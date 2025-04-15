@@ -6,6 +6,14 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
+	"durable_objects": {
+		"bindings": [
+			{ "name": "POKER_ROOM", "class_name": "PokerRoom" }
+		]
+	},
+	"migrations": [
+		{ "tag": "v1", "new_classes": ["PokerRoom"] }
+	],
 	"assets": {
 		"binding": "ASSETS",
 		"directory": "./app"
