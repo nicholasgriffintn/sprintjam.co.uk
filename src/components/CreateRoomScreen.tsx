@@ -1,4 +1,4 @@
-import type { FC, ChangeEvent } from 'react';
+import type { FC, ChangeEvent, FormEvent } from 'react';
 
 interface CreateRoomScreenProps {
   name: string;
@@ -13,11 +13,18 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   onCreateRoom,
   onBack,
 }) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (name) {
+      onCreateRoom();
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center p-8 space-y-6">
       <h1 className="text-2xl font-bold text-blue-600">Create New Room</h1>
 
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+      <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <div className="mb-4">
           <label htmlFor="create-name" className="block mb-2 text-sm font-medium text-gray-700">
             Your Name
@@ -29,6 +36,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
             onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your name"
+            required
           />
         </div>
 
@@ -41,8 +49,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
             Back
           </button>
           <button
-            type="button"
-            onClick={onCreateRoom}
+            type="submit"
             disabled={!name}
             className={`flex-1 px-4 py-2 text-white rounded-md ${
               name
@@ -53,7 +60,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
             Create Room
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

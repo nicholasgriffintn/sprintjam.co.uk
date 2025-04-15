@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import {
   createRoom,
@@ -44,6 +44,8 @@ const App = () => {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const didLoadName = useRef(false);
+
   // Memoize the room update handler to prevent unnecessary re-renders
   const handleRoomUpdate = useCallback((updatedRoomData: RoomData) => {
     setRoomData(updatedRoomData);
@@ -88,23 +90,31 @@ const App = () => {
     }
   }, [screen, name, roomData.key, handleRoomUpdate]);
 
-  // Persist user name in localStorage
+  // Persist user name in localStorage (Combined Load & Save)
   useEffect(() => {
-    // Load saved name on initial render
-    const savedName = localStorage.getItem('sprintjam_username');
-    if (savedName) {
-      setName(savedName);
+    // Load ONLY on initial mount
+    if (!didLoadName.current) {
+      const savedName = localStorage.getItem('sprintjam_username');
+      if (savedName) {
+        setName(savedName);
+      }
+      didLoadName.current = true; // Mark as loaded
+      // No need to proceed to saving logic on initial load
+      return;
     }
 
-    // Save name when it changes (debounced)
+    // Save name when it changes (debounced), skip initial empty state save
+    if (name === '' && !localStorage.getItem('sprintjam_username')) {
+      // Avoid saving empty string initially if nothing was loaded
+      return;
+    }
+
     const saveTimeout = setTimeout(() => {
-      if (name) {
-        localStorage.setItem('sprintjam_username', name);
-      }
+      localStorage.setItem('sprintjam_username', name);
     }, 500);
 
     return () => clearTimeout(saveTimeout);
-  }, [name]);
+  }, [name]); // Depend only on name
 
   // Handle creating a new room
   const handleCreateRoom = async () => {
@@ -230,7 +240,9 @@ const App = () => {
       {screen === 'create' && (
         <CreateRoomScreen
           name={name}
-          onNameChange={setName}
+          onNameChange={(newName: string) => {
+            setName(newName);
+          }}
           onCreateRoom={handleCreateRoom}
           onBack={() => navigateTo('welcome')}
         />
