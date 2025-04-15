@@ -1,14 +1,16 @@
-import { PokerRoom } from './poker-room';
 import type {
 	DurableObjectNamespace,
 	ExportedHandler,
 	ExecutionContext,
+	Fetcher,
 	Request as CfRequest,
 	Response as CfResponse,
 } from '@cloudflare/workers-types';
+import { PokerRoom } from './poker-room';
 
 export interface Env {
 	POKER_ROOM: DurableObjectNamespace;
+	ASSETS: Fetcher;
 }
 
 async function handleRequest(request: CfRequest, env: Env, ctx: ExecutionContext): Promise<CfResponse> {
@@ -45,10 +47,11 @@ async function handleRequest(request: CfRequest, env: Env, ctx: ExecutionContext
   }
 
   // For all other requests, serve the static assets
-  // TODO: env.ASSETS.fetch()
-  return new Response("Sprintjam Static Assets Would Be Served Here", {
-    headers: { "Content-Type": "text/html" },
-  }) as unknown as CfResponse; // Added type assertion
+  const assetUrl = new URL('index.html', url.origin);
+  const assetRequest = new Request(assetUrl.toString(), request);
+				
+
+  return env.ASSETS.fetch(assetRequest);
 }
 
 async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise<CfResponse> {
@@ -132,7 +135,7 @@ function generateRoomKey() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-function getRoomId(roomKey) {
+function getRoomId(roomKey: string) {
   // Create a stable ID from the room key
   return `room-${roomKey.toLowerCase()}`;
 }
@@ -142,3 +145,5 @@ export default {
 		return handleRequest(request, env, ctx);
 	},
 } satisfies ExportedHandler<Env>;
+
+export { PokerRoom };
