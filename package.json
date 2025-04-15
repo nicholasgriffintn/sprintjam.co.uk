@@ -12,9 +12,9 @@
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250415.0",
-    "typescript": "^5.8.3",
-    "wrangler": "^4.11.1"
-  }
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20250410.0",
+		"typescript": "^5.5.2",
+		"wrangler": "^4.10.0"
+	}
 }

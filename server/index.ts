@@ -1,10 +1,5 @@
 export { PokerRoom } from './poker-room';
 
-// Create a new Worker that handles HTTP requests and WebSocket connections
-addEventListener('fetch', (event) => {
-  event.respondWith(handleRequest(event.request));
-});
-
 async function handleRequest(request) {
   const url = new URL(request.url);
 
@@ -123,3 +118,9 @@ function getRoomId(roomKey) {
   // Create a stable ID from the room key
   return `room-${roomKey.toLowerCase()}`;
 }
+
+export default {
+	async fetch(request, env, ctx): Promise<Response> {
+		return handleRequest(request);
+	},
+} satisfies ExportedHandler<Env>;
