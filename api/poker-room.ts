@@ -72,12 +72,12 @@ export class PokerRoom {
       await this.handleSession(server, roomKey, userName);
 
       // Return the response to establish the WebSocket connection
-      return new Response(null, { status: 101, webSocket: client } as any) as unknown as CfResponse;
+      return new Response(null, { status: 101, webSocket: client } as unknown as CfResponse) as unknown as CfResponse;
     }
 
     // Initialize a new room
     if (url.pathname === '/initialize' && request.method === 'POST') {
-      const { roomKey, moderator } = await request.json();
+      const { roomKey, moderator } = await request.json() as { roomKey: string; moderator: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         let roomData = await this.state.storage.get<RoomData>('roomData');
@@ -123,7 +123,7 @@ export class PokerRoom {
 
     // Join an existing room
     if (url.pathname === '/join' && request.method === 'POST') {
-      const { name } = await request.json();
+      const { name } = await request.json() as { name: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -172,7 +172,7 @@ export class PokerRoom {
 
     // Vote
     if (url.pathname === '/vote' && request.method === 'POST') {
-      const { name, vote } = await request.json();
+      const { name, vote } = await request.json() as { name: string; vote: string | number };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -221,7 +221,7 @@ export class PokerRoom {
 
     // Show votes (moderator only)
     if (url.pathname === '/showVotes' && request.method === 'POST') {
-      const { name } = await request.json();
+      const { name } = await request.json() as { name: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -270,7 +270,7 @@ export class PokerRoom {
 
     // Reset votes (moderator only)
     if (url.pathname === '/resetVotes' && request.method === 'POST') {
-      const { name } = await request.json();
+      const { name } = await request.json() as { name: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -353,11 +353,11 @@ export class PokerRoom {
         } else if (data.type === 'resetVotes') {
           await this.handleResetVotes(userName);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         webSocket.send(
           JSON.stringify({
             type: 'error',
-            error: err.message,
+            error: err instanceof Error ? err.message : String(err),
           })
         );
       }

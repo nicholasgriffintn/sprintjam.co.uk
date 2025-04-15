@@ -1,7 +1,6 @@
 import type {
 	DurableObjectNamespace,
 	ExportedHandler,
-	ExecutionContext,
 	Fetcher,
 	Request as CfRequest,
 	Response as CfResponse,
@@ -13,7 +12,7 @@ export interface Env {
 	ASSETS: Fetcher;
 }
 
-async function handleRequest(request: CfRequest, env: Env, ctx: ExecutionContext): Promise<CfResponse> {
+async function handleRequest(request: CfRequest, env: Env): Promise<CfResponse> {
   const url = new URL(request.url);
 
   // Handle API requests
@@ -39,6 +38,7 @@ async function handleRequest(request: CfRequest, env: Env, ctx: ExecutionContext
 
     // Get a stub for the Durable Object using the binding from Env
     const roomObject = env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId));
+    console.log('roomObject', roomObject);
 
     // Forward the WebSocket request to the Durable Object's fetch handler
     // Ensure the request object is compatible.
@@ -47,11 +47,7 @@ async function handleRequest(request: CfRequest, env: Env, ctx: ExecutionContext
   }
 
   // For all other requests, serve the static assets
-  const assetUrl = new URL('index.html', url.origin);
-  const assetRequest = new Request(assetUrl.toString(), request);
-				
-
-  return env.ASSETS.fetch(assetRequest);
+  return env.ASSETS.fetch(request);
 }
 
 async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise<CfResponse> {
@@ -141,8 +137,8 @@ function getRoomId(roomKey: string) {
 }
 
 export default {
-	async fetch(request: CfRequest, env: Env, ctx: ExecutionContext): Promise<CfResponse> {
-		return handleRequest(request, env, ctx);
+	async fetch(request: CfRequest, env: Env): Promise<CfResponse> {
+		return handleRequest(request, env);
 	},
 } satisfies ExportedHandler<Env>;
 

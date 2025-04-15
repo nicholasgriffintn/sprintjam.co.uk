@@ -1,22 +1,25 @@
-// src/api/roomService.js
 // This file handles all communication with the backend API and WebSocket connections
 
-// API base URL - would be configured based on environment
-const API_BASE_URL = 'https://sprintjam.co.uk/api';
-const WS_BASE_URL = 'wss://sprintjam.co.uk/ws';
+const API_BASE_URL = import.meta.env.DEV
+  ? 'http://localhost:5173/api'
+  : 'https://sprintjam.co.uk/api';
+
+const WS_BASE_URL = import.meta.env.DEV
+  ? 'ws://localhost:5173/ws'
+  : 'wss://sprintjam.co.uk/ws';
 
 // Store the active WebSocket connection
-let activeSocket = null;
+let activeSocket: WebSocket | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
-let eventListeners = {};
+const eventListeners: Record<string, ((data: any) => void)[]> = {};
 
 /**
  * Create a new planning poker room
  * @param {string} name - The name of the user creating the room
  * @returns {Promise<object>} - The room data
  */
-export async function createRoom(name) {
+export async function createRoom(name: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
       method: 'POST',
@@ -45,7 +48,7 @@ export async function createRoom(name) {
  * @param {string} roomKey - The unique key for the room
  * @returns {Promise<object>} - The room data
  */
-export async function joinRoom(name, roomKey) {
+export async function joinRoom(name: string, roomKey: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
       method: 'POST',
@@ -75,7 +78,7 @@ export async function joinRoom(name, roomKey) {
  * @param {function} onRoomUpdate - Callback function when room data is updated
  * @returns {WebSocket} - The WebSocket connection
  */
-export function connectToRoom(roomKey, name, onRoomUpdate) {
+export function connectToRoom(roomKey: string, name: string, onRoomUpdate: (data: any) => void) {
   // Close any existing connection
   if (activeSocket) {
     activeSocket.close();
@@ -149,12 +152,12 @@ export function connectToRoom(roomKey, name, onRoomUpdate) {
 /**
  * Handle reconnection logic
  */
-function handleReconnect(roomKey, name, onRoomUpdate) {
+function handleReconnect(roomKey: string, name: string, onRoomUpdate: (data: any) => void) {
   if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     reconnectAttempts++;
 
     // Exponential backoff
-    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+    const delay = Math.min(1000 * 2 ** reconnectAttempts, 30000);
 
     console.log(
       `Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts})`
@@ -175,7 +178,7 @@ function handleReconnect(roomKey, name, onRoomUpdate) {
  * Submit a vote
  * @param {string} vote - The vote value
  */
-export function submitVote(vote) {
+export function submitVote(vote: string) {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error('Not connected to room');
   }
@@ -233,7 +236,7 @@ export function disconnectFromRoom() {
  * @param {string} event - The event type
  * @param {function} callback - The callback function
  */
-export function addEventListener(event, callback) {
+export function addEventListener(event: string, callback: (data: any) => void) {
   if (!eventListeners[event]) {
     eventListeners[event] = [];
   }
@@ -245,7 +248,7 @@ export function addEventListener(event, callback) {
  * @param {string} event - The event type
  * @param {function} callback - The callback function to remove
  */
-export function removeEventListener(event, callback) {
+export function removeEventListener(event: string, callback: (data: any) => void) {
   if (!eventListeners[event]) return;
 
   eventListeners[event] = eventListeners[event].filter((cb) => cb !== callback);
@@ -256,7 +259,7 @@ export function removeEventListener(event, callback) {
  * @param {string} event - The event type
  * @param {object} data - The event data
  */
-function triggerEventListeners(event, data) {
+function triggerEventListeners(event: string, data: any) {
   if (!eventListeners[event]) return;
 
   for (const callback of eventListeners[event]) {

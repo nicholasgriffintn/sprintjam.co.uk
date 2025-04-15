@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 
 import {
   createRoom,
@@ -12,25 +12,47 @@ import {
   removeEventListener,
 } from './lib/api-service';
 
+// Type definitions
+interface RoomData {
+  key: string;
+  users: string[];
+  votes: Record<string, VoteValue | null>; // Map username to their vote
+  showVotes: boolean;
+  moderator: string;
+}
+
+type VoteValue = '1' | '2' | '3' | '5' | '8' | '13' | '21' | '?';
+
+interface RoomStats {
+  avg: number | string; // Can be number or string 'N/A'
+  mode: VoteValue | null;
+}
+
+// WebSocket event data type (assuming structure based on usage)
+interface WebSocketErrorData {
+  error?: string;
+  message?: string; // Adding message as it's used in catch blocks
+}
+
 const App = () => {
   // App state
-  const [name, setName] = useState('');
-  const [roomKey, setRoomKey] = useState('');
-  const [screen, setScreen] = useState('welcome'); // welcome, create, join, room
-  const [roomData, setRoomData] = useState({
+  const [name, setName] = useState<string>('');
+  const [roomKey, setRoomKey] = useState<string>('');
+  const [screen, setScreen] = useState<'welcome' | 'create' | 'join' | 'room'>('welcome');
+  const [roomData, setRoomData] = useState<RoomData>({
     key: '',
     users: [],
     votes: {},
     showVotes: false,
     moderator: '',
   });
-  const [userVote, setUserVote] = useState(null);
-  const [isModeratorView, setIsModeratorView] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [userVote, setUserVote] = useState<VoteValue | null>(null);
+  const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Fibonacci sequence values for voting
-  const votingOptions = ['1', '2', '3', '5', '8', '13', '21', '?'];
+  const votingOptions: VoteValue[] = ['1', '2', '3', '5', '8', '13', '21', '?'];
 
   // Connect to WebSocket when entering a room
   useEffect(() => {
@@ -39,7 +61,7 @@ const App = () => {
       connectToRoom(roomData.key, name, handleRoomUpdate);
 
       // Add error event listener
-      const errorHandler = (data) => {
+      const errorHandler = (data: WebSocketErrorData) => {
         setError(data.error || 'Connection error');
       };
 
@@ -54,12 +76,12 @@ const App = () => {
   }, [screen, name, roomData.key]);
 
   // Handle WebSocket room updates
-  const handleRoomUpdate = (updatedRoomData) => {
+  const handleRoomUpdate = (updatedRoomData: RoomData) => {
     setRoomData(updatedRoomData);
 
     // Update vote selection if our vote is reflected
     if (updatedRoomData.votes && updatedRoomData.votes[name] !== undefined) {
-      setUserVote(updatedRoomData.votes[name]);
+      setUserVote(updatedRoomData.votes[name] ?? null);
     }
 
     // Check if I am the moderator
@@ -78,12 +100,12 @@ const App = () => {
 
     try {
       // Call the API to create a new room
-      const newRoom = await createRoom(name);
+      const newRoom: RoomData = await createRoom(name);
 
       setRoomData(newRoom);
       setIsModeratorView(true);
       setScreen('room');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Failed to create room');
     } finally {
       setIsLoading(false);
@@ -99,12 +121,12 @@ const App = () => {
 
     try {
       // Call the API to join an existing room
-      const joinedRoom = await joinRoom(name, roomKey);
+      const joinedRoom: RoomData = await joinRoom(name, roomKey);
 
       setRoomData(joinedRoom);
       setIsModeratorView(joinedRoom.moderator === name);
       setScreen('room');
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Failed to join room');
     } finally {
       setIsLoading(false);
@@ -112,14 +134,14 @@ const App = () => {
   };
 
   // Handle vote submission
-  const handleVote = (value) => {
+  const handleVote = (value: VoteValue) => {
     // Update local state immediately for responsiveness
     setUserVote(value);
 
     try {
       // Send the vote to the server via WebSocket
       submitVote(value);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Failed to submit vote');
     }
   };
@@ -132,7 +154,7 @@ const App = () => {
       // Reset votes via WebSocket
       resetVotes();
       setUserVote(null);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Failed to reset votes');
     }
   };
@@ -143,32 +165,35 @@ const App = () => {
     try {
       // Toggle votes via WebSocket
       toggleShowVotes();
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message || 'Failed to toggle vote visibility');
     }
   };
 
   // Calculate voting statistics when votes are shown
-  const calculateStats = () => {
+  const calculateStats = (): RoomStats | null => {
     if (!roomData.showVotes) return null;
 
-    const votes = Object.values(roomData.votes).filter((v) => v !== '?');
+    const votes = Object.values(roomData.votes).filter((v): v is VoteValue => v !== null && v !== '?');
     if (votes.length === 0) return { avg: 0, mode: null };
 
     // Calculate average (excluding ? votes)
-    const numericVotes = votes.map(Number);
+    const numericVotes: number[] = votes.map(Number);
     const avg = numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length;
 
     // Find mode (most common vote)
-    const voteCounts = {};
+    const voteCounts: Record<VoteValue, number> = {} as Record<VoteValue, number>;
     let maxCount = 0;
-    let mode = null;
+    let mode: VoteValue | null = null;
 
+    // Include null votes potentially if they exist in roomData.votes before filtering
     Object.values(roomData.votes).forEach((vote) => {
-      voteCounts[vote] = (voteCounts[vote] || 0) + 1;
-      if (voteCounts[vote] > maxCount) {
-        maxCount = voteCounts[vote];
-        mode = vote;
+      if (vote !== null) { // Check for null before counting
+        voteCounts[vote] = (voteCounts[vote] || 0) + 1;
+        if (voteCounts[vote] > maxCount) {
+          maxCount = voteCounts[vote];
+          mode = vote;
+        }
       }
     });
 
@@ -213,7 +238,7 @@ const App = () => {
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your name"
           />
@@ -255,7 +280,7 @@ const App = () => {
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your name"
           />
@@ -268,7 +293,7 @@ const App = () => {
           <input
             type="text"
             value={roomKey}
-            onChange={(e) => setRoomKey(e.target.value.toUpperCase())}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setRoomKey(e.target.value.toUpperCase())}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter room key"
           />
@@ -299,7 +324,7 @@ const App = () => {
 
   // Render room screen
   const renderRoom = () => {
-    const stats = calculateStats();
+    const stats: RoomStats | null = calculateStats();
 
     return (
       <div className="flex flex-col h-screen">
@@ -325,7 +350,7 @@ const App = () => {
           <div className="w-64 p-4 bg-gray-100 border-r">
             <h2 className="mb-4 text-lg font-medium">Participants</h2>
             <ul className="space-y-2">
-              {roomData.users.map((user, index) => (
+              {roomData.users.map((user: string, index: number) => (
                 <li
                   key={index}
                   className="flex items-center justify-between p-2 bg-white rounded-md shadow-sm"
@@ -356,7 +381,7 @@ const App = () => {
             <div className="mb-8">
               <h2 className="mb-4 text-xl font-semibold">Your Vote</h2>
               <div className="flex flex-wrap gap-3">
-                {votingOptions.map((option) => (
+                {votingOptions.map((option: VoteValue) => (
                   <button
                     key={option}
                     onClick={() => handleVote(option)}
@@ -436,6 +461,21 @@ const App = () => {
   // Main render logic
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="p-4 text-white bg-blue-600 rounded-lg">Loading...</div>
+        </div>
+      )}
+
+      {/* Error Display (Global) */}
+      {error && screen !== 'room' && ( // Only show global error if not in room screen (room has its own)
+        <div className="absolute top-0 left-0 right-0 p-3 m-4 bg-red-100 text-red-700 border border-red-300 rounded-md shadow-lg">
+          {error}
+          <button onClick={() => setError('')} className="float-right font-bold">X</button>
+        </div>
+      )}
+
       {screen === 'welcome' && renderWelcome()}
       {screen === 'create' && renderCreateRoom()}
       {screen === 'join' && renderJoinRoom()}
