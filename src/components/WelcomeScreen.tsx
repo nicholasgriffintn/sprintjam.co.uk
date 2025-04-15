@@ -13,7 +13,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
     <div className="flex flex-col items-center justify-center p-8 space-y-6">
       <h1 className="text-3xl font-bold text-blue-600">Welcome to SprintJam</h1>
       <p className="text-gray-600">
-        Collaborative planning poker for agile teams
+        Collaborative planning poker for agile teams, without the ads.
       </p>
 
       <div className="flex flex-col space-y-4">
@@ -31,6 +31,12 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
         >
           Join Room
         </button>
+
+        <p className="mt-4 text-gray-600">
+          <a href="https://github.com/nicholasgriffintn/sprintjam.co.uk" className="text-blue-500 hover:underline">
+            View the source code on GitHub
+          </a>
+        </p>
       </div>
     </div>
   );
