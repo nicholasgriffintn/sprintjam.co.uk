@@ -41,8 +41,6 @@ async function handleRequest(request: CfRequest, env: Env): Promise<CfResponse> 
     console.log('roomObject', roomObject);
 
     // Forward the WebSocket request to the Durable Object's fetch handler
-    // Ensure the request object is compatible.
-    // The DO stub fetch expects a Request type potentially different from the handler's CfRequest.
     return env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId)).fetch(request);
   }
 
@@ -55,7 +53,6 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
 
   // Create a new room
   if (path === 'rooms' && request.method === 'POST') {
-    // Explicitly type the expected JSON structure
     const body = await request.json<{ name?: string }>();
     const name = body?.name;
 
@@ -87,7 +84,6 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
 
   // Join an existing room
   if (path === 'rooms/join' && request.method === 'POST') {
-    // Explicitly type the expected JSON structure
     const body = await request.json<{ name?: string; roomKey?: string }>();
     const name = body?.name;
     const roomKey = body?.roomKey;
@@ -99,7 +95,7 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
           status: 400,
           headers: { 'Content-Type': 'application/json' },
         }
-      ) as unknown as CfResponse; // Added type assertion
+      ) as unknown as CfResponse;
     }
 
     const roomId = getRoomId(roomKey);
