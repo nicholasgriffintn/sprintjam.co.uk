@@ -2,13 +2,16 @@
   "name": "sprintjame",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
-    "start": "wrangler dev",
-    "cf-typegen": "wrangler types"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "deploy": "npm run build && npm exec wrangler deploy"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.16",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwindcss": "^4.1.4"
@@ -16,6 +19,8 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.0.7",
     "@cloudflare/workers-types": "^4.20250410.0",
+    "@tailwindcss/vite": "^4.1.4",
+    "@vitejs/plugin-react": "^4.4.0",
     "typescript": "^5.5.2",
     "vite": "^6.2.6",
     "wrangler": "^4.10.0"

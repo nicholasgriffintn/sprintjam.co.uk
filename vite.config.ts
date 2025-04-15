@@ -1,13 +1,9 @@
 import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
 
+// https://vite.dev/config/
 export default defineConfig({
-  environments: {
-    my_worker: {
-      define: {
-        __APP_VERSION__: JSON.stringify("v1.0.0"),
-      },
-    },
-  },
-  plugins: [cloudflare()],
+  plugins: [react(), tailwindcss(), cloudflare()],
 });
