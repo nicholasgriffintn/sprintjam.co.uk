@@ -6,9 +6,19 @@ export interface RoomData {
   votes: Record<string, VoteValue | null>;
   showVotes: boolean;
   moderator: string;
+  createdAt?: string;
+  lastActivity?: string;
 }
 
 export interface WebSocketErrorData {
   error?: string;
   message?: string;
-} 
+  code?: number;
+}
+
+export interface WebSocketMessage {
+  type: string;
+  roomData?: RoomData;
+  error?: string;
+  message?: string;
+}
