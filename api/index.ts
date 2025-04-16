@@ -115,6 +115,64 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
     return response;
   }
 
+  // Get room settings
+  if (path === 'rooms/settings' && request.method === 'GET') {
+    const roomKey = url.searchParams.get('roomKey');
+
+    if (!roomKey) {
+      return new Response(
+        JSON.stringify({ error: 'Room key is required' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
+    }
+
+    const roomId = getRoomId(roomKey);
+    const roomObject = env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId));
+
+    return roomObject.fetch(
+      new Request('https://dummy/settings', {
+        method: 'GET',
+      }) as unknown as CfRequest
+    );
+  }
+
+  // Update room settings
+  if (path === 'rooms/settings' && request.method === 'PUT') {
+    const body = await request.json<{ 
+      name?: string; 
+      roomKey?: string; 
+      settings?: Record<string, unknown> 
+    }>();
+    
+    const name = body?.name;
+    const roomKey = body?.roomKey;
+    const settings = body?.settings;
+
+    if (!name || !roomKey || !settings) {
+      return new Response(
+        JSON.stringify({ error: 'Name, room key, and settings are required' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
+    }
+
+    const roomId = getRoomId(roomKey);
+    const roomObject = env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId));
+
+    return roomObject.fetch(
+      new Request('https://dummy/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, settings }),
+      }) as unknown as CfRequest
+    );
+  }
+
   return new Response(JSON.stringify({ error: 'Not found' }), {
     status: 404,
     headers: { 'Content-Type': 'application/json' },

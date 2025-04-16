@@ -1,13 +1,13 @@
-import type { FC} from 'react';
+import type { FC } from 'react';
 
 interface WelcomeScreenProps {
-  onCreateRoomClick: () => void;
-  onJoinRoomClick: () => void;
+  onCreateRoom: () => void;
+  onJoinRoom: () => void;
 }
 
 const WelcomeScreen: FC<WelcomeScreenProps> = ({
-  onCreateRoomClick,
-  onJoinRoomClick,
+  onCreateRoom,
+  onJoinRoom,
 }) => {
   return (
     <div className="flex flex-col items-center justify-center p-8 space-y-6">
@@ -16,17 +16,17 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
         Collaborative planning poker for agile teams, without the ads.
       </p>
 
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col space-y-4 w-full max-w-md">
         <button
           type="button"
-          onClick={onCreateRoomClick}
+          onClick={onCreateRoom}
           className="px-6 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600"
         >
           Create Room
         </button>
         <button
           type="button"
-          onClick={onJoinRoomClick}
+          onClick={onJoinRoom}
           className="px-6 py-2 text-blue-500 bg-white border border-blue-500 rounded-md hover:bg-blue-50"
         >
           Join Room

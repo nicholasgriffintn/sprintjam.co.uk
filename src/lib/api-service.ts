@@ -1,5 +1,5 @@
 // This file handles all communication with the backend API and WebSocket connections
-import type { RoomData, VoteValue } from '../types';
+import type { RoomData, VoteValue, RoomSettings } from '../types';
 
 const API_BASE_URL = import.meta.env.DEV
   ? 'http://localhost:5173/api'
@@ -15,7 +15,7 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_BASE_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
-const eventListeners: Record<string, ((data: any) => void)[]> = {};
+const eventListeners: Record<string, ((data: WebSocketMessage) => void)[]> = {};
 
 export type WebSocketMessageType = 
   | 'initialize'
@@ -25,12 +25,14 @@ export type WebSocketMessageType =
   | 'showVotes'
   | 'resetVotes'
   | 'newModerator'
+  | 'settingsUpdated'
   | 'error'
   | 'disconnected';
 
 interface WebSocketMessage {
   type: WebSocketMessageType;
   roomData?: RoomData;
+  settings?: RoomSettings;
   error?: string;
 }
 
@@ -137,6 +139,7 @@ export function connectToRoom(
           case 'showVotes':
           case 'resetVotes':
           case 'newModerator':
+          case 'settingsUpdated':
             // Call the update callback with the new room data
             if (data.roomData) {
               onRoomUpdate(data.roomData);
@@ -170,7 +173,10 @@ export function connectToRoom(
 
     socket.onerror = (error) => {
       console.error('WebSocket error:', error);
-      triggerEventListeners('error', { error: 'Connection error occurred' });
+      triggerEventListeners('error', { 
+        type: 'error',
+        error: 'Connection error occurred' 
+      });
     };
 
     // Store the active socket
@@ -179,6 +185,7 @@ export function connectToRoom(
   } catch (error) {
     console.error('Error creating WebSocket:', error);
     triggerEventListeners('error', { 
+      type: 'error',
       error: error instanceof Error ? error.message : 'Failed to connect to server' 
     });
     throw error;
@@ -213,6 +220,7 @@ function handleReconnect(
   } else {
     console.error('Max reconnection attempts reached');
     triggerEventListeners('disconnected', {
+      type: 'disconnected',
       error: 'Connection lost. Please refresh the page to reconnect.',
     });
   }
@@ -297,7 +305,7 @@ export function addEventListener(
  */
 export function removeEventListener(
   event: WebSocketMessageType, 
-  callback: (data: any) => void
+  callback: (data: WebSocketMessage) => void
 ): void {
   if (!eventListeners[event]) return;
 
@@ -309,7 +317,7 @@ export function removeEventListener(
  * @param {WebSocketMessageType} event - The event type
  * @param {object} data - The event data
  */
-function triggerEventListeners(event: WebSocketMessageType, data: any): void {
+function triggerEventListeners(event: WebSocketMessageType, data: WebSocketMessage): void {
   if (!eventListeners[event]) return;
 
   for (const callback of eventListeners[event]) {
@@ -335,4 +343,82 @@ export function isConnected(): boolean {
  */
 export function getConnectionState(): number | null {
   return activeSocket ? activeSocket.readyState : null;
+}
+
+/**
+ * Get room settings
+ * @param {string} roomKey - The unique key for the room
+ * @returns {Promise<RoomSettings>} - The room settings
+ */
+export async function getRoomSettings(roomKey: string): Promise<RoomSettings> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/rooms/settings?roomKey=${encodeURIComponent(roomKey)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Failed to get room settings: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.settings;
+  } catch (error) {
+    console.error('Error getting room settings:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update room settings (moderator only)
+ * @param {string} name - The name of the user updating settings (must be moderator)
+ * @param {string} roomKey - The unique key for the room
+ * @param {Partial<RoomSettings>} settings - The settings to update
+ * @returns {Promise<RoomSettings>} - The updated room settings
+ */
+export async function updateRoomSettings(
+  name: string, 
+  roomKey: string, 
+  settings: Partial<RoomSettings>
+): Promise<RoomSettings> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/rooms/settings`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, roomKey, settings }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Failed to update room settings: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.settings;
+  } catch (error) {
+    console.error('Error updating room settings:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update settings via WebSocket (moderator only)
+ * @param {Partial<RoomSettings>} settings - The settings to update
+ */
+export function updateSettings(settings: Partial<RoomSettings>): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'updateSettings',
+      settings,
+    })
+  );
 }

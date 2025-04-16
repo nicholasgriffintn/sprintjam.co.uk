@@ -5,12 +5,24 @@ declare const WebSocketPair: {
 import type { DurableObjectState, WebSocket, Response as CfResponse } from '@cloudflare/workers-types';
 import type { Env } from './index';
 
+const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
+
 interface RoomData {
   key: string;
   users: string[];
   votes: Record<string, string | number>;
   showVotes: boolean;
   moderator: string;
+  settings: {
+    estimateOptions: (string | number)[];
+    allowOthersToShowEstimates: boolean;
+    allowOthersToDeleteEstimates: boolean;
+    allowOthersToClearUsers: boolean;
+    showTimer: boolean;
+    showUserPresence: boolean;
+    showAverage: boolean;
+    showMedian: boolean;
+  };
 }
 
 interface BroadcastMessage {
@@ -44,6 +56,16 @@ export class PokerRoom {
           votes: {},
           showVotes: false,
           moderator: '',
+          settings: {
+            estimateOptions: VOTING_OPTIONS,
+            allowOthersToShowEstimates: true,
+            allowOthersToDeleteEstimates: true,
+            allowOthersToClearUsers: true,
+            showTimer: false,
+            showUserPresence: false,
+            showAverage: false,
+            showMedian: false,
+          }
         };
         await this.state.storage.put('roomData', roomData);
       }
@@ -105,6 +127,16 @@ export class PokerRoom {
           votes: {},
           showVotes: false,
           moderator,
+          settings: {
+            estimateOptions: VOTING_OPTIONS,
+            allowOthersToShowEstimates: true,
+            allowOthersToDeleteEstimates: true,
+            allowOthersToClearUsers: true,
+            showTimer: false,
+            showUserPresence: false,
+            showAverage: false,
+            showMedian: false,
+          }
         };
 
         await this.state.storage.put('roomData', roomData);
@@ -234,8 +266,8 @@ export class PokerRoom {
           }) as unknown as CfResponse;
         }
 
-        // Check if user is the moderator
-        if (roomData.moderator !== name) {
+        // Check if user is the moderator or if non-moderators are allowed to show votes
+        if (roomData.moderator !== name && !roomData.settings.allowOthersToShowEstimates) {
           return new Response(
             JSON.stringify({ error: 'Only the moderator can show votes' }),
             {
@@ -283,8 +315,8 @@ export class PokerRoom {
           }) as unknown as CfResponse;
         }
 
-        // Check if user is the moderator
-        if (roomData.moderator !== name) {
+        // Check if user is the moderator or if non-moderators are allowed to delete estimates
+        if (roomData.moderator !== name && !roomData.settings.allowOthersToDeleteEstimates) {
           return new Response(
             JSON.stringify({ error: 'Only the moderator can reset votes' }),
             {
@@ -309,6 +341,86 @@ export class PokerRoom {
           JSON.stringify({
             success: true,
             room: roomData,
+          }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+          }
+        ) as unknown as CfResponse;
+      });
+    }
+
+    // Get room settings
+    if (url.pathname === '/settings' && request.method === 'GET') {
+      return await this.state.blockConcurrencyWhile(async () => {
+        const roomData = await this.state.storage.get<RoomData>('roomData');
+
+        // Check if room exists
+        if (!roomData || !roomData.key) {
+          return new Response(JSON.stringify({ error: 'Room not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }) as unknown as CfResponse;
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            settings: roomData.settings,
+          }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+          }
+        ) as unknown as CfResponse;
+      });
+    }
+
+    // Update room settings (moderator only)
+    if (url.pathname === '/settings' && request.method === 'PUT') {
+      const { name, settings } = await request.json() as { 
+        name: string; 
+        settings: RoomData['settings']
+      };
+
+      return await this.state.blockConcurrencyWhile(async () => {
+        const roomData = await this.state.storage.get<RoomData>('roomData');
+
+        // Check if room exists
+        if (!roomData || !roomData.key) {
+          return new Response(JSON.stringify({ error: 'Room not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }) as unknown as CfResponse;
+        }
+
+        // Check if user is the moderator
+        if (roomData.moderator !== name) {
+          return new Response(
+            JSON.stringify({ error: 'Only the moderator can update settings' }),
+            {
+              status: 403,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          ) as unknown as CfResponse;
+        }
+
+        // Update settings
+        roomData.settings = {
+          ...roomData.settings,
+          ...settings
+        };
+        await this.state.storage.put('roomData', roomData);
+
+        // Notify all connected clients
+        this.broadcast({
+          type: 'settingsUpdated',
+          settings: roomData.settings,
+          roomData,
+        });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            settings: roomData.settings,
           }),
           {
             headers: { 'Content-Type': 'application/json' },
@@ -352,6 +464,8 @@ export class PokerRoom {
           await this.handleShowVotes(userName);
         } else if (data.type === 'resetVotes') {
           await this.handleResetVotes(userName);
+        } else if (data.type === 'updateSettings') {
+          await this.handleUpdateSettings(userName, data.settings);
         }
       } catch (err: unknown) {
         webSocket.send(
@@ -451,8 +565,8 @@ export class PokerRoom {
       const roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) return; // Check roomData exists
 
-      // Check if user is the moderator
-      if (roomData.moderator !== userName) {
+      // Check if user is the moderator or if non-moderators are allowed to show votes
+      if (roomData.moderator !== userName && !roomData.settings.allowOthersToShowEstimates) {
         return;
       }
 
@@ -475,8 +589,8 @@ export class PokerRoom {
       const roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) return; // Check roomData exists
 
-      // Check if user is the moderator
-      if (roomData.moderator !== userName) {
+      // Check if user is the moderator or if non-moderators are allowed to delete estimates
+      if (roomData.moderator !== userName && !roomData.settings.allowOthersToDeleteEstimates) {
         return;
       }
 
@@ -488,6 +602,33 @@ export class PokerRoom {
       // Notify all connected clients
       this.broadcast({
         type: 'resetVotes',
+        roomData,
+      });
+    });
+  }
+
+  // Handle updateSettings messages (moderator only)
+  async handleUpdateSettings(userName: string, settings: Partial<RoomData['settings']>) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.state.storage.get<RoomData>('roomData');
+      if (!roomData) return; // Check roomData exists
+
+      // Check if user is the moderator
+      if (roomData.moderator !== userName) {
+        return;
+      }
+
+      // Update settings
+      roomData.settings = {
+        ...roomData.settings,
+        ...settings
+      };
+      await this.state.storage.put('roomData', roomData);
+
+      // Notify all connected clients
+      this.broadcast({
+        type: 'settingsUpdated',
+        settings: roomData.settings,
         roomData,
       });
     });

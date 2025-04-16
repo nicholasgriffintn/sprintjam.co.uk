@@ -8,12 +8,13 @@ import {
   submitVote,
   toggleShowVotes,
   resetVotes,
+  updateSettings,
   addEventListener,
   removeEventListener,
   isConnected,
   type WebSocketMessageType
 } from './lib/api-service';
-import type { RoomData, VoteValue, WebSocketErrorData } from './types';
+import type { RoomData, VoteValue, WebSocketErrorData, RoomSettings } from './types';
 
 import WelcomeScreen from './components/WelcomeScreen';
 import CreateRoomScreen from './components/CreateRoomScreen';
@@ -24,8 +25,7 @@ import LoadingOverlay from './components/LoadingOverlay';
 
 type AppScreen = 'welcome' | 'create' | 'join' | 'room';
 
-// Fibonacci sequence values for voting
-const VOTING_OPTIONS: VoteValue[] = ['1', '2', '3', '5', '8', '13', '21', '?'];
+const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
 
 const App = () => {
   // App state
@@ -38,6 +38,16 @@ const App = () => {
     votes: {},
     showVotes: false,
     moderator: '',
+    settings: {
+      estimateOptions: VOTING_OPTIONS,
+      allowOthersToShowEstimates: true,
+      allowOthersToDeleteEstimates: true,
+      allowOthersToClearUsers: true,
+      showTimer: false,
+      showUserPresence: false,
+      showAverage: false,
+      showMedian: false,
+    }
   });
   const [userVote, setUserVote] = useState<VoteValue | null>(null);
   const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
@@ -51,7 +61,7 @@ const App = () => {
     setRoomData(updatedRoomData);
 
     // Update vote selection if our vote is reflected
-    if (updatedRoomData.votes && updatedRoomData.votes[name] !== undefined) {
+    if (updatedRoomData.votes && name in updatedRoomData.votes) {
       setUserVote(updatedRoomData.votes[name]);
     }
 
@@ -182,7 +192,10 @@ const App = () => {
 
   // Moderator functions
   const handleResetVotes = () => {
-    if (roomData.moderator !== name) return;
+    // Allow non-moderators to reset votes if settings permit
+    if (roomData.moderator !== name && !roomData.settings.allowOthersToDeleteEstimates) {
+      return;
+    }
 
     try {
       // Reset votes via WebSocket
@@ -197,7 +210,10 @@ const App = () => {
   };
 
   const handleToggleShowVotes = () => {
-    if (roomData.moderator !== name) return;
+    // Allow non-moderators to toggle votes if settings permit
+    if (roomData.moderator !== name && !roomData.settings.allowOthersToShowEstimates) {
+      return;
+    }
 
     try {
       // Toggle votes via WebSocket
@@ -206,6 +222,21 @@ const App = () => {
       // Type guard to safely access error properties
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to toggle vote visibility';
+      setError(errorMessage);
+    }
+  };
+
+  // Handle settings update
+  const handleUpdateSettings = (settings: RoomSettings) => {
+    if (!isModeratorView) return;
+
+    try {
+      // Send the settings update via WebSocket
+      updateSettings(settings);
+    } catch (err: unknown) {
+      // Type guard to safely access error properties
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update settings';
       setError(errorMessage);
     }
   };
@@ -233,18 +264,18 @@ const App = () => {
       {/* Conditionally render screen components */}
       {screen === 'welcome' && (
         <WelcomeScreen
-          onCreateRoomClick={() => navigateTo('create')}
-          onJoinRoomClick={() => navigateTo('join')}
+          onCreateRoom={() => setScreen('create')}
+          onJoinRoom={() => setScreen('join')}
         />
       )}
       {screen === 'create' && (
         <CreateRoomScreen
           name={name}
-          onNameChange={(newName: string) => {
-            setName(newName);
-          }}
+          onNameChange={setName}
           onCreateRoom={handleCreateRoom}
-          onBack={() => navigateTo('welcome')}
+          onBack={() => setScreen('welcome')}
+          error={error}
+          onClearError={clearError}
         />
       )}
       {screen === 'join' && (
@@ -252,9 +283,11 @@ const App = () => {
           name={name}
           roomKey={roomKey}
           onNameChange={setName}
-          onRoomKeyChange={(key) => setRoomKey(key.toUpperCase())}
+          onRoomKeyChange={setRoomKey}
           onJoinRoom={handleJoinRoom}
-          onBack={() => navigateTo('welcome')}
+          onBack={() => setScreen('welcome')}
+          error={error}
+          onClearError={clearError}
         />
       )}
       {screen === 'room' && (
@@ -263,10 +296,11 @@ const App = () => {
           name={name}
           isModeratorView={isModeratorView}
           userVote={userVote}
-          votingOptions={VOTING_OPTIONS}
+          votingOptions={roomData.settings.estimateOptions as VoteValue[]}
           onVote={handleVote}
           onToggleShowVotes={handleToggleShowVotes}
           onResetVotes={handleResetVotes}
+          onUpdateSettings={handleUpdateSettings}
           error={error}
           onClearError={clearError}
           isConnected={isConnected()}

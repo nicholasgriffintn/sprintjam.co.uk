@@ -1,4 +1,15 @@
-export type VoteValue = '1' | '2' | '3' | '5' | '8' | '13' | '21' | '?';
+export type VoteValue = string | number;
+
+export interface RoomSettings {
+  estimateOptions: (string | number)[];
+  allowOthersToShowEstimates: boolean;
+  allowOthersToDeleteEstimates: boolean;
+  allowOthersToClearUsers: boolean;
+  showTimer: boolean;
+  showUserPresence: boolean;
+  showAverage: boolean;
+  showMedian: boolean;
+}
 
 export interface RoomData {
   key: string;
@@ -8,6 +19,7 @@ export interface RoomData {
   moderator: string;
   createdAt?: string;
   lastActivity?: string;
+  settings: RoomSettings;
 }
 
 export interface WebSocketErrorData {
@@ -19,6 +31,7 @@ export interface WebSocketErrorData {
 export interface WebSocketMessage {
   type: string;
   roomData?: RoomData;
+  settings?: RoomSettings;
   error?: string;
   message?: string;
 }

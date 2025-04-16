@@ -5,6 +5,8 @@ interface CreateRoomScreenProps {
   onNameChange: (name: string) => void;
   onCreateRoom: () => void;
   onBack: () => void;
+  error: string;
+  onClearError: () => void;
 }
 
 const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
@@ -12,10 +14,13 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   onNameChange,
   onCreateRoom,
   onBack,
+  error,
+  onClearError,
 }) => {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (name) {
+      onClearError();
       onCreateRoom();
     }
   };
@@ -25,6 +30,12 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
       <h1 className="text-2xl font-bold text-blue-600">Create New Room</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+        {error && (
+          <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
+            {error}
+          </div>
+        )}
+        
         <div className="mb-4">
           <label htmlFor="create-name" className="block mb-2 text-sm font-medium text-gray-700">
             Your Name

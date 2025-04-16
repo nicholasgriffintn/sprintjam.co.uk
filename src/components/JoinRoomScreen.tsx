@@ -7,6 +7,8 @@ interface JoinRoomScreenProps {
   onRoomKeyChange: (key: string) => void;
   onJoinRoom: () => void;
   onBack: () => void;
+  error: string;
+  onClearError: () => void;
 }
 
 const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
@@ -16,10 +18,13 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
   onRoomKeyChange,
   onJoinRoom,
   onBack,
+  error,
+  onClearError,
 }) => {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (name && roomKey) {
+      onClearError();
       onJoinRoom();
     }
   };
@@ -29,6 +34,12 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
       <h1 className="text-2xl font-bold text-blue-600">Join Existing Room</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+        {error && (
+          <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
+            {error}
+          </div>
+        )}
+        
         <div className="mb-4">
           <label htmlFor="join-name" className="block mb-2 text-sm font-medium text-gray-700">
             Your Name
