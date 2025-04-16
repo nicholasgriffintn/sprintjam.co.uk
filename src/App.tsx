@@ -55,6 +55,30 @@ const App = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const didLoadName = useRef(false);
+  const didCheckUrlParams = useRef(false);
+
+  // Parse URL parameters for direct room joining
+  useEffect(() => {
+    if (didCheckUrlParams.current) return;
+    
+    didCheckUrlParams.current = true;
+    
+    try {
+      const url = new URL(window.location.href);
+      const joinParam = url.searchParams.get('join');
+      
+      // Check if URL contains ?join=roomKey
+      if (joinParam && joinParam.length > 0) {
+        setRoomKey(joinParam.toUpperCase());
+        setScreen('join');
+        
+        // Clean up URL to avoid re-joining on refresh
+        window.history.replaceState({}, document.title, '/');
+      }
+    } catch (err) {
+      console.error('Failed to parse URL parameters', err);
+    }
+  }, []);
 
   // Memoize the room update handler to prevent unnecessary re-renders
   const handleRoomUpdate = useCallback((updatedRoomData: RoomData) => {
