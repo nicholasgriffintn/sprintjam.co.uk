@@ -17,6 +17,7 @@ export interface RoomData {
   votes: Record<string, VoteValue | null>;
   showVotes: boolean;
   moderator: string;
+  connectedUsers: Record<string, boolean>;
   createdAt?: string;
   lastActivity?: string;
   settings: RoomSettings;
@@ -34,4 +35,6 @@ export interface WebSocketMessage {
   settings?: RoomSettings;
   error?: string;
   message?: string;
+  user?: string;
+  isConnected?: boolean;
 }

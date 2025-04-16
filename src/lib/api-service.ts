@@ -21,6 +21,7 @@ export type WebSocketMessageType =
   | 'initialize'
   | 'userJoined'
   | 'userLeft'
+  | 'userConnectionStatus'
   | 'vote'
   | 'showVotes'
   | 'resetVotes'
@@ -135,6 +136,7 @@ export function connectToRoom(
           case 'initialize':
           case 'userJoined':
           case 'userLeft':
+          case 'userConnectionStatus':
           case 'vote':
           case 'showVotes':
           case 'resetVotes':

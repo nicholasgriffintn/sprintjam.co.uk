@@ -13,6 +13,7 @@ interface RoomData {
   votes: Record<string, string | number>;
   showVotes: boolean;
   moderator: string;
+  connectedUsers: Record<string, boolean>; // Track user connection status
   settings: {
     estimateOptions: (string | number)[];
     allowOthersToShowEstimates: boolean;
@@ -56,6 +57,7 @@ export class PokerRoom {
           votes: {},
           showVotes: false,
           moderator: '',
+          connectedUsers: {},
           settings: {
             estimateOptions: VOTING_OPTIONS,
             allowOthersToShowEstimates: true,
@@ -67,6 +69,14 @@ export class PokerRoom {
             showMedian: false,
           }
         };
+        await this.state.storage.put('roomData', roomData);
+      } else if (!roomData.connectedUsers) {
+        // Initialize connectedUsers for existing rooms
+        roomData.connectedUsers = {};
+        // Set all users as disconnected by default
+        for (const user of roomData.users) {
+          roomData.connectedUsers[user] = false;
+        }
         await this.state.storage.put('roomData', roomData);
       }
     });
@@ -127,6 +137,7 @@ export class PokerRoom {
           votes: {},
           showVotes: false,
           moderator,
+          connectedUsers: { [moderator]: true },
           settings: {
             estimateOptions: VOTING_OPTIONS,
             allowOthersToShowEstimates: true,
@@ -168,22 +179,25 @@ export class PokerRoom {
           }) as unknown as CfResponse;
         }
 
-        // Check if user already exists
-        if (roomData.users.includes(name)) {
-          return new Response(
-            JSON.stringify({ error: 'User already exists in this room' }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ) as unknown as CfResponse;
+        // Ensure connectedUsers exists
+        if (!roomData.connectedUsers) {
+          roomData.connectedUsers = {};
+          for (const user of roomData.users) {
+            roomData.connectedUsers[user] = false;
+          }
         }
 
-        // Add user to the room
-        roomData.users.push(name);
+        // Add user to the room if they're not already there
+        if (!roomData.users.includes(name)) {
+          roomData.users.push(name);
+        }
+        
+        // Mark user as connected
+        roomData.connectedUsers[name] = true;
+        
         await this.state.storage.put('roomData', roomData);
 
-        // Notify all connected clients about the new user
+        // Notify all connected clients about the user joining
         this.broadcast({
           type: 'userJoined',
           name,
@@ -442,6 +456,38 @@ export class PokerRoom {
     // Set up event listeners
     webSocket.accept();
 
+    // Update user connection status
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.state.storage.get<RoomData>('roomData');
+      if (roomData) {
+        // Ensure connectedUsers exists
+        if (!roomData.connectedUsers) {
+          roomData.connectedUsers = {};
+          for (const user of roomData.users) {
+            roomData.connectedUsers[user] = false;
+          }
+        }
+        
+        // Add user to the room if they're not already there
+        if (!roomData.users.includes(userName)) {
+          roomData.users.push(userName);
+        }
+        
+        // Mark the user as connected
+        roomData.connectedUsers[userName] = true;
+        
+        await this.state.storage.put('roomData', roomData);
+        
+        // Broadcast a more explicit message about user connection status
+        this.broadcast({
+          type: 'userConnectionStatus',
+          user: userName,
+          isConnected: true,
+          roomData,
+        });
+      }
+    });
+
     // Send initial room data
     const roomData = await this.state.storage.get<RoomData>('roomData');
     webSocket.send(
@@ -482,7 +528,7 @@ export class PokerRoom {
       // Remove the session
       this.sessions.delete(webSocket);
 
-      // Remove the user from the room if they were the last connection for that user
+      // Check if the user has any other active connections
       const stillConnected = Array.from(this.sessions.values()).some(
         (s: SessionInfo) => s.userName === userName
       );
@@ -493,46 +539,42 @@ export class PokerRoom {
 
           // Ensure roomData exists before modifying
           if (roomData) {
-            // Remove the user from the room
-            roomData.users = roomData.users.filter((user) => user !== userName);
-
-            // Remove their vote
-            if (roomData.votes[userName]) {
-              delete roomData.votes[userName];
+            // Ensure connectedUsers exists
+            if (!roomData.connectedUsers) {
+              roomData.connectedUsers = {};
+              for (const user of roomData.users) {
+                roomData.connectedUsers[user] = false;
+              }
             }
-
+            
+            // Mark the user as disconnected but keep them in the room
+            roomData.connectedUsers[userName] = false;
+            
             await this.state.storage.put('roomData', roomData);
 
-            // Notify remaining clients
+            // Broadcast a more explicit message about user connection status
             this.broadcast({
-              type: 'userLeft',
-              name: userName,
+              type: 'userConnectionStatus',
+              user: userName,
+              isConnected: false,
               roomData,
             });
 
-            // Check if room is empty
-            if (roomData.users.length === 0) {
-              // Delete the room data after some time if no one rejoins
-              // TODO: Durable Objects Alarms are better for this than setTimeout
-              setTimeout(async () => {
-                const currentData = await this.state.storage.get<RoomData>('roomData');
-                if (currentData?.users.length === 0) {
-                  await this.state.storage.delete('roomData');
-                }
-              }, 1000 * 60 * 60); // 1 hour
-            }
+            // If moderator left and there are still connected users, assign a new moderator
+            if (userName === roomData.moderator) {
+              const connectedUsers = roomData.users.filter(user => roomData.connectedUsers[user]);
+              
+              if (connectedUsers.length > 0) {
+                roomData.moderator = connectedUsers[0];
+                await this.state.storage.put('roomData', roomData);
 
-            // If moderator left, assign a new moderator
-            if (userName === roomData.moderator && roomData.users.length > 0) {
-              roomData.moderator = roomData.users[0];
-              await this.state.storage.put('roomData', roomData);
-
-              // Notify about new moderator
-              this.broadcast({
-                type: 'newModerator',
-                name: roomData.moderator,
-                roomData,
-              });
+                // Notify about new moderator
+                this.broadcast({
+                  type: 'newModerator',
+                  name: roomData.moderator,
+                  roomData,
+                });
+              }
             }
           }
         });

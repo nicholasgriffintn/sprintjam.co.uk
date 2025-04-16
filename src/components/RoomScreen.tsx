@@ -282,8 +282,12 @@ const RoomScreen: FC<RoomScreenProps> = ({
                       <span className="ml-1 text-xs text-gray-500">(You)</span>
                     )}
                     {roomData.settings.showUserPresence && (
-                      <span className="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-800">
-                        Online
+                      <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
+                        roomData.connectedUsers?.[user]
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-200 text-gray-700'
+                      }`}>
+                        {roomData.connectedUsers?.[user] ? 'Online' : 'Offline'}
                       </span>
                     )}
                   </span>

@@ -38,6 +38,7 @@ const App = () => {
     votes: {},
     showVotes: false,
     moderator: '',
+    connectedUsers: {},
     settings: {
       estimateOptions: VOTING_OPTIONS,
       allowOthersToShowEstimates: true,
