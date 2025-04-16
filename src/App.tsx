@@ -241,12 +241,6 @@ const App = () => {
     }
   };
 
-  // Handle navigation
-  const navigateTo = (targetScreen: AppScreen) => {
-    setScreen(targetScreen);
-    setError('');
-  };
-
   // Clear error message
   const clearError = () => setError('');
 
