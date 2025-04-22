@@ -108,9 +108,8 @@ const App = () => {
   const handleRoomUpdate = useCallback((updatedRoomData: RoomData) => {
     setRoomData(updatedRoomData);
 
-    if (updatedRoomData.votes && name in updatedRoomData.votes) {
-      setUserVote(updatedRoomData.votes[name]);
-    }
+    const updatedVote = updatedRoomData.votes[name] ?? null;
+    setUserVote(updatedVote);
 
     setIsModeratorView(updatedRoomData.moderator === name);
 
