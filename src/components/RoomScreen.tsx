@@ -28,6 +28,7 @@ interface RoomScreenProps {
   error: string;
   onClearError: () => void;
   isConnected: boolean;
+  onLeaveRoom: () => void;
 }
 
 const RoomScreen: FC<RoomScreenProps> = ({
@@ -42,6 +43,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
   error,
   onClearError,
   isConnected,
+  onLeaveRoom,
 }) => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -162,6 +164,14 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 </svg>
               </button>
             </div>
+            <button
+              type="button"
+              onClick={onLeaveRoom}
+              className="text-xs md:text-sm px-2 md:px-3 py-1 bg-gray-700 hover:bg-gray-800 rounded-md transition-colors"
+              title="Leave Room"
+            >
+              Leave Room
+            </button>
             {roomData.settings.showTimer && (
               <div className="px-2 py-1 bg-blue-800 rounded-md flex items-center space-x-1 text-xs">
                 <span className="font-mono">{formatTime(timerSeconds)}</span>

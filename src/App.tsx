@@ -57,6 +57,7 @@ const App = () => {
 
   const didLoadName = useRef(false);
   const didCheckUrlParams = useRef(false);
+  const didAttemptRestore = useRef(false);
 
   // Join room from URL parameters
   useEffect(() => {
@@ -79,6 +80,30 @@ const App = () => {
       console.error('Failed to parse URL parameters', err);
     }
   }, []);
+
+  // Auto-reconnect to last room on refresh
+  useEffect(() => {
+    if (didAttemptRestore.current) return;
+    if (screen !== 'welcome') return;
+    if (!name) return;
+    didAttemptRestore.current = true;
+    const savedRoomKey = localStorage.getItem('sprintjam_roomKey');
+    if (savedRoomKey) {
+      setIsLoading(true);
+      joinRoom(name, savedRoomKey)
+        .then((joinedRoom) => {
+          setRoomData(joinedRoom);
+          setIsModeratorView(joinedRoom.moderator === name);
+          setScreen('room');
+        })
+        .catch((err) => {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to reconnect to room';
+          setError(errorMessage);
+          localStorage.removeItem('sprintjam_roomKey');
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [name, screen]);
 
   const handleRoomUpdate = useCallback((updatedRoomData: RoomData) => {
     setRoomData(updatedRoomData);
@@ -148,6 +173,7 @@ const App = () => {
       const newRoom = await createRoom(name);
 
       setRoomData(newRoom);
+      localStorage.setItem('sprintjam_roomKey', newRoom.key);
       setIsModeratorView(true);
       setScreen('room');
     } catch (err: unknown) {
@@ -169,6 +195,7 @@ const App = () => {
       const joinedRoom = await joinRoom(name, roomKey);
 
       setRoomData(joinedRoom);
+      localStorage.setItem('sprintjam_roomKey', joinedRoom.key);
       setIsModeratorView(joinedRoom.moderator === name);
       setScreen('room');
     } catch (err: unknown) {
@@ -233,6 +260,32 @@ const App = () => {
     }
   };
 
+  const handleLeaveRoom = () => {
+    disconnectFromRoom();
+    localStorage.removeItem('sprintjam_roomKey');
+    setRoomData({
+      key: '',
+      users: [],
+      votes: {},
+      showVotes: false,
+      moderator: '',
+      connectedUsers: {},
+      settings: {
+        estimateOptions: VOTING_OPTIONS,
+        allowOthersToShowEstimates: true,
+        allowOthersToDeleteEstimates: true,
+        allowOthersToClearUsers: true,
+        showTimer: false,
+        showUserPresence: false,
+        showAverage: false,
+        showMedian: false,
+        anonymousVotes: true,
+      }
+    });
+    setUserVote(null);
+    setScreen('welcome');
+  };
+
   const clearError = () => setError('');
 
   return (
@@ -282,6 +335,7 @@ const App = () => {
           onToggleShowVotes={handleToggleShowVotes}
           onResetVotes={handleResetVotes}
           onUpdateSettings={handleUpdateSettings}
+          onLeaveRoom={handleLeaveRoom}
           error={error}
           onClearError={clearError}
           isConnected={isConnected()}
