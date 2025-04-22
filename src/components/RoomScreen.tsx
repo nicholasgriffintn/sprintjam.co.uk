@@ -50,7 +50,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stats: RoomStats = useMemo(() => {
@@ -156,17 +155,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
       <header className="p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 md:space-x-4">
-            <button 
-              type="button" 
-              className="block md:hidden mr-1" 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <title>{isSidebarOpen ? "Close sidebar" : "Open sidebar"}</title>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
             <h1 className="text-lg md:text-xl font-bold">SprintJam</h1>
             <div className="flex items-stretch h-7">
               <div className="px-2 md:px-3 py-1 text-xs md:text-sm bg-blue-800 rounded-l-md truncate max-w-[80px] md:max-w-none flex items-center">
@@ -192,30 +180,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
             >
               Leave Room
             </button>
-            {roomData.settings.showTimer && (
-              <div className="px-2 py-1 bg-blue-800 rounded-md flex items-center space-x-1 text-xs">
-                <span className="font-mono">{formatTime(timerSeconds)}</span>
-                <button
-                  type="button"
-                  onClick={() => setTimerRunning(!timerRunning)}
-                  className="p-0.5 rounded hover:bg-blue-700"
-                  title={timerRunning ? "Pause Timer" : "Start Timer"}
-                >
-                  {timerRunning ? "⏸" : "▶️"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTimerRunning(false);
-                    setTimerSeconds(0);
-                  }}
-                  className="p-0.5 rounded hover:bg-blue-700"
-                  title="Reset Timer"
-                >
-                  🔄
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="flex items-center space-x-2 md:space-x-4">
@@ -241,44 +205,21 @@ const RoomScreen: FC<RoomScreenProps> = ({
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden relative">
-        {isSidebarOpen && (
-          <div 
-            className="fixed inset-0 z-10 md:hidden"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}
-            onClick={() => setIsSidebarOpen(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setIsSidebarOpen(false);
-            }}
-            role="button"
-            tabIndex={0}
-            aria-label="Close sidebar overlay"
-          />
-        )}
-      
-        <div 
-          className={`
-            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-            fixed md:relative md:translate-x-0 
-            z-20 h-full md:w-64 w-3/4 p-4 bg-gray-100 border-r overflow-y-auto 
-            transition-transform duration-300 ease-in-out
-          `}
-        >
+      <div className="grid grid-cols-1 md:grid-cols-[30%_70%] flex-1 h-full">
+        <div className="p-4 bg-gray-100 border-b md:border-b-0 md:border-r overflow-y-auto">
           <h2 className="mb-4 text-lg font-medium">Participants ({roomData.users.length})</h2>
-          
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-1">
               <span>Voting Progress</span>
               <span>{stats.votedUsers}/{roomData.users.length}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" 
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${votingProgress}%` }}
               />
             </div>
           </div>
-          
           <ul className="space-y-2">
             {roomData.users.map((user: string) => (
               <li
@@ -316,8 +257,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
                       roomData.showVotes
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-200'
-                    }`}
-                  >
+                    }`}>
                     {roomData.settings.anonymousVotes && roomData.showVotes
                       ? '✓'
                       : roomData.showVotes
@@ -330,7 +270,31 @@ const RoomScreen: FC<RoomScreenProps> = ({
           </ul>
         </div>
 
-        <div className="flex flex-col flex-1 p-4 md:p-6 overflow-y-auto">
+        <div className="flex flex-col p-4 md:p-6 overflow-y-auto">
+          {roomData.settings.showTimer && (
+            <div className="mb-4 flex items-center space-x-2">
+              <span className="font-mono text-lg">{formatTime(timerSeconds)}</span>
+              <button
+                type="button"
+                onClick={() => setTimerRunning(!timerRunning)}
+                className="p-1 rounded bg-blue-200 hover:bg-blue-300"
+                title={timerRunning ? "Pause Timer" : "Start Timer"}
+              >
+                {timerRunning ? "⏸" : "▶️"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTimerRunning(false);
+                  setTimerSeconds(0);
+                }}
+                className="p-1 rounded bg-blue-200 hover:bg-blue-300"
+                title="Reset Timer"
+              >
+                🔄
+              </button>
+            </div>
+          )}
           <div className="mb-8">
             <h2 className="mb-4 text-xl font-semibold">Your Vote</h2>
             <div className="flex flex-wrap gap-2 md:gap-3">
