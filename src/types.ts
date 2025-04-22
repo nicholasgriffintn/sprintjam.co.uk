@@ -9,6 +9,7 @@ export interface RoomSettings {
   showUserPresence: boolean;
   showAverage: boolean;
   showMedian: boolean;
+  anonymousVotes: boolean;
 }
 
 export interface RoomData {

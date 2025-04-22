@@ -17,7 +17,6 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
   
   if (!isOpen) return null;
   
-  // Generate shareable URL with room key as query string
   const shareableUrl = `${window.location.origin}/?join=${roomKey}`;
   
   const handleCopy = () => {
@@ -26,7 +25,6 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
       navigator.clipboard.writeText(shareableUrl);
       setCopied(true);
       
-      // Reset copied state after 2 seconds
       setTimeout(() => setCopied(false), 2000);
     }
   };

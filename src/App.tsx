@@ -28,7 +28,6 @@ type AppScreen = 'welcome' | 'create' | 'join' | 'room';
 const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
 
 const App = () => {
-  // App state
   const [name, setName] = useState<string>('');
   const [roomKey, setRoomKey] = useState<string>('');
   const [screen, setScreen] = useState<AppScreen>('welcome');
@@ -48,6 +47,7 @@ const App = () => {
       showUserPresence: false,
       showAverage: false,
       showMedian: false,
+      anonymousVotes: true,
     }
   });
   const [userVote, setUserVote] = useState<VoteValue | null>(null);
@@ -58,7 +58,7 @@ const App = () => {
   const didLoadName = useRef(false);
   const didCheckUrlParams = useRef(false);
 
-  // Parse URL parameters for direct room joining
+  // Join room from URL parameters
   useEffect(() => {
     if (didCheckUrlParams.current) return;
     
@@ -73,7 +73,6 @@ const App = () => {
         setRoomKey(joinParam.toUpperCase());
         setScreen('join');
         
-        // Clean up URL to avoid re-joining on refresh
         window.history.replaceState({}, document.title, '/');
       }
     } catch (err) {
@@ -81,41 +80,33 @@ const App = () => {
     }
   }, []);
 
-  // Memoize the room update handler to prevent unnecessary re-renders
   const handleRoomUpdate = useCallback((updatedRoomData: RoomData) => {
     setRoomData(updatedRoomData);
 
-    // Update vote selection if our vote is reflected
     if (updatedRoomData.votes && name in updatedRoomData.votes) {
       setUserVote(updatedRoomData.votes[name]);
     }
 
-    // Check if I am the moderator
     setIsModeratorView(updatedRoomData.moderator === name);
 
-    // Clear any existing errors
     setError('');
   }, [name]);
 
   // Connect to WebSocket when entering a room
   useEffect(() => {
     if (screen === 'room' && name && roomData.key) {
-      // Setup WebSocket connection
       connectToRoom(roomData.key, name, handleRoomUpdate);
 
-      // Add error event listener
       const errorHandler = (data: WebSocketErrorData) => {
         setError(data.error || 'Connection error');
       };
 
       const eventTypes: WebSocketMessageType[] = ['disconnected', 'error'];
       
-      // Add event listeners
       for (const type of eventTypes) {
         addEventListener(type, errorHandler);
       }
 
-      // Cleanup on unmount
       return () => {
         disconnectFromRoom();
         for (const type of eventTypes) {
@@ -127,20 +118,16 @@ const App = () => {
 
   // Persist user name in localStorage (Combined Load & Save)
   useEffect(() => {
-    // Load ONLY on initial mount
     if (!didLoadName.current) {
       const savedName = localStorage.getItem('sprintjam_username');
       if (savedName) {
         setName(savedName);
       }
-      didLoadName.current = true; // Mark as loaded
-      // No need to proceed to saving logic on initial load
+      didLoadName.current = true;
       return;
     }
 
-    // Save name when it changes (debounced), skip initial empty state save
     if (name === '' && !localStorage.getItem('sprintjam_username')) {
-      // Avoid saving empty string initially if nothing was loaded
       return;
     }
 
@@ -149,9 +136,8 @@ const App = () => {
     }, 500);
 
     return () => clearTimeout(saveTimeout);
-  }, [name]); // Depend only on name
+  }, [name]);
 
-  // Handle creating a new room
   const handleCreateRoom = async () => {
     if (!name) return;
 
@@ -159,14 +145,12 @@ const App = () => {
     setError('');
 
     try {
-      // Call the API to create a new room
       const newRoom = await createRoom(name);
 
       setRoomData(newRoom);
       setIsModeratorView(true);
       setScreen('room');
     } catch (err: unknown) {
-      // Type guard to safely access error properties
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to create room';
       setError(errorMessage);
@@ -175,7 +159,6 @@ const App = () => {
     }
   };
 
-  // Handle joining an existing room
   const handleJoinRoom = async () => {
     if (!name || !roomKey) return;
 
@@ -183,14 +166,12 @@ const App = () => {
     setError('');
 
     try {
-      // Call the API to join an existing room
       const joinedRoom = await joinRoom(name, roomKey);
 
       setRoomData(joinedRoom);
       setIsModeratorView(joinedRoom.moderator === name);
       setScreen('room');
     } catch (err: unknown) {
-      // Type guard to safely access error properties
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to join room';
       setError(errorMessage);
@@ -199,35 +180,27 @@ const App = () => {
     }
   };
 
-  // Handle vote submission
   const handleVote = (value: VoteValue) => {
-    // Update local state immediately for responsiveness
     setUserVote(value);
 
     try {
-      // Send the vote to the server via WebSocket
       submitVote(value);
     } catch (err: unknown) {
-      // Type guard to safely access error properties
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to submit vote';
       setError(errorMessage);
     }
   };
 
-  // Moderator functions
   const handleResetVotes = () => {
-    // Allow non-moderators to reset votes if settings permit
     if (roomData.moderator !== name && !roomData.settings.allowOthersToDeleteEstimates) {
       return;
     }
 
     try {
-      // Reset votes via WebSocket
       resetVotes();
       setUserVote(null);
     } catch (err: unknown) {
-      // Type guard to safely access error properties
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to reset votes';
       setError(errorMessage);
@@ -235,52 +208,41 @@ const App = () => {
   };
 
   const handleToggleShowVotes = () => {
-    // Allow non-moderators to toggle votes if settings permit
     if (roomData.moderator !== name && !roomData.settings.allowOthersToShowEstimates) {
       return;
     }
 
     try {
-      // Toggle votes via WebSocket
       toggleShowVotes();
     } catch (err: unknown) {
-      // Type guard to safely access error properties
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to toggle vote visibility';
       setError(errorMessage);
     }
   };
 
-  // Handle settings update
   const handleUpdateSettings = (settings: RoomSettings) => {
     if (!isModeratorView) return;
 
     try {
-      // Send the settings update via WebSocket
       updateSettings(settings);
     } catch (err: unknown) {
-      // Type guard to safely access error properties
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to update settings';
       setError(errorMessage);
     }
   };
 
-  // Clear error message
   const clearError = () => setError('');
 
-  // Main render logic
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Loading Indicator */}
       {isLoading && <LoadingOverlay />}
 
-      {/* Error Display (Global) */}
       {error && screen !== 'room' && (
         <ErrorBanner message={error} onClose={clearError} />
       )}
 
-      {/* Conditionally render screen components */}
       {screen === 'welcome' && (
         <WelcomeScreen
           onCreateRoom={() => setScreen('create')}

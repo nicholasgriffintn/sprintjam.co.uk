@@ -1,4 +1,3 @@
-// This file handles all communication with the backend API and WebSocket connections
 import type { RoomData, VoteValue, RoomSettings } from '../types';
 
 const API_BASE_URL = import.meta.env.DEV
@@ -9,7 +8,6 @@ const WS_BASE_URL = import.meta.env.DEV
   ? 'ws://localhost:5173/ws'
   : 'wss://sprintjam.co.uk/ws';
 
-// Store the active WebSocket connection
 let activeSocket: WebSocket | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -106,21 +104,17 @@ export function connectToRoom(
   name: string, 
   onRoomUpdate: (data: RoomData) => void
 ): WebSocket {
-  // Close any existing connection
   if (activeSocket) {
     activeSocket.close();
   }
 
-  // Reset reconnect attempts
   reconnectAttempts = 0;
 
-  // Create a new WebSocket connection with proper error handling
   try {
     const socket = new WebSocket(
       `${WS_BASE_URL}?room=${encodeURIComponent(roomKey)}&name=${encodeURIComponent(name)}`
     );
 
-    // Set up event handlers
     socket.onopen = () => {
       console.log('WebSocket connection established');
       reconnectAttempts = 0;
@@ -131,7 +125,6 @@ export function connectToRoom(
         const data = JSON.parse(event.data) as WebSocketMessage;
         console.log('Received message:', data);
 
-        // Handle different message types
         switch (data.type) {
           case 'initialize':
           case 'userJoined':
@@ -142,12 +135,10 @@ export function connectToRoom(
           case 'resetVotes':
           case 'newModerator':
           case 'settingsUpdated':
-            // Call the update callback with the new room data
             if (data.roomData) {
               onRoomUpdate(data.roomData);
             }
 
-            // Also trigger any specific event listeners
             triggerEventListeners(data.type, data);
             break;
 
@@ -167,7 +158,6 @@ export function connectToRoom(
     socket.onclose = (event) => {
       console.log('WebSocket connection closed:', event.code, event.reason);
 
-      // Try to reconnect if not a normal closure
       if (event.code !== 1000 && event.code !== 1001) {
         handleReconnect(roomKey, name, onRoomUpdate);
       }
@@ -181,7 +171,6 @@ export function connectToRoom(
       });
     };
 
-    // Store the active socket
     activeSocket = socket;
     return socket;
   } catch (error) {
@@ -205,7 +194,6 @@ function handleReconnect(
   if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     reconnectAttempts++;
 
-    // Exponential backoff with jitter
     const jitter = Math.random() * 0.3 + 0.85; // Random value between 0.85 and 1.15
     const delay = Math.min(
       RECONNECT_BASE_DELAY * 2 ** reconnectAttempts * jitter, 

@@ -42,12 +42,10 @@ const SettingsModal: FC<SettingsModalProps> = ({
   const handleEstimateOptionsChange = (value: string) => {
     setEstimateOptionsInput(value);
     
-    // Parse the comma-separated string into an array of numbers and strings
     const options = value.split(',')
       .map(item => item.trim())
       .filter(item => item !== '')
       .map(item => {
-        // Convert to number if it's a valid number, otherwise keep as string
         const num = Number(item);
         return Number.isNaN(num) ? item : num;
       });
@@ -188,6 +186,18 @@ const SettingsModal: FC<SettingsModalProps> = ({
                 />
                 <label htmlFor="showMedian" className="ml-2 text-sm text-gray-700">
                   Show median
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="anonymousVotes"
+                  checked={localSettings.anonymousVotes}
+                  onChange={(e) => handleChange('anonymousVotes', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="anonymousVotes" className="ml-2 text-sm text-gray-700">
+                  Anonymous votes in sidebar
                 </label>
               </div>
             </div>

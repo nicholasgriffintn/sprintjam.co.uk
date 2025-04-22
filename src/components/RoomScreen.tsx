@@ -50,7 +50,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Calculate voting statistics
   const stats: RoomStats = useMemo(() => {
     const votes = Object.values(roomData.votes).filter((v): v is VoteValue => v !== null && v !== '?');
     const numericVotes = votes.filter(v => !Number.isNaN(Number(v))).map(Number);
@@ -96,19 +95,16 @@ const RoomScreen: FC<RoomScreenProps> = ({
     };
   }, [roomData.votes, roomData.users.length, roomData.settings.estimateOptions]);
 
-  // Calculate progress percentage
   const votingProgress = useMemo(() => {
     return roomData.users.length > 0
       ? Math.round((stats.votedUsers / roomData.users.length) * 100)
       : 0;
   }, [stats.votedUsers, roomData.users.length]);
 
-  // Add useEffect to log when settings change
   useEffect(() => {
     console.log('Room settings updated:', roomData.settings);
   }, [roomData.settings]);
 
-  // Timer functionality
   useEffect(() => {
     if (timerRunning) {
       timerRef.current = setInterval(() => {
@@ -125,7 +121,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
     };
   }, [timerRunning]);
 
-  // Format timer display
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -134,14 +129,11 @@ const RoomScreen: FC<RoomScreenProps> = ({
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Error banner */}
       {error && <ErrorBanner message={error} onClose={onClearError} />}
       
-      {/* Header */}
       <header className="p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 md:space-x-4">
-            {/* Mobile sidebar toggle */}
             <button 
               type="button" 
               className="block md:hidden mr-1" 
@@ -219,9 +211,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
         </div>
       </header>
 
-      {/* Main content */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Mobile sidebar overlay */}
         {isSidebarOpen && (
           <div 
             className="fixed inset-0 z-10 md:hidden"
@@ -236,7 +226,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
           />
         )}
       
-        {/* Left sidebar - Users (responsive) */}
         <div 
           className={`
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
@@ -247,7 +236,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
         >
           <h2 className="mb-4 text-lg font-medium">Participants ({roomData.users.length})</h2>
           
-          {/* Voting progress */}
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-1">
               <span>Voting Progress</span>
@@ -300,7 +288,11 @@ const RoomScreen: FC<RoomScreenProps> = ({
                         : 'bg-gray-200'
                     }`}
                   >
-                    {roomData.showVotes ? roomData.votes[user] : '✓'}
+                    {roomData.settings.anonymousVotes && roomData.showVotes
+                      ? '✓'
+                      : roomData.showVotes
+                      ? roomData.votes[user]
+                      : '✓'}
                   </span>
                 )}
               </li>
@@ -308,9 +300,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
           </ul>
         </div>
 
-        {/* Right content area */}
         <div className="flex flex-col flex-1 p-4 md:p-6 overflow-y-auto">
-          {/* Voting area */}
           <div className="mb-8">
             <h2 className="mb-4 text-xl font-semibold">Your Vote</h2>
             <div className="flex flex-wrap gap-2 md:gap-3">
@@ -331,7 +321,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
             </div>
           </div>
 
-          {/* Results area */}
           {roomData.users.length > 0 && (
             <div className="mb-4">
               <div className="flex flex-wrap items-center justify-between mb-4">
@@ -389,7 +378,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 )}
               </div>
               
-              {/* Vote distribution visualization */}
               <div className="bg-white p-4 rounded-lg shadow-sm">
                 <h3 className="mb-4 text-sm font-medium text-gray-500">Vote Distribution</h3>
                 <div className="space-y-3">
@@ -438,7 +426,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
         </div>
       </div>
 
-      {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
@@ -446,7 +433,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
         onSaveSettings={onUpdateSettings}
       />
 
-      {/* Share Room Modal */}
       <ShareRoomModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
