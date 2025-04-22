@@ -5,6 +5,7 @@ import ConnectionStatus from './ConnectionStatus';
 import ErrorBanner from './ErrorBanner';
 import SettingsModal from './SettingsModal';
 import ShareRoomModal from './ShareRoomModal';
+import confetti from 'canvas-confetti';
 
 interface RoomStats {
   avg: number | string;
@@ -128,6 +129,25 @@ const RoomScreen: FC<RoomScreenProps> = ({
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  const hasCelebratedRef = useRef(false);
+
+  // Trigger confetti if everyone voted the same option
+  useEffect(() => {
+    if (
+      roomData.showVotes &&
+      stats.votedUsers === roomData.users.length &&
+      stats.mode !== null &&
+      stats.distribution[stats.mode] === stats.votedUsers
+    ) {
+      if (!hasCelebratedRef.current) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        hasCelebratedRef.current = true;
+      }
+    } else if (stats.votedUsers < roomData.users.length) {
+      hasCelebratedRef.current = false;
+    }
+  }, [roomData.showVotes, stats.votedUsers, stats.mode, stats.distribution, roomData.users.length]);
 
   return (
     <div className="flex flex-col h-screen">

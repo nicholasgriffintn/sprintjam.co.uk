@@ -15,7 +15,8 @@
     "qrcode.react": "^4.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "tailwindcss": "^4.1.4"
+    "tailwindcss": "^4.1.4",
+    "canvas-confetti": "^1.5.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.0.7",
