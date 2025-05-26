@@ -1,5 +1,5 @@
 import { type FC, useMemo, useState, useEffect, useRef } from 'react';
-import { Gavel } from 'lucide-react';
+import { BarChart3, Gavel } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 import type { RoomData, VoteValue } from '../types';
@@ -59,38 +59,33 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const stats: RoomStats = useMemo(() => {
     const votes = Object.values(roomData.votes).filter((v): v is VoteValue => v !== null && v !== '?');
     const numericVotes = votes.filter(v => !Number.isNaN(Number(v))).map(Number);
-    
-    // Calculate distribution
+
     const distribution: Record<VoteValue, number> = {} as Record<VoteValue, number>;
     for (const option of roomData.settings.estimateOptions) {
       distribution[option] = 0;
     }
-    
+
     for (const vote of Object.values(roomData.votes)) {
       if (vote !== null) {
         distribution[vote] = (distribution[vote] || 0) + 1;
       }
     }
-    
-    // Calculate average
+
     const avg = numericVotes.length > 0
       ? numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length
       : 0;
-    
-    // Find mode (most common vote)
     let maxCount = 0;
     let mode: VoteValue | null = null;
-    
+
     for (const [vote, count] of Object.entries(distribution)) {
       if (count > maxCount) {
         maxCount = count;
         mode = vote as VoteValue;
       }
     }
-    
-    // Count users who have voted
+
     const votedUsers = Object.values(roomData.votes).filter(v => v !== null).length;
-    
+
     return {
       avg: Number.isNaN(avg) ? 'N/A' : avg.toFixed(1),
       mode: maxCount > 0 ? mode : null,
@@ -110,23 +105,23 @@ const RoomScreen: FC<RoomScreenProps> = ({
 
   useEffect(() => {
     console.log('Room settings updated:', roomData.settings);
+    console.log('Vote options metadata:', roomData.settings.voteOptionsMetadata);
   }, [roomData.settings]);
-  
+
   // Effect to show hammer animation when judge score changes
   useEffect(() => {
-    if (roomData.settings.enableJudge && 
-        roomData.judgeScore !== null && 
-        roomData.judgeScore !== prevJudgeScoreRef.current &&
-        roomData.showVotes) {
+    if (roomData.settings.enableJudge &&
+      roomData.judgeScore !== null &&
+      roomData.judgeScore !== prevJudgeScoreRef.current &&
+      roomData.showVotes) {
       setShowJudgeAnimation(true);
-      
-      // Hide animation after 2 seconds
+
       const timer = setTimeout(() => {
         setShowJudgeAnimation(false);
       }, 2000);
-      
+
       prevJudgeScoreRef.current = roomData.judgeScore;
-      
+
       return () => clearTimeout(timer);
     }
   }, [roomData.judgeScore, roomData.showVotes, roomData.settings.enableJudge]);
@@ -172,10 +167,31 @@ const RoomScreen: FC<RoomScreenProps> = ({
     }
   }, [roomData.showVotes, stats.votedUsers, stats.mode, stats.distribution, roomData.users.length]);
 
+  function getUsersVoteTaskSize() {
+    const usersVote = roomData.votes[name];
+    const metadata = roomData.settings.voteOptionsMetadata?.find(m => m.value === usersVote);
+    const taskSize = metadata?.taskSize || null;
+
+    switch (taskSize) {
+      case 'xs':
+        return 'Extra Small';
+      case 'sm':
+        return 'Small';
+      case 'md':
+        return 'Medium';
+      case 'lg':
+        return 'Large';
+      case 'xl':
+        return 'Extra Large';
+      default:
+        return 'Unknown';
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen">
       {error && <ErrorBanner message={error} onClose={onClearError} />}
-      
+
       <header className="p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 md:space-x-4">
@@ -251,11 +267,10 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 className="flex items-center justify-between p-2 bg-white rounded-md shadow-sm transition-all hover:shadow-md"
               >
                 <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    roomData.votes[user] !== undefined && roomData.votes[user] !== null
+                  <div className={`w-2 h-2 rounded-full ${roomData.votes[user] !== undefined && roomData.votes[user] !== null
                       ? 'bg-green-500'
                       : 'bg-gray-300'
-                  }`} />
+                    }`} />
                   <span className={`${user === name ? 'font-medium' : ''}`}>
                     {user}
                     {user === roomData.moderator && (
@@ -265,11 +280,10 @@ const RoomScreen: FC<RoomScreenProps> = ({
                       <span className="ml-1 text-xs text-gray-500">(You)</span>
                     )}
                     {roomData.settings.showUserPresence && (
-                      <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
-                        roomData.connectedUsers?.[user]
+                      <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${roomData.connectedUsers?.[user]
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-200 text-gray-700'
-                      }`}>
+                        }`}>
                         {roomData.connectedUsers?.[user] ? 'Online' : 'Offline'}
                       </span>
                     )}
@@ -277,16 +291,15 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 </div>
                 {(roomData.votes[user] !== undefined && roomData.votes[user] !== null) && (
                   <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      roomData.showVotes
+                    className={`px-2 py-1 text-xs font-medium rounded-full ${roomData.showVotes
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-200'
-                    }`}>
+                      }`}>
                     {roomData.settings.anonymousVotes && roomData.showVotes
                       ? '✓'
                       : roomData.showVotes
-                      ? roomData.votes[user]
-                      : '✓'}
+                        ? roomData.votes[user]
+                        : '✓'}
                   </span>
                 )}
               </li>
@@ -320,39 +333,55 @@ const RoomScreen: FC<RoomScreenProps> = ({
             </div>
           )}
           <div className="mb-8">
-            <h2 className="mb-4 text-xl font-semibold">Your Vote</h2>
             <div className="flex flex-wrap gap-2 md:gap-3">
-              {roomData.settings.estimateOptions.map((option: VoteValue) => (
-                <button
-                  type="button"
-                  key={option}
-                  onClick={() => onVote(option)}
-                  className={`w-12 h-16 md:w-16 md:h-24 flex items-center justify-center text-lg font-medium border-2 rounded-lg transition-all ${
-                    userVote === option
-                      ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md transform scale-105'
-                      : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
+              <h2 className="mb-4 text-xl font-semibold">Your Estimate</h2>
+              {userVote && (
+                <div>
+                  <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground">
+                    {getUsersVoteTaskSize()}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 md:gap-3">
+              {roomData.settings.estimateOptions.map((option) => {
+                const metadata = roomData.settings.voteOptionsMetadata?.find(m => m.value === option);
+                const background = metadata?.background || (option === userVote ? '#ebf5ff' : '#ffffff');
+
+                return (
+                  <button
+                    type="button"
+                    key={option}
+                    onClick={() => onVote(option)}
+                    className={`w-12 h-16 md:w-16 md:h-24 flex flex-col items-center justify-center text-lg font-medium border-2 rounded-lg transition-all ${userVote === option
+                      ? 'border-blue-500 shadow-md transform scale-105'
+                      : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    style={{ backgroundColor: background }}
+                  >
+                    <span className="text-lg">{option}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {roomData.users.length > 0 && (
             <div className="mb-4">
               <div className="flex flex-wrap items-center justify-between mb-2">
-                <h2 className="text-xl font-semibold">Results</h2>
+                <h2 className="text-xl font-semibold flex items-center space-x-2 gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Results
+                </h2>
                 <div className="flex flex-wrap mt-2 sm:mt-0 gap-2 sm:space-x-3">
                   {(isModeratorView || roomData.settings.allowOthersToShowEstimates) && (
                     <button
                       type="button"
                       onClick={onToggleShowVotes}
-                      className={`px-3 py-1.5 text-sm sm:text-base rounded-md ${
-                        !roomData.showVotes
+                      className={`px-3 py-1.5 text-sm sm:text-base rounded-md ${!roomData.showVotes
                           ? 'bg-blue-500 text-white hover:bg-blue-600'
                           : 'bg-yellow-500 text-white hover:bg-yellow-600'
-                      }`}
+                        }`}
                     >
                       {roomData.showVotes ? 'Hide Votes' : 'Show Votes'}
                     </button>
@@ -371,46 +400,46 @@ const RoomScreen: FC<RoomScreenProps> = ({
             </div>
           )}
 
-          {roomData.settings.enableJudge && roomData.showVotes && (
-            <div className="mb-4">
-              <div className="flex items-center mb-2">
-                {showJudgeAnimation ? (
-                  <div className="mr-2 animate-bounce">
-                    <Gavel className="text-amber-700" />
-                  </div>
-                ) : (
-                  <Gavel className="mr-2 text-amber-700" />
-                )}
-                <h3 className="text-lg font-semibold">The Judge's Verdict</h3>
-              </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      Algorithm:{' '}
-                      {roomData.settings.judgeAlgorithm === 'weightedConsensus' && 'Weighted Consensus'}
-                      {roomData.settings.judgeAlgorithm === 'majorityBias' && 'Majority Bias'}
-                      {roomData.settings.judgeAlgorithm === 'confidenceInterval' && 'Confidence Interval'}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                    {roomData.settings.judgeAlgorithm === 'weightedConsensus' && 
-                      'Balances all votes, giving extra weight to clusters of similar estimates'}
-                    {roomData.settings.judgeAlgorithm === 'majorityBias' && 
-                      'Strongly favors the most common vote with small adjustments from outliers'}
-                    {roomData.settings.judgeAlgorithm === 'confidenceInterval' && 
-                      'Uses statistical confidence to find the most reliable range of estimates'}
-                    </p>
-                  </div>
-                  <div className="text-2xl font-bold">
-                    {stats.judgeScore !== null ? stats.judgeScore : 'Calculating...'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {roomData.showVotes ? (
             <div className="p-6 bg-gray-100 rounded-lg shadow-inner">
+              {roomData.settings.enableJudge && roomData.showVotes && (
+                <div className="mb-4">
+                  <div className="flex items-center mb-2">
+                    {showJudgeAnimation ? (
+                      <div className="mr-2 animate-bounce">
+                        <Gavel className="text-amber-700" />
+                      </div>
+                    ) : (
+                      <Gavel className="mr-2 text-amber-700" />
+                    )}
+                    <h3 className="text-lg font-semibold">The Judge's Verdict</h3>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-gray-600">
+                          Algorithm:{' '}
+                          {roomData.settings.judgeAlgorithm === 'weightedConsensus' && 'Weighted Consensus'}
+                          {roomData.settings.judgeAlgorithm === 'majorityBias' && 'Majority Bias'}
+                          {roomData.settings.judgeAlgorithm === 'confidenceInterval' && 'Confidence Interval'}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {roomData.settings.judgeAlgorithm === 'weightedConsensus' &&
+                            'Balances all votes, giving extra weight to clusters of similar estimates'}
+                          {roomData.settings.judgeAlgorithm === 'majorityBias' &&
+                            'Strongly favors the most common vote with small adjustments from outliers'}
+                          {roomData.settings.judgeAlgorithm === 'confidenceInterval' &&
+                            'Uses statistical confidence to find the most reliable range of estimates'}
+                        </p>
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {stats.judgeScore !== null ? stats.judgeScore : 'Calculating...'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {roomData.settings.showAverage && (
                   <div className="p-4 bg-white rounded-lg shadow-sm">
@@ -433,28 +462,43 @@ const RoomScreen: FC<RoomScreenProps> = ({
                   </div>
                 )}
               </div>
-              
+
               <div className="bg-white p-4 rounded-lg shadow-sm">
                 <h3 className="mb-4 text-sm font-medium text-gray-500">Vote Distribution</h3>
                 <div className="space-y-3">
-                  {roomData.settings.estimateOptions.map(option => (
-                    <div key={option} className="flex items-center">
-                      <div className="w-8 text-center font-medium">{option}</div>
-                      <div className="flex-1 mx-2">
-                        <div className="w-full bg-gray-200 rounded-full h-4">
-                          <div 
-                            className="bg-blue-600 h-4 rounded-full transition-all duration-500 ease-out"
-                            style={{ 
-                              width: `${roomData.users.length > 0 
-                                ? (stats.distribution[option] / roomData.users.length) * 100 
-                                : 0}%` 
-                            }}
-                          />
+                  {roomData.settings.estimateOptions.map((option) => {
+                    const metadata = roomData.settings.voteOptionsMetadata?.find(m => m.value === option);
+                    const background = metadata?.background || '#ebf5ff';
+
+                    return (
+                      <div key={option} className="flex items-center mb-2">
+                        <div 
+                          className="w-8 text-center font-medium rounded" 
+                          style={{ backgroundColor: background }}
+                        >
+                          {option}
+                        </div>
+                        <div className="flex-1 mx-2">
+                          <div className="w-full bg-gray-200 rounded-full h-4">
+                            <div
+                              className="h-4 rounded-full transition-all duration-500 ease-out"
+                              style={{
+                                width: `${roomData.users.length > 0
+                                  ? (stats.distribution[option] / roomData.users.length) * 100
+                                  : 0}%`,
+                                backgroundColor: background
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="w-10 text-center">
+                          <span className="px-2 py-1 rounded bg-grey-100 border-grey-200 text-grey-800">
+                            {stats.distribution[option] || 0}
+                          </span>
                         </div>
                       </div>
-                      <div className="w-8 text-center text-sm">{stats.distribution[option] || 0}</div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

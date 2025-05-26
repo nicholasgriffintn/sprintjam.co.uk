@@ -2,8 +2,17 @@ export type VoteValue = string | number;
 
 export type JudgeAlgorithm = 'weightedConsensus' | 'majorityBias' | 'confidenceInterval';
 
+export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+export interface VoteOptionMetadata {
+  value: VoteValue;
+  background: string;
+  taskSize: TaskSize | null;
+}
+
 export interface RoomSettings {
   estimateOptions: (string | number)[];
+  voteOptionsMetadata?: VoteOptionMetadata[];
   allowOthersToShowEstimates: boolean;
   allowOthersToDeleteEstimates: boolean;
   allowOthersToClearUsers: boolean;

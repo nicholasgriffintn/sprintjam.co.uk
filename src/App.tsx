@@ -72,7 +72,6 @@ const App = () => {
       const url = new URL(window.location.href);
       const joinParam = url.searchParams.get('join');
       
-      // Check if URL contains ?join=roomKey
       if (joinParam && joinParam.length > 0) {
         setRoomKey(joinParam.toUpperCase());
         setScreen('join');
@@ -143,7 +142,7 @@ const App = () => {
     }
   }, [screen, name, roomData.key, handleRoomUpdate]);
 
-  // Persist user name in localStorage (Combined Load & Save)
+  // Persist user name in localStorage
   useEffect(() => {
     if (!didLoadName.current) {
       const savedName = localStorage.getItem('sprintjam_username');
@@ -265,6 +264,7 @@ const App = () => {
   const handleLeaveRoom = () => {
     disconnectFromRoom();
     localStorage.removeItem('sprintjam_roomKey');
+    
     setRoomData({
       key: '',
       users: [],
