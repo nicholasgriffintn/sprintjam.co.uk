@@ -15,7 +15,6 @@ export interface RoomSettings {
   voteOptionsMetadata?: VoteOptionMetadata[];
   allowOthersToShowEstimates: boolean;
   allowOthersToDeleteEstimates: boolean;
-  allowOthersToClearUsers: boolean;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;

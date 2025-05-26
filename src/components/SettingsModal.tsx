@@ -122,18 +122,6 @@ const SettingsModal: FC<SettingsModalProps> = ({
                   Allow others to delete estimates
                 </label>
               </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="allowOthersToClearUsers"
-                  checked={localSettings.allowOthersToClearUsers}
-                  onChange={(e) => handleChange('allowOthersToClearUsers', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="allowOthersToClearUsers" className="ml-2 text-sm text-gray-700">
-                  Allow others to clear users
-                </label>
-              </div>
             </div>
           </div>
 

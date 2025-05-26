@@ -30,7 +30,6 @@ interface RoomData {
     voteOptionsMetadata?: VoteOptionMetadata[];
     allowOthersToShowEstimates: boolean;
     allowOthersToDeleteEstimates: boolean;
-    allowOthersToClearUsers: boolean;
     showTimer: boolean;
     showUserPresence: boolean;
     showAverage: boolean;
@@ -175,7 +174,6 @@ export class PokerRoom {
             voteOptionsMetadata: initialVoteOptionsMetadata,
             allowOthersToShowEstimates: true,
             allowOthersToDeleteEstimates: true,
-            allowOthersToClearUsers: true,
             showTimer: false,
             showUserPresence: false,
             showAverage: false,
@@ -253,7 +251,6 @@ export class PokerRoom {
             voteOptionsMetadata: initialVoteOptionsMetadata,
             allowOthersToShowEstimates: true,
             allowOthersToDeleteEstimates: true,
-            allowOthersToClearUsers: true,
             showTimer: false,
             showUserPresence: false,
             showAverage: false,
