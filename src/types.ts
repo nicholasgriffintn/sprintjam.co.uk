@@ -1,5 +1,7 @@
 export type VoteValue = string | number;
 
+export type JudgeAlgorithm = 'weightedConsensus' | 'majorityBias' | 'confidenceInterval';
+
 export interface RoomSettings {
   estimateOptions: (string | number)[];
   allowOthersToShowEstimates: boolean;
@@ -10,6 +12,8 @@ export interface RoomSettings {
   showAverage: boolean;
   showMedian: boolean;
   anonymousVotes: boolean;
+  enableJudge: boolean;
+  judgeAlgorithm: JudgeAlgorithm;
 }
 
 export interface RoomData {
@@ -22,6 +26,7 @@ export interface RoomData {
   createdAt?: string;
   lastActivity?: string;
   settings: RoomSettings;
+  judgeScore: VoteValue | null;
 }
 
 export interface WebSocketErrorData {

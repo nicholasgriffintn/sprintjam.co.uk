@@ -38,6 +38,7 @@ const App = () => {
     showVotes: false,
     moderator: '',
     connectedUsers: {},
+    judgeScore: null,
     settings: {
       estimateOptions: VOTING_OPTIONS,
       allowOthersToShowEstimates: true,
@@ -48,6 +49,8 @@ const App = () => {
       showAverage: false,
       showMedian: false,
       anonymousVotes: true,
+      enableJudge: true,
+      judgeAlgorithm: "weightedConsensus"
     }
   });
   const [userVote, setUserVote] = useState<VoteValue | null>(null);
@@ -269,6 +272,7 @@ const App = () => {
       showVotes: false,
       moderator: '',
       connectedUsers: {},
+      judgeScore: null,
       settings: {
         estimateOptions: VOTING_OPTIONS,
         allowOthersToShowEstimates: true,
@@ -279,6 +283,8 @@ const App = () => {
         showAverage: false,
         showMedian: false,
         anonymousVotes: true,
+        enableJudge: true,
+        judgeAlgorithm: "weightedConsensus"
       }
     });
     setUserVote(null);

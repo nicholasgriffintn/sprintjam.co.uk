@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC } from 'react';
-import type { RoomSettings } from '../types';
+import type { RoomSettings, JudgeAlgorithm } from '../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
 
   const handleChange = (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[]
+    value: boolean | (string | number)[] | JudgeAlgorithm
   ) => {
     setLocalSettings({
       ...localSettings,
@@ -64,8 +64,8 @@ const SettingsModal: FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2 className="text-xl font-semibold">Room Settings</h2>
           <button 
             type="button"
@@ -79,7 +79,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto pr-1 flex-grow">
           <div>
             <label htmlFor="estimateOptions" className="block text-sm font-medium text-gray-700 mb-1">
               Estimate Options
@@ -202,9 +202,52 @@ const SettingsModal: FC<SettingsModalProps> = ({
               </div>
             </div>
           </div>
+
+          <div className="pt-2">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">The Judge</h3>
+            <div className="space-y-3">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="enableJudge"
+                  checked={localSettings.enableJudge}
+                  onChange={(e) => handleChange('enableJudge', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="enableJudge" className="ml-2 text-sm text-gray-700">
+                  Enable The Judge (permanent member that decides the best score)
+                </label>
+              </div>
+              {localSettings.enableJudge && (
+                <div className="ml-6">
+                  <label htmlFor="judgeAlgorithm" className="block text-sm text-gray-700 mb-1">
+                    Algorithm
+                  </label>
+                  <select
+                    id="judgeAlgorithm"
+                    value={localSettings.judgeAlgorithm}
+                    onChange={(e) => handleChange('judgeAlgorithm', e.target.value as JudgeAlgorithm)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="weightedConsensus">Weighted Consensus</option>
+                    <option value="majorityBias">Majority Bias</option>
+                    <option value="confidenceInterval">Confidence Interval</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {localSettings.judgeAlgorithm === 'weightedConsensus' && 
+                      'Balances all votes, giving extra weight to clusters of similar estimates'}
+                    {localSettings.judgeAlgorithm === 'majorityBias' && 
+                      'Strongly favors the most common vote with small adjustments from outliers'}
+                    {localSettings.judgeAlgorithm === 'confidenceInterval' && 
+                      'Uses statistical confidence to find the most reliable range of estimates'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="mt-6 flex justify-end space-x-3">
+        <div className="mt-6 flex justify-end space-x-3 flex-shrink-0">
           <button
             type="button"
             onClick={onClose}

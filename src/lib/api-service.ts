@@ -25,6 +25,7 @@ export type WebSocketMessageType =
   | 'resetVotes'
   | 'newModerator'
   | 'settingsUpdated'
+  | 'judgeScoreUpdated'
   | 'error'
   | 'disconnected';
 
@@ -135,6 +136,7 @@ export function connectToRoom(
           case 'resetVotes':
           case 'newModerator':
           case 'settingsUpdated':
+          case 'judgeScoreUpdated':
             if (data.roomData) {
               onRoomUpdate(data.roomData);
             }

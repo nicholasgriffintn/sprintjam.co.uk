@@ -1,11 +1,12 @@
 import { type FC, useMemo, useState, useEffect, useRef } from 'react';
+import { Gavel } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 import type { RoomData, VoteValue } from '../types';
 import ConnectionStatus from './ConnectionStatus';
 import ErrorBanner from './ErrorBanner';
 import SettingsModal from './SettingsModal';
 import ShareRoomModal from './ShareRoomModal';
-import confetti from 'canvas-confetti';
 
 interface RoomStats {
   avg: number | string;
@@ -14,6 +15,7 @@ interface RoomStats {
   totalVotes: number;
   votedUsers: number;
   totalUsers: number;
+  judgeScore: VoteValue | null;
 }
 
 interface RoomScreenProps {
@@ -51,6 +53,8 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [showJudgeAnimation, setShowJudgeAnimation] = useState(false);
+  const prevJudgeScoreRef = useRef<VoteValue | null>(null);
 
   const stats: RoomStats = useMemo(() => {
     const votes = Object.values(roomData.votes).filter((v): v is VoteValue => v !== null && v !== '?');
@@ -94,6 +98,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
       totalVotes: votes.length,
       votedUsers,
       totalUsers: roomData.users.length,
+      judgeScore: roomData.judgeScore
     };
   }, [roomData.votes, roomData.users.length, roomData.settings.estimateOptions]);
 
@@ -106,6 +111,25 @@ const RoomScreen: FC<RoomScreenProps> = ({
   useEffect(() => {
     console.log('Room settings updated:', roomData.settings);
   }, [roomData.settings]);
+  
+  // Effect to show hammer animation when judge score changes
+  useEffect(() => {
+    if (roomData.settings.enableJudge && 
+        roomData.judgeScore !== null && 
+        roomData.judgeScore !== prevJudgeScoreRef.current &&
+        roomData.showVotes) {
+      setShowJudgeAnimation(true);
+      
+      // Hide animation after 2 seconds
+      const timer = setTimeout(() => {
+        setShowJudgeAnimation(false);
+      }, 2000);
+      
+      prevJudgeScoreRef.current = roomData.judgeScore;
+      
+      return () => clearTimeout(timer);
+    }
+  }, [roomData.judgeScore, roomData.showVotes, roomData.settings.enableJudge]);
 
   useEffect(() => {
     if (timerRunning) {
@@ -205,7 +229,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-[30%_70%] flex-1 h-full">
+      <div className="grid grid-cols-1 md:grid-cols-[25%_75%] flex-1 h-full">
         <div className="p-4 bg-gray-100 border-b md:border-b-0 md:border-r overflow-y-auto">
           <h2 className="mb-4 text-lg font-medium">Participants ({roomData.users.length})</h2>
           <div className="mb-4">
@@ -317,7 +341,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
 
           {roomData.users.length > 0 && (
             <div className="mb-4">
-              <div className="flex flex-wrap items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between mb-2">
                 <h2 className="text-xl font-semibold">Results</h2>
                 <div className="flex flex-wrap mt-2 sm:mt-0 gap-2 sm:space-x-3">
                   {(isModeratorView || roomData.settings.allowOthersToShowEstimates) && (
@@ -342,6 +366,44 @@ const RoomScreen: FC<RoomScreenProps> = ({
                       Reset Votes
                     </button>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {roomData.settings.enableJudge && roomData.showVotes && (
+            <div className="mb-4">
+              <div className="flex items-center mb-2">
+                {showJudgeAnimation ? (
+                  <div className="mr-2 animate-bounce">
+                    <Gavel className="text-amber-700" />
+                  </div>
+                ) : (
+                  <Gavel className="mr-2 text-amber-700" />
+                )}
+                <h3 className="text-lg font-semibold">The Judge's Verdict</h3>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-gray-600">
+                      Algorithm:{' '}
+                      {roomData.settings.judgeAlgorithm === 'weightedConsensus' && 'Weighted Consensus'}
+                      {roomData.settings.judgeAlgorithm === 'majorityBias' && 'Majority Bias'}
+                      {roomData.settings.judgeAlgorithm === 'confidenceInterval' && 'Confidence Interval'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                    {roomData.settings.judgeAlgorithm === 'weightedConsensus' && 
+                      'Balances all votes, giving extra weight to clusters of similar estimates'}
+                    {roomData.settings.judgeAlgorithm === 'majorityBias' && 
+                      'Strongly favors the most common vote with small adjustments from outliers'}
+                    {roomData.settings.judgeAlgorithm === 'confidenceInterval' && 
+                      'Uses statistical confidence to find the most reliable range of estimates'}
+                    </p>
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {stats.judgeScore !== null ? stats.judgeScore : 'Calculating...'}
+                  </div>
                 </div>
               </div>
             </div>

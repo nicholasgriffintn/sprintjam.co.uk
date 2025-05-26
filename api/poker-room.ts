@@ -7,6 +7,8 @@ import type { Env } from './index';
 
 const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
 
+type JudgeAlgorithm = 'weightedConsensus' | 'majorityBias' | 'confidenceInterval';
+
 interface RoomData {
   key: string;
   users: string[];
@@ -14,6 +16,7 @@ interface RoomData {
   showVotes: boolean;
   moderator: string;
   connectedUsers: Record<string, boolean>; // Track user connection status
+  judgeScore?: string | number | null;
   settings: {
     estimateOptions: (string | number)[];
     allowOthersToShowEstimates: boolean;
@@ -23,6 +26,9 @@ interface RoomData {
     showUserPresence: boolean;
     showAverage: boolean;
     showMedian: boolean;
+    anonymousVotes: boolean;
+    enableJudge: boolean;
+    judgeAlgorithm: JudgeAlgorithm;
   };
 }
 
@@ -58,6 +64,7 @@ export class PokerRoom {
           showVotes: false,
           moderator: '',
           connectedUsers: {},
+          judgeScore: null,
           settings: {
             estimateOptions: VOTING_OPTIONS,
             allowOthersToShowEstimates: true,
@@ -67,6 +74,9 @@ export class PokerRoom {
             showUserPresence: false,
             showAverage: false,
             showMedian: false,
+            anonymousVotes: true,
+            enableJudge: true,
+            judgeAlgorithm: 'weightedConsensus',
           }
         };
         await this.state.storage.put('roomData', roomData);
@@ -138,6 +148,7 @@ export class PokerRoom {
           showVotes: false,
           moderator,
           connectedUsers: { [moderator]: true },
+          judgeScore: null,
           settings: {
             estimateOptions: VOTING_OPTIONS,
             allowOthersToShowEstimates: true,
@@ -147,6 +158,9 @@ export class PokerRoom {
             showUserPresence: false,
             showAverage: false,
             showMedian: false,
+            anonymousVotes: true,
+            enableJudge: true,
+            judgeAlgorithm: 'weightedConsensus',
           }
         };
 
@@ -586,22 +600,27 @@ export class PokerRoom {
   async handleVote(userName: string, vote: string | number) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
-      if (roomData) { // Check roomData exists
-        // Record the vote
-        roomData.votes[userName] = vote;
-        await this.state.storage.put('roomData', roomData);
+      if (!roomData) return; // Check roomData exists
 
-        // Notify all connected clients
-        this.broadcast({
-          type: 'vote',
-          name: userName,
-          roomData,
-        });
+      // Record the vote
+      roomData.votes[userName] = vote;
+      await this.state.storage.put('roomData', roomData);
+
+      // Notify all connected clients
+      this.broadcast({
+        type: 'vote',
+        name: userName,
+        roomData,
+      });
+      
+      // If votes are shown and Judge is enabled, recalculate Judge's score
+      if (roomData.showVotes && roomData.settings.enableJudge) {
+        await this.calculateAndUpdateJudgeScore();
       }
     });
   }
 
-  // Handle showVotes messages (moderator only)
+  // Handle show votes messages
   async handleShowVotes(userName: string) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -622,6 +641,11 @@ export class PokerRoom {
         showVotes: roomData.showVotes,
         roomData,
       });
+      
+      // If votes are now shown and Judge is enabled, calculate Judge's score
+      if (roomData.showVotes && roomData.settings.enableJudge) {
+        await this.calculateAndUpdateJudgeScore();
+      }
     });
   }
 
@@ -639,6 +663,7 @@ export class PokerRoom {
       // Reset votes and hide results
       roomData.votes = {};
       roomData.showVotes = false;
+      roomData.judgeScore = null; // Reset the judge score too
       await this.state.storage.put('roomData', roomData);
 
       // Notify all connected clients
@@ -659,6 +684,11 @@ export class PokerRoom {
       if (roomData.moderator !== userName) {
         return;
       }
+      
+      // Track if judge settings have changed
+      const judgeSettingsChanged = 
+        (settings.enableJudge !== undefined && settings.enableJudge !== roomData.settings.enableJudge) ||
+        (settings.judgeAlgorithm !== undefined && settings.judgeAlgorithm !== roomData.settings.judgeAlgorithm);
 
       // Update settings
       roomData.settings = {
@@ -673,6 +703,21 @@ export class PokerRoom {
         settings: roomData.settings,
         roomData,
       });
+      
+      // If judge settings changed and votes are shown, recalculate the judge score
+      if (judgeSettingsChanged && roomData.showVotes && roomData.settings.enableJudge) {
+        await this.calculateAndUpdateJudgeScore();
+      } else if (judgeSettingsChanged && !roomData.settings.enableJudge) {
+        // If judge was disabled, clear the score
+        roomData.judgeScore = null;
+        await this.state.storage.put('roomData', roomData);
+        
+        this.broadcast({
+          type: 'judgeScoreUpdated',
+          judgeScore: null,
+          roomData,
+        });
+      }
     });
   }
 
@@ -686,5 +731,167 @@ export class PokerRoom {
         // Ignore errors (the WebSocket might already be closed)
       }
     }
+  }
+  
+  // Calculate the Judge's score based on algorithm
+  calculateJudgeScore(numericVotes: number[], algorithm: JudgeAlgorithm): string | number | null {
+    if (numericVotes.length === 0) return null;
+    
+    // Get distribution of votes for calculations
+    const distribution: Record<number, number> = {};
+    numericVotes.forEach(vote => {
+      distribution[vote] = (distribution[vote] || 0) + 1;
+    });
+    
+    switch (algorithm) {
+      case 'weightedConsensus': {
+        // Calculate weighted average giving more weight to clustered values
+        let weightedSum = 0;
+        let totalWeight = 0;
+        
+        Object.entries(distribution).forEach(([vote, count]) => {
+          const voteValue = Number(vote);
+          const weight = Math.pow(count, 1.5); // Apply exponential weight to clusters
+          weightedSum += voteValue * weight;
+          totalWeight += weight;
+        });
+        
+        if (totalWeight === 0) return null;
+        return weightedSum / totalWeight;
+      }
+      
+      case 'majorityBias': {
+        // Find the mode (most common vote)
+        let maxCount = 0;
+        let modeValue: number | null = null;
+        
+        Object.entries(distribution).forEach(([vote, count]) => {
+          if (count > maxCount) {
+            maxCount = count;
+            modeValue = Number(vote);
+          }
+        });
+        
+        if (modeValue === null) return null;
+        
+        // Apply small adjustment from other votes
+        const otherVotes = numericVotes.filter(v => v !== modeValue);
+        if (otherVotes.length === 0) return modeValue;
+        
+        // Calculate influence factor based on how dominant the mode is
+        const modeDominance = maxCount / numericVotes.length;
+        const adjustmentFactor = Math.max(0.05, 0.3 * (1 - modeDominance));
+        
+        // Calculate adjustment from other votes
+        const otherAvg = otherVotes.reduce((sum, vote) => sum + vote, 0) / otherVotes.length;
+        const adjustment = (otherAvg - modeValue) * adjustmentFactor;
+        
+        return modeValue + adjustment;
+      }
+      
+      case 'confidenceInterval': {
+        // Sort votes
+        const sortedVotes = [...numericVotes].sort((a, b) => a - b);
+        
+        // Remove outliers (votes outside 1.5 * IQR)
+        const q1Index = Math.floor(sortedVotes.length * 0.25);
+        const q3Index = Math.floor(sortedVotes.length * 0.75);
+        const q1 = sortedVotes[q1Index];
+        const q3 = sortedVotes[q3Index];
+        const iqr = q3 - q1;
+        const lowerBound = q1 - 1.5 * iqr;
+        const upperBound = q3 + 1.5 * iqr;
+        
+        const filteredVotes = sortedVotes.filter(vote => vote >= lowerBound && vote <= upperBound);
+        
+        // If we have votes after filtering
+        if (filteredVotes.length > 0) {
+          // Calculate the mean of the filtered set
+          const mean = filteredVotes.reduce((sum, vote) => sum + vote, 0) / filteredVotes.length;
+          
+          // Find median
+          const median = filteredVotes.length % 2 === 0
+            ? (filteredVotes[filteredVotes.length / 2 - 1] + filteredVotes[filteredVotes.length / 2]) / 2
+            : filteredVotes[Math.floor(filteredVotes.length / 2)];
+          
+          // Combine mean and median with higher weight to median for robustness
+          return (median * 0.7) + (mean * 0.3);
+        }
+        
+        // Fallback to simple average if filtering removed all votes
+        return numericVotes.reduce((sum, vote) => sum + vote, 0) / numericVotes.length;
+      }
+      
+      default:
+        // Fallback to simple average
+        return numericVotes.reduce((sum, vote) => sum + vote, 0) / numericVotes.length;
+    }
+  }
+  
+  // Find the closest valid option to a calculated score
+  findClosestOption(value: number, validOptions: number[]): number {
+    if (validOptions.length === 0) return value;
+    
+    let closest = validOptions[0];
+    let closestDiff = Math.abs(value - closest);
+    
+    for (const option of validOptions) {
+      const diff = Math.abs(value - option);
+      if (diff < closestDiff) {
+        closest = option;
+        closestDiff = diff;
+      }
+    }
+    
+    return closest;
+  }
+
+  // Calculate and update the Judge's score when votes change
+  async calculateAndUpdateJudgeScore() {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.state.storage.get<RoomData>('roomData');
+      
+      if (!roomData || !roomData.settings.enableJudge) {
+        return;
+      }
+
+      // Only calculate if votes are shown
+      if (!roomData.showVotes) {
+        return;
+      }
+
+      // Get numeric votes only
+      const votes = Object.values(roomData.votes).filter(v => v !== null && v !== '?');
+      const numericVotes = votes.filter(v => !Number.isNaN(Number(v))).map(Number);
+      
+      if (numericVotes.length === 0) {
+        roomData.judgeScore = null;
+      } else {
+        // Calculate raw score based on algorithm
+        const rawScore = this.calculateJudgeScore(numericVotes, roomData.settings.judgeAlgorithm);
+        
+        // Map to closest valid option in estimateOptions
+        if (rawScore !== null) {
+          const validOptions = roomData.settings.estimateOptions
+            .filter(opt => !Number.isNaN(Number(opt)))
+            .map(Number)
+            .sort((a, b) => a - b);
+          
+          const closestOption = this.findClosestOption(Number(rawScore), validOptions);
+          roomData.judgeScore = closestOption;
+        } else {
+          roomData.judgeScore = null;
+        }
+      }
+
+      await this.state.storage.put('roomData', roomData);
+
+      // Notify all connected clients
+      this.broadcast({
+        type: 'judgeScoreUpdated',
+        judgeScore: roomData.judgeScore,
+        roomData,
+      });
+    });
   }
 }
