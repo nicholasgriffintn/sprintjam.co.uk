@@ -1,0 +1,61 @@
+import type {
+	DurableObjectNamespace,
+	Fetcher,
+} from '@cloudflare/workers-types';
+
+export interface Env {
+  POKER_ROOM: DurableObjectNamespace;
+  ASSETS: Fetcher;
+}
+
+export type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimisticMode' | 'simpleAverage';
+
+export interface JudgeResult {
+  score: number | null;
+  confidence: 'high' | 'medium' | 'low';
+  needsDiscussion: boolean;
+  reasoning: string;
+}
+
+export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+export interface VoteOptionMetadata {
+  value: string | number;
+  background: string;
+  taskSize: TaskSize | null;
+}
+
+export interface RoomData {
+  key: string;
+  users: string[];
+  votes: Record<string, string | number>;
+  showVotes: boolean;
+  moderator: string;
+  connectedUsers: Record<string, boolean>;
+  judgeScore?: string | number | null;
+  judgeMetadata?: Record<string, unknown>;
+  settings: {
+    estimateOptions: (string | number)[];
+    voteOptionsMetadata?: VoteOptionMetadata[];
+    allowOthersToShowEstimates: boolean;
+    allowOthersToDeleteEstimates: boolean;
+    showTimer: boolean;
+    showUserPresence: boolean;
+    showAverage: boolean;
+    showMedian: boolean;
+    anonymousVotes: boolean;
+    enableJudge: boolean;
+    judgeAlgorithm: JudgeAlgorithm;
+  };
+}
+
+export interface BroadcastMessage {
+  type: string;
+  [key: string]: unknown;
+}
+
+export interface SessionInfo {
+  webSocket: WebSocket;
+  roomKey: string;
+  userName: string;
+}

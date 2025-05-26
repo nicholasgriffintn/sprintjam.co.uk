@@ -24,13 +24,6 @@ export interface RoomSettings {
   judgeAlgorithm: JudgeAlgorithm;
 }
 
-export interface JudgeResult {
-  score: number | null;
-  confidence: 'high' | 'medium' | 'low';
-  needsDiscussion: boolean;
-  reasoning: string;
-}
-
 export interface JudgeMetadata {
   confidence: 'high' | 'medium' | 'low';
   needsDiscussion: boolean;
@@ -68,4 +61,14 @@ export interface WebSocketMessage {
   isConnected?: boolean;
   judgeScore?: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
+}
+
+export interface RoomStats {
+  avg: number | string;
+  mode: VoteValue | null;
+  distribution: Record<VoteValue, number>;
+  totalVotes: number;
+  votedUsers: number;
+  totalUsers: number;
+  judgeScore: VoteValue | null;
 }

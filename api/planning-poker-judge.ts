@@ -1,7 +1,7 @@
-import type { JudgeAlgorithm, JudgeResult } from '../src/types';
+import type { JudgeAlgorithm, JudgeResult } from './types';
+import { findClosestOption } from './utils/judge';
 
 export class PlanningPokerJudge {
-  
   calculateJudgeScore(numericVotes: number[], algorithm: JudgeAlgorithm, validOptions: number[]): JudgeResult {
     if (numericVotes.length === 0) {
       return {
@@ -99,7 +99,7 @@ export class PlanningPokerJudge {
         sum + val * distribution[val], 0
       ) / bestGroup.totalVotes;
       
-      const closestValid = this.findClosestOption(weightedAvg, validOptions);
+      const closestValid = findClosestOption(weightedAvg, validOptions);
       
       return {
         score: closestValid,
@@ -118,7 +118,7 @@ export class PlanningPokerJudge {
       };
     }
     
-    const closestValid = this.findClosestOption(stats.median, validOptions);
+    const closestValid = findClosestOption(stats.median, validOptions);
     return {
       score: closestValid,
       confidence: 'medium',
@@ -137,7 +137,7 @@ export class PlanningPokerJudge {
     const p75Index = Math.ceil(sortedVotes.length * 0.75) - 1;
     const p75 = sortedVotes[p75Index];
     
-    const closestValid = this.findClosestOption(p75, validOptions);
+    const closestValid = findClosestOption(p75, validOptions);
     
     const confidence = stats.range <= stats.median * 0.3 ? 'high' : 
                       stats.range <= stats.median * 0.8 ? 'medium' : 'low';
@@ -160,7 +160,7 @@ export class PlanningPokerJudge {
     const p25Index = Math.floor(sortedVotes.length * 0.25);
     const p25 = sortedVotes[p25Index];
     
-    const closestValid = this.findClosestOption(p25, validOptions);
+    const closestValid = findClosestOption(p25, validOptions);
     
     const confidence = stats.range <= stats.median * 0.3 ? 'high' : 
                       stats.range <= stats.median * 0.8 ? 'medium' : 'low';
@@ -177,7 +177,7 @@ export class PlanningPokerJudge {
     stats: any, 
     validOptions: number[]
   ): JudgeResult {
-    const closestValid = this.findClosestOption(stats.mean, validOptions);
+    const closestValid = findClosestOption(stats.mean, validOptions);
     
     const confidence = stats.range <= stats.mean * 0.2 ? 'high' : 
                       stats.range <= stats.mean * 0.6 ? 'medium' : 'low';
@@ -226,13 +226,5 @@ export class PlanningPokerJudge {
     const sorted = [...validOptions].sort((a, b) => a - b);
     const midIndex = Math.floor(sorted.length / 2);
     return sorted[midIndex] * 2; // Reasonable range is 2x the median option
-  }
-
-  findClosestOption(value: number, validOptions: number[]): number {
-    if (validOptions.length === 0) return Math.round(value);
-
-    return validOptions.reduce((closest, option) => {
-      return Math.abs(value - option) < Math.abs(value - closest) ? option : closest;
-    });
   }
 }

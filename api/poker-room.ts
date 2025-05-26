@@ -3,149 +3,11 @@ declare const WebSocketPair: {
 };
 
 import type { DurableObjectState, WebSocket, Response as CfResponse } from '@cloudflare/workers-types';
-import type { Env } from './index';
+
 import { PlanningPokerJudge } from './planning-poker-judge';
-
-const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
-
-type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimisticMode' | 'simpleAverage';
-
-type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
-interface VoteOptionMetadata {
-  value: string | number;
-  background: string;
-  taskSize: TaskSize | null;
-}
-
-interface RoomData {
-  key: string;
-  users: string[];
-  votes: Record<string, string | number>;
-  showVotes: boolean;
-  moderator: string;
-  connectedUsers: Record<string, boolean>;
-  judgeScore?: string | number | null;
-  judgeMetadata?: Record<string, unknown>;
-  settings: {
-    estimateOptions: (string | number)[];
-    voteOptionsMetadata?: VoteOptionMetadata[];
-    allowOthersToShowEstimates: boolean;
-    allowOthersToDeleteEstimates: boolean;
-    showTimer: boolean;
-    showUserPresence: boolean;
-    showAverage: boolean;
-    showMedian: boolean;
-    anonymousVotes: boolean;
-    enableJudge: boolean;
-    judgeAlgorithm: JudgeAlgorithm;
-  };
-}
-
-interface BroadcastMessage {
-  type: string;
-  [key: string]: unknown;
-}
-
-interface SessionInfo {
-  webSocket: WebSocket;
-  roomKey: string;
-  userName: string;
-}
-
-/**
- * Generates metadata for vote options including background colors and task sizes
- */
-export function generateVoteOptionsMetadata(options: (string | number)[]): VoteOptionMetadata[] {
-  const specialColorMap: Record<string, string> = {
-    '?': '#f2f2ff',
-    'coffee': '#f5e6d8',
-    'break': '#f8e8c8'
-  };
-
-
-  /**
-   * Generates a color based on the numeric value
-   * Creates a vibrant spectrum from happy blues to warm reds
-   */
-  function generateColorFromValue(value: number, maxValue: number): string {
-    if (value === 0) return '#f0f0f0';
-
-    const normalizedValue = Math.min(value / maxValue, 1);
-
-    const startHue = 220;
-    const endHue = 15;
-
-    const hue = startHue - (normalizedValue * (startHue - endHue));
-
-    const saturation = 65 + (normalizedValue * 20);
-
-    const lightness = 75 + (normalizedValue * 10);
-
-    return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
-  }
-
-  /**
-   * Creates a pleasing color for non-numeric string values based on the string content
-   */
-  function generateColorFromString(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    const h = hash % 360;
-    const s = 25 + (hash % 30);
-    const l = 85 + (hash % 10);
-
-    return `hsl(${h}, ${s}%, ${l}%)`;
-  }
-
-  /**
-   * Map numeric values to task sizes using a logarithmic scale
-   * This ensures appropriate task size categorization for any scale
-   */
-  function getTaskSize(value: string | number): TaskSize | null {
-    if (typeof value === 'string' && isNaN(Number(value))) {
-      return null;
-    }
-
-    const numValue = Number(value);
-
-    if (numValue === 0) return 'xs';
-    if (numValue <= 1) return 'xs';
-    if (numValue <= 2) return 'sm';
-    if (numValue <= 4) return 'md';
-    if (numValue <= 8) return 'lg';
-    return 'xl';
-  }
-
-  const numericValues = options.filter(value => !isNaN(Number(value))).map(value => Number(value));
-  const maxValue = (numericValues.length > 0 ? Math.max(...numericValues) : 34);
-
-  return options.map(value => {
-    let background: string;
-    const stringValue = String(value);
-
-    if (specialColorMap[stringValue]) {
-      background = specialColorMap[stringValue];
-    }
-    else if (!isNaN(Number(value))) {
-      background = generateColorFromValue(Number(value), maxValue);
-    }
-    else {
-      background = generateColorFromString(stringValue);
-    }
-
-    const taskSize = getTaskSize(value);
-
-    return {
-      value,
-      background,
-      taskSize
-    };
-  });
-}
+import type { Env, RoomData, BroadcastMessage, SessionInfo } from './types'
+import { VOTING_OPTIONS } from './constants'
+import { generateVoteOptionsMetadata } from './utils/votes'
 
 export class PokerRoom {
   state: DurableObjectState;
@@ -774,27 +636,6 @@ export class PokerRoom {
     }
   }
 
-  calculateJudgeScore(numericVotes: number[], algorithm: JudgeAlgorithm, validOptions: number[]): number | null {
-    const result = this.judge.calculateJudgeScore(numericVotes, algorithm, validOptions);
-    return result.score;
-  }
-
-  findClosestOption(value: number, validOptions: number[]): number {
-    if (validOptions.length === 0) return value;
-
-    let closest = validOptions[0];
-    let closestDiff = Math.abs(value - closest);
-
-    for (const option of validOptions) {
-      const diff = Math.abs(value - option);
-      if (diff < closestDiff) {
-        closest = option;
-        closestDiff = diff;
-      }
-    }
-
-    return closest;
-  }
   async calculateAndUpdateJudgeScore() {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -812,8 +653,8 @@ export class PokerRoom {
         .sort((a, b) => a - b);
 
       const result = this.judge.calculateJudgeScore(
-        numericVotes, 
-        roomData.settings.judgeAlgorithm, 
+        numericVotes,
+        roomData.settings.judgeAlgorithm,
         validOptions
       );
 
