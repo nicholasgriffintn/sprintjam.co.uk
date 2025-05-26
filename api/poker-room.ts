@@ -54,7 +54,7 @@ interface SessionInfo {
 /**
  * Generates metadata for vote options including background colors and task sizes
  */
-function generateVoteOptionsMetadata(options: (string | number)[]): VoteOptionMetadata[] {
+export function generateVoteOptionsMetadata(options: (string | number)[]): VoteOptionMetadata[] {
   // Special case colors for non-numeric values
   const specialColorMap: Record<string, string> = {
     '?': '#f2f2ff',
@@ -67,10 +67,8 @@ function generateVoteOptionsMetadata(options: (string | number)[]): VoteOptionMe
    * Generates a color based on the numeric value
    * Creates a vibrant spectrum from happy blues to warm reds
    */
-  function generateColorFromValue(value: number): string {
+  function generateColorFromValue(value: number, maxValue: number): string {
     if (value === 0) return '#f0f0f0';
-
-    const maxValue = 34;
 
     const normalizedValue = Math.min(value / maxValue, 1);
 
@@ -121,6 +119,9 @@ function generateVoteOptionsMetadata(options: (string | number)[]): VoteOptionMe
     return 'xl';
   }
 
+  const numericValues = options.filter(value => !isNaN(Number(value))).map(value => Number(value));
+  const maxValue = (numericValues.length > 0 ? Math.max(...numericValues) : 34);
+
   return options.map(value => {
     let background: string;
     const stringValue = String(value);
@@ -129,7 +130,7 @@ function generateVoteOptionsMetadata(options: (string | number)[]): VoteOptionMe
       background = specialColorMap[stringValue];
     }
     else if (!isNaN(Number(value))) {
-      background = generateColorFromValue(Number(value));
+      background = generateColorFromValue(Number(value), maxValue);
     }
     else {
       background = generateColorFromString(stringValue);
