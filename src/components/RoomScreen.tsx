@@ -1,5 +1,5 @@
 import { type FC, useMemo, useState, useEffect, useRef } from 'react';
-import { BarChart3, Gavel, ChevronDown, ChevronUp, Users } from 'lucide-react';
+import { BarChart3, Gavel, ChevronDown, ChevronUp, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 import type { RoomData, VoteValue } from '../types';
@@ -429,28 +429,58 @@ const RoomScreen: FC<RoomScreenProps> = ({
                     )}
                     <h3 className="text-lg font-semibold">The Judge's Verdict</h3>
                   </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                     <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-gray-600">
-                          Algorithm:{' '}
-                          {roomData.settings.judgeAlgorithm === 'weightedConsensus' && 'Weighted Consensus'}
-                          {roomData.settings.judgeAlgorithm === 'majorityBias' && 'Majority Bias'}
-                          {roomData.settings.judgeAlgorithm === 'confidenceInterval' && 'Confidence Interval'}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          {roomData.settings.judgeAlgorithm === 'weightedConsensus' &&
-                            'Balances all votes, giving extra weight to clusters of similar estimates'}
-                          {roomData.settings.judgeAlgorithm === 'majorityBias' &&
-                            'Strongly favors the most common vote with small adjustments from outliers'}
-                          {roomData.settings.judgeAlgorithm === 'confidenceInterval' &&
-                            'Uses statistical confidence to find the most reliable range of estimates'}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-5xl font-bold text-gray-800">
+                          {stats.judgeScore !== null ? stats.judgeScore : 'Calculating...'}
+                        </div>
+                        <div>
+                          {roomData.judgeMetadata?.confidence === 'high' && (
+                            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium flex items-center">
+                              <CheckCircle className="w-4 h-4 mr-1" /> High Confidence
+                            </span>
+                          )}
+                          {roomData.judgeMetadata?.confidence === 'medium' && (
+                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium flex items-center">
+                              Medium Confidence
+                            </span>
+                          )}
+                          {roomData.judgeMetadata?.confidence === 'low' && (
+                            <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium flex items-center">
+                              <AlertTriangle className="w-4 h-4 mr-1" /> Low Confidence
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-2xl font-bold">
-                        {stats.judgeScore !== null ? stats.judgeScore : 'Calculating...'}
+                      <div>
+                        <div className="text-sm text-gray-600 font-medium text-right">
+                          {roomData.settings.judgeAlgorithm === 'smartConsensus' && 'Smart Consensus'}
+                          {roomData.settings.judgeAlgorithm === 'conservativeMode' && 'Conservative Mode'}
+                          {roomData.settings.judgeAlgorithm === 'optimisticMode' && 'Optimistic Mode'}
+                          {roomData.settings.judgeAlgorithm === 'simpleAverage' && 'Simple Average'}
+                          <span className="text-gray-500 ml-2">
+                            <Users className="inline w-3.5 h-3.5 mr-1" /> {stats.votedUsers} votes
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    
+                    {roomData.judgeMetadata?.reasoning && (
+                      <p className="mt-2 text-sm text-gray-700">
+                        {roomData.judgeMetadata.reasoning}
+                      </p>
+                    )}
+                    
+                    {roomData.judgeMetadata?.needsDiscussion && (
+                      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start">
+                        <AlertTriangle className="w-4 h-4 text-amber-800 mr-2 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">Discussion Recommended</p>
+                          <p className="text-sm text-amber-700">Wide spread suggests different understanding of requirements.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

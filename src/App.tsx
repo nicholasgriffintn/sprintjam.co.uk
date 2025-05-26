@@ -49,7 +49,7 @@ const App = () => {
       showMedian: false,
       anonymousVotes: true,
       enableJudge: true,
-      judgeAlgorithm: "weightedConsensus"
+      judgeAlgorithm: "smartConsensus"
     }
   });
   const [userVote, setUserVote] = useState<VoteValue | null>(null);
@@ -282,7 +282,7 @@ const App = () => {
         showMedian: false,
         anonymousVotes: true,
         enableJudge: true,
-        judgeAlgorithm: "weightedConsensus"
+        judgeAlgorithm: "smartConsensus"
       }
     });
     setUserVote(null);

@@ -4,10 +4,11 @@ declare const WebSocketPair: {
 
 import type { DurableObjectState, WebSocket, Response as CfResponse } from '@cloudflare/workers-types';
 import type { Env } from './index';
+import { PlanningPokerJudge } from './planning-poker-judge';
 
 const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
 
-type JudgeAlgorithm = 'weightedConsensus' | 'majorityBias' | 'confidenceInterval';
+type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimisticMode' | 'simpleAverage';
 
 type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -23,8 +24,9 @@ interface RoomData {
   votes: Record<string, string | number>;
   showVotes: boolean;
   moderator: string;
-  connectedUsers: Record<string, boolean>; // Track user connection status
+  connectedUsers: Record<string, boolean>;
   judgeScore?: string | number | null;
+  judgeMetadata?: Record<string, unknown>;
   settings: {
     estimateOptions: (string | number)[];
     voteOptionsMetadata?: VoteOptionMetadata[];
@@ -55,7 +57,6 @@ interface SessionInfo {
  * Generates metadata for vote options including background colors and task sizes
  */
 export function generateVoteOptionsMetadata(options: (string | number)[]): VoteOptionMetadata[] {
-  // Special case colors for non-numeric values
   const specialColorMap: Record<string, string> = {
     '?': '#f2f2ff',
     'coffee': '#f5e6d8',
@@ -150,11 +151,13 @@ export class PokerRoom {
   state: DurableObjectState;
   env: Env;
   sessions: Map<WebSocket, SessionInfo>;
+  judge: PlanningPokerJudge;
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
     this.sessions = new Map();
+    this.judge = new PlanningPokerJudge();
 
     this.state.blockConcurrencyWhile(async () => {
       let roomData = await this.state.storage.get<RoomData>('roomData');
@@ -181,7 +184,7 @@ export class PokerRoom {
             showMedian: false,
             anonymousVotes: true,
             enableJudge: true,
-            judgeAlgorithm: 'weightedConsensus',
+            judgeAlgorithm: 'smartConsensus',
           }
         };
         await this.state.storage.put('roomData', roomData);
@@ -258,7 +261,7 @@ export class PokerRoom {
             showMedian: false,
             anonymousVotes: true,
             enableJudge: true,
-            judgeAlgorithm: 'weightedConsensus',
+            judgeAlgorithm: 'smartConsensus',
           }
         };
 
@@ -771,82 +774,9 @@ export class PokerRoom {
     }
   }
 
-  calculateJudgeScore(numericVotes: number[], algorithm: JudgeAlgorithm): string | number | null {
-    if (numericVotes.length === 0) return null;
-
-    const distribution: Record<number, number> = {};
-    numericVotes.forEach(vote => {
-      distribution[vote] = (distribution[vote] || 0) + 1;
-    });
-
-    switch (algorithm) {
-      case 'weightedConsensus': {
-        let weightedSum = 0;
-        let totalWeight = 0;
-
-        Object.entries(distribution).forEach(([vote, count]) => {
-          const voteValue = Number(vote);
-          const weight = Math.pow(count, 1.5);
-          weightedSum += voteValue * weight;
-          totalWeight += weight;
-        });
-
-        if (totalWeight === 0) return null;
-        return weightedSum / totalWeight;
-      }
-
-      case 'majorityBias': {
-        let maxCount = 0;
-        let modeValue: number | null = null;
-
-        Object.entries(distribution).forEach(([vote, count]) => {
-          if (count > maxCount) {
-            maxCount = count;
-            modeValue = Number(vote);
-          }
-        });
-
-        if (modeValue === null) return null;
-
-        const otherVotes = numericVotes.filter(v => v !== modeValue);
-        if (otherVotes.length === 0) return modeValue;
-
-        const modeDominance = maxCount / numericVotes.length;
-        const adjustmentFactor = Math.max(0.05, 0.3 * (1 - modeDominance));
-
-        const otherAvg = otherVotes.reduce((sum, vote) => sum + vote, 0) / otherVotes.length;
-        const adjustment = (otherAvg - modeValue) * adjustmentFactor;
-
-        return modeValue + adjustment;
-      }
-
-      case 'confidenceInterval': {
-        const sortedVotes = [...numericVotes].sort((a, b) => a - b);
-        const q1Index = Math.floor(sortedVotes.length * 0.25);
-        const q3Index = Math.floor(sortedVotes.length * 0.75);
-        const q1 = sortedVotes[q1Index];
-        const q3 = sortedVotes[q3Index];
-        const iqr = q3 - q1;
-        const lowerBound = q1 - 1.5 * iqr;
-        const upperBound = q3 + 1.5 * iqr;
-
-        const filteredVotes = sortedVotes.filter(vote => vote >= lowerBound && vote <= upperBound);
-
-        if (filteredVotes.length > 0) {
-          const mean = filteredVotes.reduce((sum, vote) => sum + vote, 0) / filteredVotes.length;
-          const median = filteredVotes.length % 2 === 0
-            ? (filteredVotes[filteredVotes.length / 2 - 1] + filteredVotes[filteredVotes.length / 2]) / 2
-            : filteredVotes[Math.floor(filteredVotes.length / 2)];
-
-          return (median * 0.7) + (mean * 0.3);
-        }
-
-        return numericVotes.reduce((sum, vote) => sum + vote, 0) / numericVotes.length;
-      }
-
-      default:
-        return numericVotes.reduce((sum, vote) => sum + vote, 0) / numericVotes.length;
-    }
+  calculateJudgeScore(numericVotes: number[], algorithm: JudgeAlgorithm, validOptions: number[]): number | null {
+    const result = this.judge.calculateJudgeScore(numericVotes, algorithm, validOptions);
+    return result.score;
   }
 
   findClosestOption(value: number, validOptions: number[]): number {
@@ -865,46 +795,42 @@ export class PokerRoom {
 
     return closest;
   }
-
   async calculateAndUpdateJudgeScore() {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
 
-      if (!roomData || !roomData.settings.enableJudge) {
-        return;
-      }
-
-      if (!roomData.showVotes) {
+      if (!roomData || !roomData.settings.enableJudge || !roomData.showVotes) {
         return;
       }
 
       const votes = Object.values(roomData.votes).filter(v => v !== null && v !== '?');
       const numericVotes = votes.filter(v => !Number.isNaN(Number(v))).map(Number);
 
-      if (numericVotes.length === 0) {
-        roomData.judgeScore = null;
-      } else {
-        const rawScore = this.calculateJudgeScore(numericVotes, roomData.settings.judgeAlgorithm);
+      const validOptions = roomData.settings.estimateOptions
+        .filter(opt => !Number.isNaN(Number(opt)))
+        .map(Number)
+        .sort((a, b) => a - b);
 
-        if (rawScore !== null) {
-          const validOptions = roomData.settings.estimateOptions
-            .filter(opt => !Number.isNaN(Number(opt)))
-            .map(Number)
-            .sort((a, b) => a - b);
+      const result = this.judge.calculateJudgeScore(
+        numericVotes, 
+        roomData.settings.judgeAlgorithm, 
+        validOptions
+      );
 
-          const closestOption = this.findClosestOption(Number(rawScore), validOptions);
-          roomData.judgeScore = closestOption;
-        } else {
-          roomData.judgeScore = null;
-        }
-      }
+      roomData.judgeScore = result.score;
+      roomData.judgeMetadata = {
+        confidence: result.confidence,
+        needsDiscussion: result.needsDiscussion,
+        reasoning: result.reasoning,
+        algorithm: roomData.settings.judgeAlgorithm
+      };
 
       await this.state.storage.put('roomData', roomData);
 
-      // Notify all connected clients
       this.broadcast({
         type: 'judgeScoreUpdated',
-        judgeScore: roomData.judgeScore,
+        judgeScore: result.score,
+        judgeMetadata: roomData.judgeMetadata,
         roomData,
       });
     });

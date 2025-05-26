@@ -217,17 +217,20 @@ const SettingsModal: FC<SettingsModalProps> = ({
                     onChange={(e) => handleChange('judgeAlgorithm', e.target.value as JudgeAlgorithm)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="weightedConsensus">Weighted Consensus</option>
-                    <option value="majorityBias">Majority Bias</option>
-                    <option value="confidenceInterval">Confidence Interval</option>
+                    <option value="smartConsensus">Smart Consensus</option>
+                    <option value="conservativeMode">Conservative Mode</option>
+                    <option value="optimisticMode">Optimistic Mode</option>
+                    <option value="simpleAverage">Simple Average</option>
                   </select>
                   <p className="mt-1 text-xs text-gray-500">
-                    {localSettings.judgeAlgorithm === 'weightedConsensus' && 
-                      'Balances all votes, giving extra weight to clusters of similar estimates'}
-                    {localSettings.judgeAlgorithm === 'majorityBias' && 
-                      'Strongly favors the most common vote with small adjustments from outliers'}
-                    {localSettings.judgeAlgorithm === 'confidenceInterval' && 
-                      'Uses statistical confidence to find the most reliable range of estimates'}
+                    {localSettings.judgeAlgorithm === 'smartConsensus' && 
+                      'Intelligently identifies consensus in voting patterns across different scenarios'}
+                    {localSettings.judgeAlgorithm === 'conservativeMode' && 
+                      'Biases towards higher estimates to account for unforeseen complexity'}
+                    {localSettings.judgeAlgorithm === 'optimisticMode' && 
+                      'Biases towards lower estimates assuming team efficiency'}
+                    {localSettings.judgeAlgorithm === 'simpleAverage' && 
+                      'Simple mathematical average of all votes'}
                   </p>
                 </div>
               )}

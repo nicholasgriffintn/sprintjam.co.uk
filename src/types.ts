@@ -1,6 +1,6 @@
 export type VoteValue = string | number;
 
-export type JudgeAlgorithm = 'weightedConsensus' | 'majorityBias' | 'confidenceInterval';
+export type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimisticMode' | 'simpleAverage';
 
 export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -24,6 +24,20 @@ export interface RoomSettings {
   judgeAlgorithm: JudgeAlgorithm;
 }
 
+export interface JudgeResult {
+  score: number | null;
+  confidence: 'high' | 'medium' | 'low';
+  needsDiscussion: boolean;
+  reasoning: string;
+}
+
+export interface JudgeMetadata {
+  confidence: 'high' | 'medium' | 'low';
+  needsDiscussion: boolean;
+  reasoning: string;
+  algorithm: JudgeAlgorithm;
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -35,6 +49,7 @@ export interface RoomData {
   lastActivity?: string;
   settings: RoomSettings;
   judgeScore: VoteValue | null;
+  judgeMetadata?: JudgeMetadata;
 }
 
 export interface WebSocketErrorData {
@@ -51,4 +66,6 @@ export interface WebSocketMessage {
   message?: string;
   user?: string;
   isConnected?: boolean;
+  judgeScore?: VoteValue | null;
+  judgeMetadata?: JudgeMetadata;
 }
