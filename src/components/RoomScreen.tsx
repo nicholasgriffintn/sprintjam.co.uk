@@ -425,7 +425,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
                         }`}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      layout
                     >
                       {roomData.showVotes ? 'Hide Votes' : 'Show Votes'}
                     </motion.button>
@@ -434,7 +433,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
                     <motion.button
                       type="button"
                       onClick={onResetVotes}
-                      className="px-3 py-1.5 text-sm sm:text-base bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                      className={`px-3 py-1.5 text-sm sm:text-base rounded-md bg-gray-500 text-white hover:bg-gray-600`}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                     >
