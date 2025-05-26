@@ -13,6 +13,7 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.16",
     "canvas-confetti": "^1.5.1",
+    "framer-motion": "^12.14.0",
     "lucide-react": "^0.511.0",
     "qrcode.react": "^4.2.0",
     "react": "19.1.0",
