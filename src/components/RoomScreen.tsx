@@ -1,5 +1,5 @@
 import { type FC, useMemo, useState, useEffect, useRef } from 'react';
-import { BarChart3, Gavel } from 'lucide-react';
+import { BarChart3, Gavel, ChevronDown, ChevronUp, Users } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 import type { RoomData, VoteValue } from '../types';
@@ -52,6 +52,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
+  const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showJudgeAnimation, setShowJudgeAnimation] = useState(false);
   const prevJudgeScoreRef = useRef<VoteValue | null>(null);
@@ -246,8 +247,21 @@ const RoomScreen: FC<RoomScreenProps> = ({
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-[25%_75%] flex-1 h-full">
-        <div className="p-4 bg-gray-100 border-b md:border-b-0 md:border-r overflow-y-auto">
-          <h2 className="mb-4 text-lg font-medium">Participants ({roomData.users.length})</h2>
+        <div className="bg-gray-100 border-b md:border-b-0 md:border-r overflow-y-auto md:p-4">
+          <div className="flex items-center justify-between p-4 md:p-0 md:mb-4">
+            <h2 className="text-lg font-medium flex items-center">
+              <Users size={18} className="mr-1 md:hidden" />
+              Participants ({roomData.users.length})
+            </h2>
+            <button 
+              className="block md:hidden rounded-md p-1 hover:bg-gray-200 transition-colors"
+              onClick={() => setIsParticipantsExpanded(!isParticipantsExpanded)}
+              aria-label={isParticipantsExpanded ? "Collapse participants" : "Expand participants"}
+            >
+              {isParticipantsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+          </div>
+          <div className={`px-4 pb-4 md:p-0 ${isParticipantsExpanded ? 'block' : 'hidden md:block'}`}>
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-1">
               <span>Voting Progress</span>
@@ -305,6 +319,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
               </li>
             ))}
           </ul>
+          </div>
         </div>
 
         <div className="flex flex-col p-4 md:p-6 overflow-y-auto">
