@@ -1,12 +1,5 @@
 import type { RoomData, VoteValue, RoomSettings } from '../types';
-
-const API_BASE_URL = import.meta.env.DEV
-  ? 'http://localhost:5173/api'
-  : 'https://sprintjam.co.uk/api';
-
-const WS_BASE_URL = import.meta.env.DEV
-  ? 'ws://localhost:5173/ws'
-  : 'wss://sprintjam.co.uk/ws';
+import { API_BASE_URL, WS_BASE_URL } from '../constants';
 
 let activeSocket: WebSocket | null = null;
 let reconnectAttempts = 0;
@@ -26,6 +19,7 @@ export type WebSocketMessageType =
   | 'newModerator'
   | 'settingsUpdated'
   | 'judgeScoreUpdated'
+  | 'jiraTicketUpdated'
   | 'error'
   | 'disconnected';
 
@@ -137,6 +131,7 @@ export function connectToRoom(
           case 'newModerator':
           case 'settingsUpdated':
           case 'judgeScoreUpdated':
+          case 'jiraTicketUpdated':
             if (data.roomData) {
               onRoomUpdate(data.roomData);
             }

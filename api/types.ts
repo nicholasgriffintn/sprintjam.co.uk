@@ -6,6 +6,10 @@ import type {
 export interface Env {
   POKER_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;
+  JIRA_DOMAIN?: string;
+  JIRA_EMAIL?: string;
+  JIRA_API_TOKEN?: string;
+  JIRA_STORY_POINTS_FIELD?: string;
 }
 
 export type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimisticMode' | 'simpleAverage';
@@ -25,6 +29,16 @@ export interface VoteOptionMetadata {
   taskSize: TaskSize | null;
 }
 
+export interface JiraTicket {
+  id: string;
+  key: string;
+  summary: string;
+  description?: string;
+  status?: string;
+  storyPoints?: number;
+  url?: string;
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -34,6 +48,7 @@ export interface RoomData {
   connectedUsers: Record<string, boolean>;
   judgeScore?: string | number | null;
   judgeMetadata?: Record<string, unknown>;
+  jiraTicket?: JiraTicket;
   settings: {
     estimateOptions: (string | number)[];
     voteOptionsMetadata?: VoteOptionMetadata[];

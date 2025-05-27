@@ -14,7 +14,8 @@ import {
   isConnected,
   type WebSocketMessageType
 } from './lib/api-service';
-import type { RoomData, VoteValue, WebSocketErrorData, RoomSettings } from './types';
+import { updateJiraStoryPoints } from './lib/jira-service';
+import type { RoomData, VoteValue, WebSocketErrorData, RoomSettings, JiraTicket } from './types';
 
 import WelcomeScreen from './components/WelcomeScreen';
 import CreateRoomScreen from './components/CreateRoomScreen';
@@ -260,6 +261,49 @@ const App = () => {
     }
   };
 
+  const handleJiraTicketFetched = (ticket: JiraTicket | undefined) => {
+    setRoomData(prevData => ({
+      ...prevData,
+      currentJiraTicket: ticket
+    }));
+  };
+
+  const handleJiraTicketUpdated = (ticket: JiraTicket) => {
+    setRoomData(prevData => ({
+      ...prevData,
+      currentJiraTicket: ticket
+    }));
+  };
+
+  // Auto-update Jira story points if setting is enabled
+  useEffect(() => {
+    if (
+      roomData.settings.enableJiraIntegration &&
+      roomData.settings.autoUpdateJiraStoryPoints &&
+      roomData.jiraTicket &&
+      roomData.judgeScore !== null &&
+      roomData.showVotes
+    ) {
+      const storyPoint = typeof roomData.judgeScore === 'number' 
+        ? roomData.judgeScore 
+        : Number(roomData.judgeScore);
+      
+      if (!isNaN(storyPoint)) {
+        updateJiraStoryPoints(roomData.jiraTicket.key, storyPoint, { roomKey: roomData.key, userName: name })
+          .then(updatedTicket => {
+            handleJiraTicketUpdated(updatedTicket);
+          })
+          .catch(err => {
+            const errorMessage = err instanceof Error 
+              ? err.message 
+              : 'Failed to auto-update Jira story points';
+            setError(errorMessage);
+          });
+      }
+    }
+  }, [roomData.settings.enableJiraIntegration, roomData.settings.autoUpdateJiraStoryPoints, 
+      roomData.jiraTicket, roomData.judgeScore, roomData.showVotes]);
+
   const handleLeaveRoom = () => {
     disconnectFromRoom();
     localStorage.removeItem('sprintjam_roomKey');
@@ -338,6 +382,8 @@ const App = () => {
           onToggleShowVotes={handleToggleShowVotes}
           onResetVotes={handleResetVotes}
           onUpdateSettings={handleUpdateSettings}
+          onJiraTicketFetched={handleJiraTicketFetched}
+          onJiraTicketUpdated={handleJiraTicketUpdated}
           onLeaveRoom={handleLeaveRoom}
           error={error}
           onClearError={clearError}

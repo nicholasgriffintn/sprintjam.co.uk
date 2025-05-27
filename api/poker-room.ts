@@ -5,7 +5,7 @@ declare const WebSocketPair: {
 import type { DurableObjectState, WebSocket, Response as CfResponse } from '@cloudflare/workers-types';
 
 import { PlanningPokerJudge } from './planning-poker-judge';
-import type { Env, RoomData, BroadcastMessage, SessionInfo } from './types'
+import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket } from './types'
 import { VOTING_OPTIONS } from './constants'
 import { generateVoteOptionsMetadata } from './utils/votes'
 
@@ -395,6 +395,97 @@ export class PokerRoom {
         ) as unknown as CfResponse;
       });
     }
+    
+    if (url.pathname === '/jira/ticket' && request.method === 'POST') {
+      const { name, ticket } = await request.json() as {
+        name: string;
+        ticket: JiraTicket;
+      };
+
+      return await this.state.blockConcurrencyWhile(async () => {
+        const roomData = await this.state.storage.get<RoomData>('roomData');
+
+        if (!roomData || !roomData.key) {
+          return new Response(JSON.stringify({ error: 'Room not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }) as unknown as CfResponse;
+        }
+
+        if (!roomData.users.includes(name)) {
+          return new Response(
+            JSON.stringify({ error: 'User not found in this room' }),
+            {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          ) as unknown as CfResponse;
+        }
+
+        roomData.jiraTicket = ticket;
+        await this.state.storage.put('roomData', roomData);
+
+        this.broadcast({
+          type: 'jiraTicketUpdated',
+          ticket: roomData.jiraTicket,
+          roomData,
+        });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            room: roomData,
+          }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+          }
+        ) as unknown as CfResponse;
+      });
+    }
+    
+    if (url.pathname === '/jira/ticket/clear' && request.method === 'POST') {
+      const { name } = await request.json() as { name: string };
+
+      return await this.state.blockConcurrencyWhile(async () => {
+        const roomData = await this.state.storage.get<RoomData>('roomData');
+
+        if (!roomData || !roomData.key) {
+          return new Response(JSON.stringify({ error: 'Room not found' }), {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }) as unknown as CfResponse;
+        }
+
+        if (!roomData.users.includes(name)) {
+          return new Response(
+            JSON.stringify({ error: 'User not found in this room' }),
+            {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          ) as unknown as CfResponse;
+        }
+
+        delete roomData.jiraTicket;
+        await this.state.storage.put('roomData', roomData);
+
+        this.broadcast({
+          type: 'jiraTicketUpdated',
+          ticket: undefined,
+          roomData,
+        });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            room: roomData,
+          }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+          }
+        ) as unknown as CfResponse;
+      });
+    }
 
     return new Response('Not found', { status: 404 }) as unknown as CfResponse;
   }
@@ -456,6 +547,10 @@ export class PokerRoom {
           await this.handleResetVotes(userName);
         } else if (data.type === 'updateSettings') {
           await this.handleUpdateSettings(userName, data.settings);
+        } else if (data.type === 'updateJiraTicket') {
+          await this.handleUpdateJiraTicket(userName, data.ticket);
+        } else if (data.type === 'clearJiraTicket') {
+          await this.handleClearJiraTicket(userName);
         }
       } catch (err: unknown) {
         webSocket.send(
@@ -672,6 +767,45 @@ export class PokerRoom {
         type: 'judgeScoreUpdated',
         judgeScore: result.score,
         judgeMetadata: roomData.judgeMetadata,
+        roomData,
+      });
+    });
+  }
+
+  async handleUpdateJiraTicket(userName: string, ticket: JiraTicket) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.state.storage.get<RoomData>('roomData');
+      if (!roomData) return;
+
+      if (!roomData.users.includes(userName)) {
+        return;
+      }
+
+      roomData.jiraTicket = ticket;
+      await this.state.storage.put('roomData', roomData);
+
+      this.broadcast({
+        type: 'jiraTicketUpdated',
+        ticket: roomData.jiraTicket,
+        roomData,
+      });
+    });
+  }
+
+  async handleClearJiraTicket(userName: string) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.state.storage.get<RoomData>('roomData');
+      if (!roomData) return;
+
+      if (!roomData.users.includes(userName)) {
+        return;
+      }
+
+      delete roomData.jiraTicket;
+      await this.state.storage.put('roomData', roomData);
+
+      this.broadcast({
+        type: 'jiraTicketCleared',
         roomData,
       });
     });

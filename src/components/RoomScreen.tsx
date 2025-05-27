@@ -2,7 +2,7 @@ import { type FC, useMemo, useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import type { RoomData, RoomStats, VoteValue } from '../types';
+import type { RoomData, RoomStats, VoteValue, JiraTicket } from '../types';
 import ErrorBanner from './ErrorBanner';
 import SettingsModal from './SettingsModal';
 import ShareRoomModal from './ShareRoomModal';
@@ -14,6 +14,7 @@ import { ResultsControls } from './ResultsControls';
 import { JudgeResult } from './JudgeResult';
 import { VoteDistribution } from './VoteDistribution';
 import { VotesHidden } from './VotesHidden';
+import JiraTicketPanel from './JiraTicketPanel';
 
 export interface RoomScreenProps {
   roomData: RoomData;
@@ -25,6 +26,8 @@ export interface RoomScreenProps {
   onToggleShowVotes: () => void;
   onResetVotes: () => void;
   onUpdateSettings: (settings: RoomData['settings']) => void;
+  onJiraTicketFetched?: (ticket: JiraTicket) => void;
+  onJiraTicketUpdated?: (ticket: JiraTicket) => void;
   error: string;
   onClearError: () => void;
   isConnected: boolean;
@@ -40,6 +43,8 @@ const RoomScreen: FC<RoomScreenProps> = ({
   onToggleShowVotes,
   onResetVotes,
   onUpdateSettings,
+  onJiraTicketFetched,
+  onJiraTicketUpdated,
   error,
   onClearError,
   isConnected,
@@ -168,6 +173,21 @@ const RoomScreen: FC<RoomScreenProps> = ({
               onToggleShowVotes={onToggleShowVotes}
               onResetVotes={onResetVotes}
             />
+          )}
+
+          {roomData.settings.enableJiraIntegration && (roomData.jiraTicket || isModeratorView) && (
+            <div className="mb-4">
+              <JiraTicketPanel
+                isModeratorView={isModeratorView}
+                currentJiraTicket={roomData.jiraTicket}
+                judgeScore={roomData.judgeScore}
+                roomKey={roomData.key}
+                userName={name}
+                onJiraTicketFetched={onJiraTicketFetched || (() => {})}
+                onJiraTicketUpdated={onJiraTicketUpdated || (() => {})}
+                onError={onClearError}
+              />
+            </div>
           )}
 
           <AnimatePresence mode="wait">

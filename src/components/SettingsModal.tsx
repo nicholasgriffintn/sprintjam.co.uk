@@ -96,6 +96,85 @@ const SettingsModal: FC<SettingsModalProps> = ({
           </div>
 
           <div className="pt-2">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Jira Integration</h3>
+            <div className="space-y-3">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="enableJiraIntegration"
+                  checked={localSettings.enableJiraIntegration || false}
+                  onChange={(e) => handleChange('enableJiraIntegration', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="enableJiraIntegration" className="ml-2 text-sm text-gray-700">
+                  Enable Jira Integration
+                </label>
+              </div>
+              {localSettings.enableJiraIntegration && (
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="autoUpdateJiraStoryPoints"
+                    checked={localSettings.autoUpdateJiraStoryPoints || false}
+                    onChange={(e) => handleChange('autoUpdateJiraStoryPoints', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="autoUpdateJiraStoryPoints" className="ml-2 text-sm text-gray-700">
+                    Auto-update story points in Jira when voting completes
+                  </label>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">The Judge</h3>
+            <div className="space-y-3">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="enableJudge"
+                  checked={localSettings.enableJudge}
+                  onChange={(e) => handleChange('enableJudge', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="enableJudge" className="ml-2 text-sm text-gray-700">
+                  Enable The Judge (permanent member that decides the best score)
+                </label>
+              </div>
+              {localSettings.enableJudge && (
+                <div className="ml-6">
+                  <label htmlFor="judgeAlgorithm" className="block text-sm text-gray-700 mb-1">
+                    Algorithm
+                  </label>
+                  <select
+                    id="judgeAlgorithm"
+                    value={localSettings.judgeAlgorithm}
+                    onChange={(e) => handleChange('judgeAlgorithm', e.target.value as JudgeAlgorithm)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="smartConsensus">Smart Consensus</option>
+                    <option value="conservativeMode">Conservative Mode</option>
+                    <option value="optimisticMode">Optimistic Mode</option>
+                    <option value="simpleAverage">Simple Average</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {localSettings.judgeAlgorithm === 'smartConsensus' && 
+                      'Intelligently identifies consensus in voting patterns across different scenarios'}
+                    {localSettings.judgeAlgorithm === 'conservativeMode' && 
+                      'Biases towards higher estimates to account for unforeseen complexity'}
+                    {localSettings.judgeAlgorithm === 'optimisticMode' && 
+                      'Biases towards lower estimates assuming team efficiency'}
+                    {localSettings.judgeAlgorithm === 'simpleAverage' && 
+                      'Simple mathematical average of all votes'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+          <div className="pt-2">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Permissions</h3>
             <div className="space-y-2">
               <div className="flex items-center">
@@ -190,53 +269,6 @@ const SettingsModal: FC<SettingsModalProps> = ({
               </div>
             </div>
           </div>
-
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">The Judge</h3>
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="enableJudge"
-                  checked={localSettings.enableJudge}
-                  onChange={(e) => handleChange('enableJudge', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="enableJudge" className="ml-2 text-sm text-gray-700">
-                  Enable The Judge (permanent member that decides the best score)
-                </label>
-              </div>
-              {localSettings.enableJudge && (
-                <div className="ml-6">
-                  <label htmlFor="judgeAlgorithm" className="block text-sm text-gray-700 mb-1">
-                    Algorithm
-                  </label>
-                  <select
-                    id="judgeAlgorithm"
-                    value={localSettings.judgeAlgorithm}
-                    onChange={(e) => handleChange('judgeAlgorithm', e.target.value as JudgeAlgorithm)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="smartConsensus">Smart Consensus</option>
-                    <option value="conservativeMode">Conservative Mode</option>
-                    <option value="optimisticMode">Optimistic Mode</option>
-                    <option value="simpleAverage">Simple Average</option>
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {localSettings.judgeAlgorithm === 'smartConsensus' && 
-                      'Intelligently identifies consensus in voting patterns across different scenarios'}
-                    {localSettings.judgeAlgorithm === 'conservativeMode' && 
-                      'Biases towards higher estimates to account for unforeseen complexity'}
-                    {localSettings.judgeAlgorithm === 'optimisticMode' && 
-                      'Biases towards lower estimates assuming team efficiency'}
-                    {localSettings.judgeAlgorithm === 'simpleAverage' && 
-                      'Simple mathematical average of all votes'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
         <div className="mt-6 flex justify-end space-x-3 flex-shrink-0">
           <button

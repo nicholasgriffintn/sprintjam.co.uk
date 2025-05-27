@@ -4,6 +4,17 @@ export type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimistic
 
 export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
+export interface JiraTicket {
+  id: string;
+  key: string;
+  summary: string;
+  description: string;
+  status: string;
+  assignee: string | null;
+  storyPoints: number | null;
+  url: string;
+}
+
 export interface VoteOptionMetadata {
   value: VoteValue;
   background: string;
@@ -22,6 +33,8 @@ export interface RoomSettings {
   anonymousVotes: boolean;
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
+  enableJiraIntegration?: boolean;
+  autoUpdateJiraStoryPoints?: boolean;
 }
 
 export interface JudgeMetadata {
@@ -43,6 +56,7 @@ export interface RoomData {
   settings: RoomSettings;
   judgeScore: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
+  jiraTicket?: JiraTicket;
 }
 
 export interface WebSocketErrorData {

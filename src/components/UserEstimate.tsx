@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import type { RoomData, VoteValue } from '../types';
 import { getUsersVoteTaskSize } from '../utils/tasks';
+import { Check } from 'lucide-react';
 
 export function UserEstimate({
   roomData,
@@ -48,7 +49,16 @@ export function UserEstimate({
               }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >
-              <span className="text-lg">{option}</span>
+              <div className="relative w-full h-full flex items-center justify-center">
+                {userVote === option && (
+                  <div className="absolute top-1 right-1">
+                    <div className="bg-blue-500 rounded-full p-0.5">
+                      <Check className="text-white" size={12} strokeWidth={3} />
+                    </div>
+                  </div>
+                )}
+                <span className="text-lg">{option}</span>
+              </div>
             </motion.button>
           );
         })}
