@@ -2,7 +2,7 @@ import { type FC, useMemo, useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import type { RoomData, RoomStats, VoteValue, JiraTicket } from '../types';
+import type { RoomData, RoomStats, VoteValue, JiraTicket, StructuredVote } from '../types';
 import ErrorBanner from './ErrorBanner';
 import SettingsModal from './SettingsModal';
 import ShareRoomModal from './ShareRoomModal';
@@ -15,14 +15,15 @@ import { JudgeResult } from './JudgeResult';
 import { VoteDistribution } from './VoteDistribution';
 import { VotesHidden } from './VotesHidden';
 import JiraTicketPanel from './JiraTicketPanel';
+import { StructuredVotingPanel } from './StructuredVotingPanel';
 
 export interface RoomScreenProps {
   roomData: RoomData;
   name: string;
   isModeratorView: boolean;
-  userVote: VoteValue | null;
+  userVote: VoteValue | StructuredVote | null;
   votingOptions: VoteValue[];
-  onVote: (value: VoteValue) => void;
+  onVote: (value: VoteValue | StructuredVote) => void;
   onToggleShowVotes: () => void;
   onResetVotes: () => void;
   onUpdateSettings: (settings: RoomData['settings']) => void;
@@ -94,7 +95,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
       totalUsers: roomData.users.length,
       judgeScore: roomData.judgeScore
     };
-  }, [roomData.votes, roomData.users.length, roomData.settings.estimateOptions]);
+  }, [roomData.votes, roomData.users.length, roomData.settings.estimateOptions, roomData.judgeScore]);
 
   // Effect to show hammer animation when judge score changes
   useEffect(() => {
@@ -159,12 +160,21 @@ const RoomScreen: FC<RoomScreenProps> = ({
             <Timer />
           )}
 
-          <UserEstimate
-            roomData={roomData}
-            name={name}
-            userVote={userVote}
-            onVote={onVote}
-          />
+          {roomData.settings.enableStructuredVoting && roomData.settings.votingCriteria && roomData.settings.scoringRules ? (
+            <StructuredVotingPanel
+              criteria={roomData.settings.votingCriteria}
+              scoringRules={roomData.settings.scoringRules}
+              currentVote={roomData.structuredVotes?.[name] || null}
+              onVote={onVote}
+            />
+          ) : (
+            <UserEstimate
+              roomData={roomData}
+              name={name}
+              userVote={typeof userVote === 'object' ? null : userVote}
+              onVote={onVote}
+            />
+          )}
 
           {roomData.users.length > 0 && (
             <ResultsControls

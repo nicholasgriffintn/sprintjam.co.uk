@@ -21,6 +21,30 @@ export interface VoteOptionMetadata {
   taskSize: TaskSize | null;
 }
 
+
+export interface StructuredVote {
+  criteriaScores: Record<string, number>;
+  calculatedStoryPoints?: VoteValue;
+}
+
+export interface VotingCriterion {
+  id: string;
+  name: string;
+  description: string;
+  minScore: number;
+  maxScore: number;
+}
+
+export interface ScoringRule {
+  storyPoints: VoteValue;
+  conditions: {
+    criterionId: string;
+    minScore: number;
+    maxScore: number;
+  }[];
+  maxTotalScore?: number;
+}
+
 export interface RoomSettings {
   estimateOptions: (string | number)[];
   voteOptionsMetadata?: VoteOptionMetadata[];
@@ -35,6 +59,9 @@ export interface RoomSettings {
   judgeAlgorithm: JudgeAlgorithm;
   enableJiraIntegration?: boolean;
   autoUpdateJiraStoryPoints?: boolean;
+  enableStructuredVoting?: boolean;
+  votingCriteria?: VotingCriterion[];
+  scoringRules?: ScoringRule[];
 }
 
 export interface JudgeMetadata {
@@ -48,6 +75,7 @@ export interface RoomData {
   key: string;
   users: string[];
   votes: Record<string, VoteValue | null>;
+  structuredVotes?: Record<string, StructuredVote>;
   showVotes: boolean;
   moderator: string;
   connectedUsers: Record<string, boolean>;

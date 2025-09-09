@@ -29,6 +29,30 @@ export interface VoteOptionMetadata {
   taskSize: TaskSize | null;
 }
 
+
+export interface VotingCriterion {
+  id: string;
+  name: string;
+  description: string;
+  minScore: number;
+  maxScore: number;
+}
+
+export interface ScoringRule {
+  storyPoints: string | number;
+  conditions: {
+    criterionId: string;
+    minScore: number;
+    maxScore: number;
+  }[];
+  maxTotalScore?: number;
+}
+
+export interface StructuredVote {
+  criteriaScores: Record<string, number>;
+  calculatedStoryPoints?: string | number;
+}
+
 export interface JiraTicket {
   id: string;
   key: string;
@@ -43,6 +67,7 @@ export interface RoomData {
   key: string;
   users: string[];
   votes: Record<string, string | number>;
+  structuredVotes?: Record<string, StructuredVote>;
   showVotes: boolean;
   moderator: string;
   connectedUsers: Record<string, boolean>;
@@ -61,6 +86,9 @@ export interface RoomData {
     anonymousVotes: boolean;
     enableJudge: boolean;
     judgeAlgorithm: JudgeAlgorithm;
+    enableStructuredVoting?: boolean;
+    votingCriteria?: VotingCriterion[];
+    scoringRules?: ScoringRule[];
   };
 }
 

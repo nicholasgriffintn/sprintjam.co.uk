@@ -15,7 +15,7 @@ import {
   type WebSocketMessageType
 } from './lib/api-service';
 import { updateJiraStoryPoints } from './lib/jira-service';
-import type { RoomData, VoteValue, WebSocketErrorData, RoomSettings, JiraTicket } from './types';
+import type { RoomData, VoteValue, WebSocketErrorData, RoomSettings, JiraTicket, StructuredVote } from './types';
 
 import WelcomeScreen from './components/WelcomeScreen';
 import CreateRoomScreen from './components/CreateRoomScreen';
@@ -53,7 +53,7 @@ const App = () => {
       judgeAlgorithm: "smartConsensus"
     }
   });
-  const [userVote, setUserVote] = useState<VoteValue | null>(null);
+  const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(null);
   const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -208,7 +208,7 @@ const App = () => {
     }
   };
 
-  const handleVote = (value: VoteValue) => {
+  const handleVote = (value: VoteValue | StructuredVote) => {
     setUserVote(value);
 
     try {
@@ -288,7 +288,7 @@ const App = () => {
         ? roomData.judgeScore 
         : Number(roomData.judgeScore);
       
-      if (!isNaN(storyPoint)) {
+      if (!Number.isNaN(storyPoint)) {
         updateJiraStoryPoints(roomData.jiraTicket.key, storyPoint, { roomKey: roomData.key, userName: name })
           .then(updatedTicket => {
             handleJiraTicketUpdated(updatedTicket);

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Users, ChevronDown, ChevronUp } from "lucide-react";
 import { motion } from "framer-motion";
 
-import { RoomData, RoomStats } from "../types";
+import type { RoomData, RoomStats } from "../types";
 
 export type ParticipantsListProps = {
   roomData: RoomData;
@@ -27,6 +27,7 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
           Participants ({roomData.users.length})
         </h2>
         <button
+          type="button"
           className="block md:hidden rounded-md p-1 hover:bg-gray-200 transition-colors"
           onClick={() => setIsParticipantsExpanded(!isParticipantsExpanded)}
           aria-label={isParticipantsExpanded ? "Collapse participants" : "Expand participants"}

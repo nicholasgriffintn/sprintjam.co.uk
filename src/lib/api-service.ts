@@ -1,4 +1,4 @@
-import type { RoomData, VoteValue, RoomSettings } from '../types';
+import type { RoomData, VoteValue, RoomSettings, StructuredVote } from '../types';
 import { API_BASE_URL, WS_BASE_URL } from '../constants';
 
 let activeSocket: WebSocket | null = null;
@@ -215,9 +215,9 @@ function handleReconnect(
 
 /**
  * Submit a vote
- * @param {VoteValue} vote - The vote value
+ * @param {VoteValue | StructuredVote} vote - The vote value
  */
-export function submitVote(vote: VoteValue): void {
+export function submitVote(vote: VoteValue | StructuredVote): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error('Not connected to room');
   }
