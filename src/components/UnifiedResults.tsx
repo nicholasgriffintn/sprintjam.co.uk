@@ -116,7 +116,7 @@ export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProp
           </motion.div>
         )}
 
-        {roomData.settings.showTopVotes && (
+        {roomData.settings.showTopVotes && topDistribution?.length > 0 && (
           <motion.div
             className="bg-white border border-gray-200 rounded-lg p-4"
             initial={{ opacity: 0, y: 10 }}

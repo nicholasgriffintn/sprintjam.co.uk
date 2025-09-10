@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Info } from 'lucide-react';
 import type { VotingCriterion, ScoringRule, StructuredVote } from '../types';
 import { createStructuredVote } from '../utils/structured-voting';
@@ -13,7 +13,7 @@ interface StructuredVotingPanelProps {
 
 interface CriterionRowProps {
   criterion: VotingCriterion;
-  score: number;
+  score: number | null;
   onScoreChange: (score: number) => void;
 }
 
@@ -63,13 +63,16 @@ export function StructuredVotingPanel({
     if (currentVote?.criteriaScores) {
       return { ...currentVote.criteriaScores };
     }
-    return criteria.reduce((acc, criterion) => {
-      acc[criterion.id] = criterion.minScore;
-      return acc;
-    }, {} as Record<string, number>);
+    return {};
   });
 
   const [showScoringInfo, setShowScoringInfo] = useState(false);
+
+  useEffect(() => {
+    if (!currentVote) {
+      setCriteriaScores({});
+    }
+  }, [currentVote]);
 
   const calculatedVote = useMemo(() => {
     return createStructuredVote(criteriaScores, scoringRules);
@@ -127,7 +130,7 @@ export function StructuredVotingPanel({
           <CriterionRow
             key={criterion.id}
             criterion={criterion}
-            score={criteriaScores[criterion.id] || criterion.minScore}
+            score={criteriaScores[criterion.id] ?? null}
             onScoreChange={(score) => handleScoreChange(criterion.id, score)}
           />
         ))}

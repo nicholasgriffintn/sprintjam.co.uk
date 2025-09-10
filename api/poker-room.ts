@@ -693,6 +693,7 @@ export class PokerRoom {
         return;
       }
       roomData.votes = {};
+      roomData.structuredVotes = {};
       roomData.showVotes = false;
       roomData.judgeScore = null;
       await this.state.storage.put('roomData', roomData);
