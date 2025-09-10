@@ -31,7 +31,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
 
   const handleChange = (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm
+    value: boolean | (string | number)[] | JudgeAlgorithm | number
   ) => {
     setLocalSettings({
       ...localSettings,
@@ -280,6 +280,36 @@ const SettingsModal: FC<SettingsModalProps> = ({
               <label htmlFor="showMedian" className="ml-2 text-sm text-gray-700">
                 Show median
               </label>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="showTopVotes"
+                  checked={localSettings.showTopVotes}
+                  onChange={(e) => handleChange('showTopVotes', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="showTopVotes" className="ml-2 text-sm text-gray-700">
+                  Show top votes
+                </label>
+              </div>
+              {localSettings.showTopVotes && (
+                <div className="ml-6">
+                  <label htmlFor="topVotesCount" className="block text-sm text-gray-700 mb-1">
+                    Number of top votes to show
+                  </label>
+                  <input
+                    id="topVotesCount"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={localSettings.topVotesCount}
+                    onChange={(e) => handleChange('topVotesCount', parseInt(e.target.value) || 1)}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              )}
             </div>
             <div className="flex items-center">
               <input

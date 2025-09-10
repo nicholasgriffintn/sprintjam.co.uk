@@ -54,6 +54,8 @@ export interface RoomSettings {
   showUserPresence: boolean;
   showAverage: boolean;
   showMedian: boolean;
+  showTopVotes: boolean;
+  topVotesCount: number;
   anonymousVotes: boolean;
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;

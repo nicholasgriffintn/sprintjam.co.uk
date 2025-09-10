@@ -12,10 +12,10 @@ import { Timer } from './Timer';
 import { UserEstimate } from './UserEstimate';
 import { ResultsControls } from './ResultsControls';
 import { JudgeResult } from './JudgeResult';
-import { VoteDistribution } from './VoteDistribution';
 import { VotesHidden } from './VotesHidden';
 import JiraTicketPanel from './JiraTicketPanel';
 import { StructuredVotingPanel } from './StructuredVotingPanel';
+import { UnifiedResults } from './UnifiedResults';
 
 export interface RoomScreenProps {
   roomData: RoomData;
@@ -219,42 +219,14 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 )}
 
                 <motion.div
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {roomData.settings.showAverage && (
-                    <div className="p-4 bg-white rounded-lg shadow-sm">
-                      <h3 className="mb-2 text-sm font-medium text-gray-500">
-                        Average
-                      </h3>
-                      <p className="text-3xl font-bold text-blue-600">
-                        {stats.avg}
-                      </p>
-                    </div>
-                  )}
-                  {roomData.settings.showMedian && (
-                    <div className="p-4 bg-white rounded-lg shadow-sm">
-                      <h3 className="mb-2 text-sm font-medium text-gray-500">
-                        Most Common
-                      </h3>
-                      <p className="text-3xl font-bold text-blue-600">
-                        {stats.mode || 'N/A'}
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  className="bg-white p-4 rounded-lg shadow-sm"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                >
-                  <VoteDistribution
+                  <UnifiedResults
                     roomData={roomData}
                     stats={stats}
+                    criteria={roomData.settings.votingCriteria}
                   />
                 </motion.div>
               </motion.div>
