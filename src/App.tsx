@@ -48,6 +48,8 @@ const App = () => {
       showUserPresence: false,
       showAverage: false,
       showMedian: false,
+      showTopVotes: false,
+      topVotesCount: 4,
       anonymousVotes: true,
       enableJudge: true,
       judgeAlgorithm: "smartConsensus"
@@ -324,6 +326,8 @@ const App = () => {
         showUserPresence: false,
         showAverage: false,
         showMedian: false,
+        showTopVotes: false,
+        topVotesCount: 4,
         anonymousVotes: true,
         enableJudge: true,
         judgeAlgorithm: "smartConsensus"

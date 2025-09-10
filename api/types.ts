@@ -83,6 +83,8 @@ export interface RoomData {
     showUserPresence: boolean;
     showAverage: boolean;
     showMedian: boolean;
+    showTopVotes: boolean;
+    topVotesCount: number;
     anonymousVotes: boolean;
     enableJudge: boolean;
     judgeAlgorithm: JudgeAlgorithm;
