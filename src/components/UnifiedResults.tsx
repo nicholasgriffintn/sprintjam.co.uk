@@ -150,7 +150,7 @@ export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProp
       {hasStructuredData && (
         <div>
           <h3 className="mb-3 text-sm font-medium text-gray-500">Criteria Breakdown</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {criteriaStats.map((stat) => (
               <motion.div
                 key={stat.criterionId}
@@ -159,9 +159,11 @@ export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProp
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: criteriaStats.indexOf(stat) * 0.05 }}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-gray-900">{stat.name}</h4>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
+                <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                  <h4 className="font-medium text-gray-900 flex-1 min-w-0" title={stat.name}>
+                    {stat.name}
+                  </h4>
+                  <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap flex-shrink-0 ${
                     stat.consensus === 'high' ? 'bg-green-100 text-green-800' :
                     stat.consensus === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-red-100 text-red-800'
@@ -172,22 +174,22 @@ export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProp
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Average:</span>
+                  <div className="flex justify-between items-center text-sm gap-2">
+                    <span className="text-gray-600 flex-shrink-0">Average:</span>
                     <span className="font-medium">{stat.average.toFixed(1)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Range:</span>
+                  <div className="flex justify-between items-center text-sm gap-2">
+                    <span className="text-gray-600 flex-shrink-0">Range:</span>
                     <span className="text-gray-800">{stat.min} - {stat.max}</span>
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                  <div className="flex justify-between text-xs text-gray-500 mb-1 px-0.5">
                     <span>0</span>
                     <span>5</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 relative">
+                  <div className="w-full bg-gray-200 rounded-full h-2 relative min-w-0">
                     <div 
                       className="h-2 rounded-full bg-blue-200 absolute"
                       style={{
