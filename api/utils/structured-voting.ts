@@ -89,15 +89,15 @@ export function calculateStoryPointsFromStructuredVote(
 
   // Map percentage score to story points
   // 1: 0-2 (0-34%), 3: 3-7 (35-49%), 5: 8-11 (50-79%), 8: 12+ (80%+)
-  const min1ptScore = 35;
-  const min3ptScore = 50;
-  const min5ptScore = 80;
+  const max1ptScore = 35;
+  const max3ptScore = 50;
+  const max5ptScore = 80;
 
-  if (finalScore < min1ptScore) {
+  if (finalScore < max1ptScore) {
     return 1;
-  } else if (finalScore < min3ptScore) {
+  } else if (finalScore < max3ptScore) {
     return 3;
-  } else if (finalScore < min5ptScore) {
+  } else if (finalScore < max5ptScore) {
     return 5;
   } else {
     return 8;
