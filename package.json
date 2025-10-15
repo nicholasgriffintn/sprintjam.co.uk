@@ -11,24 +11,24 @@
     "deploy": "npm run build && npm exec wrangler deploy"
   },
   "dependencies": {
-    "@tailwindcss/typography": "^0.5.16",
-    "canvas-confetti": "^1.5.1",
-    "framer-motion": "^12.14.0",
-    "lucide-react": "^0.511.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "canvas-confetti": "^1.9.3",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.545.0",
     "qrcode.react": "^4.2.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "tailwindcss": "^4.1.4"
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "tailwindcss": "^4.1.14"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.0.7",
-    "@cloudflare/workers-types": "^4.20250410.0",
-    "@tailwindcss/vite": "^4.1.4",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react": "^4.4.0",
-    "typescript": "^5.5.2",
-    "vite": "^6.2.6",
-    "wrangler": "^4.10.0"
+    "@cloudflare/vite-plugin": "^1.13.13",
+    "@cloudflare/workers-types": "^4.20251011.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.10",
+    "wrangler": "^4.43.0"
   }
 }

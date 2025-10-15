@@ -1,6 +1,7 @@
 import type {
 	DurableObjectNamespace,
 	Fetcher,
+	WebSocket as CfWebSocket,
 } from '@cloudflare/workers-types';
 
 export interface Env {
@@ -103,7 +104,7 @@ export interface BroadcastMessage {
 }
 
 export interface SessionInfo {
-  webSocket: WebSocket;
+  webSocket: CfWebSocket;
   roomKey: string;
   userName: string;
 }

@@ -1,8 +1,8 @@
 declare const WebSocketPair: {
-  new(): { 0: WebSocket; 1: WebSocket };
+  new(): { 0: CfWebSocket; 1: CfWebSocket };
 };
 
-import type { DurableObjectState, WebSocket, Response as CfResponse } from '@cloudflare/workers-types';
+import type { DurableObjectState, WebSocket as CfWebSocket, Response as CfResponse } from '@cloudflare/workers-types';
 
 import { PlanningPokerJudge } from './planning-poker-judge';
 import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket, StructuredVote } from './types'
@@ -60,7 +60,7 @@ function returnInitialOptions({
 export class PokerRoom {
   state: DurableObjectState;
   env: Env;
-  sessions: Map<WebSocket, SessionInfo>;
+  sessions: Map<CfWebSocket, SessionInfo>;
   judge: PlanningPokerJudge;
 
   constructor(state: DurableObjectState, env: Env) {
@@ -97,11 +97,11 @@ export class PokerRoom {
       }
 
       const pair = new WebSocketPair();
-      const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
+      const [client, server] = Object.values(pair);
 
       await this.handleSession(server, roomKey, userName);
 
-      return new Response(null, { status: 101, webSocket: client } as unknown as CfResponse) as unknown as CfResponse;
+      return new Response(null, { status: 101, webSocket: client as any }) as unknown as CfResponse;
     }
 
     if (url.pathname === '/initialize' && request.method === 'POST') {
@@ -508,7 +508,7 @@ export class PokerRoom {
     return new Response('Not found', { status: 404 }) as unknown as CfResponse;
   }
 
-  async handleSession(webSocket: WebSocket, roomKey: string, userName: string) {
+  async handleSession(webSocket: CfWebSocket, roomKey: string, userName: string) {
     const session = { webSocket, roomKey, userName };
     this.sessions.set(webSocket, session);
 
