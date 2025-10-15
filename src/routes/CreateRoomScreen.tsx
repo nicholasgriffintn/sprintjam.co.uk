@@ -3,7 +3,9 @@ import type { FC, ChangeEvent, FormEvent } from 'react';
 
 interface CreateRoomScreenProps {
   name: string;
+  passcode: string;
   onNameChange: (name: string) => void;
+  onPasscodeChange: (passcode: string) => void;
   onCreateRoom: () => void;
   onBack: () => void;
   error: string;
@@ -12,7 +14,9 @@ interface CreateRoomScreenProps {
 
 const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   name,
+  passcode,
   onNameChange,
+  onPasscodeChange,
   onCreateRoom,
   onBack,
   error,
@@ -50,6 +54,23 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
             placeholder="Enter your name"
             required
           />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="create-passcode" className="block mb-2 text-sm font-medium text-gray-700">
+            Room Passcode (Optional)
+          </label>
+          <input
+            id="create-passcode"
+            type="password"
+            value={passcode}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter passcode (leave empty for no passcode)"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Set a passcode to restrict room access. Leave empty for public room.
+          </p>
         </div>
 
         <div className="flex space-x-3">

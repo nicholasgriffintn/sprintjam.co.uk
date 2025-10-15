@@ -55,6 +55,7 @@ const App = () => {
   );
   const [name, setName] = useState<string>('');
   const [roomKey, setRoomKey] = useState<string>('');
+  const [passcode, setPasscode] = useState<string>('');
   const [screen, setScreen] = useState<AppScreen>('welcome');
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
@@ -98,7 +99,7 @@ const App = () => {
         setIsLoadingDefaults(false);
       }
     },
-    [setDefaultsError, setIsLoadingDefaults]
+    []
   );
 
   const handleRetryDefaults = useCallback(() => {
@@ -195,7 +196,7 @@ const App = () => {
           setError('Connection update failed');
         });
     },
-    [setActiveRoomKey]
+    []
   );
 
   // Connect to WebSocket when entering a room
@@ -272,7 +273,7 @@ const App = () => {
     setError('');
 
     try {
-      const { room: newRoom, defaults } = await createRoom(name);
+      const { room: newRoom, defaults } = await createRoom(name, passcode || undefined);
       await applyServerDefaults(defaults);
       await upsertRoom(newRoom);
       setActiveRoomKey(newRoom.key);
@@ -295,7 +296,7 @@ const App = () => {
     setError('');
 
     try {
-      const { room: joinedRoom, defaults } = await joinRoom(name, roomKey);
+      const { room: joinedRoom, defaults } = await joinRoom(name, roomKey, passcode || undefined);
       await applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
@@ -479,15 +480,26 @@ const App = () => {
 
       {screen === 'welcome' ? (
         <WelcomeScreen
-          onCreateRoom={() => setScreen('create')}
-          onJoinRoom={() => setScreen('join')}
+          onCreateRoom={() => {
+            setPasscode('');
+            setScreen('create');
+          }}
+          onJoinRoom={() => {
+            setPasscode('');
+            setScreen('join');
+          }}
         />
       ) : screen === 'create' ? (
         <CreateRoomScreen
           name={name}
+          passcode={passcode}
           onNameChange={setName}
+          onPasscodeChange={setPasscode}
           onCreateRoom={handleCreateRoom}
-          onBack={() => setScreen('welcome')}
+          onBack={() => {
+            setPasscode('');
+            setScreen('welcome');
+          }}
           error={error}
           onClearError={clearError}
         />
@@ -495,10 +507,15 @@ const App = () => {
         <JoinRoomScreen
           name={name}
           roomKey={roomKey}
+          passcode={passcode}
           onNameChange={setName}
           onRoomKeyChange={setRoomKey}
+          onPasscodeChange={setPasscode}
           onJoinRoom={handleJoinRoom}
-          onBack={() => setScreen('welcome')}
+          onBack={() => {
+            setPasscode('');
+            setScreen('welcome');
+          }}
           error={error}
           onClearError={clearError}
         />

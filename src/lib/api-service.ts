@@ -55,7 +55,8 @@ export async function fetchDefaultSettings(
  * @returns {Promise<RoomData>} - The room data
  */
 export async function createRoom(
-  name: string
+  name: string,
+  passcode?: string
 ): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
@@ -63,7 +64,7 @@ export async function createRoom(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, passcode }),
     });
 
     if (!response.ok) {
@@ -103,7 +104,8 @@ export async function createRoom(
  */
 export async function joinRoom(
   name: string,
-  roomKey: string
+  roomKey: string,
+  passcode?: string
 ): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
@@ -111,7 +113,7 @@ export async function joinRoom(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, roomKey }),
+      body: JSON.stringify({ name, roomKey, passcode }),
     });
 
     if (!response.ok) {

@@ -112,6 +112,7 @@ export interface RoomSettings {
   votingCriteria?: VotingCriterion[];
   resultsDisplay?: ResultsDisplaySettings;
   structuredVotingDisplay?: StructuredVotingDisplaySettings;
+  autoHandoverModerator?: boolean;
 }
 
 export interface ServerDefaults {
@@ -147,6 +148,7 @@ export interface RoomData {
   judgeScore: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
   jiraTicket?: JiraTicket;
+  passcode?: string;
 }
 
 export interface WebSocketErrorData {

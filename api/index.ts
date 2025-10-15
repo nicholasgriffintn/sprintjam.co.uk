@@ -63,8 +63,9 @@ async function handleApiRequest(
   }
 
   if (path === 'rooms' && request.method === 'POST') {
-    const body = await request.json<{ name?: string }>();
+    const body = await request.json<{ name?: string; passcode?: string }>();
     const name = body?.name;
+    const passcode = body?.passcode;
 
     if (!name) {
       return new Response(JSON.stringify({ error: 'Name is required' }), {
@@ -82,7 +83,7 @@ async function handleApiRequest(
       new Request('https://dummy/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomKey, moderator: name }),
+        body: JSON.stringify({ roomKey, moderator: name, passcode }),
       }) as unknown as CfRequest
     );
 
@@ -90,9 +91,10 @@ async function handleApiRequest(
   }
 
   if (path === 'rooms/join' && request.method === 'POST') {
-    const body = await request.json<{ name?: string; roomKey?: string }>();
+    const body = await request.json<{ name?: string; roomKey?: string; passcode?: string }>();
     const name = body?.name;
     const roomKey = body?.roomKey;
+    const passcode = body?.passcode;
 
     if (!name || !roomKey) {
       return new Response(
@@ -112,7 +114,7 @@ async function handleApiRequest(
       new Request('https://dummy/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, passcode }),
       }) as unknown as CfRequest
     );
 

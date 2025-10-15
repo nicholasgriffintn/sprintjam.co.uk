@@ -257,6 +257,18 @@ const SettingsModal: FC<SettingsModalProps> = ({
                     Allow others to delete estimates
                   </label>
                 </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="autoHandoverModerator"
+                    checked={localSettings.autoHandoverModerator || false}
+                    onChange={(e) => handleChange('autoHandoverModerator', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="autoHandoverModerator" className="ml-2 text-sm text-gray-700">
+                    Auto handover moderator when they leave
+                  </label>
+                </div>
               </div>
             </div>
 

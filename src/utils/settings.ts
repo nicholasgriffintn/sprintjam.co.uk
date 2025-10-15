@@ -14,6 +14,7 @@ const cloneRoomSettings = (settings: RoomSettings): RoomSettings => ({
   votingCriteria: settings.votingCriteria
     ? settings.votingCriteria.map((criterion) => ({ ...criterion }))
     : undefined,
+  autoHandoverModerator: settings.autoHandoverModerator ?? false,
   resultsDisplay: settings.resultsDisplay
     ? {
         ...settings.resultsDisplay,

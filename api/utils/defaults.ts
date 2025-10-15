@@ -18,8 +18,8 @@ export function getDefaultRoomSettings(): RoomSettings {
   return {
     estimateOptions,
     voteOptionsMetadata: generateVoteOptionsMetadata(estimateOptions),
-    allowOthersToShowEstimates: true,
-    allowOthersToDeleteEstimates: true,
+    allowOthersToShowEstimates: false,
+    allowOthersToDeleteEstimates: false,
     showTimer: false,
     showUserPresence: false,
     showAverage: false,
@@ -33,6 +33,7 @@ export function getDefaultRoomSettings(): RoomSettings {
     votingCriteria: getDefaultVotingCriteria(),
     enableJiraIntegration: false,
     autoUpdateJiraStoryPoints: false,
+    autoHandoverModerator: false,
     resultsDisplay: {
       summaryCards: [
         { id: 'average', label: 'Average', enabled: true },

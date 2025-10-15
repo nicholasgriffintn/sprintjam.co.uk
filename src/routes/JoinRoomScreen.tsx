@@ -4,8 +4,10 @@ import type { FC, ChangeEvent, FormEvent } from 'react';
 interface JoinRoomScreenProps {
   name: string;
   roomKey: string;
+  passcode: string;
   onNameChange: (name: string) => void;
   onRoomKeyChange: (key: string) => void;
+  onPasscodeChange: (passcode: string) => void;
   onJoinRoom: () => void;
   onBack: () => void;
   error: string;
@@ -15,8 +17,10 @@ interface JoinRoomScreenProps {
 const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
   name,
   roomKey,
+  passcode,
   onNameChange,
   onRoomKeyChange,
+  onPasscodeChange,
   onJoinRoom,
   onBack,
   error,
@@ -68,6 +72,20 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter room key"
             required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="join-passcode" className="block mb-2 text-sm font-medium text-gray-700">
+            Room Passcode (if required)
+          </label>
+          <input
+            id="join-passcode"
+            type="password"
+            value={passcode}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter passcode (leave empty if room has no passcode)"
           />
         </div>
 

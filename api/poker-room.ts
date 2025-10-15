@@ -97,7 +97,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/initialize' && request.method === 'POST') {
-      const { roomKey, moderator } = await request.json() as { roomKey: string; moderator: string };
+      const { roomKey, moderator, passcode } = await request.json() as { roomKey: string; moderator: string; passcode?: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         let roomData = await this.state.storage.get<RoomData>('roomData');
@@ -124,6 +124,10 @@ export class PokerRoom {
           connectedUsers: { [moderator]: true },
         });
 
+        if (passcode && passcode.trim()) {
+          roomData.passcode = passcode.trim();
+        }
+
         await this.state.storage.put('roomData', roomData);
 
         const defaults = getServerDefaults();
@@ -142,7 +146,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/join' && request.method === 'POST') {
-      const { name } = (await request.json()) as { name: string };
+      const { name, passcode } = (await request.json()) as { name: string; passcode?: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -152,6 +156,16 @@ export class PokerRoom {
             status: 404,
             headers: { 'Content-Type': 'application/json' },
           }) as unknown as CfResponse;
+        }
+
+        // Check passcode if room has one
+        if (roomData.passcode && roomData.passcode.trim()) {
+          if (!passcode || passcode.trim() !== roomData.passcode.trim()) {
+            return new Response(JSON.stringify({ error: 'Invalid passcode' }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json' },
+            }) as unknown as CfResponse;
+          }
         }
 
         if (!roomData.connectedUsers) {
@@ -646,7 +660,7 @@ export class PokerRoom {
               isConnected: false,
             });
 
-            if (userName === roomData.moderator) {
+            if (userName === roomData.moderator && roomData.settings.autoHandoverModerator) {
               const connectedUsers = roomData.users.filter(
                 (user) => roomData.connectedUsers[user]
               );

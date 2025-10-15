@@ -103,6 +103,7 @@ export interface RoomSettings {
   autoUpdateJiraStoryPoints?: boolean;
   resultsDisplay?: ResultsDisplaySettings;
   structuredVotingDisplay?: StructuredVotingDisplaySettings;
+  autoHandoverModerator?: boolean;
 }
 
 
@@ -150,6 +151,7 @@ export interface RoomData {
   judgeMetadata?: Record<string, unknown>;
   jiraTicket?: JiraTicket;
   settings: RoomSettings;
+  passcode?: string;
 }
 
 export interface BroadcastMessage {
