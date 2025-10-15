@@ -21,7 +21,7 @@ interface CriteriaStats {
 }
 
 export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProps) {
-  const criteriaStats = useMemo((): CriteriaStats[] => {
+  const criteriaStats = useMemo((): (CriteriaStats & { maxScore: number })[] => {
     if (!criteria || !roomData.structuredVotes) return [];
     
     const structuredVotes = Object.values(roomData.structuredVotes);
@@ -40,7 +40,8 @@ export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProp
           min: 0,
           max: 0,
           variance: 0,
-          consensus: 'low' as const
+          consensus: 'low' as const,
+          maxScore: criterion.maxScore
         };
       }
 
@@ -49,7 +50,13 @@ export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProp
       const max = Math.max(...scores);
       const variance = max - min;
       
-      const consensus = variance <= 1 ? 'high' : variance <= 2 ? 'medium' : 'low';
+      let consensus: 'high' | 'medium' | 'low';
+      if (criterion.id === 'unknowns') {
+        consensus = variance === 0 ? 'high' : variance === 1 ? 'medium' : 'low';
+      } else {
+        const relativeVariance = variance / criterion.maxScore;
+        consensus = relativeVariance <= 0.25 ? 'high' : relativeVariance <= 0.5 ? 'medium' : 'low';
+      }
 
       return {
         criterionId: criterion.id,
@@ -58,7 +65,8 @@ export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProp
         min,
         max,
         variance,
-        consensus
+        consensus,
+        maxScore: criterion.maxScore
       };
     });
   }, [roomData.structuredVotes, criteria]);
@@ -187,20 +195,20 @@ export function UnifiedResults({ roomData, stats, criteria }: UnifiedResultsProp
                 <div className="mt-3">
                   <div className="flex justify-between text-xs text-gray-500 mb-1 px-0.5">
                     <span>0</span>
-                    <span>5</span>
+                    <span>{stat.maxScore}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 relative min-w-0">
                     <div 
                       className="h-2 rounded-full bg-blue-200 absolute"
                       style={{
-                        left: `${(stat.min / 5) * 100}%`,
-                        width: `${((stat.max - stat.min) / 5) * 100}%`
+                        left: `${(stat.min / stat.maxScore) * 100}%`,
+                        width: `${((stat.max - stat.min) / stat.maxScore) * 100}%`
                       }}
                     />
                     <div 
                       className="absolute w-1 h-4 bg-blue-600 rounded-full -mt-1"
                       style={{
-                        left: `${(stat.average / 5) * 100}%`
+                        left: `${(stat.average / stat.maxScore) * 100}%`
                       }}
                     />
                   </div>
