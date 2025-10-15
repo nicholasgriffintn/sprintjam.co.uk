@@ -8,6 +8,13 @@ import type {
   WebSocketMessageType,
 } from '../types';
 import { API_BASE_URL, WS_BASE_URL } from '../constants';
+import {
+  SERVER_DEFAULTS_DOCUMENT_KEY,
+  roomsCollection,
+  serverDefaultsCollection,
+  ensureRoomsCollectionReady,
+  ensureServerDefaultsCollectionReady,
+} from './data/collections';
 
 export type { WebSocketMessageType } from '../types';
 
@@ -17,38 +24,29 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_BASE_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
 const eventListeners: Record<string, ((data: WebSocketMessage) => void)[]> = {};
-let defaultSettingsCache: ServerDefaults | null = null;
-
-function updateDefaultSettingsCache(defaults?: ServerDefaults): void {
-  if (defaults) {
-    defaultSettingsCache = defaults;
-  }
-}
 
 export function getCachedDefaultSettings(): ServerDefaults | null {
-  return defaultSettingsCache;
+  return serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
 }
 
-export async function fetchDefaultSettings(forceRefresh = false): Promise<ServerDefaults> {
-  if (!forceRefresh && defaultSettingsCache) {
-    return defaultSettingsCache;
+export async function fetchDefaultSettings(
+  forceRefresh = false
+): Promise<ServerDefaults> {
+  if (forceRefresh) {
+    await serverDefaultsCollection.utils.refetch({ throwOnError: true });
+  } else {
+    await serverDefaultsCollection.preload();
+    await serverDefaultsCollection.toArrayWhenReady();
   }
 
-  const response = await fetch(`${API_BASE_URL}/defaults`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  const defaults =
+    serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || `Failed to fetch defaults: ${response.status}`);
+  if (!defaults) {
+    throw new Error('Unable to load default settings from server');
   }
 
-  const data = await response.json() as ServerDefaults;
-  updateDefaultSettingsCache(data);
-  return data;
+  return defaults;
 }
 
 /**
@@ -56,7 +54,9 @@ export async function fetchDefaultSettings(forceRefresh = false): Promise<Server
  * @param {string} name - The name of the user creating the room
  * @returns {Promise<RoomData>} - The room data
  */
-export async function createRoom(name: string): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
+export async function createRoom(
+  name: string
+): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
       method: 'POST',
@@ -71,11 +71,21 @@ export async function createRoom(name: string): Promise<{ room: RoomData; defaul
       throw new Error(errorData.error || `Failed to create room: ${response.status}`);
     }
 
-    const data = await response.json() as { room?: RoomData; defaults?: ServerDefaults; error?: string };
-    updateDefaultSettingsCache(data.defaults);
+    const data = (await response.json()) as {
+      room?: RoomData;
+      defaults?: ServerDefaults;
+      error?: string;
+    };
 
     if (!data.room) {
       throw new Error('Invalid response from server while creating room');
+    }
+
+    await ensureRoomsCollectionReady();
+    roomsCollection.utils.writeUpsert(data.room);
+    if (data.defaults) {
+      await ensureServerDefaultsCollectionReady();
+      serverDefaultsCollection.utils.writeUpsert(data.defaults);
     }
 
     return { room: data.room, defaults: data.defaults };
@@ -91,7 +101,10 @@ export async function createRoom(name: string): Promise<{ room: RoomData; defaul
  * @param {string} roomKey - The unique key for the room
  * @returns {Promise<RoomData>} - The room data
  */
-export async function joinRoom(name: string, roomKey: string): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
+export async function joinRoom(
+  name: string,
+  roomKey: string
+): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
       method: 'POST',
@@ -106,11 +119,21 @@ export async function joinRoom(name: string, roomKey: string): Promise<{ room: R
       throw new Error(errorData.error || `Failed to join room: ${response.status}`);
     }
 
-    const data = await response.json() as { room?: RoomData; defaults?: ServerDefaults; error?: string };
-    updateDefaultSettingsCache(data.defaults);
+    const data = (await response.json()) as {
+      room?: RoomData;
+      defaults?: ServerDefaults;
+      error?: string;
+    };
 
     if (!data.room) {
       throw new Error('Invalid response from server while joining room');
+    }
+
+    await ensureRoomsCollectionReady();
+    roomsCollection.utils.writeUpsert(data.room);
+    if (data.defaults) {
+      await ensureServerDefaultsCollectionReady();
+      serverDefaultsCollection.utils.writeUpsert(data.defaults);
     }
 
     return { room: data.room, defaults: data.defaults };

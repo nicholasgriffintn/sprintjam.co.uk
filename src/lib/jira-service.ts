@@ -1,5 +1,10 @@
 import type { VoteValue, JiraTicket } from '../types';
 import { API_BASE_URL } from '../constants';
+import {
+  jiraTicketsCollection,
+  type JiraTicketRecord,
+  ensureJiraTicketsCollectionReady,
+} from './data/collections';
 
 /**
  * Fetch Jira ticket details by ticket ID or key
@@ -35,10 +40,15 @@ export async function fetchJiraTicket(
     const data = await response.json();
     console.log('Jira ticket API response:', data);
   
-    if (data.ticket) {
-      return data.ticket;
-    } else if (data.room?.jiraTicket) {
-      return data.room.jiraTicket;
+    const ticket: JiraTicket | undefined = data.ticket ?? data.room?.jiraTicket;
+
+    if (ticket) {
+      if (options?.roomKey) {
+        await ensureJiraTicketsCollectionReady();
+        const record: JiraTicketRecord = { ...ticket, roomKey: options.roomKey };
+        jiraTicketsCollection.utils.writeUpsert(record);
+      }
+      return ticket;
     }
     throw new Error('Invalid response format from Jira API');
   } catch (error) {
@@ -80,7 +90,15 @@ export async function updateJiraStoryPoints(
     }
 
     const data = await response.json();
-    return data.ticket;
+    const ticket = data.ticket as JiraTicket;
+
+    if (ticket && options.roomKey) {
+      await ensureJiraTicketsCollectionReady();
+      const record: JiraTicketRecord = { ...ticket, roomKey: options.roomKey };
+      jiraTicketsCollection.utils.writeUpsert(record);
+    }
+
+    return ticket;
   } catch (error) {
     console.error('Error updating Jira story points:', error);
     throw error;
@@ -125,6 +143,19 @@ export async function clearJiraTicket(roomKey: string, userName: string): Promis
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || `Failed to clear Jira ticket: ${response.status}`);
+    }
+
+    await ensureJiraTicketsCollectionReady();
+
+    const keysToDelete: Array<string | number> = [];
+    for (const [key, value] of jiraTicketsCollection.state) {
+      if (value.roomKey === roomKey) {
+        keysToDelete.push(key);
+      }
+    }
+
+    if (keysToDelete.length > 0) {
+      jiraTicketsCollection.utils.writeDelete(keysToDelete);
     }
   } catch (error) {
     console.error('Error clearing Jira ticket:', error);

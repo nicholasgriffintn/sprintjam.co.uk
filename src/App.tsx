@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   createRoom,
@@ -16,8 +16,18 @@ import {
   getCachedDefaultSettings,
 } from './lib/api-service';
 import { updateJiraStoryPoints } from './lib/jira-service';
+import {
+  serverDefaultsCollection,
+  ensureServerDefaultsCollectionReady,
+} from './lib/data/collections';
+import {
+  applyRoomMessageToCollections,
+  removeRoomFromCollection,
+  setRoomJiraTicket,
+  upsertRoom,
+} from './lib/data/room-store';
+import { useRoomData, useServerDefaults } from './lib/data/hooks';
 import type {
-  RoomData,
   VoteValue,
   WebSocketErrorData,
   RoomSettings,
@@ -27,8 +37,7 @@ import type {
   WebSocketMessage,
   WebSocketMessageType,
 } from './types';
-import { buildInitialRoomData, cloneServerDefaults } from './utils/settings';
-import { applyRoomUpdate } from './utils/room';
+import { cloneServerDefaults } from './utils/settings';
 import WelcomeScreen from './routes/WelcomeScreen';
 import CreateRoomScreen from './routes/CreateRoomScreen';
 import JoinRoomScreen from './routes/JoinRoomScreen';
@@ -47,9 +56,7 @@ const App = () => {
   const [name, setName] = useState<string>('');
   const [roomKey, setRoomKey] = useState<string>('');
   const [screen, setScreen] = useState<AppScreen>('welcome');
-  const [roomData, setRoomData] = useState<RoomData | null>(() =>
-    cachedDefaults ? buildInitialRoomData(cachedDefaults.roomSettings) : null
-  );
+  const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
     null
   );
@@ -60,27 +67,26 @@ const App = () => {
     !cachedDefaults
   );
   const [defaultsError, setDefaultsError] = useState<string | null>(null);
+  const serverDefaultsFromCollection = useServerDefaults();
+  const roomData = useRoomData(activeRoomKey);
+  const activeRoomKeyRef = useRef<string | null>(null);
 
-  const applyServerDefaults = useCallback((defaults?: ServerDefaults) => {
-    if (!defaults) return;
+  const applyServerDefaults = useCallback(async (defaults?: ServerDefaults) => {
+    if (!defaults) {
+      return;
+    }
 
-    const clonedDefaults = cloneServerDefaults(defaults);
-    setServerDefaults(clonedDefaults);
+    await ensureServerDefaultsCollectionReady();
+    serverDefaultsCollection.utils.writeUpsert(defaults);
     setDefaultsError(null);
-    setRoomData((current) => {
-      if (current?.key) {
-        return current;
-      }
-      return buildInitialRoomData(clonedDefaults.roomSettings);
-    });
   }, []);
 
   const loadDefaults = useCallback(
     async (forceRefresh = false) => {
       setIsLoadingDefaults(true);
       try {
-        const defaults = await fetchDefaultSettings(forceRefresh);
-        applyServerDefaults(defaults);
+        await fetchDefaultSettings(forceRefresh);
+        setDefaultsError(null);
       } catch (err) {
         console.error('Failed to load default settings', err);
         const message =
@@ -92,7 +98,7 @@ const App = () => {
         setIsLoadingDefaults(false);
       }
     },
-    [applyServerDefaults, setDefaultsError, setIsLoadingDefaults]
+    [setDefaultsError, setIsLoadingDefaults]
   );
 
   const handleRetryDefaults = useCallback(() => {
@@ -104,6 +110,18 @@ const App = () => {
       loadDefaults();
     }
   }, [cachedDefaults, loadDefaults]);
+
+  useEffect(() => {
+    if (serverDefaultsFromCollection) {
+      setServerDefaults(cloneServerDefaults(serverDefaultsFromCollection));
+    } else {
+      setServerDefaults(null);
+    }
+  }, [serverDefaultsFromCollection]);
+
+  useEffect(() => {
+    activeRoomKeyRef.current = activeRoomKey;
+  }, [activeRoomKey]);
 
   const didLoadName = useRef(false);
   const didCheckUrlParams = useRef(false);
@@ -141,9 +159,11 @@ const App = () => {
     if (savedRoomKey) {
       setIsLoading(true);
       joinRoom(name, savedRoomKey)
-        .then(({ room: joinedRoom, defaults }) => {
-          applyServerDefaults(defaults);
-          setRoomData(joinedRoom);
+        .then(async ({ room: joinedRoom, defaults }) => {
+          await applyServerDefaults(defaults);
+          await upsertRoom(joinedRoom);
+          setActiveRoomKey(joinedRoom.key);
+          localStorage.setItem('sprintjam_roomKey', joinedRoom.key);
           setIsModeratorView(joinedRoom.moderator === name);
           setScreen('room');
         })
@@ -157,20 +177,31 @@ const App = () => {
     }
   }, [name, screen, isLoadingDefaults, applyServerDefaults]);
 
-  const handleRoomMessage = useCallback((message: WebSocketMessage) => {
-    if (message.type === 'error') {
-      setError(message.error || 'Connection error');
-      return;
-    }
-
-    setRoomData((current) => applyRoomUpdate(current, message));
-    setError('');
-  }, []);
+  const handleRoomMessage = useCallback(
+    (message: WebSocketMessage) => {
+      if (message.type === 'error') {
+        setError(message.error || 'Connection error');
+        return;
+      }
+      void applyRoomMessageToCollections(message, activeRoomKeyRef.current)
+        .then((updatedRoom) => {
+          if (!activeRoomKeyRef.current && updatedRoom?.key) {
+            setActiveRoomKey(updatedRoom.key);
+          }
+          setError('');
+        })
+        .catch((err) => {
+          console.error('Failed to process room message', err);
+          setError('Connection update failed');
+        });
+    },
+    [setActiveRoomKey]
+  );
 
   // Connect to WebSocket when entering a room
   useEffect(() => {
-    if (screen === 'room' && name && roomData?.key) {
-      connectToRoom(roomData.key, name, handleRoomMessage);
+    if (screen === 'room' && name && activeRoomKey) {
+      connectToRoom(activeRoomKey, name, handleRoomMessage);
 
       const errorHandler = (data: WebSocketErrorData) => {
         setError(data.error || 'Connection error');
@@ -189,7 +220,7 @@ const App = () => {
         }
       };
     }
-  }, [screen, name, roomData?.key, handleRoomMessage]);
+  }, [screen, name, activeRoomKey, handleRoomMessage]);
 
   useEffect(() => {
     if (!roomData) {
@@ -242,9 +273,9 @@ const App = () => {
 
     try {
       const { room: newRoom, defaults } = await createRoom(name);
-      applyServerDefaults(defaults);
-
-      setRoomData(newRoom);
+      await applyServerDefaults(defaults);
+      await upsertRoom(newRoom);
+      setActiveRoomKey(newRoom.key);
       localStorage.setItem('sprintjam_roomKey', newRoom.key);
       setIsModeratorView(true);
       setScreen('room');
@@ -265,9 +296,9 @@ const App = () => {
 
     try {
       const { room: joinedRoom, defaults } = await joinRoom(name, roomKey);
-      applyServerDefaults(defaults);
-
-      setRoomData(joinedRoom);
+      await applyServerDefaults(defaults);
+      await upsertRoom(joinedRoom);
+      setActiveRoomKey(joinedRoom.key);
       localStorage.setItem('sprintjam_roomKey', joinedRoom.key);
       setIsModeratorView(joinedRoom.moderator === name);
       setScreen('room');
@@ -350,15 +381,23 @@ const App = () => {
   };
 
   const handleJiraTicketFetched = (ticket: JiraTicket | undefined) => {
-    setRoomData((prevData) =>
-      prevData ? { ...prevData, currentJiraTicket: ticket } : prevData
-    );
+    const key = activeRoomKeyRef.current;
+    if (!key) {
+      return;
+    }
+    void setRoomJiraTicket(key, ticket).catch((error) => {
+      console.error('Failed to update Jira ticket from fetch', error);
+    });
   };
 
   const handleJiraTicketUpdated = (ticket: JiraTicket) => {
-    setRoomData((prevData) =>
-      prevData ? { ...prevData, currentJiraTicket: ticket } : prevData
-    );
+    const key = activeRoomKeyRef.current;
+    if (!key) {
+      return;
+    }
+    void setRoomJiraTicket(key, ticket).catch((error) => {
+      console.error('Failed to apply Jira ticket update', error);
+    });
   };
 
   // Auto-update Jira story points if setting is enabled
@@ -400,12 +439,15 @@ const App = () => {
     disconnectFromRoom();
     localStorage.removeItem('sprintjam_roomKey');
 
-    if (serverDefaults) {
-      setRoomData(buildInitialRoomData(serverDefaults.roomSettings));
-    } else {
-      setRoomData(null);
+    const key = activeRoomKeyRef.current;
+    if (key) {
+      void removeRoomFromCollection(key).catch((error) => {
+        console.error('Failed to remove room from collection', error);
+      });
     }
+    setActiveRoomKey(null);
     setUserVote(null);
+    setIsModeratorView(false);
     setScreen('welcome');
   };
 
