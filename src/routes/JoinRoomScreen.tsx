@@ -1,5 +1,7 @@
 /** biome-ignore-all lint/nursery/useUniqueElementIds: <explanation> */
 import type { FC, ChangeEvent, FormEvent } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Users, Key, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface JoinRoomScreenProps {
   name: string;
@@ -34,82 +36,165 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
     }
   };
 
+  const isFormValid = name.trim() && roomKey.trim();
+
   return (
-    <div className="flex flex-col items-center justify-center p-8 space-y-6">
-      <h1 className="text-2xl font-bold text-blue-600">Join Existing Room</h1>
-
-      <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        {error && (
-          <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
-            {error}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+        <motion.div 
+          className="w-full max-w-md"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="text-center mb-8">
+            <motion.div
+              className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
+            >
+              <Users className="w-8 h-8 text-white" />
+            </motion.div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Join Room
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Enter the room details to join your team
+            </p>
           </div>
-        )}
-        
-        <div className="mb-4">
-          <label htmlFor="join-name" className="block mb-2 text-sm font-medium text-gray-700">
-            Your Name
-          </label>
-          <input
-            id="join-name"
-            type="text"
-            value={name}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter your name"
-            required
-          />
-        </div>
 
-        <div className="mb-4">
-          <label htmlFor="join-room-key" className="block mb-2 text-sm font-medium text-gray-700">
-            Room Key
-          </label>
-          <input
-            id="join-room-key"
-            type="text"
-            value={roomKey}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onRoomKeyChange(e.target.value.toUpperCase())}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter room key"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="join-passcode" className="block mb-2 text-sm font-medium text-gray-700">
-            Room Passcode (if required)
-          </label>
-          <input
-            id="join-passcode"
-            type="password"
-            value={passcode}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter passcode (leave empty if room has no passcode)"
-          />
-        </div>
-
-        <div className="flex space-x-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+          <motion.form 
+            onSubmit={handleSubmit} 
+            className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200/50"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
           >
-            Back
-          </button>
-          <button
-            type="submit"
-            disabled={!name || !roomKey}
-            className={`flex-1 px-4 py-2 text-white rounded-md ${
-              name && roomKey
-                ? 'bg-blue-500 hover:bg-blue-600'
-                : 'bg-blue-300 cursor-not-allowed'
-            }`}
+            {error && (
+              <motion.div 
+                className="flex items-center gap-3 p-4 mb-6 text-red-700 bg-red-50 border border-red-200 rounded-xl"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
+              </motion.div>
+            )}
+            
+            <div className="mb-6">
+              <label htmlFor="join-name" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+                <User className="w-4 h-4" />
+                Your Name
+              </label>
+              <div className="relative">
+                <input
+                  id="join-name"
+                  type="text"
+                  value={name}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  placeholder="Enter your name"
+                  required
+                />
+                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                {name.trim() && (
+                  <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
+                )}
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="join-room-key" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+                <Key className="w-4 h-4" />
+                Room Key
+              </label>
+              <div className="relative">
+                <input
+                  id="join-room-key"
+                  type="text"
+                  value={roomKey}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => onRoomKeyChange(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white font-mono text-center tracking-wider"
+                  placeholder="0MTINL"
+                  maxLength={6}
+                  style={{ letterSpacing: '0.2em' }}
+                  required
+                />
+                <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                {roomKey.trim() && (
+                  <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
+                )}
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Enter the 6-character room key (e.g., 0MTINL)
+              </p>
+            </div>
+
+            <div className="mb-8">
+              <label htmlFor="join-passcode" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+                <Lock className="w-4 h-4" />
+                Room Passcode
+                <span className="text-xs text-gray-500 font-normal">(optional)</span>
+              </label>
+              <div className="relative">
+                <input
+                  id="join-passcode"
+                  type="password"
+                  value={passcode}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  placeholder="Enter passcode if required"
+                />
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Leave empty if the room doesn't require a passcode
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <motion.button
+                type="button"
+                onClick={onBack}
+                className="flex items-center justify-center gap-2 px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 font-medium"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </motion.button>
+              
+              <motion.button
+                type="submit"
+                disabled={!isFormValid}
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-xl transition-all duration-200 ${
+                  isFormValid
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+                whileHover={isFormValid ? { scale: 1.02 } : {}}
+                whileTap={isFormValid ? { scale: 0.98 } : {}}
+              >
+                <Users className="w-4 h-4" />
+                Join Room
+              </motion.button>
+            </div>
+          </motion.form>
+
+          <motion.div 
+            className="text-center mt-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: 0.2 }}
           >
-            Join Room
-          </button>
-        </div>
-      </form>
+            <p className="text-sm text-gray-600">
+              Don't have a room key? Ask your team moderator to share it with you.
+            </p>
+          </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };
