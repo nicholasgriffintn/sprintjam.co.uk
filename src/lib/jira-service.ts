@@ -37,9 +37,7 @@ export async function fetchJiraTicket(
   
     if (data.ticket) {
       return data.ticket;
-    } else if (data.room && data.room.jiraTicket) {
-      return data.room.jiraTicket;
-    } else if (data.success && data.room && data.room.jiraTicket) {
+    } else if (data.room?.jiraTicket) {
       return data.room.jiraTicket;
     }
     throw new Error('Invalid response format from Jira API');
@@ -101,7 +99,7 @@ export function convertVoteValueToStoryPoints(voteValue: VoteValue): number | nu
   
   const numericValue = typeof voteValue === 'number' ? voteValue : Number(voteValue);
   
-  if (isNaN(numericValue)) {
+  if (Number.isNaN(numericValue)) {
     return null;
   }
   

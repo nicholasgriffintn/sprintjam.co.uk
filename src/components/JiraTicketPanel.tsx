@@ -96,6 +96,7 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
               disabled={isLoading}
             />
             <button
+              type="button"
               onClick={handleFetchTicket}
               disabled={isLoading || !ticketId.trim()}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
@@ -120,10 +121,11 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
             </div>
             {isModeratorView && (
               <button
+                type="button"
                 onClick={async () => {
                   try {
                     await clearJiraTicket(roomKey, userName);
-                    onJiraTicketFetched(undefined as any);
+                    onJiraTicketFetched(undefined as unknown as JiraTicket);
                   } catch (err) {
                     onError(err instanceof Error ? err.message : 'Failed to clear Jira ticket');
                   }
@@ -160,6 +162,7 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
               <div className="flex items-center space-x-2">
                 <span className="text-sm">Current Vote Score: <span className="font-medium">{judgeScore}</span></span>
                 <button
+                  type="button"
                   onClick={handleUpdateStoryPoints}
                   disabled={isUpdating}
                   className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
