@@ -1,5 +1,15 @@
-import type { RoomData, VoteValue, RoomSettings, StructuredVote, ServerDefaults } from '../types';
+import type {
+  RoomData,
+  VoteValue,
+  RoomSettings,
+  StructuredVote,
+  ServerDefaults,
+  WebSocketMessage,
+  WebSocketMessageType,
+} from '../types';
 import { API_BASE_URL, WS_BASE_URL } from '../constants';
+
+export type { WebSocketMessageType } from '../types';
 
 let activeSocket: WebSocket | null = null;
 let reconnectAttempts = 0;
@@ -8,28 +18,6 @@ const RECONNECT_BASE_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
 const eventListeners: Record<string, ((data: WebSocketMessage) => void)[]> = {};
 let defaultSettingsCache: ServerDefaults | null = null;
-
-export type WebSocketMessageType = 
-  | 'initialize'
-  | 'userJoined'
-  | 'userLeft'
-  | 'userConnectionStatus'
-  | 'vote'
-  | 'showVotes'
-  | 'resetVotes'
-  | 'newModerator'
-  | 'settingsUpdated'
-  | 'judgeScoreUpdated'
-  | 'jiraTicketUpdated'
-  | 'error'
-  | 'disconnected';
-
-interface WebSocketMessage {
-  type: WebSocketMessageType;
-  roomData?: RoomData;
-  settings?: RoomSettings;
-  error?: string;
-}
 
 function updateDefaultSettingsCache(defaults?: ServerDefaults): void {
   if (defaults) {
@@ -142,7 +130,7 @@ export async function joinRoom(name: string, roomKey: string): Promise<{ room: R
 export function connectToRoom(
   roomKey: string, 
   name: string, 
-  onRoomUpdate: (data: RoomData) => void
+  onMessage: (data: WebSocketMessage) => void
 ): WebSocket {
   if (activeSocket) {
     activeSocket.close();
@@ -165,6 +153,12 @@ export function connectToRoom(
         const data = JSON.parse(event.data) as WebSocketMessage;
         console.log('Received message:', data);
 
+        try {
+          onMessage(data);
+        } catch (callbackError) {
+          console.error('Error in onMessage handler:', callbackError);
+        }
+
         switch (data.type) {
           case 'initialize':
           case 'userJoined':
@@ -177,10 +171,7 @@ export function connectToRoom(
           case 'settingsUpdated':
           case 'judgeScoreUpdated':
           case 'jiraTicketUpdated':
-            if (data.roomData) {
-              onRoomUpdate(data.roomData);
-            }
-
+          case 'jiraTicketCleared':
             triggerEventListeners(data.type, data);
             break;
 
@@ -201,7 +192,7 @@ export function connectToRoom(
       console.log('WebSocket connection closed:', event.code, event.reason);
 
       if (event.code !== 1000 && event.code !== 1001) {
-        handleReconnect(roomKey, name, onRoomUpdate);
+        handleReconnect(roomKey, name, onMessage);
       }
     };
 
@@ -231,7 +222,7 @@ export function connectToRoom(
 function handleReconnect(
   roomKey: string, 
   name: string, 
-  onRoomUpdate: (data: RoomData) => void
+  onMessage: (data: WebSocketMessage) => void
 ): void {
   if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     reconnectAttempts++;
@@ -247,7 +238,7 @@ function handleReconnect(
     );
 
     setTimeout(() => {
-      connectToRoom(roomKey, name, onRoomUpdate);
+      connectToRoom(roomKey, name, onMessage);
     }, delay);
   } else {
     console.error('Max reconnection attempts reached');

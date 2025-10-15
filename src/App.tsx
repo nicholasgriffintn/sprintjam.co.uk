@@ -14,7 +14,6 @@ import {
   isConnected,
   fetchDefaultSettings,
   getCachedDefaultSettings,
-  type WebSocketMessageType,
 } from './lib/api-service';
 import { updateJiraStoryPoints } from './lib/jira-service';
 import type {
@@ -25,8 +24,11 @@ import type {
   JiraTicket,
   StructuredVote,
   ServerDefaults,
+  WebSocketMessage,
+  WebSocketMessageType,
 } from './types';
 import { buildInitialRoomData, cloneServerDefaults } from './utils/settings';
+import { applyRoomUpdate } from './utils/room';
 import WelcomeScreen from './routes/WelcomeScreen';
 import CreateRoomScreen from './routes/CreateRoomScreen';
 import JoinRoomScreen from './routes/JoinRoomScreen';
@@ -155,24 +157,20 @@ const App = () => {
     }
   }, [name, screen, isLoadingDefaults, applyServerDefaults]);
 
-  const handleRoomUpdate = useCallback(
-    (updatedRoomData: RoomData) => {
-      setRoomData(updatedRoomData);
+  const handleRoomMessage = useCallback((message: WebSocketMessage) => {
+    if (message.type === 'error') {
+      setError(message.error || 'Connection error');
+      return;
+    }
 
-      const updatedVote = updatedRoomData.votes[name] ?? null;
-      setUserVote(updatedVote);
-
-      setIsModeratorView(updatedRoomData.moderator === name);
-
-      setError('');
-    },
-    [name]
-  );
+    setRoomData((current) => applyRoomUpdate(current, message));
+    setError('');
+  }, []);
 
   // Connect to WebSocket when entering a room
   useEffect(() => {
     if (screen === 'room' && name && roomData?.key) {
-      connectToRoom(roomData.key, name, handleRoomUpdate);
+      connectToRoom(roomData.key, name, handleRoomMessage);
 
       const errorHandler = (data: WebSocketErrorData) => {
         setError(data.error || 'Connection error');
@@ -191,8 +189,29 @@ const App = () => {
         }
       };
     }
-  }, [screen, name, roomData?.key, handleRoomUpdate]);
+  }, [screen, name, roomData?.key, handleRoomMessage]);
 
+  useEffect(() => {
+    if (!roomData) {
+      if (userVote !== null) {
+        setUserVote(null);
+      }
+      if (isModeratorView !== false) {
+        setIsModeratorView(false);
+      }
+      return;
+    }
+
+    const nextVote = roomData.votes[name] ?? null;
+    if (nextVote !== userVote) {
+      setUserVote(nextVote);
+    }
+
+    const nextModeratorView = roomData.moderator === name;
+    if (nextModeratorView !== isModeratorView) {
+      setIsModeratorView(nextModeratorView);
+    }
+  }, [roomData, name, userVote, isModeratorView]);
   // Persist user name in localStorage
   useEffect(() => {
     if (!didLoadName.current) {

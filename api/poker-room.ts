@@ -142,7 +142,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/join' && request.method === 'POST') {
-      const { name } = await request.json() as { name: string };
+      const { name } = (await request.json()) as { name: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -170,8 +170,7 @@ export class PokerRoom {
 
         this.broadcast({
           type: 'userJoined',
-          name,
-          roomData,
+          user: name,
         });
 
         const defaults = getServerDefaults();
@@ -190,7 +189,10 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/vote' && request.method === 'POST') {
-      const { name, vote } = await request.json() as { name: string; vote: string | number };
+      const { name, vote } = (await request.json()) as {
+        name: string;
+        vote: string | number;
+      };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -215,10 +217,15 @@ export class PokerRoom {
         roomData.votes[name] = vote;
         await this.state.storage.put('roomData', roomData);
 
+        const structuredVote = isStructuredVote(vote)
+          ? roomData.structuredVotes?.[name]
+          : undefined;
+
         this.broadcast({
           type: 'vote',
-          name,
-          roomData,
+          user: name,
+          vote,
+          structuredVote,
         });
 
         return new Response(
@@ -234,7 +241,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/showVotes' && request.method === 'POST') {
-      const { name } = await request.json() as { name: string };
+      const { name } = (await request.json()) as { name: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -246,7 +253,10 @@ export class PokerRoom {
           }) as unknown as CfResponse;
         }
 
-        if (roomData.moderator !== name && !roomData.settings.allowOthersToShowEstimates) {
+        if (
+          roomData.moderator !== name &&
+          !roomData.settings.allowOthersToShowEstimates
+        ) {
           return new Response(
             JSON.stringify({ error: 'Only the moderator can show votes' }),
             {
@@ -262,7 +272,6 @@ export class PokerRoom {
         this.broadcast({
           type: 'showVotes',
           showVotes: roomData.showVotes,
-          roomData,
         });
 
         return new Response(
@@ -278,7 +287,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/resetVotes' && request.method === 'POST') {
-      const { name } = await request.json() as { name: string };
+      const { name } = (await request.json()) as { name: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -290,7 +299,10 @@ export class PokerRoom {
           }) as unknown as CfResponse;
         }
 
-        if (roomData.moderator !== name && !roomData.settings.allowOthersToDeleteEstimates) {
+        if (
+          roomData.moderator !== name &&
+          !roomData.settings.allowOthersToDeleteEstimates
+        ) {
           return new Response(
             JSON.stringify({ error: 'Only the moderator can reset votes' }),
             {
@@ -304,15 +316,19 @@ export class PokerRoom {
         roomData.structuredVotes = {};
         roomData.showVotes = false;
         await this.state.storage.put('roomData', roomData);
-        if (roomData?.settings?.estimateOptions && !roomData?.settings?.voteOptionsMetadata) {
+        if (
+          roomData?.settings?.estimateOptions &&
+          !roomData?.settings?.voteOptionsMetadata
+        ) {
           console.log('Adding missing voteOptionsMetadata');
-          roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(roomData.settings.estimateOptions);
+          roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(
+            roomData.settings.estimateOptions
+          );
           await this.state.storage.put('roomData', roomData);
         }
 
         this.broadcast({
           type: 'resetVotes',
-          roomData,
         });
 
         return new Response(
@@ -351,9 +367,9 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/settings' && request.method === 'PUT') {
-      const { name, settings } = await request.json() as {
+      const { name, settings } = (await request.json()) as {
         name: string;
-        settings: RoomData['settings']
+        settings: RoomData['settings'];
       };
 
       return await this.state.blockConcurrencyWhile(async () => {
@@ -382,27 +398,34 @@ export class PokerRoom {
         const newSettings = {
           ...defaultSettings,
           ...roomData.settings,
-          ...providedSettings
+          ...providedSettings,
         };
 
         if (providedSettings.enableStructuredVoting === true) {
           const structuredOptions = getDefaultStructuredVotingOptions();
           newSettings.estimateOptions = structuredOptions;
-          newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(structuredOptions);
+          newSettings.voteOptionsMetadata =
+            generateVoteOptionsMetadata(structuredOptions);
           if (!newSettings.votingCriteria) {
             newSettings.votingCriteria = defaultSettings.votingCriteria;
           }
-        } else if (providedSettings.enableStructuredVoting === false && !providedSettings.estimateOptions) {
+        } else if (
+          providedSettings.enableStructuredVoting === false &&
+          !providedSettings.estimateOptions
+        ) {
           const defaultOptions = getDefaultEstimateOptions();
           newSettings.estimateOptions = defaultOptions;
-          newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(defaultOptions);
+          newSettings.voteOptionsMetadata =
+            generateVoteOptionsMetadata(defaultOptions);
           if (!newSettings.votingCriteria) {
             newSettings.votingCriteria = defaultSettings.votingCriteria;
           }
         }
 
         if (providedSettings.estimateOptions) {
-          newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(providedSettings.estimateOptions);
+          newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(
+            providedSettings.estimateOptions
+          );
         }
 
         roomData.settings = newSettings;
@@ -412,7 +435,6 @@ export class PokerRoom {
         this.broadcast({
           type: 'settingsUpdated',
           settings: roomData.settings,
-          roomData,
         });
 
         return new Response(
@@ -428,7 +450,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/jira/ticket' && request.method === 'POST') {
-      const { name, ticket } = await request.json() as {
+      const { name, ticket } = (await request.json()) as {
         name: string;
         ticket: JiraTicket;
       };
@@ -459,7 +481,6 @@ export class PokerRoom {
         this.broadcast({
           type: 'jiraTicketUpdated',
           ticket: roomData.jiraTicket,
-          roomData,
         });
 
         return new Response(
@@ -475,7 +496,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/jira/ticket/clear' && request.method === 'POST') {
-      const { name } = await request.json() as { name: string };
+      const { name } = (await request.json()) as { name: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -501,9 +522,7 @@ export class PokerRoom {
         await this.state.storage.put('roomData', roomData);
 
         this.broadcast({
-          type: 'jiraTicketUpdated',
-          ticket: undefined,
-          roomData,
+          type: 'jiraTicketCleared',
         });
 
         return new Response(
@@ -542,8 +561,13 @@ export class PokerRoom {
         }
         roomData.connectedUsers[userName] = true;
 
-        if (!roomData.settings.voteOptionsMetadata && roomData.settings.estimateOptions) {
-          roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(roomData.settings.estimateOptions);
+        if (
+          !roomData.settings.voteOptionsMetadata &&
+          roomData.settings.estimateOptions
+        ) {
+          roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(
+            roomData.settings.estimateOptions
+          );
         }
 
         await this.state.storage.put('roomData', roomData);
@@ -552,7 +576,6 @@ export class PokerRoom {
           type: 'userConnectionStatus',
           user: userName,
           isConnected: true,
-          roomData,
         });
       }
     });
@@ -567,7 +590,10 @@ export class PokerRoom {
 
     webSocket.addEventListener('message', async (msg) => {
       try {
-        const messageData = typeof msg.data === 'string' ? msg.data : new TextDecoder().decode(msg.data);
+        const messageData =
+          typeof msg.data === 'string'
+            ? msg.data
+            : new TextDecoder().decode(msg.data);
         const data = JSON.parse(messageData);
 
         if (data.type === 'vote') {
@@ -618,11 +644,12 @@ export class PokerRoom {
               type: 'userConnectionStatus',
               user: userName,
               isConnected: false,
-              roomData,
             });
 
             if (userName === roomData.moderator) {
-              const connectedUsers = roomData.users.filter(user => roomData.connectedUsers[user]);
+              const connectedUsers = roomData.users.filter(
+                (user) => roomData.connectedUsers[user]
+              );
 
               if (connectedUsers.length > 0) {
                 roomData.moderator = connectedUsers[0];
@@ -630,8 +657,7 @@ export class PokerRoom {
 
                 this.broadcast({
                   type: 'newModerator',
-                  name: roomData.moderator,
-                  roomData,
+                  moderator: roomData.moderator,
                 });
               }
             }
@@ -648,6 +674,7 @@ export class PokerRoom {
 
       // If it's a structured vote, calculate the story points and store both
       let finalVote: string | number;
+      let structuredVotePayload: StructuredVote | null = null;
       if (isStructuredVote(vote)) {
         const structuredVote = createStructuredVote(vote.criteriaScores);
         const calculatedPoints = structuredVote.calculatedStoryPoints || '?';
@@ -656,6 +683,7 @@ export class PokerRoom {
           roomData.structuredVotes = {};
         }
         roomData.structuredVotes[userName] = structuredVote;
+        structuredVotePayload = structuredVote;
       } else {
         finalVote = vote;
       }
@@ -666,8 +694,9 @@ export class PokerRoom {
 
       this.broadcast({
         type: 'vote',
-        name: userName,
-        roomData,
+        user: userName,
+        vote: finalVote,
+        structuredVote: structuredVotePayload,
       });
 
       if (roomData.showVotes && roomData.settings.enableJudge) {
@@ -690,7 +719,6 @@ export class PokerRoom {
       this.broadcast({
         type: 'showVotes',
         showVotes: roomData.showVotes,
-        roomData,
       });
 
       if (roomData.showVotes && roomData.settings.enableJudge) {
@@ -715,7 +743,6 @@ export class PokerRoom {
 
       this.broadcast({
         type: 'resetVotes',
-        roomData,
       });
     });
   }
@@ -767,10 +794,13 @@ export class PokerRoom {
       this.broadcast({
         type: 'settingsUpdated',
         settings: roomData.settings,
-        roomData,
       });
 
-      if (judgeSettingsChanged && roomData.showVotes && roomData.settings.enableJudge) {
+      if (
+        judgeSettingsChanged &&
+        roomData.showVotes &&
+        roomData.settings.enableJudge
+      ) {
         await this.calculateAndUpdateJudgeScore();
       } else if (judgeSettingsChanged && !roomData.settings.enableJudge) {
         roomData.judgeScore = null;
@@ -779,7 +809,6 @@ export class PokerRoom {
         this.broadcast({
           type: 'judgeScoreUpdated',
           judgeScore: null,
-          roomData,
         });
       }
     });
@@ -832,7 +861,6 @@ export class PokerRoom {
         type: 'judgeScoreUpdated',
         judgeScore: result.score,
         judgeMetadata: roomData.judgeMetadata,
-        roomData,
       });
     });
   }
@@ -852,7 +880,6 @@ export class PokerRoom {
       this.broadcast({
         type: 'jiraTicketUpdated',
         ticket: roomData.jiraTicket,
-        roomData,
       });
     });
   }
@@ -871,7 +898,6 @@ export class PokerRoom {
 
       this.broadcast({
         type: 'jiraTicketCleared',
-        roomData,
       });
     });
   }

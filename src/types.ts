@@ -155,16 +155,37 @@ export interface WebSocketErrorData {
   code?: number;
 }
 
+export type WebSocketMessageType =
+  | 'initialize'
+  | 'userJoined'
+  | 'userLeft'
+  | 'userConnectionStatus'
+  | 'vote'
+  | 'showVotes'
+  | 'resetVotes'
+  | 'newModerator'
+  | 'settingsUpdated'
+  | 'judgeScoreUpdated'
+  | 'jiraTicketUpdated'
+  | 'jiraTicketCleared'
+  | 'error'
+  | 'disconnected';
+
 export interface WebSocketMessage {
-  type: string;
+  type: WebSocketMessageType;
   roomData?: RoomData;
   settings?: RoomSettings;
   error?: string;
   message?: string;
   user?: string;
+  vote?: VoteValue | null;
+  structuredVote?: StructuredVote | null;
+  showVotes?: boolean;
   isConnected?: boolean;
   judgeScore?: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
+  moderator?: string;
+  ticket?: JiraTicket | undefined;
 }
 
 export interface RoomStats {
