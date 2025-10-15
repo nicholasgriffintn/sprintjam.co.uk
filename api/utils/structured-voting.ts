@@ -41,15 +41,23 @@
 
 import type { VotingCriterion, StructuredVote } from '../types';
 
-export function calculateStoryPointsFromStructuredVote(
-  criteriaScores: Record<string, number>,
-): string | number | undefined {
+function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
+  weightedScore: number;
+  finalScore: number;
+  appliedConversionRules: string[];
+  contributions: {
+    id: string;
+    weightPercent: number;
+    score: number;
+    maxScore: number;
+    contributionPercent: number;
+  }[];
+} {
   const complexity = criteriaScores.complexity ?? 0;
   const confidence = criteriaScores.confidence ?? 0;
   const volume = criteriaScores.volume ?? 0;
   const unknowns = criteriaScores.unknowns ?? 0;
 
-  // Calculate weighted score using the formula:
   const maxComplexityScore = 4;
   const maxConfidenceScore = 4;
   const maxVolumeScore = 4;
@@ -60,35 +68,52 @@ export function calculateStoryPointsFromStructuredVote(
   const volumeWeight = 0.25;
   const unknownsWeight = 0.15;
 
-  const weightedScore =
-    (complexity * 100 / maxComplexityScore * complexityWeight) +
-    (confidence * 100 / maxConfidenceScore * confidenceWeight) +
-    (volume * 100 / maxVolumeScore * volumeWeight) +
-    (unknowns * 100 / maxUnknownsScore * unknownsWeight);
+  const complexityContribution = (complexity / maxComplexityScore) * (complexityWeight * 100);
+  const confidenceContribution = (confidence / maxConfidenceScore) * (confidenceWeight * 100);
+  const volumeContribution = (volume / maxVolumeScore) * (volumeWeight * 100);
+  const unknownsContribution = (unknowns / maxUnknownsScore) * (unknownsWeight * 100);
 
-  // Apply conversion rules
+  const weightedScore =
+    complexityContribution +
+    confidenceContribution +
+    volumeContribution +
+    unknownsContribution;
+
+  const contributions = [
+    { id: 'complexity', weightPercent: complexityWeight * 100, score: complexity, maxScore: maxComplexityScore, contributionPercent: complexityContribution },
+    { id: 'confidence', weightPercent: confidenceWeight * 100, score: confidence, maxScore: maxConfidenceScore, contributionPercent: confidenceContribution },
+    { id: 'volume', weightPercent: volumeWeight * 100, score: volume, maxScore: maxVolumeScore, contributionPercent: volumeContribution },
+    { id: 'unknowns', weightPercent: unknownsWeight * 100, score: unknowns, maxScore: maxUnknownsScore, contributionPercent: unknownsContribution },
+  ];
+
+  const appliedConversionRules: string[] = [];
   let finalScore = weightedScore;
 
   const minUnknowns2Score = 80;
   const minUnknowns1Score = 35;
   const minVolume4Score = 80;
 
-  // If unknowns = 2, minimum estimation is 8
   if (unknowns === 2) {
     finalScore = Math.max(finalScore, minUnknowns2Score);
-  }
-  // If unknowns = 1, minimum estimation is 3
-  else if (unknowns === 1) {
+    appliedConversionRules.push('Unknowns=2 → minimum 8pt');
+  } else if (unknowns === 1) {
     finalScore = Math.max(finalScore, minUnknowns1Score);
+    appliedConversionRules.push('Unknowns=1 → minimum 3pt');
   }
 
-  // If volume = 4, minimum estimation is 8
   if (volume === 4) {
     finalScore = Math.max(finalScore, minVolume4Score);
+    appliedConversionRules.push('Volume=4 → minimum 8pt');
   }
 
-  // Map percentage score to story points
-  // 1: 0-2 (0-34%), 3: 3-7 (35-49%), 5: 8-11 (50-79%), 8: 12+ (80%+)
+  return { weightedScore, finalScore, appliedConversionRules, contributions };
+}
+
+export function calculateStoryPointsFromStructuredVote(
+  criteriaScores: Record<string, number>,
+): string | number | undefined {
+  const { finalScore } = computeWeightedScoreAndRules(criteriaScores);
+
   const max1ptScore = 35;
   const max3ptScore = 50;
   const max5ptScore = 80;
@@ -108,10 +133,14 @@ export function createStructuredVote(
   criteriaScores: Record<string, number>,
 ): StructuredVote {
   const calculatedStoryPoints = calculateStoryPointsFromStructuredVote(criteriaScores);
+  const { weightedScore, appliedConversionRules, contributions } = computeWeightedScoreAndRules(criteriaScores);
 
   return {
     criteriaScores,
-    calculatedStoryPoints
+    calculatedStoryPoints,
+    percentageScore: weightedScore,
+    appliedConversionRules,
+    contributions,
   };
 }
 

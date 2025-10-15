@@ -9,7 +9,7 @@ import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket, Structur
 import { JudgeAlgorithm } from './types'
 import { STRUCTURED_VOTING_OPTIONS, VOTING_OPTIONS } from './constants'
 import { generateVoteOptionsMetadata } from './utils/votes'
-import { getDefaultVotingCriteria, isStructuredVote, calculateStoryPointsFromStructuredVote } from './utils/structured-voting'
+import { getDefaultVotingCriteria, isStructuredVote, createStructuredVote } from './utils/structured-voting'
 
 function returnInitialOptions({
   key = "",
@@ -636,13 +636,13 @@ export class PokerRoom {
       // If it's a structured vote, calculate the story points and store both
       let finalVote: string | number;
       if (isStructuredVote(vote)) {
-        const calculatedPoints = calculateStoryPointsFromStructuredVote(vote.criteriaScores);
-        finalVote = calculatedPoints || '?';
-
+        const structuredVote = createStructuredVote(vote.criteriaScores);
+        const calculatedPoints = structuredVote.calculatedStoryPoints || '?';
+        finalVote = calculatedPoints;
         if (!roomData.structuredVotes) {
           roomData.structuredVotes = {};
         }
-        roomData.structuredVotes[userName] = vote;
+        roomData.structuredVotes[userName] = structuredVote;
       } else {
         finalVote = vote;
       }

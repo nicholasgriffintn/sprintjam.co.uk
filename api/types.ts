@@ -46,6 +46,15 @@ export interface VotingCriterion {
 export interface StructuredVote {
   criteriaScores: Record<string, number>;
   calculatedStoryPoints?: string | number;
+  percentageScore?: number;
+  appliedConversionRules?: string[];
+  contributions?: {
+    id: string;
+    weightPercent: number;
+    score: number;
+    maxScore: number;
+    contributionPercent: number;
+  }[];
 }
 
 export interface JiraTicket {

@@ -25,6 +25,15 @@ export interface VoteOptionMetadata {
 export interface StructuredVote {
   criteriaScores: Record<string, number>;
   calculatedStoryPoints?: VoteValue;
+  percentageScore?: number;
+  appliedConversionRules?: string[];
+  contributions?: {
+    id: string;
+    weightPercent: number;
+    score: number;
+    maxScore: number;
+    contributionPercent: number;
+  }[];
 }
 
 export interface VotingCriterion {
