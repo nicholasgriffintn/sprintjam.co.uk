@@ -38,16 +38,6 @@ export interface VotingCriterion {
   maxScore: number;
 }
 
-export interface ScoringRule {
-  storyPoints: string | number;
-  conditions: {
-    criterionId: string;
-    minScore: number;
-    maxScore: number;
-  }[];
-  maxTotalScore?: number;
-}
-
 export interface StructuredVote {
   criteriaScores: Record<string, number>;
   calculatedStoryPoints?: string | number;
@@ -90,7 +80,6 @@ export interface RoomData {
     judgeAlgorithm: JudgeAlgorithm;
     enableStructuredVoting?: boolean;
     votingCriteria?: VotingCriterion[];
-    scoringRules?: ScoringRule[];
   };
 }
 

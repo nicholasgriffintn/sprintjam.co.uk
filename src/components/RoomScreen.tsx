@@ -160,10 +160,9 @@ const RoomScreen: FC<RoomScreenProps> = ({
             <Timer />
           )}
 
-          {roomData.settings.enableStructuredVoting && roomData.settings.votingCriteria && roomData.settings.scoringRules ? (
+          {roomData.settings.enableStructuredVoting && roomData.settings.votingCriteria ? (
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
-              scoringRules={roomData.settings.scoringRules}
               currentVote={roomData.structuredVotes?.[name] || null}
               onVote={onVote}
             />

@@ -1,12 +1,11 @@
 import { motion } from 'framer-motion';
 import { useState, useMemo, useEffect } from 'react';
 import { Info } from 'lucide-react';
-import type { VotingCriterion, ScoringRule, StructuredVote } from '../types';
-import { createStructuredVote } from '../utils/structured-voting';
+import type { VotingCriterion, StructuredVote } from '../types';
+import { createStructuredVote, getWeightedPercentageScore } from '../utils/structured-voting';
 
 interface StructuredVotingPanelProps {
   criteria: VotingCriterion[];
-  scoringRules: ScoringRule[];
   currentVote: StructuredVote | null;
   onVote: (vote: StructuredVote) => void;
 }
@@ -54,9 +53,8 @@ function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
 }
 
 export function StructuredVotingPanel({ 
-  criteria, 
-  scoringRules, 
-  currentVote, 
+  criteria,
+  currentVote,
   onVote 
 }: StructuredVotingPanelProps) {
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>(() => {
@@ -75,37 +73,43 @@ export function StructuredVotingPanel({
   }, [currentVote]);
 
   const calculatedVote = useMemo(() => {
-    return createStructuredVote(criteriaScores, scoringRules);
-  }, [criteriaScores, scoringRules]);
+    return createStructuredVote(criteriaScores);
+  }, [criteriaScores]);
 
-  const appliedRule = useMemo(() => {
-    const totalScore = Object.values(criteriaScores).reduce((sum, score) => sum + score, 0);
-    
-    for (const rule of scoringRules) {
-      let matchesRule = true;
-      for (const condition of rule.conditions) {
-        const score = criteriaScores[condition.criterionId];
-        if (score === undefined || score < condition.minScore || score > condition.maxScore) {
-          matchesRule = false;
-          break;
-        }
-      }
-      if (matchesRule && (rule.maxTotalScore === undefined || totalScore <= rule.maxTotalScore)) {
-        return rule;
-      }
+  const percentageScore = useMemo(() => {
+    return getWeightedPercentageScore(criteriaScores);
+  }, [criteriaScores]);
+
+  const appliedConversions = useMemo(() => {
+    const conversions = [];
+    if (criteriaScores.unknowns === 2) {
+      conversions.push('Unknowns=2 → minimum 8pt');
+    } else if (criteriaScores.unknowns === 1) {
+      conversions.push('Unknowns=1 → minimum 3pt');
     }
-    return null;
-  }, [criteriaScores, scoringRules]);
+    if (criteriaScores.volume === 4) {
+      conversions.push('Volume=4 → minimum 8pt');
+    }
+    return conversions;
+  }, [criteriaScores]);
 
   const handleScoreChange = (criterionId: string, score: number) => {
     const newScores = { ...criteriaScores, [criterionId]: score };
     setCriteriaScores(newScores);
     
-    const newVote = createStructuredVote(newScores, scoringRules);
+    const newVote = createStructuredVote(newScores);
     onVote(newVote);
   };
 
-  const totalScore = Object.values(criteriaScores).reduce((sum, score) => sum + score, 0);
+  const getCriterionWeight = (criterionId: string) => {
+    switch (criterionId) {
+      case 'complexity': return 35;
+      case 'confidence': return 25;
+      case 'volume': return 25;
+      case 'unknowns': return 15;
+      default: return 0;
+    }
+  };
 
   return (
     <div className="mb-6">
@@ -138,18 +142,44 @@ export function StructuredVotingPanel({
 
       {showScoringInfo && (
         <div className="mb-4 p-3 bg-gray-50 border rounded-lg">
-          <div className="text-sm font-medium text-gray-700 mb-2">Scoring Rules</div>
-          <div className="text-xs text-gray-600 space-y-1">
-            {scoringRules.map((rule, index) => (
-              <div key={index} className={`${appliedRule === rule ? 'text-blue-600 font-medium' : ''}`}>
-                <span className="font-medium">{rule.storyPoints}pt:</span> {
-                  rule.conditions.map((c) => 
-                    `${criteria.find(cr => cr.id === c.criterionId)?.name} ${c.minScore}-${c.maxScore}`
-                  ).join(', ')
-                }
-                {rule.maxTotalScore !== undefined && ` (max total: ${rule.maxTotalScore})`}
+          <div className="text-sm font-medium text-gray-700 mb-3">Weighted Scoring System</div>
+          <div className="text-xs text-gray-600 space-y-2">
+            <div className="grid grid-cols-1 gap-1">
+              {criteria.map((criterion) => {
+                const weight = getCriterionWeight(criterion.id);
+                const score = criteriaScores[criterion.id] ?? 0;
+                const maxScore = criterion.id === 'unknowns' ? 2 : 4;
+                const contribution = (score / maxScore * weight).toFixed(1);
+                return (
+                  <div key={criterion.id} className="flex justify-between items-center">
+                    <span className="font-medium">{criterion.name}:</span>
+                    <span className="text-right">
+                      {score}/{maxScore} × {weight}% = {contribution}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="border-t pt-2 mt-2">
+              <div className="flex justify-between font-medium">
+                <span>Total Score:</span>
+                <span>{percentageScore.toFixed(1)}%</span>
               </div>
-            ))}
+            </div>
+            <div className="mt-3 text-xs">
+              <div className="font-medium mb-1">Story Point Ranges:</div>
+              <div className="space-y-0.5">
+                <div>1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+</div>
+              </div>
+            </div>
+            {appliedConversions.length > 0 && (
+              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                <div className="font-medium text-yellow-800 mb-1">Applied Rules:</div>
+                {appliedConversions.map((conversion) => (
+                  <div key={conversion} className="text-yellow-700">{conversion}</div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -157,11 +187,11 @@ export function StructuredVotingPanel({
       <div className="flex items-center justify-between p-3 border-2 border-blue-200 rounded-lg bg-blue-50">
         <div>
           <div className="font-medium text-blue-900">Story Points: {calculatedVote.calculatedStoryPoints || '?'}</div>
-          <div className="text-xs text-blue-700">Total score: {totalScore}</div>
+          <div className="text-xs text-blue-700">Weighted score: {percentageScore.toFixed(1)}%</div>
         </div>
-        {appliedRule && (
+        {appliedConversions.length > 0 && (
           <div className="text-xs text-blue-600">
-            Rule applied: {appliedRule.storyPoints}pt
+            {appliedConversions.length} rule{appliedConversions.length > 1 ? 's' : ''} applied
           </div>
         )}
       </div>

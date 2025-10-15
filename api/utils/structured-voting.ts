@@ -1,36 +1,114 @@
-import type { VotingCriterion, ScoringRule, StructuredVote } from '../types';
+/**
+  * Weighted structured voting system with detailed examples
+  * 
+  * Formula: complexity×100/4×0.35 + confidence×100/4×0.25 + volume×100/4×0.25 + unknowns×100/2×0.15
+  * 
+  * ┌─────────────┬─────────────┬─────────────┬──────────┬───────────┬─────────────┬──────────────────────────────┐
+  * │ Story Points│ Complexity  │ Confidence  │ Volume   │ Unknowns  │ Percentage  │ Example Scenario             │
+  * ├─────────────┼─────────────┼─────────────┼──────────┼───────────┼─────────────┼──────────────────────────────┤
+  * │     1pt     │      0      │      0      │     0    │     0     │    0.0%     │ Trivial config change        │
+  * │     1pt     │      1      │      0      │     0    │     0     │    8.8%     │ Simple same-app fix          │
+  * │     1pt     │      1      │      1      │     1    │     0     │   29.0%     │ Small familiar feature       │
+  * │     3pt     │      2      │      0      │     0    │     0     │   17.5%*    │ *unknowns=1 rule → min 3pt   │
+  * │     3pt     │      1      │      1      │     1    │     1     │   36.5%     │ Moderate task, some unknowns │
+  * │     3pt     │      2      │      2      │     0    │     0     │   42.5%     │ Medium complexity, confident │
+  * │     5pt     │      3      │      2      │     2    │     0     │   64.0%     │ Complex cross-repo work      │
+  * │     5pt     │      2      │      2      │     3    │     1     │   61.3%     │ High volume, some unknowns   │
+  * │     8pt     │      0      │      0      │     0    │     2     │   15.0%*    │ *unknowns=2 rule → min 8pt   │
+  * │     8pt     │      0      │      0      │     4    │     0     │   25.0%*    │ *volume=4 rule → min 8pt     │
+  * │     8pt     │      4      │      4      │     2    │     1     │   88.8%     │ Cross-team, unfamiliar, hard │
+  * │     8pt     │      4      │      4      │     4    │     2     │  100.0%     │ Maximum complexity scenario  │
+  * └─────────────┴─────────────┴─────────────┴──────────┴───────────┴─────────────┴──────────────────────────────┘
+  * 
+  * Weighted breakdown examples:
+  * - Complexity=2: 2×100/4×0.35 = 17.5%
+  * - Confidence=1: 1×100/4×0.25 = 6.25% 
+  * - Volume=3: 3×100/4×0.25 = 18.75%
+  * - Unknowns=1: 1×100/2×0.15 = 7.5%
+  * Total: 17.5 + 6.25 + 18.75 + 7.5 = 50.0% → 5pt
+  * 
+  * Story point ranges:
+  * - 1pt: 0-34% (unless conversion rules apply)
+  * - 3pt: 35-49%
+  * - 5pt: 50-79%
+  * - 8pt: 80%+ or conversion rules (unknowns=2, unknowns=1, volume=4)
+  * 
+  * Conversion rules override percentage calculation:
+  * - unknowns=2 → minimum 8pt (too many implementation unknowns)
+  * - unknowns=1 → minimum 3pt (some implementation unknowns) 
+  * - volume=4 → minimum 8pt (extensive work required)
+  */
+
+import type { VotingCriterion, StructuredVote } from '../types';
 
 export function calculateStoryPointsFromStructuredVote(
   criteriaScores: Record<string, number>,
-  scoringRules: ScoringRule[]
 ): string | number | undefined {
-  const totalScore = Object.values(criteriaScores).reduce((sum, score) => sum + score, 0);
+  const complexity = criteriaScores.complexity ?? 0;
+  const confidence = criteriaScores.confidence ?? 0;
+  const volume = criteriaScores.volume ?? 0;
+  const unknowns = criteriaScores.unknowns ?? 0;
 
-  for (const rule of scoringRules) {
-    let matchesRule = true;
+  // Calculate weighted score using the formula:
+  const maxComplexityScore = 4;
+  const maxConfidenceScore = 4;
+  const maxVolumeScore = 4;
+  const maxUnknownsScore = 2;
 
-    for (const condition of rule.conditions) {
-      const score = criteriaScores[condition.criterionId];
-      if (score === undefined || score < condition.minScore || score > condition.maxScore) {
-        matchesRule = false;
-        break;
-      }
-    }
+  const complexityWeight = 0.35;
+  const confidenceWeight = 0.25;
+  const volumeWeight = 0.25;
+  const unknownsWeight = 0.15;
 
-    if (matchesRule && (rule.maxTotalScore === undefined || totalScore <= rule.maxTotalScore)) {
-      return rule.storyPoints;
-    }
+  const weightedScore =
+    (complexity * 100 / maxComplexityScore * complexityWeight) +
+    (confidence * 100 / maxConfidenceScore * confidenceWeight) +
+    (volume * 100 / maxVolumeScore * volumeWeight) +
+    (unknowns * 100 / maxUnknownsScore * unknownsWeight);
+
+  // Apply conversion rules
+  let finalScore = weightedScore;
+
+  const minUnknowns2Score = 80;
+  const minUnknowns1Score = 35;
+  const minVolume4Score = 80;
+
+  // If unknowns = 2, minimum estimation is 8
+  if (unknowns === 2) {
+    finalScore = Math.max(finalScore, minUnknowns2Score);
+  }
+  // If unknowns = 1, minimum estimation is 3
+  else if (unknowns === 1) {
+    finalScore = Math.max(finalScore, minUnknowns1Score);
   }
 
-  return undefined;
+  // If volume = 4, minimum estimation is 8
+  if (volume === 4) {
+    finalScore = Math.max(finalScore, minVolume4Score);
+  }
+
+  // Map percentage score to story points
+  // 1: 0-2 (0-34%), 3: 3-7 (35-49%), 5: 8-11 (50-79%), 8: 12+ (80%+)
+  const min1ptScore = 35;
+  const min3ptScore = 50;
+  const min5ptScore = 80;
+
+  if (finalScore < min1ptScore) {
+    return 1;
+  } else if (finalScore < min3ptScore) {
+    return 3;
+  } else if (finalScore < min5ptScore) {
+    return 5;
+  } else {
+    return 8;
+  }
 }
 
 export function createStructuredVote(
   criteriaScores: Record<string, number>,
-  scoringRules: ScoringRule[]
 ): StructuredVote {
-  const calculatedStoryPoints = calculateStoryPointsFromStructuredVote(criteriaScores, scoringRules);
-  
+  const calculatedStoryPoints = calculateStoryPointsFromStructuredVote(criteriaScores);
+
   return {
     criteriaScores,
     calculatedStoryPoints
@@ -42,141 +120,30 @@ export function getDefaultVotingCriteria(): VotingCriterion[] {
     {
       id: 'complexity',
       name: 'Complexity',
-      description: 'Technical complexity of the task',
+      description: 'Level of logic and coordination (0: same app, 3: cross repo, 5: cross team)',
       minScore: 0,
-      maxScore: 5
+      maxScore: 4
     },
     {
-      id: 'risks',
-      name: 'Risks',
-      description: 'Potential risks and uncertainties',
+      id: 'confidence',
+      name: 'Individual Confidence',
+      description: 'Your confidence in this area (0: very familiar, 4: completely unfamiliar)',
       minScore: 0,
-      maxScore: 5
+      maxScore: 4
+    },
+    {
+      id: 'volume',
+      name: 'Volume',
+      description: 'Amount of work required (0: minimal, 4: extensive)',
+      minScore: 0,
+      maxScore: 4
     },
     {
       id: 'unknowns',
       name: 'Unknowns',
-      description: 'Unknown factors (internal and external)',
+      description: 'Implementation unknowns (0: none, 1: some, 2: too many)',
       minScore: 0,
-      maxScore: 5
-    }
-  ];
-}
-
-export function generateScoringRulesFromEstimateOptions(estimateOptions: (string | number)[]): ScoringRule[] {
-  /**
-   * Generates scoring rules that map criteria combinations to story points
-   * 
-   * Example with [1,2,3,5,8,13,21]:
-   * ┌─────────────┬─────────────┬──────────┬───────────┬──────────────────────────────┐
-   * │ Story Points │ Complexity  │ Risks    │ Unknowns  │ Logic                        │
-   * ├────────────┼────────────┼─────────┼──────────┼────────────────────────── ─┤
-   * │     1pt     │      0      │    0     │     0     │ All zeros only               │
-   * │     2pt     │    0-2      │   0-2    │     0     │ Low complexity/risks, none   │
-   * │     3pt     │    0-3      │   0-3    │    0-1    │ Moderate + minimal unknowns  │
-   * │     5pt     │    0-4      │   0-4    │    0-1    │ Higher complexity/risks      │
-   * │     8pt     │    0-5      │   0-5    │    0-2    │ High + some unknowns         │
-   * │    13pt     │    0-5      │   0-5    │    0-3    │ Full range + more unknowns   │
-   * │    21pt     │    0-5      │   0-5    │    0-4    │ Maximum uncertainty allowed  │
-   * └─────────────┴─────────────┴──────────┴───────────┴──────────────────────────────┘
-   * 
-   * Math breakdown:
-   * - Complexity/Risks: Min(5, index + 1) → grows with story point position
-   * - Unknowns: Min(5, floor(index * 0.8)) → slower growth, kicks in later
-   * - MaxTotal: 2 + (index * 2) → prevents overly high total combinations
-   */
-
-  const numericOptions = estimateOptions
-    .filter(option => !Number.isNaN(Number(option)) && option !== '?')
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  if (numericOptions.length === 0) {
-    return getDefaultScoringRules();
-  }
-
-  const rules: ScoringRule[] = [];
-
-  numericOptions.forEach((points, index) => {
-    if (points === 0 || points === 1) {
-      // Lowest story points: all criteria must be 0
-      rules.push({
-        storyPoints: points,
-        conditions: [
-          { criterionId: 'complexity', minScore: 0, maxScore: 0 },
-          { criterionId: 'risks', minScore: 0, maxScore: 0 },
-          { criterionId: 'unknowns', minScore: 0, maxScore: 0 }
-        ]
-      });
-    } else {
-      // Progressive scoring: higher story points allow higher individual criteria
-      // Complexity & Risks: grow steadily with story point index
-      const complexityMax = Math.min(5, index + 1);  // index 1→2, 2→3, 3→4, 4→5, 5+→5
-      const risksMax = Math.min(5, index + 1);        // Same as complexity
-      
-      // Unknowns: grow very conservatively - most work should be reasonably understood
-      const unknownsMax = Math.min(5, Math.max(0, Math.floor(index / 2))); // index 1→0, 2→1, 3→1, 4→2, 5→2, 6→3
-      
-      // Total score cap: allows reasonable combinations but prevents extreme edge cases
-      const maxTotal = Math.min(15, 1 + index * 2); // index 1→3, 2→5, 3→7, 4→9, etc.
-
-      rules.push({
-        storyPoints: points,
-        conditions: [
-          { criterionId: 'complexity', minScore: 0, maxScore: complexityMax },
-          { criterionId: 'risks', minScore: 0, maxScore: risksMax },
-          { criterionId: 'unknowns', minScore: 0, maxScore: unknownsMax }
-        ],
-        maxTotalScore: maxTotal
-      });
-    }
-  });
-
-  return rules;
-}
-
-export function getDefaultScoringRules(): ScoringRule[] {
-  return [
-    {
-      storyPoints: 1,
-      conditions: [
-        { criterionId: 'complexity', minScore: 0, maxScore: 0 },
-        { criterionId: 'risks', minScore: 0, maxScore: 0 },
-        { criterionId: 'unknowns', minScore: 0, maxScore: 0 }
-      ]
-    },
-    {
-      storyPoints: 2,
-      conditions: [
-        { criterionId: 'complexity', minScore: 0, maxScore: 2 },
-        { criterionId: 'risks', minScore: 0, maxScore: 2 },
-        { criterionId: 'unknowns', minScore: 0, maxScore: 0 }
-      ],
-      maxTotalScore: 2
-    },
-    {
-      storyPoints: 3,
-      conditions: [
-        { criterionId: 'complexity', minScore: 0, maxScore: 3 },
-        { criterionId: 'risks', minScore: 0, maxScore: 3 },
-        { criterionId: 'unknowns', minScore: 0, maxScore: 1 }
-      ]
-    },
-    {
-      storyPoints: 5,
-      conditions: [
-        { criterionId: 'complexity', minScore: 2, maxScore: 4 },
-        { criterionId: 'risks', minScore: 2, maxScore: 4 },
-        { criterionId: 'unknowns', minScore: 0, maxScore: 2 }
-      ]
-    },
-    {
-      storyPoints: 8,
-      conditions: [
-        { criterionId: 'complexity', minScore: 3, maxScore: 5 },
-        { criterionId: 'risks', minScore: 3, maxScore: 5 },
-        { criterionId: 'unknowns', minScore: 0, maxScore: 5 }
-      ]
+      maxScore: 2
     }
   ];
 }

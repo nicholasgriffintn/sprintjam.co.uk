@@ -8,7 +8,7 @@ import { PlanningPokerJudge } from './planning-poker-judge';
 import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket, StructuredVote } from './types'
 import { VOTING_OPTIONS } from './constants'
 import { generateVoteOptionsMetadata } from './utils/votes'
-import { getDefaultVotingCriteria, generateScoringRulesFromEstimateOptions, isStructuredVote, calculateStoryPointsFromStructuredVote } from './utils/structured-voting'
+import { getDefaultVotingCriteria, isStructuredVote, calculateStoryPointsFromStructuredVote } from './utils/structured-voting'
 
 export class PokerRoom {
   state: DurableObjectState;
@@ -131,7 +131,6 @@ export class PokerRoom {
             judgeAlgorithm: 'smartConsensus',
             enableStructuredVoting: false,
             votingCriteria: getDefaultVotingCriteria(),
-            scoringRules: generateScoringRulesFromEstimateOptions(initialEstimateOptions)
           }
         };
 
@@ -385,11 +384,6 @@ export class PokerRoom {
           ...roomData.settings,
           ...settings
         };
-
-        // Regenerate scoring rules if estimate options changed
-        if (settings.estimateOptions) {
-          roomData.settings.scoringRules = generateScoringRulesFromEstimateOptions(settings.estimateOptions);
-        }
   
         await this.state.storage.put('roomData', roomData);
 
@@ -633,8 +627,7 @@ export class PokerRoom {
       // If it's a structured vote, calculate the story points and store both
       let finalVote: string | number;
       if (isStructuredVote(vote)) {
-        const scoringRules = roomData.settings.scoringRules || [];
-        const calculatedPoints = calculateStoryPointsFromStructuredVote(vote.criteriaScores, scoringRules);
+        const calculatedPoints = calculateStoryPointsFromStructuredVote(vote.criteriaScores);
         finalVote = calculatedPoints || '?';
         
         if (!roomData.structuredVotes) {
@@ -757,7 +750,7 @@ export class PokerRoom {
     for (const session of this.sessions.values()) {
       try {
         session.webSocket.send(json);
-      } catch (err) {
+      } catch (_err) {
         // Ignore errors (the WebSocket might already be closed)
       }
     }
