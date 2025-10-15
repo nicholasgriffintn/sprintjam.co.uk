@@ -8,8 +8,12 @@ import { PokerRoom } from './poker-room';
 import { Env } from './types';
 import { generateRoomKey, getRoomId } from './utils/room';
 import { fetchJiraTicket, updateJiraStoryPoints } from './jira-service';
+import { getServerDefaults } from './utils/defaults';
 
-async function handleRequest(request: CfRequest, env: Env): Promise<CfResponse> {
+async function handleRequest(
+  request: CfRequest,
+  env: Env
+): Promise<CfResponse> {
   const url = new URL(request.url);
 
   if (url.pathname.startsWith('/api/')) {
@@ -18,14 +22,18 @@ async function handleRequest(request: CfRequest, env: Env): Promise<CfResponse> 
 
   if (url.pathname === '/ws') {
     if (request.headers.get('Upgrade') !== 'websocket') {
-      return new Response('Expected WebSocket', { status: 400 }) as unknown as CfResponse;
+      return new Response('Expected WebSocket', {
+        status: 400,
+      }) as unknown as CfResponse;
     }
 
     const roomKey = url.searchParams.get('room');
     const userName = url.searchParams.get('name');
 
     if (!roomKey || !userName) {
-      return new Response('Missing room key or user name', { status: 400 }) as unknown as CfResponse;
+      return new Response('Missing room key or user name', {
+        status: 400,
+      }) as unknown as CfResponse;
     }
 
     const roomId = getRoomId(roomKey);
@@ -39,8 +47,20 @@ async function handleRequest(request: CfRequest, env: Env): Promise<CfResponse> 
   return env.ASSETS.fetch(request);
 }
 
-async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise<CfResponse> {
+async function handleApiRequest(
+  url: URL,
+  request: CfRequest,
+  env: Env
+): Promise<CfResponse> {
   const path = url.pathname.substring(5);
+
+  if (path === 'defaults' && request.method === 'GET') {
+    const defaultsPayload = getServerDefaults();
+
+    return new Response(JSON.stringify(defaultsPayload), {
+      headers: { 'Content-Type': 'application/json' },
+    }) as unknown as CfResponse;
+  }
 
   if (path === 'rooms' && request.method === 'POST') {
     const body = await request.json<{ name?: string }>();
@@ -103,13 +123,10 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
     const roomKey = url.searchParams.get('roomKey');
 
     if (!roomKey) {
-      return new Response(
-        JSON.stringify({ error: 'Room key is required' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      ) as unknown as CfResponse;
+      return new Response(JSON.stringify({ error: 'Room key is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }) as unknown as CfResponse;
     }
 
     const roomId = getRoomId(roomKey);
@@ -126,7 +143,7 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
     const body = await request.json<{
       name?: string;
       roomKey?: string;
-      settings?: Record<string, unknown>
+      settings?: Record<string, unknown>;
     }>();
 
     const name = body?.name;
@@ -161,13 +178,10 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
     const userName = url.searchParams.get('userName');
 
     if (!ticketId) {
-      return new Response(
-        JSON.stringify({ error: 'Ticket ID is required' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      ) as unknown as CfResponse;
+      return new Response(JSON.stringify({ error: 'Ticket ID is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      }) as unknown as CfResponse;
     }
 
     try {
@@ -186,7 +200,13 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
       const jiraApiToken = env.JIRA_API_TOKEN || 'YOUR_API_TOKEN';
       const jiraStoryPointsField = env.JIRA_STORY_POINTS_FIELD || '';
 
-      const ticket = await fetchJiraTicket(jiraDomain, jiraEmail, jiraApiToken, jiraStoryPointsField, ticketId);
+      const ticket = await fetchJiraTicket(
+        jiraDomain,
+        jiraEmail,
+        jiraApiToken,
+        jiraStoryPointsField,
+        ticketId
+      );
 
       const roomId = getRoomId(roomKey);
       const roomObject = env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId));
@@ -203,7 +223,12 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
         return response;
       } catch (roomError) {
         return new Response(
-          JSON.stringify({ error: roomError instanceof Error ? roomError.message : 'Failed to store Jira ticket in room' }),
+          JSON.stringify({
+            error:
+              roomError instanceof Error
+                ? roomError.message
+                : 'Failed to store Jira ticket in room',
+          }),
           {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
@@ -212,7 +237,12 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
       }
     } catch (error) {
       return new Response(
-        JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to fetch Jira ticket' }),
+        JSON.stringify({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to fetch Jira ticket',
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
@@ -221,9 +251,17 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
     }
   }
 
-  if (path.startsWith('jira/ticket/') && path.endsWith('/storyPoints') && request.method === 'PUT') {
+  if (
+    path.startsWith('jira/ticket/') &&
+    path.endsWith('/storyPoints') &&
+    request.method === 'PUT'
+  ) {
     const ticketId = path.split('/')[2];
-    const body = await request.json<{ storyPoints?: number; roomKey?: string; userName?: string }>();
+    const body = await request.json<{
+      storyPoints?: number;
+      roomKey?: string;
+      userName?: string;
+    }>();
     const storyPoints = body?.storyPoints;
     const roomKey = body?.roomKey;
     const userName = body?.userName;
@@ -262,10 +300,10 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
         ticketId,
         storyPoints
       );
-      
+
       const roomId = getRoomId(roomKey);
       const roomObject = env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId));
-      
+
       try {
         await roomObject.fetch(
           new Request('https://dummy/jira/ticket', {
@@ -278,16 +316,18 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
         console.error('Failed to update Jira ticket in room:', roomError);
       }
 
-      return new Response(
-        JSON.stringify({ ticket: updatedTicket }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      ) as unknown as CfResponse;
+      return new Response(JSON.stringify({ ticket: updatedTicket }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }) as unknown as CfResponse;
     } catch (error) {
       return new Response(
-        JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to update Jira story points' }),
+        JSON.stringify({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to update Jira story points',
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },
@@ -326,7 +366,12 @@ async function handleApiRequest(url: URL, request: CfRequest, env: Env): Promise
       return response;
     } catch (error) {
       return new Response(
-        JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to clear Jira ticket' }),
+        JSON.stringify({
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to clear Jira ticket',
+        }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json' },

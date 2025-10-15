@@ -1,4 +1,4 @@
-import type { RoomData, VoteValue, RoomSettings, StructuredVote } from '../types';
+import type { RoomData, VoteValue, RoomSettings, StructuredVote, ServerDefaults } from '../types';
 import { API_BASE_URL, WS_BASE_URL } from '../constants';
 
 let activeSocket: WebSocket | null = null;
@@ -7,6 +7,7 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_BASE_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
 const eventListeners: Record<string, ((data: WebSocketMessage) => void)[]> = {};
+let defaultSettingsCache: ServerDefaults | null = null;
 
 export type WebSocketMessageType = 
   | 'initialize'
@@ -30,12 +31,44 @@ interface WebSocketMessage {
   error?: string;
 }
 
+function updateDefaultSettingsCache(defaults?: ServerDefaults): void {
+  if (defaults) {
+    defaultSettingsCache = defaults;
+  }
+}
+
+export function getCachedDefaultSettings(): ServerDefaults | null {
+  return defaultSettingsCache;
+}
+
+export async function fetchDefaultSettings(forceRefresh = false): Promise<ServerDefaults> {
+  if (!forceRefresh && defaultSettingsCache) {
+    return defaultSettingsCache;
+  }
+
+  const response = await fetch(`${API_BASE_URL}/defaults`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `Failed to fetch defaults: ${response.status}`);
+  }
+
+  const data = await response.json() as ServerDefaults;
+  updateDefaultSettingsCache(data);
+  return data;
+}
+
 /**
  * Create a new planning poker room
  * @param {string} name - The name of the user creating the room
  * @returns {Promise<RoomData>} - The room data
  */
-export async function createRoom(name: string): Promise<RoomData> {
+export async function createRoom(name: string): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
       method: 'POST',
@@ -50,8 +83,14 @@ export async function createRoom(name: string): Promise<RoomData> {
       throw new Error(errorData.error || `Failed to create room: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data.room;
+    const data = await response.json() as { room?: RoomData; defaults?: ServerDefaults; error?: string };
+    updateDefaultSettingsCache(data.defaults);
+
+    if (!data.room) {
+      throw new Error('Invalid response from server while creating room');
+    }
+
+    return { room: data.room, defaults: data.defaults };
   } catch (error) {
     console.error('Error creating room:', error);
     throw error;
@@ -64,7 +103,7 @@ export async function createRoom(name: string): Promise<RoomData> {
  * @param {string} roomKey - The unique key for the room
  * @returns {Promise<RoomData>} - The room data
  */
-export async function joinRoom(name: string, roomKey: string): Promise<RoomData> {
+export async function joinRoom(name: string, roomKey: string): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
       method: 'POST',
@@ -79,8 +118,14 @@ export async function joinRoom(name: string, roomKey: string): Promise<RoomData>
       throw new Error(errorData.error || `Failed to join room: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data.room;
+    const data = await response.json() as { room?: RoomData; defaults?: ServerDefaults; error?: string };
+    updateDefaultSettingsCache(data.defaults);
+
+    if (!data.room) {
+      throw new Error('Invalid response from server while joining room');
+    }
+
+    return { room: data.room, defaults: data.defaults };
   } catch (error) {
     console.error('Error joining room:', error);
     throw error;

@@ -35,6 +35,76 @@ export interface VoteOptionMetadata {
   taskSize: TaskSize | null;
 }
 
+export interface SummaryCardSetting {
+  id: string;
+  label: string;
+  enabled: boolean;
+}
+
+export interface ConsensusLabelSettings {
+  high?: string;
+  medium?: string;
+  low?: string;
+}
+
+export interface CriteriaBreakdownSettings {
+  enabled: boolean;
+  title: string;
+  consensusLabels?: ConsensusLabelSettings;
+}
+
+export interface ResultsDisplaySettings {
+  summaryCards: SummaryCardSetting[];
+  showVoteDistribution?: boolean;
+  voteDistributionLabel?: string;
+  criteriaBreakdown?: CriteriaBreakdownSettings;
+}
+
+export interface InfoToggleSettings {
+  enabled: boolean;
+  label: string;
+  title?: string;
+  rangesDescription?: string;
+  rangesLabel?: string;
+  showRangeDetails?: boolean;
+  showContributionDetails?: boolean;
+  showConversionRules?: boolean;
+}
+
+export interface StructuredSummarySettings {
+  storyPointsLabel?: string;
+  weightedScoreLabel?: string;
+  showConversionCount?: boolean;
+}
+
+export interface StructuredVotingDisplaySettings {
+  panelTitle?: string;
+  infoToggle?: InfoToggleSettings;
+  summary?: StructuredSummarySettings;
+}
+
+export interface RoomSettings {
+  estimateOptions: (string | number)[];
+  voteOptionsMetadata?: VoteOptionMetadata[];
+  allowOthersToShowEstimates: boolean;
+  allowOthersToDeleteEstimates: boolean;
+  showTimer: boolean;
+  showUserPresence: boolean;
+  showAverage: boolean;
+  showMedian: boolean;
+  showTopVotes: boolean;
+  topVotesCount: number;
+  anonymousVotes: boolean;
+  enableJudge: boolean;
+  judgeAlgorithm: JudgeAlgorithm;
+  enableStructuredVoting?: boolean;
+  votingCriteria?: VotingCriterion[];
+  enableJiraIntegration?: boolean;
+  autoUpdateJiraStoryPoints?: boolean;
+  resultsDisplay?: ResultsDisplaySettings;
+  structuredVotingDisplay?: StructuredVotingDisplaySettings;
+}
+
 
 export interface VotingCriterion {
   id: string;
@@ -79,23 +149,7 @@ export interface RoomData {
   judgeScore?: string | number | null;
   judgeMetadata?: Record<string, unknown>;
   jiraTicket?: JiraTicket;
-  settings: {
-    estimateOptions: (string | number)[];
-    voteOptionsMetadata?: VoteOptionMetadata[];
-    allowOthersToShowEstimates: boolean;
-    allowOthersToDeleteEstimates: boolean;
-    showTimer: boolean;
-    showUserPresence: boolean;
-    showAverage: boolean;
-    showMedian: boolean;
-    showTopVotes: boolean;
-    topVotesCount: number;
-    anonymousVotes: boolean;
-    enableJudge: boolean;
-    judgeAlgorithm: JudgeAlgorithm;
-    enableStructuredVoting?: boolean;
-    votingCriteria?: VotingCriterion[];
-  };
+  settings: RoomSettings;
 }
 
 export interface BroadcastMessage {

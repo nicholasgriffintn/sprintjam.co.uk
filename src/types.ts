@@ -21,6 +21,54 @@ export interface VoteOptionMetadata {
   taskSize: TaskSize | null;
 }
 
+export interface SummaryCardSetting {
+  id: string;
+  label: string;
+  enabled: boolean;
+}
+
+export interface ConsensusLabelSettings {
+  high?: string;
+  medium?: string;
+  low?: string;
+}
+
+export interface CriteriaBreakdownSettings {
+  enabled: boolean;
+  title: string;
+  consensusLabels?: ConsensusLabelSettings;
+}
+
+export interface ResultsDisplaySettings {
+  summaryCards: SummaryCardSetting[];
+  showVoteDistribution?: boolean;
+  voteDistributionLabel?: string;
+  criteriaBreakdown?: CriteriaBreakdownSettings;
+}
+
+export interface InfoToggleSettings {
+  enabled: boolean;
+  label: string;
+  title?: string;
+  rangesDescription?: string;
+  rangesLabel?: string;
+  showRangeDetails?: boolean;
+  showContributionDetails?: boolean;
+  showConversionRules?: boolean;
+}
+
+export interface StructuredSummarySettings {
+  storyPointsLabel?: string;
+  weightedScoreLabel?: string;
+  showConversionCount?: boolean;
+}
+
+export interface StructuredVotingDisplaySettings {
+  panelTitle?: string;
+  infoToggle?: InfoToggleSettings;
+  summary?: StructuredSummarySettings;
+}
+
 
 export interface StructuredVote {
   criteriaScores: Record<string, number>;
@@ -62,6 +110,20 @@ export interface RoomSettings {
   autoUpdateJiraStoryPoints?: boolean;
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
+  resultsDisplay?: ResultsDisplaySettings;
+  structuredVotingDisplay?: StructuredVotingDisplaySettings;
+}
+
+export interface ServerDefaults {
+  roomSettings: RoomSettings;
+  votingCriteria: VotingCriterion[];
+  structuredVotingOptions: (string | number)[];
+  deploymentConfig?: {
+    hasCustomVotingOptions?: boolean;
+    judgeEnabledByDefault?: boolean;
+    structuredVotingEnabledByDefault?: boolean;
+    [key: string]: unknown;
+  };
 }
 
 export interface JudgeMetadata {

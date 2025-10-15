@@ -2,14 +2,13 @@
 import { useState, useEffect, type FC } from 'react';
 import type { RoomSettings, JudgeAlgorithm } from '../types';
 
-export const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
-export const STRUCTURED_VOTING_OPTIONS = [1, 3, 5, 8];
-
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   settings: RoomSettings;
   onSaveSettings: (settings: RoomSettings) => void;
+  defaultSettings: RoomSettings;
+  structuredVotingOptions: (string | number)[];
 }
 
 const SettingsModal: FC<SettingsModalProps> = ({
@@ -17,6 +16,8 @@ const SettingsModal: FC<SettingsModalProps> = ({
   onClose,
   settings,
   onSaveSettings,
+  defaultSettings,
+  structuredVotingOptions,
 }) => {
   const [localSettings, setLocalSettings] = useState<RoomSettings>(settings);
   const [estimateOptionsInput, setEstimateOptionsInput] = useState<string>(
@@ -40,9 +41,19 @@ const SettingsModal: FC<SettingsModalProps> = ({
     const newSettings = { ...localSettings, [key]: value };
 
     if (key === 'enableStructuredVoting' && value === true) {
-      newSettings.estimateOptions = STRUCTURED_VOTING_OPTIONS;
+      const structuredOptions = Array.from(structuredVotingOptions);
+      newSettings.estimateOptions = structuredOptions;
+      if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
+        newSettings.votingCriteria = defaultSettings.votingCriteria.map((criterion) => ({ ...criterion }));
+      }
+      setEstimateOptionsInput(structuredOptions.map((option) => option.toString()).join(','));
     } else if (key === 'enableStructuredVoting' && value === false && !newSettings.estimateOptions) {
-      newSettings.estimateOptions = VOTING_OPTIONS;
+      const defaultOptions = Array.from(defaultSettings.estimateOptions);
+      newSettings.estimateOptions = defaultOptions;
+      if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
+        newSettings.votingCriteria = defaultSettings.votingCriteria.map((criterion) => ({ ...criterion }));
+      }
+      setEstimateOptionsInput(defaultOptions.map((option) => option.toString()).join(','));
     }
     
     setLocalSettings(newSettings);
@@ -121,9 +132,13 @@ const SettingsModal: FC<SettingsModalProps> = ({
             <input
               id="estimateOptions"
               type="text"
-              value={localSettings.enableStructuredVoting ? STRUCTURED_VOTING_OPTIONS.join(',') : estimateOptionsInput}
+              value={
+                localSettings.enableStructuredVoting
+                  ? structuredVotingOptions.map((option) => option.toString()).join(',')
+                  : estimateOptionsInput
+              }
               onChange={(e) => handleEstimateOptionsChange(e.target.value)}
-              placeholder={`e.g., ${VOTING_OPTIONS.join(',')}`}
+              placeholder={`e.g., ${defaultSettings.estimateOptions.map((option) => option.toString()).join(',')}`}
               disabled={localSettings.enableStructuredVoting}
               className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${localSettings.enableStructuredVoting ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
                 }`}

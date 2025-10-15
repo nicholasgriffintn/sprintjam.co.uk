@@ -6,56 +6,15 @@ import type { DurableObjectState, WebSocket as CfWebSocket, Response as CfRespon
 
 import { PlanningPokerJudge } from './planning-poker-judge';
 import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket, StructuredVote } from './types'
-import { JudgeAlgorithm } from './types'
-import { STRUCTURED_VOTING_OPTIONS, VOTING_OPTIONS } from './constants'
+import {
+  createInitialRoomData,
+  getDefaultEstimateOptions,
+  getDefaultRoomSettings,
+  getDefaultStructuredVotingOptions,
+  getServerDefaults,
+} from './utils/defaults'
 import { generateVoteOptionsMetadata } from './utils/votes'
-import { getDefaultVotingCriteria, isStructuredVote, createStructuredVote } from './utils/structured-voting'
-
-function returnInitialOptions({
-  key = "",
-  users = [],
-  moderator = "",
-  connectedUsers = {},
-}: {
-  key?: string;
-  users?: string[];
-  moderator?: string;
-  connectedUsers?: Record<string, boolean>;
-}): RoomData {
-  const initialEstimateOptions = VOTING_OPTIONS;
-  const initialVoteOptionsMetadata = generateVoteOptionsMetadata(
-    initialEstimateOptions,
-  );
-
-  const roomData = {
-    key,
-    users,
-    votes: {},
-    showVotes: false,
-    moderator,
-    connectedUsers,
-    judgeScore: null,
-    settings: {
-      estimateOptions: initialEstimateOptions,
-      voteOptionsMetadata: initialVoteOptionsMetadata,
-      allowOthersToShowEstimates: true,
-      allowOthersToDeleteEstimates: true,
-      showTimer: false,
-      showUserPresence: false,
-      showAverage: false,
-      showMedian: false,
-      showTopVotes: true,
-      topVotesCount: 4,
-      anonymousVotes: true,
-      enableJudge: true,
-      judgeAlgorithm: JudgeAlgorithm.SMART_CONSENSUS,
-      enableStructuredVoting: false,
-      votingCriteria: getDefaultVotingCriteria(),
-    },
-  };
-
-  return roomData;
-}
+import { isStructuredVote, createStructuredVote } from './utils/structured-voting'
 
 export class PokerRoom {
   state: DurableObjectState;
@@ -72,13 +31,46 @@ export class PokerRoom {
     this.state.blockConcurrencyWhile(async () => {
       let roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) {
-        roomData = returnInitialOptions({});
+        roomData = createInitialRoomData({});
         await this.state.storage.put('roomData', roomData);
-      } else if (!roomData.connectedUsers) {
+        return;
+      }
+
+      let requiresUpdate = false;
+
+      if (!roomData.settings) {
+        roomData.settings = getDefaultRoomSettings();
+        requiresUpdate = true;
+      } else {
+        const defaultSettings = getDefaultRoomSettings();
+        roomData.settings = {
+          ...defaultSettings,
+          ...roomData.settings,
+        };
+        requiresUpdate = true;
+      }
+
+      if (roomData.settings.estimateOptions && !roomData.settings.voteOptionsMetadata) {
+        roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(
+          roomData.settings.estimateOptions,
+        );
+        requiresUpdate = true;
+      }
+
+      if (!roomData.connectedUsers) {
         roomData.connectedUsers = {};
         for (const user of roomData.users) {
           roomData.connectedUsers[user] = false;
         }
+        requiresUpdate = true;
+      }
+
+      if (!roomData.structuredVotes) {
+        roomData.structuredVotes = {};
+        requiresUpdate = true;
+      }
+
+      if (requiresUpdate) {
         await this.state.storage.put('roomData', roomData);
       }
     });
@@ -125,7 +117,7 @@ export class PokerRoom {
           ) as unknown as CfResponse;
         }
 
-        roomData = returnInitialOptions({
+        roomData = createInitialRoomData({
           key: roomKey,
           users: [moderator],
           moderator,
@@ -134,10 +126,13 @@ export class PokerRoom {
 
         await this.state.storage.put('roomData', roomData);
 
+        const defaults = getServerDefaults();
+
         return new Response(
           JSON.stringify({
             success: true,
             room: roomData,
+            defaults,
           }),
           {
             headers: { 'Content-Type': 'application/json' },
@@ -179,10 +174,13 @@ export class PokerRoom {
           roomData,
         });
 
+        const defaults = getServerDefaults();
+
         return new Response(
           JSON.stringify({
             success: true,
             room: roomData,
+            defaults,
           }),
           {
             headers: { 'Content-Type': 'application/json' },
@@ -380,17 +378,32 @@ export class PokerRoom {
 
         const providedSettings = settings as Partial<RoomData['settings']>;
 
+        const defaultSettings = getDefaultRoomSettings();
         const newSettings = {
+          ...defaultSettings,
           ...roomData.settings,
           ...providedSettings
         };
 
         if (providedSettings.enableStructuredVoting === true) {
-          newSettings.estimateOptions = STRUCTURED_VOTING_OPTIONS;
+          const structuredOptions = getDefaultStructuredVotingOptions();
+          newSettings.estimateOptions = structuredOptions;
+          newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(structuredOptions);
+          if (!newSettings.votingCriteria) {
+            newSettings.votingCriteria = defaultSettings.votingCriteria;
+          }
         } else if (providedSettings.enableStructuredVoting === false && !providedSettings.estimateOptions) {
-          newSettings.estimateOptions = VOTING_OPTIONS;
+          const defaultOptions = getDefaultEstimateOptions();
+          newSettings.estimateOptions = defaultOptions;
+          newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(defaultOptions);
+          if (!newSettings.votingCriteria) {
+            newSettings.votingCriteria = defaultSettings.votingCriteria;
+          }
         }
 
+        if (providedSettings.estimateOptions) {
+          newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(providedSettings.estimateOptions);
+        }
 
         roomData.settings = newSettings;
 
@@ -722,10 +735,28 @@ export class PokerRoom {
       const estimateOptionsChanged = settings.estimateOptions !== undefined &&
         JSON.stringify(settings.estimateOptions) !== JSON.stringify(roomData.settings.estimateOptions);
 
+      const defaultSettings = getDefaultRoomSettings();
       const updatedSettings = {
+        ...defaultSettings,
         ...roomData.settings,
         ...settings
       };
+
+      if (settings.enableStructuredVoting === true) {
+        const structuredOptions = getDefaultStructuredVotingOptions();
+        updatedSettings.estimateOptions = structuredOptions;
+        updatedSettings.voteOptionsMetadata = generateVoteOptionsMetadata(structuredOptions);
+        if (!updatedSettings.votingCriteria) {
+          updatedSettings.votingCriteria = defaultSettings.votingCriteria;
+        }
+      } else if (settings.enableStructuredVoting === false && !settings.estimateOptions) {
+        const defaultOptions = getDefaultEstimateOptions();
+        updatedSettings.estimateOptions = defaultOptions;
+        updatedSettings.voteOptionsMetadata = generateVoteOptionsMetadata(defaultOptions);
+        if (!updatedSettings.votingCriteria) {
+          updatedSettings.votingCriteria = defaultSettings.votingCriteria;
+        }
+      }
 
       if (estimateOptionsChanged && updatedSettings.estimateOptions) {
         updatedSettings.voteOptionsMetadata = generateVoteOptionsMetadata(updatedSettings.estimateOptions);

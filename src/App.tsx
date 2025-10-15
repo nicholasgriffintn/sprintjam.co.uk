@@ -12,11 +12,21 @@ import {
   addEventListener,
   removeEventListener,
   isConnected,
-  type WebSocketMessageType
+  fetchDefaultSettings,
+  getCachedDefaultSettings,
+  type WebSocketMessageType,
 } from './lib/api-service';
 import { updateJiraStoryPoints } from './lib/jira-service';
-import type { RoomData, VoteValue, WebSocketErrorData, RoomSettings, JiraTicket, StructuredVote } from './types';
-
+import type {
+  RoomData,
+  VoteValue,
+  WebSocketErrorData,
+  RoomSettings,
+  JiraTicket,
+  StructuredVote,
+  ServerDefaults,
+} from './types';
+import { buildInitialRoomData, cloneServerDefaults } from './utils/settings';
 import WelcomeScreen from './routes/WelcomeScreen';
 import CreateRoomScreen from './routes/CreateRoomScreen';
 import JoinRoomScreen from './routes/JoinRoomScreen';
@@ -26,39 +36,72 @@ import LoadingOverlay from './components/LoadingOverlay';
 
 type AppScreen = 'welcome' | 'create' | 'join' | 'room';
 
-const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
-
 const App = () => {
+  const cachedDefaults = getCachedDefaultSettings();
+
+  const [serverDefaults, setServerDefaults] = useState<ServerDefaults | null>(
+    () => (cachedDefaults ? cloneServerDefaults(cachedDefaults) : null)
+  );
   const [name, setName] = useState<string>('');
   const [roomKey, setRoomKey] = useState<string>('');
   const [screen, setScreen] = useState<AppScreen>('welcome');
-  const [roomData, setRoomData] = useState<RoomData>({
-    key: '',
-    users: [],
-    votes: {},
-    showVotes: false,
-    moderator: '',
-    connectedUsers: {},
-    judgeScore: null,
-    settings: {
-      estimateOptions: VOTING_OPTIONS,
-      allowOthersToShowEstimates: true,
-      allowOthersToDeleteEstimates: true,
-      showTimer: false,
-      showUserPresence: false,
-      showAverage: false,
-      showMedian: false,
-      showTopVotes: false,
-      topVotesCount: 4,
-      anonymousVotes: true,
-      enableJudge: true,
-      judgeAlgorithm: "smartConsensus"
-    }
-  });
-  const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(null);
+  const [roomData, setRoomData] = useState<RoomData | null>(() =>
+    cachedDefaults ? buildInitialRoomData(cachedDefaults.roomSettings) : null
+  );
+  const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
+    null
+  );
   const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoadingDefaults, setIsLoadingDefaults] = useState<boolean>(
+    !cachedDefaults
+  );
+  const [defaultsError, setDefaultsError] = useState<string | null>(null);
+
+  const applyServerDefaults = useCallback((defaults?: ServerDefaults) => {
+    if (!defaults) return;
+
+    const clonedDefaults = cloneServerDefaults(defaults);
+    setServerDefaults(clonedDefaults);
+    setDefaultsError(null);
+    setRoomData((current) => {
+      if (current?.key) {
+        return current;
+      }
+      return buildInitialRoomData(clonedDefaults.roomSettings);
+    });
+  }, []);
+
+  const loadDefaults = useCallback(
+    async (forceRefresh = false) => {
+      setIsLoadingDefaults(true);
+      try {
+        const defaults = await fetchDefaultSettings(forceRefresh);
+        applyServerDefaults(defaults);
+      } catch (err) {
+        console.error('Failed to load default settings', err);
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Unable to load default settings from server';
+        setDefaultsError(message);
+      } finally {
+        setIsLoadingDefaults(false);
+      }
+    },
+    [applyServerDefaults, setDefaultsError, setIsLoadingDefaults]
+  );
+
+  const handleRetryDefaults = useCallback(() => {
+    loadDefaults(true);
+  }, [loadDefaults]);
+
+  useEffect(() => {
+    if (!cachedDefaults) {
+      loadDefaults();
+    }
+  }, [cachedDefaults, loadDefaults]);
 
   const didLoadName = useRef(false);
   const didCheckUrlParams = useRef(false);
@@ -67,17 +110,17 @@ const App = () => {
   // Join room from URL parameters
   useEffect(() => {
     if (didCheckUrlParams.current) return;
-    
+
     didCheckUrlParams.current = true;
-    
+
     try {
       const url = new URL(window.location.href);
       const joinParam = url.searchParams.get('join');
-      
+
       if (joinParam && joinParam.length > 0) {
         setRoomKey(joinParam.toUpperCase());
         setScreen('join');
-        
+
         window.history.replaceState({}, document.title, '/');
       }
     } catch (err) {
@@ -90,39 +133,45 @@ const App = () => {
     if (didAttemptRestore.current) return;
     if (screen !== 'welcome') return;
     if (!name) return;
+    if (isLoadingDefaults) return;
     didAttemptRestore.current = true;
     const savedRoomKey = localStorage.getItem('sprintjam_roomKey');
     if (savedRoomKey) {
       setIsLoading(true);
       joinRoom(name, savedRoomKey)
-        .then((joinedRoom) => {
+        .then(({ room: joinedRoom, defaults }) => {
+          applyServerDefaults(defaults);
           setRoomData(joinedRoom);
           setIsModeratorView(joinedRoom.moderator === name);
           setScreen('room');
         })
         .catch((err) => {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to reconnect to room';
+          const errorMessage =
+            err instanceof Error ? err.message : 'Failed to reconnect to room';
           setError(errorMessage);
           localStorage.removeItem('sprintjam_roomKey');
         })
         .finally(() => setIsLoading(false));
     }
-  }, [name, screen]);
+  }, [name, screen, isLoadingDefaults, applyServerDefaults]);
 
-  const handleRoomUpdate = useCallback((updatedRoomData: RoomData) => {
-    setRoomData(updatedRoomData);
+  const handleRoomUpdate = useCallback(
+    (updatedRoomData: RoomData) => {
+      setRoomData(updatedRoomData);
 
-    const updatedVote = updatedRoomData.votes[name] ?? null;
-    setUserVote(updatedVote);
+      const updatedVote = updatedRoomData.votes[name] ?? null;
+      setUserVote(updatedVote);
 
-    setIsModeratorView(updatedRoomData.moderator === name);
+      setIsModeratorView(updatedRoomData.moderator === name);
 
-    setError('');
-  }, [name]);
+      setError('');
+    },
+    [name]
+  );
 
   // Connect to WebSocket when entering a room
   useEffect(() => {
-    if (screen === 'room' && name && roomData.key) {
+    if (screen === 'room' && name && roomData?.key) {
       connectToRoom(roomData.key, name, handleRoomUpdate);
 
       const errorHandler = (data: WebSocketErrorData) => {
@@ -130,7 +179,7 @@ const App = () => {
       };
 
       const eventTypes: WebSocketMessageType[] = ['disconnected', 'error'];
-      
+
       for (const type of eventTypes) {
         addEventListener(type, errorHandler);
       }
@@ -142,7 +191,7 @@ const App = () => {
         }
       };
     }
-  }, [screen, name, roomData.key, handleRoomUpdate]);
+  }, [screen, name, roomData?.key, handleRoomUpdate]);
 
   // Persist user name in localStorage
   useEffect(() => {
@@ -173,7 +222,8 @@ const App = () => {
     setError('');
 
     try {
-      const newRoom = await createRoom(name);
+      const { room: newRoom, defaults } = await createRoom(name);
+      applyServerDefaults(defaults);
 
       setRoomData(newRoom);
       localStorage.setItem('sprintjam_roomKey', newRoom.key);
@@ -195,7 +245,8 @@ const App = () => {
     setError('');
 
     try {
-      const joinedRoom = await joinRoom(name, roomKey);
+      const { room: joinedRoom, defaults } = await joinRoom(name, roomKey);
+      applyServerDefaults(defaults);
 
       setRoomData(joinedRoom);
       localStorage.setItem('sprintjam_roomKey', joinedRoom.key);
@@ -223,7 +274,14 @@ const App = () => {
   };
 
   const handleResetVotes = () => {
-    if (roomData.moderator !== name && !roomData.settings.allowOthersToDeleteEstimates) {
+    if (!roomData) {
+      return;
+    }
+
+    if (
+      roomData.moderator !== name &&
+      !roomData.settings.allowOthersToDeleteEstimates
+    ) {
       return;
     }
 
@@ -238,7 +296,14 @@ const App = () => {
   };
 
   const handleToggleShowVotes = () => {
-    if (roomData.moderator !== name && !roomData.settings.allowOthersToShowEstimates) {
+    if (!roomData) {
+      return;
+    }
+
+    if (
+      roomData.moderator !== name &&
+      !roomData.settings.allowOthersToShowEstimates
+    ) {
       return;
     }
 
@@ -252,7 +317,9 @@ const App = () => {
   };
 
   const handleUpdateSettings = (settings: RoomSettings) => {
-    if (!isModeratorView) return;
+    if (!isModeratorView) {
+      return;
+    }
 
     try {
       updateSettings(settings);
@@ -264,22 +331,21 @@ const App = () => {
   };
 
   const handleJiraTicketFetched = (ticket: JiraTicket | undefined) => {
-    setRoomData(prevData => ({
-      ...prevData,
-      currentJiraTicket: ticket
-    }));
+    setRoomData((prevData) =>
+      prevData ? { ...prevData, currentJiraTicket: ticket } : prevData
+    );
   };
 
   const handleJiraTicketUpdated = (ticket: JiraTicket) => {
-    setRoomData(prevData => ({
-      ...prevData,
-      currentJiraTicket: ticket
-    }));
+    setRoomData((prevData) =>
+      prevData ? { ...prevData, currentJiraTicket: ticket } : prevData
+    );
   };
 
   // Auto-update Jira story points if setting is enabled
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    useEffect(() => {
+  useEffect(() => {
+    if (!roomData) return;
     if (
       roomData.settings.enableJiraIntegration &&
       roomData.settings.autoUpdateJiraStoryPoints &&
@@ -287,53 +353,39 @@ const App = () => {
       roomData.judgeScore !== null &&
       roomData.showVotes
     ) {
-      const storyPoint = typeof roomData.judgeScore === 'number' 
-        ? roomData.judgeScore 
-        : Number(roomData.judgeScore);
-      
+      const storyPoint =
+        typeof roomData.judgeScore === 'number'
+          ? roomData.judgeScore
+          : Number(roomData.judgeScore);
+
       if (!Number.isNaN(storyPoint)) {
-        updateJiraStoryPoints(roomData.jiraTicket.key, storyPoint, { roomKey: roomData.key, userName: name })
-          .then(updatedTicket => {
+        updateJiraStoryPoints(roomData.jiraTicket.key, storyPoint, {
+          roomKey: roomData.key,
+          userName: name,
+        })
+          .then((updatedTicket) => {
             handleJiraTicketUpdated(updatedTicket);
           })
-          .catch(err => {
-            const errorMessage = err instanceof Error 
-              ? err.message 
-              : 'Failed to auto-update Jira story points';
+          .catch((err) => {
+            const errorMessage =
+              err instanceof Error
+                ? err.message
+                : 'Failed to auto-update Jira story points';
             setError(errorMessage);
           });
       }
     }
-  }, [roomData.settings.enableJiraIntegration, roomData.settings.autoUpdateJiraStoryPoints, 
-      roomData.jiraTicket, roomData.judgeScore, roomData.showVotes]);
+  }, [roomData, name]);
 
   const handleLeaveRoom = () => {
     disconnectFromRoom();
     localStorage.removeItem('sprintjam_roomKey');
-    
-    setRoomData({
-      key: '',
-      users: [],
-      votes: {},
-      showVotes: false,
-      moderator: '',
-      connectedUsers: {},
-      judgeScore: null,
-      settings: {
-        estimateOptions: VOTING_OPTIONS,
-        allowOthersToShowEstimates: true,
-        allowOthersToDeleteEstimates: true,
-        showTimer: false,
-        showUserPresence: false,
-        showAverage: false,
-        showMedian: false,
-        showTopVotes: false,
-        topVotesCount: 4,
-        anonymousVotes: true,
-        enableJudge: true,
-        judgeAlgorithm: "smartConsensus"
-      }
-    });
+
+    if (serverDefaults) {
+      setRoomData(buildInitialRoomData(serverDefaults.roomSettings));
+    } else {
+      setRoomData(null);
+    }
     setUserVote(null);
     setScreen('welcome');
   };
@@ -342,7 +394,23 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {isLoading && <LoadingOverlay />}
+      {(isLoading || isLoadingDefaults) && <LoadingOverlay />}
+
+      {defaultsError && (
+        <div className="max-w-2xl mx-auto mt-4 px-4">
+          <div className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-md p-3 flex items-start justify-between gap-4">
+            <span>Unable to load server defaults. {defaultsError}</span>
+            <button
+              type="button"
+              onClick={handleRetryDefaults}
+              className="text-sm font-medium underline"
+              disabled={isLoadingDefaults}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && screen !== 'room' && (
         <ErrorBanner message={error} onClose={clearError} />
@@ -373,13 +441,14 @@ const App = () => {
           error={error}
           onClearError={clearError}
         />
-      ) : screen === 'room' ? (
+      ) : screen === 'room' && roomData && serverDefaults ? (
         <RoomScreen
           roomData={roomData}
           name={name}
           isModeratorView={isModeratorView}
           userVote={userVote}
           votingOptions={roomData.settings.estimateOptions as VoteValue[]}
+          serverDefaults={serverDefaults}
           onVote={handleVote}
           onToggleShowVotes={handleToggleShowVotes}
           onResetVotes={handleResetVotes}
@@ -391,6 +460,10 @@ const App = () => {
           onClearError={clearError}
           isConnected={isConnected()}
         />
+      ) : screen === 'room' ? (
+        <div className="p-6 text-center text-gray-600">
+          Loading room data&hellip;
+        </div>
       ) : (
         <div>
           <h1>404</h1>

@@ -2,7 +2,14 @@ import { type FC, useMemo, useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import type { RoomData, RoomStats, VoteValue, JiraTicket, StructuredVote } from '../types';
+import type {
+  RoomData,
+  RoomStats,
+  VoteValue,
+  JiraTicket,
+  StructuredVote,
+  ServerDefaults,
+} from '../types';
 import ErrorBanner from '../components/ErrorBanner';
 import SettingsModal from '../components/SettingsModal';
 import ShareRoomModal from '../components/ShareRoomModal';
@@ -23,6 +30,7 @@ export interface RoomScreenProps {
   isModeratorView: boolean;
   userVote: VoteValue | StructuredVote | null;
   votingOptions: VoteValue[];
+  serverDefaults: ServerDefaults;
   onVote: (value: VoteValue | StructuredVote) => void;
   onToggleShowVotes: () => void;
   onResetVotes: () => void;
@@ -40,6 +48,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
   name,
   isModeratorView,
   userVote,
+  serverDefaults,
   onVote,
   onToggleShowVotes,
   onResetVotes,
@@ -57,10 +66,17 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const prevJudgeScoreRef = useRef<VoteValue | null>(null);
 
   const stats: RoomStats = useMemo(() => {
-    const votes = Object.values(roomData.votes).filter((v): v is VoteValue => v !== null && v !== '?');
-    const numericVotes = votes.filter(v => !Number.isNaN(Number(v))).map(Number);
+    const votes = Object.values(roomData.votes).filter(
+      (v): v is VoteValue => v !== null && v !== '?'
+    );
+    const numericVotes = votes
+      .filter((v) => !Number.isNaN(Number(v)))
+      .map(Number);
 
-    const distribution: Record<VoteValue, number> = {} as Record<VoteValue, number>;
+    const distribution: Record<VoteValue, number> = {} as Record<
+      VoteValue,
+      number
+    >;
     for (const option of roomData.settings.estimateOptions) {
       distribution[option] = 0;
     }
@@ -71,9 +87,10 @@ const RoomScreen: FC<RoomScreenProps> = ({
       }
     }
 
-    const avg = numericVotes.length > 0
-      ? numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length
-      : 0;
+    const avg =
+      numericVotes.length > 0
+        ? numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length
+        : 0;
     let maxCount = 0;
     let mode: VoteValue | null = null;
 
@@ -84,7 +101,9 @@ const RoomScreen: FC<RoomScreenProps> = ({
       }
     }
 
-    const votedUsers = Object.values(roomData.votes).filter(v => v !== null).length;
+    const votedUsers = Object.values(roomData.votes).filter(
+      (v) => v !== null
+    ).length;
 
     return {
       avg: Number.isNaN(avg) ? 'N/A' : avg.toFixed(1),
@@ -93,16 +112,23 @@ const RoomScreen: FC<RoomScreenProps> = ({
       totalVotes: votes.length,
       votedUsers,
       totalUsers: roomData.users.length,
-      judgeScore: roomData.judgeScore
+      judgeScore: roomData.judgeScore,
     };
-  }, [roomData.votes, roomData.users.length, roomData.settings.estimateOptions, roomData.judgeScore]);
+  }, [
+    roomData.votes,
+    roomData.users.length,
+    roomData.settings.estimateOptions,
+    roomData.judgeScore,
+  ]);
 
   // Effect to show hammer animation when judge score changes
   useEffect(() => {
-    if (roomData.settings.enableJudge &&
+    if (
+      roomData.settings.enableJudge &&
       roomData.judgeScore !== null &&
       roomData.judgeScore !== prevJudgeScoreRef.current &&
-      roomData.showVotes) {
+      roomData.showVotes
+    ) {
       setShowJudgeAnimation(true);
 
       const timer = setTimeout(() => {
@@ -132,7 +158,13 @@ const RoomScreen: FC<RoomScreenProps> = ({
     } else if (stats.votedUsers < roomData.users.length) {
       hasCelebratedRef.current = false;
     }
-  }, [roomData.showVotes, stats.votedUsers, stats.mode, stats.distribution, roomData.users.length]);
+  }, [
+    roomData.showVotes,
+    stats.votedUsers,
+    stats.mode,
+    stats.distribution,
+    roomData.users.length,
+  ]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -156,15 +188,15 @@ const RoomScreen: FC<RoomScreenProps> = ({
         <ParticipantsList roomData={roomData} stats={stats} name={name} />
 
         <div className="flex flex-col p-4 md:p-6 overflow-y-auto">
-          {roomData.settings.showTimer && (
-            <Timer />
-          )}
+          {roomData.settings.showTimer && <Timer />}
 
-          {roomData.settings.enableStructuredVoting && roomData.settings.votingCriteria ? (
+          {roomData.settings.enableStructuredVoting &&
+          roomData.settings.votingCriteria ? (
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
               currentVote={roomData.structuredVotes?.[name] || null}
               onVote={onVote}
+              displaySettings={roomData.settings.structuredVotingDisplay}
             />
           ) : (
             <UserEstimate
@@ -184,20 +216,21 @@ const RoomScreen: FC<RoomScreenProps> = ({
             />
           )}
 
-          {roomData.settings.enableJiraIntegration && (roomData.jiraTicket || isModeratorView) && (
-            <div className="mb-4">
-              <JiraTicketPanel
-                isModeratorView={isModeratorView}
-                currentJiraTicket={roomData.jiraTicket}
-                judgeScore={roomData.judgeScore}
-                roomKey={roomData.key}
-                userName={name}
-                onJiraTicketFetched={onJiraTicketFetched || (() => {})}
-                onJiraTicketUpdated={onJiraTicketUpdated || (() => {})}
-                onError={onClearError}
-              />
-            </div>
-          )}
+          {roomData.settings.enableJiraIntegration &&
+            (roomData.jiraTicket || isModeratorView) && (
+              <div className="mb-4">
+                <JiraTicketPanel
+                  isModeratorView={isModeratorView}
+                  currentJiraTicket={roomData.jiraTicket}
+                  judgeScore={roomData.judgeScore}
+                  roomKey={roomData.key}
+                  userName={name}
+                  onJiraTicketFetched={onJiraTicketFetched || (() => {})}
+                  onJiraTicketUpdated={onJiraTicketUpdated || (() => {})}
+                  onError={onClearError}
+                />
+              </div>
+            )}
 
           <AnimatePresence mode="wait">
             {roomData.showVotes ? (
@@ -259,6 +292,8 @@ const RoomScreen: FC<RoomScreenProps> = ({
             onClose={() => setIsSettingsModalOpen(false)}
             settings={roomData.settings}
             onSaveSettings={onUpdateSettings}
+            defaultSettings={serverDefaults.roomSettings}
+            structuredVotingOptions={serverDefaults.structuredVotingOptions}
           />
         )}
       </AnimatePresence>
