@@ -17,10 +17,10 @@ import {
 import { updateJiraStoryPoints } from './lib/jira-service';
 import type { RoomData, VoteValue, WebSocketErrorData, RoomSettings, JiraTicket, StructuredVote } from './types';
 
-import WelcomeScreen from './components/WelcomeScreen';
-import CreateRoomScreen from './components/CreateRoomScreen';
-import JoinRoomScreen from './components/JoinRoomScreen';
-import RoomScreen from './components/RoomScreen';
+import WelcomeScreen from './routes/WelcomeScreen';
+import CreateRoomScreen from './routes/CreateRoomScreen';
+import JoinRoomScreen from './routes/JoinRoomScreen';
+import RoomScreen from './routes/RoomScreen';
 import ErrorBanner from './components/ErrorBanner';
 import LoadingOverlay from './components/LoadingOverlay';
 
@@ -278,7 +278,8 @@ const App = () => {
   };
 
   // Auto-update Jira story points if setting is enabled
-  useEffect(() => {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    useEffect(() => {
     if (
       roomData.settings.enableJiraIntegration &&
       roomData.settings.autoUpdateJiraStoryPoints &&
@@ -347,13 +348,12 @@ const App = () => {
         <ErrorBanner message={error} onClose={clearError} />
       )}
 
-      {screen === 'welcome' && (
+      {screen === 'welcome' ? (
         <WelcomeScreen
           onCreateRoom={() => setScreen('create')}
           onJoinRoom={() => setScreen('join')}
         />
-      )}
-      {screen === 'create' && (
+      ) : screen === 'create' ? (
         <CreateRoomScreen
           name={name}
           onNameChange={setName}
@@ -362,8 +362,7 @@ const App = () => {
           error={error}
           onClearError={clearError}
         />
-      )}
-      {screen === 'join' && (
+      ) : screen === 'join' ? (
         <JoinRoomScreen
           name={name}
           roomKey={roomKey}
@@ -374,8 +373,7 @@ const App = () => {
           error={error}
           onClearError={clearError}
         />
-      )}
-      {screen === 'room' && (
+      ) : screen === 'room' ? (
         <RoomScreen
           roomData={roomData}
           name={name}
@@ -393,6 +391,11 @@ const App = () => {
           onClearError={clearError}
           isConnected={isConnected()}
         />
+      ) : (
+        <div>
+          <h1>404</h1>
+          <p>Page not found</p>
+        </div>
       )}
     </div>
   );

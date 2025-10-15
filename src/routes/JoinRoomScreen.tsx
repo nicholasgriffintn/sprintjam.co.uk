@@ -1,33 +1,38 @@
+/** biome-ignore-all lint/nursery/useUniqueElementIds: <explanation> */
 import type { FC, ChangeEvent, FormEvent } from 'react';
 
-interface CreateRoomScreenProps {
+interface JoinRoomScreenProps {
   name: string;
+  roomKey: string;
   onNameChange: (name: string) => void;
-  onCreateRoom: () => void;
+  onRoomKeyChange: (key: string) => void;
+  onJoinRoom: () => void;
   onBack: () => void;
   error: string;
   onClearError: () => void;
 }
 
-const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
+const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
   name,
+  roomKey,
   onNameChange,
-  onCreateRoom,
+  onRoomKeyChange,
+  onJoinRoom,
   onBack,
   error,
   onClearError,
 }) => {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (name) {
+    if (name && roomKey) {
       onClearError();
-      onCreateRoom();
+      onJoinRoom();
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center p-8 space-y-6">
-      <h1 className="text-2xl font-bold text-blue-600">Create New Room</h1>
+      <h1 className="text-2xl font-bold text-blue-600">Join Existing Room</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         {error && (
@@ -37,16 +42,31 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
         )}
         
         <div className="mb-4">
-          <label htmlFor="create-name" className="block mb-2 text-sm font-medium text-gray-700">
+          <label htmlFor="join-name" className="block mb-2 text-sm font-medium text-gray-700">
             Your Name
           </label>
           <input
-            id="create-name"
+            id="join-name"
             type="text"
             value={name}
             onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your name"
+            required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="join-room-key" className="block mb-2 text-sm font-medium text-gray-700">
+            Room Key
+          </label>
+          <input
+            id="join-room-key"
+            type="text"
+            value={roomKey}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => onRoomKeyChange(e.target.value.toUpperCase())}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter room key"
             required
           />
         </div>
@@ -61,14 +81,14 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
           </button>
           <button
             type="submit"
-            disabled={!name}
+            disabled={!name || !roomKey}
             className={`flex-1 px-4 py-2 text-white rounded-md ${
-              name
+              name && roomKey
                 ? 'bg-blue-500 hover:bg-blue-600'
                 : 'bg-blue-300 cursor-not-allowed'
             }`}
           >
-            Create Room
+            Join Room
           </button>
         </div>
       </form>
@@ -76,4 +96,4 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   );
 };
 
-export default CreateRoomScreen; 
+export default JoinRoomScreen; 

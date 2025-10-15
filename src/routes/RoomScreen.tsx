@@ -3,19 +3,19 @@ import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import type { RoomData, RoomStats, VoteValue, JiraTicket, StructuredVote } from '../types';
-import ErrorBanner from './ErrorBanner';
-import SettingsModal from './SettingsModal';
-import ShareRoomModal from './ShareRoomModal';
-import Header from './Header';
-import { ParticipantsList } from './ParticipantsList';
-import { Timer } from './Timer';
-import { UserEstimate } from './UserEstimate';
-import { ResultsControls } from './ResultsControls';
-import { JudgeResult } from './JudgeResult';
-import { VotesHidden } from './VotesHidden';
-import JiraTicketPanel from './JiraTicketPanel';
-import { StructuredVotingPanel } from './StructuredVotingPanel';
-import { UnifiedResults } from './UnifiedResults';
+import ErrorBanner from '../components/ErrorBanner';
+import SettingsModal from '../components/SettingsModal';
+import ShareRoomModal from '../components/ShareRoomModal';
+import Header from '../components/Header';
+import { ParticipantsList } from '../components/ParticipantsList';
+import { Timer } from '../components/Timer';
+import { UserEstimate } from '../components/UserEstimate';
+import { ResultsControls } from '../components/ResultsControls';
+import { JudgeResult } from '../components/JudgeResult';
+import { VotesHidden } from '../components/VotesHidden';
+import JiraTicketPanel from '../components/JiraTicketPanel';
+import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
+import { UnifiedResults } from '../components/UnifiedResults';
 
 export interface RoomScreenProps {
   roomData: RoomData;
