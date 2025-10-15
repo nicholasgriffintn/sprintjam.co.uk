@@ -6,9 +6,56 @@ import type { DurableObjectState, WebSocket, Response as CfResponse } from '@clo
 
 import { PlanningPokerJudge } from './planning-poker-judge';
 import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket, StructuredVote } from './types'
-import { VOTING_OPTIONS } from './constants'
+import { JudgeAlgorithm } from './types'
+import { STRUCTURED_VOTING_OPTIONS, VOTING_OPTIONS } from './constants'
 import { generateVoteOptionsMetadata } from './utils/votes'
 import { getDefaultVotingCriteria, isStructuredVote, calculateStoryPointsFromStructuredVote } from './utils/structured-voting'
+
+function returnInitialOptions({
+  key = "",
+  users = [],
+  moderator = "",
+  connectedUsers = {},
+}: {
+  key?: string;
+  users?: string[];
+  moderator?: string;
+  connectedUsers?: Record<string, boolean>;
+}): RoomData {
+  const initialEstimateOptions = VOTING_OPTIONS;
+  const initialVoteOptionsMetadata = generateVoteOptionsMetadata(
+    initialEstimateOptions,
+  );
+
+  const roomData = {
+    key,
+    users,
+    votes: {},
+    showVotes: false,
+    moderator,
+    connectedUsers,
+    judgeScore: null,
+    settings: {
+      estimateOptions: initialEstimateOptions,
+      voteOptionsMetadata: initialVoteOptionsMetadata,
+      allowOthersToShowEstimates: true,
+      allowOthersToDeleteEstimates: true,
+      showTimer: false,
+      showUserPresence: false,
+      showAverage: false,
+      showMedian: false,
+      showTopVotes: true,
+      topVotesCount: 4,
+      anonymousVotes: true,
+      enableJudge: true,
+      judgeAlgorithm: JudgeAlgorithm.SMART_CONSENSUS,
+      enableStructuredVoting: false,
+      votingCriteria: getDefaultVotingCriteria(),
+    },
+  };
+
+  return roomData;
+}
 
 export class PokerRoom {
   state: DurableObjectState;
@@ -25,33 +72,7 @@ export class PokerRoom {
     this.state.blockConcurrencyWhile(async () => {
       let roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) {
-        const initialEstimateOptions = VOTING_OPTIONS;
-        const initialVoteOptionsMetadata = generateVoteOptionsMetadata(initialEstimateOptions);
-
-        roomData = {
-          key: '',
-          users: [],
-          votes: {},
-          showVotes: false,
-          moderator: '',
-          connectedUsers: {},
-          judgeScore: null,
-          settings: {
-            estimateOptions: initialEstimateOptions,
-            voteOptionsMetadata: initialVoteOptionsMetadata,
-            allowOthersToShowEstimates: true,
-            allowOthersToDeleteEstimates: true,
-            showTimer: false,
-            showUserPresence: false,
-            showAverage: false,
-            showMedian: false,
-            showTopVotes: true,
-            topVotesCount: 4,
-            anonymousVotes: true,
-            enableJudge: true,
-            judgeAlgorithm: 'smartConsensus',
-          }
-        };
+        roomData = returnInitialOptions({});
         await this.state.storage.put('roomData', roomData);
       } else if (!roomData.connectedUsers) {
         roomData.connectedUsers = {};
@@ -104,35 +125,12 @@ export class PokerRoom {
           ) as unknown as CfResponse;
         }
 
-        const initialEstimateOptions = VOTING_OPTIONS;
-        const initialVoteOptionsMetadata = generateVoteOptionsMetadata(initialEstimateOptions);
-
-        roomData = {
+        roomData = returnInitialOptions({
           key: roomKey,
           users: [moderator],
-          votes: {},
-          showVotes: false,
           moderator,
           connectedUsers: { [moderator]: true },
-          judgeScore: null,
-          settings: {
-            estimateOptions: initialEstimateOptions,
-            voteOptionsMetadata: initialVoteOptionsMetadata,
-            allowOthersToShowEstimates: true,
-            allowOthersToDeleteEstimates: true,
-            showTimer: false,
-            showUserPresence: false,
-            showAverage: false,
-            showMedian: false,
-            showTopVotes: true,
-            topVotesCount: 4,
-            anonymousVotes: true,
-            enableJudge: true,
-            judgeAlgorithm: 'smartConsensus',
-            enableStructuredVoting: false,
-            votingCriteria: getDefaultVotingCriteria(),
-          }
-        };
+        });
 
         await this.state.storage.put('roomData', roomData);
 
@@ -380,11 +378,22 @@ export class PokerRoom {
           ) as unknown as CfResponse;
         }
 
-        roomData.settings = {
+        const providedSettings = settings as Partial<RoomData['settings']>;
+
+        const newSettings = {
           ...roomData.settings,
-          ...settings
+          ...providedSettings
         };
-  
+
+        if (providedSettings.enableStructuredVoting === true) {
+          newSettings.estimateOptions = STRUCTURED_VOTING_OPTIONS;
+        } else if (providedSettings.enableStructuredVoting === false && !providedSettings.estimateOptions) {
+          newSettings.estimateOptions = VOTING_OPTIONS;
+        }
+
+
+        roomData.settings = newSettings;
+
         await this.state.storage.put('roomData', roomData);
 
         this.broadcast({
@@ -404,7 +413,7 @@ export class PokerRoom {
         ) as unknown as CfResponse;
       });
     }
-    
+
     if (url.pathname === '/jira/ticket' && request.method === 'POST') {
       const { name, ticket } = await request.json() as {
         name: string;
@@ -451,7 +460,7 @@ export class PokerRoom {
         ) as unknown as CfResponse;
       });
     }
-    
+
     if (url.pathname === '/jira/ticket/clear' && request.method === 'POST') {
       const { name } = await request.json() as { name: string };
 
@@ -629,7 +638,7 @@ export class PokerRoom {
       if (isStructuredVote(vote)) {
         const calculatedPoints = calculateStoryPointsFromStructuredVote(vote.criteriaScores);
         finalVote = calculatedPoints || '?';
-        
+
         if (!roomData.structuredVotes) {
           roomData.structuredVotes = {};
         }

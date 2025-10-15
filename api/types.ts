@@ -12,7 +12,12 @@ export interface Env {
   JIRA_STORY_POINTS_FIELD?: string;
 }
 
-export type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimisticMode' | 'simpleAverage';
+export enum JudgeAlgorithm {
+  SMART_CONSENSUS = 'smartConsensus',
+  CONSERVATIVE_MODE = 'conservativeMode',
+  OPTIMISTIC_MODE = 'optimisticMode',
+  SIMPLE_AVERAGE = 'simpleAverage',
+}
 
 export interface JudgeResult {
   score: number | null;

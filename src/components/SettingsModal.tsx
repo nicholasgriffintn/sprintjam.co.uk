@@ -1,5 +1,9 @@
+/** biome-ignore-all lint/nursery/useUniqueElementIds: <explanation> */
 import { useState, useEffect, type FC } from 'react';
 import type { RoomSettings, JudgeAlgorithm } from '../types';
+
+export const VOTING_OPTIONS = ['1', '2', '3', '5', '8', '13', '21', '?'];
+export const STRUCTURED_VOTING_OPTIONS = [1, 3, 5, 8];
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -33,10 +37,15 @@ const SettingsModal: FC<SettingsModalProps> = ({
     key: keyof RoomSettings,
     value: boolean | (string | number)[] | JudgeAlgorithm | number
   ) => {
-    setLocalSettings({
-      ...localSettings,
-      [key]: value,
-    });
+    const newSettings = { ...localSettings, [key]: value };
+
+    if (key === 'enableStructuredVoting' && value === true) {
+      newSettings.estimateOptions = STRUCTURED_VOTING_OPTIONS;
+    } else if (key === 'enableStructuredVoting' && value === false && !newSettings.estimateOptions) {
+      newSettings.estimateOptions = VOTING_OPTIONS;
+    }
+    
+    setLocalSettings(newSettings);
   };
 
   const handleEstimateOptionsChange = (value: string) => {
@@ -79,7 +88,32 @@ const SettingsModal: FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="space-y-4 overflow-y-auto pr-1 flex-grow">
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Voting Mode</h3>
+          <div className="space-y-3">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="enableStructuredVoting"
+                checked={localSettings.enableStructuredVoting || false}
+                onChange={(e) => handleChange('enableStructuredVoting', e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="enableStructuredVoting" className="ml-2 text-sm text-gray-700">
+                Enable Structured Voting
+              </label>
+            </div>
+            {localSettings.enableStructuredVoting && (
+              <div className="bg-gray-50 p-3 rounded-md">
+                <p className="text-xs text-gray-600">
+                  Structured voting allows users to vote on multiple criteria with scores from 0-4. Story points are automatically calculated based on your estimate options.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-4 overflow-y-auto pr-1 pt-2 flex-grow">
           <div>
             <label htmlFor="estimateOptions" className="block text-sm font-medium text-gray-700 mb-1">
               Estimate Options
@@ -87,72 +121,20 @@ const SettingsModal: FC<SettingsModalProps> = ({
             <input
               id="estimateOptions"
               type="text"
-              value={estimateOptionsInput}
+              value={localSettings.enableStructuredVoting ? STRUCTURED_VOTING_OPTIONS.join(',') : estimateOptionsInput}
               onChange={(e) => handleEstimateOptionsChange(e.target.value)}
-              placeholder="e.g., 0,0.5,1,2,3,5,8,13,21,?"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder={`e.g., ${VOTING_OPTIONS.join(',')}`}
+              disabled={localSettings.enableStructuredVoting}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${localSettings.enableStructuredVoting ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                }`}
             />
-            <p className="mt-1 text-xs text-gray-500">Separate values with commas</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {localSettings.enableStructuredVoting
+                ? 'Fixed options for structured voting'
+                : 'Separate values with commas'
+              }
+            </p>
           </div>
-
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Voting Mode</h3>
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="enableStructuredVoting"
-                  checked={localSettings.enableStructuredVoting || false}
-                  onChange={(e) => handleChange('enableStructuredVoting', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="enableStructuredVoting" className="ml-2 text-sm text-gray-700">
-                  Enable Structured Voting
-                </label>
-              </div>
-              {localSettings.enableStructuredVoting && (
-                <div className="bg-gray-50 p-3 rounded-md">
-                  <p className="text-xs text-gray-600">
-                    Structured voting allows users to vote on multiple criteria (complexity, risks, unknowns)
-                    with scores from 0-5. Story points are automatically calculated based on your estimate options.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Jira Integration</h3>
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="enableJiraIntegration"
-                  checked={localSettings.enableJiraIntegration || false}
-                  onChange={(e) => handleChange('enableJiraIntegration', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="enableJiraIntegration" className="ml-2 text-sm text-gray-700">
-                  Enable Jira Integration
-                </label>
-              </div>
-              {localSettings.enableJiraIntegration && (
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="autoUpdateJiraStoryPoints"
-                    checked={localSettings.autoUpdateJiraStoryPoints || false}
-                    onChange={(e) => handleChange('autoUpdateJiraStoryPoints', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="autoUpdateJiraStoryPoints" className="ml-2 text-sm text-gray-700">
-                    Auto-update story points in Jira when voting completes
-                  </label>
-                </div>
-              )}
-            </div>
-          </div>
-
           <div className="pt-2">
             <h3 className="text-sm font-medium text-gray-700 mb-2">The Judge</h3>
             <div className="space-y-3">
@@ -199,131 +181,167 @@ const SettingsModal: FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Permissions</h3>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="allowOthersToShowEstimates"
-                  checked={localSettings.allowOthersToShowEstimates}
-                  onChange={(e) => handleChange('allowOthersToShowEstimates', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="allowOthersToShowEstimates" className="ml-2 text-sm text-gray-700">
-                  Allow others to show estimates
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="allowOthersToDeleteEstimates"
-                  checked={localSettings.allowOthersToDeleteEstimates}
-                  onChange={(e) => handleChange('allowOthersToDeleteEstimates', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="allowOthersToDeleteEstimates" className="ml-2 text-sm text-gray-700">
-                  Allow others to delete estimates
-                </label>
+          <details className="cursor-pointer">
+            <summary>Other options</summary>
+            <div className="pt-2">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Jira Integration</h3>
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="enableJiraIntegration"
+                    checked={localSettings.enableJiraIntegration || false}
+                    onChange={(e) => handleChange('enableJiraIntegration', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="enableJiraIntegration" className="ml-2 text-sm text-gray-700">
+                    Enable Jira Integration
+                  </label>
+                </div>
+                {localSettings.enableJiraIntegration && (
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="autoUpdateJiraStoryPoints"
+                      checked={localSettings.autoUpdateJiraStoryPoints || false}
+                      onChange={(e) => handleChange('autoUpdateJiraStoryPoints', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="autoUpdateJiraStoryPoints" className="ml-2 text-sm text-gray-700">
+                      Auto-update story points in Jira when voting completes
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
 
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Display Options</h3>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="showTimer"
-                  checked={localSettings.showTimer}
-                  onChange={(e) => handleChange('showTimer', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="showTimer" className="ml-2 text-sm text-gray-700">
-                  Show timer
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="showUserPresence"
-                  checked={localSettings.showUserPresence}
-                  onChange={(e) => handleChange('showUserPresence', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="showUserPresence" className="ml-2 text-sm text-gray-700">
-                  Show user presence
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="showAverage"
-                  checked={localSettings.showAverage}
-                  onChange={(e) => handleChange('showAverage', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="showAverage" className="ml-2 text-sm text-gray-700">
-                  Show average
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="showMedian"
-                  checked={localSettings.showMedian}
-                  onChange={(e) => handleChange('showMedian', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="showMedian" className="ml-2 text-sm text-gray-700">
-                  Show median
-                </label>
-              </div>
+            <div className="pt-2">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Permissions</h3>
               <div className="space-y-2">
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    id="showTopVotes"
-                    checked={localSettings.showTopVotes}
-                    onChange={(e) => handleChange('showTopVotes', e.target.checked)}
+                    id="allowOthersToShowEstimates"
+                    checked={localSettings.allowOthersToShowEstimates}
+                    onChange={(e) => handleChange('allowOthersToShowEstimates', e.target.checked)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="showTopVotes" className="ml-2 text-sm text-gray-700">
-                    Show top votes
+                  <label htmlFor="allowOthersToShowEstimates" className="ml-2 text-sm text-gray-700">
+                    Allow others to show estimates
                   </label>
                 </div>
-                {localSettings.showTopVotes && (
-                  <div className="ml-6">
-                    <label htmlFor="topVotesCount" className="block text-sm text-gray-700 mb-1">
-                      Number of top votes to show
-                    </label>
-                    <input
-                      id="topVotesCount"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={localSettings.topVotesCount}
-                      onChange={(e) => handleChange('topVotesCount', parseInt(e.target.value) || 1)}
-                      className="w-20 px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="anonymousVotes"
-                  checked={localSettings.anonymousVotes}
-                  onChange={(e) => handleChange('anonymousVotes', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="anonymousVotes" className="ml-2 text-sm text-gray-700">
-                  Anonymous votes in sidebar
-                </label>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="allowOthersToDeleteEstimates"
+                    checked={localSettings.allowOthersToDeleteEstimates}
+                    onChange={(e) => handleChange('allowOthersToDeleteEstimates', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="allowOthersToDeleteEstimates" className="ml-2 text-sm text-gray-700">
+                    Allow others to delete estimates
+                  </label>
+                </div>
               </div>
             </div>
-          </div>
+
+            <div className="pt-2">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Display Options</h3>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="showTimer"
+                    checked={localSettings.showTimer}
+                    onChange={(e) => handleChange('showTimer', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="showTimer" className="ml-2 text-sm text-gray-700">
+                    Show timer
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="showUserPresence"
+                    checked={localSettings.showUserPresence}
+                    onChange={(e) => handleChange('showUserPresence', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="showUserPresence" className="ml-2 text-sm text-gray-700">
+                    Show user presence
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="showAverage"
+                    checked={localSettings.showAverage}
+                    onChange={(e) => handleChange('showAverage', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="showAverage" className="ml-2 text-sm text-gray-700">
+                    Show average
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="showMedian"
+                    checked={localSettings.showMedian}
+                    onChange={(e) => handleChange('showMedian', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="showMedian" className="ml-2 text-sm text-gray-700">
+                    Show median
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="showTopVotes"
+                      checked={localSettings.showTopVotes}
+                      onChange={(e) => handleChange('showTopVotes', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="showTopVotes" className="ml-2 text-sm text-gray-700">
+                      Show top votes
+                    </label>
+                  </div>
+                  {localSettings.showTopVotes && (
+                    <div className="ml-6">
+                      <label htmlFor="topVotesCount" className="block text-sm text-gray-700 mb-1">
+                        Number of top votes to show
+                      </label>
+                      <input
+                        id="topVotesCount"
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={localSettings.topVotesCount}
+                        onChange={(e) => handleChange('topVotesCount', parseInt(e.target.value) || 1)}
+                        className="w-20 px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="anonymousVotes"
+                    checked={localSettings.anonymousVotes}
+                    onChange={(e) => handleChange('anonymousVotes', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="anonymousVotes" className="ml-2 text-sm text-gray-700">
+                    Anonymous votes in sidebar
+                  </label>
+                </div>
+              </div>
+            </div>
+          </details>
+
         </div>
 
         <div className="mt-6 flex justify-end space-x-3 flex-shrink-0">
