@@ -1,15 +1,18 @@
 /** biome-ignore-all lint/nursery/useUniqueElementIds: form elements have unique IDs within component scope */
 import type { FC, ChangeEvent, FormEvent } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, Lock, User, AlertCircle, CheckCircle, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Plus, Lock, User, AlertCircle, CheckCircle, Settings, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import type { RoomSettings } from '../types';
+import type { RoomSettings, AvatarId } from '../types';
+import AvatarSelector from '../components/AvatarSelector';
 
 interface CreateRoomScreenProps {
   name: string;
   passcode: string;
+  selectedAvatar: AvatarId | null;
   onNameChange: (name: string) => void;
   onPasscodeChange: (passcode: string) => void;
+  onAvatarChange: (avatar: AvatarId) => void;
   onCreateRoom: (settings?: Partial<RoomSettings>) => void;
   onBack: () => void;
   error: string;
@@ -20,15 +23,18 @@ interface CreateRoomScreenProps {
 const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   name,
   passcode,
+  selectedAvatar,
   onNameChange,
   onPasscodeChange,
+  onAvatarChange,
   onCreateRoom,
   onBack,
   error,
   onClearError,
   defaultSettings,
 }) => {
-  const [showSettings, setShowSettings] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'name' | 'avatar' | 'details'>('name');
+  const [showSettings, setShowSettings] = useState(true);
   const [settings, setSettings] = useState<Partial<RoomSettings>>(() => {
     // Initialize with some sensible defaults if no defaultSettings provided
     if (!defaultSettings) return {};
@@ -39,14 +45,29 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
       enableJiraIntegration: defaultSettings.enableJiraIntegration ?? false,
       showTimer: defaultSettings.showTimer ?? false,
       allowOthersToShowEstimates: defaultSettings.allowOthersToShowEstimates ?? false,
+      hideParticipantNames: defaultSettings.hideParticipantNames ?? false,
     };
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (name) {
+    if (currentStep === 'name' && name.trim()) {
+      setCurrentStep('avatar');
+    } else if (currentStep === 'avatar' && selectedAvatar) {
+      setCurrentStep('details');
+    } else if (currentStep === 'details' && name && selectedAvatar) {
       onClearError();
       onCreateRoom(settings);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 'avatar') {
+      setCurrentStep('name');
+    } else if (currentStep === 'details') {
+      setCurrentStep('avatar');
+    } else {
+      onBack();
     }
   };
 
@@ -57,7 +78,30 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
     }));
   };
 
-  const isFormValid = name.trim();
+  const getFormValid = () => {
+    if (currentStep === 'name') return name.trim();
+    if (currentStep === 'avatar') return selectedAvatar;
+    if (currentStep === 'details') return name.trim() && selectedAvatar;
+    return false;
+  };
+
+  const getButtonText = () => {
+    if (currentStep === 'name') return 'Continue';
+    if (currentStep === 'avatar') return 'Continue';
+    return 'Create Room';
+  };
+
+  const getStepTitle = () => {
+    if (currentStep === 'name') return 'Create Room';
+    if (currentStep === 'avatar') return 'Select Your Avatar';
+    return 'Room Settings';
+  };
+
+  const getStepDescription = () => {
+    if (currentStep === 'name') return 'Set up a new planning poker session for your team';
+    if (currentStep === 'avatar') return 'Choose an avatar to represent you in the room';
+    return 'Configure your room preferences (optional)';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -78,10 +122,10 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               <Plus className="w-8 h-8 text-white" />
             </motion.div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Create Room
+              {getStepTitle()}
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
-              Set up a new planning poker session for your team
+              {getStepDescription()}
             </p>
           </div>
 
@@ -104,59 +148,63 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               </motion.div>
             )}
             
-            <div className="mb-6">
-              <label htmlFor="create-name" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <User className="w-4 h-4" />
-                Your Name
-              </label>
-              <div className="relative">
-                <input
-                  id="create-name"
-                  type="text"
-                  value={name}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
-                  placeholder="Enter your name"
-                  required
-                />
-                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-                {name.trim() && (
-                  <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
-                )}
-              </div>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                You'll be the moderator of this room
-              </p>
-            </div>
-
-            <div className="mb-8">
-              <label htmlFor="create-passcode" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <Lock className="w-4 h-4" />
-                Room Passcode
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">(optional)</span>
-              </label>
-              <div className="relative">
-                <input
-                  id="create-passcode"
-                  type="password"
-                  value={passcode}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
-                  placeholder="Enter passcode (optional)"
-                />
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-              </div>
-              <div className="mt-2 space-y-1">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Set a passcode to restrict room access
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Leave empty for a public room that anyone can join
+            {currentStep === 'name' && (
+              <div className="mb-8">
+                <label htmlFor="create-name" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <User className="w-4 h-4" />
+                  Your Name
+                </label>
+                <div className="relative">
+                  <input
+                    id="create-name"
+                    type="text"
+                    value={name}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
+                    className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
+                    placeholder="Enter your name"
+                    required
+                  />
+                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  {name.trim() && (
+                    <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  You'll be the moderator of this room
                 </p>
               </div>
-            </div>
+            )}
 
-            <div className="mb-6">
+            {currentStep === 'details' && (
+              <>
+                <div className="mb-6">
+                  <label htmlFor="create-passcode" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <Lock className="w-4 h-4" />
+                    Room Passcode
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="create-passcode"
+                      type="password"
+                      value={passcode}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
+                      className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
+                      placeholder="Enter passcode (optional)"
+                    />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Set a passcode to restrict room access
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      Leave empty for a public room that anyone can join
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-6">
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
@@ -204,15 +252,38 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                         Structured voting allows users to vote on multiple criteria with scores from 0-4. Story points are automatically calculated.
                       </p>
                     </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="hideParticipantNames"
+                        checked={settings.hideParticipantNames ?? false}
+                        onChange={(e) => handleSettingChange('hideParticipantNames', e.target.checked)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                      />
+                      <label htmlFor="hideParticipantNames" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        Hide Participant Names
+                      </label>
+                    </div>
                   </div>
                 </motion.div>
               )}
-            </div>
+                </div>
+              </>
+            )}
+
+            {currentStep === 'avatar' && (
+              <div className="mb-8">
+                <AvatarSelector
+                  selectedAvatar={selectedAvatar}
+                  onSelectAvatar={onAvatarChange}
+                />
+              </div>
+            )}
 
             <div className="flex gap-4">
               <motion.button
                 type="button"
-                onClick={onBack}
+                onClick={handleBack}
                 className="flex items-center justify-center gap-2 px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all duration-200 font-medium"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -223,17 +294,17 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               
               <motion.button
                 type="submit"
-                disabled={!isFormValid}
+                disabled={!getFormValid()}
                 className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-xl transition-all duration-200 ${
-                  isFormValid
+                  getFormValid()
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
                     : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 }`}
-                whileHover={isFormValid ? { scale: 1.02 } : {}}
-                whileTap={isFormValid ? { scale: 0.98 } : {}}
+                whileHover={getFormValid() ? { scale: 1.02 } : {}}
+                whileTap={getFormValid() ? { scale: 0.98 } : {}}
               >
-                <Plus className="w-4 h-4" />
-                Create Room
+                {currentStep === 'name' || currentStep === 'details' || currentStep === 'avatar' ? <ChevronRight className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                {getButtonText()}
               </motion.button>
             </div>
           </motion.form>

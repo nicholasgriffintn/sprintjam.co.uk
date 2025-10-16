@@ -29,10 +29,19 @@ export function applyRoomUpdate(
         ? prev.connectedUsers
         : { ...prev.connectedUsers, [user]: true };
 
+      let userAvatars = prev.userAvatars;
+      if (message.avatar && (!userAvatars || !userAvatars[user])) {
+        userAvatars = {
+          ...(userAvatars ?? {}),
+          [user]: message.avatar,
+        };
+      }
+
       return {
         ...prev,
         users,
         connectedUsers,
+        userAvatars,
       };
     }
 

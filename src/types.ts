@@ -4,6 +4,8 @@ export type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimistic
 
 export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
+export type AvatarId = 'user' | 'robot' | 'bear' | 'bird' | 'knight' | 'alien' | 'ninja' | 'pirate' | 'wizard' | 'ghost' | 'dragon' | 'crown';
+
 export interface JiraTicket {
   id: string;
   key: string;
@@ -106,6 +108,7 @@ export interface RoomSettings {
   anonymousVotes: boolean;
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
+  hideParticipantNames?: boolean;
   enableJiraIntegration?: boolean;
   autoUpdateJiraStoryPoints?: boolean;
   enableStructuredVoting?: boolean;
@@ -149,6 +152,7 @@ export interface RoomData {
   judgeMetadata?: JudgeMetadata;
   jiraTicket?: JiraTicket;
   passcode?: string;
+  userAvatars?: Record<string, AvatarId>;
 }
 
 export interface WebSocketErrorData {
@@ -171,10 +175,13 @@ export type WebSocketMessageType =
   | 'jiraTicketUpdated'
   | 'jiraTicketCleared'
   | 'error'
-  | 'disconnected';
+  | 'disconnected'
+  | 'avatarChanged';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
+  userAvatar?: AvatarId;
+  avatar?: AvatarId;
   roomData?: RoomData;
   settings?: RoomSettings;
   error?: string;

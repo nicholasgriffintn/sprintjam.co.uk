@@ -36,6 +36,7 @@ import type {
   ServerDefaults,
   WebSocketMessage,
   WebSocketMessageType,
+  AvatarId,
 } from './types';
 import { cloneServerDefaults } from './utils/settings';
 import WelcomeScreen from './routes/WelcomeScreen';
@@ -56,6 +57,7 @@ const App = () => {
   const [name, setName] = useState<string>('');
   const [roomKey, setRoomKey] = useState<string>('');
   const [passcode, setPasscode] = useState<string>('');
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(null);
   const [screen, setScreen] = useState<AppScreen>('welcome');
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
@@ -82,25 +84,22 @@ const App = () => {
     setDefaultsError(null);
   }, []);
 
-  const loadDefaults = useCallback(
-    async (forceRefresh = false) => {
-      setIsLoadingDefaults(true);
-      try {
-        await fetchDefaultSettings(forceRefresh);
-        setDefaultsError(null);
-      } catch (err) {
-        console.error('Failed to load default settings', err);
-        const message =
-          err instanceof Error
-            ? err.message
-            : 'Unable to load default settings from server';
-        setDefaultsError(message);
-      } finally {
-        setIsLoadingDefaults(false);
-      }
-    },
-    []
-  );
+  const loadDefaults = useCallback(async (forceRefresh = false) => {
+    setIsLoadingDefaults(true);
+    try {
+      await fetchDefaultSettings(forceRefresh);
+      setDefaultsError(null);
+    } catch (err) {
+      console.error('Failed to load default settings', err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Unable to load default settings from server';
+      setDefaultsError(message);
+    } finally {
+      setIsLoadingDefaults(false);
+    }
+  }, []);
 
   const handleRetryDefaults = useCallback(() => {
     loadDefaults(true);
@@ -159,7 +158,8 @@ const App = () => {
     const savedRoomKey = localStorage.getItem('sprintjam_roomKey');
     if (savedRoomKey) {
       setIsLoading(true);
-      joinRoom(name, savedRoomKey)
+      const avatarToUse = selectedAvatar || 'user';
+      joinRoom(name, savedRoomKey, undefined, avatarToUse)
         .then(async ({ room: joinedRoom, defaults }) => {
           await applyServerDefaults(defaults);
           await upsertRoom(joinedRoom);
@@ -176,28 +176,25 @@ const App = () => {
         })
         .finally(() => setIsLoading(false));
     }
-  }, [name, screen, isLoadingDefaults, applyServerDefaults]);
+  }, [name, screen, isLoadingDefaults, selectedAvatar, applyServerDefaults]);
 
-  const handleRoomMessage = useCallback(
-    (message: WebSocketMessage) => {
-      if (message.type === 'error') {
-        setError(message.error || 'Connection error');
-        return;
-      }
-      void applyRoomMessageToCollections(message, activeRoomKeyRef.current)
-        .then((updatedRoom) => {
-          if (!activeRoomKeyRef.current && updatedRoom?.key) {
-            setActiveRoomKey(updatedRoom.key);
-          }
-          setError('');
-        })
-        .catch((err) => {
-          console.error('Failed to process room message', err);
-          setError('Connection update failed');
-        });
-    },
-    []
-  );
+  const handleRoomMessage = useCallback((message: WebSocketMessage) => {
+    if (message.type === 'error') {
+      setError(message.error || 'Connection error');
+      return;
+    }
+    void applyRoomMessageToCollections(message, activeRoomKeyRef.current)
+      .then((updatedRoom) => {
+        if (!activeRoomKeyRef.current && updatedRoom?.key) {
+          setActiveRoomKey(updatedRoom.key);
+        }
+        setError('');
+      })
+      .catch((err) => {
+        console.error('Failed to process room message', err);
+        setError('Connection update failed');
+      });
+  }, []);
 
   // Connect to WebSocket when entering a room
   useEffect(() => {
@@ -267,13 +264,18 @@ const App = () => {
   }, [name]);
 
   const handleCreateRoom = async (settings?: Partial<RoomSettings>) => {
-    if (!name) return;
+    if (!name || !selectedAvatar) return;
 
     setIsLoading(true);
     setError('');
 
     try {
-      const { room: newRoom, defaults } = await createRoom(name, passcode || undefined, settings);
+      const { room: newRoom, defaults } = await createRoom(
+        name,
+        passcode || undefined,
+        settings,
+        selectedAvatar
+      );
       await applyServerDefaults(defaults);
       await upsertRoom(newRoom);
       setActiveRoomKey(newRoom.key);
@@ -290,13 +292,18 @@ const App = () => {
   };
 
   const handleJoinRoom = async () => {
-    if (!name || !roomKey) return;
+    if (!name || !roomKey || !selectedAvatar) return;
 
     setIsLoading(true);
     setError('');
 
     try {
-      const { room: joinedRoom, defaults } = await joinRoom(name, roomKey, passcode || undefined);
+      const { room: joinedRoom, defaults } = await joinRoom(
+        name,
+        roomKey,
+        passcode || undefined,
+        selectedAvatar
+      );
       await applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
@@ -493,8 +500,10 @@ const App = () => {
         <CreateRoomScreen
           name={name}
           passcode={passcode}
+          selectedAvatar={selectedAvatar}
           onNameChange={setName}
           onPasscodeChange={setPasscode}
+          onAvatarChange={setSelectedAvatar}
           onCreateRoom={handleCreateRoom}
           onBack={() => {
             setPasscode('');
@@ -509,9 +518,11 @@ const App = () => {
           name={name}
           roomKey={roomKey}
           passcode={passcode}
+          selectedAvatar={selectedAvatar}
           onNameChange={setName}
           onRoomKeyChange={setRoomKey}
           onPasscodeChange={setPasscode}
+          onAvatarChange={setSelectedAvatar}
           onJoinRoom={handleJoinRoom}
           onBack={() => {
             setPasscode('');

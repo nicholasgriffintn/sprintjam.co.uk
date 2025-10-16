@@ -6,6 +6,7 @@ import type {
   ServerDefaults,
   WebSocketMessage,
   WebSocketMessageType,
+  AvatarId,
 } from '../types';
 import { API_BASE_URL, WS_BASE_URL } from '../constants';
 import {
@@ -59,7 +60,8 @@ export async function fetchDefaultSettings(
 export async function createRoom(
   name: string,
   passcode?: string,
-  settings?: Partial<RoomSettings>
+  settings?: Partial<RoomSettings>,
+  avatar?: AvatarId
 ): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
@@ -67,7 +69,7 @@ export async function createRoom(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, passcode, settings }),
+      body: JSON.stringify({ name, passcode, settings, avatar }),
     });
 
     if (!response.ok) {
@@ -108,7 +110,8 @@ export async function createRoom(
 export async function joinRoom(
   name: string,
   roomKey: string,
-  passcode?: string
+  passcode?: string,
+  avatar?: AvatarId
 ): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
@@ -116,7 +119,7 @@ export async function joinRoom(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, roomKey, passcode }),
+      body: JSON.stringify({ name, roomKey, passcode, avatar }),
     });
 
     if (!response.ok) {

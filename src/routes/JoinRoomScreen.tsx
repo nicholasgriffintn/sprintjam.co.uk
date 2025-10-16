@@ -1,15 +1,21 @@
 /** biome-ignore-all lint/nursery/useUniqueElementIds: <explanation> */
 import type { FC, ChangeEvent, FormEvent } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, Key, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Users, Key, Lock, User, AlertCircle, CheckCircle, ChevronRight } from 'lucide-react';
+
+import AvatarSelector from '../components/AvatarSelector';
+import type { AvatarId } from '../types';
 
 interface JoinRoomScreenProps {
   name: string;
   roomKey: string;
   passcode: string;
+  selectedAvatar: AvatarId | null;
   onNameChange: (name: string) => void;
   onRoomKeyChange: (key: string) => void;
   onPasscodeChange: (passcode: string) => void;
+  onAvatarChange: (avatar: AvatarId) => void;
   onJoinRoom: () => void;
   onBack: () => void;
   error: string;
@@ -20,23 +26,56 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
   name,
   roomKey,
   passcode,
+  selectedAvatar,
   onNameChange,
   onRoomKeyChange,
   onPasscodeChange,
+  onAvatarChange,
   onJoinRoom,
   onBack,
   error,
   onClearError,
 }) => {
+  const [currentStep, setCurrentStep] = useState<'details' | 'avatar'>('details');
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (name && roomKey) {
+    if (currentStep === 'details' && name.trim() && roomKey.trim()) {
+      setCurrentStep('avatar');
+    } else if (currentStep === 'avatar' && selectedAvatar) {
       onClearError();
       onJoinRoom();
     }
   };
 
-  const isFormValid = name.trim() && roomKey.trim();
+  const handleBack = () => {
+    if (currentStep === 'avatar') {
+      setCurrentStep('details');
+    } else {
+      onBack();
+    }
+  };
+
+  const getFormValid = () => {
+    if (currentStep === 'details') return name.trim() && roomKey.trim();
+    if (currentStep === 'avatar') return selectedAvatar;
+    return false;
+  };
+
+  const getButtonText = () => {
+    if (currentStep === 'details') return 'Continue';
+    return 'Join Room';
+  };
+
+  const getStepTitle = () => {
+    if (currentStep === 'details') return 'Join Room';
+    return 'Select Your Avatar';
+  };
+
+  const getStepDescription = () => {
+    if (currentStep === 'details') return 'Enter the room details to join your team';
+    return 'Choose an avatar to represent you in the room';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -57,10 +96,10 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
               <Users className="w-8 h-8 text-white" />
             </motion.div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Join Room
+              {getStepTitle()}
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
-              Enter the room details to join your team
+              {getStepDescription()}
             </p>
           </div>
 
@@ -83,81 +122,94 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
               </motion.div>
             )}
             
-            <div className="mb-6">
-              <label htmlFor="join-name" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <User className="w-4 h-4" />
-                Your Name
-              </label>
-              <div className="relative">
-                <input
-                  id="join-name"
-                  type="text"
-                  value={name}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
-                  placeholder="Enter your name"
-                  required
-                />
-                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-                {name.trim() && (
-                  <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
-                )}
-              </div>
-            </div>
+            {currentStep === 'details' && (
+              <>
+                <div className="mb-6">
+                  <label htmlFor="join-name" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <User className="w-4 h-4" />
+                    Your Name
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="join-name"
+                      type="text"
+                      value={name}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
+                      className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
+                      placeholder="Enter your name"
+                      required
+                    />
+                    <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    {name.trim() && (
+                      <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
+                    )}
+                  </div>
+                </div>
 
-            <div className="mb-6">
-              <label htmlFor="join-room-key" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <Key className="w-4 h-4" />
-                Room Key
-              </label>
-              <div className="relative">
-                <input
-                  id="join-room-key"
-                  type="text"
-                  value={roomKey}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => onRoomKeyChange(e.target.value.toUpperCase())}
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white font-mono text-center tracking-wider"
-                  placeholder="0MTINL"
-                  maxLength={6}
-                  style={{ letterSpacing: '0.2em' }}
-                  required
-                />
-                <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-                {roomKey.trim() && (
-                  <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
-                )}
-              </div>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Enter the 6-character room key (e.g., 0MTINL)
-              </p>
-            </div>
+                <div className="mb-6">
+                  <label htmlFor="join-room-key" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <Key className="w-4 h-4" />
+                    Room Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="join-room-key"
+                      type="text"
+                      value={roomKey}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => onRoomKeyChange(e.target.value.toUpperCase())}
+                      className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white font-mono text-center tracking-wider"
+                      placeholder="0MTINL"
+                      maxLength={6}
+                      style={{ letterSpacing: '0.2em' }}
+                      required
+                    />
+                    <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    {roomKey.trim() && (
+                      <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Enter the 6-character room key (e.g., 0MTINL)
+                  </p>
+                </div>
 
-            <div className="mb-8">
-              <label htmlFor="join-passcode" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <Lock className="w-4 h-4" />
-                Room Passcode
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">(optional)</span>
-              </label>
-              <div className="relative">
-                <input
-                  id="join-passcode"
-                  type="password"
-                  value={passcode}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
-                  placeholder="Enter passcode if required"
+                <div className="mb-8">
+                  <label htmlFor="join-passcode" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <Lock className="w-4 h-4" />
+                    Room Passcode
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="join-passcode"
+                      type="password"
+                      value={passcode}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
+                      className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
+                      placeholder="Enter passcode if required"
+                    />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Leave empty if the room doesn't require a passcode
+                  </p>
+                </div>
+              </>
+            )}
+
+            {currentStep === 'avatar' && (
+              <div className="mb-8">
+                <AvatarSelector
+                  selectedAvatar={selectedAvatar}
+                  onSelectAvatar={onAvatarChange}
                 />
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
               </div>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Leave empty if the room doesn't require a passcode
-              </p>
-            </div>
+            )}
 
             <div className="flex gap-4">
               <motion.button
                 type="button"
-                onClick={onBack}
+                onClick={handleBack}
                 className="flex items-center justify-center gap-2 px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all duration-200 font-medium"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -165,20 +217,20 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
                 <ArrowLeft className="w-4 h-4" />
                 Back
               </motion.button>
-              
+
               <motion.button
                 type="submit"
-                disabled={!isFormValid}
+                disabled={!getFormValid()}
                 className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-xl transition-all duration-200 ${
-                  isFormValid
+                  getFormValid()
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
                     : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 }`}
-                whileHover={isFormValid ? { scale: 1.02 } : {}}
-                whileTap={isFormValid ? { scale: 0.98 } : {}}
+                whileHover={getFormValid() ? { scale: 1.02 } : {}}
+                whileTap={getFormValid() ? { scale: 0.98 } : {}}
               >
-                <Users className="w-4 h-4" />
-                Join Room
+                {currentStep === 'details' || currentStep === 'avatar' ? <ChevronRight className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+                {getButtonText()}
               </motion.button>
             </div>
           </motion.form>

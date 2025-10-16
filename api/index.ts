@@ -63,10 +63,11 @@ async function handleApiRequest(
   }
 
   if (path === 'rooms' && request.method === 'POST') {
-    const body = await request.json<{ name?: string; passcode?: string; settings?: Partial<RoomSettings> }>();
+    const body = await request.json<{ name?: string; passcode?: string; settings?: Partial<RoomSettings>; avatar?: string }>();
     const name = body?.name;
     const passcode = body?.passcode;
     const settings = body?.settings;
+    const avatar = body?.avatar;
 
     if (!name) {
       return new Response(JSON.stringify({ error: 'Name is required' }), {
@@ -84,7 +85,7 @@ async function handleApiRequest(
       new Request('https://dummy/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomKey, moderator: name, passcode, settings }),
+        body: JSON.stringify({ roomKey, moderator: name, passcode, settings, avatar }),
       }) as unknown as CfRequest
     );
 
@@ -92,10 +93,11 @@ async function handleApiRequest(
   }
 
   if (path === 'rooms/join' && request.method === 'POST') {
-    const body = await request.json<{ name?: string; roomKey?: string; passcode?: string }>();
+    const body = await request.json<{ name?: string; roomKey?: string; passcode?: string; avatar?: string }>();
     const name = body?.name;
     const roomKey = body?.roomKey;
     const passcode = body?.passcode;
+    const avatar = body?.avatar;
 
     if (!name || !roomKey) {
       return new Response(
@@ -115,7 +117,7 @@ async function handleApiRequest(
       new Request('https://dummy/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, passcode }),
+        body: JSON.stringify({ name, passcode, avatar }),
       }) as unknown as CfRequest
     );
 

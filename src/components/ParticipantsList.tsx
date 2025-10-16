@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { Users, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, ChevronDown, ChevronUp, Crown, User } from "lucide-react";
 import { motion } from "framer-motion";
 
 import type { RoomData, RoomStats } from "../types";
+import { getAvatarInfo } from "../utils/avatars";
 
 export type ParticipantsListProps = {
   roomData: RoomData;
@@ -63,18 +64,30 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
               }}
               whileHover={{ scale: 1.01 }}
             >
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${roomData.votes[user] !== undefined && roomData.votes[user] !== null
-                  ? 'bg-green-500'
-                  : 'bg-gray-300'
-                  }`} />
-                <span className={`${user === name ? 'font-medium' : ''} text-gray-900 dark:text-white`}>
-                  {user}
-                  {user === roomData.moderator && (
-                    <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">(Mod)</span>
-                  )}
-                  {user === name && (
-                    <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">(You)</span>
+              <div className="flex items-center space-x-3">
+                {roomData.userAvatars?.[user] && (
+                  <div className={`w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-600 flex items-center justify-center border-2 ${
+                    roomData.connectedUsers?.[user]
+                      ? 'border-green-300 dark:border-green-600'
+                      : 'border-red-300 dark:border-red-600'
+                  }`}>
+                    {(() => {
+                      const avatarInfo = getAvatarInfo(roomData.userAvatars[user]);
+                      return <avatarInfo.Icon size={20} className={avatarInfo.color} />;
+                    })()}
+                  </div>
+                )}
+                <span className={`flex items-center ${user === name ? 'font-medium' : ''} text-gray-900 dark:text-white`}>
+                  {!roomData.settings.hideParticipantNames && (
+                    <>
+                      {user}
+                      {user === roomData.moderator && (
+                        <Crown className="ml-1 w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      )}
+                      {user === name && (
+                        <User className="ml-1 w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                      )}
+                    </>
                   )}
                   {roomData.settings.showUserPresence && (
                     <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${roomData.connectedUsers?.[user]

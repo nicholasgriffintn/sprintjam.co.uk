@@ -29,6 +29,7 @@ export function getDefaultRoomSettings(): RoomSettings {
     anonymousVotes: true,
     enableJudge: true,
     judgeAlgorithm: JudgeAlgorithm.SMART_CONSENSUS,
+    hideParticipantNames: false,
     enableStructuredVoting: false,
     votingCriteria: getDefaultVotingCriteria(),
     enableJiraIntegration: false,

@@ -55,7 +55,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
       }
       setEstimateOptionsInput(defaultOptions.map((option) => option.toString()).join(','));
     }
-    
+
     setLocalSettings(newSettings);
   };
 
@@ -228,53 +228,63 @@ const SettingsModal: FC<SettingsModalProps> = ({
                   </div>
                 )}
               </div>
-            </div>
 
-            <div className="pt-2">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Permissions</h3>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="allowOthersToShowEstimates"
-                    checked={localSettings.allowOthersToShowEstimates}
-                    onChange={(e) => handleChange('allowOthersToShowEstimates', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
-                  />
-                  <label htmlFor="allowOthersToShowEstimates" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                    Allow others to show estimates
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="allowOthersToDeleteEstimates"
-                    checked={localSettings.allowOthersToDeleteEstimates}
-                    onChange={(e) => handleChange('allowOthersToDeleteEstimates', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
-                  />
-                  <label htmlFor="allowOthersToDeleteEstimates" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                    Allow others to delete estimates
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="autoHandoverModerator"
-                    checked={localSettings.autoHandoverModerator || false}
-                    onChange={(e) => handleChange('autoHandoverModerator', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
-                  />
-                  <label htmlFor="autoHandoverModerator" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                    Auto handover moderator when they leave
-                  </label>
+              <div className="pt-2">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Permissions</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="allowOthersToShowEstimates"
+                      checked={localSettings.allowOthersToShowEstimates}
+                      onChange={(e) => handleChange('allowOthersToShowEstimates', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    />
+                    <label htmlFor="allowOthersToShowEstimates" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                      Allow others to show estimates
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="allowOthersToDeleteEstimates"
+                      checked={localSettings.allowOthersToDeleteEstimates}
+                      onChange={(e) => handleChange('allowOthersToDeleteEstimates', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    />
+                    <label htmlFor="allowOthersToDeleteEstimates" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                      Allow others to delete estimates
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="autoHandoverModerator"
+                      checked={localSettings.autoHandoverModerator || false}
+                      onChange={(e) => handleChange('autoHandoverModerator', e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    />
+                    <label htmlFor="autoHandoverModerator" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                      Auto handover moderator when they leave
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="pt-2">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Display Options</h3>
-              <div className="space-y-2">
+              <div className="pt-2">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Display Options</h3>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="hideParticipantNames"
+                    checked={localSettings.hideParticipantNames || false}
+                    onChange={(e) => handleChange('hideParticipantNames', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                  />
+                  <label htmlFor="hideParticipantNames" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    Hide participant names
+                  </label>
+                </div>
                 <div className="flex items-center">
                   <input
                     type="checkbox"

@@ -97,7 +97,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/initialize' && request.method === 'POST') {
-      const { roomKey, moderator, passcode, settings } = await request.json() as { roomKey: string; moderator: string; passcode?: string; settings?: Partial<RoomSettings> };
+      const { roomKey, moderator, passcode, settings, avatar } = await request.json() as { roomKey: string; moderator: string; passcode?: string; settings?: Partial<RoomSettings>; avatar?: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         let roomData = await this.state.storage.get<RoomData>('roomData');
@@ -135,6 +135,10 @@ export class PokerRoom {
           roomData.passcode = passcode.trim();
         }
 
+        if (avatar) {
+          roomData.userAvatars = { [moderator]: avatar };
+        }
+
         await this.state.storage.put('roomData', roomData);
 
         const defaults = getServerDefaults();
@@ -153,7 +157,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/join' && request.method === 'POST') {
-      const { name, passcode } = (await request.json()) as { name: string; passcode?: string };
+      const { name, passcode, avatar } = (await request.json()) as { name: string; passcode?: string; avatar?: string };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -186,11 +190,19 @@ export class PokerRoom {
         }
         roomData.connectedUsers[name] = true;
 
+        if (avatar) {
+          if (!roomData.userAvatars) {
+            roomData.userAvatars = {};
+          }
+          roomData.userAvatars[name] = avatar;
+        }
+
         await this.state.storage.put('roomData', roomData);
 
         this.broadcast({
           type: 'userJoined',
           user: name,
+          avatar: avatar,
         });
 
         const defaults = getServerDefaults();

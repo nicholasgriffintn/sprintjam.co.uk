@@ -97,6 +97,7 @@ export interface RoomSettings {
   anonymousVotes: boolean;
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
+  hideParticipantNames?: boolean;
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   enableJiraIntegration?: boolean;
@@ -152,6 +153,7 @@ export interface RoomData {
   jiraTicket?: JiraTicket;
   settings: RoomSettings;
   passcode?: string;
+  userAvatars?: Record<string, string>;
 }
 
 export interface BroadcastMessage {
