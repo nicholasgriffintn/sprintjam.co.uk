@@ -1,17 +1,20 @@
-/** biome-ignore-all lint/nursery/useUniqueElementIds: <explanation> */
+/** biome-ignore-all lint/nursery/useUniqueElementIds: form elements have unique IDs within component scope */
 import type { FC, ChangeEvent, FormEvent } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, Lock, User, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, Lock, User, AlertCircle, CheckCircle, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
+import type { RoomSettings } from '../types';
 
 interface CreateRoomScreenProps {
   name: string;
   passcode: string;
   onNameChange: (name: string) => void;
   onPasscodeChange: (passcode: string) => void;
-  onCreateRoom: () => void;
+  onCreateRoom: (settings?: Partial<RoomSettings>) => void;
   onBack: () => void;
   error: string;
   onClearError: () => void;
+  defaultSettings?: RoomSettings;
 }
 
 const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
@@ -23,13 +26,35 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   onBack,
   error,
   onClearError,
+  defaultSettings,
 }) => {
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState<Partial<RoomSettings>>(() => {
+    // Initialize with some sensible defaults if no defaultSettings provided
+    if (!defaultSettings) return {};
+    
+    return {
+      enableStructuredVoting: defaultSettings.enableStructuredVoting ?? false,
+      enableJudge: defaultSettings.enableJudge ?? true,
+      enableJiraIntegration: defaultSettings.enableJiraIntegration ?? false,
+      showTimer: defaultSettings.showTimer ?? false,
+      allowOthersToShowEstimates: defaultSettings.allowOthersToShowEstimates ?? false,
+    };
+  });
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (name) {
       onClearError();
-      onCreateRoom();
+      onCreateRoom(settings);
     }
+  };
+
+  const handleSettingChange = (key: keyof RoomSettings, value: boolean | string | number) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   const isFormValid = name.trim();
@@ -131,17 +156,57 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               </div>
             </div>
 
-            <div className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-semibold text-blue-900 dark:text-blue-300">What you'll get:</span>
-              </div>
-              <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
-                <li>• Real-time collaborative voting</li>
-                <li>• Smart consensus detection</li>
-                <li>• Structured voting options</li>
-                <li>• Jira integration (optional)</li>
-              </ul>
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={() => setShowSettings(!showSettings)}
+                className="flex items-center justify-between w-full p-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl transition-all duration-200 border border-gray-200 dark:border-gray-600"
+              >
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Room Settings
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                    (optional)
+                  </span>
+                </div>
+                {showSettings ? (
+                  <ChevronUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                )}
+              </button>
+
+              {showSettings && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="enableStructuredVoting"
+                        checked={settings.enableStructuredVoting ?? false}
+                        onChange={(e) => handleSettingChange('enableStructuredVoting', e.target.checked)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                      />
+                      <label htmlFor="enableStructuredVoting" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                        Enable Structured Voting
+                      </label>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
+                      <p className="text-xs text-blue-700 dark:text-blue-300">
+                        Structured voting allows users to vote on multiple criteria with scores from 0-4. Story points are automatically calculated.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             <div className="flex gap-4">

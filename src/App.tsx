@@ -266,14 +266,14 @@ const App = () => {
     return () => clearTimeout(saveTimeout);
   }, [name]);
 
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = async (settings?: Partial<RoomSettings>) => {
     if (!name) return;
 
     setIsLoading(true);
     setError('');
 
     try {
-      const { room: newRoom, defaults } = await createRoom(name, passcode || undefined);
+      const { room: newRoom, defaults } = await createRoom(name, passcode || undefined, settings);
       await applyServerDefaults(defaults);
       await upsertRoom(newRoom);
       setActiveRoomKey(newRoom.key);
@@ -402,7 +402,7 @@ const App = () => {
   };
 
   // Auto-update Jira story points if setting is enabled
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleJiraTicketUpdated is stable and doesn't need to be in deps
   useEffect(() => {
     if (!roomData) return;
     if (
@@ -502,6 +502,7 @@ const App = () => {
           }}
           error={error}
           onClearError={clearError}
+          defaultSettings={serverDefaults?.roomSettings}
         />
       ) : screen === 'join' ? (
         <JoinRoomScreen

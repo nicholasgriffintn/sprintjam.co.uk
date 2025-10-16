@@ -5,7 +5,7 @@ import type {
 } from '@cloudflare/workers-types';
 
 import { PokerRoom } from './poker-room';
-import { Env } from './types';
+import { Env, RoomSettings } from './types';
 import { generateRoomKey, getRoomId } from './utils/room';
 import { fetchJiraTicket, updateJiraStoryPoints } from './jira-service';
 import { getServerDefaults } from './utils/defaults';
@@ -63,9 +63,10 @@ async function handleApiRequest(
   }
 
   if (path === 'rooms' && request.method === 'POST') {
-    const body = await request.json<{ name?: string; passcode?: string }>();
+    const body = await request.json<{ name?: string; passcode?: string; settings?: Partial<RoomSettings> }>();
     const name = body?.name;
     const passcode = body?.passcode;
+    const settings = body?.settings;
 
     if (!name) {
       return new Response(JSON.stringify({ error: 'Name is required' }), {
@@ -83,7 +84,7 @@ async function handleApiRequest(
       new Request('https://dummy/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomKey, moderator: name, passcode }),
+        body: JSON.stringify({ roomKey, moderator: name, passcode, settings }),
       }) as unknown as CfRequest
     );
 

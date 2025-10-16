@@ -5,7 +5,7 @@ declare const WebSocketPair: {
 import type { DurableObjectState, WebSocket as CfWebSocket, Response as CfResponse } from '@cloudflare/workers-types';
 
 import { PlanningPokerJudge } from './planning-poker-judge';
-import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket, StructuredVote } from './types'
+import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket, StructuredVote, RoomSettings } from './types'
 import {
   createInitialRoomData,
   getDefaultEstimateOptions,
@@ -97,7 +97,7 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/initialize' && request.method === 'POST') {
-      const { roomKey, moderator, passcode } = await request.json() as { roomKey: string; moderator: string; passcode?: string };
+      const { roomKey, moderator, passcode, settings } = await request.json() as { roomKey: string; moderator: string; passcode?: string; settings?: Partial<RoomSettings> };
 
       return await this.state.blockConcurrencyWhile(async () => {
         let roomData = await this.state.storage.get<RoomData>('roomData');
@@ -123,6 +123,13 @@ export class PokerRoom {
           moderator,
           connectedUsers: { [moderator]: true },
         });
+
+        if (settings) {
+          roomData.settings = {
+            ...roomData.settings,
+            ...settings,
+          };
+        }
 
         if (passcode && passcode.trim()) {
           roomData.passcode = passcode.trim();
@@ -158,7 +165,6 @@ export class PokerRoom {
           }) as unknown as CfResponse;
         }
 
-        // Check passcode if room has one
         if (roomData.passcode && roomData.passcode.trim()) {
           if (!passcode || passcode.trim() !== roomData.passcode.trim()) {
             return new Response(JSON.stringify({ error: 'Invalid passcode' }), {

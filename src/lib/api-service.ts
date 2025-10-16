@@ -52,11 +52,14 @@ export async function fetchDefaultSettings(
 /**
  * Create a new planning poker room
  * @param {string} name - The name of the user creating the room
+ * @param {string} passcode - Optional passcode for the room
+ * @param {Partial<RoomSettings>} settings - Optional initial settings for the room
  * @returns {Promise<RoomData>} - The room data
  */
 export async function createRoom(
   name: string,
-  passcode?: string
+  passcode?: string,
+  settings?: Partial<RoomSettings>
 ): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
@@ -64,7 +67,7 @@ export async function createRoom(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, passcode }),
+      body: JSON.stringify({ name, passcode, settings }),
     });
 
     if (!response.ok) {
