@@ -187,7 +187,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
       >
         <ParticipantsList roomData={roomData} stats={stats} name={name} />
 
-        <div className="flex flex-col p-4 md:p-6 overflow-y-auto">
+        <div className="flex flex-col p-4 md:p-6 overflow-y-auto bg-white dark:bg-gray-900">
           {roomData.settings.showTimer && <Timer />}
 
           {roomData.settings.enableStructuredVoting &&
@@ -239,7 +239,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
-                className="p-6 bg-gray-100 rounded-lg shadow-inner"
+                className="p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-inner"
                 key="results"
               >
                 {roomData.settings.enableJudge && roomData.showVotes && (
@@ -268,7 +268,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-center p-12 bg-gray-100 rounded-lg"
+                className="flex items-center justify-center p-12 bg-gray-100 dark:bg-gray-800 rounded-lg"
                 key="waiting"
               >
                 <motion.div

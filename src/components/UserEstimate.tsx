@@ -17,10 +17,10 @@ export function UserEstimate({
   return (
     <div className="mb-8">
       <div className="flex flex-wrap gap-2 md:gap-3">
-        <h2 className="mb-4 text-xl font-semibold">Your Estimate</h2>
+        <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Your Estimate</h2>
         {userVote && (
           <div>
-            <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground">
+            <span className="inline-flex items-center rounded-full border border-gray-300 dark:border-gray-600 px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800">
               {getUsersVoteTaskSize(roomData, name)}
             </span>
           </div>
@@ -38,14 +38,13 @@ export function UserEstimate({
               onClick={() => onVote(option)}
               className={`w-12 h-16 md:w-16 md:h-24 flex flex-col items-center justify-center text-lg font-medium border-2 rounded-lg ${userVote === option
                 ? 'border-blue-500 shadow-md'
-                : 'border-gray-300 hover:border-gray-400'
+                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                 }`}
               style={{ backgroundColor: background }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               animate={{
-                scale: userVote === option ? 1.05 : 1,
-                borderColor: userVote === option ? '#3b82f6' : '#d1d5db'
+                scale: userVote === option ? 1.05 : 1
               }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >

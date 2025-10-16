@@ -20,15 +20,15 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
   const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(false);
 
   return (
-    <div className="bg-gray-100 border-b md:border-b-0 md:border-r overflow-y-auto md:p-4">
+    <div className="bg-gray-100 dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 overflow-y-auto md:p-4">
       <div className="flex items-center justify-between p-4 md:p-0 md:mb-4">
-        <h2 className="text-lg font-medium flex items-center">
+        <h2 className="text-lg font-medium flex items-center text-gray-900 dark:text-white">
           <Users size={18} className="mr-1 md:hidden" />
           Participants ({roomData.users.length})
         </h2>
         <button
           type="button"
-          className="block md:hidden rounded-md p-1 hover:bg-gray-200 transition-colors"
+          className="block md:hidden rounded-md p-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
           onClick={() => setIsParticipantsExpanded(!isParticipantsExpanded)}
           aria-label={isParticipantsExpanded ? "Collapse participants" : "Expand participants"}
         >
@@ -38,10 +38,10 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
       <div className={`px-4 pb-4 md:p-0 ${isParticipantsExpanded ? 'block' : 'hidden md:block'}`}>
         <div className="mb-4">
           <div className="flex justify-between text-sm mb-1">
-            <span>Voting Progress</span>
-            <span>{stats.votedUsers}/{roomData.users.length}</span>
+            <span className="text-gray-700 dark:text-gray-300">Voting Progress</span>
+            <span className="text-gray-700 dark:text-gray-300">{stats.votedUsers}/{roomData.users.length}</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
             <motion.div
               className="bg-blue-600 h-2.5 rounded-full"
               initial={{ width: 0 }}
@@ -54,7 +54,7 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
           {roomData.users.map((user: string) => (
             <motion.li
               key={user}
-              className="flex items-center justify-between p-2 bg-white rounded-md shadow-sm hover:shadow-md"
+              className="flex items-center justify-between p-2 bg-white dark:bg-gray-700 rounded-md shadow-sm hover:shadow-md text-gray-900 dark:text-white"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
@@ -68,18 +68,18 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
                   ? 'bg-green-500'
                   : 'bg-gray-300'
                   }`} />
-                <span className={`${user === name ? 'font-medium' : ''}`}>
+                <span className={`${user === name ? 'font-medium' : ''} text-gray-900 dark:text-white`}>
                   {user}
                   {user === roomData.moderator && (
-                    <span className="ml-1 text-xs text-blue-600">(Mod)</span>
+                    <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">(Mod)</span>
                   )}
                   {user === name && (
-                    <span className="ml-1 text-xs text-gray-500">(You)</span>
+                    <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">(You)</span>
                   )}
                   {roomData.settings.showUserPresence && (
                     <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${roomData.connectedUsers?.[user]
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-200 text-gray-700'
+                      ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                      : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
                       }`}>
                       {roomData.connectedUsers?.[user] ? 'Online' : 'Offline'}
                     </span>
@@ -89,8 +89,8 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
               {(roomData.votes[user] !== undefined && roomData.votes[user] !== null) && (
                 <span
                   className={`px-2 py-1 text-xs font-medium rounded-full ${roomData.showVotes
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-200'
+                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                    : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
                     }`}>
                   {roomData.settings.anonymousVotes && roomData.showVotes
                     ? '✓'

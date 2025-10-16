@@ -147,15 +147,15 @@ export function UnifiedResults({
             return (
               <motion.div
                 key={card.id}
-                className="bg-white border border-gray-200 rounded-lg p-4"
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay }}
               >
-                <h4 className="text-sm font-medium text-gray-500 mb-1">
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                   {card.label}
                 </h4>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats.avg}
                 </div>
               </motion.div>
@@ -167,15 +167,15 @@ export function UnifiedResults({
             return (
               <motion.div
                 key={card.id}
-                className="bg-white border border-gray-200 rounded-lg p-4"
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay }}
               >
-                <h4 className="text-sm font-medium text-gray-500 mb-1">
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                   {card.label}
                 </h4>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats.mode || 'N/A'}
                 </div>
               </motion.div>
@@ -188,12 +188,12 @@ export function UnifiedResults({
             return (
               <motion.div
                 key={card.id}
-                className="bg-white border border-gray-200 rounded-lg p-4"
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay }}
               >
-                <h4 className="text-sm font-medium text-gray-500 mb-1">
+                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                   {card.label}
                 </h4>
                 <div className="flex gap-2 items-center flex-wrap">
@@ -212,7 +212,7 @@ export function UnifiedResults({
                         >
                           {vote}
                         </div>
-                        <span className="text-xs text-gray-600">×{count}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">×{count}</span>
                       </div>
                     );
                   })}
@@ -270,14 +270,14 @@ export function UnifiedResults({
 
       {showCriteriaBreakdown && (
         <div>
-          <h3 className="mb-3 text-sm font-medium text-gray-500">
+          <h3 className="mb-3 text-sm font-medium text-gray-500 dark:text-gray-400">
             {criteriaSettings?.title ?? 'Criteria Breakdown'}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {criteriaStats.map((stat) => (
               <motion.div
                 key={stat.criterionId}
-                className="bg-white border border-gray-200 rounded-lg p-4"
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
@@ -287,7 +287,7 @@ export function UnifiedResults({
               >
                 <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
                   <h4
-                    className="font-medium text-gray-900 flex-1 min-w-0"
+                    className="font-medium text-gray-900 dark:text-white flex-1 min-w-0"
                     title={stat.name}
                   >
                     {stat.name}
@@ -311,27 +311,27 @@ export function UnifiedResults({
 
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-sm gap-2">
-                    <span className="text-gray-600 flex-shrink-0">
+                    <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">
                       Average:
                     </span>
-                    <span className="font-medium">
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {stat.average.toFixed(1)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm gap-2">
-                    <span className="text-gray-600 flex-shrink-0">Range:</span>
-                    <span className="text-gray-800">
+                    <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">Range:</span>
+                    <span className="text-gray-800 dark:text-gray-200">
                       {stat.min} - {stat.max}
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1 px-0.5">
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1 px-0.5">
                     <span>0</span>
                     <span>{stat.maxScore}</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 relative min-w-0">
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 relative min-w-0">
                     <div
                       className="h-2 rounded-full bg-blue-200 absolute"
                       style={{
@@ -357,10 +357,10 @@ export function UnifiedResults({
 
       {showVoteDistributionSection && (
         <div>
-          <h3 className="mb-3 text-sm font-medium text-gray-500">
+          <h3 className="mb-3 text-sm font-medium text-gray-500 dark:text-gray-400">
             {voteDistributionLabel}
           </h3>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <VoteDistribution roomData={roomData} stats={stats} />
           </div>
         </div>

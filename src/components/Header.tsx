@@ -1,4 +1,5 @@
 import ConnectionStatus from './ConnectionStatus';
+import DarkModeToggle from './DarkModeToggle';
 import type { RoomData } from '../types';
 
 export interface HeaderProps {
@@ -19,18 +20,18 @@ export default function Header({
   setIsSettingsModalOpen,
 }: HeaderProps) {
   return (
-    <header className="p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md">
+    <header className="p-4 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-gray-900 text-white shadow-md">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 md:space-x-4">
           <h1 className="text-lg md:text-xl font-bold">SprintJam</h1>
           <div className="flex items-stretch h-7">
-            <div className="px-2 md:px-3 py-1 text-xs md:text-sm bg-blue-800 rounded-l-md truncate max-w-[80px] md:max-w-none flex items-center">
+            <div className="px-2 md:px-3 py-1 text-xs md:text-sm bg-blue-800 dark:bg-gray-700 rounded-l-md truncate max-w-[80px] md:max-w-none flex items-center">
               {roomData.key}
             </div>
             <button
               type="button"
               onClick={() => setIsShareModalOpen(true)}
-              className="px-2 py-1 bg-blue-700 hover:bg-blue-800 rounded-r-md border-l border-blue-600 flex items-center"
+              className="px-2 py-1 bg-blue-700 hover:bg-blue-800 dark:bg-gray-600 dark:hover:bg-gray-500 rounded-r-md border-l border-blue-600 dark:border-gray-500 flex items-center"
               title="Share Room"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,7 +43,7 @@ export default function Header({
           <button
             type="button"
             onClick={onLeaveRoom}
-            className="text-xs md:text-sm px-2 md:px-3 py-1 bg-gray-700 hover:bg-gray-800 rounded-md transition-colors"
+            className="text-xs md:text-sm px-2 md:px-3 py-1 bg-gray-700 hover:bg-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 rounded-md transition-colors"
             title="Leave Room"
           >
             Leave Room
@@ -51,14 +52,15 @@ export default function Header({
 
         <div className="flex items-center space-x-2 md:space-x-4">
           <ConnectionStatus isConnected={isConnected} />
-          <div className="hidden sm:block text-xs md:text-sm px-2 md:px-3 py-1 bg-blue-800 rounded-md">
+          <div className="hidden sm:block text-xs md:text-sm px-2 md:px-3 py-1 bg-blue-800 dark:bg-gray-700 rounded-md">
             {isModeratorView ? 'Moderator' : 'Team Member'}
           </div>
+          <DarkModeToggle />
           {isModeratorView && (
             <button
               type="button"
               onClick={() => setIsSettingsModalOpen(true)}
-              className="p-1 md:p-1.5 rounded-full bg-blue-800 hover:bg-blue-900 transition-colors"
+              className="p-1 md:p-1.5 rounded-full bg-blue-800 hover:bg-blue-900 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
               title="Room Settings"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

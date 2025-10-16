@@ -81,8 +81,8 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow">
-      <h3 className="text-lg font-semibold mb-3">Jira Ticket</h3>
+    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+      <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Jira Ticket</h3>
 
       {!currentJiraTicket ? (
         <div className="mb-4">
@@ -92,14 +92,14 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
               value={ticketId}
               onChange={(e) => setTicketId(e.target.value)}
               placeholder="Enter Jira ticket ID (e.g., PROJECT-123)"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               disabled={isLoading}
             />
             <button
               type="button"
               onClick={handleFetchTicket}
               disabled={isLoading || !ticketId.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
               {isLoading ? 'Loading...' : 'Fetch'}
             </button>
@@ -109,12 +109,12 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
         <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <h4 className="font-medium text-blue-600">{currentJiraTicket.key}</h4>
+              <h4 className="font-medium text-blue-600 dark:text-blue-400">{currentJiraTicket.key}</h4>
               <a
                 href={currentJiraTicket.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-2 text-sm text-gray-500 hover:text-blue-600"
+                className="ml-2 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 Open in Jira
               </a>
@@ -130,7 +130,7 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
                     onError(err instanceof Error ? err.message : 'Failed to clear Jira ticket');
                   }
                 }}
-                className="text-sm text-gray-500 hover:text-red-600"
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
               >
                 Clear
               </button>
@@ -139,33 +139,33 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
 
           <h3 className="text-lg font-medium">{currentJiraTicket.summary}</h3>
 
-          <div className="bg-gray-50 p-3 rounded text-sm">
+          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded text-sm">
             <p className="line-clamp-3">{currentJiraTicket.description || 'No description available'}</p>
           </div>
 
           <div className="flex flex-wrap gap-2 text-sm">
-            <div className="px-2 py-1 bg-gray-100 rounded">
-              Status: <span className="font-medium">{currentJiraTicket.status}</span>
+            <div className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded">
+              Status: <span className="font-medium text-gray-900 dark:text-white">{currentJiraTicket.status}</span>
             </div>
             {currentJiraTicket.assignee && (
-              <div className="px-2 py-1 bg-gray-100 rounded">
-                Assignee: <span className="font-medium">{currentJiraTicket.assignee}</span>
+              <div className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded">
+                Assignee: <span className="font-medium text-gray-900 dark:text-white">{currentJiraTicket.assignee}</span>
               </div>
             )}
-            <div className="px-2 py-1 bg-gray-100 rounded">
-              Story Points: <span className="font-medium">{currentJiraTicket.storyPoints ?? 'Not set'}</span>
+            <div className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded">
+              Story Points: <span className="font-medium text-gray-900 dark:text-white">{currentJiraTicket.storyPoints ?? 'Not set'}</span>
             </div>
           </div>
 
           {isModeratorView && judgeScore !== null && judgeScore !== currentJiraTicket.storyPoints && (
             <div className="mt-3">
               <div className="flex items-center space-x-2">
-                <span className="text-sm">Current Vote Score: <span className="font-medium">{judgeScore}</span></span>
+                <span className="text-sm text-gray-900 dark:text-white">Current Vote Score: <span className="font-medium">{judgeScore}</span></span>
                 <button
                   type="button"
                   onClick={handleUpdateStoryPoints}
                   disabled={isUpdating}
-                  className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  className="px-3 py-1 text-sm bg-green-600 dark:bg-green-700 text-white rounded hover:bg-green-700 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                 >
                   {isUpdating ? 'Updating...' : 'Update Story Points in Jira'}
                 </button>
@@ -175,7 +175,7 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
         </div>
       )}
 
-      <div className="text-xs text-gray-500 mt-2">
+      <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
         {isModeratorView ?
           'As the moderator, you can fetch Jira tickets and update story points when voting is complete.' :
           'The room moderator can fetch Jira tickets and update story points.'}

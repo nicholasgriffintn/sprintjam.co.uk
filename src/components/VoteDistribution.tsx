@@ -27,7 +27,7 @@ export function VoteDistribution({
               {option}
             </div>
             <div className="flex-1 mx-2">
-              <div className="w-full bg-gray-200 rounded-full h-4">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
                 <motion.div
                   className="h-4 rounded-full"
                   initial={{ width: 0 }}
@@ -42,7 +42,7 @@ export function VoteDistribution({
               </div>
             </div>
             <div className="w-10 text-center">
-              <span className="px-2 py-1 rounded bg-grey-100 border-grey-200 text-grey-800">
+              <span className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200">
                 {stats.distribution[option] || 0}
               </span>
             </div>

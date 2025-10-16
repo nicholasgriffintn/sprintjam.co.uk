@@ -35,7 +35,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
         <motion.div 
           className="text-center max-w-4xl mx-auto"
@@ -52,8 +52,8 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
               Welcome to SprintJam
             </h1>
-            <p className="text-xl sm:text-2xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Collaborative planning poker for agile teams, <span className="font-semibold text-gray-800">without the ads</span>
+            <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+              Collaborative planning poker for agile teams, <span className="font-semibold text-gray-800 dark:text-gray-200">without the ads</span>
             </p>
           </motion.div>
 
@@ -79,7 +79,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
             <motion.button
               type="button"
               onClick={onJoinRoom}
-              className="group px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl border-2 border-blue-200 hover:border-blue-300 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              className="group px-8 py-4 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-semibold rounded-xl border-2 border-blue-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-gray-500 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -99,7 +99,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-gray-200/50 hover:border-blue-200 hover:shadow-lg"
+                className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50 hover:border-blue-200 dark:hover:border-gray-600 hover:shadow-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, delay: 0.3 + index * 0.05 }}
@@ -109,22 +109,22 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white mb-3">
                     {feature.icon}
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{feature.description}</p>
                 </div>
               </motion.div>
             ))}
           </motion.div>
 
           <motion.div 
-            className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-600"
+            className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-600 dark:text-gray-400"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.4 }}
           >
             <a 
               href="https://github.com/nicholasgriffintn/sprintjam.co.uk" 
-              className="flex items-center gap-2 hover:text-blue-600 transition-colors duration-200 group"
+              className="flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 group"
               target="_blank"
               rel="noopener noreferrer"
             >

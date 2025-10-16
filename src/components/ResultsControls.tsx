@@ -17,7 +17,7 @@ export function ResultsControls({
   return (
     <div className="mb-4">
       <div className="flex flex-wrap items-center justify-between mb-2">
-        <h2 className="text-xl font-semibold flex items-center space-x-2 gap-2">
+        <h2 className="text-xl font-semibold flex items-center space-x-2 gap-2 text-gray-900 dark:text-white">
           <BarChart3 className="h-5 w-5" />
           Results
         </h2>
@@ -27,8 +27,8 @@ export function ResultsControls({
               type="button"
               onClick={onToggleShowVotes}
               className={`px-3 py-1.5 text-sm sm:text-base rounded-md ${!roomData.showVotes
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                ? 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'
+                : 'bg-yellow-500 dark:bg-yellow-600 text-white hover:bg-yellow-600 dark:hover:bg-yellow-700'
                 }`}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -40,7 +40,7 @@ export function ResultsControls({
             <motion.button
               type="button"
               onClick={onResetVotes}
-              className={`px-3 py-1.5 text-sm sm:text-base rounded-md bg-gray-500 text-white hover:bg-gray-600`}
+              className={`px-3 py-1.5 text-sm sm:text-base rounded-md bg-gray-500 dark:bg-gray-600 text-white hover:bg-gray-600 dark:hover:bg-gray-700`}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
             >

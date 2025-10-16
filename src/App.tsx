@@ -455,12 +455,12 @@ const App = () => {
   const clearError = () => setError('');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {(isLoading || isLoadingDefaults) && <LoadingOverlay />}
 
       {defaultsError && (
         <div className="max-w-2xl mx-auto mt-4 px-4">
-          <div className="bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-md p-3 flex items-start justify-between gap-4">
+          <div className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700 rounded-md p-3 flex items-start justify-between gap-4">
             <span>Unable to load server defaults. {defaultsError}</span>
             <button
               type="button"
@@ -539,7 +539,7 @@ const App = () => {
           isConnected={isConnected()}
         />
       ) : screen === 'room' ? (
-        <div className="p-6 text-center text-gray-600">
+        <div className="p-6 text-center text-gray-600 dark:text-gray-400">
           Loading room data&hellip;
         </div>
       ) : (

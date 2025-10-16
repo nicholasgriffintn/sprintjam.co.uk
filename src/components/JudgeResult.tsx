@@ -33,9 +33,9 @@ export function JudgeResult({
         ) : (
           <Gavel className="mr-2 text-amber-700" />
         )}
-        <h3 className="text-lg font-semibold">The Judge's Verdict</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">The Judge's Verdict</h3>
       </div>
-      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
         <motion.div
           className="flex flex-col sm:flex-row sm:justify-between sm:items-center"
           initial={{ opacity: 0 }}
@@ -43,37 +43,37 @@ export function JudgeResult({
           transition={{ duration: 0.3, delay: 0.2 }}
         >
           <div className="flex flex-row items-center gap-3 mb-2 sm:mb-0">
-            <div className="text-4xl sm:text-5xl font-bold text-gray-800">
+            <div className="text-4xl sm:text-5xl font-bold text-gray-800 dark:text-white">
               {stats.judgeScore !== null ? stats.judgeScore : 0}
             </div>
             <div className="flex flex-col">
               {roomData.judgeMetadata?.confidence === 'high' && (
-                <span className="px-2.5 py-1 bg-green-100 text-green-800 rounded-full text-xs sm:text-sm font-medium flex items-center">
+                <span className="px-2.5 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs sm:text-sm font-medium flex items-center">
                   <CheckCircle className="w-3.5 h-3.5 mr-1" /> High Confidence
                 </span>
               )}
               {roomData.judgeMetadata?.confidence === 'medium' && (
-                <span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-medium flex items-center">
+                <span className="px-2.5 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs sm:text-sm font-medium flex items-center">
                   Medium Confidence
                 </span>
               )}
               {roomData.judgeMetadata?.confidence === 'low' && (
-                <span className="px-2.5 py-1 bg-red-100 text-red-800 rounded-full text-xs sm:text-sm font-medium flex items-center">
+                <span className="px-2.5 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full text-xs sm:text-sm font-medium flex items-center">
                   <AlertTriangle className="w-3.5 h-3.5 mr-1" /> Low Confidence
                 </span>
               )}
-              <span className="text-xs text-gray-500 mt-1 flex items-center sm:hidden">
+              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center sm:hidden">
                 <Users className="inline w-3 h-3 mr-1" /> {stats.votedUsers} votes
               </span>
             </div>
           </div>
           <div className="mb-2 sm:mb-0">
-            <div className="text-xs sm:text-sm text-gray-600 font-medium sm:text-right">
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium sm:text-right">
               {roomData.settings.judgeAlgorithm === 'smartConsensus' && 'Smart Consensus'}
               {roomData.settings.judgeAlgorithm === 'conservativeMode' && 'Conservative Mode'}
               {roomData.settings.judgeAlgorithm === 'optimisticMode' && 'Optimistic Mode'}
               {roomData.settings.judgeAlgorithm === 'simpleAverage' && 'Simple Average'}
-              <span className="text-gray-500 ml-2 hidden sm:inline">
+              <span className="text-gray-500 dark:text-gray-400 ml-2 hidden sm:inline">
                 <Users className="inline w-3.5 h-3.5 mr-1" /> {stats.votedUsers} votes
               </span>
             </div>
@@ -81,7 +81,7 @@ export function JudgeResult({
         </motion.div>
 
         {roomData.judgeMetadata?.reasoning && (
-          <p className="mt-2 text-sm text-gray-700">
+          <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
             {roomData.judgeMetadata.reasoning}
           </p>
         )}

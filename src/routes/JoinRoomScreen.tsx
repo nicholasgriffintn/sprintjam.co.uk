@@ -39,7 +39,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
   const isFormValid = name.trim() && roomKey.trim();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
         <motion.div 
           className="w-full max-w-md"
@@ -59,21 +59,21 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Join Room
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
               Enter the room details to join your team
             </p>
           </div>
 
           <motion.form 
             onSubmit={handleSubmit} 
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200/50"
+            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-gray-200/50 dark:border-gray-700/50"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: 0.1 }}
           >
             {error && (
               <motion.div 
-                className="flex items-center gap-3 p-4 mb-6 text-red-700 bg-red-50 border border-red-200 rounded-xl"
+                className="flex items-center gap-3 p-4 mb-6 text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
@@ -84,7 +84,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
             )}
             
             <div className="mb-6">
-              <label htmlFor="join-name" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+              <label htmlFor="join-name" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
                 <User className="w-4 h-4" />
                 Your Name
               </label>
@@ -94,11 +94,11 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
                   type="text"
                   value={name}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
                   placeholder="Enter your name"
                   required
                 />
-                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                 {name.trim() && (
                   <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
                 )}
@@ -106,7 +106,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
             </div>
 
             <div className="mb-6">
-              <label htmlFor="join-room-key" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+              <label htmlFor="join-room-key" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
                 <Key className="w-4 h-4" />
                 Room Key
               </label>
@@ -116,27 +116,27 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
                   type="text"
                   value={roomKey}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => onRoomKeyChange(e.target.value.toUpperCase())}
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white font-mono text-center tracking-wider"
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white font-mono text-center tracking-wider"
                   placeholder="0MTINL"
                   maxLength={6}
                   style={{ letterSpacing: '0.2em' }}
                   required
                 />
-                <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                 {roomKey.trim() && (
                   <CheckCircle className="absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
                 )}
               </div>
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Enter the 6-character room key (e.g., 0MTINL)
               </p>
             </div>
 
             <div className="mb-8">
-              <label htmlFor="join-passcode" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700">
+              <label htmlFor="join-passcode" className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
                 <Lock className="w-4 h-4" />
                 Room Passcode
-                <span className="text-xs text-gray-500 font-normal">(optional)</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">(optional)</span>
               </label>
               <div className="relative">
                 <input
@@ -144,12 +144,12 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
                   type="password"
                   value={passcode}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => onPasscodeChange(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 text-gray-900 dark:text-white"
                   placeholder="Enter passcode if required"
                 />
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
               </div>
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Leave empty if the room doesn't require a passcode
               </p>
             </div>
@@ -158,7 +158,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
               <motion.button
                 type="button"
                 onClick={onBack}
-                className="flex items-center justify-center gap-2 px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 font-medium"
+                className="flex items-center justify-center gap-2 px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all duration-200 font-medium"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -172,7 +172,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
                 className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-xl transition-all duration-200 ${
                   isFormValid
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 }`}
                 whileHover={isFormValid ? { scale: 1.02 } : {}}
                 whileTap={isFormValid ? { scale: 0.98 } : {}}
@@ -189,7 +189,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2, delay: 0.2 }}
           >
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have a room key? Ask your team moderator to share it with you.
             </p>
           </motion.div>
