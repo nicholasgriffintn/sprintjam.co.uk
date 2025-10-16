@@ -23,7 +23,10 @@ export default function Header({
     <header className="p-4 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-gray-900 text-white shadow-md">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2 md:space-x-4">
-          <h1 className="text-lg md:text-xl font-bold">SprintJam</h1>
+          <div className="flex items-center space-x-2">
+            <img src="/logo-192.png" alt="SprintJam" className="h-8 w-8" />
+            <h1 className="text-lg md:text-xl font-bold">SprintJam</h1>
+          </div>
           <div className="flex items-stretch h-7">
             <div className="px-2 md:px-3 py-1 text-xs md:text-sm bg-blue-800 dark:bg-gray-700 rounded-l-md truncate max-w-[80px] md:max-w-none flex items-center">
               {roomData.key}
