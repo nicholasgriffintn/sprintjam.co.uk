@@ -21,7 +21,7 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
   const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(false);
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 overflow-y-auto md:p-4">
+    <div className="w-full bg-gray-100 dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 md:overflow-y-auto md:p-4">
       <div className="flex items-center justify-between p-4 md:p-0 md:mb-4">
         <h2 className="text-lg font-medium flex items-center text-gray-900 dark:text-white">
           <Users size={18} className="mr-1 md:hidden" />
@@ -36,15 +36,15 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
           {isParticipantsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
       </div>
-      <div className={`px-4 pb-4 md:p-0 ${isParticipantsExpanded ? 'block' : 'hidden md:block'}`}>
+      <div className={`px-4 pb-4 md:px-0 md:pb-0 ${isParticipantsExpanded ? "block" : "hidden md:block"}`}>
         <div className="mb-4">
-          <div className="flex justify-between text-sm mb-1">
+          <div className="flex justify-between text-sm mb-1.5">
             <span className="text-gray-700 dark:text-gray-300">Voting Progress</span>
             <span className="text-gray-700 dark:text-gray-300">{stats.votedUsers}/{roomData.users.length}</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <motion.div
-              className="bg-blue-600 h-2.5 rounded-full"
+              className="bg-blue-600 h-2 rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${votingProgress}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}
@@ -55,7 +55,7 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
           {roomData.users.map((user: string) => (
             <motion.li
               key={user}
-              className="flex items-center justify-between p-2 bg-white dark:bg-gray-700 rounded-md shadow-sm hover:shadow-md text-gray-900 dark:text-white"
+              className="flex flex-wrap items-center justify-between gap-3 p-2 bg-white dark:bg-gray-700 rounded-md shadow-sm hover:shadow-md text-gray-900 dark:text-white"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
@@ -77,7 +77,7 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
                     })()}
                   </div>
                 )}
-                <span className={`flex items-center ${user === name ? 'font-medium' : ''} text-gray-900 dark:text-white`}>
+                <span className={`flex items-center flex-wrap gap-x-1 gap-y-1 ${user === name ? "font-medium" : ""} text-gray-900 dark:text-white`}>
                   {!roomData.settings.hideParticipantNames && (
                     <>
                       {user}
@@ -90,7 +90,7 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
                     </>
                   )}
                   {roomData.settings.showUserPresence && (
-                    <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${roomData.connectedUsers?.[user]
+                    <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${roomData.connectedUsers?.[user]
                       ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                       : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
                       }`}>
