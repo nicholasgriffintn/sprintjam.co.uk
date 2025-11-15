@@ -3,7 +3,6 @@ import type { FC, ChangeEvent, FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
-  Plus,
   Lock,
   User,
   AlertCircle,
