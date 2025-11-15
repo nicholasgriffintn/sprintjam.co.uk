@@ -181,7 +181,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
       />
 
       <motion.div
-        className="grid flex-1 grid-cols-1 gap-4 px-4 py-0 md:grid-cols-[1fr_3fr] md:px-4"
+        className="flex flex-1 flex-col gap-4 px-4 py-0 md:grid md:grid-cols-[1fr_3fr] md:px-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}

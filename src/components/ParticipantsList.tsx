@@ -21,8 +21,8 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
   const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(false);
 
   return (
-    <div className="w-full border-b border-white/30 bg-transparent px-0 py-3 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5">
-      <div className="flex items-center justify-between pb-3">
+    <div className={`w-full flex-shrink-0 border-b border-white/30 bg-transparent px-0 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5 ${isParticipantsExpanded ? 'py-3' : 'py-2'}`}>
+      <div className={`flex items-center justify-between ${isParticipantsExpanded ? 'pb-3' : 'pb-0 md:pb-3'}`}>
         <h2 className="flex items-center text-lg font-semibold text-slate-900 dark:text-white">
           <Users size={18} className="mr-2 hidden md:inline-flex" />
           Participants ({roomData.users.length})
