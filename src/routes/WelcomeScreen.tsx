@@ -64,9 +64,9 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
               Effortless team estimations in a beautiful shared space.
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300">
-              SprintJam keeps estimation rituals focused and human. Real-time
-              voting, consensus insights, and structured criteria. Without ads
-              or distractions.
+              Plan sprints faster with real-time story point voting, instant
+              consensus insights, and lightweight collaboration. No sign-ups, no
+              distractions.
             </p>
           </div>
         </div>
