@@ -702,9 +702,10 @@ export class PokerRoom {
   async handleVote(userName: string, vote: string | number | StructuredVote) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
-      if (!roomData) return;
+      if (!roomData) {
+        return;
+      }
 
-      // If it's a structured vote, calculate the story points and store both
       let finalVote: string | number;
       let structuredVotePayload: StructuredVote | null = null;
       if (isStructuredVote(vote)) {

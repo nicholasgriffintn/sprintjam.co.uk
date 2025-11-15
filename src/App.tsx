@@ -409,7 +409,6 @@ const App = () => {
   };
 
   // Auto-update Jira story points if setting is enabled
-  // biome-ignore lint/correctness/useExhaustiveDependencies: handleJiraTicketUpdated is stable and doesn't need to be in deps
   useEffect(() => {
     if (!roomData) return;
     if (

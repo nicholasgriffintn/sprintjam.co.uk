@@ -52,8 +52,9 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   );
   const [showSettings, setShowSettings] = useState(true);
   const [settings, setSettings] = useState<Partial<RoomSettings>>(() => {
-    // Initialize with some sensible defaults if no defaultSettings provided
-    if (!defaultSettings) return {};
+    if (!defaultSettings) {
+      return {};
+    }
 
     return {
       enableStructuredVoting: defaultSettings.enableStructuredVoting ?? false,
@@ -323,6 +324,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                 type="button"
                 variant="secondary"
                 onClick={handleBack}
+                className="sm:w-auto sm:flex-shrink-0"
                 fullWidth
                 icon={<ArrowLeft className="h-4 w-4" />}
               >
@@ -331,7 +333,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               <Button
                 type="submit"
                 disabled={!getFormValid()}
-                className="flex-1"
+                className="sm:flex-1"
                 icon={<ChevronRight className="h-4 w-4" />}
                 fullWidth
               >

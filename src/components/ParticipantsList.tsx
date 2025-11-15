@@ -89,11 +89,20 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
                       const avatarInfo = getAvatarInfo(
                         roomData.userAvatars[user]
                       );
+                      
+                      if (avatarInfo) {
+                        return (
+                          <avatarInfo.Icon
+                            size={20}
+                            className={avatarInfo.color}
+                          />
+                        );
+                      }
+
                       return (
-                        <avatarInfo.Icon
-                          size={20}
-                          className={avatarInfo.color}
-                        />
+                        <span className="text-lg">
+                          {roomData.userAvatars[user]}
+                        </span>
                       );
                     })()}
                   </div>

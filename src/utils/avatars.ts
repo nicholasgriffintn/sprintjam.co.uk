@@ -36,6 +36,10 @@ export const AVATAR_MAP: Record<AvatarId, AvatarInfo> = {
   crown: { id: 'crown', label: 'Crown', Icon: Crown, color: 'text-yellow-600 dark:text-yellow-400' },
 };
 
-export const getAvatarInfo = (avatarId: AvatarId): AvatarInfo => {
-  return AVATAR_MAP[avatarId] || AVATAR_MAP.user;
+export const getAvatarInfo = (avatarId: AvatarId): AvatarInfo | null => {
+  return AVATAR_MAP[avatarId] || null;
+};
+
+export const isEmojiAvatar = (avatarId: AvatarId): boolean => {
+  return !AVATAR_MAP[avatarId];
 };

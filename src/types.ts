@@ -4,7 +4,7 @@ export type JudgeAlgorithm = 'smartConsensus' | 'conservativeMode' | 'optimistic
 
 export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export type AvatarId = 'user' | 'robot' | 'bear' | 'bird' | 'knight' | 'alien' | 'ninja' | 'pirate' | 'wizard' | 'ghost' | 'dragon' | 'crown';
+export type AvatarId = 'user' | 'robot' | 'bear' | 'bird' | 'knight' | 'alien' | 'ninja' | 'pirate' | 'wizard' | 'ghost' | 'dragon' | 'crown' | string;
 
 export interface JiraTicket {
   id: string;
