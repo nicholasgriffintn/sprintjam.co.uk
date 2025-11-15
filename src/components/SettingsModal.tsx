@@ -1,6 +1,8 @@
 /** biome-ignore-all lint/nursery/useUniqueElementIds: <explanation> */
 import { useState, useEffect, type FC } from 'react';
 import type { RoomSettings, JudgeAlgorithm } from '../types';
+import { SurfaceCard } from './ui/SurfaceCard';
+import { Button } from './ui/Button';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -104,14 +106,14 @@ const SettingsModal: FC<SettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/10 dark:bg-black/30">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/10 dark:bg-black/30 backdrop-blur-sm">
+      <SurfaceCard className="w-full max-w-md max-h-[90vh] flex flex-col" padding="md">
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Room Settings</h2>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Room Settings</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <title>Close settings modal</title>
@@ -121,7 +123,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Voting Mode</h3>
+          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Voting Mode</h3>
           <div className="space-y-3">
             <div className="flex items-center">
               <input
@@ -129,15 +131,15 @@ const SettingsModal: FC<SettingsModalProps> = ({
                 id="enableStructuredVoting"
                 checked={localSettings.enableStructuredVoting || false}
                 onChange={(e) => handleChange('enableStructuredVoting', e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
               />
-              <label htmlFor="enableStructuredVoting" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor="enableStructuredVoting" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                 Enable Structured Voting
               </label>
             </div>
             {localSettings.enableStructuredVoting && (
-              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="bg-white/50 dark:bg-slate-800/50 p-3 rounded-2xl border border-white/50 dark:border-white/10">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   Structured voting allows users to vote on multiple criteria with scores from 0-4. Story points are automatically calculated based on your estimate options.
                 </p>
               </div>
@@ -147,7 +149,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
 
         <div className="space-y-4 overflow-y-auto pr-1 pt-2 flex-grow">
           <div>
-            <label htmlFor="estimateOptions" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="estimateOptions" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Estimate Options
             </label>
             <input
@@ -161,10 +163,10 @@ const SettingsModal: FC<SettingsModalProps> = ({
               onChange={(e) => handleEstimateOptionsChange(e.target.value)}
               placeholder={`e.g., ${defaultSettings.estimateOptions.map((option) => option.toString()).join(',')}`}
               disabled={localSettings.enableStructuredVoting}
-              className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${localSettings.enableStructuredVoting ? 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed' : ''
+              className={`w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900 ${localSettings.enableStructuredVoting ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed' : ''
                 }`}
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               {localSettings.enableStructuredVoting
                 ? 'Fixed options for structured voting'
                 : 'Separate values with commas'
@@ -172,7 +174,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
             </p>
           </div>
           <div className="pt-2">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">The Judge</h3>
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">The Judge</h3>
             <div className="space-y-3">
               <div className="flex items-center">
                 <input
@@ -180,29 +182,29 @@ const SettingsModal: FC<SettingsModalProps> = ({
                   id="enableJudge"
                   checked={localSettings.enableJudge}
                   onChange={(e) => handleChange('enableJudge', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                  className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />
-                <label htmlFor="enableJudge" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                <label htmlFor="enableJudge" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                   Enable The Judge (permanent member that decides the best score)
                 </label>
               </div>
               {localSettings.enableJudge && (
                 <div className="ml-6">
-                  <label htmlFor="judgeAlgorithm" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="judgeAlgorithm" className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                     Algorithm
                   </label>
                   <select
                     id="judgeAlgorithm"
                     value={localSettings.judgeAlgorithm}
                     onChange={(e) => handleChange('judgeAlgorithm', e.target.value as JudgeAlgorithm)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
                   >
                     <option value="smartConsensus">Smart Consensus</option>
                     <option value="conservativeMode">Conservative Mode</option>
                     <option value="optimisticMode">Optimistic Mode</option>
                     <option value="simpleAverage">Simple Average</option>
                   </select>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     {localSettings.judgeAlgorithm === 'smartConsensus' &&
                       'Intelligently identifies consensus in voting patterns across different scenarios'}
                     {localSettings.judgeAlgorithm === 'conservativeMode' &&
@@ -218,9 +220,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
           </div>
 
           <details className="cursor-pointer">
-            <summary className="text-sm font-medium text-gray-700 dark:text-gray-300">Other options</summary>
+            <summary className="text-sm font-medium text-slate-700 dark:text-slate-300">Other options</summary>
             <div className="pt-2">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Jira Integration</h3>
+              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Jira Integration</h3>
               <div className="space-y-3">
                 <div className="flex items-center">
                   <input
@@ -228,9 +230,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                     id="enableJiraIntegration"
                     checked={localSettings.enableJiraIntegration || false}
                     onChange={(e) => handleChange('enableJiraIntegration', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
-                  <label htmlFor="enableJiraIntegration" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="enableJiraIntegration" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                     Enable Jira Integration
                   </label>
                 </div>
@@ -241,9 +243,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                       id="autoUpdateJiraStoryPoints"
                       checked={localSettings.autoUpdateJiraStoryPoints || false}
                       onChange={(e) => handleChange('autoUpdateJiraStoryPoints', e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                      className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                     />
-                    <label htmlFor="autoUpdateJiraStoryPoints" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label htmlFor="autoUpdateJiraStoryPoints" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                       Auto-update story points in Jira when voting completes
                     </label>
                   </div>
@@ -251,7 +253,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
               </div>
 
               <div className="pt-2">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Permissions</h3>
+                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Permissions</h3>
                 <div className="space-y-2">
                   <div className="flex items-center">
                     <input
@@ -259,9 +261,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                       id="allowOthersToShowEstimates"
                       checked={localSettings.allowOthersToShowEstimates}
                       onChange={(e) => handleChange('allowOthersToShowEstimates', e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                      className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                     />
-                    <label htmlFor="allowOthersToShowEstimates" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label htmlFor="allowOthersToShowEstimates" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                       Allow others to show estimates
                     </label>
                   </div>
@@ -271,9 +273,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                       id="allowOthersToDeleteEstimates"
                       checked={localSettings.allowOthersToDeleteEstimates}
                       onChange={(e) => handleChange('allowOthersToDeleteEstimates', e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                      className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                     />
-                    <label htmlFor="allowOthersToDeleteEstimates" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label htmlFor="allowOthersToDeleteEstimates" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                       Allow others to delete estimates
                     </label>
                   </div>
@@ -283,9 +285,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                       id="autoHandoverModerator"
                       checked={localSettings.autoHandoverModerator || false}
                       onChange={(e) => handleChange('autoHandoverModerator', e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                      className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                     />
-                    <label htmlFor="autoHandoverModerator" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label htmlFor="autoHandoverModerator" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                       Auto handover moderator when they leave
                     </label>
                   </div>
@@ -293,16 +295,16 @@ const SettingsModal: FC<SettingsModalProps> = ({
               </div>
 
               <div className="pt-2">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Display Options</h3>
+                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Display Options</h3>
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     id="hideParticipantNames"
                     checked={localSettings.hideParticipantNames || false}
                     onChange={(e) => handleChange('hideParticipantNames', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
-                  <label htmlFor="hideParticipantNames" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="hideParticipantNames" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                     Hide participant names
                   </label>
                 </div>
@@ -312,9 +314,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                     id="showTimer"
                     checked={localSettings.showTimer}
                     onChange={(e) => handleChange('showTimer', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
-                  <label htmlFor="showTimer" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="showTimer" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                     Show timer
                   </label>
                 </div>
@@ -324,9 +326,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                     id="showUserPresence"
                     checked={localSettings.showUserPresence}
                     onChange={(e) => handleChange('showUserPresence', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
-                  <label htmlFor="showUserPresence" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="showUserPresence" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                     Show user presence
                   </label>
                 </div>
@@ -336,9 +338,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                     id="showAverage"
                     checked={localSettings.showAverage}
                     onChange={(e) => handleChange('showAverage', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
-                  <label htmlFor="showAverage" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="showAverage" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                     Show average
                   </label>
                 </div>
@@ -348,9 +350,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                     id="showMedian"
                     checked={localSettings.showMedian}
                     onChange={(e) => handleChange('showMedian', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
-                  <label htmlFor="showMedian" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="showMedian" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                     Show median
                   </label>
                 </div>
@@ -361,15 +363,15 @@ const SettingsModal: FC<SettingsModalProps> = ({
                       id="showTopVotes"
                       checked={localSettings.showTopVotes}
                       onChange={(e) => handleChange('showTopVotes', e.target.checked)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                      className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                     />
-                    <label htmlFor="showTopVotes" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label htmlFor="showTopVotes" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                       Show top votes
                     </label>
                   </div>
                   {localSettings.showTopVotes && (
                     <div className="ml-6">
-                      <label htmlFor="topVotesCount" className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                      <label htmlFor="topVotesCount" className="block text-sm text-slate-700 dark:text-slate-300 mb-1">
                         Number of top votes to show
                       </label>
                       <input
@@ -379,7 +381,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
                         max="10"
                         value={localSettings.topVotesCount}
                         onChange={(e) => handleChange('topVotesCount', parseInt(e.target.value) || 1)}
-                        className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-20 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
                       />
                     </div>
                   )}
@@ -390,9 +392,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
                     id="anonymousVotes"
                     checked={localSettings.anonymousVotes}
                     onChange={(e) => handleChange('anonymousVotes', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
-                  <label htmlFor="anonymousVotes" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="anonymousVotes" className="ml-2 text-sm text-slate-700 dark:text-slate-300">
                     Anonymous votes in sidebar
                   </label>
                 </div>
@@ -402,23 +404,23 @@ const SettingsModal: FC<SettingsModalProps> = ({
 
         </div>
 
-        <div className="mt-6 flex justify-end space-x-3 flex-shrink-0">
-          <button
-            type="button"
+        <div className="mt-6 flex justify-end gap-3 flex-shrink-0">
+          <Button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
+            variant="secondary"
+            size="md"
           >
             Cancel
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={handleSave}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            variant="primary"
+            size="md"
           >
             Save
-          </button>
+          </Button>
         </div>
-      </div>
+      </SurfaceCard>
     </div>
   );
 };
