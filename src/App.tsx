@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   createRoom,
@@ -39,12 +46,15 @@ import type {
   AvatarId,
 } from './types';
 import { cloneServerDefaults } from './utils/settings';
-import WelcomeScreen from './routes/WelcomeScreen';
-import CreateRoomScreen from './routes/CreateRoomScreen';
-import JoinRoomScreen from './routes/JoinRoomScreen';
-import RoomScreen from './routes/RoomScreen';
 import ErrorBanner from './components/ErrorBanner';
 import LoadingOverlay from './components/LoadingOverlay';
+import { ScreenLoader } from './components/layout/ScreenLoader';
+import WelcomeScreen from './routes/WelcomeScreen';
+import NotFoundScreen from './routes/NotFoundScreen';
+
+const CreateRoomScreen = lazy(() => import('./routes/CreateRoomScreen'));
+const JoinRoomScreen = lazy(() => import('./routes/JoinRoomScreen'));
+const RoomScreen = lazy(() => import('./routes/RoomScreen'));
 
 type AppScreen = 'welcome' | 'create' | 'join' | 'room';
 
@@ -460,6 +470,92 @@ const App = () => {
 
   const clearError = () => setError('');
 
+  const renderScreen = () => {
+    switch (screen) {
+      case 'welcome':
+        return (
+          <WelcomeScreen
+            onCreateRoom={() => {
+              setPasscode('');
+              setScreen('create');
+            }}
+            onJoinRoom={() => {
+              setPasscode('');
+              setScreen('join');
+            }}
+          />
+        );
+      case 'create':
+        return (
+          <CreateRoomScreen
+            name={name}
+            passcode={passcode}
+            selectedAvatar={selectedAvatar}
+            onNameChange={setName}
+            onPasscodeChange={setPasscode}
+            onAvatarChange={setSelectedAvatar}
+            onCreateRoom={handleCreateRoom}
+            onBack={() => {
+              setPasscode('');
+              setScreen('welcome');
+            }}
+            error={error}
+            onClearError={clearError}
+            defaultSettings={serverDefaults?.roomSettings}
+          />
+        );
+      case 'join':
+        return (
+          <JoinRoomScreen
+            name={name}
+            roomKey={roomKey}
+            passcode={passcode}
+            selectedAvatar={selectedAvatar}
+            onNameChange={setName}
+            onRoomKeyChange={setRoomKey}
+            onPasscodeChange={setPasscode}
+            onAvatarChange={setSelectedAvatar}
+            onJoinRoom={handleJoinRoom}
+            onBack={() => {
+              setPasscode('');
+              setScreen('welcome');
+            }}
+            error={error}
+            onClearError={clearError}
+          />
+        );
+      case 'room':
+        if (roomData && serverDefaults) {
+          return (
+            <RoomScreen
+              roomData={roomData}
+              name={name}
+              isModeratorView={isModeratorView}
+              userVote={userVote}
+              votingOptions={roomData.settings.estimateOptions as VoteValue[]}
+              serverDefaults={serverDefaults}
+              onVote={handleVote}
+              onToggleShowVotes={handleToggleShowVotes}
+              onResetVotes={handleResetVotes}
+              onUpdateSettings={handleUpdateSettings}
+              onJiraTicketFetched={handleJiraTicketFetched}
+              onJiraTicketUpdated={handleJiraTicketUpdated}
+              onLeaveRoom={handleLeaveRoom}
+              error={error}
+              onClearError={clearError}
+              isConnected={isConnected()}
+            />
+          );
+        }
+
+        return (
+          <ScreenLoader title="Loading room" subtitle="Please wait a moment." />
+        );
+      default:
+        return <NotFoundScreen />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {(isLoading || isLoadingDefaults) && <LoadingOverlay />}
@@ -484,81 +580,7 @@ const App = () => {
         <ErrorBanner message={error} onClose={clearError} />
       )}
 
-      {screen === 'welcome' ? (
-        <WelcomeScreen
-          onCreateRoom={() => {
-            setPasscode('');
-            setScreen('create');
-          }}
-          onJoinRoom={() => {
-            setPasscode('');
-            setScreen('join');
-          }}
-        />
-      ) : screen === 'create' ? (
-        <CreateRoomScreen
-          name={name}
-          passcode={passcode}
-          selectedAvatar={selectedAvatar}
-          onNameChange={setName}
-          onPasscodeChange={setPasscode}
-          onAvatarChange={setSelectedAvatar}
-          onCreateRoom={handleCreateRoom}
-          onBack={() => {
-            setPasscode('');
-            setScreen('welcome');
-          }}
-          error={error}
-          onClearError={clearError}
-          defaultSettings={serverDefaults?.roomSettings}
-        />
-      ) : screen === 'join' ? (
-        <JoinRoomScreen
-          name={name}
-          roomKey={roomKey}
-          passcode={passcode}
-          selectedAvatar={selectedAvatar}
-          onNameChange={setName}
-          onRoomKeyChange={setRoomKey}
-          onPasscodeChange={setPasscode}
-          onAvatarChange={setSelectedAvatar}
-          onJoinRoom={handleJoinRoom}
-          onBack={() => {
-            setPasscode('');
-            setScreen('welcome');
-          }}
-          error={error}
-          onClearError={clearError}
-        />
-      ) : screen === 'room' && roomData && serverDefaults ? (
-        <RoomScreen
-          roomData={roomData}
-          name={name}
-          isModeratorView={isModeratorView}
-          userVote={userVote}
-          votingOptions={roomData.settings.estimateOptions as VoteValue[]}
-          serverDefaults={serverDefaults}
-          onVote={handleVote}
-          onToggleShowVotes={handleToggleShowVotes}
-          onResetVotes={handleResetVotes}
-          onUpdateSettings={handleUpdateSettings}
-          onJiraTicketFetched={handleJiraTicketFetched}
-          onJiraTicketUpdated={handleJiraTicketUpdated}
-          onLeaveRoom={handleLeaveRoom}
-          error={error}
-          onClearError={clearError}
-          isConnected={isConnected()}
-        />
-      ) : screen === 'room' ? (
-        <div className="p-6 text-center text-gray-600 dark:text-gray-400">
-          Loading room data&hellip;
-        </div>
-      ) : (
-        <div>
-          <h1>404</h1>
-          <p>Page not found</p>
-        </div>
-      )}
+      <Suspense fallback={<ScreenLoader />}>{renderScreen()}</Suspense>
     </div>
   );
 };
