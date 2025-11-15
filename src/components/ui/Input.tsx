@@ -51,10 +51,10 @@ export const Input = ({
             'dark:focus:border-brand-400 dark:focus:ring-brand-900',
             'disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500',
             'dark:disabled:bg-slate-800 dark:disabled:text-slate-400',
-            icon && iconPosition === 'left' && 'pl-10',
-            icon && iconPosition === 'right' && 'pr-10',
-            error && 'border-red-300 focus:border-red-400 focus:ring-red-200',
-            fullWidth && 'w-full',
+            icon && iconPosition === 'left' ? 'pl-10' : '',
+            icon && iconPosition === 'right' ? 'pr-10' : '',
+            error ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : '',
+            fullWidth ? 'w-full' : '',
             className
           )}
           {...props}
