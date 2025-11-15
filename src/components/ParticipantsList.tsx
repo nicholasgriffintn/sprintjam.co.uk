@@ -21,33 +21,45 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
   const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(false);
 
   return (
-    <div className="w-full bg-gray-100 dark:bg-gray-800 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 md:overflow-y-auto md:p-4">
-      <div className="flex items-center justify-between p-4 md:p-0 md:mb-4">
-        <h2 className="text-lg font-medium flex items-center text-gray-900 dark:text-white">
-          <Users size={18} className="mr-1 md:hidden" />
+    <div className="w-full border-b border-white/30 bg-transparent px-0 py-3 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5">
+      <div className="flex items-center justify-between pb-3">
+        <h2 className="flex items-center text-lg font-semibold text-slate-900 dark:text-white">
+          <Users size={18} className="mr-2 hidden md:inline-flex" />
           Participants ({roomData.users.length})
         </h2>
         <button
           type="button"
-          className="block md:hidden rounded-md p-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+          className="inline-flex rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 dark:border-white/10 dark:bg-white/10 dark:text-white md:hidden"
           onClick={() => setIsParticipantsExpanded(!isParticipantsExpanded)}
-          aria-label={isParticipantsExpanded ? "Collapse participants" : "Expand participants"}
+          aria-label={
+            isParticipantsExpanded
+              ? 'Collapse participants'
+              : 'Expand participants'
+          }
         >
-          {isParticipantsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          {isParticipantsExpanded ? (
+            <ChevronUp size={20} />
+          ) : (
+            <ChevronDown size={20} />
+          )}
         </button>
       </div>
-      <div className={`px-4 pb-4 md:px-0 md:pb-0 ${isParticipantsExpanded ? "block" : "hidden md:block"}`}>
-        <div className="mb-4">
-          <div className="flex justify-between text-sm mb-1.5">
-            <span className="text-gray-700 dark:text-gray-300">Voting Progress</span>
-            <span className="text-gray-700 dark:text-gray-300">{stats.votedUsers}/{roomData.users.length}</span>
+      <div
+        className={`${isParticipantsExpanded ? 'block' : 'hidden md:block'}`}
+      >
+        <div className="mb-3">
+          <div className="mb-1 flex justify-between text-sm text-slate-500 dark:text-slate-300 mb-2">
+            <span>Voting progress</span>
+            <span>
+              {stats.votedUsers}/{roomData.users.length}
+            </span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="h-2 w-full rounded-full bg-slate-200/70 dark:bg-slate-800">
             <motion.div
-              className="bg-blue-600 h-2 rounded-full"
+              className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-indigo-500"
               initial={{ width: 0 }}
               animate={{ width: `${votingProgress}%` }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
             />
           </div>
         </div>
@@ -55,63 +67,71 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
           {roomData.users.map((user: string) => (
             <motion.li
               key={user}
-              className="flex flex-wrap items-center justify-between gap-3 p-2 bg-white dark:bg-gray-700 rounded-md shadow-sm hover:shadow-md text-gray-900 dark:text-white"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-slate-900 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.2,
-                delay: roomData.users.indexOf(user) * 0.05
+                delay: roomData.users.indexOf(user) * 0.05,
               }}
               whileHover={{ scale: 1.01 }}
             >
               <div className="flex items-center space-x-3">
                 {roomData.userAvatars?.[user] && (
-                  <div className={`w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-600 flex items-center justify-center border-2 ${
-                    roomData.connectedUsers?.[user]
-                      ? 'border-green-300 dark:border-green-600'
-                      : 'border-red-300 dark:border-red-600'
-                  }`}>
+                  <div
+                    className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
+                      roomData.connectedUsers?.[user]
+                        ? 'border-emerald-300 dark:border-emerald-600'
+                        : 'border-slate-200 dark:border-slate-600'
+                    }`}
+                  >
                     {(() => {
-                      const avatarInfo = getAvatarInfo(roomData.userAvatars[user]);
-                      return <avatarInfo.Icon size={20} className={avatarInfo.color} />;
+                      const avatarInfo = getAvatarInfo(
+                        roomData.userAvatars[user]
+                      );
+                      return (
+                        <avatarInfo.Icon
+                          size={20}
+                          className={avatarInfo.color}
+                        />
+                      );
                     })()}
                   </div>
                 )}
-                <span className={`flex items-center flex-wrap gap-x-1 gap-y-1 ${user === name ? "font-medium" : ""} text-gray-900 dark:text-white`}>
+                <span
+                  className={`flex items-center gap-2 text-sm ${
+                    user === name ? 'font-semibold' : ''
+                  }`}
+                >
                   {!roomData.settings.hideParticipantNames && (
                     <>
                       {user}
                       {user === roomData.moderator && (
-                        <Crown className="ml-1 w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        <Crown className="h-3.5 w-3.5 text-brand-500" />
                       )}
                       {user === name && (
-                        <User className="ml-1 w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                        <User className="h-3.5 w-3.5 text-slate-500 dark:text-slate-300" />
                       )}
                     </>
                   )}
-                  {roomData.settings.showUserPresence && (
-                    <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${roomData.connectedUsers?.[user]
-                      ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                      : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                      }`}>
-                      {roomData.connectedUsers?.[user] ? 'Online' : 'Offline'}
-                    </span>
-                  )}
                 </span>
               </div>
-              {(roomData.votes[user] !== undefined && roomData.votes[user] !== null) && (
-                <span
-                  className={`px-2 py-1 text-xs font-medium rounded-full ${roomData.showVotes
-                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                    : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                    }`}>
-                  {roomData.settings.anonymousVotes && roomData.showVotes
-                    ? '✓'
-                    : roomData.showVotes
+              {roomData.votes[user] !== undefined &&
+                roomData.votes[user] !== null && (
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      roomData.showVotes
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200'
+                        : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-200'
+                    }`}
+                  >
+                    {roomData.settings.anonymousVotes && roomData.showVotes
+                      ? '✓'
+                      : roomData.showVotes
                       ? roomData.votes[user]
                       : '✓'}
-                </span>
-              )}
+                  </span>
+                )}
             </motion.li>
           ))}
         </ul>

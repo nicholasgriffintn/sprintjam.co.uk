@@ -8,6 +8,7 @@ import type {
   VotingCriterion,
 } from '../types';
 import { VoteDistribution } from './VoteDistribution';
+import { SurfaceCard } from './ui/SurfaceCard';
 
 interface UnifiedResultsProps {
   roomData: RoomData;
@@ -147,17 +148,18 @@ export function UnifiedResults({
             return (
               <motion.div
                 key={card.id}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay }}
               >
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  {card.label}
-                </h4>
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {stats.avg}
-                </div>
+                <SurfaceCard padding="sm" className="text-left">
+                  <h4 className="mb-1 text-sm font-medium text-slate-500 dark:text-slate-300">
+                    {card.label}
+                  </h4>
+                  <div className="text-3xl font-semibold text-brand-600 dark:text-brand-300">
+                    {stats.avg}
+                  </div>
+                </SurfaceCard>
               </motion.div>
             );
           }
@@ -167,17 +169,18 @@ export function UnifiedResults({
             return (
               <motion.div
                 key={card.id}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay }}
               >
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  {card.label}
-                </h4>
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {stats.mode || 'N/A'}
-                </div>
+                <SurfaceCard padding="sm" className="text-left">
+                  <h4 className="mb-1 text-sm font-medium text-slate-500 dark:text-slate-300">
+                    {card.label}
+                  </h4>
+                  <div className="text-3xl font-semibold text-brand-600 dark:text-brand-300">
+                    {stats.mode || 'N/A'}
+                  </div>
+                </SurfaceCard>
               </motion.div>
             );
           }
@@ -188,35 +191,38 @@ export function UnifiedResults({
             return (
               <motion.div
                 key={card.id}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay }}
               >
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  {card.label}
-                </h4>
-                <div className="flex gap-2 items-center flex-wrap">
-                  {topDistribution.map(([vote, count]) => {
-                    const metadata =
-                      roomData.settings.voteOptionsMetadata?.find(
-                        (m) => m.value.toString() === vote
-                      );
-                    const background = metadata?.background || '#ebf5ff';
+                <SurfaceCard padding="sm" className="space-y-2">
+                  <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+                    {card.label}
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {topDistribution.map(([vote, count]) => {
+                      const metadata =
+                        roomData.settings.voteOptionsMetadata?.find(
+                          (m) => m.value.toString() === vote
+                        );
+                      const background = metadata?.background || '#ebf5ff';
 
-                    return (
-                      <div key={vote} className="flex items-center gap-1">
-                        <div
-                          className="w-6 h-6 flex items-center justify-center text-xs font-medium rounded"
-                          style={{ backgroundColor: background }}
-                        >
-                          {vote}
+                      return (
+                        <div key={vote} className="flex items-center gap-1">
+                          <div
+                            className="flex h-7 w-7 items-center justify-center rounded-xl text-xs font-semibold text-black"
+                            style={{ backgroundColor: background }}
+                          >
+                            {vote}
+                          </div>
+                          <span className="text-xs text-slate-500 dark:text-slate-300">
+                            ×{count}
+                          </span>
                         </div>
-                        <span className="text-xs text-gray-600 dark:text-gray-400">×{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                </SurfaceCard>
               </motion.div>
             );
           }
@@ -270,14 +276,13 @@ export function UnifiedResults({
 
       {showCriteriaBreakdown && (
         <div>
-          <h3 className="mb-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+          <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
             {criteriaSettings?.title ?? 'Criteria Breakdown'}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {criteriaStats.map((stat) => (
               <motion.div
                 key={stat.criterionId}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
@@ -285,70 +290,74 @@ export function UnifiedResults({
                   delay: criteriaStats.indexOf(stat) * 0.05,
                 }}
               >
-                <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
-                  <h4
-                    className="font-medium text-gray-900 dark:text-white flex-1 min-w-0"
-                    title={stat.name}
-                  >
-                    {stat.name}
-                  </h4>
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full whitespace-nowrap flex-shrink-0 ${
-                      stat.consensus === 'high'
-                        ? 'bg-green-100 text-green-800'
+                <SurfaceCard
+                  padding="sm"
+                  variant="subtle"
+                  className="space-y-3"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <h4
+                      className="min-w-0 flex-1 font-semibold text-slate-900 dark:text-white"
+                      title={stat.name}
+                    >
+                      {stat.name}
+                    </h4>
+                    <span
+                      className={`flex-shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs ${
+                        stat.consensus === 'high'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200'
+                          : stat.consensus === 'medium'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200'
+                          : 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200'
+                      }`}
+                    >
+                      {stat.consensus === 'high'
+                        ? consensusLabels.high
                         : stat.consensus === 'medium'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {stat.consensus === 'high'
-                      ? consensusLabels.high
-                      : stat.consensus === 'medium'
-                      ? consensusLabels.medium
-                      : consensusLabels.low}
-                  </span>
-                </div>
+                        ? consensusLabels.medium
+                        : consensusLabels.low}
+                    </span>
+                  </div>
 
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center text-sm gap-2">
-                    <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">
-                      Average:
-                    </span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {stat.average.toFixed(1)}
-                    </span>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center justify-between gap-2 text-slate-500 dark:text-slate-400">
+                      <span>Average</span>
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {stat.average.toFixed(1)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-slate-500 dark:text-slate-400">
+                      <span>Range</span>
+                      <span className="text-slate-900 dark:text-white">
+                        {stat.min} - {stat.max}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm gap-2">
-                    <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">Range:</span>
-                    <span className="text-gray-800 dark:text-gray-200">
-                      {stat.min} - {stat.max}
-                    </span>
-                  </div>
-                </div>
 
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1 px-0.5">
-                    <span>0</span>
-                    <span>{stat.maxScore}</span>
+                  <div>
+                    <div className="mb-1 flex justify-between px-0.5 text-xs text-slate-400">
+                      <span>0</span>
+                      <span>{stat.maxScore}</span>
+                    </div>
+                    <div className="relative h-2 w-full rounded-full bg-slate-200/80 dark:bg-slate-800">
+                      <div
+                        className="absolute h-2 rounded-full bg-gradient-to-r from-brand-300 to-indigo-400"
+                        style={{
+                          left: `${(stat.min / stat.maxScore) * 100}%`,
+                          width: `${
+                            ((stat.max - stat.min) / stat.maxScore) * 100
+                          }%`,
+                        }}
+                      />
+                      <div
+                        className="absolute -mt-1 h-4 w-1 rounded-full bg-brand-700 dark:bg-brand-300"
+                        style={{
+                          left: `${(stat.average / stat.maxScore) * 100}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 relative min-w-0">
-                    <div
-                      className="h-2 rounded-full bg-blue-200 absolute"
-                      style={{
-                        left: `${(stat.min / stat.maxScore) * 100}%`,
-                        width: `${
-                          ((stat.max - stat.min) / stat.maxScore) * 100
-                        }%`,
-                      }}
-                    />
-                    <div
-                      className="absolute w-1 h-4 bg-blue-600 rounded-full -mt-1"
-                      style={{
-                        left: `${(stat.average / stat.maxScore) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
+                </SurfaceCard>
               </motion.div>
             ))}
           </div>
@@ -357,12 +366,12 @@ export function UnifiedResults({
 
       {showVoteDistributionSection && (
         <div>
-          <h3 className="mb-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+          <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
             {voteDistributionLabel}
           </h3>
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <SurfaceCard padding="sm">
             <VoteDistribution roomData={roomData} stats={stats} />
-          </div>
+          </SurfaceCard>
         </div>
       )}
     </div>

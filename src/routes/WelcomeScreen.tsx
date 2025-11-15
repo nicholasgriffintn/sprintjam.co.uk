@@ -1,6 +1,19 @@
 import type { FC } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Plus, Github, Zap, Shield, Timer, BarChart3 } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  Github,
+  Zap,
+  Shield,
+  Timer,
+  BarChart3,
+} from 'lucide-react';
+
+import { PageBackground } from '../components/layout/PageBackground';
+import { Button } from '../components/ui/Button';
+import { SurfaceCard } from '../components/ui/SurfaceCard';
+import { Logo } from '../components/Logo';
 
 interface WelcomeScreenProps {
   onCreateRoom: () => void;
@@ -14,127 +27,114 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
   const features = [
     {
       icon: <Zap className="w-5 h-5" />,
-      title: "Real-time Voting",
-      description: "Live collaboration with instant updates"
+      title: 'Real-time Voting',
+      description: 'Live collaboration with instant updates',
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
-      title: "Smart Consensus",
-      description: "Automated consensus detection and recommendations"
+      title: 'Smart Consensus',
+      description: 'Automated consensus detection and recommendations',
     },
     {
       icon: <Shield className="w-5 h-5" />,
-      title: "Privacy First",
-      description: "No ads, no tracking, open source"
+      title: 'Privacy First',
+      description: 'No ads, no tracking, open source',
     },
     {
       icon: <Timer className="w-5 h-5" />,
-      title: "Voting Options",
-      description: "Multi-criteria estimation systems"
-    }
+      title: 'Voting Options',
+      description: 'Multi-criteria estimation systems',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-        <motion.div 
-          className="text-center max-w-4xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <motion.div
-            className="mb-8"
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.2, delay: 0.1 }}
-          >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
-              Welcome to SprintJam
+    <PageBackground maxWidth="xl">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="space-y-14"
+      >
+        <div className="flex justify-center">
+          <Logo size="lg" />
+        </div>
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+              Effortless team estimations in a beautiful shared space.
             </h1>
-            <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-              Collaborative planning poker for agile teams, <span className="font-semibold text-gray-800 dark:text-gray-200">without the ads</span>
+            <p className="text-lg text-slate-600 dark:text-slate-300">
+              SprintJam keeps estimation rituals focused and human. Real-time
+              voting, consensus insights, and structured criteria. Without ads
+              or distractions.
             </p>
-          </motion.div>
+          </div>
+        </div>
 
-          <motion.div 
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: 0.1 }}
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <Button
+            onClick={onCreateRoom}
+            icon={<Plus className="h-4 w-4" />}
+            size="lg"
           >
-            <motion.button
-              type="button"
-              onClick={onCreateRoom}
-              className="relative px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="relative z-10 flex items-center justify-center gap-3">
-                <Plus className="w-5 h-5" />
-                <span>Create New Room</span>
-              </div>
-            </motion.button>
-
-            <motion.button
-              type="button"
-              onClick={onJoinRoom}
-              className="group px-8 py-4 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 font-semibold rounded-xl border-2 border-blue-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-gray-500 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="flex items-center justify-center gap-3">
-                <Users className="w-5 h-5" />
-                <span>Join Existing Room</span>
-              </div>
-            </motion.button>
-          </motion.div>
-
-          <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: 0.2 }}
+            Create a room
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={onJoinRoom}
+            icon={<Users className="h-4 w-4" />}
+            size="lg"
           >
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50 hover:border-blue-200 dark:hover:border-gray-600 hover:shadow-lg"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.3 + index * 0.05 }}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white mb-3">
-                    {feature.icon}
-                  </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{feature.description}</p>
+            Join a session
+          </Button>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
+            >
+              <SurfaceCard className="h-full text-left">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
+                  {feature.icon}
                 </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                  {feature.description}
+                </p>
+              </SurfaceCard>
+            </motion.div>
+          ))}
+        </div>
 
-          <motion.div 
-            className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-600 dark:text-gray-400"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2, delay: 0.4 }}
-          >
-            <a 
-              href="https://github.com/nicholasgriffintn/sprintjam.co.uk" 
-              className="flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 group"
+        <SurfaceCard variant="subtle" className="mx-auto max-w-2xl text-sm">
+          <div className="flex flex-col items-center justify-between gap-4 text-slate-600 dark:text-slate-300 sm:flex-row sm:text-base">
+            <div className="flex flex-col gap-1 text-center sm:text-left">
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Fully transparent
+              </span>
+              <p className="font-semibold text-slate-900 dark:text-white">
+                Built in the open for agile teams everywhere.
+              </p>
+            </div>
+            <a
+              href="https://github.com/nicholasgriffintn/sprintjam.co.uk"
               target="_blank"
               rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/60 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:text-brand-600 dark:border-white/20 dark:text-white dark:hover:text-brand-200"
             >
-              <Github className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-              <span>View source code</span>
+              <Github className="h-4 w-4" />
+              View source on GitHub
             </a>
-          </motion.div>
-        </motion.div>
-      </div>
-    </div>
+          </div>
+        </SurfaceCard>
+      </motion.div>
+    </PageBackground>
   );
 };
 

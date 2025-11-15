@@ -21,9 +21,15 @@ export function VoteDistribution({
             className="flex items-center mb-2"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 * roomData.settings.estimateOptions.indexOf(option) }}
+            transition={{
+              duration: 0.3,
+              delay: 0.1 * roomData.settings.estimateOptions.indexOf(option),
+            }}
           >
-            <div className="w-8 text-center font-medium rounded" style={{ backgroundColor: background }}>
+            <div
+              className="w-8 text-center font-medium rounded text-black"
+              style={{ backgroundColor: background }}
+            >
               {option}
             </div>
             <div className="flex-1 mx-2">
@@ -32,11 +38,18 @@ export function VoteDistribution({
                   className="h-4 rounded-full"
                   initial={{ width: 0 }}
                   animate={{
-                    width: `${roomData.users.length > 0
-                      ? (stats.distribution[option] / roomData.users.length) * 100
-                      : 0}%`
+                    width: `${
+                      roomData.users.length > 0
+                        ? (stats.distribution[option] / roomData.users.length) *
+                          100
+                        : 0
+                    }%`,
                   }}
-                  transition={{ duration: 0.8, delay: 0.1 * roomData.settings.estimateOptions.indexOf(option) }}
+                  transition={{
+                    duration: 0.8,
+                    delay:
+                      0.1 * roomData.settings.estimateOptions.indexOf(option),
+                  }}
                   style={{ backgroundColor: background }}
                 />
               </div>

@@ -20,7 +20,7 @@ const cloneRoomSettings = (settings: RoomSettings): RoomSettings => ({
         ...settings.resultsDisplay,
         summaryCards: settings.resultsDisplay.summaryCards
           ? settings.resultsDisplay.summaryCards.map((card) => ({ ...card }))
-          : [],
+          : undefined,
         criteriaBreakdown: settings.resultsDisplay.criteriaBreakdown
           ? {
               ...settings.resultsDisplay.criteriaBreakdown,

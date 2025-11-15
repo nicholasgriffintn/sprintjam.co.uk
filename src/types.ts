@@ -42,7 +42,7 @@ export interface CriteriaBreakdownSettings {
 }
 
 export interface ResultsDisplaySettings {
-  summaryCards: SummaryCardSetting[];
+  summaryCards?: SummaryCardSetting[];
   showVoteDistribution?: boolean;
   voteDistributionLabel?: string;
   criteriaBreakdown?: CriteriaBreakdownSettings;

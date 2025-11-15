@@ -15,40 +15,40 @@ export function ResultsControls({
   onResetVotes: () => void;
 }) {
   return (
-    <div className="mb-4">
-      <div className="flex flex-wrap items-center justify-between mb-2">
-        <h2 className="text-xl font-semibold flex items-center space-x-2 gap-2 text-gray-900 dark:text-white">
-          <BarChart3 className="h-5 w-5" />
-          Results
-        </h2>
-        <div className="flex flex-wrap mt-2 sm:mt-0 gap-2 sm:space-x-3">
-          {(isModeratorView || roomData.settings.allowOthersToShowEstimates) && (
-            <motion.button
-              type="button"
-              onClick={onToggleShowVotes}
-              className={`px-3 py-1.5 text-sm sm:text-base rounded-md ${!roomData.showVotes
-                ? 'bg-blue-500 dark:bg-blue-600 text-white hover:bg-blue-600 dark:hover:bg-blue-700'
-                : 'bg-yellow-500 dark:bg-yellow-600 text-white hover:bg-yellow-600 dark:hover:bg-yellow-700'
-                }`}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              {roomData.showVotes ? 'Hide Votes' : 'Show Votes'}
-            </motion.button>
-          )}
-          {(isModeratorView || roomData.settings.allowOthersToDeleteEstimates) && (
-            <motion.button
-              type="button"
-              onClick={onResetVotes}
-              className={`px-3 py-1.5 text-sm sm:text-base rounded-md bg-gray-500 dark:bg-gray-600 text-white hover:bg-gray-600 dark:hover:bg-gray-700`}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              Reset Votes
-            </motion.button>
-          )}
-        </div>
+    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 text-gray-900 dark:text-white">
+      <h2 className="flex items-center gap-2 text-lg font-semibold">
+        <BarChart3 className="h-5 w-5" />
+        Results
+      </h2>
+      <div className="flex flex-wrap gap-2">
+        {(isModeratorView || roomData.settings.allowOthersToShowEstimates) && (
+          <motion.button
+            type="button"
+            onClick={onToggleShowVotes}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+              !roomData.showVotes
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-amber-500 text-black hover:bg-amber-600'
+            }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {roomData.showVotes ? 'Hide Votes' : 'Show Votes'}
+          </motion.button>
+        )}
+        {(isModeratorView ||
+          roomData.settings.allowOthersToDeleteEstimates) && (
+          <motion.button
+            type="button"
+            onClick={onResetVotes}
+            className="rounded-xl bg-slate-500 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Reset Votes
+          </motion.button>
+        )}
       </div>
     </div>
-  )
+  );
 }

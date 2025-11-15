@@ -56,7 +56,7 @@ export function UserEstimate({
                     </div>
                   </div>
                 )}
-                <span className="text-lg">{option}</span>
+                <span className="text-lg font-semibold text-slate-900">{option}</span>
               </div>
             </motion.button>
           );

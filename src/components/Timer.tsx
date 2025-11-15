@@ -33,12 +33,16 @@ export function Timer() {
       <motion.button
         type="button"
         onClick={() => setTimerRunning(!timerRunning)}
-        className="p-1 rounded bg-blue-200 hover:bg-blue-300"
-        title={timerRunning ? "Pause Timer" : "Start Timer"}
+        className="p-1 rounded bg-blue-200 text-blue-900 hover:bg-blue-300"
+        title={timerRunning ? 'Pause Timer' : 'Start Timer'}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
       >
-        {timerRunning ? <PauseIcon className="w-6 h-6" /> : <TimerIcon className="w-6 h-6" />}
+        {timerRunning ? (
+          <PauseIcon className="w-6 h-6" />
+        ) : (
+          <TimerIcon className="w-6 h-6" />
+        )}
       </motion.button>
       <motion.button
         type="button"
@@ -46,7 +50,7 @@ export function Timer() {
           setTimerRunning(false);
           setTimerSeconds(0);
         }}
-        className="p-1 rounded bg-blue-200 hover:bg-blue-300"
+        className="p-1 rounded bg-blue-200 text-blue-900 hover:bg-blue-300"
         title="Reset Timer"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}

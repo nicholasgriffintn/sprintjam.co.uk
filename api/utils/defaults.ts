@@ -36,11 +36,6 @@ export function getDefaultRoomSettings(): RoomSettings {
     autoUpdateJiraStoryPoints: false,
     autoHandoverModerator: false,
     resultsDisplay: {
-      summaryCards: [
-        { id: 'average', label: 'Average', enabled: true },
-        { id: 'mode', label: 'Most Common', enabled: true },
-        { id: 'topVotes', label: 'Top Votes', enabled: true },
-      ],
       showVoteDistribution: true,
       voteDistributionLabel: 'Vote Distribution',
       criteriaBreakdown: {

@@ -86,6 +86,7 @@ export function StructuredVotingPanel({
   }, [allowScoringInfoToggle]);
 
   const calculatedVote = currentVote;
+  const hasAnyScores = Object.keys(criteriaScores).length > 0;
 
   const handleScoreChange = (criterionId: string, score: number) => {
     const newScores = { ...criteriaScores, [criterionId]: score };
@@ -116,7 +117,7 @@ export function StructuredVotingPanel({
         )}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 mb-4">
+      <div className="bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl p-3 mb-4">
         {criteria.map((criterion) => (
           <CriterionRow
             key={criterion.id}
@@ -127,80 +128,95 @@ export function StructuredVotingPanel({
         ))}
       </div>
 
-      {allowScoringInfoToggle && showScoringInfo && calculatedVote && (
-        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            {infoToggleSettings?.title ?? 'Weighted Scoring System'}
-          </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 space-y-2">
-            {(infoToggleSettings?.showContributionDetails ?? true) && (
-              <div className="grid grid-cols-1 gap-1">
-                {(calculatedVote.contributions || []).map((c) => {
-                  const criterionName = criteria.find((k) => k.id === c.id)?.name || c.id;
-                  return (
-                    <div key={c.id} className="flex justify-between items-center">
-                      <span className="font-medium">{criterionName}:</span>
-                      <span className="text-right">
-                        {c.score}/{c.maxScore} × {c.weightPercent.toFixed(0)}% ={' '}
-                        {c.contributionPercent.toFixed(1)}%
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <div className="border-t pt-2 mt-2">
-              <div className="flex justify-between font-medium">
-                <span>Total Score:</span>
-                <span>{(calculatedVote?.percentageScore ?? 0).toFixed(1)}%</span>
-              </div>
+      {allowScoringInfoToggle &&
+        showScoringInfo &&
+        (calculatedVote || hasAnyScores) && (
+          <div className="mb-4 p-3 bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl">
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              {infoToggleSettings?.title ?? 'Weighted Scoring System'}
             </div>
-            {(infoToggleSettings?.showRangeDetails ?? true) && (
-              <div className="mt-3 text-xs">
-                <div className="font-medium mb-1">
-                  {infoToggleSettings?.rangesLabel ?? 'Story Point Ranges:'}
+            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-2">
+              {(infoToggleSettings?.showContributionDetails ?? true) && (
+                <div className="grid grid-cols-1 gap-1">
+                  {(calculatedVote?.contributions || []).map((c) => {
+                    const criterionName =
+                      criteria.find((k) => k.id === c.id)?.name || c.id;
+                    return (
+                      <div
+                        key={c.id}
+                        className="flex justify-between items-center"
+                      >
+                        <span className="font-medium">{criterionName}:</span>
+                        <span className="text-right">
+                          {c.score}/{c.maxScore} × {c.weightPercent.toFixed(0)}%
+                          = {c.contributionPercent.toFixed(1)}%
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="space-y-0.5">
-                  <div>
-                    {infoToggleSettings?.rangesDescription ??
-                      '1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+'}
-                  </div>
+              )}
+              <div className="border-t pt-2 mt-2">
+                <div className="flex justify-between font-medium">
+                  <span>Total Score:</span>
+                  <span>
+                    {(calculatedVote?.percentageScore ?? 0).toFixed(1)}%
+                  </span>
                 </div>
               </div>
-            )}
-            {(infoToggleSettings?.showConversionRules ?? true) &&
-              (calculatedVote?.appliedConversionRules?.length ?? 0) > 0 && (
-              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                <div className="font-medium text-yellow-800 mb-1">Applied Rules:</div>
-                {calculatedVote?.appliedConversionRules?.map((conversion) => (
-                  <div key={conversion} className="text-yellow-700">
-                    {conversion}
+              {(infoToggleSettings?.showRangeDetails ?? true) && (
+                <div className="mt-3 text-xs">
+                  <div className="font-medium mb-1">
+                    {infoToggleSettings?.rangesLabel ?? 'Story Point Ranges:'}
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="space-y-0.5">
+                    <div>
+                      {infoToggleSettings?.rangesDescription ??
+                        '1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+'}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {(infoToggleSettings?.showConversionRules ?? true) &&
+                (calculatedVote?.appliedConversionRules?.length ?? 0) > 0 && (
+                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                    <div className="font-medium text-yellow-800 mb-1">
+                      Applied Rules:
+                    </div>
+                    {calculatedVote?.appliedConversionRules?.map(
+                      (conversion) => (
+                        <div key={conversion} className="text-yellow-700">
+                          {conversion}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       <div className="flex items-center justify-between p-3 border-2 border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20">
         <div>
           <div className="font-medium text-blue-900 dark:text-blue-200">
-            {(displaySettings?.summary?.storyPointsLabel ?? 'Story Points')}:{" "}
+            {displaySettings?.summary?.storyPointsLabel ?? 'Story Points'}:{' '}
             {calculatedVote?.calculatedStoryPoints || '?'}
           </div>
           <div className="text-xs text-blue-700 dark:text-blue-300">
-            {(displaySettings?.summary?.weightedScoreLabel ?? 'Weighted score')}:{' '}
+            {displaySettings?.summary?.weightedScoreLabel ?? 'Weighted score'}:{' '}
             {(calculatedVote?.percentageScore ?? 0).toFixed(1)}%
           </div>
         </div>
         {(displaySettings?.summary?.showConversionCount ?? true) &&
           (calculatedVote?.appliedConversionRules?.length ?? 0) > 0 && (
-          <div className="text-xs text-blue-600 dark:text-blue-400">
-            {calculatedVote?.appliedConversionRules?.length} rule
-            {(calculatedVote?.appliedConversionRules?.length ?? 0) > 1 ? 's' : ''} applied
-          </div>
-        )}
+            <div className="text-xs text-blue-600 dark:text-blue-400">
+              {calculatedVote?.appliedConversionRules?.length} rule
+              {(calculatedVote?.appliedConversionRules?.length ?? 0) > 1
+                ? 's'
+                : ''}{' '}
+              applied
+            </div>
+          )}
       </div>
     </div>
   );

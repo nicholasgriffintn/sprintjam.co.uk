@@ -23,6 +23,7 @@ import { VotesHidden } from '../components/VotesHidden';
 import JiraTicketPanel from '../components/JiraTicketPanel';
 import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
 import { UnifiedResults } from '../components/UnifiedResults';
+import { SurfaceCard } from '../components/ui/SurfaceCard';
 
 export interface RoomScreenProps {
   roomData: RoomData;
@@ -167,7 +168,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
   ]);
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       {error && <ErrorBanner message={error} onClose={onClearError} />}
 
       <Header
@@ -180,14 +181,14 @@ const RoomScreen: FC<RoomScreenProps> = ({
       />
 
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-[25%_75%] flex-1 h-full"
+        className="grid flex-1 grid-cols-1 gap-4 px-4 py-0 md:grid-cols-[1fr_3fr] md:px-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         <ParticipantsList roomData={roomData} stats={stats} name={name} />
 
-        <div className="flex flex-col p-4 md:p-6 overflow-y-auto bg-white dark:bg-gray-900">
+        <div className="flex flex-col gap-4 py-3 md:py-5">
           {roomData.settings.showTimer && <Timer />}
 
           {roomData.settings.enableStructuredVoting &&
@@ -218,7 +219,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
 
           {roomData.settings.enableJiraIntegration &&
             (roomData.jiraTicket || isModeratorView) && (
-              <div className="mb-4">
+              <SurfaceCard padding="sm" variant="subtle">
                 <JiraTicketPanel
                   isModeratorView={isModeratorView}
                   currentJiraTicket={roomData.jiraTicket}
@@ -229,56 +230,61 @@ const RoomScreen: FC<RoomScreenProps> = ({
                   onJiraTicketUpdated={onJiraTicketUpdated || (() => {})}
                   onError={onClearError}
                 />
-              </div>
+              </SurfaceCard>
             )}
 
           <AnimatePresence mode="wait">
             {roomData.showVotes ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                exit={{ opacity: 0, scale: 0.97 }}
                 transition={{ duration: 0.3 }}
-                className="p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-inner"
                 key="results"
               >
-                {roomData.settings.enableJudge && roomData.showVotes && (
-                  <JudgeResult
-                    roomData={roomData}
-                    stats={stats}
-                    showJudgeAnimation={showJudgeAnimation}
-                  />
-                )}
+                <SurfaceCard padding="sm" className="space-y-5">
+                  {roomData.settings.enableJudge && roomData.showVotes && (
+                    <JudgeResult
+                      roomData={roomData}
+                      stats={stats}
+                      showJudgeAnimation={showJudgeAnimation}
+                    />
+                  )}
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <UnifiedResults
-                    roomData={roomData}
-                    stats={stats}
-                    criteria={roomData.settings.votingCriteria}
-                  />
-                </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <UnifiedResults
+                      roomData={roomData}
+                      stats={stats}
+                      criteria={roomData.settings.votingCriteria}
+                    />
+                  </motion.div>
+                </SurfaceCard>
               </motion.div>
             ) : (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                exit={{ opacity: 0, scale: 0.97 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-center p-12 bg-gray-100 dark:bg-gray-800 rounded-lg"
                 key="waiting"
               >
-                <motion.div
-                  className="text-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.3 }}
+                <SurfaceCard
+                  padding="sm"
+                  variant="subtle"
+                  className="flex items-center justify-center border-dashed text-center dark:border-slate-800/80"
                 >
-                  <VotesHidden votes={roomData.votes} />
-                </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.3 }}
+                  >
+                    <VotesHidden votes={roomData.votes} />
+                  </motion.div>
+                </SurfaceCard>
               </motion.div>
             )}
           </AnimatePresence>

@@ -56,6 +56,27 @@ const SettingsModal: FC<SettingsModalProps> = ({
       setEstimateOptionsInput(defaultOptions.map((option) => option.toString()).join(','));
     }
 
+    // Sync resultsDisplay.summaryCards with individual display settings
+    if (key === 'showAverage' || key === 'showMedian' || key === 'showTopVotes') {
+      if (newSettings.resultsDisplay?.summaryCards) {
+        newSettings.resultsDisplay = {
+          ...newSettings.resultsDisplay,
+          summaryCards: newSettings.resultsDisplay.summaryCards.map((card) => {
+            if (key === 'showAverage' && card.id === 'average') {
+              return { ...card, enabled: value as boolean };
+            }
+            if (key === 'showMedian' && card.id === 'mode') {
+              return { ...card, enabled: value as boolean };
+            }
+            if (key === 'showTopVotes' && card.id === 'topVotes') {
+              return { ...card, enabled: value as boolean };
+            }
+            return card;
+          }),
+        };
+      }
+    }
+
     setLocalSettings(newSettings);
   };
 
