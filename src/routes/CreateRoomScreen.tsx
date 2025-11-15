@@ -127,7 +127,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   };
 
   const inputClasses =
-    'w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-3 pl-12 text-base text-slate-900 shadow-inner shadow-white/40 transition placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500';
+    'w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-3 pl-12 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500';
 
   return (
     <PageBackground align="start" maxWidth="sm">
