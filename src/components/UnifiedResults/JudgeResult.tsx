@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Gavel, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 
-import type { RoomData, RoomStats } from '../types';
+import type { RoomData, RoomStats } from '../../types';
 
 function getSelectedModeLabel(mode: string) {
   switch (mode) {
@@ -27,6 +27,14 @@ export function JudgeResult({
   stats: RoomStats;
   showJudgeAnimation: boolean;
 }) {
+  const totalParticipants = stats.totalUsers || roomData.users.length;
+  const participationPercentage = totalParticipants
+    ? Math.round((stats.votedUsers / totalParticipants) * 100)
+    : 0;
+  const participationLabel = totalParticipants
+    ? `${stats.votedUsers} votes (${participationPercentage}% of room)`
+    : `${stats.votedUsers} votes`;
+
   return (
     <div className="mb-4">
       <div className="flex items-center mb-2">
@@ -80,8 +88,7 @@ export function JudgeResult({
                 </span>
               )}
               <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center sm:hidden">
-                <Users className="inline w-3 h-3 mr-1" /> {stats.votedUsers}{' '}
-                votes
+                <Users className="inline w-3 h-3 mr-1" /> {participationLabel}
               </span>
             </div>
           </div>
@@ -89,8 +96,8 @@ export function JudgeResult({
             <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium sm:text-right">
               {getSelectedModeLabel(roomData.settings.judgeAlgorithm || '')}
               <span className="text-gray-500 dark:text-gray-400 ml-2 hidden sm:inline">
-                <Users className="inline w-3.5 h-3.5 mr-1" /> {stats.votedUsers}{' '}
-                votes
+                <Users className="inline w-3.5 h-3.5 mr-1" />{' '}
+                {participationLabel}
               </span>
             </div>
           </div>

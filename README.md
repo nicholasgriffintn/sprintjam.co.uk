@@ -7,7 +7,7 @@ SprintJam is a modern, privacy-focused planning poker application designed for a
 [![Website](https://img.shields.io/badge/sprintjam.co.uk-blue?style=for-the-badge)](https://sprintjam.co.uk)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-> **Note**: This project was initially built on a train with AI assistance. While functional, it may have bugs or areas for improvement. Feel free to contribute!
+> **Note**: This is somewhat of a passion project built in my spare time. While I strive to maintain and improve it, please be aware that it is provided "as is". A large amount of development has also been contributed with AI assistance. All contributions and feedback are welcome!
 
 ## ✨ Features
 
@@ -108,6 +108,16 @@ Contributions are welcome! This project was built quickly and there are definite
 3. Make your changes
 4. Add tests if applicable
 5. Submit a pull request
+
+## 🧭 TODO / Future Enhancements
+
+- [ ] Add workspace support for teams to manage multiple rooms.
+- [ ] Enrich room metadata (team, persona, sprint) so vote distribution filters can operate on meaningful cohorts in both live and historical modes.
+- [ ] Figure out how to fully implement Jira integration (OAuth flow?).
+- [ ] Persist past sessions so facilitators can compare rounds (Durable Object snapshots keyed by room + timestamp, lightweight metadata for participants and consensus).
+- [ ] Add a history drawer in `UnifiedResults` to surface trend lines once snapshots exist (avg delta, consensus trend, automatic regression callouts).
+- [ ] Improve accessibility (ARIA roles, keyboard navigation, screen reader support).
+- [ ] Make the background music as awesome as possible (this is something to do on Polychat).
 
 ## 📝 License
 

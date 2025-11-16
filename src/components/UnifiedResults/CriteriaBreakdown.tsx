@@ -14,7 +14,7 @@ export function CriteriaBreakdownStat({
   };
 
   return (
-    <>
+    <div className="flex h-full flex-col gap-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h4
           className="min-w-0 flex-1 font-semibold text-slate-900 dark:text-white"
@@ -52,6 +52,12 @@ export function CriteriaBreakdownStat({
             {stat.min} - {stat.max}
           </span>
         </div>
+        <div className="flex items-center justify-between gap-2 text-slate-500 dark:text-slate-400">
+          <span>Variance</span>
+          <span className="text-slate-900 dark:text-white">
+            {stat.variance.toFixed(1)}
+          </span>
+        </div>
       </div>
 
       {stat.maxScore ? (
@@ -77,6 +83,6 @@ export function CriteriaBreakdownStat({
           </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

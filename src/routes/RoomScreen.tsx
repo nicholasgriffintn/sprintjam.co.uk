@@ -18,7 +18,6 @@ import { ParticipantsList } from '../components/ParticipantsList';
 import { Timer } from '../components/Timer';
 import { UserEstimate } from '../components/UserEstimate';
 import { ResultsControls } from '../components/ResultsControls';
-import { JudgeResult } from '../components/JudgeResult';
 import { VotesHidden } from '../components/VotesHidden';
 import JiraTicketPanel from '../components/JiraTicketPanel';
 import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
@@ -64,8 +63,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
 }) => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [showJudgeAnimation, setShowJudgeAnimation] = useState(false);
-  const prevJudgeScoreRef = useRef<VoteValue | null>(null);
 
   const stats: RoomStats = useMemo(() => {
     const votes = Object.values(roomData.votes).filter(
@@ -122,26 +119,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
     roomData.settings.estimateOptions,
     roomData.judgeScore,
   ]);
-
-  // Effect to show hammer animation when judge score changes
-  useEffect(() => {
-    if (
-      roomData.settings.enableJudge &&
-      roomData.judgeScore !== null &&
-      roomData.judgeScore !== prevJudgeScoreRef.current &&
-      roomData.showVotes
-    ) {
-      setShowJudgeAnimation(true);
-
-      const timer = setTimeout(() => {
-        setShowJudgeAnimation(false);
-      }, 2000);
-
-      prevJudgeScoreRef.current = roomData.judgeScore;
-
-      return () => clearTimeout(timer);
-    }
-  }, [roomData.judgeScore, roomData.showVotes, roomData.settings.enableJudge]);
 
   const hasCelebratedRef = useRef(false);
 
@@ -251,14 +228,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 key="results"
               >
                 <SurfaceCard padding="sm" className="space-y-5">
-                  {roomData.settings.enableJudge && roomData.showVotes && (
-                    <JudgeResult
-                      roomData={roomData}
-                      stats={stats}
-                      showJudgeAnimation={showJudgeAnimation}
-                    />
-                  )}
-
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -268,6 +237,8 @@ const RoomScreen: FC<RoomScreenProps> = ({
                       roomData={roomData}
                       stats={stats}
                       criteria={roomData.settings.votingCriteria}
+                      displayJudge={roomData.settings.enableJudge}
+                      showVotes={roomData.showVotes}
                     />
                   </motion.div>
                 </SurfaceCard>
