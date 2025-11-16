@@ -45,7 +45,7 @@ import type {
   AvatarId,
 } from './types';
 import { cloneServerDefaults } from './utils/settings';
-import ErrorBanner from './components/ErrorBanner';
+import ErrorBanner from './components/ui/ErrorBanner';
 import LoadingOverlay from './components/LoadingOverlay';
 import { ScreenLoader } from './components/layout/ScreenLoader';
 import WelcomeScreen from './routes/WelcomeScreen';

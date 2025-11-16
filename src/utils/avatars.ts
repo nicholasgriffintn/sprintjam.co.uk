@@ -12,6 +12,7 @@ import {
   Flame,
   Crown,
 } from 'lucide-react';
+
 import type { AvatarId } from '../types';
 
 interface AvatarInfo {

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-import type { RoomData, RoomStats } from '../types';
+import type { RoomData, RoomStats } from '../../types';
 
 export function VoteDistribution({
   roomData,

@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
+
 import type { RoomData, VoteValue } from '../types';
 import { getUsersVoteTaskSize } from '../utils/tasks';
-import { Check } from 'lucide-react';
 
 export function UserEstimate({
   roomData,

@@ -17,8 +17,6 @@ import {
   ensureServerDefaultsCollectionReady,
 } from './data/collections';
 
-export type { WebSocketMessageType } from '../types';
-
 let activeSocket: WebSocket | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;

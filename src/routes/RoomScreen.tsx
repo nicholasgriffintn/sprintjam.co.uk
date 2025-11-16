@@ -10,7 +10,7 @@ import type {
   StructuredVote,
   ServerDefaults,
 } from '../types';
-import ErrorBanner from '../components/ErrorBanner';
+import ErrorBanner from '../components/ui/ErrorBanner';
 import SettingsModal from '../components/SettingsModal';
 import ShareRoomModal from '../components/ShareRoomModal';
 import Header from '../components/Header';

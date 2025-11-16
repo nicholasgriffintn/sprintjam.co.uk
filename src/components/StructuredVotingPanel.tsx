@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
+
 import type {
   VotingCriterion,
   StructuredVote,

@@ -1,11 +1,13 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Smile } from 'lucide-react';
+import { Smile, User } from 'lucide-react';
 
 import type { AvatarId } from '../types';
 import { AVATAR_MAP } from '../utils/avatars';
 import { QUICK_EMOJIS } from '../constants';
+import { Input } from './ui/Input';
+import { Button } from './ui/Button';
 
 const AVATARS = Object.values(AVATAR_MAP);
 
@@ -66,8 +68,9 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
       {!showEmojiPicker && (
         <div className="grid grid-cols-6 gap-3 mb-4">
           {AVATARS.map((avatar) => (
-            <button
+            <Button
               key={avatar.id}
+              variant="ghost"
               type="button"
               onClick={() => onSelectAvatar(avatar.id)}
               className={`w-full aspect-square rounded-full flex items-center justify-center transition-all duration-200 border-2 hover:scale-105 active:scale-95 ${
@@ -81,20 +84,27 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
                 const IconComponent = avatar.Icon;
                 return <IconComponent size={32} className={avatar.color} />;
               })()}
-            </button>
+            </Button>
           ))}
         </div>
       )}
 
       <div className="space-y-3">
-        <button
+        <Button
+          variant="secondary"
           type="button"
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           className="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 flex items-center justify-center gap-2"
         >
-          <Smile className="h-4 w-4" />
-          {showEmojiPicker ? 'Show Icon Avatars' : 'Use Custom Emoji'}
-        </button>
+          <div className="flex items-center justify-center gap-2">
+            {showEmojiPicker ? (
+              <User className="h-4 w-4" />
+            ) : (
+              <Smile className="h-4 w-4" />
+            )}
+            {showEmojiPicker ? 'Show Icon Avatars' : 'Use Custom Emoji'}
+          </div>
+        </Button>
 
         {showEmojiPicker && (
           <motion.div
@@ -123,7 +133,7 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
             </div>
 
             <div className="flex gap-2">
-              <input
+              <Input
                 type="text"
                 value={customEmoji}
                 onChange={(e) => setCustomEmoji(e.target.value)}
@@ -133,17 +143,17 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
                   }
                 }}
                 placeholder="Or type/paste any emoji..."
-                className="flex-1 rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2 text-base text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-400 dark:focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-indigo-900"
+                fullWidth
                 maxLength={2}
               />
-              <button
+              <Button
                 type="button"
                 onClick={handleCustomEmojiSubmit}
                 disabled={!customEmoji.trim()}
                 className="px-6 py-2 rounded-2xl bg-blue-500 hover:bg-blue-600 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Use
-              </button>
+              </Button>
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 text-center">

@@ -3,6 +3,21 @@ import { Gavel, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 
 import type { RoomData, RoomStats } from '../types';
 
+function getSelectedModeLabel(mode: string) {
+  switch (mode) {
+    case 'smartConsensus':
+      return 'Smart Consensus';
+    case 'conservativeMode':
+      return 'Conservative Mode';
+    case 'optimisticMode':
+      return 'Optimistic Mode';
+    case 'simpleAverage':
+      return 'Simple Average';
+    default:
+      return 'Unknown Mode';
+  }
+}
+
 export function JudgeResult({
   roomData,
   stats,
@@ -20,12 +35,12 @@ export function JudgeResult({
             className="mr-2"
             animate={{
               y: [0, -10, 0],
-              rotate: [0, -10, 10, -5, 0]
+              rotate: [0, -10, 10, -5, 0],
             }}
             transition={{
               duration: 0.8,
               repeat: 2,
-              repeatType: "reverse"
+              repeatType: 'reverse',
             }}
           >
             <Gavel className="text-amber-700" />
@@ -33,7 +48,9 @@ export function JudgeResult({
         ) : (
           <Gavel className="mr-2 text-amber-700" />
         )}
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">The Judge's Verdict</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          The Judge's Verdict
+        </h3>
       </div>
       <div className="bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl p-4">
         <motion.div
@@ -63,18 +80,17 @@ export function JudgeResult({
                 </span>
               )}
               <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center sm:hidden">
-                <Users className="inline w-3 h-3 mr-1" /> {stats.votedUsers} votes
+                <Users className="inline w-3 h-3 mr-1" /> {stats.votedUsers}{' '}
+                votes
               </span>
             </div>
           </div>
           <div className="mb-2 sm:mb-0">
             <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium sm:text-right">
-              {roomData.settings.judgeAlgorithm === 'smartConsensus' && 'Smart Consensus'}
-              {roomData.settings.judgeAlgorithm === 'conservativeMode' && 'Conservative Mode'}
-              {roomData.settings.judgeAlgorithm === 'optimisticMode' && 'Optimistic Mode'}
-              {roomData.settings.judgeAlgorithm === 'simpleAverage' && 'Simple Average'}
+              {getSelectedModeLabel(roomData.settings.judgeAlgorithm || '')}
               <span className="text-gray-500 dark:text-gray-400 ml-2 hidden sm:inline">
-                <Users className="inline w-3.5 h-3.5 mr-1" /> {stats.votedUsers} votes
+                <Users className="inline w-3.5 h-3.5 mr-1" /> {stats.votedUsers}{' '}
+                votes
               </span>
             </div>
           </div>
@@ -90,12 +106,16 @@ export function JudgeResult({
           <div className="mt-3 bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start">
             <AlertTriangle className="w-4 h-4 text-amber-800 mr-2 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-amber-800">Discussion Recommended</p>
-              <p className="text-sm text-amber-700">Wide spread suggests different understanding of requirements.</p>
+              <p className="text-sm font-medium text-amber-800">
+                Discussion Recommended
+              </p>
+              <p className="text-sm text-amber-700">
+                Wide spread suggests different understanding of requirements.
+              </p>
             </div>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,5 +1,6 @@
 import { PageBackground } from './PageBackground';
 import { SurfaceCard } from '../ui/SurfaceCard';
+import { Spinner } from '../ui/Spinner';
 
 export function ScreenLoader({
   title = 'Preparing your view',
@@ -9,7 +10,7 @@ export function ScreenLoader({
     <PageBackground maxWidth="sm">
       <div className="flex min-h-[60vh] items-center justify-center">
         <SurfaceCard className="flex w-full flex-col items-center gap-4 text-center sm:w-[420px]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-brand-500/40 border-t-brand-500 animate-spin" />
+          <Spinner size="lg" className="text-brand-500" />
           <div className="space-y-1">
             <p className="text-lg font-semibold text-slate-900 dark:text-white">
               {title}

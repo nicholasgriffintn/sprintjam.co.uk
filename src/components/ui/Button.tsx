@@ -13,6 +13,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconPosition?: 'left' | 'right';
   isLoading?: boolean;
   fullWidth?: boolean;
+  iconOnly?: boolean;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
@@ -30,6 +31,12 @@ const sizeStyles: Record<ButtonSize, string> = {
   lg: 'text-base px-6 py-4 rounded-2xl',
 };
 
+const iconOnlySizeStyles: Record<ButtonSize, string> = {
+  sm: 'p-1.5 rounded-xl',
+  md: 'p-2 rounded-2xl',
+  lg: 'p-2.5 rounded-2xl',
+};
+
 export const Button = ({
   variant = 'primary',
   size = 'md',
@@ -38,11 +45,16 @@ export const Button = ({
   isLoading = false,
   className,
   fullWidth,
+  iconOnly = false,
   children,
   disabled,
   ...props
 }: ButtonProps) => {
-  const content = (
+  const content = iconOnly ? (
+    <span className="flex items-center justify-center">
+      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
+    </span>
+  ) : (
     <>
       {icon && iconPosition === 'left' && (
         <span className="flex items-center justify-center text-current">
@@ -64,7 +76,7 @@ export const Button = ({
       className={cn(
         'inline-flex items-center justify-center gap-2 font-medium tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer',
         variantStyles[variant],
-        sizeStyles[size],
+        iconOnly ? iconOnlySizeStyles[size] : sizeStyles[size],
         fullWidth && 'w-full',
         className
       )}

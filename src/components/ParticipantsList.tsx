@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 
 import type { RoomData, RoomStats } from "../types";
 import { getAvatarInfo } from "../utils/avatars";
+import { Badge } from './ui/Badge';
 
 export type ParticipantsListProps = {
   roomData: RoomData;
@@ -11,7 +12,11 @@ export type ParticipantsListProps = {
   name: string;
 };
 
-export function ParticipantsList({ roomData, stats, name }: ParticipantsListProps) {
+export function ParticipantsList({
+  roomData,
+  stats,
+  name,
+}: ParticipantsListProps) {
   const votingProgress = useMemo(() => {
     return roomData.users.length > 0
       ? Math.round((stats.votedUsers / roomData.users.length) * 100)
@@ -21,8 +26,16 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
   const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(false);
 
   return (
-    <div className={`w-full flex-shrink-0 border-b border-white/30 bg-transparent px-0 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5 ${isParticipantsExpanded ? 'py-3' : 'py-2'}`}>
-      <div className={`flex items-center justify-between ${isParticipantsExpanded ? 'pb-3' : 'pb-0 md:pb-3'}`}>
+    <div
+      className={`w-full flex-shrink-0 border-b border-white/30 bg-transparent px-0 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5 ${
+        isParticipantsExpanded ? 'py-3' : 'py-2'
+      }`}
+    >
+      <div
+        className={`flex items-center justify-between ${
+          isParticipantsExpanded ? 'pb-3' : 'pb-0 md:pb-3'
+        }`}
+      >
         <h2 className="flex items-center text-lg font-semibold text-slate-900 dark:text-white">
           <Users size={18} className="mr-2 hidden md:inline-flex" />
           Participants ({roomData.users.length})
@@ -89,7 +102,7 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
                       const avatarInfo = getAvatarInfo(
                         roomData.userAvatars[user]
                       );
-                      
+
                       if (avatarInfo) {
                         return (
                           <avatarInfo.Icon
@@ -127,19 +140,16 @@ export function ParticipantsList({ roomData, stats, name }: ParticipantsListProp
               </div>
               {roomData.votes[user] !== undefined &&
                 roomData.votes[user] !== null && (
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      roomData.showVotes
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200'
-                        : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-200'
-                    }`}
+                  <Badge
+                    variant={roomData.showVotes ? 'success' : 'default'}
+                    className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
                   >
                     {roomData.settings.anonymousVotes && roomData.showVotes
                       ? '✓'
                       : roomData.showVotes
                       ? roomData.votes[user]
                       : '✓'}
-                  </span>
+                  </Badge>
                 )}
             </motion.li>
           ))}

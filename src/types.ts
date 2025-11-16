@@ -220,3 +220,14 @@ export interface RoomStats {
   totalUsers: number;
   judgeScore: VoteValue | null;
 }
+
+export interface CriteriaStats {
+  criterionId: string;
+  name: string;
+  average: number;
+  min: number;
+  max: number;
+  variance: number;
+  consensus: 'high' | 'medium' | 'low';
+  maxScore?: number;
+}
