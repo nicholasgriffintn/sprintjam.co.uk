@@ -39,7 +39,6 @@ async function handleRequest(
     const roomId = getRoomId(roomKey);
 
     const roomObject = env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId));
-    console.log('roomObject', roomObject);
 
     return env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId)).fetch(request);
   }

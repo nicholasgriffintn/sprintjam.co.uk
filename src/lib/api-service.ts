@@ -203,6 +203,8 @@ export function connectToRoom(
           case 'judgeScoreUpdated':
           case 'jiraTicketUpdated':
           case 'jiraTicketCleared':
+          case 'strudelCodeGenerated':
+          case 'strudelPlaybackToggled':
             triggerEventListeners(data.type, data);
             break;
 
@@ -323,6 +325,36 @@ export function resetVotes(): void {
   activeSocket.send(
     JSON.stringify({
       type: 'resetVotes',
+    })
+  );
+}
+
+/**
+ * Request generation of new Strudel music (moderator only)
+ */
+export function requestStrudelGeneration(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'generateStrudelCode',
+    })
+  );
+}
+
+/**
+ * Toggle Strudel playback state (moderator only)
+ */
+export function toggleStrudelPlayback(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'toggleStrudelPlayback',
     })
   );
 }

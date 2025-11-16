@@ -11,6 +11,7 @@ export interface Env {
   JIRA_EMAIL?: string;
   JIRA_API_TOKEN?: string;
   JIRA_STORY_POINTS_FIELD?: string;
+  POLYCHAT_API_TOKEN?: string;
 }
 
 export enum JudgeAlgorithm {
@@ -105,6 +106,8 @@ export interface RoomSettings {
   resultsDisplay?: ResultsDisplaySettings;
   structuredVotingDisplay?: StructuredVotingDisplaySettings;
   autoHandoverModerator?: boolean;
+  enableStrudelPlayer?: boolean;
+  strudelAutoGenerate?: boolean;
 }
 
 
@@ -154,6 +157,10 @@ export interface RoomData {
   settings: RoomSettings;
   passcode?: string;
   userAvatars?: Record<string, string>;
+  currentStrudelCode?: string;
+  currentStrudelGenerationId?: string;
+  strudelPhase?: string;
+  strudelIsPlaying?: boolean;
 }
 
 export interface BroadcastMessage {

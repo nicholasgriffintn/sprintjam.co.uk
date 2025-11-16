@@ -12,6 +12,7 @@
     "deploy": "npm run build && npm exec wrangler deploy"
   },
   "dependencies": {
+    "@strudel/web": "^1.2.6",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/db": "^0.4.10",
     "@tanstack/query-core": "^5.90.3",

@@ -116,6 +116,8 @@ export interface RoomSettings {
   resultsDisplay?: ResultsDisplaySettings;
   structuredVotingDisplay?: StructuredVotingDisplaySettings;
   autoHandoverModerator?: boolean;
+  enableStrudelPlayer?: boolean;
+  strudelAutoGenerate?: boolean;
 }
 
 export interface ServerDefaults {
@@ -153,6 +155,10 @@ export interface RoomData {
   jiraTicket?: JiraTicket;
   passcode?: string;
   userAvatars?: Record<string, AvatarId>;
+  currentStrudelCode?: string;
+  currentStrudelGenerationId?: string;
+  strudelPhase?: string;
+  strudelIsPlaying?: boolean;
 }
 
 export interface WebSocketErrorData {
@@ -176,7 +182,11 @@ export type WebSocketMessageType =
   | 'jiraTicketCleared'
   | 'error'
   | 'disconnected'
-  | 'avatarChanged';
+  | 'avatarChanged'
+  | 'strudelCodeGenerated'
+  | 'generateStrudelCode'
+  | 'toggleStrudelPlayback'
+  | 'strudelPlaybackToggled';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -195,6 +205,10 @@ export interface WebSocketMessage {
   judgeMetadata?: JudgeMetadata;
   moderator?: string;
   ticket?: JiraTicket | undefined;
+  code?: string;
+  generationId?: string;
+  phase?: string;
+  isPlaying?: boolean;
 }
 
 export interface RoomStats {

@@ -15,6 +15,11 @@ import {
 } from './utils/defaults'
 import { generateVoteOptionsMetadata } from './utils/votes'
 import { isStructuredVote, createStructuredVote } from './utils/structured-voting'
+import {
+  generateStrudelCode,
+  type StrudelGenerateRequest,
+} from './lib/polychat-client';
+import { strudelMusicPresets } from './lib/strudel';
 
 export class PokerRoom {
   state: DurableObjectState;
@@ -50,9 +55,12 @@ export class PokerRoom {
         requiresUpdate = true;
       }
 
-      if (roomData.settings.estimateOptions && !roomData.settings.voteOptionsMetadata) {
+      if (
+        roomData.settings.estimateOptions &&
+        !roomData.settings.voteOptionsMetadata
+      ) {
         roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(
-          roomData.settings.estimateOptions,
+          roomData.settings.estimateOptions
         );
         requiresUpdate = true;
       }
@@ -85,7 +93,9 @@ export class PokerRoom {
       const userName = url.searchParams.get('name');
 
       if (!roomKey || !userName) {
-        return new Response('Missing room key or user name', { status: 400 }) as unknown as CfResponse;
+        return new Response('Missing room key or user name', {
+          status: 400,
+        }) as unknown as CfResponse;
       }
 
       const pair = new WebSocketPair();
@@ -93,11 +103,21 @@ export class PokerRoom {
 
       await this.handleSession(server, roomKey, userName);
 
-      return new Response(null, { status: 101, webSocket: client as any }) as unknown as CfResponse;
+      return new Response(null, {
+        status: 101,
+        webSocket: client as any,
+      }) as unknown as CfResponse;
     }
 
     if (url.pathname === '/initialize' && request.method === 'POST') {
-      const { roomKey, moderator, passcode, settings, avatar } = await request.json() as { roomKey: string; moderator: string; passcode?: string; settings?: Partial<RoomSettings>; avatar?: string };
+      const { roomKey, moderator, passcode, settings, avatar } =
+        (await request.json()) as {
+          roomKey: string;
+          moderator: string;
+          passcode?: string;
+          settings?: Partial<RoomSettings>;
+          avatar?: string;
+        };
 
       return await this.state.blockConcurrencyWhile(async () => {
         let roomData = await this.state.storage.get<RoomData>('roomData');
@@ -157,7 +177,11 @@ export class PokerRoom {
     }
 
     if (url.pathname === '/join' && request.method === 'POST') {
-      const { name, passcode, avatar } = (await request.json()) as { name: string; passcode?: string; avatar?: string };
+      const { name, passcode, avatar } = (await request.json()) as {
+        name: string;
+        passcode?: string;
+        avatar?: string;
+      };
 
       return await this.state.blockConcurrencyWhile(async () => {
         const roomData = await this.state.storage.get<RoomData>('roomData');
@@ -352,7 +376,6 @@ export class PokerRoom {
           roomData?.settings?.estimateOptions &&
           !roomData?.settings?.voteOptionsMetadata
         ) {
-          console.log('Adding missing voteOptionsMetadata');
           roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(
             roomData.settings.estimateOptions
           );
@@ -572,7 +595,11 @@ export class PokerRoom {
     return new Response('Not found', { status: 404 }) as unknown as CfResponse;
   }
 
-  async handleSession(webSocket: CfWebSocket, roomKey: string, userName: string) {
+  async handleSession(
+    webSocket: CfWebSocket,
+    roomKey: string,
+    userName: string
+  ) {
     const session = { webSocket, roomKey, userName };
     this.sessions.set(webSocket, session);
 
@@ -640,6 +667,10 @@ export class PokerRoom {
           await this.handleUpdateJiraTicket(userName, data.ticket);
         } else if (data.type === 'clearJiraTicket') {
           await this.handleClearJiraTicket(userName);
+        } else if (data.type === 'generateStrudelCode') {
+          await this.handleGenerateStrudel(userName);
+        } else if (data.type === 'toggleStrudelPlayback') {
+          await this.handleToggleStrudelPlayback(userName);
         }
       } catch (err: unknown) {
         webSocket.send(
@@ -678,7 +709,10 @@ export class PokerRoom {
               isConnected: false,
             });
 
-            if (userName === roomData.moderator && roomData.settings.autoHandoverModerator) {
+            if (
+              userName === roomData.moderator &&
+              roomData.settings.autoHandoverModerator
+            ) {
               const connectedUsers = roomData.users.filter(
                 (user) => roomData.connectedUsers[user]
               );
@@ -706,6 +740,8 @@ export class PokerRoom {
         return;
       }
 
+      const previousPhase = this.determineRoomPhase(roomData);
+
       let finalVote: string | number;
       let structuredVotePayload: StructuredVote | null = null;
       if (isStructuredVote(vote)) {
@@ -722,6 +758,7 @@ export class PokerRoom {
       }
 
       roomData.votes[userName] = finalVote;
+      const newPhase = this.determineRoomPhase(roomData);
 
       await this.state.storage.put('roomData', roomData);
 
@@ -735,6 +772,14 @@ export class PokerRoom {
       if (roomData.showVotes && roomData.settings.enableJudge) {
         await this.calculateAndUpdateJudgeScore();
       }
+
+      if (
+        previousPhase !== newPhase &&
+        roomData.settings.enableStrudelPlayer &&
+        roomData.settings.strudelAutoGenerate
+      ) {
+        await this.autoGenerateStrudel();
+      }
     });
   }
 
@@ -743,10 +788,17 @@ export class PokerRoom {
       const roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) return;
 
-      if (roomData.moderator !== userName && !roomData.settings.allowOthersToShowEstimates) {
+      if (
+        roomData.moderator !== userName &&
+        !roomData.settings.allowOthersToShowEstimates
+      ) {
         return;
       }
+
+      const previousPhase = this.determineRoomPhase(roomData);
       roomData.showVotes = !roomData.showVotes;
+      const newPhase = this.determineRoomPhase(roomData);
+
       await this.state.storage.put('roomData', roomData);
 
       this.broadcast({
@@ -757,6 +809,14 @@ export class PokerRoom {
       if (roomData.showVotes && roomData.settings.enableJudge) {
         await this.calculateAndUpdateJudgeScore();
       }
+
+      if (
+        previousPhase !== newPhase &&
+        roomData.settings.enableStrudelPlayer &&
+        roomData.settings.strudelAutoGenerate
+      ) {
+        await this.autoGenerateStrudel();
+      }
     });
   }
 
@@ -765,22 +825,40 @@ export class PokerRoom {
       const roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) return;
 
-      if (roomData.moderator !== userName && !roomData.settings.allowOthersToDeleteEstimates) {
+      if (
+        roomData.moderator !== userName &&
+        !roomData.settings.allowOthersToDeleteEstimates
+      ) {
         return;
       }
+
+      const previousPhase = this.determineRoomPhase(roomData);
       roomData.votes = {};
       roomData.structuredVotes = {};
       roomData.showVotes = false;
       roomData.judgeScore = null;
+      const newPhase = this.determineRoomPhase(roomData);
+
       await this.state.storage.put('roomData', roomData);
 
       this.broadcast({
         type: 'resetVotes',
       });
+
+      if (
+        previousPhase !== newPhase &&
+        roomData.settings.enableStrudelPlayer &&
+        roomData.settings.strudelAutoGenerate
+      ) {
+        await this.autoGenerateStrudel();
+      }
     });
   }
 
-  async handleUpdateSettings(userName: string, settings: Partial<RoomData['settings']>) {
+  async handleUpdateSettings(
+    userName: string,
+    settings: Partial<RoomData['settings']>
+  ) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) return;
@@ -789,37 +867,48 @@ export class PokerRoom {
         return;
       }
       const judgeSettingsChanged =
-        (settings.enableJudge !== undefined && settings.enableJudge !== roomData.settings.enableJudge) ||
-        (settings.judgeAlgorithm !== undefined && settings.judgeAlgorithm !== roomData.settings.judgeAlgorithm);
+        (settings.enableJudge !== undefined &&
+          settings.enableJudge !== roomData.settings.enableJudge) ||
+        (settings.judgeAlgorithm !== undefined &&
+          settings.judgeAlgorithm !== roomData.settings.judgeAlgorithm);
 
-      const estimateOptionsChanged = settings.estimateOptions !== undefined &&
-        JSON.stringify(settings.estimateOptions) !== JSON.stringify(roomData.settings.estimateOptions);
+      const estimateOptionsChanged =
+        settings.estimateOptions !== undefined &&
+        JSON.stringify(settings.estimateOptions) !==
+          JSON.stringify(roomData.settings.estimateOptions);
 
       const defaultSettings = getDefaultRoomSettings();
       const updatedSettings = {
         ...defaultSettings,
         ...roomData.settings,
-        ...settings
+        ...settings,
       };
 
       if (settings.enableStructuredVoting === true) {
         const structuredOptions = getDefaultStructuredVotingOptions();
         updatedSettings.estimateOptions = structuredOptions;
-        updatedSettings.voteOptionsMetadata = generateVoteOptionsMetadata(structuredOptions);
+        updatedSettings.voteOptionsMetadata =
+          generateVoteOptionsMetadata(structuredOptions);
         if (!updatedSettings.votingCriteria) {
           updatedSettings.votingCriteria = defaultSettings.votingCriteria;
         }
-      } else if (settings.enableStructuredVoting === false && !settings.estimateOptions) {
+      } else if (
+        settings.enableStructuredVoting === false &&
+        !settings.estimateOptions
+      ) {
         const defaultOptions = getDefaultEstimateOptions();
         updatedSettings.estimateOptions = defaultOptions;
-        updatedSettings.voteOptionsMetadata = generateVoteOptionsMetadata(defaultOptions);
+        updatedSettings.voteOptionsMetadata =
+          generateVoteOptionsMetadata(defaultOptions);
         if (!updatedSettings.votingCriteria) {
           updatedSettings.votingCriteria = defaultSettings.votingCriteria;
         }
       }
 
       if (estimateOptionsChanged && updatedSettings.estimateOptions) {
-        updatedSettings.voteOptionsMetadata = generateVoteOptionsMetadata(updatedSettings.estimateOptions);
+        updatedSettings.voteOptionsMetadata = generateVoteOptionsMetadata(
+          updatedSettings.estimateOptions
+        );
       }
       roomData.settings = updatedSettings;
       await this.state.storage.put('roomData', roomData);
@@ -866,11 +955,15 @@ export class PokerRoom {
         return;
       }
 
-      const votes = Object.values(roomData.votes).filter(v => v !== null && v !== '?');
-      const numericVotes = votes.filter(v => !Number.isNaN(Number(v))).map(Number);
+      const votes = Object.values(roomData.votes).filter(
+        (v) => v !== null && v !== '?'
+      );
+      const numericVotes = votes
+        .filter((v) => !Number.isNaN(Number(v)))
+        .map(Number);
 
       const validOptions = roomData.settings.estimateOptions
-        .filter(opt => !Number.isNaN(Number(opt)))
+        .filter((opt) => !Number.isNaN(Number(opt)))
         .map(Number)
         .sort((a, b) => a - b);
 
@@ -885,7 +978,7 @@ export class PokerRoom {
         confidence: result.confidence,
         needsDiscussion: result.needsDiscussion,
         reasoning: result.reasoning,
-        algorithm: roomData.settings.judgeAlgorithm
+        algorithm: roomData.settings.judgeAlgorithm,
       };
 
       await this.state.storage.put('roomData', roomData);
@@ -931,6 +1024,158 @@ export class PokerRoom {
 
       this.broadcast({
         type: 'jiraTicketCleared',
+      });
+    });
+  }
+
+  determineRoomPhase(roomData: RoomData): string {
+    const voteCount = Object.keys(roomData.votes).length;
+
+    if (voteCount === 0 && !roomData.showVotes) {
+      return 'lobby';
+    }
+
+    if (voteCount > 0 && !roomData.showVotes) {
+      return 'voting';
+    }
+
+    if (roomData.showVotes) {
+      return 'discussion';
+    }
+
+    return 'lobby';
+  }
+
+  selectPresetForPhase(phase: string): {
+    style: string;
+    tempo: number;
+    complexity: string;
+    prompt: string;
+  } {
+    type PhaseKey = 'lobby' | 'voting' | 'discussion' | 'reveal' | 'wrapup';
+    const phaseKey = phase as PhaseKey;
+    const presets = strudelMusicPresets[phaseKey] || strudelMusicPresets.lobby;
+    const preset = presets[Math.floor(Math.random() * presets.length)];
+
+    const promptWithExample = preset.prompt;
+
+    return {
+      style: preset.style,
+      tempo: 120,
+      complexity: preset.complexity,
+      prompt: promptWithExample,
+    };
+  }
+
+  async handleGenerateStrudel(userName: string) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.state.storage.get<RoomData>('roomData');
+      if (!roomData) return;
+
+      if (roomData.moderator !== userName) {
+        return;
+      }
+
+      await this.generateStrudelTrack(roomData, {
+        notifyOnError: true,
+        logPrefix: 'Failed to generate Strudel code',
+      });
+    });
+  }
+
+  async autoGenerateStrudel() {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.state.storage.get<RoomData>('roomData');
+      if (!roomData) return;
+
+      await this.generateStrudelTrack(roomData, {
+        logPrefix: 'Failed to auto-generate Strudel code',
+      });
+    });
+  }
+
+  async generateStrudelTrack(
+    roomData: RoomData,
+    options: { notifyOnError?: boolean; logPrefix?: string } = {}
+  ) {
+    const {
+      notifyOnError = false,
+      logPrefix = 'Failed to generate Strudel code',
+    } = options;
+
+    if (!roomData.settings.enableStrudelPlayer) {
+      return;
+    }
+
+    const apiToken = this.env.POLYCHAT_API_TOKEN;
+    if (!apiToken) {
+      console.error('POLYCHAT_API_TOKEN not configured');
+      if (notifyOnError) {
+        this.broadcast({
+          type: 'error',
+          error: 'Music generation is not configured on this server',
+        });
+      }
+      return;
+    }
+
+    try {
+      const phase = this.determineRoomPhase(roomData);
+      const preset = this.selectPresetForPhase(phase);
+
+      const request: StrudelGenerateRequest = {
+        prompt: preset.prompt,
+        style: preset.style,
+        tempo: preset.tempo,
+        complexity: preset.complexity,
+        model: 'claude-4-5-sonnet',
+      };
+
+      const response = await generateStrudelCode(request, apiToken);
+
+      if (!response.code || !response.generationId) {
+        throw new Error('Invalid response from music generation service');
+      }
+
+      roomData.currentStrudelCode = response.code;
+      roomData.currentStrudelGenerationId = response.generationId;
+      roomData.strudelPhase = phase;
+
+      await this.state.storage.put('roomData', roomData);
+
+      this.broadcast({
+        type: 'strudelCodeGenerated',
+        code: response.code,
+        generationId: response.generationId,
+        phase,
+      });
+    } catch (error) {
+      console.error(`${logPrefix}:`, error);
+      if (notifyOnError) {
+        this.broadcast({
+          type: 'error',
+          error:
+            error instanceof Error ? error.message : 'Failed to generate music',
+        });
+      }
+    }
+  }
+
+  async handleToggleStrudelPlayback(userName: string) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.state.storage.get<RoomData>('roomData');
+      if (!roomData) return;
+
+      if (roomData.moderator !== userName) {
+        return;
+      }
+
+      roomData.strudelIsPlaying = !roomData.strudelIsPlaying;
+      await this.state.storage.put('roomData', roomData);
+
+      this.broadcast({
+        type: 'initialize',
+        roomData,
       });
     });
   }

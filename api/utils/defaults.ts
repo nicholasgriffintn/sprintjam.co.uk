@@ -66,6 +66,8 @@ export function getDefaultRoomSettings(): RoomSettings {
         showConversionCount: true,
       },
     },
+    enableStrudelPlayer: true,
+    strudelAutoGenerate: false,
   };
 }
 

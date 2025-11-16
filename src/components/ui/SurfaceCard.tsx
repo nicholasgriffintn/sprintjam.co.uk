@@ -1,15 +1,16 @@
-import type { FC, PropsWithChildren } from 'react';
+import type { ComponentPropsWithoutRef, FC, PropsWithChildren } from 'react';
 
 import { cn } from '../../lib/cn';
 
 type SurfaceVariant = 'default' | 'subtle';
 type SurfacePadding = 'none' | 'sm' | 'md';
 
-type SurfaceCardProps = PropsWithChildren<{
-  className?: string;
-  variant?: SurfaceVariant;
-  padding?: SurfacePadding;
-}>;
+type SurfaceCardProps = PropsWithChildren<
+  ComponentPropsWithoutRef<'div'> & {
+    variant?: SurfaceVariant;
+    padding?: SurfacePadding;
+  }
+>;
 
 const baseVariants: Record<SurfaceVariant, string> = {
   default:
@@ -29,6 +30,7 @@ export const SurfaceCard: FC<SurfaceCardProps> = ({
   variant = 'default',
   padding = 'md',
   children,
+  ...props
 }) => {
   return (
     <div
@@ -38,6 +40,7 @@ export const SurfaceCard: FC<SurfaceCardProps> = ({
         paddingMap[padding],
         className
       )}
+      {...props}
     >
       {children}
     </div>

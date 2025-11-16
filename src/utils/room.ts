@@ -184,6 +184,18 @@ export function applyRoomUpdate(
       return updated;
     }
 
+    case 'strudelCodeGenerated': {
+      if (!message.code) {
+        return prev;
+      }
+      return {
+        ...prev,
+        currentStrudelCode: message.code,
+        currentStrudelGenerationId: message.generationId,
+        strudelPhase: message.phase,
+      };
+    }
+
     default:
       return prev;
   }

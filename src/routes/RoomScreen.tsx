@@ -24,6 +24,7 @@ import JiraTicketPanel from '../components/JiraTicketPanel';
 import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
 import { UnifiedResults } from '../components/UnifiedResults';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
+import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
 
 export interface RoomScreenProps {
   roomData: RoomData;
@@ -190,6 +191,13 @@ const RoomScreen: FC<RoomScreenProps> = ({
 
         <div className="flex flex-col gap-4 py-3 md:py-5">
           {roomData.settings.showTimer && <Timer />}
+
+          {roomData.settings.enableStrudelPlayer && (
+            <StrudelMiniPlayer
+              roomData={roomData}
+              isModeratorView={isModeratorView}
+            />
+          )}
 
           {roomData.settings.enableStructuredVoting &&
           roomData.settings.votingCriteria ? (
