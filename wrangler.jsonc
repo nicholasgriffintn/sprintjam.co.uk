@@ -4,6 +4,14 @@
   "main": "api/index.ts",
   "compatibility_date": "2025-09-15",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "sprintjam.co.uk",
+      "custom_domain": true
+    }
+  ],
+  "workers_dev": true,
+  "preview_urls": true,
   "durable_objects": {
     "bindings": [
       {
