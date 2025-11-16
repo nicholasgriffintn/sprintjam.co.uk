@@ -22,27 +22,31 @@ interface CriterionRowProps {
 }
 
 function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
-  const scoreButtons = [];
+  const scoreValues: number[] = [];
   
   for (let i = criterion.minScore; i <= criterion.maxScore; i++) {
-    scoreButtons.push(
-      <motion.button
-        key={i}
-        type="button"
-        onClick={() => onScoreChange(i)}
-        className={`w-8 h-8 flex items-center justify-center text-sm font-medium border rounded ${
-          score === i
-            ? 'border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-        }`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-      >
-        {i}
-      </motion.button>
-    );
+    scoreValues.push(i);
   }
+
+  const orderedValues = criterion.descending ? [...scoreValues].reverse() : scoreValues;
+
+  const scoreButtons = orderedValues.map((value) => (
+    <motion.button
+      key={value}
+      type="button"
+      onClick={() => onScoreChange(value)}
+      className={`w-8 h-8 flex items-center justify-center text-sm font-medium border rounded ${
+        score === value
+          ? 'border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+      }`}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+    >
+      {value}
+    </motion.button>
+  ));
 
   return (
     <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-600 last:border-b-0">

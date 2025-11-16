@@ -92,6 +92,7 @@ export interface VotingCriterion {
   description: string;
   minScore: number;
   maxScore: number;
+  descending?: boolean;
 }
 
 export interface RoomSettings {
