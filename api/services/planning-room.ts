@@ -6,6 +6,7 @@ import type {
   DurableObjectState,
   WebSocket as CfWebSocket,
   Response as CfResponse,
+  SqlStorage,
 } from '@cloudflare/workers-types';
 
 import { PlanningPokerJudge } from '../lib/planning-poker-judge';
@@ -32,31 +33,34 @@ import { determineRoomPhase } from '../utils/room-phase';
 import { selectPresetForPhase } from '../utils/strudel';
 import {
   handleHttpRequest,
-  type PokerRoomHttpContext,
-} from './poker-room-http';
+  type PlanningRoomHttpContext,
+} from './planning-room-http';
 
-export class PokerRoom implements PokerRoomHttpContext {
+export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
   env: Env;
   sessions: Map<CfWebSocket, SessionInfo>;
   judge: PlanningPokerJudge;
+  sql: SqlStorage;
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
     this.sessions = new Map();
     this.judge = new PlanningPokerJudge();
+    this.sql = this.state.storage.sql;
 
     this.state.blockConcurrencyWhile(async () => {
-      let roomData = await this.state.storage.get<RoomData>('roomData');
+      this.ensureRoomStateTable();
+      let roomData = await this.getRoomData();
       if (!roomData) {
         roomData = createInitialRoomData({});
-        await this.state.storage.put('roomData', roomData);
+        await this.putRoomData(roomData);
         return;
       }
 
       const normalizedRoomData = normalizeRoomData(roomData);
-      await this.state.storage.put('roomData', normalizedRoomData);
+      await this.putRoomData(normalizedRoomData);
     });
   }
 
@@ -104,7 +108,7 @@ export class PokerRoom implements PokerRoomHttpContext {
     webSocket.accept();
 
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.getRoomData();
       if (!roomData) {
         return;
       }
@@ -112,7 +116,7 @@ export class PokerRoom implements PokerRoomHttpContext {
       const normalizedRoomData = normalizeRoomData(roomData);
       markUserConnection(normalizedRoomData, userName, true);
 
-      await this.state.storage.put('roomData', normalizedRoomData);
+      await this.putRoomData(normalizedRoomData);
 
       this.broadcast({
         type: 'userConnectionStatus',
@@ -121,7 +125,7 @@ export class PokerRoom implements PokerRoomHttpContext {
       });
     });
 
-    const roomData = await this.state.storage.get<RoomData>('roomData');
+    const roomData = await this.getRoomData();
     webSocket.send(
       JSON.stringify({
         type: 'initialize',
@@ -172,12 +176,12 @@ export class PokerRoom implements PokerRoomHttpContext {
 
       if (!stillConnected) {
         await this.state.blockConcurrencyWhile(async () => {
-          const roomData = await this.state.storage.get<RoomData>('roomData');
+          const roomData = await this.getRoomData();
 
           if (roomData) {
             markUserConnection(roomData, userName, false);
 
-            await this.state.storage.put('roomData', roomData);
+            await this.putRoomData(roomData);
             this.broadcast({
               type: 'userConnectionStatus',
               user: userName,
@@ -194,7 +198,7 @@ export class PokerRoom implements PokerRoomHttpContext {
 
               if (connectedUsers.length > 0) {
                 roomData.moderator = connectedUsers[0];
-                await this.state.storage.put('roomData', roomData);
+                await this.putRoomData(roomData);
 
                 this.broadcast({
                   type: 'newModerator',
@@ -212,7 +216,7 @@ export class PokerRoom implements PokerRoomHttpContext {
     let shouldGenerateMusic = false;
 
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.getRoomData();
       if (!roomData) {
         return;
       }
@@ -237,7 +241,7 @@ export class PokerRoom implements PokerRoomHttpContext {
       roomData.votes[userName] = finalVote;
       const newPhase = determineRoomPhase(roomData);
 
-      await this.state.storage.put('roomData', roomData);
+      await this.putRoomData(roomData);
 
       this.broadcast({
         type: 'vote',
@@ -267,7 +271,7 @@ export class PokerRoom implements PokerRoomHttpContext {
     let shouldGenerateMusic = false;
 
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.getRoomData();
       if (!roomData) return;
 
       if (
@@ -281,7 +285,7 @@ export class PokerRoom implements PokerRoomHttpContext {
       roomData.showVotes = !roomData.showVotes;
       const newPhase = determineRoomPhase(roomData);
 
-      await this.state.storage.put('roomData', roomData);
+      await this.putRoomData(roomData);
 
       this.broadcast({
         type: 'showVotes',
@@ -309,7 +313,7 @@ export class PokerRoom implements PokerRoomHttpContext {
     let shouldGenerateMusic = false;
 
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.getRoomData();
       if (!roomData) return;
 
       if (
@@ -326,7 +330,7 @@ export class PokerRoom implements PokerRoomHttpContext {
       roomData.judgeScore = null;
       const newPhase = determineRoomPhase(roomData);
 
-      await this.state.storage.put('roomData', roomData);
+      await this.putRoomData(roomData);
 
       this.broadcast({
         type: 'resetVotes',
@@ -350,7 +354,7 @@ export class PokerRoom implements PokerRoomHttpContext {
     settings: Partial<RoomData['settings']>
   ) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.getRoomData();
       if (!roomData) return;
 
       if (roomData.moderator !== userName) {
@@ -366,7 +370,7 @@ export class PokerRoom implements PokerRoomHttpContext {
         currentSettings: roomData.settings,
         settingsUpdate: settings,
       });
-      await this.state.storage.put('roomData', roomData);
+      await this.putRoomData(roomData);
 
       this.broadcast({
         type: 'settingsUpdated',
@@ -381,7 +385,7 @@ export class PokerRoom implements PokerRoomHttpContext {
         await this.calculateAndUpdateJudgeScore();
       } else if (judgeSettingsChanged && !roomData.settings.enableJudge) {
         roomData.judgeScore = null;
-        await this.state.storage.put('roomData', roomData);
+        await this.putRoomData(roomData);
 
         this.broadcast({
           type: 'judgeScoreUpdated',
@@ -402,7 +406,7 @@ export class PokerRoom implements PokerRoomHttpContext {
 
   async calculateAndUpdateJudgeScore() {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.getRoomData();
 
       if (!roomData || !roomData.settings.enableJudge || !roomData.showVotes) {
         return;
@@ -434,7 +438,7 @@ export class PokerRoom implements PokerRoomHttpContext {
         algorithm: roomData.settings.judgeAlgorithm,
       };
 
-      await this.state.storage.put('roomData', roomData);
+      await this.putRoomData(roomData);
 
       this.broadcast({
         type: 'judgeScoreUpdated',
@@ -446,7 +450,7 @@ export class PokerRoom implements PokerRoomHttpContext {
 
   async handleUpdateJiraTicket(userName: string, ticket: JiraTicket) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.getRoomData();
       if (!roomData) return;
 
       if (!roomData.users.includes(userName)) {
@@ -454,7 +458,7 @@ export class PokerRoom implements PokerRoomHttpContext {
       }
 
       roomData.jiraTicket = ticket;
-      await this.state.storage.put('roomData', roomData);
+      await this.putRoomData(roomData);
 
       this.broadcast({
         type: 'jiraTicketUpdated',
@@ -465,7 +469,7 @@ export class PokerRoom implements PokerRoomHttpContext {
 
   async handleClearJiraTicket(userName: string) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.getRoomData();
       if (!roomData) return;
 
       if (!roomData.users.includes(userName)) {
@@ -473,7 +477,7 @@ export class PokerRoom implements PokerRoomHttpContext {
       }
 
       delete roomData.jiraTicket;
-      await this.state.storage.put('roomData', roomData);
+      await this.putRoomData(roomData);
 
       this.broadcast({
         type: 'jiraTicketCleared',
@@ -482,7 +486,7 @@ export class PokerRoom implements PokerRoomHttpContext {
   }
 
   async handleGenerateStrudel(userName: string) {
-    const roomData = await this.state.storage.get<RoomData>('roomData');
+    const roomData = await this.getRoomData();
     if (!roomData) return;
 
     if (roomData.moderator !== userName) {
@@ -496,7 +500,7 @@ export class PokerRoom implements PokerRoomHttpContext {
   }
 
   async autoGenerateStrudel() {
-    const roomData = await this.state.storage.get<RoomData>('roomData');
+    const roomData = await this.getRoomData();
     if (!roomData) return;
 
     await this.generateStrudelTrack(roomData, {
@@ -550,7 +554,7 @@ export class PokerRoom implements PokerRoomHttpContext {
       roomData.currentStrudelGenerationId = response.generationId;
       roomData.strudelPhase = phase;
 
-      await this.state.storage.put('roomData', roomData);
+      await this.putRoomData(roomData);
 
       this.broadcast({
         type: 'strudelCodeGenerated',
@@ -571,7 +575,7 @@ export class PokerRoom implements PokerRoomHttpContext {
   }
 
   async handleToggleStrudelPlayback(userName: string) {
-    const roomData = await this.state.storage.get<RoomData>('roomData');
+    const roomData = await this.getRoomData();
     if (!roomData) return;
 
     if (roomData.moderator !== userName) {
@@ -579,11 +583,49 @@ export class PokerRoom implements PokerRoomHttpContext {
     }
 
     roomData.strudelIsPlaying = !roomData.strudelIsPlaying;
-    await this.state.storage.put('roomData', roomData);
+    await this.putRoomData(roomData);
 
     this.broadcast({
       type: 'initialize',
       roomData,
     });
+  }
+
+  private ensureRoomStateTable() {
+    this.sql.exec(
+      `CREATE TABLE IF NOT EXISTS room_state (
+        key TEXT PRIMARY KEY,
+        data TEXT NOT NULL
+      )`
+    );
+  }
+
+  async getRoomData(): Promise<RoomData | undefined> {
+    const row = this.sql
+      .exec<{ data: string }>(
+        'SELECT data FROM room_state WHERE key = ?',
+        'roomData'
+      )
+      .toArray()[0];
+
+    if (!row?.data) {
+      return undefined;
+    }
+
+    try {
+      return JSON.parse(row.data) as RoomData;
+    } catch (error) {
+      console.error('Failed to parse room data from SQLite storage:', error);
+      return undefined;
+    }
+  }
+
+  async putRoomData(roomData: RoomData): Promise<void> {
+    this.sql.exec(
+      `INSERT INTO room_state (key, data) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET data = excluded.data`,
+      'roomData',
+      JSON.stringify(roomData)
+    );
   }
 }

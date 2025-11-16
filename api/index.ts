@@ -5,8 +5,8 @@ import type {
 } from '@cloudflare/workers-types';
 
 import { Env } from './types';
-import { getRoomId } from './utils/room';
-import { PokerRoom } from './services/poker-room';
+import { getRoomStub } from './utils/room';
+import { PlanningRoom } from './services/planning-room';
 import { getDefaultsController } from './controllers/defaults-controller';
 import {
   createRoomController,
@@ -46,9 +46,9 @@ async function handleRequest(
       }) as unknown as CfResponse;
     }
 
-    const roomId = getRoomId(roomKey);
+    const roomStub = getRoomStub(env, roomKey);
 
-    return env.POKER_ROOM.get(env.POKER_ROOM.idFromName(roomId)).fetch(request);
+    return roomStub.fetch(request);
   }
 
   return env.ASSETS.fetch(request);
@@ -110,4 +110,4 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
-export { PokerRoom };
+export { PlanningRoom };

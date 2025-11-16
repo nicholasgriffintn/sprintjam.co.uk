@@ -1,3 +1,5 @@
+import { Env } from '../types';
+
 export function generateRoomKey() {
   const array = new Uint8Array(4);
   crypto.getRandomValues(array);
@@ -10,4 +12,9 @@ export function generateRoomKey() {
 
 export function getRoomId(roomKey: string) {
   return `room-${roomKey.toLowerCase()}`;
+}
+
+export function getRoomStub(env: Env, roomKey: string) {
+  const roomId = getRoomId(roomKey);
+  return env.PLANNING_ROOM.get(env.PLANNING_ROOM.idFromName(roomId));
 }

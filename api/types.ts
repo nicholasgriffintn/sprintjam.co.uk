@@ -5,7 +5,7 @@ import type {
 } from '@cloudflare/workers-types';
 
 export interface Env {
-  POKER_ROOM: DurableObjectNamespace;
+  PLANNING_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;
   JIRA_DOMAIN?: string;
   JIRA_EMAIL?: string;

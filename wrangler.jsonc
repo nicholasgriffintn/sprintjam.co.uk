@@ -1,24 +1,28 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "sprintjam",
-	"main": "api/index.ts",
-	"compatibility_date": "2025-09-15",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"durable_objects": {
-		"bindings": [
-			{ "name": "POKER_ROOM", "class_name": "PokerRoom" }
-		]
-	},
-	"migrations": [
-		{ "tag": "v1", "new_classes": ["PokerRoom"] }
-	],
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "dist/client"
-	},
-	"observability": {
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sprintjam",
+  "main": "api/index.ts",
+  "compatibility_date": "2025-09-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PLANNING_ROOM",
+        "class_name": "PlanningRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["PlanningRoom"]
+    }
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "dist/client"
+  },
+  "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
     "logs": {

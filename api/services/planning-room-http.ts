@@ -1,11 +1,7 @@
-import type {
-  DurableObjectState,
-  Response as CfResponse,
-} from '@cloudflare/workers-types';
+import type { Response as CfResponse } from '@cloudflare/workers-types';
 
 import type {
   BroadcastMessage,
-  Env,
   JiraTicket,
   RoomData,
   RoomSettings,
@@ -19,14 +15,14 @@ import {
 import { applySettingsUpdate } from '../utils/room-settings';
 import { createJsonResponse } from '../utils/http';
 
-export interface PokerRoomHttpContext {
-  state: DurableObjectState;
-  env: Env;
+export interface PlanningRoomHttpContext {
+  getRoomData(): Promise<RoomData | undefined>;
+  putRoomData(roomData: RoomData): Promise<void>;
   broadcast(message: BroadcastMessage): void;
 }
 
 export async function handleHttpRequest(
-  ctx: PokerRoomHttpContext,
+  ctx: PlanningRoomHttpContext,
   request: Request
 ): Promise<CfResponse | null> {
   const url = new URL(request.url);
@@ -41,7 +37,7 @@ export async function handleHttpRequest(
         avatar?: string;
       };
 
-    let roomData = await ctx.state.storage.get<RoomData>('roomData');
+    let roomData = await ctx.getRoomData();
 
     if (!roomData) {
       // Initialization when room data not present; continue with default flow
@@ -69,7 +65,7 @@ export async function handleHttpRequest(
 
     assignUserAvatar(roomData, moderator, avatar);
 
-    await ctx.state.storage.put('roomData', roomData);
+    await ctx.putRoomData(roomData);
 
     const defaults = getServerDefaults();
 
@@ -87,7 +83,7 @@ export async function handleHttpRequest(
       avatar?: string;
     };
 
-    const roomData = await ctx.state.storage.get<RoomData>('roomData');
+    const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: 'Room not found' }, 404);
@@ -103,7 +99,7 @@ export async function handleHttpRequest(
     markUserConnection(updatedRoomData, name, true);
     assignUserAvatar(updatedRoomData, name, avatar);
 
-    await ctx.state.storage.put('roomData', updatedRoomData);
+    await ctx.putRoomData(updatedRoomData);
 
     ctx.broadcast({
       type: 'userJoined',
@@ -126,7 +122,7 @@ export async function handleHttpRequest(
       vote: string | number;
     };
 
-    const roomData = await ctx.state.storage.get<RoomData>('roomData');
+    const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: 'Room not found' }, 404);
@@ -137,7 +133,7 @@ export async function handleHttpRequest(
     }
 
     roomData.votes[name] = vote;
-    await ctx.state.storage.put('roomData', roomData);
+    await ctx.putRoomData(roomData);
 
     const structuredVote = roomData.structuredVotes?.[name];
 
@@ -157,7 +153,7 @@ export async function handleHttpRequest(
   if (url.pathname === '/showVotes' && request.method === 'POST') {
     const { name } = (await request.json()) as { name: string };
 
-    const roomData = await ctx.state.storage.get<RoomData>('roomData');
+    const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: 'Room not found' }, 404);
@@ -174,7 +170,7 @@ export async function handleHttpRequest(
     }
 
     roomData.showVotes = !roomData.showVotes;
-    await ctx.state.storage.put('roomData', roomData);
+    await ctx.putRoomData(roomData);
 
     ctx.broadcast({
       type: 'showVotes',
@@ -190,7 +186,7 @@ export async function handleHttpRequest(
   if (url.pathname === '/resetVotes' && request.method === 'POST') {
     const { name } = (await request.json()) as { name: string };
 
-    const roomData = await ctx.state.storage.get<RoomData>('roomData');
+    const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: 'Room not found' }, 404);
@@ -212,7 +208,7 @@ export async function handleHttpRequest(
     roomData.settings = applySettingsUpdate({
       currentSettings: roomData.settings,
     });
-    await ctx.state.storage.put('roomData', roomData);
+    await ctx.putRoomData(roomData);
 
     ctx.broadcast({
       type: 'resetVotes',
@@ -225,7 +221,7 @@ export async function handleHttpRequest(
   }
 
   if (url.pathname === '/settings' && request.method === 'GET') {
-    const roomData = await ctx.state.storage.get<RoomData>('roomData');
+    const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: 'Room not found' }, 404);
@@ -243,7 +239,7 @@ export async function handleHttpRequest(
       settings: RoomData['settings'];
     };
 
-    const roomData = await ctx.state.storage.get<RoomData>('roomData');
+    const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: 'Room not found' }, 404);
@@ -262,7 +258,7 @@ export async function handleHttpRequest(
       settingsUpdate: providedSettings,
     });
 
-    await ctx.state.storage.put('roomData', roomData);
+    await ctx.putRoomData(roomData);
 
     ctx.broadcast({
       type: 'settingsUpdated',
@@ -281,7 +277,7 @@ export async function handleHttpRequest(
       ticket: JiraTicket;
     };
 
-    const roomData = await ctx.state.storage.get<RoomData>('roomData');
+    const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: 'Room not found' }, 404);
@@ -292,7 +288,7 @@ export async function handleHttpRequest(
     }
 
     roomData.jiraTicket = ticket;
-    await ctx.state.storage.put('roomData', roomData);
+    await ctx.putRoomData(roomData);
 
     ctx.broadcast({
       type: 'jiraTicketUpdated',
@@ -308,7 +304,7 @@ export async function handleHttpRequest(
   if (url.pathname === '/jira/ticket/clear' && request.method === 'POST') {
     const { name } = (await request.json()) as { name: string };
 
-    const roomData = await ctx.state.storage.get<RoomData>('roomData');
+    const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: 'Room not found' }, 404);
@@ -319,7 +315,7 @@ export async function handleHttpRequest(
     }
 
     delete roomData.jiraTicket;
-    await ctx.state.storage.put('roomData', roomData);
+    await ctx.putRoomData(roomData);
 
     ctx.broadcast({
       type: 'jiraTicketCleared',

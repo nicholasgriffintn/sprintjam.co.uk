@@ -8,7 +8,8 @@ import {
   fetchJiraTicket,
   updateJiraStoryPoints,
 } from '../services/jira-service';
-import { getRoomStub, jsonError } from '../utils/controller-helpers';
+import { getRoomStub } from '../utils/room';
+import { jsonError } from '../utils/http';
 
 function getJiraConfig(env: Env) {
   return {
