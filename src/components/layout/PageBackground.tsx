@@ -6,6 +6,7 @@ type PageBackgroundProps = PropsWithChildren<{
   align?: 'center' | 'start';
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
   padded?: boolean;
+  variant?: 'hero' | 'compact';
 }>;
 
 const maxWidthMap: Record<NonNullable<PageBackgroundProps['maxWidth']>, string> =
@@ -20,9 +21,28 @@ export const PageBackground: FC<PageBackgroundProps> = ({
   align = 'center',
   maxWidth = 'lg',
   padded = true,
+  variant = 'hero',
   children,
 }) => {
   const alignment = align === 'center' ? 'text-center' : 'text-left';
+  const gradients =
+    variant === 'hero'
+      ? {
+          topWrapper: 'absolute inset-x-0 top-[-160px] h-[420px] blur-[120px]',
+          topInner:
+            'mx-auto h-full max-w-3xl bg-gradient-to-r from-brand-400/40 via-brand-500/30 to-brand-300/30',
+          bottomWrapper:
+            'absolute inset-x-0 bottom-[-160px] h-[320px] blur-[110px]',
+          bottomInner:
+            'mx-auto h-full max-w-4xl bg-gradient-to-r from-indigo-500/20 via-brand-500/10 to-blue-300/20',
+        }
+      : {
+          topWrapper: 'absolute inset-x-0 top-[-80px] h-[260px] blur-[90px]',
+          topInner:
+            'mx-auto h-full max-w-2xl bg-gradient-to-r from-brand-400/30 via-brand-500/20 to-brand-300/20',
+          bottomWrapper: null,
+          bottomInner: null,
+        };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
@@ -30,12 +50,14 @@ export const PageBackground: FC<PageBackgroundProps> = ({
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-50 dark:opacity-35"
       >
-        <div className="absolute inset-x-0 top-[-160px] h-[420px] blur-[120px]">
-          <div className="mx-auto h-full max-w-3xl bg-gradient-to-r from-brand-400/40 via-brand-500/30 to-brand-300/30" />
+        <div className={gradients.topWrapper}>
+          <div className={gradients.topInner} />
         </div>
-        <div className="absolute inset-x-0 bottom-[-160px] h-[320px] blur-[110px]">
-          <div className="mx-auto h-full max-w-4xl bg-gradient-to-r from-indigo-500/20 via-brand-500/10 to-blue-300/20" />
-        </div>
+        {gradients.bottomWrapper && gradients.bottomInner && (
+          <div className={gradients.bottomWrapper}>
+            <div className={gradients.bottomInner} />
+          </div>
+        )}
         <div className="absolute inset-0 bg-brand-grid [background-size:32px_32px] opacity-15 dark:opacity-10" />
       </div>
 

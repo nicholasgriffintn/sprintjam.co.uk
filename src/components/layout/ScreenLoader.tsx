@@ -7,7 +7,7 @@ export function ScreenLoader({
   subtitle = 'Hang tight while we load everything.',
 }) {
   return (
-    <PageBackground maxWidth="sm">
+    <PageBackground maxWidth="sm" variant="compact">
       <div className="flex min-h-[60vh] items-center justify-center">
         <SurfaceCard className="flex w-full flex-col items-center gap-4 text-center sm:w-[420px]">
           <Spinner size="lg" className="text-brand-500" />

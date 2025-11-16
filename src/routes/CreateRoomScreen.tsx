@@ -127,7 +127,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   };
 
   return (
-    <PageBackground align="start" maxWidth="sm">
+    <PageBackground align="start" maxWidth="sm" variant="compact">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}

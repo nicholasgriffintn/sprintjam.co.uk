@@ -5,7 +5,7 @@ import { Logo } from '../components/Logo';
 
 const NotFoundScreen = () => {
   return (
-    <PageBackground maxWidth="xl">
+    <PageBackground maxWidth="xl" variant="compact">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
