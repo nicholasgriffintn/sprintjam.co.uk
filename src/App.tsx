@@ -36,7 +36,6 @@ import {
 import { useRoomData, useServerDefaults } from './lib/data/hooks';
 import type {
   VoteValue,
-  WebSocketErrorData,
   RoomSettings,
   JiraTicket,
   StructuredVote,
@@ -211,7 +210,7 @@ const App = () => {
     if (screen === 'room' && name && activeRoomKey) {
       connectToRoom(activeRoomKey, name, handleRoomMessage);
 
-      const errorHandler = (data: WebSocketErrorData) => {
+      const errorHandler = (data: WebSocketMessage) => {
         setError(data.error || 'Connection error');
       };
 
