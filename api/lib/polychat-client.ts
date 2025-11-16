@@ -39,8 +39,7 @@ export async function generateStrudelCode(
       },
       body: JSON.stringify({
         ...request,
-        model: 'groq-openai-gpt-oss-20b',
-        reasoning_effort: 'none',
+        model: 'cerebras/gpt-oss-120b',
         options: {
           cache_ttl_seconds: 1,
         },
