@@ -749,6 +749,8 @@ export class PokerRoom {
   }
 
   async handleVote(userName: string, vote: string | number | StructuredVote) {
+    let shouldGenerateMusic = false;
+
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) {
@@ -788,17 +790,22 @@ export class PokerRoom {
         await this.calculateAndUpdateJudgeScore();
       }
 
-      if (
+      shouldGenerateMusic =
         previousPhase !== newPhase &&
-        roomData.settings.enableStrudelPlayer &&
-        roomData.settings.strudelAutoGenerate
-      ) {
-        await this.autoGenerateStrudel();
-      }
+        !!roomData.settings.enableStrudelPlayer &&
+        !!roomData.settings.strudelAutoGenerate;
     });
+
+    if (shouldGenerateMusic) {
+      this.autoGenerateStrudel().catch((err) =>
+        console.error('Background Strudel generation failed:', err)
+      );
+    }
   }
 
   async handleShowVotes(userName: string) {
+    let shouldGenerateMusic = false;
+
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) return;
@@ -825,17 +832,22 @@ export class PokerRoom {
         await this.calculateAndUpdateJudgeScore();
       }
 
-      if (
+      shouldGenerateMusic =
         previousPhase !== newPhase &&
-        roomData.settings.enableStrudelPlayer &&
-        roomData.settings.strudelAutoGenerate
-      ) {
-        await this.autoGenerateStrudel();
-      }
+        !!roomData.settings.enableStrudelPlayer &&
+        !!roomData.settings.strudelAutoGenerate;
     });
+
+    if (shouldGenerateMusic) {
+      this.autoGenerateStrudel().catch((err) =>
+        console.error('Background Strudel generation failed:', err)
+      );
+    }
   }
 
   async handleResetVotes(userName: string) {
+    let shouldGenerateMusic = false;
+
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.state.storage.get<RoomData>('roomData');
       if (!roomData) return;
@@ -860,14 +872,17 @@ export class PokerRoom {
         type: 'resetVotes',
       });
 
-      if (
+      shouldGenerateMusic =
         previousPhase !== newPhase &&
-        roomData.settings.enableStrudelPlayer &&
-        roomData.settings.strudelAutoGenerate
-      ) {
-        await this.autoGenerateStrudel();
-      }
+        !!roomData.settings.enableStrudelPlayer &&
+        !!roomData.settings.strudelAutoGenerate;
     });
+
+    if (shouldGenerateMusic) {
+      this.autoGenerateStrudel().catch((err) =>
+        console.error('Background Strudel generation failed:', err)
+      );
+    }
   }
 
   async handleUpdateSettings(
@@ -953,13 +968,11 @@ export class PokerRoom {
 
   broadcast(message: BroadcastMessage) {
     const json = JSON.stringify(message);
-    for (const session of this.sessions.values()) {
+    this.sessions.forEach((session) => {
       try {
         session.webSocket.send(json);
-      } catch (_err) {
-        // Ignore errors (the WebSocket might already be closed)
-      }
-    }
+      } catch (_err) {}
+    });
   }
 
   async calculateAndUpdateJudgeScore() {

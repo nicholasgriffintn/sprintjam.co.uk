@@ -102,13 +102,31 @@ export async function updateJiraStoryPointsController(
 
   try {
     const { domain, email, apiToken, storyPointsField } = getJiraConfig(env);
+
+    const currentTicket = await fetchJiraTicket(
+      domain,
+      email,
+      apiToken,
+      storyPointsField,
+      ticketId
+    );
+
+    if (!currentTicket) {
+      return jsonError('Jira ticket not found', 404);
+    }
+
+    if (currentTicket.storyPoints === storyPoints) {
+      return jsonResponse({ ticket: currentTicket });
+    }
+
     const updatedTicket = await updateJiraStoryPoints(
       domain,
       email,
       apiToken,
       storyPointsField,
       ticketId,
-      storyPoints
+      storyPoints,
+      currentTicket
     );
 
     const roomObject = getRoomStub(env, roomKey);

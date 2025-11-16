@@ -118,6 +118,7 @@ export async function fetchJiraTicket(
  * @param apiToken Jira API token
  * @param ticketId Jira ticket ID
  * @param storyPoints Story points value
+ * @param currentTicket Optional current ticket data to avoid refetching
  * @returns Updated Jira ticket
  */
 export async function updateJiraStoryPoints(
@@ -126,29 +127,49 @@ export async function updateJiraStoryPoints(
   apiToken: string,
   storyPointsField: string,
   ticketId: string,
-  storyPoints: number
+  storyPoints: number,
+  currentTicket?: JiraTicket
 ): Promise<JiraTicket> {
   try {
     const headers = getAuthHeaders(email, apiToken);
-    
-    const response = await fetch(`https://${domain}/rest/api/3/issue/${ticketId}`, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify({
-        fields: {
-          [storyPointsField]: storyPoints
-        }
-      })
-    });
+
+    const response = await fetch(
+      `https://${domain}/rest/api/3/issue/${ticketId}`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          fields: {
+            [storyPointsField]: storyPoints,
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
-      const errorData = await response.json() as {
+      const errorData = (await response.json()) as {
         errorMessages: string[];
       };
-      throw new Error(errorData.errorMessages?.[0] || `Failed to update Jira story points: ${response.status}`);
+      throw new Error(
+        errorData.errorMessages?.[0] ||
+          `Failed to update Jira story points: ${response.status}`
+      );
     }
 
-    return await fetchJiraTicket(domain, email, apiToken, storyPointsField, ticketId);
+    if (currentTicket) {
+      return {
+        ...currentTicket,
+        storyPoints,
+      };
+    }
+
+    return await fetchJiraTicket(
+      domain,
+      email,
+      apiToken,
+      storyPointsField,
+      ticketId
+    );
   } catch (error) {
     console.error('Error updating Jira story points:', error);
     throw error;
