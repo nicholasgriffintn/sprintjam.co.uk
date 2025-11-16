@@ -1124,7 +1124,6 @@ export class PokerRoom {
         style: preset.style,
         tempo: preset.tempo,
         complexity: preset.complexity,
-        model: 'claude-4-5-sonnet',
       };
 
       const response = await generateStrudelCode(request, apiToken);

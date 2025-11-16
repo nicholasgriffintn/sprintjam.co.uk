@@ -37,7 +37,14 @@ export async function generateStrudelCode(
         'User-Agent': 'SprintJam/1.0',
         Authorization: `Bearer ${apiToken}`,
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify({
+        ...request,
+        model: 'groq-openai-gpt-oss-20b',
+        reasoning_effort: 'none',
+        options: {
+          cache_ttl_seconds: 1,
+        },
+      }),
     });
 
     if (!response.ok) {
