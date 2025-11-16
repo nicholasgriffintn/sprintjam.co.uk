@@ -159,9 +159,10 @@ export async function joinRoom(
  * @returns {WebSocket} - The WebSocket connection
  */
 export function connectToRoom(
-  roomKey: string, 
-  name: string, 
-  onMessage: (data: WebSocketMessage) => void
+  roomKey: string,
+  name: string,
+  onMessage: (data: WebSocketMessage) => void,
+  onConnectionStatusChange?: (isConnected: boolean) => void
 ): WebSocket {
   if (activeSocket) {
     activeSocket.close();
@@ -177,6 +178,7 @@ export function connectToRoom(
     socket.onopen = () => {
       console.log('WebSocket connection established');
       reconnectAttempts = 0;
+      onConnectionStatusChange?.(true);
     };
 
     socket.onmessage = (event) => {
@@ -223,14 +225,16 @@ export function connectToRoom(
 
     socket.onclose = (event) => {
       console.log('WebSocket connection closed:', event.code, event.reason);
+      onConnectionStatusChange?.(false);
 
       if (event.code !== 1000 && event.code !== 1001) {
-        handleReconnect(roomKey, name, onMessage);
+        handleReconnect(roomKey, name, onMessage, onConnectionStatusChange);
       }
     };
 
     socket.onerror = (error) => {
       console.error('WebSocket error:', error);
+      onConnectionStatusChange?.(false);
       triggerEventListeners('error', { 
         type: 'error',
         error: 'Connection error occurred' 
@@ -241,6 +245,7 @@ export function connectToRoom(
     return socket;
   } catch (error) {
     console.error('Error creating WebSocket:', error);
+    onConnectionStatusChange?.(false);
     triggerEventListeners('error', { 
       type: 'error',
       error: error instanceof Error ? error.message : 'Failed to connect to server' 
@@ -253,9 +258,10 @@ export function connectToRoom(
  * Handle reconnection logic with exponential backoff
  */
 function handleReconnect(
-  roomKey: string, 
-  name: string, 
-  onMessage: (data: WebSocketMessage) => void
+  roomKey: string,
+  name: string,
+  onMessage: (data: WebSocketMessage) => void,
+  onConnectionStatusChange?: (isConnected: boolean) => void
 ): void {
   if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     reconnectAttempts++;
@@ -271,7 +277,7 @@ function handleReconnect(
     );
 
     setTimeout(() => {
-      connectToRoom(roomKey, name, onMessage);
+      connectToRoom(roomKey, name, onMessage, onConnectionStatusChange);
     }, delay);
   } else {
     console.error('Max reconnection attempts reached');

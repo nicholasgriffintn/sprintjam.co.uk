@@ -72,6 +72,9 @@ const App = () => {
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
     null
   );
+  const [isSocketConnected, setIsSocketConnected] = useState<boolean>(() =>
+    isConnected()
+  );
   const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -208,10 +211,16 @@ const App = () => {
   // Connect to WebSocket when entering a room
   useEffect(() => {
     if (screen === 'room' && name && activeRoomKey) {
-      connectToRoom(activeRoomKey, name, handleRoomMessage);
+      connectToRoom(
+        activeRoomKey,
+        name,
+        handleRoomMessage,
+        setIsSocketConnected
+      );
 
       const errorHandler = (data: WebSocketMessage) => {
         setError(data.error || 'Connection error');
+        setIsSocketConnected(false);
       };
 
       const eventTypes: WebSocketMessageType[] = ['disconnected', 'error'];
@@ -222,6 +231,7 @@ const App = () => {
 
       return () => {
         disconnectFromRoom();
+        setIsSocketConnected(false);
         for (const type of eventTypes) {
           removeEventListener(type, errorHandler);
         }
@@ -542,7 +552,7 @@ const App = () => {
               onLeaveRoom={handleLeaveRoom}
               error={error}
               onClearError={clearError}
-              isConnected={isConnected()}
+              isConnected={isSocketConnected}
             />
           );
         }
