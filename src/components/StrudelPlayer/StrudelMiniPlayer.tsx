@@ -159,7 +159,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                      Background Music
+                      AI Background Music
                     </span>
                     <span className="rounded-md bg-brand-500/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
                       Beta
