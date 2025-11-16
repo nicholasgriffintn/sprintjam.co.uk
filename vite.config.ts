@@ -11,8 +11,15 @@ export default defineConfig(({ command }) => ({
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'strudel-vendor': ['@strudel/web'],
-          'query-vendor': ['@tanstack/react-query'],
+          'tanstack-vendor': [
+            '@tanstack/react-query',
+            '@tanstack/db',
+            '@tanstack/query-core',
+            '@tanstack/query-db-collection',
+          ],
+          'framer-vendor': ['framer-motion'],
           'icons-vendor': ['lucide-react'],
+          'ui-vendor': ['qrcode.react', 'canvas-confetti'],
         },
       },
     },
