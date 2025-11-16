@@ -8,6 +8,7 @@ import {
   Shield,
   Timer,
   BarChart3,
+  Play,
 } from 'lucide-react';
 
 import { PageBackground } from '../components/layout/PageBackground';
@@ -87,6 +88,54 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
           >
             Join a session
           </Button>
+        </div>
+
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="pointer-events-none absolute inset-x-4 -top-10 -z-20 h-[120%] rounded-[5rem] bg-gradient-to-b from-brand-400/25 via-indigo-600/15 to-transparent opacity-70 blur-[150px] sm:inset-x-12" />
+          <div className="rounded-[2.5rem] border border-white/10 bg-white/5 shadow-[0_40px_160px_rgba(8,10,24,0.65)] backdrop-blur-[14px] dark:border-white/5 dark:bg-slate-900/40">
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-gradient-to-b from-white/10 via-white/5 to-white/0 dark:from-white/10 dark:via-white/5">
+              <button
+                type="button"
+                aria-label="Play SprintJam demo video"
+                onClick={() => alert('Video demo coming soon')}
+                className="group relative block w-full overflow-hidden rounded-[1.75rem] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-400"
+              >
+                <img
+                  src="/images/screenshot.png"
+                  alt="SprintJam collaborative room preview"
+                  className="block h-[260px] w-full origin-bottom transform-gpu rounded-[1.75rem] border border-white/10 object-cover object-top shadow-[0_40px_120px_-30px_rgba(0,0,0,0.45)] transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01] sm:rotate-[0.6deg]"
+                  style={{
+                    maskImage:
+                      'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                    WebkitMaskImage:
+                      'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                  }}
+                  loading="lazy"
+                />
+                <div
+                  className="pointer-events-none absolute inset-0 rounded-[1.75rem]"
+                  style={{
+                    background:
+                      'radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)',
+                    mixBlendMode: 'multiply',
+                  }}
+                />
+                <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] bg-gradient-to-b from-white/15 via-white/5 to-transparent opacity-30 mix-blend-screen" />
+                <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] bg-gradient-to-b from-slate-900/10 via-slate-900/40 to-slate-900/70 opacity-80 transition duration-500 group-hover:opacity-100 dark:from-black/0 dark:via-black/40 dark:to-black/70" />
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-4 text-white">
+                  <div className="rounded-full border border-white/30 bg-white/15 p-4 text-white shadow-lg shadow-black/40 backdrop-blur transition duration-300 group-hover:scale-110">
+                    <Play className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="pointer-events-none absolute inset-x-6 bottom-6 flex items-center justify-between rounded-[1.6rem] border border-white/20 bg-slate-900/60 px-5 py-3 text-xs font-medium uppercase tracking-[0.3em] text-white/60 shadow-[0_15px_25px_rgba(6,9,20,0.35)] backdrop-blur-lg group-hover:border-white/40 group-hover:bg-slate-900/70">
+                  <span>Live demo preview</span>
+                  <span>00:42</span>
+                </div>
+              </button>
+              <div className="pointer-events-none absolute inset-x-12 -bottom-6 -z-10 h-8 rounded-[999px] bg-slate-900/45 blur-3xl dark:bg-black/70" />
+              <div className="pointer-events-none absolute inset-x-16 -bottom-2 -z-20 h-5 rounded-[999px] bg-black/40 blur-2xl opacity-70" />
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
