@@ -106,7 +106,7 @@ export function StructuredVotingPanel({
           <button
             type="button"
             onClick={() => setShowScoringInfo(!showScoringInfo)}
-            className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${
               showScoringInfo
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border border-transparent'
