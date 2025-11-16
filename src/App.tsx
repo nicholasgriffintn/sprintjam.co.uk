@@ -49,10 +49,10 @@ import ErrorBanner from './components/ui/ErrorBanner';
 import LoadingOverlay from './components/LoadingOverlay';
 import { ScreenLoader } from './components/layout/ScreenLoader';
 import WelcomeScreen from './routes/WelcomeScreen';
+import CreateRoomScreen from './routes/CreateRoomScreen';
+import JoinRoomScreen from './routes/JoinRoomScreen';
 import NotFoundScreen from './routes/NotFoundScreen';
 
-const CreateRoomScreen = lazy(() => import('./routes/CreateRoomScreen'));
-const JoinRoomScreen = lazy(() => import('./routes/JoinRoomScreen'));
 const RoomScreen = lazy(() => import('./routes/RoomScreen'));
 
 type AppScreen = 'welcome' | 'create' | 'join' | 'room';
