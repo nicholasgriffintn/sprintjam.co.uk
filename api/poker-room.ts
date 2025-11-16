@@ -1068,29 +1068,25 @@ export class PokerRoom {
   }
 
   async handleGenerateStrudel(userName: string) {
-    await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
-      if (!roomData) return;
+    const roomData = await this.state.storage.get<RoomData>('roomData');
+    if (!roomData) return;
 
-      if (roomData.moderator !== userName) {
-        return;
-      }
+    if (roomData.moderator !== userName) {
+      return;
+    }
 
-      await this.generateStrudelTrack(roomData, {
-        notifyOnError: true,
-        logPrefix: 'Failed to generate Strudel code',
-      });
+    await this.generateStrudelTrack(roomData, {
+      notifyOnError: true,
+      logPrefix: 'Failed to generate Strudel code',
     });
   }
 
   async autoGenerateStrudel() {
-    await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
-      if (!roomData) return;
+    const roomData = await this.state.storage.get<RoomData>('roomData');
+    if (!roomData) return;
 
-      await this.generateStrudelTrack(roomData, {
-        logPrefix: 'Failed to auto-generate Strudel code',
-      });
+    await this.generateStrudelTrack(roomData, {
+      logPrefix: 'Failed to auto-generate Strudel code',
     });
   }
 
@@ -1162,21 +1158,19 @@ export class PokerRoom {
   }
 
   async handleToggleStrudelPlayback(userName: string) {
-    await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.state.storage.get<RoomData>('roomData');
-      if (!roomData) return;
+    const roomData = await this.state.storage.get<RoomData>('roomData');
+    if (!roomData) return;
 
-      if (roomData.moderator !== userName) {
-        return;
-      }
+    if (roomData.moderator !== userName) {
+      return;
+    }
 
-      roomData.strudelIsPlaying = !roomData.strudelIsPlaying;
-      await this.state.storage.put('roomData', roomData);
+    roomData.strudelIsPlaying = !roomData.strudelIsPlaying;
+    await this.state.storage.put('roomData', roomData);
 
-      this.broadcast({
-        type: 'initialize',
-        roomData,
-      });
+    this.broadcast({
+      type: 'initialize',
+      roomData,
     });
   }
 }
