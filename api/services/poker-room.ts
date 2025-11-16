@@ -1,25 +1,40 @@
 declare const WebSocketPair: {
-  new(): { 0: CfWebSocket; 1: CfWebSocket };
+  new (): { 0: CfWebSocket; 1: CfWebSocket };
 };
 
-import type { DurableObjectState, WebSocket as CfWebSocket, Response as CfResponse } from '@cloudflare/workers-types';
+import type {
+  DurableObjectState,
+  WebSocket as CfWebSocket,
+  Response as CfResponse,
+} from '@cloudflare/workers-types';
 
-import { PlanningPokerJudge } from './planning-poker-judge';
-import type { Env, RoomData, BroadcastMessage, SessionInfo, JiraTicket, StructuredVote, RoomSettings } from './types'
+import { PlanningPokerJudge } from '../lib/planning-poker-judge';
+import type {
+  Env,
+  RoomData,
+  BroadcastMessage,
+  SessionInfo,
+  JiraTicket,
+  StructuredVote,
+  RoomSettings,
+} from '../types';
 import {
   createInitialRoomData,
   getDefaultEstimateOptions,
   getDefaultRoomSettings,
   getDefaultStructuredVotingOptions,
   getServerDefaults,
-} from './utils/defaults'
-import { generateVoteOptionsMetadata } from './utils/votes'
-import { isStructuredVote, createStructuredVote } from './utils/structured-voting'
+} from '../utils/defaults';
+import { generateVoteOptionsMetadata } from '../utils/votes';
+import {
+  isStructuredVote,
+  createStructuredVote,
+} from '../utils/structured-voting';
 import {
   generateStrudelCode,
   type StrudelGenerateRequest,
-} from './lib/polychat-client';
-import { strudelMusicPresets } from './lib/strudel';
+} from '../lib/polychat-client';
+import { strudelMusicPresets } from '../lib/strudel';
 
 export class PokerRoom {
   state: DurableObjectState;

@@ -1,5 +1,5 @@
-import type { JudgeAlgorithm, JudgeResult } from './types';
-import { findClosestOption } from './utils/judge';
+import type { JudgeAlgorithm, JudgeResult } from '../types';
+import { findClosestOption } from '../utils/judge';
 
 export class PlanningPokerJudge {
   calculateJudgeScore(numericVotes: number[], algorithm: JudgeAlgorithm, validOptions: number[]): JudgeResult {

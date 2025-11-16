@@ -1,4 +1,4 @@
-import type { JiraTicket } from '../src/types';
+import type { JiraTicket } from '../../src/types';
 
 /**
  * Parse Jira description in Atlassian Document Format (ADF)
