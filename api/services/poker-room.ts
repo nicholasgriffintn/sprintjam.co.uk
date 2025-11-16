@@ -134,61 +134,59 @@ export class PokerRoom {
           avatar?: string;
         };
 
-      return await this.state.blockConcurrencyWhile(async () => {
-        let roomData = await this.state.storage.get<RoomData>('roomData');
+      let roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData) {
-          // TODO: Handle case where roomData is not found during initialization attempt
-          // This scenario might need specific logic depending on requirements,
-          // maybe return an error or proceed with initialization.
-          // For now, let's assume initialization proceeds if roomData is null/undefined.
-        } else if (roomData.key) {
-          return new Response(
-            JSON.stringify({ error: 'Room already exists' }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ) as unknown as CfResponse;
-        }
-
-        roomData = createInitialRoomData({
-          key: roomKey,
-          users: [moderator],
-          moderator,
-          connectedUsers: { [moderator]: true },
-        });
-
-        if (settings) {
-          roomData.settings = {
-            ...roomData.settings,
-            ...settings,
-          };
-        }
-
-        if (passcode && passcode.trim()) {
-          roomData.passcode = passcode.trim();
-        }
-
-        if (avatar) {
-          roomData.userAvatars = { [moderator]: avatar };
-        }
-
-        await this.state.storage.put('roomData', roomData);
-
-        const defaults = getServerDefaults();
-
+      if (!roomData) {
+        // TODO: Handle case where roomData is not found during initialization attempt
+        // This scenario might need specific logic depending on requirements,
+        // maybe return an error or proceed with initialization.
+        // For now, let's assume initialization proceeds if roomData is null/undefined.
+      } else if (roomData.key) {
         return new Response(
-          JSON.stringify({
-            success: true,
-            room: roomData,
-            defaults,
-          }),
+          JSON.stringify({ error: 'Room already exists' }),
           {
+            status: 400,
             headers: { 'Content-Type': 'application/json' },
           }
         ) as unknown as CfResponse;
+      }
+
+      roomData = createInitialRoomData({
+        key: roomKey,
+        users: [moderator],
+        moderator,
+        connectedUsers: { [moderator]: true },
       });
+
+      if (settings) {
+        roomData.settings = {
+          ...roomData.settings,
+          ...settings,
+        };
+      }
+
+      if (passcode && passcode.trim()) {
+        roomData.passcode = passcode.trim();
+      }
+
+      if (avatar) {
+        roomData.userAvatars = { [moderator]: avatar };
+      }
+
+      await this.state.storage.put('roomData', roomData);
+
+      const defaults = getServerDefaults();
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          room: roomData,
+          defaults,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
     }
 
     if (url.pathname === '/join' && request.method === 'POST') {
@@ -198,65 +196,63 @@ export class PokerRoom {
         avatar?: string;
       };
 
-      return await this.state.blockConcurrencyWhile(async () => {
-        const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData || !roomData.key) {
-          return new Response(JSON.stringify({ error: 'Room not found' }), {
-            status: 404,
+      if (!roomData || !roomData.key) {
+        return new Response(JSON.stringify({ error: 'Room not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }) as unknown as CfResponse;
+      }
+
+      if (roomData.passcode && roomData.passcode.trim()) {
+        if (!passcode || passcode.trim() !== roomData.passcode.trim()) {
+          return new Response(JSON.stringify({ error: 'Invalid passcode' }), {
+            status: 401,
             headers: { 'Content-Type': 'application/json' },
           }) as unknown as CfResponse;
         }
+      }
 
-        if (roomData.passcode && roomData.passcode.trim()) {
-          if (!passcode || passcode.trim() !== roomData.passcode.trim()) {
-            return new Response(JSON.stringify({ error: 'Invalid passcode' }), {
-              status: 401,
-              headers: { 'Content-Type': 'application/json' },
-            }) as unknown as CfResponse;
-          }
+      if (!roomData.connectedUsers) {
+        roomData.connectedUsers = {};
+        for (const user of roomData.users) {
+          roomData.connectedUsers[user] = false;
         }
+      }
 
-        if (!roomData.connectedUsers) {
-          roomData.connectedUsers = {};
-          for (const user of roomData.users) {
-            roomData.connectedUsers[user] = false;
-          }
+      if (!roomData.users.includes(name)) {
+        roomData.users.push(name);
+      }
+      roomData.connectedUsers[name] = true;
+
+      if (avatar) {
+        if (!roomData.userAvatars) {
+          roomData.userAvatars = {};
         }
+        roomData.userAvatars[name] = avatar;
+      }
 
-        if (!roomData.users.includes(name)) {
-          roomData.users.push(name);
-        }
-        roomData.connectedUsers[name] = true;
+      await this.state.storage.put('roomData', roomData);
 
-        if (avatar) {
-          if (!roomData.userAvatars) {
-            roomData.userAvatars = {};
-          }
-          roomData.userAvatars[name] = avatar;
-        }
-
-        await this.state.storage.put('roomData', roomData);
-
-        this.broadcast({
-          type: 'userJoined',
-          user: name,
-          avatar: avatar,
-        });
-
-        const defaults = getServerDefaults();
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            room: roomData,
-            defaults,
-          }),
-          {
-            headers: { 'Content-Type': 'application/json' },
-          }
-        ) as unknown as CfResponse;
+      this.broadcast({
+        type: 'userJoined',
+        user: name,
+        avatar: avatar,
       });
+
+      const defaults = getServerDefaults();
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          room: roomData,
+          defaults,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
     }
 
     if (url.pathname === '/vote' && request.method === 'POST') {
@@ -265,175 +261,167 @@ export class PokerRoom {
         vote: string | number;
       };
 
-      return await this.state.blockConcurrencyWhile(async () => {
-        const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData || !roomData.key) {
-          return new Response(JSON.stringify({ error: 'Room not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }) as unknown as CfResponse;
-        }
+      if (!roomData || !roomData.key) {
+        return new Response(JSON.stringify({ error: 'Room not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }) as unknown as CfResponse;
+      }
 
-        if (!roomData.users.includes(name)) {
-          return new Response(
-            JSON.stringify({ error: 'User not found in this room' }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ) as unknown as CfResponse;
-        }
-
-        roomData.votes[name] = vote;
-        await this.state.storage.put('roomData', roomData);
-
-        const structuredVote = isStructuredVote(vote)
-          ? roomData.structuredVotes?.[name]
-          : undefined;
-
-        this.broadcast({
-          type: 'vote',
-          user: name,
-          vote,
-          structuredVote,
-        });
-
+      if (!roomData.users.includes(name)) {
         return new Response(
-          JSON.stringify({
-            success: true,
-            room: roomData,
-          }),
+          JSON.stringify({ error: 'User not found in this room' }),
           {
+            status: 400,
             headers: { 'Content-Type': 'application/json' },
           }
         ) as unknown as CfResponse;
+      }
+
+      roomData.votes[name] = vote;
+      await this.state.storage.put('roomData', roomData);
+
+      const structuredVote = isStructuredVote(vote)
+        ? roomData.structuredVotes?.[name]
+        : undefined;
+
+      this.broadcast({
+        type: 'vote',
+        user: name,
+        vote,
+        structuredVote,
       });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          room: roomData,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
     }
 
     if (url.pathname === '/showVotes' && request.method === 'POST') {
       const { name } = (await request.json()) as { name: string };
 
-      return await this.state.blockConcurrencyWhile(async () => {
-        const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData || !roomData.key) {
-          return new Response(JSON.stringify({ error: 'Room not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }) as unknown as CfResponse;
-        }
+      if (!roomData || !roomData.key) {
+        return new Response(JSON.stringify({ error: 'Room not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }) as unknown as CfResponse;
+      }
 
-        if (
-          roomData.moderator !== name &&
-          !roomData.settings.allowOthersToShowEstimates
-        ) {
-          return new Response(
-            JSON.stringify({ error: 'Only the moderator can show votes' }),
-            {
-              status: 403,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ) as unknown as CfResponse;
-        }
-
-        roomData.showVotes = !roomData.showVotes;
-        await this.state.storage.put('roomData', roomData);
-
-        this.broadcast({
-          type: 'showVotes',
-          showVotes: roomData.showVotes,
-        });
-
+      if (
+        roomData.moderator !== name &&
+        !roomData.settings.allowOthersToShowEstimates
+      ) {
         return new Response(
-          JSON.stringify({
-            success: true,
-            room: roomData,
-          }),
+          JSON.stringify({ error: 'Only the moderator can show votes' }),
           {
+            status: 403,
             headers: { 'Content-Type': 'application/json' },
           }
         ) as unknown as CfResponse;
+      }
+
+      roomData.showVotes = !roomData.showVotes;
+      await this.state.storage.put('roomData', roomData);
+
+      this.broadcast({
+        type: 'showVotes',
+        showVotes: roomData.showVotes,
       });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          room: roomData,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
     }
 
     if (url.pathname === '/resetVotes' && request.method === 'POST') {
       const { name } = (await request.json()) as { name: string };
 
-      return await this.state.blockConcurrencyWhile(async () => {
-        const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData || !roomData.key) {
-          return new Response(JSON.stringify({ error: 'Room not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }) as unknown as CfResponse;
-        }
+      if (!roomData || !roomData.key) {
+        return new Response(JSON.stringify({ error: 'Room not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }) as unknown as CfResponse;
+      }
 
-        if (
-          roomData.moderator !== name &&
-          !roomData.settings.allowOthersToDeleteEstimates
-        ) {
-          return new Response(
-            JSON.stringify({ error: 'Only the moderator can reset votes' }),
-            {
-              status: 403,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ) as unknown as CfResponse;
-        }
-
-        roomData.votes = {};
-        roomData.structuredVotes = {};
-        roomData.showVotes = false;
-        await this.state.storage.put('roomData', roomData);
-        if (
-          roomData?.settings?.estimateOptions &&
-          !roomData?.settings?.voteOptionsMetadata
-        ) {
-          roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(
-            roomData.settings.estimateOptions
-          );
-          await this.state.storage.put('roomData', roomData);
-        }
-
-        this.broadcast({
-          type: 'resetVotes',
-        });
-
+      if (
+        roomData.moderator !== name &&
+        !roomData.settings.allowOthersToDeleteEstimates
+      ) {
         return new Response(
-          JSON.stringify({
-            success: true,
-            room: roomData,
-          }),
+          JSON.stringify({ error: 'Only the moderator can reset votes' }),
           {
+            status: 403,
             headers: { 'Content-Type': 'application/json' },
           }
         ) as unknown as CfResponse;
+      }
+
+      roomData.votes = {};
+      roomData.structuredVotes = {};
+      roomData.showVotes = false;
+      await this.state.storage.put('roomData', roomData);
+      if (
+        roomData?.settings?.estimateOptions &&
+        !roomData?.settings?.voteOptionsMetadata
+      ) {
+        roomData.settings.voteOptionsMetadata = generateVoteOptionsMetadata(
+          roomData.settings.estimateOptions
+        );
+        await this.state.storage.put('roomData', roomData);
+      }
+
+      this.broadcast({
+        type: 'resetVotes',
       });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          room: roomData,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
     }
 
     if (url.pathname === '/settings' && request.method === 'GET') {
-      return await this.state.blockConcurrencyWhile(async () => {
-        const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData || !roomData.key) {
-          return new Response(JSON.stringify({ error: 'Room not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }) as unknown as CfResponse;
+      if (!roomData || !roomData.key) {
+        return new Response(JSON.stringify({ error: 'Room not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }) as unknown as CfResponse;
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          settings: roomData.settings,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
         }
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            settings: roomData.settings,
-          }),
-          {
-            headers: { 'Content-Type': 'application/json' },
-          }
-        ) as unknown as CfResponse;
-      });
+      ) as unknown as CfResponse;
     }
 
     if (url.pathname === '/settings' && request.method === 'PUT') {
@@ -442,81 +430,79 @@ export class PokerRoom {
         settings: RoomData['settings'];
       };
 
-      return await this.state.blockConcurrencyWhile(async () => {
-        const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData || !roomData.key) {
-          return new Response(JSON.stringify({ error: 'Room not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }) as unknown as CfResponse;
-        }
+      if (!roomData || !roomData.key) {
+        return new Response(JSON.stringify({ error: 'Room not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }) as unknown as CfResponse;
+      }
 
-        if (roomData.moderator !== name) {
-          return new Response(
-            JSON.stringify({ error: 'Only the moderator can update settings' }),
-            {
-              status: 403,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ) as unknown as CfResponse;
-        }
-
-        const providedSettings = settings as Partial<RoomData['settings']>;
-
-        const defaultSettings = getDefaultRoomSettings();
-        const newSettings = {
-          ...defaultSettings,
-          ...roomData.settings,
-          ...providedSettings,
-        };
-
-        if (providedSettings.enableStructuredVoting === true) {
-          const structuredOptions = getDefaultStructuredVotingOptions();
-          newSettings.estimateOptions = structuredOptions;
-          newSettings.voteOptionsMetadata =
-            generateVoteOptionsMetadata(structuredOptions);
-          if (!newSettings.votingCriteria) {
-            newSettings.votingCriteria = defaultSettings.votingCriteria;
-          }
-        } else if (
-          providedSettings.enableStructuredVoting === false &&
-          !providedSettings.estimateOptions
-        ) {
-          const defaultOptions = getDefaultEstimateOptions();
-          newSettings.estimateOptions = defaultOptions;
-          newSettings.voteOptionsMetadata =
-            generateVoteOptionsMetadata(defaultOptions);
-          if (!newSettings.votingCriteria) {
-            newSettings.votingCriteria = defaultSettings.votingCriteria;
-          }
-        }
-
-        if (providedSettings.estimateOptions) {
-          newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(
-            providedSettings.estimateOptions
-          );
-        }
-
-        roomData.settings = newSettings;
-
-        await this.state.storage.put('roomData', roomData);
-
-        this.broadcast({
-          type: 'settingsUpdated',
-          settings: roomData.settings,
-        });
-
+      if (roomData.moderator !== name) {
         return new Response(
-          JSON.stringify({
-            success: true,
-            settings: roomData.settings,
-          }),
+          JSON.stringify({ error: 'Only the moderator can update settings' }),
           {
+            status: 403,
             headers: { 'Content-Type': 'application/json' },
           }
         ) as unknown as CfResponse;
+      }
+
+      const providedSettings = settings as Partial<RoomData['settings']>;
+
+      const defaultSettings = getDefaultRoomSettings();
+      const newSettings = {
+        ...defaultSettings,
+        ...roomData.settings,
+        ...providedSettings,
+      };
+
+      if (providedSettings.enableStructuredVoting === true) {
+        const structuredOptions = getDefaultStructuredVotingOptions();
+        newSettings.estimateOptions = structuredOptions;
+        newSettings.voteOptionsMetadata =
+          generateVoteOptionsMetadata(structuredOptions);
+        if (!newSettings.votingCriteria) {
+          newSettings.votingCriteria = defaultSettings.votingCriteria;
+        }
+      } else if (
+        providedSettings.enableStructuredVoting === false &&
+        !providedSettings.estimateOptions
+      ) {
+        const defaultOptions = getDefaultEstimateOptions();
+        newSettings.estimateOptions = defaultOptions;
+        newSettings.voteOptionsMetadata =
+          generateVoteOptionsMetadata(defaultOptions);
+        if (!newSettings.votingCriteria) {
+          newSettings.votingCriteria = defaultSettings.votingCriteria;
+        }
+      }
+
+      if (providedSettings.estimateOptions) {
+        newSettings.voteOptionsMetadata = generateVoteOptionsMetadata(
+          providedSettings.estimateOptions
+        );
+      }
+
+      roomData.settings = newSettings;
+
+      await this.state.storage.put('roomData', roomData);
+
+      this.broadcast({
+        type: 'settingsUpdated',
+        settings: roomData.settings,
       });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          settings: roomData.settings,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
     }
 
     if (url.pathname === '/jira/ticket' && request.method === 'POST') {
@@ -525,86 +511,82 @@ export class PokerRoom {
         ticket: JiraTicket;
       };
 
-      return await this.state.blockConcurrencyWhile(async () => {
-        const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData || !roomData.key) {
-          return new Response(JSON.stringify({ error: 'Room not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }) as unknown as CfResponse;
-        }
+      if (!roomData || !roomData.key) {
+        return new Response(JSON.stringify({ error: 'Room not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }) as unknown as CfResponse;
+      }
 
-        if (!roomData.users.includes(name)) {
-          return new Response(
-            JSON.stringify({ error: 'User not found in this room' }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ) as unknown as CfResponse;
-        }
-
-        roomData.jiraTicket = ticket;
-        await this.state.storage.put('roomData', roomData);
-
-        this.broadcast({
-          type: 'jiraTicketUpdated',
-          ticket: roomData.jiraTicket,
-        });
-
+      if (!roomData.users.includes(name)) {
         return new Response(
-          JSON.stringify({
-            success: true,
-            room: roomData,
-          }),
+          JSON.stringify({ error: 'User not found in this room' }),
           {
+            status: 400,
             headers: { 'Content-Type': 'application/json' },
           }
         ) as unknown as CfResponse;
+      }
+
+      roomData.jiraTicket = ticket;
+      await this.state.storage.put('roomData', roomData);
+
+      this.broadcast({
+        type: 'jiraTicketUpdated',
+        ticket: roomData.jiraTicket,
       });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          room: roomData,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
     }
 
     if (url.pathname === '/jira/ticket/clear' && request.method === 'POST') {
       const { name } = (await request.json()) as { name: string };
 
-      return await this.state.blockConcurrencyWhile(async () => {
-        const roomData = await this.state.storage.get<RoomData>('roomData');
+      const roomData = await this.state.storage.get<RoomData>('roomData');
 
-        if (!roomData || !roomData.key) {
-          return new Response(JSON.stringify({ error: 'Room not found' }), {
-            status: 404,
-            headers: { 'Content-Type': 'application/json' },
-          }) as unknown as CfResponse;
-        }
+      if (!roomData || !roomData.key) {
+        return new Response(JSON.stringify({ error: 'Room not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }) as unknown as CfResponse;
+      }
 
-        if (!roomData.users.includes(name)) {
-          return new Response(
-            JSON.stringify({ error: 'User not found in this room' }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          ) as unknown as CfResponse;
-        }
-
-        delete roomData.jiraTicket;
-        await this.state.storage.put('roomData', roomData);
-
-        this.broadcast({
-          type: 'jiraTicketCleared',
-        });
-
+      if (!roomData.users.includes(name)) {
         return new Response(
-          JSON.stringify({
-            success: true,
-            room: roomData,
-          }),
+          JSON.stringify({ error: 'User not found in this room' }),
           {
+            status: 400,
             headers: { 'Content-Type': 'application/json' },
           }
         ) as unknown as CfResponse;
+      }
+
+      delete roomData.jiraTicket;
+      await this.state.storage.put('roomData', roomData);
+
+      this.broadcast({
+        type: 'jiraTicketCleared',
       });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          room: roomData,
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
     }
 
     return new Response('Not found', { status: 404 }) as unknown as CfResponse;
