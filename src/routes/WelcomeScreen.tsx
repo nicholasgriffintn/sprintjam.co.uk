@@ -90,7 +90,13 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
           </Button>
         </div>
 
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.97 }}
+          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          viewport={{ once: true, amount: 0.4 }}
+          className="relative mx-auto max-w-5xl px-4 sm:px-6"
+        >
           <div className="pointer-events-none absolute inset-x-4 -top-10 -z-20 h-[120%] rounded-[5rem] bg-gradient-to-b from-brand-400/25 via-indigo-600/15 to-transparent opacity-70 blur-[150px] sm:inset-x-12" />
           <div className="rounded-[2.5rem] border border-white/10 bg-white/5 shadow-[0_40px_160px_rgba(8,10,24,0.65)] backdrop-blur-[14px] dark:border-white/5 dark:bg-slate-900/40">
             <div className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-gradient-to-b from-white/10 via-white/5 to-white/0 dark:from-white/10 dark:via-white/5">
@@ -136,7 +142,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
               <div className="pointer-events-none absolute inset-x-16 -bottom-2 -z-20 h-5 rounded-[999px] bg-black/40 blur-2xl opacity-70" />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
