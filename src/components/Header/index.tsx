@@ -1,10 +1,10 @@
 import { Share2, Settings, LogOut } from 'lucide-react';
 
-import ConnectionStatus from './ConnectionStatus';
+import type { RoomData } from '../../types';
+import { Badge } from '../ui/Badge';
+import { cn } from '../../lib/cn';
+import ConnectionStatus from '../ConnectionStatus';
 import DarkModeToggle from './DarkModeToggle';
-import type { RoomData } from '../types';
-import { Badge } from './ui/Badge';
-import { cn } from '../lib/cn';
 
 export interface HeaderProps {
   roomData: RoomData;
