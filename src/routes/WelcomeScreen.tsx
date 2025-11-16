@@ -54,17 +54,17 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="space-y-14"
+        className="space-y-10 sm:space-y-14"
       >
         <div className="flex justify-center">
-          <Logo size="lg" />
+          <Logo size="lg" className="scale-95 sm:scale-100" />
         </div>
         <div className="space-y-6">
           <div className="space-y-4">
-            <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+            <h1 className="text-3xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
               Effortless team estimations in a beautiful shared space.
             </h1>
-            <p className="text-lg text-slate-600 dark:text-slate-300">
+            <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg">
               Plan sprints faster with real-time story point voting, instant
               consensus insights, and lightweight collaboration. No sign-ups, no
               distractions.
@@ -72,11 +72,12 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
           <Button
             onClick={onCreateRoom}
             icon={<Plus className="h-4 w-4" />}
             size="lg"
+            className="w-full sm:w-auto"
           >
             Create a room
           </Button>
@@ -85,6 +86,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
             onClick={onJoinRoom}
             icon={<Users className="h-4 w-4" />}
             size="lg"
+            className="w-full sm:w-auto"
           >
             Join a session
           </Button>
@@ -109,7 +111,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
                 <img
                   src="/images/screenshot.png"
                   alt="SprintJam collaborative room preview"
-                  className="block h-[260px] w-full origin-bottom transform-gpu rounded-[1.75rem] border border-white/10 object-cover object-top shadow-[0_40px_120px_-30px_rgba(0,0,0,0.45)] transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01] sm:rotate-[0.6deg]"
+                  className="block h-[220px] w-full origin-bottom transform-gpu rounded-[1.75rem] border border-white/10 object-cover object-top shadow-[0_40px_120px_-30px_rgba(0,0,0,0.45)] transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01] sm:rotate-[0.6deg]"
                   style={{
                     maskImage:
                       'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
