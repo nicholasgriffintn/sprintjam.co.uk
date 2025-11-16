@@ -25,11 +25,12 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
   disabled = false,
 }) => {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full flex-wrap items-stretch gap-2 sm:w-auto sm:flex-nowrap sm:items-center">
       <Button
         variant="secondary"
         size="sm"
         onClick={onPlayPause}
+        className="flex-1 sm:flex-none"
         disabled={disabled || isLoading}
         icon={
           isLoading ? (
@@ -55,7 +56,7 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
         type="button"
         onClick={onToggleMute}
         disabled={disabled}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 text-slate-600 border border-slate-200/60 hover:bg-white hover:text-slate-900 dark:bg-slate-900/60 dark:text-slate-300 dark:border-white/10 dark:hover:bg-slate-900 dark:hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+        className="inline-flex h-9 flex-1 items-center justify-center rounded-xl border border-slate-200/60 bg-white/90 text-slate-600 transition-all duration-200 hover:bg-white hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:h-9 sm:w-9 sm:flex-none"
         aria-label={isMuted ? 'Unmute' : 'Mute'}
       >
         {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
@@ -66,6 +67,7 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
           variant="secondary"
           size="sm"
           onClick={onGenerate}
+          className="flex-1 sm:flex-none"
           disabled={disabled || isLoading}
           icon={
             isLoading ? (
