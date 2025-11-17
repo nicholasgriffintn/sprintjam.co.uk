@@ -9,6 +9,7 @@ export type AvatarId = 'user' | 'robot' | 'bear' | 'bird' | 'knight' | 'alien' |
 export interface JiraTicket {
   id: string;
   key: string;
+  projectName?: string;
   summary: string;
   description: string;
   status: string;

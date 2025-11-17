@@ -115,6 +115,20 @@ const RoomScreen: FC<RoomScreenProps> = ({
             />
           )}
 
+          {roomData.settings.enableJiraIntegration &&
+            (roomData.jiraTicket || isModeratorView) && (
+              <JiraTicketPanel
+                isModeratorView={isModeratorView}
+                currentJiraTicket={roomData.jiraTicket}
+                judgeScore={roomData.judgeScore}
+                roomKey={roomData.key}
+                userName={name}
+                onJiraTicketFetched={onJiraTicketFetched || (() => {})}
+                onJiraTicketUpdated={onJiraTicketUpdated || (() => {})}
+                onError={onClearError}
+              />
+            )}
+
           {roomData.users.length > 0 && (
             <ResultsControls
               roomData={roomData}
@@ -123,22 +137,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
               onResetVotes={onResetVotes}
             />
           )}
-
-          {roomData.settings.enableJiraIntegration &&
-            (roomData.jiraTicket || isModeratorView) && (
-              <SurfaceCard padding="sm" variant="subtle">
-                <JiraTicketPanel
-                  isModeratorView={isModeratorView}
-                  currentJiraTicket={roomData.jiraTicket}
-                  judgeScore={roomData.judgeScore}
-                  roomKey={roomData.key}
-                  userName={name}
-                  onJiraTicketFetched={onJiraTicketFetched || (() => {})}
-                  onJiraTicketUpdated={onJiraTicketUpdated || (() => {})}
-                  onError={onClearError}
-                />
-              </SurfaceCard>
-            )}
 
           <AnimatePresence mode="wait">
             {roomData.showVotes ? (

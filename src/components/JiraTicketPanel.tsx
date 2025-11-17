@@ -9,6 +9,7 @@ import {
 } from '../lib/jira-service';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
+import { SurfaceCard } from './ui/SurfaceCard';
 
 interface JiraTicketPanelProps {
   isModeratorView: boolean;
@@ -106,15 +107,39 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
   };
 
   return (
-    <div data-testid="jira-ticket-panel">
-      <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
-        Jira Ticket
-      </h3>
+    <SurfaceCard
+      data-testid="jira-ticket-panel"
+      className="space-y-4"
+      padding="sm"
+      variant="subtle"
+    >
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+            Jira Ticket
+          </p>
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+            {currentJiraTicket ? currentJiraTicket.summary : 'Link a ticket'}
+          </h3>
+        </div>
+        {currentJiraTicket && (
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-300">
+            {currentJiraTicket.projectName ?? 'Active project'}
+          </span>
+        )}
+      </div>
 
       {!currentJiraTicket ? (
-        <div className="mb-4">
-          <div className="flex items-center space-x-2">
+        <div className="space-y-2 rounded-2xl border border-white/30 p-3 text-sm dark:border-white/10">
+          <label
+            htmlFor="jira-ticket-input"
+            className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300"
+          >
+            Ticket ID
+          </label>
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Input
+              id="jira-ticket-input"
               type="text"
               value={ticketId}
               onChange={(e) => setTicketId(e.target.value)}
@@ -125,35 +150,43 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
               data-testid="jira-ticket-input"
             />
             <Button
-              type="button"
               onClick={handleFetchTicket}
               disabled={isLoading || !ticketId.trim()}
+              isLoading={isLoading}
               data-testid="jira-fetch-button"
-              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              fullWidth
+              className="sm:w-auto"
             >
-              {isLoading ? 'Loading...' : 'Fetch'}
+              Fetch Ticket
             </Button>
           </div>
         </div>
       ) : (
-        <div className="mb-4 space-y-2" data-testid="jira-ticket-details">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <h4 className="font-medium text-blue-600 dark:text-blue-400">
-                {currentJiraTicket.key}
-              </h4>
+        <div className="space-y-3 text-sm" data-testid="jira-ticket-details">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
               <a
                 href={currentJiraTicket.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-2 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                className="text-base font-semibold text-brand-600 transition hover:text-brand-500 dark:text-brand-300"
+              >
+                {currentJiraTicket.key}
+              </a>
+              <a
+                href={currentJiraTicket.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium text-slate-500 underline underline-offset-4 hover:text-brand-500 dark:text-slate-300"
               >
                 Open in Jira
               </a>
             </div>
             {isModeratorView && (
               <Button
-                type="button"
+                variant="secondary"
+                size="sm"
+                className="rounded-full text-xs font-semibold"
                 onClick={async () => {
                   try {
                     await clearJiraTicket(roomKey, userName);
@@ -166,62 +199,67 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
                     );
                   }
                 }}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
               >
-                Clear
+                Clear Ticket
               </Button>
             )}
           </div>
 
-          <h3 className="text-lg font-medium">{currentJiraTicket.summary}</h3>
-
-          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded text-sm">
-            <p className="line-clamp-3">
-              {currentJiraTicket.description || 'No description available'}
+          {currentJiraTicket.description && (
+            <p className="text-xs text-slate-500 dark:text-slate-300 line-clamp-2">
+              {currentJiraTicket.description}
             </p>
-          </div>
+          )}
 
-          <div className="flex flex-wrap gap-2 text-sm">
-            <div className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded">
-              Status:{' '}
-              <span className="font-medium text-gray-900 dark:text-white">
+          <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/20 p-3 dark:border-white/10">
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Status
+              </dt>
+              <dd className="text-base font-semibold text-slate-900 dark:text-white">
                 {currentJiraTicket.status}
-              </span>
+              </dd>
             </div>
             {currentJiraTicket.assignee && (
-              <div className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded">
-                Assignee:{' '}
-                <span className="font-medium text-gray-900 dark:text-white">
+              <div className="rounded-2xl border border-white/20 p-3 dark:border-white/10">
+                <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  Assignee
+                </dt>
+                <dd className="text-base font-semibold text-slate-900 dark:text-white">
                   {currentJiraTicket.assignee}
-                </span>
+                </dd>
               </div>
             )}
-            <div className="px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded">
-              Story Points:{' '}
-              <span className="font-medium text-gray-900 dark:text-white">
+            <div className="rounded-2xl border border-white/20 p-3 dark:border-white/10">
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Story Points
+              </dt>
+              <dd className="text-base font-semibold text-slate-900 dark:text-white">
                 {currentJiraTicket.storyPoints ?? 'Not set'}
-              </span>
+              </dd>
             </div>
-          </div>
+          </dl>
 
           {isModeratorView &&
             judgeScore !== null &&
             judgeScore !== currentJiraTicket.storyPoints && (
-              <div className="mt-3">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-900 dark:text-white">
-                    Current Vote Score:{' '}
-                    <span className="font-medium">{judgeScore}</span>
+              <div className="rounded-2xl border border-emerald-200/40 bg-emerald-50/70 p-3 dark:border-emerald-400/30 dark:bg-emerald-500/10">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                    Current vote score:{' '}
+                    <span className="font-semibold">
+                      {judgeScore}
+                    </span>
                   </span>
                   <Button
-                    type="button"
-                    variant="ghost"
                     onClick={handleUpdateStoryPoints}
                     disabled={isUpdating}
+                    isLoading={isUpdating}
                     data-testid="jira-update-button"
-                    className="px-3 py-1 text-sm bg-green-600 dark:bg-green-700 text-white rounded hover:bg-green-700 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                    fullWidth
+                    className="sm:w-fit"
                   >
-                    {isUpdating ? 'Updating...' : 'Update Story Points in Jira'}
+                    Update Story Points in Jira
                   </Button>
                 </div>
               </div>
@@ -229,12 +267,7 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
         </div>
       )}
 
-      <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-        {isModeratorView
-          ? 'As the moderator, you can fetch Jira tickets and update story points when voting is complete.'
-          : 'The room moderator can fetch Jira tickets and update story points.'}
-      </div>
-    </div>
+    </SurfaceCard>
   );
 };
 
