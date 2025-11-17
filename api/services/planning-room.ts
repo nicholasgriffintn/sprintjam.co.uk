@@ -192,9 +192,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
               userName === roomData.moderator &&
               roomData.settings.autoHandoverModerator
             ) {
-              const connectedUsers = roomData.users.filter(
-                (user) => roomData.connectedUsers[user]
-              );
+              const connectedUsers = roomData.users
+                .filter((user) => roomData.connectedUsers[user])
+                .sort((a, b) => a.localeCompare(b));
 
               if (connectedUsers.length > 0) {
                 roomData.moderator = connectedUsers[0];
@@ -236,6 +236,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         structuredVotePayload = structuredVote;
       } else {
         finalVote = vote;
+      }
+
+      const validOptions = roomData.settings.estimateOptions.map(String);
+      if (!validOptions.includes(String(finalVote))) {
+        console.warn(
+          `Invalid vote ${finalVote} from ${userName}. Valid options: ${validOptions.join(', ')}`
+        );
+        return;
       }
 
       roomData.votes[userName] = finalVote;
@@ -374,11 +382,52 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         (settings.judgeAlgorithm !== undefined &&
           settings.judgeAlgorithm !== roomData.settings.judgeAlgorithm);
 
-      roomData.settings = applySettingsUpdate({
+      const oldEstimateOptions = roomData.settings.estimateOptions.map(String);
+      const oldStructuredVoting = roomData.settings.enableStructuredVoting;
+      const newSettings = applySettingsUpdate({
         currentSettings: roomData.settings,
         settingsUpdate: settings,
       });
+      const newEstimateOptions = newSettings.estimateOptions.map(String);
+      const newStructuredVoting = newSettings.enableStructuredVoting;
+
+      const estimateOptionsChanged =
+        oldEstimateOptions.length !== newEstimateOptions.length ||
+        !oldEstimateOptions.every((opt, idx) => opt === newEstimateOptions[idx]);
+
+      const structuredVotingModeChanged = oldStructuredVoting !== newStructuredVoting;
+
+      roomData.settings = newSettings;
       this.repository.setSettings(roomData.settings);
+
+      if (estimateOptionsChanged) {
+        const validOptions = newEstimateOptions;
+        const invalidVotes = Object.entries(roomData.votes).filter(
+          ([, vote]) => !validOptions.includes(String(vote))
+        );
+
+        if (invalidVotes.length > 0) {
+          roomData.votes = {};
+          roomData.structuredVotes = {};
+          roomData.showVotes = false;
+          roomData.judgeScore = null;
+          roomData.judgeMetadata = undefined;
+
+          this.repository.clearVotes();
+          this.repository.clearStructuredVotes();
+          this.repository.setShowVotes(false);
+          this.repository.setJudgeState(null);
+
+          this.broadcast({
+            type: 'resetVotes',
+          });
+        }
+      } else if (structuredVotingModeChanged && !newStructuredVoting) {
+        if (roomData.structuredVotes && Object.keys(roomData.structuredVotes).length > 0) {
+          roomData.structuredVotes = {};
+          this.repository.clearStructuredVotes();
+        }
+      }
 
       this.broadcast({
         type: 'settingsUpdated',
@@ -421,9 +470,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         return;
       }
 
-      const votes = Object.values(roomData.votes).filter(
-        (v) => v !== null && v !== '?'
-      );
+      const allVotes = Object.values(roomData.votes).filter((v) => v !== null);
+      const totalVoteCount = allVotes.length;
+      const questionMarkCount = allVotes.filter((v) => v === '?').length;
+
+      const votes = allVotes.filter((v) => v !== '?');
       const numericVotes = votes
         .filter((v) => !Number.isNaN(Number(v)))
         .map(Number);
@@ -436,7 +487,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const result = this.judge.calculateJudgeScore(
         numericVotes,
         roomData.settings.judgeAlgorithm,
-        validOptions
+        validOptions,
+        totalVoteCount,
+        questionMarkCount
       );
 
       roomData.judgeScore = result.score;

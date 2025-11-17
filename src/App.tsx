@@ -205,11 +205,13 @@ const App = () => {
   };
 
   const handleVote = (value: VoteValue | StructuredVote) => {
+    const previousVote = userVote;
     setUserVote(value);
 
     try {
       submitVote(value);
     } catch (err: unknown) {
+      setUserVote(previousVote);
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to submit vote';
       setError(errorMessage);

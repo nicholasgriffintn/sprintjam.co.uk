@@ -247,4 +247,106 @@ describe('PlanningPokerJudge', () => {
       expect([5, 8]).toContain(result.score);
     });
   });
+
+  describe('question mark vote handling', () => {
+    it('handles only question mark votes', () => {
+      const result = judge.calculateJudgeScore(
+        [],
+        JudgeAlgorithm.SMART_CONSENSUS,
+        fibonacciOptions,
+        3,
+        3
+      );
+
+      expect(result.score).toBe(null);
+      expect(result.confidence).toBe('low');
+      expect(result.needsDiscussion).toBe(true);
+      expect(result.reasoning).toContain('3 "?" votes');
+    });
+
+    it('downgrades confidence when >20% are question marks', () => {
+      const votes = [5, 5, 5, 5, 5];
+      const result = judge.calculateJudgeScore(
+        votes,
+        JudgeAlgorithm.SMART_CONSENSUS,
+        fibonacciOptions,
+        7,
+        2
+      );
+
+      expect(result.confidence).toBe('medium');
+      expect(result.reasoning).toContain('2 "?" votes');
+    });
+
+    it('triggers discussion when >30% are question marks', () => {
+      const votes = [5, 5, 5];
+      const result = judge.calculateJudgeScore(
+        votes,
+        JudgeAlgorithm.SMART_CONSENSUS,
+        fibonacciOptions,
+        5,
+        2
+      );
+
+      expect(result.needsDiscussion).toBe(true);
+      expect(result.reasoning).toContain('2 "?" votes');
+    });
+
+    it('includes question mark count in conservative mode reasoning', () => {
+      const votes = [3, 5, 8];
+      const result = judge.calculateJudgeScore(
+        votes,
+        JudgeAlgorithm.CONSERVATIVE_MODE,
+        fibonacciOptions,
+        4,
+        1
+      );
+
+      expect(result.reasoning).toContain('1 "?" vote');
+      expect(result.needsDiscussion).toBe(true);
+    });
+
+    it('includes question mark count in optimistic mode reasoning', () => {
+      const votes = [3, 5, 8];
+      const result = judge.calculateJudgeScore(
+        votes,
+        JudgeAlgorithm.OPTIMISTIC_MODE,
+        fibonacciOptions,
+        5,
+        2
+      );
+
+      expect(result.reasoning).toContain('2 "?" votes');
+      expect(result.needsDiscussion).toBe(true);
+    });
+
+    it('includes question mark count in simple average reasoning', () => {
+      const votes = [3, 5, 8];
+      const result = judge.calculateJudgeScore(
+        votes,
+        JudgeAlgorithm.SIMPLE_AVERAGE,
+        fibonacciOptions,
+        4,
+        1
+      );
+
+      expect(result.reasoning).toContain('1 "?" vote');
+      expect(result.needsDiscussion).toBe(true);
+    });
+
+    it('handles single numeric vote with question marks', () => {
+      const result = judge.calculateJudgeScore(
+        [5],
+        JudgeAlgorithm.SMART_CONSENSUS,
+        fibonacciOptions,
+        3,
+        2
+      );
+
+      expect(result.score).toBe(5);
+      expect(result.confidence).toBe('low');
+      expect(result.needsDiscussion).toBe(true);
+      expect(result.reasoning).toContain('2 "?" votes');
+    });
+  });
 });

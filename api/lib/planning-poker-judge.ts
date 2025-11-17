@@ -2,44 +2,65 @@ import type { JudgeAlgorithm, JudgeResult } from '../types';
 import { findClosestOption } from '../utils/judge';
 
 export class PlanningPokerJudge {
-  calculateJudgeScore(numericVotes: number[], algorithm: JudgeAlgorithm, validOptions: number[]): JudgeResult {
+  calculateJudgeScore(
+    numericVotes: number[],
+    algorithm: JudgeAlgorithm,
+    validOptions: number[],
+    totalVoteCount?: number,
+    questionMarkCount?: number
+  ): JudgeResult {
+    const actualTotalVotes = totalVoteCount ?? numericVotes.length;
+    const actualQuestionMarks = questionMarkCount ?? 0;
+
     if (numericVotes.length === 0) {
+      const reasoning = actualQuestionMarks > 0
+        ? `No numeric votes to analyze (${actualQuestionMarks} "?" vote${actualQuestionMarks > 1 ? 's' : ''})`
+        : 'No votes to analyze';
       return {
         score: null,
         confidence: 'low',
-        needsDiscussion: false,
-        reasoning: 'No votes to analyze'
+        needsDiscussion: actualQuestionMarks > 0,
+        reasoning
       };
     }
 
     if (numericVotes.length === 1) {
+      const reasoning = actualQuestionMarks > 0
+        ? `Only one numeric vote (${actualQuestionMarks} "?" vote${actualQuestionMarks > 1 ? 's' : ''})`
+        : 'No consensus possible';
       return {
         score: numericVotes[0],
         confidence: 'low',
-        needsDiscussion: false,
-        reasoning: 'No consensus possible'
+        needsDiscussion: actualQuestionMarks > 0,
+        reasoning
       };
     }
 
     const sortedVotes = [...numericVotes].sort((a, b) => a - b);
     const distribution = this.getVoteDistribution(numericVotes);
     const stats = this.calculateBasicStats(sortedVotes);
-    
+
+    const context = {
+      totalVoteCount: actualTotalVotes,
+      questionMarkCount: actualQuestionMarks,
+      numericVoteCount: numericVotes.length,
+    };
+
     switch (algorithm) {
       case 'smartConsensus':
-        return this.smartConsensus(sortedVotes, distribution, stats, validOptions);
-      
+        return this.smartConsensus(sortedVotes, distribution, stats, validOptions, context);
+
       case 'conservativeMode':
-        return this.conservativeMode(sortedVotes, stats, validOptions);
-      
+        return this.conservativeMode(sortedVotes, stats, validOptions, context);
+
       case 'optimisticMode':
-        return this.optimisticMode(sortedVotes, stats, validOptions);
-      
+        return this.optimisticMode(sortedVotes, stats, validOptions, context);
+
       case 'simpleAverage':
-        return this.simpleAverage(stats, validOptions);
-      
+        return this.simpleAverage(stats, validOptions, context);
+
       default:
-        return this.smartConsensus(sortedVotes, distribution,stats, validOptions);
+        return this.smartConsensus(sortedVotes, distribution, stats, validOptions, context);
     }
   }
 
@@ -65,26 +86,32 @@ export class PlanningPokerJudge {
   }
 
   private smartConsensus(
-    sortedVotes: number[], 
-    distribution: Record<number, number>, 
-    stats: any, 
-    validOptions: number[]
+    sortedVotes: number[],
+    distribution: Record<number, number>,
+    stats: any,
+    validOptions: number[],
+    context?: { totalVoteCount: number; questionMarkCount: number; numericVoteCount: number }
   ): JudgeResult {
     const totalVotes = sortedVotes.length;
-    
-    // Find the most common vote(s)
+    const questionMarks = context?.questionMarkCount ?? 0;
+    const actualTotal = context?.totalVoteCount ?? totalVotes;
+
     const maxCount = Math.max(...Object.values(distribution));
     const modes = Object.entries(distribution)
       .filter(([_, count]) => count === maxCount)
       .map(([vote, _]) => Number(vote));
-    
-    // Check for strong consensus (>60% on single value)
+
     if (modes.length === 1 && maxCount / totalVotes >= 0.6) {
+      const confidence = questionMarks > 0 && questionMarks / actualTotal > 0.2 ? 'medium' : 'high';
+      const reasoning = questionMarks > 0
+        ? `Strong consensus: ${maxCount}/${totalVotes} voted for ${modes[0]} (${questionMarks} "?" vote${questionMarks > 1 ? 's' : ''})`
+        : `Strong consensus: ${maxCount}/${totalVotes} voted for ${modes[0]}`;
+
       return {
         score: modes[0],
-        confidence: 'high',
-        needsDiscussion: false,
-        reasoning: `Strong consensus: ${maxCount}/${totalVotes} voted for ${modes[0]}`
+        confidence,
+        needsDiscussion: questionMarks > 0 && questionMarks / actualTotal > 0.3,
+        reasoning
       };
     }
     
@@ -129,64 +156,84 @@ export class PlanningPokerJudge {
 
   private conservativeMode(
     sortedVotes: number[],
-    stats: any, 
-    validOptions: number[]
+    stats: any,
+    validOptions: number[],
+    context?: { totalVoteCount: number; questionMarkCount: number; numericVoteCount: number }
   ): JudgeResult {
-    // In conservative mode, we bias toward higher estimates
-    // Use 75th percentile to account for complexity that might be missed
     const p75Index = Math.ceil(sortedVotes.length * 0.75) - 1;
     const p75 = sortedVotes[p75Index];
-    
+
     const closestValid = findClosestOption(p75, validOptions);
-    
-    const confidence = stats.range <= stats.median * 0.3 ? 'high' : 
-                      stats.range <= stats.median * 0.8 ? 'medium' : 'low';
-    
+
+    const questionMarks = context?.questionMarkCount ?? 0;
+    const baseConfidence = stats.range <= stats.median * 0.3 ? 'high' :
+                          stats.range <= stats.median * 0.8 ? 'medium' : 'low';
+
+    const confidence = questionMarks > 0 && baseConfidence === 'high' ? 'medium' : baseConfidence;
+
+    const reasoning = questionMarks > 0
+      ? `Conservative estimate using 75th percentile (${closestValid}) to account for potential complexity (${questionMarks} "?" vote${questionMarks > 1 ? 's' : ''})`
+      : `Conservative estimate using 75th percentile (${closestValid}) to account for potential complexity`;
+
     return {
       score: closestValid,
       confidence,
-      needsDiscussion: confidence === 'low',
-      reasoning: `Conservative estimate using 75th percentile (${closestValid}) to account for potential complexity`
+      needsDiscussion: confidence === 'low' || questionMarks > 0,
+      reasoning
     };
   }
 
   private optimisticMode(
     sortedVotes: number[],
-    stats: any, 
-    validOptions: number[]
+    stats: any,
+    validOptions: number[],
+    context?: { totalVoteCount: number; questionMarkCount: number; numericVoteCount: number }
   ): JudgeResult {
-    // In optimistic mode, we bias toward lower estimates
-    // Use 25th percentile assuming team efficiency
     const p25Index = Math.floor(sortedVotes.length * 0.25);
     const p25 = sortedVotes[p25Index];
-    
+
     const closestValid = findClosestOption(p25, validOptions);
-    
-    const confidence = stats.range <= stats.median * 0.3 ? 'high' : 
-                      stats.range <= stats.median * 0.8 ? 'medium' : 'low';
-    
+
+    const questionMarks = context?.questionMarkCount ?? 0;
+    const baseConfidence = stats.range <= stats.median * 0.3 ? 'high' :
+                          stats.range <= stats.median * 0.8 ? 'medium' : 'low';
+
+    const confidence = questionMarks > 0 && baseConfidence === 'high' ? 'medium' : baseConfidence;
+
+    const reasoning = questionMarks > 0
+      ? `Optimistic estimate using 25th percentile (${closestValid}) assuming team efficiency (${questionMarks} "?" vote${questionMarks > 1 ? 's' : ''})`
+      : `Optimistic estimate using 25th percentile (${closestValid}) assuming team efficiency`;
+
     return {
       score: closestValid,
       confidence,
-      needsDiscussion: confidence === 'low',
-      reasoning: `Optimistic estimate using 25th percentile (${closestValid}) assuming team efficiency`
+      needsDiscussion: confidence === 'low' || questionMarks > 0,
+      reasoning
     };
   }
 
   private simpleAverage(
-    stats: any, 
-    validOptions: number[]
+    stats: any,
+    validOptions: number[],
+    context?: { totalVoteCount: number; questionMarkCount: number; numericVoteCount: number }
   ): JudgeResult {
     const closestValid = findClosestOption(stats.mean, validOptions);
-    
-    const confidence = stats.range <= stats.mean * 0.2 ? 'high' : 
-                      stats.range <= stats.mean * 0.6 ? 'medium' : 'low';
-    
+
+    const questionMarks = context?.questionMarkCount ?? 0;
+    const baseConfidence = stats.range <= stats.mean * 0.2 ? 'high' :
+                          stats.range <= stats.mean * 0.6 ? 'medium' : 'low';
+
+    const confidence = questionMarks > 0 && baseConfidence === 'high' ? 'medium' : baseConfidence;
+
+    const reasoning = questionMarks > 0
+      ? `Simple average (${closestValid}) of all votes (${questionMarks} "?" vote${questionMarks > 1 ? 's' : ''})`
+      : `Simple average (${closestValid}) of all votes`;
+
     return {
       score: closestValid,
       confidence,
-      needsDiscussion: confidence === 'low',
-      reasoning: `Simple average (${closestValid}) of all votes`
+      needsDiscussion: confidence === 'low' || questionMarks > 0,
+      reasoning
     };
   }
 
