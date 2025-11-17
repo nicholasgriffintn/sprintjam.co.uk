@@ -75,9 +75,9 @@ export function VoteDistribution({ roomData, stats, viewMode }: VoteDistribution
                 />
               </div>
             </div>
-            <div className="w-32 text-right text-xs font-medium text-slate-600 dark:text-slate-300">
+            <div className="w-32 text-right text-xs font-medium text-slate-600 dark:text-white">
               <div>{displayLabel}</div>
-              <div className="text-[11px] text-slate-400 dark:text-slate-500">
+              <div className="text-[11px] text-slate-500 dark:text-white">
                 {viewMode === 'count'
                   ? `${asPercentage.toFixed(1)}% of votes`
                   : `${voteCount} votes`}
