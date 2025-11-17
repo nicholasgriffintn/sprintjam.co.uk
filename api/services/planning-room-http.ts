@@ -14,8 +14,10 @@ import {
 } from '../utils/room-data';
 import { applySettingsUpdate } from '../utils/room-settings';
 import { createJsonResponse } from '../utils/http';
+import type { PlanningRoomRepository } from '../repositories/planning-room';
 
 export interface PlanningRoomHttpContext {
+  repository: PlanningRoomRepository;
   getRoomData(): Promise<RoomData | undefined>;
   putRoomData(roomData: RoomData): Promise<void>;
   broadcast(message: BroadcastMessage): void;
@@ -99,7 +101,9 @@ export async function handleHttpRequest(
     markUserConnection(updatedRoomData, name, true);
     assignUserAvatar(updatedRoomData, name, avatar);
 
-    await ctx.putRoomData(updatedRoomData);
+    ctx.repository.ensureUser(name);
+    ctx.repository.setUserConnection(name, true);
+    ctx.repository.setUserAvatar(name, avatar);
 
     ctx.broadcast({
       type: 'userJoined',
@@ -133,7 +137,7 @@ export async function handleHttpRequest(
     }
 
     roomData.votes[name] = vote;
-    await ctx.putRoomData(roomData);
+    ctx.repository.setVote(name, vote);
 
     const structuredVote = roomData.structuredVotes?.[name];
 
@@ -170,7 +174,7 @@ export async function handleHttpRequest(
     }
 
     roomData.showVotes = !roomData.showVotes;
-    await ctx.putRoomData(roomData);
+    ctx.repository.setShowVotes(roomData.showVotes);
 
     ctx.broadcast({
       type: 'showVotes',
@@ -208,7 +212,10 @@ export async function handleHttpRequest(
     roomData.settings = applySettingsUpdate({
       currentSettings: roomData.settings,
     });
-    await ctx.putRoomData(roomData);
+    ctx.repository.clearVotes();
+    ctx.repository.clearStructuredVotes();
+    ctx.repository.setShowVotes(roomData.showVotes);
+    ctx.repository.setSettings(roomData.settings);
 
     ctx.broadcast({
       type: 'resetVotes',
@@ -258,7 +265,7 @@ export async function handleHttpRequest(
       settingsUpdate: providedSettings,
     });
 
-    await ctx.putRoomData(roomData);
+    ctx.repository.setSettings(roomData.settings);
 
     ctx.broadcast({
       type: 'settingsUpdated',
@@ -288,7 +295,7 @@ export async function handleHttpRequest(
     }
 
     roomData.jiraTicket = ticket;
-    await ctx.putRoomData(roomData);
+    ctx.repository.setJiraTicket(roomData.jiraTicket);
 
     ctx.broadcast({
       type: 'jiraTicketUpdated',
@@ -315,7 +322,7 @@ export async function handleHttpRequest(
     }
 
     delete roomData.jiraTicket;
-    await ctx.putRoomData(roomData);
+    ctx.repository.setJiraTicket(undefined);
 
     ctx.broadcast({
       type: 'jiraTicketCleared',

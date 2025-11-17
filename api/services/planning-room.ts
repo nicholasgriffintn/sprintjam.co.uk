@@ -6,7 +6,6 @@ import type {
   DurableObjectState,
   WebSocket as CfWebSocket,
   Response as CfResponse,
-  SqlStorage,
 } from '@cloudflare/workers-types';
 
 import { PlanningPokerJudge } from '../lib/planning-poker-judge';
@@ -35,23 +34,24 @@ import {
   handleHttpRequest,
   type PlanningRoomHttpContext,
 } from './planning-room-http';
+import { PlanningRoomRepository } from '../repositories/planning-room';
 
 export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
   env: Env;
   sessions: Map<CfWebSocket, SessionInfo>;
   judge: PlanningPokerJudge;
-  sql: SqlStorage;
+  repository: PlanningRoomRepository;
 
   constructor(state: DurableObjectState, env: Env) {
     this.state = state;
     this.env = env;
     this.sessions = new Map();
     this.judge = new PlanningPokerJudge();
-    this.sql = this.state.storage.sql;
+    this.repository = new PlanningRoomRepository(this.state.storage);
 
     this.state.blockConcurrencyWhile(async () => {
-      this.ensureRoomStateTable();
+      this.repository.initializeSchema();
       let roomData = await this.getRoomData();
       if (!roomData) {
         roomData = createInitialRoomData({});
@@ -116,7 +116,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const normalizedRoomData = normalizeRoomData(roomData);
       markUserConnection(normalizedRoomData, userName, true);
 
-      await this.putRoomData(normalizedRoomData);
+      this.repository.setUserConnection(userName, true);
 
       this.broadcast({
         type: 'userConnectionStatus',
@@ -181,7 +181,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           if (roomData) {
             markUserConnection(roomData, userName, false);
 
-            await this.putRoomData(roomData);
+            this.repository.setUserConnection(userName, false);
             this.broadcast({
               type: 'userConnectionStatus',
               user: userName,
@@ -198,7 +198,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
               if (connectedUsers.length > 0) {
                 roomData.moderator = connectedUsers[0];
-                await this.putRoomData(roomData);
+                this.repository.setModerator(roomData.moderator);
 
                 this.broadcast({
                   type: 'newModerator',
@@ -241,7 +241,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       roomData.votes[userName] = finalVote;
       const newPhase = determineRoomPhase(roomData);
 
-      await this.putRoomData(roomData);
+      this.repository.setVote(userName, finalVote);
+
+      if (structuredVotePayload) {
+        this.repository.setStructuredVote(userName, structuredVotePayload);
+      }
 
       this.broadcast({
         type: 'vote',
@@ -285,7 +289,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       roomData.showVotes = !roomData.showVotes;
       const newPhase = determineRoomPhase(roomData);
 
-      await this.putRoomData(roomData);
+      this.repository.setShowVotes(roomData.showVotes);
 
       this.broadcast({
         type: 'showVotes',
@@ -328,9 +332,13 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       roomData.structuredVotes = {};
       roomData.showVotes = false;
       roomData.judgeScore = null;
+      roomData.judgeMetadata = undefined;
       const newPhase = determineRoomPhase(roomData);
 
-      await this.putRoomData(roomData);
+      this.repository.clearVotes();
+      this.repository.clearStructuredVotes();
+      this.repository.setShowVotes(roomData.showVotes);
+      this.repository.setJudgeState(null);
 
       this.broadcast({
         type: 'resetVotes',
@@ -370,7 +378,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         currentSettings: roomData.settings,
         settingsUpdate: settings,
       });
-      await this.putRoomData(roomData);
+      this.repository.setSettings(roomData.settings);
 
       this.broadcast({
         type: 'settingsUpdated',
@@ -385,7 +393,8 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         await this.calculateAndUpdateJudgeScore();
       } else if (judgeSettingsChanged && !roomData.settings.enableJudge) {
         roomData.judgeScore = null;
-        await this.putRoomData(roomData);
+        roomData.judgeMetadata = undefined;
+        this.repository.setJudgeState(null);
 
         this.broadcast({
           type: 'judgeScoreUpdated',
@@ -438,7 +447,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         algorithm: roomData.settings.judgeAlgorithm,
       };
 
-      await this.putRoomData(roomData);
+      this.repository.setJudgeState(result.score, roomData.judgeMetadata);
 
       this.broadcast({
         type: 'judgeScoreUpdated',
@@ -458,7 +467,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       roomData.jiraTicket = ticket;
-      await this.putRoomData(roomData);
+      this.repository.setJiraTicket(roomData.jiraTicket);
 
       this.broadcast({
         type: 'jiraTicketUpdated',
@@ -477,7 +486,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       delete roomData.jiraTicket;
-      await this.putRoomData(roomData);
+      this.repository.setJiraTicket(undefined);
 
       this.broadcast({
         type: 'jiraTicketCleared',
@@ -554,7 +563,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       roomData.currentStrudelGenerationId = response.generationId;
       roomData.strudelPhase = phase;
 
-      await this.putRoomData(roomData);
+      this.repository.setStrudelState({
+        code: roomData.currentStrudelCode,
+        generationId: roomData.currentStrudelGenerationId,
+        phase: roomData.strudelPhase,
+      });
 
       this.broadcast({
         type: 'strudelCodeGenerated',
@@ -583,7 +596,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     }
 
     roomData.strudelIsPlaying = !roomData.strudelIsPlaying;
-    await this.putRoomData(roomData);
+    this.repository.setStrudelPlayback(!!roomData.strudelIsPlaying);
 
     this.broadcast({
       type: 'initialize',
@@ -591,41 +604,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     });
   }
 
-  private ensureRoomStateTable() {
-    this.sql.exec(
-      `CREATE TABLE IF NOT EXISTS room_state (
-        key TEXT PRIMARY KEY,
-        data TEXT NOT NULL
-      )`
-    );
-  }
-
   async getRoomData(): Promise<RoomData | undefined> {
-    const row = this.sql
-      .exec<{ data: string }>(
-        'SELECT data FROM room_state WHERE key = ?',
-        'roomData'
-      )
-      .toArray()[0];
-
-    if (!row?.data) {
-      return undefined;
-    }
-
-    try {
-      return JSON.parse(row.data) as RoomData;
-    } catch (error) {
-      console.error('Failed to parse room data from SQLite storage:', error);
-      return undefined;
-    }
+    return this.repository.getRoomData();
   }
 
   async putRoomData(roomData: RoomData): Promise<void> {
-    this.sql.exec(
-      `INSERT INTO room_state (key, data) VALUES (?, ?)
-       ON CONFLICT(key) DO UPDATE SET data = excluded.data`,
-      'roomData',
-      JSON.stringify(roomData)
-    );
+    await this.repository.replaceRoomData(roomData);
   }
 }
