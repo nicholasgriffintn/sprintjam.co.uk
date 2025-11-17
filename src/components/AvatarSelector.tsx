@@ -70,6 +70,7 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
           {AVATARS.map((avatar) => (
             <Button
               key={avatar.id}
+              data-testid={`avatar-option-${avatar.id}`}
               variant="ghost"
               type="button"
               onClick={() => onSelectAvatar(avatar.id)}

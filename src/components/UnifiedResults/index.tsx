@@ -1,248 +1,77 @@
 import { motion } from 'framer-motion';
-import { useMemo, type JSX } from 'react';
+import { useMemo } from 'react';
 
-import type {
-  RoomData,
-  RoomStats,
-  SummaryCardSetting,
-  VotingCriterion,
-  CriteriaStats,
-} from '../../types';
+import type { RoomData, RoomStats, VotingCriterion } from '../../types';
 import { VoteDistribution } from './VoteDistribution';
 import { CriteriaBreakdownStat } from './CriteriaBreakdown';
 import { SurfaceCard } from '../ui/SurfaceCard';
+import { useCriteriaStats } from './hooks/useCriteriaStats';
+import { useSummaryCardConfigs } from './hooks/useSummaryCardConfigs';
+import { useSummaryCards } from './hooks/useSummaryCards';
+import { useVoteDistributionControls } from './hooks/useVoteDistributionControls';
+import { useJudgeAnimation } from './hooks/useJudgeAnimation';
+import {
+  buildConsensusSummary,
+  buildRecommendation,
+  calculateParticipationRate,
+  getGridCols,
+  getTopDistribution,
+} from './utils';
+import { JudgeResult } from './JudgeResult';
 
 interface UnifiedResultsProps {
   roomData: RoomData;
   stats: RoomStats;
   criteria?: VotingCriterion[];
+  displayJudge?: boolean;
+  showVotes?: boolean;
 }
 
 export function UnifiedResults({
   roomData,
   stats,
   criteria,
+  displayJudge = false,
+  showVotes = false,
 }: UnifiedResultsProps) {
+  const showJudgeAnimation = useJudgeAnimation(roomData);
+
   const resultsDisplay = roomData.settings.resultsDisplay;
-
-  const useConfiguredSummaryCards = Boolean(
-    resultsDisplay?.summaryCards && resultsDisplay.summaryCards.length > 0
-  );
-
-  const summaryCardConfigs = useMemo((): SummaryCardSetting[] => {
-    if (useConfiguredSummaryCards && resultsDisplay?.summaryCards) {
-      return resultsDisplay.summaryCards.filter(
-        (card) => card.enabled !== false
-      );
-    }
-
-    return [
-      {
-        id: 'average',
-        label: 'Average',
-        enabled: roomData.settings.showAverage,
-      },
-      {
-        id: 'mode',
-        label: 'Most Common',
-        enabled: roomData.settings.showMedian,
-      },
-      {
-        id: 'topVotes',
-        label: 'Top Votes',
-        enabled: roomData.settings.showTopVotes,
-      },
-    ].filter((card) => card.enabled);
-  }, [
-    resultsDisplay?.summaryCards,
-    roomData.settings.showAverage,
-    roomData.settings.showMedian,
-    roomData.settings.showTopVotes,
-    useConfiguredSummaryCards,
-  ]);
-
-  const criteriaStats = useMemo((): (CriteriaStats & {
-    maxScore: number;
-  })[] => {
-    if (!criteria || !roomData.structuredVotes) return [];
-
-    const structuredVotes = Object.values(roomData.structuredVotes);
-    if (structuredVotes.length === 0) return [];
-
-    return criteria.map((criterion) => {
-      const scores = structuredVotes
-        .map((vote) => vote.criteriaScores[criterion.id])
-        .filter((score) => score !== undefined);
-
-      if (scores.length === 0) {
-        return {
-          criterionId: criterion.id,
-          name: criterion.name,
-          average: 0,
-          min: 0,
-          max: 0,
-          variance: 0,
-          consensus: 'low' as const,
-          maxScore: criterion.maxScore,
-        };
-      }
-
-      const average =
-        scores.reduce((sum, score) => sum + score, 0) / scores.length;
-      const min = Math.min(...scores);
-      const max = Math.max(...scores);
-      const variance = max - min;
-
-      let consensus: 'high' | 'medium' | 'low';
-      if (criterion.id === 'unknowns') {
-        consensus = variance === 0 ? 'high' : variance === 1 ? 'medium' : 'low';
-      } else {
-        const relativeVariance = variance / criterion.maxScore;
-        consensus =
-          relativeVariance <= 0.25
-            ? 'high'
-            : relativeVariance <= 0.5
-            ? 'medium'
-            : 'low';
-      }
-
-      return {
-        criterionId: criterion.id,
-        name: criterion.name,
-        average,
-        min,
-        max,
-        variance,
-        consensus,
-        maxScore: criterion.maxScore,
-      };
-    });
-  }, [roomData.structuredVotes, criteria]);
-
+  const criteriaStats = useCriteriaStats(roomData, criteria);
   const hasStructuredData = criteriaStats.length > 0;
-
-  const topDistribution = useMemo(() => {
-    const maxCount = roomData.settings.topVotesCount || 4;
-    return Object.entries(stats.distribution)
-      .filter(([_, count]) => count > 0)
-      .sort(([_, a], [__, b]) => b - a)
-      .slice(0, maxCount);
-  }, [stats.distribution, roomData.settings.topVotesCount]);
-
-  const summaryCardElements = useMemo(() => {
-    return summaryCardConfigs
-      .map((card, index) => {
-        const delay = index * 0.05;
-        switch (card.id) {
-          case 'average': {
-            if (!useConfiguredSummaryCards && !roomData.settings.showAverage)
-              return null;
-            return (
-              <motion.div
-                key={card.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay }}
-              >
-                <SurfaceCard padding="sm" className="text-left">
-                  <h4 className="mb-1 text-sm font-medium text-slate-500 dark:text-slate-300">
-                    {card.label}
-                  </h4>
-                  <div className="text-3xl font-semibold text-brand-600 dark:text-brand-300">
-                    {stats.avg}
-                  </div>
-                </SurfaceCard>
-              </motion.div>
-            );
-          }
-          case 'mode': {
-            if (!useConfiguredSummaryCards && !roomData.settings.showMedian)
-              return null;
-            return (
-              <motion.div
-                key={card.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay }}
-              >
-                <SurfaceCard padding="sm" className="text-left">
-                  <h4 className="mb-1 text-sm font-medium text-slate-500 dark:text-slate-300">
-                    {card.label}
-                  </h4>
-                  <div className="text-3xl font-semibold text-brand-600 dark:text-brand-300">
-                    {stats.mode || 'N/A'}
-                  </div>
-                </SurfaceCard>
-              </motion.div>
-            );
-          }
-          case 'topVotes': {
-            if (!useConfiguredSummaryCards && !roomData.settings.showTopVotes)
-              return null;
-            if (!topDistribution || topDistribution.length === 0) return null;
-            return (
-              <motion.div
-                key={card.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay }}
-              >
-                <SurfaceCard padding="sm" className="space-y-2">
-                  <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
-                    {card.label}
-                  </h4>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {topDistribution.map(([vote, count]) => {
-                      const metadata =
-                        roomData.settings.voteOptionsMetadata?.find(
-                          (m) => m.value.toString() === vote
-                        );
-                      const background = metadata?.background || '#ebf5ff';
-
-                      return (
-                        <div key={vote} className="flex items-center gap-1">
-                          <div
-                            className="flex h-7 w-7 items-center justify-center rounded-xl text-xs font-semibold text-black"
-                            style={{ backgroundColor: background }}
-                          >
-                            {vote}
-                          </div>
-                          <span className="text-xs text-slate-500 dark:text-slate-300">
-                            ×{count}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </SurfaceCard>
-              </motion.div>
-            );
-          }
-          default:
-            return null;
-        }
-      })
-      .filter((element): element is JSX.Element => element !== null);
-  }, [
+  const { summaryCardConfigs, useConfiguredSummaryCards } =
+    useSummaryCardConfigs(roomData, resultsDisplay, hasStructuredData);
+  const topDistribution = useMemo(
+    () => getTopDistribution(stats, roomData),
+    [stats.distribution, roomData.settings.topVotesCount]
+  );
+  const participationRate = calculateParticipationRate(stats, roomData);
+  const consensusSummary = buildConsensusSummary(
+    criteriaStats,
+    roomData.judgeMetadata
+  );
+  const recommendation = buildRecommendation({
+    participationRate,
+    consensusLevel: consensusSummary.level,
+    needsDiscussion: consensusSummary.needsDiscussion,
+  });
+  const { summaryCardElements, visibleStatsCount } = useSummaryCards({
     summaryCardConfigs,
-    topDistribution,
-    roomData.settings.showAverage,
-    roomData.settings.showMedian,
-    roomData.settings.showTopVotes,
-    stats.avg,
-    stats.mode,
     useConfiguredSummaryCards,
-    roomData.settings.voteOptionsMetadata,
-  ]);
-
-  const visibleStatsCount = summaryCardElements.length;
-
-  const getGridCols = () => {
-    if (visibleStatsCount === 0) return '';
-    if (visibleStatsCount === 1) return 'grid-cols-1';
-    if (visibleStatsCount === 2) return 'grid-cols-2';
-    return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
-  };
+    roomData,
+    stats,
+    topDistribution,
+    participationRate,
+    consensusSummary,
+    recommendation,
+    hasStructuredData,
+  });
+  const {
+    distributionView,
+    setDistributionView,
+    distributionViewOptions,
+    handleExportDistribution,
+  } = useVoteDistributionControls(roomData, stats);
 
   const criteriaSettings = resultsDisplay?.criteriaBreakdown;
   const showCriteriaBreakdown =
@@ -254,55 +83,95 @@ export function UnifiedResults({
     resultsDisplay?.voteDistributionLabel ?? 'Vote Distribution';
 
   return (
-    <div className="space-y-4">
-      {visibleStatsCount > 0 && (
-        <div className={`grid ${getGridCols()} gap-4`}>
-          {summaryCardElements}
-        </div>
+    <>
+      {displayJudge && showVotes && (
+        <JudgeResult
+          roomData={roomData}
+          stats={stats}
+          showJudgeAnimation={showJudgeAnimation}
+        />
       )}
 
-      {showCriteriaBreakdown && (
-        <div>
-          <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
-            {criteriaSettings?.title ?? 'Criteria Breakdown'}
-          </h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {criteriaStats.map((stat) => (
-              <motion.div
-                key={stat.criterionId}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.3,
-                  delay: criteriaStats.indexOf(stat) * 0.05,
-                }}
-              >
-                <SurfaceCard
-                  padding="sm"
-                  variant="subtle"
-                  className="space-y-3"
-                >
-                  <CriteriaBreakdownStat
-                    stat={stat}
-                    criteriaSettings={criteriaSettings}
-                  />
-                </SurfaceCard>
-              </motion.div>
-            ))}
+      <div className="space-y-4">
+        {visibleStatsCount > 0 && (
+          <div className={`grid ${getGridCols(visibleStatsCount)} gap-4`}>
+            {summaryCardElements}
           </div>
-        </div>
-      )}
+        )}
 
-      {showVoteDistributionSection && (
-        <div>
-          <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
-            {voteDistributionLabel}
-          </h3>
-          <SurfaceCard padding="sm">
-            <VoteDistribution roomData={roomData} stats={stats} />
-          </SurfaceCard>
-        </div>
-      )}
-    </div>
+        {showCriteriaBreakdown && (
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
+              {criteriaSettings?.title ?? 'Criteria Breakdown'}
+            </h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {criteriaStats.map((stat) => (
+                <motion.div
+                  key={stat.criterionId}
+                  className="h-full"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: criteriaStats.indexOf(stat) * 0.05,
+                  }}
+                >
+                  <SurfaceCard
+                    padding="sm"
+                    variant="subtle"
+                    className="flex h-full flex-col"
+                  >
+                    <CriteriaBreakdownStat
+                      stat={stat}
+                      criteriaSettings={criteriaSettings}
+                    />
+                  </SurfaceCard>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {showVoteDistributionSection && (
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
+              {voteDistributionLabel}
+            </h3>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-sm dark:bg-slate-800">
+                {distributionViewOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setDistributionView(option.id)}
+                    className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                      distributionView === option.id
+                        ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={handleExportDistribution}
+                className="inline-flex items-center rounded-md border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Export CSV
+              </button>
+            </div>
+            <SurfaceCard padding="sm">
+              <VoteDistribution
+                roomData={roomData}
+                stats={stats}
+                viewMode={distributionView}
+              />
+            </SurfaceCard>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

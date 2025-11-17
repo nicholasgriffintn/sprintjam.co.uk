@@ -8,6 +8,50 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
+    <style>
+      html {
+        background-color: #f8fafc;
+        color: #0f172a;
+      }
+      @media (prefers-color-scheme: dark) {
+        html {
+          background-color: #04060b;
+          color: #ffffff;
+        }
+      }
+      html.light {
+        background-color: #f8fafc;
+        color: #0f172a;
+      }
+      html.dark {
+        background-color: #04060b;
+        color: #ffffff;
+      }
+      body {
+        background: transparent;
+      }
+    </style>
+    <script>
+      (function() {
+        var storageKey = 'sprintjam_theme';
+        var root = document.documentElement;
+        var getPreferredTheme = function() {
+          try {
+            var stored = localStorage.getItem(storageKey);
+            if (stored === 'light' || stored === 'dark') {
+              return stored;
+            }
+          } catch (_error) {
+            // Ignore read errors and fall back to system preference
+          }
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          return prefersDark ? 'dark' : 'light';
+        };
+        var theme = getPreferredTheme();
+        root.classList.remove('light', 'dark');
+        root.classList.add(theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -109,13 +109,13 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
   const hasCode = Boolean(roomData.currentStrudelCode);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-end sm:left-auto sm:right-4 sm:w-auto">
       <SurfaceCard
         variant="subtle"
         padding={isExpanded ? 'sm' : 'none'}
         className={`relative origin-bottom-right overflow-hidden transition-all duration-300 ${
           isExpanded
-            ? 'w-[min(640px,calc(100vw-2rem))]'
+            ? 'w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]'
             : 'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl'
         }`}
         aria-expanded={isExpanded}
@@ -151,8 +151,8 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
               <X className="h-4 w-4" />
             </button>
 
-            <div className="flex items-center justify-between gap-3 pr-6">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-4 pr-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:pr-6">
+              <div className="flex min-w-0 items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 text-brand-500">
                   <Music className="h-5 w-5" />
                 </div>
@@ -175,16 +175,18 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
                 </div>
               </div>
 
-              <StrudelControls
-                isPlaying={isPlaying}
-                isMuted={isMuted}
-                isLoading={isLoading || isAwaitingGeneration}
-                onPlayPause={handlePlayPause}
-                onToggleMute={toggleMute}
-                onGenerate={isModeratorView ? handleGenerate : undefined}
-                showGenerateButton={isModeratorView}
-                disabled={!hasCode && !isModeratorView}
-              />
+              <div className="w-full sm:w-auto">
+                <StrudelControls
+                  isPlaying={isPlaying}
+                  isMuted={isMuted}
+                  isLoading={isLoading || isAwaitingGeneration}
+                  onPlayPause={handlePlayPause}
+                  onToggleMute={toggleMute}
+                  onGenerate={isModeratorView ? handleGenerate : undefined}
+                  showGenerateButton={isModeratorView}
+                  disabled={!hasCode && !isModeratorView}
+                />
+              </div>
             </div>
 
             {error && (

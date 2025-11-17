@@ -23,18 +23,21 @@ interface CriterionRowProps {
 
 function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
   const scoreValues: number[] = [];
-  
+
   for (let i = criterion.minScore; i <= criterion.maxScore; i++) {
     scoreValues.push(i);
   }
 
-  const orderedValues = criterion.descending ? [...scoreValues].reverse() : scoreValues;
+  const orderedValues = criterion.descending
+    ? [...scoreValues].reverse()
+    : scoreValues;
 
   const scoreButtons = orderedValues.map((value) => (
     <motion.button
       key={value}
       type="button"
       onClick={() => onScoreChange(value)}
+      data-testid={`structured-score-${criterion.id}-${value}`}
       className={`w-8 h-8 flex items-center justify-center text-sm font-medium border rounded ${
         score === value
           ? 'border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
@@ -49,14 +52,19 @@ function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
   ));
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
+    <div
+      className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-600 last:border-b-0"
+      data-testid={`structured-criterion-${criterion.id}`}
+    >
       <div className="flex-1">
-        <div className="font-medium text-gray-900 dark:text-white">{criterion.name}</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">{criterion.description}</div>
+        <div className="font-medium text-gray-900 dark:text-white">
+          {criterion.name}
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          {criterion.description}
+        </div>
       </div>
-      <div className="flex gap-1 ml-4">
-        {scoreButtons}
-      </div>
+      <div className="flex gap-1 ml-4">{scoreButtons}</div>
     </div>
   );
 }
@@ -67,12 +75,14 @@ export function StructuredVotingPanel({
   onVote,
   displaySettings,
 }: StructuredVotingPanelProps) {
-  const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>(() => {
-    if (currentVote?.criteriaScores) {
-      return { ...currentVote.criteriaScores };
+  const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>(
+    () => {
+      if (currentVote?.criteriaScores) {
+        return { ...currentVote.criteriaScores };
+      }
+      return {};
     }
-    return {};
-  });
+  );
 
   const [showScoringInfo, setShowScoringInfo] = useState(false);
   const infoToggleSettings = displaySettings?.infoToggle;
@@ -96,12 +106,12 @@ export function StructuredVotingPanel({
   const handleScoreChange = (criterionId: string, score: number) => {
     const newScores = { ...criteriaScores, [criterionId]: score };
     setCriteriaScores(newScores);
-    
+
     onVote({ criteriaScores: newScores });
   };
 
   return (
-    <div className="mb-6">
+    <div className="mb-6" data-testid="structured-voting-panel">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           {displaySettings?.panelTitle ?? 'Structured Estimation'}
@@ -110,7 +120,7 @@ export function StructuredVotingPanel({
           <button
             type="button"
             onClick={() => setShowScoringInfo(!showScoringInfo)}
-            className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${
               showScoringInfo
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border border-transparent'
@@ -201,11 +211,16 @@ export function StructuredVotingPanel({
           </div>
         )}
 
-      <div className="flex items-center justify-between p-3 border-2 border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+      <div
+        className="flex items-center justify-between p-3 border-2 border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20"
+        data-testid="structured-summary"
+      >
         <div>
           <div className="font-medium text-blue-900 dark:text-blue-200">
             {displaySettings?.summary?.storyPointsLabel ?? 'Story Points'}:{' '}
-            {calculatedVote?.calculatedStoryPoints || '?'}
+            <span data-testid="structured-summary-points">
+              {calculatedVote?.calculatedStoryPoints || '?'}
+            </span>
           </div>
           <div className="text-xs text-blue-700 dark:text-blue-300">
             {displaySettings?.summary?.weightedScoreLabel ?? 'Weighted score'}:{' '}

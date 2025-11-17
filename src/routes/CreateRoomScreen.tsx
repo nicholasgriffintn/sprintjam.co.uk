@@ -127,7 +127,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   };
 
   return (
-    <PageBackground align="start" maxWidth="sm">
+    <PageBackground align="start" maxWidth="sm" variant="compact">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -303,6 +303,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               <Button
                 type="button"
                 variant="secondary"
+                data-testid="create-room-back"
                 onClick={handleBack}
                 className="sm:w-auto sm:flex-shrink-0"
                 fullWidth
@@ -312,6 +313,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               </Button>
               <Button
                 type="submit"
+                data-testid="create-room-submit"
                 disabled={!getFormValid()}
                 className="sm:flex-1"
                 icon={<ChevronRight className="h-4 w-4" />}

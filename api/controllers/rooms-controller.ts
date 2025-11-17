@@ -4,8 +4,8 @@ import type {
 } from '@cloudflare/workers-types';
 
 import type { Env, RoomSettings } from '../types';
-import { generateRoomKey } from '../utils/room';
-import { getRoomStub, jsonError } from '../utils/controller-helpers';
+import { generateRoomKey, getRoomStub } from '../utils/room';
+import { jsonError } from '../utils/http';
 
 export async function createRoomController(
   request: CfRequest,
