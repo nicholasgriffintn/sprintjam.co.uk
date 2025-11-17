@@ -28,13 +28,17 @@ export class RoomPage {
   }
 
   async expectVotePendingState() {
-    await expect(this.page.getByTestId('votes-hidden-panel')).toContainText(
-      'Votes are hidden'
-    );
+    await this.expectVotesHiddenMessage('Votes are hidden');
   }
 
   async revealVotes() {
     await this.page.getByTestId('toggle-votes-button').click();
+  }
+
+  async expectVotesHiddenMessage(expected: string) {
+    await expect(this.page.getByTestId('votes-hidden-panel')).toContainText(
+      expected
+    );
   }
 
   async expectVoteVisible(_participantName: string, expectedValue: string) {
@@ -45,5 +49,9 @@ export class RoomPage {
 
   async expectResultsVisible() {
     await expect(this.page.getByTestId('results-panel')).toBeVisible();
+  }
+
+  async resetVotes() {
+    await this.page.getByTestId('reset-votes-button').click();
   }
 }
