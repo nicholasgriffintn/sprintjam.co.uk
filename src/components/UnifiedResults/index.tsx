@@ -95,6 +95,7 @@ export function UnifiedResults({
       <div
         className="space-y-4"
         data-testid="vote-results"
+        id="vote-results-region"
         role="region"
         aria-live="polite"
         aria-atomic="false"
@@ -145,7 +146,12 @@ export function UnifiedResults({
               {voteDistributionLabel}
             </h3>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-sm dark:bg-slate-800">
+              <div
+                className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-sm dark:bg-slate-800"
+                role="group"
+                aria-label="Vote distribution view"
+                data-testid="distribution-view-toggle-group"
+              >
                 {distributionViewOptions.map((option) => (
                   <button
                     key={option.id}
@@ -156,6 +162,8 @@ export function UnifiedResults({
                         ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
                         : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                     }`}
+                    aria-pressed={distributionView === option.id}
+                    data-testid={`distribution-view-option-${option.id}`}
                   >
                     {option.label}
                   </button>

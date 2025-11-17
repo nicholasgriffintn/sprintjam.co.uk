@@ -50,4 +50,29 @@ test.describe('Room Creation Flow Accessibility', () => {
     // Should navigate to avatar selection
     await expect(page.getByText(/pick an avatar/i)).toBeVisible();
   });
+
+  test('custom emoji picker exposes aria-expanded and controls', async ({
+    page,
+  }) => {
+    await page.locator('#create-name').fill('Accessibility Test');
+    await page.getByTestId('create-room-submit').click();
+    await waitForA11yReady(page);
+
+    await expect(
+      page.getByRole('heading', { name: /select your avatar/i })
+    ).toBeVisible();
+
+    const toggle = page.getByTestId('avatar-emoji-toggle');
+    await toggle.scrollIntoViewIfNeeded();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const controlsId = await toggle.getAttribute('aria-controls');
+    expect(controlsId).toBeTruthy();
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const emojiPanel = controlsId
+      ? page.locator(`#${controlsId}`)
+      : page.getByTestId('avatar-emoji-panel');
+    await expect(emojiPanel).toBeVisible();
+  });
 });

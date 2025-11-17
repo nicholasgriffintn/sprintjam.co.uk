@@ -1,6 +1,10 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-import { Timer as TimerIcon, Pause as PauseIcon, RefreshCcw as ResetIcon } from 'lucide-react';
+import {
+  Timer as TimerIcon,
+  Pause as PauseIcon,
+  RefreshCcw as ResetIcon,
+} from 'lucide-react';
 
 import { formatTime } from '../utils/time';
 
@@ -25,16 +29,26 @@ export function Timer() {
     };
   }, [timerRunning]);
 
+  const timerActionLabel = timerRunning ? 'Pause timer' : 'Start timer';
+
   return (
     <div className="mb-4 flex items-center space-x-2" data-testid="room-timer">
-      <span className="font-mono text-lg text-gray-500 dark:text-gray-400">
+      <span
+        className="font-mono text-lg text-gray-500 dark:text-gray-400"
+        role="timer"
+        aria-live="off"
+        aria-atomic="true"
+        aria-label={`Elapsed time ${formatTime(timerSeconds)}`}
+      >
         {formatTime(timerSeconds)}
       </span>
       <motion.button
         type="button"
         onClick={() => setTimerRunning(!timerRunning)}
         className="p-1 rounded bg-blue-200 text-blue-900 hover:bg-blue-300"
-        title={timerRunning ? 'Pause Timer' : 'Start Timer'}
+        title={timerActionLabel}
+        aria-label={timerActionLabel}
+        aria-pressed={timerRunning}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
       >
@@ -52,6 +66,7 @@ export function Timer() {
         }}
         className="p-1 rounded bg-blue-200 text-blue-900 hover:bg-blue-300"
         title="Reset Timer"
+        aria-label="Reset timer"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
       >

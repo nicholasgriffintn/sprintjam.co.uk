@@ -33,6 +33,8 @@ export function ResultsControls({
             }`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            aria-pressed={roomData.showVotes}
+            aria-label={roomData.showVotes ? 'Hide votes' : 'Show votes'}
           >
             {roomData.showVotes ? 'Hide Votes' : 'Show Votes'}
           </motion.button>

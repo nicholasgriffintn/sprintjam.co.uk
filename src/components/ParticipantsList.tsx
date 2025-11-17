@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Users, ChevronDown, ChevronUp, Crown, User } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -24,6 +24,10 @@ export function ParticipantsList({
   }, [stats.votedUsers, roomData.users.length]);
 
   const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(false);
+  const participantsSectionId = useId();
+  const contentId = `${participantsSectionId}-content`;
+  const headingId = `${participantsSectionId}-heading`;
+  const progressLabelId = `${participantsSectionId}-progress`;
 
   return (
     <div
@@ -31,13 +35,18 @@ export function ParticipantsList({
       className={`w-full flex-shrink-0 border-b border-white/30 bg-transparent px-0 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5 ${
         isParticipantsExpanded ? 'py-3' : 'py-2'
       }`}
+      role="region"
+      aria-labelledby={headingId}
     >
       <div
         className={`flex items-center justify-between ${
           isParticipantsExpanded ? 'pb-3' : 'pb-0 md:pb-3'
         }`}
       >
-        <h2 className="flex items-center text-lg font-semibold text-slate-900 dark:text-white">
+        <h2
+          id={headingId}
+          className="flex items-center text-lg font-semibold text-slate-900 dark:text-white"
+        >
           <Users size={18} className="mr-2 hidden md:inline-flex" />
           Participants ({roomData.users.length})
         </h2>
@@ -51,6 +60,8 @@ export function ParticipantsList({
               : 'Expand participants'
           }
           aria-expanded={isParticipantsExpanded}
+          aria-controls={contentId}
+          data-testid="participants-toggle"
         >
           {isParticipantsExpanded ? (
             <ChevronUp size={20} />
@@ -60,16 +71,30 @@ export function ParticipantsList({
         </button>
       </div>
       <div
+        id={contentId}
         className={`${isParticipantsExpanded ? 'block' : 'hidden md:block'}`}
       >
         <div className="mb-3">
-          <div className="mb-1 flex justify-between text-sm text-slate-700 dark:text-slate-200 mb-2">
+          <div
+            id={progressLabelId}
+            className="mb-1 flex justify-between text-sm text-slate-700 dark:text-slate-200 mb-2"
+          >
             <span>Voting progress</span>
             <span>
               {stats.votedUsers}/{roomData.users.length}
             </span>
           </div>
-          <div className="h-2 w-full rounded-full bg-slate-200/70 dark:bg-slate-800">
+          <div
+            className="h-2 w-full rounded-full bg-slate-200/70 dark:bg-slate-800"
+            role="progressbar"
+            aria-valuenow={votingProgress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Voting progress"
+            aria-describedby={progressLabelId}
+            aria-valuetext={`${stats.votedUsers} of ${roomData.users.length} participants have voted`}
+            data-testid="voting-progress-bar"
+          >
             <motion.div
               className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-indigo-500"
               initial={{ width: 0 }}

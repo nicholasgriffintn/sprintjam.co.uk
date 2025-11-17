@@ -14,6 +14,12 @@ test.describe('Room Screen Accessibility', () => {
     await page.getByTestId('create-room-submit').click();
 
     await waitForA11yReady(page);
+
+    const createButton = page.getByTestId('create-room-submit');
+    await expect(createButton).toBeVisible();
+    await createButton.click();
+    await waitForA11yReady(page);
+    await expect(page.getByTestId('participants-panel')).toBeVisible();
   });
 
   test('should not have any WCAG A & AA violations', async ({ page }) => {
@@ -48,5 +54,93 @@ test.describe('Room Screen Accessibility', () => {
     });
 
     expect(results.violations).toEqual([]);
+  });
+
+  test('participants panel exposes progress semantics and mobile toggle control', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 640, height: 900 });
+
+    const toggleButton = page.getByTestId('participants-toggle');
+    await toggleButton.scrollIntoViewIfNeeded();
+    const initialState = await toggleButton.getAttribute('aria-expanded');
+    if (initialState !== 'true') {
+      await toggleButton.click();
+      await expect(toggleButton).toHaveAttribute('aria-expanded', 'true');
+    }
+
+    const progressBar = page.getByTestId('voting-progress-bar');
+    await expect(progressBar).toHaveAttribute('aria-valuemin', '0');
+    await expect(progressBar).toHaveAttribute('aria-valuemax', '100');
+    const valueText = await progressBar.getAttribute('aria-valuetext');
+    expect(valueText).toContain('participants have voted');
+
+    const controlsId = await toggleButton.getAttribute('aria-controls');
+    expect(controlsId).toBeTruthy();
+    const controlledRegion = page.locator(`#${controlsId}`);
+    await expect(controlledRegion).toBeVisible();
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+  });
+
+  test('show votes controls and distribution view toggles provide pressed state', async ({
+    page,
+  }) => {
+    const firstVoteButton = page.getByTestId(/vote-option-/).first();
+    await firstVoteButton.click();
+
+    const toggleVotes = page.getByTestId('toggle-votes-button');
+    await expect(toggleVotes).toHaveAttribute('aria-pressed', 'false');
+    await toggleVotes.click();
+    await expect(toggleVotes).toHaveAttribute('aria-pressed', 'true');
+
+    const distributionToggleGroup = page.getByTestId(
+      'distribution-view-toggle-group'
+    );
+    await expect(distributionToggleGroup).toBeVisible();
+
+    const percentageToggle = page.getByTestId(
+      'distribution-view-option-percentage'
+    );
+    await percentageToggle.click();
+    await expect(percentageToggle).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('timer controls expose accessible labels and state', async ({ page }) => {
+    await page.getByRole('button', { name: /settings/i }).click();
+    const settingsDialog = page.getByRole('dialog', { name: 'Room Settings' });
+    const otherOptionsDetails = settingsDialog
+      .locator('details')
+      .filter({ hasText: 'Other Options' })
+      .first();
+    const otherOptionsSummary = otherOptionsDetails.locator('summary').first();
+    await otherOptionsSummary.scrollIntoViewIfNeeded();
+    const detailsOpen = await otherOptionsDetails.evaluate((el) =>
+      el.hasAttribute('open')
+    );
+    if (!detailsOpen) {
+      await otherOptionsSummary.click();
+    }
+    const timerToggle = settingsDialog.getByTestId('settings-toggle-show-timer');
+    const timerLabel = settingsDialog.locator('label[for="showTimer"]');
+    await timerLabel.scrollIntoViewIfNeeded();
+    if (!(await timerToggle.isChecked())) {
+      await timerLabel.click();
+    }
+    await settingsDialog.getByRole('button', { name: 'Save' }).click();
+
+    const timer = page.getByTestId('room-timer');
+    await expect(timer).toBeVisible();
+
+    const timerStartButton = page.getByRole('button', { name: 'Start timer' });
+    await expect(timerStartButton).toHaveAttribute('aria-pressed', 'false');
+    await timerStartButton.click();
+    await expect(
+      page.getByRole('button', { name: 'Pause timer' })
+    ).toHaveAttribute('aria-pressed', 'true');
+
+    const timerDisplay = page.locator('[role="timer"]');
+    await expect(timerDisplay.first()).toHaveAttribute('aria-label', /Elapsed time/);
+    await page.getByRole('button', { name: 'Reset timer' }).click();
   });
 });

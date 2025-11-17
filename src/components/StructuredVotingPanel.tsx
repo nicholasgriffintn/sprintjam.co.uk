@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { Info } from 'lucide-react';
 
 import type {
@@ -84,6 +84,7 @@ export function StructuredVotingPanel({
   const [showScoringInfo, setShowScoringInfo] = useState(false);
   const infoToggleSettings = displaySettings?.infoToggle;
   const allowScoringInfoToggle = infoToggleSettings?.enabled ?? true;
+  const scoringInfoPanelId = useId();
 
   useEffect(() => {
     if (!currentVote) {
@@ -127,6 +128,8 @@ export function StructuredVotingPanel({
                   ? 'text-slate-900 border border-slate-300 bg-white/80 hover:border-slate-400 dark:border-slate-600 dark:bg-white/10 dark:text-white'
                   : 'text-slate-600 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white border border-transparent'
               }`}
+              aria-expanded={showScoringInfo}
+              aria-controls={scoringInfoPanelId}
             >
               <Info size={14} />
               {infoToggleSettings?.label ?? 'Scoring Info'}
@@ -148,7 +151,12 @@ export function StructuredVotingPanel({
         {allowScoringInfoToggle &&
           showScoringInfo &&
           (calculatedVote || hasAnyScores) && (
-            <div className="mb-4 p-3 bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl">
+            <div
+              id={scoringInfoPanelId}
+              className="mb-4 p-3 bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl"
+              role="region"
+              aria-live="polite"
+            >
             <div className="text-sm font-medium text-slate-900 dark:text-slate-200 mb-3">
               {infoToggleSettings?.title ?? 'Weighted Scoring System'}
             </div>

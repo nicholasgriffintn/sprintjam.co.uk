@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Smile, User } from 'lucide-react';
 
@@ -22,6 +22,7 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [customEmoji, setCustomEmoji] = useState('');
+  const emojiPickerId = useId();
 
   const handleEmojiSelect = (emoji: string) => {
     onSelectAvatar(emoji);
@@ -98,6 +99,10 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
           type="button"
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           className="w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 flex items-center justify-center gap-2"
+          aria-expanded={showEmojiPicker}
+          aria-controls={emojiPickerId}
+          aria-pressed={showEmojiPicker}
+          data-testid="avatar-emoji-toggle"
         >
           <div className="flex items-center justify-center gap-2">
             {showEmojiPicker ? (
@@ -111,11 +116,16 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
 
         {showEmojiPicker && (
           <motion.div
+            id={emojiPickerId}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             className="space-y-3"
+            role="region"
+            aria-live="polite"
+            aria-label="Custom emoji picker"
+            data-testid="avatar-emoji-panel"
           >
             <div className="grid grid-cols-8 gap-2 p-3 rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800">
               {QUICK_EMOJIS.map((emoji) => (

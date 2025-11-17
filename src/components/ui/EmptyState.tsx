@@ -18,11 +18,11 @@ export const EmptyState = ({
       {icon && (
         <div className="mb-4 text-slate-400 dark:text-slate-500">{icon}</div>
       )}
-      <h3 className="text-lg font-semibold !text-slate-900 dark:!text-white">
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
         {title}
       </h3>
       {description && (
-        <p className="mt-2 text-sm !text-slate-900 dark:!text-slate-200">
+        <p className="mt-2 text-sm text-slate-900 dark:text-slate-200">
           {description}
         </p>
       )}
