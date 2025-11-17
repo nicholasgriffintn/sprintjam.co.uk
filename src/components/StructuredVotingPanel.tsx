@@ -30,6 +30,7 @@ function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
         key={i}
         type="button"
         onClick={() => onScoreChange(i)}
+        data-testid={`structured-score-${criterion.id}-${i}`}
         className={`w-8 h-8 flex items-center justify-center text-sm font-medium border rounded ${
           score === i
             ? 'border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
@@ -45,7 +46,10 @@ function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
   }
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
+    <div
+      className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-600 last:border-b-0"
+      data-testid={`structured-criterion-${criterion.id}`}
+    >
       <div className="flex-1">
         <div className="font-medium text-gray-900 dark:text-white">{criterion.name}</div>
         <div className="text-xs text-gray-500 dark:text-gray-400">{criterion.description}</div>
@@ -97,7 +101,7 @@ export function StructuredVotingPanel({
   };
 
   return (
-    <div className="mb-6">
+    <div className="mb-6" data-testid="structured-voting-panel">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           {displaySettings?.panelTitle ?? 'Structured Estimation'}
@@ -197,11 +201,16 @@ export function StructuredVotingPanel({
           </div>
         )}
 
-      <div className="flex items-center justify-between p-3 border-2 border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+      <div
+        className="flex items-center justify-between p-3 border-2 border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20"
+        data-testid="structured-summary"
+      >
         <div>
           <div className="font-medium text-blue-900 dark:text-blue-200">
             {displaySettings?.summary?.storyPointsLabel ?? 'Story Points'}:{' '}
-            {calculatedVote?.calculatedStoryPoints || '?'}
+            <span data-testid="structured-summary-points">
+              {calculatedVote?.calculatedStoryPoints || '?'}
+            </span>
           </div>
           <div className="text-xs text-blue-700 dark:text-blue-300">
             {displaySettings?.summary?.weightedScoreLabel ?? 'Weighted score'}:{' '}

@@ -29,6 +29,7 @@ export function UserEstimate({
       </div>
       <div className="flex flex-wrap gap-2 md:gap-3">
         {roomData.settings.estimateOptions.map((option) => {
+          const optionLabel = `${option}`;
           const metadata = roomData.settings.voteOptionsMetadata?.find(m => m.value === option);
           const background = metadata?.background || (option === userVote ? '#ebf5ff' : '#ffffff');
 
@@ -36,6 +37,7 @@ export function UserEstimate({
             <motion.button
               type="button"
               key={option}
+              data-testid={`vote-option-${optionLabel}`}
               onClick={() => onVote(option)}
               className={`w-12 h-16 md:w-16 md:h-24 flex flex-col items-center justify-center text-lg font-medium border-2 rounded-lg ${userVote === option
                 ? 'border-blue-500 shadow-md'

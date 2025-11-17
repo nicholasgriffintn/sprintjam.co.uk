@@ -26,7 +26,7 @@ export function Timer() {
   }, [timerRunning]);
 
   return (
-    <div className="mb-4 flex items-center space-x-2">
+    <div className="mb-4 flex items-center space-x-2" data-testid="room-timer">
       <span className="font-mono text-lg text-gray-500 dark:text-gray-400">
         {formatTime(timerSeconds)}
       </span>

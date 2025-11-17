@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test:e2e": "playwright test",
     "deploy": "npm run build && npm exec wrangler deploy"
   },
   "dependencies": {
@@ -30,7 +31,9 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.13.13",
     "@cloudflare/workers-types": "^4.20251011.0",
+    "@playwright/test": "1.56.1",
     "@tailwindcss/vite": "^4.1.14",
+    "@types/node": "^24.10.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",

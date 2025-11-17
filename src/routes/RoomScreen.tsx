@@ -149,7 +149,11 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 transition={{ duration: 0.3 }}
                 key="results"
               >
-                <SurfaceCard padding="sm" className="space-y-5">
+                <SurfaceCard
+                  padding="sm"
+                  className="space-y-5"
+                  data-testid="results-panel"
+                >
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -177,6 +181,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
                   padding="sm"
                   variant="subtle"
                   className="flex items-center justify-center border-dashed text-center dark:border-slate-800/80"
+                  data-testid="votes-hidden-panel"
                 >
                   <motion.div
                     initial={{ opacity: 0 }}
