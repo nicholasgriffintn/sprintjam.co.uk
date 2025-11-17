@@ -11,7 +11,7 @@ describe('Structured Voting Calculations', () => {
     it('returns 1pt for trivial tasks (0% score)', () => {
       const result = calculateStoryPointsFromStructuredVote({
         complexity: 0,
-        confidence: 0,
+        confidence: 4,
         volume: 0,
         unknowns: 0,
       });
@@ -21,7 +21,7 @@ describe('Structured Voting Calculations', () => {
     it('returns 1pt for low scores (< 35%)', () => {
       const result = calculateStoryPointsFromStructuredVote({
         complexity: 1,
-        confidence: 0,
+        confidence: 4,
         volume: 0,
         unknowns: 0,
       });
@@ -53,7 +53,7 @@ describe('Structured Voting Calculations', () => {
     it('returns 8pt for maximum scores (80%+)', () => {
       const result = calculateStoryPointsFromStructuredVote({
         complexity: 4,
-        confidence: 4,
+        confidence: 0,
         volume: 4,
         unknowns: 2,
       });
@@ -98,7 +98,7 @@ describe('Structured Voting Calculations', () => {
       it('uses higher score when conversion rule not needed', () => {
         const result = calculateStoryPointsFromStructuredVote({
           complexity: 4,
-          confidence: 4,
+          confidence: 0,
           volume: 2,
           unknowns: 1,
         });
@@ -127,12 +127,33 @@ describe('Structured Voting Calculations', () => {
     it('calculates correct weighted percentages', () => {
       const vote = createStructuredVote({
         complexity: 4,
-        confidence: 0,
+        confidence: 4,
         volume: 0,
         unknowns: 0,
       });
 
       expect(vote.percentageScore).toBe(35);
+    });
+
+    it('reduces contribution when confidence is high (4) compared to low (0)', () => {
+      const highConfidenceVote = createStructuredVote({
+        complexity: 0,
+        confidence: 4,
+        volume: 0,
+        unknowns: 0,
+      });
+
+      const lowConfidenceVote = createStructuredVote({
+        complexity: 0,
+        confidence: 0,
+        volume: 0,
+        unknowns: 0,
+      });
+
+      expect(highConfidenceVote.percentageScore).toBe(0);
+      expect(lowConfidenceVote.percentageScore).toBe(25);
+      expect(highConfidenceVote.contributions?.find((c) => c.id === 'confidence')?.contributionPercent).toBe(0);
+      expect(lowConfidenceVote.contributions?.find((c) => c.id === 'confidence')?.contributionPercent).toBe(25);
     });
 
     it('includes contribution breakdown for each criterion', () => {
@@ -260,7 +281,7 @@ describe('Structured Voting Calculations', () => {
     it('scenario: simple same-app fix', () => {
       const vote = createStructuredVote({
         complexity: 1,
-        confidence: 0,
+        confidence: 4,
         volume: 0,
         unknowns: 0,
       });
@@ -272,7 +293,7 @@ describe('Structured Voting Calculations', () => {
     it('scenario: small familiar feature', () => {
       const vote = createStructuredVote({
         complexity: 1,
-        confidence: 1,
+        confidence: 3,
         volume: 1,
         unknowns: 0,
       });
@@ -283,7 +304,7 @@ describe('Structured Voting Calculations', () => {
     it('scenario: moderate task with some unknowns', () => {
       const vote = createStructuredVote({
         complexity: 1,
-        confidence: 1,
+        confidence: 3,
         volume: 1,
         unknowns: 1,
       });
@@ -306,7 +327,7 @@ describe('Structured Voting Calculations', () => {
     it('scenario: maximum complexity', () => {
       const vote = createStructuredVote({
         complexity: 4,
-        confidence: 4,
+        confidence: 0,
         volume: 4,
         unknowns: 2,
       });

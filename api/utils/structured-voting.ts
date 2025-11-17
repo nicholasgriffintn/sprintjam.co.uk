@@ -165,8 +165,7 @@ export function getDefaultVotingCriteria(): VotingCriterion[] {
       name: 'Individual Confidence',
       description: 'Your confidence in this area (0: no confidence, 4: very confident)',
       minScore: 0,
-      maxScore: 4,
-      descending: true
+      maxScore: 4
     },
     {
       id: 'volume',
