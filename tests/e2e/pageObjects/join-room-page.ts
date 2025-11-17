@@ -6,12 +6,17 @@ export class JoinRoomPage {
   async completeParticipantDetails({
     name,
     roomKey,
+    passcode,
   }: {
     name: string;
     roomKey: string;
+    passcode?: string;
   }) {
     await this.page.locator('#join-name').fill(name);
     await this.page.locator('#join-room-key').fill(roomKey);
+    if (typeof passcode === 'string') {
+      await this.page.locator('#join-passcode').fill(passcode);
+    }
     const continueButton = this.page.getByTestId('join-room-submit');
     await expect(continueButton).toBeEnabled();
     await continueButton.click();

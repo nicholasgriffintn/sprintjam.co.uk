@@ -54,4 +54,53 @@ export class RoomPage {
   async resetVotes() {
     await this.page.getByTestId('reset-votes-button').click();
   }
+
+  async expectParticipantVisible(name: string) {
+    const participantRow = this.page
+      .getByTestId('participant-row')
+      .filter({ hasText: name });
+    await expect(participantRow).toHaveCount(1);
+  }
+
+  async openShareModal() {
+    await this.page.getByRole('button', { name: /share/i }).click();
+    await expect(
+      this.page.getByRole('dialog', { name: 'Share Room' })
+    ).toBeVisible();
+  }
+
+  async expectShareLink(roomKey: string) {
+    const dialog = this.page.getByRole('dialog', { name: 'Share Room' });
+    const shareInput = dialog.locator('input[type="text"]');
+    await expect(shareInput).toHaveValue(new RegExp(`${roomKey}$`));
+    await expect(dialog.getByText('Share this link with your team:')).toBeVisible();
+  }
+
+  async closeShareModal() {
+    const dialog = this.page.getByRole('dialog', { name: 'Share Room' });
+    await dialog.getByRole('button', { name: 'Close modal' }).click();
+    await expect(dialog).toBeHidden();
+  }
+
+  async leaveRoom() {
+    await this.page.getByRole('button', { name: /leave room/i }).click();
+  }
+
+  async expectOnWelcomeScreen() {
+    await expect(this.page.getByTestId('create-room-button')).toBeVisible();
+  }
+
+  async expectParticipantConnectionState(
+    name: string,
+    connected: boolean
+  ) {
+    const connectedIndicator = this.page.locator(
+      `[data-participant-name="${name}"] .border-emerald-300`
+    );
+    if (connected) {
+      await expect(connectedIndicator).toHaveCount(1);
+    } else {
+      await expect(connectedIndicator).toHaveCount(0);
+    }
+  }
 }

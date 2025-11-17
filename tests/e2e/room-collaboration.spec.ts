@@ -1,12 +1,26 @@
 import { test } from '@playwright/test';
-import type { Browser } from '@playwright/test';
+import type { Browser, BrowserContext } from '@playwright/test';
 
 import { CreateRoomPage } from './pageObjects/create-room-page';
 import { JoinRoomPage } from './pageObjects/join-room-page';
 import { RoomPage } from './pageObjects/room-page';
 import { WelcomePage } from './pageObjects/welcome-page';
 
-async function createRoomWithParticipant(browser: Browser) {
+type ParticipantJoinMode = 'inviteLink' | 'manual';
+
+interface RoomSetupOptions {
+  participantJoinMode?: ParticipantJoinMode;
+  roomPasscode?: string;
+}
+
+async function createRoomWithParticipant(
+  browser: Browser,
+  options: RoomSetupOptions = {}
+) {
+  const {
+    participantJoinMode = 'inviteLink',
+    roomPasscode,
+  } = options;
   const moderatorContext = await browser.newContext();
   const participantContext = await browser.newContext();
 
@@ -31,6 +45,13 @@ async function createRoomWithParticipant(browser: Browser) {
     const createRoom = new CreateRoomPage(moderatorPage);
     await createRoom.completeNameStep(moderatorName);
     await createRoom.selectAvatar('avatar-option-robot');
+    await createRoom.configureRoomDetails(
+      roomPasscode
+        ? {
+            passcode: roomPasscode,
+          }
+        : undefined
+    );
     await createRoom.finishCreation();
 
     const moderatorRoom = new RoomPage(moderatorPage);
@@ -38,12 +59,18 @@ async function createRoomWithParticipant(browser: Browser) {
     const roomKey = await moderatorRoom.getRoomKey();
 
     const welcomeForParticipant = new WelcomePage(participantPage);
-    await welcomeForParticipant.gotoWithInvite(roomKey);
+    if (participantJoinMode === 'manual') {
+      await welcomeForParticipant.gotoHome();
+      await welcomeForParticipant.startJoinRoom();
+    } else {
+      await welcomeForParticipant.gotoWithInvite(roomKey);
+    }
 
     const joinRoom = new JoinRoomPage(participantPage);
     await joinRoom.completeParticipantDetails({
       name: participantName,
       roomKey,
+      passcode: roomPasscode,
     });
     await joinRoom.selectAvatarAndJoin('avatar-option-bird');
 
@@ -59,6 +86,9 @@ async function createRoomWithParticipant(browser: Browser) {
       cleanup,
       moderatorName,
       participantName,
+      roomKey,
+      participantContext,
+      moderatorContext,
     };
   } catch (error) {
     await cleanup();
@@ -109,6 +139,76 @@ test.describe('SprintJam collaboration journeys', () => {
         await moderatorRoom.resetVotes();
         await moderatorRoom.expectVotesHiddenMessage('No votes yet');
         await participantRoom.expectVotesHiddenMessage('No votes yet');
+      } finally {
+        await cleanup();
+      }
+    }
+  );
+
+  test(
+    'participant can join via room key journey with a passcode-protected room',
+    async ({ browser }) => {
+      const passcode = 'SAFE-ROOM';
+      const setup = await createRoomWithParticipant(browser, {
+        participantJoinMode: 'manual',
+        roomPasscode: passcode,
+      });
+      const {
+        moderatorRoom,
+        participantRoom,
+        cleanup,
+        moderatorName,
+        participantName,
+      } = setup;
+
+      try {
+        await moderatorRoom.expectParticipantVisible(participantName);
+        await participantRoom.expectParticipantVisible(moderatorName);
+
+        await participantRoom.castVote('1');
+        await moderatorRoom.castVote('2');
+        await moderatorRoom.expectVotePendingState();
+
+        await moderatorRoom.revealVotes();
+        await moderatorRoom.expectVoteVisible(participantName, '1');
+        await moderatorRoom.expectVoteVisible(moderatorName, '2');
+      } finally {
+        await cleanup();
+      }
+    }
+  );
+
+  test(
+    'share modal is accessible and participant departures update the room state',
+    async ({ browser }) => {
+      const setup = await createRoomWithParticipant(browser);
+      const {
+        moderatorRoom,
+        participantRoom,
+        cleanup,
+        roomKey,
+        participantContext,
+        participantName,
+      } = setup;
+
+      try {
+        await moderatorRoom.expectParticipantConnectionState(
+          participantName,
+          true
+        );
+        await moderatorRoom.openShareModal();
+        await moderatorRoom.expectShareLink(roomKey);
+        await moderatorRoom.closeShareModal();
+
+        await participantRoom.leaveRoom();
+        await participantRoom.expectOnWelcomeScreen();
+        await participantContext.close();
+
+        await moderatorRoom.expectParticipantConnectionState(
+          participantName,
+          false
+        );
+        await moderatorRoom.expectVotesHiddenMessage('No votes yet');
       } finally {
         await cleanup();
       }

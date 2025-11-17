@@ -23,4 +23,34 @@ export class CreateRoomPage {
     await expect(createButton).toBeEnabled();
     await createButton.click();
   }
+
+  async configureRoomDetails(options?: {
+    passcode?: string;
+    enableStructuredVoting?: boolean;
+    hideParticipantNames?: boolean;
+  }) {
+    if (!options) {
+      return;
+    }
+
+    const { passcode, enableStructuredVoting, hideParticipantNames } = options;
+
+    if (typeof passcode === 'string') {
+      await this.page.locator('#create-passcode').fill(passcode);
+    }
+
+    if (enableStructuredVoting) {
+      const structuredToggle = this.page
+        .locator('label:has-text("Enable structured voting")')
+        .locator('input[type="checkbox"]');
+      await structuredToggle.check({ force: true });
+    }
+
+    if (hideParticipantNames) {
+      const hideNamesToggle = this.page
+        .locator('label:has-text("Hide participant names")')
+        .locator('input[type="checkbox"]');
+      await hideNamesToggle.check({ force: true });
+    }
+  }
 }
