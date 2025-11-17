@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { initStrudel, evaluate, hush } from '@strudel/web';
 
 import { prebake } from '../lib/strudel';
+import { safeLocalStorage } from '../utils/storage';
 
 interface UseStrudelPlayerOptions {
   onError?: (error: Error) => void;
@@ -105,7 +106,7 @@ export function useStrudelPlayer(
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(() => {
-    const stored = localStorage.getItem(MUTE_STORAGE_KEY);
+    const stored = safeLocalStorage.get(MUTE_STORAGE_KEY);
     return stored === 'true';
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -162,7 +163,7 @@ export function useStrudelPlayer(
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(MUTE_STORAGE_KEY, String(isMuted));
+    safeLocalStorage.set(MUTE_STORAGE_KEY, String(isMuted));
   }, [isMuted]);
 
   const play = useCallback(async () => {

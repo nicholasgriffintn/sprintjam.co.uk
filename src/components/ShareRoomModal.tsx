@@ -1,4 +1,4 @@
-import { type FC, useState, useRef } from 'react';
+import { type FC, useState, useRef, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 import { Modal } from './ui/Modal';
@@ -18,7 +18,12 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const shareableUrl = `${window.location.origin}/?join=${roomKey}`;
+  const shareableUrl = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return '';
+    }
+    return `${window.location.origin}/?join=${roomKey}`;
+  }, [roomKey]);
 
   const handleCopy = () => {
     if (inputRef.current) {

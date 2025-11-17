@@ -11,41 +11,36 @@ import { MotionConfig } from 'framer-motion';
 import {
   createRoom,
   joinRoom,
-  connectToRoom,
   disconnectFromRoom,
   submitVote,
   toggleShowVotes,
   resetVotes,
   updateSettings,
-  addEventListener,
-  removeEventListener,
   isConnected,
-  fetchDefaultSettings,
-  getCachedDefaultSettings,
 } from './lib/api-service';
-import { updateJiraStoryPoints } from './lib/jira-service';
-import {
-  serverDefaultsCollection,
-  ensureServerDefaultsCollectionReady,
-} from './lib/data/collections';
 import {
   applyRoomMessageToCollections,
   removeRoomFromCollection,
   setRoomJiraTicket,
   upsertRoom,
 } from './lib/data/room-store';
-import { useRoomData, useServerDefaults } from './lib/data/hooks';
+import { useRoomData } from './lib/data/hooks';
 import type {
   VoteValue,
   RoomSettings,
   JiraTicket,
   StructuredVote,
-  ServerDefaults,
   WebSocketMessage,
-  WebSocketMessageType,
   AvatarId,
 } from './types';
-import { cloneServerDefaults } from './utils/settings';
+import { safeLocalStorage } from './utils/storage';
+import { useServerDefaults } from './hooks/useServerDefaults';
+import { useUrlParams } from './hooks/useUrlParams';
+import { useAutoReconnect } from './hooks/useAutoReconnect';
+import { useUserPersistence } from './hooks/useUserPersistence';
+import { useAutoJiraUpdate } from './hooks/useAutoJiraUpdate';
+import { useRoomConnection } from './hooks/useRoomConnection';
+import { useRoomDataSync } from './hooks/useRoomDataSync';
 import ErrorBanner from './components/ui/ErrorBanner';
 import LoadingOverlay from './components/LoadingOverlay';
 import { ScreenLoader } from './components/layout/ScreenLoader';
@@ -59,11 +54,6 @@ const RoomScreen = lazy(() => import('./routes/RoomScreen'));
 type AppScreen = 'welcome' | 'create' | 'join' | 'room';
 
 const App = () => {
-  const cachedDefaults = getCachedDefaultSettings();
-
-  const [serverDefaults, setServerDefaults] = useState<ServerDefaults | null>(
-    () => (cachedDefaults ? cloneServerDefaults(cachedDefaults) : null)
-  );
   const [name, setName] = useState<string>('');
   const [roomKey, setRoomKey] = useState<string>('');
   const [passcode, setPasscode] = useState<string>('');
@@ -79,117 +69,43 @@ const App = () => {
   const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isLoadingDefaults, setIsLoadingDefaults] = useState<boolean>(
-    !cachedDefaults
-  );
-  const [defaultsError, setDefaultsError] = useState<string | null>(null);
-  const serverDefaultsFromCollection = useServerDefaults();
+
   const roomData = useRoomData(activeRoomKey);
   const activeRoomKeyRef = useRef<string | null>(null);
 
-  const applyServerDefaults = useCallback(async (defaults?: ServerDefaults) => {
-    if (!defaults) {
-      return;
-    }
-
-    await ensureServerDefaultsCollectionReady();
-    serverDefaultsCollection.utils.writeUpsert(defaults);
-    setDefaultsError(null);
-  }, []);
-
-  const loadDefaults = useCallback(async (forceRefresh = false) => {
-    setIsLoadingDefaults(true);
-    try {
-      await fetchDefaultSettings(forceRefresh);
-      setDefaultsError(null);
-    } catch (err) {
-      console.error('Failed to load default settings', err);
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Unable to load default settings from server';
-      setDefaultsError(message);
-    } finally {
-      setIsLoadingDefaults(false);
-    }
-  }, []);
-
-  const handleRetryDefaults = useCallback(() => {
-    loadDefaults(true);
-  }, [loadDefaults]);
-
-  useEffect(() => {
-    if (!cachedDefaults) {
-      loadDefaults();
-    }
-  }, [cachedDefaults, loadDefaults]);
-
-  useEffect(() => {
-    if (serverDefaultsFromCollection) {
-      setServerDefaults(cloneServerDefaults(serverDefaultsFromCollection));
-    } else {
-      setServerDefaults(null);
-    }
-  }, [serverDefaultsFromCollection]);
+  const {
+    serverDefaults,
+    isLoadingDefaults,
+    defaultsError,
+    applyServerDefaults,
+    handleRetryDefaults,
+  } = useServerDefaults();
 
   useEffect(() => {
     activeRoomKeyRef.current = activeRoomKey;
   }, [activeRoomKey]);
 
-  const didLoadName = useRef(false);
-  const didCheckUrlParams = useRef(false);
-  const didAttemptRestore = useRef(false);
+  useUrlParams({
+    onJoinRoom: (joinRoomKey) => {
+      setRoomKey(joinRoomKey);
+      setScreen('join');
+    },
+  });
 
-  // Join room from URL parameters
-  useEffect(() => {
-    if (didCheckUrlParams.current) return;
-
-    didCheckUrlParams.current = true;
-
-    try {
-      const url = new URL(window.location.href);
-      const joinParam = url.searchParams.get('join');
-
-      if (joinParam && joinParam.length > 0) {
-        setRoomKey(joinParam.toUpperCase());
-        setScreen('join');
-
-        window.history.replaceState({}, document.title, '/');
-      }
-    } catch (err) {
-      console.error('Failed to parse URL parameters', err);
-    }
-  }, []);
-
-  // Auto-reconnect to last room on refresh
-  useEffect(() => {
-    if (didAttemptRestore.current) return;
-    if (screen !== 'welcome') return;
-    if (!name) return;
-    if (isLoadingDefaults) return;
-    didAttemptRestore.current = true;
-    const savedRoomKey = localStorage.getItem('sprintjam_roomKey');
-    if (savedRoomKey) {
-      setIsLoading(true);
-      const avatarToUse = selectedAvatar || 'user';
-      joinRoom(name, savedRoomKey, undefined, avatarToUse)
-        .then(async ({ room: joinedRoom, defaults }) => {
-          await applyServerDefaults(defaults);
-          await upsertRoom(joinedRoom);
-          setActiveRoomKey(joinedRoom.key);
-          localStorage.setItem('sprintjam_roomKey', joinedRoom.key);
-          setIsModeratorView(joinedRoom.moderator === name);
-          setScreen('room');
-        })
-        .catch((err) => {
-          const errorMessage =
-            err instanceof Error ? err.message : 'Failed to reconnect to room';
-          setError(errorMessage);
-          localStorage.removeItem('sprintjam_roomKey');
-        })
-        .finally(() => setIsLoading(false));
-    }
-  }, [name, screen, isLoadingDefaults, selectedAvatar, applyServerDefaults]);
+  useAutoReconnect({
+    name,
+    screen,
+    isLoadingDefaults,
+    selectedAvatar,
+    onReconnectSuccess: (roomKey, isModerator) => {
+      setActiveRoomKey(roomKey);
+      setIsModeratorView(isModerator);
+      setScreen('room');
+    },
+    onReconnectError: setError,
+    onLoadingChange: setIsLoading,
+    applyServerDefaults,
+  });
 
   const handleRoomMessage = useCallback((message: WebSocketMessage) => {
     if (message.type === 'error') {
@@ -209,79 +125,28 @@ const App = () => {
       });
   }, []);
 
-  // Connect to WebSocket when entering a room
-  useEffect(() => {
-    if (screen === 'room' && name && activeRoomKey) {
-      connectToRoom(
-        activeRoomKey,
-        name,
-        handleRoomMessage,
-        setIsSocketConnected
-      );
+  useRoomConnection({
+    screen,
+    name,
+    activeRoomKey,
+    onMessage: handleRoomMessage,
+    onConnectionChange: setIsSocketConnected,
+    onError: setError,
+  });
 
-      const errorHandler = (data: WebSocketMessage) => {
-        setError(data.error || 'Connection error');
-        setIsSocketConnected(false);
-      };
+  useRoomDataSync({
+    roomData,
+    name,
+    userVote,
+    isModeratorView,
+    onVoteChange: setUserVote,
+    onModeratorViewChange: setIsModeratorView,
+  });
 
-      const eventTypes: WebSocketMessageType[] = ['disconnected', 'error'];
-
-      for (const type of eventTypes) {
-        addEventListener(type, errorHandler);
-      }
-
-      return () => {
-        disconnectFromRoom();
-        setIsSocketConnected(false);
-        for (const type of eventTypes) {
-          removeEventListener(type, errorHandler);
-        }
-      };
-    }
-  }, [screen, name, activeRoomKey, handleRoomMessage]);
-
-  useEffect(() => {
-    if (!roomData) {
-      if (userVote !== null) {
-        setUserVote(null);
-      }
-      if (isModeratorView !== false) {
-        setIsModeratorView(false);
-      }
-      return;
-    }
-
-    const nextVote = roomData.votes[name] ?? null;
-    if (nextVote !== userVote) {
-      setUserVote(nextVote);
-    }
-
-    const nextModeratorView = roomData.moderator === name;
-    if (nextModeratorView !== isModeratorView) {
-      setIsModeratorView(nextModeratorView);
-    }
-  }, [roomData, name, userVote, isModeratorView]);
-  // Persist user name in localStorage
-  useEffect(() => {
-    if (!didLoadName.current) {
-      const savedName = localStorage.getItem('sprintjam_username');
-      if (savedName) {
-        setName(savedName);
-      }
-      didLoadName.current = true;
-      return;
-    }
-
-    if (name === '' && !localStorage.getItem('sprintjam_username')) {
-      return;
-    }
-
-    const saveTimeout = setTimeout(() => {
-      localStorage.setItem('sprintjam_username', name);
-    }, 500);
-
-    return () => clearTimeout(saveTimeout);
-  }, [name]);
+  useUserPersistence({
+    name,
+    onNameLoaded: setName,
+  });
 
   const handleCreateRoom = async (settings?: Partial<RoomSettings>) => {
     if (!name || !selectedAvatar) return;
@@ -299,7 +164,7 @@ const App = () => {
       await applyServerDefaults(defaults);
       await upsertRoom(newRoom);
       setActiveRoomKey(newRoom.key);
-      localStorage.setItem('sprintjam_roomKey', newRoom.key);
+      safeLocalStorage.set('sprintjam_roomKey', newRoom.key);
       setIsModeratorView(true);
       setScreen('room');
     } catch (err: unknown) {
@@ -327,7 +192,7 @@ const App = () => {
       await applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
-      localStorage.setItem('sprintjam_roomKey', joinedRoom.key);
+      safeLocalStorage.set('sprintjam_roomKey', joinedRoom.key);
       setIsModeratorView(joinedRoom.moderator === name);
       setScreen('room');
     } catch (err: unknown) {
@@ -428,43 +293,16 @@ const App = () => {
     });
   };
 
-  // Auto-update Jira story points if setting is enabled
-  useEffect(() => {
-    if (!roomData) return;
-    if (
-      roomData.settings.enableJiraIntegration &&
-      roomData.settings.autoUpdateJiraStoryPoints &&
-      roomData.jiraTicket &&
-      roomData.judgeScore !== null &&
-      roomData.showVotes
-    ) {
-      const storyPoint =
-        typeof roomData.judgeScore === 'number'
-          ? roomData.judgeScore
-          : Number(roomData.judgeScore);
-
-      if (!Number.isNaN(storyPoint)) {
-        updateJiraStoryPoints(roomData.jiraTicket.key, storyPoint, {
-          roomKey: roomData.key,
-          userName: name,
-        })
-          .then((updatedTicket) => {
-            handleJiraTicketUpdated(updatedTicket);
-          })
-          .catch((err) => {
-            const errorMessage =
-              err instanceof Error
-                ? err.message
-                : 'Failed to auto-update Jira story points';
-            setError(errorMessage);
-          });
-      }
-    }
-  }, [roomData, name]);
+  useAutoJiraUpdate({
+    roomData,
+    name,
+    onJiraTicketUpdated: handleJiraTicketUpdated,
+    onError: setError,
+  });
 
   const handleLeaveRoom = () => {
     disconnectFromRoom();
-    localStorage.removeItem('sprintjam_roomKey');
+    safeLocalStorage.remove('sprintjam_roomKey');
 
     const key = activeRoomKeyRef.current;
     if (key) {

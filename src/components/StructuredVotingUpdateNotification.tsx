@@ -2,25 +2,21 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Info } from 'lucide-react';
 
+import { safeLocalStorage } from '../utils/storage';
+
 const CONFIDENCE_INFO_STORAGE_KEY = 'structuredVotingConfidenceInfoSeen';
 
 export function StructuredVotingUpdateNotification() {
   const [showConfidenceInfo, setShowConfidenceInfo] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const hasSeen = window.localStorage.getItem(CONFIDENCE_INFO_STORAGE_KEY);
+    const hasSeen = safeLocalStorage.get(CONFIDENCE_INFO_STORAGE_KEY);
     setShowConfidenceInfo(!hasSeen);
   }, []);
 
   const handleDismissConfidenceInfo = () => {
     setShowConfidenceInfo(false);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(CONFIDENCE_INFO_STORAGE_KEY, 'true');
-    }
+    safeLocalStorage.set(CONFIDENCE_INFO_STORAGE_KEY, 'true');
   };
 
   return (
