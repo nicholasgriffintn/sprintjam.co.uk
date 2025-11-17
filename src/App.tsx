@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { MotionConfig } from 'framer-motion';
 
 import {
   createRoom,
@@ -589,7 +590,9 @@ const App = () => {
         <ErrorBanner message={error} onClose={clearError} />
       )}
 
-      <Suspense fallback={<ScreenLoader />}>{renderScreen()}</Suspense>
+      <MotionConfig reducedMotion="user">
+        <Suspense fallback={<ScreenLoader />}>{renderScreen()}</Suspense>
+      </MotionConfig>
     </div>
   );
 };
