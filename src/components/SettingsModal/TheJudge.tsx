@@ -52,7 +52,7 @@ export function TheJudge({
               <option value="optimisticMode">Optimistic Mode</option>
               <option value="simpleAverage">Simple Average</option>
             </select>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
               {localSettings.judgeAlgorithm === 'smartConsensus' &&
                 'Intelligently identifies consensus in voting patterns across different scenarios'}
               {localSettings.judgeAlgorithm === 'conservativeMode' &&

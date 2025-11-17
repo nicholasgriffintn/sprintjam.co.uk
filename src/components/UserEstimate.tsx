@@ -39,6 +39,8 @@ export function UserEstimate({
               key={option}
               data-testid={`vote-option-${optionLabel}`}
               onClick={() => onVote(option)}
+              aria-label={`Vote ${option}`}
+              aria-pressed={userVote === option}
               className={`w-12 h-16 md:w-16 md:h-24 flex flex-col items-center justify-center text-lg font-medium border-2 rounded-lg ${userVote === option
                 ? 'border-blue-500 shadow-md'
                 : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'

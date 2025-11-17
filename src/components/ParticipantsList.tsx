@@ -50,6 +50,7 @@ export function ParticipantsList({
               ? 'Collapse participants'
               : 'Expand participants'
           }
+          aria-expanded={isParticipantsExpanded}
         >
           {isParticipantsExpanded ? (
             <ChevronUp size={20} />

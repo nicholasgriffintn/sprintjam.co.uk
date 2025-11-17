@@ -51,6 +51,7 @@ export default function Header({
               <button
                 type="button"
                 onClick={() => setIsShareModalOpen(true)}
+                aria-label="Share room"
                 className="flex items-center gap-1 border-l border-black/5 px-2 sm:px-3 text-xs font-semibold text-brand-600 hover:text-brand-700 dark:border-white/10 dark:text-brand-200 hover:dark:text-brand-100 cursor-pointer"
               >
                 <Share2 className="h-3.5 w-3.5" />
@@ -90,7 +91,7 @@ export default function Header({
             onClick={onLeaveRoom}
             aria-label="Leave room"
             className={cn(
-              'flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/40 text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-rose-500/40 dark:bg-rose-500/5 dark:text-rose-200 dark:hover:border-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-100 cursor-pointer',
+              'flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/40 text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-rose-500/40 dark:bg-rose-500/5 dark:text-rose-200 dark:hover:border-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-100 cursor-pointer',
               'md:w-auto md:min-w-[3rem] md:gap-2 md:px-4'
             )}
           >

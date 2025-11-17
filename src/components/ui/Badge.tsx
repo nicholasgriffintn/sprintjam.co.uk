@@ -35,6 +35,9 @@ export const Badge = ({
 
   return (
     <span
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
       className={cn(
         'inline-flex items-center rounded-md font-medium',
         variants[variant],

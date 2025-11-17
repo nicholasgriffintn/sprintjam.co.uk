@@ -11,6 +11,7 @@ const ConnectionStatus: FC<ConnectionStatusProps> = ({ isConnected }) => {
     <Badge
       variant={isConnected ? 'success' : 'error'}
       className="flex items-center"
+      data-testid="connection-status"
     >
       <div
         className={`w-2 h-2 rounded-full ${

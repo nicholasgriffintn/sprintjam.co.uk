@@ -28,7 +28,7 @@ export function ResultsControls({
             onClick={onToggleShowVotes}
             className={`rounded-xl px-4 py-2 text-sm font-semibold ${
               !roomData.showVotes
-                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-amber-500 text-black hover:bg-amber-600'
             }`}
             whileHover={{ scale: 1.02 }}

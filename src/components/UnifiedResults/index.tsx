@@ -92,7 +92,14 @@ export function UnifiedResults({
         />
       )}
 
-      <div className="space-y-4">
+      <div
+        className="space-y-4"
+        data-testid="vote-results"
+        role="region"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-label="Voting results"
+      >
         {visibleStatsCount > 0 && (
           <div className={`grid ${getGridCols(visibleStatsCount)} gap-4`}>
             {summaryCardElements}

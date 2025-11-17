@@ -74,6 +74,8 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
               variant="ghost"
               type="button"
               onClick={() => onSelectAvatar(avatar.id)}
+              aria-label={`Select ${avatar.label} avatar`}
+              aria-pressed={selectedAvatar === avatar.id}
               className={`w-full aspect-square rounded-full flex items-center justify-center transition-all duration-200 border-2 hover:scale-105 active:scale-95 ${
                 selectedAvatar === avatar.id
                   ? 'border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg scale-110'
@@ -121,6 +123,8 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
                   key={emoji}
                   type="button"
                   onClick={() => handleEmojiSelect(emoji)}
+                  aria-label={`Select ${emoji} emoji avatar`}
+                  aria-pressed={selectedAvatar === emoji}
                   className={`aspect-square rounded-lg flex items-center justify-center text-2xl transition-all duration-200 hover:scale-110 active:scale-95 border-2 ${
                     selectedAvatar === emoji
                       ? 'border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg'
@@ -135,6 +139,7 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
 
             <div className="flex gap-2">
               <Input
+                id="custom-emoji-input"
                 type="text"
                 value={customEmoji}
                 onChange={(e) => setCustomEmoji(e.target.value)}
@@ -144,6 +149,7 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
                   }
                 }}
                 placeholder="Or type/paste any emoji..."
+                aria-label="Custom emoji input"
                 fullWidth
                 maxLength={2}
               />

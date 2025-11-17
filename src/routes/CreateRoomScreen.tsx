@@ -227,6 +227,8 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowSettings(!showSettings)}
+                    aria-expanded={showSettings}
+                    aria-controls="room-preferences-panel"
                     className="flex w-full items-center justify-between rounded-2xl border border-white/60 bg-white/70 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100"
                   >
                     <span className="flex items-center gap-2">
@@ -245,13 +247,18 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
 
                   {showSettings && (
                     <motion.div
+                      id="room-preferences-panel"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       transition={{ duration: 0.2 }}
                       className="space-y-4 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm dark:border-white/10 dark:bg-slate-900/60"
                     >
-                      <label className="flex items-center gap-3">
+                      <label
+                        htmlFor="enable-structured-voting"
+                        className="flex items-center gap-3"
+                      >
                         <input
+                          id="enable-structured-voting"
                           type="checkbox"
                           className="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
                           checked={settings.enableStructuredVoting ?? false}
@@ -267,8 +274,12 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                       <p className="rounded-2xl bg-brand-50/70 p-3 text-xs text-brand-700 dark:bg-brand-500/10 dark:text-brand-200">
                         Vote on multiple criteria with calculated story points.
                       </p>
-                      <label className="flex items-center gap-3">
+                      <label
+                        htmlFor="hide-participant-names"
+                        className="flex items-center gap-3"
+                      >
                         <input
+                          id="hide-participant-names"
                           type="checkbox"
                           className="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
                           checked={settings.hideParticipantNames ?? false}

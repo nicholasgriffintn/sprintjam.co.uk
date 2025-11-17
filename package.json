@@ -33,6 +33,7 @@
     "tailwindcss": "^4.1.14"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@cloudflare/vite-plugin": "^1.13.13",
     "@cloudflare/workers-types": "^4.20251011.0",
     "@playwright/test": "1.56.1",
