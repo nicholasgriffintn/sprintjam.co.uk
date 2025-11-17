@@ -97,7 +97,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
           viewport={{ once: true, amount: 0.4 }}
-          className="relative mx-auto max-w-5xl px-4 sm:px-6"
+          className="relative mx-auto max-w-2xl px-4 sm:px-6"
         >
           <div className="pointer-events-none absolute inset-x-4 -top-10 -z-20 h-[120%] rounded-[5rem] bg-gradient-to-b from-brand-400/25 via-indigo-600/15 to-transparent opacity-70 blur-[150px] sm:inset-x-12" />
           <div className="rounded-[2.5rem] border border-white/10 bg-white/5 shadow-[0_40px_160px_rgba(8,10,24,0.65)] backdrop-blur-[14px] dark:border-white/5 dark:bg-slate-900/40">
