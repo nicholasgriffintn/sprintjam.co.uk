@@ -106,7 +106,7 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
   };
 
   return (
-    <div>
+    <div data-testid="jira-ticket-panel">
       <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
         Jira Ticket
       </h3>
@@ -122,11 +122,13 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
               className="flex-1"
               disabled={isLoading}
               fullWidth
+              data-testid="jira-ticket-input"
             />
             <Button
               type="button"
               onClick={handleFetchTicket}
               disabled={isLoading || !ticketId.trim()}
+              data-testid="jira-fetch-button"
               className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
               {isLoading ? 'Loading...' : 'Fetch'}
@@ -134,7 +136,7 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
           </div>
         </div>
       ) : (
-        <div className="mb-4 space-y-2">
+        <div className="mb-4 space-y-2" data-testid="jira-ticket-details">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <h4 className="font-medium text-blue-600 dark:text-blue-400">
@@ -216,6 +218,7 @@ const JiraTicketPanel: React.FC<JiraTicketPanelProps> = ({
                     variant="ghost"
                     onClick={handleUpdateStoryPoints}
                     disabled={isUpdating}
+                    data-testid="jira-update-button"
                     className="px-3 py-1 text-sm bg-green-600 dark:bg-green-700 text-white rounded hover:bg-green-700 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                   >
                     {isUpdating ? 'Updating...' : 'Update Story Points in Jira'}

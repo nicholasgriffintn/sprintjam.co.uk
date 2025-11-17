@@ -33,6 +33,7 @@ export function OtherOptions({
                   onChange={(e) =>
                     handleChange('enableJiraIntegration', e.target.checked)
                   }
+                  data-testid="settings-toggle-jira"
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />
                 <label
@@ -45,15 +46,16 @@ export function OtherOptions({
               {localSettings.enableJiraIntegration && (
                 <div className="flex items-center">
                   <input
-                    type="checkbox"
-                    id="autoUpdateJiraStoryPoints"
-                    checked={localSettings.autoUpdateJiraStoryPoints || false}
-                    onChange={(e) =>
-                      handleChange(
-                        'autoUpdateJiraStoryPoints',
-                        e.target.checked
-                      )
-                    }
+                  type="checkbox"
+                  id="autoUpdateJiraStoryPoints"
+                  checked={localSettings.autoUpdateJiraStoryPoints || false}
+                  onChange={(e) =>
+                    handleChange(
+                      'autoUpdateJiraStoryPoints',
+                      e.target.checked
+                    )
+                  }
+                  data-testid="settings-toggle-jira-auto"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -73,15 +75,16 @@ export function OtherOptions({
               <div className="space-y-2">
                 <div className="flex items-center">
                   <input
-                    type="checkbox"
-                    id="allowOthersToShowEstimates"
-                    checked={localSettings.allowOthersToShowEstimates}
-                    onChange={(e) =>
-                      handleChange(
-                        'allowOthersToShowEstimates',
-                        e.target.checked
-                      )
-                    }
+                  type="checkbox"
+                  id="allowOthersToShowEstimates"
+                  checked={localSettings.allowOthersToShowEstimates}
+                  onChange={(e) =>
+                    handleChange(
+                      'allowOthersToShowEstimates',
+                      e.target.checked
+                    )
+                  }
+                  data-testid="settings-toggle-allow-show"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -93,15 +96,16 @@ export function OtherOptions({
                 </div>
                 <div className="flex items-center">
                   <input
-                    type="checkbox"
-                    id="allowOthersToDeleteEstimates"
-                    checked={localSettings.allowOthersToDeleteEstimates}
-                    onChange={(e) =>
-                      handleChange(
-                        'allowOthersToDeleteEstimates',
-                        e.target.checked
-                      )
-                    }
+                  type="checkbox"
+                  id="allowOthersToDeleteEstimates"
+                  checked={localSettings.allowOthersToDeleteEstimates}
+                  onChange={(e) =>
+                    handleChange(
+                      'allowOthersToDeleteEstimates',
+                      e.target.checked
+                    )
+                  }
+                  data-testid="settings-toggle-allow-reset"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -143,6 +147,7 @@ export function OtherOptions({
                   onChange={(e) =>
                     handleChange('hideParticipantNames', e.target.checked)
                   }
+                  data-testid="settings-toggle-hide-names"
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />
                 <label
@@ -158,6 +163,7 @@ export function OtherOptions({
                   id="showTimer"
                   checked={localSettings.showTimer}
                   onChange={(e) => handleChange('showTimer', e.target.checked)}
+                  data-testid="settings-toggle-show-timer"
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />
                 <label

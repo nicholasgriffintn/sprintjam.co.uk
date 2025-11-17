@@ -7,6 +7,10 @@ export class RoomPage {
     await expect(this.page.getByTestId('participants-panel')).toBeVisible();
   }
 
+  getPage() {
+    return this.page;
+  }
+
   async getRoomKey(): Promise<string> {
     const key = await this.page.getByTestId('room-key-value').textContent();
     if (!key) {
@@ -102,5 +106,36 @@ export class RoomPage {
     } else {
       await expect(connectedIndicator).toHaveCount(0);
     }
+  }
+
+  async openSettingsModal() {
+    await this.page.getByRole('button', { name: /settings/i }).click();
+    await expect(
+      this.page.getByRole('dialog', { name: 'Room Settings' })
+    ).toBeVisible();
+  }
+
+  async expectTimerVisible() {
+    await expect(this.page.getByTestId('room-timer')).toBeVisible();
+  }
+
+  async expectParticipantNameHidden(name: string) {
+    const row = this.page.locator(`[data-participant-name="${name}"]`);
+    await expect(row.getByText(name)).toHaveCount(0);
+  }
+
+  async expectToggleVotesButtonVisible(isVisible = true) {
+    const button = this.page.getByTestId('toggle-votes-button');
+    if (isVisible) {
+      await expect(button).toBeVisible();
+    } else {
+      await expect(button).toHaveCount(0);
+    }
+  }
+
+  async expectJiraPanelVisible() {
+    await expect(
+      this.page.getByTestId('jira-ticket-panel')
+    ).toBeVisible();
   }
 }

@@ -24,6 +24,7 @@ export function VotingMode({
             onChange={(e) =>
               handleChange('enableStructuredVoting', e.target.checked)
             }
+            data-testid="settings-toggle-structured-voting"
             className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
           />
           <label
