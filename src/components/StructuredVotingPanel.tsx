@@ -210,7 +210,7 @@ export function StructuredVotingPanel({
           )}
 
         <div
-          className="flex items-center justify-between p-3 border-2 border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20"
+          className="flex items-center justify-between p-3 border border-blue-200/70 dark:border-blue-700/50 rounded-lg bg-blue-50 dark:bg-blue-900/20"
           data-testid="structured-summary"
         >
           <div>
