@@ -63,7 +63,7 @@ export function ParticipantsList({
         className={`${isParticipantsExpanded ? 'block' : 'hidden md:block'}`}
       >
         <div className="mb-3">
-          <div className="mb-1 flex justify-between text-sm text-slate-500 dark:text-slate-300 mb-2">
+          <div className="mb-1 flex justify-between text-sm text-slate-700 dark:text-slate-200 mb-2">
             <span>Voting progress</span>
             <span>
               {stats.votedUsers}/{roomData.users.length}
@@ -136,7 +136,7 @@ export function ParticipantsList({
                         <Crown className="h-3.5 w-3.5 text-brand-500" />
                       )}
                       {user === name && (
-                        <User className="h-3.5 w-3.5 text-slate-500 dark:text-slate-300" />
+                        <User className="h-3.5 w-3.5 text-slate-700 dark:text-slate-200" />
                       )}
                     </>
                   )}

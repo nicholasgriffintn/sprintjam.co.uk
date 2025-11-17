@@ -43,7 +43,7 @@ export function ResultsControls({
             type="button"
             data-testid="reset-votes-button"
             onClick={onResetVotes}
-            className="rounded-xl bg-slate-500 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600"
+            className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 dark:bg-slate-600/90 dark:hover:bg-slate-500/90 dark:focus-visible:ring-slate-600"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >

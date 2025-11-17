@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 
 import { SurfaceCard } from './SurfaceCard';
 
@@ -20,17 +20,32 @@ export const Modal = ({
 }: ModalProps) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const generatedId = useId();
+  const titleId = title ? `${generatedId}-modal-title` : undefined;
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
+    const focusableSelector =
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-    if (focusableElements && focusableElements.length > 0) {
-      focusableElements[0].focus();
-    }
+    const getFocusableElements = () =>
+      modalRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [];
+
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
+    const focusFirstElement = () => {
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length > 0) {
+        focusableElements[0].focus();
+      }
+    };
+
+    focusFirstElement();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -38,17 +53,20 @@ export const Modal = ({
         return;
       }
 
-      if (e.key === 'Tab' && focusableElements) {
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
+      if (e.key !== 'Tab') return;
 
-        if (e.shiftKey && document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        } else if (!e.shiftKey && document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
       }
     };
 
@@ -58,10 +76,10 @@ export const Modal = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
     };
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const sizeClasses = {
     sm: 'max-w-md',
@@ -75,6 +93,8 @@ export const Modal = ({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div
       ref={overlayRef}
@@ -82,14 +102,15 @@ export const Modal = ({
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/30 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-labelledby={title ? 'modal-title' : undefined}
+      aria-labelledby={titleId}
+      tabIndex={-1}
     >
       <div ref={modalRef} className={`w-full ${sizeClasses[size]}`}>
         <SurfaceCard>
           {title && (
             <div className="mb-6 flex items-center justify-between">
               <h2
-                id="modal-title"
+                id={titleId}
                 className="text-2xl font-semibold text-slate-900 dark:text-white"
               >
                 {title}

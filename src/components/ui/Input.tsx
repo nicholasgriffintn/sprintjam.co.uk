@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes, ReactNode } from 'react';
+import { useId } from 'react';
 import { CheckCircle } from 'lucide-react';
 
 import { cn } from '../../lib/cn';
@@ -28,11 +29,12 @@ export const Input = ({
   disabled,
   ...props
 }: InputProps) => {
-  const inputId =
-    id ||
-    (typeof label === 'string'
-      ? label.toLowerCase().replace(/\s+/g, '-')
-      : undefined);
+  const generatedId = useId();
+  const inputId = id || `input-${generatedId}`;
+  const helperId =
+    (error || helperText) && inputId
+      ? `${inputId}-helper`
+      : undefined;
   const hasRightContent =
     (icon && iconPosition === 'right') || (showValidation && isValid);
 
@@ -55,6 +57,8 @@ export const Input = ({
         <input
           id={inputId}
           disabled={disabled}
+          aria-describedby={helperId}
+          aria-invalid={!!error}
           className={cn(
             'rounded-2xl border border-white/50 bg-white/80 px-4 py-3 text-base text-slate-900 shadow-sm transition',
             'placeholder:text-slate-400',
@@ -84,6 +88,7 @@ export const Input = ({
       </div>
       {(helperText || error) && (
         <p
+          id={helperId}
           className={cn(
             'text-xs',
             error

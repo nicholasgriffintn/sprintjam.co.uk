@@ -36,24 +36,20 @@ export function StructuredVotingUpdateNotification() {
           data-testid="confidence-info-toast"
         >
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4 md:flex-nowrap">
-            <div className="flex gap-3 flex-1">
+              <div className="flex gap-3 flex-1">
               <Info
                 size={20}
-                className="mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-300"
+                className="mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-200"
               />
-              <div className="space-y-1 text-sm">
+              <div className="space-y-1 text-sm text-blue-900 dark:text-blue-100">
                 <p className="font-semibold">
                   Individual Confidence scoring update
                 </p>
-                <p>
-                  Confidence buttons still go from 0 → 4, but 4 now means
-                  you&apos;re very confident. The backend automatically inverts
-                  the score so higher confidence lowers the weighted
-                  contribution.
+                <p className="text-slate-700 dark:text-blue-100">
+                  Confidence buttons still go from 0 → 4, but 4 now means you&apos;re very confident. The backend automatically inverts the score so higher confidence lowers the weighted contribution.
                 </p>
-                <p className="text-xs text-blue-800 dark:text-blue-200/80">
-                  Pick 0 when you&apos;re unsure and 4 when you&apos;re very
-                  confident, no more mental gymnastics needed.
+                <p className="text-xs text-slate-600 dark:text-blue-200">
+                  Pick 0 when you&apos;re unsure and 4 when you&apos;re very confident, no more mental gymnastics needed.
                 </p>
               </div>
             </div>
@@ -61,7 +57,7 @@ export function StructuredVotingUpdateNotification() {
               <button
                 type="button"
                 onClick={handleDismissConfidenceInfo}
-                className="rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow hover:bg-blue-700 focus:outline-none focus-visible:ring focus-visible:ring-blue-400 dark:bg-blue-500 dark:hover:bg-blue-400"
+                className="rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow hover:bg-blue-700 focus:outline-none focus-visible:ring focus-visible:ring-blue-400"
               >
                 Got it
               </button>
