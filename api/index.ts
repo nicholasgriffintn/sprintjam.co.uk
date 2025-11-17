@@ -19,6 +19,12 @@ import {
   getJiraTicketController,
   updateJiraStoryPointsController,
 } from './controllers/jira-controller';
+import {
+  disconnectJiraIntegrationController,
+  getJiraIntegrationStatusController,
+  jiraOAuthCallbackController,
+  startJiraOAuthController,
+} from './controllers/jira-oauth-controller';
 
 async function handleRequest(
   request: CfRequest,
@@ -79,6 +85,22 @@ async function handleApiRequest(
 
   if (path === 'rooms/settings' && request.method === 'PUT') {
     return updateRoomSettingsController(request, env);
+  }
+
+  if (path === 'jira/oauth/start' && request.method === 'GET') {
+    return startJiraOAuthController(url, env);
+  }
+
+  if (path === 'jira/oauth/status' && request.method === 'GET') {
+    return getJiraIntegrationStatusController(url, env);
+  }
+
+  if (path === 'jira/oauth/callback' && request.method === 'GET') {
+    return jiraOAuthCallbackController(url, env);
+  }
+
+  if (path === 'jira/oauth/disconnect' && request.method === 'POST') {
+    return disconnectJiraIntegrationController(request, env);
   }
 
   if (path === 'jira/ticket' && request.method === 'GET') {

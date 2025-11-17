@@ -5,6 +5,7 @@ import type {
 } from '@cloudflare/workers-types';
 
 import type {
+  JiraOAuthIntegration,
   JiraTicket,
   RoomData,
   RoomSettings,
@@ -63,6 +64,21 @@ export class PlanningRoomRepository {
         `CREATE TABLE IF NOT EXISTS room_structured_votes (
           user_name TEXT PRIMARY KEY,
           payload TEXT NOT NULL
+        )`
+      );
+
+      this.sql.exec(
+        `CREATE TABLE IF NOT EXISTS room_jira_integration (
+          id INTEGER PRIMARY KEY CHECK (id = ${ROOM_ROW_ID}),
+          payload TEXT
+        )`
+      );
+
+      this.sql.exec(
+        `CREATE TABLE IF NOT EXISTS room_jira_oauth_states (
+          nonce TEXT PRIMARY KEY,
+          user_name TEXT NOT NULL,
+          created_at INTEGER NOT NULL
         )`
       );
     });
@@ -394,6 +410,60 @@ export class PlanningRoomRepository {
        WHERE id = ${ROOM_ROW_ID}`,
       isPlaying ? 1 : 0
     );
+  }
+
+  getJiraIntegration(): JiraOAuthIntegration | undefined {
+    const row = this.sql
+      .exec<{ payload: string | null }>(
+        `SELECT payload FROM room_jira_integration WHERE id = ${ROOM_ROW_ID}`
+      )
+      .toArray()[0];
+
+    if (!row || !row.payload) {
+      return undefined;
+    }
+
+    try {
+      return JSON.parse(row.payload) as JiraOAuthIntegration;
+    } catch {
+      return undefined;
+    }
+  }
+
+  setJiraIntegration(integration?: JiraOAuthIntegration) {
+    this.sql.exec(
+      `INSERT INTO room_jira_integration (id, payload)
+       VALUES (${ROOM_ROW_ID}, ?)
+       ON CONFLICT(id) DO UPDATE SET payload = excluded.payload`,
+      serializeJSON(integration)
+    );
+  }
+
+  createJiraOAuthState(nonce: string, userName: string) {
+    this.sql.exec(
+      `INSERT INTO room_jira_oauth_states (nonce, user_name, created_at)
+       VALUES (?, ?, strftime('%s','now'))
+       ON CONFLICT(nonce) DO UPDATE SET user_name = excluded.user_name,
+         created_at = excluded.created_at`,
+      nonce,
+      userName
+    );
+  }
+
+  consumeJiraOAuthState(nonce: string): { userName: string } | undefined {
+    const row = this.sql
+      .exec<{ user_name: string }>(
+        `SELECT user_name FROM room_jira_oauth_states WHERE nonce = ?`,
+        nonce
+      )
+      .toArray()[0];
+
+    if (!row) {
+      return undefined;
+    }
+
+    this.sql.exec(`DELETE FROM room_jira_oauth_states WHERE nonce = ?`, nonce);
+    return { userName: row.user_name };
   }
 
   private getSql(txn?: DurableObjectTransaction): SqlStorage {

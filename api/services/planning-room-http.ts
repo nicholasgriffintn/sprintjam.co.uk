@@ -2,6 +2,7 @@ import type { Response as CfResponse } from '@cloudflare/workers-types';
 
 import type {
   BroadcastMessage,
+  JiraOAuthIntegration,
   JiraTicket,
   RoomData,
   RoomSettings,
@@ -276,6 +277,133 @@ export async function handleHttpRequest(
       success: true,
       settings: roomData.settings,
     });
+  }
+
+  if (url.pathname === '/jira/oauth/state' && request.method === 'POST') {
+    const { userName, nonce } = (await request.json()) as {
+      userName?: string;
+      nonce?: string;
+    };
+
+    if (!userName || !nonce) {
+      return createJsonResponse(
+        { error: 'User name and nonce are required' },
+        400
+      );
+    }
+
+    const roomData = await ctx.getRoomData();
+
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    if (roomData.moderator !== userName) {
+      return createJsonResponse(
+        { error: 'Only the moderator can connect Jira' },
+        403
+      );
+    }
+
+    if (!roomData.users.includes(userName)) {
+      return createJsonResponse({ error: 'User not in room' }, 400);
+    }
+
+    ctx.repository.createJiraOAuthState(nonce, userName);
+    return createJsonResponse({ success: true });
+  }
+
+  if (
+    url.pathname === '/jira/oauth/state/consume' &&
+    request.method === 'POST'
+  ) {
+    const { nonce } = (await request.json()) as { nonce?: string };
+
+    if (!nonce) {
+      return createJsonResponse({ error: 'Nonce is required' }, 400);
+    }
+
+    const roomData = await ctx.getRoomData();
+
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    const stateInfo = ctx.repository.consumeJiraOAuthState(nonce);
+
+    if (!stateInfo) {
+      return createJsonResponse(
+        { error: 'Invalid or expired OAuth state' },
+        400
+      );
+    }
+
+    return createJsonResponse({ success: true, userName: stateInfo.userName });
+  }
+
+  if (url.pathname === '/jira/integration' && request.method === 'GET') {
+    const integration = ctx.repository.getJiraIntegration();
+    return createJsonResponse({ integration });
+  }
+
+  if (url.pathname === '/jira/integration' && request.method === 'PUT') {
+    const { integration, userName, system } = (await request.json()) as {
+      integration?: JiraOAuthIntegration;
+      userName?: string;
+      system?: boolean;
+    };
+
+    if (!system) {
+      const roomData = await ctx.getRoomData();
+
+      if (!roomData || !roomData.key) {
+        return createJsonResponse({ error: 'Room not found' }, 404);
+      }
+
+      if (!userName || roomData.moderator !== userName) {
+        return createJsonResponse(
+          { error: 'Only the moderator can connect Jira' },
+          403
+        );
+      }
+
+      if (!roomData.users.includes(userName)) {
+        return createJsonResponse({ error: 'User not in room' }, 400);
+      }
+    }
+
+    ctx.repository.setJiraIntegration(integration);
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === '/jira/integration' && request.method === 'DELETE') {
+    const { userName, system } = (await request.json().catch(() => ({}))) as {
+      userName?: string;
+      system?: boolean;
+    };
+
+    if (!system) {
+      const roomData = await ctx.getRoomData();
+
+      if (!roomData || !roomData.key) {
+        return createJsonResponse({ error: 'Room not found' }, 404);
+      }
+
+      if (!userName || roomData.moderator !== userName) {
+        return createJsonResponse(
+          { error: 'Only the moderator can disconnect Jira' },
+          403
+        );
+      }
+
+      if (!roomData.users.includes(userName)) {
+        return createJsonResponse({ error: 'User not in room' }, 400);
+      }
+    }
+
+    ctx.repository.setJiraIntegration(undefined);
+    return createJsonResponse({ success: true });
   }
 
   if (url.pathname === '/jira/ticket' && request.method === 'POST') {

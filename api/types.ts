@@ -7,10 +7,11 @@ import type {
 export interface Env {
   PLANNING_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;
-  JIRA_DOMAIN?: string;
-  JIRA_EMAIL?: string;
-  JIRA_API_TOKEN?: string;
-  JIRA_STORY_POINTS_FIELD?: string;
+  JIRA_CLIENT_ID?: string;
+  JIRA_CLIENT_SECRET?: string;
+  JIRA_OAUTH_REDIRECT_URI?: string;
+  JIRA_OAUTH_SCOPES?: string;
+  JIRA_OAUTH_AUDIENCE?: string;
   POLYCHAT_API_TOKEN?: string;
 }
 
@@ -110,7 +111,6 @@ export interface RoomSettings {
   strudelAutoGenerate?: boolean;
 }
 
-
 export interface VotingCriterion {
   id: string;
   name: string;
@@ -141,6 +141,18 @@ export interface JiraTicket {
   status?: string;
   storyPoints?: number;
   url?: string;
+}
+
+export interface JiraOAuthIntegration {
+  type: 'oauth';
+  cloudId: string;
+  siteUrl: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  scopes: string[];
+  connectedBy: string;
+  connectedAt: number;
 }
 
 export interface RoomData {

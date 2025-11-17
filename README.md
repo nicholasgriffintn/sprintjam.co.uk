@@ -24,7 +24,8 @@ SprintJam is a modern, privacy-focused planning poker application designed for a
 - **Automatic Scoring**: Final story point recommendations
 - **Consensus Detection**: Identifies when team alignment is reached
 
-### 🔗 **Jira Integration (In Development)**
+### 🔗 **Jira Integration (In Dev)**
+- OAuth 2.0 (3LO) connection per room or team
 - Fetch ticket details directly from Jira
 - Auto-update story points after estimation
 - Support for custom story point fields
@@ -73,14 +74,22 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
 3. **Set up environment variables**
    Create a `.dev.vars` file or configure in Cloudflare dashboard:
    ```env
-   # Optional: Jira Integration
-   JIRA_DOMAIN=your-domain.atlassian.net
-   JIRA_EMAIL=your-email@company.com
-   JIRA_API_TOKEN=your-api-token
-   JIRA_STORY_POINTS_FIELD=customfield_10016
+   # Recommended: Atlassian OAuth 2.0 (3LO)
+   JIRA_CLIENT_ID=your-atlassian-client-id
+   JIRA_CLIENT_SECRET=super-secret
+   JIRA_OAUTH_REDIRECT_URI=https://your-worker-domain/api/jira/oauth/callback
+   JIRA_OAUTH_SCOPES="read:issue:jira write:issue:jira offline_access"
+   JIRA_OAUTH_AUDIENCE=api.atlassian.com
    ```
 
-4. **Deploy to Cloudflare**
+4. **Configure Jira OAuth**
+   1. Create a new Atlassian developer app (OAuth 2.0 (3LO)).
+   2. Add the scopes listed above (at minimum `read:issue:jira` and `write:issue:jira`).
+   3. Set the callback URL to `https://<your-worker-domain>/api/jira/oauth/callback`.
+   4. Save the client ID/secret into the environment variables.
+   5. From the SprintJam UI call `/api/jira/oauth/start?roomKey=...&userName=...` (or use the helper methods in `src/lib/jira-service.ts`) to initiate the connection for a room.
+
+5. **Deploy to Cloudflare**
    ```bash
    pnpm run deploy
    ```
@@ -117,7 +126,7 @@ Contributions are welcome! This project was built quickly and there are definite
 
 - [ ] Add workspace support for teams to manage multiple rooms.
 - [ ] Enrich room metadata (team, persona, sprint) so vote distribution filters can operate on meaningful cohorts in both live and historical modes.
-- [ ] Figure out how to fully implement Jira integration (OAuth flow?).
+- [ ] Improve Jira integration UX (site picker, status surface area, richer error messages).
 - [ ] Persist past sessions so facilitators can compare rounds (Durable Object snapshots keyed by room + timestamp, lightweight metadata for participants and consensus).
 - [ ] Add a history drawer in `UnifiedResults` to surface trend lines once snapshots exist (avg delta, consensus trend, automatic regression callouts).
 - [ ] Improve accessibility (ARIA roles, keyboard navigation, screen reader support).

@@ -130,6 +130,14 @@ export function convertVoteValueToStoryPoints(voteValue: VoteValue): number | nu
  * @param {string} userName - The user name making the request
  * @returns {Promise<void>}
  */
+export interface JiraIntegrationSummary {
+  cloudId: string;
+  siteUrl: string;
+  scopes: string[];
+  connectedBy: string;
+  connectedAt: number;
+}
+
 export async function clearJiraTicket(roomKey: string, userName: string): Promise<void> {
   try {
     const response = await fetch(`${API_BASE_URL}/jira/ticket/clear`, {
@@ -160,5 +168,74 @@ export async function clearJiraTicket(roomKey: string, userName: string): Promis
   } catch (error) {
     console.error('Error clearing Jira ticket:', error);
     throw error;
+  }
+}
+
+export async function getJiraIntegrationStatus(
+  roomKey: string
+): Promise<JiraIntegrationSummary | undefined> {
+  const response = await fetch(
+    `${API_BASE_URL}/jira/oauth/status?roomKey=${encodeURIComponent(roomKey)}`
+  );
+  const data = (await response.json().catch(() => undefined)) as
+    | { integration?: JiraIntegrationSummary; error?: string }
+    | undefined;
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error || `Failed to fetch Jira integration: ${response.status}`
+    );
+  }
+
+  return data?.integration;
+}
+
+export async function startJiraOAuth(
+  roomKey: string,
+  userName: string
+): Promise<string> {
+  const response = await fetch(
+    `${API_BASE_URL}/jira/oauth/start?roomKey=${encodeURIComponent(
+      roomKey
+    )}&userName=${encodeURIComponent(userName)}`
+  );
+
+  const data = (await response.json().catch(() => undefined)) as
+    | { url?: string; error?: string }
+    | undefined;
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error || `Failed to start Jira OAuth: ${response.status}`
+    );
+  }
+
+  if (!data.url) {
+    throw new Error('Jira OAuth did not return an authorization URL');
+  }
+
+  return data.url;
+}
+
+export async function disconnectJiraIntegration(
+  roomKey: string,
+  userName: string
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/jira/oauth/disconnect`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ roomKey, userName }),
+  });
+
+  const payload = (await response.json().catch(() => undefined)) as
+    | { error?: string }
+    | undefined;
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.error || `Failed to disconnect Jira: ${response.status}`
+    );
   }
 }
