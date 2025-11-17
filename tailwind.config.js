@@ -1,10 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'class',
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       fontFamily: {
@@ -24,7 +21,7 @@ module.exports = {
           900: '#172d70',
         },
         slate: {
-          950: '#04060b',
+          950: '#02091a',
         },
       },
       boxShadow: {

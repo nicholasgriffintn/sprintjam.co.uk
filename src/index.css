@@ -7,7 +7,7 @@
   :root {
     color-scheme: light;
     --surface: #f8fafc;
-    --surface-dark: #04060b;
+    --surface-dark: #0f172a;
     --card: rgba(255, 255, 255, 0.85);
     --card-dark: rgba(2, 6, 23, 0.7);
   }
