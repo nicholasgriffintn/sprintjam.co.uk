@@ -226,6 +226,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
               <Button
                 type="button"
                 variant="secondary"
+                data-testid="join-room-back"
                 onClick={handleBack}
                 className="sm:w-auto sm:flex-shrink-0"
                 fullWidth
@@ -235,6 +236,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
               </Button>
               <Button
                 type="submit"
+                data-testid="join-room-submit"
                 disabled={!getFormValid()}
                 className="sm:flex-1"
                 icon={

@@ -74,6 +74,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
 
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
           <Button
+            data-testid="create-room-button"
             onClick={onCreateRoom}
             icon={<Plus className="h-4 w-4" />}
             size="lg"
@@ -83,6 +84,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
           </Button>
           <Button
             variant="secondary"
+            data-testid="join-room-button"
             onClick={onJoinRoom}
             icon={<Users className="h-4 w-4" />}
             size="lg"

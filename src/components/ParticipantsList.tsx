@@ -27,6 +27,7 @@ export function ParticipantsList({
 
   return (
     <div
+      data-testid="participants-panel"
       className={`w-full flex-shrink-0 border-b border-white/30 bg-transparent px-0 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5 ${
         isParticipantsExpanded ? 'py-3' : 'py-2'
       }`}
@@ -76,10 +77,12 @@ export function ParticipantsList({
             />
           </div>
         </div>
-        <ul className="space-y-2">
+        <ul className="space-y-2" data-testid="participants-list">
           {roomData.users.map((user: string) => (
             <motion.li
               key={user}
+              data-testid="participant-row"
+              data-participant-name={user}
               className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-slate-900 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

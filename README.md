@@ -97,6 +97,10 @@ pnpm run build
 
 # Preview production build
 pnpm run preview
+
+# Run E2E tests
+pnpm exec playwright install --with-deps
+pnpm test:e2e
 ```
 
 ## 🤝 Contributing
