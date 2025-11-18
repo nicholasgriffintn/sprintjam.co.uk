@@ -1,9 +1,9 @@
-import { useId, useMemo, useState } from "react";
-import { Users, ChevronDown, ChevronUp, Crown, User } from "lucide-react";
-import { motion } from "framer-motion";
+import { useId, useMemo, useState, memo } from 'react';
+import { Users, ChevronDown, ChevronUp, Crown, User } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-import type { RoomData, RoomStats } from "../types";
-import { getAvatarInfo } from "../utils/avatars";
+import type { RoomData, RoomStats } from '../types';
+import { getAvatarInfo } from '../utils/avatars';
 import { Badge } from './ui/Badge';
 
 export type ParticipantsListProps = {
@@ -12,7 +12,101 @@ export type ParticipantsListProps = {
   name: string;
 };
 
-export function ParticipantsList({
+type ParticipantItemProps = {
+  user: string;
+  index: number;
+  currentUser: string;
+  moderator: string;
+  userAvatar?: string;
+  isConnected: boolean;
+  vote?: string | number;
+  showVotes: boolean;
+  anonymousVotes: boolean;
+  hideParticipantNames?: boolean;
+};
+
+const ParticipantItem = memo(
+  ({
+    user,
+    index,
+    currentUser,
+    moderator,
+    userAvatar,
+    isConnected,
+    vote,
+    showVotes,
+    anonymousVotes,
+    hideParticipantNames,
+  }: ParticipantItemProps) => {
+    return (
+      <motion.li
+        data-testid="participant-row"
+        data-participant-name={user}
+        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-slate-900 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.2,
+          delay: index * 0.05,
+        }}
+        whileHover={{ scale: 1.01 }}
+      >
+        <div className="flex items-center space-x-3">
+          {userAvatar && (
+            <div
+              className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
+                isConnected
+                  ? 'border-emerald-300 dark:border-emerald-600'
+                  : 'border-slate-200 dark:border-slate-600'
+              }`}
+            >
+              {(() => {
+                const avatarInfo = getAvatarInfo(userAvatar);
+
+                if (avatarInfo) {
+                  return (
+                    <avatarInfo.Icon size={20} className={avatarInfo.color} />
+                  );
+                }
+
+                return <span className="text-lg">{userAvatar}</span>;
+              })()}
+            </div>
+          )}
+          <span
+            className={`flex items-center gap-2 text-sm ${
+              user === currentUser ? 'font-semibold' : ''
+            }`}
+          >
+            {!hideParticipantNames && (
+              <>
+                {user}
+                {user === moderator && (
+                  <Crown className="h-3.5 w-3.5 text-brand-500" />
+                )}
+                {user === currentUser && (
+                  <User className="h-3.5 w-3.5 text-slate-700 dark:text-slate-200" />
+                )}
+              </>
+            )}
+          </span>
+        </div>
+        {vote !== undefined && vote !== null && (
+          <Badge
+            variant={showVotes ? 'success' : 'default'}
+            className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+          >
+            {anonymousVotes && showVotes ? '✓' : showVotes ? vote : '✓'}
+          </Badge>
+        )}
+      </motion.li>
+    );
+  }
+);
+
+ParticipantItem.displayName = 'ParticipantItem';
+
+export const ParticipantsList = memo(function ParticipantsList({
   roomData,
   stats,
   name,
@@ -104,86 +198,23 @@ export function ParticipantsList({
           </div>
         </div>
         <ul className="space-y-2" data-testid="participants-list">
-          {roomData.users.map((user: string) => (
-            <motion.li
+          {roomData.users.map((user: string, index: number) => (
+            <ParticipantItem
               key={user}
-              data-testid="participant-row"
-              data-participant-name={user}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-slate-900 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.2,
-                delay: roomData.users.indexOf(user) * 0.05,
-              }}
-              whileHover={{ scale: 1.01 }}
-            >
-              <div className="flex items-center space-x-3">
-                {roomData.userAvatars?.[user] && (
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
-                      roomData.connectedUsers?.[user]
-                        ? 'border-emerald-300 dark:border-emerald-600'
-                        : 'border-slate-200 dark:border-slate-600'
-                    }`}
-                  >
-                    {(() => {
-                      const avatarInfo = getAvatarInfo(
-                        roomData.userAvatars[user]
-                      );
-
-                      if (avatarInfo) {
-                        return (
-                          <avatarInfo.Icon
-                            size={20}
-                            className={avatarInfo.color}
-                          />
-                        );
-                      }
-
-                      return (
-                        <span className="text-lg">
-                          {roomData.userAvatars[user]}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                )}
-                <span
-                  className={`flex items-center gap-2 text-sm ${
-                    user === name ? 'font-semibold' : ''
-                  }`}
-                >
-                  {!roomData.settings.hideParticipantNames && (
-                    <>
-                      {user}
-                      {user === roomData.moderator && (
-                        <Crown className="h-3.5 w-3.5 text-brand-500" />
-                      )}
-                      {user === name && (
-                        <User className="h-3.5 w-3.5 text-slate-700 dark:text-slate-200" />
-                      )}
-                    </>
-                  )}
-                </span>
-              </div>
-              {roomData.votes[user] !== undefined &&
-                roomData.votes[user] !== null && (
-                  <Badge
-                    variant={roomData.showVotes ? 'success' : 'default'}
-                    className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                  >
-                    {roomData.settings.anonymousVotes && roomData.showVotes
-                      ? '✓'
-                      : roomData.showVotes
-                      ? roomData.votes[user]
-                      : '✓'}
-                  </Badge>
-                )}
-            </motion.li>
+              user={user}
+              index={index}
+              currentUser={name}
+              moderator={roomData.moderator}
+              userAvatar={roomData.userAvatars?.[user]}
+              isConnected={roomData.connectedUsers?.[user] ?? false}
+              vote={roomData.votes[user] ?? undefined}
+              showVotes={roomData.showVotes}
+              anonymousVotes={roomData.settings.anonymousVotes}
+              hideParticipantNames={roomData.settings.hideParticipantNames}
+            />
           ))}
         </ul>
       </div>
     </div>
   );
-}
+});

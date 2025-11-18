@@ -45,16 +45,25 @@ export function UnifiedResults({
     () => getTopDistribution(stats, roomData),
     [stats.distribution, roomData.settings.topVotesCount]
   );
-  const participationRate = calculateParticipationRate(stats, roomData);
-  const consensusSummary = buildConsensusSummary(
-    criteriaStats,
-    roomData.judgeMetadata
+  const participationRate = useMemo(
+    () => calculateParticipationRate(stats, roomData),
+    [stats.votedUsers, stats.totalUsers, roomData.users.length]
   );
-  const recommendation = buildRecommendation({
-    participationRate,
-    consensusLevel: consensusSummary.level,
-    needsDiscussion: consensusSummary.needsDiscussion,
-  });
+
+  const consensusSummary = useMemo(
+    () => buildConsensusSummary(criteriaStats, roomData.judgeMetadata),
+    [criteriaStats, roomData.judgeMetadata]
+  );
+
+  const recommendation = useMemo(
+    () =>
+      buildRecommendation({
+        participationRate,
+        consensusLevel: consensusSummary.level,
+        needsDiscussion: consensusSummary.needsDiscussion,
+      }),
+    [participationRate, consensusSummary.level, consensusSummary.needsDiscussion]
+  );
   const { summaryCardElements, visibleStatsCount } = useSummaryCards({
     summaryCardConfigs,
     useConfiguredSummaryCards,

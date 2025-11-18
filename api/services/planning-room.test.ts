@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { RoomData, RoomSettings } from '../types';
+import { describe, it, expect } from 'vitest';
+import type { RoomData } from '../types';
 import { JudgeAlgorithm } from '../types';
 
 describe('PlanningRoom - Vote Validation and Settings', () => {

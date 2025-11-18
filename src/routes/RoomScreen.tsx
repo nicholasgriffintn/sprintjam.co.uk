@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react';
+import { type FC, useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import type {
@@ -11,8 +11,6 @@ import type {
 import { useRoomStats } from '../hooks/useRoomStats';
 import { useConsensusCelebration } from '../hooks/useConsensusCelebration';
 import ErrorBanner from '../components/ui/ErrorBanner';
-import SettingsModal from '../components/SettingsModal';
-import ShareRoomModal from '../components/ShareRoomModal';
 import Header from '../components/Header';
 import { ParticipantsList } from '../components/ParticipantsList';
 import { Timer } from '../components/Timer';
@@ -21,9 +19,17 @@ import { ResultsControls } from '../components/ResultsControls';
 import { VotesHidden } from '../components/VotesHidden';
 import JiraTicketPanel from '../components/JiraTicketPanel';
 import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
-import { UnifiedResults } from '../components/UnifiedResults';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
+import { FallbackLoading } from '../components/ui/FallbackLoading';
+
+const SettingsModal = lazy(() => import('../components/SettingsModal'));
+const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
+const UnifiedResults = lazy(() =>
+  import('../components/UnifiedResults').then((m) => ({
+    default: m.UnifiedResults,
+  }))
+);
 
 export interface RoomScreenProps {
   roomData: RoomData;
@@ -157,13 +163,15 @@ const RoomScreen: FC<RoomScreenProps> = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <UnifiedResults
-                      roomData={roomData}
-                      stats={stats}
-                      criteria={roomData.settings.votingCriteria}
-                      displayJudge={roomData.settings.enableJudge}
-                      showVotes={roomData.showVotes}
-                    />
+                    <Suspense fallback={<FallbackLoading variant="inline" />}>
+                      <UnifiedResults
+                        roomData={roomData}
+                        stats={stats}
+                        criteria={roomData.settings.votingCriteria}
+                        displayJudge={roomData.settings.enableJudge}
+                        showVotes={roomData.showVotes}
+                      />
+                    </Suspense>
                   </motion.div>
                 </SurfaceCard>
               </motion.div>
@@ -197,24 +205,28 @@ const RoomScreen: FC<RoomScreenProps> = ({
 
       <AnimatePresence>
         {isSettingsModalOpen && (
-          <SettingsModal
-            isOpen={isSettingsModalOpen}
-            onClose={() => setIsSettingsModalOpen(false)}
-            settings={roomData.settings}
-            onSaveSettings={onUpdateSettings}
-            defaultSettings={serverDefaults.roomSettings}
-            structuredVotingOptions={serverDefaults.structuredVotingOptions}
-          />
+          <Suspense fallback={<FallbackLoading />}>
+            <SettingsModal
+              isOpen={isSettingsModalOpen}
+              onClose={() => setIsSettingsModalOpen(false)}
+              settings={roomData.settings}
+              onSaveSettings={onUpdateSettings}
+              defaultSettings={serverDefaults.roomSettings}
+              structuredVotingOptions={serverDefaults.structuredVotingOptions}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
         {isShareModalOpen && (
-          <ShareRoomModal
-            isOpen={isShareModalOpen}
-            onClose={() => setIsShareModalOpen(false)}
-            roomKey={roomData.key}
-          />
+          <Suspense fallback={<FallbackLoading />}>
+            <ShareRoomModal
+              isOpen={isShareModalOpen}
+              onClose={() => setIsShareModalOpen(false)}
+              roomKey={roomData.key}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
     </div>

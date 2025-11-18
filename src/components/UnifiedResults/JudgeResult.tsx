@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Gavel, Users, AlertTriangle, CheckCircle } from 'lucide-react';
+import { memo, useMemo } from 'react';
 
 import type { RoomData, RoomStats } from '../../types';
 
@@ -18,7 +19,7 @@ function getSelectedModeLabel(mode: string) {
   }
 }
 
-export function JudgeResult({
+export const JudgeResult = memo(function JudgeResult({
   roomData,
   stats,
   showJudgeAnimation
@@ -28,12 +29,16 @@ export function JudgeResult({
   showJudgeAnimation: boolean;
 }) {
   const totalParticipants = stats.totalUsers || roomData.users.length;
-  const participationPercentage = totalParticipants
-    ? Math.round((stats.votedUsers / totalParticipants) * 100)
-    : 0;
-  const participationLabel = totalParticipants
-    ? `${stats.votedUsers} votes (${participationPercentage}% of room)`
-    : `${stats.votedUsers} votes`;
+
+  const participationData = useMemo(() => {
+    const percentage = totalParticipants
+      ? Math.round((stats.votedUsers / totalParticipants) * 100)
+      : 0;
+    const label = totalParticipants
+      ? `${stats.votedUsers} votes (${percentage}% of room)`
+      : `${stats.votedUsers} votes`;
+    return { percentage, label };
+  }, [stats.votedUsers, totalParticipants]);
 
   return (
     <div className="mb-4">
@@ -88,7 +93,7 @@ export function JudgeResult({
                 </span>
               )}
               <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center sm:hidden">
-                <Users className="inline w-3 h-3 mr-1" /> {participationLabel}
+                <Users className="inline w-3 h-3 mr-1" /> {participationData.label}
               </span>
             </div>
           </div>
@@ -97,7 +102,7 @@ export function JudgeResult({
               {getSelectedModeLabel(roomData.settings.judgeAlgorithm || '')}
               <span className="text-gray-500 dark:text-gray-400 ml-2 hidden sm:inline">
                 <Users className="inline w-3.5 h-3.5 mr-1" />{' '}
-                {participationLabel}
+                {participationData.label}
               </span>
             </div>
           </div>
@@ -125,4 +130,4 @@ export function JudgeResult({
       </div>
     </div>
   );
-}
+});

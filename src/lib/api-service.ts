@@ -24,6 +24,9 @@ const RECONNECT_BASE_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30000;
 const eventListeners: Record<string, ((data: WebSocketMessage) => void)[]> = {};
 
+let voteDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const VOTE_DEBOUNCE_MS = 300;
+
 export function getCachedDefaultSettings(): ServerDefaults | null {
   return serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
 }
@@ -289,18 +292,31 @@ function handleReconnect(
 /**
  * Submit a vote
  * @param {VoteValue | StructuredVote} vote - The vote value
+ * @param {boolean} immediate - Whether to bypass debouncing
  */
-export function submitVote(vote: VoteValue | StructuredVote): void {
+export function submitVote(vote: VoteValue | StructuredVote, immediate = false): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error('Not connected to room');
   }
 
-  activeSocket.send(
-    JSON.stringify({
-      type: 'vote',
-      vote,
-    })
-  );
+  if (voteDebounceTimer) {
+    clearTimeout(voteDebounceTimer);
+  }
+
+  const sendVote = () => {
+    activeSocket?.send(
+      JSON.stringify({
+        type: 'vote',
+        vote,
+      })
+    );
+  };
+
+  if (immediate) {
+    sendVote();
+  } else {
+    voteDebounceTimer = setTimeout(sendVote, VOTE_DEBOUNCE_MS);
+  }
 }
 
 /**

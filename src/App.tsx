@@ -44,6 +44,7 @@ import { useRoomDataSync } from './hooks/useRoomDataSync';
 import ErrorBanner from './components/ui/ErrorBanner';
 import LoadingOverlay from './components/LoadingOverlay';
 import { ScreenLoader } from './components/layout/ScreenLoader';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import WelcomeScreen from './routes/WelcomeScreen';
 import CreateRoomScreen from './routes/CreateRoomScreen';
 import JoinRoomScreen from './routes/JoinRoomScreen';
@@ -209,7 +210,7 @@ const App = () => {
     setUserVote(value);
 
     try {
-      submitVote(value);
+      submitVote(value, true);
     } catch (err: unknown) {
       setUserVote(previousVote);
       const errorMessage =
@@ -407,33 +408,39 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      {(isLoading || isLoadingDefaults) && <LoadingOverlay />}
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('App Error Boundary:', error, errorInfo);
+      }}
+    >
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        {(isLoading || isLoadingDefaults) && <LoadingOverlay />}
 
-      {defaultsError && (
-        <div className="max-w-2xl mx-auto mt-4 px-4">
-          <div className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700 rounded-md p-3 flex items-start justify-between gap-4">
-            <span>Unable to load server defaults. {defaultsError}</span>
-            <button
-              type="button"
-              onClick={handleRetryDefaults}
-              className="text-sm font-medium underline"
-              disabled={isLoadingDefaults}
-            >
-              Retry
-            </button>
+        {defaultsError && (
+          <div className="max-w-2xl mx-auto mt-4 px-4">
+            <div className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700 rounded-md p-3 flex items-start justify-between gap-4">
+              <span>Unable to load server defaults. {defaultsError}</span>
+              <button
+                type="button"
+                onClick={handleRetryDefaults}
+                className="text-sm font-medium underline"
+                disabled={isLoadingDefaults}
+              >
+                Retry
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {error && screen !== 'room' && (
-        <ErrorBanner message={error} onClose={clearError} />
-      )}
+        {error && screen !== 'room' && (
+          <ErrorBanner message={error} onClose={clearError} />
+        )}
 
-      <MotionConfig reducedMotion="user">
-        <Suspense fallback={<ScreenLoader />}>{renderScreen()}</Suspense>
-      </MotionConfig>
-    </div>
+        <MotionConfig reducedMotion="user">
+          <Suspense fallback={<ScreenLoader />}>{renderScreen()}</Suspense>
+        </MotionConfig>
+      </div>
+    </ErrorBoundary>
   );
 };
 
