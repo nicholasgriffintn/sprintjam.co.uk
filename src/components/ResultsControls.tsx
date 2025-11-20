@@ -6,12 +6,12 @@ import {
   Eye,
   EyeOff,
   RotateCcw,
-} from 'lucide-react';
+} from "lucide-react";
 
-import type { RoomData } from '../types';
+import type { RoomData } from "../types";
 
 const buttonBase =
-  'group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md transition hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2';
+  "group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md transition hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
 export function ResultsControls({
   roomData,
@@ -30,7 +30,7 @@ export function ResultsControls({
   onNextTicket: () => void;
   onRevisitLater?: () => void;
 }) {
-  const voteToggleLabel = roomData.showVotes ? 'Hide Votes' : 'Show Votes';
+  const voteToggleLabel = roomData.showVotes ? "Hide Votes" : "Show Votes";
   const voteToggleClasses = roomData.showVotes
     ? `${buttonBase} bg-amber-600/90 text-slate-900 hover:bg-amber-700 focus-visible:ring-amber-200 focus-visible:ring-offset-amber-950/20`
     : `${buttonBase} bg-blue-600/90 text-white hover:bg-blue-700 focus-visible:ring-blue-200 focus-visible:ring-offset-slate-900/30`;
@@ -51,7 +51,7 @@ export function ResultsControls({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             aria-pressed={roomData.showVotes}
-            aria-label={roomData.showVotes ? 'Hide votes' : 'Show votes'}
+            aria-label={roomData.showVotes ? "Hide votes" : "Show votes"}
           >
             <span className="relative flex items-center gap-2">
               {roomData.showVotes ? (

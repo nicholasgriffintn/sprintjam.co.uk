@@ -432,9 +432,9 @@ export class PlanningRoomRepository {
 
   getPasscodeHash(): string | null {
     const result = this.sql
-      .exec<{ passcode: string | null }>(
-        `SELECT passcode FROM room_meta WHERE id = ${ROOM_ROW_ID}`,
-      )
+      .exec<{
+        passcode: string | null;
+      }>(`SELECT passcode FROM room_meta WHERE id = ${ROOM_ROW_ID}`)
       .toArray()[0];
 
     return result?.passcode ?? null;
@@ -455,10 +455,9 @@ export class PlanningRoomRepository {
 
   getSessionToken(userName: string): string | null {
     const result = this.sql
-      .exec<{ token: string | null }>(
-        "SELECT token FROM session_tokens WHERE user_name = ?",
-        userName,
-      )
+      .exec<{
+        token: string | null;
+      }>("SELECT token FROM session_tokens WHERE user_name = ?", userName)
       .toArray()[0];
     return result?.token ?? null;
   }

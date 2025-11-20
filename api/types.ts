@@ -14,6 +14,24 @@ export interface Env {
   POLYCHAT_API_TOKEN?: string;
 }
 
+export type ClientMessage =
+  | { type: 'vote'; vote: string | number | StructuredVote }
+  | { type: 'showVotes' }
+  | { type: 'resetVotes' }
+  | { type: 'updateSettings'; settings: Partial<RoomData['settings']> }
+  | { type: 'generateStrudelCode' }
+  | { type: 'toggleStrudelPlayback' }
+  | { type: 'nextTicket' }
+  | { type: 'addTicket'; ticket: Partial<TicketQueueItem> }
+  | {
+      type: 'updateTicket';
+      ticketId: number;
+      updates: Partial<TicketQueueItem>;
+    }
+  | { type: 'deleteTicket'; ticketId: number }
+  | { type: 'completeTicket'; outcome?: string }
+  | { type: 'ping' };
+
 export enum JudgeAlgorithm {
   SMART_CONSENSUS = "smartConsensus",
   CONSERVATIVE_MODE = "conservativeMode",

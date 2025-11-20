@@ -35,7 +35,13 @@ export const useRoomConnection = ({
       }
 
       try {
-        connectToRoom(activeRoomKey, name, authToken, onMessage, onConnectionChange);
+        connectToRoom(
+          activeRoomKey,
+          name,
+          authToken,
+          onMessage,
+          onConnectionChange,
+        );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Connection error";
@@ -63,5 +69,13 @@ export const useRoomConnection = ({
         }
       };
     }
-  }, [screen, activeRoomKey, name, authToken, onMessage, onConnectionChange, onError]);
+  }, [
+    screen,
+    activeRoomKey,
+    name,
+    authToken,
+    onMessage,
+    onConnectionChange,
+    onError,
+  ]);
 };

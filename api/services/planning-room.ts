@@ -39,11 +39,13 @@ import {
   type PlanningRoomHttpContext,
 } from "./planning-room-http";
 import { PlanningRoomRepository } from "../repositories/planning-room";
+import { validateClientMessage } from '../utils/validate';
 
 export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
   env: Env;
   sessions: Map<CfWebSocket, SessionInfo>;
+  heartbeats: Map<CfWebSocket, number>;
   judge: PlanningPokerJudge;
   repository: PlanningRoomRepository;
 
@@ -51,6 +53,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.state = state;
     this.env = env;
     this.sessions = new Map();
+    this.heartbeats = new Map();
     this.judge = new PlanningPokerJudge();
     this.repository = new PlanningRoomRepository(this.state.storage);
 
@@ -71,14 +74,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   async fetch(request: Request): Promise<CfResponse> {
     const url = new URL(request.url);
 
-    const upgradeHeader = request.headers.get("Upgrade");
-    if (upgradeHeader === "websocket") {
-      const roomKey = url.searchParams.get("room");
-      const userName = url.searchParams.get("name");
-      const sessionToken = url.searchParams.get("token");
+    const upgradeHeader = request.headers.get('Upgrade');
+    if (upgradeHeader === 'websocket') {
+      const roomKey = url.searchParams.get('room');
+      const userName = url.searchParams.get('name');
+      const sessionToken = url.searchParams.get('token');
 
       if (!roomKey || !userName || !sessionToken) {
-        return new Response("Missing room key, user name, or token", {
+        return new Response('Missing room key, user name, or token', {
           status: 400,
         }) as unknown as CfResponse;
       }
@@ -99,32 +102,34 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       return httpResponse;
     }
 
-    return new Response("Not found", { status: 404 }) as unknown as CfResponse;
+    return new Response('Not found', { status: 404 }) as unknown as CfResponse;
   }
 
   async handleSession(
     webSocket: CfWebSocket,
     roomKey: string,
     userName: string,
-    sessionToken: string,
+    sessionToken: string
   ) {
     const storedRoom = await this.getRoomData();
     const hasRoom =
-      storedRoom && storedRoom.key === roomKey && storedRoom.users.includes(userName);
+      storedRoom &&
+      storedRoom.key === roomKey &&
+      storedRoom.users.includes(userName);
     const hasValidToken = this.repository.validateSessionToken(
       userName,
-      sessionToken,
+      sessionToken
     );
 
     if (!hasRoom || !hasValidToken) {
       webSocket.accept();
       webSocket.send(
         JSON.stringify({
-          type: "error",
-          error: "Invalid or expired session. Please rejoin the room.",
-        }),
+          type: 'error',
+          error: 'Invalid or expired session. Please rejoin the room.',
+        })
       );
-      webSocket.close(4003, "Invalid session token");
+      webSocket.close(4003, 'Invalid session token');
       return;
     }
 
@@ -145,7 +150,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setUserConnection(userName, true);
 
       this.broadcast({
-        type: "userConnectionStatus",
+        type: 'userConnectionStatus',
         user: userName,
         isConnected: true,
       });
@@ -155,66 +160,99 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     if (roomData) {
       webSocket.send(
         JSON.stringify({
-          type: "initialize",
+          type: 'initialize',
           roomData: sanitizeRoomData(roomData),
-        }),
+        })
       );
     } else {
       webSocket.send(
         JSON.stringify({
-          type: "error",
-          error: "Unable to load room data",
-        }),
+          type: 'error',
+          error: 'Unable to load room data',
+        })
       );
-      webSocket.close(1011, "Room data unavailable");
+      webSocket.close(1011, 'Room data unavailable');
       return;
     }
 
-    webSocket.addEventListener("message", async (msg) => {
+    webSocket.addEventListener('message', async (msg) => {
       try {
         const messageData =
-          typeof msg.data === "string"
+          typeof msg.data === 'string'
             ? msg.data
             : new TextDecoder().decode(msg.data);
         const data = JSON.parse(messageData);
+        this.heartbeats.set(webSocket, Date.now());
+        const validated = validateClientMessage(data);
 
-        if (data.type === "vote") {
-          await this.handleVote(userName, data.vote);
-        } else if (data.type === "showVotes") {
-          await this.handleShowVotes(userName);
-        } else if (data.type === "resetVotes") {
-          await this.handleResetVotes(userName);
-        } else if (data.type === "updateSettings") {
-          await this.handleUpdateSettings(userName, data.settings);
-        } else if (data.type === "generateStrudelCode") {
-          await this.handleGenerateStrudel(userName);
-        } else if (data.type === "toggleStrudelPlayback") {
-          await this.handleToggleStrudelPlayback(userName);
-        } else if (data.type === "nextTicket") {
-          await this.handleNextTicket(userName);
-        } else if (data.type === "addTicket") {
-          await this.handleAddTicket(userName, data.ticket);
-        } else if (data.type === "updateTicket") {
-          await this.handleUpdateTicket(userName, data.ticketId, data.updates);
-        } else if (data.type === "deleteTicket") {
-          await this.handleDeleteTicket(userName, data.ticketId);
-        } else if (data.type === "completeTicket") {
-          await this.handleCompleteTicket(userName, data.outcome);
+        if ('error' in validated) {
+          webSocket.send(
+            JSON.stringify({
+              type: 'error',
+              error: validated.error,
+            })
+          );
+          return;
+        }
+
+        if (validated.type === 'ping') {
+          return;
+        }
+
+        switch (validated.type) {
+          case 'vote':
+            await this.handleVote(userName, validated.vote);
+            break;
+          case 'showVotes':
+            await this.handleShowVotes(userName);
+            break;
+          case 'resetVotes':
+            await this.handleResetVotes(userName);
+            break;
+          case 'updateSettings':
+            await this.handleUpdateSettings(userName, validated.settings);
+            break;
+          case 'generateStrudelCode':
+            await this.handleGenerateStrudel(userName);
+            break;
+          case 'toggleStrudelPlayback':
+            await this.handleToggleStrudelPlayback(userName);
+            break;
+          case 'nextTicket':
+            await this.handleNextTicket(userName);
+            break;
+          case 'addTicket':
+            await this.handleAddTicket(userName, validated.ticket);
+            break;
+          case 'updateTicket':
+            await this.handleUpdateTicket(
+              userName,
+              validated.ticketId,
+              validated.updates
+            );
+            break;
+          case 'deleteTicket':
+            await this.handleDeleteTicket(userName, validated.ticketId);
+            break;
+          case 'completeTicket':
+            await this.handleCompleteTicket(userName, validated.outcome);
+            break;
         }
       } catch (err: unknown) {
         webSocket.send(
           JSON.stringify({
-            type: "error",
+            type: 'error',
             error: err instanceof Error ? err.message : String(err),
-          }),
+          })
         );
       }
     });
 
-    webSocket.addEventListener("close", async () => {
+    webSocket.addEventListener('close', async () => {
       this.sessions.delete(webSocket);
+      this.heartbeats.delete(webSocket);
       const stillConnected = Array.from(this.sessions.values()).some(
-        (s: SessionInfo) => s.userName === userName,
+        (s: SessionInfo) => s.userName === userName
       );
 
       if (!stillConnected) {
@@ -226,7 +264,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
             this.repository.setUserConnection(userName, false);
             this.broadcast({
-              type: "userConnectionStatus",
+              type: 'userConnectionStatus',
               user: userName,
               isConnected: false,
             });
@@ -244,7 +282,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
                 this.repository.setModerator(roomData.moderator);
 
                 this.broadcast({
-                  type: "newModerator",
+                  type: 'newModerator',
                   moderator: roomData.moderator,
                 });
               }
@@ -270,7 +308,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       let structuredVotePayload: StructuredVote | null = null;
       if (isStructuredVote(vote)) {
         const structuredVote = createStructuredVote(vote.criteriaScores);
-        const calculatedPoints = structuredVote.calculatedStoryPoints || "?";
+        const calculatedPoints = structuredVote.calculatedStoryPoints || '?';
         finalVote = calculatedPoints;
         if (!roomData.structuredVotes) {
           roomData.structuredVotes = {};
@@ -285,8 +323,8 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       if (!validOptions.includes(String(finalVote))) {
         console.warn(
           `Invalid vote ${finalVote} from ${userName}. Valid options: ${validOptions.join(
-            ", ",
-          )}`,
+            ', '
+          )}`
         );
         return;
       }
@@ -301,7 +339,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       this.broadcast({
-        type: "vote",
+        type: 'vote',
         user: userName,
         vote: finalVote,
         structuredVote: structuredVotePayload,
@@ -319,7 +357,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     if (shouldGenerateMusic) {
       this.autoGenerateStrudel().catch((err) =>
-        console.error("Background Strudel generation failed:", err),
+        console.error('Background Strudel generation failed:', err)
       );
     }
   }
@@ -345,7 +383,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setShowVotes(roomData.showVotes);
 
       this.broadcast({
-        type: "showVotes",
+        type: 'showVotes',
         showVotes: roomData.showVotes,
       });
 
@@ -361,7 +399,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     if (shouldGenerateMusic) {
       this.autoGenerateStrudel().catch((err) =>
-        console.error("Background Strudel generation failed:", err),
+        console.error('Background Strudel generation failed:', err)
       );
     }
   }
@@ -394,7 +432,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setJudgeState(null);
 
       this.broadcast({
-        type: "resetVotes",
+        type: 'resetVotes',
       });
 
       shouldGenerateMusic =
@@ -405,14 +443,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     if (shouldGenerateMusic) {
       this.autoGenerateStrudel().catch((err) =>
-        console.error("Background Strudel generation failed:", err),
+        console.error('Background Strudel generation failed:', err)
       );
     }
   }
 
   async handleUpdateSettings(
     userName: string,
-    settings: Partial<RoomData["settings"]>,
+    settings: Partial<RoomData['settings']>
   ) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.getRoomData();
@@ -439,7 +477,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const estimateOptionsChanged =
         oldEstimateOptions.length !== newEstimateOptions.length ||
         !oldEstimateOptions.every(
-          (opt, idx) => opt === newEstimateOptions[idx],
+          (opt, idx) => opt === newEstimateOptions[idx]
         );
 
       const structuredVotingModeChanged =
@@ -451,7 +489,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       if (estimateOptionsChanged) {
         const validOptions = newEstimateOptions;
         const invalidVotes = Object.entries(roomData.votes).filter(
-          ([, vote]) => !validOptions.includes(String(vote)),
+          ([, vote]) => !validOptions.includes(String(vote))
         );
 
         if (invalidVotes.length > 0) {
@@ -467,7 +505,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           this.repository.setJudgeState(null);
 
           this.broadcast({
-            type: "resetVotes",
+            type: 'resetVotes',
           });
         }
       } else if (structuredVotingModeChanged && !newStructuredVoting) {
@@ -481,7 +519,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       this.broadcast({
-        type: "settingsUpdated",
+        type: 'settingsUpdated',
         settings: roomData.settings,
       });
 
@@ -497,7 +535,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         this.repository.setJudgeState(null);
 
         this.broadcast({
-          type: "judgeScoreUpdated",
+          type: 'judgeScoreUpdated',
           judgeScore: null,
         });
       }
@@ -523,9 +561,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const allVotes = Object.values(roomData.votes).filter((v) => v !== null);
       const totalVoteCount = allVotes.length;
-      const questionMarkCount = allVotes.filter((v) => v === "?").length;
+      const questionMarkCount = allVotes.filter((v) => v === '?').length;
 
-      const votes = allVotes.filter((v) => v !== "?");
+      const votes = allVotes.filter((v) => v !== '?');
       const numericVotes = votes
         .filter((v) => !Number.isNaN(Number(v)))
         .map(Number);
@@ -540,7 +578,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         roomData.settings.judgeAlgorithm,
         validOptions,
         totalVoteCount,
-        questionMarkCount,
+        questionMarkCount
       );
 
       roomData.judgeScore = result.score;
@@ -554,7 +592,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setJudgeState(result.score, roomData.judgeMetadata);
 
       this.broadcast({
-        type: "judgeScoreUpdated",
+        type: 'judgeScoreUpdated',
         judgeScore: result.score,
         judgeMetadata: roomData.judgeMetadata,
       });
@@ -571,7 +609,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     await this.generateStrudelTrack(roomData, {
       notifyOnError: true,
-      logPrefix: "Failed to generate Strudel code",
+      logPrefix: 'Failed to generate Strudel code',
     });
   }
 
@@ -580,17 +618,17 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     if (!roomData) return;
 
     await this.generateStrudelTrack(roomData, {
-      logPrefix: "Failed to auto-generate Strudel code",
+      logPrefix: 'Failed to auto-generate Strudel code',
     });
   }
 
   async generateStrudelTrack(
     roomData: RoomData,
-    options: { notifyOnError?: boolean; logPrefix?: string } = {},
+    options: { notifyOnError?: boolean; logPrefix?: string } = {}
   ) {
     const {
       notifyOnError = false,
-      logPrefix = "Failed to generate Strudel code",
+      logPrefix = 'Failed to generate Strudel code',
     } = options;
 
     if (!roomData.settings.enableStrudelPlayer) {
@@ -599,11 +637,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     const apiToken = this.env.POLYCHAT_API_TOKEN;
     if (!apiToken) {
-      console.error("POLYCHAT_API_TOKEN not configured");
+      console.error('POLYCHAT_API_TOKEN not configured');
       if (notifyOnError) {
         this.broadcast({
-          type: "error",
-          error: "Music generation is not configured on this server",
+          type: 'error',
+          error: 'Music generation is not configured on this server',
         });
       }
       return;
@@ -623,7 +661,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const response = await generateStrudelCode(request, apiToken);
 
       if (!response.code || !response.generationId) {
-        throw new Error("Invalid response from music generation service");
+        throw new Error('Invalid response from music generation service');
       }
 
       roomData.currentStrudelCode = response.code;
@@ -637,7 +675,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       });
 
       this.broadcast({
-        type: "strudelCodeGenerated",
+        type: 'strudelCodeGenerated',
         code: response.code,
         generationId: response.generationId,
         phase,
@@ -646,9 +684,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       console.error(`${logPrefix}:`, error);
       if (notifyOnError) {
         this.broadcast({
-          type: "error",
+          type: 'error',
           error:
-            error instanceof Error ? error.message : "Failed to generate music",
+            error instanceof Error ? error.message : 'Failed to generate music',
         });
       }
     }
@@ -666,7 +704,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.repository.setStrudelPlayback(!!roomData.strudelIsPlaying);
 
     this.broadcast({
-      type: "initialize",
+      type: 'initialize',
       roomData,
     });
   }
@@ -692,33 +730,33 @@ export class PlanningRoom implements PlanningRoomHttpContext {
               currentTicket.id,
               user,
               vote,
-              roomData.structuredVotes?.[user],
+              roomData.structuredVotes?.[user]
             );
           });
         }
 
         this.repository.updateTicket(currentTicket.id, {
-          status: "completed",
+          status: 'completed',
           completedAt: Date.now(),
         });
       }
 
       const queue = this.repository.getTicketQueue();
-      const pendingTickets = queue.filter((t) => t.status === "pending");
+      const pendingTickets = queue.filter((t) => t.status === 'pending');
 
       let nextTicket: TicketQueueItem;
       if (pendingTickets.length > 0) {
         nextTicket = pendingTickets[0];
-        this.repository.updateTicket(nextTicket.id, { status: "in_progress" });
+        this.repository.updateTicket(nextTicket.id, { status: 'in_progress' });
         nextTicket = this.repository.getTicketById(nextTicket.id)!;
       } else {
         const ticketId = this.repository.getNextTicketId();
         const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
         nextTicket = this.repository.createTicket({
           ticketId,
-          status: "in_progress",
+          status: 'in_progress',
           ordinal: maxOrdinal + 1,
-          externalService: "none",
+          externalService: 'none',
         });
       }
 
@@ -738,7 +776,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: "nextTicket",
+        type: 'nextTicket',
         ticket: nextTicket,
         queue: updatedQueue,
       });
@@ -766,9 +804,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         ticketId,
         title: ticket.title,
         description: ticket.description,
-        status: ticket.status || "pending",
+        status: ticket.status || 'pending',
         ordinal: ticket.ordinal ?? maxOrdinal + 1,
-        externalService: ticket.externalService || "none",
+        externalService: ticket.externalService || 'none',
         externalServiceId: ticket.externalServiceId,
         externalServiceMetadata: ticket.externalServiceMetadata,
       });
@@ -776,7 +814,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: "ticketAdded",
+        type: 'ticketAdded',
         ticket: newTicket,
         queue: updatedQueue,
       });
@@ -786,7 +824,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   async handleUpdateTicket(
     userName: string,
     ticketId: number,
-    updates: Partial<TicketQueueItem>,
+    updates: Partial<TicketQueueItem>
   ) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.getRoomData();
@@ -809,7 +847,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: "ticketUpdated",
+        type: 'ticketUpdated',
         ticket: updatedTicket,
         queue: updatedQueue,
       });
@@ -836,7 +874,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: "ticketDeleted",
+        type: 'ticketDeleted',
         ticketId,
         queue: updatedQueue,
       });
@@ -865,12 +903,12 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           currentTicket.id,
           user,
           vote,
-          roomData.structuredVotes?.[user],
+          roomData.structuredVotes?.[user]
         );
       });
 
       this.repository.updateTicket(currentTicket.id, {
-        status: "completed",
+        status: 'completed',
         outcome,
         completedAt: Date.now(),
       });
@@ -879,7 +917,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: "ticketCompleted",
+        type: 'ticketCompleted',
         ticket: updatedTicket,
         queue: updatedQueue,
       });
@@ -909,9 +947,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const created = this.repository.createTicket({
         ticketId: nextTicketId,
-        status: "in_progress",
+        status: 'in_progress',
         ordinal: maxOrdinal + 1,
-        externalService: "none",
+        externalService: 'none',
       });
 
       this.repository.setCurrentTicket(created.id);

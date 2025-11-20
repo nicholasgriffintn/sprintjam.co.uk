@@ -51,7 +51,13 @@ export const useAutoReconnect = ({
     if (savedRoomKey) {
       onLoadingChange(true);
       const avatarToUse = selectedAvatar || "user";
-      joinRoom(name, savedRoomKey, undefined, avatarToUse, savedAuthToken || undefined)
+      joinRoom(
+        name,
+        savedRoomKey,
+        undefined,
+        avatarToUse,
+        savedAuthToken || undefined,
+      )
         .then(async ({ room: joinedRoom, defaults, authToken }) => {
           await applyServerDefaults(defaults);
           await upsertRoom(joinedRoom);

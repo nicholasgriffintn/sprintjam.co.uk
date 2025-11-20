@@ -163,13 +163,16 @@ const App = () => {
     setError("");
 
     try {
-      const { room: newRoom, defaults, authToken: newAuthToken } =
-        await createRoom(
-          name,
-          passcode || undefined,
-          settings,
-          selectedAvatar,
-        );
+      const {
+        room: newRoom,
+        defaults,
+        authToken: newAuthToken,
+      } = await createRoom(
+        name,
+        passcode || undefined,
+        settings,
+        selectedAvatar,
+      );
       await applyServerDefaults(defaults);
       await upsertRoom(newRoom);
       setActiveRoomKey(newRoom.key);
@@ -199,13 +202,11 @@ const App = () => {
     setError("");
 
     try {
-      const { room: joinedRoom, defaults, authToken: newAuthToken } =
-        await joinRoom(
-          name,
-          roomKey,
-          passcode || undefined,
-          selectedAvatar,
-        );
+      const {
+        room: joinedRoom,
+        defaults,
+        authToken: newAuthToken,
+      } = await joinRoom(name, roomKey, passcode || undefined, selectedAvatar);
       await applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);

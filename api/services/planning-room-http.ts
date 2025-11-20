@@ -98,9 +98,7 @@ export async function handleHttpRequest(
     );
 
     if (storedPasscodeHash && !hasValidSessionToken) {
-      const providedHash = passcode
-        ? await hashPasscode(passcode)
-        : undefined;
+      const providedHash = passcode ? await hashPasscode(passcode) : undefined;
 
       if (!providedHash || providedHash !== storedPasscodeHash) {
         return createJsonResponse({ error: "Invalid passcode" }, 401);
