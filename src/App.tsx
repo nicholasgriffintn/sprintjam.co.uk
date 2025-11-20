@@ -25,14 +25,12 @@ import {
 import {
   applyRoomMessageToCollections,
   removeRoomFromCollection,
-  setRoomJiraTicket,
   upsertRoom,
 } from './lib/data/room-store';
 import { useRoomData } from './lib/data/hooks';
 import type {
   VoteValue,
   RoomSettings,
-  JiraTicket,
   StructuredVote,
   WebSocketMessage,
   AvatarId,
@@ -280,30 +278,20 @@ const App = () => {
     }
   };
 
-  const handleJiraTicketFetched = (ticket: JiraTicket | undefined) => {
-    const key = activeRoomKeyRef.current;
-    if (!key) {
-      return;
-    }
-    void setRoomJiraTicket(key, ticket).catch((error) => {
-      console.error('Failed to update Jira ticket from fetch', error);
-    });
-  };
-
-  const handleJiraTicketUpdated = (ticket: JiraTicket) => {
-    const key = activeRoomKeyRef.current;
-    if (!key) {
-      return;
-    }
-    void setRoomJiraTicket(key, ticket).catch((error) => {
-      console.error('Failed to apply Jira ticket update', error);
-    });
-  };
-
   useAutoJiraUpdate({
     roomData,
-    name,
-    onJiraTicketUpdated: handleJiraTicketUpdated,
+    userName: name,
+    onTicketUpdate: (ticketId, updates) => {
+      try {
+        updateTicket(ticketId, updates);
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : 'Failed to update Jira metadata';
+        setError(errorMessage);
+      }
+    },
     onError: setError,
   });
 
@@ -393,8 +381,6 @@ const App = () => {
               onToggleShowVotes={handleToggleShowVotes}
               onResetVotes={handleResetVotes}
               onUpdateSettings={handleUpdateSettings}
-              onJiraTicketFetched={handleJiraTicketFetched}
-              onJiraTicketUpdated={handleJiraTicketUpdated}
               onNextTicket={() => nextTicket()}
               onAddTicket={(ticket) => addTicket(ticket)}
               onUpdateTicket={(ticketId, updates) => updateTicket(ticketId, updates)}
@@ -402,6 +388,7 @@ const App = () => {
               onLeaveRoom={handleLeaveRoom}
               error={error}
               onClearError={clearError}
+              onError={setError}
               isConnected={isSocketConnected}
             />
           );

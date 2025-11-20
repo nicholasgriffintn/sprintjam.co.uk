@@ -5,7 +5,6 @@ import type {
 } from '@cloudflare/workers-types';
 
 import type {
-  JiraTicket,
   RoomData,
   RoomSettings,
   StructuredVote,
@@ -110,7 +109,6 @@ export class PlanningRoomRepository {
         passcode: string | null;
         judge_score: string | null;
         judge_metadata: string | null;
-        jira_ticket: string | null;
         settings: string;
         current_strudel_code: string | null;
         current_strudel_generation_id: string | null;
@@ -201,9 +199,6 @@ export class PlanningRoomRepository {
       judgeMetadata: row.judge_metadata
         ? safeJsonParse<Record<string, unknown>>(row.judge_metadata)
         : undefined,
-      jiraTicket: row.jira_ticket
-        ? safeJsonParse<JiraTicket>(row.jira_ticket)
-        : undefined,
       settings,
       passcode: row.passcode ?? undefined,
       userAvatars:
@@ -235,13 +230,12 @@ export class PlanningRoomRepository {
           passcode,
           judge_score,
           judge_metadata,
-          jira_ticket,
           settings,
           current_strudel_code,
           current_strudel_generation_id,
           strudel_phase,
           strudel_is_playing
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           room_key = excluded.room_key,
           moderator = excluded.moderator,
@@ -249,7 +243,6 @@ export class PlanningRoomRepository {
           passcode = excluded.passcode,
           judge_score = excluded.judge_score,
           judge_metadata = excluded.judge_metadata,
-          jira_ticket = excluded.jira_ticket,
           settings = excluded.settings,
           current_strudel_code = excluded.current_strudel_code,
           current_strudel_generation_id = excluded.current_strudel_generation_id,
@@ -264,7 +257,6 @@ export class PlanningRoomRepository {
           ? null
           : String(roomData.judgeScore),
         serializeJSON(roomData.judgeMetadata),
-        serializeJSON(roomData.jiraTicket),
         JSON.stringify(roomData.settings),
         roomData.currentStrudelCode ?? null,
         roomData.currentStrudelGenerationId ?? null,
@@ -404,13 +396,6 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_meta SET settings = ? WHERE id = ${ROOM_ROW_ID}`,
       JSON.stringify(settings)
-    );
-  }
-
-  setJiraTicket(ticket?: JiraTicket) {
-    this.sql.exec(
-      `UPDATE room_meta SET jira_ticket = ? WHERE id = ${ROOM_ROW_ID}`,
-      serializeJSON(ticket)
     );
   }
 
@@ -584,7 +569,7 @@ export class PlanningRoomRepository {
         external_service,
         external_service_id,
         external_service_metadata
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id`,
       ticket.ticketId,
       ticket.title ?? null,
@@ -596,7 +581,7 @@ export class PlanningRoomRepository {
       ticket.ordinal,
       ticket.externalService,
       ticket.externalServiceId ?? null,
-      ticket.externalServiceMetadata ?? null,
+      serializeJSON(ticket.externalServiceMetadata),
     );
 
     const insertedId = result.toArray()[0] as { id: number };
@@ -654,7 +639,7 @@ export class PlanningRoomRepository {
     }
     if (updates.externalServiceMetadata !== undefined) {
       fields.push('external_service_metadata = ?');
-      values.push(updates.externalServiceMetadata ?? null);
+      values.push(serializeJSON(updates.externalServiceMetadata));
     }
 
     if (fields.length === 0) {

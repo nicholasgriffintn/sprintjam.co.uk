@@ -132,10 +132,4 @@ export class RoomPage {
       await expect(button).toHaveCount(0);
     }
   }
-
-  async expectJiraPanelVisible() {
-    await expect(
-      this.page.getByTestId('jira-ticket-panel')
-    ).toBeVisible();
-  }
 }

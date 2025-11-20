@@ -2,7 +2,6 @@ import type { Response as CfResponse } from '@cloudflare/workers-types';
 
 import type {
   BroadcastMessage,
-  JiraTicket,
   RoomData,
   RoomSettings,
 } from '../types';
@@ -275,62 +274,6 @@ export async function handleHttpRequest(
     return createJsonResponse({
       success: true,
       settings: roomData.settings,
-    });
-  }
-
-  if (url.pathname === '/jira/ticket' && request.method === 'POST') {
-    const { name, ticket } = (await request.json()) as {
-      name: string;
-      ticket: JiraTicket;
-    };
-
-    const roomData = await ctx.getRoomData();
-
-    if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: 'Room not found' }, 404);
-    }
-
-    if (!roomData.users.includes(name)) {
-      return createJsonResponse({ error: 'User not found in this room' }, 400);
-    }
-
-    roomData.jiraTicket = ticket;
-    ctx.repository.setJiraTicket(roomData.jiraTicket);
-
-    ctx.broadcast({
-      type: 'jiraTicketUpdated',
-      ticket: roomData.jiraTicket,
-    });
-
-    return createJsonResponse({
-      success: true,
-      room: roomData,
-    });
-  }
-
-  if (url.pathname === '/jira/ticket/clear' && request.method === 'POST') {
-    const { name } = (await request.json()) as { name: string };
-
-    const roomData = await ctx.getRoomData();
-
-    if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: 'Room not found' }, 404);
-    }
-
-    if (!roomData.users.includes(name)) {
-      return createJsonResponse({ error: 'User not found in this room' }, 400);
-    }
-
-    delete roomData.jiraTicket;
-    ctx.repository.setJiraTicket(undefined);
-
-    ctx.broadcast({
-      type: 'jiraTicketCleared',
-    });
-
-    return createJsonResponse({
-      success: true,
-      room: roomData,
     });
   }
 

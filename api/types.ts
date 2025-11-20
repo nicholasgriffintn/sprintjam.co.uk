@@ -179,7 +179,6 @@ export interface RoomData {
   connectedUsers: Record<string, boolean>;
   judgeScore?: string | number | null;
   judgeMetadata?: Record<string, unknown>;
-  jiraTicket?: JiraTicket;
   settings: RoomSettings;
   passcode?: string;
   userAvatars?: Record<string, string>;

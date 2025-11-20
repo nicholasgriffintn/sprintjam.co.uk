@@ -179,7 +179,6 @@ export interface RoomData {
   settings: RoomSettings;
   judgeScore: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
-  jiraTicket?: JiraTicket;
   passcode?: string;
   userAvatars?: Record<string, AvatarId>;
   currentStrudelCode?: string;
@@ -207,8 +206,6 @@ export type WebSocketMessageType =
   | 'newModerator'
   | 'settingsUpdated'
   | 'judgeScoreUpdated'
-  | 'jiraTicketUpdated'
-  | 'jiraTicketCleared'
   | 'error'
   | 'disconnected'
   | 'avatarChanged'
@@ -239,7 +236,7 @@ export interface WebSocketMessage {
   judgeScore?: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
   moderator?: string;
-  ticket?: JiraTicket | TicketQueueItem | undefined;
+  ticket?: TicketQueueItem | undefined;
   ticketId?: number;
   queue?: TicketQueueItem[];
   code?: string;

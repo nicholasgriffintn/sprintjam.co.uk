@@ -3,7 +3,7 @@ import { createCollection, type Collection } from '@tanstack/db';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 
 import { API_BASE_URL } from '../../constants';
-import type { JiraTicket, RoomData, ServerDefaults } from '../../types';
+import type { RoomData, ServerDefaults } from '../../types';
 
 export const SERVER_DEFAULTS_DOCUMENT_KEY = 'server-defaults';
 
@@ -79,29 +79,10 @@ export const roomsCollection = createCollection(
   })
 );
 
-export interface JiraTicketRecord extends JiraTicket {
-  roomKey: string;
-}
-
-export const jiraTicketsCollection = createCollection(
-  queryCollectionOptions<JiraTicketRecord>({
-    id: 'jira-tickets',
-    queryKey: ['jira-tickets'],
-    startSync: false,
-    queryFn: async () => [],
-    queryClient,
-    getKey: (ticket) => `${ticket.roomKey}:${ticket.key}`,
-  })
-);
-
 export const ensureServerDefaultsCollectionReady = createEnsureCollectionReady(
   serverDefaultsCollection
 );
 
 export const ensureRoomsCollectionReady = createEnsureCollectionReady(
   roomsCollection
-);
-
-export const ensureJiraTicketsCollectionReady = createEnsureCollectionReady(
-  jiraTicketsCollection
 );

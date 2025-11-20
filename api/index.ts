@@ -15,7 +15,6 @@ import {
   updateRoomSettingsController,
 } from './controllers/rooms-controller';
 import {
-  clearJiraTicketController,
   getJiraTicketController,
   updateJiraStoryPointsController,
 } from './controllers/jira-controller';
@@ -92,10 +91,6 @@ async function handleApiRequest(
   ) {
     const ticketId = path.split('/')[2];
     return updateJiraStoryPointsController(ticketId, request, env);
-  }
-
-  if (path === 'jira/ticket/clear' && request.method === 'POST') {
-    return clearJiraTicketController(request, env);
   }
 
   return new Response(JSON.stringify({ error: 'Not found' }), {

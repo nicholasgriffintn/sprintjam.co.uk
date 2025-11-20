@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type {
   RoomData,
   VoteValue,
-  JiraTicket,
   StructuredVote,
   ServerDefaults,
   TicketQueueItem,
@@ -18,7 +17,6 @@ import { Timer } from '../components/Timer';
 import { UserEstimate } from '../components/UserEstimate';
 import { ResultsControls } from '../components/ResultsControls';
 import { VotesHidden } from '../components/VotesHidden';
-import JiraTicketPanel from '../components/JiraTicketPanel';
 import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
@@ -44,14 +42,13 @@ export interface RoomScreenProps {
   onToggleShowVotes: () => void;
   onResetVotes: () => void;
   onUpdateSettings: (settings: RoomData['settings']) => void;
-  onJiraTicketFetched?: (ticket: JiraTicket) => void;
-  onJiraTicketUpdated?: (ticket: JiraTicket) => void;
   onNextTicket: () => void;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
   onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onDeleteTicket: (ticketId: number) => void;
   error: string;
   onClearError: () => void;
+  onError: (message: string) => void;
   isConnected: boolean;
   onLeaveRoom: () => void;
 }
@@ -66,14 +63,13 @@ const RoomScreen: FC<RoomScreenProps> = ({
   onToggleShowVotes,
   onResetVotes,
   onUpdateSettings,
-  onJiraTicketFetched,
-  onJiraTicketUpdated,
   onNextTicket,
   onAddTicket,
   onUpdateTicket,
   onDeleteTicket,
   error,
   onClearError,
+  onError,
   isConnected,
   onLeaveRoom,
 }) => {
@@ -131,20 +127,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
               onVote={onVote}
             />
           )}
-
-          {roomData.settings.enableJiraIntegration &&
-            (roomData.jiraTicket || isModeratorView) && (
-              <JiraTicketPanel
-                isModeratorView={isModeratorView}
-                currentJiraTicket={roomData.jiraTicket}
-                judgeScore={roomData.judgeScore}
-                roomKey={roomData.key}
-                userName={name}
-                onJiraTicketFetched={onJiraTicketFetched || (() => { })}
-                onJiraTicketUpdated={onJiraTicketUpdated || (() => { })}
-                onError={onClearError}
-              />
-            )}
 
           {roomData.users.length > 0 && (
             <ResultsControls
@@ -248,10 +230,14 @@ const RoomScreen: FC<RoomScreenProps> = ({
         onClose={() => setIsQueueModalOpen(false)}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
+        roomKey={roomData.key}
+        userName={name}
+        jiraEnabled={roomData.settings.enableJiraIntegration === true}
         onAddTicket={onAddTicket}
         onUpdateTicket={onUpdateTicket}
         onDeleteTicket={onDeleteTicket}
         canManageQueue={isModeratorView || roomData.settings.allowOthersToManageQueue === true}
+        onError={onError}
       />
     </div>
   );

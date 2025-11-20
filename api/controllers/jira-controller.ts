@@ -8,7 +8,6 @@ import {
   fetchJiraTicket,
   updateJiraStoryPoints,
 } from '../services/jira-service';
-import { getRoomStub } from '../utils/room';
 import { jsonError } from '../utils/http';
 
 function getJiraConfig(env: Env) {
@@ -53,24 +52,7 @@ export async function getJiraTicketController(
       ticketId
     );
 
-    const roomObject = getRoomStub(env, roomKey);
-
-    try {
-      return (await roomObject.fetch(
-        new Request('https://dummy/jira/ticket', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: userName, ticket }),
-        }) as unknown as CfRequest
-      )) as CfResponse;
-    } catch (roomError) {
-      return jsonError(
-        roomError instanceof Error
-          ? roomError.message
-          : 'Failed to store Jira ticket in room',
-        500
-      );
-    }
+    return jsonResponse({ ticket });
   } catch (error) {
     return jsonError(
       error instanceof Error ? error.message : 'Failed to fetch Jira ticket',
@@ -130,56 +112,12 @@ export async function updateJiraStoryPointsController(
       currentTicket
     );
 
-    const roomObject = getRoomStub(env, roomKey);
-
-    try {
-      await roomObject.fetch(
-        new Request('https://dummy/jira/ticket', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticket: updatedTicket, name: userName }),
-        }) as unknown as CfRequest
-      );
-    } catch (roomError) {
-      console.error('Failed to update Jira ticket in room:', roomError);
-    }
-
     return jsonResponse({ ticket: updatedTicket });
   } catch (error) {
     return jsonError(
       error instanceof Error
         ? error.message
         : 'Failed to update Jira story points',
-      500
-    );
-  }
-}
-
-export async function clearJiraTicketController(
-  request: CfRequest,
-  env: Env
-): Promise<CfResponse> {
-  const body = await request.json<{ roomKey?: string; userName?: string }>();
-  const roomKey = body?.roomKey;
-  const userName = body?.userName;
-
-  if (!roomKey || !userName) {
-    return jsonError('Room key and user name are required');
-  }
-
-  const roomObject = getRoomStub(env, roomKey);
-
-  try {
-    return (await roomObject.fetch(
-      new Request('https://dummy/jira/ticket/clear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: userName }),
-      }) as unknown as CfRequest
-    )) as CfResponse;
-  } catch (error) {
-    return jsonError(
-      error instanceof Error ? error.message : 'Failed to clear Jira ticket',
       500
     );
   }

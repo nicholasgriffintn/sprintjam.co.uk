@@ -14,7 +14,6 @@ import type {
   RoomData,
   BroadcastMessage,
   SessionInfo,
-  JiraTicket,
   StructuredVote,
   TicketQueueItem,
 } from '../types';
@@ -150,10 +149,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           await this.handleResetVotes(userName);
         } else if (data.type === 'updateSettings') {
           await this.handleUpdateSettings(userName, data.settings);
-        } else if (data.type === 'updateJiraTicket') {
-          await this.handleUpdateJiraTicket(userName, data.ticket);
-        } else if (data.type === 'clearJiraTicket') {
-          await this.handleClearJiraTicket(userName);
         } else if (data.type === 'generateStrudelCode') {
           await this.handleGenerateStrudel(userName);
         } else if (data.type === 'toggleStrudelPlayback') {
@@ -517,43 +512,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         type: 'judgeScoreUpdated',
         judgeScore: result.score,
         judgeMetadata: roomData.judgeMetadata,
-      });
-    });
-  }
-
-  async handleUpdateJiraTicket(userName: string, ticket: JiraTicket) {
-    await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
-      if (!roomData) return;
-
-      if (!roomData.users.includes(userName)) {
-        return;
-      }
-
-      roomData.jiraTicket = ticket;
-      this.repository.setJiraTicket(roomData.jiraTicket);
-
-      this.broadcast({
-        type: 'jiraTicketUpdated',
-        ticket: roomData.jiraTicket,
-      });
-    });
-  }
-
-  async handleClearJiraTicket(userName: string) {
-    await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
-      if (!roomData) return;
-
-      if (!roomData.users.includes(userName)) {
-        return;
-      }
-
-      delete roomData.jiraTicket;
-      this.repository.setJiraTicket(undefined);
-
-      this.broadcast({
-        type: 'jiraTicketCleared',
       });
     });
   }

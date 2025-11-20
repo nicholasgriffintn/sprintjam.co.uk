@@ -1,7 +1,6 @@
-import type { JiraTicket, RoomData, WebSocketMessage } from '../../types';
+import type { RoomData, WebSocketMessage } from '../../types';
 import { applyRoomUpdate } from '../../utils/room';
 import {
-  ensureJiraTicketsCollectionReady,
   ensureRoomsCollectionReady,
   roomsCollection,
 } from './collections';
@@ -11,13 +10,6 @@ import {
  */
 async function readyRoomsCollection(): Promise<void> {
   await ensureRoomsCollectionReady();
-}
-
-/**
- * Ensure the Jira ticket collection is synchronised before performing writes.
- */
-async function readyJiraCollection(): Promise<void> {
-  await ensureJiraTicketsCollectionReady();
 }
 
 /**
@@ -57,34 +49,6 @@ export async function applyRoomMessageToCollections(
   }
 
   return nextRoom ?? currentRoom;
-}
-
-/**
- * Persist Jira ticket changes for a specific room.
- */
-export async function setRoomJiraTicket(
-  roomKey: string,
-  ticket: JiraTicket | undefined
-): Promise<void> {
-  await Promise.all([readyRoomsCollection(), readyJiraCollection()]);
-
-  const current = roomsCollection.get(roomKey);
-  if (!current) {
-    return;
-  }
-
-  const updated: RoomData =
-    ticket !== undefined
-      ? { ...current, jiraTicket: ticket }
-      : (() => {
-          const clone = { ...current };
-          if (Object.prototype.hasOwnProperty.call(clone, 'jiraTicket')) {
-            delete clone.jiraTicket;
-          }
-          return clone;
-        })();
-
-  roomsCollection.utils.writeUpsert(updated);
 }
 
 /**

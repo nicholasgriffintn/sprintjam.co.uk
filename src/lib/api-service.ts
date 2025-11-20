@@ -205,8 +205,6 @@ export function connectToRoom(
           case 'newModerator':
           case 'settingsUpdated':
           case 'judgeScoreUpdated':
-          case 'jiraTicketUpdated':
-          case 'jiraTicketCleared':
           case 'strudelCodeGenerated':
           case 'strudelPlaybackToggled':
           case 'nextTicket':
