@@ -6,18 +6,6 @@ export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type AvatarId = 'user' | 'robot' | 'bear' | 'bird' | 'knight' | 'alien' | 'ninja' | 'pirate' | 'wizard' | 'ghost' | 'dragon' | 'crown' | string;
 
-export interface JiraTicket {
-  id: string;
-  key: string;
-  projectName?: string;
-  summary: string;
-  description: string;
-  status: string;
-  assignee: string | null;
-  storyPoints: number | null;
-  url: string;
-}
-
 export interface TicketVote {
   id: number;
   ticketQueueId: number;
@@ -26,6 +14,8 @@ export interface TicketVote {
   structuredVotePayload?: StructuredVote;
   votedAt: number;
 }
+
+export type TicketMetadata = Record<string, any>;
 
 export interface TicketQueueItem {
   id: number;
@@ -39,7 +29,7 @@ export interface TicketQueueItem {
   ordinal: number;
   externalService: 'jira' | 'none';
   externalServiceId?: string;
-  externalServiceMetadata?: Record<string, unknown>;
+  externalServiceMetadata?: TicketMetadata;
   votes?: TicketVote[];
 }
 

@@ -9,7 +9,7 @@ import {
   Loader2,
 } from 'lucide-react';
 
-import type { JiraTicket, TicketQueueItem } from '../types';
+import type { TicketMetadata, TicketQueueItem } from '../types';
 import { fetchJiraTicket } from '../lib/jira-service';
 import { Modal } from './ui/Modal';
 
@@ -22,10 +22,7 @@ interface TicketQueueModalProps {
   roomKey: string;
   userName: string;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
-  onUpdateTicket: (
-    ticketId: number,
-    updates: Partial<TicketQueueItem>
-  ) => void;
+  onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onDeleteTicket: (ticketId: number) => void;
   canManageQueue: boolean;
   onError?: (message: string) => void;
@@ -51,13 +48,13 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   const [newTicketDescription, setNewTicketDescription] = useState('');
 
   const [jiraLookupKey, setJiraLookupKey] = useState('');
-  const [jiraPreview, setJiraPreview] = useState<JiraTicket | null>(null);
+  const [jiraPreview, setJiraPreview] = useState<TicketMetadata | null>(null);
   const [isFetchingJira, setIsFetchingJira] = useState(false);
   const [isSavingJiraAdd, setIsSavingJiraAdd] = useState(false);
 
   const [linkingTicketId, setLinkingTicketId] = useState<number | null>(null);
   const [linkLookupKey, setLinkLookupKey] = useState('');
-  const [linkPreview, setLinkPreview] = useState<JiraTicket | null>(null);
+  const [linkPreview, setLinkPreview] = useState<TicketMetadata | null>(null);
   const [isFetchingLink, setIsFetchingLink] = useState(false);
   const [isSavingLink, setIsSavingLink] = useState(false);
 
@@ -80,7 +77,9 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
     }
   };
 
-  const getJiraMetadata = (ticket: TicketQueueItem): JiraTicket | undefined => {
+  const getJiraMetadata = (
+    ticket: TicketQueueItem
+  ): TicketMetadata | undefined => {
     const metadata = ticket.externalServiceMetadata as
       | Record<string, unknown>
       | undefined;
@@ -92,7 +91,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
       'key' in metadata &&
       'summary' in metadata
     ) {
-      return metadata as JiraTicket;
+      return metadata as TicketMetadata;
     }
 
     return undefined;
@@ -131,7 +130,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
 
   const lookupJiraTicket = async (
     key: string,
-    setPreview: (ticket: JiraTicket | null) => void,
+    setPreview: (ticket: TicketMetadata | null) => void,
     setLoading: (loading: boolean) => void
   ) => {
     if (!key.trim()) return;
@@ -251,7 +250,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
     return badge;
   };
 
-  const renderJiraPreview = (ticket: JiraTicket | null) => {
+  const renderJiraPreview = (ticket: TicketMetadata | null) => {
     if (!ticket) return null;
     return (
       <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs dark:border-blue-800 dark:bg-blue-900/20">
@@ -411,28 +410,28 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                   </label>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
-                    type="text"
-                    placeholder="PROJECT-123"
-                    value={jiraLookupKey}
-                    onChange={(e) => setJiraLookupKey(e.target.value)}
-                    data-testid="queue-jira-input"
-                    className="flex-1 rounded-lg border border-blue-200 px-3 py-2 text-sm dark:border-blue-700 dark:bg-blue-900/30"
-                  />
-                  <button
-                    onClick={() =>
-                      lookupJiraTicket(
+                      type="text"
+                      placeholder="PROJECT-123"
+                      value={jiraLookupKey}
+                      onChange={(e) => setJiraLookupKey(e.target.value)}
+                      data-testid="queue-jira-input"
+                      className="flex-1 rounded-lg border border-blue-200 px-3 py-2 text-sm dark:border-blue-700 dark:bg-blue-900/30"
+                    />
+                    <button
+                      onClick={() =>
+                        lookupJiraTicket(
                           jiraLookupKey,
                           setJiraPreview,
-                        setIsFetchingJira
-                      )
-                    }
-                    disabled={isFetchingJira || !jiraLookupKey.trim()}
-                    data-testid="queue-jira-fetch"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {isFetchingJira && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
+                          setIsFetchingJira
+                        )
+                      }
+                      disabled={isFetchingJira || !jiraLookupKey.trim()}
+                      data-testid="queue-jira-fetch"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {isFetchingJira && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
                       Fetch
                     </button>
                   </div>
@@ -465,7 +464,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             )}
           </AnimatePresence>
 
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
             {pendingTickets.length === 0 ? (
               <p className="py-4 text-center text-sm text-slate-500">
                 No pending tickets
@@ -481,7 +480,9 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                     className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"
                   >
                     <div className="flex items-start gap-2">
-                      {canManageQueue && <GripVertical className="h-4 w-4 text-slate-400" />}
+                      {canManageQueue && (
+                        <GripVertical className="h-4 w-4 text-slate-400" />
+                      )}
                       <div className="flex-1 space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-sm font-semibold">
@@ -508,7 +509,9 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                           {jiraEnabled && (
                             <button
                               onClick={() =>
-                                isLinking ? cancelLinking() : startLinkTicket(ticket)
+                                isLinking
+                                  ? cancelLinking()
+                                  : startLinkTicket(ticket)
                               }
                               data-testid={`queue-link-toggle-${ticket.id}`}
                               className="rounded-lg px-2 py-1 text-blue-700 hover:bg-blue-50 dark:text-blue-200 dark:hover:bg-blue-900/40"
@@ -596,7 +599,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">
               Completed Tickets ({completedTickets.length})
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
               {completedTickets.map((ticket) => (
                 <div
                   key={ticket.id}
@@ -609,7 +612,9 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                           {ticket.ticketId}
                         </span>
                         {renderJiraBadge(ticket)}
-                        {ticket.title && <span className="text-sm">{ticket.title}</span>}
+                        {ticket.title && (
+                          <span className="text-sm">{ticket.title}</span>
+                        )}
                         <span className="rounded-full bg-green-500 px-2 py-0.5 text-xs font-semibold text-white">
                           Completed
                         </span>
