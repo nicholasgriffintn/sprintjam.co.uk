@@ -6,6 +6,7 @@ import type { RoomData } from '../types';
 export function ResultsControls({
   roomData,
   isModeratorView,
+  queueEnabled = true,
   onToggleShowVotes,
   onResetVotes,
   onNextTicket,
@@ -13,6 +14,7 @@ export function ResultsControls({
 }: {
   roomData: RoomData;
   isModeratorView: boolean;
+  queueEnabled?: boolean;
   onToggleShowVotes: () => void;
   onResetVotes: () => void;
   onNextTicket: () => void;
@@ -55,19 +57,21 @@ export function ResultsControls({
               Reset Votes
             </motion.button>
           )}
-        {(isModeratorView || roomData.settings.allowOthersToManageQueue) && (
-          <motion.button
-            type="button"
-            data-testid="next-ticket-button"
-            onClick={onNextTicket}
-            className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 dark:bg-green-700/90 dark:hover:bg-green-600/90 dark:focus-visible:ring-green-600"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            Next Ticket
-          </motion.button>
-        )}
-        {(isModeratorView || roomData.settings.allowOthersToManageQueue) &&
+        {queueEnabled &&
+          (isModeratorView || roomData.settings.allowOthersToManageQueue) && (
+            <motion.button
+              type="button"
+              data-testid="next-ticket-button"
+              onClick={onNextTicket}
+              className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 dark:bg-green-700/90 dark:hover:bg-green-600/90 dark:focus-visible:ring-green-600"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Next Ticket
+            </motion.button>
+          )}
+        {queueEnabled &&
+          (isModeratorView || roomData.settings.allowOthersToManageQueue) &&
           onRevisitLater &&
           roomData.currentTicket && (
             <motion.button

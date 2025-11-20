@@ -80,6 +80,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
+  const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
 
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
@@ -105,16 +106,18 @@ const RoomScreen: FC<RoomScreenProps> = ({
       >
         <div className="flex flex-col gap-4 border-b border-white/30 dark:border-white/10 md:h-full md:border-b-0 md:border-r">
           <ParticipantsList roomData={roomData} stats={stats} name={name} />
-          <TicketQueueSidebar
-            roomData={roomData}
-            canManageQueue={
-              isModeratorView ||
-              roomData.settings.allowOthersToManageQueue === true
-            }
-            onViewQueue={() => setIsQueueModalOpen(true)}
-            onUpdateTicket={onUpdateTicket}
-            className="flex flex-col gap-3 px-0 md:mt-auto md:pr-4 md:py-5"
-          />
+          {isQueueEnabled && (
+            <TicketQueueSidebar
+              roomData={roomData}
+              canManageQueue={
+                isModeratorView ||
+                roomData.settings.allowOthersToManageQueue === true
+              }
+              onViewQueue={() => setIsQueueModalOpen(true)}
+              onUpdateTicket={onUpdateTicket}
+              className="flex flex-col gap-3 px-0 md:mt-auto md:pr-4 md:py-5"
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-4 py-3 md:py-5">
@@ -148,6 +151,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
             <ResultsControls
               roomData={roomData}
               isModeratorView={isModeratorView}
+              queueEnabled={isQueueEnabled}
               onToggleShowVotes={onToggleShowVotes}
               onResetVotes={onResetVotes}
               onNextTicket={() => setIsSummaryOpen(true)}
@@ -254,22 +258,25 @@ const RoomScreen: FC<RoomScreenProps> = ({
         )}
       </AnimatePresence>
 
-      <TicketQueueModal
-        isOpen={isQueueModalOpen}
-        onClose={() => setIsQueueModalOpen(false)}
-        currentTicket={roomData.currentTicket}
-        queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || 'none'}
-        roomKey={roomData.key}
-        userName={name}
-        onAddTicket={onAddTicket}
-        onUpdateTicket={onUpdateTicket}
-        onDeleteTicket={onDeleteTicket}
-        canManageQueue={
-          isModeratorView || roomData.settings.allowOthersToManageQueue === true
-        }
-        onError={onError}
-      />
+      {isQueueEnabled && (
+        <TicketQueueModal
+          isOpen={isQueueModalOpen}
+          onClose={() => setIsQueueModalOpen(false)}
+          currentTicket={roomData.currentTicket}
+          queue={roomData.ticketQueue || []}
+          externalService={roomData.settings.externalService || 'none'}
+          roomKey={roomData.key}
+          userName={name}
+          onAddTicket={onAddTicket}
+          onUpdateTicket={onUpdateTicket}
+          onDeleteTicket={onDeleteTicket}
+          canManageQueue={
+            isModeratorView ||
+            roomData.settings.allowOthersToManageQueue === true
+          }
+          onError={onError}
+        />
+      )}
 
       <PrePointingSummaryModal
         isOpen={isSummaryOpen}

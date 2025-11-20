@@ -6,7 +6,9 @@ test.describe('Ticket Queue E2E', () => {
     test('should create auto-increment ticket on first Next Ticket click', async ({
         browser,
     }) => {
-        const setup = await createRoomWithParticipant(browser);
+        const setup = await createRoomWithParticipant(browser, {
+            enableTicketQueue: true,
+        });
         const { moderatorRoom, cleanup } = setup;
 
         try {
@@ -30,7 +32,9 @@ test.describe('Ticket Queue E2E', () => {
     });
 
     test('should reset votes when clicking Next Ticket', async ({ browser }) => {
-        const setup = await createRoomWithParticipant(browser);
+        const setup = await createRoomWithParticipant(browser, {
+            enableTicketQueue: true,
+        });
         const { moderatorRoom, cleanup } = setup;
 
         try {
@@ -59,7 +63,9 @@ test.describe('Ticket Queue E2E', () => {
     });
 
     test('should increment ticket IDs sequentially', async ({ browser }) => {
-        const setup = await createRoomWithParticipant(browser);
+        const setup = await createRoomWithParticipant(browser, {
+            enableTicketQueue: true,
+        });
         const { moderatorRoom, cleanup } = setup;
 
         try {
@@ -92,7 +98,9 @@ test.describe('Ticket Queue E2E', () => {
     test('should not show Next Ticket button to non-moderator', async ({
         browser,
     }) => {
-        const setup = await createRoomWithParticipant(browser);
+        const setup = await createRoomWithParticipant(browser, {
+            enableTicketQueue: true,
+        });
         const { participantRoom, cleanup } = setup;
 
         try {

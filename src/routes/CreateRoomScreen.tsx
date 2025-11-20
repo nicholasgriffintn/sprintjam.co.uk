@@ -61,6 +61,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
       enableJudge: defaultSettings.enableJudge ?? true,
       externalService: defaultSettings.externalService ?? 'none',
       showTimer: defaultSettings.showTimer ?? false,
+      enableTicketQueue: defaultSettings.enableTicketQueue ?? false,
       allowOthersToShowEstimates:
         defaultSettings.allowOthersToShowEstimates ?? false,
       hideParticipantNames: defaultSettings.hideParticipantNames ?? false,

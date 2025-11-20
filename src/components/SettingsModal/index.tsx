@@ -8,6 +8,7 @@ import { EstimateOptions } from './EstimateOptions';
 import { TheJudge } from './TheJudge';
 import { OtherOptions } from './OtherOptions';
 import { BackgroundMusic } from './BackgroundMusic';
+import { TicketQueueSettings } from './TicketQueueSettings';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -143,6 +144,11 @@ const SettingsModal: FC<SettingsModalProps> = ({
           <TheJudge localSettings={localSettings} handleChange={handleChange} />
 
           <OtherOptions
+            localSettings={localSettings}
+            handleChange={handleChange}
+          />
+
+          <TicketQueueSettings
             localSettings={localSettings}
             handleChange={handleChange}
           />

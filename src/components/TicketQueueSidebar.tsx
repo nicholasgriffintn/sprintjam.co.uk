@@ -138,8 +138,11 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              Queue
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <span>Queue</span>
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/60 dark:text-amber-200">
+                Beta
+              </span>
             </div>
             <button
               onClick={onViewQueue}

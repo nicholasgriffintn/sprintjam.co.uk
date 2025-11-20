@@ -63,6 +63,7 @@ test.describe('SprintJam Jira integration journeys', () => {
 
     try {
       await settingsModal.open();
+      await settingsModal.toggle('settings-toggle-enable-queue', true);
       await settingsModal.selectExternalService('jira');
       await settingsModal.toggle('settings-toggle-jira-auto', true);
       await settingsModal.save();

@@ -128,6 +128,7 @@ export interface RoomSettings {
   hideParticipantNames?: boolean;
   externalService?: 'jira' | 'none';
   autoUpdateJiraStoryPoints?: boolean;
+  enableTicketQueue?: boolean;
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   resultsDisplay?: ResultsDisplaySettings;

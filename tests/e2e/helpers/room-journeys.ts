@@ -4,6 +4,7 @@ import { WelcomePage } from '../pageObjects/welcome-page';
 import { CreateRoomPage } from '../pageObjects/create-room-page';
 import { JoinRoomPage } from '../pageObjects/join-room-page';
 import { RoomPage } from '../pageObjects/room-page';
+import { SettingsModal } from '../pageObjects/settings-modal';
 
 export type ParticipantJoinMode = 'inviteLink' | 'manual';
 
@@ -11,6 +12,7 @@ export interface RoomSetupOptions {
   participantJoinMode?: ParticipantJoinMode;
   roomPasscode?: string;
   enableStructuredVotingOnCreate?: boolean;
+  enableTicketQueue?: boolean;
 }
 
 export interface RoomSetupResult {
@@ -32,6 +34,7 @@ export async function createRoomWithParticipant(
     participantJoinMode = 'inviteLink',
     roomPasscode,
     enableStructuredVotingOnCreate,
+    enableTicketQueue,
   } = options;
 
   const moderatorContext = await browser.newContext();
@@ -93,6 +96,13 @@ export async function createRoomWithParticipant(
 
     await moderatorRoom.waitForParticipants(2);
     await participantRoom.waitForParticipants(2);
+
+    if (enableTicketQueue) {
+      const modal = new SettingsModal(moderatorRoom.getPage());
+      await modal.open();
+      await modal.toggle('settings-toggle-enable-queue', true);
+      await modal.save();
+    }
 
     return {
       moderatorRoom,
