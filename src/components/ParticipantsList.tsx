@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import type { RoomData, RoomStats } from '../types';
 import { getAvatarInfo } from '../utils/avatars';
 import { Badge } from './ui/Badge';
+import { HorizontalProgress } from './ui/HorizontalProgress';
 
 export type ParticipantsListProps = {
   roomData: RoomData;
@@ -126,7 +127,7 @@ export const ParticipantsList = memo(function ParticipantsList({
   return (
     <div
       data-testid="participants-panel"
-      className={`w-full flex-shrink-0 border-b border-white/30 bg-transparent px-0 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5 ${
+      className={`w-full flex-shrink-0 bg-transparent px-0 md:pr-4 md:py-5 ${
         isParticipantsExpanded ? 'py-3' : 'py-2'
       }`}
       role="region"
@@ -178,8 +179,9 @@ export const ParticipantsList = memo(function ParticipantsList({
               {stats.votedUsers}/{roomData.users.length}
             </span>
           </div>
-          <div
-            className="h-2 w-full rounded-full bg-slate-200/70 dark:bg-slate-800"
+          <HorizontalProgress
+            completed={votingProgress}
+            total={100}
             role="progressbar"
             aria-valuenow={votingProgress}
             aria-valuemin={0}
@@ -188,14 +190,7 @@ export const ParticipantsList = memo(function ParticipantsList({
             aria-describedby={progressLabelId}
             aria-valuetext={`${stats.votedUsers} of ${roomData.users.length} participants have voted`}
             data-testid="voting-progress-bar"
-          >
-            <motion.div
-              className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-indigo-500"
-              initial={{ width: 0 }}
-              animate={{ width: `${votingProgress}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-            />
-          </div>
+          />
         </div>
         <ul className="space-y-2" data-testid="participants-list">
           {roomData.users.map((user: string, index: number) => (

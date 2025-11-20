@@ -7,7 +7,7 @@ export function OtherOptions({
   localSettings: RoomSettings;
   handleChange: (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number
+    value: boolean | (string | number)[] | JudgeAlgorithm | number | string
   ) => void;
 }) {
   return (
@@ -22,40 +22,40 @@ export function OtherOptions({
         <div className="space-y-3 rounded-2xl border border-white/50 bg-white/60 dark:border-white/10 dark:bg-slate-900/40 p-4">
           <div className="pt-2">
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Jira Integration
+              External Integration
             </h3>
             <div className="space-y-3">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="enableJiraIntegration"
-                  checked={localSettings.enableJiraIntegration || false}
-                  onChange={(e) =>
-                    handleChange('enableJiraIntegration', e.target.checked)
-                  }
-                  data-testid="settings-toggle-jira"
-                  className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
-                />
-                <label
-                  htmlFor="enableJiraIntegration"
-                  className="ml-2 text-sm text-slate-700 dark:text-slate-300"
-                >
-                  Enable Jira Integration
-                </label>
-              </div>
-              {localSettings.enableJiraIntegration && (
+              <label
+                htmlFor="externalService"
+                className="text-sm text-slate-700 dark:text-slate-300"
+              >
+                Provider
+              </label>
+              <select
+                id="externalService"
+                value={localSettings.externalService || 'none'}
+                onChange={(e) =>
+                  handleChange('externalService', e.target.value)
+                }
+                data-testid="settings-select-external-service"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+              >
+                <option value="none">None</option>
+                <option value="jira">Jira</option>
+              </select>
+              {localSettings.externalService === 'jira' && (
                 <div className="flex items-center">
                   <input
-                  type="checkbox"
-                  id="autoUpdateJiraStoryPoints"
-                  checked={localSettings.autoUpdateJiraStoryPoints || false}
-                  onChange={(e) =>
-                    handleChange(
-                      'autoUpdateJiraStoryPoints',
-                      e.target.checked
-                    )
-                  }
-                  data-testid="settings-toggle-jira-auto"
+                    type="checkbox"
+                    id="autoUpdateJiraStoryPoints"
+                    checked={localSettings.autoUpdateJiraStoryPoints || false}
+                    onChange={(e) =>
+                      handleChange(
+                        'autoUpdateJiraStoryPoints',
+                        e.target.checked
+                      )
+                    }
+                    data-testid="settings-toggle-jira-auto"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -75,16 +75,16 @@ export function OtherOptions({
               <div className="space-y-2">
                 <div className="flex items-center">
                   <input
-                  type="checkbox"
-                  id="allowOthersToShowEstimates"
-                  checked={localSettings.allowOthersToShowEstimates}
-                  onChange={(e) =>
-                    handleChange(
-                      'allowOthersToShowEstimates',
-                      e.target.checked
-                    )
-                  }
-                  data-testid="settings-toggle-allow-show"
+                    type="checkbox"
+                    id="allowOthersToShowEstimates"
+                    checked={localSettings.allowOthersToShowEstimates}
+                    onChange={(e) =>
+                      handleChange(
+                        'allowOthersToShowEstimates',
+                        e.target.checked
+                      )
+                    }
+                    data-testid="settings-toggle-allow-show"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -96,16 +96,16 @@ export function OtherOptions({
                 </div>
                 <div className="flex items-center">
                   <input
-                  type="checkbox"
-                  id="allowOthersToDeleteEstimates"
-                  checked={localSettings.allowOthersToDeleteEstimates}
-                  onChange={(e) =>
-                    handleChange(
-                      'allowOthersToDeleteEstimates',
-                      e.target.checked
-                    )
-                  }
-                  data-testid="settings-toggle-allow-reset"
+                    type="checkbox"
+                    id="allowOthersToDeleteEstimates"
+                    checked={localSettings.allowOthersToDeleteEstimates}
+                    onChange={(e) =>
+                      handleChange(
+                        'allowOthersToDeleteEstimates',
+                        e.target.checked
+                      )
+                    }
+                    data-testid="settings-toggle-allow-reset"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -134,7 +134,6 @@ export function OtherOptions({
                 </div>
               </div>
             </div>
-
             <div className="pt-2">
               <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Display Options

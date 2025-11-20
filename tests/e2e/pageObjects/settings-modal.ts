@@ -33,6 +33,15 @@ export class SettingsModal {
     }
   }
 
+  async selectExternalService(value: 'none' | 'jira') {
+    await this.expandDetailsSections();
+    const select = this.modal().getByTestId(
+      'settings-select-external-service'
+    );
+    await select.scrollIntoViewIfNeeded();
+    await select.selectOption(value);
+  }
+
   async save() {
     await this.modal().getByRole('button', { name: 'Save' }).click();
     await expect(this.modal()).toBeHidden();

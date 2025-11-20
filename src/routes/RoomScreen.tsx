@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type {
   RoomData,
   VoteValue,
-  JiraTicket,
   StructuredVote,
   ServerDefaults,
+  TicketQueueItem,
 } from '../types';
 import { useRoomStats } from '../hooks/useRoomStats';
 import { useConsensusCelebration } from '../hooks/useConsensusCelebration';
@@ -17,11 +17,13 @@ import { Timer } from '../components/Timer';
 import { UserEstimate } from '../components/UserEstimate';
 import { ResultsControls } from '../components/ResultsControls';
 import { VotesHidden } from '../components/VotesHidden';
-import JiraTicketPanel from '../components/JiraTicketPanel';
 import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
 import { FallbackLoading } from '../components/ui/FallbackLoading';
+import { TicketQueueModal } from '../components/TicketQueueModal';
+import { TicketQueueSidebar } from '../components/TicketQueueSidebar';
+import { PrePointingSummaryModal } from '../components/modals/PrePointingSummaryModal';
 
 const SettingsModal = lazy(() => import('../components/SettingsModal'));
 const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
@@ -42,10 +44,13 @@ export interface RoomScreenProps {
   onToggleShowVotes: () => void;
   onResetVotes: () => void;
   onUpdateSettings: (settings: RoomData['settings']) => void;
-  onJiraTicketFetched?: (ticket: JiraTicket) => void;
-  onJiraTicketUpdated?: (ticket: JiraTicket) => void;
+  onNextTicket: () => void;
+  onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
+  onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
+  onDeleteTicket: (ticketId: number) => void;
   error: string;
   onClearError: () => void;
+  onError: (message: string) => void;
   isConnected: boolean;
   onLeaveRoom: () => void;
 }
@@ -60,15 +65,22 @@ const RoomScreen: FC<RoomScreenProps> = ({
   onToggleShowVotes,
   onResetVotes,
   onUpdateSettings,
-  onJiraTicketFetched,
-  onJiraTicketUpdated,
+  onNextTicket,
+  onAddTicket,
+  onUpdateTicket,
+  onDeleteTicket,
   error,
   onClearError,
+  onError,
   isConnected,
   onLeaveRoom,
 }) => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [pendingNextTicket, setPendingNextTicket] = useState(false);
+  const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
 
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
@@ -92,7 +104,21 @@ const RoomScreen: FC<RoomScreenProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <ParticipantsList roomData={roomData} stats={stats} name={name} />
+        <div className="flex flex-col gap-4 border-b border-white/30 dark:border-white/10 md:h-full md:border-b-0 md:border-r">
+          <ParticipantsList roomData={roomData} stats={stats} name={name} />
+          {isQueueEnabled && (
+            <TicketQueueSidebar
+              roomData={roomData}
+              canManageQueue={
+                isModeratorView ||
+                roomData.settings.allowOthersToManageQueue === true
+              }
+              onViewQueue={() => setIsQueueModalOpen(true)}
+              onUpdateTicket={onUpdateTicket}
+              className="flex flex-col gap-3 px-0 md:mt-auto md:pr-4 md:py-5"
+            />
+          )}
+        </div>
 
         <div className="flex flex-col gap-4 py-3 md:py-5">
           {roomData.settings.showTimer && <Timer />}
@@ -121,26 +147,28 @@ const RoomScreen: FC<RoomScreenProps> = ({
             />
           )}
 
-          {roomData.settings.enableJiraIntegration &&
-            (roomData.jiraTicket || isModeratorView) && (
-              <JiraTicketPanel
-                isModeratorView={isModeratorView}
-                currentJiraTicket={roomData.jiraTicket}
-                judgeScore={roomData.judgeScore}
-                roomKey={roomData.key}
-                userName={name}
-                onJiraTicketFetched={onJiraTicketFetched || (() => {})}
-                onJiraTicketUpdated={onJiraTicketUpdated || (() => {})}
-                onError={onClearError}
-              />
-            )}
-
           {roomData.users.length > 0 && (
             <ResultsControls
               roomData={roomData}
               isModeratorView={isModeratorView}
+              queueEnabled={isQueueEnabled}
               onToggleShowVotes={onToggleShowVotes}
               onResetVotes={onResetVotes}
+              onNextTicket={() => setIsSummaryOpen(true)}
+              onRevisitLater={async () => {
+                if (!roomData.currentTicket) return;
+                const pendingQueue = roomData.ticketQueue || [];
+                const maxOrdinal =
+                  pendingQueue.reduce(
+                    (max, t) => (t.ordinal > max ? t.ordinal : max),
+                    0
+                  ) + 1;
+                await onUpdateTicket(roomData.currentTicket.id, {
+                  status: 'pending',
+                  ordinal: maxOrdinal,
+                });
+                onNextTicket();
+              }}
             />
           )}
 
@@ -229,6 +257,45 @@ const RoomScreen: FC<RoomScreenProps> = ({
           </Suspense>
         )}
       </AnimatePresence>
+
+      {isQueueEnabled && (
+        <TicketQueueModal
+          isOpen={isQueueModalOpen}
+          onClose={() => setIsQueueModalOpen(false)}
+          currentTicket={roomData.currentTicket}
+          queue={roomData.ticketQueue || []}
+          externalService={roomData.settings.externalService || 'none'}
+          roomKey={roomData.key}
+          userName={name}
+          onAddTicket={onAddTicket}
+          onUpdateTicket={onUpdateTicket}
+          onDeleteTicket={onDeleteTicket}
+          canManageQueue={
+            isModeratorView ||
+            roomData.settings.allowOthersToManageQueue === true
+          }
+          onError={onError}
+        />
+      )}
+
+      <PrePointingSummaryModal
+        isOpen={isSummaryOpen}
+        onClose={() => setIsSummaryOpen(false)}
+        votes={roomData.votes}
+        stats={stats}
+        currentTicket={roomData.currentTicket}
+        currentUser={name}
+        onConfirm={async () => {
+          if (pendingNextTicket) return;
+          setPendingNextTicket(true);
+          try {
+            onNextTicket();
+          } finally {
+            setPendingNextTicket(false);
+            setIsSummaryOpen(false);
+          }
+        }}
+      />
     </div>
   );
 };

@@ -1,52 +1,78 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { updateJiraStoryPoints } from '../lib/jira-service';
-import type { RoomData, JiraTicket } from '../types';
+import type { RoomData, TicketQueueItem } from '../types';
 
 interface UseAutoJiraUpdateOptions {
   roomData: RoomData | null;
-  name: string;
-  onJiraTicketUpdated: (ticket: JiraTicket) => void;
+  userName: string;
+  onTicketUpdate: (
+    ticketId: number,
+    updates: Partial<TicketQueueItem>
+  ) => void;
   onError: (error: string) => void;
 }
 
 export const useAutoJiraUpdate = ({
   roomData,
-  name,
-  onJiraTicketUpdated,
+  userName,
+  onTicketUpdate,
   onError,
 }: UseAutoJiraUpdateOptions) => {
+  const lastUpdatedRef = useRef<{
+    ticketId: number;
+    storyPoints: number;
+  } | null>(null);
+
   useEffect(() => {
     if (!roomData) return;
 
-    if (
-      roomData.settings.enableJiraIntegration &&
-      roomData.settings.autoUpdateJiraStoryPoints &&
-      roomData.jiraTicket &&
-      roomData.judgeScore !== null &&
-      roomData.showVotes
-    ) {
-      const storyPoint =
-        typeof roomData.judgeScore === 'number'
-          ? roomData.judgeScore
-          : Number(roomData.judgeScore);
+    const currentTicket = roomData.currentTicket;
 
-      if (!Number.isNaN(storyPoint)) {
-        updateJiraStoryPoints(roomData.jiraTicket.key, storyPoint, {
-          roomKey: roomData.key,
-          userName: name,
-        })
-          .then((updatedTicket) => {
-            onJiraTicketUpdated(updatedTicket);
-          })
-          .catch((err) => {
-            const errorMessage =
-              err instanceof Error
-                ? err.message
-                : 'Failed to auto-update Jira story points';
-            onError(errorMessage);
-          });
-      }
+    if (
+      !currentTicket ||
+      currentTicket.externalService !== 'jira' ||
+      roomData.settings.externalService !== 'jira' ||
+      !roomData.settings.autoUpdateJiraStoryPoints ||
+      roomData.showVotes !== true ||
+      roomData.judgeScore === null ||
+      roomData.moderator !== userName
+    ) {
+      return;
     }
-  }, [roomData, name, onJiraTicketUpdated, onError]);
+
+    const storyPoints = Number(roomData.judgeScore);
+    if (Number.isNaN(storyPoints)) {
+      return;
+    }
+
+    const lastUpdate = lastUpdatedRef.current;
+    if (
+      lastUpdate &&
+      lastUpdate.ticketId === currentTicket.id &&
+      lastUpdate.storyPoints === storyPoints
+    ) {
+      return;
+    }
+
+    lastUpdatedRef.current = { ticketId: currentTicket.id, storyPoints };
+
+    updateJiraStoryPoints(currentTicket.ticketId, storyPoints, {
+      roomKey: roomData.key,
+      userName,
+    })
+      .then((ticket) => {
+        onTicketUpdate(currentTicket.id, {
+          externalServiceMetadata: ticket,
+        });
+      })
+      .catch((err) => {
+        lastUpdatedRef.current = null;
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : 'Failed to auto-update Jira story points';
+        onError(errorMessage);
+      });
+  }, [roomData, userName, onTicketUpdate, onError]);
 };

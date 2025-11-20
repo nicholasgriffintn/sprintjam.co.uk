@@ -59,8 +59,9 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
     return {
       enableStructuredVoting: defaultSettings.enableStructuredVoting ?? false,
       enableJudge: defaultSettings.enableJudge ?? true,
-      enableJiraIntegration: defaultSettings.enableJiraIntegration ?? false,
+      externalService: defaultSettings.externalService ?? 'none',
       showTimer: defaultSettings.showTimer ?? false,
+      enableTicketQueue: defaultSettings.enableTicketQueue ?? false,
       allowOthersToShowEstimates:
         defaultSettings.allowOthersToShowEstimates ?? false,
       hideParticipantNames: defaultSettings.hideParticipantNames ?? false,

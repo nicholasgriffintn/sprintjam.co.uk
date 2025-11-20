@@ -6,16 +6,31 @@ export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type AvatarId = 'user' | 'robot' | 'bear' | 'bird' | 'knight' | 'alien' | 'ninja' | 'pirate' | 'wizard' | 'ghost' | 'dragon' | 'crown' | string;
 
-export interface JiraTicket {
-  id: string;
-  key: string;
-  projectName?: string;
-  summary: string;
-  description: string;
-  status: string;
-  assignee: string | null;
-  storyPoints: number | null;
-  url: string;
+export interface TicketVote {
+  id: number;
+  ticketQueueId: number;
+  userName: string;
+  vote: VoteValue;
+  structuredVotePayload?: StructuredVote;
+  votedAt: number;
+}
+
+export type TicketMetadata = Record<string, any>;
+
+export interface TicketQueueItem {
+  id: number;
+  ticketId: string;
+  title?: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  outcome?: string;
+  createdAt: number;
+  completedAt?: number;
+  ordinal: number;
+  externalService: 'jira' | 'none';
+  externalServiceId?: string;
+  externalServiceMetadata?: TicketMetadata;
+  votes?: TicketVote[];
 }
 
 export interface VoteOptionMetadata {
@@ -100,6 +115,7 @@ export interface RoomSettings {
   voteOptionsMetadata?: VoteOptionMetadata[];
   allowOthersToShowEstimates: boolean;
   allowOthersToDeleteEstimates: boolean;
+  allowOthersToManageQueue?: boolean;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;
@@ -110,8 +126,9 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  enableJiraIntegration?: boolean;
+  externalService?: 'jira' | 'none';
   autoUpdateJiraStoryPoints?: boolean;
+  enableTicketQueue?: boolean;
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   resultsDisplay?: ResultsDisplaySettings;
@@ -153,13 +170,14 @@ export interface RoomData {
   settings: RoomSettings;
   judgeScore: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
-  jiraTicket?: JiraTicket;
   passcode?: string;
   userAvatars?: Record<string, AvatarId>;
   currentStrudelCode?: string;
   currentStrudelGenerationId?: string;
   strudelPhase?: string;
   strudelIsPlaying?: boolean;
+  currentTicket?: TicketQueueItem;
+  ticketQueue?: TicketQueueItem[];
 }
 
 export interface WebSocketErrorData {
@@ -179,15 +197,19 @@ export type WebSocketMessageType =
   | 'newModerator'
   | 'settingsUpdated'
   | 'judgeScoreUpdated'
-  | 'jiraTicketUpdated'
-  | 'jiraTicketCleared'
   | 'error'
   | 'disconnected'
   | 'avatarChanged'
   | 'strudelCodeGenerated'
   | 'generateStrudelCode'
   | 'toggleStrudelPlayback'
-  | 'strudelPlaybackToggled';
+  | 'strudelPlaybackToggled'
+  | 'nextTicket'
+  | 'ticketAdded'
+  | 'ticketUpdated'
+  | 'ticketDeleted'
+  | 'ticketCompleted'
+  | 'queueUpdated';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -205,11 +227,15 @@ export interface WebSocketMessage {
   judgeScore?: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
   moderator?: string;
-  ticket?: JiraTicket | undefined;
+  ticket?: TicketQueueItem | undefined;
+  ticketId?: number;
+  queue?: TicketQueueItem[];
   code?: string;
   generationId?: string;
   phase?: string;
   isPlaying?: boolean;
+  updates?: Partial<TicketQueueItem>;
+  outcome?: string;
 }
 
 export interface RoomStats {
