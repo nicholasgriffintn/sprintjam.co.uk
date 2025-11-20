@@ -127,44 +127,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
             />
           )}
 
-          {roomData.currentTicket && (
-            <SurfaceCard
-              padding="sm"
-              className="space-y-2"
-              data-testid="current-ticket-notes"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-sm font-semibold">
-                    {roomData.currentTicket.ticketId}
-                  </span>
-                  {roomData.currentTicket.externalService === 'jira' &&
-                    roomData.currentTicket.externalServiceMetadata &&
-                    'url' in roomData.currentTicket.externalServiceMetadata && (
-                      <a
-                        href={
-                          (
-                            roomData.currentTicket
-                              .externalServiceMetadata as Record<string, string>
-                          ).url
-                        }
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 dark:text-blue-300"
-                      >
-                        Open in Jira
-                      </a>
-                    )}
-                </div>
-              </div>
-              {roomData.currentTicket.description && (
-                <p className="text-sm text-slate-700 dark:text-slate-200">
-                  {roomData.currentTicket.description}
-                </p>
-              )}
-            </SurfaceCard>
-          )}
-
           {roomData.settings.enableStructuredVoting &&
           roomData.settings.votingCriteria ? (
             <StructuredVotingPanel

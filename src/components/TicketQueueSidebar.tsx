@@ -1,4 +1,4 @@
-import { FC, useMemo } from 'react';
+import { FC, useMemo, useId } from 'react';
 import { ChevronsUpDown, ExternalLink } from 'lucide-react';
 
 import type { RoomData, TicketQueueItem } from '../types';
@@ -20,6 +20,9 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   onViewQueue,
   className,
 }) => {
+  const ticketQueueId = useId();
+  const progressLabelId = `${ticketQueueId}-progress`;
+
   const queue = roomData.ticketQueue || [];
   const pending = useMemo(
     () => queue.filter((t) => t.status === 'pending'),
@@ -139,21 +142,26 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-center text-xs text-slate-600 dark:text-slate-300">
-            <div className="rounded-lg bg-blue-50 px-2 py-1 font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
-              Current
-            </div>
-            <div className="rounded-lg bg-amber-50 px-2 py-1 font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-              Next
-            </div>
-            <div className="rounded-lg bg-slate-100 px-2 py-1 font-semibold text-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
-              {pending.length} pending • {completedCount} done
-            </div>
+          <div
+            id={progressLabelId}
+            className="mb-1 flex justify-between text-sm text-slate-700 dark:text-slate-200 mb-2"
+          >
+            <span>Session progress</span>
+            <span>
+              {pending.length} / {totalCount}
+            </span>
           </div>
-
           <HorizontalProgress
             total={totalCount || pending.length}
             completed={completedCount}
+            role="progressbar"
+            aria-valuenow={totalCount || pending.length}
+            aria-valuemin={0}
+            aria-valuemax={totalCount}
+            aria-label="Session progress"
+            aria-describedby={progressLabelId}
+            aria-valuetext={`${pending.length} tickets remain out of ${completedCount}`}
+            data-testid="session-progress-bar"
           />
 
           {current ? (
