@@ -67,10 +67,9 @@ test.describe('SprintJam Jira integration journeys', () => {
       await settingsModal.toggle('settings-toggle-jira-auto', true);
       await settingsModal.save();
 
-      await moderatorRoom.getPage().getByTestId('view-queue-button').click();
-      const queueDialog = moderatorRoom
-        .getPage()
-        .getByRole('dialog', { name: 'Ticket Queue' });
+      const page = moderatorRoom.getPage();
+      await page.getByTestId('queue-expand').click();
+      const queueDialog = page.getByRole('dialog', { name: 'Ticket Queue' });
       await expect(queueDialog).toBeVisible();
 
       await queueDialog.getByTestId('queue-add-jira-button').click();
@@ -94,7 +93,11 @@ test.describe('SprintJam Jira integration journeys', () => {
 
       await queueDialog.getByLabel('Close modal').click();
 
-      await moderatorRoom.getPage().getByTestId('next-ticket-button').click();
+      await page.getByTestId('next-ticket-button').click();
+      await page
+        .getByRole('dialog', { name: 'Review before moving on' })
+        .getByTestId('pre-pointing-confirm')
+        .click();
 
       await moderatorRoom.castVote('5');
       await participantRoom.castVote('5');
@@ -104,14 +107,9 @@ test.describe('SprintJam Jira integration journeys', () => {
         .poll(() => storyPointsUpdated, { timeout: 5000 })
         .toBeTruthy();
 
-      await moderatorRoom.getPage().getByTestId('view-queue-button').click();
-      await expect(
-        moderatorRoom.getPage().getByRole('dialog', { name: 'Ticket Queue' })
-      ).toContainText(ticketKey);
-      await moderatorRoom
-        .getPage()
-        .getByRole('button', { name: 'Close modal' })
-        .click();
+      await page.getByTestId('queue-expand').click();
+      await expect(page.getByRole('dialog', { name: 'Ticket Queue' })).toContainText(ticketKey);
+      await page.getByRole('button', { name: 'Close modal' }).click();
     } finally {
       await cleanup();
     }

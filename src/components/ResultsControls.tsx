@@ -9,7 +9,6 @@ export function ResultsControls({
   onToggleShowVotes,
   onResetVotes,
   onNextTicket,
-  onViewQueue,
   onRevisitLater,
 }: {
   roomData: RoomData;
@@ -17,7 +16,6 @@ export function ResultsControls({
   onToggleShowVotes: () => void;
   onResetVotes: () => void;
   onNextTicket: () => void;
-  onViewQueue: () => void;
   onRevisitLater?: () => void;
 }) {
   return (
@@ -83,16 +81,6 @@ export function ResultsControls({
               Revisit Later
             </motion.button>
           )}
-        <motion.button
-          type="button"
-          data-testid="view-queue-button"
-          onClick={onViewQueue}
-          className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 dark:bg-slate-600/90 dark:hover:bg-slate-500/90 dark:focus-visible:ring-slate-600"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          Open Queue
-        </motion.button>
       </div>
     </div>
   );

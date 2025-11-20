@@ -151,7 +151,6 @@ const RoomScreen: FC<RoomScreenProps> = ({
               onToggleShowVotes={onToggleShowVotes}
               onResetVotes={onResetVotes}
               onNextTicket={() => setIsSummaryOpen(true)}
-              onViewQueue={() => setIsQueueModalOpen(true)}
               onRevisitLater={async () => {
                 if (!roomData.currentTicket) return;
                 const pendingQueue = roomData.ticketQueue || [];

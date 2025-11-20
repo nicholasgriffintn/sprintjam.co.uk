@@ -139,6 +139,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            data-testid="pre-pointing-cancel"
             className="rounded-lg bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
           >
             Cancel
@@ -146,6 +147,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
           <button
             type="button"
             onClick={onConfirm}
+            data-testid="pre-pointing-confirm"
             className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
           >
             Next Ticket

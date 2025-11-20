@@ -69,7 +69,10 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                 {label}
               </span>
-              <span className="font-mono text-sm font-semibold">
+              <span
+                className="font-mono text-sm font-semibold"
+                data-testid={`queue-ticket-id-${label.toLowerCase()}`}
+              >
                 {ticket.ticketId}
               </span>
             </div>
@@ -136,6 +139,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
             </div>
             <button
               onClick={onViewQueue}
+              data-testid="queue-expand"
               className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 hover:text-blue-500 dark:text-blue-300"
             >
               Expand
@@ -165,15 +169,22 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
           />
 
           {current ? (
-            renderTicketRow(current, 'Current')
+            <div data-testid="queue-current-ticket">
+              {renderTicketRow(current, 'Current')}
+            </div>
           ) : (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p
+              className="text-xs text-slate-500 dark:text-slate-400"
+              data-testid="queue-no-current"
+            >
               No active ticket
             </p>
           )}
 
           {next ? (
-            renderTicketRow(next, 'Pending')
+            <div data-testid="queue-next-ticket">
+              {renderTicketRow(next, 'Pending')}
+            </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Add tickets to get started
@@ -185,10 +196,14 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Queue
               </div>
-              <div className="max-h-40 space-y-1 overflow-y-auto pr-1">
+              <div
+                className="max-h-40 space-y-1 overflow-y-auto pr-1"
+                data-testid="queue-pending-list"
+              >
                 {pending.slice(1).map((ticket) => (
                   <div
                     key={ticket.id}
+                    data-testid={`queue-pending-ticket-${ticket.id}`}
                     className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-1 text-xs dark:border-slate-800 dark:bg-slate-900/50"
                   >
                     <div className="flex items-center justify-between gap-2">
