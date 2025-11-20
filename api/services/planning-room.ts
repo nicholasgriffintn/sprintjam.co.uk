@@ -247,7 +247,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const validOptions = roomData.settings.estimateOptions.map(String);
       if (!validOptions.includes(String(finalVote))) {
         console.warn(
-          `Invalid vote ${finalVote} from ${userName}. Valid options: ${validOptions.join(', ')}`
+          `Invalid vote ${finalVote} from ${userName}. Valid options: ${validOptions.join(
+            ', '
+          )}`
         );
         return;
       }
@@ -399,9 +401,12 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const estimateOptionsChanged =
         oldEstimateOptions.length !== newEstimateOptions.length ||
-        !oldEstimateOptions.every((opt, idx) => opt === newEstimateOptions[idx]);
+        !oldEstimateOptions.every(
+          (opt, idx) => opt === newEstimateOptions[idx]
+        );
 
-      const structuredVotingModeChanged = oldStructuredVoting !== newStructuredVoting;
+      const structuredVotingModeChanged =
+        oldStructuredVoting !== newStructuredVoting;
 
       roomData.settings = newSettings;
       this.repository.setSettings(roomData.settings);
@@ -429,7 +434,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           });
         }
       } else if (structuredVotingModeChanged && !newStructuredVoting) {
-        if (roomData.structuredVotes && Object.keys(roomData.structuredVotes).length > 0) {
+        if (
+          roomData.structuredVotes &&
+          Object.keys(roomData.structuredVotes).length > 0
+        ) {
           roomData.structuredVotes = {};
           this.repository.clearStructuredVotes();
         }
@@ -464,7 +472,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.sessions.forEach((session) => {
       try {
         session.webSocket.send(json);
-      } catch (_err) { }
+      } catch (_err) {}
     });
   }
 
@@ -700,10 +708,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     });
   }
 
-  async handleAddTicket(
-    userName: string,
-    ticket: Partial<TicketQueueItem>
-  ) {
+  async handleAddTicket(userName: string, ticket: Partial<TicketQueueItem>) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.getRoomData();
       if (!roomData) return;
@@ -845,10 +850,40 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   }
 
   async getRoomData(): Promise<RoomData | undefined> {
-    return this.repository.getRoomData();
+    return this.ensureCurrentTicketPresent();
   }
 
   async putRoomData(roomData: RoomData): Promise<void> {
     await this.repository.replaceRoomData(roomData);
+  }
+
+  private async ensureCurrentTicketPresent(): Promise<RoomData | undefined> {
+    return this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.repository.getRoomData();
+      if (!roomData) return undefined;
+
+      if (roomData.currentTicket) {
+        return roomData;
+      }
+
+      const queue = this.repository.getTicketQueue();
+      const nextTicketId = this.repository.getNextTicketId();
+      const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
+
+      const created = this.repository.createTicket({
+        ticketId: nextTicketId,
+        status: 'in_progress',
+        ordinal: maxOrdinal + 1,
+        externalService: 'none',
+      });
+
+      this.repository.setCurrentTicket(created.id);
+
+      return {
+        ...roomData,
+        currentTicket: created,
+        ticketQueue: this.repository.getTicketQueue(),
+      };
+    });
   }
 }
