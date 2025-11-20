@@ -103,7 +103,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex flex-col gap-4 border-b border-white/30 dark:border-white/10 md:border-b-0 md:border-r">
+        <div className="flex flex-col gap-4 border-b border-white/30 dark:border-white/10 md:h-full md:border-b-0 md:border-r">
           <ParticipantsList roomData={roomData} stats={stats} name={name} />
           <TicketQueueSidebar
             roomData={roomData}
@@ -113,7 +113,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
             }
             onViewQueue={() => setIsQueueModalOpen(true)}
             onUpdateTicket={onUpdateTicket}
-            className="flex flex-col gap-3 px-0 md:pr-4 md:py-5"
+            className="flex flex-col gap-3 px-0 md:mt-auto md:pr-4 md:py-5"
           />
         </div>
 
