@@ -30,9 +30,9 @@ export function getDefaultRoomSettings(): RoomSettings {
     enableJudge: true,
     judgeAlgorithm: JudgeAlgorithm.SMART_CONSENSUS,
     hideParticipantNames: false,
+    externalService: 'none',
     enableStructuredVoting: false,
     votingCriteria: getDefaultVotingCriteria(),
-    enableJiraIntegration: false,
     autoUpdateJiraStoryPoints: false,
     autoHandoverModerator: false,
     resultsDisplay: {

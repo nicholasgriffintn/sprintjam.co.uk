@@ -136,7 +136,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  enableJiraIntegration?: boolean;
+  externalService?: 'jira' | 'none';
   autoUpdateJiraStoryPoints?: boolean;
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];

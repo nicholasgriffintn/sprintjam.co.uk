@@ -32,7 +32,7 @@ export const useAutoJiraUpdate = ({
     if (
       !currentTicket ||
       currentTicket.externalService !== 'jira' ||
-      !roomData.settings.enableJiraIntegration ||
+      roomData.settings.externalService !== 'jira' ||
       !roomData.settings.autoUpdateJiraStoryPoints ||
       roomData.showVotes !== true ||
       roomData.judgeScore === null ||

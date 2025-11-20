@@ -18,9 +18,9 @@ interface TicketQueueModalProps {
   onClose: () => void;
   currentTicket?: TicketQueueItem;
   queue: TicketQueueItem[];
+  externalService: 'none' | 'jira';
   roomKey: string;
   userName: string;
-  jiraEnabled: boolean;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
   onUpdateTicket: (
     ticketId: number,
@@ -36,9 +36,9 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   onClose,
   currentTicket,
   queue,
+  externalService,
   roomKey,
   userName,
-  jiraEnabled,
   onAddTicket,
   onUpdateTicket,
   onDeleteTicket,
@@ -60,6 +60,8 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   const [linkPreview, setLinkPreview] = useState<JiraTicket | null>(null);
   const [isFetchingLink, setIsFetchingLink] = useState(false);
   const [isSavingLink, setIsSavingLink] = useState(false);
+
+  const jiraEnabled = externalService === 'jira';
 
   const completedTickets = useMemo(
     () => queue.filter((t) => t.status === 'completed'),

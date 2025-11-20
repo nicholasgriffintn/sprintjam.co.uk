@@ -230,9 +230,9 @@ const RoomScreen: FC<RoomScreenProps> = ({
         onClose={() => setIsQueueModalOpen(false)}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
+        externalService={roomData.settings.externalService || 'none'}
         roomKey={roomData.key}
         userName={name}
-        jiraEnabled={roomData.settings.enableJiraIntegration === true}
         onAddTicket={onAddTicket}
         onUpdateTicket={onUpdateTicket}
         onDeleteTicket={onDeleteTicket}
