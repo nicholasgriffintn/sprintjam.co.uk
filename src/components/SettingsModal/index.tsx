@@ -41,7 +41,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
 
   const handleChange = (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number
+    value: boolean | (string | number)[] | JudgeAlgorithm | number | string
   ) => {
     const newSettings = { ...localSettings, [key]: value };
 

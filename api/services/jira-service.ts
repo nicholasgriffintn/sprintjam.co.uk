@@ -1,4 +1,4 @@
-import type { JiraTicket } from '../../src/types';
+import type { TicketMetadata } from '../../src/types';
 
 /**
  * Parse Jira description in Atlassian Document Format (ADF)
@@ -7,7 +7,7 @@ import type { JiraTicket } from '../../src/types';
  */
 function parseJiraDescription(description: any): string {
   if (!description) return '';
-  
+
   try {
     if (typeof description === 'string') return description;
     if (description.content && Array.isArray(description.content)) {
@@ -25,22 +25,22 @@ function parseJiraDescription(description: any): string {
   } catch (e) {
     console.error('Error parsing Jira description:', e);
   }
-  
+
   return '';
 }
 
 /**
  * Connect to Jira API with authentication
- * @param email Jira user email 
+ * @param email Jira user email
  * @param apiToken Jira API token
  * @returns Headers with authentication
  */
 function getAuthHeaders(email: string, apiToken: string): Headers {
   const auth = btoa(`${email}:${apiToken}`);
   return new Headers({
-    'Authorization': `Basic ${auth}`,
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
+    Authorization: `Basic ${auth}`,
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
   });
 }
 
@@ -58,22 +58,28 @@ export async function fetchJiraTicket(
   apiToken: string,
   storyPointsField: string,
   ticketId: string
-): Promise<JiraTicket> {
+): Promise<TicketMetadata> {
   try {
     const headers = getAuthHeaders(email, apiToken);
-    const response = await fetch(`https://${domain}/rest/api/3/issue/${ticketId}`, {
-      method: 'GET',
-      headers
-    });
+    const response = await fetch(
+      `https://${domain}/rest/api/3/issue/${ticketId}`,
+      {
+        method: 'GET',
+        headers,
+      }
+    );
 
     if (!response.ok) {
-      const errorData = await response.json() as {
+      const errorData = (await response.json()) as {
         errorMessages: string[];
       };
-      throw new Error(errorData.errorMessages?.[0] || `Failed to fetch Jira ticket: ${response.status}`);
+      throw new Error(
+        errorData.errorMessages?.[0] ||
+          `Failed to fetch Jira ticket: ${response.status}`
+      );
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       id: string;
       key: string;
       fields: {
@@ -92,8 +98,8 @@ export async function fetchJiraTicket(
         [key: string]: any;
       };
     };
-    
-    const ticket: JiraTicket = {
+
+    const ticket: TicketMetadata = {
       id: data.id,
       key: data.key,
       summary: data.fields.summary,
@@ -101,7 +107,7 @@ export async function fetchJiraTicket(
       status: data.fields.status?.name || 'Unknown',
       assignee: data.fields.assignee?.displayName || null,
       storyPoints: storyPointsField ? data.fields[storyPointsField] : null,
-      url: `https://${domain}/browse/${data.key}`
+      url: `https://${domain}/browse/${data.key}`,
     };
 
     return ticket;
@@ -128,8 +134,8 @@ export async function updateJiraStoryPoints(
   storyPointsField: string,
   ticketId: string,
   storyPoints: number,
-  currentTicket?: JiraTicket
-): Promise<JiraTicket> {
+  currentTicket?: TicketMetadata
+): Promise<TicketMetadata> {
   try {
     const headers = getAuthHeaders(email, apiToken);
 
