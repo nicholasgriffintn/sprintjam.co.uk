@@ -69,7 +69,7 @@ export function ResultsControls({
             type="button"
             data-testid="reset-votes-button"
             onClick={onResetVotes}
-            className={`${buttonBase} bg-red-600/90 text-white shadow-red-900/30 hover:bg-red-700 focus-visible:ring-red-200 focus-visible:ring-offset-red-950/30`}
+            className={`${buttonBase} bg-red-500/80 text-white/95 shadow-red-900/20 hover:bg-red-600/90 focus-visible:ring-red-200/60 focus-visible:ring-offset-red-950/25`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
