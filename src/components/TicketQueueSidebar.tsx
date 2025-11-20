@@ -33,6 +33,10 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
     [queue]
   );
   const totalCount = queue.length;
+  const labelText =
+    totalCount === 0
+      ? 'No tickets yet'
+      : `${completedCount}/${totalCount} completed`;
 
   const current = roomData.currentTicket;
   const next = pending[0];
@@ -140,7 +144,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
             <button
               onClick={onViewQueue}
               data-testid="queue-expand"
-              className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 hover:text-blue-500 dark:text-blue-300"
+              className="cursor-pointer text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 hover:text-blue-500 dark:text-blue-300"
             >
               Expand
             </button>
@@ -148,12 +152,12 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
           <div
             id={progressLabelId}
-            className="mb-1 flex justify-between text-sm text-slate-700 dark:text-slate-200 mb-2"
+            className="flex flex-col gap-0.5 text-sm text-slate-700 dark:text-slate-200"
           >
-            <span>Session progress</span>
-            <span>
-              {pending.length} / {totalCount}
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              Session progress
             </span>
+            <span className="font-semibold">{labelText}</span>
           </div>
           <HorizontalProgress
             total={totalCount || pending.length}
@@ -187,7 +191,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
             </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Add tickets to get started
+              No upcoming tickets. Add more to keep things moving.
             </p>
           )}
 
