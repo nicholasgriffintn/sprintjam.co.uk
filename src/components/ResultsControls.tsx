@@ -1,7 +1,17 @@
 import { motion } from "framer-motion";
-import { BarChart3 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRightCircle,
+  BarChart3,
+  Eye,
+  EyeOff,
+  RotateCcw,
+} from 'lucide-react';
 
-import type { RoomData } from "../types";
+import type { RoomData } from '../types';
+
+const buttonBase =
+  'group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md transition hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2';
 
 export function ResultsControls({
   roomData,
@@ -20,6 +30,11 @@ export function ResultsControls({
   onNextTicket: () => void;
   onRevisitLater?: () => void;
 }) {
+  const voteToggleLabel = roomData.showVotes ? 'Hide Votes' : 'Show Votes';
+  const voteToggleClasses = roomData.showVotes
+    ? `${buttonBase} bg-amber-600/90 text-slate-900 hover:bg-amber-700 focus-visible:ring-amber-200 focus-visible:ring-offset-amber-950/20`
+    : `${buttonBase} bg-blue-600/90 text-white hover:bg-blue-700 focus-visible:ring-blue-200 focus-visible:ring-offset-slate-900/30`;
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pb-3 text-gray-900 dark:text-white">
       <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -32,17 +47,20 @@ export function ResultsControls({
             type="button"
             data-testid="toggle-votes-button"
             onClick={onToggleShowVotes}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-              !roomData.showVotes
-                ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "bg-amber-500 text-black hover:bg-amber-600"
-            }`}
+            className={voteToggleClasses}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             aria-pressed={roomData.showVotes}
-            aria-label={roomData.showVotes ? "Hide votes" : "Show votes"}
+            aria-label={roomData.showVotes ? 'Hide votes' : 'Show votes'}
           >
-            {roomData.showVotes ? "Hide Votes" : "Show Votes"}
+            <span className="relative flex items-center gap-2">
+              {roomData.showVotes ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+              <span>{voteToggleLabel}</span>
+            </span>
           </motion.button>
         )}
         {(isModeratorView ||
@@ -51,11 +69,14 @@ export function ResultsControls({
             type="button"
             data-testid="reset-votes-button"
             onClick={onResetVotes}
-            className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 dark:bg-slate-600/90 dark:hover:bg-slate-500/90 dark:focus-visible:ring-slate-600"
+            className={`${buttonBase} bg-red-600/90 text-white shadow-red-900/30 hover:bg-red-700 focus-visible:ring-red-200 focus-visible:ring-offset-red-950/30`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            Reset Votes
+            <span className="relative flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Reset Votes</span>
+            </span>
           </motion.button>
         )}
         {queueEnabled &&
@@ -64,11 +85,14 @@ export function ResultsControls({
               type="button"
               data-testid="next-ticket-button"
               onClick={onNextTicket}
-              className="rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 dark:bg-green-700/90 dark:hover:bg-green-600/90 dark:focus-visible:ring-green-600"
+              className={`${buttonBase} bg-green-600/90 text-white shadow-green-900/20 hover:bg-green-700 focus-visible:ring-green-200 focus-visible:ring-offset-green-950/30`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              Next Ticket
+              <span className="relative flex items-center gap-2">
+                <ArrowRightCircle className="h-4 w-4" />
+                <span>Next Ticket</span>
+              </span>
             </motion.button>
           )}
         {queueEnabled &&
@@ -79,11 +103,14 @@ export function ResultsControls({
               type="button"
               data-testid="revisit-ticket-button"
               onClick={onRevisitLater}
-              className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 dark:bg-amber-600/90 dark:hover:bg-amber-500/90 dark:focus-visible:ring-amber-600"
+              className={`${buttonBase} bg-amber-600/90 text-white shadow-amber-900/20 hover:bg-amber-700 focus-visible:ring-amber-200 focus-visible:ring-offset-amber-950/30`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              Revisit Later
+              <span className="relative flex items-center gap-2">
+                <RotateCcw className="h-4 w-4" />
+                <span>Revisit Later</span>
+              </span>
             </motion.button>
           )}
       </div>
