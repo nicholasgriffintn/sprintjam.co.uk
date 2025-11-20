@@ -22,6 +22,8 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
 import { FallbackLoading } from '../components/ui/FallbackLoading';
 import { TicketQueueModal } from '../components/TicketQueueModal';
+import { TicketQueueSidebar } from '../components/TicketQueueSidebar';
+import { PrePointingSummaryModal } from '../components/modals/PrePointingSummaryModal';
 
 const SettingsModal = lazy(() => import('../components/SettingsModal'));
 const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
@@ -76,6 +78,8 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [pendingNextTicket, setPendingNextTicket] = useState(false);
 
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
@@ -99,7 +103,19 @@ const RoomScreen: FC<RoomScreenProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <ParticipantsList roomData={roomData} stats={stats} name={name} />
+        <div className="flex flex-col gap-4 border-b border-white/30 dark:border-white/10 md:border-b-0 md:border-r">
+          <ParticipantsList roomData={roomData} stats={stats} name={name} />
+          <TicketQueueSidebar
+            roomData={roomData}
+            canManageQueue={
+              isModeratorView ||
+              roomData.settings.allowOthersToManageQueue === true
+            }
+            onViewQueue={() => setIsQueueModalOpen(true)}
+            onUpdateTicket={onUpdateTicket}
+            className="flex flex-col gap-3 px-0 md:pr-4 md:py-5"
+          />
+        </div>
 
         <div className="flex flex-col gap-4 py-3 md:py-5">
           {roomData.settings.showTimer && <Timer />}
@@ -111,8 +127,46 @@ const RoomScreen: FC<RoomScreenProps> = ({
             />
           )}
 
+          {roomData.currentTicket && (
+            <SurfaceCard
+              padding="sm"
+              className="space-y-2"
+              data-testid="current-ticket-notes"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-sm font-semibold">
+                    {roomData.currentTicket.ticketId}
+                  </span>
+                  {roomData.currentTicket.externalService === 'jira' &&
+                    roomData.currentTicket.externalServiceMetadata &&
+                    'url' in roomData.currentTicket.externalServiceMetadata && (
+                      <a
+                        href={
+                          (
+                            roomData.currentTicket
+                              .externalServiceMetadata as Record<string, string>
+                          ).url
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 dark:text-blue-300"
+                      >
+                        Open in Jira
+                      </a>
+                    )}
+                </div>
+              </div>
+              {roomData.currentTicket.description && (
+                <p className="text-sm text-slate-700 dark:text-slate-200">
+                  {roomData.currentTicket.description}
+                </p>
+              )}
+            </SurfaceCard>
+          )}
+
           {roomData.settings.enableStructuredVoting &&
-            roomData.settings.votingCriteria ? (
+          roomData.settings.votingCriteria ? (
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
               currentVote={roomData.structuredVotes?.[name] || null}
@@ -134,8 +188,22 @@ const RoomScreen: FC<RoomScreenProps> = ({
               isModeratorView={isModeratorView}
               onToggleShowVotes={onToggleShowVotes}
               onResetVotes={onResetVotes}
-              onNextTicket={onNextTicket}
+              onNextTicket={() => setIsSummaryOpen(true)}
               onViewQueue={() => setIsQueueModalOpen(true)}
+              onRevisitLater={async () => {
+                if (!roomData.currentTicket) return;
+                const pendingQueue = roomData.ticketQueue || [];
+                const maxOrdinal =
+                  pendingQueue.reduce(
+                    (max, t) => (t.ordinal > max ? t.ordinal : max),
+                    0
+                  ) + 1;
+                await onUpdateTicket(roomData.currentTicket.id, {
+                  status: 'pending',
+                  ordinal: maxOrdinal,
+                });
+                onNextTicket();
+              }}
             />
           )}
 
@@ -236,8 +304,29 @@ const RoomScreen: FC<RoomScreenProps> = ({
         onAddTicket={onAddTicket}
         onUpdateTicket={onUpdateTicket}
         onDeleteTicket={onDeleteTicket}
-        canManageQueue={isModeratorView || roomData.settings.allowOthersToManageQueue === true}
+        canManageQueue={
+          isModeratorView || roomData.settings.allowOthersToManageQueue === true
+        }
         onError={onError}
+      />
+
+      <PrePointingSummaryModal
+        isOpen={isSummaryOpen}
+        onClose={() => setIsSummaryOpen(false)}
+        votes={roomData.votes}
+        stats={stats}
+        currentTicket={roomData.currentTicket}
+        currentUser={name}
+        onConfirm={async () => {
+          if (pendingNextTicket) return;
+          setPendingNextTicket(true);
+          try {
+            onNextTicket();
+          } finally {
+            setPendingNextTicket(false);
+            setIsSummaryOpen(false);
+          }
+        }}
       />
     </div>
   );

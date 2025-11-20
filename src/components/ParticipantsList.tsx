@@ -126,7 +126,7 @@ export const ParticipantsList = memo(function ParticipantsList({
   return (
     <div
       data-testid="participants-panel"
-      className={`w-full flex-shrink-0 border-b border-white/30 bg-transparent px-0 dark:border-white/10 md:border-b-0 md:border-r md:pr-4 md:py-5 ${
+      className={`w-full flex-shrink-0 bg-transparent px-0 md:pr-4 md:py-5 ${
         isParticipantsExpanded ? 'py-3' : 'py-2'
       }`}
       role="region"

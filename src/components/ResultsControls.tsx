@@ -10,6 +10,7 @@ export function ResultsControls({
   onResetVotes,
   onNextTicket,
   onViewQueue,
+  onRevisitLater,
 }: {
   roomData: RoomData;
   isModeratorView: boolean;
@@ -17,6 +18,7 @@ export function ResultsControls({
   onResetVotes: () => void;
   onNextTicket: () => void;
   onViewQueue: () => void;
+  onRevisitLater?: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pb-3 text-gray-900 dark:text-white">
@@ -67,6 +69,20 @@ export function ResultsControls({
             Next Ticket
           </motion.button>
         )}
+        {(isModeratorView || roomData.settings.allowOthersToManageQueue) &&
+          onRevisitLater &&
+          roomData.currentTicket && (
+            <motion.button
+              type="button"
+              data-testid="revisit-ticket-button"
+              onClick={onRevisitLater}
+              className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 dark:bg-amber-600/90 dark:hover:bg-amber-500/90 dark:focus-visible:ring-amber-600"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Revisit Later
+            </motion.button>
+          )}
         <motion.button
           type="button"
           data-testid="view-queue-button"
