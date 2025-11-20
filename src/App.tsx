@@ -17,6 +17,10 @@ import {
   resetVotes,
   updateSettings,
   isConnected,
+  nextTicket,
+  addTicket,
+  updateTicket,
+  deleteTicket,
 } from './lib/api-service';
 import {
   applyRoomMessageToCollections,
@@ -391,6 +395,10 @@ const App = () => {
               onUpdateSettings={handleUpdateSettings}
               onJiraTicketFetched={handleJiraTicketFetched}
               onJiraTicketUpdated={handleJiraTicketUpdated}
+              onNextTicket={() => nextTicket()}
+              onAddTicket={(ticket) => addTicket(ticket)}
+              onUpdateTicket={(ticketId, updates) => updateTicket(ticketId, updates)}
+              onDeleteTicket={(ticketId) => deleteTicket(ticketId)}
               onLeaveRoom={handleLeaveRoom}
               error={error}
               onClearError={clearError}

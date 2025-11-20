@@ -7,6 +7,7 @@ import type {
   WebSocketMessage,
   WebSocketMessageType,
   AvatarId,
+  TicketQueueItem,
 } from '../types';
 import { API_BASE_URL, WS_BASE_URL } from '../constants';
 import {
@@ -208,6 +209,12 @@ export function connectToRoom(
           case 'jiraTicketCleared':
           case 'strudelCodeGenerated':
           case 'strudelPlaybackToggled':
+          case 'nextTicket':
+          case 'ticketAdded':
+          case 'ticketUpdated':
+          case 'ticketDeleted':
+          case 'ticketCompleted':
+          case 'queueUpdated':
             triggerEventListeners(data.type, data);
             break;
 
@@ -236,9 +243,9 @@ export function connectToRoom(
     socket.onerror = (error) => {
       console.error('WebSocket error:', error);
       onConnectionStatusChange?.(false);
-      triggerEventListeners('error', { 
+      triggerEventListeners('error', {
         type: 'error',
-        error: 'Connection error occurred' 
+        error: 'Connection error occurred'
       });
     };
 
@@ -247,9 +254,9 @@ export function connectToRoom(
   } catch (error) {
     console.error('Error creating WebSocket:', error);
     onConnectionStatusChange?.(false);
-    triggerEventListeners('error', { 
+    triggerEventListeners('error', {
       type: 'error',
-      error: error instanceof Error ? error.message : 'Failed to connect to server' 
+      error: error instanceof Error ? error.message : 'Failed to connect to server'
     });
     throw error;
   }
@@ -269,7 +276,7 @@ function handleReconnect(
 
     const jitter = Math.random() * 0.3 + 0.85; // Random value between 0.85 and 1.15
     const delay = Math.min(
-      RECONNECT_BASE_DELAY * 2 ** reconnectAttempts * jitter, 
+      RECONNECT_BASE_DELAY * 2 ** reconnectAttempts * jitter,
       MAX_RECONNECT_DELAY
     );
 
@@ -395,7 +402,7 @@ export function disconnectFromRoom(): void {
  * @param {function} callback - The callback function
  */
 export function addEventListener(
-  event: WebSocketMessageType, 
+  event: WebSocketMessageType,
   callback: (data: WebSocketMessage) => void
 ): void {
   if (!eventListeners[event]) {
@@ -410,7 +417,7 @@ export function addEventListener(
  * @param {function} callback - The callback function to remove
  */
 export function removeEventListener(
-  event: WebSocketMessageType, 
+  event: WebSocketMessageType,
   callback: (data: WebSocketMessage) => void
 ): void {
   if (!eventListeners[event]) return;
@@ -486,8 +493,8 @@ export async function getRoomSettings(roomKey: string): Promise<RoomSettings> {
  * @returns {Promise<RoomSettings>} - The updated room settings
  */
 export async function updateRoomSettings(
-  name: string, 
-  roomKey: string, 
+  name: string,
+  roomKey: string,
   settings: Partial<RoomSettings>
 ): Promise<RoomSettings> {
   try {
@@ -525,6 +532,94 @@ export function updateSettings(settings: Partial<RoomSettings>): void {
     JSON.stringify({
       type: 'updateSettings',
       settings,
+    })
+  );
+}
+
+/**
+ * Move to the next ticket in the queue (auto-saves current ticket)
+ */
+export function nextTicket(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'nextTicket',
+    })
+  );
+}
+
+/**
+ * Add a new ticket to the queue
+ * @param {Partial<TicketQueueItem>} ticket - The ticket data
+ */
+export function addTicket(ticket: Partial<TicketQueueItem>): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'addTicket',
+      ticket,
+    })
+  );
+}
+
+/**
+ * Update an existing ticket in the queue
+ * @param {number} ticketId - The ID of the ticket to update
+ * @param {Partial<TicketQueueItem>} updates - The updates to apply
+ */
+export function updateTicket(
+  ticketId: number,
+  updates: Partial<TicketQueueItem>
+): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'updateTicket',
+      ticketId,
+      updates,
+    })
+  );
+}
+
+/**
+ * Delete a ticket from the queue
+ * @param {number} ticketId - The ID of the ticket to delete
+ */
+export function deleteTicket(ticketId: number): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'deleteTicket',
+      ticketId,
+    })
+  );
+}
+
+/**
+ * Mark the current ticket as completed
+ * @param {string} outcome - Optional outcome description
+ */
+export function completeTicket(outcome?: string): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'completeTicket',
+      outcome,
     })
   );
 }

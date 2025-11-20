@@ -1,7 +1,7 @@
 import type {
-	DurableObjectNamespace,
-	Fetcher,
-	WebSocket as CfWebSocket,
+  DurableObjectNamespace,
+  Fetcher,
+  WebSocket as CfWebSocket,
 } from '@cloudflare/workers-types';
 
 export interface Env {
@@ -89,6 +89,7 @@ export interface RoomSettings {
   voteOptionsMetadata?: VoteOptionMetadata[];
   allowOthersToShowEstimates: boolean;
   allowOthersToDeleteEstimates: boolean;
+  allowOthersToManageQueue?: boolean;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;
@@ -143,6 +144,31 @@ export interface JiraTicket {
   url?: string;
 }
 
+export interface TicketVote {
+  id: number;
+  ticketQueueId: number;
+  userName: string;
+  vote: string | number;
+  structuredVotePayload?: StructuredVote;
+  votedAt: number;
+}
+
+export interface TicketQueueItem {
+  id: number;
+  ticketId: string;
+  title?: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  outcome?: string;
+  createdAt: number;
+  completedAt?: number;
+  ordinal: number;
+  externalService: 'jira' | 'none';
+  externalServiceId?: string;
+  externalServiceMetadata?: Record<string, unknown>;
+  votes?: TicketVote[];
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -161,6 +187,8 @@ export interface RoomData {
   currentStrudelGenerationId?: string;
   strudelPhase?: string;
   strudelIsPlaying?: boolean;
+  currentTicket?: TicketQueueItem;
+  ticketQueue?: TicketQueueItem[];
 }
 
 export interface BroadcastMessage {

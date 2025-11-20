@@ -18,6 +18,31 @@ export interface JiraTicket {
   url: string;
 }
 
+export interface TicketVote {
+  id: number;
+  ticketQueueId: number;
+  userName: string;
+  vote: VoteValue;
+  structuredVotePayload?: StructuredVote;
+  votedAt: number;
+}
+
+export interface TicketQueueItem {
+  id: number;
+  ticketId: string;
+  title?: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  outcome?: string;
+  createdAt: number;
+  completedAt?: number;
+  ordinal: number;
+  externalService: 'jira' | 'none';
+  externalServiceId?: string;
+  externalServiceMetadata?: Record<string, unknown>;
+  votes?: TicketVote[];
+}
+
 export interface VoteOptionMetadata {
   value: VoteValue;
   background: string;
@@ -100,6 +125,7 @@ export interface RoomSettings {
   voteOptionsMetadata?: VoteOptionMetadata[];
   allowOthersToShowEstimates: boolean;
   allowOthersToDeleteEstimates: boolean;
+  allowOthersToManageQueue?: boolean;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;
@@ -160,6 +186,8 @@ export interface RoomData {
   currentStrudelGenerationId?: string;
   strudelPhase?: string;
   strudelIsPlaying?: boolean;
+  currentTicket?: TicketQueueItem;
+  ticketQueue?: TicketQueueItem[];
 }
 
 export interface WebSocketErrorData {
@@ -187,7 +215,13 @@ export type WebSocketMessageType =
   | 'strudelCodeGenerated'
   | 'generateStrudelCode'
   | 'toggleStrudelPlayback'
-  | 'strudelPlaybackToggled';
+  | 'strudelPlaybackToggled'
+  | 'nextTicket'
+  | 'ticketAdded'
+  | 'ticketUpdated'
+  | 'ticketDeleted'
+  | 'ticketCompleted'
+  | 'queueUpdated';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -205,11 +239,15 @@ export interface WebSocketMessage {
   judgeScore?: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
   moderator?: string;
-  ticket?: JiraTicket | undefined;
+  ticket?: JiraTicket | TicketQueueItem | undefined;
+  ticketId?: number;
+  queue?: TicketQueueItem[];
   code?: string;
   generationId?: string;
   phase?: string;
   isPlaying?: boolean;
+  updates?: Partial<TicketQueueItem>;
+  outcome?: string;
 }
 
 export interface RoomStats {

@@ -7,6 +7,7 @@ import type {
   JiraTicket,
   StructuredVote,
   ServerDefaults,
+  TicketQueueItem,
 } from '../types';
 import { useRoomStats } from '../hooks/useRoomStats';
 import { useConsensusCelebration } from '../hooks/useConsensusCelebration';
@@ -22,6 +23,7 @@ import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
 import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
 import { FallbackLoading } from '../components/ui/FallbackLoading';
+import { TicketQueueModal } from '../components/TicketQueueModal';
 
 const SettingsModal = lazy(() => import('../components/SettingsModal'));
 const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
@@ -44,6 +46,10 @@ export interface RoomScreenProps {
   onUpdateSettings: (settings: RoomData['settings']) => void;
   onJiraTicketFetched?: (ticket: JiraTicket) => void;
   onJiraTicketUpdated?: (ticket: JiraTicket) => void;
+  onNextTicket: () => void;
+  onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
+  onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
+  onDeleteTicket: (ticketId: number) => void;
   error: string;
   onClearError: () => void;
   isConnected: boolean;
@@ -62,12 +68,17 @@ const RoomScreen: FC<RoomScreenProps> = ({
   onUpdateSettings,
   onJiraTicketFetched,
   onJiraTicketUpdated,
+  onNextTicket,
+  onAddTicket,
+  onUpdateTicket,
+  onDeleteTicket,
   error,
   onClearError,
   isConnected,
   onLeaveRoom,
 }) => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const stats = useRoomStats(roomData);
@@ -105,7 +116,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
           )}
 
           {roomData.settings.enableStructuredVoting &&
-          roomData.settings.votingCriteria ? (
+            roomData.settings.votingCriteria ? (
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
               currentVote={roomData.structuredVotes?.[name] || null}
@@ -129,8 +140,8 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 judgeScore={roomData.judgeScore}
                 roomKey={roomData.key}
                 userName={name}
-                onJiraTicketFetched={onJiraTicketFetched || (() => {})}
-                onJiraTicketUpdated={onJiraTicketUpdated || (() => {})}
+                onJiraTicketFetched={onJiraTicketFetched || (() => { })}
+                onJiraTicketUpdated={onJiraTicketUpdated || (() => { })}
                 onError={onClearError}
               />
             )}
@@ -141,6 +152,8 @@ const RoomScreen: FC<RoomScreenProps> = ({
               isModeratorView={isModeratorView}
               onToggleShowVotes={onToggleShowVotes}
               onResetVotes={onResetVotes}
+              onNextTicket={onNextTicket}
+              onViewQueue={() => setIsQueueModalOpen(true)}
             />
           )}
 
@@ -229,6 +242,17 @@ const RoomScreen: FC<RoomScreenProps> = ({
           </Suspense>
         )}
       </AnimatePresence>
+
+      <TicketQueueModal
+        isOpen={isQueueModalOpen}
+        onClose={() => setIsQueueModalOpen(false)}
+        currentTicket={roomData.currentTicket}
+        queue={roomData.ticketQueue || []}
+        onAddTicket={onAddTicket}
+        onUpdateTicket={onUpdateTicket}
+        onDeleteTicket={onDeleteTicket}
+        canManageQueue={isModeratorView || roomData.settings.allowOthersToManageQueue === true}
+      />
     </div>
   );
 };

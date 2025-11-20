@@ -46,16 +46,16 @@ export function OtherOptions({
               {localSettings.enableJiraIntegration && (
                 <div className="flex items-center">
                   <input
-                  type="checkbox"
-                  id="autoUpdateJiraStoryPoints"
-                  checked={localSettings.autoUpdateJiraStoryPoints || false}
-                  onChange={(e) =>
-                    handleChange(
-                      'autoUpdateJiraStoryPoints',
-                      e.target.checked
-                    )
-                  }
-                  data-testid="settings-toggle-jira-auto"
+                    type="checkbox"
+                    id="autoUpdateJiraStoryPoints"
+                    checked={localSettings.autoUpdateJiraStoryPoints || false}
+                    onChange={(e) =>
+                      handleChange(
+                        'autoUpdateJiraStoryPoints',
+                        e.target.checked
+                      )
+                    }
+                    data-testid="settings-toggle-jira-auto"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -75,16 +75,16 @@ export function OtherOptions({
               <div className="space-y-2">
                 <div className="flex items-center">
                   <input
-                  type="checkbox"
-                  id="allowOthersToShowEstimates"
-                  checked={localSettings.allowOthersToShowEstimates}
-                  onChange={(e) =>
-                    handleChange(
-                      'allowOthersToShowEstimates',
-                      e.target.checked
-                    )
-                  }
-                  data-testid="settings-toggle-allow-show"
+                    type="checkbox"
+                    id="allowOthersToShowEstimates"
+                    checked={localSettings.allowOthersToShowEstimates}
+                    onChange={(e) =>
+                      handleChange(
+                        'allowOthersToShowEstimates',
+                        e.target.checked
+                      )
+                    }
+                    data-testid="settings-toggle-allow-show"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -96,16 +96,16 @@ export function OtherOptions({
                 </div>
                 <div className="flex items-center">
                   <input
-                  type="checkbox"
-                  id="allowOthersToDeleteEstimates"
-                  checked={localSettings.allowOthersToDeleteEstimates}
-                  onChange={(e) =>
-                    handleChange(
-                      'allowOthersToDeleteEstimates',
-                      e.target.checked
-                    )
-                  }
-                  data-testid="settings-toggle-allow-reset"
+                    type="checkbox"
+                    id="allowOthersToDeleteEstimates"
+                    checked={localSettings.allowOthersToDeleteEstimates}
+                    onChange={(e) =>
+                      handleChange(
+                        'allowOthersToDeleteEstimates',
+                        e.target.checked
+                      )
+                    }
+                    data-testid="settings-toggle-allow-reset"
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
                   <label
@@ -130,6 +130,24 @@ export function OtherOptions({
                     className="ml-2 text-sm text-slate-700 dark:text-slate-300"
                   >
                     Auto handover moderator when they leave
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="allowOthersToManageQueue"
+                    checked={localSettings.allowOthersToManageQueue || false}
+                    onChange={(e) =>
+                      handleChange('allowOthersToManageQueue', e.target.checked)
+                    }
+                    data-testid="settings-toggle-allow-queue"
+                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
+                  />
+                  <label
+                    htmlFor="allowOthersToManageQueue"
+                    className="ml-2 text-sm text-slate-700 dark:text-slate-300"
+                  >
+                    Allow others to manage ticket queue
                   </label>
                 </div>
               </div>

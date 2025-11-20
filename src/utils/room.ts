@@ -1,4 +1,4 @@
-import { RoomData, WebSocketMessage } from '../types';
+import { RoomData, WebSocketMessage, TicketQueueItem, JiraTicket } from '../types';
 
 export function applyRoomUpdate(
   prev: RoomData | null,
@@ -160,6 +160,12 @@ export function applyRoomUpdate(
         return prev;
       }
 
+      const isJiraTicket = message.ticket && 'key' in message.ticket;
+
+      if (!isJiraTicket) {
+        return prev;
+      }
+
       if (message.ticket === undefined) {
         if (prev.jiraTicket === undefined) {
           return prev;
@@ -171,7 +177,7 @@ export function applyRoomUpdate(
 
       return {
         ...prev,
-        jiraTicket: message.ticket,
+        jiraTicket: message.ticket as JiraTicket,
       };
     }
 
@@ -193,6 +199,31 @@ export function applyRoomUpdate(
         currentStrudelCode: message.code,
         currentStrudelGenerationId: message.generationId,
         strudelPhase: message.phase,
+      };
+    }
+
+    case 'nextTicket': {
+      return {
+        ...prev,
+        votes: {},
+        structuredVotes: undefined,
+        showVotes: false,
+        judgeScore: null,
+        judgeMetadata: undefined,
+        currentTicket: message.ticket as TicketQueueItem,
+        ticketQueue: message.queue,
+      };
+    }
+
+    case 'ticketAdded':
+    case 'ticketUpdated':
+    case 'ticketDeleted':
+    case 'ticketCompleted':
+    case 'queueUpdated': {
+      return {
+        ...prev,
+        currentTicket: message.ticket as TicketQueueItem | undefined,
+        ticketQueue: message.queue,
       };
     }
 
