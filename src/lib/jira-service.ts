@@ -1,5 +1,5 @@
-import type { VoteValue, TicketMetadata } from '../types';
-import { API_BASE_URL } from '../constants';
+import type { VoteValue, TicketMetadata } from "../types";
+import { API_BASE_URL } from "../constants";
 
 /**
  * Fetch Jira ticket details by ticket ID or key
@@ -11,44 +11,44 @@ import { API_BASE_URL } from '../constants';
  */
 export async function fetchJiraTicket(
   ticketId: string,
-  options?: { roomKey?: string; userName?: string }
+  options?: { roomKey?: string; userName?: string },
 ): Promise<TicketMetadata> {
   try {
     let url = `${API_BASE_URL}/jira/ticket?ticketId=${encodeURIComponent(
-      ticketId
+      ticketId,
     )}`;
 
     if (options?.roomKey && options?.userName) {
       url += `&roomKey=${encodeURIComponent(
-        options.roomKey
+        options.roomKey,
       )}&userName=${encodeURIComponent(options.userName)}`;
     }
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to fetch Jira ticket: ${response.status}`
+        errorData.error || `Failed to fetch Jira ticket: ${response.status}`,
       );
     }
 
     const data = await response.json();
-    console.log('Jira ticket API response:', data);
+    console.log("Jira ticket API response:", data);
 
     const ticket: TicketMetadata | undefined = data.ticket;
 
     if (ticket) {
       return ticket;
     }
-    throw new Error('Invalid response format from Jira API');
+    throw new Error("Invalid response format from Jira API");
   } catch (error) {
-    console.error('Error fetching Jira ticket:', error);
+    console.error("Error fetching Jira ticket:", error);
     throw error;
   }
 }
@@ -65,29 +65,29 @@ export async function fetchJiraTicket(
 export async function updateJiraStoryPoints(
   ticketId: string,
   storyPoints: number,
-  options: { roomKey: string; userName: string }
+  options: { roomKey: string; userName: string },
 ): Promise<TicketMetadata> {
   try {
     const response = await fetch(
       `${API_BASE_URL}/jira/ticket/${encodeURIComponent(ticketId)}/storyPoints`,
       {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           storyPoints,
           roomKey: options.roomKey,
           userName: options.userName,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
         errorData.error ||
-          `Failed to update Jira story points: ${response.status}`
+          `Failed to update Jira story points: ${response.status}`,
       );
     }
 
@@ -96,7 +96,7 @@ export async function updateJiraStoryPoints(
 
     return ticket;
   } catch (error) {
-    console.error('Error updating Jira story points:', error);
+    console.error("Error updating Jira story points:", error);
     throw error;
   }
 }
@@ -107,14 +107,14 @@ export async function updateJiraStoryPoints(
  * @returns {number | null} - The corresponding Jira story points number
  */
 export function convertVoteValueToStoryPoints(
-  voteValue: VoteValue
+  voteValue: VoteValue,
 ): number | null {
-  if (voteValue === null || voteValue === '?' || voteValue === 'coffee') {
+  if (voteValue === null || voteValue === "?" || voteValue === "coffee") {
     return null;
   }
 
   const numericValue =
-    typeof voteValue === 'number' ? voteValue : Number(voteValue);
+    typeof voteValue === "number" ? voteValue : Number(voteValue);
 
   if (Number.isNaN(numericValue)) {
     return null;

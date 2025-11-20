@@ -1,14 +1,14 @@
-import { X } from 'lucide-react';
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { X } from "lucide-react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
 
-import { SurfaceCard } from './SurfaceCard';
+import { SurfaceCard } from "./SurfaceCard";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
 }
 
 export const Modal = ({
@@ -16,7 +16,7 @@ export const Modal = ({
   onClose,
   title,
   children,
-  size = 'md',
+  size = "md",
 }: ModalProps) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -48,12 +48,12 @@ export const Modal = ({
     focusFirstElement();
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
         return;
       }
 
-      if (e.key !== 'Tab') return;
+      if (e.key !== "Tab") return;
 
       const focusableElements = getFocusableElements();
       if (focusableElements.length === 0) return;
@@ -70,21 +70,21 @@ export const Modal = ({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
       previousFocusRef.current?.focus();
       previousFocusRef.current = null;
     };
   }, [isOpen, onClose]);
 
   const sizeClasses = {
-    sm: 'max-w-md',
-    md: 'max-w-xl',
-    lg: 'max-w-3xl',
+    sm: "max-w-md",
+    md: "max-w-xl",
+    lg: "max-w-3xl",
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {

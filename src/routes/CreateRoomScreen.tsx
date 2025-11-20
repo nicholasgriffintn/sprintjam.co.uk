@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import type { FC, ChangeEvent, FormEvent } from 'react';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import type { FC, ChangeEvent, FormEvent } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Lock,
@@ -9,16 +9,16 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronRight,
-} from 'lucide-react';
+} from "lucide-react";
 
-import type { RoomSettings, AvatarId } from '../types';
-import AvatarSelector from '../components/AvatarSelector';
-import { PageBackground } from '../components/layout/PageBackground';
-import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Alert } from '../components/ui/Alert';
-import { Logo } from '../components/Logo';
+import type { RoomSettings, AvatarId } from "../types";
+import AvatarSelector from "../components/AvatarSelector";
+import { PageBackground } from "../components/layout/PageBackground";
+import { SurfaceCard } from "../components/ui/SurfaceCard";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { Alert } from "../components/ui/Alert";
+import { Logo } from "../components/Logo";
 
 interface CreateRoomScreenProps {
   name: string;
@@ -47,8 +47,8 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   onClearError,
   defaultSettings,
 }) => {
-  const [currentStep, setCurrentStep] = useState<'name' | 'avatar' | 'details'>(
-    'name'
+  const [currentStep, setCurrentStep] = useState<"name" | "avatar" | "details">(
+    "name",
   );
   const [showSettings, setShowSettings] = useState(true);
   const [settings, setSettings] = useState<Partial<RoomSettings>>(() => {
@@ -59,7 +59,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
     return {
       enableStructuredVoting: defaultSettings.enableStructuredVoting ?? false,
       enableJudge: defaultSettings.enableJudge ?? true,
-      externalService: defaultSettings.externalService ?? 'none',
+      externalService: defaultSettings.externalService ?? "none",
       showTimer: defaultSettings.showTimer ?? false,
       enableTicketQueue: defaultSettings.enableTicketQueue ?? false,
       allowOthersToShowEstimates:
@@ -70,21 +70,21 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (currentStep === 'name' && name.trim()) {
-      setCurrentStep('avatar');
-    } else if (currentStep === 'avatar' && selectedAvatar) {
-      setCurrentStep('details');
-    } else if (currentStep === 'details' && name && selectedAvatar) {
+    if (currentStep === "name" && name.trim()) {
+      setCurrentStep("avatar");
+    } else if (currentStep === "avatar" && selectedAvatar) {
+      setCurrentStep("details");
+    } else if (currentStep === "details" && name && selectedAvatar) {
       onClearError();
       onCreateRoom(settings);
     }
   };
 
   const handleBack = () => {
-    if (currentStep === 'avatar') {
-      setCurrentStep('name');
-    } else if (currentStep === 'details') {
-      setCurrentStep('avatar');
+    if (currentStep === "avatar") {
+      setCurrentStep("name");
+    } else if (currentStep === "details") {
+      setCurrentStep("avatar");
     } else {
       onBack();
     }
@@ -92,7 +92,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
 
   const handleSettingChange = (
     key: keyof RoomSettings,
-    value: boolean | string | number
+    value: boolean | string | number,
   ) => {
     setSettings((prev) => ({
       ...prev,
@@ -101,30 +101,30 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
   };
 
   const getFormValid = () => {
-    if (currentStep === 'name') return name.trim();
-    if (currentStep === 'avatar') return selectedAvatar;
-    if (currentStep === 'details') return name.trim() && selectedAvatar;
+    if (currentStep === "name") return name.trim();
+    if (currentStep === "avatar") return selectedAvatar;
+    if (currentStep === "details") return name.trim() && selectedAvatar;
     return false;
   };
 
   const getButtonText = () => {
-    if (currentStep === 'name') return 'Continue';
-    if (currentStep === 'avatar') return 'Continue';
-    return 'Create';
+    if (currentStep === "name") return "Continue";
+    if (currentStep === "avatar") return "Continue";
+    return "Create";
   };
 
   const getStepTitle = () => {
-    if (currentStep === 'name') return 'Create Room';
-    if (currentStep === 'avatar') return 'Select Your Avatar';
-    return 'Room Settings';
+    if (currentStep === "name") return "Create Room";
+    if (currentStep === "avatar") return "Select Your Avatar";
+    return "Room Settings";
   };
 
   const getStepDescription = () => {
-    if (currentStep === 'name')
-      return 'Set up a new planning poker session for your team';
-    if (currentStep === 'avatar')
-      return 'Choose an avatar to represent you in the room';
-    return 'Configure your room preferences (optional)';
+    if (currentStep === "name")
+      return "Set up a new planning poker session for your team";
+    if (currentStep === "avatar")
+      return "Choose an avatar to represent you in the room";
+    return "Configure your room preferences (optional)";
   };
 
   return (
@@ -149,8 +149,8 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
           </button>
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-brand-500">
-              Step{' '}
-              {currentStep === 'name' ? 1 : currentStep === 'avatar' ? 3 : 2}
+              Step{" "}
+              {currentStep === "name" ? 1 : currentStep === "avatar" ? 3 : 2}
               /3
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
@@ -176,7 +176,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               </Alert>
             )}
 
-            {currentStep === 'name' && (
+            {currentStep === "name" && (
               <Input
                 id="create-name"
                 label={
@@ -200,7 +200,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               />
             )}
 
-            {currentStep === 'details' && (
+            {currentStep === "details" && (
               <div className="space-y-6">
                 <Input
                   id="create-passcode"
@@ -250,7 +250,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                     <motion.div
                       id="room-preferences-panel"
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      animate={{ opacity: 1, height: "auto" }}
                       transition={{ duration: 0.2 }}
                       className="space-y-4 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm dark:border-white/10 dark:bg-slate-900/60"
                     >
@@ -265,8 +265,8 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                           checked={settings.enableStructuredVoting ?? false}
                           onChange={(e) =>
                             handleSettingChange(
-                              'enableStructuredVoting',
-                              e.target.checked
+                              "enableStructuredVoting",
+                              e.target.checked,
                             )
                           }
                         />
@@ -286,8 +286,8 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                           checked={settings.hideParticipantNames ?? false}
                           onChange={(e) =>
                             handleSettingChange(
-                              'hideParticipantNames',
-                              e.target.checked
+                              "hideParticipantNames",
+                              e.target.checked,
                             )
                           }
                         />
@@ -299,7 +299,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
               </div>
             )}
 
-            {currentStep === 'avatar' && (
+            {currentStep === "avatar" && (
               <div className="space-y-4">
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Pick an avatar

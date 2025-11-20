@@ -1,14 +1,14 @@
-import { type FC, useCallback, useEffect, useState } from 'react';
-import { Music, X } from 'lucide-react';
+import { type FC, useCallback, useEffect, useState } from "react";
+import { Music, X } from "lucide-react";
 
-import { SurfaceCard } from '../ui/SurfaceCard';
-import { StrudelControls } from './StrudelControls';
-import { useStrudelPlayer } from '../../hooks/useStrudelPlayer';
+import { SurfaceCard } from "../ui/SurfaceCard";
+import { StrudelControls } from "./StrudelControls";
+import { useStrudelPlayer } from "../../hooks/useStrudelPlayer";
 import {
   requestStrudelGeneration,
   toggleStrudelPlayback,
-} from '../../lib/api-service';
-import type { RoomData } from '../../types';
+} from "../../lib/api-service";
+import type { RoomData } from "../../types";
 
 interface StrudelMiniPlayerProps {
   roomData: RoomData;
@@ -61,7 +61,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
 
   const triggerGeneration = useCallback(() => {
     if (!isModeratorView) {
-      showTemporaryError('Waiting for the moderator to generate music');
+      showTemporaryError("Waiting for the moderator to generate music");
       return;
     }
 
@@ -77,14 +77,14 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     } catch (err) {
       setIsAwaitingGeneration(false);
       showTemporaryError(
-        err instanceof Error ? err.message : 'Failed to generate music'
+        err instanceof Error ? err.message : "Failed to generate music",
       );
     }
   }, [isModeratorView, isAwaitingGeneration, showTemporaryError]);
 
   const handlePlayPause = async () => {
     if (!isModeratorView) {
-      showTemporaryError('Only the moderator can control playback');
+      showTemporaryError("Only the moderator can control playback");
       return;
     }
 
@@ -97,7 +97,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
       toggleStrudelPlayback();
     } catch (err) {
       showTemporaryError(
-        err instanceof Error ? err.message : 'Failed to toggle playback'
+        err instanceof Error ? err.message : "Failed to toggle playback",
       );
     }
   };
@@ -112,15 +112,15 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-end sm:left-auto sm:right-4 sm:w-auto">
       <SurfaceCard
         variant="subtle"
-        padding={isExpanded ? 'sm' : 'none'}
+        padding={isExpanded ? "sm" : "none"}
         className={`relative origin-bottom-right overflow-hidden transition-all duration-300 ${
           isExpanded
-            ? 'w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]'
-            : 'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl'
+            ? "w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]"
+            : "flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl"
         }`}
         aria-expanded={isExpanded}
-        role={!isExpanded ? 'button' : undefined}
-        aria-label={!isExpanded ? 'Expand Strudel player' : undefined}
+        role={!isExpanded ? "button" : undefined}
+        aria-label={!isExpanded ? "Expand Strudel player" : undefined}
         tabIndex={!isExpanded ? 0 : undefined}
         onClick={
           !isExpanded
@@ -132,7 +132,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
         onKeyDown={
           !isExpanded
             ? (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
+                if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   setIsExpanded(true);
                 }
@@ -167,10 +167,10 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCode
-                      ? `${isPlaying ? 'Playing' : 'Paused'} • ${
-                          roomData.strudelPhase || 'Unknown'
+                      ? `${isPlaying ? "Playing" : "Paused"} • ${
+                          roomData.strudelPhase || "Unknown"
                         } phase`
-                      : 'No music generated yet'}
+                      : "No music generated yet"}
                   </span>
                 </div>
               </div>

@@ -1,14 +1,14 @@
 declare const WebSocketPair: {
-  new(): { 0: CfWebSocket; 1: CfWebSocket };
+  new (): { 0: CfWebSocket; 1: CfWebSocket };
 };
 
 import type {
   DurableObjectState,
   WebSocket as CfWebSocket,
   Response as CfResponse,
-} from '@cloudflare/workers-types';
+} from "@cloudflare/workers-types";
 
-import { PlanningPokerJudge } from '../lib/planning-poker-judge';
+import { PlanningPokerJudge } from "../lib/planning-poker-judge";
 import type {
   Env,
   RoomData,
@@ -16,25 +16,25 @@ import type {
   SessionInfo,
   StructuredVote,
   TicketQueueItem,
-} from '../types';
-import { createInitialRoomData } from '../utils/defaults';
+} from "../types";
+import { createInitialRoomData } from "../utils/defaults";
 import {
   isStructuredVote,
   createStructuredVote,
-} from '../utils/structured-voting';
+} from "../utils/structured-voting";
 import {
   generateStrudelCode,
   type StrudelGenerateRequest,
-} from '../lib/polychat-client';
-import { markUserConnection, normalizeRoomData } from '../utils/room-data';
-import { applySettingsUpdate } from '../utils/room-settings';
-import { determineRoomPhase } from '../utils/room-phase';
-import { selectPresetForPhase } from '../utils/strudel';
+} from "../lib/polychat-client";
+import { markUserConnection, normalizeRoomData } from "../utils/room-data";
+import { applySettingsUpdate } from "../utils/room-settings";
+import { determineRoomPhase } from "../utils/room-phase";
+import { selectPresetForPhase } from "../utils/strudel";
 import {
   handleHttpRequest,
   type PlanningRoomHttpContext,
-} from './planning-room-http';
-import { PlanningRoomRepository } from '../repositories/planning-room';
+} from "./planning-room-http";
+import { PlanningRoomRepository } from "../repositories/planning-room";
 
 export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
@@ -67,13 +67,13 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   async fetch(request: Request): Promise<CfResponse> {
     const url = new URL(request.url);
 
-    const upgradeHeader = request.headers.get('Upgrade');
-    if (upgradeHeader === 'websocket') {
-      const roomKey = url.searchParams.get('room');
-      const userName = url.searchParams.get('name');
+    const upgradeHeader = request.headers.get("Upgrade");
+    if (upgradeHeader === "websocket") {
+      const roomKey = url.searchParams.get("room");
+      const userName = url.searchParams.get("name");
 
       if (!roomKey || !userName) {
-        return new Response('Missing room key or user name', {
+        return new Response("Missing room key or user name", {
           status: 400,
         }) as unknown as CfResponse;
       }
@@ -94,13 +94,13 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       return httpResponse;
     }
 
-    return new Response('Not found', { status: 404 }) as unknown as CfResponse;
+    return new Response("Not found", { status: 404 }) as unknown as CfResponse;
   }
 
   async handleSession(
     webSocket: CfWebSocket,
     roomKey: string,
-    userName: string
+    userName: string,
   ) {
     const session = { webSocket, roomKey, userName };
     this.sessions.set(webSocket, session);
@@ -119,7 +119,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setUserConnection(userName, true);
 
       this.broadcast({
-        type: 'userConnectionStatus',
+        type: "userConnectionStatus",
         user: userName,
         isConnected: true,
       });
@@ -128,56 +128,56 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     const roomData = await this.getRoomData();
     webSocket.send(
       JSON.stringify({
-        type: 'initialize',
+        type: "initialize",
         roomData,
-      })
+      }),
     );
 
-    webSocket.addEventListener('message', async (msg) => {
+    webSocket.addEventListener("message", async (msg) => {
       try {
         const messageData =
-          typeof msg.data === 'string'
+          typeof msg.data === "string"
             ? msg.data
             : new TextDecoder().decode(msg.data);
         const data = JSON.parse(messageData);
 
-        if (data.type === 'vote') {
+        if (data.type === "vote") {
           await this.handleVote(userName, data.vote);
-        } else if (data.type === 'showVotes') {
+        } else if (data.type === "showVotes") {
           await this.handleShowVotes(userName);
-        } else if (data.type === 'resetVotes') {
+        } else if (data.type === "resetVotes") {
           await this.handleResetVotes(userName);
-        } else if (data.type === 'updateSettings') {
+        } else if (data.type === "updateSettings") {
           await this.handleUpdateSettings(userName, data.settings);
-        } else if (data.type === 'generateStrudelCode') {
+        } else if (data.type === "generateStrudelCode") {
           await this.handleGenerateStrudel(userName);
-        } else if (data.type === 'toggleStrudelPlayback') {
+        } else if (data.type === "toggleStrudelPlayback") {
           await this.handleToggleStrudelPlayback(userName);
-        } else if (data.type === 'nextTicket') {
+        } else if (data.type === "nextTicket") {
           await this.handleNextTicket(userName);
-        } else if (data.type === 'addTicket') {
+        } else if (data.type === "addTicket") {
           await this.handleAddTicket(userName, data.ticket);
-        } else if (data.type === 'updateTicket') {
+        } else if (data.type === "updateTicket") {
           await this.handleUpdateTicket(userName, data.ticketId, data.updates);
-        } else if (data.type === 'deleteTicket') {
+        } else if (data.type === "deleteTicket") {
           await this.handleDeleteTicket(userName, data.ticketId);
-        } else if (data.type === 'completeTicket') {
+        } else if (data.type === "completeTicket") {
           await this.handleCompleteTicket(userName, data.outcome);
         }
       } catch (err: unknown) {
         webSocket.send(
           JSON.stringify({
-            type: 'error',
+            type: "error",
             error: err instanceof Error ? err.message : String(err),
-          })
+          }),
         );
       }
     });
 
-    webSocket.addEventListener('close', async () => {
+    webSocket.addEventListener("close", async () => {
       this.sessions.delete(webSocket);
       const stillConnected = Array.from(this.sessions.values()).some(
-        (s: SessionInfo) => s.userName === userName
+        (s: SessionInfo) => s.userName === userName,
       );
 
       if (!stillConnected) {
@@ -189,7 +189,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
             this.repository.setUserConnection(userName, false);
             this.broadcast({
-              type: 'userConnectionStatus',
+              type: "userConnectionStatus",
               user: userName,
               isConnected: false,
             });
@@ -207,7 +207,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
                 this.repository.setModerator(roomData.moderator);
 
                 this.broadcast({
-                  type: 'newModerator',
+                  type: "newModerator",
                   moderator: roomData.moderator,
                 });
               }
@@ -233,7 +233,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       let structuredVotePayload: StructuredVote | null = null;
       if (isStructuredVote(vote)) {
         const structuredVote = createStructuredVote(vote.criteriaScores);
-        const calculatedPoints = structuredVote.calculatedStoryPoints || '?';
+        const calculatedPoints = structuredVote.calculatedStoryPoints || "?";
         finalVote = calculatedPoints;
         if (!roomData.structuredVotes) {
           roomData.structuredVotes = {};
@@ -248,8 +248,8 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       if (!validOptions.includes(String(finalVote))) {
         console.warn(
           `Invalid vote ${finalVote} from ${userName}. Valid options: ${validOptions.join(
-            ', '
-          )}`
+            ", ",
+          )}`,
         );
         return;
       }
@@ -264,7 +264,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       this.broadcast({
-        type: 'vote',
+        type: "vote",
         user: userName,
         vote: finalVote,
         structuredVote: structuredVotePayload,
@@ -282,7 +282,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     if (shouldGenerateMusic) {
       this.autoGenerateStrudel().catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error("Background Strudel generation failed:", err),
       );
     }
   }
@@ -308,7 +308,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setShowVotes(roomData.showVotes);
 
       this.broadcast({
-        type: 'showVotes',
+        type: "showVotes",
         showVotes: roomData.showVotes,
       });
 
@@ -324,7 +324,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     if (shouldGenerateMusic) {
       this.autoGenerateStrudel().catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error("Background Strudel generation failed:", err),
       );
     }
   }
@@ -357,7 +357,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setJudgeState(null);
 
       this.broadcast({
-        type: 'resetVotes',
+        type: "resetVotes",
       });
 
       shouldGenerateMusic =
@@ -368,14 +368,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     if (shouldGenerateMusic) {
       this.autoGenerateStrudel().catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error("Background Strudel generation failed:", err),
       );
     }
   }
 
   async handleUpdateSettings(
     userName: string,
-    settings: Partial<RoomData['settings']>
+    settings: Partial<RoomData["settings"]>,
   ) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.getRoomData();
@@ -402,7 +402,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const estimateOptionsChanged =
         oldEstimateOptions.length !== newEstimateOptions.length ||
         !oldEstimateOptions.every(
-          (opt, idx) => opt === newEstimateOptions[idx]
+          (opt, idx) => opt === newEstimateOptions[idx],
         );
 
       const structuredVotingModeChanged =
@@ -414,7 +414,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       if (estimateOptionsChanged) {
         const validOptions = newEstimateOptions;
         const invalidVotes = Object.entries(roomData.votes).filter(
-          ([, vote]) => !validOptions.includes(String(vote))
+          ([, vote]) => !validOptions.includes(String(vote)),
         );
 
         if (invalidVotes.length > 0) {
@@ -430,7 +430,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           this.repository.setJudgeState(null);
 
           this.broadcast({
-            type: 'resetVotes',
+            type: "resetVotes",
           });
         }
       } else if (structuredVotingModeChanged && !newStructuredVoting) {
@@ -444,7 +444,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       this.broadcast({
-        type: 'settingsUpdated',
+        type: "settingsUpdated",
         settings: roomData.settings,
       });
 
@@ -460,7 +460,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         this.repository.setJudgeState(null);
 
         this.broadcast({
-          type: 'judgeScoreUpdated',
+          type: "judgeScoreUpdated",
           judgeScore: null,
         });
       }
@@ -486,9 +486,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const allVotes = Object.values(roomData.votes).filter((v) => v !== null);
       const totalVoteCount = allVotes.length;
-      const questionMarkCount = allVotes.filter((v) => v === '?').length;
+      const questionMarkCount = allVotes.filter((v) => v === "?").length;
 
-      const votes = allVotes.filter((v) => v !== '?');
+      const votes = allVotes.filter((v) => v !== "?");
       const numericVotes = votes
         .filter((v) => !Number.isNaN(Number(v)))
         .map(Number);
@@ -503,7 +503,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         roomData.settings.judgeAlgorithm,
         validOptions,
         totalVoteCount,
-        questionMarkCount
+        questionMarkCount,
       );
 
       roomData.judgeScore = result.score;
@@ -517,7 +517,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setJudgeState(result.score, roomData.judgeMetadata);
 
       this.broadcast({
-        type: 'judgeScoreUpdated',
+        type: "judgeScoreUpdated",
         judgeScore: result.score,
         judgeMetadata: roomData.judgeMetadata,
       });
@@ -534,7 +534,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     await this.generateStrudelTrack(roomData, {
       notifyOnError: true,
-      logPrefix: 'Failed to generate Strudel code',
+      logPrefix: "Failed to generate Strudel code",
     });
   }
 
@@ -543,17 +543,17 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     if (!roomData) return;
 
     await this.generateStrudelTrack(roomData, {
-      logPrefix: 'Failed to auto-generate Strudel code',
+      logPrefix: "Failed to auto-generate Strudel code",
     });
   }
 
   async generateStrudelTrack(
     roomData: RoomData,
-    options: { notifyOnError?: boolean; logPrefix?: string } = {}
+    options: { notifyOnError?: boolean; logPrefix?: string } = {},
   ) {
     const {
       notifyOnError = false,
-      logPrefix = 'Failed to generate Strudel code',
+      logPrefix = "Failed to generate Strudel code",
     } = options;
 
     if (!roomData.settings.enableStrudelPlayer) {
@@ -562,11 +562,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     const apiToken = this.env.POLYCHAT_API_TOKEN;
     if (!apiToken) {
-      console.error('POLYCHAT_API_TOKEN not configured');
+      console.error("POLYCHAT_API_TOKEN not configured");
       if (notifyOnError) {
         this.broadcast({
-          type: 'error',
-          error: 'Music generation is not configured on this server',
+          type: "error",
+          error: "Music generation is not configured on this server",
         });
       }
       return;
@@ -586,7 +586,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const response = await generateStrudelCode(request, apiToken);
 
       if (!response.code || !response.generationId) {
-        throw new Error('Invalid response from music generation service');
+        throw new Error("Invalid response from music generation service");
       }
 
       roomData.currentStrudelCode = response.code;
@@ -600,7 +600,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       });
 
       this.broadcast({
-        type: 'strudelCodeGenerated',
+        type: "strudelCodeGenerated",
         code: response.code,
         generationId: response.generationId,
         phase,
@@ -609,9 +609,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       console.error(`${logPrefix}:`, error);
       if (notifyOnError) {
         this.broadcast({
-          type: 'error',
+          type: "error",
           error:
-            error instanceof Error ? error.message : 'Failed to generate music',
+            error instanceof Error ? error.message : "Failed to generate music",
         });
       }
     }
@@ -629,7 +629,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.repository.setStrudelPlayback(!!roomData.strudelIsPlaying);
 
     this.broadcast({
-      type: 'initialize',
+      type: "initialize",
       roomData,
     });
   }
@@ -655,33 +655,33 @@ export class PlanningRoom implements PlanningRoomHttpContext {
               currentTicket.id,
               user,
               vote,
-              roomData.structuredVotes?.[user]
+              roomData.structuredVotes?.[user],
             );
           });
         }
 
         this.repository.updateTicket(currentTicket.id, {
-          status: 'completed',
+          status: "completed",
           completedAt: Date.now(),
         });
       }
 
       const queue = this.repository.getTicketQueue();
-      const pendingTickets = queue.filter((t) => t.status === 'pending');
+      const pendingTickets = queue.filter((t) => t.status === "pending");
 
       let nextTicket: TicketQueueItem;
       if (pendingTickets.length > 0) {
         nextTicket = pendingTickets[0];
-        this.repository.updateTicket(nextTicket.id, { status: 'in_progress' });
+        this.repository.updateTicket(nextTicket.id, { status: "in_progress" });
         nextTicket = this.repository.getTicketById(nextTicket.id)!;
       } else {
         const ticketId = this.repository.getNextTicketId();
         const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
         nextTicket = this.repository.createTicket({
           ticketId,
-          status: 'in_progress',
+          status: "in_progress",
           ordinal: maxOrdinal + 1,
-          externalService: 'none',
+          externalService: "none",
         });
       }
 
@@ -701,7 +701,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: 'nextTicket',
+        type: "nextTicket",
         ticket: nextTicket,
         queue: updatedQueue,
       });
@@ -729,9 +729,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         ticketId,
         title: ticket.title,
         description: ticket.description,
-        status: ticket.status || 'pending',
+        status: ticket.status || "pending",
         ordinal: ticket.ordinal ?? maxOrdinal + 1,
-        externalService: ticket.externalService || 'none',
+        externalService: ticket.externalService || "none",
         externalServiceId: ticket.externalServiceId,
         externalServiceMetadata: ticket.externalServiceMetadata,
       });
@@ -739,7 +739,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: 'ticketAdded',
+        type: "ticketAdded",
         ticket: newTicket,
         queue: updatedQueue,
       });
@@ -749,7 +749,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   async handleUpdateTicket(
     userName: string,
     ticketId: number,
-    updates: Partial<TicketQueueItem>
+    updates: Partial<TicketQueueItem>,
   ) {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.getRoomData();
@@ -772,7 +772,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: 'ticketUpdated',
+        type: "ticketUpdated",
         ticket: updatedTicket,
         queue: updatedQueue,
       });
@@ -799,7 +799,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: 'ticketDeleted',
+        type: "ticketDeleted",
         ticketId,
         queue: updatedQueue,
       });
@@ -828,12 +828,12 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           currentTicket.id,
           user,
           vote,
-          roomData.structuredVotes?.[user]
+          roomData.structuredVotes?.[user],
         );
       });
 
       this.repository.updateTicket(currentTicket.id, {
-        status: 'completed',
+        status: "completed",
         outcome,
         completedAt: Date.now(),
       });
@@ -842,7 +842,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
-        type: 'ticketCompleted',
+        type: "ticketCompleted",
         ticket: updatedTicket,
         queue: updatedQueue,
       });
@@ -872,9 +872,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const created = this.repository.createTicket({
         ticketId: nextTicketId,
-        status: 'in_progress',
+        status: "in_progress",
         ordinal: maxOrdinal + 1,
-        externalService: 'none',
+        externalService: "none",
       });
 
       this.repository.setCurrentTicket(created.id);

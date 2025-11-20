@@ -1,8 +1,8 @@
-import { FC, useMemo } from 'react';
-import { CheckCircle2, Users } from 'lucide-react';
+import { FC, useMemo } from "react";
+import { CheckCircle2, Users } from "lucide-react";
 
-import type { TicketQueueItem, VoteValue } from '../../types';
-import { Modal } from '../ui/Modal';
+import type { TicketQueueItem, VoteValue } from "../../types";
+import { Modal } from "../ui/Modal";
 
 interface PrePointingSummaryModalProps {
   isOpen: boolean;
@@ -34,15 +34,15 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
   const voteEntries = useMemo(
     () =>
       Object.entries(votes).filter(
-        ([, value]) => value !== null && value !== undefined
+        ([, value]) => value !== null && value !== undefined,
       ),
-    [votes]
+    [votes],
   );
 
   const consensusLabel =
     stats.mode !== null && stats.distribution[stats.mode] === stats.totalVotes
-      ? 'Consensus'
-      : 'Mixed';
+      ? "Consensus"
+      : "Mixed";
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Review before moving on">
@@ -56,17 +56,21 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
                   Current Ticket
                 </div>
                 <div className="font-semibold text-slate-900 dark:text-white">
-                  {currentTicket?.ticketId || 'N/A'}
+                  {currentTicket?.ticketId || "N/A"}
                 </div>
               </div>
             </div>
-            {currentTicket?.externalService === 'jira' &&
+            {currentTicket?.externalService === "jira" &&
               currentTicket.externalServiceMetadata &&
-              'url' in currentTicket.externalServiceMetadata && (
+              "url" in currentTicket.externalServiceMetadata && (
                 <a
                   href={
-                    (currentTicket.externalServiceMetadata as Record<string, string>)
-                      .url
+                    (
+                      currentTicket.externalServiceMetadata as Record<
+                        string,
+                        string
+                      >
+                    ).url
                   }
                   target="_blank"
                   rel="noreferrer"
@@ -125,7 +129,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
               >
                 <span className="font-medium text-slate-800 dark:text-slate-100">
                   {user}
-                  {user === currentUser && ' (you)'}
+                  {user === currentUser && " (you)"}
                 </span>
                 <span className="font-semibold text-slate-900 dark:text-white">
                   {value}

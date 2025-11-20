@@ -1,4 +1,4 @@
-import type { RoomSettings, JudgeAlgorithm } from '../../types';
+import type { RoomSettings, JudgeAlgorithm } from "../../types";
 
 export function TicketQueueSettings({
   localSettings,
@@ -7,7 +7,7 @@ export function TicketQueueSettings({
   localSettings: RoomSettings;
   handleChange: (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number
+    value: boolean | (string | number)[] | JudgeAlgorithm | number,
   ) => void;
 }) {
   return (
@@ -27,7 +27,7 @@ export function TicketQueueSettings({
                 id="enableTicketQueue"
                 checked={localSettings.enableTicketQueue ?? false}
                 onChange={(e) =>
-                  handleChange('enableTicketQueue', e.target.checked)
+                  handleChange("enableTicketQueue", e.target.checked)
                 }
                 data-testid="settings-toggle-enable-queue"
                 className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -52,7 +52,7 @@ export function TicketQueueSettings({
                 id="allowOthersToManageQueue"
                 checked={localSettings.allowOthersToManageQueue ?? false}
                 onChange={(e) =>
-                  handleChange('allowOthersToManageQueue', e.target.checked)
+                  handleChange("allowOthersToManageQueue", e.target.checked)
                 }
                 data-testid="settings-toggle-allow-queue"
                 className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"

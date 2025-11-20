@@ -1,10 +1,10 @@
-import { PageBackground } from './PageBackground';
-import { SurfaceCard } from '../ui/SurfaceCard';
-import { Spinner } from '../ui/Spinner';
+import { PageBackground } from "./PageBackground";
+import { SurfaceCard } from "../ui/SurfaceCard";
+import { Spinner } from "../ui/Spinner";
 
 export function ScreenLoader({
-  title = 'Preparing your view',
-  subtitle = 'Hang tight while we load everything.',
+  title = "Preparing your view",
+  subtitle = "Hang tight while we load everything.",
 }) {
   return (
     <PageBackground maxWidth="sm" variant="compact">

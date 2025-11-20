@@ -1,7 +1,7 @@
-import { type FC } from 'react';
-import { Play, Pause, Volume2, VolumeX, Music, Loader2 } from 'lucide-react';
+import { type FC } from "react";
+import { Play, Pause, Volume2, VolumeX, Music, Loader2 } from "lucide-react";
 
-import { Button } from '../ui/Button';
+import { Button } from "../ui/Button";
 
 interface StrudelControlsProps {
   isPlaying: boolean;
@@ -42,14 +42,10 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
           )
         }
         aria-label={
-          isLoading
-            ? 'Loading music'
-            : isPlaying
-            ? 'Pause music'
-            : 'Play music'
+          isLoading ? "Loading music" : isPlaying ? "Pause music" : "Play music"
         }
       >
-        {isLoading ? 'Loading...' : isPlaying ? 'Pause' : 'Play'}
+        {isLoading ? "Loading..." : isPlaying ? "Pause" : "Play"}
       </Button>
 
       <button
@@ -57,9 +53,13 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
         onClick={onToggleMute}
         disabled={disabled}
         className="inline-flex h-9 flex-1 items-center justify-center rounded-xl border border-slate-200/60 bg-white/90 text-slate-600 transition-all duration-200 hover:bg-white hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:h-9 sm:w-9 sm:flex-none"
-        aria-label={isMuted ? 'Unmute' : 'Mute'}
+        aria-label={isMuted ? "Unmute" : "Mute"}
       >
-        {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        {isMuted ? (
+          <VolumeX className="h-4 w-4" />
+        ) : (
+          <Volume2 className="h-4 w-4" />
+        )}
       </button>
 
       {showGenerateButton && onGenerate && (
@@ -78,7 +78,7 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
           }
           aria-label="Generate new music"
         >
-          {isLoading ? 'Generating...' : 'New Music'}
+          {isLoading ? "Generating..." : "New Music"}
         </Button>
       )}
     </div>

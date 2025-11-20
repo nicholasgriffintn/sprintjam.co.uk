@@ -1,12 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 import {
   connectToRoom,
   disconnectFromRoom,
   addEventListener,
   removeEventListener,
-} from '../lib/api-service';
-import type { WebSocketMessage, WebSocketMessageType } from '../types';
+} from "../lib/api-service";
+import type { WebSocketMessage, WebSocketMessageType } from "../types";
 
 interface UseRoomConnectionOptions {
   screen: string;
@@ -26,15 +26,15 @@ export const useRoomConnection = ({
   onError,
 }: UseRoomConnectionOptions) => {
   useEffect(() => {
-    if (screen === 'room' && name && activeRoomKey) {
+    if (screen === "room" && name && activeRoomKey) {
       connectToRoom(activeRoomKey, name, onMessage, onConnectionChange);
 
       const errorHandler = (data: WebSocketMessage) => {
-        onError(data.error || 'Connection error');
+        onError(data.error || "Connection error");
         onConnectionChange(false);
       };
 
-      const eventTypes: WebSocketMessageType[] = ['disconnected', 'error'];
+      const eventTypes: WebSocketMessageType[] = ["disconnected", "error"];
 
       for (const type of eventTypes) {
         addEventListener(type, errorHandler);

@@ -1,12 +1,12 @@
-import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import {
   Timer as TimerIcon,
   Pause as PauseIcon,
   RefreshCcw as ResetIcon,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { formatTime } from '../utils/time';
+import { formatTime } from "../utils/time";
 
 export function Timer() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -16,7 +16,7 @@ export function Timer() {
   useEffect(() => {
     if (timerRunning) {
       timerRef.current = setInterval(() => {
-        setTimerSeconds(prev => prev + 1);
+        setTimerSeconds((prev) => prev + 1);
       }, 1000);
     } else if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -29,7 +29,7 @@ export function Timer() {
     };
   }, [timerRunning]);
 
-  const timerActionLabel = timerRunning ? 'Pause timer' : 'Start timer';
+  const timerActionLabel = timerRunning ? "Pause timer" : "Start timer";
 
   return (
     <div className="mb-4 flex items-center space-x-2" data-testid="room-timer">

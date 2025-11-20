@@ -1,9 +1,9 @@
-import { FC, useMemo, useId } from 'react';
-import { ChevronsUpDown, ExternalLink } from 'lucide-react';
+import { FC, useMemo, useId } from "react";
+import { ChevronsUpDown, ExternalLink } from "lucide-react";
 
-import type { RoomData, TicketQueueItem } from '../types';
-import { SurfaceCard } from './ui/SurfaceCard';
-import { HorizontalProgress } from './ui/HorizontalProgress';
+import type { RoomData, TicketQueueItem } from "../types";
+import { SurfaceCard } from "./ui/SurfaceCard";
+import { HorizontalProgress } from "./ui/HorizontalProgress";
 
 interface TicketQueueSidebarProps {
   roomData: RoomData;
@@ -25,27 +25,27 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
   const queue = roomData.ticketQueue || [];
   const pending = useMemo(
-    () => queue.filter((t) => t.status === 'pending'),
-    [queue]
+    () => queue.filter((t) => t.status === "pending"),
+    [queue],
   );
   const completedCount = useMemo(
-    () => queue.filter((t) => t.status === 'completed').length,
-    [queue]
+    () => queue.filter((t) => t.status === "completed").length,
+    [queue],
   );
   const totalCount = queue.length;
   const labelText =
     totalCount === 0
-      ? 'No tickets yet'
+      ? "No tickets yet"
       : `${completedCount}/${totalCount} completed`;
 
   const current = roomData.currentTicket;
   const next = pending[0];
 
-  const moveTicket = (ticketId: number, direction: 'up' | 'down') => {
+  const moveTicket = (ticketId: number, direction: "up" | "down") => {
     const tickets = [...pending];
     const index = tickets.findIndex((t) => t.id === ticketId);
     if (index === -1) return;
-    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= tickets.length) return;
     const target = tickets[index];
     const swap = tickets[swapIndex];
@@ -55,13 +55,13 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
   const renderTicketRow = (ticket: TicketQueueItem, label: string) => {
     const meta =
-      ticket.externalService === 'jira'
+      ticket.externalService === "jira"
         ? (ticket.externalServiceMetadata as
             | Record<string, unknown>
             | undefined)
         : undefined;
     const link =
-      meta && typeof meta === 'object' && 'url' in meta
+      meta && typeof meta === "object" && "url" in meta
         ? String(meta.url)
         : undefined;
 
@@ -107,17 +107,17 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
               </div>
             )}
           </div>
-          {canManageQueue && label === 'Pending' && (
+          {canManageQueue && label === "Pending" && (
             <div className="flex flex-col items-center gap-1">
               <button
-                onClick={() => moveTicket(ticket.id, 'up')}
+                onClick={() => moveTicket(ticket.id, "up")}
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move up"
               >
                 <ChevronsUpDown className="h-4 w-4 rotate-180" />
               </button>
               <button
-                onClick={() => moveTicket(ticket.id, 'down')}
+                onClick={() => moveTicket(ticket.id, "down")}
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move down"
               >
@@ -131,7 +131,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   };
 
   return (
-    <aside className={className ?? 'flex w-full flex-col gap-3'}>
+    <aside className={className ?? "flex w-full flex-col gap-3"}>
       <SurfaceCard
         padding="sm"
         className="shadow-lg border border-slate-200/80 dark:border-slate-800"
@@ -177,7 +177,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
           {current ? (
             <div data-testid="queue-current-ticket">
-              {renderTicketRow(current, 'Current')}
+              {renderTicketRow(current, "Current")}
             </div>
           ) : (
             <p
@@ -190,7 +190,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
           {next ? (
             <div data-testid="queue-next-ticket">
-              {renderTicketRow(next, 'Pending')}
+              {renderTicketRow(next, "Pending")}
             </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -219,7 +219,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                       </span>
                       {canManageQueue && (
                         <button
-                          onClick={() => moveTicket(ticket.id, 'up')}
+                          onClick={() => moveTicket(ticket.id, "up")}
                           className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                           aria-label="Move up"
                         >

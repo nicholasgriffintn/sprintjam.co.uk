@@ -1,5 +1,5 @@
-import type { RoomData } from '../types';
-import { applySettingsUpdate } from './room-settings';
+import type { RoomData } from "../types";
+import { applySettingsUpdate } from "./room-settings";
 
 export function normalizeRoomData(roomData: RoomData): RoomData {
   const normalized: RoomData = {
@@ -16,7 +16,7 @@ export function normalizeRoomData(roomData: RoomData): RoomData {
 }
 
 export function ensureConnectedUsers(
-  roomData: RoomData
+  roomData: RoomData,
 ): Record<string, boolean> {
   if (!roomData.connectedUsers) {
     roomData.connectedUsers = {};
@@ -38,7 +38,7 @@ export function ensureStructuredVotes(roomData: RoomData) {
 export function markUserConnection(
   roomData: RoomData,
   userName: string,
-  isConnected: boolean
+  isConnected: boolean,
 ) {
   ensureConnectedUsers(roomData);
   if (!roomData.users.includes(userName)) {
@@ -51,7 +51,7 @@ export function markUserConnection(
 export function assignUserAvatar(
   roomData: RoomData,
   userName: string,
-  avatar?: string
+  avatar?: string,
 ) {
   if (!avatar) {
     return;

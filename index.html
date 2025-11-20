@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SprintJam</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <style>
       html {
         background-color: #f8fafc;
@@ -32,23 +32,25 @@
       }
     </style>
     <script>
-      (function() {
-        var storageKey = 'sprintjam_theme';
+      (function () {
+        var storageKey = "sprintjam_theme";
         var root = document.documentElement;
-        var getPreferredTheme = function() {
+        var getPreferredTheme = function () {
           try {
             var stored = localStorage.getItem(storageKey);
-            if (stored === 'light' || stored === 'dark') {
+            if (stored === "light" || stored === "dark") {
               return stored;
             }
           } catch (_error) {
             // Ignore read errors and fall back to system preference
           }
-          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          return prefersDark ? 'dark' : 'light';
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          return prefersDark ? "dark" : "light";
         };
         var theme = getPreferredTheme();
-        root.classList.remove('light', 'dark');
+        root.classList.remove("light", "dark");
         root.classList.add(theme);
       })();
     </script>

@@ -1,4 +1,4 @@
-import type { RoomSettings, JudgeAlgorithm } from '../../types';
+import type { RoomSettings, JudgeAlgorithm } from "../../types";
 
 export function OtherOptions({
   localSettings,
@@ -7,7 +7,7 @@ export function OtherOptions({
   localSettings: RoomSettings;
   handleChange: (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number | string
+    value: boolean | (string | number)[] | JudgeAlgorithm | number | string,
   ) => void;
 }) {
   return (
@@ -33,9 +33,9 @@ export function OtherOptions({
               </label>
               <select
                 id="externalService"
-                value={localSettings.externalService || 'none'}
+                value={localSettings.externalService || "none"}
                 onChange={(e) =>
-                  handleChange('externalService', e.target.value)
+                  handleChange("externalService", e.target.value)
                 }
                 data-testid="settings-select-external-service"
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
@@ -43,7 +43,7 @@ export function OtherOptions({
                 <option value="none">None</option>
                 <option value="jira">Jira</option>
               </select>
-              {localSettings.externalService === 'jira' && (
+              {localSettings.externalService === "jira" && (
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -51,8 +51,8 @@ export function OtherOptions({
                     checked={localSettings.autoUpdateJiraStoryPoints || false}
                     onChange={(e) =>
                       handleChange(
-                        'autoUpdateJiraStoryPoints',
-                        e.target.checked
+                        "autoUpdateJiraStoryPoints",
+                        e.target.checked,
                       )
                     }
                     data-testid="settings-toggle-jira-auto"
@@ -80,8 +80,8 @@ export function OtherOptions({
                     checked={localSettings.allowOthersToShowEstimates}
                     onChange={(e) =>
                       handleChange(
-                        'allowOthersToShowEstimates',
-                        e.target.checked
+                        "allowOthersToShowEstimates",
+                        e.target.checked,
                       )
                     }
                     data-testid="settings-toggle-allow-show"
@@ -101,8 +101,8 @@ export function OtherOptions({
                     checked={localSettings.allowOthersToDeleteEstimates}
                     onChange={(e) =>
                       handleChange(
-                        'allowOthersToDeleteEstimates',
-                        e.target.checked
+                        "allowOthersToDeleteEstimates",
+                        e.target.checked,
                       )
                     }
                     data-testid="settings-toggle-allow-reset"
@@ -121,7 +121,7 @@ export function OtherOptions({
                     id="autoHandoverModerator"
                     checked={localSettings.autoHandoverModerator || false}
                     onChange={(e) =>
-                      handleChange('autoHandoverModerator', e.target.checked)
+                      handleChange("autoHandoverModerator", e.target.checked)
                     }
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
@@ -144,7 +144,7 @@ export function OtherOptions({
                   id="hideParticipantNames"
                   checked={localSettings.hideParticipantNames || false}
                   onChange={(e) =>
-                    handleChange('hideParticipantNames', e.target.checked)
+                    handleChange("hideParticipantNames", e.target.checked)
                   }
                   data-testid="settings-toggle-hide-names"
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
@@ -161,7 +161,7 @@ export function OtherOptions({
                   type="checkbox"
                   id="showTimer"
                   checked={localSettings.showTimer}
-                  onChange={(e) => handleChange('showTimer', e.target.checked)}
+                  onChange={(e) => handleChange("showTimer", e.target.checked)}
                   data-testid="settings-toggle-show-timer"
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />
@@ -178,7 +178,7 @@ export function OtherOptions({
                   id="showUserPresence"
                   checked={localSettings.showUserPresence}
                   onChange={(e) =>
-                    handleChange('showUserPresence', e.target.checked)
+                    handleChange("showUserPresence", e.target.checked)
                   }
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />
@@ -195,7 +195,7 @@ export function OtherOptions({
                   id="showAverage"
                   checked={localSettings.showAverage}
                   onChange={(e) =>
-                    handleChange('showAverage', e.target.checked)
+                    handleChange("showAverage", e.target.checked)
                   }
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />
@@ -211,7 +211,7 @@ export function OtherOptions({
                   type="checkbox"
                   id="showMedian"
                   checked={localSettings.showMedian}
-                  onChange={(e) => handleChange('showMedian', e.target.checked)}
+                  onChange={(e) => handleChange("showMedian", e.target.checked)}
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />
                 <label
@@ -228,7 +228,7 @@ export function OtherOptions({
                     id="showTopVotes"
                     checked={localSettings.showTopVotes}
                     onChange={(e) =>
-                      handleChange('showTopVotes', e.target.checked)
+                      handleChange("showTopVotes", e.target.checked)
                     }
                     className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                   />
@@ -255,8 +255,8 @@ export function OtherOptions({
                       value={localSettings.topVotesCount}
                       onChange={(e) =>
                         handleChange(
-                          'topVotesCount',
-                          parseInt(e.target.value) || 1
+                          "topVotesCount",
+                          parseInt(e.target.value) || 1,
                         )
                       }
                       className="w-20 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
@@ -270,7 +270,7 @@ export function OtherOptions({
                   id="anonymousVotes"
                   checked={localSettings.anonymousVotes}
                   onChange={(e) =>
-                    handleChange('anonymousVotes', e.target.checked)
+                    handleChange("anonymousVotes", e.target.checked)
                   }
                   className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
                 />

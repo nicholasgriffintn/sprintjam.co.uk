@@ -7,8 +7,8 @@
   "routes": [
     {
       "pattern": "sprintjam.co.uk",
-      "custom_domain": true
-    }
+      "custom_domain": true,
+    },
   ],
   "workers_dev": true,
   "preview_urls": true,
@@ -16,19 +16,19 @@
     "bindings": [
       {
         "name": "PLANNING_ROOM",
-        "class_name": "PlanningRoom"
-      }
-    ]
+        "class_name": "PlanningRoom",
+      },
+    ],
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["PlanningRoom"]
-    }
+      "new_sqlite_classes": ["PlanningRoom"],
+    },
   ],
   "assets": {
     "binding": "ASSETS",
-    "directory": "dist/client"
+    "directory": "dist/client",
   },
   "observability": {
     "enabled": true,
@@ -36,7 +36,7 @@
     "logs": {
       "enabled": true,
       "head_sampling_rate": 1,
-      "invocation_logs": false
-    }
-  }
+      "invocation_logs": false,
+    },
+  },
 }

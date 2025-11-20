@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 interface UseUrlParamsOptions {
   onJoinRoom: (roomKey: string) => void;
@@ -14,14 +14,14 @@ export const useUrlParams = ({ onJoinRoom }: UseUrlParamsOptions) => {
 
     try {
       const url = new URL(window.location.href);
-      const joinParam = url.searchParams.get('join');
+      const joinParam = url.searchParams.get("join");
 
       if (joinParam && joinParam.length > 0) {
         onJoinRoom(joinParam.toUpperCase());
-        window.history.replaceState({}, document.title, '/');
+        window.history.replaceState({}, document.title, "/");
       }
     } catch (err) {
-      console.error('Failed to parse URL parameters', err);
+      console.error("Failed to parse URL parameters", err);
     }
   }, [onJoinRoom]);
 };

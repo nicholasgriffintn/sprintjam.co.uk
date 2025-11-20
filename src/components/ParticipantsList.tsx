@@ -1,11 +1,11 @@
-import { useId, useMemo, useState, memo } from 'react';
-import { Users, ChevronDown, ChevronUp, Crown, User } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useId, useMemo, useState, memo } from "react";
+import { Users, ChevronDown, ChevronUp, Crown, User } from "lucide-react";
+import { motion } from "framer-motion";
 
-import type { RoomData, RoomStats } from '../types';
-import { getAvatarInfo } from '../utils/avatars';
-import { Badge } from './ui/Badge';
-import { HorizontalProgress } from './ui/HorizontalProgress';
+import type { RoomData, RoomStats } from "../types";
+import { getAvatarInfo } from "../utils/avatars";
+import { Badge } from "./ui/Badge";
+import { HorizontalProgress } from "./ui/HorizontalProgress";
 
 export type ParticipantsListProps = {
   roomData: RoomData;
@@ -57,8 +57,8 @@ const ParticipantItem = memo(
             <div
               className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
                 isConnected
-                  ? 'border-emerald-300 dark:border-emerald-600'
-                  : 'border-slate-200 dark:border-slate-600'
+                  ? "border-emerald-300 dark:border-emerald-600"
+                  : "border-slate-200 dark:border-slate-600"
               }`}
             >
               {(() => {
@@ -76,7 +76,7 @@ const ParticipantItem = memo(
           )}
           <span
             className={`flex items-center gap-2 text-sm ${
-              user === currentUser ? 'font-semibold' : ''
+              user === currentUser ? "font-semibold" : ""
             }`}
           >
             {!hideParticipantNames && (
@@ -94,18 +94,18 @@ const ParticipantItem = memo(
         </div>
         {vote !== undefined && vote !== null && (
           <Badge
-            variant={showVotes ? 'success' : 'default'}
+            variant={showVotes ? "success" : "default"}
             className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
           >
-            {anonymousVotes && showVotes ? '✓' : showVotes ? vote : '✓'}
+            {anonymousVotes && showVotes ? "✓" : showVotes ? vote : "✓"}
           </Badge>
         )}
       </motion.li>
     );
-  }
+  },
 );
 
-ParticipantItem.displayName = 'ParticipantItem';
+ParticipantItem.displayName = "ParticipantItem";
 
 export const ParticipantsList = memo(function ParticipantsList({
   roomData,
@@ -128,14 +128,14 @@ export const ParticipantsList = memo(function ParticipantsList({
     <div
       data-testid="participants-panel"
       className={`w-full flex-shrink-0 bg-transparent px-0 md:pr-4 md:py-5 ${
-        isParticipantsExpanded ? 'py-3' : 'py-2'
+        isParticipantsExpanded ? "py-3" : "py-2"
       }`}
       role="region"
       aria-labelledby={headingId}
     >
       <div
         className={`flex items-center justify-between ${
-          isParticipantsExpanded ? 'pb-3' : 'pb-0 md:pb-3'
+          isParticipantsExpanded ? "pb-3" : "pb-0 md:pb-3"
         }`}
       >
         <h2
@@ -151,8 +151,8 @@ export const ParticipantsList = memo(function ParticipantsList({
           onClick={() => setIsParticipantsExpanded(!isParticipantsExpanded)}
           aria-label={
             isParticipantsExpanded
-              ? 'Collapse participants'
-              : 'Expand participants'
+              ? "Collapse participants"
+              : "Expand participants"
           }
           aria-expanded={isParticipantsExpanded}
           aria-controls={contentId}
@@ -167,7 +167,7 @@ export const ParticipantsList = memo(function ParticipantsList({
       </div>
       <div
         id={contentId}
-        className={`${isParticipantsExpanded ? 'block' : 'hidden md:block'}`}
+        className={`${isParticipantsExpanded ? "block" : "hidden md:block"}`}
       >
         <div className="mb-3">
           <div

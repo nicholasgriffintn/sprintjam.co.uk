@@ -1,5 +1,5 @@
-import type { FC } from 'react';
-import { motion } from 'framer-motion';
+import type { FC } from "react";
+import { motion } from "framer-motion";
 
 interface HorizontalProgressProps {
   total: number;
@@ -23,7 +23,7 @@ export const HorizontalProgress: FC<HorizontalProgressProps> = ({
         className="h-2 rounded-full bg-gradient-to-r from-brand-500 to-indigo-500"
         initial={{ width: 0 }}
         animate={{ width: `${percent}%` }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
       />
     </div>
   );

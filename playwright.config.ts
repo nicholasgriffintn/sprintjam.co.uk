@@ -1,11 +1,11 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 const isCI = !!process.env.CI;
-const baseURL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:5173';
+const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:5173";
 const shouldStartWebServer = !process.env.E2E_BASE_URL;
 
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: "./tests/e2e",
   timeout: 120_000,
   expect: {
     timeout: 15_000,
@@ -13,25 +13,25 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  reporter: isCI ? [['github'], ['list']] : [['list']],
+  reporter: isCI ? [["github"], ["list"]] : [["list"]],
   use: {
     baseURL,
-    testIdAttribute: 'data-testid',
-    trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    testIdAttribute: "data-testid",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
     actionTimeout: 15_000,
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
   webServer: shouldStartWebServer
     ? {
-        command: 'npm run dev -- --host 0.0.0.0',
-        url: 'http://127.0.0.1:5173',
+        command: "npm run dev -- --host 0.0.0.0",
+        url: "http://127.0.0.1:5173",
         reuseExistingServer: !isCI,
         timeout: 120_000,
         cwd: process.cwd(),

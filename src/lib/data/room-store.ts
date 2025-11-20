@@ -1,9 +1,6 @@
-import type { RoomData, WebSocketMessage } from '../../types';
-import { applyRoomUpdate } from '../../utils/room';
-import {
-  ensureRoomsCollectionReady,
-  roomsCollection,
-} from './collections';
+import type { RoomData, WebSocketMessage } from "../../types";
+import { applyRoomUpdate } from "../../utils/room";
+import { ensureRoomsCollectionReady, roomsCollection } from "./collections";
 
 /**
  * Ensure the room collection is synchronised before performing writes.
@@ -25,7 +22,7 @@ export async function upsertRoom(room: RoomData): Promise<void> {
  */
 export async function applyRoomMessageToCollections(
   message: WebSocketMessage,
-  fallbackRoomKey?: string | null
+  fallbackRoomKey?: string | null,
 ): Promise<RoomData | null> {
   await readyRoomsCollection();
 
@@ -34,12 +31,12 @@ export async function applyRoomMessageToCollections(
 
   const currentRoom =
     candidateKey !== null && candidateKey !== undefined
-      ? roomsCollection.get(candidateKey) ?? null
+      ? (roomsCollection.get(candidateKey) ?? null)
       : null;
 
   const baseRoom = currentRoom ?? message.roomData ?? null;
   const nextRoom =
-    message.type === 'initialize' && message.roomData
+    message.type === "initialize" && message.roomData
       ? message.roomData
       : applyRoomUpdate(baseRoom, message);
 

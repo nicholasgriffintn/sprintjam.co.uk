@@ -1,24 +1,17 @@
 /** biome-ignore-all lint/nursery/useUniqueElementIds: <explanation> */
-import type { FC, ChangeEvent, FormEvent } from 'react';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import {
-  ArrowLeft,
-  Users,
-  Key,
-  Lock,
-  User,
-  ChevronRight,
-} from 'lucide-react';
+import type { FC, ChangeEvent, FormEvent } from "react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Users, Key, Lock, User, ChevronRight } from "lucide-react";
 
-import AvatarSelector from '../components/AvatarSelector';
-import type { AvatarId } from '../types';
-import { PageBackground } from '../components/layout/PageBackground';
-import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Alert } from '../components/ui/Alert';
-import { Logo } from '../components/Logo';
+import AvatarSelector from "../components/AvatarSelector";
+import type { AvatarId } from "../types";
+import { PageBackground } from "../components/layout/PageBackground";
+import { SurfaceCard } from "../components/ui/SurfaceCard";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { Alert } from "../components/ui/Alert";
+import { Logo } from "../components/Logo";
 
 interface JoinRoomScreenProps {
   name: string;
@@ -49,48 +42,48 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
   error,
   onClearError,
 }) => {
-  const [currentStep, setCurrentStep] = useState<'details' | 'avatar'>(
-    'details'
+  const [currentStep, setCurrentStep] = useState<"details" | "avatar">(
+    "details",
   );
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (currentStep === 'details' && name.trim() && roomKey.trim()) {
-      setCurrentStep('avatar');
-    } else if (currentStep === 'avatar' && selectedAvatar) {
+    if (currentStep === "details" && name.trim() && roomKey.trim()) {
+      setCurrentStep("avatar");
+    } else if (currentStep === "avatar" && selectedAvatar) {
       onClearError();
       onJoinRoom();
     }
   };
 
   const handleBack = () => {
-    if (currentStep === 'avatar') {
-      setCurrentStep('details');
+    if (currentStep === "avatar") {
+      setCurrentStep("details");
     } else {
       onBack();
     }
   };
 
   const getFormValid = () => {
-    if (currentStep === 'details') return name.trim() && roomKey.trim();
-    if (currentStep === 'avatar') return selectedAvatar;
+    if (currentStep === "details") return name.trim() && roomKey.trim();
+    if (currentStep === "avatar") return selectedAvatar;
     return false;
   };
 
   const getButtonText = () => {
-    if (currentStep === 'details') return 'Continue';
-    return 'Join';
+    if (currentStep === "details") return "Continue";
+    return "Join";
   };
 
   const getStepTitle = () => {
-    if (currentStep === 'details') return 'Join Room';
-    return 'Select Your Avatar';
+    if (currentStep === "details") return "Join Room";
+    return "Select Your Avatar";
   };
 
   const getStepDescription = () => {
-    if (currentStep === 'details')
-      return 'Enter the room details to join your team';
-    return 'Choose an avatar to represent you in the room';
+    if (currentStep === "details")
+      return "Enter the room details to join your team";
+    return "Choose an avatar to represent you in the room";
   };
 
   return (
@@ -115,7 +108,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
           </button>
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-brand-500">
-              Step {currentStep === 'details' ? 1 : 2}/2
+              Step {currentStep === "details" ? 1 : 2}/2
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
               {getStepTitle()}
@@ -140,7 +133,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
               </Alert>
             )}
 
-            {currentStep === 'details' && (
+            {currentStep === "details" && (
               <div className="space-y-6">
                 <Input
                   id="join-name"
@@ -210,7 +203,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
               </div>
             )}
 
-            {currentStep === 'avatar' && (
+            {currentStep === "avatar" && (
               <div className="space-y-4">
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Choose your avatar
@@ -240,7 +233,7 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
                 disabled={!getFormValid()}
                 className="sm:flex-1"
                 icon={
-                  currentStep === 'details' ? (
+                  currentStep === "details" ? (
                     <ChevronRight className="h-4 w-4" />
                   ) : (
                     <Users className="h-4 w-4" />
@@ -262,4 +255,4 @@ const JoinRoomScreen: FC<JoinRoomScreenProps> = ({
   );
 };
 
-export default JoinRoomScreen; 
+export default JoinRoomScreen;

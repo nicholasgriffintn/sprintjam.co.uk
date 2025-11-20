@@ -5,8 +5,8 @@ import {
   useEffect,
   useRef,
   useState,
-} from 'react';
-import { MotionConfig } from 'framer-motion';
+} from "react";
+import { MotionConfig } from "framer-motion";
 
 import {
   createRoom,
@@ -21,56 +21,56 @@ import {
   addTicket,
   updateTicket,
   deleteTicket,
-} from './lib/api-service';
+} from "./lib/api-service";
 import {
   applyRoomMessageToCollections,
   removeRoomFromCollection,
   upsertRoom,
-} from './lib/data/room-store';
-import { useRoomData } from './lib/data/hooks';
+} from "./lib/data/room-store";
+import { useRoomData } from "./lib/data/hooks";
 import type {
   VoteValue,
   RoomSettings,
   StructuredVote,
   WebSocketMessage,
   AvatarId,
-} from './types';
-import { safeLocalStorage } from './utils/storage';
-import { useServerDefaults } from './hooks/useServerDefaults';
-import { useUrlParams } from './hooks/useUrlParams';
-import { useAutoReconnect } from './hooks/useAutoReconnect';
-import { useUserPersistence } from './hooks/useUserPersistence';
-import { useAutoJiraUpdate } from './hooks/useAutoJiraUpdate';
-import { useRoomConnection } from './hooks/useRoomConnection';
-import { useRoomDataSync } from './hooks/useRoomDataSync';
-import ErrorBanner from './components/ui/ErrorBanner';
-import LoadingOverlay from './components/LoadingOverlay';
-import { ScreenLoader } from './components/layout/ScreenLoader';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import WelcomeScreen from './routes/WelcomeScreen';
-import CreateRoomScreen from './routes/CreateRoomScreen';
-import JoinRoomScreen from './routes/JoinRoomScreen';
-import NotFoundScreen from './routes/NotFoundScreen';
+} from "./types";
+import { safeLocalStorage } from "./utils/storage";
+import { useServerDefaults } from "./hooks/useServerDefaults";
+import { useUrlParams } from "./hooks/useUrlParams";
+import { useAutoReconnect } from "./hooks/useAutoReconnect";
+import { useUserPersistence } from "./hooks/useUserPersistence";
+import { useAutoJiraUpdate } from "./hooks/useAutoJiraUpdate";
+import { useRoomConnection } from "./hooks/useRoomConnection";
+import { useRoomDataSync } from "./hooks/useRoomDataSync";
+import ErrorBanner from "./components/ui/ErrorBanner";
+import LoadingOverlay from "./components/LoadingOverlay";
+import { ScreenLoader } from "./components/layout/ScreenLoader";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import WelcomeScreen from "./routes/WelcomeScreen";
+import CreateRoomScreen from "./routes/CreateRoomScreen";
+import JoinRoomScreen from "./routes/JoinRoomScreen";
+import NotFoundScreen from "./routes/NotFoundScreen";
 
-const RoomScreen = lazy(() => import('./routes/RoomScreen'));
+const RoomScreen = lazy(() => import("./routes/RoomScreen"));
 
-type AppScreen = 'welcome' | 'create' | 'join' | 'room';
+type AppScreen = "welcome" | "create" | "join" | "room";
 
 const App = () => {
-  const [name, setName] = useState<string>('');
-  const [roomKey, setRoomKey] = useState<string>('');
-  const [passcode, setPasscode] = useState<string>('');
+  const [name, setName] = useState<string>("");
+  const [roomKey, setRoomKey] = useState<string>("");
+  const [passcode, setPasscode] = useState<string>("");
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(null);
-  const [screen, setScreen] = useState<AppScreen>('welcome');
+  const [screen, setScreen] = useState<AppScreen>("welcome");
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
-    null
+    null,
   );
   const [isSocketConnected, setIsSocketConnected] = useState<boolean>(() =>
-    isConnected()
+    isConnected(),
   );
   const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const roomData = useRoomData(activeRoomKey);
@@ -91,7 +91,7 @@ const App = () => {
   useUrlParams({
     onJoinRoom: (joinRoomKey) => {
       setRoomKey(joinRoomKey);
-      setScreen('join');
+      setScreen("join");
     },
   });
 
@@ -103,7 +103,7 @@ const App = () => {
     onReconnectSuccess: (roomKey, isModerator) => {
       setActiveRoomKey(roomKey);
       setIsModeratorView(isModerator);
-      setScreen('room');
+      setScreen("room");
     },
     onReconnectError: setError,
     onLoadingChange: setIsLoading,
@@ -111,8 +111,8 @@ const App = () => {
   });
 
   const handleRoomMessage = useCallback((message: WebSocketMessage) => {
-    if (message.type === 'error') {
-      setError(message.error || 'Connection error');
+    if (message.type === "error") {
+      setError(message.error || "Connection error");
       return;
     }
     void applyRoomMessageToCollections(message, activeRoomKeyRef.current)
@@ -120,11 +120,11 @@ const App = () => {
         if (!activeRoomKeyRef.current && updatedRoom?.key) {
           setActiveRoomKey(updatedRoom.key);
         }
-        setError('');
+        setError("");
       })
       .catch((err) => {
-        console.error('Failed to process room message', err);
-        setError('Connection update failed');
+        console.error("Failed to process room message", err);
+        setError("Connection update failed");
       });
   }, []);
 
@@ -155,24 +155,24 @@ const App = () => {
     if (!name || !selectedAvatar) return;
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       const { room: newRoom, defaults } = await createRoom(
         name,
         passcode || undefined,
         settings,
-        selectedAvatar
+        selectedAvatar,
       );
       await applyServerDefaults(defaults);
       await upsertRoom(newRoom);
       setActiveRoomKey(newRoom.key);
-      safeLocalStorage.set('sprintjam_roomKey', newRoom.key);
+      safeLocalStorage.set("sprintjam_roomKey", newRoom.key);
       setIsModeratorView(true);
-      setScreen('room');
+      setScreen("room");
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to create room';
+        err instanceof Error ? err.message : "Failed to create room";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -183,24 +183,24 @@ const App = () => {
     if (!name || !roomKey || !selectedAvatar) return;
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       const { room: joinedRoom, defaults } = await joinRoom(
         name,
         roomKey,
         passcode || undefined,
-        selectedAvatar
+        selectedAvatar,
       );
       await applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
-      safeLocalStorage.set('sprintjam_roomKey', joinedRoom.key);
+      safeLocalStorage.set("sprintjam_roomKey", joinedRoom.key);
       setIsModeratorView(joinedRoom.moderator === name);
-      setScreen('room');
+      setScreen("room");
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to join room';
+        err instanceof Error ? err.message : "Failed to join room";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -216,7 +216,7 @@ const App = () => {
     } catch (err: unknown) {
       setUserVote(previousVote);
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to submit vote';
+        err instanceof Error ? err.message : "Failed to submit vote";
       setError(errorMessage);
     }
   };
@@ -238,7 +238,7 @@ const App = () => {
       setUserVote(null);
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to reset votes';
+        err instanceof Error ? err.message : "Failed to reset votes";
       setError(errorMessage);
     }
   };
@@ -259,7 +259,7 @@ const App = () => {
       toggleShowVotes();
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to toggle vote visibility';
+        err instanceof Error ? err.message : "Failed to toggle vote visibility";
       setError(errorMessage);
     }
   };
@@ -273,7 +273,7 @@ const App = () => {
       updateSettings(settings);
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to update settings';
+        err instanceof Error ? err.message : "Failed to update settings";
       setError(errorMessage);
     }
   };
@@ -286,9 +286,7 @@ const App = () => {
         updateTicket(ticketId, updates);
       } catch (err: unknown) {
         const errorMessage =
-          err instanceof Error
-            ? err.message
-            : 'Failed to update Jira metadata';
+          err instanceof Error ? err.message : "Failed to update Jira metadata";
         setError(errorMessage);
       }
     },
@@ -297,38 +295,38 @@ const App = () => {
 
   const handleLeaveRoom = () => {
     disconnectFromRoom();
-    safeLocalStorage.remove('sprintjam_roomKey');
+    safeLocalStorage.remove("sprintjam_roomKey");
 
     const key = activeRoomKeyRef.current;
     if (key) {
       void removeRoomFromCollection(key).catch((error) => {
-        console.error('Failed to remove room from collection', error);
+        console.error("Failed to remove room from collection", error);
       });
     }
     setActiveRoomKey(null);
     setUserVote(null);
     setIsModeratorView(false);
-    setScreen('welcome');
+    setScreen("welcome");
   };
 
-  const clearError = () => setError('');
+  const clearError = () => setError("");
 
   const renderScreen = () => {
     switch (screen) {
-      case 'welcome':
+      case "welcome":
         return (
           <WelcomeScreen
             onCreateRoom={() => {
-              setPasscode('');
-              setScreen('create');
+              setPasscode("");
+              setScreen("create");
             }}
             onJoinRoom={() => {
-              setPasscode('');
-              setScreen('join');
+              setPasscode("");
+              setScreen("join");
             }}
           />
         );
-      case 'create':
+      case "create":
         return (
           <CreateRoomScreen
             name={name}
@@ -339,15 +337,15 @@ const App = () => {
             onAvatarChange={setSelectedAvatar}
             onCreateRoom={handleCreateRoom}
             onBack={() => {
-              setPasscode('');
-              setScreen('welcome');
+              setPasscode("");
+              setScreen("welcome");
             }}
             error={error}
             onClearError={clearError}
             defaultSettings={serverDefaults?.roomSettings}
           />
         );
-      case 'join':
+      case "join":
         return (
           <JoinRoomScreen
             name={name}
@@ -360,14 +358,14 @@ const App = () => {
             onAvatarChange={setSelectedAvatar}
             onJoinRoom={handleJoinRoom}
             onBack={() => {
-              setPasscode('');
-              setScreen('welcome');
+              setPasscode("");
+              setScreen("welcome");
             }}
             error={error}
             onClearError={clearError}
           />
         );
-      case 'room':
+      case "room":
         if (roomData && serverDefaults) {
           return (
             <RoomScreen
@@ -383,7 +381,9 @@ const App = () => {
               onUpdateSettings={handleUpdateSettings}
               onNextTicket={() => nextTicket()}
               onAddTicket={(ticket) => addTicket(ticket)}
-              onUpdateTicket={(ticketId, updates) => updateTicket(ticketId, updates)}
+              onUpdateTicket={(ticketId, updates) =>
+                updateTicket(ticketId, updates)
+              }
               onDeleteTicket={(ticketId) => deleteTicket(ticketId)}
               onLeaveRoom={handleLeaveRoom}
               error={error}
@@ -405,7 +405,7 @@ const App = () => {
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
-        console.error('App Error Boundary:', error, errorInfo);
+        console.error("App Error Boundary:", error, errorInfo);
       }}
     >
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -427,7 +427,7 @@ const App = () => {
           </div>
         )}
 
-        {error && screen !== 'room' && (
+        {error && screen !== "room" && (
           <ErrorBanner message={error} onClose={clearError} />
         )}
 

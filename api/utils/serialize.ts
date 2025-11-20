@@ -3,5 +3,5 @@ export function serializeJSON(value: unknown): string | null {
 }
 
 export function serializeVote(value: string | number): string {
-  return typeof value === 'number' ? value.toString() : value;
+  return typeof value === "number" ? value.toString() : value;
 }

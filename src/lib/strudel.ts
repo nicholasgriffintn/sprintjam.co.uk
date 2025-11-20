@@ -4,13 +4,13 @@ import {
   aliasBank,
   registerZZFXSounds,
   // @ts-expect-error - @strudel/webstudio has no type definitions
-} from '@strudel/web';
+} from "@strudel/web";
 
 async function prebake() {
-  const ds = 'https://raw.githubusercontent.com/felixroos/dough-samples/main/';
-  const ts = 'https://raw.githubusercontent.com/todepond/samples/main/';
+  const ds = "https://raw.githubusercontent.com/felixroos/dough-samples/main/";
+  const ts = "https://raw.githubusercontent.com/todepond/samples/main/";
   const drts =
-    'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/';
+    "https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/";
   await Promise.all([
     registerSynthSounds(),
     registerZZFXSounds(),

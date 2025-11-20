@@ -1,9 +1,9 @@
-import { useMemo, type JSX } from 'react';
-import { motion } from 'framer-motion';
+import { useMemo, type JSX } from "react";
+import { motion } from "framer-motion";
 
-import type { RoomData, RoomStats, SummaryCardSetting } from '../../../types';
-import { SurfaceCard } from '../../ui/SurfaceCard';
-import type { ConsensusSummaryResult } from '../utils';
+import type { RoomData, RoomStats, SummaryCardSetting } from "../../../types";
+import { SurfaceCard } from "../../ui/SurfaceCard";
+import type { ConsensusSummaryResult } from "../utils";
 
 interface UseSummaryCardsParams {
   summaryCardConfigs: SummaryCardSetting[];
@@ -28,14 +28,14 @@ export function useSummaryCards({
   recommendation,
   hasStructuredData,
 }: UseSummaryCardsParams) {
-  const baseCardClass = 'flex h-full flex-col justify-between';
+  const baseCardClass = "flex h-full flex-col justify-between";
 
   const summaryCardElements = useMemo(() => {
     return summaryCardConfigs
       .map((card, index) => {
         const delay = index * 0.05;
         switch (card.id) {
-          case 'average': {
+          case "average": {
             if (!useConfiguredSummaryCards && !roomData.settings.showAverage) {
               return null;
             }
@@ -66,7 +66,7 @@ export function useSummaryCards({
               </motion.div>
             );
           }
-          case 'mode': {
+          case "mode": {
             if (!useConfiguredSummaryCards && !roomData.settings.showMedian) {
               return null;
             }
@@ -91,13 +91,13 @@ export function useSummaryCards({
                     {card.label}
                   </h4>
                   <div className="text-3xl font-semibold text-brand-600 dark:text-brand-300">
-                    {stats.mode || 'N/A'}
+                    {stats.mode || "N/A"}
                   </div>
                 </SurfaceCard>
               </motion.div>
             );
           }
-          case 'topVotes': {
+          case "topVotes": {
             if (!useConfiguredSummaryCards && !roomData.settings.showTopVotes)
               return null;
             if (!topDistribution || topDistribution.length === 0) return null;
@@ -120,9 +120,9 @@ export function useSummaryCards({
                     {topDistribution.map(([vote, count]) => {
                       const metadata =
                         roomData.settings.voteOptionsMetadata?.find(
-                          (m) => m.value.toString() === vote
+                          (m) => m.value.toString() === vote,
                         );
-                      const background = metadata?.background || '#ebf5ff';
+                      const background = metadata?.background || "#ebf5ff";
 
                       return (
                         <div key={vote} className="flex items-center gap-1">
@@ -143,7 +143,7 @@ export function useSummaryCards({
               </motion.div>
             );
           }
-          case 'participation': {
+          case "participation": {
             return (
               <motion.div
                 key={card.id}
@@ -163,14 +163,14 @@ export function useSummaryCards({
                     {(participationRate * 100).toFixed(0)}%
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-300">
-                    {stats.votedUsers} of{' '}
+                    {stats.votedUsers} of{" "}
                     {stats.totalUsers || roomData.users.length} teammates voted
                   </p>
                 </SurfaceCard>
               </motion.div>
             );
           }
-          case 'consensusHealth': {
+          case "consensusHealth": {
             if (!hasStructuredData) return null;
             return (
               <motion.div
@@ -189,16 +189,16 @@ export function useSummaryCards({
                   </h4>
                   <div className="flex items-end justify-between">
                     <span className="text-3xl font-semibold text-brand-600 dark:text-brand-300">
-                      {consensusSummary.score ?? '--'}
+                      {consensusSummary.score ?? "--"}
                     </span>
                     <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      {consensusSummary.level === 'high'
-                        ? 'High'
-                        : consensusSummary.level === 'medium'
-                        ? 'Medium'
-                        : consensusSummary.level === 'low'
-                        ? 'Low'
-                        : 'N/A'}
+                      {consensusSummary.level === "high"
+                        ? "High"
+                        : consensusSummary.level === "medium"
+                          ? "Medium"
+                          : consensusSummary.level === "low"
+                            ? "Low"
+                            : "N/A"}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">
@@ -208,7 +208,7 @@ export function useSummaryCards({
               </motion.div>
             );
           }
-          case 'nextStep': {
+          case "nextStep": {
             return (
               <motion.div
                 key={card.id}

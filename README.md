@@ -12,36 +12,42 @@ SprintJam is a modern, privacy-focused planning poker application designed for a
 ## ✨ Features
 
 ### 🎲 **Flexible Voting Systems**
+
 - **Classic Planning Poker**: Traditional Fibonacci sequence (1, 2, 3, 5, 8, 13, 21, ?)
 - **Structured Voting**: Multi-criteria estimation with weighted scoring across:
   - Complexity (35% weight)
-  - Confidence (25% weight) 
+  - Confidence (25% weight)
   - Volume (25% weight)
   - Unknowns (15% weight)
 
 ### 🤖 **Smart Resolution Algorithms (The Judge)**
+
 - **Smart Consensus**: Intelligent analysis of voting patterns
 - **Automatic Scoring**: Final story point recommendations
 - **Consensus Detection**: Identifies when team alignment is reached
 
 ### 🔗 **Jira Integration (In Development)**
+
 - Fetch ticket details directly from Jira
 - Auto-update story points after estimation
 - Support for custom story point fields
 
 ### 🎛️ **Customizable Experience**
+
 - **Room Settings**: Configure voting options, display preferences, and permissions
 - **Anonymous Voting**: Optional anonymous mode for unbiased estimation
 - **Timer Support**: Optional session timing
 - **Results Display**: Customizable summary cards and vote distribution charts
 
 ### 🚀 **Real-time Collaboration**
+
 - WebSocket-powered live updates
 - Multi-user rooms with moderator controls
 - Participant presence indicators
 - Share rooms via QR codes or links
 
 ### 🔒 **Privacy-First Design**
+
 - No ads or tracking
 - Optional room passcodes
 - Self-hostable on Cloudflare
@@ -55,23 +61,27 @@ SprintJam is a modern, privacy-focused planning poker application designed for a
 ## 🚀 Quick Start
 
 ### Using the Hosted Version
+
 Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms immediately!
 
 ### Self-Hosting on Cloudflare
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/nicholasgriffintn/sprintjam.co.uk.git
    cd sprintjam.co.uk
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Set up environment variables**
    Create a `.dev.vars` file or configure in Cloudflare dashboard:
+
    ```env
    # Optional: Jira Integration
    JIRA_DOMAIN=your-domain.atlassian.net
@@ -88,6 +98,7 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
 ## 🔧 Development
 
 ### Local Development
+
 ```bash
 # Start development server
 pnpm run dev

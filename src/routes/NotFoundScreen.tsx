@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
-import { PageBackground } from '../components/layout/PageBackground';
-import { Logo } from '../components/Logo';
+import { PageBackground } from "../components/layout/PageBackground";
+import { Logo } from "../components/Logo";
 
 const NotFoundScreen = () => {
   return (

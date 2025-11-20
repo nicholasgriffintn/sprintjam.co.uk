@@ -2,45 +2,45 @@ import type {
   ExportedHandler,
   Request as CfRequest,
   Response as CfResponse,
-} from '@cloudflare/workers-types';
+} from "@cloudflare/workers-types";
 
-import { Env } from './types';
-import { getRoomStub } from './utils/room';
-import { PlanningRoom } from './services/planning-room';
-import { getDefaultsController } from './controllers/defaults-controller';
+import { Env } from "./types";
+import { getRoomStub } from "./utils/room";
+import { PlanningRoom } from "./services/planning-room";
+import { getDefaultsController } from "./controllers/defaults-controller";
 import {
   createRoomController,
   getRoomSettingsController,
   joinRoomController,
   updateRoomSettingsController,
-} from './controllers/rooms-controller';
+} from "./controllers/rooms-controller";
 import {
   getJiraTicketController,
   updateJiraStoryPointsController,
-} from './controllers/jira-controller';
+} from "./controllers/jira-controller";
 
 async function handleRequest(
   request: CfRequest,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
   const url = new URL(request.url);
 
-  if (url.pathname.startsWith('/api/')) {
+  if (url.pathname.startsWith("/api/")) {
     return handleApiRequest(url, request, env);
   }
 
-  if (url.pathname === '/ws') {
-    if (request.headers.get('Upgrade') !== 'websocket') {
-      return new Response('Expected WebSocket', {
+  if (url.pathname === "/ws") {
+    if (request.headers.get("Upgrade") !== "websocket") {
+      return new Response("Expected WebSocket", {
         status: 400,
       }) as unknown as CfResponse;
     }
 
-    const roomKey = url.searchParams.get('room');
-    const userName = url.searchParams.get('name');
+    const roomKey = url.searchParams.get("room");
+    const userName = url.searchParams.get("name");
 
     if (!roomKey || !userName) {
-      return new Response('Missing room key or user name', {
+      return new Response("Missing room key or user name", {
         status: 400,
       }) as unknown as CfResponse;
     }
@@ -56,46 +56,46 @@ async function handleRequest(
 async function handleApiRequest(
   url: URL,
   request: CfRequest,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
   const path = url.pathname.substring(5);
 
-  if (path === 'defaults' && request.method === 'GET') {
+  if (path === "defaults" && request.method === "GET") {
     return getDefaultsController();
   }
 
-  if (path === 'rooms' && request.method === 'POST') {
+  if (path === "rooms" && request.method === "POST") {
     return createRoomController(request, env);
   }
 
-  if (path === 'rooms/join' && request.method === 'POST') {
+  if (path === "rooms/join" && request.method === "POST") {
     return joinRoomController(request, env);
   }
 
-  if (path === 'rooms/settings' && request.method === 'GET') {
+  if (path === "rooms/settings" && request.method === "GET") {
     return getRoomSettingsController(url, env);
   }
 
-  if (path === 'rooms/settings' && request.method === 'PUT') {
+  if (path === "rooms/settings" && request.method === "PUT") {
     return updateRoomSettingsController(request, env);
   }
 
-  if (path === 'jira/ticket' && request.method === 'GET') {
+  if (path === "jira/ticket" && request.method === "GET") {
     return getJiraTicketController(url, env);
   }
 
   if (
-    path.startsWith('jira/ticket/') &&
-    path.endsWith('/storyPoints') &&
-    request.method === 'PUT'
+    path.startsWith("jira/ticket/") &&
+    path.endsWith("/storyPoints") &&
+    request.method === "PUT"
   ) {
-    const ticketId = path.split('/')[2];
+    const ticketId = path.split("/")[2];
     return updateJiraStoryPointsController(ticketId, request, env);
   }
 
-  return new Response(JSON.stringify({ error: 'Not found' }), {
+  return new Response(JSON.stringify({ error: "Not found" }), {
     status: 404,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   }) as unknown as CfResponse;
 }
 

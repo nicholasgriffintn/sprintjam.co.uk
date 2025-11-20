@@ -1,4 +1,4 @@
-import type { CriteriaStats, CriteriaBreakdownSettings } from '../../types';
+import type { CriteriaStats, CriteriaBreakdownSettings } from "../../types";
 
 export function CriteriaBreakdownStat({
   stat,
@@ -8,9 +8,9 @@ export function CriteriaBreakdownStat({
   criteriaSettings: CriteriaBreakdownSettings | undefined;
 }) {
   const consensusLabels = {
-    high: criteriaSettings?.consensusLabels?.high ?? 'Consensus',
-    medium: criteriaSettings?.consensusLabels?.medium ?? 'Some Split',
-    low: criteriaSettings?.consensusLabels?.low ?? 'Wide Split',
+    high: criteriaSettings?.consensusLabels?.high ?? "Consensus",
+    medium: criteriaSettings?.consensusLabels?.medium ?? "Some Split",
+    low: criteriaSettings?.consensusLabels?.low ?? "Wide Split",
   };
 
   return (
@@ -24,18 +24,18 @@ export function CriteriaBreakdownStat({
         </h4>
         <span
           className={`flex-shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs ${
-            stat.consensus === 'high'
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200'
-              : stat.consensus === 'medium'
-              ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200'
-              : 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200'
+            stat.consensus === "high"
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200"
+              : stat.consensus === "medium"
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
+                : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
           }`}
         >
-          {stat.consensus === 'high'
+          {stat.consensus === "high"
             ? consensusLabels.high
-            : stat.consensus === 'medium'
-            ? consensusLabels.medium
-            : consensusLabels.low}
+            : stat.consensus === "medium"
+              ? consensusLabels.medium
+              : consensusLabels.low}
         </span>
       </div>
 

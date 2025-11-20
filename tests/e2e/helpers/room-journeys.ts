@@ -1,12 +1,12 @@
-import type { Browser, BrowserContext } from '@playwright/test';
+import type { Browser, BrowserContext } from "@playwright/test";
 
-import { WelcomePage } from '../pageObjects/welcome-page';
-import { CreateRoomPage } from '../pageObjects/create-room-page';
-import { JoinRoomPage } from '../pageObjects/join-room-page';
-import { RoomPage } from '../pageObjects/room-page';
-import { SettingsModal } from '../pageObjects/settings-modal';
+import { WelcomePage } from "../pageObjects/welcome-page";
+import { CreateRoomPage } from "../pageObjects/create-room-page";
+import { JoinRoomPage } from "../pageObjects/join-room-page";
+import { RoomPage } from "../pageObjects/room-page";
+import { SettingsModal } from "../pageObjects/settings-modal";
 
-export type ParticipantJoinMode = 'inviteLink' | 'manual';
+export type ParticipantJoinMode = "inviteLink" | "manual";
 
 export interface RoomSetupOptions {
   participantJoinMode?: ParticipantJoinMode;
@@ -28,10 +28,10 @@ export interface RoomSetupResult {
 
 export async function createRoomWithParticipant(
   browser: Browser,
-  options: RoomSetupOptions = {}
+  options: RoomSetupOptions = {},
 ): Promise<RoomSetupResult> {
   const {
-    participantJoinMode = 'inviteLink',
+    participantJoinMode = "inviteLink",
     roomPasscode,
     enableStructuredVotingOnCreate,
     enableTicketQueue,
@@ -47,8 +47,8 @@ export async function createRoomWithParticipant(
     ]);
   };
 
-  const moderatorName = 'Moderator QA';
-  const participantName = 'Participant QA';
+  const moderatorName = "Moderator QA";
+  const participantName = "Participant QA";
 
   try {
     const moderatorPage = await moderatorContext.newPage();
@@ -60,7 +60,7 @@ export async function createRoomWithParticipant(
 
     const createRoom = new CreateRoomPage(moderatorPage);
     await createRoom.completeNameStep(moderatorName);
-    await createRoom.selectAvatar('avatar-option-robot');
+    await createRoom.selectAvatar("avatar-option-robot");
 
     if (roomPasscode || enableStructuredVotingOnCreate) {
       await createRoom.configureRoomDetails({
@@ -76,7 +76,7 @@ export async function createRoomWithParticipant(
     const roomKey = await moderatorRoom.getRoomKey();
 
     const welcomeForParticipant = new WelcomePage(participantPage);
-    if (participantJoinMode === 'manual') {
+    if (participantJoinMode === "manual") {
       await welcomeForParticipant.gotoHome();
       await welcomeForParticipant.startJoinRoom();
     } else {
@@ -89,7 +89,7 @@ export async function createRoomWithParticipant(
       roomKey,
       passcode: roomPasscode,
     });
-    await joinRoom.selectAvatarAndJoin('avatar-option-bird');
+    await joinRoom.selectAvatarAndJoin("avatar-option-bird");
 
     const participantRoom = new RoomPage(participantPage);
     await participantRoom.waitForLoaded();
@@ -100,7 +100,7 @@ export async function createRoomWithParticipant(
     if (enableTicketQueue) {
       const modal = new SettingsModal(moderatorRoom.getPage());
       await modal.open();
-      await modal.toggle('settings-toggle-enable-queue', true);
+      await modal.toggle("settings-toggle-enable-queue", true);
       await modal.save();
     }
 

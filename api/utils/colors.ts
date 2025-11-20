@@ -1,20 +1,23 @@
 /**
-   * Generates a color based on the numeric value
-   * Creates a vibrant spectrum from happy blues to warm reds
-   */
-export function generateColorFromValue(value: number, maxValue: number): string {
-  if (value === 0) return '#f0f0f0';
+ * Generates a color based on the numeric value
+ * Creates a vibrant spectrum from happy blues to warm reds
+ */
+export function generateColorFromValue(
+  value: number,
+  maxValue: number,
+): string {
+  if (value === 0) return "#f0f0f0";
 
   const normalizedValue = Math.min(value / maxValue, 1);
 
   const startHue = 220;
   const endHue = 15;
 
-  const hue = startHue - (normalizedValue * (startHue - endHue));
+  const hue = startHue - normalizedValue * (startHue - endHue);
 
-  const saturation = 65 + (normalizedValue * 20);
+  const saturation = 65 + normalizedValue * 20;
 
-  const lightness = 75 + (normalizedValue * 10);
+  const lightness = 75 + normalizedValue * 10;
 
   return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
 }

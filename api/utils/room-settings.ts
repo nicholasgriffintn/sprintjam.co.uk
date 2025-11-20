@@ -1,10 +1,10 @@
-import type { RoomSettings } from '../types';
+import type { RoomSettings } from "../types";
 import {
   getDefaultEstimateOptions,
   getDefaultRoomSettings,
   getDefaultStructuredVotingOptions,
-} from './defaults';
-import { generateVoteOptionsMetadata } from './votes';
+} from "./defaults";
+import { generateVoteOptionsMetadata } from "./votes";
 
 export function applySettingsUpdate({
   currentSettings,
@@ -49,16 +49,12 @@ export function applySettingsUpdate({
   if (updates.estimateOptions) {
     result = {
       ...result,
-      voteOptionsMetadata: generateVoteOptionsMetadata(
-        updates.estimateOptions
-      ),
+      voteOptionsMetadata: generateVoteOptionsMetadata(updates.estimateOptions),
     };
   } else if (!result.voteOptionsMetadata && result.estimateOptions) {
     result = {
       ...result,
-      voteOptionsMetadata: generateVoteOptionsMetadata(
-        result.estimateOptions
-      ),
+      voteOptionsMetadata: generateVoteOptionsMetadata(result.estimateOptions),
     };
   }
 

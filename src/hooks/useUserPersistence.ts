@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-import { safeLocalStorage } from '../utils/storage';
+import { safeLocalStorage } from "../utils/storage";
 
 interface UseUserPersistenceOptions {
   name: string;
@@ -15,7 +15,7 @@ export const useUserPersistence = ({
 
   useEffect(() => {
     if (!didLoadName.current) {
-      const savedName = safeLocalStorage.get('sprintjam_username');
+      const savedName = safeLocalStorage.get("sprintjam_username");
       if (savedName) {
         onNameLoaded(savedName);
       }
@@ -23,12 +23,12 @@ export const useUserPersistence = ({
       return;
     }
 
-    if (name === '' && !safeLocalStorage.get('sprintjam_username')) {
+    if (name === "" && !safeLocalStorage.get("sprintjam_username")) {
       return;
     }
 
     const saveTimeout = setTimeout(() => {
-      safeLocalStorage.set('sprintjam_username', name);
+      safeLocalStorage.set("sprintjam_username", name);
     }, 500);
 
     return () => clearTimeout(saveTimeout);

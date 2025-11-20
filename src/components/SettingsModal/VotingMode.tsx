@@ -1,4 +1,4 @@
-import type { RoomSettings, JudgeAlgorithm } from '../../types';
+import type { RoomSettings, JudgeAlgorithm } from "../../types";
 
 export function VotingMode({
   localSettings,
@@ -7,7 +7,7 @@ export function VotingMode({
   localSettings: RoomSettings;
   handleChange: (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number
+    value: boolean | (string | number)[] | JudgeAlgorithm | number,
   ) => void;
 }) {
   return (
@@ -22,7 +22,7 @@ export function VotingMode({
             id="enableStructuredVoting"
             checked={localSettings.enableStructuredVoting || false}
             onChange={(e) =>
-              handleChange('enableStructuredVoting', e.target.checked)
+              handleChange("enableStructuredVoting", e.target.checked)
             }
             data-testid="settings-toggle-structured-voting"
             className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"

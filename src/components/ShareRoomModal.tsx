@@ -1,8 +1,8 @@
-import { type FC, useState, useRef, useMemo } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { type FC, useState, useRef, useMemo } from "react";
+import { QRCodeSVG } from "qrcode.react";
 
-import { Modal } from './ui/Modal';
-import { Button } from './ui/Button';
+import { Modal } from "./ui/Modal";
+import { Button } from "./ui/Button";
 
 interface ShareRoomModalProps {
   isOpen: boolean;
@@ -19,8 +19,8 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const shareableUrl = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return '';
+    if (typeof window === "undefined") {
+      return "";
     }
     return `${window.location.origin}/?join=${roomKey}`;
   }, [roomKey]);
@@ -56,7 +56,7 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
               className="flex-1 rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-300 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:ring-brand-900 dark:focus:border-brand-400"
             />
             <Button onClick={handleCopy} variant="primary" size="md">
-              {copied ? 'Copied!' : 'Copy'}
+              {copied ? "Copied!" : "Copy"}
             </Button>
           </div>
         </div>
@@ -84,4 +84,4 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
   );
 };
 
-export default ShareRoomModal; 
+export default ShareRoomModal;

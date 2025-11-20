@@ -1,15 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-import { updateJiraStoryPoints } from '../lib/jira-service';
-import type { RoomData, TicketQueueItem } from '../types';
+import { updateJiraStoryPoints } from "../lib/jira-service";
+import type { RoomData, TicketQueueItem } from "../types";
 
 interface UseAutoJiraUpdateOptions {
   roomData: RoomData | null;
   userName: string;
-  onTicketUpdate: (
-    ticketId: number,
-    updates: Partial<TicketQueueItem>
-  ) => void;
+  onTicketUpdate: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onError: (error: string) => void;
 }
 
@@ -31,8 +28,8 @@ export const useAutoJiraUpdate = ({
 
     if (
       !currentTicket ||
-      currentTicket.externalService !== 'jira' ||
-      roomData.settings.externalService !== 'jira' ||
+      currentTicket.externalService !== "jira" ||
+      roomData.settings.externalService !== "jira" ||
       !roomData.settings.autoUpdateJiraStoryPoints ||
       roomData.showVotes !== true ||
       roomData.judgeScore === null ||
@@ -71,7 +68,7 @@ export const useAutoJiraUpdate = ({
         const errorMessage =
           err instanceof Error
             ? err.message
-            : 'Failed to auto-update Jira story points';
+            : "Failed to auto-update Jira story points";
         onError(errorMessage);
       });
   }, [roomData, userName, onTicketUpdate, onError]);

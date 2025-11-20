@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
-import { joinRoom } from '../lib/api-service';
-import { upsertRoom } from '../lib/data/room-store';
-import { safeLocalStorage } from '../utils/storage';
-import type { AvatarId, ServerDefaults } from '../types';
+import { joinRoom } from "../lib/api-service";
+import { upsertRoom } from "../lib/data/room-store";
+import { safeLocalStorage } from "../utils/storage";
+import type { AvatarId, ServerDefaults } from "../types";
 
 interface UseAutoReconnectOptions {
   name: string;
@@ -32,7 +32,7 @@ export const useAutoReconnect = ({
     if (didAttemptRestore.current) {
       return;
     }
-    if (screen !== 'welcome') {
+    if (screen !== "welcome") {
       return;
     }
     if (!name) {
@@ -44,22 +44,22 @@ export const useAutoReconnect = ({
 
     didAttemptRestore.current = true;
 
-    const savedRoomKey = safeLocalStorage.get('sprintjam_roomKey');
+    const savedRoomKey = safeLocalStorage.get("sprintjam_roomKey");
     if (savedRoomKey) {
       onLoadingChange(true);
-      const avatarToUse = selectedAvatar || 'user';
+      const avatarToUse = selectedAvatar || "user";
       joinRoom(name, savedRoomKey, undefined, avatarToUse)
         .then(async ({ room: joinedRoom, defaults }) => {
           await applyServerDefaults(defaults);
           await upsertRoom(joinedRoom);
-          safeLocalStorage.set('sprintjam_roomKey', joinedRoom.key);
+          safeLocalStorage.set("sprintjam_roomKey", joinedRoom.key);
           onReconnectSuccess(joinedRoom.key, joinedRoom.moderator === name);
         })
         .catch((err) => {
           const errorMessage =
-            err instanceof Error ? err.message : 'Failed to reconnect to room';
+            err instanceof Error ? err.message : "Failed to reconnect to room";
           onReconnectError(errorMessage);
-          safeLocalStorage.remove('sprintjam_roomKey');
+          safeLocalStorage.remove("sprintjam_roomKey");
         })
         .finally(() => onLoadingChange(false));
     }

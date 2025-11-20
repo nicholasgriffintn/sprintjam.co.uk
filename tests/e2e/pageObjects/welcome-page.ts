@@ -1,6 +1,6 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page } from "@playwright/test";
 
-import { BasePage } from './base-page';
+import { BasePage } from "./base-page";
 
 export class WelcomePage extends BasePage {
   constructor(page: Page) {
@@ -8,20 +8,20 @@ export class WelcomePage extends BasePage {
   }
 
   async gotoHome() {
-    await this.goto('/');
-    await expect(this.page.getByTestId('create-room-button')).toBeVisible();
+    await this.goto("/");
+    await expect(this.page.getByTestId("create-room-button")).toBeVisible();
   }
 
   async gotoWithInvite(roomKey: string) {
     await this.goto(`/?join=${roomKey}`);
-    await expect(this.page.getByTestId('join-room-submit')).toBeVisible();
+    await expect(this.page.getByTestId("join-room-submit")).toBeVisible();
   }
 
   async startCreateRoom() {
-    await this.page.getByTestId('create-room-button').click();
+    await this.page.getByTestId("create-room-button").click();
   }
 
   async startJoinRoom() {
-    await this.page.getByTestId('join-room-button').click();
+    await this.page.getByTestId("join-room-button").click();
   }
 }

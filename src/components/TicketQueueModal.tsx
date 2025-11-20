@@ -1,5 +1,5 @@
-import { FC, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { FC, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Trash2,
@@ -7,18 +7,18 @@ import {
   Link2,
   ExternalLink,
   Loader2,
-} from 'lucide-react';
+} from "lucide-react";
 
-import type { TicketMetadata, TicketQueueItem } from '../types';
-import { fetchJiraTicket } from '../lib/jira-service';
-import { Modal } from './ui/Modal';
+import type { TicketMetadata, TicketQueueItem } from "../types";
+import { fetchJiraTicket } from "../lib/jira-service";
+import { Modal } from "./ui/Modal";
 
 interface TicketQueueModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentTicket?: TicketQueueItem;
   queue: TicketQueueItem[];
-  externalService: 'none' | 'jira';
+  externalService: "none" | "jira";
   roomKey: string;
   userName: string;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
@@ -44,29 +44,29 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showJiraForm, setShowJiraForm] = useState(false);
-  const [newTicketTitle, setNewTicketTitle] = useState('');
-  const [newTicketDescription, setNewTicketDescription] = useState('');
+  const [newTicketTitle, setNewTicketTitle] = useState("");
+  const [newTicketDescription, setNewTicketDescription] = useState("");
 
-  const [jiraLookupKey, setJiraLookupKey] = useState('');
+  const [jiraLookupKey, setJiraLookupKey] = useState("");
   const [jiraPreview, setJiraPreview] = useState<TicketMetadata | null>(null);
   const [isFetchingJira, setIsFetchingJira] = useState(false);
   const [isSavingJiraAdd, setIsSavingJiraAdd] = useState(false);
 
   const [linkingTicketId, setLinkingTicketId] = useState<number | null>(null);
-  const [linkLookupKey, setLinkLookupKey] = useState('');
+  const [linkLookupKey, setLinkLookupKey] = useState("");
   const [linkPreview, setLinkPreview] = useState<TicketMetadata | null>(null);
   const [isFetchingLink, setIsFetchingLink] = useState(false);
   const [isSavingLink, setIsSavingLink] = useState(false);
 
-  const jiraEnabled = externalService === 'jira';
+  const jiraEnabled = externalService === "jira";
 
   const completedTickets = useMemo(
-    () => queue.filter((t) => t.status === 'completed'),
-    [queue]
+    () => queue.filter((t) => t.status === "completed"),
+    [queue],
   );
   const pendingTickets = useMemo(
-    () => queue.filter((t) => t.status === 'pending'),
-    [queue]
+    () => queue.filter((t) => t.status === "pending"),
+    [queue],
   );
 
   const handleError = (message: string) => {
@@ -78,18 +78,18 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   };
 
   const getJiraMetadata = (
-    ticket: TicketQueueItem
+    ticket: TicketQueueItem,
   ): TicketMetadata | undefined => {
     const metadata = ticket.externalServiceMetadata as
       | Record<string, unknown>
       | undefined;
 
     if (
-      ticket.externalService === 'jira' &&
+      ticket.externalService === "jira" &&
       metadata &&
-      typeof metadata === 'object' &&
-      'key' in metadata &&
-      'summary' in metadata
+      typeof metadata === "object" &&
+      "key" in metadata &&
+      "summary" in metadata
     ) {
       return metadata as TicketMetadata;
     }
@@ -102,7 +102,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   };
 
   const getVoteSummary = (ticket: TicketQueueItem) => {
-    if (!ticket.votes || ticket.votes.length === 0) return 'No votes';
+    if (!ticket.votes || ticket.votes.length === 0) return "No votes";
 
     const voteValues = ticket.votes.map((v) => String(v.vote));
     const counts: Record<string, number> = {};
@@ -111,7 +111,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
     return Object.entries(counts)
       .sort(([, a], [, b]) => b - a)
       .map(([val, count]) => `${val} (${count})`)
-      .join(', ');
+      .join(", ");
   };
 
   const handleAddTicket = () => {
@@ -120,18 +120,18 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
     onAddTicket({
       title: newTicketTitle.trim(),
       description: newTicketDescription.trim() || undefined,
-      status: 'pending',
+      status: "pending",
     });
 
-    setNewTicketTitle('');
-    setNewTicketDescription('');
+    setNewTicketTitle("");
+    setNewTicketDescription("");
     setShowAddForm(false);
   };
 
   const lookupJiraTicket = async (
     key: string,
     setPreview: (ticket: TicketMetadata | null) => void,
-    setLoading: (loading: boolean) => void
+    setLoading: (loading: boolean) => void,
   ) => {
     if (!key.trim()) return;
     setLoading(true);
@@ -140,7 +140,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
       setPreview(ticket);
     } catch (err) {
       handleError(
-        err instanceof Error ? err.message : 'Failed to fetch Jira ticket'
+        err instanceof Error ? err.message : "Failed to fetch Jira ticket",
       );
       setPreview(null);
     } finally {
@@ -150,7 +150,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
 
   const handleAddFromJira = async () => {
     if (!jiraPreview) {
-      handleError('Fetch a Jira ticket before adding it to the queue.');
+      handleError("Fetch a Jira ticket before adding it to the queue.");
       return;
     }
 
@@ -160,18 +160,18 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
         ticketId: jiraPreview.key,
         title: jiraPreview.summary,
         description: jiraPreview.description || undefined,
-        status: 'pending',
-        externalService: 'jira',
+        status: "pending",
+        externalService: "jira",
         externalServiceId: jiraPreview.id,
         externalServiceMetadata: jiraPreview,
       });
 
-      setJiraLookupKey('');
+      setJiraLookupKey("");
       setJiraPreview(null);
       setShowJiraForm(false);
     } catch (err) {
       handleError(
-        err instanceof Error ? err.message : 'Failed to add Jira ticket'
+        err instanceof Error ? err.message : "Failed to add Jira ticket",
       );
     } finally {
       setIsSavingJiraAdd(false);
@@ -182,18 +182,18 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
     setLinkingTicketId(ticket.id);
     const metadata = getJiraMetadata(ticket);
     setLinkPreview(metadata ?? null);
-    setLinkLookupKey(metadata?.key || ticket.ticketId || '');
+    setLinkLookupKey(metadata?.key || ticket.ticketId || "");
   };
 
   const cancelLinking = () => {
     setLinkingTicketId(null);
-    setLinkLookupKey('');
+    setLinkLookupKey("");
     setLinkPreview(null);
   };
 
   const handleApplyJiraLink = async () => {
     if (!linkingTicketId || !linkPreview) {
-      handleError('Fetch a Jira ticket before linking.');
+      handleError("Fetch a Jira ticket before linking.");
       return;
     }
 
@@ -203,14 +203,14 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
         ticketId: linkPreview.key,
         title: linkPreview.summary,
         description: linkPreview.description || undefined,
-        externalService: 'jira',
+        externalService: "jira",
         externalServiceId: linkPreview.id,
         externalServiceMetadata: linkPreview,
       });
       cancelLinking();
     } catch (err) {
       handleError(
-        err instanceof Error ? err.message : 'Failed to link Jira ticket'
+        err instanceof Error ? err.message : "Failed to link Jira ticket",
       );
     } finally {
       setIsSavingLink(false);
@@ -218,7 +218,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   };
 
   const renderJiraBadge = (ticket: TicketQueueItem) => {
-    if (ticket.externalService !== 'jira') {
+    if (ticket.externalService !== "jira") {
       return null;
     }
     const meta = getJiraMetadata(ticket);
@@ -264,7 +264,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             </span>
           </div>
           <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
-            {ticket.status || 'Unknown'}
+            {ticket.status || "Unknown"}
           </span>
         </div>
         {ticket.description && (
@@ -275,10 +275,10 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
         <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-600 dark:text-slate-300">
           {ticket.assignee && <span>Assignee: {ticket.assignee}</span>}
           <span>
-            Story Points:{' '}
+            Story Points:{" "}
             {ticket.storyPoints !== null && ticket.storyPoints !== undefined
               ? ticket.storyPoints
-              : 'Not set'}
+              : "Not set"}
           </span>
         </div>
       </div>
@@ -351,7 +351,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             {showAddForm && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="mb-3 overflow-hidden"
               >
@@ -362,7 +362,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                     value={newTicketTitle}
                     onChange={(e) => setNewTicketTitle(e.target.value)}
                     className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddTicket()}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddTicket()}
                   />
                   <textarea
                     placeholder="Description (optional)"
@@ -383,8 +383,8 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                     <button
                       onClick={() => {
                         setShowAddForm(false);
-                        setNewTicketTitle('');
-                        setNewTicketDescription('');
+                        setNewTicketTitle("");
+                        setNewTicketDescription("");
                       }}
                       className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
                     >
@@ -400,7 +400,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             {showJiraForm && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="mb-3 overflow-hidden"
               >
@@ -422,7 +422,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                         lookupJiraTicket(
                           jiraLookupKey,
                           setJiraPreview,
-                          setIsFetchingJira
+                          setIsFetchingJira,
                         )
                       }
                       disabled={isFetchingJira || !jiraLookupKey.trim()}
@@ -451,7 +451,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                     <button
                       onClick={() => {
                         setShowJiraForm(false);
-                        setJiraLookupKey('');
+                        setJiraLookupKey("");
                         setJiraPreview(null);
                       }}
                       className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
@@ -516,7 +516,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                               data-testid={`queue-link-toggle-${ticket.id}`}
                               className="rounded-lg px-2 py-1 text-blue-700 hover:bg-blue-50 dark:text-blue-200 dark:hover:bg-blue-900/40"
                             >
-                              {isLinking ? 'Close' : 'Link Jira'}
+                              {isLinking ? "Close" : "Link Jira"}
                             </button>
                           )}
                           <button
@@ -533,7 +533,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                       {isLinking && jiraEnabled && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
+                          animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           className="mt-3 overflow-hidden rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-800 dark:bg-blue-900/20"
                         >
@@ -551,7 +551,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
                                 lookupJiraTicket(
                                   linkLookupKey,
                                   setLinkPreview,
-                                  setIsFetchingLink
+                                  setIsFetchingLink,
                                 )
                               }
                               disabled={isFetchingLink || !linkLookupKey.trim()}

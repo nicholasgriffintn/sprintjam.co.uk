@@ -9,21 +9,21 @@ export default defineConfig(({ command }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'strudel-vendor': ['@strudel/web'],
-          'tanstack-vendor': [
-            '@tanstack/react-query',
-            '@tanstack/db',
-            '@tanstack/query-core',
-            '@tanstack/query-db-collection',
+          "react-vendor": ["react", "react-dom"],
+          "strudel-vendor": ["@strudel/web"],
+          "tanstack-vendor": [
+            "@tanstack/react-query",
+            "@tanstack/db",
+            "@tanstack/query-core",
+            "@tanstack/query-db-collection",
           ],
-          'framer-vendor': ['framer-motion'],
-          'icons-vendor': ['lucide-react'],
-          'ui-vendor': ['qrcode.react', 'canvas-confetti'],
+          "framer-vendor": ["framer-motion"],
+          "icons-vendor": ["lucide-react"],
+          "ui-vendor": ["qrcode.react", "canvas-confetti"],
         },
       },
     },
-    sourcemap: command === 'build' ? false : true,
+    sourcemap: command === "build" ? false : true,
   },
   plugins: [react(), tailwindcss(), cloudflare()],
 }));

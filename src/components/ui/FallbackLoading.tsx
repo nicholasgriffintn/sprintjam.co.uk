@@ -1,9 +1,9 @@
 export function FallbackLoading({
-  variant = 'default',
+  variant = "default",
 }: {
-  variant?: 'default' | 'inline';
+  variant?: "default" | "inline";
 }) {
-  if (variant === 'inline') {
+  if (variant === "inline") {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" />

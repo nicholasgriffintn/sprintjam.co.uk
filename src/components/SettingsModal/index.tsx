@@ -1,14 +1,14 @@
-import { useState, useEffect, type FC } from 'react';
+import { useState, useEffect, type FC } from "react";
 
-import type { RoomSettings, JudgeAlgorithm } from '../../types';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
-import { VotingMode } from './VotingMode';
-import { EstimateOptions } from './EstimateOptions';
-import { TheJudge } from './TheJudge';
-import { OtherOptions } from './OtherOptions';
-import { BackgroundMusic } from './BackgroundMusic';
-import { TicketQueueSettings } from './TicketQueueSettings';
+import type { RoomSettings, JudgeAlgorithm } from "../../types";
+import { Modal } from "../ui/Modal";
+import { Button } from "../ui/Button";
+import { VotingMode } from "./VotingMode";
+import { EstimateOptions } from "./EstimateOptions";
+import { TheJudge } from "./TheJudge";
+import { OtherOptions } from "./OtherOptions";
+import { BackgroundMusic } from "./BackgroundMusic";
+import { TicketQueueSettings } from "./TicketQueueSettings";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -29,35 +29,35 @@ const SettingsModal: FC<SettingsModalProps> = ({
 }) => {
   const [localSettings, setLocalSettings] = useState<RoomSettings>(settings);
   const [estimateOptionsInput, setEstimateOptionsInput] = useState<string>(
-    settings.estimateOptions.join(',')
+    settings.estimateOptions.join(","),
   );
 
   useEffect(() => {
     if (isOpen) {
       setLocalSettings(settings);
-      setEstimateOptionsInput(settings.estimateOptions.join(','));
+      setEstimateOptionsInput(settings.estimateOptions.join(","));
     }
   }, [isOpen, settings]);
 
   const handleChange = (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number | string
+    value: boolean | (string | number)[] | JudgeAlgorithm | number | string,
   ) => {
     const newSettings = { ...localSettings, [key]: value };
 
-    if (key === 'enableStructuredVoting' && value === true) {
+    if (key === "enableStructuredVoting" && value === true) {
       const structuredOptions = Array.from(structuredVotingOptions);
       newSettings.estimateOptions = structuredOptions;
       if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
         newSettings.votingCriteria = defaultSettings.votingCriteria.map(
-          (criterion) => ({ ...criterion })
+          (criterion) => ({ ...criterion }),
         );
       }
       setEstimateOptionsInput(
-        structuredOptions.map((option) => option.toString()).join(',')
+        structuredOptions.map((option) => option.toString()).join(","),
       );
     } else if (
-      key === 'enableStructuredVoting' &&
+      key === "enableStructuredVoting" &&
       value === false &&
       !newSettings.estimateOptions
     ) {
@@ -65,30 +65,30 @@ const SettingsModal: FC<SettingsModalProps> = ({
       newSettings.estimateOptions = defaultOptions;
       if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
         newSettings.votingCriteria = defaultSettings.votingCriteria.map(
-          (criterion) => ({ ...criterion })
+          (criterion) => ({ ...criterion }),
         );
       }
       setEstimateOptionsInput(
-        defaultOptions.map((option) => option.toString()).join(',')
+        defaultOptions.map((option) => option.toString()).join(","),
       );
     }
 
     if (
-      key === 'showAverage' ||
-      key === 'showMedian' ||
-      key === 'showTopVotes'
+      key === "showAverage" ||
+      key === "showMedian" ||
+      key === "showTopVotes"
     ) {
       if (newSettings.resultsDisplay?.summaryCards) {
         newSettings.resultsDisplay = {
           ...newSettings.resultsDisplay,
           summaryCards: newSettings.resultsDisplay.summaryCards.map((card) => {
-            if (key === 'showAverage' && card.id === 'average') {
+            if (key === "showAverage" && card.id === "average") {
               return { ...card, enabled: value as boolean };
             }
-            if (key === 'showMedian' && card.id === 'mode') {
+            if (key === "showMedian" && card.id === "mode") {
               return { ...card, enabled: value as boolean };
             }
-            if (key === 'showTopVotes' && card.id === 'topVotes') {
+            if (key === "showTopVotes" && card.id === "topVotes") {
               return { ...card, enabled: value as boolean };
             }
             return card;
@@ -104,9 +104,9 @@ const SettingsModal: FC<SettingsModalProps> = ({
     setEstimateOptionsInput(value);
 
     const options = value
-      .split(',')
+      .split(",")
       .map((item) => item.trim())
-      .filter((item) => item !== '')
+      .filter((item) => item !== "")
       .map((item) => {
         const num = Number(item);
         return Number.isNaN(num) ? item : num;
@@ -119,7 +119,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
   };
 
   const handleSave = () => {
-    console.log('Saving settings from modal:', localSettings);
+    console.log("Saving settings from modal:", localSettings);
     onSaveSettings(localSettings);
     onClose();
   };

@@ -1,24 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
 import type {
   ResultsDisplaySettings,
   RoomData,
   SummaryCardSetting,
-} from '../../../types';
+} from "../../../types";
 
 const judgeSuppressedCards = new Set([
-  'participation',
-  'consensusHealth',
-  'nextStep',
+  "participation",
+  "consensusHealth",
+  "nextStep",
 ]);
 
 export function useSummaryCardConfigs(
   roomData: RoomData,
   resultsDisplay: ResultsDisplaySettings | undefined,
-  hasStructuredData: boolean
+  hasStructuredData: boolean,
 ) {
   const useConfiguredSummaryCards = Boolean(
-    resultsDisplay?.summaryCards && resultsDisplay.summaryCards.length > 0
+    resultsDisplay?.summaryCards && resultsDisplay.summaryCards.length > 0,
   );
   const judgeEnabled = roomData.settings.enableJudge;
 
@@ -27,39 +27,39 @@ export function useSummaryCardConfigs(
       return resultsDisplay.summaryCards
         .filter((card) => card.enabled !== false)
         .filter((card) =>
-          judgeEnabled ? !judgeSuppressedCards.has(card.id) : true
+          judgeEnabled ? !judgeSuppressedCards.has(card.id) : true,
         );
     }
 
     return [
       {
-        id: 'average',
-        label: 'Average',
+        id: "average",
+        label: "Average",
         enabled: roomData.settings.showAverage,
       },
       {
-        id: 'mode',
-        label: 'Most Common',
+        id: "mode",
+        label: "Most Common",
         enabled: roomData.settings.showMedian,
       },
       {
-        id: 'topVotes',
-        label: 'Top Votes',
+        id: "topVotes",
+        label: "Top Votes",
         enabled: roomData.settings.showTopVotes,
       },
       {
-        id: 'participation',
-        label: 'Participation',
+        id: "participation",
+        label: "Participation",
         enabled: !judgeEnabled,
       },
       {
-        id: 'consensusHealth',
-        label: 'Consensus Health',
+        id: "consensusHealth",
+        label: "Consensus Health",
         enabled: hasStructuredData && !judgeEnabled,
       },
       {
-        id: 'nextStep',
-        label: 'Suggested Next Step',
+        id: "nextStep",
+        label: "Suggested Next Step",
         enabled: !judgeEnabled,
       },
     ].filter((card) => card.enabled);

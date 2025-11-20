@@ -3,7 +3,7 @@ import type {
   VoteValue,
   RoomSettings,
   ServerDefaults,
-} from '../types';
+} from "../types";
 
 const cloneRoomSettings = (settings: RoomSettings): RoomSettings => ({
   ...settings,
@@ -49,7 +49,7 @@ const cloneRoomSettings = (settings: RoomSettings): RoomSettings => ({
 });
 
 export const cloneServerDefaults = (
-  defaults: ServerDefaults
+  defaults: ServerDefaults,
 ): ServerDefaults => ({
   roomSettings: cloneRoomSettings(defaults.roomSettings),
   votingCriteria: defaults.votingCriteria.map((criterion) => ({
@@ -62,12 +62,12 @@ export const cloneServerDefaults = (
 });
 
 export const buildInitialRoomData = (settings: RoomSettings): RoomData => ({
-  key: '',
+  key: "",
   users: [],
   votes: {} as Record<string, VoteValue | null>,
   structuredVotes: {},
   showVotes: false,
-  moderator: '',
+  moderator: "",
   connectedUsers: {},
   judgeScore: null,
   settings: cloneRoomSettings(settings),

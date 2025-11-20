@@ -1,27 +1,26 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from "react";
 
 import {
   fetchDefaultSettings,
   getCachedDefaultSettings,
-} from '../lib/api-service';
+} from "../lib/api-service";
 import {
   serverDefaultsCollection,
   ensureServerDefaultsCollectionReady,
-} from '../lib/data/collections';
-import { useServerDefaults as useServerDefaultsFromCollection } from '../lib/data/hooks';
-import type { ServerDefaults } from '../types';
-import { cloneServerDefaults } from '../utils/settings';
+} from "../lib/data/collections";
+import { useServerDefaults as useServerDefaultsFromCollection } from "../lib/data/hooks";
+import type { ServerDefaults } from "../types";
+import { cloneServerDefaults } from "../utils/settings";
 
 export const useServerDefaults = () => {
   const cachedDefaults = getCachedDefaultSettings();
   const serverDefaultsFromCollection = useServerDefaultsFromCollection();
 
   const [serverDefaults, setServerDefaults] = useState<ServerDefaults | null>(
-    () => (cachedDefaults ? cloneServerDefaults(cachedDefaults) : null)
+    () => (cachedDefaults ? cloneServerDefaults(cachedDefaults) : null),
   );
-  const [isLoadingDefaults, setIsLoadingDefaults] = useState<boolean>(
-    !cachedDefaults
-  );
+  const [isLoadingDefaults, setIsLoadingDefaults] =
+    useState<boolean>(!cachedDefaults);
   const [defaultsError, setDefaultsError] = useState<string | null>(null);
 
   const applyServerDefaults = useCallback(async (defaults?: ServerDefaults) => {
@@ -40,11 +39,11 @@ export const useServerDefaults = () => {
       await fetchDefaultSettings(forceRefresh);
       setDefaultsError(null);
     } catch (err) {
-      console.error('Failed to load default settings', err);
+      console.error("Failed to load default settings", err);
       const message =
         err instanceof Error
           ? err.message
-          : 'Unable to load default settings from server';
+          : "Unable to load default settings from server";
       setDefaultsError(message);
     } finally {
       setIsLoadingDefaults(false);

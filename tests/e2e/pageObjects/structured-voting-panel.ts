@@ -1,10 +1,10 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page } from "@playwright/test";
 
 export class StructuredVotingPanel {
   constructor(private readonly page: Page) {}
 
   panel() {
-    return this.page.getByTestId('structured-voting-panel');
+    return this.page.getByTestId("structured-voting-panel");
   }
 
   async selectScore(criterionId: string, score: number) {
@@ -15,7 +15,7 @@ export class StructuredVotingPanel {
 
   async expectStoryPoints(value: string | number) {
     await expect(
-      this.panel().getByTestId('structured-summary-points')
+      this.panel().getByTestId("structured-summary-points"),
     ).toContainText(String(value));
   }
 

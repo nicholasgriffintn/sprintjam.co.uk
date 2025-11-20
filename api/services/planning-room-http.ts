@@ -1,19 +1,15 @@
-import type { Response as CfResponse } from '@cloudflare/workers-types';
+import type { Response as CfResponse } from "@cloudflare/workers-types";
 
-import type {
-  BroadcastMessage,
-  RoomData,
-  RoomSettings,
-} from '../types';
-import { createInitialRoomData, getServerDefaults } from '../utils/defaults';
+import type { BroadcastMessage, RoomData, RoomSettings } from "../types";
+import { createInitialRoomData, getServerDefaults } from "../utils/defaults";
 import {
   assignUserAvatar,
   markUserConnection,
   normalizeRoomData,
-} from '../utils/room-data';
-import { applySettingsUpdate } from '../utils/room-settings';
-import { createJsonResponse } from '../utils/http';
-import type { PlanningRoomRepository } from '../repositories/planning-room';
+} from "../utils/room-data";
+import { applySettingsUpdate } from "../utils/room-settings";
+import { createJsonResponse } from "../utils/http";
+import type { PlanningRoomRepository } from "../repositories/planning-room";
 
 export interface PlanningRoomHttpContext {
   repository: PlanningRoomRepository;
@@ -24,11 +20,11 @@ export interface PlanningRoomHttpContext {
 
 export async function handleHttpRequest(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse | null> {
   const url = new URL(request.url);
 
-  if (url.pathname === '/initialize' && request.method === 'POST') {
+  if (url.pathname === "/initialize" && request.method === "POST") {
     const { roomKey, moderator, passcode, settings, avatar } =
       (await request.json()) as {
         roomKey: string;
@@ -43,7 +39,7 @@ export async function handleHttpRequest(
     if (!roomData) {
       // Initialization when room data not present; continue with default flow
     } else if (roomData.key) {
-      return createJsonResponse({ error: 'Room already exists' }, 400);
+      return createJsonResponse({ error: "Room already exists" }, 400);
     }
 
     roomData = createInitialRoomData({
@@ -77,7 +73,7 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === '/join' && request.method === 'POST') {
+  if (url.pathname === "/join" && request.method === "POST") {
     const { name, passcode, avatar } = (await request.json()) as {
       name: string;
       passcode?: string;
@@ -87,12 +83,12 @@ export async function handleHttpRequest(
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: 'Room not found' }, 404);
+      return createJsonResponse({ error: "Room not found" }, 404);
     }
 
     if (roomData.passcode && roomData.passcode.trim()) {
       if (!passcode || passcode.trim() !== roomData.passcode.trim()) {
-        return createJsonResponse({ error: 'Invalid passcode' }, 401);
+        return createJsonResponse({ error: "Invalid passcode" }, 401);
       }
     }
 
@@ -105,7 +101,7 @@ export async function handleHttpRequest(
     ctx.repository.setUserAvatar(name, avatar);
 
     ctx.broadcast({
-      type: 'userJoined',
+      type: "userJoined",
       user: name,
       avatar,
     });
@@ -119,7 +115,7 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === '/vote' && request.method === 'POST') {
+  if (url.pathname === "/vote" && request.method === "POST") {
     const { name, vote } = (await request.json()) as {
       name: string;
       vote: string | number;
@@ -128,11 +124,11 @@ export async function handleHttpRequest(
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: 'Room not found' }, 404);
+      return createJsonResponse({ error: "Room not found" }, 404);
     }
 
     if (!roomData.users.includes(name)) {
-      return createJsonResponse({ error: 'User not found in this room' }, 400);
+      return createJsonResponse({ error: "User not found in this room" }, 400);
     }
 
     roomData.votes[name] = vote;
@@ -141,7 +137,7 @@ export async function handleHttpRequest(
     const structuredVote = roomData.structuredVotes?.[name];
 
     ctx.broadcast({
-      type: 'vote',
+      type: "vote",
       user: name,
       vote,
       structuredVote,
@@ -153,13 +149,13 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === '/showVotes' && request.method === 'POST') {
+  if (url.pathname === "/showVotes" && request.method === "POST") {
     const { name } = (await request.json()) as { name: string };
 
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: 'Room not found' }, 404);
+      return createJsonResponse({ error: "Room not found" }, 404);
     }
 
     if (
@@ -167,8 +163,8 @@ export async function handleHttpRequest(
       !roomData.settings.allowOthersToShowEstimates
     ) {
       return createJsonResponse(
-        { error: 'Only the moderator can show votes' },
-        403
+        { error: "Only the moderator can show votes" },
+        403,
       );
     }
 
@@ -176,7 +172,7 @@ export async function handleHttpRequest(
     ctx.repository.setShowVotes(roomData.showVotes);
 
     ctx.broadcast({
-      type: 'showVotes',
+      type: "showVotes",
       showVotes: roomData.showVotes,
     });
 
@@ -186,13 +182,13 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === '/resetVotes' && request.method === 'POST') {
+  if (url.pathname === "/resetVotes" && request.method === "POST") {
     const { name } = (await request.json()) as { name: string };
 
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: 'Room not found' }, 404);
+      return createJsonResponse({ error: "Room not found" }, 404);
     }
 
     if (
@@ -200,8 +196,8 @@ export async function handleHttpRequest(
       !roomData.settings.allowOthersToDeleteEstimates
     ) {
       return createJsonResponse(
-        { error: 'Only the moderator can reset votes' },
-        403
+        { error: "Only the moderator can reset votes" },
+        403,
       );
     }
 
@@ -217,7 +213,7 @@ export async function handleHttpRequest(
     ctx.repository.setSettings(roomData.settings);
 
     ctx.broadcast({
-      type: 'resetVotes',
+      type: "resetVotes",
     });
 
     return createJsonResponse({
@@ -226,11 +222,11 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === '/settings' && request.method === 'GET') {
+  if (url.pathname === "/settings" && request.method === "GET") {
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: 'Room not found' }, 404);
+      return createJsonResponse({ error: "Room not found" }, 404);
     }
 
     return createJsonResponse({
@@ -239,26 +235,26 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === '/settings' && request.method === 'PUT') {
+  if (url.pathname === "/settings" && request.method === "PUT") {
     const { name, settings } = (await request.json()) as {
       name: string;
-      settings: RoomData['settings'];
+      settings: RoomData["settings"];
     };
 
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: 'Room not found' }, 404);
+      return createJsonResponse({ error: "Room not found" }, 404);
     }
 
     if (roomData.moderator !== name) {
       return createJsonResponse(
-        { error: 'Only the moderator can update settings' },
-        403
+        { error: "Only the moderator can update settings" },
+        403,
       );
     }
 
-    const providedSettings = settings as Partial<RoomData['settings']>;
+    const providedSettings = settings as Partial<RoomData["settings"]>;
     roomData.settings = applySettingsUpdate({
       currentSettings: roomData.settings,
       settingsUpdate: providedSettings,
@@ -267,7 +263,7 @@ export async function handleHttpRequest(
     ctx.repository.setSettings(roomData.settings);
 
     ctx.broadcast({
-      type: 'settingsUpdated',
+      type: "settingsUpdated",
       settings: roomData.settings,
     });
 

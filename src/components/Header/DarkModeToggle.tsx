@@ -1,13 +1,13 @@
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from "lucide-react";
 
-import { useTheme } from '../../lib/theme-context';
-import { Button } from '../ui/Button';
+import { useTheme } from "../../lib/theme-context";
+import { Button } from "../ui/Button";
 
 export default function DarkModeToggle() {
   const { theme, toggleTheme } = useTheme();
 
   const icon =
-    theme === 'light' ? (
+    theme === "light" ? (
       <Moon className="h-5 w-5" />
     ) : (
       <Sun className="h-5 w-5" />
@@ -20,7 +20,7 @@ export default function DarkModeToggle() {
       icon={icon}
       iconOnly
       onClick={toggleTheme}
-      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
     />
   );
 }

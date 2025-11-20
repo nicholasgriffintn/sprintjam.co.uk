@@ -2,7 +2,7 @@ import type {
   DurableObjectNamespace,
   Fetcher,
   WebSocket as CfWebSocket,
-} from '@cloudflare/workers-types';
+} from "@cloudflare/workers-types";
 
 export interface Env {
   PLANNING_ROOM: DurableObjectNamespace;
@@ -15,20 +15,20 @@ export interface Env {
 }
 
 export enum JudgeAlgorithm {
-  SMART_CONSENSUS = 'smartConsensus',
-  CONSERVATIVE_MODE = 'conservativeMode',
-  OPTIMISTIC_MODE = 'optimisticMode',
-  SIMPLE_AVERAGE = 'simpleAverage',
+  SMART_CONSENSUS = "smartConsensus",
+  CONSERVATIVE_MODE = "conservativeMode",
+  OPTIMISTIC_MODE = "optimisticMode",
+  SIMPLE_AVERAGE = "simpleAverage",
 }
 
 export interface JudgeResult {
   score: number | null;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   needsDiscussion: boolean;
   reasoning: string;
 }
 
-export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type TaskSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 export interface VoteOptionMetadata {
   value: string | number;
@@ -100,7 +100,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: 'jira' | 'none';
+  externalService?: "jira" | "none";
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   autoUpdateJiraStoryPoints?: boolean;
@@ -110,7 +110,6 @@ export interface RoomSettings {
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
 }
-
 
 export interface VotingCriterion {
   id: string;
@@ -158,12 +157,12 @@ export interface TicketQueueItem {
   ticketId: string;
   title?: string;
   description?: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: "pending" | "in_progress" | "completed";
   outcome?: string;
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: 'jira' | 'none';
+  externalService: "jira" | "none";
   externalServiceId?: string;
   externalServiceMetadata?: Record<string, unknown>;
   votes?: TicketVote[];

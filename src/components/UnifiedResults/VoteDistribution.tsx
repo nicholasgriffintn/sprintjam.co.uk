@@ -1,8 +1,8 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
-import type { RoomData, RoomStats } from '../../types';
+import type { RoomData, RoomStats } from "../../types";
 
-export type VoteDistributionViewMode = 'count' | 'percentage' | 'cumulative';
+export type VoteDistributionViewMode = "count" | "percentage" | "cumulative";
 
 interface VoteDistributionProps {
   roomData: RoomData;
@@ -10,7 +10,11 @@ interface VoteDistributionProps {
   viewMode: VoteDistributionViewMode;
 }
 
-export function VoteDistribution({ roomData, stats, viewMode }: VoteDistributionProps) {
+export function VoteDistribution({
+  roomData,
+  stats,
+  viewMode,
+}: VoteDistributionProps) {
   const defaultTotal = roomData.users.length || stats.totalUsers || 1;
   const voteTotal = stats.totalVotes || defaultTotal;
   let cumulativeCount = 0;
@@ -19,9 +23,9 @@ export function VoteDistribution({ roomData, stats, viewMode }: VoteDistribution
     <div>
       {roomData.settings.estimateOptions.map((option, index) => {
         const metadata = roomData.settings.voteOptionsMetadata?.find(
-          (m) => m.value === option
+          (m) => m.value === option,
         );
-        const background = metadata?.background || '#ebf5ff';
+        const background = metadata?.background || "#ebf5ff";
         const voteCount = stats.distribution[option] || 0;
         cumulativeCount += voteCount;
         const asPercentage = voteTotal > 0 ? (voteCount / voteTotal) * 100 : 0;
@@ -29,16 +33,16 @@ export function VoteDistribution({ roomData, stats, viewMode }: VoteDistribution
           voteTotal > 0 ? (cumulativeCount / voteTotal) * 100 : 0;
 
         const width = (() => {
-          if (viewMode === 'cumulative') return cumulativePercentage;
-          if (viewMode === 'percentage') return asPercentage;
+          if (viewMode === "cumulative") return cumulativePercentage;
+          if (viewMode === "percentage") return asPercentage;
           return defaultTotal > 0 ? (voteCount / defaultTotal) * 100 : 0;
         })();
 
         const displayLabel = (() => {
-          if (viewMode === 'cumulative') {
+          if (viewMode === "cumulative") {
             return `${cumulativePercentage.toFixed(1)}% cumulative`;
           }
-          if (viewMode === 'percentage') {
+          if (viewMode === "percentage") {
             return `${asPercentage.toFixed(1)}% of votes`;
           }
           return `${voteCount} votes`;
@@ -78,7 +82,7 @@ export function VoteDistribution({ roomData, stats, viewMode }: VoteDistribution
             <div className="w-32 text-right text-xs font-medium text-slate-600 dark:text-white">
               <div>{displayLabel}</div>
               <div className="text-[11px] text-slate-500 dark:text-white">
-                {viewMode === 'count'
+                {viewMode === "count"
                   ? `${asPercentage.toFixed(1)}% of votes`
                   : `${voteCount} votes`}
               </div>

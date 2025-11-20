@@ -1,4 +1,4 @@
-import type { TicketMetadata } from '../../src/types';
+import type { TicketMetadata } from "../../src/types";
 
 /**
  * Parse Jira description in Atlassian Document Format (ADF)
@@ -6,27 +6,27 @@ import type { TicketMetadata } from '../../src/types';
  * @returns Plain text extracted from the description
  */
 function parseJiraDescription(description: any): string {
-  if (!description) return '';
+  if (!description) return "";
 
   try {
-    if (typeof description === 'string') return description;
+    if (typeof description === "string") return description;
     if (description.content && Array.isArray(description.content)) {
       return description.content
         .map((block: any) => {
           if (block.content && Array.isArray(block.content)) {
             return block.content
-              .map((textNode: any) => textNode.text || '')
-              .join('');
+              .map((textNode: any) => textNode.text || "")
+              .join("");
           }
-          return block.text || '';
+          return block.text || "";
         })
-        .join('\n');
+        .join("\n");
     }
   } catch (e) {
-    console.error('Error parsing Jira description:', e);
+    console.error("Error parsing Jira description:", e);
   }
 
-  return '';
+  return "";
 }
 
 /**
@@ -39,8 +39,8 @@ function getAuthHeaders(email: string, apiToken: string): Headers {
   const auth = btoa(`${email}:${apiToken}`);
   return new Headers({
     Authorization: `Basic ${auth}`,
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
+    Accept: "application/json",
+    "Content-Type": "application/json",
   });
 }
 
@@ -57,16 +57,16 @@ export async function fetchJiraTicket(
   email: string,
   apiToken: string,
   storyPointsField: string,
-  ticketId: string
+  ticketId: string,
 ): Promise<TicketMetadata> {
   try {
     const headers = getAuthHeaders(email, apiToken);
     const response = await fetch(
       `https://${domain}/rest/api/3/issue/${ticketId}`,
       {
-        method: 'GET',
+        method: "GET",
         headers,
-      }
+      },
     );
 
     if (!response.ok) {
@@ -75,7 +75,7 @@ export async function fetchJiraTicket(
       };
       throw new Error(
         errorData.errorMessages?.[0] ||
-          `Failed to fetch Jira ticket: ${response.status}`
+          `Failed to fetch Jira ticket: ${response.status}`,
       );
     }
 
@@ -103,8 +103,8 @@ export async function fetchJiraTicket(
       id: data.id,
       key: data.key,
       summary: data.fields.summary,
-      description: parseJiraDescription(data.fields.description) || '',
-      status: data.fields.status?.name || 'Unknown',
+      description: parseJiraDescription(data.fields.description) || "",
+      status: data.fields.status?.name || "Unknown",
       assignee: data.fields.assignee?.displayName || null,
       storyPoints: storyPointsField ? data.fields[storyPointsField] : null,
       url: `https://${domain}/browse/${data.key}`,
@@ -112,7 +112,7 @@ export async function fetchJiraTicket(
 
     return ticket;
   } catch (error) {
-    console.error('Error fetching Jira ticket:', error);
+    console.error("Error fetching Jira ticket:", error);
     throw error;
   }
 }
@@ -134,7 +134,7 @@ export async function updateJiraStoryPoints(
   storyPointsField: string,
   ticketId: string,
   storyPoints: number,
-  currentTicket?: TicketMetadata
+  currentTicket?: TicketMetadata,
 ): Promise<TicketMetadata> {
   try {
     const headers = getAuthHeaders(email, apiToken);
@@ -142,14 +142,14 @@ export async function updateJiraStoryPoints(
     const response = await fetch(
       `https://${domain}/rest/api/3/issue/${ticketId}`,
       {
-        method: 'PUT',
+        method: "PUT",
         headers,
         body: JSON.stringify({
           fields: {
             [storyPointsField]: storyPoints,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -158,7 +158,7 @@ export async function updateJiraStoryPoints(
       };
       throw new Error(
         errorData.errorMessages?.[0] ||
-          `Failed to update Jira story points: ${response.status}`
+          `Failed to update Jira story points: ${response.status}`,
       );
     }
 
@@ -174,10 +174,10 @@ export async function updateJiraStoryPoints(
       email,
       apiToken,
       storyPointsField,
-      ticketId
+      ticketId,
     );
   } catch (error) {
-    console.error('Error updating Jira story points:', error);
+    console.error("Error updating Jira story points:", error);
     throw error;
   }
 }

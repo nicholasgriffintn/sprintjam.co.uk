@@ -1,5 +1,5 @@
-import { Page } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 export async function checkA11y(
   page: Page,
@@ -7,7 +7,7 @@ export async function checkA11y(
     disableRules?: string[];
     runOnly?: string[];
     context?: string | { include?: string[][]; exclude?: string[][] };
-  }
+  },
 ) {
   const axeBuilder = new AxeBuilder({ page });
 
@@ -20,17 +20,17 @@ export async function checkA11y(
   }
 
   if (options?.context) {
-    if (typeof options.context === 'string') {
+    if (typeof options.context === "string") {
       axeBuilder.include(options.context);
     } else {
       if (options.context.include) {
         options.context.include.forEach((selector) =>
-          axeBuilder.include(selector)
+          axeBuilder.include(selector),
         );
       }
       if (options.context.exclude) {
         options.context.exclude.forEach((selector) =>
-          axeBuilder.exclude(selector)
+          axeBuilder.exclude(selector),
         );
       }
     }
@@ -40,8 +40,8 @@ export async function checkA11y(
 }
 
 export async function waitForA11yReady(page: Page) {
-  await page.waitForLoadState('networkidle');
-  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
   // Wait a bit for any animations to settle
   await page.waitForTimeout(300);
 }

@@ -1,23 +1,23 @@
-import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { motion } from "framer-motion";
+import { useMemo } from "react";
 
-import type { RoomData, RoomStats, VotingCriterion } from '../../types';
-import { VoteDistribution } from './VoteDistribution';
-import { CriteriaBreakdownStat } from './CriteriaBreakdown';
-import { SurfaceCard } from '../ui/SurfaceCard';
-import { useCriteriaStats } from './hooks/useCriteriaStats';
-import { useSummaryCardConfigs } from './hooks/useSummaryCardConfigs';
-import { useSummaryCards } from './hooks/useSummaryCards';
-import { useVoteDistributionControls } from './hooks/useVoteDistributionControls';
-import { useJudgeAnimation } from './hooks/useJudgeAnimation';
+import type { RoomData, RoomStats, VotingCriterion } from "../../types";
+import { VoteDistribution } from "./VoteDistribution";
+import { CriteriaBreakdownStat } from "./CriteriaBreakdown";
+import { SurfaceCard } from "../ui/SurfaceCard";
+import { useCriteriaStats } from "./hooks/useCriteriaStats";
+import { useSummaryCardConfigs } from "./hooks/useSummaryCardConfigs";
+import { useSummaryCards } from "./hooks/useSummaryCards";
+import { useVoteDistributionControls } from "./hooks/useVoteDistributionControls";
+import { useJudgeAnimation } from "./hooks/useJudgeAnimation";
 import {
   buildConsensusSummary,
   buildRecommendation,
   calculateParticipationRate,
   getGridCols,
   getTopDistribution,
-} from './utils';
-import { JudgeResult } from './JudgeResult';
+} from "./utils";
+import { JudgeResult } from "./JudgeResult";
 
 interface UnifiedResultsProps {
   roomData: RoomData;
@@ -43,16 +43,16 @@ export function UnifiedResults({
     useSummaryCardConfigs(roomData, resultsDisplay, hasStructuredData);
   const topDistribution = useMemo(
     () => getTopDistribution(stats, roomData),
-    [stats.distribution, roomData.settings.topVotesCount]
+    [stats.distribution, roomData.settings.topVotesCount],
   );
   const participationRate = useMemo(
     () => calculateParticipationRate(stats, roomData),
-    [stats.votedUsers, stats.totalUsers, roomData.users.length]
+    [stats.votedUsers, stats.totalUsers, roomData.users.length],
   );
 
   const consensusSummary = useMemo(
     () => buildConsensusSummary(criteriaStats, roomData.judgeMetadata),
-    [criteriaStats, roomData.judgeMetadata]
+    [criteriaStats, roomData.judgeMetadata],
   );
 
   const recommendation = useMemo(
@@ -62,7 +62,11 @@ export function UnifiedResults({
         consensusLevel: consensusSummary.level,
         needsDiscussion: consensusSummary.needsDiscussion,
       }),
-    [participationRate, consensusSummary.level, consensusSummary.needsDiscussion]
+    [
+      participationRate,
+      consensusSummary.level,
+      consensusSummary.needsDiscussion,
+    ],
   );
   const { summaryCardElements, visibleStatsCount } = useSummaryCards({
     summaryCardConfigs,
@@ -89,7 +93,7 @@ export function UnifiedResults({
   const showVoteDistributionSection =
     resultsDisplay?.showVoteDistribution ?? true;
   const voteDistributionLabel =
-    resultsDisplay?.voteDistributionLabel ?? 'Vote Distribution';
+    resultsDisplay?.voteDistributionLabel ?? "Vote Distribution";
 
   return (
     <>
@@ -119,7 +123,7 @@ export function UnifiedResults({
         {showCriteriaBreakdown && (
           <div>
             <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
-              {criteriaSettings?.title ?? 'Criteria Breakdown'}
+              {criteriaSettings?.title ?? "Criteria Breakdown"}
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {criteriaStats.map((stat) => (
@@ -168,8 +172,8 @@ export function UnifiedResults({
                     onClick={() => setDistributionView(option.id)}
                     className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                       distributionView === option.id
-                        ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                        ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                     }`}
                     aria-pressed={distributionView === option.id}
                     data-testid={`distribution-view-option-${option.id}`}

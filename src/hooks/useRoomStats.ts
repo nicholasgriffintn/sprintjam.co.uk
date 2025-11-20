@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-import type { RoomData, RoomStats, VoteValue } from '../types';
+import type { RoomData, RoomStats, VoteValue } from "../types";
 
 export const useRoomStats = (roomData: RoomData): RoomStats => {
   return useMemo(() => {
     const votes = Object.values(roomData.votes).filter(
-      (v): v is VoteValue => v !== null && v !== '?'
+      (v): v is VoteValue => v !== null && v !== "?",
     );
     const numericVotes = votes
       .filter((v) => !Number.isNaN(Number(v)))
@@ -40,11 +40,11 @@ export const useRoomStats = (roomData: RoomData): RoomStats => {
     }
 
     const votedUsers = Object.values(roomData.votes).filter(
-      (v) => v !== null
+      (v) => v !== null,
     ).length;
 
     return {
-      avg: Number.isNaN(avg) ? 'N/A' : avg.toFixed(1),
+      avg: Number.isNaN(avg) ? "N/A" : avg.toFixed(1),
       mode: maxCount > 0 ? mode : null,
       distribution,
       totalVotes: votes.length,
@@ -59,4 +59,3 @@ export const useRoomStats = (roomData: RoomData): RoomStats => {
     roomData.judgeScore,
   ]);
 };
-

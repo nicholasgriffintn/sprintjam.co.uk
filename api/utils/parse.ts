@@ -1,6 +1,6 @@
 export function parseVote(value: string | null | undefined): string | number {
   if (value === null || value === undefined) {
-    return '';
+    return "";
   }
 
   const numeric = Number(value);
@@ -8,7 +8,7 @@ export function parseVote(value: string | null | undefined): string | number {
 }
 
 export function parseJudgeScore(
-  value: string | null | undefined
+  value: string | null | undefined,
 ): string | number | null {
   if (value === null || value === undefined) {
     return null;
@@ -26,7 +26,7 @@ export function safeJsonParse<T>(json: string): T | undefined {
   try {
     return JSON.parse(json) as T;
   } catch (error) {
-    console.error('Error parsing JSON:', error);
+    console.error("Error parsing JSON:", error);
     return undefined;
   }
 }
