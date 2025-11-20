@@ -46,6 +46,14 @@ export class PlanningRoomRepository {
       );
 
       this.sql.exec(
+        `CREATE TABLE IF NOT EXISTS session_tokens (
+          user_name TEXT PRIMARY KEY,
+          token TEXT NOT NULL,
+          created_at INTEGER NOT NULL
+        )`,
+      );
+
+      this.sql.exec(
         `CREATE TABLE IF NOT EXISTS room_users (
           user_name TEXT PRIMARY KEY,
           avatar TEXT,
@@ -106,7 +114,7 @@ export class PlanningRoomRepository {
         room_key: string;
         moderator: string;
         show_votes: number;
-        passcode: string | null;
+        passcode_hash: string | null;
         judge_score: string | null;
         judge_metadata: string | null;
         settings: string;
@@ -114,7 +122,22 @@ export class PlanningRoomRepository {
         current_strudel_generation_id: string | null;
         strudel_phase: string | null;
         strudel_is_playing: number | null;
-      }>(`SELECT * FROM room_meta WHERE id = ${ROOM_ROW_ID}`)
+      }>(
+        `SELECT
+           room_key,
+           moderator,
+           show_votes,
+           passcode AS passcode_hash,
+           judge_score,
+           judge_metadata,
+           settings,
+           current_strudel_code,
+           current_strudel_generation_id,
+           strudel_phase,
+           strudel_is_playing
+         FROM room_meta
+         WHERE id = ${ROOM_ROW_ID}`,
+      )
       .toArray()[0];
 
     if (!row) {
@@ -201,7 +224,7 @@ export class PlanningRoomRepository {
         ? safeJsonParse<Record<string, unknown>>(row.judge_metadata)
         : undefined,
       settings,
-      passcode: row.passcode ?? undefined,
+      passcodeHash: row.passcode_hash ?? undefined,
       userAvatars:
         Object.keys(userAvatars).length > 0 ? userAvatars : undefined,
       currentStrudelCode: row.current_strudel_code ?? undefined,
@@ -253,7 +276,7 @@ export class PlanningRoomRepository {
         roomData.key,
         roomData.moderator,
         roomData.showVotes ? 1 : 0,
-        roomData.passcode ?? null,
+        roomData.passcodeHash ?? null,
         roomData.judgeScore === undefined || roomData.judgeScore === null
           ? null
           : String(roomData.judgeScore),
@@ -398,6 +421,54 @@ export class PlanningRoomRepository {
       `UPDATE room_meta SET settings = ? WHERE id = ${ROOM_ROW_ID}`,
       JSON.stringify(settings),
     );
+  }
+
+  setPasscodeHash(passcodeHash: string | null) {
+    this.sql.exec(
+      `UPDATE room_meta SET passcode = ? WHERE id = ${ROOM_ROW_ID}`,
+      passcodeHash,
+    );
+  }
+
+  getPasscodeHash(): string | null {
+    const result = this.sql
+      .exec<{ passcode: string | null }>(
+        `SELECT passcode FROM room_meta WHERE id = ${ROOM_ROW_ID}`,
+      )
+      .toArray()[0];
+
+    return result?.passcode ?? null;
+  }
+
+  setSessionToken(userName: string, token: string) {
+    this.ensureUser(userName);
+    this.sql.exec(
+      `INSERT INTO session_tokens (user_name, token, created_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(user_name)
+       DO UPDATE SET token = excluded.token, created_at = excluded.created_at`,
+      userName,
+      token,
+      Date.now(),
+    );
+  }
+
+  getSessionToken(userName: string): string | null {
+    const result = this.sql
+      .exec<{ token: string | null }>(
+        "SELECT token FROM session_tokens WHERE user_name = ?",
+        userName,
+      )
+      .toArray()[0];
+    return result?.token ?? null;
+  }
+
+  validateSessionToken(userName: string, token: string | null): boolean {
+    if (!token) {
+      return false;
+    }
+    const stored = this.getSessionToken(userName);
+    return !!stored && stored === token;
   }
 
   setStrudelState(options: {

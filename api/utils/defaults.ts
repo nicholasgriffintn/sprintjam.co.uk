@@ -76,10 +76,17 @@ interface InitialRoomOptions {
   users?: string[];
   moderator?: string;
   connectedUsers?: Record<string, boolean>;
+  passcodeHash?: string;
 }
 
 export function createInitialRoomData(options: InitialRoomOptions): RoomData {
-  const { key = "", users = [], moderator = "", connectedUsers = {} } = options;
+  const {
+    key = "",
+    users = [],
+    moderator = "",
+    connectedUsers = {},
+    passcodeHash,
+  } = options;
 
   const settings = getDefaultRoomSettings();
 
@@ -93,6 +100,7 @@ export function createInitialRoomData(options: InitialRoomOptions): RoomData {
     connectedUsers,
     judgeScore: null,
     settings,
+    passcodeHash,
   };
 }
 

@@ -63,3 +63,10 @@ export function assignUserAvatar(
 
   roomData.userAvatars[userName] = avatar;
 }
+
+export function sanitizeRoomData(roomData: RoomData): RoomData {
+  const { passcodeHash, ...rest } = roomData;
+  return {
+    ...rest,
+  };
+}

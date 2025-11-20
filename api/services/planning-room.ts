@@ -26,7 +26,11 @@ import {
   generateStrudelCode,
   type StrudelGenerateRequest,
 } from "../lib/polychat-client";
-import { markUserConnection, normalizeRoomData } from "../utils/room-data";
+import {
+  markUserConnection,
+  normalizeRoomData,
+  sanitizeRoomData,
+} from "../utils/room-data";
 import { applySettingsUpdate } from "../utils/room-settings";
 import { determineRoomPhase } from "../utils/room-phase";
 import { selectPresetForPhase } from "../utils/strudel";
@@ -71,9 +75,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     if (upgradeHeader === "websocket") {
       const roomKey = url.searchParams.get("room");
       const userName = url.searchParams.get("name");
+      const sessionToken = url.searchParams.get("token");
 
-      if (!roomKey || !userName) {
-        return new Response("Missing room key or user name", {
+      if (!roomKey || !userName || !sessionToken) {
+        return new Response("Missing room key, user name, or token", {
           status: 400,
         }) as unknown as CfResponse;
       }
@@ -81,7 +86,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const pair = new WebSocketPair();
       const [client, server] = Object.values(pair);
 
-      await this.handleSession(server, roomKey, userName);
+      await this.handleSession(server, roomKey, userName, sessionToken);
 
       return new Response(null, {
         status: 101,
@@ -101,7 +106,28 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     webSocket: CfWebSocket,
     roomKey: string,
     userName: string,
+    sessionToken: string,
   ) {
+    const storedRoom = await this.getRoomData();
+    const hasRoom =
+      storedRoom && storedRoom.key === roomKey && storedRoom.users.includes(userName);
+    const hasValidToken = this.repository.validateSessionToken(
+      userName,
+      sessionToken,
+    );
+
+    if (!hasRoom || !hasValidToken) {
+      webSocket.accept();
+      webSocket.send(
+        JSON.stringify({
+          type: "error",
+          error: "Invalid or expired session. Please rejoin the room.",
+        }),
+      );
+      webSocket.close(4003, "Invalid session token");
+      return;
+    }
+
     const session = { webSocket, roomKey, userName };
     this.sessions.set(webSocket, session);
 
@@ -126,12 +152,23 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     });
 
     const roomData = await this.getRoomData();
-    webSocket.send(
-      JSON.stringify({
-        type: "initialize",
-        roomData,
-      }),
-    );
+    if (roomData) {
+      webSocket.send(
+        JSON.stringify({
+          type: "initialize",
+          roomData: sanitizeRoomData(roomData),
+        }),
+      );
+    } else {
+      webSocket.send(
+        JSON.stringify({
+          type: "error",
+          error: "Unable to load room data",
+        }),
+      );
+      webSocket.close(1011, "Room data unavailable");
+      return;
+    }
 
     webSocket.addEventListener("message", async (msg) => {
       try {

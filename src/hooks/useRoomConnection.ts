@@ -12,6 +12,7 @@ interface UseRoomConnectionOptions {
   screen: string;
   name: string;
   activeRoomKey: string | null;
+  authToken: string | null;
   onMessage: (message: WebSocketMessage) => void;
   onConnectionChange: (isConnected: boolean) => void;
   onError: (error: string) => void;
@@ -21,13 +22,27 @@ export const useRoomConnection = ({
   screen,
   name,
   activeRoomKey,
+  authToken,
   onMessage,
   onConnectionChange,
   onError,
 }: UseRoomConnectionOptions) => {
   useEffect(() => {
     if (screen === "room" && name && activeRoomKey) {
-      connectToRoom(activeRoomKey, name, onMessage, onConnectionChange);
+      if (!authToken) {
+        onError("Missing session token. Please rejoin the room.");
+        return;
+      }
+
+      try {
+        connectToRoom(activeRoomKey, name, authToken, onMessage, onConnectionChange);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Connection error";
+        onError(errorMessage);
+        onConnectionChange(false);
+        return;
+      }
 
       const errorHandler = (data: WebSocketMessage) => {
         onError(data.error || "Connection error");
@@ -48,5 +63,5 @@ export const useRoomConnection = ({
         }
       };
     }
-  }, [screen, activeRoomKey, name, onMessage, onConnectionChange, onError]);
+  }, [screen, activeRoomKey, name, authToken, onMessage, onConnectionChange, onError]);
 };

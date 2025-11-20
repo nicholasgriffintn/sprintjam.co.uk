@@ -53,11 +53,13 @@ export async function joinRoomController(
     roomKey?: string;
     passcode?: string;
     avatar?: string;
+    authToken?: string;
   }>();
   const name = body?.name;
   const roomKey = body?.roomKey;
   const passcode = body?.passcode;
   const avatar = body?.avatar;
+  const authToken = body?.authToken;
 
   if (!name || !roomKey) {
     return jsonError("Name and room key are required");
@@ -69,7 +71,7 @@ export async function joinRoomController(
     new Request("https://dummy/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, passcode, avatar }),
+      body: JSON.stringify({ name, passcode, avatar, authToken }),
     }) as unknown as CfRequest,
   );
 }

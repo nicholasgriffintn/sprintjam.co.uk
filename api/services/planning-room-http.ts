@@ -6,10 +6,12 @@ import {
   assignUserAvatar,
   markUserConnection,
   normalizeRoomData,
+  sanitizeRoomData,
 } from "../utils/room-data";
 import { applySettingsUpdate } from "../utils/room-settings";
 import { createJsonResponse } from "../utils/http";
 import type { PlanningRoomRepository } from "../repositories/planning-room";
+import { generateSessionToken, hashPasscode } from "../utils/security";
 
 export interface PlanningRoomHttpContext {
   repository: PlanningRoomRepository;
@@ -34,6 +36,7 @@ export async function handleHttpRequest(
         avatar?: string;
       };
 
+    const passcodeHash = passcode ? await hashPasscode(passcode) : undefined;
     let roomData = await ctx.getRoomData();
 
     if (!roomData) {
@@ -47,6 +50,7 @@ export async function handleHttpRequest(
       users: [moderator],
       moderator,
       connectedUsers: { [moderator]: true },
+      passcodeHash,
     });
 
     if (settings) {
@@ -56,28 +60,29 @@ export async function handleHttpRequest(
       };
     }
 
-    if (passcode && passcode.trim()) {
-      roomData.passcode = passcode.trim();
-    }
-
     assignUserAvatar(roomData, moderator, avatar);
 
     await ctx.putRoomData(roomData);
+
+    const authToken = generateSessionToken();
+    ctx.repository.setSessionToken(moderator, authToken);
 
     const defaults = getServerDefaults();
 
     return createJsonResponse({
       success: true,
-      room: roomData,
+      room: sanitizeRoomData(roomData),
       defaults,
+      authToken,
     });
   }
 
   if (url.pathname === "/join" && request.method === "POST") {
-    const { name, passcode, avatar } = (await request.json()) as {
+    const { name, passcode, avatar, authToken } = (await request.json()) as {
       name: string;
       passcode?: string;
       avatar?: string;
+      authToken?: string;
     };
 
     const roomData = await ctx.getRoomData();
@@ -86,8 +91,18 @@ export async function handleHttpRequest(
       return createJsonResponse({ error: "Room not found" }, 404);
     }
 
-    if (roomData.passcode && roomData.passcode.trim()) {
-      if (!passcode || passcode.trim() !== roomData.passcode.trim()) {
+    const storedPasscodeHash = ctx.repository.getPasscodeHash();
+    const hasValidSessionToken = ctx.repository.validateSessionToken(
+      name,
+      authToken ?? null,
+    );
+
+    if (storedPasscodeHash && !hasValidSessionToken) {
+      const providedHash = passcode
+        ? await hashPasscode(passcode)
+        : undefined;
+
+      if (!providedHash || providedHash !== storedPasscodeHash) {
         return createJsonResponse({ error: "Invalid passcode" }, 401);
       }
     }
@@ -106,12 +121,16 @@ export async function handleHttpRequest(
       avatar,
     });
 
+    const newAuthToken = generateSessionToken();
+    ctx.repository.setSessionToken(name, newAuthToken);
+
     const defaults = getServerDefaults();
 
     return createJsonResponse({
       success: true,
-      room: updatedRoomData,
+      room: sanitizeRoomData(updatedRoomData),
       defaults,
+      authToken: newAuthToken,
     });
   }
 
@@ -145,7 +164,7 @@ export async function handleHttpRequest(
 
     return createJsonResponse({
       success: true,
-      room: roomData,
+      room: sanitizeRoomData(roomData),
     });
   }
 
@@ -178,7 +197,7 @@ export async function handleHttpRequest(
 
     return createJsonResponse({
       success: true,
-      room: roomData,
+      room: sanitizeRoomData(roomData),
     });
   }
 
@@ -218,7 +237,7 @@ export async function handleHttpRequest(
 
     return createJsonResponse({
       success: true,
-      room: roomData,
+      room: sanitizeRoomData(roomData),
     });
   }
 

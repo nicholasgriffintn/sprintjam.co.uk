@@ -179,7 +179,7 @@ export interface RoomData {
   judgeScore?: string | number | null;
   judgeMetadata?: Record<string, unknown>;
   settings: RoomSettings;
-  passcode?: string;
+  passcodeHash?: string;
   userAvatars?: Record<string, string>;
   currentStrudelCode?: string;
   currentStrudelGenerationId?: string;

@@ -38,9 +38,10 @@ async function handleRequest(
 
     const roomKey = url.searchParams.get("room");
     const userName = url.searchParams.get("name");
+    const sessionToken = url.searchParams.get("token");
 
-    if (!roomKey || !userName) {
-      return new Response("Missing room key or user name", {
+    if (!roomKey || !userName || !sessionToken) {
+      return new Response("Missing room key, user name, or token", {
         status: 400,
       }) as unknown as CfResponse;
     }

@@ -63,6 +63,9 @@ const App = () => {
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(null);
   const [screen, setScreen] = useState<AppScreen>("welcome");
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(() =>
+    safeLocalStorage.get("sprintjam_authToken"),
+  );
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
     null,
   );
@@ -108,6 +111,7 @@ const App = () => {
     onReconnectError: setError,
     onLoadingChange: setIsLoading,
     applyServerDefaults,
+    onAuthTokenRefresh: setAuthToken,
   });
 
   const handleRoomMessage = useCallback((message: WebSocketMessage) => {
@@ -132,6 +136,7 @@ const App = () => {
     screen,
     name,
     activeRoomKey,
+    authToken,
     onMessage: handleRoomMessage,
     onConnectionChange: setIsSocketConnected,
     onError: setError,
@@ -158,16 +163,24 @@ const App = () => {
     setError("");
 
     try {
-      const { room: newRoom, defaults } = await createRoom(
-        name,
-        passcode || undefined,
-        settings,
-        selectedAvatar,
-      );
+      const { room: newRoom, defaults, authToken: newAuthToken } =
+        await createRoom(
+          name,
+          passcode || undefined,
+          settings,
+          selectedAvatar,
+        );
       await applyServerDefaults(defaults);
       await upsertRoom(newRoom);
       setActiveRoomKey(newRoom.key);
       safeLocalStorage.set("sprintjam_roomKey", newRoom.key);
+      if (newAuthToken) {
+        setAuthToken(newAuthToken);
+        safeLocalStorage.set("sprintjam_authToken", newAuthToken);
+      } else {
+        setAuthToken(null);
+        safeLocalStorage.remove("sprintjam_authToken");
+      }
       setIsModeratorView(true);
       setScreen("room");
     } catch (err: unknown) {
@@ -186,16 +199,24 @@ const App = () => {
     setError("");
 
     try {
-      const { room: joinedRoom, defaults } = await joinRoom(
-        name,
-        roomKey,
-        passcode || undefined,
-        selectedAvatar,
-      );
+      const { room: joinedRoom, defaults, authToken: newAuthToken } =
+        await joinRoom(
+          name,
+          roomKey,
+          passcode || undefined,
+          selectedAvatar,
+        );
       await applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
       safeLocalStorage.set("sprintjam_roomKey", joinedRoom.key);
+      if (newAuthToken) {
+        setAuthToken(newAuthToken);
+        safeLocalStorage.set("sprintjam_authToken", newAuthToken);
+      } else {
+        setAuthToken(null);
+        safeLocalStorage.remove("sprintjam_authToken");
+      }
       setIsModeratorView(joinedRoom.moderator === name);
       setScreen("room");
     } catch (err: unknown) {
@@ -296,6 +317,7 @@ const App = () => {
   const handleLeaveRoom = () => {
     disconnectFromRoom();
     safeLocalStorage.remove("sprintjam_roomKey");
+    safeLocalStorage.remove("sprintjam_authToken");
 
     const key = activeRoomKeyRef.current;
     if (key) {
@@ -304,6 +326,7 @@ const App = () => {
       });
     }
     setActiveRoomKey(null);
+    setAuthToken(null);
     setUserVote(null);
     setIsModeratorView(false);
     setScreen("welcome");

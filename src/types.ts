@@ -186,7 +186,6 @@ export interface RoomData {
   settings: RoomSettings;
   judgeScore: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
-  passcode?: string;
   userAvatars?: Record<string, AvatarId>;
   currentStrudelCode?: string;
   currentStrudelGenerationId?: string;

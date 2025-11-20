@@ -14,6 +14,7 @@ interface UseAutoReconnectOptions {
   onReconnectError: (error: string) => void;
   onLoadingChange: (isLoading: boolean) => void;
   applyServerDefaults: (defaults?: ServerDefaults) => Promise<void>;
+  onAuthTokenRefresh?: (token: string | null) => void;
 }
 
 export const useAutoReconnect = ({
@@ -25,6 +26,7 @@ export const useAutoReconnect = ({
   onReconnectError,
   onLoadingChange,
   applyServerDefaults,
+  onAuthTokenRefresh,
 }: UseAutoReconnectOptions) => {
   const didAttemptRestore = useRef(false);
 
@@ -45,14 +47,21 @@ export const useAutoReconnect = ({
     didAttemptRestore.current = true;
 
     const savedRoomKey = safeLocalStorage.get("sprintjam_roomKey");
+    const savedAuthToken = safeLocalStorage.get("sprintjam_authToken");
     if (savedRoomKey) {
       onLoadingChange(true);
       const avatarToUse = selectedAvatar || "user";
-      joinRoom(name, savedRoomKey, undefined, avatarToUse)
-        .then(async ({ room: joinedRoom, defaults }) => {
+      joinRoom(name, savedRoomKey, undefined, avatarToUse, savedAuthToken || undefined)
+        .then(async ({ room: joinedRoom, defaults, authToken }) => {
           await applyServerDefaults(defaults);
           await upsertRoom(joinedRoom);
           safeLocalStorage.set("sprintjam_roomKey", joinedRoom.key);
+          if (authToken) {
+            safeLocalStorage.set("sprintjam_authToken", authToken);
+          } else {
+            safeLocalStorage.remove("sprintjam_authToken");
+          }
+          onAuthTokenRefresh?.(authToken ?? null);
           onReconnectSuccess(joinedRoom.key, joinedRoom.moderator === name);
         })
         .catch((err) => {
@@ -60,6 +69,8 @@ export const useAutoReconnect = ({
             err instanceof Error ? err.message : "Failed to reconnect to room";
           onReconnectError(errorMessage);
           safeLocalStorage.remove("sprintjam_roomKey");
+          safeLocalStorage.remove("sprintjam_authToken");
+          onAuthTokenRefresh?.(null);
         })
         .finally(() => onLoadingChange(false));
     }
@@ -72,5 +83,6 @@ export const useAutoReconnect = ({
     onReconnectError,
     onLoadingChange,
     applyServerDefaults,
+    onAuthTokenRefresh,
   ]);
 };
