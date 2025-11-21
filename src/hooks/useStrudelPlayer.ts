@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 // @ts-ignore - no types available
-import { initStrudel, evaluate, hush } from "@strudel/web";
+import { initStrudel, evaluate, hush, setDefaultValue } from '@strudel/web';
 
 import { prebake } from "../lib/strudel";
 import { safeLocalStorage } from "../utils/storage";
-import { MUTE_STORAGE_KEY } from "../constants";
+import { MUTE_STORAGE_KEY, VOLUME_STORAGE_KEY } from '../constants';
 
 let sharedInitPromise: Promise<void> | null = null;
 let sharedInitialized = false;
@@ -18,9 +18,11 @@ interface UseStrudelPlayerReturn {
   isMuted: boolean;
   isLoading: boolean;
   isInitialized: boolean;
+  volume: number;
   play: () => Promise<void>;
   pause: () => void;
   toggleMute: () => void;
+  setVolume: (value: number) => void;
   playCode: (code: StrudelCodePayload) => Promise<void>;
   stop: () => void;
 }
@@ -37,10 +39,10 @@ interface StrudelCodeObjectPayload {
 type StrudelCodePayload = string | StrudelCodeObjectPayload;
 
 const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === "string" && value.length > 0;
+  typeof value === 'string' && value.length > 0;
 
 const extractCodeFromObjectPayload = (
-  payload: StrudelCodeObjectPayload,
+  payload: StrudelCodeObjectPayload
 ): string | null => {
   if (isNonEmptyString(payload.code)) {
     return payload.code;
@@ -63,30 +65,30 @@ const tryParseJson = (value: string): unknown | null => {
 };
 
 const parseStrudelCodePayload = (payload: StrudelCodePayload): string => {
-  if (typeof payload === "string") {
+  if (typeof payload === 'string') {
     const trimmed = payload.trim();
 
     if (!trimmed) {
-      throw new Error("Received empty Strudel code payload");
+      throw new Error('Received empty Strudel code payload');
     }
 
-    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
       const parsed = tryParseJson(trimmed);
       if (parsed !== null) {
-        if (typeof parsed === "string" && isNonEmptyString(parsed)) {
+        if (typeof parsed === 'string' && isNonEmptyString(parsed)) {
           return parsed;
         }
 
-        if (parsed && typeof parsed === "object") {
+        if (parsed && typeof parsed === 'object') {
           const parsedCode = extractCodeFromObjectPayload(
-            parsed as StrudelCodeObjectPayload,
+            parsed as StrudelCodeObjectPayload
           );
           if (parsedCode) {
             return parsedCode;
           }
         }
 
-        throw new Error("Strudel payload missing code property");
+        throw new Error('Strudel payload missing code property');
       }
     }
 
@@ -98,11 +100,11 @@ const parseStrudelCodePayload = (payload: StrudelCodePayload): string => {
     return extracted;
   }
 
-  throw new Error("Strudel payload missing code property");
+  throw new Error('Strudel payload missing code property');
 };
 
 export function useStrudelPlayer(
-  options: UseStrudelPlayerOptions = {},
+  options: UseStrudelPlayerOptions = {}
 ): UseStrudelPlayerReturn {
   const { onError } = options;
 
@@ -110,7 +112,15 @@ export function useStrudelPlayer(
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(() => {
     const stored = safeLocalStorage.get(MUTE_STORAGE_KEY);
-    return stored === "true";
+    return stored === 'true';
+  });
+  const [volume, setVolumeState] = useState(() => {
+    const stored = safeLocalStorage.get(VOLUME_STORAGE_KEY);
+    const parsed = stored ? Number.parseFloat(stored) : NaN;
+    if (Number.isFinite(parsed)) {
+      return Math.min(Math.max(parsed, 0), 1);
+    }
+    return 0.3;
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -118,7 +128,7 @@ export function useStrudelPlayer(
   const initPromiseRef = useRef<Promise<void> | null>(null);
   const currentCodeRef = useRef<string | null>(null);
   const isPlayingRef = useRef(false);
-  const onErrorRef = useRef<UseStrudelPlayerOptions["onError"]>(onError);
+  const onErrorRef = useRef<UseStrudelPlayerOptions['onError']>(onError);
   const reportError = useCallback((error: Error) => {
     onErrorRef.current?.(error);
   }, []);
@@ -132,12 +142,12 @@ export function useStrudelPlayer(
     return () => {
       isMountedRef.current = false;
       try {
-        console.info("StrudelPlayer] Cleaning up Strudel");
+        console.info('StrudelPlayer] Cleaning up Strudel');
         if (sharedInitialized || sharedInitPromise || initPromiseRef.current) {
           hush();
         }
       } catch (e) {
-        console.error("Failed to clean up Strudel:", e);
+        console.error('Failed to clean up Strudel:', e);
       }
     };
   }, []);
@@ -169,11 +179,11 @@ export function useStrudelPlayer(
               setIsInitialized(true);
             }
           } catch (error) {
-            console.error("Failed to initialize Strudel:", error);
+            console.error('Failed to initialize Strudel:', error);
             reportError(
               error instanceof Error
                 ? error
-                : new Error("Failed to initialize Strudel"),
+                : new Error('Failed to initialize Strudel')
             );
             throw error;
           } finally {
@@ -189,6 +199,13 @@ export function useStrudelPlayer(
     safeLocalStorage.set(MUTE_STORAGE_KEY, String(isMuted));
   }, [isMuted]);
 
+  useEffect(() => {
+    const clampedVolume = Math.min(Math.max(volume, 0), 1);
+    safeLocalStorage.set(VOLUME_STORAGE_KEY, String(clampedVolume));
+    setDefaultValue('postgain', clampedVolume);
+    setDefaultValue('gain', clampedVolume);
+  }, [volume]);
+
   const play = useCallback(async () => {
     if (!currentCodeRef.current || isMuted) return;
 
@@ -203,10 +220,10 @@ export function useStrudelPlayer(
       console.info(`StrudelPlayer] Playing code:`, currentCodeRef.current);
       setIsPlaying(true);
     } catch (error) {
-      console.error("Failed to play:", error);
+      console.error('Failed to play:', error);
       if (onErrorRef.current) {
         reportError(
-          error instanceof Error ? error : new Error("Failed to play"),
+          error instanceof Error ? error : new Error('Failed to play')
         );
       }
     }
@@ -219,14 +236,14 @@ export function useStrudelPlayer(
     }
 
     try {
-      console.info("StrudelPlayer] Pausing playback");
+      console.info('StrudelPlayer] Pausing playback');
       hush();
       setIsPlaying(false);
     } catch (error) {
-      console.error("Failed to pause:", error);
+      console.error('Failed to pause:', error);
       if (onErrorRef.current) {
         reportError(
-          error instanceof Error ? error : new Error("Failed to pause"),
+          error instanceof Error ? error : new Error('Failed to pause')
         );
       }
     }
@@ -240,15 +257,15 @@ export function useStrudelPlayer(
     }
 
     try {
-      console.info("StrudelPlayer] Stopping playback");
+      console.info('StrudelPlayer] Stopping playback');
       hush();
       setIsPlaying(false);
       currentCodeRef.current = null;
     } catch (error) {
-      console.error("Failed to stop:", error);
+      console.error('Failed to stop:', error);
       if (onErrorRef.current) {
         reportError(
-          error instanceof Error ? error : new Error("Failed to stop"),
+          error instanceof Error ? error : new Error('Failed to stop')
         );
       }
     }
@@ -260,21 +277,27 @@ export function useStrudelPlayer(
 
     if (newMuted && isPlayingRef.current) {
       try {
-        console.info("StrudelPlayer] Muting playback");
+        console.info('StrudelPlayer] Muting playback');
         if (isInitialized || initPromiseRef.current) {
           hush();
         }
         setIsPlaying(false);
       } catch (error) {
-        console.error("Failed to mute:", error);
+        console.error('Failed to mute:', error);
       }
     }
   }, [isMuted, isInitialized]);
 
+  const setVolume = useCallback((value: number) => {
+    if (Number.isFinite(value)) {
+      setVolumeState(Math.min(Math.max(value, 0), 1));
+    }
+  }, []);
+
   const playCode = useCallback(
     async (code: StrudelCodePayload) => {
       if (code == null) {
-        console.warn("No Strudel code provided");
+        console.warn('No Strudel code provided');
         return;
       }
 
@@ -291,12 +314,12 @@ export function useStrudelPlayer(
       if (isPlayingRef.current) {
         try {
           console.info(
-            "StrudelPlayer] Stopping existing playback before playing new code",
+            'StrudelPlayer] Stopping existing playback before playing new code'
           );
           hush();
           setIsPlaying(false);
         } catch (error) {
-          console.error("Failed to stop existing playback:", error);
+          console.error('Failed to stop existing playback:', error);
         }
       }
 
@@ -307,8 +330,8 @@ export function useStrudelPlayer(
         const errorMessage =
           parseError instanceof Error
             ? parseError.message
-            : "Invalid Strudel code payload";
-        console.error("Failed to parse Strudel response:", parseError);
+            : 'Invalid Strudel code payload';
+        console.error('Failed to parse Strudel response:', parseError);
         reportError(new Error(errorMessage));
         setIsPlaying(false);
         setIsLoading(false);
@@ -316,7 +339,7 @@ export function useStrudelPlayer(
       }
 
       try {
-        console.info("StrudelPlayer] Stopping any existing playback");
+        console.info('StrudelPlayer] Stopping any existing playback');
         hush();
 
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -329,11 +352,11 @@ export function useStrudelPlayer(
           setIsPlaying(false);
         }
       } catch (error) {
-        console.error("Failed to play Strudel code:", error);
+        console.error('Failed to play Strudel code:', error);
         const errorMessage =
           error instanceof Error
             ? `Invalid Strudel code: ${error.message}`
-            : "Failed to play code";
+            : 'Failed to play code';
 
         reportError(new Error(errorMessage));
         setIsPlaying(false);
@@ -341,7 +364,7 @@ export function useStrudelPlayer(
         setIsLoading(false);
       }
     },
-    [ensureInitialized, isMuted, reportError],
+    [ensureInitialized, isMuted, reportError]
   );
 
   return {
@@ -349,9 +372,11 @@ export function useStrudelPlayer(
     isMuted,
     isLoading,
     isInitialized,
+    volume,
     play,
     pause,
     toggleMute,
+    setVolume,
     playCode,
     stop,
   };

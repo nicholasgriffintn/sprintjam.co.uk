@@ -1,15 +1,15 @@
 import { type FC, useCallback, useEffect, useState } from "react";
-import { Music, X } from "lucide-react";
-import { useRef } from "react";
+import { Music, X, Volume2 } from 'lucide-react';
+import { useRef } from 'react';
 
-import { SurfaceCard } from "../ui/SurfaceCard";
-import { StrudelControls } from "./StrudelControls";
-import { useStrudelPlayer } from "../../hooks/useStrudelPlayer";
+import { SurfaceCard } from '../ui/SurfaceCard';
+import { StrudelControls } from './StrudelControls';
+import { useStrudelPlayer } from '../../hooks/useStrudelPlayer';
 import {
   requestStrudelGeneration,
   toggleStrudelPlayback,
-} from "../../lib/api-service";
-import type { RoomData } from "../../types";
+} from '../../lib/api-service';
+import type { RoomData } from '../../types';
 
 interface StrudelMiniPlayerProps {
   roomData: RoomData;
@@ -28,7 +28,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     setTimeout(() => setError(null), 5000);
   }, []);
 
-  const { isMuted, isLoading, pause, toggleMute, playCode } =
+  const { isMuted, isLoading, pause, toggleMute, playCode, setVolume, volume } =
     useStrudelPlayer({
       onError: (err) => {
         showTemporaryError(err.message);
@@ -50,9 +50,9 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
 
     const signature = [
       roomData.currentStrudelCode,
-      isPlaying ? "1" : "0",
-      isMuted ? "1" : "0",
-    ].join("|");
+      isPlaying ? '1' : '0',
+      isMuted ? '1' : '0',
+    ].join('|');
 
     if (lastPlaybackSignatureRef.current === signature) {
       return;
@@ -81,7 +81,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
 
   const triggerGeneration = useCallback(() => {
     if (!isModeratorView) {
-      showTemporaryError("Waiting for the moderator to generate music");
+      showTemporaryError('Waiting for the moderator to generate music');
       return;
     }
 
@@ -97,14 +97,14 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     } catch (err) {
       setIsAwaitingGeneration(false);
       showTemporaryError(
-        err instanceof Error ? err.message : "Failed to generate music",
+        err instanceof Error ? err.message : 'Failed to generate music'
       );
     }
   }, [isModeratorView, isAwaitingGeneration, showTemporaryError]);
 
   const handlePlayPause = async () => {
     if (!isModeratorView) {
-      showTemporaryError("Only the moderator can control playback");
+      showTemporaryError('Only the moderator can control playback');
       return;
     }
 
@@ -117,7 +117,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
       toggleStrudelPlayback();
     } catch (err) {
       showTemporaryError(
-        err instanceof Error ? err.message : "Failed to toggle playback",
+        err instanceof Error ? err.message : 'Failed to toggle playback'
       );
     }
   };
@@ -132,15 +132,15 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-end sm:left-auto sm:right-4 sm:w-auto">
       <SurfaceCard
         variant="subtle"
-        padding={isExpanded ? "sm" : "none"}
+        padding={isExpanded ? 'sm' : 'none'}
         className={`relative origin-bottom-right overflow-hidden transition-all duration-300 ${
           isExpanded
-            ? "w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]"
-            : "flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl"
+            ? 'w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]'
+            : 'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl'
         }`}
         aria-expanded={isExpanded}
-        role={!isExpanded ? "button" : undefined}
-        aria-label={!isExpanded ? "Expand Strudel player" : undefined}
+        role={!isExpanded ? 'button' : undefined}
+        aria-label={!isExpanded ? 'Expand Strudel player' : undefined}
         tabIndex={!isExpanded ? 0 : undefined}
         onClick={
           !isExpanded
@@ -152,7 +152,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
         onKeyDown={
           !isExpanded
             ? (event) => {
-                if (event.key === "Enter" || event.key === " ") {
+                if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
                   setIsExpanded(true);
                 }
@@ -187,26 +187,41 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCode
-                      ? `${isPlaying ? "Playing" : "Paused"} • ${
-                          roomData.strudelPhase || "Unknown"
+                      ? `${isPlaying ? 'Playing' : 'Paused'} • ${
+                          roomData.strudelPhase || 'Unknown'
                         } phase`
-                      : "No music generated yet"}
+                      : 'No music generated yet'}
                   </span>
                 </div>
               </div>
 
-              <div className="w-full sm:w-auto">
-                <StrudelControls
-                  isPlaying={isPlaying}
-                  isMuted={isMuted}
-                  isLoading={isLoading || isAwaitingGeneration}
-                  onPlayPause={handlePlayPause}
-                  onToggleMute={toggleMute}
-                  onGenerate={isModeratorView ? handleGenerate : undefined}
-                  showGenerateButton={isModeratorView}
-                  disabled={!hasCode && !isModeratorView}
-                />
-              </div>
+              <StrudelControls
+                isPlaying={isPlaying}
+                isMuted={isMuted}
+                isLoading={isLoading || isAwaitingGeneration}
+                onPlayPause={handlePlayPause}
+                onToggleMute={toggleMute}
+                onGenerate={isModeratorView ? handleGenerate : undefined}
+                showGenerateButton={isModeratorView}
+                disabled={!hasCode && !isModeratorView}
+              />
+            </div>
+
+            <div className="mt-4 flex items-center gap-3 border-t border-slate-200/50 pt-3 dark:border-slate-700/50">
+              <Volume2 className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={volume}
+                onChange={(event) => setVolume(Number(event.target.value))}
+                className="h-1.5 flex-1 accent-brand-500"
+                aria-label="Strudel volume"
+              />
+              <span className="min-w-[2.5rem] shrink-0 text-xs font-medium tabular-nums text-slate-700 dark:text-slate-200">
+                {Math.round(volume * 100)}%
+              </span>
             </div>
 
             {error && (
