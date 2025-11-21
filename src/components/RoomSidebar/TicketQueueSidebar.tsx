@@ -1,16 +1,19 @@
-import { FC, useMemo, useId } from "react";
+import { FC, useMemo, useId, useState } from 'react';
 import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 
-import type { RoomData, TicketQueueItem } from '../types';
-import { SurfaceCard } from './ui/SurfaceCard';
-import { HorizontalProgress } from './ui/HorizontalProgress';
+import type { RoomData, TicketQueueItem } from '../../types';
+import { SurfaceCard } from '../ui/SurfaceCard';
+import { HorizontalProgress } from '../ui/HorizontalProgress';
+import { cn } from '../../lib/cn';
 
 interface TicketQueueSidebarProps {
-  roomData: RoomData;
+  roomData: RoomData | null;
   canManageQueue: boolean;
   onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onViewQueue: () => void;
   className?: string;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
@@ -19,11 +22,14 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   onUpdateTicket,
   onViewQueue,
   className,
+  isCollapsed,
+  onToggleCollapse,
 }) => {
   const ticketQueueId = useId();
   const progressLabelId = `${ticketQueueId}-progress`;
+  const [localCollapsed, setLocalCollapsed] = useState(false);
 
-  const queue = roomData.ticketQueue || [];
+  const queue = roomData?.ticketQueue || [];
   const pending = useMemo(
     () => queue.filter((t) => t.status === 'pending'),
     [queue]
@@ -39,8 +45,18 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
       ? 'No tickets yet'
       : `${completedCount}/${totalCount} completed`;
 
-  const current = roomData.currentTicket;
+  const current = roomData?.currentTicket;
   const next = pending[0];
+
+  const collapsed = isCollapsed ?? localCollapsed;
+
+  const handleToggle = () => {
+    if (onToggleCollapse) {
+      onToggleCollapse();
+      return;
+    }
+    setLocalCollapsed((prev) => !prev);
+  };
 
   const moveTicket = (ticketId: number, direction: 'up' | 'down') => {
     const tickets = [...pending];
@@ -139,28 +155,57 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   };
 
   return (
-    <aside className={className ?? 'flex w-full flex-col gap-3'}>
+    <aside className={cn('flex h-full flex-col', className)}>
       <SurfaceCard
-        padding="sm"
-        className="shadow-lg border border-slate-200/80 dark:border-slate-800"
+        padding="none"
+        className="flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800"
       >
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-              <span>Queue</span>
+        <div
+          className={cn(
+            'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
+            collapsed && 'border-b-0 py-2',
+          )}
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <span className="inline-flex items-center gap-2">
+              Queue
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/60 dark:text-amber-200">
                 Beta
               </span>
-            </div>
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
             <button
               onClick={onViewQueue}
               data-testid="queue-expand"
-              className="cursor-pointer text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 hover:text-blue-500 dark:text-blue-300"
+              className="cursor-pointer rounded-md px-3 py-1 text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 transition hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:text-blue-300"
             >
               Expand
             </button>
+            <button
+              type="button"
+              onClick={handleToggle}
+              aria-label={
+                collapsed ? 'Expand ticket queue' : 'Collapse ticket queue'
+              }
+              aria-expanded={!collapsed}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-white/10 dark:text-white"
+            >
+              {collapsed ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
+            </button>
           </div>
+        </div>
 
+        <div
+          className={cn(
+            'flex-1 space-y-3 overflow-y-auto px-4 py-4',
+            collapsed && 'hidden'
+          )}
+        >
           <div
             id={progressLabelId}
             className="flex flex-col gap-0.5 text-sm text-slate-700 dark:text-slate-200"

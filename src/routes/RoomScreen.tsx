@@ -7,7 +7,6 @@ import { useRoomStats } from '../hooks/useRoomStats';
 import { useConsensusCelebration } from '../hooks/useConsensusCelebration';
 import ErrorBanner from '../components/ui/ErrorBanner';
 import Header from '../components/Header';
-import { ParticipantsList } from '../components/ParticipantsList';
 import { Timer } from '../components/Timer';
 import { UserEstimate } from '../components/UserEstimate';
 import { ResultsControls } from '../components/ResultsControls';
@@ -17,10 +16,10 @@ import { SurfaceCard } from '../components/ui/SurfaceCard';
 import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
 import { FallbackLoading } from '../components/ui/FallbackLoading';
 import { TicketQueueModal } from '../components/TicketQueueModal';
-import { TicketQueueSidebar } from '../components/TicketQueueSidebar';
 import { PrePointingSummaryModal } from '../components/modals/PrePointingSummaryModal';
 import { ErrorBannerAuth } from '../components/ErrorBannerAuth';
 import { ErrorBannerConnection } from '../components/ErrorBannerConnection';
+import { RoomSidebar } from '../components/RoomSidebar';
 
 const SettingsModal = lazy(() => import('../components/SettingsModal'));
 const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
@@ -58,9 +57,11 @@ const RoomScreen = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
+
   if (!roomData || !serverDefaults) {
     return <FallbackLoading />;
   }
+
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
 
   const stats = useRoomStats(roomData);
@@ -106,28 +107,18 @@ const RoomScreen = () => {
       />
 
       <motion.div
-        className="flex flex-1 flex-col gap-4 px-4 py-0 md:grid md:grid-cols-[1fr_3fr] md:px-4"
+        className="flex flex-1 flex-col py-0 md:grid md:grid-cols-[minmax(280px,360px)_1fr] md:items-start"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex flex-col gap-4 border-b border-white/30 dark:border-white/10 md:h-full md:border-b-0 md:border-r">
-          <ParticipantsList roomData={roomData} stats={stats} name={name} />
-          {isQueueEnabled && (
-            <TicketQueueSidebar
-              roomData={roomData}
-              canManageQueue={
-                isModeratorView ||
-                roomData.settings.allowOthersToManageQueue === true
-              }
-              onViewQueue={() => setIsQueueModalOpen(true)}
-              onUpdateTicket={handleUpdateTicket}
-              className="flex flex-col gap-3 px-0 md:mt-auto md:pr-4 md:py-5"
-            />
-          )}
-        </div>
+        <RoomSidebar
+          isQueueEnabled={isQueueEnabled}
+          stats={stats}
+          setIsQueueModalOpen={setIsQueueModalOpen}
+        />
 
-        <div className="flex flex-col gap-4 py-3 md:py-5">
+        <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
           {roomData.settings.showTimer && <Timer />}
 
           {roomData.settings.enableStrudelPlayer && (

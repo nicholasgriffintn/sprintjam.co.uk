@@ -2,15 +2,21 @@ import { useId, useMemo, useState, memo } from "react";
 import { Users, ChevronDown, ChevronUp, Crown, User } from "lucide-react";
 import { motion } from "framer-motion";
 
-import type { RoomData, RoomStats } from "../types";
-import { getAvatarInfo } from "../utils/avatars";
-import { Badge } from "./ui/Badge";
-import { HorizontalProgress } from "./ui/HorizontalProgress";
+import type { RoomData, RoomStats } from "../../types";
+import { getAvatarInfo } from "../../utils/avatars";
+import { Badge } from "../ui/Badge";
+import { HorizontalProgress } from "../ui/HorizontalProgress";
+import { cn } from '../../lib/cn';
+import { SurfaceCard } from '../ui/SurfaceCard';
 
 export type ParticipantsListProps = {
-  roomData: RoomData;
+  roomData: RoomData | null;
   stats: RoomStats;
   name: string;
+  className?: string;
+  contentClassName?: string;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 };
 
 type ParticipantItemProps = {
@@ -57,8 +63,8 @@ const ParticipantItem = memo(
             <div
               className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
                 isConnected
-                  ? "border-emerald-300 dark:border-emerald-600"
-                  : "border-slate-200 dark:border-slate-600"
+                  ? 'border-emerald-300 dark:border-emerald-600'
+                  : 'border-slate-200 dark:border-slate-600'
               }`}
             >
               {(() => {
@@ -76,7 +82,7 @@ const ParticipantItem = memo(
           )}
           <span
             className={`flex items-center gap-2 text-sm ${
-              user === currentUser ? "font-semibold" : ""
+              user === currentUser ? 'font-semibold' : ''
             }`}
           >
             {!hideParticipantNames && (
@@ -94,89 +100,111 @@ const ParticipantItem = memo(
         </div>
         {vote !== undefined && vote !== null && (
           <Badge
-            variant={showVotes ? "success" : "default"}
+            variant={showVotes ? 'success' : 'default'}
             className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
           >
-            {anonymousVotes && showVotes ? "✓" : showVotes ? vote : "✓"}
+            {anonymousVotes && showVotes ? '✓' : showVotes ? vote : '✓'}
           </Badge>
         )}
       </motion.li>
     );
-  },
+  }
 );
 
-ParticipantItem.displayName = "ParticipantItem";
+ParticipantItem.displayName = 'ParticipantItem';
 
 export const ParticipantsList = memo(function ParticipantsList({
   roomData,
   stats,
   name,
+  className,
+  contentClassName,
+  isCollapsed,
+  onToggleCollapse,
 }: ParticipantsListProps) {
   const votingProgress = useMemo(() => {
+    if (!roomData) {
+      return 0;
+    }
     return roomData.users.length > 0
       ? Math.round((stats.votedUsers / roomData.users.length) * 100)
       : 0;
-  }, [stats.votedUsers, roomData.users.length]);
+  }, [stats.votedUsers, roomData?.users.length]);
 
-  const [isParticipantsExpanded, setIsParticipantsExpanded] = useState(false);
+  const [localCollapsed, setLocalCollapsed] = useState(false);
   const participantsSectionId = useId();
   const contentId = `${participantsSectionId}-content`;
   const headingId = `${participantsSectionId}-heading`;
   const progressLabelId = `${participantsSectionId}-progress`;
+  const collapsed = isCollapsed ?? localCollapsed;
+
+  const handleToggle = () => {
+    if (onToggleCollapse) {
+      onToggleCollapse();
+      return;
+    }
+    setLocalCollapsed((prev) => !prev);
+  };
 
   return (
-    <div
+    <SurfaceCard
       data-testid="participants-panel"
-      className={`w-full flex-shrink-0 bg-transparent px-0 md:pr-4 md:py-5 ${
-        isParticipantsExpanded ? "py-3" : "py-2"
-      }`}
+      className={cn(
+        'flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800',
+        className
+      )}
+      padding="none"
       role="region"
       aria-labelledby={headingId}
     >
       <div
-        className={`flex items-center justify-between ${
-          isParticipantsExpanded ? "pb-3" : "pb-0 md:pb-3"
-        }`}
+        className={cn(
+          'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
+          collapsed && 'border-b-0 py-2',
+        )}
       >
         <h2
           id={headingId}
-          className="flex items-center text-lg font-semibold text-slate-900 dark:text-white"
+          className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
         >
-          <Users size={18} className="mr-2 hidden md:inline-flex" />
-          Participants ({roomData.users.length})
+          <Users size={18} className="hidden md:inline-flex" />
+          <span className="inline-flex items-center gap-1 leading-none">
+            Participants
+            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+              {roomData?.users.length}
+            </span>
+          </span>
         </h2>
         <button
           type="button"
-          className="inline-flex rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 dark:border-white/10 dark:bg-white/10 dark:text-white md:hidden"
-          onClick={() => setIsParticipantsExpanded(!isParticipantsExpanded)}
+          className="inline-flex items-center rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-white/10 dark:text-white"
+          onClick={handleToggle}
           aria-label={
-            isParticipantsExpanded
-              ? "Collapse participants"
-              : "Expand participants"
+            collapsed ? 'Expand participants' : 'Collapse participants'
           }
-          aria-expanded={isParticipantsExpanded}
+          aria-expanded={!collapsed}
           aria-controls={contentId}
           data-testid="participants-toggle"
         >
-          {isParticipantsExpanded ? (
-            <ChevronUp size={20} />
-          ) : (
-            <ChevronDown size={20} />
-          )}
+          {collapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
         </button>
       </div>
       <div
         id={contentId}
-        className={`${isParticipantsExpanded ? "block" : "hidden md:block"}`}
+        className={cn(
+          'flex-1 space-y-3 overflow-y-auto px-4 py-4',
+          collapsed && 'hidden',
+          contentClassName
+        )}
       >
-        <div className="mb-3">
+        <div>
           <div
             id={progressLabelId}
-            className="mb-1 flex justify-between text-sm text-slate-700 dark:text-slate-200 mb-2"
+            className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
           >
             <span>Voting progress</span>
             <span>
-              {stats.votedUsers}/{roomData.users.length}
+              {stats.votedUsers}/{roomData?.users.length}
             </span>
           </div>
           <HorizontalProgress
@@ -188,12 +216,12 @@ export const ParticipantsList = memo(function ParticipantsList({
             aria-valuemax={100}
             aria-label="Voting progress"
             aria-describedby={progressLabelId}
-            aria-valuetext={`${stats.votedUsers} of ${roomData.users.length} participants have voted`}
+            aria-valuetext={`${stats.votedUsers} of ${roomData?.users.length} participants have voted`}
             data-testid="voting-progress-bar"
           />
         </div>
-        <ul className="space-y-2" data-testid="participants-list">
-          {roomData.users.map((user: string, index: number) => (
+        <ul className="space-y-2 pr-1" data-testid="participants-list">
+          {roomData?.users.map((user: string, index: number) => (
             <ParticipantItem
               key={user}
               user={user}
@@ -210,6 +238,6 @@ export const ParticipantsList = memo(function ParticipantsList({
           ))}
         </ul>
       </div>
-    </div>
+    </SurfaceCard>
   );
 });

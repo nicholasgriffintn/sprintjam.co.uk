@@ -45,3 +45,9 @@ export async function waitForA11yReady(page: Page) {
   // Wait a bit for any animations to settle
   await page.waitForTimeout(300);
 }
+
+export async function scrollToBottom(page: Page) {
+  await page.evaluate(() => {
+    window.scrollTo(0, document.body.scrollHeight);
+  });
+}

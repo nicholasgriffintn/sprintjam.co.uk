@@ -32,8 +32,8 @@ export function ResultsControls({
 }) {
   const voteToggleLabel = roomData.showVotes ? "Hide Votes" : "Show Votes";
   const voteToggleClasses = roomData.showVotes
-    ? `${buttonBase} bg-amber-600/90 text-slate-900 hover:bg-amber-700 focus-visible:ring-amber-200 focus-visible:ring-offset-amber-950/20`
-    : `${buttonBase} bg-blue-600/90 text-white hover:bg-blue-700 focus-visible:ring-blue-200 focus-visible:ring-offset-slate-900/30`;
+    ? `${buttonBase} bg-amber-600/90 text-white hover:bg-amber-700 focus-visible:ring-amber-100 focus-visible:ring-offset-amber-950/30`
+    : `${buttonBase} bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-200 focus-visible:ring-offset-slate-900/30`;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pb-3 text-gray-900 dark:text-white">
@@ -69,7 +69,7 @@ export function ResultsControls({
             type="button"
             data-testid="reset-votes-button"
             onClick={onResetVotes}
-            className={`${buttonBase} bg-red-500/80 text-white/95 shadow-red-900/20 hover:bg-red-600/90 focus-visible:ring-red-200/60 focus-visible:ring-offset-red-950/25`}
+            className={`${buttonBase} bg-red-600 text-white shadow-red-900/25 hover:bg-red-700 focus-visible:ring-red-200/70 focus-visible:ring-offset-red-950/25`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >

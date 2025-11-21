@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 
 import type { RoomData, RoomStats } from "../../types";
+import { getContrastingTextColor } from '../../utils/colors';
 
 export type VoteDistributionViewMode = "count" | "percentage" | "cumulative";
 
@@ -26,6 +27,7 @@ export function VoteDistribution({
           (m) => m.value === option,
         );
         const background = metadata?.background || "#ebf5ff";
+        const labelTextColor = getContrastingTextColor(background);
         const voteCount = stats.distribution[option] || 0;
         cumulativeCount += voteCount;
         const asPercentage = voteTotal > 0 ? (voteCount / voteTotal) * 100 : 0;
@@ -60,8 +62,8 @@ export function VoteDistribution({
             }}
           >
             <div
-              className="w-10 text-center font-medium rounded text-black"
-              style={{ backgroundColor: background }}
+              className="w-10 text-center font-medium rounded"
+              style={{ backgroundColor: background, color: labelTextColor }}
             >
               {option}
             </div>
@@ -79,10 +81,12 @@ export function VoteDistribution({
                 />
               </div>
             </div>
-            <div className="w-32 text-right text-xs font-medium text-slate-600 dark:text-white">
-              <div>{displayLabel}</div>
-              <div className="text-[11px] text-slate-500 dark:text-white">
-                {viewMode === "count"
+            <div className="w-32 text-right space-y-0.5">
+              <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                {displayLabel}
+              </div>
+              <div className="text-[11px] text-slate-700 dark:text-slate-300">
+                {viewMode === 'count'
                   ? `${asPercentage.toFixed(1)}% of votes`
                   : `${voteCount} votes`}
               </div>

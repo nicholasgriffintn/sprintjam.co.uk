@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { checkA11y, waitForA11yReady } from "../../helpers/a11y-helpers";
+import {
+  checkA11y,
+  waitForA11yReady,
+  scrollToBottom,
+} from '../../helpers/a11y-helpers';
 
 test.describe("Room Screen Accessibility", () => {
   test.beforeEach(async ({ page }) => {
@@ -18,8 +22,9 @@ test.describe("Room Screen Accessibility", () => {
     const createButton = page.getByTestId("create-room-submit");
     await expect(createButton).toBeVisible();
     await createButton.click();
+    await expect(page.getByTestId('participants-panel')).toBeVisible();
     await waitForA11yReady(page);
-    await expect(page.getByTestId("participants-panel")).toBeVisible();
+    await scrollToBottom(page);
   });
 
   test("should not have any WCAG A & AA violations", async ({ page }) => {
