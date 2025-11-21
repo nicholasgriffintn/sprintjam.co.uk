@@ -3,9 +3,11 @@ import { defineConfig, devices } from "@playwright/test";
 const isCI = !!process.env.CI;
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:5173";
 const shouldStartWebServer = !process.env.E2E_BASE_URL;
+const shouldRunA11y = process.env.PLAYWRIGHT_RUN_A11Y === "1";
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  testIgnore: shouldRunA11y ? [] : ["**/a11y/**"],
   timeout: 120_000,
   expect: {
     timeout: 15_000,
