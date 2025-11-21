@@ -111,10 +111,14 @@ test.describe("SprintJam Jira integration journeys", () => {
         .toBeTruthy();
 
       await page.getByTestId("queue-expand").click();
+      const reopenedDialog = page.getByRole("dialog", { name: "Ticket Queue" });
+      await expect(reopenedDialog).toBeVisible();
+      await expect(reopenedDialog).toContainText(ticketKey);
+      await reopenedDialog.getByTestId("queue-tab-history").click();
       await expect(
-        page.getByRole("dialog", { name: "Ticket Queue" }),
-      ).toContainText(ticketKey);
-      await page.getByRole("button", { name: "Close modal" }).click();
+        reopenedDialog.getByTestId("queue-history-tab-panel"),
+      ).toBeVisible();
+      await reopenedDialog.getByRole("button", { name: "Close modal" }).click();
     } finally {
       await cleanup();
     }

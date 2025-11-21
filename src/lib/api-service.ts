@@ -21,7 +21,6 @@ import {
 
 let activeSocket: WebSocket | null = null;
 let activeAuthToken: string | null = null;
-let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_BASE_DELAY = 1000;
@@ -79,9 +78,11 @@ export async function createRoom(
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
+      const error = new Error(
         errorData.error || `Failed to create room: ${response.status}`
-      );
+      ) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
     }
 
     const data = (await response.json()) as {
@@ -137,9 +138,11 @@ export async function joinRoom(
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
+      const error = new Error(
         errorData.error || `Failed to join room: ${response.status}`
-      );
+      ) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
     }
 
     const data = (await response.json()) as {
@@ -266,6 +269,7 @@ export function connectToRoom(
         triggerEventListeners('error', {
           type: 'error',
           error: 'Session expired. Please rejoin the room.',
+          closeCode: event.code,
         });
         activeAuthToken = null;
         safeLocalStorage.remove('sprintjam_authToken');
@@ -276,6 +280,7 @@ export function connectToRoom(
         triggerEventListeners('error', {
           type: 'error',
           error: 'Disconnected due to inactivity. Reconnecting...',
+          closeCode: event.code,
         });
       }
 
@@ -290,6 +295,7 @@ export function connectToRoom(
       triggerEventListeners('error', {
         type: 'error',
         error: 'Connection error occurred',
+        closeCode: 1006,
       });
     };
 

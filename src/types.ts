@@ -1,26 +1,34 @@
+export type ErrorKind = string;
+
+export type ErrorConnectionIssue = {
+  type: string;
+  message: string;
+  reconnecting?: boolean;
+};
+
 export type VoteValue = string | number;
 
 export type JudgeAlgorithm =
-  | "smartConsensus"
-  | "conservativeMode"
-  | "optimisticMode"
-  | "simpleAverage";
+  | 'smartConsensus'
+  | 'conservativeMode'
+  | 'optimisticMode'
+  | 'simpleAverage';
 
-export type TaskSize = "xs" | "sm" | "md" | "lg" | "xl";
+export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export type AvatarId =
-  | "user"
-  | "robot"
-  | "bear"
-  | "bird"
-  | "knight"
-  | "alien"
-  | "ninja"
-  | "pirate"
-  | "wizard"
-  | "ghost"
-  | "dragon"
-  | "crown"
+  | 'user'
+  | 'robot'
+  | 'bear'
+  | 'bird'
+  | 'knight'
+  | 'alien'
+  | 'ninja'
+  | 'pirate'
+  | 'wizard'
+  | 'ghost'
+  | 'dragon'
+  | 'crown'
   | string;
 
 export interface TicketVote {
@@ -39,12 +47,12 @@ export interface TicketQueueItem {
   ticketId: string;
   title?: string;
   description?: string;
-  status: "pending" | "in_progress" | "completed";
+  status: 'pending' | 'in_progress' | 'completed';
   outcome?: string;
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: "jira" | "none";
+  externalService: 'jira' | 'none';
   externalServiceId?: string;
   externalServiceMetadata?: TicketMetadata;
   votes?: TicketVote[];
@@ -142,7 +150,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: "jira" | "none";
+  externalService?: 'jira' | 'none';
   autoUpdateJiraStoryPoints?: boolean;
   enableTicketQueue?: boolean;
   enableStructuredVoting?: boolean;
@@ -167,7 +175,7 @@ export interface ServerDefaults {
 }
 
 export interface JudgeMetadata {
-  confidence: "high" | "medium" | "low";
+  confidence: 'high' | 'medium' | 'low';
   needsDiscussion: boolean;
   reasoning: string;
   algorithm: JudgeAlgorithm;
@@ -202,29 +210,29 @@ export interface WebSocketErrorData {
 }
 
 export type WebSocketMessageType =
-  | "initialize"
-  | "userJoined"
-  | "userLeft"
-  | "userConnectionStatus"
-  | "vote"
-  | "showVotes"
-  | "resetVotes"
-  | "newModerator"
-  | "settingsUpdated"
-  | "judgeScoreUpdated"
-  | "error"
-  | "disconnected"
-  | "avatarChanged"
-  | "strudelCodeGenerated"
-  | "generateStrudelCode"
-  | "toggleStrudelPlayback"
-  | "strudelPlaybackToggled"
-  | "nextTicket"
-  | "ticketAdded"
-  | "ticketUpdated"
-  | "ticketDeleted"
-  | "ticketCompleted"
-  | "queueUpdated";
+  | 'initialize'
+  | 'userJoined'
+  | 'userLeft'
+  | 'userConnectionStatus'
+  | 'vote'
+  | 'showVotes'
+  | 'resetVotes'
+  | 'newModerator'
+  | 'settingsUpdated'
+  | 'judgeScoreUpdated'
+  | 'error'
+  | 'disconnected'
+  | 'avatarChanged'
+  | 'strudelCodeGenerated'
+  | 'generateStrudelCode'
+  | 'toggleStrudelPlayback'
+  | 'strudelPlaybackToggled'
+  | 'nextTicket'
+  | 'ticketAdded'
+  | 'ticketUpdated'
+  | 'ticketDeleted'
+  | 'ticketCompleted'
+  | 'queueUpdated';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -251,6 +259,8 @@ export interface WebSocketMessage {
   isPlaying?: boolean;
   updates?: Partial<TicketQueueItem>;
   outcome?: string;
+  closeCode?: number;
+  reason?: string;
 }
 
 export interface RoomStats {
@@ -270,6 +280,6 @@ export interface CriteriaStats {
   min: number;
   max: number;
   variance: number;
-  consensus: "high" | "medium" | "low";
+  consensus: 'high' | 'medium' | 'low';
   maxScore?: number;
 }

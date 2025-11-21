@@ -1,9 +1,9 @@
 import { FC, useMemo, useId } from "react";
-import { ChevronsUpDown, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 
-import type { RoomData, TicketQueueItem } from "../types";
-import { SurfaceCard } from "./ui/SurfaceCard";
-import { HorizontalProgress } from "./ui/HorizontalProgress";
+import type { RoomData, TicketQueueItem } from '../types';
+import { SurfaceCard } from './ui/SurfaceCard';
+import { HorizontalProgress } from './ui/HorizontalProgress';
 
 interface TicketQueueSidebarProps {
   roomData: RoomData;
@@ -25,27 +25,28 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
   const queue = roomData.ticketQueue || [];
   const pending = useMemo(
-    () => queue.filter((t) => t.status === "pending"),
-    [queue],
+    () => queue.filter((t) => t.status === 'pending'),
+    [queue]
   );
+  const hasMultiplePending = pending.length > 1;
   const completedCount = useMemo(
-    () => queue.filter((t) => t.status === "completed").length,
-    [queue],
+    () => queue.filter((t) => t.status === 'completed').length,
+    [queue]
   );
   const totalCount = queue.length;
   const labelText =
     totalCount === 0
-      ? "No tickets yet"
+      ? 'No tickets yet'
       : `${completedCount}/${totalCount} completed`;
 
   const current = roomData.currentTicket;
   const next = pending[0];
 
-  const moveTicket = (ticketId: number, direction: "up" | "down") => {
+  const moveTicket = (ticketId: number, direction: 'up' | 'down') => {
     const tickets = [...pending];
     const index = tickets.findIndex((t) => t.id === ticketId);
     if (index === -1) return;
-    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= tickets.length) return;
     const target = tickets[index];
     const swap = tickets[swapIndex];
@@ -54,19 +55,26 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   };
 
   const renderTicketRow = (ticket: TicketQueueItem, label: string) => {
+    const isPendingRow = label === 'Pending';
+    const showReorder = canManageQueue && isPendingRow && hasMultiplePending;
     const meta =
-      ticket.externalService === "jira"
+      ticket.externalService === 'jira'
         ? (ticket.externalServiceMetadata as
             | Record<string, unknown>
             | undefined)
         : undefined;
     const link =
-      meta && typeof meta === "object" && "url" in meta
+      meta && typeof meta === 'object' && 'url' in meta
         ? String(meta.url)
         : undefined;
 
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+      <div
+        className={[
+          'rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/60',
+          isPendingRow ? 'max-h-28 overflow-hidden' : '',
+        ].join(' ')}
+      >
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
@@ -80,17 +88,17 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                 {ticket.ticketId}
               </span>
             </div>
-            {ticket.title && (
+            {!isPendingRow && ticket.title && (
               <div className="text-slate-800 dark:text-slate-100">
                 {ticket.title}
               </div>
             )}
-            {ticket.description && (
+            {!isPendingRow && ticket.description && (
               <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                 {ticket.description}
               </p>
             )}
-            {meta && (
+            {!isPendingRow && meta && (
               <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
                 Jira
                 {link && (
@@ -107,21 +115,21 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
               </div>
             )}
           </div>
-          {canManageQueue && label === "Pending" && (
+          {showReorder && (
             <div className="flex flex-col items-center gap-1">
               <button
-                onClick={() => moveTicket(ticket.id, "up")}
+                onClick={() => moveTicket(ticket.id, 'up')}
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move up"
               >
-                <ChevronsUpDown className="h-4 w-4 rotate-180" />
+                <ChevronUp className="h-4 w-4" />
               </button>
               <button
-                onClick={() => moveTicket(ticket.id, "down")}
+                onClick={() => moveTicket(ticket.id, 'down')}
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move down"
               >
-                <ChevronsUpDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4" />
               </button>
             </div>
           )}
@@ -131,7 +139,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   };
 
   return (
-    <aside className={className ?? "flex w-full flex-col gap-3"}>
+    <aside className={className ?? 'flex w-full flex-col gap-3'}>
       <SurfaceCard
         padding="sm"
         className="shadow-lg border border-slate-200/80 dark:border-slate-800"
@@ -177,7 +185,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
           {current ? (
             <div data-testid="queue-current-ticket">
-              {renderTicketRow(current, "Current")}
+              {renderTicketRow(current, 'Current')}
             </div>
           ) : (
             <p
@@ -190,52 +198,12 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
           {next ? (
             <div data-testid="queue-next-ticket">
-              {renderTicketRow(next, "Pending")}
+              {renderTicketRow(next, 'Pending')}
             </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">
               No upcoming tickets. Add more to keep things moving.
             </p>
-          )}
-
-          {pending.length > 1 && (
-            <div className="space-y-1">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Queue
-              </div>
-              <div
-                className="max-h-40 space-y-1 overflow-y-auto pr-1"
-                data-testid="queue-pending-list"
-              >
-                {pending.slice(1).map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    data-testid={`queue-pending-ticket-${ticket.id}`}
-                    className="rounded-lg border border-slate-100 bg-slate-50 px-2 py-1 text-xs dark:border-slate-800 dark:bg-slate-900/50"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[11px] font-semibold">
-                        {ticket.ticketId}
-                      </span>
-                      {canManageQueue && (
-                        <button
-                          onClick={() => moveTicket(ticket.id, "up")}
-                          className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          aria-label="Move up"
-                        >
-                          <ChevronsUpDown className="h-3 w-3 rotate-180" />
-                        </button>
-                      )}
-                    </div>
-                    {ticket.title && (
-                      <div className="line-clamp-1 text-slate-700 dark:text-slate-200">
-                        {ticket.title}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
         </div>
       </SurfaceCard>

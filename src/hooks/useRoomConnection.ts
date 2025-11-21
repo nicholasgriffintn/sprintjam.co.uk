@@ -15,7 +15,11 @@ interface UseRoomConnectionOptions {
   authToken: string | null;
   onMessage: (message: WebSocketMessage) => void;
   onConnectionChange: (isConnected: boolean) => void;
-  onError: (error: string) => void;
+  onError: (
+    error: string,
+    meta?: { reason?: "auth" | "disconnect"; code?: number },
+  ) => void;
+  reconnectSignal?: number;
 }
 
 export const useRoomConnection = ({
@@ -26,6 +30,7 @@ export const useRoomConnection = ({
   onMessage,
   onConnectionChange,
   onError,
+  reconnectSignal = 0,
 }: UseRoomConnectionOptions) => {
   useEffect(() => {
     if (screen === "room" && name && activeRoomKey) {
@@ -51,7 +56,14 @@ export const useRoomConnection = ({
       }
 
       const errorHandler = (data: WebSocketMessage) => {
-        onError(data.error || "Connection error");
+        const message = data.error || data.message || "Connection error";
+        const isAuthError =
+          data.closeCode === 4003 || message.includes("Invalid session");
+        const isDisconnect = data.type === "disconnected";
+        onError(message, {
+          reason: isAuthError ? "auth" : isDisconnect ? "disconnect" : undefined,
+          code: data.closeCode,
+        });
         onConnectionChange(false);
       };
 
@@ -77,5 +89,6 @@ export const useRoomConnection = ({
     onMessage,
     onConnectionChange,
     onError,
+    reconnectSignal,
   ]);
 };

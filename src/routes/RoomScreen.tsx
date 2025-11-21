@@ -7,30 +7,34 @@ import type {
   StructuredVote,
   ServerDefaults,
   TicketQueueItem,
-} from "../types";
-import { useRoomStats } from "../hooks/useRoomStats";
-import { useConsensusCelebration } from "../hooks/useConsensusCelebration";
-import ErrorBanner from "../components/ui/ErrorBanner";
-import Header from "../components/Header";
-import { ParticipantsList } from "../components/ParticipantsList";
-import { Timer } from "../components/Timer";
-import { UserEstimate } from "../components/UserEstimate";
-import { ResultsControls } from "../components/ResultsControls";
-import { VotesHidden } from "../components/VotesHidden";
-import { StructuredVotingPanel } from "../components/StructuredVotingPanel";
-import { SurfaceCard } from "../components/ui/SurfaceCard";
-import { StrudelMiniPlayer } from "../components/StrudelPlayer/StrudelMiniPlayer";
-import { FallbackLoading } from "../components/ui/FallbackLoading";
-import { TicketQueueModal } from "../components/TicketQueueModal";
-import { TicketQueueSidebar } from "../components/TicketQueueSidebar";
-import { PrePointingSummaryModal } from "../components/modals/PrePointingSummaryModal";
+  ErrorKind,
+  ErrorConnectionIssue,
+} from '../types';
+import { useRoomStats } from '../hooks/useRoomStats';
+import { useConsensusCelebration } from '../hooks/useConsensusCelebration';
+import ErrorBanner from '../components/ui/ErrorBanner';
+import Header from '../components/Header';
+import { ParticipantsList } from '../components/ParticipantsList';
+import { Timer } from '../components/Timer';
+import { UserEstimate } from '../components/UserEstimate';
+import { ResultsControls } from '../components/ResultsControls';
+import { VotesHidden } from '../components/VotesHidden';
+import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
+import { SurfaceCard } from '../components/ui/SurfaceCard';
+import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
+import { FallbackLoading } from '../components/ui/FallbackLoading';
+import { TicketQueueModal } from '../components/TicketQueueModal';
+import { TicketQueueSidebar } from '../components/TicketQueueSidebar';
+import { PrePointingSummaryModal } from '../components/modals/PrePointingSummaryModal';
+import { ErrorBannerAuth } from '../components/ErrorBannerAuth';
+import { ErrorBannerConnection } from '../components/ErrorBannerConnection';
 
-const SettingsModal = lazy(() => import("../components/SettingsModal"));
-const ShareRoomModal = lazy(() => import("../components/ShareRoomModal"));
+const SettingsModal = lazy(() => import('../components/SettingsModal'));
+const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
 const UnifiedResults = lazy(() =>
-  import("../components/UnifiedResults").then((m) => ({
+  import('../components/UnifiedResults').then((m) => ({
     default: m.UnifiedResults,
-  })),
+  }))
 );
 
 export interface RoomScreenProps {
@@ -43,15 +47,18 @@ export interface RoomScreenProps {
   onVote: (value: VoteValue | StructuredVote) => void;
   onToggleShowVotes: () => void;
   onResetVotes: () => void;
-  onUpdateSettings: (settings: RoomData["settings"]) => void;
+  onUpdateSettings: (settings: RoomData['settings']) => void;
   onNextTicket: () => void;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
   onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onDeleteTicket: (ticketId: number) => void;
   error: string;
+  errorKind?: ErrorKind | null;
   onClearError: () => void;
   onError: (message: string) => void;
   isConnected: boolean;
+  connectionIssue?: ErrorConnectionIssue | null;
+  onRetryConnection?: () => void;
   onLeaveRoom: () => void;
 }
 
@@ -70,9 +77,12 @@ const RoomScreen: FC<RoomScreenProps> = ({
   onUpdateTicket,
   onDeleteTicket,
   error,
+  errorKind,
   onClearError,
   onError,
   isConnected,
+  connectionIssue,
+  onRetryConnection,
   onLeaveRoom,
 }) => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -85,9 +95,35 @@ const RoomScreen: FC<RoomScreenProps> = ({
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
 
+  const showReconnectBanner =
+    connectionIssue?.type === 'disconnected' ||
+    (!isConnected && !connectionIssue);
+
+  const showAuthBanner = connectionIssue?.type === 'auth';
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
-      {error && <ErrorBanner message={error} onClose={onClearError} />}
+      {showAuthBanner && (
+        <ErrorBannerAuth
+          onRetryConnection={onRetryConnection}
+          onLeaveRoom={onLeaveRoom}
+        />
+      )}
+
+      {!showAuthBanner && (connectionIssue || showReconnectBanner) && (
+        <ErrorBannerConnection
+          connectionIssue={connectionIssue}
+          onRetryConnection={onRetryConnection}
+        />
+      )}
+
+      {error && (
+        <ErrorBanner
+          message={error}
+          onClose={onClearError}
+          variant={errorKind === 'permission' ? 'warning' : 'error'}
+        />
+      )}
 
       <Header
         roomData={roomData}
@@ -142,7 +178,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
             <UserEstimate
               roomData={roomData}
               name={name}
-              userVote={typeof userVote === "object" ? null : userVote}
+              userVote={typeof userVote === 'object' ? null : userVote}
               onVote={onVote}
             />
           )}
@@ -161,10 +197,10 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 const maxOrdinal =
                   pendingQueue.reduce(
                     (max, t) => (t.ordinal > max ? t.ordinal : max),
-                    0,
+                    0
                   ) + 1;
                 await onUpdateTicket(roomData.currentTicket.id, {
-                  status: "pending",
+                  status: 'pending',
                   ordinal: maxOrdinal,
                 });
                 onNextTicket();
@@ -264,7 +300,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
           onClose={() => setIsQueueModalOpen(false)}
           currentTicket={roomData.currentTicket}
           queue={roomData.ticketQueue || []}
-          externalService={roomData.settings.externalService || "none"}
+          externalService={roomData.settings.externalService || 'none'}
           roomKey={roomData.key}
           userName={name}
           onAddTicket={onAddTicket}
