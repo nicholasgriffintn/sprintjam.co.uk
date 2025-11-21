@@ -1,5 +1,26 @@
 import { RoomData, WebSocketMessage, TicketQueueItem } from "../types";
 
+export const getAnonymousUserId = (
+  roomData: RoomData,
+  userName: string,
+): string => {
+  const index = roomData.users.indexOf(userName);
+  if (index === -1) {
+    return "Anonymous";
+  }
+  return `Anonymous ${index + 1}`;
+};
+
+export const getVoteKeyForUser = (
+  roomData: RoomData,
+  userName: string,
+): string => {
+  if (roomData.settings.anonymousVotes) {
+    return getAnonymousUserId(roomData, userName);
+  }
+  return userName;
+};
+
 export function applyRoomUpdate(
   prev: RoomData | null,
   message: WebSocketMessage,
@@ -177,6 +198,19 @@ export function applyRoomUpdate(
         currentStrudelCode: message.code,
         currentStrudelGenerationId: message.generationId,
         strudelPhase: message.phase,
+      };
+    }
+
+    case 'strudelPlaybackToggled': {
+      if (typeof message.isPlaying !== 'boolean') {
+        return prev;
+      }
+      if (prev.strudelIsPlaying === message.isPlaying) {
+        return prev;
+      }
+      return {
+        ...prev,
+        strudelIsPlaying: message.isPlaying,
       };
     }
 

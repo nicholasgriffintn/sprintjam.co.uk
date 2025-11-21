@@ -1,5 +1,16 @@
 import type { VoteValue, TicketMetadata } from "../types";
 import { API_BASE_URL } from "../constants";
+import { safeLocalStorage } from "../utils/storage";
+import { AUTH_TOKEN_STORAGE_KEY } from "../constants";
+
+function resolveSessionToken(provided?: string | null): string {
+  if (provided) return provided;
+  const stored = safeLocalStorage.get(AUTH_TOKEN_STORAGE_KEY);
+  if (!stored) {
+    throw new Error("Missing session token. Please rejoin the room.");
+  }
+  return stored;
+}
 
 /**
  * Fetch Jira ticket details by ticket ID or key
@@ -11,9 +22,10 @@ import { API_BASE_URL } from "../constants";
  */
 export async function fetchJiraTicket(
   ticketId: string,
-  options?: { roomKey?: string; userName?: string },
+  options?: { roomKey?: string; userName?: string; sessionToken?: string },
 ): Promise<TicketMetadata> {
   try {
+    const sessionToken = resolveSessionToken(options?.sessionToken);
     let url = `${API_BASE_URL}/jira/ticket?ticketId=${encodeURIComponent(
       ticketId,
     )}`;
@@ -22,6 +34,7 @@ export async function fetchJiraTicket(
       url += `&roomKey=${encodeURIComponent(
         options.roomKey,
       )}&userName=${encodeURIComponent(options.userName)}`;
+      url += `&sessionToken=${encodeURIComponent(sessionToken)}`;
     }
 
     const response = await fetch(url, {
@@ -65,9 +78,10 @@ export async function fetchJiraTicket(
 export async function updateJiraStoryPoints(
   ticketId: string,
   storyPoints: number,
-  options: { roomKey: string; userName: string },
+  options: { roomKey: string; userName: string; sessionToken?: string },
 ): Promise<TicketMetadata> {
   try {
+    const sessionToken = resolveSessionToken(options.sessionToken);
     const response = await fetch(
       `${API_BASE_URL}/jira/ticket/${encodeURIComponent(ticketId)}/storyPoints`,
       {
@@ -79,6 +93,7 @@ export async function updateJiraStoryPoints(
           storyPoints,
           roomKey: options.roomKey,
           userName: options.userName,
+          sessionToken,
         }),
       },
     );

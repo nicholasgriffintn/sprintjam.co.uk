@@ -50,7 +50,7 @@ const CreateRoomScreen = () => {
       enableJudge: serverDefaults.roomSettings.enableJudge ?? true,
       externalService: serverDefaults.roomSettings.externalService ?? 'none',
       showTimer: serverDefaults.roomSettings.showTimer ?? false,
-      enableTicketQueue: serverDefaults.roomSettings.enableTicketQueue ?? false,
+      enableTicketQueue: serverDefaults.roomSettings.enableTicketQueue ?? true,
       allowOthersToShowEstimates:
         serverDefaults.roomSettings.allowOthersToShowEstimates ?? false,
       hideParticipantNames:

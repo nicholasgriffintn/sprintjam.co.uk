@@ -1,5 +1,21 @@
-import type { RoomData } from "../types";
-import { applySettingsUpdate } from "./room-settings";
+import type {
+  RoomData,
+  StructuredVote,
+  VoteValue,
+  TicketQueueItem,
+} from '../types';
+import { applySettingsUpdate } from './room-settings';
+
+export function getAnonymousUserId(
+  roomData: RoomData,
+  userName: string
+): string {
+  const index = roomData.users.indexOf(userName);
+  if (index === -1) {
+    return 'Anonymous';
+  }
+  return `Anonymous ${index + 1}`;
+}
 
 export function normalizeRoomData(roomData: RoomData): RoomData {
   const normalized: RoomData = {
@@ -16,7 +32,7 @@ export function normalizeRoomData(roomData: RoomData): RoomData {
 }
 
 export function ensureConnectedUsers(
-  roomData: RoomData,
+  roomData: RoomData
 ): Record<string, boolean> {
   if (!roomData.connectedUsers) {
     roomData.connectedUsers = {};
@@ -38,7 +54,7 @@ export function ensureStructuredVotes(roomData: RoomData) {
 export function markUserConnection(
   roomData: RoomData,
   userName: string,
-  isConnected: boolean,
+  isConnected: boolean
 ) {
   ensureConnectedUsers(roomData);
   if (!roomData.users.includes(userName)) {
@@ -51,7 +67,7 @@ export function markUserConnection(
 export function assignUserAvatar(
   roomData: RoomData,
   userName: string,
-  avatar?: string,
+  avatar?: string
 ) {
   if (!avatar) {
     return;
@@ -69,4 +85,69 @@ export function sanitizeRoomData(roomData: RoomData): RoomData {
   return {
     ...rest,
   };
+}
+
+export const remapVotes = (
+  idMap: Map<string, string>,
+  votes: Record<string, VoteValue | null>
+) => {
+  const mapped: Record<string, VoteValue | null> = {};
+  Object.entries(votes).forEach(([user, vote]) => {
+    const anon = idMap.get(user) ?? 'Anonymous';
+    mapped[anon] = vote;
+  });
+  return mapped;
+};
+
+export const remapStructuredVotes = (
+  idMap: Map<string, string>,
+  structured?: Record<string, StructuredVote>
+) => {
+  if (!structured) return undefined;
+  const mapped: Record<string, StructuredVote> = {};
+  Object.entries(structured).forEach(([user, payload]) => {
+    const anon = idMap.get(user) ?? 'Anonymous';
+    mapped[anon] = payload;
+  });
+  return mapped;
+};
+
+export const remapTicketVotes = (
+  idMap: Map<string, string>,
+  ticket?: TicketQueueItem
+) => {
+  if (!ticket?.votes) return ticket;
+  return {
+    ...ticket,
+    votes: ticket.votes.map((vote) => ({
+      ...vote,
+      userName: idMap.get(vote.userName) ?? 'Anonymous',
+    })),
+  };
+};
+
+export function anonymizeRoomData(roomData: RoomData): RoomData {
+  if (
+    !roomData.settings.anonymousVotes &&
+    !roomData.settings.hideParticipantNames
+  ) {
+    return sanitizeRoomData(roomData);
+  }
+
+  const idMap = new Map<string, string>();
+  roomData.users.forEach((user) => {
+    idMap.set(user, getAnonymousUserId(roomData, user));
+  });
+
+  const ticketQueue = roomData.ticketQueue
+    ?.map((t) => remapTicketVotes(idMap, t))
+    .filter((t): t is TicketQueueItem => t !== undefined);
+
+  return sanitizeRoomData({
+    ...roomData,
+    votes: remapVotes(idMap, roomData.votes),
+    structuredVotes: remapStructuredVotes(idMap, roomData.structuredVotes),
+    currentTicket: remapTicketVotes(idMap, roomData.currentTicket),
+    ticketQueue,
+  });
 }

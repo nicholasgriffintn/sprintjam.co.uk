@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import type { RoomData, VoteValue, StructuredVote } from "../types";
+import { getVoteKeyForUser } from "../utils/room";
 
 interface UseRoomDataSyncOptions {
   roomData: RoomData | null;
@@ -31,8 +32,13 @@ export const useRoomDataSync = ({
     }
 
     const nextVote = roomData.votes[name] ?? null;
-    if (nextVote !== userVote) {
-      onVoteChange(nextVote);
+    const anonymousVote =
+      roomData.settings.anonymousVotes && roomData.users.length > 0
+        ? roomData.votes[getVoteKeyForUser(roomData, name)] ?? null
+        : null;
+    const resolvedVote = anonymousVote ?? nextVote;
+    if (resolvedVote !== userVote) {
+      onVoteChange(resolvedVote);
     }
 
     const nextModeratorView = roomData.moderator === name;

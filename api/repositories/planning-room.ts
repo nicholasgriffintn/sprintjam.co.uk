@@ -10,7 +10,8 @@ import type {
   StructuredVote,
   TicketQueueItem,
   TicketVote,
-} from "../types";
+  VoteValue,
+} from '../types';
 import { serializeJSON, serializeVote } from "../utils/serialize";
 import { parseJudgeScore, parseVote, safeJsonParse } from "../utils/parse";
 
@@ -19,6 +20,7 @@ type SqlEnabledTransaction = DurableObjectTransaction & { sql: SqlStorage };
 
 export class PlanningRoomRepository {
   private readonly sql: SqlStorage;
+  private readonly anonymousName = 'Anonymous';
 
   constructor(private readonly storage: DurableObjectStorage) {
     this.sql = storage.sql;
@@ -42,7 +44,7 @@ export class PlanningRoomRepository {
           strudel_phase TEXT,
           strudel_is_playing INTEGER NOT NULL DEFAULT 0,
           current_ticket_id INTEGER
-        )`,
+        )`
       );
 
       this.sql.exec(
@@ -50,7 +52,7 @@ export class PlanningRoomRepository {
           user_name TEXT PRIMARY KEY,
           token TEXT NOT NULL,
           created_at INTEGER NOT NULL
-        )`,
+        )`
       );
 
       this.sql.exec(
@@ -59,21 +61,21 @@ export class PlanningRoomRepository {
           avatar TEXT,
           is_connected INTEGER NOT NULL DEFAULT 0,
           ordinal INTEGER NOT NULL
-        )`,
+        )`
       );
 
       this.sql.exec(
         `CREATE TABLE IF NOT EXISTS room_votes (
           user_name TEXT PRIMARY KEY,
           vote TEXT NOT NULL
-        )`,
+        )`
       );
 
       this.sql.exec(
         `CREATE TABLE IF NOT EXISTS room_structured_votes (
           user_name TEXT PRIMARY KEY,
           payload TEXT NOT NULL
-        )`,
+        )`
       );
 
       this.sql.exec(
@@ -90,7 +92,7 @@ export class PlanningRoomRepository {
           external_service TEXT CHECK(external_service IN ('jira', 'linear', 'clickup', 'asana', 'youtrack', 'zoho', 'trello', 'monday', 'none')) DEFAULT 'none',
           external_service_id TEXT,
           external_service_metadata TEXT
-        )`,
+        )`
       );
 
       this.sql.exec(
@@ -103,7 +105,7 @@ export class PlanningRoomRepository {
           voted_at INTEGER NOT NULL,
           FOREIGN KEY (ticket_queue_id) REFERENCES ticket_queue(id) ON DELETE CASCADE,
           UNIQUE(ticket_queue_id, user_name)
-        )`,
+        )`
       );
     });
   }
@@ -136,7 +138,7 @@ export class PlanningRoomRepository {
            strudel_phase,
            strudel_is_playing
          FROM room_meta
-         WHERE id = ${ROOM_ROW_ID}`,
+         WHERE id = ${ROOM_ROW_ID}`
       )
       .toArray()[0];
 
@@ -152,19 +154,19 @@ export class PlanningRoomRepository {
       }>(
         `SELECT user_name, avatar, is_connected
          FROM room_users
-         ORDER BY ordinal ASC`,
+         ORDER BY ordinal ASC`
       )
       .toArray();
 
     const votes = this.sql
-      .exec<{ user_name: string; vote: string }>("SELECT * FROM room_votes")
+      .exec<{ user_name: string; vote: string }>('SELECT * FROM room_votes')
       .toArray();
 
     const structuredVotes = this.sql
       .exec<{
         user_name: string;
         payload: string;
-      }>("SELECT * FROM room_structured_votes")
+      }>('SELECT * FROM room_structured_votes')
       .toArray();
 
     const connectedUsers: Record<string, boolean> = {};
@@ -189,7 +191,7 @@ export class PlanningRoomRepository {
       try {
         const structuredVoteData = safeJsonParse<StructuredVote>(entry.payload);
         if (!structuredVoteData) {
-          throw new Error("Failed to parse structured vote from storage");
+          throw new Error('Failed to parse structured vote from storage');
         }
         structuredVoteMap[entry.user_name] = structuredVoteData;
       } catch {
@@ -201,15 +203,19 @@ export class PlanningRoomRepository {
     try {
       const settingsData = safeJsonParse<RoomSettings>(row.settings);
       if (!settingsData) {
-        throw new Error("Failed to parse room settings from storage");
+        throw new Error('Failed to parse room settings from storage');
       }
       settings = settingsData;
     } catch {
-      throw new Error("Failed to parse room settings from storage");
+      throw new Error('Failed to parse room settings from storage');
     }
 
-    const currentTicket = this.getCurrentTicket();
-    const ticketQueue = this.getTicketQueue();
+    const currentTicket = this.getCurrentTicket({
+      anonymizeVotes: settings.hideParticipantNames,
+    });
+    const ticketQueue = this.getTicketQueue({
+      anonymizeVotes: settings.hideParticipantNames,
+    });
 
     const roomData: RoomData = {
       key: row.room_key,
@@ -285,10 +291,10 @@ export class PlanningRoomRepository {
         roomData.currentStrudelCode ?? null,
         roomData.currentStrudelGenerationId ?? null,
         roomData.strudelPhase ?? null,
-        roomData.strudelIsPlaying ? 1 : 0,
+        roomData.strudelIsPlaying ? 1 : 0
       );
 
-      sql.exec("DELETE FROM room_users");
+      sql.exec('DELETE FROM room_users');
       roomData.users.forEach((user, index) => {
         const isConnected = roomData.connectedUsers?.[user] ? 1 : 0;
         const avatar = roomData.userAvatars?.[user] ?? null;
@@ -298,27 +304,27 @@ export class PlanningRoomRepository {
           user,
           avatar,
           isConnected,
-          index,
+          index
         );
       });
 
-      sql.exec("DELETE FROM room_votes");
+      sql.exec('DELETE FROM room_votes');
       Object.entries(roomData.votes).forEach(([user, vote]) => {
         sql.exec(
           `INSERT INTO room_votes (user_name, vote) VALUES (?, ?)`,
           user,
-          serializeVote(vote),
+          serializeVote(vote)
         );
       });
 
-      sql.exec("DELETE FROM room_structured_votes");
+      sql.exec('DELETE FROM room_structured_votes');
       if (roomData.structuredVotes) {
         Object.entries(roomData.structuredVotes).forEach(([user, payload]) => {
           sql.exec(
             `INSERT INTO room_structured_votes (user_name, payload)
              VALUES (?, ?)`,
             user,
-            JSON.stringify(payload),
+            JSON.stringify(payload)
           );
         });
       }
@@ -334,7 +340,7 @@ export class PlanningRoomRepository {
          0,
          COALESCE((SELECT MAX(ordinal) + 1 FROM room_users), 0)
        )`,
-      userName,
+      userName
     );
   }
 
@@ -343,7 +349,7 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_users SET is_connected = ? WHERE user_name = ?`,
       isConnected ? 1 : 0,
-      userName,
+      userName
     );
   }
 
@@ -355,21 +361,21 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_users SET avatar = ? WHERE user_name = ?`,
       avatar,
-      userName,
+      userName
     );
   }
 
   setModerator(userName: string) {
     this.sql.exec(
       `UPDATE room_meta SET moderator = ? WHERE id = ${ROOM_ROW_ID}`,
-      userName,
+      userName
     );
   }
 
   setShowVotes(showVotes: boolean) {
     this.sql.exec(
       `UPDATE room_meta SET show_votes = ? WHERE id = ${ROOM_ROW_ID}`,
-      showVotes ? 1 : 0,
+      showVotes ? 1 : 0
     );
   }
 
@@ -380,12 +386,12 @@ export class PlanningRoomRepository {
        VALUES (?, ?)
        ON CONFLICT(user_name) DO UPDATE SET vote = excluded.vote`,
       userName,
-      serializeVote(vote),
+      serializeVote(vote)
     );
   }
 
   clearVotes() {
-    this.sql.exec("DELETE FROM room_votes");
+    this.sql.exec('DELETE FROM room_votes');
   }
 
   setStructuredVote(userName: string, vote: StructuredVote) {
@@ -395,38 +401,38 @@ export class PlanningRoomRepository {
        VALUES (?, ?)
        ON CONFLICT(user_name) DO UPDATE SET payload = excluded.payload`,
       userName,
-      JSON.stringify(vote),
+      JSON.stringify(vote)
     );
   }
 
   clearStructuredVotes() {
-    this.sql.exec("DELETE FROM room_structured_votes");
+    this.sql.exec('DELETE FROM room_structured_votes');
   }
 
   setJudgeState(
     score: string | number | null,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ) {
     this.sql.exec(
       `UPDATE room_meta
        SET judge_score = ?, judge_metadata = ?
        WHERE id = ${ROOM_ROW_ID}`,
       score === null || score === undefined ? null : String(score),
-      serializeJSON(metadata),
+      serializeJSON(metadata)
     );
   }
 
   setSettings(settings: RoomSettings) {
     this.sql.exec(
       `UPDATE room_meta SET settings = ? WHERE id = ${ROOM_ROW_ID}`,
-      JSON.stringify(settings),
+      JSON.stringify(settings)
     );
   }
 
   setPasscodeHash(passcodeHash: string | null) {
     this.sql.exec(
       `UPDATE room_meta SET passcode = ? WHERE id = ${ROOM_ROW_ID}`,
-      passcodeHash,
+      passcodeHash
     );
   }
 
@@ -449,7 +455,7 @@ export class PlanningRoomRepository {
        DO UPDATE SET token = excluded.token, created_at = excluded.created_at`,
       userName,
       token,
-      Date.now(),
+      Date.now()
     );
   }
 
@@ -457,7 +463,7 @@ export class PlanningRoomRepository {
     const result = this.sql
       .exec<{
         token: string | null;
-      }>("SELECT token FROM session_tokens WHERE user_name = ?", userName)
+      }>('SELECT token FROM session_tokens WHERE user_name = ?', userName)
       .toArray()[0];
     return result?.token ?? null;
   }
@@ -483,7 +489,7 @@ export class PlanningRoomRepository {
        WHERE id = ${ROOM_ROW_ID}`,
       options.code ?? null,
       options.generationId ?? null,
-      options.phase ?? null,
+      options.phase ?? null
     );
   }
 
@@ -492,11 +498,13 @@ export class PlanningRoomRepository {
       `UPDATE room_meta
        SET strudel_is_playing = ?
        WHERE id = ${ROOM_ROW_ID}`,
-      isPlaying ? 1 : 0,
+      isPlaying ? 1 : 0
     );
   }
 
-  getCurrentTicket(): TicketQueueItem | undefined {
+  getCurrentTicket(options?: {
+    anonymizeVotes?: boolean;
+  }): TicketQueueItem | undefined {
     const currentTicketId = this.sql
       .exec<{
         current_ticket_id: number | null;
@@ -507,22 +515,25 @@ export class PlanningRoomRepository {
       return undefined;
     }
 
-    return this.getTicketById(currentTicketId);
+    return this.getTicketById(currentTicketId, options);
   }
 
-  getTicketById(id: number): TicketQueueItem | undefined {
+  getTicketById(
+    id: number,
+    options?: { anonymizeVotes?: boolean }
+  ): TicketQueueItem | undefined {
     const row = this.sql
       .exec<{
         id: number;
         ticket_id: string;
         title: string | null;
         description: string | null;
-        status: "pending" | "in_progress" | "completed";
+        status: 'pending' | 'in_progress' | 'completed';
         outcome: string | null;
         created_at: number;
         completed_at: number | null;
         ordinal: number;
-        external_service: "jira" | "none";
+        external_service: 'jira' | 'none';
         external_service_id: string | null;
         external_service_metadata: string | null;
       }>(`SELECT * FROM ticket_queue WHERE id = ?`, id)
@@ -532,7 +543,7 @@ export class PlanningRoomRepository {
       return undefined;
     }
 
-    const votes = this.getTicketVotes(row.id);
+    const votes = this.getTicketVotes(row.id, options?.anonymizeVotes);
 
     return {
       id: row.id,
@@ -553,26 +564,26 @@ export class PlanningRoomRepository {
     };
   }
 
-  getTicketQueue(): TicketQueueItem[] {
+  getTicketQueue(options?: { anonymizeVotes?: boolean }): TicketQueueItem[] {
     const rows = this.sql
       .exec<{
         id: number;
         ticket_id: string;
         title: string | null;
         description: string | null;
-        status: "pending" | "in_progress" | "completed";
+        status: 'pending' | 'in_progress' | 'completed';
         outcome: string | null;
         created_at: number;
         completed_at: number | null;
         ordinal: number;
-        external_service: "jira" | "none";
+        external_service: 'jira' | 'none';
         external_service_id: string | null;
         external_service_metadata: string | null;
-      }>("SELECT * FROM ticket_queue ORDER BY ordinal ASC")
+      }>('SELECT * FROM ticket_queue ORDER BY ordinal ASC')
       .toArray();
 
     return rows.map((row) => {
-      const votes = this.getTicketVotes(row.id);
+      const votes = this.getTicketVotes(row.id, options?.anonymizeVotes);
 
       return {
         id: row.id,
@@ -588,7 +599,7 @@ export class PlanningRoomRepository {
         externalServiceId: row.external_service_id ?? undefined,
         externalServiceMetadata: row.external_service_metadata
           ? safeJsonParse<Record<string, unknown>>(
-              row.external_service_metadata,
+              row.external_service_metadata
             )
           : undefined,
         votes,
@@ -596,7 +607,10 @@ export class PlanningRoomRepository {
     });
   }
 
-  getTicketVotes(ticketQueueId: number): TicketVote[] {
+  getTicketVotes(
+    ticketQueueId: number,
+    anonymizeVotes?: boolean
+  ): TicketVote[] {
     const rows = this.sql
       .exec<{
         id: number;
@@ -606,25 +620,29 @@ export class PlanningRoomRepository {
         structured_vote_payload: string | null;
         voted_at: number;
       }>(
-        "SELECT * FROM ticket_votes WHERE ticket_queue_id = ? ORDER BY voted_at ASC",
-        ticketQueueId,
+        'SELECT * FROM ticket_votes WHERE ticket_queue_id = ? ORDER BY voted_at ASC',
+        ticketQueueId
       )
       .toArray();
 
-    return rows.map((row) => ({
-      id: row.id,
-      ticketQueueId: row.ticket_queue_id,
-      userName: row.user_name,
-      vote: parseVote(row.vote),
-      structuredVotePayload: row.structured_vote_payload
+    return rows.map((row) => {
+      const structuredVotePayload = row.structured_vote_payload
         ? safeJsonParse<StructuredVote>(row.structured_vote_payload)
-        : undefined,
-      votedAt: row.voted_at,
-    }));
+        : undefined;
+
+      return {
+        id: row.id,
+        ticketQueueId: row.ticket_queue_id,
+        userName: anonymizeVotes ? this.anonymousName : row.user_name,
+        vote: parseVote(row.vote),
+        structuredVotePayload,
+        votedAt: row.voted_at,
+      };
+    });
   }
 
   createTicket(
-    ticket: Omit<TicketQueueItem, "id" | "createdAt" | "votes">,
+    ticket: Omit<TicketQueueItem, 'id' | 'createdAt' | 'votes'>
   ): TicketQueueItem {
     const result = this.sql.exec(
       `INSERT INTO ticket_queue (
@@ -651,62 +669,62 @@ export class PlanningRoomRepository {
       ticket.ordinal,
       ticket.externalService,
       ticket.externalServiceId ?? null,
-      serializeJSON(ticket.externalServiceMetadata),
+      serializeJSON(ticket.externalServiceMetadata)
     );
 
     const insertedId = result.toArray()[0] as { id: number };
     const created = this.getTicketById(insertedId.id);
     if (!created) {
-      throw new Error("Failed to create ticket");
+      throw new Error('Failed to create ticket');
     }
     return created;
   }
 
   updateTicket(
     id: number,
-    updates: Partial<Omit<TicketQueueItem, "id" | "createdAt" | "votes">>,
+    updates: Partial<Omit<TicketQueueItem, 'id' | 'createdAt' | 'votes'>>
   ): void {
     const fields: string[] = [];
     const values: unknown[] = [];
 
     if (updates.ticketId !== undefined) {
-      fields.push("ticket_id = ?");
+      fields.push('ticket_id = ?');
       values.push(updates.ticketId);
     }
     if (updates.title !== undefined) {
-      fields.push("title = ?");
+      fields.push('title = ?');
       values.push(updates.title ?? null);
     }
     if (updates.description !== undefined) {
-      fields.push("description = ?");
+      fields.push('description = ?');
       values.push(updates.description ?? null);
     }
     if (updates.status !== undefined) {
-      fields.push("status = ?");
+      fields.push('status = ?');
       values.push(updates.status);
     }
     if (updates.outcome !== undefined) {
-      fields.push("outcome = ?");
+      fields.push('outcome = ?');
       values.push(updates.outcome ?? null);
     }
     if (updates.completedAt !== undefined) {
-      fields.push("completed_at = ?");
+      fields.push('completed_at = ?');
       values.push(updates.completedAt ?? null);
     }
     if (updates.ordinal !== undefined) {
-      fields.push("ordinal = ?");
+      fields.push('ordinal = ?');
       values.push(updates.ordinal);
     }
     if (updates.externalService !== undefined) {
-      fields.push("external_service = ?");
+      fields.push('external_service = ?');
       values.push(updates.externalService);
     }
     if (updates.externalServiceId !== undefined) {
-      fields.push("external_service_id = ?");
+      fields.push('external_service_id = ?');
       values.push(updates.externalServiceId ?? null);
     }
     if (updates.externalServiceMetadata !== undefined) {
-      fields.push("external_service_metadata = ?");
+      fields.push('external_service_metadata = ?');
       values.push(serializeJSON(updates.externalServiceMetadata));
     }
 
@@ -716,27 +734,42 @@ export class PlanningRoomRepository {
 
     values.push(id);
     this.sql.exec(
-      `UPDATE ticket_queue SET ${fields.join(", ")} WHERE id = ?`,
-      ...values,
+      `UPDATE ticket_queue SET ${fields.join(', ')} WHERE id = ?`,
+      ...values
     );
   }
 
   deleteTicket(id: number): void {
-    this.sql.exec("DELETE FROM ticket_queue WHERE id = ?", id);
+    this.sql.exec('DELETE FROM ticket_queue WHERE id = ?', id);
   }
 
   setCurrentTicket(ticketId: number | null): void {
     this.sql.exec(
       `UPDATE room_meta SET current_ticket_id = ? WHERE id = ${ROOM_ROW_ID}`,
-      ticketId,
+      ticketId
     );
+  }
+
+  getTicketByTicketKey(
+    ticketKey: string,
+    options?: { anonymizeVotes?: boolean }
+  ): TicketQueueItem | undefined {
+    const row = this.sql
+      .exec<{ id: number }>(
+        `SELECT id FROM ticket_queue WHERE ticket_id = ? LIMIT 1`,
+        ticketKey
+      )
+      .toArray()[0];
+
+    if (!row) return undefined;
+    return this.getTicketById(row.id, options);
   }
 
   logTicketVote(
     ticketQueueId: number,
     userName: string,
-    vote: string | number,
-    structuredVote?: StructuredVote,
+    vote: VoteValue,
+    structuredVote?: StructuredVote
   ): void {
     this.sql.exec(
       `INSERT INTO ticket_votes (
@@ -755,7 +788,7 @@ export class PlanningRoomRepository {
       userName,
       serializeVote(vote),
       structuredVote ? JSON.stringify(structuredVote) : null,
-      Date.now(),
+      Date.now()
     );
   }
 
@@ -765,35 +798,35 @@ export class PlanningRoomRepository {
         `SELECT ticket_id FROM ticket_queue 
          WHERE ticket_id LIKE 'SPRINTJAM-%' 
          ORDER BY CAST(SUBSTR(ticket_id, 11) AS INTEGER) DESC 
-         LIMIT 1`,
+         LIMIT 1`
       )
       .toArray()[0];
 
     if (!maxTicket) {
-      return "SPRINTJAM-001";
+      return 'SPRINTJAM-001';
     }
 
     const match = maxTicket.ticket_id.match(/SPRINTJAM-(\d+)/);
     if (!match) {
-      return "SPRINTJAM-001";
+      return 'SPRINTJAM-001';
     }
 
     const nextNum = parseInt(match[1], 10) + 1;
-    return `SPRINTJAM-${String(nextNum).padStart(3, "0")}`;
+    return `SPRINTJAM-${String(nextNum).padStart(3, '0')}`;
   }
 
   reorderQueue(ticketIds: number[]): void {
     ticketIds.forEach((id, index) => {
       this.sql.exec(
-        "UPDATE ticket_queue SET ordinal = ? WHERE id = ?",
+        'UPDATE ticket_queue SET ordinal = ? WHERE id = ?',
         index,
-        id,
+        id
       );
     });
   }
 
   private getSql(txn?: DurableObjectTransaction): SqlStorage {
-    if (txn && "sql" in txn) {
+    if (txn && 'sql' in txn) {
       return (txn as SqlEnabledTransaction).sql;
     }
 

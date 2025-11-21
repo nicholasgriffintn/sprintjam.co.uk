@@ -1,4 +1,9 @@
-export const ENV_BASE_URL = import.meta.env.VITE_API_URL || "sprintjam.co.uk";
+const DEFAULT_HOST =
+  typeof window !== "undefined" && window.location?.host
+    ? window.location.host
+    : "sprintjam.co.uk";
+
+export const ENV_BASE_URL = import.meta.env.VITE_API_URL || DEFAULT_HOST;
 
 export const API_BASE_URL = import.meta.env.DEV
   ? "http://localhost:5173/api"

@@ -1,7 +1,9 @@
 import type { RoomData } from "../types";
+import { getVoteKeyForUser } from "./room";
 
 export function getUsersVoteTaskSize(roomData: RoomData, name: string) {
-  const usersVote = roomData.votes[name];
+  const usersVote =
+    roomData.votes[getVoteKeyForUser(roomData, name)] ?? roomData.votes[name];
   const metadata = roomData.settings.voteOptionsMetadata?.find(
     (m) => m.value === usersVote,
   );

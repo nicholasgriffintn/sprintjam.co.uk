@@ -32,26 +32,28 @@ export type ClientMessage =
   | { type: 'completeTicket'; outcome?: string }
   | { type: 'ping' };
 
-export enum JudgeAlgorithm {
-  SMART_CONSENSUS = "smartConsensus",
-  CONSERVATIVE_MODE = "conservativeMode",
-  OPTIMISTIC_MODE = "optimisticMode",
-  SIMPLE_AVERAGE = "simpleAverage",
-}
-
-export interface JudgeResult {
-  score: number | null;
-  confidence: "high" | "medium" | "low";
-  needsDiscussion: boolean;
-  reasoning: string;
-}
-
-export type TaskSize = "xs" | "sm" | "md" | "lg" | "xl";
+export type VoteValue = string | number | null | '?' | 'coffee';
 
 export interface VoteOptionMetadata {
   value: string | number;
   background: string;
   taskSize: TaskSize | null;
+}
+
+export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+export enum JudgeAlgorithm {
+  SMART_CONSENSUS = 'smartConsensus',
+  CONSERVATIVE_MODE = 'conservativeMode',
+  OPTIMISTIC_MODE = 'optimisticMode',
+  SIMPLE_AVERAGE = 'simpleAverage',
+}
+
+export interface JudgeResult {
+  score: number | null;
+  confidence: 'high' | 'medium' | 'low';
+  needsDiscussion: boolean;
+  reasoning: string;
 }
 
 export interface SummaryCardSetting {
@@ -166,7 +168,7 @@ export interface TicketVote {
   id: number;
   ticketQueueId: number;
   userName: string;
-  vote: string | number;
+  vote: VoteValue;
   structuredVotePayload?: StructuredVote;
   votedAt: number;
 }
@@ -176,12 +178,12 @@ export interface TicketQueueItem {
   ticketId: string;
   title?: string;
   description?: string;
-  status: "pending" | "in_progress" | "completed";
+  status: 'pending' | 'in_progress' | 'completed';
   outcome?: string;
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: "jira" | "none";
+  externalService: 'jira' | 'none';
   externalServiceId?: string;
   externalServiceMetadata?: Record<string, unknown>;
   votes?: TicketVote[];
@@ -190,7 +192,7 @@ export interface TicketQueueItem {
 export interface RoomData {
   key: string;
   users: string[];
-  votes: Record<string, string | number>;
+  votes: Record<string, VoteValue>;
   structuredVotes?: Record<string, StructuredVote>;
   showVotes: boolean;
   moderator: string;

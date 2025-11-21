@@ -77,6 +77,34 @@ export async function handleHttpRequest(
     });
   }
 
+  if (url.pathname === '/session/validate' && request.method === 'POST') {
+    const { name, sessionToken } = (await request.json()) as {
+      name?: string;
+      sessionToken?: string;
+    };
+
+    if (!name || !sessionToken) {
+      return createJsonResponse(
+        { error: 'Missing user name or session token' },
+        400
+      );
+    }
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    const isMember = roomData.users.includes(name);
+    const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
+
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: 'Invalid session' }, 401);
+    }
+
+    return createJsonResponse({ success: true });
+  }
+
   if (url.pathname === "/join" && request.method === "POST") {
     const { name, passcode, avatar, authToken } = (await request.json()) as {
       name: string;

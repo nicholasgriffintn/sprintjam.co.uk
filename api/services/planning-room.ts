@@ -16,29 +16,30 @@ import type {
   SessionInfo,
   StructuredVote,
   TicketQueueItem,
-} from "../types";
-import { createInitialRoomData } from "../utils/defaults";
+} from '../types';
+import { createInitialRoomData } from '../utils/defaults';
 import {
   isStructuredVote,
   createStructuredVote,
-} from "../utils/structured-voting";
+} from '../utils/structured-voting';
 import {
   generateStrudelCode,
   type StrudelGenerateRequest,
-} from "../lib/polychat-client";
+} from '../lib/polychat-client';
 import {
   markUserConnection,
   normalizeRoomData,
-  sanitizeRoomData,
-} from "../utils/room-data";
-import { applySettingsUpdate } from "../utils/room-settings";
-import { determineRoomPhase } from "../utils/room-phase";
-import { selectPresetForPhase } from "../utils/strudel";
+  getAnonymousUserId,
+  anonymizeRoomData,
+} from '../utils/room-data';
+import { applySettingsUpdate } from '../utils/room-settings';
+import { determineRoomPhase } from '../utils/room-phase';
+import { selectPresetForPhase } from '../utils/strudel';
 import {
   handleHttpRequest,
   type PlanningRoomHttpContext,
-} from "./planning-room-http";
-import { PlanningRoomRepository } from "../repositories/planning-room";
+} from './planning-room-http';
+import { PlanningRoomRepository } from '../repositories/planning-room';
 import { validateClientMessage } from '../utils/validate';
 
 export class PlanningRoom implements PlanningRoomHttpContext {
@@ -161,7 +162,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       webSocket.send(
         JSON.stringify({
           type: 'initialize',
-          roomData: sanitizeRoomData(roomData),
+          roomData: anonymizeRoomData(roomData),
         })
       );
     } else {
@@ -338,9 +339,15 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         this.repository.setStructuredVote(userName, structuredVotePayload);
       }
 
+      const broadcastUser =
+        roomData.settings.anonymousVotes ||
+        roomData.settings.hideParticipantNames
+          ? getAnonymousUserId(roomData, userName)
+          : userName;
+
       this.broadcast({
         type: 'vote',
-        user: userName,
+        user: broadcastUser,
         vote: finalVote,
         structuredVote: structuredVotePayload,
       });
@@ -704,8 +711,8 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.repository.setStrudelPlayback(!!roomData.strudelIsPlaying);
 
     this.broadcast({
-      type: 'initialize',
-      roomData,
+      type: 'strudelPlaybackToggled',
+      isPlaying: !!roomData.strudelIsPlaying,
     });
   }
 
@@ -727,7 +734,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const currentTicket = roomData.currentTicket;
 
-      const queue = this.repository.getTicketQueue();
+      const queue = this.repository.getTicketQueue({
+        anonymizeVotes:
+          roomData.settings.anonymousVotes ||
+          roomData.settings.hideParticipantNames,
+      });
       const pendingTickets = queue.filter((t) => t.status === 'pending');
 
       if (currentTicket && Object.keys(roomData.votes).length > 0) {
@@ -752,7 +763,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       if (pendingTickets.length > 0) {
         nextTicket = pendingTickets[0];
         this.repository.updateTicket(nextTicket.id, { status: 'in_progress' });
-        nextTicket = this.repository.getTicketById(nextTicket.id)!;
+        nextTicket = this.repository.getTicketById(nextTicket.id, {
+          anonymizeVotes:
+            roomData.settings.anonymousVotes ||
+            roomData.settings.hideParticipantNames,
+        })!;
       } else {
         const ticketId = this.repository.getNextTicketId();
         const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
@@ -777,7 +792,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setShowVotes(false);
       this.repository.setJudgeState(null);
 
-      const updatedQueue = this.repository.getTicketQueue();
+      const updatedQueue = this.repository.getTicketQueue({
+        anonymizeVotes:
+          roomData.settings.anonymousVotes ||
+          roomData.settings.hideParticipantNames,
+      });
 
       this.broadcast({
         type: 'nextTicket',
@@ -808,6 +827,15 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const ticketId = ticket.ticketId || this.repository.getNextTicketId();
 
+      const existingWithKey = this.repository.getTicketByTicketKey(ticketId);
+      if (existingWithKey) {
+        this.broadcast({
+          type: 'error',
+          error: `Ticket ${ticketId} already exists in the queue`,
+        });
+        return;
+      }
+
       const newTicket = this.repository.createTicket({
         ticketId,
         title: ticket.title,
@@ -819,7 +847,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         externalServiceMetadata: ticket.externalServiceMetadata,
       });
 
-      const updatedQueue = this.repository.getTicketQueue();
+      const updatedQueue = this.repository.getTicketQueue({
+        anonymizeVotes:
+          roomData.settings.anonymousVotes ||
+          roomData.settings.hideParticipantNames,
+      });
 
       this.broadcast({
         type: 'ticketAdded',
@@ -854,6 +886,18 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         return;
       }
 
+      if (
+        updates.ticketId &&
+        updates.ticketId !== currentTicket.ticketId &&
+        this.repository.getTicketByTicketKey(updates.ticketId)
+      ) {
+        this.broadcast({
+          type: 'error',
+          error: `Ticket ${updates.ticketId} already exists in the queue`,
+        });
+        return;
+      }
+
       if (updates.ordinal !== undefined) {
         const queue = this.repository.getTicketQueue();
         const conflicting = queue.find(
@@ -868,13 +912,21 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       this.repository.updateTicket(ticketId, updates);
-      const updatedTicket = this.repository.getTicketById(ticketId);
+      const updatedTicket = this.repository.getTicketById(ticketId, {
+        anonymizeVotes:
+          roomData.settings.anonymousVotes ||
+          roomData.settings.hideParticipantNames,
+      });
 
       if (!updatedTicket) {
         return;
       }
 
-      const updatedQueue = this.repository.getTicketQueue();
+      const updatedQueue = this.repository.getTicketQueue({
+        anonymizeVotes:
+          roomData.settings.anonymousVotes ||
+          roomData.settings.hideParticipantNames,
+      });
 
       this.broadcast({
         type: 'ticketUpdated',
@@ -905,7 +957,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       this.repository.deleteTicket(ticketId);
-      const updatedQueue = this.repository.getTicketQueue();
+      const updatedQueue = this.repository.getTicketQueue({
+        anonymizeVotes:
+          roomData.settings.anonymousVotes ||
+          roomData.settings.hideParticipantNames,
+      });
 
       this.broadcast({
         type: 'ticketDeleted',
@@ -962,7 +1018,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.repository.setShowVotes(false);
       this.repository.setJudgeState(null);
 
-      const queueAfterCompletion = this.repository.getTicketQueue();
+      const queueAfterCompletion = this.repository.getTicketQueue({
+        anonymizeVotes:
+          roomData.settings.anonymousVotes ||
+          roomData.settings.hideParticipantNames,
+      });
       const pendingTickets = queueAfterCompletion.filter(
         (t) => t.status === 'pending'
       );
@@ -971,7 +1031,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       if (pendingTickets.length > 0) {
         nextTicket = pendingTickets[0];
         this.repository.updateTicket(nextTicket.id, { status: 'in_progress' });
-        nextTicket = this.repository.getTicketById(nextTicket.id);
+        nextTicket = this.repository.getTicketById(nextTicket.id, {
+          anonymizeVotes:
+            roomData.settings.anonymousVotes ||
+            roomData.settings.hideParticipantNames,
+        });
         if (nextTicket) {
           this.repository.setCurrentTicket(nextTicket.id);
         }
@@ -979,7 +1043,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         this.repository.setCurrentTicket(null);
       }
 
-      const updatedQueue = this.repository.getTicketQueue();
+      const updatedQueue = this.repository.getTicketQueue({
+        anonymizeVotes:
+          roomData.settings.anonymousVotes ||
+          roomData.settings.hideParticipantNames,
+      });
 
       this.broadcast({
         type: 'ticketCompleted',
@@ -1010,19 +1078,30 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const nextTicketId = this.repository.getNextTicketId();
       const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
 
-      const created = this.repository.createTicket({
-        ticketId: nextTicketId,
-        status: 'in_progress',
-        ordinal: maxOrdinal + 1,
-        externalService: 'none',
-      });
+      const existingTicket = this.repository.getTicketByTicketKey(nextTicketId);
+      const created =
+        existingTicket ??
+        this.repository.createTicket({
+          ticketId: nextTicketId,
+          status: 'in_progress',
+          ordinal: maxOrdinal + 1,
+          externalService: 'none',
+        });
+
+      if (created.status !== 'in_progress') {
+        this.repository.updateTicket(created.id, { status: 'in_progress' });
+      }
 
       this.repository.setCurrentTicket(created.id);
 
       return {
         ...roomData,
         currentTicket: created,
-        ticketQueue: this.repository.getTicketQueue(),
+        ticketQueue: this.repository.getTicketQueue({
+          anonymizeVotes:
+            roomData.settings.anonymousVotes ||
+            roomData.settings.hideParticipantNames,
+        }),
       };
     });
   }

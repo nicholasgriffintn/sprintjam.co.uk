@@ -20,6 +20,7 @@ import { PrePointingSummaryModal } from '../components/modals/PrePointingSummary
 import { ErrorBannerAuth } from '../components/ErrorBannerAuth';
 import { ErrorBannerConnection } from '../components/ErrorBannerConnection';
 import { RoomSidebar } from '../components/RoomSidebar';
+import { getVoteKeyForUser } from '../utils/room';
 
 const SettingsModal = lazy(() => import('../components/SettingsModal'));
 const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
@@ -132,7 +133,11 @@ const RoomScreen = () => {
           roomData.settings.votingCriteria ? (
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
-              currentVote={roomData.structuredVotes?.[name] || null}
+              currentVote={
+                roomData.structuredVotes?.[
+                  getVoteKeyForUser(roomData, name)
+                ] || null
+              }
               onVote={handleVote}
               displaySettings={roomData.settings.structuredVotingDisplay}
             />
