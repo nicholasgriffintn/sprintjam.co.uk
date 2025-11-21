@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { updateJiraStoryPoints } from "../lib/jira-service";
-import type { RoomData, TicketQueueItem } from "../types";
+import { updateJiraStoryPoints, convertVoteValueToStoryPoints } from "../lib/jira-service";
+import type { RoomData, TicketQueueItem, VoteValue, StructuredVote } from "../types";
 
 interface UseAutoJiraUpdateOptions {
   roomData: RoomData | null;
@@ -21,6 +21,29 @@ export const useAutoJiraUpdate = ({
     storyPoints: number;
   } | null>(null);
 
+  const calculateStoryPoints = (
+    votes: Record<string, VoteValue | null>,
+    structuredVotes?: Record<string, StructuredVote>
+  ): number | null => {
+    const numericVotes = Object.entries(votes)
+      .map(([user, vote]) => {
+        const structured = structuredVotes?.[user];
+        const source = structured?.calculatedStoryPoints ?? vote;
+        return convertVoteValueToStoryPoints(source);
+      })
+      .filter((value): value is number => value !== null);
+
+    if (numericVotes.length === 0) {
+      return null;
+    }
+
+    const average =
+      numericVotes.reduce((total, value) => total + value, 0) /
+      numericVotes.length;
+
+    return Math.round((average + Number.EPSILON) * 10) / 10;
+  };
+
   useEffect(() => {
     if (!roomData) return;
 
@@ -32,16 +55,13 @@ export const useAutoJiraUpdate = ({
       roomData.settings.externalService !== "jira" ||
       !roomData.settings.autoUpdateJiraStoryPoints ||
       roomData.showVotes !== true ||
-      roomData.judgeScore === null ||
       roomData.moderator !== userName
     ) {
       return;
     }
 
-    const storyPoints = Number(roomData.judgeScore);
-    if (Number.isNaN(storyPoints)) {
-      return;
-    }
+    const storyPoints = calculateStoryPoints(roomData.votes, roomData.structuredVotes);
+    if (storyPoints === null) return;
 
     const lastUpdate = lastUpdatedRef.current;
     if (

@@ -74,6 +74,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             roomKey={roomKey}
             userName={userName}
             onError={onError}
+            onUpdateTicket={onUpdateTicket}
           />
         )}
       </div>

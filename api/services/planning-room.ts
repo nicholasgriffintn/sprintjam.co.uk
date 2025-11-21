@@ -727,28 +727,26 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const currentTicket = roomData.currentTicket;
 
-      if (currentTicket && currentTicket.status === 'in_progress') {
-        if (Object.keys(roomData.votes).length > 0) {
-          Object.entries(roomData.votes).forEach(([user, vote]) => {
-            this.repository.logTicketVote(
-              currentTicket.id,
-              user,
-              vote,
-              roomData.structuredVotes?.[user]
-            );
-          });
-        }
+      const queue = this.repository.getTicketQueue();
+      const pendingTickets = queue.filter((t) => t.status === 'pending');
 
+      if (currentTicket && Object.keys(roomData.votes).length > 0) {
+        Object.entries(roomData.votes).forEach(([user, vote]) => {
+          this.repository.logTicketVote(
+            currentTicket.id,
+            user,
+            vote,
+            roomData.structuredVotes?.[user]
+          );
+        });
+      }
+
+      if (currentTicket && currentTicket.status === 'in_progress') {
         this.repository.updateTicket(currentTicket.id, {
           status: 'completed',
           completedAt: Date.now(),
         });
       }
-
-      const queue = this.repository.getTicketQueue();
-      const pendingTickets = queue
-        .filter((t) => t.status === 'pending')
-        .filter((t) => !currentTicket || t.id !== currentTicket.id);
 
       let nextTicket: TicketQueueItem;
       if (pendingTickets.length > 0) {

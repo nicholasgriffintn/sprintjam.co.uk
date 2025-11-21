@@ -3,13 +3,10 @@ import { ArrowDownToLine, Loader2, RefreshCw } from 'lucide-react';
 
 import type { TicketQueueItem } from '../../../types';
 import { handleError } from '../../../utils/error';
-import {
-  updateJiraStoryPoints,
-  convertVoteValueToStoryPoints,
-} from '../../../lib/jira-service';
+import { updateJiraStoryPoints } from '../../../lib/jira-service';
 import { formatDate } from '../../../utils/date';
 import { JiraBadge } from '../../JiraBadge';
-import { getVoteSummary } from '../../../utils/votes';
+import { getVoteSummary, calculateStoryPointsFromVotes } from '../../../utils/votes';
 import { downloadCsv } from '../../../utils/csv';
 import { buildCsv } from '../utils/csv';
 
@@ -18,6 +15,7 @@ interface TicketQueueModalCompletedTabProps {
   roomKey: string;
   userName: string;
   onError?: (message: string) => void;
+  onUpdateTicket?: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
 }
 
 export function TicketQueueModalCompletedTab({
@@ -25,29 +23,12 @@ export function TicketQueueModalCompletedTab({
   roomKey,
   userName,
   onError,
+  onUpdateTicket,
 }: TicketQueueModalCompletedTabProps) {
   const [syncingTicketId, setSyncingTicketId] = useState<number | null>(null);
 
-  const getStoryPointEstimate = (ticket: TicketQueueItem): number | null => {
-    if (!ticket.votes || ticket.votes.length === 0) {
-      return null;
-    }
-
-    const numericVotes = ticket.votes
-      .map(
-        (vote) => vote.structuredVotePayload?.calculatedStoryPoints ?? vote.vote
-      )
-      .map(convertVoteValueToStoryPoints)
-      .filter((value): value is number => value !== null);
-
-    if (numericVotes.length === 0) return null;
-
-    const average =
-      numericVotes.reduce((total, value) => total + value, 0) /
-      numericVotes.length;
-
-    return Math.round((average + Number.EPSILON) * 10) / 10;
-  };
+  const getStoryPointEstimate = (ticket: TicketQueueItem): number | null =>
+    calculateStoryPointsFromVotes(ticket.votes);
 
   const handleSyncToJira = async (ticket: TicketQueueItem) => {
     if (ticket.externalService !== 'jira') {
@@ -63,10 +44,15 @@ export function TicketQueueModalCompletedTab({
 
     setSyncingTicketId(ticket.id);
     try {
-      await updateJiraStoryPoints(ticket.ticketId, storyPoints, {
+      const updated = await updateJiraStoryPoints(ticket.ticketId, storyPoints, {
         roomKey,
         userName,
       });
+      if (onUpdateTicket) {
+        onUpdateTicket(ticket.id, {
+          externalServiceMetadata: updated,
+        });
+      }
     } catch (err) {
       handleError(
         err instanceof Error
