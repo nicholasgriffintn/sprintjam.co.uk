@@ -1,5 +1,6 @@
 import { type FC, useCallback, useEffect, useState } from "react";
 import { Music, X } from "lucide-react";
+import { useRef } from "react";
 
 import { SurfaceCard } from "../ui/SurfaceCard";
 import { StrudelControls } from "./StrudelControls";
@@ -27,24 +28,43 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     setTimeout(() => setError(null), 5000);
   }, []);
 
-  const { isMuted, isLoading, isInitialized, pause, toggleMute, playCode } =
+  const { isMuted, isLoading, pause, toggleMute, playCode } =
     useStrudelPlayer({
       onError: (err) => {
         showTemporaryError(err.message);
       },
     });
+  const playCodeRef = useRef(playCode);
+  const pauseRef = useRef(pause);
+  const lastPlaybackSignatureRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    playCodeRef.current = playCode;
+    pauseRef.current = pause;
+  }, [playCode, pause]);
 
   const isPlaying = roomData.strudelIsPlaying ?? false;
 
   useEffect(() => {
-    if (!isInitialized || !roomData.currentStrudelCode) return;
+    if (!roomData.currentStrudelCode) return;
+
+    const signature = [
+      roomData.currentStrudelCode,
+      isPlaying ? "1" : "0",
+      isMuted ? "1" : "0",
+    ].join("|");
+
+    if (lastPlaybackSignatureRef.current === signature) {
+      return;
+    }
+    lastPlaybackSignatureRef.current = signature;
 
     if (isPlaying && !isMuted) {
-      playCode(roomData.currentStrudelCode);
+      playCodeRef.current(roomData.currentStrudelCode);
     } else if (!isPlaying) {
-      pause();
+      pauseRef.current();
     }
-  }, [isPlaying, roomData.currentStrudelCode, isInitialized, isMuted]);
+  }, [isPlaying, roomData.currentStrudelCode, isMuted]);
 
   useEffect(() => {
     if (

@@ -4,7 +4,10 @@ import { initStrudel, evaluate, hush } from "@strudel/web";
 
 import { prebake } from "../lib/strudel";
 import { safeLocalStorage } from "../utils/storage";
-import { MUTE_STORAGE_KEY } from '../constants';
+import { MUTE_STORAGE_KEY } from "../constants";
+
+let sharedInitPromise: Promise<void> | null = null;
+let sharedInitialized = false;
 
 interface UseStrudelPlayerOptions {
   onError?: (error: Error) => void;
@@ -15,7 +18,7 @@ interface UseStrudelPlayerReturn {
   isMuted: boolean;
   isLoading: boolean;
   isInitialized: boolean;
-  play: () => void;
+  play: () => Promise<void>;
   pause: () => void;
   toggleMute: () => void;
   playCode: (code: StrudelCodePayload) => Promise<void>;
@@ -103,6 +106,7 @@ export function useStrudelPlayer(
 ): UseStrudelPlayerReturn {
   const { onError } = options;
 
+  const isMountedRef = useRef(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(() => {
     const stored = safeLocalStorage.get(MUTE_STORAGE_KEY);
@@ -111,7 +115,9 @@ export function useStrudelPlayer(
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const initPromiseRef = useRef<Promise<void> | null>(null);
   const currentCodeRef = useRef<string | null>(null);
+  const isPlayingRef = useRef(false);
   const onErrorRef = useRef<UseStrudelPlayerOptions["onError"]>(onError);
   const reportError = useCallback((error: Error) => {
     onErrorRef.current?.(error);
@@ -122,39 +128,14 @@ export function useStrudelPlayer(
   }, [onError]);
 
   useEffect(() => {
-    let mounted = true;
-
-    const notifyError = (error: unknown) => {
-      if (!mounted) return;
-      const normalizedError =
-        error instanceof Error
-          ? error
-          : new Error("Failed to initialize Strudel");
-      onErrorRef.current?.(normalizedError);
-    };
-
-    const init = async () => {
-      try {
-        await initStrudel({
-          prebake,
-        });
-
-        if (mounted) {
-          setIsInitialized(true);
-        }
-      } catch (error) {
-        console.error("Failed to initialize Strudel:", error);
-        notifyError(error);
-      }
-    };
-
-    init();
-
+    isMountedRef.current = true;
     return () => {
-      mounted = false;
+      isMountedRef.current = false;
       try {
         console.info("StrudelPlayer] Cleaning up Strudel");
-        hush();
+        if (sharedInitialized || sharedInitPromise || initPromiseRef.current) {
+          hush();
+        }
       } catch (e) {
         console.error("Failed to clean up Strudel:", e);
       }
@@ -162,11 +143,60 @@ export function useStrudelPlayer(
   }, []);
 
   useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  const ensureInitialized = useCallback(async () => {
+    if (sharedInitialized) {
+      if (!isInitialized) {
+        setIsInitialized(true);
+      }
+      return;
+    }
+
+    if (!initPromiseRef.current) {
+      initPromiseRef.current = sharedInitPromise =
+        sharedInitPromise ||
+        (async () => {
+          try {
+            await initStrudel({
+              prebake,
+            });
+
+            sharedInitialized = true;
+
+            if (isMountedRef.current) {
+              setIsInitialized(true);
+            }
+          } catch (error) {
+            console.error("Failed to initialize Strudel:", error);
+            reportError(
+              error instanceof Error
+                ? error
+                : new Error("Failed to initialize Strudel"),
+            );
+            throw error;
+          } finally {
+            initPromiseRef.current = null;
+          }
+        })();
+    }
+
+    await sharedInitPromise;
+  }, [isInitialized, reportError]);
+
+  useEffect(() => {
     safeLocalStorage.set(MUTE_STORAGE_KEY, String(isMuted));
   }, [isMuted]);
 
   const play = useCallback(async () => {
-    if (!isInitialized || !currentCodeRef.current || isMuted) return;
+    if (!currentCodeRef.current || isMuted) return;
+
+    try {
+      await ensureInitialized();
+    } catch {
+      return;
+    }
 
     try {
       await evaluate(currentCodeRef.current);
@@ -180,9 +210,14 @@ export function useStrudelPlayer(
         );
       }
     }
-  }, [isInitialized, isMuted, reportError]);
+  }, [ensureInitialized, isMuted, reportError]);
 
   const pause = useCallback(() => {
+    if (!isInitialized && !initPromiseRef.current) {
+      setIsPlaying(false);
+      return;
+    }
+
     try {
       console.info("StrudelPlayer] Pausing playback");
       hush();
@@ -198,6 +233,12 @@ export function useStrudelPlayer(
   }, [reportError]);
 
   const stop = useCallback(() => {
+    if (!isInitialized && !initPromiseRef.current) {
+      setIsPlaying(false);
+      currentCodeRef.current = null;
+      return;
+    }
+
     try {
       console.info("StrudelPlayer] Stopping playback");
       hush();
@@ -217,29 +258,37 @@ export function useStrudelPlayer(
     const newMuted = !isMuted;
     setIsMuted(newMuted);
 
-    if (newMuted && isPlaying) {
+    if (newMuted && isPlayingRef.current) {
       try {
         console.info("StrudelPlayer] Muting playback");
-        hush();
+        if (isInitialized || initPromiseRef.current) {
+          hush();
+        }
         setIsPlaying(false);
       } catch (error) {
         console.error("Failed to mute:", error);
       }
     }
-  }, [isMuted, isPlaying]);
+  }, [isMuted, isInitialized]);
 
   const playCode = useCallback(
     async (code: StrudelCodePayload) => {
-      if (!isInitialized) {
-        console.warn("Strudel not initialized yet");
-        return;
-      }
       if (code == null) {
         console.warn("No Strudel code provided");
         return;
       }
 
-      if (isPlaying) {
+      setIsLoading(true);
+
+      try {
+        await ensureInitialized();
+      } catch (_error) {
+        setIsLoading(false);
+        setIsPlaying(false);
+        return;
+      }
+
+      if (isPlayingRef.current) {
         try {
           console.info(
             "StrudelPlayer] Stopping existing playback before playing new code",
@@ -251,7 +300,6 @@ export function useStrudelPlayer(
         }
       }
 
-      setIsLoading(true);
       try {
         const parsedCode = parseStrudelCodePayload(code);
         currentCodeRef.current = parsedCode;
@@ -293,7 +341,7 @@ export function useStrudelPlayer(
         setIsLoading(false);
       }
     },
-    [isInitialized, isMuted, reportError],
+    [ensureInitialized, isMuted, reportError],
   );
 
   return {
