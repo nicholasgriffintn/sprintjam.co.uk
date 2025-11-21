@@ -714,6 +714,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const roomData = await this.getRoomData();
       if (!roomData) return;
 
+      if (!roomData.settings.enableTicketQueue) {
+        return;
+      }
+
       if (
         roomData.moderator !== userName &&
         !roomData.settings.allowOthersToManageQueue
@@ -723,7 +727,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const currentTicket = roomData.currentTicket;
 
-      if (currentTicket) {
+      if (currentTicket && currentTicket.status === 'in_progress') {
         if (Object.keys(roomData.votes).length > 0) {
           Object.entries(roomData.votes).forEach(([user, vote]) => {
             this.repository.logTicketVote(
@@ -742,7 +746,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       const queue = this.repository.getTicketQueue();
-      const pendingTickets = queue.filter((t) => t.status === 'pending');
+      const pendingTickets = queue
+        .filter((t) => t.status === 'pending')
+        .filter((t) => !currentTicket || t.id !== currentTicket.id);
 
       let nextTicket: TicketQueueItem;
       if (pendingTickets.length > 0) {
@@ -788,6 +794,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const roomData = await this.getRoomData();
       if (!roomData) return;
 
+      if (!roomData.settings.enableTicketQueue) {
+        return;
+      }
+
       if (
         roomData.moderator !== userName &&
         !roomData.settings.allowOthersToManageQueue
@@ -830,11 +840,33 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const roomData = await this.getRoomData();
       if (!roomData) return;
 
+      if (!roomData.settings.enableTicketQueue) {
+        return;
+      }
+
       if (
         roomData.moderator !== userName &&
         !roomData.settings.allowOthersToManageQueue
       ) {
         return;
+      }
+
+      const currentTicket = this.repository.getTicketById(ticketId);
+      if (!currentTicket) {
+        return;
+      }
+
+      if (updates.ordinal !== undefined) {
+        const queue = this.repository.getTicketQueue();
+        const conflicting = queue.find(
+          (t) => t.id !== ticketId && t.ordinal === updates.ordinal
+        );
+
+        if (conflicting) {
+          this.repository.updateTicket(conflicting.id, {
+            ordinal: currentTicket.ordinal,
+          });
+        }
       }
 
       this.repository.updateTicket(ticketId, updates);
@@ -858,6 +890,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     await this.state.blockConcurrencyWhile(async () => {
       const roomData = await this.getRoomData();
       if (!roomData) return;
+
+      if (!roomData.settings.enableTicketQueue) {
+        return;
+      }
 
       if (
         roomData.moderator !== userName &&
@@ -886,6 +922,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const roomData = await this.getRoomData();
       if (!roomData) return;
 
+      if (!roomData.settings.enableTicketQueue) {
+        return;
+      }
+
       if (
         roomData.moderator !== userName &&
         !roomData.settings.allowOthersToManageQueue
@@ -913,12 +953,39 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         completedAt: Date.now(),
       });
 
-      const updatedTicket = this.repository.getTicketById(currentTicket.id);
+      roomData.votes = {};
+      roomData.structuredVotes = {};
+      roomData.showVotes = false;
+      roomData.judgeScore = null;
+      roomData.judgeMetadata = undefined;
+
+      this.repository.clearVotes();
+      this.repository.clearStructuredVotes();
+      this.repository.setShowVotes(false);
+      this.repository.setJudgeState(null);
+
+      const queueAfterCompletion = this.repository.getTicketQueue();
+      const pendingTickets = queueAfterCompletion.filter(
+        (t) => t.status === 'pending'
+      );
+
+      let nextTicket: TicketQueueItem | undefined;
+      if (pendingTickets.length > 0) {
+        nextTicket = pendingTickets[0];
+        this.repository.updateTicket(nextTicket.id, { status: 'in_progress' });
+        nextTicket = this.repository.getTicketById(nextTicket.id);
+        if (nextTicket) {
+          this.repository.setCurrentTicket(nextTicket.id);
+        }
+      } else {
+        this.repository.setCurrentTicket(null);
+      }
+
       const updatedQueue = this.repository.getTicketQueue();
 
       this.broadcast({
         type: 'ticketCompleted',
-        ticket: updatedTicket,
+        ticket: nextTicket,
         queue: updatedQueue,
       });
     });

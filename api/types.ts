@@ -118,7 +118,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: "jira" | "none";
+  externalService?: 'jira' | 'none';
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   autoUpdateJiraStoryPoints?: boolean;
@@ -127,6 +127,7 @@ export interface RoomSettings {
   autoHandoverModerator?: boolean;
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
+  enableTicketQueue?: boolean;
 }
 
 export interface VotingCriterion {

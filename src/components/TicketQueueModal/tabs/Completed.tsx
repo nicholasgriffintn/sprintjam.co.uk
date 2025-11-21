@@ -85,7 +85,10 @@ export function TicketQueueModalCompletedTab({
   };
 
   return (
-    <div className="space-y-3" data-testid="queue-history-tab-panel">
+    <div
+      className="max-h-[70vh] space-y-3 overflow-y-auto pr-1"
+      data-testid="queue-history-tab-panel"
+    >
       {completedTickets.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-500">
           No completed tickets yet—wrap a ticket to see the history here.
