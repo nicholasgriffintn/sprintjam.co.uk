@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FC, ChangeEvent, FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -11,7 +11,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import type { RoomSettings, AvatarId, ErrorKind } from '../types';
+import type { RoomSettings } from '../types';
+import { useSession } from "../context/SessionContext";
+import { useRoom } from "../context/RoomContext";
 import AvatarSelector from "../components/AvatarSelector";
 import { PageBackground } from "../components/layout/PageBackground";
 import { SurfaceCard } from "../components/ui/SurfaceCard";
@@ -20,53 +22,39 @@ import { Input } from "../components/ui/Input";
 import { Alert } from "../components/ui/Alert";
 import { Logo } from "../components/Logo";
 
-interface CreateRoomScreenProps {
-  name: string;
-  passcode: string;
-  selectedAvatar: AvatarId | null;
-  onNameChange: (name: string) => void;
-  onPasscodeChange: (passcode: string) => void;
-  onAvatarChange: (avatar: AvatarId) => void;
-  onCreateRoom: (settings?: Partial<RoomSettings>) => void;
-  onBack: () => void;
-  error: string;
-  errorKind?: ErrorKind | null;
-  onClearError: () => void;
-  defaultSettings?: RoomSettings;
-}
-
-const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
-  name,
-  passcode,
-  selectedAvatar,
-  onNameChange,
-  onPasscodeChange,
-  onAvatarChange,
-  onCreateRoom,
-  onBack,
-  error,
-  errorKind: _errorKind,
-  onClearError,
-  defaultSettings,
-}) => {
+const CreateRoomScreen = () => {
+  const {
+    name,
+    passcode,
+    selectedAvatar,
+    setName,
+    setPasscode,
+    setSelectedAvatar,
+    goHome,
+    error,
+    clearError,
+  } = useSession();
+  const { handleCreateRoom, serverDefaults } = useRoom();
   const [currentStep, setCurrentStep] = useState<'name' | 'avatar' | 'details'>(
     'name'
   );
   const [showSettings, setShowSettings] = useState(true);
   const [settings, setSettings] = useState<Partial<RoomSettings>>(() => {
-    if (!defaultSettings) {
+    if (!serverDefaults?.roomSettings) {
       return {};
     }
 
     return {
-      enableStructuredVoting: defaultSettings.enableStructuredVoting ?? false,
-      enableJudge: defaultSettings.enableJudge ?? true,
-      externalService: defaultSettings.externalService ?? 'none',
-      showTimer: defaultSettings.showTimer ?? false,
-      enableTicketQueue: defaultSettings.enableTicketQueue ?? false,
+      enableStructuredVoting:
+        serverDefaults.roomSettings.enableStructuredVoting ?? false,
+      enableJudge: serverDefaults.roomSettings.enableJudge ?? true,
+      externalService: serverDefaults.roomSettings.externalService ?? 'none',
+      showTimer: serverDefaults.roomSettings.showTimer ?? false,
+      enableTicketQueue: serverDefaults.roomSettings.enableTicketQueue ?? false,
       allowOthersToShowEstimates:
-        defaultSettings.allowOthersToShowEstimates ?? false,
-      hideParticipantNames: defaultSettings.hideParticipantNames ?? false,
+        serverDefaults.roomSettings.allowOthersToShowEstimates ?? false,
+      hideParticipantNames:
+        serverDefaults.roomSettings.hideParticipantNames ?? false,
     };
   });
 
@@ -77,8 +65,8 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
     } else if (currentStep === 'avatar' && selectedAvatar) {
       setCurrentStep('details');
     } else if (currentStep === 'details' && name && selectedAvatar) {
-      onClearError();
-      onCreateRoom(settings);
+      clearError();
+      handleCreateRoom(settings);
     }
   };
 
@@ -88,7 +76,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
     } else if (currentStep === 'details') {
       setCurrentStep('avatar');
     } else {
-      onBack();
+      goHome();
     }
   };
 
@@ -143,7 +131,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
         <div className="space-y-3 text-left">
           <button
             type="button"
-            onClick={onBack}
+            onClick={goHome}
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -173,7 +161,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
             transition={{ duration: 0.3 }}
           >
             {error && (
-              <Alert variant="error" onDismiss={onClearError}>
+              <Alert variant="error" onDismiss={clearError}>
                 {error}
               </Alert>
             )}
@@ -190,7 +178,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                 type="text"
                 value={name}
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  onNameChange(e.target.value)
+                  setName(e.target.value)
                 }
                 placeholder="Moderator name"
                 required
@@ -218,7 +206,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                   type="password"
                   value={passcode}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    onPasscodeChange(e.target.value)
+                    setPasscode(e.target.value)
                   }
                   placeholder="Add a passcode"
                   fullWidth
@@ -308,7 +296,7 @@ const CreateRoomScreen: FC<CreateRoomScreenProps> = ({
                 </p>
                 <AvatarSelector
                   selectedAvatar={selectedAvatar}
-                  onSelectAvatar={onAvatarChange}
+                  onSelectAvatar={setSelectedAvatar}
                 />
               </div>
             )}

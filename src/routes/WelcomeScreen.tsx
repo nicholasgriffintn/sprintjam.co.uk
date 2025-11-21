@@ -1,4 +1,3 @@
-import type { FC } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -11,20 +10,14 @@ import {
   Play,
 } from "lucide-react";
 
+import { useSession } from "../context/SessionContext";
 import { PageBackground } from "../components/layout/PageBackground";
 import { Button } from "../components/ui/Button";
 import { SurfaceCard } from "../components/ui/SurfaceCard";
 import { Logo } from "../components/Logo";
 
-interface WelcomeScreenProps {
-  onCreateRoom: () => void;
-  onJoinRoom: () => void;
-}
-
-const WelcomeScreen: FC<WelcomeScreenProps> = ({
-  onCreateRoom,
-  onJoinRoom,
-}) => {
+const WelcomeScreen = () => {
+  const { startCreateFlow, startJoinFlow } = useSession();
   const features = [
     {
       icon: <Zap className="w-5 h-5" />,
@@ -75,7 +68,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
           <Button
             data-testid="create-room-button"
-            onClick={onCreateRoom}
+            onClick={startCreateFlow}
             icon={<Plus className="h-4 w-4" />}
             size="lg"
             className="w-full sm:w-auto"
@@ -85,7 +78,7 @@ const WelcomeScreen: FC<WelcomeScreenProps> = ({
           <Button
             variant="secondary"
             data-testid="join-room-button"
-            onClick={onJoinRoom}
+            onClick={startJoinFlow}
             icon={<Users className="h-4 w-4" />}
             size="lg"
             className="w-full sm:w-auto"

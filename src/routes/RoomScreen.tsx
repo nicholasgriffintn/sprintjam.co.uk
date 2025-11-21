@@ -1,15 +1,8 @@
-import { type FC, useState, lazy, Suspense } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import type {
-  RoomData,
-  VoteValue,
-  StructuredVote,
-  ServerDefaults,
-  TicketQueueItem,
-  ErrorKind,
-  ErrorConnectionIssue,
-} from '../types';
+import { useRoom } from '../context/RoomContext';
+import { useSession } from '../context/SessionContext';
 import { useRoomStats } from '../hooks/useRoomStats';
 import { useConsensusCelebration } from '../hooks/useConsensusCelebration';
 import ErrorBanner from '../components/ui/ErrorBanner';
@@ -36,60 +29,38 @@ const UnifiedResults = lazy(() =>
     default: m.UnifiedResults,
   }))
 );
-
-export interface RoomScreenProps {
-  roomData: RoomData;
-  name: string;
-  isModeratorView: boolean;
-  userVote: VoteValue | StructuredVote | null;
-  votingOptions: VoteValue[];
-  serverDefaults: ServerDefaults;
-  onVote: (value: VoteValue | StructuredVote) => void;
-  onToggleShowVotes: () => void;
-  onResetVotes: () => void;
-  onUpdateSettings: (settings: RoomData['settings']) => void;
-  onNextTicket: () => void;
-  onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
-  onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
-  onDeleteTicket: (ticketId: number) => void;
-  error: string;
-  errorKind?: ErrorKind | null;
-  onClearError: () => void;
-  onError: (message: string) => void;
-  isConnected: boolean;
-  connectionIssue?: ErrorConnectionIssue | null;
-  onRetryConnection?: () => void;
-  onLeaveRoom: () => void;
-}
-
-const RoomScreen: FC<RoomScreenProps> = ({
-  roomData,
-  name,
-  isModeratorView,
-  userVote,
-  serverDefaults,
-  onVote,
-  onToggleShowVotes,
-  onResetVotes,
-  onUpdateSettings,
-  onNextTicket,
-  onAddTicket,
-  onUpdateTicket,
-  onDeleteTicket,
-  error,
-  errorKind,
-  onClearError,
-  onError,
-  isConnected,
-  connectionIssue,
-  onRetryConnection,
-  onLeaveRoom,
-}) => {
+const RoomScreen = () => {
+  const {
+    roomData,
+    isModeratorView,
+    userVote,
+    serverDefaults,
+    handleVote,
+    handleToggleShowVotes,
+    handleResetVotes,
+    handleUpdateSettings,
+    handleNextTicket,
+    handleAddTicket,
+    handleUpdateTicket,
+    handleDeleteTicket,
+    roomError,
+    roomErrorKind,
+    clearRoomError,
+    reportRoomError,
+    isSocketConnected,
+    connectionIssue,
+    retryConnection,
+    handleLeaveRoom,
+  } = useRoom();
+  const { name } = useSession();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
+  if (!roomData || !serverDefaults) {
+    return <FallbackLoading />;
+  }
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
 
   const stats = useRoomStats(roomData);
@@ -97,7 +68,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
 
   const showReconnectBanner =
     connectionIssue?.type === 'disconnected' ||
-    (!isConnected && !connectionIssue);
+    (!isSocketConnected && !connectionIssue);
 
   const showAuthBanner = connectionIssue?.type === 'auth';
 
@@ -105,31 +76,31 @@ const RoomScreen: FC<RoomScreenProps> = ({
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       {showAuthBanner && (
         <ErrorBannerAuth
-          onRetryConnection={onRetryConnection}
-          onLeaveRoom={onLeaveRoom}
+          onRetryConnection={retryConnection}
+          onLeaveRoom={handleLeaveRoom}
         />
       )}
 
       {!showAuthBanner && (connectionIssue || showReconnectBanner) && (
         <ErrorBannerConnection
           connectionIssue={connectionIssue}
-          onRetryConnection={onRetryConnection}
+          onRetryConnection={retryConnection}
         />
       )}
 
-      {error && (
+      {roomError && (
         <ErrorBanner
-          message={error}
-          onClose={onClearError}
-          variant={errorKind === 'permission' ? 'warning' : 'error'}
+          message={roomError}
+          onClose={clearRoomError}
+          variant={roomErrorKind === 'permission' ? 'warning' : 'error'}
         />
       )}
 
       <Header
         roomData={roomData}
         isModeratorView={isModeratorView}
-        isConnected={isConnected}
-        onLeaveRoom={onLeaveRoom}
+        isConnected={isSocketConnected}
+        onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
       />
@@ -150,7 +121,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
                 roomData.settings.allowOthersToManageQueue === true
               }
               onViewQueue={() => setIsQueueModalOpen(true)}
-              onUpdateTicket={onUpdateTicket}
+              onUpdateTicket={handleUpdateTicket}
               className="flex flex-col gap-3 px-0 md:mt-auto md:pr-4 md:py-5"
             />
           )}
@@ -171,7 +142,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
               currentVote={roomData.structuredVotes?.[name] || null}
-              onVote={onVote}
+              onVote={handleVote}
               displaySettings={roomData.settings.structuredVotingDisplay}
             />
           ) : (
@@ -179,7 +150,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
               roomData={roomData}
               name={name}
               userVote={typeof userVote === 'object' ? null : userVote}
-              onVote={onVote}
+              onVote={handleVote}
             />
           )}
 
@@ -188,8 +159,8 @@ const RoomScreen: FC<RoomScreenProps> = ({
               roomData={roomData}
               isModeratorView={isModeratorView}
               queueEnabled={isQueueEnabled}
-              onToggleShowVotes={onToggleShowVotes}
-              onResetVotes={onResetVotes}
+              onToggleShowVotes={handleToggleShowVotes}
+              onResetVotes={handleResetVotes}
               onNextTicket={() => setIsSummaryOpen(true)}
               onRevisitLater={async () => {
                 if (!roomData.currentTicket) return;
@@ -199,11 +170,11 @@ const RoomScreen: FC<RoomScreenProps> = ({
                     (max, t) => (t.ordinal > max ? t.ordinal : max),
                     0
                   ) + 1;
-                await onUpdateTicket(roomData.currentTicket.id, {
+                await handleUpdateTicket(roomData.currentTicket.id, {
                   status: 'pending',
                   ordinal: maxOrdinal,
                 });
-                onNextTicket();
+                handleNextTicket();
               }}
             />
           )}
@@ -274,7 +245,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
               isOpen={isSettingsModalOpen}
               onClose={() => setIsSettingsModalOpen(false)}
               settings={roomData.settings}
-              onSaveSettings={onUpdateSettings}
+              onSaveSettings={handleUpdateSettings}
               defaultSettings={serverDefaults.roomSettings}
               structuredVotingOptions={serverDefaults.structuredVotingOptions}
             />
@@ -303,14 +274,14 @@ const RoomScreen: FC<RoomScreenProps> = ({
           externalService={roomData.settings.externalService || 'none'}
           roomKey={roomData.key}
           userName={name}
-          onAddTicket={onAddTicket}
-          onUpdateTicket={onUpdateTicket}
-          onDeleteTicket={onDeleteTicket}
+          onAddTicket={handleAddTicket}
+          onUpdateTicket={handleUpdateTicket}
+          onDeleteTicket={handleDeleteTicket}
           canManageQueue={
             isModeratorView ||
             roomData.settings.allowOthersToManageQueue === true
           }
-          onError={onError}
+          onError={reportRoomError}
         />
       )}
 
@@ -325,7 +296,7 @@ const RoomScreen: FC<RoomScreenProps> = ({
           if (pendingNextTicket) return;
           setPendingNextTicket(true);
           try {
-            onNextTicket();
+            handleNextTicket();
           } finally {
             setPendingNextTicket(false);
             setIsSummaryOpen(false);

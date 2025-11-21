@@ -4,6 +4,7 @@ import { joinRoom } from "../lib/api-service";
 import { upsertRoom } from "../lib/data/room-store";
 import { safeLocalStorage } from "../utils/storage";
 import type { AvatarId, ServerDefaults } from "../types";
+import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from '../constants';
 
 interface UseAutoReconnectOptions {
   name: string;
@@ -34,7 +35,7 @@ export const useAutoReconnect = ({
     if (didAttemptRestore.current) {
       return;
     }
-    if (screen !== "welcome") {
+    if (screen !== 'welcome') {
       return;
     }
     if (!name) {
@@ -46,36 +47,36 @@ export const useAutoReconnect = ({
 
     didAttemptRestore.current = true;
 
-    const savedRoomKey = safeLocalStorage.get("sprintjam_roomKey");
-    const savedAuthToken = safeLocalStorage.get("sprintjam_authToken");
+    const savedRoomKey = safeLocalStorage.get(ROOM_KEY_STORAGE_KEY);
+    const savedAuthToken = safeLocalStorage.get(AUTH_TOKEN_STORAGE_KEY);
     if (savedRoomKey) {
       onLoadingChange(true);
-      const avatarToUse = selectedAvatar || "user";
+      const avatarToUse = selectedAvatar || 'user';
       joinRoom(
         name,
         savedRoomKey,
         undefined,
         avatarToUse,
-        savedAuthToken || undefined,
+        savedAuthToken || undefined
       )
         .then(async ({ room: joinedRoom, defaults, authToken }) => {
           await applyServerDefaults(defaults);
           await upsertRoom(joinedRoom);
-          safeLocalStorage.set("sprintjam_roomKey", joinedRoom.key);
+          safeLocalStorage.set(ROOM_KEY_STORAGE_KEY, joinedRoom.key);
           if (authToken) {
-            safeLocalStorage.set("sprintjam_authToken", authToken);
+            safeLocalStorage.set(AUTH_TOKEN_STORAGE_KEY, authToken);
           } else {
-            safeLocalStorage.remove("sprintjam_authToken");
+            safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
           }
           onAuthTokenRefresh?.(authToken ?? null);
           onReconnectSuccess(joinedRoom.key, joinedRoom.moderator === name);
         })
         .catch((err) => {
           const errorMessage =
-            err instanceof Error ? err.message : "Failed to reconnect to room";
+            err instanceof Error ? err.message : 'Failed to reconnect to room';
           onReconnectError(errorMessage);
-          safeLocalStorage.remove("sprintjam_roomKey");
-          safeLocalStorage.remove("sprintjam_authToken");
+          safeLocalStorage.remove(ROOM_KEY_STORAGE_KEY);
+          safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
           onAuthTokenRefresh?.(null);
         })
         .finally(() => onLoadingChange(false));

@@ -18,6 +18,7 @@ import {
   ensureRoomsCollectionReady,
   ensureServerDefaultsCollectionReady,
 } from "./data/collections";
+import { AUTH_TOKEN_STORAGE_KEY } from '../constants';
 
 let activeSocket: WebSocket | null = null;
 let activeAuthToken: string | null = null;
@@ -272,7 +273,7 @@ export function connectToRoom(
           closeCode: event.code,
         });
         activeAuthToken = null;
-        safeLocalStorage.remove('sprintjam_authToken');
+        safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
         return;
       }
 

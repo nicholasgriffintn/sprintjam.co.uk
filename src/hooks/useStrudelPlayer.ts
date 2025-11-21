@@ -4,6 +4,7 @@ import { initStrudel, evaluate, hush } from "@strudel/web";
 
 import { prebake } from "../lib/strudel";
 import { safeLocalStorage } from "../utils/storage";
+import { MUTE_STORAGE_KEY } from '../constants';
 
 interface UseStrudelPlayerOptions {
   onError?: (error: Error) => void;
@@ -20,8 +21,6 @@ interface UseStrudelPlayerReturn {
   playCode: (code: StrudelCodePayload) => Promise<void>;
   stop: () => void;
 }
-
-const MUTE_STORAGE_KEY = "strudel-player-muted";
 
 interface StrudelCodeObjectPayload {
   code?: unknown;
