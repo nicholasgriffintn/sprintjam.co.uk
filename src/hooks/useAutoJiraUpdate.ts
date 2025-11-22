@@ -29,7 +29,7 @@ export const useAutoJiraUpdate = ({
       .map(([user, vote]) => {
         const structured = structuredVotes?.[user];
         const source = structured?.calculatedStoryPoints ?? vote;
-        return convertVoteValueToStoryPoints(source);
+        return source !== null ? convertVoteValueToStoryPoints(source) : null;
       })
       .filter((value): value is number => value !== null);
 
