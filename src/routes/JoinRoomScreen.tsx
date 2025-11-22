@@ -12,8 +12,11 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Alert } from '../components/ui/Alert';
 import { Logo } from '../components/Logo';
+import { usePageMeta } from '../hooks/usePageMeta';
+import { META_CONFIGS } from '../config/meta';
 
 const JoinRoomScreen = () => {
+  usePageMeta(META_CONFIGS.join);
   const {
     name,
     roomKey,
