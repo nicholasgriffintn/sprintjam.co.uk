@@ -61,11 +61,10 @@ const ParticipantItem = memo(
         <div className="flex items-center space-x-3">
           {userAvatar && (
             <div
-              className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
-                isConnected
+              className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${isConnected
                   ? 'border-emerald-300 dark:border-emerald-600'
                   : 'border-slate-200 dark:border-slate-600'
-              }`}
+                }`}
             >
               {(() => {
                 const avatarInfo = getAvatarInfo(userAvatar);
@@ -81,9 +80,8 @@ const ParticipantItem = memo(
             </div>
           )}
           <span
-            className={`flex items-center gap-2 text-sm ${
-              user === currentUser ? 'font-semibold' : ''
-            }`}
+            className={`flex items-center gap-2 text-sm ${user === currentUser ? 'font-semibold' : ''
+              }`}
           >
             {!hideParticipantNames && (
               <>
@@ -191,6 +189,7 @@ export const ParticipantsList = memo(function ParticipantsList({
       </div>
       <div
         id={contentId}
+        tabIndex={0}
         className={cn(
           'flex-1 space-y-3 overflow-y-auto px-4 py-4',
           collapsed && 'hidden',

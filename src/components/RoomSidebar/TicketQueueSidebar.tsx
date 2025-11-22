@@ -76,8 +76,8 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
     const meta =
       ticket.externalService === 'jira'
         ? (ticket.externalServiceMetadata as
-            | Record<string, unknown>
-            | undefined)
+          | Record<string, unknown>
+          | undefined)
         : undefined;
     const link =
       meta && typeof meta === 'object' && 'url' in meta
@@ -201,6 +201,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
         </div>
 
         <div
+          tabIndex={0}
           className={cn(
             'flex-1 space-y-3 overflow-y-auto px-4 py-4',
             collapsed && 'hidden'
