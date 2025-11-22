@@ -7,16 +7,41 @@ import {
 } from "lucide-react";
 
 import { formatTime } from "@/utils/time";
+import { useRoom } from "@/context/RoomContext";
+import { addEventListener, removeEventListener, startTimer, pauseTimer, resetTimer } from "@/lib/api-service";
+import type { WebSocketMessage, TimerState } from "@/types";
+
+function calculateCurrentSeconds(timerState: TimerState | undefined): number {
+  if (!timerState) return 0;
+
+  if (!timerState.running) {
+    return timerState.seconds;
+  }
+
+  // Calculate elapsed time since last update
+  const now = Date.now();
+  const elapsedMs = now - timerState.lastUpdateTime;
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+  return timerState.seconds + elapsedSeconds;
+}
 
 export function Timer() {
+  const { roomData } = useRoom();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [localSeconds, setLocalSeconds] = useState(0);
 
+  // Sync local state with server state
   useEffect(() => {
-    if (timerRunning) {
+    const currentSeconds = calculateCurrentSeconds(roomData?.timerState);
+    setLocalSeconds(currentSeconds);
+  }, [roomData?.timerState]);
+
+  // Handle timer tick for smooth local updates
+  useEffect(() => {
+    if (roomData?.timerState?.running) {
       timerRef.current = setInterval(() => {
-        setTimerSeconds((prev) => prev + 1);
+        setLocalSeconds((prev) => prev + 1);
       }, 1000);
     } else if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -27,9 +52,50 @@ export function Timer() {
         clearInterval(timerRef.current);
       }
     };
-  }, [timerRunning]);
+  }, [roomData?.timerState?.running]);
 
+  // Listen for timer updates from server
+  useEffect(() => {
+    const handleTimerUpdate = (message: WebSocketMessage) => {
+      if (message.timerState) {
+        const currentSeconds = calculateCurrentSeconds(message.timerState);
+        setLocalSeconds(currentSeconds);
+      }
+    };
+
+    addEventListener('timerStarted', handleTimerUpdate);
+    addEventListener('timerPaused', handleTimerUpdate);
+    addEventListener('timerReset', handleTimerUpdate);
+
+    return () => {
+      removeEventListener('timerStarted', handleTimerUpdate);
+      removeEventListener('timerPaused', handleTimerUpdate);
+      removeEventListener('timerReset', handleTimerUpdate);
+    };
+  }, []);
+
+  const timerRunning = roomData?.timerState?.running ?? false;
   const timerActionLabel = timerRunning ? "Pause timer" : "Start timer";
+
+  const handleToggleTimer = () => {
+    try {
+      if (timerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    } catch (error) {
+      console.error('Failed to toggle timer:', error);
+    }
+  };
+
+  const handleResetTimer = () => {
+    try {
+      resetTimer();
+    } catch (error) {
+      console.error('Failed to reset timer:', error);
+    }
+  };
 
   return (
     <div className="mb-4 flex items-center space-x-2" data-testid="room-timer">
@@ -38,14 +104,14 @@ export function Timer() {
         role="timer"
         aria-live="off"
         aria-atomic="true"
-        aria-label={`Elapsed time ${formatTime(timerSeconds)}`}
+        aria-label={`Elapsed time ${formatTime(localSeconds)}`}
       >
-        {formatTime(timerSeconds)}
+        {formatTime(localSeconds)}
       </span>
       <motion.button
         type="button"
-        onClick={() => setTimerRunning(!timerRunning)}
-        className="p-1 rounded bg-blue-200 text-blue-900 hover:bg-blue-300"
+        onClick={handleToggleTimer}
+        className="p-1 rounded bg-blue-200 text-blue-900 hover:bg-blue-300 dark:bg-blue-800 dark:text-blue-100 dark:hover:bg-blue-700"
         title={timerActionLabel}
         aria-label={timerActionLabel}
         aria-pressed={timerRunning}
@@ -60,11 +126,8 @@ export function Timer() {
       </motion.button>
       <motion.button
         type="button"
-        onClick={() => {
-          setTimerRunning(false);
-          setTimerSeconds(0);
-        }}
-        className="p-1 rounded bg-blue-200 text-blue-900 hover:bg-blue-300"
+        onClick={handleResetTimer}
+        className="p-1 rounded bg-blue-200 text-blue-900 hover:bg-blue-300 dark:bg-blue-800 dark:text-blue-100 dark:hover:bg-blue-700"
         title="Reset Timer"
         aria-label="Reset timer"
         whileHover={{ scale: 1.1 }}

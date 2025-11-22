@@ -32,6 +32,9 @@ export type ClientMessage =
     }
   | { type: 'deleteTicket'; ticketId: number }
   | { type: 'completeTicket'; outcome?: string }
+  | { type: 'startTimer' }
+  | { type: 'pauseTimer' }
+  | { type: 'resetTimer' }
   | { type: 'ping' };
 
 export type VoteValue = string | number | null | '?' | 'coffee';
@@ -248,6 +251,12 @@ export interface TicketQueueItem {
   votes?: TicketVote[];
 }
 
+export interface TimerState {
+  running: boolean;
+  seconds: number;
+  lastUpdateTime: number;
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -267,6 +276,7 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  timerState?: TimerState;
 }
 
 export interface BroadcastMessage {

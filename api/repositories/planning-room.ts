@@ -43,9 +43,29 @@ export class PlanningRoomRepository {
           current_strudel_generation_id TEXT,
           strudel_phase TEXT,
           strudel_is_playing INTEGER NOT NULL DEFAULT 0,
-          current_ticket_id INTEGER
+          current_ticket_id INTEGER,
+          timer_running INTEGER NOT NULL DEFAULT 0,
+          timer_seconds INTEGER NOT NULL DEFAULT 0,
+          timer_last_update INTEGER NOT NULL DEFAULT 0
         )`
       );
+
+      // Migrate existing tables to add timer columns if they don't exist
+      try {
+        this.sql.exec(`ALTER TABLE room_meta ADD COLUMN timer_running INTEGER NOT NULL DEFAULT 0`);
+      } catch (e) {
+        // Column already exists, ignore
+      }
+      try {
+        this.sql.exec(`ALTER TABLE room_meta ADD COLUMN timer_seconds INTEGER NOT NULL DEFAULT 0`);
+      } catch (e) {
+        // Column already exists, ignore
+      }
+      try {
+        this.sql.exec(`ALTER TABLE room_meta ADD COLUMN timer_last_update INTEGER NOT NULL DEFAULT 0`);
+      } catch (e) {
+        // Column already exists, ignore
+      }
 
       this.sql.exec(
         `CREATE TABLE IF NOT EXISTS session_tokens (
@@ -142,6 +162,9 @@ export class PlanningRoomRepository {
         current_strudel_generation_id: string | null;
         strudel_phase: string | null;
         strudel_is_playing: number | null;
+        timer_running: number | null;
+        timer_seconds: number | null;
+        timer_last_update: number | null;
       }>(
         `SELECT
            room_key,
@@ -154,7 +177,10 @@ export class PlanningRoomRepository {
            current_strudel_code,
            current_strudel_generation_id,
            strudel_phase,
-           strudel_is_playing
+           strudel_is_playing,
+           timer_running,
+           timer_seconds,
+           timer_last_update
          FROM room_meta
          WHERE id = ${ROOM_ROW_ID}`
       )
@@ -263,6 +289,11 @@ export class PlanningRoomRepository {
         : undefined,
       currentTicket,
       ticketQueue: ticketQueue.length > 0 ? ticketQueue : undefined,
+      timerState: (row.timer_running !== null || row.timer_seconds !== null || row.timer_last_update !== null) ? {
+        running: !!row.timer_running,
+        seconds: row.timer_seconds ?? 0,
+        lastUpdateTime: row.timer_last_update ?? 0,
+      } : undefined,
     };
 
     return roomData;
@@ -285,8 +316,11 @@ export class PlanningRoomRepository {
           current_strudel_code,
           current_strudel_generation_id,
           strudel_phase,
-          strudel_is_playing
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          strudel_is_playing,
+          timer_running,
+          timer_seconds,
+          timer_last_update
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           room_key = excluded.room_key,
           moderator = excluded.moderator,
@@ -298,7 +332,10 @@ export class PlanningRoomRepository {
           current_strudel_code = excluded.current_strudel_code,
           current_strudel_generation_id = excluded.current_strudel_generation_id,
           strudel_phase = excluded.strudel_phase,
-          strudel_is_playing = excluded.strudel_is_playing`,
+          strudel_is_playing = excluded.strudel_is_playing,
+          timer_running = excluded.timer_running,
+          timer_seconds = excluded.timer_seconds,
+          timer_last_update = excluded.timer_last_update`,
         ROOM_ROW_ID,
         roomData.key,
         roomData.moderator,
@@ -312,7 +349,10 @@ export class PlanningRoomRepository {
         roomData.currentStrudelCode ?? null,
         roomData.currentStrudelGenerationId ?? null,
         roomData.strudelPhase ?? null,
-        roomData.strudelIsPlaying ? 1 : 0
+        roomData.strudelIsPlaying ? 1 : 0,
+        roomData.timerState?.running ? 1 : 0,
+        roomData.timerState?.seconds ?? 0,
+        roomData.timerState?.lastUpdateTime ?? 0
       );
 
       sql.exec('DELETE FROM room_users');
@@ -397,6 +437,59 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_meta SET show_votes = ? WHERE id = ${ROOM_ROW_ID}`,
       showVotes ? 1 : 0
+    );
+  }
+
+  setTimerState(running: boolean, seconds: number, lastUpdateTime: number) {
+    this.sql.exec(
+      `UPDATE room_meta
+       SET timer_running = ?, timer_seconds = ?, timer_last_update = ?
+       WHERE id = ${ROOM_ROW_ID}`,
+      running ? 1 : 0,
+      seconds,
+      lastUpdateTime
+    );
+  }
+
+  startTimer(currentTime: number) {
+    this.sql.exec(
+      `UPDATE room_meta
+       SET timer_running = 1, timer_last_update = ?
+       WHERE id = ${ROOM_ROW_ID}`,
+      currentTime
+    );
+  }
+
+  pauseTimer(currentTime: number) {
+    const row = this.sql
+      .exec<{
+        timer_running: number;
+        timer_seconds: number;
+        timer_last_update: number;
+      }>(
+        `SELECT timer_running, timer_seconds, timer_last_update
+         FROM room_meta WHERE id = ${ROOM_ROW_ID}`
+      )
+      .toArray()[0];
+
+    if (row && row.timer_running) {
+      const elapsedSinceLastUpdate = Math.floor((currentTime - row.timer_last_update) / 1000);
+      const newSeconds = row.timer_seconds + elapsedSinceLastUpdate;
+      this.sql.exec(
+        `UPDATE room_meta
+         SET timer_running = 0, timer_seconds = ?, timer_last_update = ?
+         WHERE id = ${ROOM_ROW_ID}`,
+        newSeconds,
+        currentTime
+      );
+    }
+  }
+
+  resetTimer() {
+    this.sql.exec(
+      `UPDATE room_meta
+       SET timer_running = 0, timer_seconds = 0, timer_last_update = 0
+       WHERE id = ${ROOM_ROW_ID}`
     );
   }
 
