@@ -1,6 +1,6 @@
-import { useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Lock,
@@ -9,18 +9,18 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronRight,
-} from "lucide-react";
+} from 'lucide-react';
 
 import type { RoomSettings } from '../types';
-import { useSession } from "../context/SessionContext";
-import { useRoom } from "../context/RoomContext";
-import AvatarSelector from "../components/AvatarSelector";
-import { PageBackground } from "../components/layout/PageBackground";
-import { SurfaceCard } from "../components/ui/SurfaceCard";
-import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
-import { Alert } from "../components/ui/Alert";
-import { Logo } from "../components/Logo";
+import { useSession } from '../context/SessionContext';
+import { useRoom } from '../context/RoomContext';
+import AvatarSelector from '../components/AvatarSelector';
+import { PageBackground } from '../components/layout/PageBackground';
+import { SurfaceCard } from '../components/ui/SurfaceCard';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Alert } from '../components/ui/Alert';
+import { Logo } from '../components/Logo';
 
 const CreateRoomScreen = () => {
   const {
@@ -35,28 +35,38 @@ const CreateRoomScreen = () => {
     clearError,
   } = useSession();
   const { handleCreateRoom, serverDefaults } = useRoom();
+  const buildSettingsFromDefaults = (
+    roomDefaults?: RoomSettings | null
+  ): Partial<RoomSettings> => ({
+    enableStructuredVoting: roomDefaults?.enableStructuredVoting ?? false,
+    enableJudge: roomDefaults?.enableJudge ?? true,
+    externalService: roomDefaults?.externalService ?? 'none',
+    showTimer: roomDefaults?.showTimer ?? false,
+    enableTicketQueue: roomDefaults?.enableTicketQueue ?? true,
+    allowOthersToShowEstimates:
+      roomDefaults?.allowOthersToShowEstimates ?? false,
+    allowOthersToDeleteEstimates:
+      roomDefaults?.allowOthersToDeleteEstimates ?? false,
+    allowOthersToManageQueue: roomDefaults?.allowOthersToManageQueue ?? false,
+    hideParticipantNames: roomDefaults?.hideParticipantNames ?? false,
+    anonymousVotes: roomDefaults?.anonymousVotes ?? true,
+  });
   const [currentStep, setCurrentStep] = useState<'name' | 'avatar' | 'details'>(
     'name'
   );
   const [showSettings, setShowSettings] = useState(true);
-  const [settings, setSettings] = useState<Partial<RoomSettings>>(() => {
-    if (!serverDefaults?.roomSettings) {
-      return {};
-    }
+  const [settings, setSettings] = useState<Partial<RoomSettings>>(() =>
+    buildSettingsFromDefaults(serverDefaults?.roomSettings)
+  );
 
-    return {
-      enableStructuredVoting:
-        serverDefaults.roomSettings.enableStructuredVoting ?? false,
-      enableJudge: serverDefaults.roomSettings.enableJudge ?? true,
-      externalService: serverDefaults.roomSettings.externalService ?? 'none',
-      showTimer: serverDefaults.roomSettings.showTimer ?? false,
-      enableTicketQueue: serverDefaults.roomSettings.enableTicketQueue ?? true,
-      allowOthersToShowEstimates:
-        serverDefaults.roomSettings.allowOthersToShowEstimates ?? false,
-      hideParticipantNames:
-        serverDefaults.roomSettings.hideParticipantNames ?? false,
-    };
-  });
+  useEffect(() => {
+    if (!serverDefaults?.roomSettings) return;
+
+    setSettings((prev) => ({
+      ...buildSettingsFromDefaults(serverDefaults.roomSettings),
+      ...prev,
+    }));
+  }, [serverDefaults]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -242,47 +252,174 @@ const CreateRoomScreen = () => {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       transition={{ duration: 0.2 }}
-                      className="space-y-4 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm dark:border-white/10 dark:bg-slate-900/60"
+                      className="space-y-4 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm dark:border-white/10 dark:bg-slate-900/60 max-h-[220px] overflow-y-auto"
                     >
-                      <label
-                        htmlFor="enable-structured-voting"
-                        className="flex items-center gap-3"
-                      >
-                        <input
-                          id="enable-structured-voting"
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
-                          checked={settings.enableStructuredVoting ?? false}
-                          onChange={(e) =>
-                            handleSettingChange(
-                              'enableStructuredVoting',
-                              e.target.checked
-                            )
-                          }
-                        />
-                        Enable structured voting
-                      </label>
-                      <p className="rounded-2xl bg-brand-50/70 p-3 text-xs text-brand-700 dark:bg-brand-500/10 dark:text-brand-200">
-                        Vote on multiple criteria with calculated story points.
-                      </p>
-                      <label
-                        htmlFor="hide-participant-names"
-                        className="flex items-center gap-3"
-                      >
-                        <input
-                          id="hide-participant-names"
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
-                          checked={settings.hideParticipantNames ?? false}
-                          onChange={(e) =>
-                            handleSettingChange(
-                              'hideParticipantNames',
-                              e.target.checked
-                            )
-                          }
-                        />
-                        Hide participant names
-                      </label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label
+                          htmlFor="enable-structured-voting"
+                          className="flex items-start gap-3 rounded-xl border border-white/70 bg-white/70 px-3 py-2 transition hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/60"
+                        >
+                          <input
+                            id="enable-structured-voting"
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
+                            checked={settings.enableStructuredVoting ?? false}
+                            onChange={(e) =>
+                              handleSettingChange(
+                                'enableStructuredVoting',
+                                e.target.checked
+                              )
+                            }
+                          />
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                              Enable structured voting
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Vote on multiple criteria with calculated story
+                              points.
+                            </p>
+                          </div>
+                        </label>
+
+                        <label
+                          htmlFor="enable-ticket-queue"
+                          className="flex items-start gap-3 rounded-xl border border-white/70 bg-white/70 px-3 py-2 transition hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/60"
+                        >
+                          <input
+                            id="enable-ticket-queue"
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
+                            checked={settings.enableTicketQueue ?? true}
+                            onChange={(e) =>
+                              handleSettingChange(
+                                'enableTicketQueue',
+                                e.target.checked
+                              )
+                            }
+                          />
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                              Enable ticket queue
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Line up stories to move through the backlog
+                              without losing flow.
+                            </p>
+                          </div>
+                        </label>
+
+                        <label
+                          htmlFor="anonymous-votes"
+                          className="flex items-start gap-3 rounded-xl border border-white/70 bg-white/70 px-3 py-2 transition hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/60"
+                        >
+                          <input
+                            id="anonymous-votes"
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
+                            checked={settings.anonymousVotes ?? false}
+                            onChange={(e) =>
+                              handleSettingChange(
+                                'anonymousVotes',
+                                e.target.checked
+                              )
+                            }
+                          />
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                              Use anonymous voting
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Keep votes private.
+                            </p>
+                          </div>
+                        </label>
+
+                        <label
+                          htmlFor="hide-participant-names"
+                          className="flex items-start gap-3 rounded-xl border border-white/70 bg-white/70 px-3 py-2 transition hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/60"
+                        >
+                          <input
+                            id="hide-participant-names"
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
+                            checked={settings.hideParticipantNames ?? false}
+                            onChange={(e) =>
+                              handleSettingChange(
+                                'hideParticipantNames',
+                                e.target.checked
+                              )
+                            }
+                          />
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                              Hide participant names
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Keep estimates impartial by hiding who is voting
+                              during rounds.
+                            </p>
+                          </div>
+                        </label>
+
+                        <label
+                          htmlFor="allow-others-to-show-estimates"
+                          className="flex items-start gap-3 rounded-xl border border-white/70 bg-white/70 px-3 py-2 transition hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/60"
+                        >
+                          <input
+                            id="allow-others-to-show-estimates"
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
+                            checked={
+                              settings.allowOthersToShowEstimates ?? false
+                            }
+                            onChange={(e) =>
+                              handleSettingChange(
+                                'allowOthersToShowEstimates',
+                                e.target.checked
+                              )
+                            }
+                          />
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                              Let anyone reveal votes
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Give teammates permission to show estimates when
+                              you are ready.
+                            </p>
+                          </div>
+                        </label>
+
+                        <label
+                          htmlFor="allow-others-to-delete-estimates"
+                          className="flex items-start gap-3 rounded-xl border border-white/70 bg-white/70 px-3 py-2 transition hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/60"
+                        >
+                          <input
+                            id="allow-others-to-delete-estimates"
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
+                            checked={
+                              settings.allowOthersToDeleteEstimates ?? false
+                            }
+                            onChange={(e) =>
+                              handleSettingChange(
+                                'allowOthersToDeleteEstimates',
+                                e.target.checked
+                              )
+                            }
+                          />
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                              Let anyone reset a round
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Allow the team to clear votes without waiting on
+                              the moderator.
+                            </p>
+                          </div>
+                        </label>
+                      </div>
                     </motion.div>
                   )}
                 </div>
