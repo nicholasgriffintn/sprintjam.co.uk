@@ -240,7 +240,6 @@ export async function updateLinearEstimateController(
       credentials,
       issueId,
       estimate,
-      currentIssue,
       onTokenRefresh,
       clientId,
       clientSecret
