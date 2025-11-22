@@ -15,9 +15,12 @@ import { PageBackground } from "../components/layout/PageBackground";
 import { Button } from "../components/ui/Button";
 import { SurfaceCard } from "../components/ui/SurfaceCard";
 import { Logo } from "../components/Logo";
+import { usePageMeta } from "../hooks/usePageMeta";
+import { META_CONFIGS } from "../config/meta";
 
 const WelcomeScreen = () => {
   const { startCreateFlow, startJoinFlow } = useSession();
+  usePageMeta(META_CONFIGS.welcome);
   const features = [
     {
       icon: <Zap className="w-5 h-5" />,

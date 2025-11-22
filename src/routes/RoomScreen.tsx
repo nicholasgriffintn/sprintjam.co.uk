@@ -23,6 +23,8 @@ import { ErrorBannerConnection } from '../components/ErrorBannerConnection';
 import { RoomSidebar } from '../components/RoomSidebar';
 import { getVoteKeyForUser } from '../utils/room';
 import { useDisplayQueueSetup } from '../hooks/useDisplayQueueSetup';
+import { usePageMeta } from '../hooks/usePageMeta';
+import { META_CONFIGS } from '../config/meta';
 
 const SettingsModal = lazy(() => import('../components/SettingsModal'));
 const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
@@ -32,6 +34,7 @@ const UnifiedResults = lazy(() =>
   }))
 );
 const RoomScreen = () => {
+  usePageMeta(META_CONFIGS.room);
   const {
     roomData,
     isModeratorView,

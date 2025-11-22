@@ -2,8 +2,12 @@ import { motion } from 'framer-motion';
 
 import { PageBackground } from '../components/layout/PageBackground';
 import { Logo } from '../components/Logo';
+import { usePageMeta } from '../hooks/usePageMeta';
+import { META_CONFIGS } from '../config/meta';
 
 const PrivacyPolicyScreen = () => {
+  usePageMeta(META_CONFIGS.privacy);
+
   return (
     <PageBackground maxWidth="xl" variant="compact">
       <motion.div
