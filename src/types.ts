@@ -277,3 +277,25 @@ export interface CriteriaStats {
   consensus: 'high' | 'medium' | 'low';
   maxScore?: number;
 }
+
+export type RetroFormat =
+  | 'start-stop-continue'
+  | 'went-well-improve-actions'
+  | 'mad-sad-glad'
+  | 'four-ls';
+
+export interface RetroItem {
+  id: string;
+  category: string;
+  content: string;
+  author: string;
+  votes: number;
+  createdAt: number;
+}
+
+export interface RetroData {
+  format: RetroFormat;
+  items: RetroItem[];
+  isActive: boolean;
+  createdAt: number;
+}

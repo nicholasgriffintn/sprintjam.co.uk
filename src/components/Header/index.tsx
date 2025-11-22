@@ -1,4 +1,4 @@
-import { Share2, Settings, LogOut } from "lucide-react";
+import { Share2, Settings, LogOut, MessageSquare } from "lucide-react";
 
 import type { RoomData } from "@/types";
 import { Badge } from "@/components/ui/Badge";
@@ -13,6 +13,7 @@ export interface HeaderProps {
   onLeaveRoom: () => void;
   setIsShareModalOpen: (open: boolean) => void;
   setIsSettingsModalOpen: (open: boolean) => void;
+  setIsRetroModalOpen?: (open: boolean) => void;
 }
 
 export default function Header({
@@ -22,6 +23,7 @@ export default function Header({
   onLeaveRoom,
   setIsShareModalOpen,
   setIsSettingsModalOpen,
+  setIsRetroModalOpen,
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-white/50 bg-white/80 px-4 py-3 text-slate-900 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 dark:text-white">
@@ -70,6 +72,23 @@ export default function Header({
           </Badge>
           <ConnectionStatus isConnected={isConnected} />
           <DarkModeToggle />
+          {setIsRetroModalOpen && (
+            <button
+              type="button"
+              onClick={() => setIsRetroModalOpen(true)}
+              aria-label="Open retrospective"
+              title="Sprint Retrospective"
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-purple-700 shadow-sm transition hover:border-purple-200 hover:text-purple-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/15 dark:bg-white/10 dark:text-purple-300 dark:hover:border-purple-300/60 dark:hover:text-purple-200 cursor-pointer",
+                "md:w-auto md:min-w-[3rem] md:gap-2 md:px-4",
+              )}
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden text-sm font-semibold md:inline">
+                Retro
+              </span>
+            </button>
+          )}
           {isModeratorView && (
             <button
               type="button"

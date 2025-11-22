@@ -29,6 +29,9 @@ import { Footer } from '@/components/layout/Footer';
 
 const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
 const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
+const RetroModal = lazy(() => import('@/components/modals/RetroModal').then((m) => ({
+  default: m.RetroModal,
+})));
 const UnifiedResults = lazy(() =>
   import('@/components/results/UnifiedResults').then((m) => ({
     default: m.UnifiedResults,
@@ -63,6 +66,7 @@ const RoomScreen = () => {
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
 
   if (!roomData || !serverDefaults) {
@@ -120,6 +124,7 @@ const RoomScreen = () => {
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
+        setIsRetroModalOpen={setIsRetroModalOpen}
       />
 
       <motion.div
@@ -274,6 +279,18 @@ const RoomScreen = () => {
               isOpen={isShareModalOpen}
               onClose={() => setIsShareModalOpen(false)}
               roomKey={roomData.key}
+            />
+          </Suspense>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isRetroModalOpen && (
+          <Suspense fallback={<FallbackLoading />}>
+            <RetroModal
+              isOpen={isRetroModalOpen}
+              onClose={() => setIsRetroModalOpen(false)}
+              userName={name}
             />
           </Suspense>
         )}
