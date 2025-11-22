@@ -44,6 +44,10 @@ const SessionContext = createContext<SessionContextValue | undefined>(
 );
 
 function getScreenFromPath(path: string): AppScreen {
+  if (path === '/' || !path) {
+    return 'welcome';
+  }
+
   const pathWithoutQuery = path.split('?')[0];
   const pathWithoutTrailingSlash = pathWithoutQuery.endsWith('/')
     ? pathWithoutQuery.slice(0, -1)
@@ -54,8 +58,6 @@ function getScreenFromPath(path: string): AppScreen {
     ? 'join'
     : pathWithoutTrailingSlash === '/room'
     ? 'room'
-    : pathWithoutTrailingSlash === '/'
-    ? 'welcome'
     : pathWithoutTrailingSlash === '/privacy'
     ? 'privacy'
     : '404';
