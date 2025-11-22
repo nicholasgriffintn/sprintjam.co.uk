@@ -28,12 +28,20 @@ export class CreateRoomPage {
     passcode?: string;
     enableStructuredVoting?: boolean;
     hideParticipantNames?: boolean;
+    enableTicketQueue?: boolean;
+    externalService?: "none" | "jira" | "linear";
   }) {
     if (!options) {
       return;
     }
 
-    const { passcode, enableStructuredVoting, hideParticipantNames } = options;
+    const {
+      passcode,
+      enableStructuredVoting,
+      hideParticipantNames,
+      enableTicketQueue,
+      externalService,
+    } = options;
 
     if (typeof passcode === "string") {
       await this.page.locator("#create-passcode").fill(passcode);
@@ -51,6 +59,19 @@ export class CreateRoomPage {
         .locator('label:has-text("Hide participant names")')
         .locator('input[type="checkbox"]');
       await hideNamesToggle.check({ force: true });
+    }
+
+    if (typeof enableTicketQueue === "boolean") {
+      const queueToggle = this.page.locator("#enable-ticket-queue-toggle");
+      const isChecked = await queueToggle.isChecked();
+      if (isChecked !== enableTicketQueue) {
+        await queueToggle.check({ force: enableTicketQueue });
+      }
+    }
+
+    if (externalService) {
+      const providerSelect = this.page.locator("#ticket-queue-provider");
+      await providerSelect.selectOption(externalService);
     }
   }
 }

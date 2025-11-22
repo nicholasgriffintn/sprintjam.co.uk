@@ -14,6 +14,17 @@ test.describe("SprintJam Jira integration journeys", () => {
 
     const ticketKey = "TEST-123";
     const secondaryTicketKey = "TEST-456";
+    const jiraOAuthStatus = {
+      connected: true,
+      jiraDomain: "jira.example.com",
+      jiraUserEmail: "qa@example.com",
+      storyPointsField: "customfield_10016",
+      sprintField: "customfield_10017",
+    };
+    const jiraFields = [
+      { id: "customfield_10016", name: "Story Points", type: "number" },
+      { id: "customfield_10017", name: "Sprint", type: "string" },
+    ];
     const initialTicket = {
       key: ticketKey,
       url: `https://jira.example.com/browse/${ticketKey}`,
@@ -45,6 +56,39 @@ test.describe("SprintJam Jira integration journeys", () => {
       });
     });
 
+    await moderatorContext.route("**/api/jira/oauth/status?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(jiraOAuthStatus),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/oauth/fields?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          fields: jiraFields,
+          storyPointsField: jiraOAuthStatus.storyPointsField,
+          sprintField: jiraOAuthStatus.sprintField,
+        }),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/oauth/fields", (route) => {
+      if (route.request().method() === "PUT") {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ok: true }),
+        });
+        return;
+      }
+
+      route.fallback();
+    });
+
     await moderatorContext.route(
       "**/api/jira/ticket/**/storyPoints",
       (route) => {
@@ -63,6 +107,7 @@ test.describe("SprintJam Jira integration journeys", () => {
       await settingsModal.open();
       await settingsModal.toggle("settings-toggle-enable-queue", true);
       await settingsModal.selectExternalService("jira");
+      await settingsModal.waitForJiraConnection();
       await settingsModal.toggle("settings-toggle-jira-auto", true);
       await settingsModal.save();
 

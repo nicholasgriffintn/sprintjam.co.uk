@@ -1,0 +1,120 @@
+import { expect, test } from "@playwright/test";
+
+import { createRoomWithParticipant } from "./helpers/room-journeys";
+import { SettingsModal } from "./pageObjects/settings-modal";
+
+test.describe("SprintJam Linear integration journeys", () => {
+  test("moderator can add and link Linear issues through the queue", async ({
+    browser,
+  }) => {
+    const setup = await createRoomWithParticipant(browser);
+    const { moderatorRoom, participantRoom, cleanup, moderatorContext } = setup;
+
+    const settingsModal = new SettingsModal(moderatorRoom.getPage());
+
+    const issueKey = "LIN-123";
+    const secondaryIssueKey = "LIN-456";
+    const linearOAuthStatus = {
+      connected: true,
+      linearOrganizationId: "eng",
+      linearUserEmail: "qa@example.com",
+      estimateField: "storyPoints",
+    };
+    const initialIssue = {
+      key: issueKey,
+      identifier: issueKey,
+      url: `https://linear.example.com/issue/${issueKey}`,
+      summary: "Demo Linear issue",
+      description: "Ensure planning poker syncs with Linear",
+      status: "In Progress",
+      assignee: "QA Bot",
+      estimate: null,
+    };
+    const secondaryIssue = {
+      ...initialIssue,
+      key: secondaryIssueKey,
+      identifier: secondaryIssueKey,
+      summary: "Linked Linear issue",
+    };
+
+    await moderatorContext.route("**/api/linear/issue?**", (route) => {
+      const url = new URL(route.request().url());
+      const key = url.searchParams.get("issueId");
+      const ticket =
+        key && key.toUpperCase() === secondaryIssueKey
+          ? secondaryIssue
+          : initialIssue;
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ticket }),
+      });
+    });
+
+    await moderatorContext.route("**/api/linear/oauth/status?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(linearOAuthStatus),
+      });
+    });
+
+    try {
+      await settingsModal.open();
+      await settingsModal.toggle("settings-toggle-enable-queue", true);
+      await settingsModal.selectExternalService("linear");
+      await settingsModal.waitForLinearConnection();
+      await settingsModal.save();
+
+      const page = moderatorRoom.getPage();
+      await page.getByTestId("queue-expand").click();
+      const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
+      await expect(queueDialog).toBeVisible();
+
+      await queueDialog.getByTestId("queue-add-linear-button").click();
+      await queueDialog.getByTestId("queue-linear-input").fill(issueKey);
+      await queueDialog.getByTestId("queue-linear-fetch").click();
+      await expect(queueDialog).toContainText(initialIssue.summary);
+      await queueDialog.getByTestId("queue-linear-add").click();
+
+      await queueDialog.getByTestId("queue-toggle-add").click();
+      await queueDialog.getByPlaceholder("Ticket title").fill("Local task");
+      await queueDialog.getByTestId("queue-add-confirm").click();
+
+      const linkButtons = queueDialog.getByRole("button", {
+        name: "Link Linear",
+      });
+      await expect(linkButtons).toHaveCount(2);
+      await linkButtons.nth(1).click();
+      await queueDialog.getByPlaceholder("TEAM-123").fill(secondaryIssueKey);
+      await queueDialog.getByRole("button", { name: /^Fetch$/ }).click();
+      await expect(queueDialog).toContainText(secondaryIssue.summary);
+      await queueDialog.getByRole("button", { name: "Save Link" }).click();
+      await expect(queueDialog).toContainText(secondaryIssueKey);
+
+      await queueDialog.getByLabel("Close modal").click();
+
+      await page.getByTestId("next-ticket-button").click();
+      await page
+        .getByRole("dialog", { name: "Review before moving on" })
+        .getByTestId("pre-pointing-confirm")
+        .click();
+
+      await moderatorRoom.castVote("5");
+      await participantRoom.castVote("5");
+      await moderatorRoom.revealVotes();
+
+      await page.getByTestId("queue-expand").click();
+      const reopenedDialog = page.getByRole("dialog", { name: "Ticket Queue" });
+      await expect(reopenedDialog).toBeVisible();
+      await expect(reopenedDialog).toContainText(issueKey);
+      await reopenedDialog.getByTestId("queue-tab-history").click();
+      await expect(
+        reopenedDialog.getByTestId("queue-history-tab-panel"),
+      ).toBeVisible();
+      await reopenedDialog.getByRole("button", { name: "Close modal" }).click();
+    } finally {
+      await cleanup();
+    }
+  });
+});

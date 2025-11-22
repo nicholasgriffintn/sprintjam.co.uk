@@ -25,6 +25,7 @@ export class SettingsModal {
   async toggle(settingTestId: string, enabled: boolean) {
     await this.expandDetailsSections();
     const checkbox = this.modal().getByTestId(settingTestId);
+    await expect(checkbox).toBeVisible();
     await checkbox.scrollIntoViewIfNeeded();
     if (enabled) {
       await checkbox.check();
@@ -33,7 +34,17 @@ export class SettingsModal {
     }
   }
 
-  async selectExternalService(value: "none" | "jira") {
+  async waitForJiraConnection() {
+    await this.expandDetailsSections();
+    await expect(this.modal().getByText("Connected to Jira")).toBeVisible();
+  }
+
+  async waitForLinearConnection() {
+    await this.expandDetailsSections();
+    await expect(this.modal().getByText("Connected to Linear")).toBeVisible();
+  }
+
+  async selectExternalService(value: "none" | "jira" | "linear") {
     await this.expandDetailsSections();
     const select = this.modal().getByTestId("settings-select-external-service");
     await select.scrollIntoViewIfNeeded();
