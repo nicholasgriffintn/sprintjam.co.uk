@@ -66,7 +66,7 @@ const TermsConditionsScreen = () => {
                                 including but not limited to:
                             </p>
                             <ul>
-                                <li>UUsing the service for any illegal purpose or in violation of any laws.</li>
+                                <li>Using the service for any illegal purpose or in violation of any laws.</li>
                                 <li>Transmitting any material that is harmful, threatening, abusive, harassing, defamatory, obscene, or otherwise objectionable</li>
                                 <li>Attempting to interfere with, compromise the system integrity or security, or circumvent any technical measures of the Service</li>
                                 <li>Engaging in any automated use of the system, such as using scripts to collect information or interact with the Service</li>
