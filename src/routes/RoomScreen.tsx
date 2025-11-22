@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useRoom } from '../context/RoomContext';
@@ -17,10 +17,12 @@ import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer
 import { FallbackLoading } from '../components/ui/FallbackLoading';
 import { TicketQueueModal } from '../components/TicketQueueModal';
 import { PrePointingSummaryModal } from '../components/modals/PrePointingSummaryModal';
+import { QueueProviderSetupModal } from '../components/modals/QueueProviderSetupModal';
 import { ErrorBannerAuth } from '../components/ErrorBannerAuth';
 import { ErrorBannerConnection } from '../components/ErrorBannerConnection';
 import { RoomSidebar } from '../components/RoomSidebar';
 import { getVoteKeyForUser } from '../utils/room';
+import { useDisplayQueueSetup } from '../hooks/useDisplayQueueSetup';
 
 const SettingsModal = lazy(() => import('../components/SettingsModal'));
 const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
@@ -63,10 +65,19 @@ const RoomScreen = () => {
     return <FallbackLoading />;
   }
 
-  const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
-
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
+
+  const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
+  const queueProvider = roomData.settings.externalService || 'none';
+
+  const { isQueueSetupModalOpen, setIsQueueSetupModalOpen } =
+    useDisplayQueueSetup({
+      isQueueEnabled: isQueueEnabled,
+      queueProvider: queueProvider,
+      roomData: roomData,
+      name: name,
+    });
 
   const showReconnectBanner =
     connectionIssue?.type === 'disconnected' ||
@@ -134,9 +145,8 @@ const RoomScreen = () => {
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
               currentVote={
-                roomData.structuredVotes?.[
-                  getVoteKeyForUser(roomData, name)
-                ] || null
+                roomData.structuredVotes?.[getVoteKeyForUser(roomData, name)] ||
+                null
               }
               onVote={handleVote}
               displaySettings={roomData.settings.structuredVotingDisplay}
@@ -278,6 +288,18 @@ const RoomScreen = () => {
             roomData.settings.allowOthersToManageQueue === true
           }
           onError={reportRoomError}
+        />
+      )}
+
+      {isQueueEnabled && queueProvider !== 'none' && (
+        <QueueProviderSetupModal
+          isOpen={isQueueSetupModalOpen}
+          provider={queueProvider as 'jira' | 'linear'}
+          onClose={() => setIsQueueSetupModalOpen(false)}
+          onOpenQueue={() => {
+            setIsQueueModalOpen(true);
+            setIsQueueSetupModalOpen(false);
+          }}
         />
       )}
 

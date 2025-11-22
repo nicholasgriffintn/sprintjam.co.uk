@@ -305,7 +305,7 @@ export class PlanningRoomRepository {
           ? null
           : String(roomData.judgeScore),
         serializeJSON(roomData.judgeMetadata),
-        JSON.stringify(roomData.settings),
+        serializeJSON(roomData.settings),
         roomData.currentStrudelCode ?? null,
         roomData.currentStrudelGenerationId ?? null,
         roomData.strudelPhase ?? null,
@@ -810,7 +810,7 @@ export class PlanningRoomRepository {
     );
   }
 
-  getNextTicketId(): string {
+  getNextTicketId({ externalService = 'none' }): string {
     const maxTicket = this.sql
       .exec<{ ticket_id: string }>(
         `SELECT ticket_id FROM ticket_queue 
@@ -820,13 +820,17 @@ export class PlanningRoomRepository {
       )
       .toArray()[0];
 
-    if (!maxTicket) {
+    if (!maxTicket && externalService === 'none') {
       return 'SPRINTJAM-001';
+    } else if (!maxTicket) {
+      return '';
     }
 
     const match = maxTicket.ticket_id.match(/SPRINTJAM-(\d+)/);
-    if (!match) {
+    if (!match && externalService === 'none') {
       return 'SPRINTJAM-001';
+    } else if (!match) {
+      return '';
     }
 
     const nextNum = parseInt(match[1], 10) + 1;

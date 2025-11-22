@@ -49,14 +49,8 @@ export async function handleHttpRequest(
       moderator,
       connectedUsers: { [moderator]: true },
       passcodeHash,
+      settings,
     });
-
-    if (settings) {
-      roomData.settings = {
-        ...roomData.settings,
-        ...settings,
-      };
-    }
 
     assignUserAvatar(roomData, moderator, avatar);
 

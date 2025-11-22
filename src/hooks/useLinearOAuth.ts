@@ -10,7 +10,7 @@ interface LinearOAuthStatus {
   estimateField?: string | null;
 }
 
-export function useLinearOAuth() {
+export function useLinearOAuth(enabled = true) {
   const { activeRoomKey, authToken } = useRoom();
   const { name } = useSession();
   const [status, setStatus] = useState<LinearOAuthStatus>({ connected: false });
@@ -18,6 +18,12 @@ export function useLinearOAuth() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchStatus = async () => {
+    if (!enabled) {
+      setLoading(false);
+      setStatus({ connected: false });
+      return;
+    }
+
     if (!activeRoomKey || !name || !authToken) {
       setLoading(false);
       return;
@@ -47,9 +53,12 @@ export function useLinearOAuth() {
 
   useEffect(() => {
     fetchStatus();
-  }, [activeRoomKey, name, authToken]);
+  }, [activeRoomKey, name, authToken, enabled]);
 
   const connect = async () => {
+    if (!enabled) {
+      return;
+    }
     if (!activeRoomKey || !name || !authToken) {
       setError('Missing room key, user name, or session token');
       return;
@@ -104,6 +113,9 @@ export function useLinearOAuth() {
   };
 
   const disconnect = async () => {
+    if (!enabled) {
+      return;
+    }
     if (!activeRoomKey || !name || !authToken) {
       setError('Missing room key, user name, or session token');
       return;

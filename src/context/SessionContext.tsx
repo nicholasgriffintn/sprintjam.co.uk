@@ -11,7 +11,13 @@ import { useUserPersistence } from '../hooks/useUserPersistence';
 import { useUrlParams } from '../hooks/useUrlParams';
 import type { AvatarId, ErrorKind } from '../types';
 
-export type AppScreen = 'welcome' | 'create' | 'join' | 'room';
+export type AppScreen =
+  | 'welcome'
+  | 'create'
+  | 'join'
+  | 'room'
+  | '404'
+  | 'privacy';
 
 interface SessionContextValue {
   screen: AppScreen;
@@ -37,8 +43,29 @@ const SessionContext = createContext<SessionContextValue | undefined>(
   undefined
 );
 
-export const SessionProvider = ({ children }: { children: ReactNode }) => {
-  const [screen, setScreen] = useState<AppScreen>('welcome');
+function getScreenFromPath(path: string): AppScreen {
+  return path === '/create'
+    ? 'create'
+    : path === '/join'
+    ? 'join'
+    : path === '/room'
+    ? 'room'
+    : path === '/'
+    ? 'welcome'
+    : path === '/privacy'
+    ? 'privacy'
+    : '404';
+}
+
+export const SessionProvider = ({
+  currentPath,
+  children,
+}: {
+  currentPath: string;
+  children: ReactNode;
+}) => {
+  const screenFromPath = getScreenFromPath(currentPath);
+  const [screen, setScreen] = useState<AppScreen>(screenFromPath);
   const [name, setName] = useState('');
   const [roomKey, setRoomKey] = useState('');
   const [passcode, setPasscode] = useState('');

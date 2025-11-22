@@ -13,6 +13,7 @@ import CreateRoomScreen from './routes/CreateRoomScreen';
 import JoinRoomScreen from './routes/JoinRoomScreen';
 import NotFoundScreen from './routes/NotFoundScreen';
 import { ErrorBannerServerDefaults } from './components/ErrorBannerServerDefaults';
+import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
 
 const RoomScreen = lazy(() => import('./routes/RoomScreen'));
 
@@ -43,6 +44,8 @@ const AppContent = () => {
         return (
           <ScreenLoader title="Loading room" subtitle="Please wait a moment." />
         );
+      case 'privacy':
+        return <PrivacyPolicyScreen />;
       default:
         return <NotFoundScreen />;
     }
@@ -71,18 +74,22 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <ErrorBoundary
-    onError={(error, errorInfo) => {
-      console.error('App Error Boundary:', error, errorInfo);
-    }}
-  >
-    <SessionProvider>
-      <RoomProvider>
-        <AppContent />
-      </RoomProvider>
-    </SessionProvider>
-  </ErrorBoundary>
-);
+const App = () => {
+  const currentPath = window.location.pathname;
+
+  return (
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('App Error Boundary:', error, errorInfo);
+      }}
+    >
+      <SessionProvider currentPath={currentPath}>
+        <RoomProvider>
+          <AppContent />
+        </RoomProvider>
+      </SessionProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;

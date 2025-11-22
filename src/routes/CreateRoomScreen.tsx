@@ -224,6 +224,67 @@ const CreateRoomScreen = () => {
                   helperText="Boost security with a passcode or leave empty for open rooms."
                 />
 
+                <div className="space-y-3 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm shadow-sm dark:border-white/10 dark:bg-slate-900/60">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        Ticket queue
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Keep track of your estimations in a queue.
+                      </p>
+                    </div>
+                    <label
+                      htmlFor="enable-ticket-queue-toggle"
+                      className="flex items-center gap-2"
+                    >
+                      <input
+                        id="enable-ticket-queue-toggle"
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
+                        checked={settings.enableTicketQueue ?? true}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          handleSettingChange('enableTicketQueue', checked);
+                          if (!checked) {
+                            handleSettingChange('externalService', 'none');
+                          }
+                        }}
+                      />
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                        {settings.enableTicketQueue ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </label>
+                  </div>
+
+                  {settings.enableTicketQueue && (
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="ticket-queue-provider"
+                        className="text-sm font-semibold text-slate-800 dark:text-slate-100"
+                      >
+                        Choose a provider
+                      </label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Choose Jira or Linear to sync ticket estimations
+                        automatically.
+                      </p>
+                      <select
+                        id="ticket-queue-provider"
+                        value={settings.externalService || 'none'}
+                        onChange={(e) =>
+                          handleSettingChange('externalService', e.target.value)
+                        }
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-brand-300 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+                      >
+                        <option value="none">SprintJam queue</option>
+                        <option value="jira">Jira</option>
+                        <option value="linear">Linear</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-3">
                   <button
                     type="button"
@@ -278,33 +339,6 @@ const CreateRoomScreen = () => {
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                               Vote on multiple criteria with calculated story
                               points.
-                            </p>
-                          </div>
-                        </label>
-
-                        <label
-                          htmlFor="enable-ticket-queue"
-                          className="flex items-start gap-3 rounded-xl border border-white/70 bg-white/70 px-3 py-2 transition hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/60"
-                        >
-                          <input
-                            id="enable-ticket-queue"
-                            type="checkbox"
-                            className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
-                            checked={settings.enableTicketQueue ?? true}
-                            onChange={(e) =>
-                              handleSettingChange(
-                                'enableTicketQueue',
-                                e.target.checked
-                              )
-                            }
-                          />
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                              Enable ticket queue
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              Line up stories to move through the backlog
-                              without losing flow.
                             </p>
                           </div>
                         </label>

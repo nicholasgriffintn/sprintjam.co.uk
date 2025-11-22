@@ -13,7 +13,9 @@ const NotFoundScreen = () => {
         className="space-y-14"
       >
         <div className="flex justify-center">
-          <Logo size="lg" />
+          <a href="/" aria-label="SprintJam home" className="hover:opacity-80">
+            <Logo size="lg" />
+          </a>
         </div>
         <div className="space-y-6">
           <div className="space-y-4">

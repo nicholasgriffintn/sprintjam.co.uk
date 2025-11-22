@@ -12,31 +12,47 @@ export function getDefaultStructuredVotingOptions(): number[] {
   return [...STRUCTURED_VOTING_OPTIONS];
 }
 
-export function getDefaultRoomSettings(): RoomSettings {
-  const estimateOptions = getDefaultEstimateOptions();
+export function getDefaultRoomSettings(
+  settings?: Partial<RoomSettings>
+): RoomSettings {
+  let estimateOptions = settings?.estimateOptions;
+  if (!estimateOptions || !Array.isArray(estimateOptions)) {
+    estimateOptions = getDefaultEstimateOptions();
+  }
+
+  let voteOptionsMetadata = settings?.voteOptionsMetadata;
+  if (!voteOptionsMetadata || typeof voteOptionsMetadata !== 'object') {
+    voteOptionsMetadata = generateVoteOptionsMetadata(estimateOptions);
+  }
+
+  let votingCriteria = settings?.votingCriteria;
+  if (!votingCriteria || !Array.isArray(votingCriteria)) {
+    votingCriteria = getDefaultVotingCriteria();
+  }
 
   return {
     estimateOptions,
-    voteOptionsMetadata: generateVoteOptionsMetadata(estimateOptions),
-    allowOthersToShowEstimates: false,
-    allowOthersToDeleteEstimates: false,
-    showTimer: false,
-    showUserPresence: false,
-    showAverage: true,
-    showMedian: true,
-    showTopVotes: true,
-    topVotesCount: 4,
-    anonymousVotes: true,
-    enableJudge: true,
-    judgeAlgorithm: JudgeAlgorithm.SMART_CONSENSUS,
-    hideParticipantNames: false,
-    externalService: 'none',
-    enableStructuredVoting: false,
-    votingCriteria: getDefaultVotingCriteria(),
-    autoUpdateJiraStoryPoints: false,
-    autoHandoverModerator: false,
-    enableStrudelPlayer: true,
-    strudelAutoGenerate: false,
+    voteOptionsMetadata,
+    allowOthersToShowEstimates: settings?.allowOthersToShowEstimates ?? false,
+    allowOthersToDeleteEstimates:
+      settings?.allowOthersToDeleteEstimates ?? false,
+    showTimer: settings?.showTimer ?? false,
+    showUserPresence: settings?.showUserPresence ?? false,
+    showAverage: settings?.showAverage ?? true,
+    showMedian: settings?.showMedian ?? true,
+    showTopVotes: settings?.showTopVotes ?? true,
+    topVotesCount: settings?.topVotesCount ?? 4,
+    anonymousVotes: settings?.anonymousVotes ?? true,
+    enableJudge: settings?.enableJudge ?? true,
+    judgeAlgorithm: settings?.judgeAlgorithm ?? JudgeAlgorithm.SMART_CONSENSUS,
+    hideParticipantNames: settings?.hideParticipantNames ?? false,
+    externalService: settings?.externalService ?? 'none',
+    enableStructuredVoting: settings?.enableStructuredVoting ?? false,
+    votingCriteria,
+    autoUpdateJiraStoryPoints: settings?.autoUpdateJiraStoryPoints ?? false,
+    autoHandoverModerator: settings?.autoHandoverModerator ?? false,
+    enableStrudelPlayer: settings?.enableStrudelPlayer ?? true,
+    strudelAutoGenerate: settings?.strudelAutoGenerate ?? false,
     enableTicketQueue: true,
     resultsDisplay: {
       showVoteDistribution: true,
@@ -78,18 +94,20 @@ interface InitialRoomOptions {
   moderator?: string;
   connectedUsers?: Record<string, boolean>;
   passcodeHash?: string;
+  settings?: Partial<RoomSettings>;
 }
 
 export function createInitialRoomData(options: InitialRoomOptions): RoomData {
   const {
-    key = "",
+    key = '',
     users = [],
-    moderator = "",
+    moderator = '',
     connectedUsers = {},
     passcodeHash,
+    settings,
   } = options;
 
-  const settings = getDefaultRoomSettings();
+  const settingsWithDefaults = getDefaultRoomSettings(settings);
 
   return {
     key,
@@ -100,7 +118,7 @@ export function createInitialRoomData(options: InitialRoomOptions): RoomData {
     moderator,
     connectedUsers,
     judgeScore: null,
-    settings,
+    settings: settingsWithDefaults,
     passcodeHash,
   };
 }

@@ -24,28 +24,53 @@ describe("PlanningRoomRepository - Ticket Queue", () => {
   });
 
   describe("getNextTicketId", () => {
-    it("returns SPRINTJAM-001 when no tickets exist", () => {
-      const ticketId = repository.getNextTicketId();
-      expect(ticketId).toBe("SPRINTJAM-001");
+    it('returns SPRINTJAM-001 when no tickets exist', () => {
+      const ticketId = repository.getNextTicketId({
+        externalService: 'none',
+      });
+      expect(ticketId).toBe('SPRINTJAM-001');
     });
 
-    it("increments from existing highest ticket", () => {
+    it('returns empty string for non-SprintJam service when no tickets exist', () => {
+      const ticketId = repository.getNextTicketId({
+        externalService: 'jira',
+      });
+      expect(ticketId).toBe('');
+    });
+
+    it('increments from existing highest ticket', () => {
       repository.createTicket({
-        ticketId: "SPRINTJAM-001",
-        status: "completed",
+        ticketId: 'SPRINTJAM-001',
+        status: 'completed',
         ordinal: 0,
-        externalService: "none",
+        externalService: 'none',
       });
 
       repository.createTicket({
-        ticketId: "SPRINTJAM-005",
-        status: "in_progress",
+        ticketId: 'SPRINTJAM-005',
+        status: 'in_progress',
         ordinal: 1,
-        externalService: "none",
+        externalService: 'none',
       });
 
-      const nextId = repository.getNextTicketId();
-      expect(nextId).toBe("SPRINTJAM-006");
+      const nextId = repository.getNextTicketId({
+        externalService: 'none',
+      });
+      expect(nextId).toBe('SPRINTJAM-006');
+    });
+
+    it('returns empty string when existing tickets do not match SprintJam pattern', () => {
+      repository.createTicket({
+        ticketId: 'JIRA-123',
+        status: 'completed',
+        ordinal: 0,
+        externalService: 'jira',
+      });
+
+      const nextId = repository.getNextTicketId({
+        externalService: 'jira',
+      });
+      expect(nextId).toBe('');
     });
   });
 

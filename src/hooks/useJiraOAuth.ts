@@ -18,7 +18,7 @@ interface JiraFieldOption {
   custom?: boolean;
 }
 
-export function useJiraOAuth() {
+export function useJiraOAuth(enabled = true) {
   const { activeRoomKey, authToken } = useRoom();
   const { name } = useSession();
   const [status, setStatus] = useState<JiraOAuthStatus>({ connected: false });
@@ -30,6 +30,12 @@ export function useJiraOAuth() {
   const [savingFields, setSavingFields] = useState(false);
 
   const fetchStatus = async () => {
+    if (!enabled) {
+      setLoading(false);
+      setStatus({ connected: false });
+      return;
+    }
+
     if (!activeRoomKey || !name || !authToken) {
       setLoading(false);
       setFields([]);
@@ -39,7 +45,11 @@ export function useJiraOAuth() {
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/jira/oauth/status?roomKey=${encodeURIComponent(activeRoomKey)}&userName=${encodeURIComponent(name)}&sessionToken=${encodeURIComponent(authToken)}`
+        `/api/jira/oauth/status?roomKey=${encodeURIComponent(
+          activeRoomKey
+        )}&userName=${encodeURIComponent(
+          name
+        )}&sessionToken=${encodeURIComponent(authToken)}`
       );
 
       if (!response.ok) {
@@ -63,15 +73,19 @@ export function useJiraOAuth() {
     fetchStatus();
     setFields([]);
     setFieldsLoaded(false);
-  }, [activeRoomKey, name, authToken]);
+  }, [activeRoomKey, name, authToken, enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (status.connected && !fieldsLoaded && !fieldsLoading) {
       void fetchFields();
     }
-  }, [status.connected, fieldsLoaded, fieldsLoading]);
+  }, [enabled, status.connected, fieldsLoaded, fieldsLoading]);
 
   const fetchFields = async () => {
+    if (!enabled) {
+      return;
+    }
     if (!activeRoomKey || !name || !authToken) {
       return;
     }
@@ -80,16 +94,14 @@ export function useJiraOAuth() {
       const response = await fetch(
         `/api/jira/oauth/fields?roomKey=${encodeURIComponent(
           activeRoomKey
-        )}&userName=${encodeURIComponent(name)}&sessionToken=${encodeURIComponent(
-          authToken
-        )}`
+        )}&userName=${encodeURIComponent(
+          name
+        )}&sessionToken=${encodeURIComponent(authToken)}`
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(
-          errorData.error || 'Failed to fetch Jira fields'
-        );
+        throw new Error(errorData.error || 'Failed to fetch Jira fields');
       }
 
       const data = (await response.json()) as {
@@ -106,9 +118,7 @@ export function useJiraOAuth() {
             ? data.storyPointsField
             : prev.storyPointsField,
         sprintField:
-          data.sprintField !== undefined
-            ? data.sprintField
-            : prev.sprintField,
+          data.sprintField !== undefined ? data.sprintField : prev.sprintField,
       }));
       setFieldsLoaded(true);
       setError(null);
@@ -121,6 +131,9 @@ export function useJiraOAuth() {
   };
 
   const connect = async () => {
+    if (!enabled) {
+      return;
+    }
     if (!activeRoomKey || !name || !authToken) {
       setError('Missing room key, user name, or session token');
       return;
@@ -175,6 +188,9 @@ export function useJiraOAuth() {
   };
 
   const disconnect = async () => {
+    if (!enabled) {
+      return;
+    }
     if (!activeRoomKey || !name || !authToken) {
       setError('Missing room key, user name, or session token');
       return;
@@ -192,7 +208,7 @@ export function useJiraOAuth() {
         body: JSON.stringify({
           roomKey: activeRoomKey,
           userName: name,
-          sessionToken: authToken
+          sessionToken: authToken,
         }),
       });
 
@@ -214,6 +230,9 @@ export function useJiraOAuth() {
     storyPointsField?: string | null;
     sprintField?: string | null;
   }) => {
+    if (!enabled) {
+      return;
+    }
     if (!activeRoomKey || !name || !authToken) {
       setError('Missing room key, user name, or session token');
       return;
@@ -239,7 +258,9 @@ export function useJiraOAuth() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save Jira field settings');
+        throw new Error(
+          errorData.error || 'Failed to save Jira field settings'
+        );
       }
 
       setStatus((prev) => ({
