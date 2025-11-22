@@ -32,7 +32,7 @@ export function ResultsControls({
 }) {
   const voteToggleLabel = roomData.showVotes ? "Hide Votes" : "Show Votes";
   const voteToggleClasses = roomData.showVotes
-    ? `${buttonBase} bg-amber-600/90 text-white hover:bg-amber-700 focus-visible:ring-amber-100 focus-visible:ring-offset-amber-950/30`
+    ? `${buttonBase} bg-blue-900 text-white shadow-blue-950/40 hover:bg-blue-950 focus-visible:ring-blue-200/80 focus-visible:ring-offset-slate-900/40`
     : `${buttonBase} bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-200 focus-visible:ring-offset-slate-900/30`;
 
   return (
