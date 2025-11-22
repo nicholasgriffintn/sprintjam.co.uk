@@ -17,7 +17,8 @@ export type AppScreen =
   | 'join'
   | 'room'
   | '404'
-  | 'privacy';
+  | 'privacy'
+  | 'terms';
 
 interface SessionContextValue {
   screen: AppScreen;
@@ -55,12 +56,14 @@ function getScreenFromPath(path: string): AppScreen {
   return pathWithoutTrailingSlash === '/create'
     ? 'create'
     : pathWithoutTrailingSlash === '/join'
-    ? 'join'
-    : pathWithoutTrailingSlash === '/room'
-    ? 'room'
-    : pathWithoutTrailingSlash === '/privacy'
-    ? 'privacy'
-    : '404';
+      ? 'join'
+      : pathWithoutTrailingSlash === '/room'
+        ? 'room'
+        : pathWithoutTrailingSlash === '/privacy'
+          ? 'privacy'
+          : pathWithoutTrailingSlash === '/terms'
+            ? 'terms'
+            : '404';
 }
 
 export const SessionProvider = ({

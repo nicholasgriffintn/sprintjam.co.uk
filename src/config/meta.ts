@@ -40,6 +40,13 @@ export const META_CONFIGS: Record<string, MetaTagConfig> = {
     keywords: 'privacy policy, data protection, privacy, terms',
     ogImage: '/og-image.png',
   },
+  terms: {
+    title: `Terms and Conditions - ${SITE_NAME}`,
+    description:
+      'Read our terms and conditions to understand the rules and guidelines for using SprintJam.',
+    keywords: 'terms and conditions, terms, conditions',
+    ogImage: '/og-image.png',
+  },
   notFound: {
     title: `Page Not Found - ${SITE_NAME}`,
     description:

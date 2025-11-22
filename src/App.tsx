@@ -14,6 +14,7 @@ import JoinRoomScreen from './routes/JoinRoomScreen';
 import NotFoundScreen from './routes/NotFoundScreen';
 import { ErrorBannerServerDefaults } from './components/ErrorBannerServerDefaults';
 import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
+import TermsConditionsScreen from './routes/TermsConditionsScreen';
 
 const RoomScreen = lazy(() => import('./routes/RoomScreen'));
 
@@ -46,6 +47,8 @@ const AppContent = () => {
         );
       case 'privacy':
         return <PrivacyPolicyScreen />;
+      case 'terms':
+        return <TermsConditionsScreen />;
       default:
         return <NotFoundScreen />;
     }
