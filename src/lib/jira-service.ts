@@ -12,6 +12,22 @@ function resolveSessionToken(provided?: string | null): string {
   return stored;
 }
 
+export interface JiraOAuthStatus {
+  connected: boolean;
+  jiraDomain?: string;
+  jiraUserEmail?: string;
+  expiresAt?: number;
+  storyPointsField?: string | null;
+  sprintField?: string | null;
+}
+
+export interface JiraFieldOption {
+  id: string;
+  name: string;
+  type?: string | null;
+  custom?: boolean;
+}
+
 export async function fetchJiraTicket(
   ticketId: string,
   options?: { roomKey?: string; userName?: string; sessionToken?: string }
@@ -114,4 +130,132 @@ export function convertVoteValueToStoryPoints(
   }
 
   return numericValue;
+}
+
+export async function getJiraOAuthStatus(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<JiraOAuthStatus> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(
+    `${API_BASE_URL}/jira/oauth/status?roomKey=${encodeURIComponent(
+      roomKey,
+    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
+      token,
+    )}`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch OAuth status");
+  }
+
+  return (await response.json()) as JiraOAuthStatus;
+}
+
+export async function getJiraFields(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<{
+  fields: JiraFieldOption[];
+  storyPointsField?: string | null;
+  sprintField?: string | null;
+}> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(
+    `${API_BASE_URL}/jira/oauth/fields?roomKey=${encodeURIComponent(
+      roomKey,
+    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
+      token,
+    )}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to fetch Jira fields");
+  }
+
+  return (await response.json()) as {
+    fields: JiraFieldOption[];
+    storyPointsField?: string | null;
+    sprintField?: string | null;
+  };
+}
+
+export async function authorizeJiraOAuth(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<{ authorizationUrl: string }> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(`${API_BASE_URL}/jira/oauth/authorize`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      roomKey,
+      userName,
+      sessionToken: token,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to initiate OAuth");
+  }
+
+  return (await response.json()) as { authorizationUrl: string };
+}
+
+export async function revokeJiraOAuth(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<void> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(`${API_BASE_URL}/jira/oauth/revoke`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      roomKey,
+      userName,
+      sessionToken: token,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to disconnect Jira");
+  }
+}
+
+export async function saveJiraFieldConfiguration(
+  roomKey: string,
+  userName: string,
+  options: { storyPointsField?: string | null; sprintField?: string | null },
+  sessionToken?: string | null,
+): Promise<void> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(`${API_BASE_URL}/jira/oauth/fields`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      roomKey,
+      userName,
+      sessionToken: token,
+      storyPointsField: options.storyPointsField,
+      sprintField: options.sprintField,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to save Jira field settings");
+  }
 }

@@ -1,91 +1,64 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { useRoom } from '../context/RoomContext';
 import { useSession } from '../context/SessionContext';
-
-interface LinearOAuthStatus {
-  connected: boolean;
-  linearOrganizationId?: string;
-  linearUserEmail?: string;
-  expiresAt?: number;
-  estimateField?: string | null;
-}
+import {
+  authorizeLinearOAuth,
+  getLinearOAuthStatus,
+  revokeLinearOAuth,
+  type LinearOAuthStatus,
+} from "../lib/linear-service";
 
 export function useLinearOAuth(enabled = true) {
   const { activeRoomKey, authToken } = useRoom();
   const { name } = useSession();
-  const [status, setStatus] = useState<LinearOAuthStatus>({ connected: false });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [clientError, setClientError] = useState<string | null>(null);
 
-  const fetchStatus = async () => {
-    if (!enabled) {
-      setLoading(false);
-      setStatus({ connected: false });
-      return;
-    }
+  const hasRequiredContext =
+    enabled && Boolean(activeRoomKey && name && authToken);
 
-    if (!activeRoomKey || !name || !authToken) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/linear/oauth/status?roomKey=${encodeURIComponent(activeRoomKey)}&userName=${encodeURIComponent(name)}&sessionToken=${encodeURIComponent(authToken)}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch OAuth status');
-      }
-
-      const data = await response.json();
-      setStatus(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching Linear OAuth status:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setStatus({ connected: false });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStatus();
-  }, [activeRoomKey, name, authToken, enabled]);
+  const statusQuery = useQuery<LinearOAuthStatus>({
+    queryKey: ["linear-oauth-status", activeRoomKey, name, authToken],
+    enabled: hasRequiredContext,
+    queryFn: () =>
+      getLinearOAuthStatus(
+        activeRoomKey ?? "",
+        name ?? "",
+        authToken ?? "",
+      ),
+    staleTime: 1000 * 30,
+  });
 
   const connect = async () => {
-    if (!enabled) {
-      return;
-    }
-    if (!activeRoomKey || !name || !authToken) {
-      setError('Missing room key, user name, or session token');
+    if (!hasRequiredContext) {
+      setClientError("Missing room key, user name, or session token");
       return;
     }
 
-    try {
-      setLoading(true);
-      setError(null);
+    setClientError(null);
+    return connectMutation.mutateAsync();
+  };
 
-      const response = await fetch('/api/linear/oauth/authorize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          roomKey: activeRoomKey,
-          userName: name,
-          sessionToken: authToken,
-        }),
-      });
+  const disconnect = async () => {
+    if (!hasRequiredContext) {
+      setClientError("Missing room key, user name, or session token");
+      return;
+    }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to initiate OAuth');
-      }
+    setClientError(null);
+    return disconnectMutation.mutateAsync();
+  };
 
-      const { authorizationUrl } = await response.json();
+  const connectMutation = useMutation({
+    mutationKey: ["linear-oauth-connect", activeRoomKey, name],
+    mutationFn: async () => {
+      const { authorizationUrl } = await authorizeLinearOAuth(
+        activeRoomKey ?? "",
+        name ?? "",
+        authToken ?? "",
+      );
 
       const width = 600;
       const height = 700;
@@ -94,62 +67,58 @@ export function useLinearOAuth(enabled = true) {
 
       const authWindow = window.open(
         authorizationUrl,
-        'Linear OAuth',
-        `width=${width},height=${height},left=${left},top=${top}`
+        "Linear OAuth",
+        `width=${width},height=${height},left=${left},top=${top}`,
       );
 
       const pollTimer = setInterval(() => {
         if (authWindow?.closed) {
           clearInterval(pollTimer);
-          setTimeout(fetchStatus, 1000);
+          setTimeout(() => {
+            void statusQuery.refetch();
+          }, 1000);
         }
       }, 500);
-    } catch (err) {
-      console.error('Error connecting to Linear:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  const disconnect = async () => {
-    if (!enabled) {
-      return;
-    }
-    if (!activeRoomKey || !name || !authToken) {
-      setError('Missing room key, user name, or session token');
-      return;
-    }
+  const disconnectMutation = useMutation({
+    mutationKey: ["linear-oauth-disconnect", activeRoomKey, name],
+    mutationFn: async () => {
+      await revokeLinearOAuth(activeRoomKey ?? "", name ?? "", authToken ?? "");
 
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/linear/oauth/revoke', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          roomKey: activeRoomKey,
-          userName: name,
-          sessionToken: authToken
-        }),
+      queryClient.setQueryData<LinearOAuthStatus>(
+        ["linear-oauth-status", activeRoomKey, name, authToken],
+        { connected: false },
+      );
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["linear-oauth-status", activeRoomKey, name, authToken],
       });
+    },
+  });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to disconnect Linear');
-      }
+  const status =
+    statusQuery.data && hasRequiredContext
+      ? statusQuery.data
+      : { connected: false };
 
-      setStatus({ connected: false });
-    } catch (err) {
-      console.error('Error disconnecting from Linear:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading =
+    (hasRequiredContext && statusQuery.isLoading) ||
+    connectMutation.isPending ||
+    disconnectMutation.isPending;
+
+  const error =
+    clientError ||
+    (statusQuery.error instanceof Error ? statusQuery.error.message : null) ||
+    (connectMutation.error instanceof Error
+      ? connectMutation.error.message
+      : null) ||
+    (disconnectMutation.error instanceof Error
+      ? disconnectMutation.error.message
+      : null) ||
+    null;
 
   return {
     status,
@@ -157,6 +126,6 @@ export function useLinearOAuth(enabled = true) {
     error,
     connect,
     disconnect,
-    refresh: fetchStatus,
+    refresh: () => statusQuery.refetch(),
   };
 }

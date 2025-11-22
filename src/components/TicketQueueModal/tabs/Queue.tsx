@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMutation } from "@tanstack/react-query";
 import { AnimatePresence, motion } from 'framer-motion';
 import { GripVertical, Link2, Plus, Loader2, Trash2 } from 'lucide-react';
 
@@ -63,6 +64,14 @@ export function TicketQueueModalQueueTab({
   const jiraEnabled = externalService === 'jira';
   const linearEnabled = externalService === 'linear';
 
+  const ticketLookup = useMutation({
+    mutationKey: ["ticket-lookup", roomKey, userName],
+    mutationFn: async (variables: { provider: "jira" | "linear"; key: string }) =>
+      variables.provider === "jira"
+        ? fetchJiraTicket(variables.key, { roomKey, userName })
+        : fetchLinearIssue(variables.key, { roomKey, userName }),
+  });
+
   const renderBadge = (ticket?: TicketQueueItem) => {
     if (!ticket) return null;
     if (ticket.externalService === 'jira') return <JiraBadge {...ticket} />;
@@ -93,10 +102,10 @@ export function TicketQueueModalQueueTab({
     if (!key.trim()) return;
     setLoading(true);
     try {
-      const ticket =
-        provider === 'jira'
-          ? await fetchJiraTicket(key.trim(), { roomKey, userName })
-          : await fetchLinearIssue(key.trim(), { roomKey, userName });
+      const ticket = await ticketLookup.mutateAsync({
+        provider,
+        key: key.trim(),
+      });
       setPreview(ticket);
     } catch (err) {
       handleError(

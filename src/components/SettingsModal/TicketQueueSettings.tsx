@@ -1,4 +1,5 @@
 import type { RoomSettings, JudgeAlgorithm } from "../../types";
+import type { JiraFieldOption } from "../../lib/jira-service";
 import { useJiraOAuth } from '../../hooks/useJiraOAuth';
 import { useLinearOAuth } from '../../hooks/useLinearOAuth';
 
@@ -250,7 +251,7 @@ export function TicketQueueSettings({
                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                               >
                                 <option value="">Select a field</option>
-                                {fields.map((field) => (
+                                {fields.map((field: JiraFieldOption) => (
                                   <option key={field.id} value={field.id}>
                                     {field.name}
                                     {field.type ? ` (${field.type})` : ''}
@@ -278,7 +279,7 @@ export function TicketQueueSettings({
                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                               >
                                 <option value="">Select a field</option>
-                                {fields.map((field) => (
+                                {fields.map((field: JiraFieldOption) => (
                                   <option key={field.id} value={field.id}>
                                     {field.name}
                                     {field.type ? ` (${field.type})` : ''}

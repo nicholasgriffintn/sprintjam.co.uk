@@ -12,6 +12,14 @@ function resolveSessionToken(provided?: string | null): string {
   return stored;
 }
 
+export interface LinearOAuthStatus {
+  connected: boolean;
+  linearOrganizationId?: string;
+  linearUserEmail?: string;
+  expiresAt?: number;
+  estimateField?: string | null;
+}
+
 export async function fetchLinearIssue(
   issueId: string,
   options?: { roomKey?: string; userName?: string; sessionToken?: string }
@@ -114,4 +122,75 @@ export function convertVoteValueToEstimate(
   }
 
   return numericValue;
+}
+
+export async function getLinearOAuthStatus(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<LinearOAuthStatus> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(
+    `${API_BASE_URL}/linear/oauth/status?roomKey=${encodeURIComponent(
+      roomKey,
+    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
+      token,
+    )}`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch OAuth status");
+  }
+
+  return (await response.json()) as LinearOAuthStatus;
+}
+
+export async function authorizeLinearOAuth(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<{ authorizationUrl: string }> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(`${API_BASE_URL}/linear/oauth/authorize`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      roomKey,
+      userName,
+      sessionToken: token,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to initiate OAuth");
+  }
+
+  return (await response.json()) as { authorizationUrl: string };
+}
+
+export async function revokeLinearOAuth(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<void> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(`${API_BASE_URL}/linear/oauth/revoke`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      roomKey,
+      userName,
+      sessionToken: token,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || "Failed to disconnect Linear");
+  }
 }

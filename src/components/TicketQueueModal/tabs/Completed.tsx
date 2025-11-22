@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMutation } from "@tanstack/react-query";
 import { ArrowDownToLine, Loader2, RefreshCw } from 'lucide-react';
 
 import type { TicketQueueItem } from '../../../types';
@@ -31,6 +32,22 @@ export function TicketQueueModalCompletedTab({
     id: number;
     provider: 'jira' | 'linear';
   } | null>(null);
+  const jiraSyncMutation = useMutation({
+    mutationKey: ["jira-sync-ticket", roomKey, userName],
+    mutationFn: async (variables: { ticketId: string; storyPoints: number }) =>
+      updateJiraStoryPoints(variables.ticketId, variables.storyPoints, {
+        roomKey,
+        userName,
+      }),
+  });
+  const linearSyncMutation = useMutation({
+    mutationKey: ["linear-sync-ticket", roomKey, userName],
+    mutationFn: async (variables: { ticketId: string; estimate: number }) =>
+      updateLinearEstimate(variables.ticketId, variables.estimate, {
+        roomKey,
+        userName,
+      }),
+  });
 
   const getStoryPointEstimate = (ticket: TicketQueueItem): number | null =>
     calculateStoryPointsFromVotes(ticket.votes);
@@ -49,9 +66,9 @@ export function TicketQueueModalCompletedTab({
 
     setSyncing({ id: ticket.id, provider: 'jira' });
     try {
-      const updated = await updateJiraStoryPoints(ticket.ticketId, storyPoints, {
-        roomKey,
-        userName,
+      const updated = await jiraSyncMutation.mutateAsync({
+        ticketId: ticket.ticketId,
+        storyPoints,
       });
       if (onUpdateTicket) {
         onUpdateTicket(ticket.id, {
@@ -84,9 +101,9 @@ export function TicketQueueModalCompletedTab({
 
     setSyncing({ id: ticket.id, provider: 'linear' });
     try {
-      const updated = await updateLinearEstimate(ticket.ticketId, estimate, {
-        roomKey,
-        userName,
+      const updated = await linearSyncMutation.mutateAsync({
+        ticketId: ticket.ticketId,
+        estimate,
       });
       if (onUpdateTicket) {
         onUpdateTicket(ticket.id, {

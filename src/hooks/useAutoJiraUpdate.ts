@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useMutation } from "@tanstack/react-query";
 
 import { updateJiraStoryPoints, convertVoteValueToStoryPoints } from "../lib/jira-service";
 import type { RoomData, TicketQueueItem, VoteValue, StructuredVote } from "../types";
@@ -20,6 +21,18 @@ export const useAutoJiraUpdate = ({
     ticketId: number;
     storyPoints: number;
   } | null>(null);
+  const updateStoryPointsMutation = useMutation({
+    mutationKey: ["jira-story-points", userName],
+    mutationFn: async (variables: {
+      ticketId: string;
+      storyPoints: number;
+      roomKey: string;
+    }) =>
+      updateJiraStoryPoints(variables.ticketId, variables.storyPoints, {
+        roomKey: variables.roomKey,
+        userName,
+      }),
+  });
 
   const calculateStoryPoints = (
     votes: Record<string, VoteValue | null>,
@@ -74,10 +87,12 @@ export const useAutoJiraUpdate = ({
 
     lastUpdatedRef.current = { ticketId: currentTicket.id, storyPoints };
 
-    updateJiraStoryPoints(currentTicket.ticketId, storyPoints, {
-      roomKey: roomData.key,
-      userName,
-    })
+    updateStoryPointsMutation
+      .mutateAsync({
+        ticketId: currentTicket.ticketId,
+        storyPoints,
+        roomKey: roomData.key,
+      })
       .then((ticket) => {
         onTicketUpdate(currentTicket.id, {
           externalServiceMetadata: ticket,

@@ -1,166 +1,116 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { useRoom } from '../context/RoomContext';
 import { useSession } from '../context/SessionContext';
-
-interface JiraOAuthStatus {
-  connected: boolean;
-  jiraDomain?: string;
-  jiraUserEmail?: string;
-  expiresAt?: number;
-  storyPointsField?: string | null;
-  sprintField?: string | null;
-}
-
-interface JiraFieldOption {
-  id: string;
-  name: string;
-  type?: string | null;
-  custom?: boolean;
-}
+import {
+  authorizeJiraOAuth,
+  getJiraFields,
+  getJiraOAuthStatus,
+  revokeJiraOAuth,
+  saveJiraFieldConfiguration,
+  type JiraFieldOption,
+  type JiraOAuthStatus,
+} from "../lib/jira-service";
 
 export function useJiraOAuth(enabled = true) {
   const { activeRoomKey, authToken } = useRoom();
   const { name } = useSession();
-  const [status, setStatus] = useState<JiraOAuthStatus>({ connected: false });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [fields, setFields] = useState<JiraFieldOption[]>([]);
-  const [fieldsLoading, setFieldsLoading] = useState(false);
-  const [fieldsLoaded, setFieldsLoaded] = useState(false);
-  const [savingFields, setSavingFields] = useState(false);
+  const queryClient = useQueryClient();
+  const [clientError, setClientError] = useState<string | null>(null);
 
-  const fetchStatus = async () => {
-    if (!enabled) {
-      setLoading(false);
-      setStatus({ connected: false });
-      return;
+  const hasRequiredContext =
+    enabled && Boolean(activeRoomKey && name && authToken);
+
+  const statusQuery = useQuery<JiraOAuthStatus, Error>({
+    queryKey: ["jira-oauth-status", activeRoomKey, name, authToken],
+    enabled: hasRequiredContext,
+    staleTime: 1000 * 30,
+    queryFn: () =>
+      getJiraOAuthStatus(
+        activeRoomKey ?? "",
+        name ?? "",
+        authToken ?? "",
+      ),
+  });
+
+  const fieldsQuery = useQuery<{
+    fields: JiraFieldOption[];
+    storyPointsField?: string | null;
+    sprintField?: string | null;
+  }, Error>({
+    queryKey: ["jira-oauth-fields", activeRoomKey, name, authToken],
+    enabled:
+      hasRequiredContext &&
+      Boolean(statusQuery.data?.connected && !statusQuery.isFetching),
+    staleTime: 1000 * 60,
+    queryFn: () =>
+      getJiraFields(
+        activeRoomKey ?? "",
+        name ?? "",
+        authToken ?? "",
+      ),
+  });
+
+  const status = useMemo(() => {
+    const base =
+      statusQuery.data && hasRequiredContext
+        ? statusQuery.data
+        : { connected: false };
+
+    if (!fieldsQuery.data || !hasRequiredContext) {
+      return base;
     }
 
-    if (!activeRoomKey || !name || !authToken) {
-      setLoading(false);
-      setFields([]);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/jira/oauth/status?roomKey=${encodeURIComponent(
-          activeRoomKey
-        )}&userName=${encodeURIComponent(
-          name
-        )}&sessionToken=${encodeURIComponent(authToken)}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch OAuth status');
-      }
-
-      const data = await response.json();
-      setStatus(data);
-      setFieldsLoaded(false);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching Jira OAuth status:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setStatus({ connected: false });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStatus();
-    setFields([]);
-    setFieldsLoaded(false);
-  }, [activeRoomKey, name, authToken, enabled]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    if (status.connected && !fieldsLoaded && !fieldsLoading) {
-      void fetchFields();
-    }
-  }, [enabled, status.connected, fieldsLoaded, fieldsLoading]);
-
-  const fetchFields = async () => {
-    if (!enabled) {
-      return;
-    }
-    if (!activeRoomKey || !name || !authToken) {
-      return;
-    }
-    try {
-      setFieldsLoading(true);
-      const response = await fetch(
-        `/api/jira/oauth/fields?roomKey=${encodeURIComponent(
-          activeRoomKey
-        )}&userName=${encodeURIComponent(
-          name
-        )}&sessionToken=${encodeURIComponent(authToken)}`
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch Jira fields');
-      }
-
-      const data = (await response.json()) as {
-        fields: JiraFieldOption[];
-        storyPointsField?: string | null;
-        sprintField?: string | null;
-      };
-
-      setFields(data.fields || []);
-      setStatus((prev) => ({
-        ...prev,
-        storyPointsField:
-          data.storyPointsField !== undefined
-            ? data.storyPointsField
-            : prev.storyPointsField,
-        sprintField:
-          data.sprintField !== undefined ? data.sprintField : prev.sprintField,
-      }));
-      setFieldsLoaded(true);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching Jira fields:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setFieldsLoading(false);
-    }
-  };
+    return {
+      ...base,
+      storyPointsField:
+        fieldsQuery.data.storyPointsField ?? base.storyPointsField,
+      sprintField: fieldsQuery.data.sprintField ?? base.sprintField,
+    };
+  }, [statusQuery.data, fieldsQuery.data, hasRequiredContext]);
 
   const connect = async () => {
-    if (!enabled) {
-      return;
-    }
-    if (!activeRoomKey || !name || !authToken) {
-      setError('Missing room key, user name, or session token');
+    if (!hasRequiredContext) {
+      setClientError("Missing room key, user name, or session token");
       return;
     }
 
-    try {
-      setLoading(true);
-      setError(null);
+    setClientError(null);
+    return connectMutation.mutateAsync();
+  };
 
-      const response = await fetch('/api/jira/oauth/authorize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          roomKey: activeRoomKey,
-          userName: name,
-          sessionToken: authToken,
-        }),
-      });
+  const disconnect = async () => {
+    if (!hasRequiredContext) {
+      setClientError("Missing room key, user name, or session token");
+      return;
+    }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to initiate OAuth');
-      }
+    setClientError(null);
+    return disconnectMutation.mutateAsync();
+  };
 
-      const { authorizationUrl } = await response.json();
+  const saveFieldConfiguration = async (options: {
+    storyPointsField?: string | null;
+    sprintField?: string | null;
+  }) => {
+    if (!hasRequiredContext) {
+      setClientError("Missing room key, user name, or session token");
+      return;
+    }
+
+    setClientError(null);
+    return saveFieldsMutation.mutateAsync(options);
+  };
+
+  const connectMutation = useMutation({
+    mutationKey: ["jira-oauth-connect", activeRoomKey, name],
+    mutationFn: async () => {
+      const { authorizationUrl } = await authorizeJiraOAuth(
+        activeRoomKey ?? "",
+        name ?? "",
+        authToken ?? "",
+      );
 
       const width = 600;
       const height = 700;
@@ -169,118 +119,113 @@ export function useJiraOAuth(enabled = true) {
 
       const authWindow = window.open(
         authorizationUrl,
-        'Jira OAuth',
-        `width=${width},height=${height},left=${left},top=${top}`
+        "Jira OAuth",
+        `width=${width},height=${height},left=${left},top=${top}`,
       );
 
       const pollTimer = setInterval(() => {
         if (authWindow?.closed) {
           clearInterval(pollTimer);
-          setTimeout(fetchStatus, 1000);
+          setTimeout(() => {
+            void statusQuery.refetch();
+          }, 1000);
         }
       }, 500);
-    } catch (err) {
-      console.error('Error connecting to Jira:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  const disconnect = async () => {
-    if (!enabled) {
-      return;
-    }
-    if (!activeRoomKey || !name || !authToken) {
-      setError('Missing room key, user name, or session token');
-      return;
-    }
+  const disconnectMutation = useMutation({
+    mutationKey: ["jira-oauth-disconnect", activeRoomKey, name],
+    mutationFn: async () => {
+      await revokeJiraOAuth(activeRoomKey ?? "", name ?? "", authToken ?? "");
 
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/jira/oauth/revoke', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          roomKey: activeRoomKey,
-          userName: name,
-          sessionToken: authToken,
-        }),
+      queryClient.setQueryData<JiraOAuthStatus | undefined>(
+        ["jira-oauth-status", activeRoomKey, name, authToken],
+        (prev) =>
+          prev
+            ? {
+                ...prev,
+                connected: false,
+                storyPointsField: undefined,
+                sprintField: undefined,
+              }
+            : prev,
+      );
+      queryClient.removeQueries({
+        queryKey: ["jira-oauth-fields", activeRoomKey, name, authToken],
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to disconnect Jira');
-      }
-
-      setStatus({ connected: false });
-    } catch (err) {
-      console.error('Error disconnecting from Jira:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveFieldConfiguration = async (options: {
-    storyPointsField?: string | null;
-    sprintField?: string | null;
-  }) => {
-    if (!enabled) {
-      return;
-    }
-    if (!activeRoomKey || !name || !authToken) {
-      setError('Missing room key, user name, or session token');
-      return;
-    }
-
-    try {
-      setSavingFields(true);
-      setError(null);
-
-      const response = await fetch('/api/jira/oauth/fields', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          roomKey: activeRoomKey,
-          userName: name,
-          sessionToken: authToken,
-          storyPointsField: options.storyPointsField,
-          sprintField: options.sprintField,
-        }),
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["jira-oauth-status", activeRoomKey, name, authToken],
       });
+    },
+  });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || 'Failed to save Jira field settings'
-        );
-      }
+  const saveFieldsMutation = useMutation({
+    mutationKey: ["jira-oauth-fields-save", activeRoomKey, name],
+    mutationFn: async (options: {
+      storyPointsField?: string | null;
+      sprintField?: string | null;
+    }) => {
+      await saveJiraFieldConfiguration(
+        activeRoomKey ?? "",
+        name ?? "",
+        options,
+        authToken ?? "",
+      );
 
-      setStatus((prev) => ({
-        ...prev,
-        storyPointsField:
-          options.storyPointsField !== undefined
-            ? options.storyPointsField
-            : prev.storyPointsField,
-        sprintField:
-          options.sprintField !== undefined
-            ? options.sprintField
-            : prev.sprintField,
-      }));
-    } catch (err) {
-      console.error('Error saving Jira field configuration:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setSavingFields(false);
-    }
-  };
+      queryClient.setQueryData<JiraOAuthStatus | undefined>(
+        ["jira-oauth-status", activeRoomKey, name, authToken],
+        (prev) =>
+          prev
+            ? {
+                ...prev,
+                storyPointsField:
+                  options.storyPointsField !== undefined
+                    ? options.storyPointsField
+                    : prev.storyPointsField,
+                sprintField:
+                  options.sprintField !== undefined
+                    ? options.sprintField
+                    : prev.sprintField,
+              }
+            : prev,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["jira-oauth-fields", activeRoomKey, name, authToken],
+      });
+    },
+  });
+
+  const fields =
+    fieldsQuery.data && hasRequiredContext ? fieldsQuery.data.fields || [] : [];
+
+  const loading =
+    (hasRequiredContext && statusQuery.isLoading) ||
+    connectMutation.isPending ||
+    disconnectMutation.isPending;
+
+  const error =
+    clientError ||
+    (statusQuery.error instanceof Error ? statusQuery.error.message : null) ||
+    (connectMutation.error instanceof Error
+      ? connectMutation.error.message
+      : null) ||
+    (disconnectMutation.error instanceof Error
+      ? disconnectMutation.error.message
+      : null) ||
+    (fieldsQuery.error instanceof Error ? fieldsQuery.error.message : null) ||
+    (saveFieldsMutation.error instanceof Error
+      ? saveFieldsMutation.error.message
+      : null) ||
+    null;
+
+  const fieldsLoaded = Boolean(fieldsQuery.data);
+  const fieldsLoading = fieldsQuery.isLoading || fieldsQuery.isRefetching;
+  const savingFields = saveFieldsMutation.isPending;
+  const refreshStatus = () => statusQuery.refetch();
+  const refreshFields = () => fieldsQuery.refetch();
 
   return {
     status,
@@ -288,11 +233,11 @@ export function useJiraOAuth(enabled = true) {
     error,
     connect,
     disconnect,
-    refresh: fetchStatus,
+    refresh: refreshStatus,
     fields,
     fieldsLoading,
     fieldsLoaded,
-    fetchFields,
+    fetchFields: refreshFields,
     saveFieldConfiguration,
     savingFields,
   };

@@ -166,7 +166,7 @@ const PrivacyPolicyScreen = () => {
               Need something clarified? Open an issue on the GitHub repo.
             </span>
             <a
-              href="https://github.com/sprintjam/sprintjam"
+              href="https://github.com/nicholasgriffintn/sprintjam"
               className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-white dark:text-slate-900"
             >
               View repository
