@@ -44,15 +44,19 @@ const SessionContext = createContext<SessionContextValue | undefined>(
 );
 
 function getScreenFromPath(path: string): AppScreen {
-  return path === '/create'
+  const pathWithoutQuery = path.split('?')[0];
+  const pathWithoutTrailingSlash = pathWithoutQuery.endsWith('/')
+    ? pathWithoutQuery.slice(0, -1)
+    : pathWithoutQuery;
+  return pathWithoutTrailingSlash === '/create'
     ? 'create'
-    : path === '/join'
+    : pathWithoutTrailingSlash === '/join'
     ? 'join'
-    : path === '/room'
+    : pathWithoutTrailingSlash === '/room'
     ? 'room'
-    : path === '/'
+    : pathWithoutTrailingSlash === '/'
     ? 'welcome'
-    : path === '/privacy'
+    : pathWithoutTrailingSlash === '/privacy'
     ? 'privacy'
     : '404';
 }
