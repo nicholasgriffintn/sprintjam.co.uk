@@ -75,9 +75,8 @@ export function RoomSidebar({
         className="flex h-full min-h-0 flex-col gap-3 p-3 shadow-sm backdrop-blur md:sticky md:top-[4.5rem] md:h-[calc(100vh-4.5rem)] md:min-h-[420px]"
       >
         <div
-          className={`flex flex-col overflow-hidden md:min-h-0 ${
-            isParticipantsCollapsed ? 'md:min-h-[54px]' : 'md:min-h-[220px]'
-          }`}
+          className={`flex flex-col overflow-hidden md:min-h-0 ${isParticipantsCollapsed ? 'md:min-h-[54px]' : 'md:min-h-[220px]'
+            }`}
           style={{
             flex: isParticipantsCollapsed
               ? '0 0 auto'
@@ -104,9 +103,8 @@ export function RoomSidebar({
               <span className="h-0.5 w-10 rounded-full bg-slate-400/80 dark:bg-slate-500/80" />
             </button>
             <div
-              className={`flex flex-col overflow-hidden md:min-h-0 md:pt-1 ${
-                isQueueCollapsed ? 'md:min-h-[54px]' : 'md:min-h-[180px]'
-              }`}
+              className={`flex flex-col overflow-hidden md:min-h-0 md:pt-1 ${isQueueCollapsed ? 'md:min-h-[54px]' : 'md:min-h-[180px]'
+                }`}
               style={{
                 flex: isQueueCollapsed ? '0 0 auto' : `${queueFlex} 1 0%`,
               }}

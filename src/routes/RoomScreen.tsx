@@ -25,6 +25,7 @@ import { getVoteKeyForUser } from '../utils/room';
 import { useDisplayQueueSetup } from '../hooks/useDisplayQueueSetup';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { META_CONFIGS } from '../config/meta';
+import { Footer } from '../components/layout/Footer';
 
 const SettingsModal = lazy(() => import('../components/SettingsModal'));
 const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
@@ -144,7 +145,7 @@ const RoomScreen = () => {
           )}
 
           {roomData.settings.enableStructuredVoting &&
-          roomData.settings.votingCriteria ? (
+            roomData.settings.votingCriteria ? (
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
               currentVote={
@@ -218,6 +219,8 @@ const RoomScreen = () => {
                     </Suspense>
                   </motion.div>
                 </SurfaceCard>
+
+                <Footer displayRepoLink={false} />
               </motion.div>
             ) : (
               <motion.div
@@ -241,6 +244,8 @@ const RoomScreen = () => {
                     <VotesHidden votes={roomData.votes} />
                   </motion.div>
                 </SurfaceCard>
+
+                <Footer displayRepoLink={false} />
               </motion.div>
             )}
           </AnimatePresence>

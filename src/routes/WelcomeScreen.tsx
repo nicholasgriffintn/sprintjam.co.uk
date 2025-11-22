@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 import {
   Users,
   Plus,
@@ -8,15 +8,16 @@ import {
   Timer,
   BarChart3,
   Play,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { useSession } from "../context/SessionContext";
-import { PageBackground } from "../components/layout/PageBackground";
-import { Button } from "../components/ui/Button";
-import { SurfaceCard } from "../components/ui/SurfaceCard";
-import { Logo } from "../components/Logo";
-import { usePageMeta } from "../hooks/usePageMeta";
-import { META_CONFIGS } from "../config/meta";
+import { useSession } from '../context/SessionContext';
+import { PageBackground } from '../components/layout/PageBackground';
+import { Button } from '../components/ui/Button';
+import { SurfaceCard } from '../components/ui/SurfaceCard';
+import { Logo } from '../components/Logo';
+import { Footer } from '../components/layout/Footer';
+import { usePageMeta } from '../hooks/usePageMeta';
+import { META_CONFIGS } from '../config/meta';
 
 const WelcomeScreen = () => {
   const { startCreateFlow, startJoinFlow } = useSession();
@@ -189,24 +190,7 @@ const WelcomeScreen = () => {
           </div>
         </SurfaceCard>
       </motion.div>
-      <div className="mt-4 flex justify-center space-x-2">
-        <span className="text-sm text-slate-600 dark:text-slate-300">
-          Built by{' '}
-        </span>
-        <a
-          href="https://nicholasgriffin.dev"
-          className="text-sm text-slate-600 dark:text-slate-300 underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
-        >
-          Nicholas Griffin
-        </a>
-        <span className="text-sm text-slate-600 dark:text-slate-300">|</span>
-        <a
-          href="/privacy"
-          className="text-sm text-slate-600 dark:text-slate-300 underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
-        >
-          Privacy Policy
-        </a>
-      </div>
+      <Footer displayRepoLink={false} fullWidth={false} />
     </PageBackground>
   );
 };

@@ -21,6 +21,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Alert } from '../components/ui/Alert';
 import { Logo } from '../components/Logo';
+import { Footer } from '../components/layout/Footer';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { META_CONFIGS } from '../config/meta';
 
@@ -505,6 +506,7 @@ const CreateRoomScreen = () => {
           After creation you’ll get a shareable key to invite the team.
         </p>
       </motion.div>
+      <Footer displayRepoLink={false} />
     </PageBackground>
   );
 };

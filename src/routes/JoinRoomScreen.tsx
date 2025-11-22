@@ -12,6 +12,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Alert } from '../components/ui/Alert';
 import { Logo } from '../components/Logo';
+import { Footer } from '../components/layout/Footer';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { META_CONFIGS } from '../config/meta';
 
@@ -129,8 +130,8 @@ const JoinRoomScreen = () => {
                 {isPermissionError
                   ? "You don't have permission to join this room."
                   : isAuthError
-                  ? 'Session expired. Rejoin with a fresh link.'
-                  : error}
+                    ? 'Session expired. Rejoin with a fresh link.'
+                    : error}
               </Alert>
             )}
 
@@ -257,6 +258,7 @@ const JoinRoomScreen = () => {
           Need help? Ask your moderator for the key or passcode again.
         </p>
       </motion.div>
+      <Footer displayRepoLink={false} />
     </PageBackground>
   );
 };

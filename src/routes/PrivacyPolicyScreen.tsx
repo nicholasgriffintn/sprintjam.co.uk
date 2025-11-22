@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 
 import { PageBackground } from '../components/layout/PageBackground';
 import { Logo } from '../components/Logo';
+import { Footer } from '../components/layout/Footer';
 import { usePageMeta } from '../hooks/usePageMeta';
 import { META_CONFIGS } from '../config/meta';
 
@@ -164,18 +165,7 @@ const PrivacyPolicyScreen = () => {
               </ul>
             </div>
           </div>
-
-          <footer className="flex items-center justify-between rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/80 px-4 py-3 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
-            <span>
-              Need something clarified? Open an issue on the GitHub repo.
-            </span>
-            <a
-              href="https://github.com/nicholasgriffintn/sprintjam"
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:bg-white dark:text-slate-900"
-            >
-              View repository
-            </a>
-          </footer>
+          <Footer />
         </div>
       </motion.div>
     </PageBackground>
