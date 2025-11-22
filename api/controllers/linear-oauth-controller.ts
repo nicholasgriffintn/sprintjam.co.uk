@@ -45,10 +45,6 @@ async function validateSession(
   }
 }
 
-/**
- * Initiates OAuth flow by generating authorization URL
- * POST /api/linear/oauth/authorize
- */
 export async function initiateLinearOAuthController(
   request: CfRequest,
   env: Env
@@ -71,10 +67,15 @@ export async function initiateLinearOAuthController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const clientId = env.LINEAR_OAUTH_CLIENT_ID;
-    const redirectUri = env.LINEAR_OAUTH_REDIRECT_URI || 'https://sprintjam.co.uk/api/linear/oauth/callback';
+    const redirectUri =
+      env.LINEAR_OAUTH_REDIRECT_URI ||
+      'https://sprintjam.co.uk/api/linear/oauth/callback';
 
     if (!clientId) {
-      return jsonError('OAuth not configured. Please contact administrator.', 500);
+      return jsonError(
+        'OAuth not configured. Please contact administrator.',
+        500
+      );
     }
 
     const state = btoa(
@@ -91,15 +92,12 @@ export async function initiateLinearOAuthController(
 
     return jsonResponse({ authorizationUrl: authUrl.toString(), state });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to initiate OAuth';
+    const message =
+      error instanceof Error ? error.message : 'Failed to initiate OAuth';
     return jsonError(message, 500);
   }
 }
 
-/**
- * Handles OAuth callback from Linear
- * GET /api/linear/oauth/callback
- */
 export async function handleLinearOAuthCallbackController(
   url: URL,
   env: Env
@@ -236,10 +234,6 @@ export async function handleLinearOAuthCallbackController(
   }
 }
 
-/**
- * Gets OAuth status for a room
- * GET /api/linear/oauth/status
- */
 export async function getLinearOAuthStatusController(
   url: URL,
   env: Env
@@ -276,15 +270,12 @@ export async function getLinearOAuthStatusController(
 
     return jsonResponse(data);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to get OAuth status';
+    const message =
+      error instanceof Error ? error.message : 'Failed to get OAuth status';
     return jsonError(message, 500);
   }
 }
 
-/**
- * Revokes OAuth credentials for a room
- * DELETE /api/linear/oauth/revoke
- */
 export async function revokeLinearOAuthController(
   request: CfRequest,
   env: Env

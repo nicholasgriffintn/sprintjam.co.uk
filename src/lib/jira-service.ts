@@ -12,69 +12,52 @@ function resolveSessionToken(provided?: string | null): string {
   return stored;
 }
 
-/**
- * Fetch Jira ticket details by ticket ID or key
- * @param {string} ticketId - The Jira ticket ID or key (e.g., "PROJECT-123")
- * @param {object} options - Optional parameters
- * @param {string} options.roomKey - The room key to store the ticket in
- * @param {string} options.userName - The user name making the request
- * @returns {Promise<TicketMetadata>} - The Jira ticket details
- */
 export async function fetchJiraTicket(
   ticketId: string,
-  options?: { roomKey?: string; userName?: string; sessionToken?: string },
+  options?: { roomKey?: string; userName?: string; sessionToken?: string }
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
     let url = `${API_BASE_URL}/jira/ticket?ticketId=${encodeURIComponent(
-      ticketId,
+      ticketId
     )}`;
 
     if (options?.roomKey && options?.userName) {
       url += `&roomKey=${encodeURIComponent(
-        options.roomKey,
+        options.roomKey
       )}&userName=${encodeURIComponent(options.userName)}`;
       url += `&sessionToken=${encodeURIComponent(sessionToken)}`;
     }
 
     const response = await fetch(url, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to fetch Jira ticket: ${response.status}`,
+        errorData.error || `Failed to fetch Jira ticket: ${response.status}`
       );
     }
 
     const data = await response.json();
-    console.log("Jira ticket API response:", data);
+    console.log('Jira ticket API response:', data);
 
     const ticket: TicketMetadata | undefined = data.ticket;
 
     if (ticket) {
       return ticket;
     }
-    throw new Error("Invalid response format from Jira API");
+    throw new Error('Invalid response format from Jira API');
   } catch (error) {
-    console.error("Error fetching Jira ticket:", error);
+    console.error('Error fetching Jira ticket:', error);
     throw error;
   }
 }
 
-/**
- * Update story points for a Jira ticket
- * @param {string} ticketId - The Jira ticket ID or key
- * @param {number} storyPoints - The story points value to set
- * @param {object} options - Optional parameters
- * @param {string} options.roomKey - The room key to update the ticket in
- * @param {string} options.userName - The user name making the request
- * @returns {Promise<TicketMetadata>} - The updated Jira ticket details
- */
 export async function updateJiraStoryPoints(
   ticketId: string,
   storyPoints: number,
@@ -116,11 +99,6 @@ export async function updateJiraStoryPoints(
   }
 }
 
-/**
- * Convert a planning poker vote value to a Jira story points number
- * @param {VoteValue} voteValue - The planning poker vote value
- * @returns {number | null} - The corresponding Jira story points number
- */
 export function convertVoteValueToStoryPoints(
   voteValue: VoteValue,
 ): number | null {

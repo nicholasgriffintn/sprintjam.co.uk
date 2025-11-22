@@ -1,11 +1,6 @@
 import type { TicketMetadata } from "../../src/types";
 import type { LinearOAuthCredentials } from '../types';
 
-/**
- * Get OAuth authorization headers
- * @param accessToken OAuth access token
- * @returns Headers with OAuth authorization
- */
 function getOAuthHeaders(accessToken: string): Headers {
   return new Headers({
     Authorization: `Bearer ${accessToken}`,
@@ -13,13 +8,6 @@ function getOAuthHeaders(accessToken: string): Headers {
   });
 }
 
-/**
- * Refresh OAuth access token
- * @param refreshToken The refresh token
- * @param clientId OAuth client ID
- * @param clientSecret OAuth client secret
- * @returns New access token and refresh token
- */
 async function refreshOAuthToken(
   refreshToken: string,
   clientId: string,
@@ -63,15 +51,6 @@ async function refreshOAuthToken(
   };
 }
 
-/**
- * Execute API call with automatic token refresh
- * @param credentials OAuth credentials
- * @param operation Function that performs the API call
- * @param onTokenRefresh Callback when token is refreshed
- * @param clientId OAuth client ID
- * @param clientSecret OAuth client secret
- * @returns API response
- */
 async function executeWithTokenRefresh<T>(
   credentials: LinearOAuthCredentials,
   operation: (accessToken: string) => Promise<T>,
@@ -143,13 +122,6 @@ async function executeWithTokenRefresh<T>(
   }
 }
 
-/**
- * Execute a GraphQL query against Linear API
- * @param accessToken OAuth access token
- * @param query GraphQL query
- * @param variables GraphQL variables
- * @returns GraphQL response
- */
 async function executeGraphQL<T>(
   accessToken: string,
   query: string,
@@ -191,15 +163,6 @@ async function executeGraphQL<T>(
   return data.data;
 }
 
-/**
- * Fetch a Linear issue by ID or identifier
- * @param credentials OAuth credentials
- * @param issueId Linear issue ID or identifier (e.g., "TEAM-123")
- * @param onTokenRefresh Callback when token is refreshed
- * @param clientId OAuth client ID
- * @param clientSecret OAuth client secret
- * @returns Linear issue details
- */
 export async function fetchLinearIssue(
   credentials: LinearOAuthCredentials,
   issueId: string,
@@ -271,22 +234,10 @@ export async function fetchLinearIssue(
   );
 }
 
-/**
- * Update estimate for a Linear issue
- * @param credentials OAuth credentials
- * @param issueId Linear issue ID
- * @param estimate Estimate value
- * @param currentTicket Optional current ticket data to avoid refetching
- * @param onTokenRefresh Callback when token is refreshed
- * @param clientId OAuth client ID
- * @param clientSecret OAuth client secret
- * @returns Updated Linear issue
- */
 export async function updateLinearEstimate(
   credentials: LinearOAuthCredentials,
   issueId: string,
   estimate: number,
-  currentTicket: TicketMetadata | undefined,
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
@@ -368,14 +319,7 @@ export async function updateLinearEstimate(
   );
 }
 
-/**
- * Get Linear organization info for the authenticated user
- * @param accessToken OAuth access token
- * @returns Organization info
- */
-export async function getLinearOrganization(
-  accessToken: string
-): Promise<{
+export async function getLinearOrganization(accessToken: string): Promise<{
   id: string;
   name: string;
 }> {
@@ -398,11 +342,6 @@ export async function getLinearOrganization(
   return data.organization;
 }
 
-/**
- * Get Linear user info for the authenticated user
- * @param accessToken OAuth access token
- * @returns User info
- */
 export async function getLinearViewer(
   accessToken: string
 ): Promise<{

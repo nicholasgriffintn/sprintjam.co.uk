@@ -12,69 +12,52 @@ function resolveSessionToken(provided?: string | null): string {
   return stored;
 }
 
-/**
- * Fetch Linear issue details by issue ID or identifier
- * @param {string} issueId - The Linear issue ID or identifier (e.g., "TEAM-123")
- * @param {object} options - Optional parameters
- * @param {string} options.roomKey - The room key to store the issue in
- * @param {string} options.userName - The user name making the request
- * @returns {Promise<TicketMetadata>} - The Linear issue details
- */
 export async function fetchLinearIssue(
   issueId: string,
-  options?: { roomKey?: string; userName?: string; sessionToken?: string },
+  options?: { roomKey?: string; userName?: string; sessionToken?: string }
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
     let url = `${API_BASE_URL}/linear/issue?issueId=${encodeURIComponent(
-      issueId,
+      issueId
     )}`;
 
     if (options?.roomKey && options?.userName) {
       url += `&roomKey=${encodeURIComponent(
-        options.roomKey,
+        options.roomKey
       )}&userName=${encodeURIComponent(options.userName)}`;
       url += `&sessionToken=${encodeURIComponent(sessionToken)}`;
     }
 
     const response = await fetch(url, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to fetch Linear issue: ${response.status}`,
+        errorData.error || `Failed to fetch Linear issue: ${response.status}`
       );
     }
 
     const data = await response.json();
-    console.log("Linear issue API response:", data);
+    console.log('Linear issue API response:', data);
 
     const ticket: TicketMetadata | undefined = data.ticket;
 
     if (ticket) {
       return ticket;
     }
-    throw new Error("Invalid response format from Linear API");
+    throw new Error('Invalid response format from Linear API');
   } catch (error) {
-    console.error("Error fetching Linear issue:", error);
+    console.error('Error fetching Linear issue:', error);
     throw error;
   }
 }
 
-/**
- * Update estimate for a Linear issue
- * @param {string} issueId - The Linear issue ID or identifier
- * @param {number} estimate - The estimate value to set
- * @param {object} options - Optional parameters
- * @param {string} options.roomKey - The room key to update the issue in
- * @param {string} options.userName - The user name making the request
- * @returns {Promise<TicketMetadata>} - The updated Linear issue details
- */
 export async function updateLinearEstimate(
   issueId: string,
   estimate: number,
@@ -116,11 +99,6 @@ export async function updateLinearEstimate(
   }
 }
 
-/**
- * Convert a planning poker vote value to a Linear estimate number
- * @param {VoteValue} voteValue - The planning poker vote value
- * @returns {number | null} - The corresponding Linear estimate number
- */
 export function convertVoteValueToEstimate(
   voteValue: VoteValue,
 ): number | null {
