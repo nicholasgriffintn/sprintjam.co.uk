@@ -55,13 +55,6 @@ export async function fetchDefaultSettings(
   return defaults;
 }
 
-/**
- * Create a new planning poker room
- * @param {string} name - The name of the user creating the room
- * @param {string} passcode - Optional passcode for the room
- * @param {Partial<RoomSettings>} settings - Optional initial settings for the room
- * @returns {Promise<RoomData>} - The room data
- */
 export async function createRoom(
   name: string,
   passcode?: string,
@@ -115,12 +108,6 @@ export async function createRoom(
   }
 }
 
-/**
- * Join an existing planning poker room
- * @param {string} name - The name of the user joining the room
- * @param {string} roomKey - The unique key for the room
- * @returns {Promise<RoomData>} - The room data
- */
 export async function joinRoom(
   name: string,
   roomKey: string,
@@ -175,13 +162,6 @@ export async function joinRoom(
   }
 }
 
-/**
- * Connect to the WebSocket for real-time updates
- * @param {string} roomKey - The unique key for the room
- * @param {string} name - The name of the connected user
- * @param {function} onRoomUpdate - Callback function when room data is updated
- * @returns {WebSocket} - The WebSocket connection
- */
 export function connectToRoom(
   roomKey: string,
   name: string,
@@ -314,9 +294,6 @@ export function connectToRoom(
   }
 }
 
-/**
- * Handle reconnection logic with exponential backoff
- */
 function handleReconnect(
   roomKey: string,
   name: string,
@@ -365,12 +342,10 @@ function handleReconnect(
   }
 }
 
-/**
- * Submit a vote
- * @param {VoteValue | StructuredVote} vote - The vote value
- * @param {boolean} immediate - Whether to bypass debouncing
- */
-export function submitVote(vote: VoteValue | StructuredVote, immediate = false): void {
+export function submitVote(
+  vote: VoteValue | StructuredVote,
+  immediate = false
+): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error('Not connected to room');
   }
@@ -395,9 +370,6 @@ export function submitVote(vote: VoteValue | StructuredVote, immediate = false):
   }
 }
 
-/**
- * Toggle showing/hiding votes (moderator only)
- */
 export function toggleShowVotes(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error('Not connected to room');
@@ -410,9 +382,6 @@ export function toggleShowVotes(): void {
   );
 }
 
-/**
- * Reset all votes (moderator only)
- */
 export function resetVotes(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error('Not connected to room');
@@ -425,9 +394,6 @@ export function resetVotes(): void {
   );
 }
 
-/**
- * Request generation of new Strudel music (moderator only)
- */
 export function requestStrudelGeneration(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error('Not connected to room');
@@ -440,9 +406,6 @@ export function requestStrudelGeneration(): void {
   );
 }
 
-/**
- * Toggle Strudel playback state (moderator only)
- */
 export function toggleStrudelPlayback(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error('Not connected to room');
@@ -455,9 +418,6 @@ export function toggleStrudelPlayback(): void {
   );
 }
 
-/**
- * Disconnect from the room
- */
 export function disconnectFromRoom(): void {
   if (activeSocket) {
     activeSocket.close(1000, 'User left the room');
@@ -467,14 +427,9 @@ export function disconnectFromRoom(): void {
   reconnectAttempts = 0;
 }
 
-/**
- * Add an event listener for specific WebSocket events
- * @param {WebSocketMessageType} event - The event type
- * @param {function} callback - The callback function
- */
 export function addEventListener(
   event: WebSocketMessageType,
-  callback: (data: WebSocketMessage) => void,
+  callback: (data: WebSocketMessage) => void
 ): void {
   if (!eventListeners[event]) {
     eventListeners[event] = [];
@@ -482,28 +437,18 @@ export function addEventListener(
   eventListeners[event].push(callback);
 }
 
-/**
- * Remove an event listener
- * @param {WebSocketMessageType} event - The event type
- * @param {function} callback - The callback function to remove
- */
 export function removeEventListener(
   event: WebSocketMessageType,
-  callback: (data: WebSocketMessage) => void,
+  callback: (data: WebSocketMessage) => void
 ): void {
   if (!eventListeners[event]) return;
 
   eventListeners[event] = eventListeners[event].filter((cb) => cb !== callback);
 }
 
-/**
- * Trigger event listeners for a specific event
- * @param {WebSocketMessageType} event - The event type
- * @param {object} data - The event data
- */
 function triggerEventListeners(
   event: WebSocketMessageType,
-  data: WebSocketMessage,
+  data: WebSocketMessage
 ): void {
   if (!eventListeners[event]) return;
 
@@ -516,71 +461,51 @@ function triggerEventListeners(
   }
 }
 
-/**
- * Check if the WebSocket connection is active
- * @returns {boolean} - Whether the connection is active
- */
 export function isConnected(): boolean {
   return activeSocket !== null && activeSocket.readyState === WebSocket.OPEN;
 }
 
-/**
- * Get the current connection state
- * @returns {number} - The WebSocket readyState
- */
 export function getConnectionState(): number | null {
   return activeSocket ? activeSocket.readyState : null;
 }
 
-/**
- * Get room settings
- * @param {string} roomKey - The unique key for the room
- * @returns {Promise<RoomSettings>} - The room settings
- */
 export async function getRoomSettings(roomKey: string): Promise<RoomSettings> {
   try {
     const response = await fetch(
       `${API_BASE_URL}/rooms/settings?roomKey=${encodeURIComponent(roomKey)}`,
       {
-        method: "GET",
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-      },
+      }
     );
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to get room settings: ${response.status}`,
+        errorData.error || `Failed to get room settings: ${response.status}`
       );
     }
 
     const data = await response.json();
     return data.settings;
   } catch (error) {
-    console.error("Error getting room settings:", error);
+    console.error('Error getting room settings:', error);
     throw error;
   }
 }
 
-/**
- * Update room settings (moderator only)
- * @param {string} name - The name of the user updating settings (must be moderator)
- * @param {string} roomKey - The unique key for the room
- * @param {Partial<RoomSettings>} settings - The settings to update
- * @returns {Promise<RoomSettings>} - The updated room settings
- */
 export async function updateRoomSettings(
   name: string,
   roomKey: string,
-  settings: Partial<RoomSettings>,
+  settings: Partial<RoomSettings>
 ): Promise<RoomSettings> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/settings`, {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ name, roomKey, settings }),
     });
@@ -588,110 +513,86 @@ export async function updateRoomSettings(
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to update room settings: ${response.status}`,
+        errorData.error || `Failed to update room settings: ${response.status}`
       );
     }
 
     const data = await response.json();
     return data.settings;
   } catch (error) {
-    console.error("Error updating room settings:", error);
+    console.error('Error updating room settings:', error);
     throw error;
   }
 }
 
-/**
- * Update settings via WebSocket (moderator only)
- * @param {Partial<RoomSettings>} settings - The settings to update
- */
 export function updateSettings(settings: Partial<RoomSettings>): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "updateSettings",
+      type: 'updateSettings',
       settings,
-    }),
+    })
   );
 }
 
-/**
- * Move to the next ticket in the queue (auto-saves current ticket)
- */
 export function nextTicket(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "nextTicket",
-    }),
+      type: 'nextTicket',
+    })
   );
 }
 
-/**
- * Add a new ticket to the queue
- * @param {Partial<TicketQueueItem>} ticket - The ticket data
- */
 export function addTicket(ticket: Partial<TicketQueueItem>): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "addTicket",
+      type: 'addTicket',
       ticket,
-    }),
+    })
   );
 }
 
-/**
- * Update an existing ticket in the queue
- * @param {number} ticketId - The ID of the ticket to update
- * @param {Partial<TicketQueueItem>} updates - The updates to apply
- */
 export function updateTicket(
   ticketId: number,
-  updates: Partial<TicketQueueItem>,
+  updates: Partial<TicketQueueItem>
 ): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "updateTicket",
+      type: 'updateTicket',
       ticketId,
       updates,
-    }),
+    })
   );
 }
 
-/**
- * Delete a ticket from the queue
- * @param {number} ticketId - The ID of the ticket to delete
- */
 export function deleteTicket(ticketId: number): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "deleteTicket",
+      type: 'deleteTicket',
       ticketId,
-    }),
+    })
   );
 }
 
-/**
- * Mark the current ticket as completed
- * @param {string} outcome - Optional outcome description
- */
 export function completeTicket(outcome?: string): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error("Not connected to room");

@@ -39,10 +39,8 @@ export async function handleHttpRequest(
     const passcodeHash = passcode ? await hashPasscode(passcode) : undefined;
     let roomData = await ctx.getRoomData();
 
-    if (!roomData) {
-      // Initialization when room data not present; continue with default flow
-    } else if (roomData.key) {
-      return createJsonResponse({ error: "Room already exists" }, 400);
+    if (roomData?.key) {
+      return createJsonResponse({ error: 'Room already exists' }, 400);
     }
 
     roomData = createInitialRoomData({
@@ -482,6 +480,122 @@ export async function handleHttpRequest(
 
     ctx.broadcast({
       type: "jiraDisconnected",
+    });
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === "/linear/oauth/save" && request.method === "POST") {
+    const credentials = (await request.json()) as {
+      accessToken: string;
+      refreshToken: string | null;
+      tokenType: string;
+      expiresAt: number;
+      scope: string | null;
+      linearOrganizationId: string | null;
+      linearUserId: string | null;
+      linearUserEmail: string | null;
+      authorizedBy: string;
+      estimateField?: string | null;
+    };
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    ctx.repository.saveLinearOAuthCredentials({
+      roomKey: roomData.key,
+      accessToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      tokenType: credentials.tokenType,
+      expiresAt: credentials.expiresAt,
+      scope: credentials.scope,
+      linearOrganizationId: credentials.linearOrganizationId,
+      linearUserId: credentials.linearUserId,
+      linearUserEmail: credentials.linearUserEmail,
+      estimateField: credentials.estimateField ?? null,
+      authorizedBy: credentials.authorizedBy,
+    });
+
+    ctx.broadcast({
+      type: "linearConnected",
+      linearOrganizationId: credentials.linearOrganizationId,
+    });
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === "/linear/oauth/status" && request.method === "GET") {
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const credentials = ctx.repository.getLinearOAuthCredentials(roomData.key);
+
+    if (!credentials) {
+      return createJsonResponse({
+        connected: false,
+      });
+    }
+
+    return createJsonResponse({
+      connected: true,
+      linearOrganizationId: credentials.linearOrganizationId,
+      linearUserEmail: credentials.linearUserEmail,
+      expiresAt: credentials.expiresAt,
+      estimateField: credentials.estimateField,
+    });
+  }
+
+  if (url.pathname === "/linear/oauth/credentials" && request.method === "GET") {
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const credentials = ctx.repository.getLinearOAuthCredentials(roomData.key);
+
+    if (!credentials) {
+      return createJsonResponse({ error: "Linear not connected" }, 404);
+    }
+
+    return createJsonResponse({ credentials });
+  }
+
+  if (url.pathname === "/linear/oauth/refresh" && request.method === "POST") {
+    const { accessToken, refreshToken, expiresAt } = (await request.json()) as {
+      accessToken: string;
+      refreshToken: string;
+      expiresAt: number;
+    };
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    ctx.repository.updateLinearOAuthTokens(
+      roomData.key,
+      accessToken,
+      refreshToken,
+      expiresAt
+    );
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === "/linear/oauth/revoke" && request.method === "DELETE") {
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    ctx.repository.deleteLinearOAuthCredentials(roomData.key);
+
+    ctx.broadcast({
+      type: "linearDisconnected",
     });
 
     return createJsonResponse({ success: true });

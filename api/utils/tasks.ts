@@ -1,9 +1,5 @@
 import type { TaskSize } from "../types";
 
-/**
- * Map numeric values to task sizes using a logarithmic scale
- * This ensures appropriate task size categorization for any scale
- */
 export function getTaskSize(value: string | number): TaskSize | null {
   if (typeof value === "string" && isNaN(Number(value))) {
     return null;

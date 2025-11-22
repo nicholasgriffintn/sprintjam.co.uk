@@ -60,8 +60,8 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
                 </div>
               </div>
             </div>
-            {currentTicket?.externalService === "jira" &&
-              currentTicket.externalServiceMetadata &&
+            {currentTicket?.externalService !== "none" &&
+              currentTicket?.externalServiceMetadata &&
               "url" in currentTicket.externalServiceMetadata && (
                 <a
                   href={
@@ -76,7 +76,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
                   rel="noreferrer"
                   className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 hover:text-blue-500 dark:text-blue-300"
                 >
-                  Open in Jira
+                  Open in {currentTicket.externalService.toUpperCase()}
                 </a>
               )}
           </div>

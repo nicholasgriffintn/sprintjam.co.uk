@@ -1,11 +1,6 @@
 import type { TicketMetadata } from "../../src/types";
 import type { JiraFieldDefinition, JiraOAuthCredentials } from '../types';
 
-/**
- * Parse Jira description in Atlassian Document Format (ADF)
- * @param description The description field from Jira API
- * @returns Plain text extracted from the description
- */
 function parseJiraDescription(description: any): string {
   if (!description) return '';
 
@@ -30,11 +25,6 @@ function parseJiraDescription(description: any): string {
   return '';
 }
 
-/**
- * Get OAuth authorization headers
- * @param accessToken OAuth access token
- * @returns Headers with OAuth authorization
- */
 function getOAuthHeaders(accessToken: string): Headers {
   return new Headers({
     Authorization: `Bearer ${accessToken}`,
@@ -43,13 +33,6 @@ function getOAuthHeaders(accessToken: string): Headers {
   });
 }
 
-/**
- * Refresh OAuth access token
- * @param refreshToken The refresh token
- * @param clientId OAuth client ID
- * @param clientSecret OAuth client secret
- * @returns New access token and refresh token
- */
 async function refreshOAuthToken(
   refreshToken: string,
   clientId: string,
@@ -93,15 +76,6 @@ async function refreshOAuthToken(
   };
 }
 
-/**
- * Execute API call with automatic token refresh
- * @param credentials OAuth credentials
- * @param operation Function that performs the API call
- * @param onTokenRefresh Callback when token is refreshed
- * @param clientId OAuth client ID
- * @param clientSecret OAuth client secret
- * @returns API response
- */
 async function executeWithTokenRefresh<T>(
   credentials: JiraOAuthCredentials,
   operation: (accessToken: string) => Promise<T>,
@@ -173,15 +147,6 @@ async function executeWithTokenRefresh<T>(
   }
 }
 
-/**
- * Fetch a Jira ticket by ID
- * @param credentials OAuth credentials
- * @param ticketId Jira ticket ID
- * @param onTokenRefresh Callback when token is refreshed
- * @param clientId OAuth client ID
- * @param clientSecret OAuth client secret
- * @returns Jira ticket details
- */
 export async function fetchJiraTicket(
   credentials: JiraOAuthCredentials,
   ticketId: string,
@@ -261,9 +226,6 @@ export async function fetchJiraTicket(
   );
 }
 
-/**
- * Fetch all Jira fields available for the connected cloud instance
- */
 export async function fetchJiraFields(
   credentials: JiraOAuthCredentials,
   onTokenRefresh: (
@@ -341,17 +303,6 @@ export function findDefaultSprintField(
   return sprintMatch?.id ?? null;
 }
 
-/**
- * Update story points for a Jira ticket
- * @param credentials OAuth credentials
- * @param ticketId Jira ticket ID
- * @param storyPoints Story points value
- * @param currentTicket Optional current ticket data to avoid refetching
- * @param onTokenRefresh Callback when token is refreshed
- * @param clientId OAuth client ID
- * @param clientSecret OAuth client secret
- * @returns Updated Jira ticket
- */
 export async function updateJiraStoryPoints(
   credentials: JiraOAuthCredentials,
   ticketId: string,

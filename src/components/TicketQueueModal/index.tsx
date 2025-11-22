@@ -11,7 +11,7 @@ interface TicketQueueModalProps {
   onClose: () => void;
   currentTicket?: TicketQueueItem;
   queue: TicketQueueItem[];
-  externalService: 'none' | 'jira';
+  externalService: 'none' | 'jira' | 'linear';
   roomKey: string;
   userName: string;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;

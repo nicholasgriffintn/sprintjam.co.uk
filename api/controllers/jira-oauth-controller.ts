@@ -46,10 +46,6 @@ async function validateSession(
   }
 }
 
-/**
- * Initiates OAuth flow by generating authorization URL
- * POST /api/jira/oauth/authorize
- */
 export async function initiateJiraOAuthController(
   request: CfRequest,
   env: Env
@@ -72,10 +68,15 @@ export async function initiateJiraOAuthController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const clientId = env.JIRA_OAUTH_CLIENT_ID;
-    const redirectUri = env.JIRA_OAUTH_REDIRECT_URI || 'https://sprintjam.co.uk/api/jira/oauth/callback';
+    const redirectUri =
+      env.JIRA_OAUTH_REDIRECT_URI ||
+      'https://sprintjam.co.uk/api/jira/oauth/callback';
 
     if (!clientId) {
-      return jsonError('OAuth not configured. Please contact administrator.', 500);
+      return jsonError(
+        'OAuth not configured. Please contact administrator.',
+        500
+      );
     }
 
     const state = btoa(
@@ -85,7 +86,10 @@ export async function initiateJiraOAuthController(
     const authUrl = new URL('https://auth.atlassian.com/authorize');
     authUrl.searchParams.set('audience', 'api.atlassian.com');
     authUrl.searchParams.set('client_id', clientId);
-    authUrl.searchParams.set('scope', 'read:jira-work write:jira-work read:jira-user offline_access');
+    authUrl.searchParams.set(
+      'scope',
+      'read:jira-work write:jira-work read:jira-user offline_access'
+    );
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('state', state);
     authUrl.searchParams.set('response_type', 'code');
@@ -93,15 +97,12 @@ export async function initiateJiraOAuthController(
 
     return jsonResponse({ authorizationUrl: authUrl.toString(), state });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to initiate OAuth';
+    const message =
+      error instanceof Error ? error.message : 'Failed to initiate OAuth';
     return jsonError(message, 500);
   }
 }
 
-/**
- * Handles OAuth callback from Jira
- * GET /api/jira/oauth/callback
- */
 export async function handleJiraOAuthCallbackController(
   url: URL,
   env: Env
@@ -301,10 +302,6 @@ export async function handleJiraOAuthCallbackController(
   }
 }
 
-/**
- * Gets OAuth status for a room
- * GET /api/jira/oauth/status
- */
 export async function getJiraOAuthStatusController(
   url: URL,
   env: Env
@@ -342,15 +339,12 @@ export async function getJiraOAuthStatusController(
 
     return jsonResponse(data);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to get OAuth status';
+    const message =
+      error instanceof Error ? error.message : 'Failed to get OAuth status';
     return jsonError(message, 500);
   }
 }
 
-/**
- * Revokes OAuth credentials for a room
- * DELETE /api/jira/oauth/revoke
- */
 export async function revokeJiraOAuthController(
   request: CfRequest,
   env: Env

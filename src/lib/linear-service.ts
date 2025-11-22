@@ -12,14 +12,14 @@ function resolveSessionToken(provided?: string | null): string {
   return stored;
 }
 
-export async function fetchJiraTicket(
-  ticketId: string,
+export async function fetchLinearIssue(
+  issueId: string,
   options?: { roomKey?: string; userName?: string; sessionToken?: string }
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
-    let url = `${API_BASE_URL}/jira/ticket?ticketId=${encodeURIComponent(
-      ticketId
+    let url = `${API_BASE_URL}/linear/issue?issueId=${encodeURIComponent(
+      issueId
     )}`;
 
     if (options?.roomKey && options?.userName) {
@@ -39,41 +39,41 @@ export async function fetchJiraTicket(
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to fetch Jira ticket: ${response.status}`
+        errorData.error || `Failed to fetch Linear issue: ${response.status}`
       );
     }
 
     const data = await response.json();
-    console.log('Jira ticket API response:', data);
+    console.log('Linear issue API response:', data);
 
     const ticket: TicketMetadata | undefined = data.ticket;
 
     if (ticket) {
       return ticket;
     }
-    throw new Error('Invalid response format from Jira API');
+    throw new Error('Invalid response format from Linear API');
   } catch (error) {
-    console.error('Error fetching Jira ticket:', error);
+    console.error('Error fetching Linear issue:', error);
     throw error;
   }
 }
 
-export async function updateJiraStoryPoints(
-  ticketId: string,
-  storyPoints: number,
+export async function updateLinearEstimate(
+  issueId: string,
+  estimate: number,
   options: { roomKey: string; userName: string; sessionToken?: string },
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options.sessionToken);
     const response = await fetch(
-      `${API_BASE_URL}/jira/ticket/${encodeURIComponent(ticketId)}/storyPoints`,
+      `${API_BASE_URL}/linear/issue/${encodeURIComponent(issueId)}/estimate`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          storyPoints,
+          estimate,
           roomKey: options.roomKey,
           userName: options.userName,
           sessionToken,
@@ -85,7 +85,7 @@ export async function updateJiraStoryPoints(
       const errorData = await response.json();
       throw new Error(
         errorData.error ||
-          `Failed to update Jira story points: ${response.status}`,
+          `Failed to update Linear estimate: ${response.status}`,
       );
     }
 
@@ -94,12 +94,12 @@ export async function updateJiraStoryPoints(
 
     return ticket;
   } catch (error) {
-    console.error("Error updating Jira story points:", error);
+    console.error("Error updating Linear estimate:", error);
     throw error;
   }
 }
 
-export function convertVoteValueToStoryPoints(
+export function convertVoteValueToEstimate(
   voteValue: VoteValue,
 ): number | null {
   if (voteValue === null || voteValue === "?" || voteValue === "coffee") {

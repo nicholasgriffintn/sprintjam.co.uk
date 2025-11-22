@@ -15,7 +15,7 @@ import type {
 import { serializeJSON, serializeVote } from "../utils/serialize";
 import { parseJudgeScore, parseVote, safeJsonParse } from "../utils/parse";
 
-const ROOM_ROW_ID = 1; // Each PlanningRoom DO only needs one metadata row.
+const ROOM_ROW_ID = 1;
 type SqlEnabledTransaction = DurableObjectTransaction & { sql: SqlStorage };
 
 export class PlanningRoomRepository {
@@ -109,23 +109,20 @@ export class PlanningRoomRepository {
       );
 
       this.sql.exec(
-        `CREATE TABLE IF NOT EXISTS jira_oauth_credentials (
+        `CREATE TABLE IF NOT EXISTS oauth_credentials (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          room_key TEXT NOT NULL UNIQUE,
+          room_key TEXT NOT NULL,
+          provider TEXT NOT NULL CHECK(provider IN ('jira', 'linear')),
           access_token TEXT NOT NULL,
           refresh_token TEXT,
           token_type TEXT NOT NULL,
           expires_at INTEGER NOT NULL,
           scope TEXT,
-          jira_domain TEXT NOT NULL,
-          jira_cloud_id TEXT,
-          jira_user_id TEXT,
-          jira_user_email TEXT,
-          story_points_field TEXT,
-          sprint_field TEXT,
           authorized_by TEXT NOT NULL,
+          metadata TEXT,
           created_at INTEGER NOT NULL,
-          updated_at INTEGER NOT NULL
+          updated_at INTEGER NOT NULL,
+          UNIQUE(room_key, provider)
         )`
       );
     });
@@ -868,24 +865,32 @@ export class PlanningRoomRepository {
       .exec<{
         id: number;
         room_key: string;
+        provider: string;
         access_token: string;
         refresh_token: string | null;
         token_type: string;
         expires_at: number;
         scope: string | null;
-        jira_domain: string;
-        jira_cloud_id: string | null;
-        jira_user_id: string | null;
-        jira_user_email: string | null;
-        story_points_field: string | null;
-        sprint_field: string | null;
         authorized_by: string;
+        metadata: string | null;
         created_at: number;
         updated_at: number;
-      }>('SELECT * FROM jira_oauth_credentials WHERE room_key = ?', roomKey)
+      }>(
+        `SELECT * FROM oauth_credentials WHERE room_key = ? AND provider = 'jira'`,
+        roomKey
+      )
       .toArray()[0];
 
     if (!row) return null;
+
+    const metadata = safeJsonParse<{
+      jiraDomain?: string;
+      jiraCloudId?: string | null;
+      jiraUserId?: string | null;
+      jiraUserEmail?: string | null;
+      storyPointsField?: string | null;
+      sprintField?: string | null;
+    }>(row.metadata ?? '{}');
 
     return {
       id: row.id,
@@ -895,12 +900,12 @@ export class PlanningRoomRepository {
       tokenType: row.token_type,
       expiresAt: row.expires_at,
       scope: row.scope,
-      jiraDomain: row.jira_domain,
-      jiraCloudId: row.jira_cloud_id,
-      jiraUserId: row.jira_user_id,
-      jiraUserEmail: row.jira_user_email,
-      storyPointsField: row.story_points_field,
-      sprintField: row.sprint_field ?? null,
+      jiraDomain: metadata?.jiraDomain ?? '',
+      jiraCloudId: metadata?.jiraCloudId ?? null,
+      jiraUserId: metadata?.jiraUserId ?? null,
+      jiraUserEmail: metadata?.jiraUserEmail ?? null,
+      storyPointsField: metadata?.storyPointsField ?? null,
+      sprintField: metadata?.sprintField ?? null,
       authorizedBy: row.authorized_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -923,37 +928,36 @@ export class PlanningRoomRepository {
     authorizedBy: string;
   }): void {
     const now = Date.now();
+    const metadata = JSON.stringify({
+      jiraDomain: credentials.jiraDomain,
+      jiraCloudId: credentials.jiraCloudId,
+      jiraUserId: credentials.jiraUserId,
+      jiraUserEmail: credentials.jiraUserEmail,
+      storyPointsField: credentials.storyPointsField,
+      sprintField: credentials.sprintField,
+    });
     this.sql.exec(
-      `INSERT INTO jira_oauth_credentials (
+      `INSERT INTO oauth_credentials (
         room_key,
+        provider,
         access_token,
         refresh_token,
         token_type,
         expires_at,
         scope,
-        jira_domain,
-        jira_cloud_id,
-        jira_user_id,
-        jira_user_email,
-        story_points_field,
-        sprint_field,
         authorized_by,
+        metadata,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(room_key) DO UPDATE SET
+      ) VALUES (?, 'jira', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(room_key, provider) DO UPDATE SET
         access_token = excluded.access_token,
         refresh_token = excluded.refresh_token,
         token_type = excluded.token_type,
         expires_at = excluded.expires_at,
         scope = excluded.scope,
-        jira_domain = excluded.jira_domain,
-        jira_cloud_id = excluded.jira_cloud_id,
-        jira_user_id = excluded.jira_user_id,
-        jira_user_email = excluded.jira_user_email,
-        story_points_field = excluded.story_points_field,
-        sprint_field = excluded.sprint_field,
         authorized_by = excluded.authorized_by,
+        metadata = excluded.metadata,
         updated_at = excluded.updated_at`,
       credentials.roomKey,
       credentials.accessToken,
@@ -961,13 +965,8 @@ export class PlanningRoomRepository {
       credentials.tokenType,
       credentials.expiresAt,
       credentials.scope,
-      credentials.jiraDomain,
-      credentials.jiraCloudId,
-      credentials.jiraUserId,
-      credentials.jiraUserEmail,
-      credentials.storyPointsField,
-      credentials.sprintField,
       credentials.authorizedBy,
+      metadata,
       now,
       now
     );
@@ -980,9 +979,9 @@ export class PlanningRoomRepository {
     expiresAt: number
   ): void {
     this.sql.exec(
-      `UPDATE jira_oauth_credentials
+      `UPDATE oauth_credentials
        SET access_token = ?, refresh_token = ?, expires_at = ?, updated_at = ?
-       WHERE room_key = ?`,
+       WHERE room_key = ? AND provider = 'jira'`,
       accessToken,
       refreshToken,
       expiresAt,
@@ -993,9 +992,177 @@ export class PlanningRoomRepository {
 
   deleteJiraOAuthCredentials(roomKey: string): void {
     this.sql.exec(
-      'DELETE FROM jira_oauth_credentials WHERE room_key = ?',
+      "DELETE FROM oauth_credentials WHERE room_key = ? AND provider = 'jira'",
       roomKey
     );
+  }
+
+  getLinearOAuthCredentials(roomKey: string): {
+    id: number;
+    roomKey: string;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    linearOrganizationId: string | null;
+    linearUserId: string | null;
+    linearUserEmail: string | null;
+    estimateField: string | null;
+    authorizedBy: string;
+    createdAt: number;
+    updatedAt: number;
+  } | null {
+    const row = this.sql
+      .exec<{
+        id: number;
+        room_key: string;
+        provider: string;
+        access_token: string;
+        refresh_token: string | null;
+        token_type: string;
+        expires_at: number;
+        scope: string | null;
+        authorized_by: string;
+        metadata: string | null;
+        created_at: number;
+        updated_at: number;
+      }>(
+        `SELECT * FROM oauth_credentials WHERE room_key = ? AND provider = 'linear'`,
+        roomKey
+      )
+      .toArray()[0];
+
+    if (!row) return null;
+
+    const metadata = safeJsonParse<{
+      linearOrganizationId?: string | null;
+      linearUserId?: string | null;
+      linearUserEmail?: string | null;
+      estimateField?: string | null;
+    }>(row.metadata ?? '{}');
+
+    return {
+      id: row.id,
+      roomKey: row.room_key,
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token,
+      tokenType: row.token_type,
+      expiresAt: row.expires_at,
+      scope: row.scope,
+      linearOrganizationId: metadata?.linearOrganizationId ?? null,
+      linearUserId: metadata?.linearUserId ?? null,
+      linearUserEmail: metadata?.linearUserEmail ?? null,
+      estimateField: metadata?.estimateField ?? null,
+      authorizedBy: row.authorized_by,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  saveLinearOAuthCredentials(credentials: {
+    roomKey: string;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    linearOrganizationId: string | null;
+    linearUserId: string | null;
+    linearUserEmail: string | null;
+    estimateField: string | null;
+    authorizedBy: string;
+  }): void {
+    const now = Date.now();
+    const metadata = JSON.stringify({
+      linearOrganizationId: credentials.linearOrganizationId,
+      linearUserId: credentials.linearUserId,
+      linearUserEmail: credentials.linearUserEmail,
+      estimateField: credentials.estimateField,
+    });
+    this.sql.exec(
+      `INSERT INTO oauth_credentials (
+        room_key,
+        provider,
+        access_token,
+        refresh_token,
+        token_type,
+        expires_at,
+        scope,
+        authorized_by,
+        metadata,
+        created_at,
+        updated_at
+      ) VALUES (?, 'linear', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(room_key, provider) DO UPDATE SET
+        access_token = excluded.access_token,
+        refresh_token = excluded.refresh_token,
+        token_type = excluded.token_type,
+        expires_at = excluded.expires_at,
+        scope = excluded.scope,
+        authorized_by = excluded.authorized_by,
+        metadata = excluded.metadata,
+        updated_at = excluded.updated_at`,
+      credentials.roomKey,
+      credentials.accessToken,
+      credentials.refreshToken,
+      credentials.tokenType,
+      credentials.expiresAt,
+      credentials.scope,
+      credentials.authorizedBy,
+      metadata,
+      now,
+      now
+    );
+  }
+
+  updateLinearOAuthTokens(
+    roomKey: string,
+    accessToken: string,
+    refreshToken: string | null,
+    expiresAt: number
+  ): void {
+    this.sql.exec(
+      `UPDATE oauth_credentials
+       SET access_token = ?, refresh_token = ?, expires_at = ?, updated_at = ?
+       WHERE room_key = ? AND provider = 'linear'`,
+      accessToken,
+      refreshToken,
+      expiresAt,
+      Date.now(),
+      roomKey
+    );
+  }
+
+  deleteLinearOAuthCredentials(roomKey: string): void {
+    this.sql.exec(
+      "DELETE FROM oauth_credentials WHERE room_key = ? AND provider = 'linear'",
+      roomKey
+    );
+  }
+
+  updateLinearEstimateField(
+    roomKey: string,
+    estimateField: string | null
+  ): void {
+    const existing = this.getLinearOAuthCredentials(roomKey);
+    if (!existing) {
+      return;
+    }
+
+    this.saveLinearOAuthCredentials({
+      roomKey: existing.roomKey,
+      accessToken: existing.accessToken,
+      refreshToken: existing.refreshToken,
+      tokenType: existing.tokenType,
+      expiresAt: existing.expiresAt,
+      scope: existing.scope,
+      linearOrganizationId: existing.linearOrganizationId,
+      linearUserId: existing.linearUserId,
+      linearUserEmail: existing.linearUserEmail,
+      estimateField,
+      authorizedBy: existing.authorizedBy,
+    });
   }
 
   private getSql(txn?: DurableObjectTransaction): SqlStorage {

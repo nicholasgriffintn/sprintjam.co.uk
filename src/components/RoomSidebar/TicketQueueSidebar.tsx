@@ -114,9 +114,9 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                 {ticket.description}
               </p>
             )}
-            {!isPendingRow && meta && (
+            {!isPendingRow && meta && ticket.externalService !== 'none' && (
               <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
-                Jira
+                {ticket.externalService}
                 {link && (
                   <a
                     href={link}

@@ -3,9 +3,6 @@ import { SPECIAL_COLORS } from "../constants";
 import { getTaskSize } from "./tasks";
 import type { VoteOptionMetadata } from "../types";
 
-/**
- * Generates metadata for vote options including background colors and task sizes.
- */
 export function generateVoteOptionsMetadata(
   options: (string | number)[],
 ): VoteOptionMetadata[] {

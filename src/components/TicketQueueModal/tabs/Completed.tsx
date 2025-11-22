@@ -4,8 +4,10 @@ import { ArrowDownToLine, Loader2, RefreshCw } from 'lucide-react';
 import type { TicketQueueItem } from '../../../types';
 import { handleError } from '../../../utils/error';
 import { updateJiraStoryPoints } from '../../../lib/jira-service';
+import { updateLinearEstimate } from '../../../lib/linear-service';
 import { formatDate } from '../../../utils/date';
 import { JiraBadge } from '../../JiraBadge';
+import { LinearBadge } from '../../LinearBadge';
 import { getVoteSummary, calculateStoryPointsFromVotes } from '../../../utils/votes';
 import { downloadCsv } from '../../../utils/csv';
 import { buildCsv } from '../utils/csv';
@@ -25,7 +27,10 @@ export function TicketQueueModalCompletedTab({
   onError,
   onUpdateTicket,
 }: TicketQueueModalCompletedTabProps) {
-  const [syncingTicketId, setSyncingTicketId] = useState<number | null>(null);
+  const [syncing, setSyncing] = useState<{
+    id: number;
+    provider: 'jira' | 'linear';
+  } | null>(null);
 
   const getStoryPointEstimate = (ticket: TicketQueueItem): number | null =>
     calculateStoryPointsFromVotes(ticket.votes);
@@ -42,7 +47,7 @@ export function TicketQueueModalCompletedTab({
       return;
     }
 
-    setSyncingTicketId(ticket.id);
+    setSyncing({ id: ticket.id, provider: 'jira' });
     try {
       const updated = await updateJiraStoryPoints(ticket.ticketId, storyPoints, {
         roomKey,
@@ -61,13 +66,54 @@ export function TicketQueueModalCompletedTab({
         onError
       );
     } finally {
-      setSyncingTicketId(null);
+      setSyncing(null);
+    }
+  };
+
+  const handleSyncToLinear = async (ticket: TicketQueueItem) => {
+    if (ticket.externalService !== 'linear') {
+      handleError('Sync available only for Linear-linked tickets.', onError);
+      return;
+    }
+
+    const estimate = getStoryPointEstimate(ticket);
+    if (estimate === null) {
+      handleError('No numeric votes available to sync to Linear.', onError);
+      return;
+    }
+
+    setSyncing({ id: ticket.id, provider: 'linear' });
+    try {
+      const updated = await updateLinearEstimate(ticket.ticketId, estimate, {
+        roomKey,
+        userName,
+      });
+      if (onUpdateTicket) {
+        onUpdateTicket(ticket.id, {
+          externalServiceMetadata: updated,
+        });
+      }
+    } catch (err) {
+      handleError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to sync estimate to Linear',
+        onError
+      );
+    } finally {
+      setSyncing(null);
     }
   };
 
   const handleDownloadTicket = (ticket: TicketQueueItem) => {
     const csv = buildCsv([ticket]);
     downloadCsv(`${ticket.ticketId}-votes.csv`, csv);
+  };
+
+  const renderBadge = (ticket: TicketQueueItem) => {
+    if (ticket.externalService === 'jira') return <JiraBadge {...ticket} />;
+    if (ticket.externalService === 'linear') return <LinearBadge {...ticket} />;
+    return null;
   };
 
   return (
@@ -93,7 +139,7 @@ export function TicketQueueModalCompletedTab({
                     <span className="font-mono text-sm font-semibold">
                       {ticket.ticketId}
                     </span>
-                    <JiraBadge {...ticket} />
+                    {renderBadge(ticket)}
                     <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
                       Completed
                     </span>
@@ -123,15 +169,35 @@ export function TicketQueueModalCompletedTab({
                   {ticket.externalService === 'jira' && (
                     <button
                       onClick={() => handleSyncToJira(ticket)}
-                      disabled={syncingTicketId === ticket.id}
+                      disabled={
+                        syncing?.id === ticket.id && syncing.provider === 'jira'
+                      }
                       className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                     >
-                      {syncingTicketId === ticket.id ? (
+                      {syncing?.id === ticket.id && syncing.provider === 'jira' ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <RefreshCw className="h-3.5 w-3.5" />
                       )}
                       Sync to Jira
+                    </button>
+                  )}
+                  {ticket.externalService === 'linear' && (
+                    <button
+                      onClick={() => handleSyncToLinear(ticket)}
+                      disabled={
+                        syncing?.id === ticket.id &&
+                        syncing.provider === 'linear'
+                      }
+                      className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
+                    >
+                      {syncing?.id === ticket.id &&
+                      syncing.provider === 'linear' ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                      Sync to Linear
                     </button>
                   )}
                 </div>

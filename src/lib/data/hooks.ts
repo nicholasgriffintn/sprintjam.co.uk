@@ -9,18 +9,12 @@ import {
 
 const noopSubscribe = () => () => {};
 
-/**
- * Subscribe to a collection using useSyncExternalStore.
- */
 function createCollectionSubscriber(
-  subscribeAll: (onChange: () => void) => () => void,
+  subscribeAll: (onChange: () => void) => () => void
 ) {
   return (onChange: () => void) => subscribeAll(onChange);
 }
 
-/**
- * Returns the current server defaults and keeps them in sync with the collection.
- */
 export function useServerDefaults(): ServerDefaults | null {
   useEffect(() => {
     serverDefaultsCollection
@@ -51,9 +45,6 @@ export function useServerDefaults(): ServerDefaults | null {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-/**
- * Returns room data for a specific key and keeps it up to date with the collection.
- */
 export function useRoomData(roomKey: string | null): RoomData | null {
   const subscribe = useMemo(
     () =>

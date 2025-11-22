@@ -1,12 +1,8 @@
-/**
- * Generates a color based on the numeric value
- * Creates a vibrant spectrum from happy blues to warm reds
- */
 export function generateColorFromValue(
   value: number,
-  maxValue: number,
+  maxValue: number
 ): string {
-  if (value === 0) return "#f0f0f0";
+  if (value === 0) return '#f0f0f0';
 
   const normalizedValue = Math.min(value / maxValue, 1);
 
@@ -19,12 +15,11 @@ export function generateColorFromValue(
 
   const lightness = 75 + normalizedValue * 10;
 
-  return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(lightness)}%)`;
+  return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(
+    lightness
+  )}%)`;
 }
 
-/**
- * Creates a pleasing color for non-numeric string values based on the string content
- */
 export function generateColorFromString(str: string): string {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {

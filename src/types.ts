@@ -52,7 +52,7 @@ export interface TicketQueueItem {
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: 'jira' | 'none';
+  externalService: 'jira' | 'linear' | 'none';
   externalServiceId?: string;
   externalServiceMetadata?: TicketMetadata;
   votes?: TicketVote[];
@@ -150,7 +150,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: 'jira' | 'none';
+  externalService?: 'jira' | 'linear' | 'none';
   autoUpdateJiraStoryPoints?: boolean;
   enableTicketQueue?: boolean;
   enableStructuredVoting?: boolean;
