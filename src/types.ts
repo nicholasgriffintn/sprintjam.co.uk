@@ -166,12 +166,6 @@ export interface ServerDefaults {
   roomSettings: RoomSettings;
   votingCriteria: VotingCriterion[];
   structuredVotingOptions: (string | number)[];
-  deploymentConfig?: {
-    hasCustomVotingOptions?: boolean;
-    judgeEnabledByDefault?: boolean;
-    structuredVotingEnabledByDefault?: boolean;
-    [key: string]: unknown;
-  };
 }
 
 export interface JudgeMetadata {

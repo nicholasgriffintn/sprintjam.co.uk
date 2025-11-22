@@ -130,11 +130,5 @@ export function getServerDefaults() {
     roomSettings,
     votingCriteria: roomSettings.votingCriteria,
     structuredVotingOptions: getDefaultStructuredVotingOptions(),
-    deploymentConfig: {
-      hasCustomVotingOptions: false,
-      judgeEnabledByDefault: roomSettings.enableJudge,
-      structuredVotingEnabledByDefault:
-        roomSettings.enableStructuredVoting ?? false,
-    },
   };
 }
