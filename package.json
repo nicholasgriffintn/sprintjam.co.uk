@@ -47,7 +47,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/ui": "^4.0.9",
     "typescript": "^5.9.3",
-    "vite": "^7.1.10",
+    "vite": "^7.1.11",
     "vitest": "^4.0.9",
     "wrangler": "^4.43.0"
   }
