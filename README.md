@@ -148,8 +148,6 @@ Contributions are welcome! This project was built quickly and there are definite
 
 - [ ] Add workspace support for teams to manage multiple rooms.
 - [ ] Enrich room metadata (team, persona, sprint) so vote distribution filters can operate on meaningful cohorts in both live and historical modes.
-- [x] ~~Figure out how to fully implement Jira integration (OAuth flow?).~~ **Completed: OAuth 2.0 flow implemented**
-- [ ] Add story points field configuration during OAuth flow (currently defaults to null)
 - [ ] Persist past sessions so facilitators can compare rounds (Durable Object snapshots keyed by room + timestamp, lightweight metadata for participants and consensus).
 - [ ] Add a history drawer in `UnifiedResults` to surface trend lines once snapshots exist (avg delta, consensus trend, automatic regression callouts).
 - [ ] Improve accessibility (ARIA roles, keyboard navigation, screen reader support).
