@@ -1,6 +1,6 @@
-import { Share2, Settings, LogOut } from "lucide-react";
+import { Share2, Settings, LogOut, LayoutGrid, LayoutList } from "lucide-react";
 
-import type { RoomData } from "@/types";
+import type { RoomData, ViewMode } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import ConnectionStatus from "@/components/ConnectionStatus";
@@ -13,6 +13,7 @@ export interface HeaderProps {
   onLeaveRoom: () => void;
   setIsShareModalOpen: (open: boolean) => void;
   setIsSettingsModalOpen: (open: boolean) => void;
+  onViewModeChange?: (viewMode: ViewMode) => void;
 }
 
 export default function Header({
@@ -22,7 +23,15 @@ export default function Header({
   onLeaveRoom,
   setIsShareModalOpen,
   setIsSettingsModalOpen,
+  onViewModeChange,
 }: HeaderProps) {
+  const currentViewMode = roomData.settings.viewMode || 'sidebar';
+
+  const handleToggleViewMode = () => {
+    if (!onViewModeChange) return;
+    const newViewMode: ViewMode = currentViewMode === 'sidebar' ? 'table' : 'sidebar';
+    onViewModeChange(newViewMode);
+  };
   return (
     <header className="sticky top-0 z-20 border-b border-white/50 bg-white/80 px-4 py-3 text-slate-900 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 dark:text-white">
       <div className="flex items-center justify-between gap-2">
@@ -70,6 +79,21 @@ export default function Header({
           </Badge>
           <ConnectionStatus isConnected={isConnected} />
           <DarkModeToggle />
+          {onViewModeChange && (
+            <button
+              type="button"
+              onClick={handleToggleViewMode}
+              aria-label={`Switch to ${currentViewMode === 'sidebar' ? 'table' : 'sidebar'} view`}
+              title={`Switch to ${currentViewMode === 'sidebar' ? 'table' : 'sidebar'} view`}
+              className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-slate-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100 cursor-pointer"
+            >
+              {currentViewMode === 'sidebar' ? (
+                <LayoutGrid className="h-4 w-4" />
+              ) : (
+                <LayoutList className="h-4 w-4" />
+              )}
+            </button>
+          )}
           {isModeratorView && (
             <button
               type="button"

@@ -54,6 +54,7 @@ export function getDefaultRoomSettings(
     enableStrudelPlayer: settings?.enableStrudelPlayer ?? true,
     strudelAutoGenerate: settings?.strudelAutoGenerate ?? false,
     enableTicketQueue: settings?.enableTicketQueue ?? true,
+    viewMode: settings?.viewMode ?? 'sidebar',
     resultsDisplay: {
       showVoteDistribution: true,
       voteDistributionLabel: 'Vote Distribution',

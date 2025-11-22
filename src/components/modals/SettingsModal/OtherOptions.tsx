@@ -1,4 +1,4 @@
-import type { RoomSettings, JudgeAlgorithm } from '@/types';
+import type { RoomSettings, JudgeAlgorithm, ViewMode } from '@/types';
 
 export function OtherOptions({
   localSettings,
@@ -87,6 +87,26 @@ export function OtherOptions({
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Display Options
             </h3>
+            <div className="mb-3">
+              <label
+                htmlFor="viewMode"
+                className="block text-sm text-slate-700 dark:text-slate-300 mb-1"
+              >
+                View Mode
+              </label>
+              <select
+                id="viewMode"
+                value={localSettings.viewMode || 'sidebar'}
+                onChange={(e) =>
+                  handleChange('viewMode', e.target.value as ViewMode)
+                }
+                data-testid="settings-view-mode"
+                className="w-full rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
+              >
+                <option value="sidebar">Sidebar View</option>
+                <option value="table">Table View</option>
+              </select>
+            </div>
             <div className="flex items-center">
               <input
                 type="checkbox"

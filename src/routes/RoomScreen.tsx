@@ -21,6 +21,7 @@ import { QueueProviderSetupModal } from '@/components/modals/QueueProviderSetupM
 import { ErrorBannerAuth } from '@/components/errors/ErrorBannerAuth';
 import { ErrorBannerConnection } from '@/components/errors/ErrorBannerConnection';
 import { RoomSidebar } from '@/components/layout/RoomSidebar';
+import { TableView } from '@/components/layout/TableView';
 import { getVoteKeyForUser } from '@/utils/room';
 import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
 import { usePageMeta } from '@/hooks/usePageMeta';
@@ -120,21 +121,33 @@ const RoomScreen = () => {
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
+        onViewModeChange={(viewMode) => {
+          handleUpdateSettings({ ...roomData.settings, viewMode });
+        }}
       />
 
       <motion.div
-        className="flex flex-1 flex-col py-0 md:grid md:grid-cols-[minmax(280px,360px)_1fr] md:items-start"
+        className={
+          roomData.settings.viewMode === 'table'
+            ? 'flex flex-1 flex-col py-0'
+            : 'flex flex-1 flex-col py-0 md:grid md:grid-cols-[minmax(280px,360px)_1fr] md:items-start'
+        }
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <RoomSidebar
-          isQueueEnabled={isQueueEnabled}
-          stats={stats}
-          setIsQueueModalOpen={setIsQueueModalOpen}
-        />
+        {roomData.settings.viewMode !== 'table' && (
+          <RoomSidebar
+            isQueueEnabled={isQueueEnabled}
+            stats={stats}
+            setIsQueueModalOpen={setIsQueueModalOpen}
+          />
+        )}
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
+          {roomData.settings.viewMode === 'table' && (
+            <TableView roomData={roomData} stats={stats} name={name} />
+          )}
           {roomData.settings.showTimer && <Timer />}
 
           {roomData.settings.enableStrudelPlayer && (
