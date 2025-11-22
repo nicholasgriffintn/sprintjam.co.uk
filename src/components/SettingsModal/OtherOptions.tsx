@@ -1,4 +1,5 @@
 import type { RoomSettings, JudgeAlgorithm } from "../../types";
+import { useJiraOAuth } from "../../hooks/useJiraOAuth";
 
 export function OtherOptions({
   localSettings,
@@ -10,6 +11,7 @@ export function OtherOptions({
     value: boolean | (string | number)[] | JudgeAlgorithm | number | string,
   ) => void;
 }) {
+  const { status, loading, error, connect, disconnect } = useJiraOAuth();
   return (
     <details className="group">
       <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900 dark:text-white mb-2 select-none flex items-center gap-2">
@@ -44,26 +46,85 @@ export function OtherOptions({
                 <option value="jira">Jira</option>
               </select>
               {localSettings.externalService === 'jira' && (
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="autoUpdateJiraStoryPoints"
-                    checked={localSettings.autoUpdateJiraStoryPoints || false}
-                    onChange={(e) =>
-                      handleChange(
-                        'autoUpdateJiraStoryPoints',
-                        e.target.checked
-                      )
-                    }
-                    data-testid="settings-toggle-jira-auto"
-                    className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
-                  />
-                  <label
-                    htmlFor="autoUpdateJiraStoryPoints"
-                    className="ml-2 text-sm text-slate-700 dark:text-slate-300"
-                  >
-                    Auto-update story points in Jira when voting completes
-                  </label>
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-800/50">
+                    {loading ? (
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Loading connection status...
+                      </p>
+                    ) : status.connected ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              ✓ Connected to Jira
+                            </p>
+                            {status.jiraDomain && (
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                                {status.jiraDomain}
+                              </p>
+                            )}
+                            {status.jiraUserEmail && (
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                                {status.jiraUserEmail}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={disconnect}
+                            disabled={loading}
+                            className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition disabled:opacity-50"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          Connect your Jira account to fetch and update tickets
+                        </p>
+                        <button
+                          onClick={connect}
+                          disabled={loading}
+                          className="w-full px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition disabled:opacity-50"
+                        >
+                          Connect to Jira
+                        </button>
+                      </div>
+                    )}
+                    {error && (
+                      <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                        {error}
+                      </p>
+                    )}
+                  </div>
+
+                  {status.connected && (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="autoUpdateJiraStoryPoints"
+                        checked={
+                          localSettings.autoUpdateJiraStoryPoints || false
+                        }
+                        onChange={(e) =>
+                          handleChange(
+                            'autoUpdateJiraStoryPoints',
+                            e.target.checked
+                          )
+                        }
+                        data-testid="settings-toggle-jira-auto"
+                        className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
+                      />
+                      <label
+                        htmlFor="autoUpdateJiraStoryPoints"
+                        className="ml-2 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        Auto-update story points in Jira when voting completes
+                      </label>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

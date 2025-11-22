@@ -1,0 +1,359 @@
+import type {
+  Request as CfRequest,
+  Response as CfResponse,
+} from "@cloudflare/workers-types";
+
+import type { Env } from "../types";
+import { jsonError } from "../utils/http";
+import { getRoomStub } from '../utils/room';
+
+function jsonResponse(payload: unknown, status = 200): CfResponse {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  }) as unknown as CfResponse;
+}
+
+async function validateSession(
+  env: Env,
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null
+) {
+  if (!sessionToken) {
+    throw new Error('Missing session token');
+  }
+
+  const roomObject = getRoomStub(env, roomKey);
+  const response = await roomObject.fetch(
+    new Request('https://dummy/session/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: userName, sessionToken }),
+    }) as unknown as CfRequest
+  );
+
+  if (!response.ok) {
+    const error = await response.json<{
+      error?: string;
+    }>();
+    throw new Error(error.error || 'Invalid session');
+  }
+}
+
+/**
+ * Initiates OAuth flow by generating authorization URL
+ * POST /api/jira/oauth/authorize
+ */
+export async function initiateJiraOAuthController(
+  request: CfRequest,
+  env: Env
+): Promise<CfResponse> {
+  const body = await request.json<{
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  }>();
+
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
+
+  if (!roomKey || !userName) {
+    return jsonError('Room key and user name are required');
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.JIRA_OAUTH_CLIENT_ID;
+    const redirectUri = env.JIRA_OAUTH_REDIRECT_URI || 'https://sprintjam.co.uk/api/jira/oauth/callback';
+
+    if (!clientId) {
+      return jsonError('OAuth not configured. Please contact administrator.', 500);
+    }
+
+    const state = btoa(
+      JSON.stringify({ roomKey, userName, nonce: crypto.randomUUID() })
+    );
+
+    const authUrl = new URL('https://auth.atlassian.com/authorize');
+    authUrl.searchParams.set('audience', 'api.atlassian.com');
+    authUrl.searchParams.set('client_id', clientId);
+    authUrl.searchParams.set('scope', 'read:jira-work write:jira-work read:jira-user offline_access');
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('prompt', 'consent');
+
+    return jsonResponse({ authorizationUrl: authUrl.toString(), state });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to initiate OAuth';
+    return jsonError(message, 500);
+  }
+}
+
+/**
+ * Handles OAuth callback from Jira
+ * GET /api/jira/oauth/callback
+ */
+export async function handleJiraOAuthCallbackController(
+  url: URL,
+  env: Env
+): Promise<CfResponse> {
+  const code = url.searchParams.get('code');
+  const state = url.searchParams.get('state');
+  const error = url.searchParams.get('error');
+
+  if (error) {
+    return new Response(
+      `<html><body><h1>OAuth Error</h1><p>${error}</p><script>window.close();</script></body></html>`,
+      { status: 400, headers: { 'Content-Type': 'text/html' } }
+    ) as unknown as CfResponse;
+  }
+
+  if (!code || !state) {
+    return new Response(
+      `<html><body><h1>OAuth Error</h1><p>Missing code or state</p><script>window.close();</script></body></html>`,
+      { status: 400, headers: { 'Content-Type': 'text/html' } }
+    ) as unknown as CfResponse;
+  }
+
+  try {
+    const stateData = JSON.parse(atob(state)) as {
+      roomKey: string;
+      userName: string;
+      nonce: string;
+    };
+    const { roomKey, userName } = stateData;
+
+    const clientId = env.JIRA_OAUTH_CLIENT_ID;
+    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
+    const redirectUri =
+      env.JIRA_OAUTH_REDIRECT_URI ||
+      'https://sprintjam.co.uk/api/jira/oauth/callback';
+
+    if (!clientId || !clientSecret) {
+      return new Response(
+        `<html><body><h1>OAuth Error</h1><p>OAuth not configured</p><script>window.close();</script></body></html>`,
+        { status: 500, headers: { 'Content-Type': 'text/html' } }
+      ) as unknown as CfResponse;
+    }
+
+    const tokenResponse = await fetch(
+      'https://auth.atlassian.com/oauth/token',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          grant_type: 'authorization_code',
+          client_id: clientId,
+          client_secret: clientSecret,
+          code,
+          redirect_uri: redirectUri,
+        }),
+      }
+    );
+
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.text();
+      console.error('Token exchange failed:', errorData);
+      return new Response(
+        `<html><body><h1>OAuth Error</h1><p>Failed to exchange code for token</p><script>window.close();</script></body></html>`,
+        { status: 500, headers: { 'Content-Type': 'text/html' } }
+      ) as unknown as CfResponse;
+    }
+
+    const tokenData = await tokenResponse.json<{
+      access_token: string;
+      refresh_token?: string;
+      expires_in: number;
+      token_type: string;
+      scope: string;
+    }>();
+
+    const resourcesResponse = await fetch(
+      'https://api.atlassian.com/oauth/token/accessible-resources',
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+          Accept: 'application/json',
+        },
+      }
+    );
+
+    if (!resourcesResponse.ok) {
+      return new Response(
+        `<html><body><h1>OAuth Error</h1><p>Failed to fetch Jira resources</p><script>window.close();</script></body></html>`,
+        { status: 500, headers: { 'Content-Type': 'text/html' } }
+      ) as unknown as CfResponse;
+    }
+
+    const resources = await resourcesResponse.json<
+      Array<{
+        id: string;
+        url: string;
+        name: string;
+        scopes: string[];
+      }>
+    >();
+
+    if (resources.length === 0) {
+      return new Response(
+        `<html><body><h1>OAuth Error</h1><p>No Jira sites accessible</p><script>window.close();</script></body></html>`,
+        { status: 400, headers: { 'Content-Type': 'text/html' } }
+      ) as unknown as CfResponse;
+    }
+    const jiraResource = resources[0];
+    const jiraDomain = new URL(jiraResource.url).hostname;
+
+    const userResponse = await fetch(
+      `https://api.atlassian.com/ex/jira/${jiraResource.id}/rest/api/3/myself`,
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+          Accept: 'application/json',
+        },
+      }
+    );
+
+    let jiraUserEmail: string | null = null;
+    let jiraUserId: string | null = null;
+    if (userResponse.ok) {
+      const userData = await userResponse.json<{
+        accountId: string;
+        emailAddress?: string;
+      }>();
+      jiraUserId = userData.accountId;
+      jiraUserEmail = userData.emailAddress || null;
+    }
+
+    const roomObject = getRoomStub(env, roomKey);
+    const saveResponse = await roomObject.fetch(
+      new Request('https://dummy/jira/oauth/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accessToken: tokenData.access_token,
+          refreshToken: tokenData.refresh_token || null,
+          tokenType: tokenData.token_type,
+          expiresAt: Date.now() + tokenData.expires_in * 1000,
+          scope: tokenData.scope,
+          jiraDomain,
+          jiraCloudId: jiraResource.id,
+          jiraUserId,
+          jiraUserEmail,
+          authorizedBy: userName,
+        }),
+      }) as unknown as CfRequest
+    );
+
+    if (!saveResponse.ok) {
+      return new Response(
+        `<html><body><h1>OAuth Error</h1><p>Failed to save credentials</p><script>window.close();</script></body></html>`,
+        { status: 500, headers: { 'Content-Type': 'text/html' } }
+      ) as unknown as CfResponse;
+    }
+
+    return new Response(
+      `<html><body><h1>Success!</h1><p>Jira connected successfully. You can close this window.</p><script>window.close();</script></body></html>`,
+      { status: 200, headers: { 'Content-Type': 'text/html' } }
+    ) as unknown as CfResponse;
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(
+      `<html><body><h1>OAuth Error</h1><p>${message}</p><script>window.close();</script></body></html>`,
+      { status: 500, headers: { 'Content-Type': 'text/html' } }
+    ) as unknown as CfResponse;
+  }
+}
+
+/**
+ * Gets OAuth status for a room
+ * GET /api/jira/oauth/status
+ */
+export async function getJiraOAuthStatusController(
+  url: URL,
+  env: Env
+): Promise<CfResponse> {
+  const roomKey = url.searchParams.get('roomKey');
+  const userName = url.searchParams.get('userName');
+  const sessionToken = url.searchParams.get('sessionToken');
+
+  if (!roomKey || !userName) {
+    return jsonError('Room key and user name are required');
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const roomObject = getRoomStub(env, roomKey);
+    const response = await roomObject.fetch(
+      new Request('https://dummy/jira/oauth/status', {
+        method: 'GET',
+      }) as unknown as CfRequest
+    );
+
+    if (!response.ok) {
+      return jsonError('Failed to get OAuth status', 500);
+    }
+
+    const data = await response.json<{
+      connected: boolean;
+      jiraDomain?: string;
+      jiraUserEmail?: string;
+      expiresAt?: number;
+    }>();
+
+    return jsonResponse(data);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to get OAuth status';
+    return jsonError(message, 500);
+  }
+}
+
+/**
+ * Revokes OAuth credentials for a room
+ * DELETE /api/jira/oauth/revoke
+ */
+export async function revokeJiraOAuthController(
+  request: CfRequest,
+  env: Env
+): Promise<CfResponse> {
+  const body = await request.json<{
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  }>();
+
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
+
+  if (!roomKey || !userName) {
+    return jsonError('Room key and user name are required');
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const roomObject = getRoomStub(env, roomKey);
+    const response = await roomObject.fetch(
+      new Request('https://dummy/jira/oauth/revoke', {
+        method: 'DELETE',
+      }) as unknown as CfRequest
+    );
+
+    if (!response.ok) {
+      return jsonError('Failed to revoke OAuth credentials', 500);
+    }
+
+    return jsonResponse({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to revoke OAuth credentials';
+    return jsonError(message, 500);
+  }
+}

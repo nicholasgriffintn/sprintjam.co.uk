@@ -318,5 +318,121 @@ export async function handleHttpRequest(
     });
   }
 
+  if (url.pathname === "/jira/oauth/save" && request.method === "POST") {
+    const credentials = (await request.json()) as {
+      accessToken: string;
+      refreshToken: string | null;
+      tokenType: string;
+      expiresAt: number;
+      scope: string | null;
+      jiraDomain: string;
+      jiraCloudId: string | null;
+      jiraUserId: string | null;
+      jiraUserEmail: string | null;
+      authorizedBy: string;
+    };
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    ctx.repository.saveJiraOAuthCredentials({
+      roomKey: roomData.key,
+      accessToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      tokenType: credentials.tokenType,
+      expiresAt: credentials.expiresAt,
+      scope: credentials.scope,
+      jiraDomain: credentials.jiraDomain,
+      jiraCloudId: credentials.jiraCloudId,
+      jiraUserId: credentials.jiraUserId,
+      jiraUserEmail: credentials.jiraUserEmail,
+      storyPointsField: null,
+      authorizedBy: credentials.authorizedBy,
+    });
+
+    ctx.broadcast({
+      type: "jiraConnected",
+      jiraDomain: credentials.jiraDomain,
+    });
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === "/jira/oauth/status" && request.method === "GET") {
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const credentials = ctx.repository.getJiraOAuthCredentials(roomData.key);
+
+    if (!credentials) {
+      return createJsonResponse({
+        connected: false,
+      });
+    }
+
+    return createJsonResponse({
+      connected: true,
+      jiraDomain: credentials.jiraDomain,
+      jiraUserEmail: credentials.jiraUserEmail,
+      expiresAt: credentials.expiresAt,
+    });
+  }
+
+  if (url.pathname === "/jira/oauth/credentials" && request.method === "GET") {
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const credentials = ctx.repository.getJiraOAuthCredentials(roomData.key);
+
+    if (!credentials) {
+      return createJsonResponse({ error: "Jira not connected" }, 404);
+    }
+
+    return createJsonResponse({ credentials });
+  }
+
+  if (url.pathname === "/jira/oauth/refresh" && request.method === "POST") {
+    const { accessToken, refreshToken, expiresAt } = (await request.json()) as {
+      accessToken: string;
+      refreshToken: string;
+      expiresAt: number;
+    };
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    ctx.repository.updateJiraOAuthTokens(
+      roomData.key,
+      accessToken,
+      refreshToken,
+      expiresAt
+    );
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === "/jira/oauth/revoke" && request.method === "DELETE") {
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    ctx.repository.deleteJiraOAuthCredentials(roomData.key);
+
+    ctx.broadcast({
+      type: "jiraDisconnected",
+    });
+
+    return createJsonResponse({ success: true });
+  }
+
   return null;
 }
