@@ -169,7 +169,10 @@ async function executeGraphQL<T>(
     if (response.status === 401) {
       throw new Error('401: Unauthorized');
     }
-    throw new Error(`Linear API request failed: ${response.status}`);
+    const bodyText = await response.text();
+    throw new Error(
+      `Linear API request failed: ${response.status} ${bodyText}`.trim()
+    );
   }
 
   const data = await response.json<{
@@ -295,8 +298,10 @@ export async function updateLinearEstimate(
   return executeWithTokenRefresh(
     credentials,
     async (accessToken) => {
+      const estimateInt = Math.round(estimate);
+
       const mutation = `
-        mutation UpdateIssue($issueId: String!, $estimate: Float) {
+        mutation UpdateIssue($issueId: String!, $estimate: Int) {
           issueUpdate(
             id: $issueId
             input: { estimate: $estimate }
@@ -338,7 +343,7 @@ export async function updateLinearEstimate(
             };
           };
         };
-      }>(accessToken, mutation, { issueId, estimate });
+      }>(accessToken, mutation, { issueId, estimate: estimateInt });
 
       if (!data.issueUpdate.success) {
         throw new Error('Failed to update Linear issue estimate');

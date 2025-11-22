@@ -4,6 +4,7 @@ import { GripVertical, Link2, Plus, Loader2, Trash2 } from 'lucide-react';
 
 import type { TicketQueueItem, TicketMetadata } from '../../../types';
 import { fetchJiraTicket } from '../../../lib/jira-service';
+import { fetchLinearIssue } from '../../../lib/linear-service';
 import { handleError } from '../../../utils/error';
 import { getJiraMetadata } from '../../../utils/jira';
 import { getLinearMetadata } from '../../../utils/linear';
@@ -37,6 +38,7 @@ export function TicketQueueModalQueueTab({
 }: TicketQueueModalQueueTabProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showJiraForm, setShowJiraForm] = useState(false);
+  const [showLinearForm, setShowLinearForm] = useState(false);
   const [newTicketTitle, setNewTicketTitle] = useState('');
   const [newTicketDescription, setNewTicketDescription] = useState('');
 
@@ -44,6 +46,13 @@ export function TicketQueueModalQueueTab({
   const [jiraPreview, setJiraPreview] = useState<TicketMetadata | null>(null);
   const [isFetchingJira, setIsFetchingJira] = useState(false);
   const [isSavingJiraAdd, setIsSavingJiraAdd] = useState(false);
+
+  const [linearLookupKey, setLinearLookupKey] = useState('');
+  const [linearPreview, setLinearPreview] = useState<TicketMetadata | null>(
+    null
+  );
+  const [isFetchingLinear, setIsFetchingLinear] = useState(false);
+  const [isSavingLinearAdd, setIsSavingLinearAdd] = useState(false);
 
   const [linkingTicketId, setLinkingTicketId] = useState<number | null>(null);
   const [linkLookupKey, setLinkLookupKey] = useState('');
@@ -75,19 +84,25 @@ export function TicketQueueModalQueueTab({
     setShowAddForm(false);
   };
 
-  const lookupJiraTicket = async (
+  const lookupExternalTicket = async (
     key: string,
+    provider: 'jira' | 'linear',
     setPreview: (ticket: TicketMetadata | null) => void,
     setLoading: (loading: boolean) => void
   ) => {
     if (!key.trim()) return;
     setLoading(true);
     try {
-      const ticket = await fetchJiraTicket(key.trim(), { roomKey, userName });
+      const ticket =
+        provider === 'jira'
+          ? await fetchJiraTicket(key.trim(), { roomKey, userName })
+          : await fetchLinearIssue(key.trim(), { roomKey, userName });
       setPreview(ticket);
     } catch (err) {
       handleError(
-        err instanceof Error ? err.message : 'Failed to fetch Jira ticket',
+        err instanceof Error
+          ? err.message
+          : `Failed to fetch ${provider === 'jira' ? 'Jira ticket' : 'Linear issue'}`,
         onError
       );
       setPreview(null);
@@ -96,45 +111,56 @@ export function TicketQueueModalQueueTab({
     }
   };
 
-  const handleAddFromJira = async () => {
-    if (!jiraPreview) {
+  const handleAddFromExternal = async (
+    provider: 'jira' | 'linear',
+    preview: TicketMetadata | null,
+    setSaving: (saving: boolean) => void,
+    reset: () => void
+  ) => {
+    if (!preview) {
       handleError(
-        'Fetch a Jira ticket before adding it to the queue.',
+        `Fetch a ${provider === 'jira' ? 'Jira ticket' : 'Linear issue'} before adding it to the queue.`,
         onError
       );
       return;
     }
 
-    setIsSavingJiraAdd(true);
+    setSaving(true);
     try {
       onAddTicket({
-        ticketId: jiraPreview.key,
-        title: jiraPreview.summary,
-        description: jiraPreview.description || undefined,
+        ticketId: preview.key || preview.identifier,
+        title: preview.summary || preview.title,
+        description: preview.description || undefined,
         status: 'pending',
-        externalService: 'jira',
-        externalServiceId: jiraPreview.id,
-        externalServiceMetadata: jiraPreview,
+        externalService: provider,
+        externalServiceId: preview.id,
+        externalServiceMetadata: preview,
       });
-
-      setJiraLookupKey('');
-      setJiraPreview(null);
-      setShowJiraForm(false);
+      reset();
     } catch (err) {
       handleError(
-        err instanceof Error ? err.message : 'Failed to add Jira ticket',
+        err instanceof Error
+          ? err.message
+          : `Failed to add ${provider === 'jira' ? 'Jira ticket' : 'Linear issue'}`,
         onError
       );
     } finally {
-      setIsSavingJiraAdd(false);
+      setSaving(false);
     }
   };
 
   const startLinkTicket = (ticket: TicketQueueItem) => {
     setLinkingTicketId(ticket.id);
-    const metadata = getJiraMetadata(ticket);
-    setLinkPreview(metadata ?? null);
-    setLinkLookupKey(metadata?.key || ticket.ticketId || '');
+    const jiraMeta = getJiraMetadata(ticket);
+    const linearMeta = getLinearMetadata(ticket);
+    const activeMeta = jiraEnabled ? jiraMeta : linearMeta;
+    setLinkPreview(activeMeta ?? null);
+    setLinkLookupKey(
+      (activeMeta?.key as string | undefined) ||
+        (activeMeta as { identifier?: string } | undefined)?.identifier ||
+        ticket.ticketId ||
+        ''
+    );
   };
 
   const cancelLinking = () => {
@@ -143,26 +169,34 @@ export function TicketQueueModalQueueTab({
     setLinkPreview(null);
   };
 
-  const handleApplyJiraLink = async () => {
+  const handleApplyLink = async (provider: 'jira' | 'linear') => {
     if (!linkingTicketId || !linkPreview) {
-      handleError('Fetch a Jira ticket before linking.', onError);
+      handleError(
+        `Fetch a ${provider === 'jira' ? 'Jira ticket' : 'Linear issue'} before linking.`,
+        onError
+      );
       return;
     }
 
     setIsSavingLink(true);
     try {
       onUpdateTicket(linkingTicketId, {
-        ticketId: linkPreview.key,
-        title: linkPreview.summary,
+        ticketId:
+          linkPreview.key ||
+          (linkPreview as { identifier?: string }).identifier,
+        title:
+          linkPreview.summary || (linkPreview as { title?: string }).title,
         description: linkPreview.description || undefined,
-        externalService: 'jira',
+        externalService: provider,
         externalServiceId: linkPreview.id,
         externalServiceMetadata: linkPreview,
       });
       cancelLinking();
     } catch (err) {
       handleError(
-        err instanceof Error ? err.message : 'Failed to link Jira ticket',
+        err instanceof Error
+          ? err.message
+          : `Failed to link ${provider === 'jira' ? 'Jira ticket' : 'Linear issue'}`,
         onError
       );
     } finally {
@@ -170,17 +204,28 @@ export function TicketQueueModalQueueTab({
     }
   };
 
-  const renderJiraPreview = (ticket: TicketMetadata | null) => {
+  const renderPreview = (
+    ticket: TicketMetadata | null,
+    provider: 'jira' | 'linear'
+  ) => {
     if (!ticket) return null;
+    const isJira = provider === 'jira';
+    const shellClass = isJira
+      ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
+      : 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-900/20';
+    const chipClass = isJira ? 'bg-blue-600' : 'bg-purple-600';
+
     return (
-      <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs dark:border-blue-800 dark:bg-blue-900/20">
+      <div
+        className={`mt-3 rounded-lg border p-3 text-xs ${shellClass}`}
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="rounded bg-blue-600 px-2 py-0.5 font-semibold text-white">
-              {ticket.key}
+            <span className={`rounded ${chipClass} px-2 py-0.5 font-semibold text-white`}>
+              {ticket.key || (ticket as { identifier?: string }).identifier}
             </span>
             <span className="font-semibold text-slate-800 dark:text-white">
-              {ticket.summary}
+              {ticket.summary || (ticket as { title?: string }).title}
             </span>
           </div>
           <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
@@ -194,12 +239,22 @@ export function TicketQueueModalQueueTab({
         )}
         <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-600 dark:text-slate-300">
           {ticket.assignee && <span>Assignee: {ticket.assignee}</span>}
-          <span>
-            Story Points:{' '}
-            {ticket.storyPoints !== null && ticket.storyPoints !== undefined
-              ? ticket.storyPoints
-              : 'Not set'}
-          </span>
+          {isJira ? (
+            <span>
+              Story Points:{' '}
+              {ticket.storyPoints !== null && ticket.storyPoints !== undefined
+                ? ticket.storyPoints
+                : 'Not set'}
+            </span>
+          ) : (
+            <span>
+              Estimate:{' '}
+              {(ticket as { estimate?: number }).estimate !== undefined &&
+              (ticket as { estimate?: number }).estimate !== null
+                ? (ticket as { estimate?: number }).estimate
+                : 'Not set'}
+            </span>
+          )}
         </div>
       </div>
     );
@@ -245,6 +300,7 @@ export function TicketQueueModalQueueTab({
                 <button
                   onClick={() => {
                     setShowJiraForm(!showJiraForm);
+                    setShowLinearForm(false);
                     setJiraPreview(null);
                   }}
                   data-testid="queue-add-jira-button"
@@ -252,6 +308,20 @@ export function TicketQueueModalQueueTab({
                 >
                   <Link2 className="h-3 w-3" />
                   Add Jira Ticket
+                </button>
+              )}
+              {linearEnabled && (
+                <button
+                  onClick={() => {
+                    setShowLinearForm(!showLinearForm);
+                    setShowJiraForm(false);
+                    setLinearPreview(null);
+                  }}
+                  data-testid="queue-add-linear-button"
+                  className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700"
+                >
+                  <Link2 className="h-3 w-3" />
+                  Add Linear Issue
                 </button>
               )}
               <button
@@ -265,13 +335,6 @@ export function TicketQueueModalQueueTab({
             </div>
           )}
         </div>
-
-        {linearEnabled && (
-          <p className="mb-3 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs text-purple-800 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-100">
-            Linear integration connected. Ticket import is coming soon—add
-            tickets manually for now.
-          </p>
-        )}
 
         <AnimatePresence>
           {showAddForm && (
@@ -345,8 +408,9 @@ export function TicketQueueModalQueueTab({
                   />
                   <button
                     onClick={() =>
-                      lookupJiraTicket(
+                      lookupExternalTicket(
                         jiraLookupKey,
+                        'jira',
                         setJiraPreview,
                         setIsFetchingJira
                       )
@@ -361,10 +425,21 @@ export function TicketQueueModalQueueTab({
                     Fetch
                   </button>
                 </div>
-                {renderJiraPreview(jiraPreview)}
+                {renderPreview(jiraPreview, 'jira')}
                 <div className="mt-3 flex gap-2">
                   <button
-                    onClick={handleAddFromJira}
+                    onClick={() =>
+                      handleAddFromExternal(
+                        'jira',
+                        jiraPreview,
+                        setIsSavingJiraAdd,
+                        () => {
+                          setJiraLookupKey('');
+                          setJiraPreview(null);
+                          setShowJiraForm(false);
+                        }
+                      )
+                    }
                     disabled={!jiraPreview || isSavingJiraAdd}
                     data-testid="queue-jira-add"
                     className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
@@ -379,6 +454,86 @@ export function TicketQueueModalQueueTab({
                       setShowJiraForm(false);
                       setJiraLookupKey('');
                       setJiraPreview(null);
+                    }}
+                    className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showLinearForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-3 overflow-hidden"
+            >
+              <div className="rounded-lg border-2 border-dashed border-purple-200 bg-purple-50 p-4 dark:border-purple-700 dark:bg-purple-900/20">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-purple-800 dark:text-purple-200">
+                  Linear Issue ID or Key
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    placeholder="TEAM-123"
+                    value={linearLookupKey}
+                    onChange={(e) => setLinearLookupKey(e.target.value)}
+                    data-testid="queue-linear-input"
+                    className="flex-1 rounded-lg border border-purple-200 px-3 py-2 text-sm dark:border-purple-700 dark:bg-purple-900/30"
+                  />
+                  <button
+                    onClick={() =>
+                      lookupExternalTicket(
+                        linearLookupKey,
+                        'linear',
+                        setLinearPreview,
+                        setIsFetchingLinear
+                      )
+                    }
+                    disabled={isFetchingLinear || !linearLookupKey.trim()}
+                    data-testid="queue-linear-fetch"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {isFetchingLinear && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    Fetch
+                  </button>
+                </div>
+                {renderPreview(linearPreview, 'linear')}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() =>
+                      handleAddFromExternal(
+                        'linear',
+                        linearPreview,
+                        setIsSavingLinearAdd,
+                        () => {
+                          setLinearLookupKey('');
+                          setLinearPreview(null);
+                          setShowLinearForm(false);
+                        }
+                      )
+                    }
+                    disabled={!linearPreview || isSavingLinearAdd}
+                    data-testid="queue-linear-add"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800 disabled:opacity-50"
+                  >
+                    {isSavingLinearAdd && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    Add to Queue
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowLinearForm(false);
+                      setLinearLookupKey('');
+                      setLinearPreview(null);
                     }}
                     className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
                   >
@@ -438,7 +593,7 @@ export function TicketQueueModalQueueTab({
                     </div>
                     {canManageQueue && (
                       <div className="flex items-center gap-1">
-                        {jiraEnabled && (
+                        {(jiraEnabled || linearEnabled) && (
                           <button
                             onClick={() =>
                               isLinking
@@ -448,7 +603,9 @@ export function TicketQueueModalQueueTab({
                             data-testid={`queue-link-toggle-${ticket.id}`}
                             className="rounded-lg px-2 py-1 text-blue-700 hover:bg-blue-50 dark:text-blue-200 dark:hover:bg-blue-900/40"
                           >
-                            {isLinking ? 'Close' : 'Link Jira'}
+                            {isLinking
+                              ? 'Close'
+                              : `Link ${jiraEnabled ? 'Jira' : 'Linear'}`}
                           </button>
                         )}
                         <button
@@ -462,7 +619,7 @@ export function TicketQueueModalQueueTab({
                   </div>
 
                   <AnimatePresence>
-                    {isLinking && jiraEnabled && (
+                    {isLinking && (jiraEnabled || linearEnabled) && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -474,20 +631,21 @@ export function TicketQueueModalQueueTab({
                             type="text"
                             value={linkLookupKey}
                             onChange={(e) => setLinkLookupKey(e.target.value)}
-                            placeholder="PROJECT-123"
-                            data-testid={`queue-link-jira-input-${ticket.id}`}
+                            placeholder={jiraEnabled ? 'PROJECT-123' : 'TEAM-123'}
+                            data-testid={`queue-link-${jiraEnabled ? 'jira' : 'linear'}-input-${ticket.id}`}
                             className="flex-1 rounded-lg border border-blue-200 px-3 py-2 text-sm dark:border-blue-700 dark:bg-blue-900/30"
                           />
                           <button
                             onClick={() =>
-                              lookupJiraTicket(
+                              lookupExternalTicket(
                                 linkLookupKey,
+                                jiraEnabled ? 'jira' : 'linear',
                                 setLinkPreview,
                                 setIsFetchingLink
                               )
                             }
                             disabled={isFetchingLink || !linkLookupKey.trim()}
-                            data-testid={`queue-link-jira-fetch-${ticket.id}`}
+                            data-testid={`queue-link-${jiraEnabled ? 'jira' : 'linear'}-fetch-${ticket.id}`}
                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                           >
                             {isFetchingLink && (
@@ -496,12 +654,14 @@ export function TicketQueueModalQueueTab({
                             Fetch
                           </button>
                         </div>
-                        {renderJiraPreview(linkPreview)}
+                        {renderPreview(linkPreview, jiraEnabled ? 'jira' : 'linear')}
                         <div className="mt-2 flex gap-2">
                           <button
-                            onClick={handleApplyJiraLink}
+                            onClick={() =>
+                              handleApplyLink(jiraEnabled ? 'jira' : 'linear')
+                            }
                             disabled={!linkPreview || isSavingLink}
-                            data-testid={`queue-link-jira-save-${ticket.id}`}
+                            data-testid={`queue-link-${jiraEnabled ? 'jira' : 'linear'}-save-${ticket.id}`}
                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
                           >
                             {isSavingLink && (
