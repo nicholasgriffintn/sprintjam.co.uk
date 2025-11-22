@@ -318,8 +318,13 @@ export async function getJiraOAuthStatusController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
+    const statusUrl = new URL('https://dummy/jira/oauth/status');
+    statusUrl.searchParams.set('roomKey', roomKey);
+    statusUrl.searchParams.set('userName', userName);
+    statusUrl.searchParams.set('sessionToken', sessionToken ?? '');
+
     const response = await roomObject.fetch(
-      new Request('https://dummy/jira/oauth/status', {
+      new Request(statusUrl.toString(), {
         method: 'GET',
       }) as unknown as CfRequest
     );
@@ -370,6 +375,8 @@ export async function revokeJiraOAuthController(
     const response = await roomObject.fetch(
       new Request('https://dummy/jira/oauth/revoke', {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomKey, userName, sessionToken }),
       }) as unknown as CfRequest
     );
 

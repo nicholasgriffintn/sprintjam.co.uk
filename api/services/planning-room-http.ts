@@ -355,31 +355,32 @@ export async function handleHttpRequest(
     return createJsonResponse({ success: true });
   }
 
-  if (url.pathname === "/jira/oauth/status" && request.method === "GET") {
-    const roomKey = url.searchParams.get("roomKey");
-    const userName = url.searchParams.get("userName");
-    const sessionToken = url.searchParams.get("sessionToken");
+  if (url.pathname === '/jira/oauth/status' && request.method === 'GET') {
+    const roomKey = url.searchParams.get('roomKey');
+    const userName = url.searchParams.get('userName');
+    const sessionToken = url.searchParams.get('sessionToken');
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
 
     if (!roomKey || !userName || !sessionToken) {
       return createJsonResponse(
-        { error: "Missing room key, user name, or session token" },
+        { error: 'Missing room key, user name, or session token' },
         400
       );
     }
-
-    const roomData = await ctx.getRoomData();
-    if (!roomData || !roomData.key || roomData.key !== roomKey) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+    if (roomData.key !== roomKey) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
-
     const isMember = roomData.users.includes(userName);
     const tokenValid = ctx.repository.validateSessionToken(
       userName,
       sessionToken
     );
-
     if (!isMember || !tokenValid) {
-      return createJsonResponse({ error: "Invalid session" }, 401);
+      return createJsonResponse({ error: 'Invalid session' }, 401);
     }
 
     const credentials = ctx.repository.getJiraOAuthCredentials(roomData.key);
@@ -400,22 +401,22 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === "/jira/oauth/credentials" && request.method === "GET") {
+  if (url.pathname === '/jira/oauth/credentials' && request.method === 'GET') {
     const roomData = await ctx.getRoomData();
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     const credentials = ctx.repository.getJiraOAuthCredentials(roomData.key);
 
     if (!credentials) {
-      return createJsonResponse({ error: "Jira not connected" }, 404);
+      return createJsonResponse({ error: 'Jira not connected' }, 404);
     }
 
     return createJsonResponse({ credentials });
   }
 
-  if (url.pathname === "/jira/oauth/refresh" && request.method === "POST") {
+  if (url.pathname === '/jira/oauth/refresh' && request.method === 'POST') {
     const { accessToken, refreshToken, expiresAt } = (await request.json()) as {
       accessToken: string;
       refreshToken: string;
@@ -424,7 +425,7 @@ export async function handleHttpRequest(
 
     const roomData = await ctx.getRoomData();
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     ctx.repository.updateJiraOAuthTokens(
@@ -437,7 +438,7 @@ export async function handleHttpRequest(
     return createJsonResponse({ success: true });
   }
 
-  if (url.pathname === "/jira/oauth/fields" && request.method === "PUT") {
+  if (url.pathname === '/jira/oauth/fields' && request.method === 'PUT') {
     const { storyPointsField, sprintField } = (await request.json()) as {
       storyPointsField?: string | null;
       sprintField?: string | null;
@@ -445,14 +446,14 @@ export async function handleHttpRequest(
 
     const roomData = await ctx.getRoomData();
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     const existing = ctx.repository.getJiraOAuthCredentials(roomData.key);
 
     if (!existing) {
       return createJsonResponse(
-        { error: "Jira not connected. Please connect first." },
+        { error: 'Jira not connected. Please connect first.' },
         400
       );
     }
@@ -478,15 +479,15 @@ export async function handleHttpRequest(
     });
 
     ctx.broadcast({
-      type: "jiraConnected",
+      type: 'jiraConnected',
       jiraDomain: existing.jiraDomain,
     });
 
     return createJsonResponse({ success: true });
   }
 
-  if (url.pathname === "/jira/oauth/revoke" && request.method === "DELETE") {
-    const body = await request.json().catch(() => ({})) as {
+  if (url.pathname === '/jira/oauth/revoke' && request.method === 'DELETE') {
+    const body = (await request.json().catch(() => ({}))) as {
       roomKey?: string;
       userName?: string;
       sessionToken?: string;
@@ -496,38 +497,39 @@ export async function handleHttpRequest(
     const userName = body?.userName;
     const sessionToken = body?.sessionToken;
 
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
     if (!roomKey || !userName || !sessionToken) {
       return createJsonResponse(
-        { error: "Missing room key, user name, or session token" },
+        { error: 'Missing room key, user name, or session token' },
         400
       );
     }
-
-    const roomData = await ctx.getRoomData();
-    if (!roomData || !roomData.key || roomData.key !== roomKey) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+    if (roomData.key !== roomKey) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
-
     const isMember = roomData.users.includes(userName);
     const tokenValid = ctx.repository.validateSessionToken(
       userName,
       sessionToken
     );
-
     if (!isMember || !tokenValid) {
-      return createJsonResponse({ error: "Invalid session" }, 401);
+      return createJsonResponse({ error: 'Invalid session' }, 401);
     }
 
     ctx.repository.deleteJiraOAuthCredentials(roomData.key);
 
     ctx.broadcast({
-      type: "jiraDisconnected",
+      type: 'jiraDisconnected',
     });
 
     return createJsonResponse({ success: true });
   }
 
-  if (url.pathname === "/linear/oauth/save" && request.method === "POST") {
+  if (url.pathname === '/linear/oauth/save' && request.method === 'POST') {
     const credentials = (await request.json()) as {
       accessToken: string;
       refreshToken: string | null;
@@ -543,7 +545,7 @@ export async function handleHttpRequest(
 
     const roomData = await ctx.getRoomData();
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     ctx.repository.saveLinearOAuthCredentials({
@@ -561,38 +563,39 @@ export async function handleHttpRequest(
     });
 
     ctx.broadcast({
-      type: "linearConnected",
+      type: 'linearConnected',
       linearOrganizationId: credentials.linearOrganizationId,
     });
 
     return createJsonResponse({ success: true });
   }
 
-  if (url.pathname === "/linear/oauth/status" && request.method === "GET") {
-    const roomKey = url.searchParams.get("roomKey");
-    const userName = url.searchParams.get("userName");
-    const sessionToken = url.searchParams.get("sessionToken");
+  if (url.pathname === '/linear/oauth/status' && request.method === 'GET') {
+    const roomKey = url.searchParams.get('roomKey');
+    const userName = url.searchParams.get('userName');
+    const sessionToken = url.searchParams.get('sessionToken');
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
 
     if (!roomKey || !userName || !sessionToken) {
       return createJsonResponse(
-        { error: "Missing room key, user name, or session token" },
+        { error: 'Missing room key, user name, or session token' },
         400
       );
     }
-
-    const roomData = await ctx.getRoomData();
-    if (!roomData || !roomData.key || roomData.key !== roomKey) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+    if (roomData.key !== roomKey) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
-
     const isMember = roomData.users.includes(userName);
     const tokenValid = ctx.repository.validateSessionToken(
       userName,
       sessionToken
     );
-
     if (!isMember || !tokenValid) {
-      return createJsonResponse({ error: "Invalid session" }, 401);
+      return createJsonResponse({ error: 'Invalid session' }, 401);
     }
 
     const credentials = ctx.repository.getLinearOAuthCredentials(roomData.key);
@@ -612,22 +615,25 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === "/linear/oauth/credentials" && request.method === "GET") {
+  if (
+    url.pathname === '/linear/oauth/credentials' &&
+    request.method === 'GET'
+  ) {
     const roomData = await ctx.getRoomData();
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     const credentials = ctx.repository.getLinearOAuthCredentials(roomData.key);
 
     if (!credentials) {
-      return createJsonResponse({ error: "Linear not connected" }, 404);
+      return createJsonResponse({ error: 'Linear not connected' }, 404);
     }
 
     return createJsonResponse({ credentials });
   }
 
-  if (url.pathname === "/linear/oauth/refresh" && request.method === "POST") {
+  if (url.pathname === '/linear/oauth/refresh' && request.method === 'POST') {
     const { accessToken, refreshToken, expiresAt } = (await request.json()) as {
       accessToken: string;
       refreshToken: string;
@@ -636,7 +642,7 @@ export async function handleHttpRequest(
 
     const roomData = await ctx.getRoomData();
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     ctx.repository.updateLinearOAuthTokens(
@@ -649,8 +655,8 @@ export async function handleHttpRequest(
     return createJsonResponse({ success: true });
   }
 
-  if (url.pathname === "/linear/oauth/revoke" && request.method === "DELETE") {
-    const body = await request.json().catch(() => ({})) as {
+  if (url.pathname === '/linear/oauth/revoke' && request.method === 'DELETE') {
+    const body = (await request.json().catch(() => ({}))) as {
       roomKey?: string;
       userName?: string;
       sessionToken?: string;
@@ -660,32 +666,33 @@ export async function handleHttpRequest(
     const userName = body?.userName;
     const sessionToken = body?.sessionToken;
 
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
     if (!roomKey || !userName || !sessionToken) {
       return createJsonResponse(
-        { error: "Missing room key, user name, or session token" },
+        { error: 'Missing room key, user name, or session token' },
         400
       );
     }
-
-    const roomData = await ctx.getRoomData();
-    if (!roomData || !roomData.key || roomData.key !== roomKey) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+    if (roomData.key !== roomKey) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
-
     const isMember = roomData.users.includes(userName);
     const tokenValid = ctx.repository.validateSessionToken(
       userName,
       sessionToken
     );
-
     if (!isMember || !tokenValid) {
-      return createJsonResponse({ error: "Invalid session" }, 401);
+      return createJsonResponse({ error: 'Invalid session' }, 401);
     }
 
     ctx.repository.deleteLinearOAuthCredentials(roomData.key);
 
     ctx.broadcast({
-      type: "linearDisconnected",
+      type: 'linearDisconnected',
     });
 
     return createJsonResponse({ success: true });
