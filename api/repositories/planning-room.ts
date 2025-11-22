@@ -107,6 +107,27 @@ export class PlanningRoomRepository {
           UNIQUE(ticket_queue_id, user_name)
         )`
       );
+
+      this.sql.exec(
+        `CREATE TABLE IF NOT EXISTS jira_oauth_credentials (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          room_key TEXT NOT NULL UNIQUE,
+          access_token TEXT NOT NULL,
+          refresh_token TEXT,
+          token_type TEXT NOT NULL,
+          expires_at INTEGER NOT NULL,
+          scope TEXT,
+          jira_domain TEXT NOT NULL,
+          jira_cloud_id TEXT,
+          jira_user_id TEXT,
+          jira_user_email TEXT,
+          story_points_field TEXT,
+          sprint_field TEXT,
+          authorized_by TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )`
+      );
     });
   }
 
@@ -823,6 +844,158 @@ export class PlanningRoomRepository {
         id
       );
     });
+  }
+
+  getJiraOAuthCredentials(roomKey: string): {
+    id: number;
+    roomKey: string;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    jiraDomain: string;
+    jiraCloudId: string | null;
+    jiraUserId: string | null;
+    jiraUserEmail: string | null;
+    storyPointsField: string | null;
+    sprintField: string | null;
+    authorizedBy: string;
+    createdAt: number;
+    updatedAt: number;
+  } | null {
+    const row = this.sql
+      .exec<{
+        id: number;
+        room_key: string;
+        access_token: string;
+        refresh_token: string | null;
+        token_type: string;
+        expires_at: number;
+        scope: string | null;
+        jira_domain: string;
+        jira_cloud_id: string | null;
+        jira_user_id: string | null;
+        jira_user_email: string | null;
+        story_points_field: string | null;
+        sprint_field: string | null;
+        authorized_by: string;
+        created_at: number;
+        updated_at: number;
+      }>('SELECT * FROM jira_oauth_credentials WHERE room_key = ?', roomKey)
+      .toArray()[0];
+
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      roomKey: row.room_key,
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token,
+      tokenType: row.token_type,
+      expiresAt: row.expires_at,
+      scope: row.scope,
+      jiraDomain: row.jira_domain,
+      jiraCloudId: row.jira_cloud_id,
+      jiraUserId: row.jira_user_id,
+      jiraUserEmail: row.jira_user_email,
+      storyPointsField: row.story_points_field,
+      sprintField: row.sprint_field ?? null,
+      authorizedBy: row.authorized_by,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  saveJiraOAuthCredentials(credentials: {
+    roomKey: string;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    jiraDomain: string;
+    jiraCloudId: string | null;
+    jiraUserId: string | null;
+    jiraUserEmail: string | null;
+    storyPointsField: string | null;
+    sprintField: string | null;
+    authorizedBy: string;
+  }): void {
+    const now = Date.now();
+    this.sql.exec(
+      `INSERT INTO jira_oauth_credentials (
+        room_key,
+        access_token,
+        refresh_token,
+        token_type,
+        expires_at,
+        scope,
+        jira_domain,
+        jira_cloud_id,
+        jira_user_id,
+        jira_user_email,
+        story_points_field,
+        sprint_field,
+        authorized_by,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(room_key) DO UPDATE SET
+        access_token = excluded.access_token,
+        refresh_token = excluded.refresh_token,
+        token_type = excluded.token_type,
+        expires_at = excluded.expires_at,
+        scope = excluded.scope,
+        jira_domain = excluded.jira_domain,
+        jira_cloud_id = excluded.jira_cloud_id,
+        jira_user_id = excluded.jira_user_id,
+        jira_user_email = excluded.jira_user_email,
+        story_points_field = excluded.story_points_field,
+        sprint_field = excluded.sprint_field,
+        authorized_by = excluded.authorized_by,
+        updated_at = excluded.updated_at`,
+      credentials.roomKey,
+      credentials.accessToken,
+      credentials.refreshToken,
+      credentials.tokenType,
+      credentials.expiresAt,
+      credentials.scope,
+      credentials.jiraDomain,
+      credentials.jiraCloudId,
+      credentials.jiraUserId,
+      credentials.jiraUserEmail,
+      credentials.storyPointsField,
+      credentials.sprintField,
+      credentials.authorizedBy,
+      now,
+      now
+    );
+  }
+
+  updateJiraOAuthTokens(
+    roomKey: string,
+    accessToken: string,
+    refreshToken: string | null,
+    expiresAt: number
+  ): void {
+    this.sql.exec(
+      `UPDATE jira_oauth_credentials
+       SET access_token = ?, refresh_token = ?, expires_at = ?, updated_at = ?
+       WHERE room_key = ?`,
+      accessToken,
+      refreshToken,
+      expiresAt,
+      Date.now(),
+      roomKey
+    );
+  }
+
+  deleteJiraOAuthCredentials(roomKey: string): void {
+    this.sql.exec(
+      'DELETE FROM jira_oauth_credentials WHERE room_key = ?',
+      roomKey
+    );
   }
 
   private getSql(txn?: DurableObjectTransaction): SqlStorage {

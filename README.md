@@ -5,7 +5,7 @@
 SprintJam is a modern, privacy-focused planning poker application designed for agile teams who want to run effective story pointing sessions without dealing with ads, trackers, or subscription fees.
 
 [![Website](https://img.shields.io/badge/sprintjam.co.uk-blue?style=for-the-badge)](https://sprintjam.co.uk)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
 > **Note**: This is somewhat of a passion project built in my spare time. While I strive to maintain and improve it, please be aware that it is provided "as is". A large amount of development has also been contributed with AI assistance. All contributions and feedback are welcome!
 
@@ -26,11 +26,13 @@ SprintJam is a modern, privacy-focused planning poker application designed for a
 - **Automatic Scoring**: Final story point recommendations
 - **Consensus Detection**: Identifies when team alignment is reached
 
-### 🔗 **Jira Integration (In Development)**
+### 🔗 **Jira Integration**
 
+- OAuth 2.0 authentication for secure, per-room Jira access
 - Fetch ticket details directly from Jira
 - Auto-update story points after estimation
 - Support for custom story point fields
+- Per-user authorization with automatic token refresh
 
 ### 🎛️ **Customizable Experience**
 
@@ -83,12 +85,30 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    Create a `.dev.vars` file or configure in Cloudflare dashboard:
 
    ```env
-   # Optional: Jira Integration
-   JIRA_DOMAIN=your-domain.atlassian.net
-   JIRA_EMAIL=your-email@company.com
-   JIRA_API_TOKEN=your-api-token
-   JIRA_STORY_POINTS_FIELD=customfield_10016
+   # Optional: Jira OAuth Integration
+   JIRA_OAUTH_CLIENT_ID=your-oauth-client-id
+   JIRA_OAUTH_CLIENT_SECRET=your-oauth-client-secret
+   JIRA_OAUTH_REDIRECT_URI=https://your-domain.com/api/jira/oauth/callback
    ```
+
+   **To enable Jira integration:**
+
+   a. Create an OAuth 2.0 app in Atlassian Developer Console:
+      - Visit https://developer.atlassian.com/console/myapps/
+      - Create a new OAuth 2.0 (3LO) app
+      - Add the following scopes:
+        - `read:jira-work`
+        - `write:jira-work`
+        - `read:jira-user`
+        - `offline_access`
+      - Set the callback URL to match `JIRA_OAUTH_REDIRECT_URI`
+
+   b. Copy your Client ID and Client Secret to the environment variables
+
+   c. Moderators can connect their Jira account via the room settings:
+      - Open Settings → Other Options
+      - Select "Jira" as External Provider
+      - Click "Connect to Jira" and authorize access
 
 4. **Deploy to Cloudflare**
    ```bash
@@ -128,12 +148,8 @@ Contributions are welcome! This project was built quickly and there are definite
 
 - [ ] Add workspace support for teams to manage multiple rooms.
 - [ ] Enrich room metadata (team, persona, sprint) so vote distribution filters can operate on meaningful cohorts in both live and historical modes.
-- [ ] Figure out how to fully implement Jira integration (OAuth flow?).
 - [ ] Persist past sessions so facilitators can compare rounds (Durable Object snapshots keyed by room + timestamp, lightweight metadata for participants and consensus).
 - [ ] Add a history drawer in `UnifiedResults` to surface trend lines once snapshots exist (avg delta, consensus trend, automatic regression callouts).
 - [ ] Improve accessibility (ARIA roles, keyboard navigation, screen reader support).
 - [ ] Make the background music as awesome as possible (this is something to do on Polychat).
 
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) for details.

@@ -11,15 +11,6 @@ import {
 import { jsonError } from "../utils/http";
 import { getRoomStub } from '../utils/room';
 
-function getJiraConfig(env: Env) {
-  return {
-    domain: env.JIRA_DOMAIN || 'YOUR_DOMAIN.atlassian.net',
-    email: env.JIRA_EMAIL || 'YOUR_EMAIL',
-    apiToken: env.JIRA_API_TOKEN || 'YOUR_API_TOKEN',
-    storyPointsField: env.JIRA_STORY_POINTS_FIELD || '',
-  };
-}
-
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
     status,
@@ -73,20 +64,79 @@ export async function getJiraTicketController(
 
   try {
     await validateSession(env, roomKey, userName, sessionToken);
-    const { domain, email, apiToken, storyPointsField } = getJiraConfig(env);
+
+    const clientId = env.JIRA_OAUTH_CLIENT_ID;
+    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError('Jira OAuth not configured', 500);
+    }
+
+    const roomObject = getRoomStub(env, roomKey);
+    const credentialsResponse = await roomObject.fetch(
+      new Request('https://dummy/jira/oauth/credentials', {
+        method: 'GET',
+      }) as unknown as CfRequest
+    );
+
+    if (!credentialsResponse.ok) {
+      return jsonError(
+        'Jira not connected. Please connect your Jira account in settings.',
+        401
+      );
+    }
+
+    const { credentials } = await credentialsResponse.json<{
+      credentials: {
+        id: number;
+        roomKey: string;
+        accessToken: string;
+        refreshToken: string | null;
+        tokenType: string;
+        expiresAt: number;
+        scope: string | null;
+        jiraDomain: string;
+        jiraCloudId: string | null;
+        jiraUserId: string | null;
+        jiraUserEmail: string | null;
+        storyPointsField: string | null;
+        sprintField: string | null;
+        authorizedBy: string;
+        createdAt: number;
+        updatedAt: number;
+      };
+    }>();
+
+    const onTokenRefresh = async (
+      accessToken: string,
+      refreshToken: string,
+      expiresAt: number
+    ) => {
+      await roomObject.fetch(
+        new Request('https://dummy/jira/oauth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
+        }) as unknown as CfRequest
+      );
+    };
+
     const ticket = await fetchJiraTicket(
-      domain,
-      email,
-      apiToken,
-      storyPointsField,
-      ticketId
+      credentials,
+      ticketId,
+      onTokenRefresh,
+      clientId,
+      clientSecret
     );
 
     return jsonResponse({ ticket });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Failed to fetch Jira ticket';
-    const isAuth = message.toLowerCase().includes('session');
+    const isAuth =
+      message.toLowerCase().includes('session') ||
+      message.toLowerCase().includes('oauth') ||
+      message.toLowerCase().includes('reconnect');
     return jsonError(message, isAuth ? 401 : 500);
   }
 }
@@ -117,14 +167,69 @@ export async function updateJiraStoryPointsController(
 
   try {
     await validateSession(env, roomKey, userName, sessionToken);
-    const { domain, email, apiToken, storyPointsField } = getJiraConfig(env);
+
+    const clientId = env.JIRA_OAUTH_CLIENT_ID;
+    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError('Jira OAuth not configured', 500);
+    }
+
+    const roomObject = getRoomStub(env, roomKey);
+    const credentialsResponse = await roomObject.fetch(
+      new Request('https://dummy/jira/oauth/credentials', {
+        method: 'GET',
+      }) as unknown as CfRequest
+    );
+
+    if (!credentialsResponse.ok) {
+      return jsonError(
+        'Jira not connected. Please connect your Jira account in settings.',
+        401
+      );
+    }
+
+    const { credentials } = await credentialsResponse.json<{
+      credentials: {
+        id: number;
+        roomKey: string;
+        accessToken: string;
+        refreshToken: string | null;
+        tokenType: string;
+        expiresAt: number;
+        scope: string | null;
+        jiraDomain: string;
+        jiraCloudId: string | null;
+        jiraUserId: string | null;
+        jiraUserEmail: string | null;
+        storyPointsField: string | null;
+        sprintField: string | null;
+        authorizedBy: string;
+        createdAt: number;
+        updatedAt: number;
+      };
+    }>();
+
+    const onTokenRefresh = async (
+      accessToken: string,
+      refreshToken: string,
+      expiresAt: number
+    ) => {
+      await roomObject.fetch(
+        new Request('https://dummy/jira/oauth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
+        }) as unknown as CfRequest
+      );
+    };
 
     const currentTicket = await fetchJiraTicket(
-      domain,
-      email,
-      apiToken,
-      storyPointsField,
-      ticketId
+      credentials,
+      ticketId,
+      onTokenRefresh,
+      clientId,
+      clientSecret
     );
 
     if (!currentTicket) {
@@ -136,13 +241,13 @@ export async function updateJiraStoryPointsController(
     }
 
     const updatedTicket = await updateJiraStoryPoints(
-      domain,
-      email,
-      apiToken,
-      storyPointsField,
+      credentials,
       ticketId,
       storyPoints,
-      currentTicket
+      currentTicket,
+      onTokenRefresh,
+      clientId,
+      clientSecret
     );
 
     return jsonResponse({ ticket: updatedTicket });
@@ -151,7 +256,10 @@ export async function updateJiraStoryPointsController(
       error instanceof Error
         ? error.message
         : 'Failed to update Jira story points';
-    const isAuth = message.toLowerCase().includes('session');
+    const isAuth =
+      message.toLowerCase().includes('session') ||
+      message.toLowerCase().includes('oauth') ||
+      message.toLowerCase().includes('reconnect');
     return jsonError(message, isAuth ? 401 : 500);
   }
 }

@@ -41,23 +41,29 @@ const SettingsModal: FC<SettingsModalProps> = ({
 
   const handleChange = (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number | string,
+    value:
+      | boolean
+      | (string | number)[]
+      | JudgeAlgorithm
+      | number
+      | string
+      | null
   ) => {
     const newSettings = { ...localSettings, [key]: value };
 
-    if (key === "enableStructuredVoting" && value === true) {
+    if (key === 'enableStructuredVoting' && value === true) {
       const structuredOptions = Array.from(structuredVotingOptions);
       newSettings.estimateOptions = structuredOptions;
       if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
         newSettings.votingCriteria = defaultSettings.votingCriteria.map(
-          (criterion) => ({ ...criterion }),
+          (criterion) => ({ ...criterion })
         );
       }
       setEstimateOptionsInput(
-        structuredOptions.map((option) => option.toString()).join(","),
+        structuredOptions.map((option) => option.toString()).join(',')
       );
     } else if (
-      key === "enableStructuredVoting" &&
+      key === 'enableStructuredVoting' &&
       value === false &&
       !newSettings.estimateOptions
     ) {
@@ -65,30 +71,30 @@ const SettingsModal: FC<SettingsModalProps> = ({
       newSettings.estimateOptions = defaultOptions;
       if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
         newSettings.votingCriteria = defaultSettings.votingCriteria.map(
-          (criterion) => ({ ...criterion }),
+          (criterion) => ({ ...criterion })
         );
       }
       setEstimateOptionsInput(
-        defaultOptions.map((option) => option.toString()).join(","),
+        defaultOptions.map((option) => option.toString()).join(',')
       );
     }
 
     if (
-      key === "showAverage" ||
-      key === "showMedian" ||
-      key === "showTopVotes"
+      key === 'showAverage' ||
+      key === 'showMedian' ||
+      key === 'showTopVotes'
     ) {
       if (newSettings.resultsDisplay?.summaryCards) {
         newSettings.resultsDisplay = {
           ...newSettings.resultsDisplay,
           summaryCards: newSettings.resultsDisplay.summaryCards.map((card) => {
-            if (key === "showAverage" && card.id === "average") {
+            if (key === 'showAverage' && card.id === 'average') {
               return { ...card, enabled: value as boolean };
             }
-            if (key === "showMedian" && card.id === "mode") {
+            if (key === 'showMedian' && card.id === 'mode') {
               return { ...card, enabled: value as boolean };
             }
-            if (key === "showTopVotes" && card.id === "topVotes") {
+            if (key === 'showTopVotes' && card.id === 'topVotes') {
               return { ...card, enabled: value as boolean };
             }
             return card;

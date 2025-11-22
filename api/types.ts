@@ -7,10 +7,9 @@ import type {
 export interface Env {
   PLANNING_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;
-  JIRA_DOMAIN?: string;
-  JIRA_EMAIL?: string;
-  JIRA_API_TOKEN?: string;
-  JIRA_STORY_POINTS_FIELD?: string;
+  JIRA_OAUTH_CLIENT_ID?: string;
+  JIRA_OAUTH_CLIENT_SECRET?: string;
+  JIRA_OAUTH_REDIRECT_URI?: string;
   POLYCHAT_API_TOKEN?: string;
 }
 
@@ -162,6 +161,36 @@ export interface JiraTicket {
   status?: string;
   storyPoints?: number;
   url?: string;
+}
+
+export interface JiraOAuthCredentials {
+  id: number;
+  roomKey: string;
+  accessToken: string;
+  refreshToken: string | null;
+  tokenType: string;
+  expiresAt: number;
+  scope: string | null;
+  jiraDomain: string;
+  jiraCloudId: string | null;
+  jiraUserId: string | null;
+  jiraUserEmail: string | null;
+  storyPointsField: string | null;
+  sprintField: string | null;
+  authorizedBy: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface JiraFieldDefinition {
+  id: string;
+  name: string;
+  schema?: {
+    type?: string;
+    system?: string;
+    custom?: string;
+    items?: string;
+  };
 }
 
 export interface TicketVote {

@@ -18,6 +18,14 @@ import {
   getJiraTicketController,
   updateJiraStoryPointsController,
 } from "./controllers/jira-controller";
+import {
+  initiateJiraOAuthController,
+  handleJiraOAuthCallbackController,
+  getJiraOAuthStatusController,
+  getJiraFieldsController,
+  updateJiraFieldsController,
+  revokeJiraOAuthController,
+} from "./controllers/jira-oauth-controller";
 
 async function handleRequest(
   request: CfRequest,
@@ -92,6 +100,30 @@ async function handleApiRequest(
   ) {
     const ticketId = path.split("/")[2];
     return updateJiraStoryPointsController(ticketId, request, env);
+  }
+
+  if (path === "jira/oauth/authorize" && request.method === "POST") {
+    return initiateJiraOAuthController(request, env);
+  }
+
+  if (path === "jira/oauth/callback" && request.method === "GET") {
+    return handleJiraOAuthCallbackController(url, env);
+  }
+
+  if (path === "jira/oauth/status" && request.method === "GET") {
+    return getJiraOAuthStatusController(url, env);
+  }
+
+  if (path === "jira/oauth/fields" && request.method === "GET") {
+    return getJiraFieldsController(url, env);
+  }
+
+  if (path === "jira/oauth/fields" && request.method === "PUT") {
+    return updateJiraFieldsController(request, env);
+  }
+
+  if (path === "jira/oauth/revoke" && request.method === "DELETE") {
+    return revokeJiraOAuthController(request, env);
   }
 
   return new Response(JSON.stringify({ error: "Not found" }), {
