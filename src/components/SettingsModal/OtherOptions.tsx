@@ -11,7 +11,19 @@ export function OtherOptions({
     value: boolean | (string | number)[] | JudgeAlgorithm | number | string,
   ) => void;
 }) {
-  const { status, loading, error, connect, disconnect } = useJiraOAuth();
+  const {
+    status,
+    loading,
+    error,
+    connect,
+    disconnect,
+    fields,
+    fieldsLoading,
+    fieldsLoaded,
+    fetchFields,
+    saveFieldConfiguration,
+    savingFields,
+  } = useJiraOAuth();
   return (
     <details className="group">
       <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900 dark:text-white mb-2 select-none flex items-center gap-2">
@@ -101,28 +113,121 @@ export function OtherOptions({
                   </div>
 
                   {status.connected && (
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="autoUpdateJiraStoryPoints"
-                        checked={
-                          localSettings.autoUpdateJiraStoryPoints || false
-                        }
-                        onChange={(e) =>
-                          handleChange(
-                            'autoUpdateJiraStoryPoints',
-                            e.target.checked
-                          )
-                        }
-                        data-testid="settings-toggle-jira-auto"
-                        className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
-                      />
-                      <label
-                        htmlFor="autoUpdateJiraStoryPoints"
-                        className="ml-2 text-sm text-slate-700 dark:text-slate-300"
-                      >
-                        Auto-update story points in Jira when voting completes
-                      </label>
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="autoUpdateJiraStoryPoints"
+                          checked={
+                            localSettings.autoUpdateJiraStoryPoints || false
+                          }
+                          onChange={(e) =>
+                            handleChange(
+                              'autoUpdateJiraStoryPoints',
+                              e.target.checked
+                            )
+                          }
+                          data-testid="settings-toggle-jira-auto"
+                          className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
+                        />
+                        <label
+                          htmlFor="autoUpdateJiraStoryPoints"
+                          className="ml-2 text-sm text-slate-700 dark:text-slate-300"
+                        >
+                          Auto-update story points in Jira when voting completes
+                        </label>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-800/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              Field configuration
+                            </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              Choose which Jira fields to use for story points and sprint.
+                            </p>
+                          </div>
+                          <button
+                            onClick={fetchFields}
+                            disabled={fieldsLoading}
+                            className="text-xs px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900/40 disabled:opacity-50"
+                          >
+                            {fieldsLoading ? 'Refreshing…' : fieldsLoaded ? 'Refresh' : 'Load fields'}
+                          </button>
+                        </div>
+
+                        {fieldsLoading ? (
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Loading fields from Jira…
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <label
+                                htmlFor="jiraStoryPointsField"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Story points field
+                              </label>
+                              <select
+                                id="jiraStoryPointsField"
+                                value={status.storyPointsField ?? ''}
+                                onChange={(e) =>
+                                  saveFieldConfiguration({
+                                    storyPointsField:
+                                      e.target.value || null,
+                                  })
+                                }
+                                disabled={savingFields || fields.length === 0}
+                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                              >
+                                <option value="">Select a field</option>
+                                {fields.map((field) => (
+                                  <option key={field.id} value={field.id}>
+                                    {field.name}
+                                    {field.type ? ` (${field.type})` : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label
+                                htmlFor="jiraSprintField"
+                                className="text-sm text-slate-700 dark:text-slate-300"
+                              >
+                                Sprint field
+                              </label>
+                              <select
+                                id="jiraSprintField"
+                                value={status.sprintField ?? ''}
+                                onChange={(e) =>
+                                  saveFieldConfiguration({
+                                    sprintField: e.target.value || null,
+                                  })
+                                }
+                                disabled={savingFields || fields.length === 0}
+                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                              >
+                                <option value="">Select a field</option>
+                                {fields.map((field) => (
+                                  <option key={field.id} value={field.id}>
+                                    {field.name}
+                                    {field.type ? ` (${field.type})` : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {!status.storyPointsField && (
+                              <p className="text-xs text-amber-700 dark:text-amber-400">
+                                Story points field is required for auto-updates.
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

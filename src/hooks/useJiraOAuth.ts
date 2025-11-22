@@ -7,6 +7,15 @@ interface JiraOAuthStatus {
   jiraDomain?: string;
   jiraUserEmail?: string;
   expiresAt?: number;
+  storyPointsField?: string | null;
+  sprintField?: string | null;
+}
+
+interface JiraFieldOption {
+  id: string;
+  name: string;
+  type?: string | null;
+  custom?: boolean;
 }
 
 export function useJiraOAuth() {
@@ -15,10 +24,15 @@ export function useJiraOAuth() {
   const [status, setStatus] = useState<JiraOAuthStatus>({ connected: false });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fields, setFields] = useState<JiraFieldOption[]>([]);
+  const [fieldsLoading, setFieldsLoading] = useState(false);
+  const [fieldsLoaded, setFieldsLoaded] = useState(false);
+  const [savingFields, setSavingFields] = useState(false);
 
   const fetchStatus = async () => {
     if (!activeRoomKey || !name || !authToken) {
       setLoading(false);
+      setFields([]);
       return;
     }
 
@@ -34,6 +48,7 @@ export function useJiraOAuth() {
 
       const data = await response.json();
       setStatus(data);
+      setFieldsLoaded(false);
       setError(null);
     } catch (err) {
       console.error('Error fetching Jira OAuth status:', err);
@@ -46,7 +61,64 @@ export function useJiraOAuth() {
 
   useEffect(() => {
     fetchStatus();
+    setFields([]);
+    setFieldsLoaded(false);
   }, [activeRoomKey, name, authToken]);
+
+  useEffect(() => {
+    if (status.connected && !fieldsLoaded && !fieldsLoading) {
+      void fetchFields();
+    }
+  }, [status.connected, fieldsLoaded, fieldsLoading]);
+
+  const fetchFields = async () => {
+    if (!activeRoomKey || !name || !authToken) {
+      return;
+    }
+    try {
+      setFieldsLoading(true);
+      const response = await fetch(
+        `/api/jira/oauth/fields?roomKey=${encodeURIComponent(
+          activeRoomKey
+        )}&userName=${encodeURIComponent(name)}&sessionToken=${encodeURIComponent(
+          authToken
+        )}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || 'Failed to fetch Jira fields'
+        );
+      }
+
+      const data = (await response.json()) as {
+        fields: JiraFieldOption[];
+        storyPointsField?: string | null;
+        sprintField?: string | null;
+      };
+
+      setFields(data.fields || []);
+      setStatus((prev) => ({
+        ...prev,
+        storyPointsField:
+          data.storyPointsField !== undefined
+            ? data.storyPointsField
+            : prev.storyPointsField,
+        sprintField:
+          data.sprintField !== undefined
+            ? data.sprintField
+            : prev.sprintField,
+      }));
+      setFieldsLoaded(true);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching Jira fields:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setFieldsLoading(false);
+    }
+  };
 
   const connect = async () => {
     if (!activeRoomKey || !name || !authToken) {
@@ -138,6 +210,57 @@ export function useJiraOAuth() {
     }
   };
 
+  const saveFieldConfiguration = async (options: {
+    storyPointsField?: string | null;
+    sprintField?: string | null;
+  }) => {
+    if (!activeRoomKey || !name || !authToken) {
+      setError('Missing room key, user name, or session token');
+      return;
+    }
+
+    try {
+      setSavingFields(true);
+      setError(null);
+
+      const response = await fetch('/api/jira/oauth/fields', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roomKey: activeRoomKey,
+          userName: name,
+          sessionToken: authToken,
+          storyPointsField: options.storyPointsField,
+          sprintField: options.sprintField,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save Jira field settings');
+      }
+
+      setStatus((prev) => ({
+        ...prev,
+        storyPointsField:
+          options.storyPointsField !== undefined
+            ? options.storyPointsField
+            : prev.storyPointsField,
+        sprintField:
+          options.sprintField !== undefined
+            ? options.sprintField
+            : prev.sprintField,
+      }));
+    } catch (err) {
+      console.error('Error saving Jira field configuration:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setSavingFields(false);
+    }
+  };
+
   return {
     status,
     loading,
@@ -145,5 +268,11 @@ export function useJiraOAuth() {
     connect,
     disconnect,
     refresh: fetchStatus,
+    fields,
+    fieldsLoading,
+    fieldsLoaded,
+    fetchFields,
+    saveFieldConfiguration,
+    savingFields,
   };
 }

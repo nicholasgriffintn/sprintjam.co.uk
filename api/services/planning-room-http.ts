@@ -330,6 +330,8 @@ export async function handleHttpRequest(
       jiraUserId: string | null;
       jiraUserEmail: string | null;
       authorizedBy: string;
+      storyPointsField?: string | null;
+      sprintField?: string | null;
     };
 
     const roomData = await ctx.getRoomData();
@@ -348,7 +350,8 @@ export async function handleHttpRequest(
       jiraCloudId: credentials.jiraCloudId,
       jiraUserId: credentials.jiraUserId,
       jiraUserEmail: credentials.jiraUserEmail,
-      storyPointsField: null,
+      storyPointsField: credentials.storyPointsField ?? null,
+      sprintField: credentials.sprintField ?? null,
       authorizedBy: credentials.authorizedBy,
     });
 
@@ -379,6 +382,8 @@ export async function handleHttpRequest(
       jiraDomain: credentials.jiraDomain,
       jiraUserEmail: credentials.jiraUserEmail,
       expiresAt: credentials.expiresAt,
+      storyPointsField: credentials.storyPointsField,
+      sprintField: credentials.sprintField,
     });
   }
 
@@ -415,6 +420,54 @@ export async function handleHttpRequest(
       refreshToken,
       expiresAt
     );
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === "/jira/oauth/fields" && request.method === "PUT") {
+    const { storyPointsField, sprintField } = (await request.json()) as {
+      storyPointsField?: string | null;
+      sprintField?: string | null;
+    };
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const existing = ctx.repository.getJiraOAuthCredentials(roomData.key);
+
+    if (!existing) {
+      return createJsonResponse(
+        { error: "Jira not connected. Please connect first." },
+        400
+      );
+    }
+
+    ctx.repository.saveJiraOAuthCredentials({
+      roomKey: roomData.key,
+      accessToken: existing.accessToken,
+      refreshToken: existing.refreshToken,
+      tokenType: existing.tokenType,
+      expiresAt: existing.expiresAt,
+      scope: existing.scope,
+      jiraDomain: existing.jiraDomain,
+      jiraCloudId: existing.jiraCloudId,
+      jiraUserId: existing.jiraUserId,
+      jiraUserEmail: existing.jiraUserEmail,
+      storyPointsField:
+        storyPointsField === undefined
+          ? existing.storyPointsField
+          : storyPointsField,
+      sprintField:
+        sprintField === undefined ? existing.sprintField : sprintField,
+      authorizedBy: existing.authorizedBy,
+    });
+
+    ctx.broadcast({
+      type: "jiraConnected",
+      jiraDomain: existing.jiraDomain,
+    });
 
     return createJsonResponse({ success: true });
   }

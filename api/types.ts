@@ -176,9 +176,21 @@ export interface JiraOAuthCredentials {
   jiraUserId: string | null;
   jiraUserEmail: string | null;
   storyPointsField: string | null;
+  sprintField: string | null;
   authorizedBy: string;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface JiraFieldDefinition {
+  id: string;
+  name: string;
+  schema?: {
+    type?: string;
+    system?: string;
+    custom?: string;
+    items?: string;
+  };
 }
 
 export interface TicketVote {

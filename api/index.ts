@@ -22,6 +22,8 @@ import {
   initiateJiraOAuthController,
   handleJiraOAuthCallbackController,
   getJiraOAuthStatusController,
+  getJiraFieldsController,
+  updateJiraFieldsController,
   revokeJiraOAuthController,
 } from "./controllers/jira-oauth-controller";
 
@@ -110,6 +112,14 @@ async function handleApiRequest(
 
   if (path === "jira/oauth/status" && request.method === "GET") {
     return getJiraOAuthStatusController(url, env);
+  }
+
+  if (path === "jira/oauth/fields" && request.method === "GET") {
+    return getJiraFieldsController(url, env);
+  }
+
+  if (path === "jira/oauth/fields" && request.method === "PUT") {
+    return updateJiraFieldsController(request, env);
   }
 
   if (path === "jira/oauth/revoke" && request.method === "DELETE") {

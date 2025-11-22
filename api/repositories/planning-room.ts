@@ -122,6 +122,7 @@ export class PlanningRoomRepository {
           jira_user_id TEXT,
           jira_user_email TEXT,
           story_points_field TEXT,
+          sprint_field TEXT,
           authorized_by TEXT NOT NULL,
           created_at INTEGER NOT NULL,
           updated_at INTEGER NOT NULL
@@ -858,6 +859,7 @@ export class PlanningRoomRepository {
     jiraUserId: string | null;
     jiraUserEmail: string | null;
     storyPointsField: string | null;
+    sprintField: string | null;
     authorizedBy: string;
     createdAt: number;
     updatedAt: number;
@@ -876,6 +878,7 @@ export class PlanningRoomRepository {
         jira_user_id: string | null;
         jira_user_email: string | null;
         story_points_field: string | null;
+        sprint_field: string | null;
         authorized_by: string;
         created_at: number;
         updated_at: number;
@@ -897,6 +900,7 @@ export class PlanningRoomRepository {
       jiraUserId: row.jira_user_id,
       jiraUserEmail: row.jira_user_email,
       storyPointsField: row.story_points_field,
+      sprintField: row.sprint_field ?? null,
       authorizedBy: row.authorized_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -915,6 +919,7 @@ export class PlanningRoomRepository {
     jiraUserId: string | null;
     jiraUserEmail: string | null;
     storyPointsField: string | null;
+    sprintField: string | null;
     authorizedBy: string;
   }): void {
     const now = Date.now();
@@ -931,10 +936,11 @@ export class PlanningRoomRepository {
         jira_user_id,
         jira_user_email,
         story_points_field,
+        sprint_field,
         authorized_by,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(room_key) DO UPDATE SET
         access_token = excluded.access_token,
         refresh_token = excluded.refresh_token,
@@ -946,6 +952,7 @@ export class PlanningRoomRepository {
         jira_user_id = excluded.jira_user_id,
         jira_user_email = excluded.jira_user_email,
         story_points_field = excluded.story_points_field,
+        sprint_field = excluded.sprint_field,
         authorized_by = excluded.authorized_by,
         updated_at = excluded.updated_at`,
       credentials.roomKey,
@@ -959,6 +966,7 @@ export class PlanningRoomRepository {
       credentials.jiraUserId,
       credentials.jiraUserEmail,
       credentials.storyPointsField,
+      credentials.sprintField,
       credentials.authorizedBy,
       now,
       now
@@ -984,7 +992,10 @@ export class PlanningRoomRepository {
   }
 
   deleteJiraOAuthCredentials(roomKey: string): void {
-    this.sql.exec('DELETE FROM jira_oauth_credentials WHERE room_key = ?', roomKey);
+    this.sql.exec(
+      'DELETE FROM jira_oauth_credentials WHERE room_key = ?',
+      roomKey
+    );
   }
 
   private getSql(txn?: DurableObjectTransaction): SqlStorage {

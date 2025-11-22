@@ -100,6 +100,7 @@ export async function getJiraTicketController(
         jiraUserId: string | null;
         jiraUserEmail: string | null;
         storyPointsField: string | null;
+        sprintField: string | null;
         authorizedBy: string;
         createdAt: number;
         updatedAt: number;
@@ -202,6 +203,7 @@ export async function updateJiraStoryPointsController(
         jiraUserId: string | null;
         jiraUserEmail: string | null;
         storyPointsField: string | null;
+        sprintField: string | null;
         authorizedBy: string;
         createdAt: number;
         updatedAt: number;
@@ -245,7 +247,8 @@ export async function updateJiraStoryPointsController(
       currentTicket,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
+      userName ?? undefined
     );
 
     return jsonResponse({ ticket: updatedTicket });

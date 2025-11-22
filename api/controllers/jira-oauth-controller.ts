@@ -3,9 +3,14 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 
-import type { Env } from "../types";
+import type { Env, JiraFieldDefinition } from "../types";
 import { jsonError } from "../utils/http";
 import { getRoomStub } from '../utils/room';
+import {
+  fetchJiraFields,
+  findDefaultSprintField,
+  findDefaultStoryPointsField,
+} from '../services/jira-service';
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
@@ -230,6 +235,29 @@ export async function handleJiraOAuthCallbackController(
       jiraUserEmail = userData.emailAddress || null;
     }
 
+    let storyPointsField: string | null = null;
+    let sprintField: string | null = null;
+
+    try {
+      const fieldsResponse = await fetch(
+        `https://api.atlassian.com/ex/jira/${jiraResource.id}/rest/api/3/field`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+            Accept: 'application/json',
+          },
+        }
+      );
+
+      if (fieldsResponse.ok) {
+        const fields = (await fieldsResponse.json()) as JiraFieldDefinition[];
+        storyPointsField = findDefaultStoryPointsField(fields);
+        sprintField = findDefaultSprintField(fields);
+      }
+    } catch (fieldError) {
+      console.error('Failed to pre-select Jira fields', fieldError);
+    }
+
     const roomObject = getRoomStub(env, roomKey);
     const saveResponse = await roomObject.fetch(
       new Request('https://dummy/jira/oauth/save', {
@@ -246,6 +274,8 @@ export async function handleJiraOAuthCallbackController(
           jiraUserId,
           jiraUserEmail,
           authorizedBy: userName,
+          storyPointsField,
+          sprintField,
         }),
       }) as unknown as CfRequest
     );
@@ -306,6 +336,8 @@ export async function getJiraOAuthStatusController(
       jiraDomain?: string;
       jiraUserEmail?: string;
       expiresAt?: number;
+      storyPointsField?: string | null;
+      sprintField?: string | null;
     }>();
 
     return jsonResponse(data);
@@ -355,5 +387,228 @@ export async function revokeJiraOAuthController(
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to revoke OAuth credentials';
     return jsonError(message, 500);
+  }
+}
+
+export async function getJiraFieldsController(
+  url: URL,
+  env: Env
+): Promise<CfResponse> {
+  const roomKey = url.searchParams.get('roomKey');
+  const userName = url.searchParams.get('userName');
+  const sessionToken = url.searchParams.get('sessionToken');
+
+  if (!roomKey || !userName) {
+    return jsonError('Room key and user name are required');
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.JIRA_OAUTH_CLIENT_ID;
+    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError('Jira OAuth not configured', 500);
+    }
+
+    const roomObject = getRoomStub(env, roomKey);
+    const credentialsResponse = await roomObject.fetch(
+      new Request('https://dummy/jira/oauth/credentials', {
+        method: 'GET',
+      }) as unknown as CfRequest
+    );
+
+    if (!credentialsResponse.ok) {
+      return jsonError(
+        'Jira not connected. Please connect your Jira account in settings.',
+        401
+      );
+    }
+
+    const { credentials } = await credentialsResponse.json<{
+      credentials: {
+        id: number;
+        roomKey: string;
+        accessToken: string;
+        refreshToken: string | null;
+        tokenType: string;
+        expiresAt: number;
+        scope: string | null;
+        jiraDomain: string;
+        jiraCloudId: string | null;
+        jiraUserId: string | null;
+        jiraUserEmail: string | null;
+        storyPointsField: string | null;
+        sprintField: string | null;
+        authorizedBy: string;
+        createdAt: number;
+        updatedAt: number;
+      };
+    }>();
+
+    const onTokenRefresh = async (
+      accessToken: string,
+      refreshToken: string,
+      expiresAt: number
+    ) => {
+      await roomObject.fetch(
+        new Request('https://dummy/jira/oauth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
+        }) as unknown as CfRequest
+      );
+    };
+
+    const fields = await fetchJiraFields(
+      credentials,
+      onTokenRefresh,
+      clientId,
+      clientSecret
+    );
+
+    const simplifiedFields = fields.map((field) => ({
+      id: field.id,
+      name: field.name,
+      type: field.schema?.type ?? field.schema?.system ?? null,
+      custom: !!field.schema?.custom,
+    }));
+
+    return jsonResponse({
+      fields: simplifiedFields,
+      storyPointsField: credentials.storyPointsField,
+      sprintField: credentials.sprintField,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch Jira fields';
+    const isAuth =
+      message.toLowerCase().includes('session') ||
+      message.toLowerCase().includes('oauth') ||
+      message.toLowerCase().includes('reconnect');
+    return jsonError(message, isAuth ? 401 : 500);
+  }
+}
+
+export async function updateJiraFieldsController(
+  request: CfRequest,
+  env: Env
+): Promise<CfResponse> {
+  const body = await request.json<{
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+    storyPointsField?: string | null;
+    sprintField?: string | null;
+  }>();
+
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
+  const { storyPointsField, sprintField } = body;
+
+  if (!roomKey || !userName) {
+    return jsonError('Room key and user name are required');
+  }
+
+  if (storyPointsField === undefined && sprintField === undefined) {
+    return jsonError('No field updates provided', 400);
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.JIRA_OAUTH_CLIENT_ID;
+    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError('Jira OAuth not configured', 500);
+    }
+
+    const roomObject = getRoomStub(env, roomKey);
+    const credentialsResponse = await roomObject.fetch(
+      new Request('https://dummy/jira/oauth/credentials', {
+        method: 'GET',
+      }) as unknown as CfRequest
+    );
+
+    if (!credentialsResponse.ok) {
+      return jsonError(
+        'Jira not connected. Please connect your Jira account in settings.',
+        401
+      );
+    }
+
+    const { credentials } = await credentialsResponse.json<{
+      credentials: {
+        id: number;
+        roomKey: string;
+        accessToken: string;
+        refreshToken: string | null;
+        tokenType: string;
+        expiresAt: number;
+        scope: string | null;
+        jiraDomain: string;
+        jiraCloudId: string | null;
+        jiraUserId: string | null;
+        jiraUserEmail: string | null;
+        storyPointsField: string | null;
+        sprintField: string | null;
+        authorizedBy: string;
+        createdAt: number;
+        updatedAt: number;
+      };
+    }>();
+
+    const onTokenRefresh = async (
+      accessToken: string,
+      refreshToken: string,
+      expiresAt: number
+    ) => {
+      await roomObject.fetch(
+        new Request('https://dummy/jira/oauth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
+        }) as unknown as CfRequest
+      );
+    };
+
+    const fields = await fetchJiraFields(
+      credentials,
+      onTokenRefresh,
+      clientId,
+      clientSecret
+    );
+    const validFieldIds = new Set(fields.map((field) => field.id));
+
+    if (storyPointsField && !validFieldIds.has(storyPointsField)) {
+      return jsonError('Selected story points field is not available in Jira', 400);
+    }
+
+    if (sprintField && !validFieldIds.has(sprintField)) {
+      return jsonError('Selected sprint field is not available in Jira', 400);
+    }
+
+    const updateResponse = await roomObject.fetch(
+      new Request('https://dummy/jira/oauth/fields', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storyPointsField, sprintField }),
+      }) as unknown as CfRequest
+    );
+
+    if (!updateResponse.ok) {
+      return jsonError('Failed to save Jira field configuration', 500);
+    }
+
+    return jsonResponse({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update Jira field configuration';
+    const isAuth =
+      message.toLowerCase().includes('session') ||
+      message.toLowerCase().includes('oauth') ||
+      message.toLowerCase().includes('reconnect');
+    return jsonError(message, isAuth ? 401 : 500);
   }
 }
