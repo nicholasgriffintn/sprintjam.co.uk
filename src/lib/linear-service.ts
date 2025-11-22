@@ -52,7 +52,6 @@ export async function fetchLinearIssue(
     }
 
     const data = await response.json();
-    console.log('Linear issue API response:', data);
 
     const ticket: TicketMetadata | undefined = data.ticket;
 

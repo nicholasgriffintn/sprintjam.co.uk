@@ -60,7 +60,6 @@ export async function fetchJiraTicket(
     }
 
     const data = await response.json();
-    console.log('Jira ticket API response:', data);
 
     const ticket: TicketMetadata | undefined = data.ticket;
 

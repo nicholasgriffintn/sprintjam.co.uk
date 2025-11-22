@@ -125,7 +125,6 @@ const SettingsModal: FC<SettingsModalProps> = ({
   };
 
   const handleSave = () => {
-    console.log("Saving settings from modal:", localSettings);
     onSaveSettings(localSettings);
     onClose();
   };
