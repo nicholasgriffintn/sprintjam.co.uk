@@ -13,6 +13,10 @@ export const WS_BASE_URL = import.meta.env.DEV
   ? "ws://localhost:5173/ws"
   : `wss://${ENV_BASE_URL}/ws`;
 
+export const SITE_NAME = 'SprintJam';
+export const BASE_DESCRIPTION =
+  'Plan sprints faster with real-time story point voting, instant consensus insights, and lightweight collaboration. No sign-ups, no distractions.';
+
 export const AUTH_TOKEN_STORAGE_KEY = 'sprintjam_authToken';
 export const CONFIDENCE_INFO_STORAGE_KEY = 'sprintjam_confidenceInfoSeen';
 export const ROOM_KEY_STORAGE_KEY = 'sprintjam_roomKey';

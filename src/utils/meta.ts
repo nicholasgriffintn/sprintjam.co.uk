@@ -13,27 +13,19 @@ export interface MetaTagConfig {
   canonical?: string;
 }
 
-/**
- * Updates the document meta tags with the provided configuration
- * This function handles title, description, Open Graph, Twitter Card, and canonical tags
- */
 export function updateMetaTags(config: MetaTagConfig): void {
-  // Update document title
   if (config.title) {
     document.title = config.title;
   }
 
-  // Update or create meta description
   if (config.description) {
     updateMetaTag('name', 'description', config.description);
   }
 
-  // Update or create meta keywords
   if (config.keywords) {
     updateMetaTag('name', 'keywords', config.keywords);
   }
 
-  // Open Graph tags
   if (config.ogTitle) {
     updateMetaTag('property', 'og:title', config.ogTitle);
   }
@@ -47,10 +39,8 @@ export function updateMetaTags(config: MetaTagConfig): void {
     updateMetaTag('property', 'og:url', config.ogUrl);
   }
 
-  // Always set og:type for proper Open Graph compliance
   updateMetaTag('property', 'og:type', 'website');
 
-  // Twitter Card tags
   if (config.twitterCard) {
     updateMetaTag('name', 'twitter:card', config.twitterCard);
   }
@@ -64,15 +54,11 @@ export function updateMetaTags(config: MetaTagConfig): void {
     updateMetaTag('name', 'twitter:image', config.twitterImage);
   }
 
-  // Canonical URL
   if (config.canonical) {
     updateCanonicalLink(config.canonical);
   }
 }
 
-/**
- * Updates or creates a meta tag in the document head
- */
 function updateMetaTag(
   attributeName: 'name' | 'property',
   attributeValue: string,
@@ -91,9 +77,6 @@ function updateMetaTag(
   }
 }
 
-/**
- * Updates or creates the canonical link tag
- */
 function updateCanonicalLink(url: string): void {
   let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
 
@@ -107,9 +90,6 @@ function updateCanonicalLink(url: string): void {
   }
 }
 
-/**
- * Gets the current absolute URL for the given path
- */
 export function getAbsoluteUrl(path: string = ''): string {
   const baseUrl = window.location.origin;
   return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
