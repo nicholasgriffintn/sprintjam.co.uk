@@ -5,7 +5,7 @@
 SprintJam is a modern, privacy-focused planning poker application designed for agile teams who want to run effective story pointing sessions without dealing with ads, trackers, or subscription fees.
 
 [![Website](https://img.shields.io/badge/sprintjam.co.uk-blue?style=for-the-badge)](https://sprintjam.co.uk)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
 > **Note**: This is somewhat of a passion project built in my spare time. While I strive to maintain and improve it, please be aware that it is provided "as is". A large amount of development has also been contributed with AI assistance. All contributions and feedback are welcome!
 
@@ -153,6 +153,3 @@ Contributions are welcome! This project was built quickly and there are definite
 - [ ] Improve accessibility (ARIA roles, keyboard navigation, screen reader support).
 - [ ] Make the background music as awesome as possible (this is something to do on Polychat).
 
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) for details.
