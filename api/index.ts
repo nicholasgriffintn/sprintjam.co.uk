@@ -26,6 +26,16 @@ import {
   updateJiraFieldsController,
   revokeJiraOAuthController,
 } from "./controllers/jira-oauth-controller";
+import {
+  getLinearIssueController,
+  updateLinearEstimateController,
+} from "./controllers/linear-controller";
+import {
+  initiateLinearOAuthController,
+  handleLinearOAuthCallbackController,
+  getLinearOAuthStatusController,
+  revokeLinearOAuthController,
+} from "./controllers/linear-oauth-controller";
 
 async function handleRequest(
   request: CfRequest,
@@ -124,6 +134,36 @@ async function handleApiRequest(
 
   if (path === "jira/oauth/revoke" && request.method === "DELETE") {
     return revokeJiraOAuthController(request, env);
+  }
+
+  // Linear API routes
+  if (path === "linear/issue" && request.method === "GET") {
+    return getLinearIssueController(url, env);
+  }
+
+  if (
+    path.startsWith("linear/issue/") &&
+    path.endsWith("/estimate") &&
+    request.method === "PUT"
+  ) {
+    const issueId = path.split("/")[2];
+    return updateLinearEstimateController(issueId, request, env);
+  }
+
+  if (path === "linear/oauth/authorize" && request.method === "POST") {
+    return initiateLinearOAuthController(request, env);
+  }
+
+  if (path === "linear/oauth/callback" && request.method === "GET") {
+    return handleLinearOAuthCallbackController(url, env);
+  }
+
+  if (path === "linear/oauth/status" && request.method === "GET") {
+    return getLinearOAuthStatusController(url, env);
+  }
+
+  if (path === "linear/oauth/revoke" && request.method === "DELETE") {
+    return revokeLinearOAuthController(request, env);
   }
 
   return new Response(JSON.stringify({ error: "Not found" }), {

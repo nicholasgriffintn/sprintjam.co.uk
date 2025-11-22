@@ -10,6 +10,9 @@ export interface Env {
   JIRA_OAUTH_CLIENT_ID?: string;
   JIRA_OAUTH_CLIENT_SECRET?: string;
   JIRA_OAUTH_REDIRECT_URI?: string;
+  LINEAR_OAUTH_CLIENT_ID?: string;
+  LINEAR_OAUTH_CLIENT_SECRET?: string;
+  LINEAR_OAUTH_REDIRECT_URI?: string;
   POLYCHAT_API_TOKEN?: string;
 }
 
@@ -119,7 +122,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: 'jira' | 'none';
+  externalService?: 'jira' | 'linear' | 'none';
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   autoUpdateJiraStoryPoints?: boolean;
@@ -193,6 +196,33 @@ export interface JiraFieldDefinition {
   };
 }
 
+export interface LinearOAuthCredentials {
+  id: number;
+  roomKey: string;
+  accessToken: string;
+  refreshToken: string | null;
+  tokenType: string;
+  expiresAt: number;
+  scope: string | null;
+  linearOrganizationId: string | null;
+  linearUserId: string | null;
+  linearUserEmail: string | null;
+  estimateField: string | null;
+  authorizedBy: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface LinearIssue {
+  id: string;
+  identifier: string;
+  title: string;
+  description?: string;
+  state?: string;
+  estimate?: number;
+  url?: string;
+}
+
 export interface TicketVote {
   id: number;
   ticketQueueId: number;
@@ -212,7 +242,7 @@ export interface TicketQueueItem {
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: 'jira' | 'none';
+  externalService: 'jira' | 'linear' | 'none';
   externalServiceId?: string;
   externalServiceMetadata?: Record<string, unknown>;
   votes?: TicketVote[];
