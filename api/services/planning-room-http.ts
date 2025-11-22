@@ -356,9 +356,30 @@ export async function handleHttpRequest(
   }
 
   if (url.pathname === "/jira/oauth/status" && request.method === "GET") {
+    const roomKey = url.searchParams.get("roomKey");
+    const userName = url.searchParams.get("userName");
+    const sessionToken = url.searchParams.get("sessionToken");
+
+    if (!roomKey || !userName || !sessionToken) {
+      return createJsonResponse(
+        { error: "Missing room key, user name, or session token" },
+        400
+      );
+    }
+
     const roomData = await ctx.getRoomData();
-    if (!roomData || !roomData.key) {
+    if (!roomData || !roomData.key || roomData.key !== roomKey) {
       return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const isMember = roomData.users.includes(userName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      userName,
+      sessionToken
+    );
+
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: "Invalid session" }, 401);
     }
 
     const credentials = ctx.repository.getJiraOAuthCredentials(roomData.key);
@@ -465,9 +486,36 @@ export async function handleHttpRequest(
   }
 
   if (url.pathname === "/jira/oauth/revoke" && request.method === "DELETE") {
+    const body = await request.json().catch(() => ({})) as {
+      roomKey?: string;
+      userName?: string;
+      sessionToken?: string;
+    };
+
+    const roomKey = body?.roomKey;
+    const userName = body?.userName;
+    const sessionToken = body?.sessionToken;
+
+    if (!roomKey || !userName || !sessionToken) {
+      return createJsonResponse(
+        { error: "Missing room key, user name, or session token" },
+        400
+      );
+    }
+
     const roomData = await ctx.getRoomData();
-    if (!roomData || !roomData.key) {
+    if (!roomData || !roomData.key || roomData.key !== roomKey) {
       return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const isMember = roomData.users.includes(userName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      userName,
+      sessionToken
+    );
+
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: "Invalid session" }, 401);
     }
 
     ctx.repository.deleteJiraOAuthCredentials(roomData.key);
@@ -521,9 +569,30 @@ export async function handleHttpRequest(
   }
 
   if (url.pathname === "/linear/oauth/status" && request.method === "GET") {
+    const roomKey = url.searchParams.get("roomKey");
+    const userName = url.searchParams.get("userName");
+    const sessionToken = url.searchParams.get("sessionToken");
+
+    if (!roomKey || !userName || !sessionToken) {
+      return createJsonResponse(
+        { error: "Missing room key, user name, or session token" },
+        400
+      );
+    }
+
     const roomData = await ctx.getRoomData();
-    if (!roomData || !roomData.key) {
+    if (!roomData || !roomData.key || roomData.key !== roomKey) {
       return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const isMember = roomData.users.includes(userName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      userName,
+      sessionToken
+    );
+
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: "Invalid session" }, 401);
     }
 
     const credentials = ctx.repository.getLinearOAuthCredentials(roomData.key);
@@ -581,9 +650,36 @@ export async function handleHttpRequest(
   }
 
   if (url.pathname === "/linear/oauth/revoke" && request.method === "DELETE") {
+    const body = await request.json().catch(() => ({})) as {
+      roomKey?: string;
+      userName?: string;
+      sessionToken?: string;
+    };
+
+    const roomKey = body?.roomKey;
+    const userName = body?.userName;
+    const sessionToken = body?.sessionToken;
+
+    if (!roomKey || !userName || !sessionToken) {
+      return createJsonResponse(
+        { error: "Missing room key, user name, or session token" },
+        400
+      );
+    }
+
     const roomData = await ctx.getRoomData();
-    if (!roomData || !roomData.key) {
+    if (!roomData || !roomData.key || roomData.key !== roomKey) {
       return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    const isMember = roomData.users.includes(userName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      userName,
+      sessionToken
+    );
+
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: "Invalid session" }, 401);
     }
 
     ctx.repository.deleteLinearOAuthCredentials(roomData.key);

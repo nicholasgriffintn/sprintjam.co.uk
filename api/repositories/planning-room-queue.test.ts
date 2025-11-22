@@ -6,6 +6,8 @@ import type {
 
 import { PlanningRoomRepository } from "./planning-room";
 import { MockSqlStorage } from "../../tests/helpers/mock-sql-helper";
+import type { RoomData } from "../types";
+import { getDefaultRoomSettings } from "../utils/defaults";
 
 describe("PlanningRoomRepository - Ticket Queue", () => {
   let repository: PlanningRoomRepository;
@@ -17,6 +19,9 @@ describe("PlanningRoomRepository - Ticket Queue", () => {
     const mockStorage = {
       sql: mockSql as unknown as SqlStorage,
       transactionSync: vi.fn((fn: () => void) => fn()),
+      transaction: vi.fn(async (fn: (txn: { sql: SqlStorage }) => void) =>
+        fn({ sql: mockSql } as unknown as { sql: SqlStorage }),
+      ),
     } as unknown as DurableObjectStorage;
 
     repository = new PlanningRoomRepository(mockStorage);
@@ -24,53 +29,53 @@ describe("PlanningRoomRepository - Ticket Queue", () => {
   });
 
   describe("getNextTicketId", () => {
-    it('returns SPRINTJAM-001 when no tickets exist', () => {
+    it("returns SPRINTJAM-001 when no tickets exist", () => {
       const ticketId = repository.getNextTicketId({
-        externalService: 'none',
+        externalService: "none",
       });
-      expect(ticketId).toBe('SPRINTJAM-001');
+      expect(ticketId).toBe("SPRINTJAM-001");
     });
 
-    it('returns empty string for non-SprintJam service when no tickets exist', () => {
+    it("returns empty string for non-SprintJam service when no tickets exist", () => {
       const ticketId = repository.getNextTicketId({
-        externalService: 'jira',
+        externalService: "jira",
       });
-      expect(ticketId).toBe('');
+      expect(ticketId).toBe("");
     });
 
-    it('increments from existing highest ticket', () => {
+    it("increments from existing highest ticket", () => {
       repository.createTicket({
-        ticketId: 'SPRINTJAM-001',
-        status: 'completed',
+        ticketId: "SPRINTJAM-001",
+        status: "completed",
         ordinal: 0,
-        externalService: 'none',
+        externalService: "none",
       });
 
       repository.createTicket({
-        ticketId: 'SPRINTJAM-005',
-        status: 'in_progress',
+        ticketId: "SPRINTJAM-005",
+        status: "in_progress",
         ordinal: 1,
-        externalService: 'none',
+        externalService: "none",
       });
 
       const nextId = repository.getNextTicketId({
-        externalService: 'none',
+        externalService: "none",
       });
-      expect(nextId).toBe('SPRINTJAM-006');
+      expect(nextId).toBe("SPRINTJAM-006");
     });
 
-    it('returns empty string when existing tickets do not match SprintJam pattern', () => {
+    it("returns empty string when existing tickets do not match SprintJam pattern", () => {
       repository.createTicket({
-        ticketId: 'JIRA-123',
-        status: 'completed',
+        ticketId: "JIRA-123",
+        status: "completed",
         ordinal: 0,
-        externalService: 'jira',
+        externalService: "jira",
       });
 
       const nextId = repository.getNextTicketId({
-        externalService: 'jira',
+        externalService: "jira",
       });
-      expect(nextId).toBe('');
+      expect(nextId).toBe("");
     });
   });
 
@@ -176,6 +181,27 @@ describe("PlanningRoomRepository - Ticket Queue", () => {
       expect(queue[0].ticketId).toBe("SPRINTJAM-001");
       expect(queue[1].ticketId).toBe("SPRINTJAM-002");
       expect(queue[2].ticketId).toBe("SPRINTJAM-003");
+    });
+  });
+
+  describe("getTicketQueue with anonymization", () => {
+    it("anonymizes ticket vote authors when anonymousVotes is enabled", () => {
+      const queue = repository.getTicketQueue({ anonymizeVotes: true });
+      expect(queue).toEqual([]);
+
+      const ticket = repository.createTicket({
+        ticketId: "SPRINTJAM-001",
+        status: "pending",
+        ordinal: 0,
+        externalService: "none",
+      });
+      repository.logTicketVote(ticket.id, "alice", "5");
+
+      const loadedQueue = repository.getTicketQueue({ anonymizeVotes: true });
+      expect(loadedQueue).toHaveLength(1);
+      const votes = loadedQueue[0].votes ?? [];
+      expect(votes).toHaveLength(1);
+      expect(votes[0].userName).toBe("Anonymous");
     });
   });
 });

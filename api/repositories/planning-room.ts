@@ -228,11 +228,14 @@ export class PlanningRoomRepository {
       throw new Error('Failed to parse room settings from storage');
     }
 
+    const anonymizeVotes =
+      settings.anonymousVotes || settings.hideParticipantNames;
+
     const currentTicket = this.getCurrentTicket({
-      anonymizeVotes: settings.hideParticipantNames,
+      anonymizeVotes,
     });
     const ticketQueue = this.getTicketQueue({
-      anonymizeVotes: settings.hideParticipantNames,
+      anonymizeVotes,
     });
 
     const roomData: RoomData = {
@@ -546,12 +549,12 @@ export class PlanningRoomRepository {
         ticket_id: string;
         title: string | null;
         description: string | null;
-        status: 'pending' | 'in_progress' | 'completed';
+        status: 'pending' | 'in_progress' | 'completed' | 'blocked';
         outcome: string | null;
         created_at: number;
         completed_at: number | null;
         ordinal: number;
-        external_service: 'jira' | 'none';
+        external_service: 'jira' | 'linear' | 'none';
         external_service_id: string | null;
         external_service_metadata: string | null;
       }>(`SELECT * FROM ticket_queue WHERE id = ?`, id)
@@ -589,12 +592,12 @@ export class PlanningRoomRepository {
         ticket_id: string;
         title: string | null;
         description: string | null;
-        status: 'pending' | 'in_progress' | 'completed';
+        status: 'pending' | 'in_progress' | 'completed' | 'blocked';
         outcome: string | null;
         created_at: number;
         completed_at: number | null;
         ordinal: number;
-        external_service: 'jira' | 'none';
+        external_service: 'jira' | 'linear' | 'none';
         external_service_id: string | null;
         external_service_metadata: string | null;
       }>('SELECT * FROM ticket_queue ORDER BY ordinal ASC')

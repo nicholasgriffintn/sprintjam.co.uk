@@ -237,7 +237,7 @@ export interface TicketQueueItem {
   ticketId: string;
   title?: string;
   description?: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
   outcome?: string;
   createdAt: number;
   completedAt?: number;

@@ -775,10 +775,12 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const queue = this.repository.getTicketQueue();
       const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
 
+      const externalServiceForTicket = ticket.externalService ?? 'none';
+
       const ticketId =
         ticket.ticketId ||
         this.repository.getNextTicketId({
-          externalService: roomData.settings.externalService || 'none',
+          externalService: externalServiceForTicket,
         });
 
       if (ticketId) {
@@ -797,7 +799,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           description: ticket.description,
           status: ticket.status || 'pending',
           ordinal: ticket.ordinal ?? maxOrdinal + 1,
-          externalService: ticket.externalService || 'none',
+          externalService: externalServiceForTicket,
           externalServiceId: ticket.externalServiceId,
           externalServiceMetadata: ticket.externalServiceMetadata,
         });

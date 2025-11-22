@@ -17,6 +17,17 @@ export class MockSqlStorage {
       return { toArray: () => [] };
     }
 
+    if (upperQuery.includes("SELECT") && upperQuery.includes("TICKET_VOTES")) {
+      const ticketQueueId = params[0];
+      const votes = (this.tables.get("ticket_votes") || []).filter(
+        (v: any) => v.ticket_queue_id === ticketQueueId,
+      );
+      return {
+        toArray: () =>
+          votes.sort((a: any, b: any) => (a.voted_at || 0) - (b.voted_at || 0)),
+      };
+    }
+
     if (upperQuery.includes("SELECT") && upperQuery.includes("TICKET_QUEUE")) {
       if (upperQuery.includes("WHERE TICKET_ID LIKE")) {
         const tickets = this.tables.get("ticket_queue") || [];
@@ -60,6 +71,37 @@ export class MockSqlStorage {
       this.autoIncrements.set("ticket_queue", id + 1);
 
       return { toArray: () => [{ id }] as T[] };
+    }
+
+    if (upperQuery.startsWith("INSERT INTO TICKET_VOTES")) {
+      const table = this.tables.get("ticket_votes") || [];
+      const id = this.autoIncrements.get("ticket_votes") || 1;
+
+      const vote = {
+        id,
+        ticket_queue_id: params[0],
+        user_name: params[1],
+        vote: params[2],
+        structured_vote_payload: params[3] || null,
+        voted_at: params[4],
+      };
+
+      const existingIndex = table.findIndex(
+        (v: any) =>
+          v.ticket_queue_id === vote.ticket_queue_id &&
+          v.user_name === vote.user_name,
+      );
+
+      if (existingIndex >= 0) {
+        table[existingIndex] = vote;
+      } else {
+        table.push(vote);
+        this.autoIncrements.set("ticket_votes", id + 1);
+      }
+
+      this.tables.set("ticket_votes", table);
+
+      return { toArray: () => [] };
     }
 
     if (upperQuery.startsWith("UPDATE TICKET_QUEUE")) {
