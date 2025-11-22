@@ -8,7 +8,13 @@ export function TicketQueueSettings({
   localSettings: RoomSettings;
   handleChange: (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number,
+    value:
+      | boolean
+      | (string | number)[]
+      | JudgeAlgorithm
+      | number
+      | string
+      | null
   ) => void;
 }) {
   const {

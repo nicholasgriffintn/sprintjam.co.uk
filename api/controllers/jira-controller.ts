@@ -247,8 +247,7 @@ export async function updateJiraStoryPointsController(
       currentTicket,
       onTokenRefresh,
       clientId,
-      clientSecret,
-      userName ?? undefined
+      clientSecret
     );
 
     return jsonResponse({ ticket: updatedTicket });
