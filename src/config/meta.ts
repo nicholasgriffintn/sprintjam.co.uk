@@ -40,6 +40,13 @@ export const META_CONFIGS: Record<string, MetaTagConfig> = {
     keywords: 'privacy policy, data protection, privacy, terms',
     ogImage: '/og-image.png',
   },
+  terms: {
+    title: `Terms and Conditions - ${SITE_NAME}`,
+    description:
+      'Read our Terms and Conditions. We believe in transparency and fair usage of our estimation tool.',
+    keywords: 'terms and conditions, terms of service, legal, usage',
+    ogImage: '/og-image.png',
+  },
   notFound: {
     title: `Page Not Found - ${SITE_NAME}`,
     description:

@@ -206,6 +206,13 @@ const WelcomeScreen = () => {
         >
           Privacy Policy
         </a>
+        <span className="text-sm text-slate-600 dark:text-slate-300">|</span>
+        <a
+          href="/terms"
+          className="text-sm text-slate-600 dark:text-slate-300 underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
+        >
+          Terms
+        </a>
       </div>
     </PageBackground>
   );
