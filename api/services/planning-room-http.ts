@@ -266,6 +266,23 @@ export async function handleHttpRequest(
       return createJsonResponse({ error: "Room not found" }, 404);
     }
 
+    const sessionToken = url.searchParams.get("sessionToken");
+    const name = url.searchParams.get("name");
+
+    if (!name || !sessionToken) {
+      return createJsonResponse(
+        { error: "Missing name or session token" },
+        401,
+      );
+    }
+
+    const isMember = roomData.users.includes(name);
+    const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
+
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: "Invalid session" }, 401);
+    }
+
     return createJsonResponse({
       success: true,
       settings: roomData.settings,
@@ -273,15 +290,26 @@ export async function handleHttpRequest(
   }
 
   if (url.pathname === "/settings" && request.method === "PUT") {
-    const { name, settings } = (await request.json()) as {
+    const { name, settings, sessionToken } = (await request.json()) as {
       name: string;
       settings: RoomData["settings"];
+      sessionToken?: string;
     };
 
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
       return createJsonResponse({ error: "Room not found" }, 404);
+    }
+
+    if (!sessionToken) {
+      return createJsonResponse({ error: "Missing session token" }, 401);
+    }
+
+    const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
+
+    if (!tokenValid) {
+      return createJsonResponse({ error: "Invalid session" }, 401);
     }
 
     if (roomData.moderator !== name) {

@@ -11,6 +11,7 @@ import {
   findDefaultSprintField,
   findDefaultStoryPointsField,
 } from '../services/jira-service';
+import { escapeHtml, signState, verifyState } from "../utils/security";
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
@@ -72,15 +73,16 @@ export async function initiateJiraOAuthController(
       env.JIRA_OAUTH_REDIRECT_URI ||
       'https://sprintjam.co.uk/api/jira/oauth/callback';
 
-    if (!clientId) {
+    if (!clientId || !env.JIRA_OAUTH_CLIENT_SECRET) {
       return jsonError(
         'OAuth not configured. Please contact administrator.',
         500
       );
     }
 
-    const state = btoa(
-      JSON.stringify({ roomKey, userName, nonce: crypto.randomUUID() })
+    const state = await signState(
+      { roomKey, userName, nonce: crypto.randomUUID() },
+      env.JIRA_OAUTH_CLIENT_SECRET
     );
 
     const authUrl = new URL('https://auth.atlassian.com/authorize');
@@ -113,7 +115,7 @@ export async function handleJiraOAuthCallbackController(
 
   if (error) {
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${error}</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(error)}</p><script>window.close();</script></body></html>`,
       { status: 400, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
@@ -126,13 +128,6 @@ export async function handleJiraOAuthCallbackController(
   }
 
   try {
-    const stateData = JSON.parse(atob(state)) as {
-      roomKey: string;
-      userName: string;
-      nonce: string;
-    };
-    const { roomKey, userName } = stateData;
-
     const clientId = env.JIRA_OAUTH_CLIENT_ID;
     const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
     const redirectUri =
@@ -145,6 +140,13 @@ export async function handleJiraOAuthCallbackController(
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
+
+    const stateData = (await verifyState(state, clientSecret)) as {
+      roomKey: string;
+      userName: string;
+      nonce: string;
+    };
+    const { roomKey, userName } = stateData;
 
     const tokenResponse = await fetch(
       'https://auth.atlassian.com/oauth/token',
@@ -296,7 +298,7 @@ export async function handleJiraOAuthCallbackController(
     console.error('OAuth callback error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${message}</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(message)}</p><script>window.close();</script></body></html>`,
       { status: 500, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }

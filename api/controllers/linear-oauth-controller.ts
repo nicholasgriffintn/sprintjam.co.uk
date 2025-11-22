@@ -10,6 +10,7 @@ import {
   getLinearOrganization,
   getLinearViewer,
 } from '../services/linear-service';
+import { escapeHtml, signState, verifyState } from "../utils/security";
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
@@ -71,15 +72,16 @@ export async function initiateLinearOAuthController(
       env.LINEAR_OAUTH_REDIRECT_URI ||
       'https://sprintjam.co.uk/api/linear/oauth/callback';
 
-    if (!clientId) {
+    if (!clientId || !env.LINEAR_OAUTH_CLIENT_SECRET) {
       return jsonError(
         'OAuth not configured. Please contact administrator.',
         500
       );
     }
 
-    const state = btoa(
-      JSON.stringify({ roomKey, userName, nonce: crypto.randomUUID() })
+    const state = await signState(
+      { roomKey, userName, nonce: crypto.randomUUID() },
+      env.LINEAR_OAUTH_CLIENT_SECRET
     );
 
     const authUrl = new URL('https://linear.app/oauth/authorize');
@@ -108,7 +110,7 @@ export async function handleLinearOAuthCallbackController(
 
   if (error) {
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${error}</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(error)}</p><script>window.close();</script></body></html>`,
       { status: 400, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
@@ -121,13 +123,6 @@ export async function handleLinearOAuthCallbackController(
   }
 
   try {
-    const stateData = JSON.parse(atob(state)) as {
-      roomKey: string;
-      userName: string;
-      nonce: string;
-    };
-    const { roomKey, userName } = stateData;
-
     const clientId = env.LINEAR_OAUTH_CLIENT_ID;
     const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
     const redirectUri =
@@ -140,6 +135,13 @@ export async function handleLinearOAuthCallbackController(
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
+
+    const stateData = (await verifyState(state, clientSecret)) as {
+      roomKey: string;
+      userName: string;
+      nonce: string;
+    };
+    const { roomKey, userName } = stateData;
 
     const tokenResponse = await fetch(
       'https://api.linear.app/oauth/token',
@@ -228,7 +230,7 @@ export async function handleLinearOAuthCallbackController(
     console.error('OAuth callback error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${message}</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(message)}</p><script>window.close();</script></body></html>`,
       { status: 500, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }

@@ -6,8 +6,6 @@ import type {
 
 import { PlanningRoomRepository } from "./planning-room";
 import { MockSqlStorage } from "../../tests/helpers/mock-sql-helper";
-import type { RoomData } from "../types";
-import { getDefaultRoomSettings } from "../utils/defaults";
 
 describe("PlanningRoomRepository - Ticket Queue", () => {
   let repository: PlanningRoomRepository;

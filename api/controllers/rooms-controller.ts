@@ -81,15 +81,24 @@ export async function getRoomSettingsController(
   env: Env,
 ): Promise<CfResponse> {
   const roomKey = url.searchParams.get("roomKey");
+  const sessionToken = url.searchParams.get("sessionToken");
+  const name = url.searchParams.get("name");
 
   if (!roomKey) {
     return jsonError("Room key is required");
   }
 
   const roomObject = getRoomStub(env, roomKey);
+  const doUrl = new URL("https://dummy/settings");
+  if (sessionToken) {
+    doUrl.searchParams.set("sessionToken", sessionToken);
+  }
+  if (name) {
+    doUrl.searchParams.set("name", name);
+  }
 
   return roomObject.fetch(
-    new Request("https://dummy/settings", {
+    new Request(doUrl.toString(), {
       method: "GET",
     }) as unknown as CfRequest,
   );
@@ -103,11 +112,13 @@ export async function updateRoomSettingsController(
     name?: string;
     roomKey?: string;
     settings?: Record<string, unknown>;
+    sessionToken?: string;
   }>();
 
   const name = body?.name;
   const roomKey = body?.roomKey;
   const settings = body?.settings;
+  const sessionToken = body?.sessionToken;
 
   if (!name || !roomKey || !settings) {
     return jsonError("Name, room key, and settings are required");
@@ -119,7 +130,7 @@ export async function updateRoomSettingsController(
     new Request("https://dummy/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, settings }),
+      body: JSON.stringify({ name, settings, sessionToken }),
     }) as unknown as CfRequest,
   );
 }
