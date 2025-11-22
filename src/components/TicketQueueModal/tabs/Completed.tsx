@@ -6,6 +6,7 @@ import { handleError } from '../../../utils/error';
 import { updateJiraStoryPoints } from '../../../lib/jira-service';
 import { formatDate } from '../../../utils/date';
 import { JiraBadge } from '../../JiraBadge';
+import { LinearBadge } from '../../LinearBadge';
 import { getVoteSummary, calculateStoryPointsFromVotes } from '../../../utils/votes';
 import { downloadCsv } from '../../../utils/csv';
 import { buildCsv } from '../utils/csv';
@@ -70,6 +71,12 @@ export function TicketQueueModalCompletedTab({
     downloadCsv(`${ticket.ticketId}-votes.csv`, csv);
   };
 
+  const renderBadge = (ticket: TicketQueueItem) => {
+    if (ticket.externalService === 'jira') return <JiraBadge {...ticket} />;
+    if (ticket.externalService === 'linear') return <LinearBadge {...ticket} />;
+    return null;
+  };
+
   return (
     <div
       className="max-h-[70vh] space-y-3 overflow-y-auto pr-1"
@@ -93,7 +100,7 @@ export function TicketQueueModalCompletedTab({
                     <span className="font-mono text-sm font-semibold">
                       {ticket.ticketId}
                     </span>
-                    <JiraBadge {...ticket} />
+                    {renderBadge(ticket)}
                     <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
                       Completed
                     </span>

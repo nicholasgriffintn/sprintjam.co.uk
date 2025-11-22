@@ -136,7 +136,6 @@ async function handleApiRequest(
     return revokeJiraOAuthController(request, env);
   }
 
-  // Linear API routes
   if (path === "linear/issue" && request.method === "GET") {
     return getLinearIssueController(url, env);
   }

@@ -6,11 +6,13 @@ import type { TicketQueueItem, TicketMetadata } from '../../../types';
 import { fetchJiraTicket } from '../../../lib/jira-service';
 import { handleError } from '../../../utils/error';
 import { getJiraMetadata } from '../../../utils/jira';
+import { getLinearMetadata } from '../../../utils/linear';
 import { JiraBadge } from '../../JiraBadge';
+import { LinearBadge } from '../../LinearBadge';
 
 interface TicketQueueModalQueueTabProps {
   currentTicket?: TicketQueueItem;
-  externalService: 'none' | 'jira';
+  externalService: 'none' | 'jira' | 'linear';
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
   onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onDeleteTicket: (ticketId: number) => void;
@@ -50,6 +52,14 @@ export function TicketQueueModalQueueTab({
   const [isSavingLink, setIsSavingLink] = useState(false);
 
   const jiraEnabled = externalService === 'jira';
+  const linearEnabled = externalService === 'linear';
+
+  const renderBadge = (ticket?: TicketQueueItem) => {
+    if (!ticket) return null;
+    if (ticket.externalService === 'jira') return <JiraBadge {...ticket} />;
+    if (ticket.externalService === 'linear') return <LinearBadge {...ticket} />;
+    return null;
+  };
 
   const handleAddTicket = () => {
     if (!newTicketTitle.trim()) return;
@@ -201,7 +211,7 @@ export function TicketQueueModalQueueTab({
         <div className="rounded-lg border-2 border-blue-500 bg-blue-50 p-4 dark:border-blue-400 dark:bg-blue-900/20">
           <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
             <span>Current Ticket</span>
-            <JiraBadge {...currentTicket} />
+            {renderBadge(currentTicket)}
           </h3>
           <div className="space-y-1">
             <div className="flex items-center justify-between">
@@ -255,6 +265,13 @@ export function TicketQueueModalQueueTab({
             </div>
           )}
         </div>
+
+        {linearEnabled && (
+          <p className="mb-3 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs text-purple-800 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-100">
+            Linear integration connected. Ticket import is coming soon—add
+            tickets manually for now.
+          </p>
+        )}
 
         <AnimatePresence>
           {showAddForm && (
@@ -381,6 +398,7 @@ export function TicketQueueModalQueueTab({
           ) : (
             pendingTickets.map((ticket) => {
               const jiraMetadata = getJiraMetadata(ticket);
+              const linearMetadata = getLinearMetadata(ticket);
               const isLinking = linkingTicketId === ticket.id;
 
               return (
@@ -397,7 +415,7 @@ export function TicketQueueModalQueueTab({
                         <span className="font-mono text-sm font-semibold">
                           {ticket.ticketId}
                         </span>
-                        <JiraBadge {...ticket} />
+                        {renderBadge(ticket)}
                         {ticket.title && (
                           <span className="text-sm">{ticket.title}</span>
                         )}
@@ -410,6 +428,11 @@ export function TicketQueueModalQueueTab({
                       {jiraMetadata && (
                         <p className="text-xs text-blue-700 dark:text-blue-200">
                           {jiraMetadata.summary}
+                        </p>
+                      )}
+                      {linearMetadata && (
+                        <p className="text-xs text-purple-700 dark:text-purple-200">
+                          {linearMetadata.title || linearMetadata.identifier}
                         </p>
                       )}
                     </div>

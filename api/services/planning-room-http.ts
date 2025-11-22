@@ -39,10 +39,8 @@ export async function handleHttpRequest(
     const passcodeHash = passcode ? await hashPasscode(passcode) : undefined;
     let roomData = await ctx.getRoomData();
 
-    if (!roomData) {
-      // Initialization when room data not present; continue with default flow
-    } else if (roomData.key) {
-      return createJsonResponse({ error: "Room already exists" }, 400);
+    if (roomData?.key) {
+      return createJsonResponse({ error: 'Room already exists' }, 400);
     }
 
     roomData = createInitialRoomData({
@@ -487,7 +485,6 @@ export async function handleHttpRequest(
     return createJsonResponse({ success: true });
   }
 
-  // Linear OAuth routes
   if (url.pathname === "/linear/oauth/save" && request.method === "POST") {
     const credentials = (await request.json()) as {
       accessToken: string;

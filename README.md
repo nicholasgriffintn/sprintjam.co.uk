@@ -26,13 +26,12 @@ SprintJam is a modern, privacy-focused planning poker application designed for a
 - **Automatic Scoring**: Final story point recommendations
 - **Consensus Detection**: Identifies when team alignment is reached
 
-### 🔗 **Jira Integration**
+### 🔗 **External Provider Integrations**
 
-- OAuth 2.0 authentication for secure, per-room Jira access
-- Fetch ticket details directly from Jira
-- Auto-update story points after estimation
-- Support for custom story point fields
-- Per-user authorization with automatic token refresh
+- OAuth 2.0 per-room connections to Jira or Linear
+- Fetch ticket details and keep estimates in sync
+- Provider-specific fields (Jira story points/sprint; Linear estimate field)
+- Automatic token refresh per moderator
 
 ### 🎛️ **Customizable Experience**
 
@@ -85,30 +84,23 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    Create a `.dev.vars` file or configure in Cloudflare dashboard:
 
    ```env
-   # Optional: Jira OAuth Integration
-   JIRA_OAUTH_CLIENT_ID=your-oauth-client-id
-   JIRA_OAUTH_CLIENT_SECRET=your-oauth-client-secret
+   # Optional: Jira OAuth
+   JIRA_OAUTH_CLIENT_ID=your-jira-client-id
+   JIRA_OAUTH_CLIENT_SECRET=your-jira-client-secret
    JIRA_OAUTH_REDIRECT_URI=https://your-domain.com/api/jira/oauth/callback
+
+   # Optional: Linear OAuth
+   LINEAR_OAUTH_CLIENT_ID=your-linear-client-id
+   LINEAR_OAUTH_CLIENT_SECRET=your-linear-client-secret
+   LINEAR_OAUTH_REDIRECT_URI=https://your-domain.com/api/linear/oauth/callback
    ```
 
-   **To enable Jira integration:**
+   **To enable an external provider:**
 
-   a. Create an OAuth 2.0 app in Atlassian Developer Console:
-      - Visit https://developer.atlassian.com/console/myapps/
-      - Create a new OAuth 2.0 (3LO) app
-      - Add the following scopes:
-        - `read:jira-work`
-        - `write:jira-work`
-        - `read:jira-user`
-        - `offline_access`
-      - Set the callback URL to match `JIRA_OAUTH_REDIRECT_URI`
-
-   b. Copy your Client ID and Client Secret to the environment variables
-
-   c. Moderators can connect their Jira account via the room settings:
-      - Open Settings → Other Options
-      - Select "Jira" as External Provider
-      - Click "Connect to Jira" and authorize access
+   a. Create an OAuth 2.0 app with the provider (Atlassian Developer Console for Jira; Linear Developer Settings for Linear) and set the redirect URI to match the value above.  
+   b. Add required scopes (only required for Jira: `read:jira-work`, `write:jira-work`, `read:jira-user`, `offline_access`).  
+   c. Copy the client ID/secret into the corresponding env vars.  
+   d. In a room, open Settings → Other Options → External Provider and connect Jira or Linear.
 
 4. **Deploy to Cloudflare**
    ```bash
@@ -152,4 +144,3 @@ Contributions are welcome! This project was built quickly and there are definite
 - [ ] Add a history drawer in `UnifiedResults` to surface trend lines once snapshots exist (avg delta, consensus trend, automatic regression callouts).
 - [ ] Improve accessibility (ARIA roles, keyboard navigation, screen reader support).
 - [ ] Make the background music as awesome as possible (this is something to do on Polychat).
-

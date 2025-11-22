@@ -177,7 +177,6 @@ export async function handleLinearOAuthCallbackController(
       scope?: string;
     }>();
 
-    // Fetch organization info
     let linearOrganizationId: string | null = null;
     try {
       const organization = await getLinearOrganization(tokenData.access_token);
@@ -186,7 +185,6 @@ export async function handleLinearOAuthCallbackController(
       console.error('Failed to fetch Linear organization:', orgError);
     }
 
-    // Fetch user info
     let linearUserId: string | null = null;
     let linearUserEmail: string | null = null;
     try {
@@ -212,7 +210,7 @@ export async function handleLinearOAuthCallbackController(
           linearUserId,
           linearUserEmail,
           authorizedBy: userName,
-          estimateField: 'estimate', // Linear has a standard estimate field
+          estimateField: 'estimate',
         }),
       }) as unknown as CfRequest
     );
