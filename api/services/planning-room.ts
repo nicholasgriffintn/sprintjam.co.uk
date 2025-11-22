@@ -17,7 +17,6 @@ import type {
   StructuredVote,
   TicketQueueItem,
 } from '../types';
-import { createInitialRoomData } from '../utils/defaults';
 import {
   isStructuredVote,
   createStructuredVote,
@@ -1042,7 +1041,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   }
 
   private canAutoCreateTicket(roomData: RoomData): boolean {
-    console.log(roomData.settings.externalService);
     return roomData.settings.externalService === 'none';
   }
 
