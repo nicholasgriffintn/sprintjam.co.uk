@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 
-import { joinRoom } from "../lib/api-service";
-import { upsertRoom } from "../lib/data/room-store";
-import { safeLocalStorage } from "../utils/storage";
-import type { AvatarId, ServerDefaults } from "../types";
-import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from '../constants';
+import { joinRoom } from "@/lib/api-service";
+import { upsertRoom } from "@/lib/data/room-store";
+import { safeLocalStorage } from "@/utils/storage";
+import type { AvatarId, ServerDefaults } from "@/types";
+import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from '@/constants';
 
 interface UseAutoReconnectOptions {
   name: string;

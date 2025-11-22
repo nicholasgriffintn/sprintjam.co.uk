@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { AlertCircle, CheckCircle2, Plug2 } from 'lucide-react';
 
-import { useJiraOAuth } from '../../hooks/useJiraOAuth';
-import { useLinearOAuth } from '../../hooks/useLinearOAuth';
-import { Button } from '../ui/Button';
-import { Modal } from '../ui/Modal';
+import { useJiraOAuth } from '@/hooks/useJiraOAuth';
+import { useLinearOAuth } from '@/hooks/useLinearOAuth';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 
 interface QueueProviderSetupModalProps {
   isOpen: boolean;
@@ -32,15 +32,15 @@ export function QueueProviderSetupModal({
     () =>
       isJira
         ? {
-            name: 'Jira',
-            description:
-              'Pull tickets directly from your Jira backlog and keep estimates in sync.',
-          }
+          name: 'Jira',
+          description:
+            'Pull tickets directly from your Jira backlog and keep estimates in sync.',
+        }
         : {
-            name: 'Linear',
-            description:
-              'Connect Linear to queue up issues and capture estimates alongside your cycle.',
-          },
+          name: 'Linear',
+          description:
+            'Connect Linear to queue up issues and capture estimates alongside your cycle.',
+        },
     [isJira]
   );
 

@@ -3,18 +3,18 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Users, Key, Lock, User, ChevronRight } from 'lucide-react';
 
-import { useSession } from '../context/SessionContext';
-import { useRoom } from '../context/RoomContext';
-import AvatarSelector from '../components/AvatarSelector';
-import { PageBackground } from '../components/layout/PageBackground';
-import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Alert } from '../components/ui/Alert';
-import { Logo } from '../components/Logo';
-import { Footer } from '../components/layout/Footer';
-import { usePageMeta } from '../hooks/usePageMeta';
-import { META_CONFIGS } from '../config/meta';
+import { useSession } from '@/context/SessionContext';
+import { useRoom } from '@/context/RoomContext';
+import AvatarSelector from '@/components/AvatarSelector';
+import { PageBackground } from '@/components/layout/PageBackground';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Alert } from '@/components/ui/Alert';
+import { Logo } from '@/components/Logo';
+import { Footer } from '@/components/layout/Footer';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { META_CONFIGS } from '@/config/meta';
 
 const JoinRoomScreen = () => {
   usePageMeta(META_CONFIGS.join);

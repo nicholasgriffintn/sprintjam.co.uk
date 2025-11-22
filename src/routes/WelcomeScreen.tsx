@@ -10,14 +10,14 @@ import {
   Play,
 } from 'lucide-react';
 
-import { useSession } from '../context/SessionContext';
-import { PageBackground } from '../components/layout/PageBackground';
-import { Button } from '../components/ui/Button';
-import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { Logo } from '../components/Logo';
-import { Footer } from '../components/layout/Footer';
-import { usePageMeta } from '../hooks/usePageMeta';
-import { META_CONFIGS } from '../config/meta';
+import { useSession } from '@/context/SessionContext';
+import { PageBackground } from '@/components/layout/PageBackground';
+import { Button } from '@/components/ui/Button';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { Logo } from '@/components/Logo';
+import { Footer } from '@/components/layout/Footer';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { META_CONFIGS } from '@/config/meta';
 
 const WelcomeScreen = () => {
   const { startCreateFlow, startJoinFlow } = useSession();

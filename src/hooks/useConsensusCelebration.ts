@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 
-import type { RoomData, RoomStats } from "../types";
+import type { RoomData, RoomStats } from "@/types";
 
 interface UseConsensusCelebrationParams {
   roomData: RoomData;

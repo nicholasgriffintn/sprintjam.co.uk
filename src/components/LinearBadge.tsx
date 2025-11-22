@@ -1,7 +1,7 @@
 import { ExternalLink, Link2 } from 'lucide-react';
 
-import type { TicketQueueItem } from '../types';
-import { getLinearMetadata } from '../utils/linear';
+import type { TicketQueueItem } from '@/types';
+import { getLinearMetadata } from '@/utils/linear';
 
 export const LinearBadge = (ticket: TicketQueueItem) => {
   if (ticket.externalService !== 'linear') {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { RoomData, RoomStats, VoteValue } from "../types";
+import type { RoomData, RoomStats, VoteValue } from "@/types";
 
 export const useRoomStats = (roomData: RoomData): RoomStats => {
   return useMemo(() => {

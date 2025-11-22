@@ -2,8 +2,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { createCollection, type Collection } from "@tanstack/db";
 import { queryCollectionOptions } from "@tanstack/query-db-collection";
 
-import { API_BASE_URL } from "../../constants";
-import type { RoomData, ServerDefaults } from "../../types";
+import { API_BASE_URL } from "@/constants";
+import type { RoomData, ServerDefaults } from "@/types";
 
 export const SERVER_DEFAULTS_DOCUMENT_KEY = "server-defaults";
 

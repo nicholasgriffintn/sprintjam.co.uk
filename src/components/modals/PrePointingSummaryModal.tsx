@@ -1,8 +1,8 @@
 import { FC, useMemo } from "react";
 import { CheckCircle2, Users } from "lucide-react";
 
-import type { TicketQueueItem, VoteValue } from "../../types";
-import { Modal } from "../ui/Modal";
+import type { TicketQueueItem, VoteValue } from "@/types";
+import { Modal } from "@/components/ui/Modal";
 
 interface PrePointingSummaryModalProps {
   isOpen: boolean;

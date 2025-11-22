@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
-import type { RoomData, VoteValue, StructuredVote } from "../types";
-import { getVoteKeyForUser } from "../utils/room";
+import type { RoomData, VoteValue, StructuredVote } from "@/types";
+import { getVoteKeyForUser } from "@/utils/room";
 
 interface UseRoomDataSyncOptions {
   roomData: RoomData | null;

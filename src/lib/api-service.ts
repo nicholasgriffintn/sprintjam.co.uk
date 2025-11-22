@@ -8,9 +8,9 @@ import type {
   WebSocketMessageType,
   AvatarId,
   TicketQueueItem,
-} from "../types";
-import { API_BASE_URL, WS_BASE_URL } from "../constants";
-import { safeLocalStorage } from "../utils/storage";
+} from "@/types";
+import { API_BASE_URL, WS_BASE_URL } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
 import {
   SERVER_DEFAULTS_DOCUMENT_KEY,
   roomsCollection,
@@ -18,7 +18,7 @@ import {
   ensureRoomsCollectionReady,
   ensureServerDefaultsCollectionReady,
 } from "./data/collections";
-import { AUTH_TOKEN_STORAGE_KEY } from '../constants';
+import { AUTH_TOKEN_STORAGE_KEY } from '@/constants';
 
 let activeSocket: WebSocket | null = null;
 let activeAuthToken: string | null = null;

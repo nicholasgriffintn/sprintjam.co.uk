@@ -2,9 +2,9 @@ import { useEffect, useRef, useState, useCallback } from "react";
 // @ts-ignore - no types available
 import { initStrudel, evaluate, hush, setDefaultValue } from '@strudel/web';
 
-import { prebake } from "../lib/strudel";
-import { safeLocalStorage } from "../utils/storage";
-import { MUTE_STORAGE_KEY, VOLUME_STORAGE_KEY } from '../constants';
+import { prebake } from "@/lib/strudel";
+import { safeLocalStorage } from "@/utils/storage";
+import { MUTE_STORAGE_KEY, VOLUME_STORAGE_KEY } from '@/constants';
 
 let sharedInitPromise: Promise<void> | null = null;
 let sharedInitialized = false;

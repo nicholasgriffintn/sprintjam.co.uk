@@ -7,6 +7,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { THEME_STORAGE_KEY } from "@/constants";
+
 type Theme = "light" | "dark";
 
 interface ThemeContextType {
@@ -15,7 +17,6 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-const STORAGE_KEY = "sprintjam_theme";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -26,7 +27,7 @@ const getInitialTheme = (): Theme => {
   }
 
   try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === "light" || saved === "dark") {
       return saved;
     }
@@ -52,7 +53,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch {
       // Ignore storage write errors (private mode, etc.)
     }

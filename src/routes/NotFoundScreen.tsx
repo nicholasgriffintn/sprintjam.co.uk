@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 
-import { PageBackground } from "../components/layout/PageBackground";
-import { Logo } from "../components/Logo";
-import { Footer } from "../components/layout/Footer";
-import { usePageMeta } from "../hooks/usePageMeta";
-import { META_CONFIGS } from "../config/meta";
+import { PageBackground } from "@/components/layout/PageBackground";
+import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/layout/Footer";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
 
 const NotFoundScreen = () => {
   usePageMeta(META_CONFIGS.notFound);

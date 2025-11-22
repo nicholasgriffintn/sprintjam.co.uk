@@ -1,36 +1,36 @@
 import { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { useRoom } from '../context/RoomContext';
-import { useSession } from '../context/SessionContext';
-import { useRoomStats } from '../hooks/useRoomStats';
-import { useConsensusCelebration } from '../hooks/useConsensusCelebration';
-import ErrorBanner from '../components/ui/ErrorBanner';
-import Header from '../components/Header';
-import { Timer } from '../components/Timer';
-import { UserEstimate } from '../components/UserEstimate';
-import { ResultsControls } from '../components/ResultsControls';
-import { VotesHidden } from '../components/VotesHidden';
-import { StructuredVotingPanel } from '../components/StructuredVotingPanel';
-import { SurfaceCard } from '../components/ui/SurfaceCard';
-import { StrudelMiniPlayer } from '../components/StrudelPlayer/StrudelMiniPlayer';
-import { FallbackLoading } from '../components/ui/FallbackLoading';
-import { TicketQueueModal } from '../components/TicketQueueModal';
-import { PrePointingSummaryModal } from '../components/modals/PrePointingSummaryModal';
-import { QueueProviderSetupModal } from '../components/modals/QueueProviderSetupModal';
-import { ErrorBannerAuth } from '../components/ErrorBannerAuth';
-import { ErrorBannerConnection } from '../components/ErrorBannerConnection';
-import { RoomSidebar } from '../components/RoomSidebar';
-import { getVoteKeyForUser } from '../utils/room';
-import { useDisplayQueueSetup } from '../hooks/useDisplayQueueSetup';
-import { usePageMeta } from '../hooks/usePageMeta';
-import { META_CONFIGS } from '../config/meta';
-import { Footer } from '../components/layout/Footer';
+import { useRoom } from '@/context/RoomContext';
+import { useSession } from '@/context/SessionContext';
+import { useRoomStats } from '@/hooks/useRoomStats';
+import { useConsensusCelebration } from '@/hooks/useConsensusCelebration';
+import ErrorBanner from '@/components/ui/ErrorBanner';
+import Header from '@/components/Header';
+import { Timer } from '@/components/voting/Timer';
+import { UserEstimate } from '@/components/voting/UserEstimate';
+import { ResultsControls } from '@/components/results/ResultsControls';
+import { VotesHidden } from '@/components/results/VotesHidden';
+import { StructuredVotingPanel } from '@/components/voting/StructuredVotingPanel';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { StrudelMiniPlayer } from '@/components/StrudelPlayer/StrudelMiniPlayer';
+import { FallbackLoading } from '@/components/ui/FallbackLoading';
+import { TicketQueueModal } from '@/components/modals/TicketQueueModal';
+import { PrePointingSummaryModal } from '@/components/modals/PrePointingSummaryModal';
+import { QueueProviderSetupModal } from '@/components/modals/QueueProviderSetupModal';
+import { ErrorBannerAuth } from '@/components/errors/ErrorBannerAuth';
+import { ErrorBannerConnection } from '@/components/errors/ErrorBannerConnection';
+import { RoomSidebar } from '@/components/layout/RoomSidebar';
+import { getVoteKeyForUser } from '@/utils/room';
+import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { META_CONFIGS } from '@/config/meta';
+import { Footer } from '@/components/layout/Footer';
 
-const SettingsModal = lazy(() => import('../components/SettingsModal'));
-const ShareRoomModal = lazy(() => import('../components/ShareRoomModal'));
+const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
+const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
 const UnifiedResults = lazy(() =>
-  import('../components/UnifiedResults').then((m) => ({
+  import('@/components/results/UnifiedResults').then((m) => ({
     default: m.UnifiedResults,
   }))
 );

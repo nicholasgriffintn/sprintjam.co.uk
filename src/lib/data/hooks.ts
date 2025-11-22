@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 
-import type { RoomData, ServerDefaults } from "../../types";
+import type { RoomData, ServerDefaults } from "@/types";
 import {
   SERVER_DEFAULTS_DOCUMENT_KEY,
   roomsCollection,
   serverDefaultsCollection,
 } from "./collections";
 
-const noopSubscribe = () => () => {};
+const noopSubscribe = () => () => { };
 
 function createCollectionSubscriber(
   subscribeAll: (onChange: () => void) => () => void

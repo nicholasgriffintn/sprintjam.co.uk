@@ -1,5 +1,5 @@
-import type { MetaTagConfig } from '../utils/meta';
-import { SITE_NAME, BASE_DESCRIPTION } from '../constants';
+import type { MetaTagConfig } from '@/utils/meta';
+import { SITE_NAME, BASE_DESCRIPTION } from '@/constants';
 
 export const META_CONFIGS: Record<string, MetaTagConfig> = {
   welcome: {

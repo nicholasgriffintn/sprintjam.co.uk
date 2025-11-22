@@ -1,7 +1,7 @@
 import { type FC } from "react";
 import { Play, Pause, Volume2, VolumeX, Music, Loader2 } from "lucide-react";
 
-import { Button } from "../ui/Button";
+import { Button } from "@/components/ui/Button";
 
 interface StrudelControlsProps {
   isPlaying: boolean;

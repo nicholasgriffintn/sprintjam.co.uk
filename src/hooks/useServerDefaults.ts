@@ -3,14 +3,14 @@ import { useState, useCallback, useEffect } from "react";
 import {
   fetchDefaultSettings,
   getCachedDefaultSettings,
-} from "../lib/api-service";
+} from "@/lib/api-service";
 import {
   serverDefaultsCollection,
   ensureServerDefaultsCollectionReady,
-} from "../lib/data/collections";
-import { useServerDefaults as useServerDefaultsFromCollection } from "../lib/data/hooks";
-import type { ServerDefaults } from "../types";
-import { cloneServerDefaults } from "../utils/settings";
+} from "@/lib/data/collections";
+import { useServerDefaults as useServerDefaultsFromCollection } from "@/lib/data/hooks";
+import type { ServerDefaults } from "@/types";
+import { cloneServerDefaults } from "@/utils/settings";
 
 export const useServerDefaults = () => {
   const cachedDefaults = getCachedDefaultSettings();

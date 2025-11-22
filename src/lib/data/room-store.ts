@@ -1,5 +1,5 @@
-import type { RoomData, WebSocketMessage } from "../../types";
-import { applyRoomUpdate } from "../../utils/room";
+import type { RoomData, WebSocketMessage } from "@/types";
+import { applyRoomUpdate } from "@/utils/room";
 import { ensureRoomsCollectionReady, roomsCollection } from "./collections";
 
 async function readyRoomsCollection(): Promise<void> {

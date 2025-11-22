@@ -23,6 +23,7 @@ export const ROOM_KEY_STORAGE_KEY = 'sprintjam_roomKey';
 export const MUTE_STORAGE_KEY = 'sprintjam_strudelPlayerMuted';
 export const VOLUME_STORAGE_KEY = 'sprintjam_strudelPlayerVolume';
 export const USERNAME_STORAGE_KEY = 'sprintjam_username';
+export const THEME_STORAGE_KEY = "sprintjam_theme";
 
 export const QUICK_EMOJIS = [
   "😀",

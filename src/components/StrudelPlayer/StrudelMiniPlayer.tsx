@@ -2,14 +2,14 @@ import { type FC, useCallback, useEffect, useState } from "react";
 import { Music, X, Volume2 } from 'lucide-react';
 import { useRef } from 'react';
 
-import { SurfaceCard } from '../ui/SurfaceCard';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { StrudelControls } from './StrudelControls';
-import { useStrudelPlayer } from '../../hooks/useStrudelPlayer';
+import { useStrudelPlayer } from '@/hooks/useStrudelPlayer';
 import {
   requestStrudelGeneration,
   toggleStrudelPlayback,
-} from '../../lib/api-service';
-import type { RoomData } from '../../types';
+} from '@/lib/api-service';
+import type { RoomData } from '@/types';
 
 interface StrudelMiniPlayerProps {
   roomData: RoomData;
@@ -133,11 +133,10 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
       <SurfaceCard
         variant="subtle"
         padding={isExpanded ? 'sm' : 'none'}
-        className={`relative origin-bottom-right overflow-hidden transition-all duration-300 ${
-          isExpanded
+        className={`relative origin-bottom-right overflow-hidden transition-all duration-300 ${isExpanded
             ? 'w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]'
             : 'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl'
-        }`}
+          }`}
         aria-expanded={isExpanded}
         role={!isExpanded ? 'button' : undefined}
         aria-label={!isExpanded ? 'Expand Strudel player' : undefined}
@@ -145,18 +144,18 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
         onClick={
           !isExpanded
             ? () => {
-                setIsExpanded(true);
-              }
+              setIsExpanded(true);
+            }
             : undefined
         }
         onKeyDown={
           !isExpanded
             ? (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  setIsExpanded(true);
-                }
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setIsExpanded(true);
               }
+            }
             : undefined
         }
       >
@@ -187,9 +186,8 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCode
-                      ? `${isPlaying ? 'Playing' : 'Paused'} • ${
-                          roomData.strudelPhase || 'Unknown'
-                        } phase`
+                      ? `${isPlaying ? 'Playing' : 'Paused'} • ${roomData.strudelPhase || 'Unknown'
+                      } phase`
                       : 'No music generated yet'}
                   </span>
                 </div>

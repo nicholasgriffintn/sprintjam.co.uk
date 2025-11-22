@@ -1,7 +1,7 @@
-import type { VoteValue, TicketMetadata } from "../types";
-import { API_BASE_URL } from "../constants";
-import { safeLocalStorage } from "../utils/storage";
-import { AUTH_TOKEN_STORAGE_KEY } from "../constants";
+import type { VoteValue, TicketMetadata } from "@/types";
+import { API_BASE_URL } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
 
 function resolveSessionToken(provided?: string | null): string {
   if (provided) return provided;
@@ -101,7 +101,7 @@ export async function updateJiraStoryPoints(
       const errorData = await response.json();
       throw new Error(
         errorData.error ||
-          `Failed to update Jira story points: ${response.status}`,
+        `Failed to update Jira story points: ${response.status}`,
       );
     }
 

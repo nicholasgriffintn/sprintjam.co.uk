@@ -1,6 +1,6 @@
 import { PageBackground } from "./PageBackground";
-import { SurfaceCard } from "../ui/SurfaceCard";
-import { Spinner } from "../ui/Spinner";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Spinner } from "@/components/ui/Spinner";
 
 export function ScreenLoader({
   title = "Preparing your view",

@@ -4,7 +4,7 @@ import {
   updateMetaTags,
   getAbsoluteUrl,
   type MetaTagConfig,
-} from '../utils/meta';
+} from '@/utils/meta';
 
 export function usePageMeta(config: MetaTagConfig): void {
   useEffect(() => {

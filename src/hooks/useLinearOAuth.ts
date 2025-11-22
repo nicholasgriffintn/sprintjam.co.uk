@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useRoom } from '../context/RoomContext';
-import { useSession } from '../context/SessionContext';
+import { useRoom } from '@/context/RoomContext';
+import { useSession } from '@/context/SessionContext';
 import {
   authorizeLinearOAuth,
   getLinearOAuthStatus,
   revokeLinearOAuth,
   type LinearOAuthStatus,
-} from "../lib/linear-service";
+} from "@/lib/linear-service";
 
 export function useLinearOAuth(enabled = true) {
   const { activeRoomKey, authToken } = useRoom();

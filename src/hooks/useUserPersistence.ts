@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { safeLocalStorage } from "../utils/storage";
-import { USERNAME_STORAGE_KEY } from '../constants';
+import { safeLocalStorage } from "@/utils/storage";
+import { USERNAME_STORAGE_KEY } from '@/constants';
 
 interface UseUserPersistenceOptions {
   name: string;

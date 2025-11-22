@@ -5,8 +5,8 @@ import {
   disconnectFromRoom,
   addEventListener,
   removeEventListener,
-} from "../lib/api-service";
-import type { WebSocketMessage, WebSocketMessageType } from "../types";
+} from "@/lib/api-service";
+import type { WebSocketMessage, WebSocketMessageType } from "@/types";
 
 interface UseRoomConnectionOptions {
   screen: string;

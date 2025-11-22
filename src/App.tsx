@@ -4,7 +4,7 @@ import { MotionConfig } from 'framer-motion';
 import ErrorBanner from './components/ui/ErrorBanner';
 import LoadingOverlay from './components/LoadingOverlay';
 import { ScreenLoader } from './components/layout/ScreenLoader';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorBoundary } from './components/errors/ErrorBoundary';
 import { SessionProvider } from './context/SessionContext';
 import { RoomProvider, useRoom } from './context/RoomContext';
 import { useSession } from './context/SessionContext';
@@ -12,7 +12,7 @@ import WelcomeScreen from './routes/WelcomeScreen';
 import CreateRoomScreen from './routes/CreateRoomScreen';
 import JoinRoomScreen from './routes/JoinRoomScreen';
 import NotFoundScreen from './routes/NotFoundScreen';
-import { ErrorBannerServerDefaults } from './components/ErrorBannerServerDefaults';
+import { ErrorBannerServerDefaults } from './components/errors/ErrorBannerServerDefaults';
 import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
 import TermsConditionsScreen from './routes/TermsConditionsScreen';
 

@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 
-import { updateJiraStoryPoints, convertVoteValueToStoryPoints } from "../lib/jira-service";
-import type { RoomData, TicketQueueItem, VoteValue, StructuredVote } from "../types";
+import { updateJiraStoryPoints, convertVoteValueToStoryPoints } from "@/lib/jira-service";
+import type { RoomData, TicketQueueItem, VoteValue, StructuredVote } from "@/types";
 
 interface UseAutoJiraUpdateOptions {
   roomData: RoomData | null;

@@ -7,9 +7,9 @@ import {
   type ReactNode,
 } from 'react';
 
-import { useUserPersistence } from '../hooks/useUserPersistence';
-import { useUrlParams } from '../hooks/useUrlParams';
-import type { AvatarId, ErrorKind } from '../types';
+import { useUserPersistence } from '@/hooks/useUserPersistence';
+import { useUrlParams } from '@/hooks/useUrlParams';
+import type { AvatarId, ErrorKind } from '@/types';
 
 export type AppScreen =
   | 'welcome'

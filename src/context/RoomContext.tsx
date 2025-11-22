@@ -22,19 +22,19 @@ import {
   addTicket,
   updateTicket,
   deleteTicket,
-} from '../lib/api-service';
+} from '@/lib/api-service';
 import {
   applyRoomMessageToCollections,
   removeRoomFromCollection,
   upsertRoom,
-} from '../lib/data/room-store';
-import { useRoomData } from '../lib/data/hooks';
-import { safeLocalStorage } from '../utils/storage';
-import { useServerDefaults } from '../hooks/useServerDefaults';
-import { useAutoReconnect } from '../hooks/useAutoReconnect';
-import { useAutoJiraUpdate } from '../hooks/useAutoJiraUpdate';
-import { useRoomConnection } from '../hooks/useRoomConnection';
-import { useRoomDataSync } from '../hooks/useRoomDataSync';
+} from '@/lib/data/room-store';
+import { useRoomData } from '@/lib/data/hooks';
+import { safeLocalStorage } from '@/utils/storage';
+import { useServerDefaults } from '@/hooks/useServerDefaults';
+import { useAutoReconnect } from '@/hooks/useAutoReconnect';
+import { useAutoJiraUpdate } from '@/hooks/useAutoJiraUpdate';
+import { useRoomConnection } from '@/hooks/useRoomConnection';
+import { useRoomDataSync } from '@/hooks/useRoomDataSync';
 import type {
   ErrorConnectionIssue,
   ErrorKind,
@@ -45,8 +45,8 @@ import type {
   TicketQueueItem,
   VoteValue,
   WebSocketMessage,
-} from '../types';
-import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from '../constants';
+} from '@/types';
+import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from '@/constants';
 import { useSession } from './SessionContext';
 
 interface RoomContextValue {

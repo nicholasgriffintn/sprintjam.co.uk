@@ -1,7 +1,7 @@
 import { ExternalLink, Link2 } from 'lucide-react';
 
-import type { TicketQueueItem } from '../types';
-import { getJiraMetadata } from '../utils/jira';
+import type { TicketQueueItem } from '@/types';
+import { getJiraMetadata } from '@/utils/jira';
 
 export const JiraBadge = (ticket: TicketQueueItem) => {
   if (ticket.externalService !== 'jira') {

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useRoom } from '../context/RoomContext';
-import { useSession } from '../context/SessionContext';
+import { useRoom } from '@/context/RoomContext';
+import { useSession } from '@/context/SessionContext';
 import {
   authorizeJiraOAuth,
   getJiraFields,
@@ -144,11 +144,11 @@ export function useJiraOAuth(enabled = true) {
         (prev) =>
           prev
             ? {
-                ...prev,
-                connected: false,
-                storyPointsField: undefined,
-                sprintField: undefined,
-              }
+              ...prev,
+              connected: false,
+              storyPointsField: undefined,
+              sprintField: undefined,
+            }
             : prev,
       );
       queryClient.removeQueries({
@@ -180,16 +180,16 @@ export function useJiraOAuth(enabled = true) {
         (prev) =>
           prev
             ? {
-                ...prev,
-                storyPointsField:
-                  options.storyPointsField !== undefined
-                    ? options.storyPointsField
-                    : prev.storyPointsField,
-                sprintField:
-                  options.sprintField !== undefined
-                    ? options.sprintField
-                    : prev.sprintField,
-              }
+              ...prev,
+              storyPointsField:
+                options.storyPointsField !== undefined
+                  ? options.storyPointsField
+                  : prev.storyPointsField,
+              sprintField:
+                options.sprintField !== undefined
+                  ? options.sprintField
+                  : prev.sprintField,
+            }
             : prev,
       );
       await queryClient.invalidateQueries({
