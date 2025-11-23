@@ -8,6 +8,7 @@ import type {
   WebSocketMessageType,
   AvatarId,
   TicketQueueItem,
+  RetroFormat,
 } from "@/types";
 import { API_BASE_URL, WS_BASE_URL } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
@@ -226,6 +227,11 @@ export function connectToRoom(
           case 'ticketDeleted':
           case 'ticketCompleted':
           case 'queueUpdated':
+          case 'retroStarted':
+          case 'retroItemAdded':
+          case 'retroItemVoted':
+          case 'retroItemDeleted':
+          case 'retroEnded':
             triggerEventListeners(data.type, data);
             break;
 
@@ -603,5 +609,69 @@ export function completeTicket(outcome?: string): void {
       type: "completeTicket",
       outcome,
     }),
+  );
+}
+
+export function startRetro(format: RetroFormat): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'startRetro',
+      retroFormat: format,
+    })
+  );
+}
+
+export function addRetroItem(category: string, content: string): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'addRetroItem',
+      retroItem: { category, content },
+    })
+  );
+}
+
+export function voteRetroItem(itemId: string): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'voteRetroItem',
+      retroItemId: itemId,
+    })
+  );
+}
+
+export function deleteRetroItem(itemId: string): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'deleteRetroItem',
+      retroItemId: itemId,
+    })
+  );
+}
+
+export function endRetro(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'endRetro',
+    })
   );
 }

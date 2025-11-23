@@ -21,11 +21,14 @@ import { QueueProviderSetupModal } from '@/components/modals/QueueProviderSetupM
 import { ErrorBannerAuth } from '@/components/errors/ErrorBannerAuth';
 import { ErrorBannerConnection } from '@/components/errors/ErrorBannerConnection';
 import { RoomSidebar } from '@/components/layout/RoomSidebar';
+import { RetroFormatModal } from '@/components/retro/RetroFormatModal';
+import { RetroView } from '@/components/retro/RetroView';
 import { getVoteKeyForUser } from '@/utils/room';
 import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { Footer } from '@/components/layout/Footer';
+import type { RetroFormat } from '@/types';
 
 const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
 const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
@@ -49,6 +52,11 @@ const RoomScreen = () => {
     handleAddTicket,
     handleUpdateTicket,
     handleDeleteTicket,
+    handleStartRetro,
+    handleAddRetroItem,
+    handleVoteRetroItem,
+    handleDeleteRetroItem,
+    handleEndRetro,
     roomError,
     roomErrorKind,
     clearRoomError,
@@ -63,7 +71,10 @@ const RoomScreen = () => {
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [isRetroFormatModalOpen, setIsRetroFormatModalOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
+  const [activeRetroCategory, setActiveRetroCategory] = useState<string | null>(null);
+  const [newRetroItemContent, setNewRetroItemContent] = useState<Record<string, string>>({});
 
   if (!roomData || !serverDefaults) {
     return <FallbackLoading />;
@@ -88,6 +99,60 @@ const RoomScreen = () => {
     (!isSocketConnected && !connectionIssue);
 
   const showAuthBanner = connectionIssue?.type === 'auth';
+
+  const onStartRetro = (format: RetroFormat) => {
+    handleStartRetro(format);
+    setIsRetroFormatModalOpen(false);
+  };
+
+  const onEndRetro = () => {
+    handleEndRetro();
+    setActiveRetroCategory(null);
+    setNewRetroItemContent({});
+  };
+
+  // If retro is active, show the retro view
+  if (roomData.retroData?.isActive) {
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+        {showAuthBanner && (
+          <ErrorBannerAuth
+            onRetryConnection={retryConnection}
+            onLeaveRoom={handleLeaveRoom}
+          />
+        )}
+
+        {!showAuthBanner && (connectionIssue || showReconnectBanner) && (
+          <ErrorBannerConnection
+            connectionIssue={connectionIssue}
+            onRetryConnection={retryConnection}
+          />
+        )}
+
+        {roomError && (
+          <ErrorBanner
+            message={roomError}
+            onClose={clearRoomError}
+            variant={roomErrorKind === 'permission' ? 'warning' : 'error'}
+          />
+        )}
+
+        <RetroView
+          retroData={roomData.retroData}
+          userName={name}
+          isModeratorView={isModeratorView}
+          onAddItem={handleAddRetroItem}
+          onVoteItem={handleVoteRetroItem}
+          onDeleteItem={handleDeleteRetroItem}
+          onEndRetro={onEndRetro}
+          activeCategory={activeRetroCategory}
+          setActiveCategory={setActiveRetroCategory}
+          newItemContent={newRetroItemContent}
+          setNewItemContent={setNewRetroItemContent}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
@@ -120,6 +185,7 @@ const RoomScreen = () => {
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
+        setIsRetroModalOpen={() => setIsRetroFormatModalOpen(true)}
       />
 
       <motion.div
@@ -278,6 +344,12 @@ const RoomScreen = () => {
           </Suspense>
         )}
       </AnimatePresence>
+
+      <RetroFormatModal
+        isOpen={isRetroFormatModalOpen}
+        onSelectFormat={onStartRetro}
+        onCancel={() => setIsRetroFormatModalOpen(false)}
+      />
 
       {isQueueEnabled && (
         <TicketQueueModal
