@@ -13,6 +13,9 @@ export interface Env {
   LINEAR_OAUTH_CLIENT_ID?: string;
   LINEAR_OAUTH_CLIENT_SECRET?: string;
   LINEAR_OAUTH_REDIRECT_URI?: string;
+  SLACK_OAUTH_CLIENT_ID?: string;
+  SLACK_OAUTH_CLIENT_SECRET?: string;
+  SLACK_OAUTH_REDIRECT_URI?: string;
   POLYCHAT_API_TOKEN?: string;
 }
 
@@ -122,7 +125,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: 'jira' | 'linear' | 'none';
+  externalService?: 'jira' | 'linear' | 'slack' | 'none';
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   autoUpdateJiraStoryPoints?: boolean;
@@ -242,7 +245,7 @@ export interface TicketQueueItem {
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: 'jira' | 'linear' | 'none';
+  externalService: 'jira' | 'linear' | 'slack' | 'none';
   externalServiceId?: string;
   externalServiceMetadata?: Record<string, unknown>;
   votes?: TicketVote[];
@@ -278,4 +281,47 @@ export interface SessionInfo {
   webSocket: CfWebSocket;
   roomKey: string;
   userName: string;
+}
+
+export interface SlackOAuthCredentials {
+  id: number;
+  roomKey: string;
+  accessToken: string;
+  refreshToken: string | null;
+  tokenType: string;
+  expiresAt: number;
+  scope: string | null;
+  slackTeamId: string | null;
+  slackTeamName: string | null;
+  slackChannelId: string | null;
+  slackChannelName: string | null;
+  slackUserId: string | null;
+  slackUserName: string | null;
+  authorizedBy: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SlackMessage {
+  channel: string;
+  text?: string;
+  blocks?: SlackBlock[];
+  thread_ts?: string;
+  attachments?: SlackAttachment[];
+}
+
+export interface SlackBlock {
+  type: string;
+  [key: string]: unknown;
+}
+
+export interface SlackAttachment {
+  color?: string;
+  title?: string;
+  text?: string;
+  fields?: Array<{
+    title: string;
+    value: string;
+    short?: boolean;
+  }>;
 }

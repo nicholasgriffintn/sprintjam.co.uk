@@ -93,14 +93,21 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    LINEAR_OAUTH_CLIENT_ID=your-linear-client-id
    LINEAR_OAUTH_CLIENT_SECRET=your-linear-client-secret
    LINEAR_OAUTH_REDIRECT_URI=https://your-domain.com/api/linear/oauth/callback
+
+   # Optional: Slack OAuth
+   SLACK_OAUTH_CLIENT_ID=your-slack-client-id
+   SLACK_OAUTH_CLIENT_SECRET=your-slack-client-secret
+   SLACK_OAUTH_REDIRECT_URI=https://your-domain.com/api/slack/oauth/callback
    ```
 
    **To enable an external provider:**
 
-   a. Create an OAuth 2.0 app with the provider (Atlassian Developer Console for Jira; Linear Developer Settings for Linear) and set the redirect URI to match the value above.  
-   b. Add required scopes (only required for Jira: `read:jira-work`, `write:jira-work`, `read:jira-user`, `offline_access`).  
-   c. Copy the client ID/secret into the corresponding env vars.  
-   d. In a room, open Settings → Other Options → External Provider and connect Jira or Linear.
+   a. Create an OAuth 2.0 app with the provider (Atlassian Developer Console for Jira; Linear Developer Settings for Linear; Slack API Apps for Slack) and set the redirect URI to match the value above.
+   b. Add required scopes:
+      - Jira: `read:jira-work`, `write:jira-work`, `read:jira-user`, `offline_access`
+      - Slack: `chat:write`, `chat:write.public`, `channels:read`, `groups:read`, `identify` (user scope)
+   c. Copy the client ID/secret into the corresponding env vars.
+   d. In a room, open Settings → Other Options → External Provider and connect Jira, Linear, or Slack.
 
 4. **Deploy to Cloudflare**
    ```bash

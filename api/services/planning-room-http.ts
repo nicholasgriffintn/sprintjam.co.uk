@@ -726,5 +726,233 @@ export async function handleHttpRequest(
     return createJsonResponse({ success: true });
   }
 
+  // Slack OAuth endpoints
+  if (url.pathname === '/slack/oauth/save' && request.method === 'POST') {
+    const credentials = (await request.json()) as {
+      accessToken: string;
+      refreshToken: string | null;
+      tokenType: string;
+      expiresAt: number;
+      scope: string | null;
+      slackTeamId: string | null;
+      slackTeamName: string | null;
+      slackChannelId?: string | null;
+      slackChannelName?: string | null;
+      slackUserId: string | null;
+      slackUserName: string | null;
+      authorizedBy: string;
+    };
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    ctx.repository.saveSlackOAuthCredentials({
+      roomKey: roomData.key,
+      accessToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      tokenType: credentials.tokenType,
+      expiresAt: credentials.expiresAt,
+      scope: credentials.scope,
+      slackTeamId: credentials.slackTeamId,
+      slackTeamName: credentials.slackTeamName,
+      slackChannelId: credentials.slackChannelId,
+      slackChannelName: credentials.slackChannelName,
+      slackUserId: credentials.slackUserId,
+      slackUserName: credentials.slackUserName,
+      authorizedBy: credentials.authorizedBy,
+    });
+
+    ctx.broadcast({
+      type: 'slackConnected',
+      slackTeamId: credentials.slackTeamId,
+      slackTeamName: credentials.slackTeamName,
+    });
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === '/slack/oauth/status' && request.method === 'GET') {
+    const roomKey = url.searchParams.get('roomKey');
+    const userName = url.searchParams.get('userName');
+    const sessionToken = url.searchParams.get('sessionToken');
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    if (!roomKey || !userName || !sessionToken) {
+      return createJsonResponse(
+        { error: 'Missing room key, user name, or session token' },
+        400
+      );
+    }
+    if (roomData.key !== roomKey) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+    const isMember = roomData.users.includes(userName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      userName,
+      sessionToken
+    );
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: 'Invalid session' }, 401);
+    }
+
+    const credentials = ctx.repository.getSlackOAuthCredentials(roomData.key);
+
+    if (!credentials) {
+      return createJsonResponse({
+        connected: false,
+      });
+    }
+
+    return createJsonResponse({
+      connected: true,
+      slackTeamId: credentials.slackTeamId,
+      slackTeamName: credentials.slackTeamName,
+      slackUserName: credentials.slackUserName,
+      slackChannelId: credentials.slackChannelId,
+      slackChannelName: credentials.slackChannelName,
+      expiresAt: credentials.expiresAt,
+    });
+  }
+
+  if (
+    url.pathname === '/slack/oauth/credentials' &&
+    request.method === 'GET'
+  ) {
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    const credentials = ctx.repository.getSlackOAuthCredentials(roomData.key);
+
+    if (!credentials) {
+      return createJsonResponse({ error: 'Slack not connected' }, 404);
+    }
+
+    return createJsonResponse(credentials);
+  }
+
+  if (url.pathname === '/slack/oauth/refresh' && request.method === 'POST') {
+    const body = (await request.json()) as {
+      accessToken: string;
+      refreshToken: string;
+      expiresAt: number;
+    };
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    ctx.repository.updateSlackOAuthTokens(
+      roomData.key,
+      body.accessToken,
+      body.refreshToken,
+      body.expiresAt
+    );
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === '/slack/oauth/revoke' && request.method === 'DELETE') {
+    const body = (await request.json().catch(() => ({}))) as {
+      roomKey?: string;
+      userName?: string;
+      sessionToken?: string;
+    };
+
+    const roomKey = body?.roomKey;
+    const userName = body?.userName;
+    const sessionToken = body?.sessionToken;
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    if (!roomKey || !userName || !sessionToken) {
+      return createJsonResponse(
+        { error: 'Missing room key, user name, or session token' },
+        400
+      );
+    }
+    if (roomData.key !== roomKey) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+    const isMember = roomData.users.includes(userName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      userName,
+      sessionToken
+    );
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: 'Invalid session' }, 401);
+    }
+
+    ctx.repository.deleteSlackOAuthCredentials(roomData.key);
+
+    ctx.broadcast({
+      type: 'slackDisconnected',
+    });
+
+    return createJsonResponse({ success: true });
+  }
+
+  if (url.pathname === '/slack/channel/update' && request.method === 'PUT') {
+    const body = (await request.json()) as {
+      roomKey?: string;
+      userName?: string;
+      sessionToken?: string;
+      channelId: string;
+      channelName: string;
+    };
+
+    const roomKey = body?.roomKey;
+    const userName = body?.userName;
+    const sessionToken = body?.sessionToken;
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    if (!roomKey || !userName || !sessionToken) {
+      return createJsonResponse(
+        { error: 'Missing room key, user name, or session token' },
+        400
+      );
+    }
+    if (roomData.key !== roomKey) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+    const isMember = roomData.users.includes(userName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      userName,
+      sessionToken
+    );
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: 'Invalid session' }, 401);
+    }
+
+    ctx.repository.updateSlackChannel(
+      roomData.key,
+      body.channelId,
+      body.channelName
+    );
+
+    ctx.broadcast({
+      type: 'slackChannelUpdated',
+      channelId: body.channelId,
+      channelName: body.channelName,
+    });
+
+    return createJsonResponse({ success: true });
+  }
+
   return null;
 }
