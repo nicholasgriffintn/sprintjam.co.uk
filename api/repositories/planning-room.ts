@@ -89,7 +89,7 @@ export class PlanningRoomRepository {
           created_at INTEGER NOT NULL,
           completed_at INTEGER,
           ordinal INTEGER NOT NULL,
-          external_service TEXT CHECK(external_service IN ('jira', 'linear', 'clickup', 'asana', 'youtrack', 'zoho', 'trello', 'monday', 'none')) DEFAULT 'none',
+          external_service TEXT CHECK(external_service IN ('jira', 'linear', 'slack', 'clickup', 'asana', 'youtrack', 'zoho', 'trello', 'monday', 'none')) DEFAULT 'none',
           external_service_id TEXT,
           external_service_metadata TEXT
         )`
@@ -112,7 +112,7 @@ export class PlanningRoomRepository {
         `CREATE TABLE IF NOT EXISTS oauth_credentials (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           room_key TEXT NOT NULL,
-          provider TEXT NOT NULL CHECK(provider IN ('jira', 'linear')),
+          provider TEXT NOT NULL CHECK(provider IN ('jira', 'linear', 'slack')),
           access_token TEXT NOT NULL,
           refresh_token TEXT,
           token_type TEXT NOT NULL,
@@ -1168,6 +1168,187 @@ export class PlanningRoomRepository {
       linearUserId: existing.linearUserId,
       linearUserEmail: existing.linearUserEmail,
       estimateField,
+      authorizedBy: existing.authorizedBy,
+    });
+  }
+
+  getSlackOAuthCredentials(roomKey: string): {
+    id: number;
+    roomKey: string;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    slackTeamId: string | null;
+    slackTeamName: string | null;
+    slackChannelId: string | null;
+    slackChannelName: string | null;
+    slackUserId: string | null;
+    slackUserName: string | null;
+    authorizedBy: string;
+    createdAt: number;
+    updatedAt: number;
+  } | null {
+    const row = this.sql
+      .exec<{
+        id: number;
+        room_key: string;
+        provider: string;
+        access_token: string;
+        refresh_token: string | null;
+        token_type: string;
+        expires_at: number;
+        scope: string | null;
+        authorized_by: string;
+        metadata: string | null;
+        created_at: number;
+        updated_at: number;
+      }>(
+        `SELECT * FROM oauth_credentials WHERE room_key = ? AND provider = 'slack'`,
+        roomKey
+      )
+      .toArray()[0];
+
+    if (!row) return null;
+
+    const metadata = safeJsonParse<{
+      slackTeamId?: string | null;
+      slackTeamName?: string | null;
+      slackChannelId?: string | null;
+      slackChannelName?: string | null;
+      slackUserId?: string | null;
+      slackUserName?: string | null;
+    }>(row.metadata ?? '{}');
+
+    return {
+      id: row.id,
+      roomKey: row.room_key,
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token,
+      tokenType: row.token_type,
+      expiresAt: row.expires_at,
+      scope: row.scope,
+      slackTeamId: metadata?.slackTeamId ?? null,
+      slackTeamName: metadata?.slackTeamName ?? null,
+      slackChannelId: metadata?.slackChannelId ?? null,
+      slackChannelName: metadata?.slackChannelName ?? null,
+      slackUserId: metadata?.slackUserId ?? null,
+      slackUserName: metadata?.slackUserName ?? null,
+      authorizedBy: row.authorized_by,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  saveSlackOAuthCredentials(credentials: {
+    roomKey: string;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    slackTeamId: string | null;
+    slackTeamName: string | null;
+    slackChannelId?: string | null;
+    slackChannelName?: string | null;
+    slackUserId: string | null;
+    slackUserName: string | null;
+    authorizedBy: string;
+  }): void {
+    const now = Date.now();
+    const metadata = JSON.stringify({
+      slackTeamId: credentials.slackTeamId,
+      slackTeamName: credentials.slackTeamName,
+      slackChannelId: credentials.slackChannelId || null,
+      slackChannelName: credentials.slackChannelName || null,
+      slackUserId: credentials.slackUserId,
+      slackUserName: credentials.slackUserName,
+    });
+    this.sql.exec(
+      `INSERT INTO oauth_credentials (
+        room_key,
+        provider,
+        access_token,
+        refresh_token,
+        token_type,
+        expires_at,
+        scope,
+        authorized_by,
+        metadata,
+        created_at,
+        updated_at
+      ) VALUES (?, 'slack', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(room_key, provider) DO UPDATE SET
+        access_token = excluded.access_token,
+        refresh_token = excluded.refresh_token,
+        token_type = excluded.token_type,
+        expires_at = excluded.expires_at,
+        scope = excluded.scope,
+        authorized_by = excluded.authorized_by,
+        metadata = excluded.metadata,
+        updated_at = excluded.updated_at`,
+      credentials.roomKey,
+      credentials.accessToken,
+      credentials.refreshToken,
+      credentials.tokenType,
+      credentials.expiresAt,
+      credentials.scope,
+      credentials.authorizedBy,
+      metadata,
+      now,
+      now
+    );
+  }
+
+  updateSlackOAuthTokens(
+    roomKey: string,
+    accessToken: string,
+    refreshToken: string | null,
+    expiresAt: number
+  ): void {
+    this.sql.exec(
+      `UPDATE oauth_credentials
+       SET access_token = ?, refresh_token = ?, expires_at = ?, updated_at = ?
+       WHERE room_key = ? AND provider = 'slack'`,
+      accessToken,
+      refreshToken,
+      expiresAt,
+      Date.now(),
+      roomKey
+    );
+  }
+
+  deleteSlackOAuthCredentials(roomKey: string): void {
+    this.sql.exec(
+      "DELETE FROM oauth_credentials WHERE room_key = ? AND provider = 'slack'",
+      roomKey
+    );
+  }
+
+  updateSlackChannel(
+    roomKey: string,
+    channelId: string,
+    channelName: string
+  ): void {
+    const existing = this.getSlackOAuthCredentials(roomKey);
+    if (!existing) {
+      return;
+    }
+
+    this.saveSlackOAuthCredentials({
+      roomKey: existing.roomKey,
+      accessToken: existing.accessToken,
+      refreshToken: existing.refreshToken,
+      tokenType: existing.tokenType,
+      expiresAt: existing.expiresAt,
+      scope: existing.scope,
+      slackTeamId: existing.slackTeamId,
+      slackTeamName: existing.slackTeamName,
+      slackChannelId: channelId,
+      slackChannelName: channelName,
+      slackUserId: existing.slackUserId,
+      slackUserName: existing.slackUserName,
       authorizedBy: existing.authorizedBy,
     });
   }

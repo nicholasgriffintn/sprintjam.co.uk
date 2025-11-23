@@ -36,6 +36,17 @@ import {
   getLinearOAuthStatusController,
   revokeLinearOAuthController,
 } from "./controllers/linear-oauth-controller";
+import {
+  initiateSlackOAuthController,
+  handleSlackOAuthCallbackController,
+  getSlackOAuthStatusController,
+  revokeSlackOAuthController,
+} from "./controllers/slack-oauth-controller";
+import {
+  postSessionResultsController,
+  postSessionStartController,
+  postCustomMessageController,
+} from "./controllers/slack-controller";
 
 async function handleRequest(
   request: CfRequest,
@@ -163,6 +174,35 @@ async function handleApiRequest(
 
   if (path === "linear/oauth/revoke" && request.method === "DELETE") {
     return revokeLinearOAuthController(request, env);
+  }
+
+  // Slack routes
+  if (path === "slack/oauth/authorize" && request.method === "POST") {
+    return initiateSlackOAuthController(request, env);
+  }
+
+  if (path === "slack/oauth/callback" && request.method === "GET") {
+    return handleSlackOAuthCallbackController(url, env);
+  }
+
+  if (path === "slack/oauth/status" && request.method === "GET") {
+    return getSlackOAuthStatusController(url, env);
+  }
+
+  if (path === "slack/oauth/revoke" && request.method === "DELETE") {
+    return revokeSlackOAuthController(request, env);
+  }
+
+  if (path === "slack/post/results" && request.method === "POST") {
+    return postSessionResultsController(request, env);
+  }
+
+  if (path === "slack/post/start" && request.method === "POST") {
+    return postSessionStartController(request, env);
+  }
+
+  if (path === "slack/post/message" && request.method === "POST") {
+    return postCustomMessageController(request, env);
   }
 
   return new Response(JSON.stringify({ error: "Not found" }), {
