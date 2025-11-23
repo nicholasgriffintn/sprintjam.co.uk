@@ -167,6 +167,38 @@ export interface StructuredVote {
   }[];
 }
 
+export interface JudgeStructuredContribution {
+  id: string;
+  label: string;
+  weightPercent: number;
+  averageScore: number;
+  maxScore: number;
+  averageContributionPercent: number;
+}
+
+export interface JudgeStructuredStoryPointBucket {
+  storyPoints: number;
+  count: number;
+  percentage: number;
+}
+
+export interface JudgeStructuredRuleUsage {
+  rule: string;
+  count: number;
+  percentage: number;
+}
+
+export interface JudgeStructuredBreakdown {
+  totalVotes: number;
+  averageWeightedScore: number;
+  averageAdjustedScore: number;
+  weightedStoryPointEstimate: number;
+  averageStoryPoints: number;
+  storyPointDistribution: JudgeStructuredStoryPointBucket[];
+  conversionRules: JudgeStructuredRuleUsage[];
+  contributions: JudgeStructuredContribution[];
+}
+
 export interface JiraTicket {
   id: string;
   key: string;

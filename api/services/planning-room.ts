@@ -20,6 +20,7 @@ import type {
 import {
   isStructuredVote,
   createStructuredVote,
+  buildJudgeStructuredBreakdown,
 } from '../utils/structured-voting';
 import {
   generateStrudelCode,
@@ -608,12 +609,20 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         questionMarkCount
       );
 
+      const structuredBreakdown = roomData.settings.enableStructuredVoting
+        ? buildJudgeStructuredBreakdown(
+            roomData.structuredVotes,
+            roomData.settings.votingCriteria,
+          )
+        : undefined;
+
       roomData.judgeScore = result.score;
       roomData.judgeMetadata = {
         confidence: result.confidence,
         needsDiscussion: result.needsDiscussion,
         reasoning: result.reasoning,
         algorithm: roomData.settings.judgeAlgorithm,
+        ...(structuredBreakdown ? { structuredBreakdown } : {}),
       };
 
       this.repository.setJudgeState(result.score, roomData.judgeMetadata);
