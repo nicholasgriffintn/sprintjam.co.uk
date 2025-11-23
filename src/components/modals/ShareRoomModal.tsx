@@ -1,8 +1,12 @@
-import { type FC, useState, useRef, useMemo } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { type FC, useState, useRef, useMemo, lazy, Suspense } from "react";
+import { toast } from "sonner";
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+
+const QRCodeSVG = lazy(() =>
+  import("qrcode.react").then((module) => ({ default: module.QRCodeSVG }))
+);
 
 interface ShareRoomModalProps {
   isOpen: boolean;
@@ -25,13 +29,19 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
     return `${window.location.origin}/?join=${roomKey}`;
   }, [roomKey]);
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (inputRef.current) {
       inputRef.current.select();
-      navigator.clipboard.writeText(shareableUrl);
-      setCopied(true);
+      try {
+        await navigator.clipboard.writeText(shareableUrl);
+        setCopied(true);
+        toast.success("Room link copied to clipboard!");
 
-      setTimeout(() => setCopied(false), 2000);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (error) {
+        toast.error("Failed to copy to clipboard. Please copy manually.");
+        console.error("Clipboard copy failed:", error);
+      }
     }
   };
 
@@ -66,13 +76,21 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
             Or scan this QR code:
           </p>
           <div className="p-4 bg-white/80 dark:bg-slate-900/60 border border-white/50 dark:border-white/10 rounded-2xl shadow-sm">
-            <QRCodeSVG
-              value={shareableUrl}
-              size={200}
-              title="QR code for room invite link"
-              role="img"
-              aria-label="QR code for room invite link"
-            />
+            <Suspense
+              fallback={
+                <div className="w-[200px] h-[200px] flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg">
+                  <span className="text-sm text-slate-500">Loading...</span>
+                </div>
+              }
+            >
+              <QRCodeSVG
+                value={shareableUrl}
+                size={200}
+                title="QR code for room invite link"
+                role="img"
+                aria-label="QR code for room invite link"
+              />
+            </Suspense>
           </div>
         </div>
 

@@ -191,7 +191,6 @@ export function connectToRoom(
     );
 
     socket.onopen = () => {
-      console.debug('WebSocket connection established');
       reconnectAttempts = 0;
       onConnectionStatusChange?.(true);
     };
@@ -199,7 +198,6 @@ export function connectToRoom(
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as WebSocketMessage;
-        console.debug('Received message:', data);
 
         try {
           onMessage(data);
@@ -243,7 +241,6 @@ export function connectToRoom(
     };
 
     socket.onclose = (event) => {
-      console.debug('WebSocket connection closed:', event.code, event.reason);
       onConnectionStatusChange?.(false);
 
       if (event.code === 4003) {
@@ -316,12 +313,6 @@ function handleReconnect(
     const delay = Math.min(
       RECONNECT_BASE_DELAY * 2 ** reconnectAttempts * jitter,
       MAX_RECONNECT_DELAY
-    );
-
-    console.debug(
-      `Attempting to reconnect in ${Math.round(
-        delay
-      )}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
     );
 
     setTimeout(() => {
