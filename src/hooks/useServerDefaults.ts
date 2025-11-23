@@ -23,14 +23,27 @@ export const useServerDefaults = () => {
     useState<boolean>(!cachedDefaults);
   const [defaultsError, setDefaultsError] = useState<string | null>(null);
 
-  const applyServerDefaults = useCallback(async (defaults?: ServerDefaults) => {
+  const applyServerDefaults = useCallback((defaults?: ServerDefaults) => {
     if (!defaults) {
       return;
     }
 
-    await ensureServerDefaultsCollectionReady();
-    serverDefaultsCollection.utils.writeUpsert(defaults);
+    setServerDefaults(cloneServerDefaults(defaults));
     setDefaultsError(null);
+    setIsLoadingDefaults(false);
+
+    const persistDefaults = async () => {
+      try {
+        if (!serverDefaultsCollection.isReady()) {
+          await ensureServerDefaultsCollectionReady();
+        }
+        serverDefaultsCollection.utils.writeUpsert(defaults);
+      } catch (err) {
+        console.error("Failed to persist server defaults", err);
+      }
+    };
+
+    void persistDefaults();
   }, []);
 
   const loadDefaults = useCallback(async (forceRefresh = false) => {

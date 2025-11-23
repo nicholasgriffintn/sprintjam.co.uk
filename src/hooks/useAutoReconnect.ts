@@ -14,7 +14,7 @@ interface UseAutoReconnectOptions {
   onReconnectSuccess: (roomKey: string, isModerator: boolean) => void;
   onReconnectError: (error: string) => void;
   onLoadingChange: (isLoading: boolean) => void;
-  applyServerDefaults: (defaults?: ServerDefaults) => Promise<void>;
+  applyServerDefaults: (defaults?: ServerDefaults) => void;
   onAuthTokenRefresh?: (token: string | null) => void;
 }
 
@@ -60,7 +60,7 @@ export const useAutoReconnect = ({
         savedAuthToken || undefined
       )
         .then(async ({ room: joinedRoom, defaults, authToken }) => {
-          await applyServerDefaults(defaults);
+          applyServerDefaults(defaults);
           await upsertRoom(joinedRoom);
           safeLocalStorage.set(ROOM_KEY_STORAGE_KEY, joinedRoom.key);
           if (authToken) {

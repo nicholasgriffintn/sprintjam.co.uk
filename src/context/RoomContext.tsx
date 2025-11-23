@@ -283,7 +283,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
           settings,
           selectedAvatar
         );
-        await applyServerDefaults(defaults);
+        applyServerDefaults(defaults);
         await upsertRoom(newRoom);
         setActiveRoomKey(newRoom.key);
         safeLocalStorage.set(ROOM_KEY_STORAGE_KEY, newRoom.key);
@@ -327,7 +327,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         defaults,
         authToken: newAuthToken,
       } = await joinRoom(name, roomKey, passcode || undefined, selectedAvatar);
-      await applyServerDefaults(defaults);
+      applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
       safeLocalStorage.set(ROOM_KEY_STORAGE_KEY, joinedRoom.key);

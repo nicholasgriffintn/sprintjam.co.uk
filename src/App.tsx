@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useRef } from 'react';
 import { MotionConfig } from 'framer-motion';
 
 import ErrorBanner from './components/ui/ErrorBanner';
@@ -16,7 +16,11 @@ import { ErrorBannerServerDefaults } from './components/errors/ErrorBannerServer
 import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
 import TermsConditionsScreen from './routes/TermsConditionsScreen';
 
-const RoomScreen = lazy(() => import('./routes/RoomScreen'));
+const roomScreenLoader = () => import('./routes/RoomScreen');
+const RoomScreen = lazy(roomScreenLoader);
+const preloadRoomScreen = () => {
+  void roomScreenLoader();
+};
 
 const AppContent = () => {
   const { screen, error, clearError } = useSession();
@@ -29,6 +33,19 @@ const AppContent = () => {
     handleRetryDefaults,
     isSocketStatusKnown,
   } = useRoom();
+
+  const hasPrefetchedRoomScreen = useRef(false);
+
+  useEffect(() => {
+    if (hasPrefetchedRoomScreen.current) {
+      return;
+    }
+
+    if (screen === 'room' || screen === 'join' || screen === 'create') {
+      preloadRoomScreen();
+      hasPrefetchedRoomScreen.current = true;
+    }
+  }, [screen]);
 
   const showGlobalLoading =
     screen !== 'room' && (isLoading || isLoadingDefaults);
