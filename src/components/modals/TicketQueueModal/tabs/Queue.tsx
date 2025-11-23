@@ -9,8 +9,7 @@ import { fetchLinearIssue } from '@/lib/linear-service';
 import { handleError } from '@/utils/error';
 import { getJiraMetadata } from '@/utils/jira';
 import { getLinearMetadata } from '@/utils/linear';
-import { JiraBadge } from '@/components/JiraBadge';
-import { LinearBadge } from '@/components/LinearBadge';
+import { ExternalServiceBadge } from '@/components/ExternalServiceBadge';
 
 interface TicketQueueModalQueueTabProps {
   currentTicket?: TicketQueueItem;
@@ -74,8 +73,8 @@ export function TicketQueueModalQueueTab({
 
   const renderBadge = (ticket?: TicketQueueItem) => {
     if (!ticket) return null;
-    if (ticket.externalService === 'jira') return <JiraBadge {...ticket} />;
-    if (ticket.externalService === 'linear') return <LinearBadge {...ticket} />;
+    if (ticket.externalService === 'jira') return <ExternalServiceBadge service="jira" getMetadata={(ticket) => ticket.externalServiceMetadata} ticket={ticket} />;
+    if (ticket.externalService === 'linear') return <ExternalServiceBadge service="linear" getMetadata={(ticket) => ticket.externalServiceMetadata} ticket={ticket} />;
     return null;
   };
 

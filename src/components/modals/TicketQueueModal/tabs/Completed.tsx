@@ -7,11 +7,10 @@ import { handleError } from '@/utils/error';
 import { updateJiraStoryPoints } from '@/lib/jira-service';
 import { updateLinearEstimate } from '@/lib/linear-service';
 import { formatDate } from '@/utils/date';
-import { JiraBadge } from '@/components/JiraBadge';
-import { LinearBadge } from '@/components/LinearBadge';
 import { getVoteSummary, calculateStoryPointsFromVotes } from '@/utils/votes';
 import { downloadCsv } from '@/utils/csv';
 import { buildCsv } from '@/components/modals/TicketQueueModal/utils/csv';
+import { ExternalServiceBadge } from '@/components/ExternalServiceBadge';
 
 interface TicketQueueModalCompletedTabProps {
   completedTickets: TicketQueueItem[];
@@ -128,8 +127,8 @@ export function TicketQueueModalCompletedTab({
   };
 
   const renderBadge = (ticket: TicketQueueItem) => {
-    if (ticket.externalService === 'jira') return <JiraBadge {...ticket} />;
-    if (ticket.externalService === 'linear') return <LinearBadge {...ticket} />;
+    if (ticket.externalService === 'jira') return <ExternalServiceBadge service="jira" getMetadata={(ticket) => ticket.externalServiceMetadata} ticket={ticket} />;
+    if (ticket.externalService === 'linear') return <ExternalServiceBadge service="linear" getMetadata={(ticket) => ticket.externalServiceMetadata} ticket={ticket} />;
     return null;
   };
 
