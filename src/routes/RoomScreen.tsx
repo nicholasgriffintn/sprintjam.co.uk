@@ -27,6 +27,7 @@ import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { Footer } from '@/components/layout/Footer';
+import { cn } from '@/lib/cn';
 
 const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
 const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
@@ -91,7 +92,10 @@ const RoomScreen = () => {
   const showAuthBanner = connectionIssue?.type === 'auth';
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div className={cn(
+      "flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white",
+      roomData.settings.viewMode === 'table' ? 'h-screen overflow-hidden' : 'min-h-screen'
+    )}>
       {showAuthBanner && (
         <ErrorBannerAuth
           onRetryConnection={retryConnection}
