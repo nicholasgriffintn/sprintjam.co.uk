@@ -5,6 +5,7 @@ import type {
 } from "@cloudflare/workers-types";
 
 import type {
+  JudgeMetadata,
   RoomData,
   RoomSettings,
   StructuredVote,
@@ -12,8 +13,8 @@ import type {
   TicketVote,
   VoteValue,
 } from '../types';
-import { serializeJSON, serializeVote } from "../utils/serialize";
-import { parseJudgeScore, parseVote, safeJsonParse } from "../utils/parse";
+import { serializeJSON, serializeVote } from '../utils/serialize';
+import { parseJudgeScore, parseVote, safeJsonParse } from '../utils/parse';
 import { DEFAULT_TIMER_DURATION_SECONDS } from '../constants';
 
 const ROOM_ROW_ID = 1;
@@ -292,7 +293,7 @@ export class PlanningRoomRepository {
       connectedUsers,
       judgeScore: parseJudgeScore(row.judge_score),
       judgeMetadata: row.judge_metadata
-        ? safeJsonParse<Record<string, unknown>>(row.judge_metadata)
+        ? safeJsonParse<JudgeMetadata>(row.judge_metadata)
         : undefined,
       settings,
       passcodeHash: row.passcode_hash ?? undefined,
@@ -572,10 +573,7 @@ export class PlanningRoomRepository {
     this.sql.exec('UPDATE room_votes SET structured_vote_payload = NULL');
   }
 
-  setJudgeState(
-    score: string | number | null,
-    metadata?: Record<string, unknown>
-  ) {
+  setJudgeState(score: string | number | null, metadata?: JudgeMetadata) {
     this.sql.exec(
       `UPDATE room_meta
        SET judge_score = ?, judge_metadata = ?
