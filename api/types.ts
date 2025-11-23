@@ -69,6 +69,16 @@ export interface JudgeResult {
   reasoning: string;
 }
 
+export interface JudgeMetadata {
+  confidence: 'high' | 'medium' | 'low';
+  needsDiscussion: boolean;
+  reasoning: string;
+  algorithm: JudgeAlgorithm;
+  questionMarkCount?: number;
+  numericVoteCount?: number;
+  totalVoteCount?: number;
+}
+
 export interface SummaryCardSetting {
   id: string;
   label: string;
@@ -277,7 +287,7 @@ export interface RoomData {
   moderator: string;
   connectedUsers: Record<string, boolean>;
   judgeScore?: string | number | null;
-  judgeMetadata?: Record<string, unknown>;
+  judgeMetadata?: JudgeMetadata;
   settings: RoomSettings;
   passcodeHash?: string;
   userAvatars?: Record<string, string>;

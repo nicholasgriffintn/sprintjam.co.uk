@@ -175,6 +175,9 @@ export interface JudgeMetadata {
   needsDiscussion: boolean;
   reasoning: string;
   algorithm: JudgeAlgorithm;
+  questionMarkCount?: number;
+  numericVoteCount?: number;
+  totalVoteCount?: number;
 }
 
 export interface TimerState {

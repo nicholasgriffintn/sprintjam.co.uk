@@ -614,6 +614,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         needsDiscussion: result.needsDiscussion,
         reasoning: result.reasoning,
         algorithm: roomData.settings.judgeAlgorithm,
+        questionMarkCount,
+        numericVoteCount: numericVotes.length,
+        totalVoteCount,
       };
 
       this.repository.setJudgeState(result.score, roomData.judgeMetadata);

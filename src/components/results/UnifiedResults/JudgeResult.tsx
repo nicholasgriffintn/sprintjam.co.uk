@@ -40,6 +40,24 @@ export const JudgeResult = memo(function JudgeResult({
     return { percentage, label };
   }, [stats.votedUsers, totalParticipants]);
 
+  const hasVerdict =
+    stats.judgeScore !== null && stats.judgeScore !== undefined;
+  const displayedScore = hasVerdict ? stats.judgeScore : '—';
+  const questionMarkCount = roomData.judgeMetadata?.questionMarkCount ?? 0;
+  const numericVoteCount = roomData.judgeMetadata?.numericVoteCount;
+  const totalVoteCount = roomData.judgeMetadata?.totalVoteCount;
+
+  const judgeContextItems = [
+    typeof numericVoteCount === 'number' && typeof totalVoteCount === 'number'
+      ? `${numericVoteCount}/${totalVoteCount} numeric votes analyzed`
+      : null,
+    questionMarkCount > 0
+      ? `${questionMarkCount} question mark${
+          questionMarkCount === 1 ? '' : 's'
+        }`
+      : null,
+  ].filter(Boolean);
+
   return (
     <div className="mb-4">
       <div className="flex items-center mb-2">
@@ -53,7 +71,7 @@ export const JudgeResult = memo(function JudgeResult({
             transition={{
               duration: 0.8,
               repeat: 2,
-              repeatType: "reverse",
+              repeatType: 'reverse',
             }}
           >
             <Gavel className="text-amber-700" />
@@ -74,35 +92,35 @@ export const JudgeResult = memo(function JudgeResult({
         >
           <div className="flex flex-row items-center gap-3 mb-2 sm:mb-0">
             <div className="text-4xl sm:text-5xl font-bold text-gray-800 dark:text-white">
-              {stats.judgeScore !== null ? stats.judgeScore : 0}
+              {displayedScore}
             </div>
             <div className="flex flex-col">
-              {roomData.judgeMetadata?.confidence === "high" && (
+              {roomData.judgeMetadata?.confidence === 'high' && (
                 <span className="px-2.5 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-xs sm:text-sm font-medium flex items-center">
                   <CheckCircle className="w-3.5 h-3.5 mr-1" /> High Confidence
                 </span>
               )}
-              {roomData.judgeMetadata?.confidence === "medium" && (
+              {roomData.judgeMetadata?.confidence === 'medium' && (
                 <span className="px-2.5 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs sm:text-sm font-medium flex items-center">
                   Medium Confidence
                 </span>
               )}
-              {roomData.judgeMetadata?.confidence === "low" && (
+              {roomData.judgeMetadata?.confidence === 'low' && (
                 <span className="px-2.5 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full text-xs sm:text-sm font-medium flex items-center">
                   <AlertTriangle className="w-3.5 h-3.5 mr-1" /> Low Confidence
                 </span>
               )}
               <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center sm:hidden">
-                <Users className="inline w-3 h-3 mr-1" />{" "}
+                <Users className="inline w-3 h-3 mr-1" />{' '}
                 {participationData.label}
               </span>
             </div>
           </div>
           <div className="mb-2 sm:mb-0">
             <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium sm:text-right">
-              {getSelectedModeLabel(roomData.settings.judgeAlgorithm || "")}
+              {getSelectedModeLabel(roomData.settings.judgeAlgorithm || '')}
               <span className="text-gray-500 dark:text-gray-400 ml-2 hidden sm:inline">
-                <Users className="inline w-3.5 h-3.5 mr-1" />{" "}
+                <Users className="inline w-3.5 h-3.5 mr-1" />{' '}
                 {participationData.label}
               </span>
             </div>
@@ -110,9 +128,34 @@ export const JudgeResult = memo(function JudgeResult({
         </motion.div>
 
         {roomData.judgeMetadata?.reasoning && (
-          <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-            {roomData.judgeMetadata.reasoning}
+          <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+            {!hasVerdict && (
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+                Awaiting verdict
+              </p>
+            )}
+            <p>{roomData.judgeMetadata.reasoning}</p>
+          </div>
+        )}
+
+        {!roomData.judgeMetadata && (
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Waiting for the judge to evaluate the revealed votes...
           </p>
+        )}
+
+        {judgeContextItems.length > 0 && (
+          <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 space-y-1 border-t border-gray-100 dark:border-white/10 pt-3">
+            {judgeContextItems.map((item) => (
+              <p key={item} className="flex items-center gap-1">
+                <span
+                  className="w-1.5 h-1.5 bg-amber-500 rounded-full inline-block"
+                  aria-hidden
+                />
+                {item}
+              </p>
+            ))}
+          </div>
         )}
 
         {roomData.judgeMetadata?.needsDiscussion && (
