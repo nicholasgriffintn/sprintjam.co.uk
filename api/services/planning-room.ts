@@ -40,6 +40,12 @@ import {
 } from './planning-room-http';
 import { PlanningRoomRepository } from '../repositories/planning-room';
 import { validateClientMessage } from '../utils/validate';
+import {
+  MAX_TIMER_DURATION_SECONDS,
+  MIN_TIMER_DURATION_SECONDS,
+} from '../constants';
+import { calculateTimerSeconds } from '../utils/timer';
+import { ensureTimerState } from '../utils/timer-state';
 
 export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
@@ -244,6 +250,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           case 'resetTimer':
             await this.handleResetTimer(userName);
             break;
+          case 'configureTimer':
+            await this.handleConfigureTimer(userName, validated.config);
+            break;
         }
       } catch (err: unknown) {
         webSocket.send(
@@ -347,7 +356,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const broadcastUser =
         roomData.settings.anonymousVotes ||
-          roomData.settings.hideParticipantNames
+        roomData.settings.hideParticipantNames
           ? getAnonymousUserId(roomData, userName)
           : userName;
 
@@ -438,6 +447,20 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.broadcast({
         type: 'resetVotes',
       });
+
+      const timerState = ensureTimerState(roomData);
+      if (timerState.autoResetOnVotesReset) {
+        const now = Date.now();
+        const currentSeconds = calculateTimerSeconds(timerState, now);
+        timerState.roundAnchorSeconds = currentSeconds;
+        this.repository.updateTimerConfig({
+          roundAnchorSeconds: currentSeconds,
+        });
+        this.broadcast({
+          type: 'timerUpdated',
+          timerState,
+        });
+      }
 
       shouldGenerateMusic =
         previousPhase !== newPhase &&
@@ -551,7 +574,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.sessions.forEach((session) => {
       try {
         session.webSocket.send(json);
-      } catch (_err) { }
+      } catch (_err) {}
     });
   }
 
@@ -999,11 +1022,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const currentTime = Date.now();
       this.repository.startTimer(currentTime);
 
-      const timerState = {
-        running: true,
-        seconds: roomData.timerState?.seconds ?? 0,
-        lastUpdateTime: currentTime,
-      };
+      const timerState = ensureTimerState(roomData);
+      timerState.running = true;
+      timerState.lastUpdateTime = currentTime;
 
       this.broadcast({
         type: 'timerStarted',
@@ -1045,14 +1066,77 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       this.repository.resetTimer();
 
-      const timerState = {
-        running: false,
-        seconds: 0,
-        lastUpdateTime: 0,
-      };
+      const timerState = ensureTimerState(roomData);
+      timerState.running = false;
+      timerState.seconds = 0;
+      timerState.lastUpdateTime = 0;
+      timerState.roundAnchorSeconds = 0;
 
       this.broadcast({
         type: 'timerReset',
+        timerState,
+      });
+    });
+  }
+
+  async handleConfigureTimer(
+    userName: string,
+    config: {
+      targetDurationSeconds?: number;
+      autoResetOnVotesReset?: boolean;
+      resetCountdown?: boolean;
+    }
+  ) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.getRoomData();
+      if (!roomData) return;
+
+      if (roomData.moderator !== userName) {
+        return;
+      }
+
+      const timerState = ensureTimerState(roomData);
+      const updates: {
+        targetDurationSeconds?: number;
+        autoResetOnVotesReset?: boolean;
+        roundAnchorSeconds?: number;
+      } = {};
+
+      if (
+        typeof config.targetDurationSeconds === 'number' &&
+        !Number.isNaN(config.targetDurationSeconds)
+      ) {
+        const clamped = Math.max(
+          MIN_TIMER_DURATION_SECONDS,
+          Math.min(config.targetDurationSeconds, MAX_TIMER_DURATION_SECONDS)
+        );
+        timerState.targetDurationSeconds = clamped;
+        updates.targetDurationSeconds = clamped;
+      }
+
+      if (typeof config.autoResetOnVotesReset === 'boolean') {
+        timerState.autoResetOnVotesReset = config.autoResetOnVotesReset;
+        updates.autoResetOnVotesReset = config.autoResetOnVotesReset;
+      }
+
+      if (config.resetCountdown) {
+        const now = Date.now();
+        const currentSeconds = calculateTimerSeconds(timerState, now);
+        timerState.roundAnchorSeconds = currentSeconds;
+        updates.roundAnchorSeconds = currentSeconds;
+      } else if (timerState.roundAnchorSeconds === undefined) {
+        timerState.roundAnchorSeconds = 0;
+        updates.roundAnchorSeconds = 0;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return;
+      }
+
+      this.repository.updateTimerConfig(updates);
+
+      this.broadcast({
+        type: 'timerUpdated',
         timerState,
       });
     });

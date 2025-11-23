@@ -12,6 +12,8 @@ import { applySettingsUpdate } from "../utils/room-settings";
 import { createJsonResponse } from "../utils/http";
 import type { PlanningRoomRepository } from "../repositories/planning-room";
 import { generateSessionToken, hashPasscode } from "../utils/security";
+import { calculateTimerSeconds } from '../utils/timer';
+import { ensureTimerState } from '../utils/timer-state';
 
 export interface PlanningRoomHttpContext {
   repository: PlanningRoomRepository;
@@ -252,6 +254,20 @@ export async function handleHttpRequest(
     ctx.broadcast({
       type: "resetVotes",
     });
+
+    const timerState = ensureTimerState(roomData);
+    if (timerState.autoResetOnVotesReset) {
+      const now = Date.now();
+      const currentSeconds = calculateTimerSeconds(timerState, now);
+      timerState.roundAnchorSeconds = currentSeconds;
+      ctx.repository.updateTimerConfig({
+        roundAnchorSeconds: currentSeconds,
+      });
+      ctx.broadcast({
+        type: 'timerUpdated',
+        timerState,
+      });
+    }
 
     return createJsonResponse({
       success: true,

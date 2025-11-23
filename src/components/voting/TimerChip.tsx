@@ -7,176 +7,305 @@ import {
 } from "lucide-react";
 
 import { useRoom } from "@/context/RoomContext";
-import { addEventListener, removeEventListener, startTimer, pauseTimer, resetTimer } from "@/lib/api-service";
-import type { WebSocketMessage } from "@/types";
-import { formatTime } from "@/utils/time";
-import { calculateCurrentSeconds } from "@/utils/timer";
+import {
+  addEventListener,
+  removeEventListener,
+  startTimer,
+  pauseTimer,
+  resetTimer,
+  configureTimer,
+} from '@/lib/api-service';
+import type { WebSocketMessage } from '@/types';
+import { formatTime } from '@/utils/time';
+import {
+  calculateCurrentSeconds,
+  calculateRemainingSeconds,
+  getTargetDurationSeconds,
+} from '@/utils/timer';
+import { TIMER_DURATION_PRESETS } from '@/constants';
+import { playChime } from '@/lib/audio';
 
 export function TimerChip() {
-    const { roomData, isModeratorView } = useRoom();
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const [localSeconds, setLocalSeconds] = useState(0);
-    const [hasPlayed, setHasPlayed] = useState(true);
-    const [showControls, setShowControls] = useState(false);
-    const controlsRef = useRef<HTMLDivElement | null>(null);
+  const { roomData, isModeratorView } = useRoom();
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [localSeconds, setLocalSeconds] = useState(0);
+  const [hasPlayed, setHasPlayed] = useState(true);
+  const [hasCountdownCompleted, setHasCountdownCompleted] = useState(false);
+  const [showControls, setShowControls] = useState(false);
+  const controlsRef = useRef<HTMLDivElement | null>(null);
 
-    const mode = "stopwatch";
+  const mode = 'stopwatch';
 
-    useEffect(() => {
-        const currentSeconds = calculateCurrentSeconds(roomData?.timerState);
+  useEffect(() => {
+    const currentSeconds = calculateCurrentSeconds(roomData?.timerState);
+    setLocalSeconds(currentSeconds);
+  }, [roomData?.timerState]);
+
+  useEffect(() => {
+    if (roomData?.timerState?.running) {
+      timerRef.current = setInterval(() => {
+        setLocalSeconds((prev) => {
+          return prev + 1;
+        });
+      }, 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [roomData?.timerState?.running, mode]);
+
+  useEffect(() => {
+    if (localSeconds > 0) {
+      setHasPlayed(false);
+    }
+  }, [localSeconds, mode, roomData?.timerState?.running, hasPlayed]);
+
+  useEffect(() => {
+    const handleTimerUpdate = (message: WebSocketMessage) => {
+      if (message.timerState) {
+        const currentSeconds = calculateCurrentSeconds(message.timerState);
         setLocalSeconds(currentSeconds);
-    }, [roomData?.timerState]);
-
-    useEffect(() => {
-        if (roomData?.timerState?.running) {
-            timerRef.current = setInterval(() => {
-                setLocalSeconds((prev) => {
-                    return prev + 1;
-                });
-            }, 1000);
-        } else if (timerRef.current) {
-            clearInterval(timerRef.current);
-        }
-
-        return () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-            }
-        };
-    }, [roomData?.timerState?.running, mode]);
-
-    useEffect(() => {
-        if (localSeconds > 0) {
-            setHasPlayed(false);
-        }
-    }, [localSeconds, mode, roomData?.timerState?.running, hasPlayed]);
-
-    useEffect(() => {
-        const handleTimerUpdate = (message: WebSocketMessage) => {
-            if (message.timerState) {
-                const currentSeconds = calculateCurrentSeconds(message.timerState);
-                setLocalSeconds(currentSeconds);
-                setHasPlayed(false);
-            }
-        };
-
-        addEventListener('timerStarted', handleTimerUpdate);
-        addEventListener('timerPaused', handleTimerUpdate);
-        addEventListener('timerReset', handleTimerUpdate);
-
-        return () => {
-            removeEventListener('timerStarted', handleTimerUpdate);
-            removeEventListener('timerPaused', handleTimerUpdate);
-            removeEventListener('timerReset', handleTimerUpdate);
-        };
-    }, []);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (controlsRef.current && !controlsRef.current.contains(event.target as Node)) {
-                setShowControls(false);
-            }
-        };
-
-        if (showControls) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [showControls]);
-
-    const timerRunning = roomData?.timerState?.running ?? false;
-
-    const handleToggleTimer = () => {
-        try {
-            if (timerRunning) {
-                pauseTimer();
-            } else {
-                startTimer();
-            }
-        } catch (error) {
-            console.error('Failed to toggle timer:', error);
-        }
+        setHasPlayed(false);
+      }
     };
 
-    const handleResetTimer = () => {
-        try {
-            resetTimer();
-        } catch (error) {
-            console.error('Failed to reset timer:', error);
-        }
+    addEventListener('timerStarted', handleTimerUpdate);
+    addEventListener('timerPaused', handleTimerUpdate);
+    addEventListener('timerReset', handleTimerUpdate);
+    addEventListener('timerUpdated', handleTimerUpdate);
+
+    return () => {
+      removeEventListener('timerStarted', handleTimerUpdate);
+      removeEventListener('timerPaused', handleTimerUpdate);
+      removeEventListener('timerReset', handleTimerUpdate);
+      removeEventListener('timerUpdated', handleTimerUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        controlsRef.current &&
+        !controlsRef.current.contains(event.target as Node)
+      ) {
+        setShowControls(false);
+      }
     };
 
-    const getChipColor = () => {
-        if (!timerRunning) {
-            return 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600';
-        }
-        return 'bg-blue-100 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600';
+    if (showControls) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [showControls]);
 
-    const getTextColor = () => {
-        if (!timerRunning) {
-            return 'text-gray-700 dark:text-gray-300';
-        }
-        return 'text-blue-700 dark:text-blue-300';
+  const timerRunning = roomData?.timerState?.running ?? false;
+  const targetDurationSeconds = getTargetDurationSeconds(roomData?.timerState);
+  const remainingSeconds = calculateRemainingSeconds(
+    roomData?.timerState,
+    localSeconds
+  );
+  const remainingRatio =
+    targetDurationSeconds > 0 ? remainingSeconds / targetDurationSeconds : 1;
+  const autoResetEnabled = roomData?.timerState?.autoResetOnVotesReset ?? false;
+
+  useEffect(() => {
+    if (!timerRunning) {
+      setHasCountdownCompleted(false);
+      return;
+    }
+
+    if (!hasCountdownCompleted && remainingSeconds <= 0) {
+      playChime();
+      setHasCountdownCompleted(true);
+    } else if (hasCountdownCompleted && remainingSeconds > targetDurationSeconds * 0.1) {
+      setHasCountdownCompleted(false);
+    }
+  }, [remainingSeconds, timerRunning, hasCountdownCompleted, targetDurationSeconds]);
+
+  const handleToggleTimer = () => {
+    try {
+      if (timerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    } catch (error) {
+      console.error('Failed to toggle timer:', error);
+    }
+  };
+
+  const handleResetTimer = () => {
+    try {
+      resetTimer();
+      configureTimer({
+        resetCountdown: true,
+      });
+      startTimer();
+    } catch (error) {
+      console.error('Failed to reset timer:', error);
+    }
+  };
+
+  const handleToggleAutoReset = () => {
+    try {
+      configureTimer({
+        autoResetOnVotesReset: !autoResetEnabled,
+      });
+    } catch (error) {
+      console.error('Failed to toggle timer auto reset:', error);
+    }
+  };
+
+  const getChipStyles = () => {
+    if (!timerRunning) {
+      return {
+        chip: 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-600',
+        text: 'text-gray-700 dark:text-gray-300',
+        subtext: 'text-gray-500 dark:text-gray-400',
+      };
+    }
+    if (remainingRatio <= 0.1) {
+      return {
+        chip: 'bg-red-100 dark:bg-red-900/30 border-red-400 dark:border-red-600',
+        text: 'text-red-700 dark:text-red-300',
+        subtext: 'text-red-600 dark:text-red-200',
+      };
+    }
+    if (remainingRatio <= 0.3) {
+      return {
+        chip: 'bg-amber-100 dark:bg-amber-900/30 border-amber-400 dark:border-amber-600',
+        text: 'text-amber-700 dark:text-amber-300',
+        subtext: 'text-amber-600 dark:text-amber-200',
+      };
+    }
+    return {
+      chip: 'bg-blue-100 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600',
+      text: 'text-blue-700 dark:text-blue-300',
+      subtext: 'text-blue-600 dark:text-blue-200',
     };
+  };
 
-    const displayTime = formatTime(localSeconds);
+  const { chip: chipClass, text: textClass } = getChipStyles();
 
-    return (
-        <div className="relative" ref={controlsRef} data-testid="room-timer">
-            <motion.button
-                type="button"
-                onClick={() => isModeratorView && setShowControls(!showControls)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-sm font-medium transition-colors ${getChipColor()} ${getTextColor()} ${isModeratorView ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
-                aria-label={`Timer: ${displayTime}, ${timerRunning ? 'Running' : 'Paused'}`}
-                aria-haspopup={isModeratorView}
-                aria-expanded={showControls}
-            >
-                {mode === 'stopwatch' ? (
-                    <Clock className="w-4 h-4" />
-                ) : (
-                    <Hourglass className="w-4 h-4" />
-                )}
-                <span className="font-mono font-semibold">{displayTime}</span>
-                {isModeratorView && <ChevronDown className="w-3 h-3" />}
-            </motion.button>
+  const displayElapsed = formatTime(localSeconds);
+  const displayRemaining = formatTime(remainingSeconds);
 
-            <AnimatePresence>
-                {showControls && isModeratorView && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-50"
-                        role="menu"
-                    >
-                        <div className="flex flex-col gap-2">
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleToggleTimer}
-                                    className="flex-1 px-3 py-2 text-xs font-medium rounded bg-blue-500 text-white hover:bg-blue-600"
-                                    aria-label={timerRunning ? 'Pause timer' : 'Start timer'}
-                                    role="menuitem"
-                                >
-                                    {timerRunning ? 'Pause' : 'Start'}
-                                </button>
-                            </div>
+  const handleSelectDuration = (seconds: number) => {
+    try {
+      configureTimer({
+        targetDurationSeconds: seconds,
+        resetCountdown: true,
+      });
+    } catch (error) {
+      console.error('Failed to update timer duration:', error);
+    }
+  };
 
-                            <button
-                                onClick={handleResetTimer}
-                                className="w-full px-3 py-2 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                                aria-label="Reset timer"
-                                role="menuitem"
-                            >
-                                Reset
-                            </button>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+  return (
+    <div className="relative" ref={controlsRef} data-testid="room-timer">
+      <motion.button
+        type="button"
+        onClick={() => isModeratorView && setShowControls(!showControls)}
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${chipClass} ${textClass} ${
+          isModeratorView ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+        }`}
+        aria-label={`Timer: elapsed ${displayElapsed}, ${displayRemaining} left, ${
+          timerRunning ? 'Running' : 'Paused'
+        }`}
+        aria-haspopup={isModeratorView}
+        aria-expanded={showControls}
+      >
+        {mode === 'stopwatch' ? (
+          <Clock className="w-4 h-4" />
+        ) : (
+          <Hourglass className="w-4 h-4" />
+        )}
+        <div className="flex flex-col leading-tight text-left">
+          <span className="font-mono font-semibold">{displayElapsed}</span>
         </div>
-    );
+        {isModeratorView && <ChevronDown className="w-3 h-3" />}
+      </motion.button>
+
+      <AnimatePresence>
+        {showControls && isModeratorView && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-50"
+            role="menu"
+          >
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleToggleTimer}
+                  className="flex-1 px-3 py-2 text-xs font-medium rounded bg-blue-500 text-white hover:bg-blue-600"
+                  aria-label={timerRunning ? 'Pause timer' : 'Start timer'}
+                  role="menuitem"
+                >
+                  {timerRunning ? 'Pause' : 'Start'}
+                </button>
+              </div>
+
+              <button
+                onClick={handleResetTimer}
+                className="w-full px-3 py-2 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                aria-label="Reset timer"
+                role="menuitem"
+              >
+                Reset
+              </button>
+
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+                <p className="text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1 uppercase tracking-wide">
+                  Expected duration
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {TIMER_DURATION_PRESETS.map((preset) => {
+                    const isActive = preset.seconds === targetDurationSeconds;
+                    return (
+                      <button
+                        key={preset.seconds}
+                        onClick={() => handleSelectDuration(preset.seconds)}
+                        className={`px-2 py-1 text-xs rounded-full border transition ${
+                          isActive
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-blue-400'
+                        }`}
+                        type="button"
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                  Reset restarts the countdown for{' '}
+                  {formatTime(targetDurationSeconds)}.
+                </p>
+              </div>
+
+              <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={autoResetEnabled}
+                  onChange={handleToggleAutoReset}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                Auto reset countdown on vote reset
+              </label>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

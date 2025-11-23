@@ -51,3 +51,19 @@ export const QUICK_EMOJIS = [
   "🎯",
   "🚀",
 ];
+
+export const DEFAULT_TIMER_DURATION_SECONDS = 3 * 60;
+export const MIN_TIMER_DURATION_SECONDS = 60;
+export const MAX_TIMER_DURATION_SECONDS = 60 * 60;
+
+export const TIMER_DURATION_PRESETS: ReadonlyArray<{
+  label: string;
+  seconds: number;
+}> = [
+  { label: '3m', seconds: 3 * 60 },
+  { label: '5m', seconds: 5 * 60 },
+  { label: '8m', seconds: 8 * 60 },
+  { label: '13m', seconds: 13 * 60 },
+  { label: '20m', seconds: 20 * 60 },
+  { label: '30m', seconds: 30 * 60 },
+];

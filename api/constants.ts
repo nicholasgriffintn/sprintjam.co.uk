@@ -18,3 +18,7 @@ export const SPECIAL_COLORS: Record<string, string> = Object.freeze({
   coffee: "#f5e6d8",
   break: "#f8e8c8",
 });
+
+export const DEFAULT_TIMER_DURATION_SECONDS = 3 * 60;
+export const MIN_TIMER_DURATION_SECONDS = 60;
+export const MAX_TIMER_DURATION_SECONDS = 60 * 60;

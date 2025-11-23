@@ -35,6 +35,14 @@ export type ClientMessage =
   | { type: 'startTimer' }
   | { type: 'pauseTimer' }
   | { type: 'resetTimer' }
+  | {
+    type: 'configureTimer';
+    config: {
+      targetDurationSeconds?: number;
+      autoResetOnVotesReset?: boolean;
+      resetCountdown?: boolean;
+    };
+  }
   | { type: 'ping' };
 
 export type VoteValue = string | number | null | '?' | 'coffee';
@@ -255,6 +263,9 @@ export interface TimerState {
   running: boolean;
   seconds: number;
   lastUpdateTime: number;
+  targetDurationSeconds?: number | null;
+  roundAnchorSeconds?: number;
+  autoResetOnVotesReset?: boolean;
 }
 
 export interface RoomData {

@@ -229,6 +229,7 @@ export function connectToRoom(
           case 'timerStarted':
           case 'timerPaused':
           case 'timerReset':
+          case 'timerUpdated':
             triggerEventListeners(data.type, data);
             break;
 
@@ -642,5 +643,22 @@ export function resetTimer(): void {
     JSON.stringify({
       type: "resetTimer",
     }),
+  );
+}
+
+export function configureTimer(config: {
+  targetDurationSeconds?: number;
+  autoResetOnVotesReset?: boolean;
+  resetCountdown?: boolean;
+}): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error("Not connected to room");
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: 'configureTimer',
+      config,
+    })
   );
 }

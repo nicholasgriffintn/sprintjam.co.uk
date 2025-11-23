@@ -14,6 +14,7 @@ import type {
 } from '../types';
 import { serializeJSON, serializeVote } from "../utils/serialize";
 import { parseJudgeScore, parseVote, safeJsonParse } from "../utils/parse";
+import { DEFAULT_TIMER_DURATION_SECONDS } from '../constants';
 
 const ROOM_ROW_ID = 1;
 type SqlEnabledTransaction = DurableObjectTransaction & { sql: SqlStorage };
@@ -46,7 +47,10 @@ export class PlanningRoomRepository {
           current_ticket_id INTEGER,
           timer_seconds INTEGER DEFAULT 0,
           timer_last_updated INTEGER DEFAULT 0,
-          timer_is_paused INTEGER DEFAULT 0
+          timer_is_paused INTEGER DEFAULT 0,
+          timer_target_duration INTEGER DEFAULT 600,
+          timer_round_anchor INTEGER DEFAULT 0,
+          timer_auto_reset INTEGER DEFAULT 1
         )`
       );
 
@@ -142,6 +146,9 @@ export class PlanningRoomRepository {
         timer_seconds: number | null;
         timer_last_updated: number | null;
         timer_is_paused: number | null;
+        timer_target_duration: number | null;
+        timer_round_anchor: number | null;
+        timer_auto_reset: number | null;
       }>(
         `SELECT
            room_key,
@@ -157,7 +164,10 @@ export class PlanningRoomRepository {
            strudel_is_playing,
            timer_seconds,
            timer_last_updated,
-           timer_is_paused
+           timer_is_paused,
+           timer_target_duration,
+           timer_round_anchor,
+           timer_auto_reset
          FROM room_meta
          WHERE id = ${ROOM_ROW_ID}`
       )
@@ -242,12 +252,35 @@ export class PlanningRoomRepository {
       anonymizeVotes,
     });
 
-    const hasTimer = row.timer_is_paused || row.timer_seconds || row.timer_last_updated;
-    const timerState = hasTimer ? {
-      running: !row.timer_is_paused,
-      seconds: row.timer_seconds ?? 0,
-      lastUpdateTime: row.timer_last_updated ?? 0,
-    } : undefined;
+    const timerPausedValue =
+      row.timer_is_paused === null || row.timer_is_paused === undefined
+        ? 1
+        : row.timer_is_paused;
+
+    const hasTimerState =
+      row.timer_seconds !== null ||
+      row.timer_last_updated !== null ||
+      row.timer_target_duration !== null ||
+      row.timer_round_anchor !== null ||
+      row.timer_auto_reset !== null;
+
+    const timerState = hasTimerState
+      ? {
+          running:
+            !!row.timer_last_updated &&
+            row.timer_last_updated > 0 &&
+            !timerPausedValue,
+          seconds: row.timer_seconds ?? 0,
+          lastUpdateTime: row.timer_last_updated ?? 0,
+          targetDurationSeconds:
+            row.timer_target_duration ?? DEFAULT_TIMER_DURATION_SECONDS,
+          roundAnchorSeconds: row.timer_round_anchor ?? 0,
+          autoResetOnVotesReset:
+            row.timer_auto_reset === null || row.timer_auto_reset === undefined
+              ? true
+              : row.timer_auto_reset !== 0,
+        }
+      : undefined;
 
     const roomData: RoomData = {
       key: row.room_key,
@@ -300,8 +333,11 @@ export class PlanningRoomRepository {
           strudel_is_playing,
           timer_seconds,
           timer_last_updated,
-          timer_is_paused
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          timer_is_paused,
+          timer_target_duration,
+          timer_round_anchor,
+          timer_auto_reset
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           room_key = excluded.room_key,
           moderator = excluded.moderator,
@@ -316,7 +352,10 @@ export class PlanningRoomRepository {
           strudel_is_playing = excluded.strudel_is_playing,
           timer_seconds = excluded.timer_seconds,
           timer_last_updated = excluded.timer_last_updated,
-          timer_is_paused = excluded.timer_is_paused`,
+          timer_is_paused = excluded.timer_is_paused,
+          timer_target_duration = excluded.timer_target_duration,
+          timer_round_anchor = excluded.timer_round_anchor,
+          timer_auto_reset = excluded.timer_auto_reset`,
         ROOM_ROW_ID,
         roomData.key,
         roomData.moderator,
@@ -334,6 +373,10 @@ export class PlanningRoomRepository {
         roomData.timerState?.seconds ?? null,
         roomData.timerState?.lastUpdateTime ?? null,
         roomData.timerState?.running ? 1 : 0,
+        roomData.timerState?.targetDurationSeconds ??
+          DEFAULT_TIMER_DURATION_SECONDS,
+        roomData.timerState?.roundAnchorSeconds ?? 0,
+        roomData.timerState?.autoResetOnVotesReset === false ? 0 : 1
       );
 
       sql.exec('DELETE FROM room_users');
@@ -423,6 +466,39 @@ export class PlanningRoomRepository {
     );
   }
 
+  updateTimerConfig(config: {
+    targetDurationSeconds?: number;
+    roundAnchorSeconds?: number;
+    autoResetOnVotesReset?: boolean;
+  }) {
+    const updates: string[] = [];
+    const params: number[] = [];
+
+    if (config.targetDurationSeconds !== undefined) {
+      updates.push('timer_target_duration = ?');
+      params.push(config.targetDurationSeconds);
+    }
+    if (config.roundAnchorSeconds !== undefined) {
+      updates.push('timer_round_anchor = ?');
+      params.push(config.roundAnchorSeconds);
+    }
+    if (config.autoResetOnVotesReset !== undefined) {
+      updates.push('timer_auto_reset = ?');
+      params.push(config.autoResetOnVotesReset ? 1 : 0);
+    }
+
+    if (updates.length === 0) {
+      return;
+    }
+
+    this.sql.exec(
+      `UPDATE room_meta
+       SET ${updates.join(', ')}
+       WHERE id = ${ROOM_ROW_ID}`,
+      ...params
+    );
+  }
+
   startTimer(currentTime: number) {
     this.sql.exec(
       `UPDATE room_meta
@@ -445,7 +521,9 @@ export class PlanningRoomRepository {
       .toArray()[0];
 
     if (row && !row.timer_is_paused) {
-      const elapsedSinceLastUpdate = Math.floor((currentTime - row.timer_last_updated) / 1000);
+      const elapsedSinceLastUpdate = Math.floor(
+        (currentTime - row.timer_last_updated) / 1000
+      );
       const existingSeconds = row.timer_seconds ?? 0;
       const newSeconds = existingSeconds + elapsedSinceLastUpdate;
       this.sql.exec(
@@ -461,7 +539,7 @@ export class PlanningRoomRepository {
   resetTimer() {
     this.sql.exec(
       `UPDATE room_meta
-       SET timer_is_paused = 0, timer_seconds = 0, timer_last_updated = 0
+       SET timer_is_paused = 0, timer_seconds = 0, timer_last_updated = 0, timer_round_anchor = 0
        WHERE id = ${ROOM_ROW_ID}`
     );
   }
@@ -684,8 +762,8 @@ export class PlanningRoomRepository {
         externalServiceId: row.external_service_id ?? undefined,
         externalServiceMetadata: row.external_service_metadata
           ? safeJsonParse<Record<string, unknown>>(
-            row.external_service_metadata
-          )
+              row.external_service_metadata
+            )
           : undefined,
         votes,
       };

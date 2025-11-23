@@ -259,7 +259,8 @@ export function applyRoomUpdate(
 
     case 'timerStarted':
     case 'timerPaused':
-    case 'timerReset': {
+    case 'timerReset':
+    case 'timerUpdated': {
       if (!message.timerState) {
         return prev;
       }

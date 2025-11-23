@@ -69,6 +69,36 @@ export function validateClientMessage(
       return { type: 'pauseTimer' };
     case 'resetTimer':
       return { type: 'resetTimer' };
+    case 'configureTimer':
+      if ('config' in data && isObject(data.config)) {
+        const configInput = data.config;
+        const config: {
+          targetDurationSeconds?: number;
+          autoResetOnVotesReset?: boolean;
+          resetCountdown?: boolean;
+        } = {};
+
+        if (
+          'targetDurationSeconds' in configInput &&
+          typeof configInput.targetDurationSeconds === 'number'
+        ) {
+          config.targetDurationSeconds = configInput.targetDurationSeconds;
+        }
+        if (
+          'autoResetOnVotesReset' in configInput &&
+          typeof configInput.autoResetOnVotesReset === 'boolean'
+        ) {
+          config.autoResetOnVotesReset = configInput.autoResetOnVotesReset;
+        }
+        if (
+          'resetCountdown' in configInput &&
+          typeof configInput.resetCountdown === 'boolean'
+        ) {
+          config.resetCountdown = configInput.resetCountdown;
+        }
+        return { type: 'configureTimer', config };
+      }
+      return { error: 'Timer config payload missing' };
     case 'ping':
       return { type: 'ping' };
     default:

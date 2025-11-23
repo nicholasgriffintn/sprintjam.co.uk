@@ -181,6 +181,9 @@ export interface TimerState {
   running: boolean;
   seconds: number;
   lastUpdateTime: number;
+  targetDurationSeconds?: number | null;
+  roundAnchorSeconds?: number;
+  autoResetOnVotesReset?: boolean;
 }
 
 export interface RoomData {
@@ -238,7 +241,8 @@ export type WebSocketMessageType =
   | 'queueUpdated'
   | 'timerStarted'
   | 'timerPaused'
-  | 'timerReset';
+  | 'timerReset'
+  | 'timerUpdated';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
