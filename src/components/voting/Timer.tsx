@@ -18,7 +18,6 @@ function calculateCurrentSeconds(timerState: TimerState | undefined): number {
     return timerState.seconds;
   }
 
-  // Calculate elapsed time since last update
   const now = Date.now();
   const elapsedMs = now - timerState.lastUpdateTime;
   const elapsedSeconds = Math.floor(elapsedMs / 1000);
@@ -31,13 +30,11 @@ export function Timer() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [localSeconds, setLocalSeconds] = useState(0);
 
-  // Sync local state with server state
   useEffect(() => {
     const currentSeconds = calculateCurrentSeconds(roomData?.timerState);
     setLocalSeconds(currentSeconds);
   }, [roomData?.timerState]);
 
-  // Handle timer tick for smooth local updates
   useEffect(() => {
     if (roomData?.timerState?.running) {
       timerRef.current = setInterval(() => {
@@ -54,7 +51,6 @@ export function Timer() {
     };
   }, [roomData?.timerState?.running]);
 
-  // Listen for timer updates from server
   useEffect(() => {
     const handleTimerUpdate = (message: WebSocketMessage) => {
       if (message.timerState) {
@@ -75,7 +71,7 @@ export function Timer() {
   }, []);
 
   const timerRunning = roomData?.timerState?.running ?? false;
-  const timerActionLabel = timerRunning ? "Pause timer" : "Start timer";
+  const timerActionLabel = timerRunning ? 'Pause timer' : 'Start timer';
 
   const handleToggleTimer = () => {
     try {

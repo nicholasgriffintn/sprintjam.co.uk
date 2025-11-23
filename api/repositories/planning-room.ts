@@ -50,23 +50,6 @@ export class PlanningRoomRepository {
         )`
       );
 
-      // Migrate existing tables to add timer columns if they don't exist
-      try {
-        this.sql.exec(`ALTER TABLE room_meta ADD COLUMN timer_running INTEGER NOT NULL DEFAULT 0`);
-      } catch (e) {
-        // Column already exists, ignore
-      }
-      try {
-        this.sql.exec(`ALTER TABLE room_meta ADD COLUMN timer_seconds INTEGER NOT NULL DEFAULT 0`);
-      } catch (e) {
-        // Column already exists, ignore
-      }
-      try {
-        this.sql.exec(`ALTER TABLE room_meta ADD COLUMN timer_last_update INTEGER NOT NULL DEFAULT 0`);
-      } catch (e) {
-        // Column already exists, ignore
-      }
-
       this.sql.exec(
         `CREATE TABLE IF NOT EXISTS session_tokens (
           user_name TEXT PRIMARY KEY,
