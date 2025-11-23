@@ -257,6 +257,18 @@ export function applyRoomUpdate(
       };
     }
 
+    case 'timerStarted':
+    case 'timerPaused':
+    case 'timerReset': {
+      if (!message.timerState) {
+        return prev;
+      }
+      return {
+        ...prev,
+        timerState: message.timerState,
+      };
+    }
+
     default:
       return prev;
   }

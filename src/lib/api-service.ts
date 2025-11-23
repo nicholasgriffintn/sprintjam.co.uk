@@ -226,6 +226,9 @@ export function connectToRoom(
           case 'ticketDeleted':
           case 'ticketCompleted':
           case 'queueUpdated':
+          case 'timerStarted':
+          case 'timerPaused':
+          case 'timerReset':
             triggerEventListeners(data.type, data);
             break;
 
@@ -602,6 +605,42 @@ export function completeTicket(outcome?: string): void {
     JSON.stringify({
       type: "completeTicket",
       outcome,
+    }),
+  );
+}
+
+export function startTimer(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error("Not connected to room");
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: "startTimer",
+    }),
+  );
+}
+
+export function pauseTimer(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error("Not connected to room");
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: "pauseTimer",
+    }),
+  );
+}
+
+export function resetTimer(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error("Not connected to room");
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: "resetTimer",
     }),
   );
 }

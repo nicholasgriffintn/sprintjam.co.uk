@@ -63,6 +63,12 @@ export function validateClientMessage(
         return { type: 'completeTicket', outcome: data.outcome };
       }
       return { error: 'CompleteTicket outcome must be a string or undefined' };
+    case 'startTimer':
+      return { type: 'startTimer' };
+    case 'pauseTimer':
+      return { type: 'pauseTimer' };
+    case 'resetTimer':
+      return { type: 'resetTimer' };
     case 'ping':
       return { type: 'ping' };
     default:

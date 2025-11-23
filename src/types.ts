@@ -195,12 +195,19 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  timerState?: TimerState;
 }
 
 export interface WebSocketErrorData {
   error?: string;
   message?: string;
   code?: number;
+}
+
+export interface TimerState {
+  running: boolean;
+  seconds: number;
+  lastUpdateTime: number;
 }
 
 export type WebSocketMessageType =
@@ -226,7 +233,10 @@ export type WebSocketMessageType =
   | 'ticketUpdated'
   | 'ticketDeleted'
   | 'ticketCompleted'
-  | 'queueUpdated';
+  | 'queueUpdated'
+  | 'timerStarted'
+  | 'timerPaused'
+  | 'timerReset';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -255,6 +265,7 @@ export interface WebSocketMessage {
   outcome?: string;
   closeCode?: number;
   reason?: string;
+  timerState?: TimerState;
 }
 
 export interface RoomStats {
