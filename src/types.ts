@@ -160,6 +160,7 @@ export interface RoomSettings {
   autoHandoverModerator?: boolean;
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
+  enableRetro?: boolean;
 }
 
 export interface ServerDefaults {
@@ -195,6 +196,7 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  retroData?: RetroData;
 }
 
 export interface WebSocketErrorData {
@@ -226,7 +228,17 @@ export type WebSocketMessageType =
   | 'ticketUpdated'
   | 'ticketDeleted'
   | 'ticketCompleted'
-  | 'queueUpdated';
+  | 'queueUpdated'
+  | 'startRetro'
+  | 'retroStarted'
+  | 'addRetroItem'
+  | 'retroItemAdded'
+  | 'voteRetroItem'
+  | 'retroItemVoted'
+  | 'deleteRetroItem'
+  | 'retroItemDeleted'
+  | 'endRetro'
+  | 'retroEnded';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -255,6 +267,10 @@ export interface WebSocketMessage {
   outcome?: string;
   closeCode?: number;
   reason?: string;
+  retroData?: RetroData;
+  retroFormat?: RetroFormat;
+  retroItem?: RetroItem;
+  retroItemId?: string;
 }
 
 export interface RoomStats {

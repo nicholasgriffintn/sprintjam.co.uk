@@ -21,17 +21,17 @@ import { QueueProviderSetupModal } from '@/components/modals/QueueProviderSetupM
 import { ErrorBannerAuth } from '@/components/errors/ErrorBannerAuth';
 import { ErrorBannerConnection } from '@/components/errors/ErrorBannerConnection';
 import { RoomSidebar } from '@/components/layout/RoomSidebar';
+import { RetroFormatModal } from '@/components/retro/RetroFormatModal';
+import { RetroView } from '@/components/retro/RetroView';
 import { getVoteKeyForUser } from '@/utils/room';
 import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { Footer } from '@/components/layout/Footer';
+import type { RetroFormat } from '@/types';
 
 const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
 const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
-const RetroModal = lazy(() => import('@/components/modals/RetroModal').then((m) => ({
-  default: m.RetroModal,
-})));
 const UnifiedResults = lazy(() =>
   import('@/components/results/UnifiedResults').then((m) => ({
     default: m.UnifiedResults,
@@ -66,8 +66,10 @@ const RoomScreen = () => {
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
-  const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
+  const [isRetroFormatModalOpen, setIsRetroFormatModalOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
+  const [activeRetroCategory, setActiveRetroCategory] = useState<string | null>(null);
+  const [newRetroItemContent, setNewRetroItemContent] = useState<Record<string, string>>({});
 
   if (!roomData || !serverDefaults) {
     return <FallbackLoading />;
@@ -92,6 +94,76 @@ const RoomScreen = () => {
     (!isSocketConnected && !connectionIssue);
 
   const showAuthBanner = connectionIssue?.type === 'auth';
+
+  const handleStartRetro = (format: RetroFormat) => {
+    // TODO: Add WebSocket handler to sync with server
+    // For now, this will be client-side only
+    console.log('Starting retro with format:', format);
+    setIsRetroFormatModalOpen(false);
+  };
+
+  const handleAddRetroItem = (category: string, content: string) => {
+    // TODO: Add WebSocket handler to sync with server
+    console.log('Adding retro item:', { category, content });
+  };
+
+  const handleVoteRetroItem = (itemId: string) => {
+    // TODO: Add WebSocket handler to sync with server
+    console.log('Voting on retro item:', itemId);
+  };
+
+  const handleDeleteRetroItem = (itemId: string) => {
+    // TODO: Add WebSocket handler to sync with server
+    console.log('Deleting retro item:', itemId);
+  };
+
+  const handleEndRetro = () => {
+    // TODO: Add WebSocket handler to sync with server
+    console.log('Ending retro');
+  };
+
+  // If retro is active, show the retro view
+  if (roomData.retroData?.isActive) {
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+        {showAuthBanner && (
+          <ErrorBannerAuth
+            onRetryConnection={retryConnection}
+            onLeaveRoom={handleLeaveRoom}
+          />
+        )}
+
+        {!showAuthBanner && (connectionIssue || showReconnectBanner) && (
+          <ErrorBannerConnection
+            connectionIssue={connectionIssue}
+            onRetryConnection={retryConnection}
+          />
+        )}
+
+        {roomError && (
+          <ErrorBanner
+            message={roomError}
+            onClose={clearRoomError}
+            variant={roomErrorKind === 'permission' ? 'warning' : 'error'}
+          />
+        )}
+
+        <RetroView
+          retroData={roomData.retroData}
+          userName={name}
+          isModeratorView={isModeratorView}
+          onAddItem={handleAddRetroItem}
+          onVoteItem={handleVoteRetroItem}
+          onDeleteItem={handleDeleteRetroItem}
+          onEndRetro={handleEndRetro}
+          activeCategory={activeRetroCategory}
+          setActiveCategory={setActiveRetroCategory}
+          newItemContent={newRetroItemContent}
+          setNewItemContent={setNewRetroItemContent}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
@@ -124,7 +196,7 @@ const RoomScreen = () => {
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
-        setIsRetroModalOpen={setIsRetroModalOpen}
+        setIsRetroModalOpen={() => setIsRetroFormatModalOpen(true)}
       />
 
       <motion.div
@@ -284,17 +356,11 @@ const RoomScreen = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {isRetroModalOpen && (
-          <Suspense fallback={<FallbackLoading />}>
-            <RetroModal
-              isOpen={isRetroModalOpen}
-              onClose={() => setIsRetroModalOpen(false)}
-              userName={name}
-            />
-          </Suspense>
-        )}
-      </AnimatePresence>
+      <RetroFormatModal
+        isOpen={isRetroFormatModalOpen}
+        onSelectFormat={handleStartRetro}
+        onCancel={() => setIsRetroFormatModalOpen(false)}
+      />
 
       {isQueueEnabled && (
         <TicketQueueModal
