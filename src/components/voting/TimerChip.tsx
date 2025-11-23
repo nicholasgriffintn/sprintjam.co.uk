@@ -24,7 +24,6 @@ import {
 } from '@/utils/timer';
 import { TIMER_DURATION_PRESETS } from '@/constants';
 import { playChime } from '@/lib/audio';
-import { test } from '@playwright/test';
 
 export function TimerChip() {
   const { roomData, isModeratorView } = useRoom();
