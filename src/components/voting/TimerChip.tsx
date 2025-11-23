@@ -11,7 +11,6 @@ import { addEventListener, removeEventListener, startTimer, pauseTimer, resetTim
 import type { WebSocketMessage } from "@/types";
 import { formatTime } from "@/utils/time";
 import { calculateCurrentSeconds } from "@/utils/timer";
-import { playChime } from "@/lib/audio";
 
 export function TimerChip() {
     const { roomData, isModeratorView } = useRoom();
@@ -64,13 +63,11 @@ export function TimerChip() {
         addEventListener('timerStarted', handleTimerUpdate);
         addEventListener('timerPaused', handleTimerUpdate);
         addEventListener('timerReset', handleTimerUpdate);
-        addEventListener('timerUpdated', handleTimerUpdate);
 
         return () => {
             removeEventListener('timerStarted', handleTimerUpdate);
             removeEventListener('timerPaused', handleTimerUpdate);
             removeEventListener('timerReset', handleTimerUpdate);
-            removeEventListener('timerUpdated', handleTimerUpdate);
         };
     }, []);
 
