@@ -22,6 +22,11 @@ import {
   addTicket,
   updateTicket,
   deleteTicket,
+  startRetro,
+  addRetroItem,
+  voteRetroItem,
+  deleteRetroItem,
+  endRetro,
 } from '@/lib/api-service';
 import {
   applyRoomMessageToCollections,
@@ -45,6 +50,7 @@ import type {
   TicketQueueItem,
   VoteValue,
   WebSocketMessage,
+  RetroFormat,
 } from '@/types';
 import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from '@/constants';
 import { useSession } from './SessionContext';
@@ -80,6 +86,11 @@ interface RoomContextValue {
     updates: Partial<TicketQueueItem>
   ) => Promise<void>;
   handleDeleteTicket: (ticketId: number) => Promise<void>;
+  handleStartRetro: (format: RetroFormat) => void;
+  handleAddRetroItem: (category: string, content: string) => void;
+  handleVoteRetroItem: (itemId: string) => void;
+  handleDeleteRetroItem: (itemId: string) => void;
+  handleEndRetro: () => void;
   retryConnection: () => void;
 }
 
@@ -503,6 +514,56 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const handleStartRetro = useCallback((format: RetroFormat) => {
+    try {
+      startRetro(format);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to start retrospective';
+      setRoomError(errorMessage);
+    }
+  }, []);
+
+  const handleAddRetroItem = useCallback((category: string, content: string) => {
+    try {
+      addRetroItem(category, content);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to add retro item';
+      setRoomError(errorMessage);
+    }
+  }, []);
+
+  const handleVoteRetroItem = useCallback((itemId: string) => {
+    try {
+      voteRetroItem(itemId);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to vote on retro item';
+      setRoomError(errorMessage);
+    }
+  }, []);
+
+  const handleDeleteRetroItem = useCallback((itemId: string) => {
+    try {
+      deleteRetroItem(itemId);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to delete retro item';
+      setRoomError(errorMessage);
+    }
+  }, []);
+
+  const handleEndRetro = useCallback(() => {
+    try {
+      endRetro();
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to end retrospective';
+      setRoomError(errorMessage);
+    }
+  }, []);
+
   const retryConnection = useCallback(() => {
     setConnectionIssue((current) =>
       current ? { ...current, reconnecting: true } : null
@@ -539,6 +600,11 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleAddTicket,
       handleUpdateTicket,
       handleDeleteTicket,
+      handleStartRetro,
+      handleAddRetroItem,
+      handleVoteRetroItem,
+      handleDeleteRetroItem,
+      handleEndRetro,
       retryConnection,
     }),
     [
@@ -569,6 +635,11 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleAddTicket,
       handleUpdateTicket,
       handleDeleteTicket,
+      handleStartRetro,
+      handleAddRetroItem,
+      handleVoteRetroItem,
+      handleDeleteRetroItem,
+      handleEndRetro,
       retryConnection,
     ]
   );
