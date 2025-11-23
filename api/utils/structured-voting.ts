@@ -42,7 +42,11 @@
  * - volume=4 → minimum 8pt (extensive work required)
  */
 
-import type { VotingCriterion, StructuredVote } from "../types";
+import type {
+  VotingCriterion,
+  StructuredVote,
+  JudgeStructuredBreakdown,
+} from "../types";
 
 function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
   weightedScore: number;
@@ -153,20 +157,24 @@ export function calculateStoryPointsFromStructuredVote(
   criteriaScores: Record<string, number>,
 ): string | number | undefined {
   const { finalScore } = computeWeightedScoreAndRules(criteriaScores);
+  return convertScoreToStoryPoints(finalScore);
+}
 
+function convertScoreToStoryPoints(score: number): number {
   const max1ptScore = 35;
   const max3ptScore = 50;
   const max5ptScore = 80;
 
-  if (finalScore < max1ptScore) {
+  if (score < max1ptScore) {
     return 1;
-  } else if (finalScore < max3ptScore) {
-    return 3;
-  } else if (finalScore < max5ptScore) {
-    return 5;
-  } else {
-    return 8;
   }
+  if (score < max3ptScore) {
+    return 3;
+  }
+  if (score < max5ptScore) {
+    return 5;
+  }
+  return 8;
 }
 
 export function createStructuredVote(
@@ -182,6 +190,145 @@ export function createStructuredVote(
     calculatedStoryPoints,
     percentageScore: weightedScore,
     appliedConversionRules,
+    contributions,
+  };
+}
+
+export function buildJudgeStructuredBreakdown(
+  structuredVotes?: Record<string, StructuredVote>,
+  criteria?: VotingCriterion[],
+): JudgeStructuredBreakdown | undefined {
+  if (!structuredVotes) {
+    return undefined;
+  }
+
+  const votes = Object.values(structuredVotes).filter(
+    (vote) =>
+      vote &&
+      vote.criteriaScores &&
+      Object.keys(vote.criteriaScores).length > 0,
+  );
+
+  if (votes.length === 0) {
+    return undefined;
+  }
+
+  type ContributionAggregate = {
+    label: string;
+    weightPercent: number;
+    maxScore: number;
+    order: number;
+    sumScore: number;
+    sumContributionPercent: number;
+  };
+
+  const criteriaMeta = new Map(
+    (criteria ?? []).map((criterion, index) => [
+      criterion.id,
+      {
+        label: criterion.name,
+        order: index,
+        maxScore: criterion.maxScore,
+      },
+    ]),
+  );
+
+  const contributionMap = new Map<string, ContributionAggregate>();
+  const ruleUsage = new Map<string, number>();
+  const storyPointCounts = new Map<number, number>();
+
+  let weightedScoreTotal = 0;
+  let adjustedScoreTotal = 0;
+  let storyPointTotal = 0;
+
+  votes.forEach((vote) => {
+    const { weightedScore, finalScore, appliedConversionRules, contributions } =
+      computeWeightedScoreAndRules(vote.criteriaScores);
+
+    weightedScoreTotal += weightedScore;
+    adjustedScoreTotal += finalScore;
+
+    const storyPoints = convertScoreToStoryPoints(finalScore);
+    storyPointTotal += storyPoints;
+    storyPointCounts.set(
+      storyPoints,
+      (storyPointCounts.get(storyPoints) ?? 0) + 1,
+    );
+
+    contributions.forEach((contribution) => {
+      const meta = criteriaMeta.get(contribution.id);
+      const existing = contributionMap.get(contribution.id);
+
+      if (!existing) {
+        contributionMap.set(contribution.id, {
+          label: meta?.label ?? contribution.id,
+          weightPercent: contribution.weightPercent,
+          maxScore: meta?.maxScore ?? contribution.maxScore,
+          order: meta?.order ?? Number.MAX_SAFE_INTEGER,
+          sumScore: contribution.score,
+          sumContributionPercent: contribution.contributionPercent,
+        });
+      } else {
+        existing.sumScore += contribution.score;
+        existing.sumContributionPercent += contribution.contributionPercent;
+      }
+    });
+
+    appliedConversionRules.forEach((rule) => {
+      ruleUsage.set(rule, (ruleUsage.get(rule) ?? 0) + 1);
+    });
+  });
+
+  const totalVotes = votes.length;
+  const contributions = Array.from(contributionMap.entries())
+    .map(([id, entry]) => ({
+      id,
+      label: entry.label,
+      weightPercent: entry.weightPercent,
+      averageScore: entry.sumScore / totalVotes,
+      maxScore: entry.maxScore,
+      averageContributionPercent: entry.sumContributionPercent / totalVotes,
+      order: entry.order,
+    }))
+    .sort((a, b) => {
+      if (a.order === b.order) {
+        return a.label.localeCompare(b.label);
+      }
+      return a.order - b.order;
+    })
+    .map(({ order, ...rest }) => rest);
+
+  const storyPointDistribution = Array.from(storyPointCounts.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([storyPoints, count]) => ({
+      storyPoints,
+      count,
+      percentage: (count / totalVotes) * 100,
+    }));
+
+  const conversionRules = Array.from(ruleUsage.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([rule, count]) => ({
+      rule,
+      count,
+      percentage: (count / totalVotes) * 100,
+    }));
+
+  const averageWeightedScore = weightedScoreTotal / totalVotes;
+  const averageAdjustedScore = adjustedScoreTotal / totalVotes;
+  const weightedStoryPointEstimate = convertScoreToStoryPoints(
+    averageAdjustedScore,
+  );
+  const averageStoryPoints = storyPointTotal / totalVotes;
+
+  return {
+    totalVotes,
+    averageWeightedScore,
+    averageAdjustedScore,
+    weightedStoryPointEstimate,
+    averageStoryPoints,
+    storyPointDistribution,
+    conversionRules,
     contributions,
   };
 }

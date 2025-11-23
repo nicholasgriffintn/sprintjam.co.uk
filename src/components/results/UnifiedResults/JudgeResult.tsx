@@ -1,6 +1,12 @@
 import { motion } from "framer-motion";
-import { Gavel, Users, AlertTriangle, CheckCircle } from "lucide-react";
-import { memo, useMemo } from "react";
+import {
+  Gavel,
+  Users,
+  AlertTriangle,
+  CheckCircle,
+  ChevronDown,
+} from "lucide-react";
+import { memo, useEffect, useId, useMemo, useState } from "react";
 
 import type { RoomData, RoomStats } from "@/types";
 
@@ -29,6 +35,16 @@ export const JudgeResult = memo(function JudgeResult({
   showJudgeAnimation: boolean;
 }) {
   const totalParticipants = stats.totalUsers || roomData.users.length;
+  const breakdown = roomData.judgeMetadata?.structuredBreakdown;
+  const hasBreakdown = (breakdown?.totalVotes ?? 0) > 0;
+  const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
+  const breakdownRegionId = useId();
+
+  useEffect(() => {
+    if (!hasBreakdown && isBreakdownOpen) {
+      setIsBreakdownOpen(false);
+    }
+  }, [hasBreakdown, isBreakdownOpen]);
 
   const participationData = useMemo(() => {
     const percentage = totalParticipants
@@ -126,6 +142,124 @@ export const JudgeResult = memo(function JudgeResult({
                 Wide spread suggests different understanding of requirements.
               </p>
             </div>
+          </div>
+        )}
+
+        {hasBreakdown && breakdown && (
+          <div className="mt-3 border border-slate-200/80 dark:border-white/10 rounded-2xl bg-white/60 dark:bg-slate-950/40">
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200"
+              onClick={() => setIsBreakdownOpen((prev) => !prev)}
+              aria-expanded={isBreakdownOpen}
+              aria-controls={breakdownRegionId}
+            >
+              <span>Show weighted criteria math</span>
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${isBreakdownOpen ? "rotate-180" : "rotate-0"}`}
+              />
+            </button>
+            {isBreakdownOpen && (
+              <motion.div
+                id={breakdownRegionId}
+                className="px-4 pb-4 text-xs text-slate-600 dark:text-slate-300"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                transition={{ duration: 0.25 }}
+              >
+                <p className="text-[13px] leading-relaxed text-slate-700 dark:text-slate-200">
+                  Based on {breakdown.totalVotes} structured vote
+                  {breakdown.totalVotes > 1 ? "s" : ""}, the criteria added up to
+                  {" "}
+                  {breakdown.averageWeightedScore.toFixed(1)}% and adjusted to
+                  {" "}
+                  {breakdown.averageAdjustedScore.toFixed(1)}% → roughly
+                  {" "}
+                  <span className="font-semibold">
+                    {breakdown.weightedStoryPointEstimate}pt
+                  </span>
+                  {" "}
+                  before consensus. Those inputs averaged
+                  {" "}
+                  {breakdown.averageStoryPoints.toFixed(1)}pt compared to the
+                  judge's verdict of {stats.judgeScore ?? "?"}.
+                </p>
+
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {breakdown.contributions.map((contribution) => (
+                    <div
+                      key={contribution.id}
+                      className="rounded-xl border border-slate-100/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-3"
+                    >
+                      <div className="flex items-center justify-between text-[12px] font-medium">
+                        <span>{contribution.label}</span>
+                        <span>
+                          {contribution.averageScore.toFixed(1)} /
+                          {contribution.maxScore}
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1.5 w-full rounded-full bg-slate-200/80 dark:bg-slate-800/80 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-sky-500"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              contribution.averageContributionPercent,
+                            ).toFixed(1)}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                        <span>Weight {Math.round(contribution.weightPercent)}%</span>
+                        <span>
+                          Avg {contribution.averageContributionPercent.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {breakdown.storyPointDistribution.length > 0 && (
+                  <div className="mt-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Structured Story Points
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-2 text-[12px]">
+                      {breakdown.storyPointDistribution.map((bucket) => (
+                        <span
+                          key={bucket.storyPoints}
+                          className="px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+                        >
+                          <span className="font-semibold">
+                            {bucket.storyPoints}pt
+                          </span>
+                          {" · "}
+                          {bucket.count} vote
+                          {bucket.count !== 1 ? "s" : ""} ({
+                          bucket.percentage.toFixed(0)
+                        }
+                          %)
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {breakdown.conversionRules.length > 0 && (
+                  <div className="mt-3 rounded-xl bg-amber-50/70 border border-amber-200/70 p-3 text-amber-800">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide">Conversion Rules applied</div>
+                    <ul className="mt-1 space-y-1">
+                      {breakdown.conversionRules.map((rule) => (
+                        <li key={rule.rule}>
+                          {rule.rule} – {rule.count} vote
+                          {rule.count !== 1 ? "s" : ""} ({rule.percentage.toFixed(0)}%)
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </motion.div>
+            )}
           </div>
         )}
       </div>

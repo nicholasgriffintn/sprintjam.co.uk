@@ -4,6 +4,7 @@ import {
   createStructuredVote,
   getDefaultVotingCriteria,
   isStructuredVote,
+  buildJudgeStructuredBreakdown,
 } from "./structured-voting";
 
 describe("Structured Voting Calculations", () => {
@@ -340,6 +341,58 @@ describe("Structured Voting Calculations", () => {
 
       expect(vote.percentageScore).toBe(100);
       expect(vote.calculatedStoryPoints).toBe(8);
+    });
+  });
+
+  describe("buildJudgeStructuredBreakdown", () => {
+    it("returns undefined when no structured votes are present", () => {
+      expect(buildJudgeStructuredBreakdown()).toBeUndefined();
+      expect(buildJudgeStructuredBreakdown({})).toBeUndefined();
+    });
+
+    it("aggregates contributions, rules, and story point distribution", () => {
+      const structuredVotes = {
+        alice: createStructuredVote({
+          complexity: 0,
+          confidence: 4,
+          volume: 0,
+          unknowns: 0,
+        }),
+        bob: createStructuredVote({
+          complexity: 4,
+          confidence: 0,
+          volume: 4,
+          unknowns: 2,
+        }),
+      };
+
+      const breakdown = buildJudgeStructuredBreakdown(
+        structuredVotes,
+        getDefaultVotingCriteria(),
+      );
+
+      expect(breakdown).toBeDefined();
+      expect(breakdown?.totalVotes).toBe(2);
+      expect(breakdown?.weightedStoryPointEstimate).toBe(5);
+      expect(breakdown?.averageWeightedScore).toBeCloseTo(50, 5);
+      expect(breakdown?.averageStoryPoints).toBeCloseTo(4.5, 5);
+
+      const contributions = breakdown?.contributions ?? [];
+      expect(contributions).toHaveLength(4);
+      expect(contributions[0].id).toBe("complexity");
+      expect(contributions[0].averageContributionPercent).toBeCloseTo(17.5, 5);
+
+      const distribution = breakdown?.storyPointDistribution ?? [];
+      expect(
+        distribution.find((bucket) => bucket.storyPoints === 1)?.count,
+      ).toBe(1);
+      expect(
+        distribution.find((bucket) => bucket.storyPoints === 8)?.count,
+      ).toBe(1);
+
+      const rules = breakdown?.conversionRules ?? [];
+      expect(rules.length).toBeGreaterThan(0);
+      expect(rules[0].count).toBeGreaterThan(0);
     });
   });
 });
