@@ -175,6 +175,12 @@ export interface JudgeMetadata {
   algorithm: JudgeAlgorithm;
 }
 
+export interface TimerState {
+  running: boolean;
+  seconds: number;
+  lastUpdateTime: number;
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -195,6 +201,7 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  timerState?: TimerState;
 }
 
 export interface WebSocketErrorData {
@@ -226,7 +233,10 @@ export type WebSocketMessageType =
   | 'ticketUpdated'
   | 'ticketDeleted'
   | 'ticketCompleted'
-  | 'queueUpdated';
+  | 'queueUpdated'
+  | 'timerStarted'
+  | 'timerPaused'
+  | 'timerReset';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;
@@ -255,6 +265,7 @@ export interface WebSocketMessage {
   outcome?: string;
   closeCode?: number;
   reason?: string;
+  timerState?: TimerState;
 }
 
 export interface RoomStats {

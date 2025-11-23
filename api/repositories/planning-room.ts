@@ -43,7 +43,10 @@ export class PlanningRoomRepository {
           current_strudel_generation_id TEXT,
           strudel_phase TEXT,
           strudel_is_playing INTEGER NOT NULL DEFAULT 0,
-          current_ticket_id INTEGER
+          current_ticket_id INTEGER,
+          timer_seconds INTEGER DEFAULT 0,
+          timer_last_updated INTEGER DEFAULT 0,
+          timer_is_paused INTEGER DEFAULT 0
         )`
       );
 
@@ -142,6 +145,9 @@ export class PlanningRoomRepository {
         current_strudel_generation_id: string | null;
         strudel_phase: string | null;
         strudel_is_playing: number | null;
+        timer_seconds: number | null;
+        timer_last_updated: number | null;
+        timer_is_paused: number | null;
       }>(
         `SELECT
            room_key,
@@ -154,7 +160,10 @@ export class PlanningRoomRepository {
            current_strudel_code,
            current_strudel_generation_id,
            strudel_phase,
-           strudel_is_playing
+           strudel_is_playing,
+           timer_seconds,
+           timer_last_updated,
+           timer_is_paused
          FROM room_meta
          WHERE id = ${ROOM_ROW_ID}`
       )
@@ -238,6 +247,13 @@ export class PlanningRoomRepository {
       anonymizeVotes,
     });
 
+    const hasTimer = row.timer_is_paused || row.timer_seconds || row.timer_last_updated;
+    const timerState = hasTimer ? {
+      running: !row.timer_is_paused,
+      seconds: row.timer_seconds ?? 0,
+      lastUpdateTime: row.timer_last_updated ?? 0,
+    } : undefined;
+
     const roomData: RoomData = {
       key: row.room_key,
       users: userList,
@@ -263,6 +279,7 @@ export class PlanningRoomRepository {
         : undefined,
       currentTicket,
       ticketQueue: ticketQueue.length > 0 ? ticketQueue : undefined,
+      timerState,
     };
 
     return roomData;
@@ -285,8 +302,11 @@ export class PlanningRoomRepository {
           current_strudel_code,
           current_strudel_generation_id,
           strudel_phase,
-          strudel_is_playing
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          strudel_is_playing,
+          timer_seconds,
+          timer_last_updated,
+          timer_is_paused
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           room_key = excluded.room_key,
           moderator = excluded.moderator,
@@ -298,7 +318,10 @@ export class PlanningRoomRepository {
           current_strudel_code = excluded.current_strudel_code,
           current_strudel_generation_id = excluded.current_strudel_generation_id,
           strudel_phase = excluded.strudel_phase,
-          strudel_is_playing = excluded.strudel_is_playing`,
+          strudel_is_playing = excluded.strudel_is_playing,
+          timer_seconds = excluded.timer_seconds,
+          timer_last_updated = excluded.timer_last_updated,
+          timer_is_paused = excluded.timer_is_paused`,
         ROOM_ROW_ID,
         roomData.key,
         roomData.moderator,
@@ -312,7 +335,10 @@ export class PlanningRoomRepository {
         roomData.currentStrudelCode ?? null,
         roomData.currentStrudelGenerationId ?? null,
         roomData.strudelPhase ?? null,
-        roomData.strudelIsPlaying ? 1 : 0
+        roomData.strudelIsPlaying ? 1 : 0,
+        roomData.timerState?.seconds ?? null,
+        roomData.timerState?.lastUpdateTime ?? null,
+        roomData.timerState?.running ? 1 : 0,
       );
 
       sql.exec('DELETE FROM room_users');
@@ -397,6 +423,60 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_meta SET show_votes = ? WHERE id = ${ROOM_ROW_ID}`,
       showVotes ? 1 : 0
+    );
+  }
+
+  setTimerState(running: boolean, seconds: number, lastUpdateTime: number) {
+    this.sql.exec(
+      `UPDATE room_meta
+       SET timer_is_paused = ?, timer_seconds = ?, timer_last_updated = ?
+       WHERE id = ${ROOM_ROW_ID}`,
+      running ? 1 : 0,
+      seconds,
+      lastUpdateTime
+    );
+  }
+
+  startTimer(currentTime: number) {
+    this.sql.exec(
+      `UPDATE room_meta
+       SET timer_is_paused = 0, timer_last_updated = ?
+       WHERE id = ${ROOM_ROW_ID}`,
+      currentTime
+    );
+  }
+
+  pauseTimer(currentTime: number) {
+    const row = this.sql
+      .exec<{
+        timer_is_paused: number;
+        timer_seconds: number;
+        timer_last_updated: number;
+      }>(
+        `SELECT timer_is_paused, timer_seconds, timer_last_updated
+         FROM room_meta WHERE id = ${ROOM_ROW_ID}`
+      )
+      .toArray()[0];
+
+    if (row && !row.timer_is_paused) {
+      const elapsedSinceLastUpdate = Math.floor((currentTime - row.timer_last_updated) / 1000);
+      const existingSeconds = row.timer_seconds ?? 0;
+      const newSeconds = existingSeconds + elapsedSinceLastUpdate;
+      this.sql.exec(
+        `UPDATE room_meta
+         SET timer_is_paused = 1, timer_seconds = ?, timer_last_updated = ?
+         WHERE id = ${ROOM_ROW_ID}`,
+        newSeconds,
+        currentTime
+      );
+    }
+  }
+
+  resetTimer() {
+    this.sql.exec(
+      `UPDATE room_meta
+       SET timer_is_paused = 0, timer_seconds = 0, timer_last_updated = 0
+       WHERE id = ${ROOM_ROW_ID}`
     );
   }
 
@@ -620,8 +700,8 @@ export class PlanningRoomRepository {
         externalServiceId: row.external_service_id ?? undefined,
         externalServiceMetadata: row.external_service_metadata
           ? safeJsonParse<Record<string, unknown>>(
-              row.external_service_metadata
-            )
+            row.external_service_metadata
+          )
           : undefined,
         votes,
       };

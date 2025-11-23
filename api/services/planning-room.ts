@@ -1,5 +1,5 @@
 declare const WebSocketPair: {
-  new (): { 0: CfWebSocket; 1: CfWebSocket };
+  new(): { 0: CfWebSocket; 1: CfWebSocket };
 };
 
 import type {
@@ -235,6 +235,15 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           case 'completeTicket':
             await this.handleCompleteTicket(userName, validated.outcome);
             break;
+          case 'startTimer':
+            await this.handleStartTimer(userName);
+            break;
+          case 'pauseTimer':
+            await this.handlePauseTimer(userName);
+            break;
+          case 'resetTimer':
+            await this.handleResetTimer(userName);
+            break;
         }
       } catch (err: unknown) {
         webSocket.send(
@@ -338,7 +347,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       const broadcastUser =
         roomData.settings.anonymousVotes ||
-        roomData.settings.hideParticipantNames
+          roomData.settings.hideParticipantNames
           ? getAnonymousUserId(roomData, userName)
           : userName;
 
@@ -542,7 +551,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.sessions.forEach((session) => {
       try {
         session.webSocket.send(json);
-      } catch (_err) {}
+      } catch (_err) { }
     });
   }
 
@@ -974,6 +983,77 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         type: 'ticketCompleted',
         ticket: nextTicket,
         queue: updatedQueue,
+      });
+    });
+  }
+
+  async handleStartTimer(userName: string) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.getRoomData();
+      if (!roomData) return;
+
+      if (roomData.moderator !== userName) {
+        return;
+      }
+
+      const currentTime = Date.now();
+      this.repository.startTimer(currentTime);
+
+      const timerState = {
+        running: true,
+        seconds: roomData.timerState?.seconds ?? 0,
+        lastUpdateTime: currentTime,
+      };
+
+      this.broadcast({
+        type: 'timerStarted',
+        timerState,
+      });
+    });
+  }
+
+  async handlePauseTimer(userName: string) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.getRoomData();
+      if (!roomData) return;
+
+      if (roomData.moderator !== userName) {
+        return;
+      }
+
+      const currentTime = Date.now();
+      this.repository.pauseTimer(currentTime);
+
+      const updatedRoomData = await this.getRoomData();
+      if (updatedRoomData?.timerState) {
+        this.broadcast({
+          type: 'timerPaused',
+          timerState: updatedRoomData.timerState,
+        });
+      }
+    });
+  }
+
+  async handleResetTimer(userName: string) {
+    await this.state.blockConcurrencyWhile(async () => {
+      const roomData = await this.getRoomData();
+      if (!roomData) return;
+
+      if (roomData.moderator !== userName) {
+        return;
+      }
+
+      this.repository.resetTimer();
+
+      const timerState = {
+        running: false,
+        seconds: 0,
+        lastUpdateTime: 0,
+      };
+
+      this.broadcast({
+        type: 'timerReset',
+        timerState,
       });
     });
   }

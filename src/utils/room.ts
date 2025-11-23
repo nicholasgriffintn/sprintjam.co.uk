@@ -233,8 +233,8 @@ export function applyRoomUpdate(
     case 'queueUpdated': {
       const currentTicket =
         message.ticket &&
-        prev.currentTicket &&
-        (message.ticket as TicketQueueItem).id === prev.currentTicket.id
+          prev.currentTicket &&
+          (message.ticket as TicketQueueItem).id === prev.currentTicket.id
           ? (message.ticket as TicketQueueItem)
           : prev.currentTicket;
 
@@ -254,6 +254,18 @@ export function applyRoomUpdate(
         ...prev,
         currentTicket,
         ticketQueue: message.queue,
+      };
+    }
+
+    case 'timerStarted':
+    case 'timerPaused':
+    case 'timerReset': {
+      if (!message.timerState) {
+        return prev;
+      }
+      return {
+        ...prev,
+        timerState: message.timerState,
       };
     }
 
