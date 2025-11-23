@@ -20,6 +20,7 @@
     "deploy": "npm run build && npm exec wrangler deploy"
   },
   "dependencies": {
+    "@microsoft/teams-js": "^2.47.0",
     "@strudel/web": "^1.2.6",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/db": "^0.4.10",

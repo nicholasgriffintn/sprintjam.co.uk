@@ -1,0 +1,70 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "YOUR_APP_ID_HERE",
+  "packageName": "com.sprintjam.teams",
+  "developer": {
+    "name": "SprintJam",
+    "websiteUrl": "https://sprintjam.co.uk",
+    "privacyUrl": "https://sprintjam.co.uk/privacy",
+    "termsOfUseUrl": "https://sprintjam.co.uk/terms"
+  },
+  "name": {
+    "short": "SprintJam",
+    "full": "SprintJam Planning Poker"
+  },
+  "description": {
+    "short": "Collaborative Planning Poker for Agile Teams",
+    "full": "SprintJam is a modern, privacy-focused planning poker application designed for agile teams. Run effective story pointing sessions right in Teams without ads, trackers, or subscription fees. Features include real-time voting, smart consensus algorithms, Jira/Linear integration, and structured multi-criteria estimation."
+  },
+  "icons": {
+    "outline": "outline-icon.png",
+    "color": "color-icon.png"
+  },
+  "accentColor": "#3B82F6",
+  "staticTabs": [
+    {
+      "entityId": "sprintjam-home",
+      "name": "Home",
+      "contentUrl": "https://sprintjam.co.uk/teams/home",
+      "websiteUrl": "https://sprintjam.co.uk",
+      "scopes": ["personal"]
+    }
+  ],
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://sprintjam.co.uk/teams/config",
+      "canUpdateConfiguration": true,
+      "scopes": ["team", "groupchat"],
+      "context": [
+        "channelTab",
+        "privateChatTab",
+        "meetingChatTab",
+        "meetingDetailsTab"
+      ],
+      "supportedSharePointHosts": [
+        "sharePointFullPage",
+        "sharePointWebPart"
+      ]
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "sprintjam.co.uk"
+  ],
+  "webApplicationInfo": {
+    "id": "YOUR_AAD_APP_ID_HERE",
+    "resource": "api://sprintjam.co.uk/YOUR_AAD_APP_ID_HERE"
+  },
+  "showLoadingIndicator": true,
+  "isFullScreen": false,
+  "defaultInstallScope": "team",
+  "defaultGroupCapability": {
+    "team": "tab",
+    "groupchat": "tab"
+  }
+}

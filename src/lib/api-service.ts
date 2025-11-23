@@ -8,6 +8,7 @@ import type {
   WebSocketMessageType,
   AvatarId,
   TicketQueueItem,
+  TeamsMetadata,
 } from "@/types";
 import { API_BASE_URL, WS_BASE_URL } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
@@ -59,7 +60,8 @@ export async function createRoom(
   name: string,
   passcode?: string,
   settings?: Partial<RoomSettings>,
-  avatar?: AvatarId
+  avatar?: AvatarId,
+  teamsMetadata?: TeamsMetadata
 ): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
@@ -67,7 +69,7 @@ export async function createRoom(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, passcode, settings, avatar }),
+      body: JSON.stringify({ name, passcode, settings, avatar, teamsMetadata }),
     });
 
     if (!response.ok) {

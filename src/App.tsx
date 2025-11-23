@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { MotionConfig } from 'framer-motion';
 
 import ErrorBanner from './components/ui/ErrorBanner';
@@ -15,6 +15,10 @@ import NotFoundScreen from './routes/NotFoundScreen';
 import { ErrorBannerServerDefaults } from './components/errors/ErrorBannerServerDefaults';
 import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
 import TermsConditionsScreen from './routes/TermsConditionsScreen';
+import TeamsTabConfigScreen from './routes/teams/TeamsTabConfigScreen';
+import TeamsHomeScreen from './routes/teams/TeamsHomeScreen';
+import TeamsRoomScreen from './routes/teams/TeamsRoomScreen';
+import { useTeamsContext } from './hooks/useTeamsContext';
 
 const RoomScreen = lazy(() => import('./routes/RoomScreen'));
 
@@ -28,6 +32,23 @@ const AppContent = () => {
     defaultsError,
     handleRetryDefaults,
   } = useRoom();
+  const teamsContext = useTeamsContext();
+
+  // Sync Teams theme with app
+  useEffect(() => {
+    if (!teamsContext.isInTeams || !teamsContext.theme) {
+      return;
+    }
+
+    const isDarkMode = teamsContext.theme === 'dark' || teamsContext.theme === 'contrast';
+
+    // Apply dark mode class to document
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [teamsContext.isInTeams, teamsContext.theme]);
 
   const renderScreen = () => {
     switch (screen) {
@@ -49,6 +70,12 @@ const AppContent = () => {
         return <PrivacyPolicyScreen />;
       case 'terms':
         return <TermsConditionsScreen />;
+      case 'teams/config':
+        return <TeamsTabConfigScreen />;
+      case 'teams/home':
+        return <TeamsHomeScreen />;
+      case 'teams/room':
+        return <TeamsRoomScreen />;
       default:
         return <NotFoundScreen />;
     }

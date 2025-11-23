@@ -175,6 +175,12 @@ export interface JudgeMetadata {
   algorithm: JudgeAlgorithm;
 }
 
+export interface TeamsMetadata {
+  channelId: string;
+  teamId: string;
+  channelName?: string;
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -195,6 +201,7 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  teamsMetadata?: TeamsMetadata;
 }
 
 export interface WebSocketErrorData {

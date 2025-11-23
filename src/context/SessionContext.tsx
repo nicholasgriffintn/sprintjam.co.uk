@@ -18,7 +18,10 @@ export type AppScreen =
   | 'room'
   | '404'
   | 'privacy'
-  | 'terms';
+  | 'terms'
+  | 'teams/config'
+  | 'teams/home'
+  | 'teams/room';
 
 interface SessionContextValue {
   screen: AppScreen;
@@ -53,6 +56,13 @@ function getScreenFromPath(path: string): AppScreen {
   const pathWithoutTrailingSlash = pathWithoutQuery.endsWith('/')
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
+
+  // Teams routes
+  if (pathWithoutTrailingSlash === '/teams/config') return 'teams/config';
+  if (pathWithoutTrailingSlash === '/teams/home') return 'teams/home';
+  if (pathWithoutTrailingSlash === '/teams/room') return 'teams/room';
+
+  // Standard routes
   return pathWithoutTrailingSlash === '/create'
     ? 'create'
     : pathWithoutTrailingSlash === '/join'
