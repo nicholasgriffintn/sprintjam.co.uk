@@ -28,7 +28,7 @@ import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { Footer } from '@/components/layout/Footer';
-import type { RetroFormat } from '@/types';
+import type { RetroFormat, RetroData } from '@/types';
 
 const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
 const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
@@ -71,6 +71,9 @@ const RoomScreen = () => {
   const [activeRetroCategory, setActiveRetroCategory] = useState<string | null>(null);
   const [newRetroItemContent, setNewRetroItemContent] = useState<Record<string, string>>({});
 
+  // Local retro state (will be replaced with server sync)
+  const [localRetroData, setLocalRetroData] = useState<RetroData | null>(null);
+
   if (!roomData || !serverDefaults) {
     return <FallbackLoading />;
   }
@@ -97,33 +100,68 @@ const RoomScreen = () => {
 
   const handleStartRetro = (format: RetroFormat) => {
     // TODO: Add WebSocket handler to sync with server
-    // For now, this will be client-side only
-    console.log('Starting retro with format:', format);
+    setLocalRetroData({
+      format,
+      items: [],
+      isActive: true,
+      createdAt: Date.now(),
+    });
     setIsRetroFormatModalOpen(false);
   };
 
   const handleAddRetroItem = (category: string, content: string) => {
     // TODO: Add WebSocket handler to sync with server
-    console.log('Adding retro item:', { category, content });
+    if (!localRetroData) return;
+
+    const newItem = {
+      id: `${Date.now()}-${Math.random()}`,
+      category,
+      content,
+      author: name,
+      votes: 0,
+      createdAt: Date.now(),
+    };
+
+    setLocalRetroData({
+      ...localRetroData,
+      items: [...localRetroData.items, newItem],
+    });
   };
 
   const handleVoteRetroItem = (itemId: string) => {
     // TODO: Add WebSocket handler to sync with server
-    console.log('Voting on retro item:', itemId);
+    if (!localRetroData) return;
+
+    setLocalRetroData({
+      ...localRetroData,
+      items: localRetroData.items.map((item) =>
+        item.id === itemId ? { ...item, votes: item.votes + 1 } : item
+      ),
+    });
   };
 
   const handleDeleteRetroItem = (itemId: string) => {
     // TODO: Add WebSocket handler to sync with server
-    console.log('Deleting retro item:', itemId);
+    if (!localRetroData) return;
+
+    setLocalRetroData({
+      ...localRetroData,
+      items: localRetroData.items.filter((item) => item.id !== itemId),
+    });
   };
 
   const handleEndRetro = () => {
     // TODO: Add WebSocket handler to sync with server
-    console.log('Ending retro');
+    setLocalRetroData(null);
+    setActiveRetroCategory(null);
+    setNewRetroItemContent({});
   };
 
+  // Use local retro data or server retro data
+  const activeRetroData = localRetroData || roomData.retroData;
+
   // If retro is active, show the retro view
-  if (roomData.retroData?.isActive) {
+  if (activeRetroData?.isActive) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
         {showAuthBanner && (
@@ -149,7 +187,7 @@ const RoomScreen = () => {
         )}
 
         <RetroView
-          retroData={roomData.retroData}
+          retroData={activeRetroData}
           userName={name}
           isModeratorView={isModeratorView}
           onAddItem={handleAddRetroItem}
