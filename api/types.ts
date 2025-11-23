@@ -267,6 +267,32 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  workspaceId?: string;
+  team?: string;
+  persona?: string;
+  sprintId?: string;
+  createdAt?: number;
+  lastActivity?: number;
+}
+
+export interface RoomSnapshot {
+  id: number;
+  roomKey: string;
+  snapshotTimestamp: number;
+  ticketId?: string;
+  voteDistribution: Record<string, number>;
+  judgeScore?: string | number | null;
+  judgeMetadata?: Record<string, unknown>;
+  participantCount: number;
+  averageVote?: number;
+  medianVote?: string;
+  consensusLevel?: 'high' | 'medium' | 'low';
+  workspaceId?: string;
+  team?: string;
+  persona?: string;
+  sprintId?: string;
+  settingsSnapshot?: Record<string, unknown>;
+  createdAt: number;
 }
 
 export interface BroadcastMessage {

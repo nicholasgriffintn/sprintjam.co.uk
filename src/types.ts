@@ -195,6 +195,30 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  workspaceId?: string;
+  team?: string;
+  persona?: string;
+  sprintId?: string;
+}
+
+export interface RoomSnapshot {
+  id: number;
+  roomKey: string;
+  snapshotTimestamp: number;
+  ticketId?: string;
+  voteDistribution: Record<VoteValue, number>;
+  judgeScore?: VoteValue | null;
+  judgeMetadata?: JudgeMetadata;
+  participantCount: number;
+  averageVote?: number;
+  medianVote?: VoteValue;
+  consensusLevel?: 'high' | 'medium' | 'low';
+  workspaceId?: string;
+  team?: string;
+  persona?: string;
+  sprintId?: string;
+  settingsSnapshot?: Partial<RoomSettings>;
+  createdAt: number;
 }
 
 export interface WebSocketErrorData {

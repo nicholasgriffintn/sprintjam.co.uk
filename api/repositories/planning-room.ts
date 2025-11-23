@@ -43,7 +43,13 @@ export class PlanningRoomRepository {
           current_strudel_generation_id TEXT,
           strudel_phase TEXT,
           strudel_is_playing INTEGER NOT NULL DEFAULT 0,
-          current_ticket_id INTEGER
+          current_ticket_id INTEGER,
+          workspace_id TEXT,
+          team TEXT,
+          persona TEXT,
+          sprint_id TEXT,
+          created_at INTEGER,
+          last_activity INTEGER
         )`
       );
 
@@ -125,6 +131,61 @@ export class PlanningRoomRepository {
           UNIQUE(room_key, provider)
         )`
       );
+
+      this.sql.exec(
+        `CREATE TABLE IF NOT EXISTS room_snapshots (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          room_key TEXT NOT NULL,
+          snapshot_timestamp INTEGER NOT NULL,
+          ticket_id TEXT,
+          vote_distribution TEXT NOT NULL,
+          judge_score TEXT,
+          judge_metadata TEXT,
+          participant_count INTEGER NOT NULL,
+          average_vote REAL,
+          median_vote TEXT,
+          consensus_level TEXT,
+          workspace_id TEXT,
+          team TEXT,
+          persona TEXT,
+          sprint_id TEXT,
+          settings_snapshot TEXT,
+          created_at INTEGER NOT NULL
+        )`
+      );
+
+      this.sql.exec(
+        `CREATE INDEX IF NOT EXISTS idx_snapshots_room_timestamp
+         ON room_snapshots(room_key, snapshot_timestamp DESC)`
+      );
+
+      this.sql.exec(
+        `CREATE INDEX IF NOT EXISTS idx_snapshots_workspace
+         ON room_snapshots(workspace_id, snapshot_timestamp DESC)`
+      );
+
+      this.sql.exec(
+        `CREATE TABLE IF NOT EXISTS workspaces (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          created_by TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        )`
+      );
+
+      this.sql.exec(
+        `CREATE TABLE IF NOT EXISTS workspace_members (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          workspace_id TEXT NOT NULL,
+          user_name TEXT NOT NULL,
+          role TEXT NOT NULL CHECK(role IN ('owner', 'admin', 'member')),
+          added_at INTEGER NOT NULL,
+          FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+          UNIQUE(workspace_id, user_name)
+        )`
+      );
     });
   }
 
@@ -142,6 +203,12 @@ export class PlanningRoomRepository {
         current_strudel_generation_id: string | null;
         strudel_phase: string | null;
         strudel_is_playing: number | null;
+        workspace_id: string | null;
+        team: string | null;
+        persona: string | null;
+        sprint_id: string | null;
+        created_at: number | null;
+        last_activity: number | null;
       }>(
         `SELECT
            room_key,
@@ -154,7 +221,13 @@ export class PlanningRoomRepository {
            current_strudel_code,
            current_strudel_generation_id,
            strudel_phase,
-           strudel_is_playing
+           strudel_is_playing,
+           workspace_id,
+           team,
+           persona,
+           sprint_id,
+           created_at,
+           last_activity
          FROM room_meta
          WHERE id = ${ROOM_ROW_ID}`
       )
@@ -263,6 +336,12 @@ export class PlanningRoomRepository {
         : undefined,
       currentTicket,
       ticketQueue: ticketQueue.length > 0 ? ticketQueue : undefined,
+      workspaceId: row.workspace_id ?? undefined,
+      team: row.team ?? undefined,
+      persona: row.persona ?? undefined,
+      sprintId: row.sprint_id ?? undefined,
+      createdAt: row.created_at ?? undefined,
+      lastActivity: row.last_activity ?? undefined,
     };
 
     return roomData;
@@ -285,8 +364,14 @@ export class PlanningRoomRepository {
           current_strudel_code,
           current_strudel_generation_id,
           strudel_phase,
-          strudel_is_playing
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          strudel_is_playing,
+          workspace_id,
+          team,
+          persona,
+          sprint_id,
+          created_at,
+          last_activity
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           room_key = excluded.room_key,
           moderator = excluded.moderator,
@@ -298,7 +383,13 @@ export class PlanningRoomRepository {
           current_strudel_code = excluded.current_strudel_code,
           current_strudel_generation_id = excluded.current_strudel_generation_id,
           strudel_phase = excluded.strudel_phase,
-          strudel_is_playing = excluded.strudel_is_playing`,
+          strudel_is_playing = excluded.strudel_is_playing,
+          workspace_id = excluded.workspace_id,
+          team = excluded.team,
+          persona = excluded.persona,
+          sprint_id = excluded.sprint_id,
+          created_at = excluded.created_at,
+          last_activity = excluded.last_activity`,
         ROOM_ROW_ID,
         roomData.key,
         roomData.moderator,
@@ -312,7 +403,13 @@ export class PlanningRoomRepository {
         roomData.currentStrudelCode ?? null,
         roomData.currentStrudelGenerationId ?? null,
         roomData.strudelPhase ?? null,
-        roomData.strudelIsPlaying ? 1 : 0
+        roomData.strudelIsPlaying ? 1 : 0,
+        roomData.workspaceId ?? null,
+        roomData.team ?? null,
+        roomData.persona ?? null,
+        roomData.sprintId ?? null,
+        roomData.createdAt ?? null,
+        roomData.lastActivity ?? null
       );
 
       sql.exec('DELETE FROM room_users');
@@ -1170,6 +1267,215 @@ export class PlanningRoomRepository {
       estimateField,
       authorizedBy: existing.authorizedBy,
     });
+  }
+
+  createSnapshot(
+    roomKey: string,
+    options: {
+      ticketId?: string;
+      voteDistribution: Record<string, number>;
+      judgeScore?: string | number | null;
+      judgeMetadata?: Record<string, unknown>;
+      participantCount: number;
+      averageVote?: number;
+      medianVote?: string;
+      consensusLevel?: 'high' | 'medium' | 'low';
+      workspaceId?: string;
+      team?: string;
+      persona?: string;
+      sprintId?: string;
+      settingsSnapshot?: Record<string, unknown>;
+    }
+  ): void {
+    this.sql.exec(
+      `INSERT INTO room_snapshots (
+        room_key,
+        snapshot_timestamp,
+        ticket_id,
+        vote_distribution,
+        judge_score,
+        judge_metadata,
+        participant_count,
+        average_vote,
+        median_vote,
+        consensus_level,
+        workspace_id,
+        team,
+        persona,
+        sprint_id,
+        settings_snapshot,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      roomKey,
+      Date.now(),
+      options.ticketId ?? null,
+      JSON.stringify(options.voteDistribution),
+      options.judgeScore !== undefined && options.judgeScore !== null
+        ? String(options.judgeScore)
+        : null,
+      serializeJSON(options.judgeMetadata),
+      options.participantCount,
+      options.averageVote ?? null,
+      options.medianVote ?? null,
+      options.consensusLevel ?? null,
+      options.workspaceId ?? null,
+      options.team ?? null,
+      options.persona ?? null,
+      options.sprintId ?? null,
+      serializeJSON(options.settingsSnapshot),
+      Date.now()
+    );
+  }
+
+  getSnapshots(
+    roomKey: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      workspaceId?: string;
+      team?: string;
+      persona?: string;
+      sprintId?: string;
+    }
+  ): Array<{
+    id: number;
+    roomKey: string;
+    snapshotTimestamp: number;
+    ticketId?: string;
+    voteDistribution: Record<string, number>;
+    judgeScore?: string | number | null;
+    judgeMetadata?: Record<string, unknown>;
+    participantCount: number;
+    averageVote?: number;
+    medianVote?: string;
+    consensusLevel?: 'high' | 'medium' | 'low';
+    workspaceId?: string;
+    team?: string;
+    persona?: string;
+    sprintId?: string;
+    settingsSnapshot?: Record<string, unknown>;
+    createdAt: number;
+  }> {
+    const conditions: string[] = ['room_key = ?'];
+    const params: unknown[] = [roomKey];
+
+    if (options?.workspaceId) {
+      conditions.push('workspace_id = ?');
+      params.push(options.workspaceId);
+    }
+    if (options?.team) {
+      conditions.push('team = ?');
+      params.push(options.team);
+    }
+    if (options?.persona) {
+      conditions.push('persona = ?');
+      params.push(options.persona);
+    }
+    if (options?.sprintId) {
+      conditions.push('sprint_id = ?');
+      params.push(options.sprintId);
+    }
+
+    let query = `SELECT * FROM room_snapshots WHERE ${conditions.join(' AND ')} ORDER BY snapshot_timestamp DESC`;
+
+    if (options?.limit) {
+      query += ` LIMIT ${options.limit}`;
+    }
+    if (options?.offset) {
+      query += ` OFFSET ${options.offset}`;
+    }
+
+    const rows = this.sql
+      .exec<{
+        id: number;
+        room_key: string;
+        snapshot_timestamp: number;
+        ticket_id: string | null;
+        vote_distribution: string;
+        judge_score: string | null;
+        judge_metadata: string | null;
+        participant_count: number;
+        average_vote: number | null;
+        median_vote: string | null;
+        consensus_level: string | null;
+        workspace_id: string | null;
+        team: string | null;
+        persona: string | null;
+        sprint_id: string | null;
+        settings_snapshot: string | null;
+        created_at: number;
+      }>(query, ...params)
+      .toArray();
+
+    return rows.map((row) => ({
+      id: row.id,
+      roomKey: row.room_key,
+      snapshotTimestamp: row.snapshot_timestamp,
+      ticketId: row.ticket_id ?? undefined,
+      voteDistribution: safeJsonParse<Record<string, number>>(
+        row.vote_distribution
+      ) || {},
+      judgeScore: parseJudgeScore(row.judge_score),
+      judgeMetadata: row.judge_metadata
+        ? safeJsonParse<Record<string, unknown>>(row.judge_metadata)
+        : undefined,
+      participantCount: row.participant_count,
+      averageVote: row.average_vote ?? undefined,
+      medianVote: row.median_vote ?? undefined,
+      consensusLevel:
+        (row.consensus_level as 'high' | 'medium' | 'low') ?? undefined,
+      workspaceId: row.workspace_id ?? undefined,
+      team: row.team ?? undefined,
+      persona: row.persona ?? undefined,
+      sprintId: row.sprint_id ?? undefined,
+      settingsSnapshot: row.settings_snapshot
+        ? safeJsonParse<Record<string, unknown>>(row.settings_snapshot)
+        : undefined,
+      createdAt: row.created_at,
+    }));
+  }
+
+  setRoomMetadata(metadata: {
+    workspaceId?: string;
+    team?: string;
+    persona?: string;
+    sprintId?: string;
+  }): void {
+    const fields: string[] = [];
+    const values: unknown[] = [];
+
+    if (metadata.workspaceId !== undefined) {
+      fields.push('workspace_id = ?');
+      values.push(metadata.workspaceId || null);
+    }
+    if (metadata.team !== undefined) {
+      fields.push('team = ?');
+      values.push(metadata.team || null);
+    }
+    if (metadata.persona !== undefined) {
+      fields.push('persona = ?');
+      values.push(metadata.persona || null);
+    }
+    if (metadata.sprintId !== undefined) {
+      fields.push('sprint_id = ?');
+      values.push(metadata.sprintId || null);
+    }
+
+    if (fields.length === 0) {
+      return;
+    }
+
+    this.sql.exec(
+      `UPDATE room_meta SET ${fields.join(', ')} WHERE id = ${ROOM_ROW_ID}`,
+      ...values
+    );
+  }
+
+  updateLastActivity(): void {
+    this.sql.exec(
+      `UPDATE room_meta SET last_activity = ? WHERE id = ${ROOM_ROW_ID}`,
+      Date.now()
+    );
   }
 
   private getSql(txn?: DurableObjectTransaction): SqlStorage {
