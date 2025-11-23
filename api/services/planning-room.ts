@@ -395,6 +395,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         await this.calculateAndUpdateJudgeScore();
       }
 
+      if (roomData.showVotes && Object.keys(roomData.votes).length > 0) {
+        this.createRoomSnapshot(roomData);
+      }
+
       shouldGenerateMusic =
         previousPhase !== newPhase &&
         !!roomData.settings.enableStrudelPlayer &&
@@ -1069,6 +1073,71 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       ordinal: maxOrdinal + 1,
       externalService: roomData.settings.externalService || 'none',
     });
+  }
+
+  private createRoomSnapshot(roomData: RoomData) {
+    try {
+      const voteDistribution: Record<string, number> = {};
+      const allVotes = Object.values(roomData.votes).filter((v) => v !== null);
+
+      allVotes.forEach((vote) => {
+        const voteKey = String(vote);
+        voteDistribution[voteKey] = (voteDistribution[voteKey] || 0) + 1;
+      });
+
+      const numericVotes = allVotes
+        .filter((v) => v !== '?' && !Number.isNaN(Number(v)))
+        .map(Number);
+
+      let averageVote: number | undefined;
+      let medianVote: string | undefined;
+      let consensusLevel: 'high' | 'medium' | 'low' | undefined;
+
+      if (numericVotes.length > 0) {
+        const sum = numericVotes.reduce((a, b) => a + b, 0);
+        averageVote = sum / numericVotes.length;
+
+        const sorted = [...numericVotes].sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+        medianVote = String(
+          sorted.length % 2 === 0
+            ? (sorted[mid - 1] + sorted[mid]) / 2
+            : sorted[mid]
+        );
+
+        const max = Math.max(...numericVotes);
+        const min = Math.min(...numericVotes);
+        const range = max - min;
+        if (range <= 1) {
+          consensusLevel = 'high';
+        } else if (range <= 3) {
+          consensusLevel = 'medium';
+        } else {
+          consensusLevel = 'low';
+        }
+      }
+
+      this.repository.createSnapshot(roomData.key, {
+        ticketId: roomData.currentTicket?.ticketId,
+        voteDistribution,
+        judgeScore: roomData.judgeScore,
+        judgeMetadata: roomData.judgeMetadata,
+        participantCount: allVotes.length,
+        averageVote,
+        medianVote,
+        consensusLevel,
+        workspaceId: roomData.workspaceId,
+        team: roomData.team,
+        persona: roomData.persona,
+        sprintId: roomData.sprintId,
+        settingsSnapshot: {
+          judgeAlgorithm: roomData.settings.judgeAlgorithm,
+          estimateOptions: roomData.settings.estimateOptions,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to create snapshot:', error);
+    }
   }
 
   async getRoomData(): Promise<RoomData | undefined> {

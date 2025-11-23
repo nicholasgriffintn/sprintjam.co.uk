@@ -9,6 +9,7 @@ import { TheJudge } from "./TheJudge";
 import { OtherOptions } from "./OtherOptions";
 import { BackgroundMusic } from "./BackgroundMusic";
 import { TicketQueueSettings } from "./TicketQueueSettings";
+import { RoomMetadata } from "./RoomMetadata";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -162,6 +163,8 @@ const SettingsModal: FC<SettingsModalProps> = ({
             localSettings={localSettings}
             handleChange={handleChange}
           />
+
+          <RoomMetadata />
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
