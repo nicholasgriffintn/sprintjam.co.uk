@@ -7,7 +7,6 @@ import { useRoomStats } from '@/hooks/useRoomStats';
 import { useConsensusCelebration } from '@/hooks/useConsensusCelebration';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import Header from '@/components/Header';
-import { Timer } from '@/components/voting/Timer';
 import { UserEstimate } from '@/components/voting/UserEstimate';
 import { ResultsControls } from '@/components/results/ResultsControls';
 import { VotesHidden } from '@/components/results/VotesHidden';
@@ -131,7 +130,6 @@ const RoomScreen = () => {
         />
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
-          {roomData.settings.showTimer && <Timer />}
 
           {roomData.settings.enableStrudelPlayer && (
             <StrudelMiniPlayer

@@ -8,6 +8,8 @@ import type {
   StructuredVotingDisplaySettings,
 } from "@/types";
 import { StructuredVotingUpdateNotification } from "./StructuredVotingUpdateNotification";
+import { TimerChip } from "./TimerChip";
+import { useRoom } from "@/context/RoomContext";
 
 interface StructuredVotingPanelProps {
   criteria: VotingCriterion[];
@@ -33,8 +35,8 @@ function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
         onClick={() => onScoreChange(i)}
         data-testid={`structured-score-${criterion.id}-${i}`}
         className={`w-8 h-8 flex items-center justify-center text-sm font-medium border rounded ${score === i
-            ? "border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
-            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-slate-900 dark:text-white"
+          ? "border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+          : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-slate-900 dark:text-white"
           }`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -71,6 +73,7 @@ export function StructuredVotingPanel({
   onVote,
   displaySettings,
 }: StructuredVotingPanelProps) {
+  const { roomData } = useRoom();
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>(
     () => {
       if (currentVote?.criteriaScores) {
@@ -118,21 +121,24 @@ export function StructuredVotingPanel({
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {displaySettings?.panelTitle ?? "Structured Estimation"}
           </h2>
-          {allowScoringInfoToggle && (
-            <button
-              type="button"
-              onClick={() => setShowScoringInfo(!showScoringInfo)}
-              className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${showScoringInfo
+          <div className="flex items-center gap-3">
+            {allowScoringInfoToggle && (
+              <button
+                type="button"
+                onClick={() => setShowScoringInfo(!showScoringInfo)}
+                className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors cursor-pointer ${showScoringInfo
                   ? "text-slate-900 border border-slate-300 bg-white/80 hover:border-slate-400 dark:border-slate-600 dark:bg-white/10 dark:text-white"
                   : "text-slate-600 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white border border-transparent"
-                }`}
-              aria-expanded={showScoringInfo}
-              aria-controls={scoringInfoPanelId}
-            >
-              <Info size={14} />
-              {infoToggleSettings?.label ?? "Scoring Info"}
-            </button>
-          )}
+                  }`}
+                aria-expanded={showScoringInfo}
+                aria-controls={scoringInfoPanelId}
+              >
+                <Info size={14} />
+                {infoToggleSettings?.label ?? "Scoring Info"}
+              </button>
+            )}
+            {roomData?.settings.showTimer && <TimerChip />}
+          </div>
         </div>
 
         <div className="bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl p-3 mb-4">

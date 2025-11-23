@@ -112,7 +112,11 @@ test.describe("SprintJam Jira integration journeys", () => {
       await settingsModal.save();
 
       const page = moderatorRoom.getPage();
-      await page.getByTestId("queue-expand").click();
+      // The queue setup modal appears automatically when a provider is selected and queue is empty
+      const setupModal = page.getByRole("dialog", { name: "Connect your queue" });
+      await expect(setupModal).toBeVisible();
+      await setupModal.getByRole("button", { name: "Open queue setup" }).click();
+
       const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await expect(queueDialog).toBeVisible();
 

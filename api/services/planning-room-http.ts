@@ -43,7 +43,7 @@ export async function handleHttpRequest(
       return createJsonResponse({ error: 'Room already exists' }, 400);
     }
 
-    roomData = createInitialRoomData({
+    const newRoomData = createInitialRoomData({
       key: roomKey,
       users: [moderator],
       moderator,
@@ -52,9 +52,9 @@ export async function handleHttpRequest(
       settings,
     });
 
-    assignUserAvatar(roomData, moderator, avatar);
+    assignUserAvatar(newRoomData, moderator, avatar);
 
-    await ctx.putRoomData(roomData);
+    await ctx.putRoomData(newRoomData);
 
     const authToken = generateSessionToken();
     ctx.repository.setSessionToken(moderator, authToken);
@@ -63,7 +63,7 @@ export async function handleHttpRequest(
 
     return createJsonResponse({
       success: true,
-      room: sanitizeRoomData(roomData),
+      room: sanitizeRoomData(newRoomData),
       defaults,
       authToken,
     });

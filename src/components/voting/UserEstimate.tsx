@@ -3,6 +3,8 @@ import { Check } from "lucide-react";
 
 import type { RoomData, VoteValue } from "@/types";
 import { getUsersVoteTaskSize } from "@/utils/tasks";
+import { TimerChip } from "./TimerChip";
+import { useRoom } from "@/context/RoomContext";
 
 export function UserEstimate({
   roomData,
@@ -15,19 +17,24 @@ export function UserEstimate({
   userVote: VoteValue | null;
   onVote: (value: VoteValue) => void;
 }) {
+  const { roomData: contextRoomData } = useRoom();
+
   return (
     <div className="mb-8">
-      <div className="flex flex-wrap gap-2 md:gap-3">
-        <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-          Your Estimate
-        </h2>
-        {userVote && (
-          <div>
-            <span className="inline-flex items-center rounded-full border border-gray-300 dark:border-gray-600 px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800">
-              {getUsersVoteTaskSize(roomData, name)}
-            </span>
-          </div>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Your Estimate
+          </h2>
+          {userVote && (
+            <div>
+              <span className="inline-flex items-center rounded-full border border-gray-300 dark:border-gray-600 px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-gray-900 dark:text-white bg-white dark:bg-gray-800">
+                {getUsersVoteTaskSize(roomData, name)}
+              </span>
+            </div>
+          )}
+        </div>
+        {contextRoomData?.settings.showTimer && <TimerChip />}
       </div>
       <div className="flex flex-wrap gap-2 md:gap-3">
         {roomData.settings.estimateOptions.map((option) => {
