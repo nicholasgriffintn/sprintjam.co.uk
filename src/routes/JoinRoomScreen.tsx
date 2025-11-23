@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Users, Key, Lock, User, ChevronRight } from 'lucide-react';
 
@@ -15,9 +15,12 @@ import { Logo } from '@/components/Logo';
 import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
+import { useTeamsContext, useTeamsUsername } from '@/hooks/useTeamsContext';
 
 const JoinRoomScreen = () => {
   usePageMeta(META_CONFIGS.join);
+  const teamsContext = useTeamsContext();
+  const teamsUsername = useTeamsUsername();
   const {
     name,
     roomKey,
@@ -33,6 +36,13 @@ const JoinRoomScreen = () => {
     clearError,
   } = useSession();
   const { handleJoinRoom } = useRoom();
+
+  // Auto-fill name from Teams context
+  useEffect(() => {
+    if (teamsUsername && !name) {
+      setName(teamsUsername);
+    }
+  }, [teamsUsername, name, setName]);
   const [currentStep, setCurrentStep] = useState<'details' | 'avatar'>(
     'details'
   );

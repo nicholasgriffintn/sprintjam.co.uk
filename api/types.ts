@@ -248,6 +248,12 @@ export interface TicketQueueItem {
   votes?: TicketVote[];
 }
 
+export interface TeamsMetadata {
+  channelId: string;
+  teamId: string;
+  channelName?: string;
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -267,6 +273,7 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  teamsMetadata?: TeamsMetadata;
 }
 
 export interface BroadcastMessage {
