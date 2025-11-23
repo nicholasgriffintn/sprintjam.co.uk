@@ -154,7 +154,7 @@ const CreateRoomScreen = () => {
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-brand-500">
               Step{' '}
-              {currentStep === 'name' ? 1 : currentStep === 'avatar' ? 3 : 2}
+              {currentStep === 'name' ? 1 : currentStep === 'avatar' ? 2 : 3}
               /3
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">

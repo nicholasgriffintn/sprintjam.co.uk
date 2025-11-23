@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { MotionConfig } from 'framer-motion';
+import { Toaster } from 'sonner';
 
 import ErrorBanner from './components/ui/ErrorBanner';
 import LoadingOverlay from './components/LoadingOverlay';
@@ -56,6 +57,13 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <Toaster
+        position="bottom-right"
+        theme="system"
+        richColors
+        closeButton
+      />
+
       {(isLoading || isLoadingDefaults) && <LoadingOverlay />}
 
       {defaultsError && (

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
@@ -15,6 +16,39 @@ export function UserEstimate({
   userVote: VoteValue | null;
   onVote: (value: VoteValue) => void;
 }) {
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Ignore if typing in an input or textarea
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement ||
+        event.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+
+      // Map number keys 1-9 to vote options
+      const key = event.key;
+      const keyNumber = parseInt(key, 10);
+
+      if (keyNumber >= 1 && keyNumber <= 9) {
+        const optionIndex = keyNumber - 1;
+        const option = roomData.settings.estimateOptions[optionIndex];
+
+        if (option !== undefined) {
+          event.preventDefault();
+          onVote(option);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [roomData.settings.estimateOptions, onVote]);
+
   return (
     <div className="mb-8">
       <div className="flex flex-wrap gap-2 md:gap-3">

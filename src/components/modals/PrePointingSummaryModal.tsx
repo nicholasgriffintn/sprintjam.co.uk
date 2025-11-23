@@ -1,8 +1,9 @@
-import { FC, useMemo } from "react";
+import { FC, useMemo, useState } from "react";
 import { CheckCircle2, Users } from "lucide-react";
 
 import type { TicketQueueItem, VoteValue } from "@/types";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 
 interface PrePointingSummaryModalProps {
   isOpen: boolean;
@@ -31,6 +32,8 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
   currentTicket,
   currentUser,
 }) => {
+  const [isConfirming, setIsConfirming] = useState(false);
+
   const voteEntries = useMemo(
     () =>
       Object.entries(votes).filter(
@@ -38,6 +41,15 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
       ),
     [votes],
   );
+
+  const handleConfirm = async () => {
+    setIsConfirming(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   const consensusLabel =
     stats.mode !== null && stats.distribution[stats.mode] === stats.totalVotes
@@ -140,22 +152,23 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={onClose}
             data-testid="pre-pointing-cancel"
-            className="rounded-lg bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
+            disabled={isConfirming}
           >
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleConfirm}
             data-testid="pre-pointing-confirm"
-            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+            isLoading={isConfirming}
+            disabled={isConfirming}
           >
             Next Ticket
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>
