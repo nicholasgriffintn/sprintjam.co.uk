@@ -373,3 +373,285 @@ export async function updateJiraStoryPoints(
     clientSecret
   );
 }
+
+export interface SearchJiraOptions {
+  jql?: string;
+  project?: string;
+  status?: string;
+  assignee?: string;
+  sprint?: string;
+  text?: string;
+  maxResults?: number;
+  startAt?: number;
+}
+
+export interface SearchJiraResult {
+  tickets: TicketMetadata[];
+  total: number;
+  startAt: number;
+  maxResults: number;
+}
+
+export async function searchJiraTickets(
+  credentials: JiraOAuthCredentials,
+  options: SearchJiraOptions,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<SearchJiraResult> {
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const headers = getOAuthHeaders(accessToken);
+
+      let jql = options.jql || '';
+
+      if (!jql) {
+        const jqlParts: string[] = [];
+
+        if (options.project) {
+          jqlParts.push(`project = "${options.project}"`);
+        }
+
+        if (options.status) {
+          jqlParts.push(`status = "${options.status}"`);
+        }
+
+        if (options.assignee) {
+          jqlParts.push(`assignee = "${options.assignee}"`);
+        }
+
+        if (options.sprint && credentials.sprintField) {
+          jqlParts.push(`"${credentials.sprintField}" = "${options.sprint}"`);
+        }
+
+        if (options.text) {
+          jqlParts.push(`(summary ~ "${options.text}" OR description ~ "${options.text}")`);
+        }
+
+        jql = jqlParts.join(' AND ');
+      }
+
+      if (!jql) {
+        jql = 'order by created DESC';
+      } else {
+        jql += ' order by created DESC';
+      }
+
+      const maxResults = options.maxResults || 50;
+      const startAt = options.startAt || 0;
+
+      const response = await fetch(
+        `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/api/3/search`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            jql,
+            startAt,
+            maxResults,
+            fields: ['summary', 'description', 'status', 'assignee', credentials.storyPointsField].filter(Boolean),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('401: Unauthorized');
+        }
+        const errorData = (await response.json()) as {
+          errorMessages: string[];
+        };
+        throw new Error(
+          errorData.errorMessages?.[0] ||
+            `Failed to search Jira tickets: ${response.status}`
+        );
+      }
+
+      const data = (await response.json()) as {
+        total: number;
+        startAt: number;
+        maxResults: number;
+        issues: Array<{
+          id: string;
+          key: string;
+          fields: {
+            summary: string;
+            description: any;
+            status: {
+              name: string;
+            };
+            assignee: {
+              displayName: string;
+            };
+            [key: string]: any;
+          };
+        }>;
+      };
+
+      const tickets: TicketMetadata[] = data.issues.map((issue) => {
+        const storyPoints = credentials.storyPointsField
+          ? issue.fields[credentials.storyPointsField]
+          : null;
+
+        return {
+          id: issue.id,
+          key: issue.key,
+          summary: issue.fields.summary,
+          description: parseJiraDescription(issue.fields.description) || '',
+          status: issue.fields.status?.name || 'Unknown',
+          assignee: issue.fields.assignee?.displayName || null,
+          storyPoints,
+          url: `https://${credentials.jiraDomain}/browse/${issue.key}`,
+        };
+      });
+
+      return {
+        tickets,
+        total: data.total,
+        startAt: data.startAt,
+        maxResults: data.maxResults,
+      };
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
+
+export async function fetchJiraTicketsBatch(
+  credentials: JiraOAuthCredentials,
+  ticketKeys: string[],
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<TicketMetadata[]> {
+  if (ticketKeys.length === 0) {
+    return [];
+  }
+
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const headers = getOAuthHeaders(accessToken);
+
+      const jql = `key in (${ticketKeys.map(k => `"${k}"`).join(',')})`;
+
+      const response = await fetch(
+        `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/api/3/search`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            jql,
+            maxResults: ticketKeys.length,
+            fields: ['summary', 'description', 'status', 'assignee', credentials.storyPointsField].filter(Boolean),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('401: Unauthorized');
+        }
+        const errorData = (await response.json()) as {
+          errorMessages: string[];
+        };
+        throw new Error(
+          errorData.errorMessages?.[0] ||
+            `Failed to fetch Jira tickets batch: ${response.status}`
+        );
+      }
+
+      const data = (await response.json()) as {
+        issues: Array<{
+          id: string;
+          key: string;
+          fields: {
+            summary: string;
+            description: any;
+            status: {
+              name: string;
+            };
+            assignee: {
+              displayName: string;
+            };
+            [key: string]: any;
+          };
+        }>;
+      };
+
+      return data.issues.map((issue) => {
+        const storyPoints = credentials.storyPointsField
+          ? issue.fields[credentials.storyPointsField]
+          : null;
+
+        return {
+          id: issue.id,
+          key: issue.key,
+          summary: issue.fields.summary,
+          description: parseJiraDescription(issue.fields.description) || '',
+          status: issue.fields.status?.name || 'Unknown',
+          assignee: issue.fields.assignee?.displayName || null,
+          storyPoints,
+          url: `https://${credentials.jiraDomain}/browse/${issue.key}`,
+        };
+      });
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
+
+export async function getJiraProjects(
+  credentials: JiraOAuthCredentials,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<Array<{ id: string; key: string; name: string }>> {
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const headers = getOAuthHeaders(accessToken);
+
+      const response = await fetch(
+        `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/api/3/project`,
+        {
+          method: 'GET',
+          headers,
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('401: Unauthorized');
+        }
+        throw new Error(`Failed to fetch Jira projects: ${response.status}`);
+      }
+
+      const data = (await response.json()) as Array<{
+        id: string;
+        key: string;
+        name: string;
+      }>;
+
+      return data;
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
