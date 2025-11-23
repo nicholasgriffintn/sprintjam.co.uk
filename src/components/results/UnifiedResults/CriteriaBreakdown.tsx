@@ -1,3 +1,6 @@
+import { motion } from "framer-motion";
+
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import type { CriteriaStats, CriteriaBreakdownSettings } from "@/types";
 
 export function CriteriaBreakdownStat({
@@ -24,10 +27,10 @@ export function CriteriaBreakdownStat({
         </h4>
         <span
           className={`flex-shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs ${stat.consensus === "high"
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200"
-              : stat.consensus === "medium"
-                ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
-                : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
+            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200"
+            : stat.consensus === "medium"
+              ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
+              : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
             }`}
         >
           {stat.consensus === "high"
@@ -84,4 +87,45 @@ export function CriteriaBreakdownStat({
       ) : null}
     </div>
   );
+}
+
+export function CriteriaBreakdown({
+  criteriaStats,
+  criteriaSettings,
+}: {
+  criteriaStats: CriteriaStats[];
+  criteriaSettings: CriteriaBreakdownSettings | undefined;
+}) {
+  return (
+    <div>
+      <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
+        {criteriaSettings?.title ?? "Criteria Breakdown"}
+      </h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {criteriaStats.map((stat) => (
+          <motion.div
+            key={stat.criterionId}
+            className="h-full"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.3,
+              delay: criteriaStats.indexOf(stat) * 0.05,
+            }}
+          >
+            <SurfaceCard
+              padding="sm"
+              variant="subtle"
+              className="flex h-full flex-col"
+            >
+              <CriteriaBreakdownStat
+                stat={stat}
+                criteriaSettings={criteriaSettings}
+              />
+            </SurfaceCard>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
 }

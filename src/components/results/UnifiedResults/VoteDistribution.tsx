@@ -2,20 +2,22 @@ import { motion } from "framer-motion";
 
 import type { RoomData, RoomStats } from "@/types";
 import { getContrastingTextColor } from '@/utils/colors';
+import { useVoteDistributionControls } from "./hooks/useVoteDistributionControls";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 export type VoteDistributionViewMode = "count" | "percentage" | "cumulative";
 
-interface VoteDistributionProps {
+interface VoteDistributionItemProps {
   roomData: RoomData;
   stats: RoomStats;
   viewMode: VoteDistributionViewMode;
 }
 
-export function VoteDistribution({
+export function VoteDistributionItem({
   roomData,
   stats,
   viewMode,
-}: VoteDistributionProps) {
+}: VoteDistributionItemProps) {
   const defaultTotal = roomData.users.length || stats.totalUsers || 1;
   const voteTotal = stats.totalVotes || defaultTotal;
   let cumulativeCount = 0;
@@ -96,4 +98,69 @@ export function VoteDistribution({
       })}
     </div>
   );
+}
+
+export function VoteDistribution({
+  roomData,
+  stats,
+}: {
+  roomData: RoomData;
+  stats: RoomStats;
+}) {
+  const {
+    distributionView,
+    setDistributionView,
+    distributionViewOptions,
+    handleExportDistribution,
+  } = useVoteDistributionControls(roomData, stats);
+
+  const resultsDisplay = roomData.settings.resultsDisplay;
+  const voteDistributionLabel =
+    resultsDisplay?.voteDistributionLabel ?? "Vote Distribution";
+
+  return (
+    <div>
+      <h3 className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-300">
+        {voteDistributionLabel}
+      </h3>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div
+          className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-sm dark:bg-slate-800"
+          role="group"
+          aria-label="Vote distribution view"
+          data-testid="distribution-view-toggle-group"
+        >
+          {distributionViewOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setDistributionView(option.id)}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${distributionView === option.id
+                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                }`}
+              aria-pressed={distributionView === option.id}
+              data-testid={`distribution-view-option-${option.id}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={handleExportDistribution}
+          className="inline-flex items-center rounded-md border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          Export CSV
+        </button>
+      </div>
+      <SurfaceCard padding="sm">
+        <VoteDistributionItem
+          roomData={roomData}
+          stats={stats}
+          viewMode={distributionView}
+        />
+      </SurfaceCard>
+    </div>
+  )
 }

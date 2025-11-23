@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useRoom } from '@/context/RoomContext';
@@ -26,14 +26,10 @@ import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { Footer } from '@/components/layout/Footer';
+import ShareRoomModal from '@/components/modals/ShareRoomModal';
+import SettingsModal from '@/components/modals/SettingsModal';
+import { UnifiedResults } from '@/components/results/UnifiedResults';
 
-const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
-const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
-const UnifiedResults = lazy(() =>
-  import('@/components/results/UnifiedResults').then((m) => ({
-    default: m.UnifiedResults,
-  }))
-);
 const RoomScreen = () => {
   usePageMeta(META_CONFIGS.room);
   const {
@@ -208,15 +204,13 @@ const RoomScreen = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Suspense fallback={<FallbackLoading variant="inline" />}>
-                      <UnifiedResults
-                        roomData={roomData}
-                        stats={stats}
-                        criteria={roomData.settings.votingCriteria}
-                        displayJudge={roomData.settings.enableJudge}
-                        showVotes={roomData.showVotes}
-                      />
-                    </Suspense>
+                    <UnifiedResults
+                      roomData={roomData}
+                      stats={stats}
+                      criteria={roomData.settings.votingCriteria}
+                      displayJudge={roomData.settings.enableJudge}
+                      showVotes={roomData.showVotes}
+                    />
                   </motion.div>
                 </SurfaceCard>
 
@@ -254,28 +248,24 @@ const RoomScreen = () => {
 
       <AnimatePresence>
         {isSettingsModalOpen && (
-          <Suspense fallback={<FallbackLoading />}>
-            <SettingsModal
-              isOpen={isSettingsModalOpen}
-              onClose={() => setIsSettingsModalOpen(false)}
-              settings={roomData.settings}
-              onSaveSettings={handleUpdateSettings}
-              defaultSettings={serverDefaults.roomSettings}
-              structuredVotingOptions={serverDefaults.structuredVotingOptions}
-            />
-          </Suspense>
+          <SettingsModal
+            isOpen={isSettingsModalOpen}
+            onClose={() => setIsSettingsModalOpen(false)}
+            settings={roomData.settings}
+            onSaveSettings={handleUpdateSettings}
+            defaultSettings={serverDefaults.roomSettings}
+            structuredVotingOptions={serverDefaults.structuredVotingOptions}
+          />
         )}
       </AnimatePresence>
 
       <AnimatePresence>
         {isShareModalOpen && (
-          <Suspense fallback={<FallbackLoading />}>
-            <ShareRoomModal
-              isOpen={isShareModalOpen}
-              onClose={() => setIsShareModalOpen(false)}
-              roomKey={roomData.key}
-            />
-          </Suspense>
+          <ShareRoomModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            roomKey={roomData.key}
+          />
         )}
       </AnimatePresence>
 

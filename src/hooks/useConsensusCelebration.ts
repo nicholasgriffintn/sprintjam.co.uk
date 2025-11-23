@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import confetti from "canvas-confetti";
 
 import type { RoomData, RoomStats } from "@/types";
 
@@ -23,7 +22,10 @@ export const useConsensusCelebration = ({
 
     if (everyoneVotedSame) {
       if (!hasCelebratedRef.current) {
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        import("canvas-confetti").then((module) => {
+          const confetti = module.default;
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        });
         hasCelebratedRef.current = true;
       }
     } else if (stats.votedUsers < roomData.users.length) {
