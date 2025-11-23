@@ -29,13 +29,16 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
     return `${window.location.origin}/?join=${roomKey}`;
   }, [roomKey]);
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (inputRef.current) {
       inputRef.current.select();
-      navigator.clipboard.writeText(shareableUrl);
-      setCopied(true);
-
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        await navigator.clipboard.writeText(shareableUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (error) {
+        console.error("Failed to copy text: ", error);
+      }
     }
   };
 
