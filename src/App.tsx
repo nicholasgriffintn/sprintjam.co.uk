@@ -16,8 +16,6 @@ import { ErrorBannerServerDefaults } from './components/errors/ErrorBannerServer
 import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
 import TermsConditionsScreen from './routes/TermsConditionsScreen';
 import TeamsTabConfigScreen from './routes/teams/TeamsTabConfigScreen';
-import TeamsHomeScreen from './routes/teams/TeamsHomeScreen';
-import TeamsRoomScreen from './routes/teams/TeamsRoomScreen';
 import { useTeamsContext } from './hooks/useTeamsContext';
 
 const RoomScreen = lazy(() => import('./routes/RoomScreen'));
@@ -72,10 +70,6 @@ const AppContent = () => {
         return <TermsConditionsScreen />;
       case 'teams/config':
         return <TeamsTabConfigScreen />;
-      case 'teams/home':
-        return <TeamsHomeScreen />;
-      case 'teams/room':
-        return <TeamsRoomScreen />;
       default:
         return <NotFoundScreen />;
     }

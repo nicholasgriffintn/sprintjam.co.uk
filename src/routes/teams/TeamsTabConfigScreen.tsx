@@ -42,13 +42,6 @@ export default function TeamsTabConfigScreen() {
       const baseUrl = window.location.origin;
       const params = new URLSearchParams();
 
-      if (mode === 'create') {
-        params.set('createRoom', 'true');
-        params.set('roomName', roomName);
-      } else {
-        params.set('roomKey', roomKey);
-      }
-
       // Add Teams metadata
       if (teamsContext.team) {
         params.set('teamsChannelId', teamsContext.team.channelId || '');
@@ -56,7 +49,16 @@ export default function TeamsTabConfigScreen() {
         params.set('teamsChannelName', teamsContext.team.channelName || '');
       }
 
-      const contentUrl = `${baseUrl}/teams/room?${params.toString()}`;
+      // Route to create or join based on mode
+      const path = mode === 'create' ? '/create' : '/join';
+
+      if (mode === 'create') {
+        params.set('roomName', roomName);
+      } else {
+        params.set('key', roomKey);
+      }
+
+      const contentUrl = `${baseUrl}${path}?${params.toString()}`;
 
       // Configure the tab
       microsoftTeams.pages.config.setConfig({

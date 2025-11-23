@@ -27,7 +27,7 @@
     {
       "entityId": "sprintjam-home",
       "name": "Home",
-      "contentUrl": "https://sprintjam.co.uk/teams/home",
+      "contentUrl": "https://sprintjam.co.uk",
       "websiteUrl": "https://sprintjam.co.uk",
       "scopes": ["personal"]
     }

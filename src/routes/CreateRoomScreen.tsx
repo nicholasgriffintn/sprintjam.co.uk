@@ -24,9 +24,12 @@ import { Logo } from '@/components/Logo';
 import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
+import { useTeamsContext, useTeamsUsername } from '@/hooks/useTeamsContext';
 
 const CreateRoomScreen = () => {
   usePageMeta(META_CONFIGS.create);
+  const teamsContext = useTeamsContext();
+  const teamsUsername = useTeamsUsername();
   const {
     name,
     passcode,
@@ -39,6 +42,13 @@ const CreateRoomScreen = () => {
     clearError,
   } = useSession();
   const { handleCreateRoom, serverDefaults } = useRoom();
+
+  // Auto-fill name from Teams context
+  useEffect(() => {
+    if (teamsUsername && !name) {
+      setName(teamsUsername);
+    }
+  }, [teamsUsername, name, setName]);
   const buildSettingsFromDefaults = (
     roomDefaults?: RoomSettings | null
   ): Partial<RoomSettings> => ({
