@@ -70,14 +70,8 @@ export class PlanningRoomRepository {
       this.sql.exec(
         `CREATE TABLE IF NOT EXISTS room_votes (
           user_name TEXT PRIMARY KEY,
-          vote TEXT NOT NULL
-        )`
-      );
-
-      this.sql.exec(
-        `CREATE TABLE IF NOT EXISTS room_structured_votes (
-          user_name TEXT PRIMARY KEY,
-          payload TEXT NOT NULL
+          vote TEXT NOT NULL,
+          structured_vote_payload TEXT
         )`
       );
 
@@ -186,14 +180,11 @@ export class PlanningRoomRepository {
       .toArray();
 
     const votes = this.sql
-      .exec<{ user_name: string; vote: string }>('SELECT * FROM room_votes')
-      .toArray();
-
-    const structuredVotes = this.sql
       .exec<{
         user_name: string;
-        payload: string;
-      }>('SELECT * FROM room_structured_votes')
+        vote: string;
+        structured_vote_payload: string | null;
+      }>('SELECT * FROM room_votes')
       .toArray();
 
     const connectedUsers: Record<string, boolean> = {};
@@ -214,9 +205,13 @@ export class PlanningRoomRepository {
     }
 
     const structuredVoteMap: Record<string, StructuredVote> = {};
-    for (const entry of structuredVotes) {
+    for (const entry of votes) {
+      const payload = entry.structured_vote_payload;
+      if (!payload) {
+        continue;
+      }
       try {
-        const structuredVoteData = safeJsonParse<StructuredVote>(entry.payload);
+        const structuredVoteData = safeJsonParse<StructuredVote>(payload);
         if (!structuredVoteData) {
           throw new Error('Failed to parse structured vote from storage');
         }
@@ -357,24 +352,15 @@ export class PlanningRoomRepository {
 
       sql.exec('DELETE FROM room_votes');
       Object.entries(roomData.votes).forEach(([user, vote]) => {
+        const structuredVote = roomData.structuredVotes?.[user] ?? null;
         sql.exec(
-          `INSERT INTO room_votes (user_name, vote) VALUES (?, ?)`,
+          `INSERT INTO room_votes (user_name, vote, structured_vote_payload)
+           VALUES (?, ?, ?)`,
           user,
-          serializeVote(vote)
+          serializeVote(vote),
+          structuredVote ? JSON.stringify(structuredVote) : null
         );
       });
-
-      sql.exec('DELETE FROM room_structured_votes');
-      if (roomData.structuredVotes) {
-        Object.entries(roomData.structuredVotes).forEach(([user, payload]) => {
-          sql.exec(
-            `INSERT INTO room_structured_votes (user_name, payload)
-             VALUES (?, ?)`,
-            user,
-            JSON.stringify(payload)
-          );
-        });
-      }
     });
   }
 
@@ -483,9 +469,9 @@ export class PlanningRoomRepository {
   setVote(userName: string, vote: string | number) {
     this.ensureUser(userName);
     this.sql.exec(
-      `INSERT INTO room_votes (user_name, vote)
-       VALUES (?, ?)
-       ON CONFLICT(user_name) DO UPDATE SET vote = excluded.vote`,
+      `INSERT INTO room_votes (user_name, vote, structured_vote_payload)
+       VALUES (?, ?, NULL)
+       ON CONFLICT(user_name) DO UPDATE SET vote = excluded.vote, structured_vote_payload = NULL`,
       userName,
       serializeVote(vote)
     );
@@ -498,16 +484,14 @@ export class PlanningRoomRepository {
   setStructuredVote(userName: string, vote: StructuredVote) {
     this.ensureUser(userName);
     this.sql.exec(
-      `INSERT INTO room_structured_votes (user_name, payload)
-       VALUES (?, ?)
-       ON CONFLICT(user_name) DO UPDATE SET payload = excluded.payload`,
-      userName,
-      JSON.stringify(vote)
+      `UPDATE room_votes SET structured_vote_payload = ? WHERE user_name = ?`,
+      JSON.stringify(vote),
+      userName
     );
   }
 
   clearStructuredVotes() {
-    this.sql.exec('DELETE FROM room_structured_votes');
+    this.sql.exec('UPDATE room_votes SET structured_vote_payload = NULL');
   }
 
   setJudgeState(
