@@ -106,6 +106,8 @@ export interface StructuredVotingDisplaySettings {
   summary?: StructuredSummarySettings;
 }
 
+export type ViewMode = 'sidebar' | 'table';
+
 export interface RoomSettings {
   estimateOptions: (string | number)[];
   voteOptionsMetadata?: VoteOptionMetadata[];
@@ -132,6 +134,7 @@ export interface RoomSettings {
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
   enableTicketQueue?: boolean;
+  viewMode?: ViewMode;
 }
 
 export interface VotingCriterion {

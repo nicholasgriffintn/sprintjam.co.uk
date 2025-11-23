@@ -21,11 +21,13 @@ import { QueueProviderSetupModal } from '@/components/modals/QueueProviderSetupM
 import { ErrorBannerAuth } from '@/components/errors/ErrorBannerAuth';
 import { ErrorBannerConnection } from '@/components/errors/ErrorBannerConnection';
 import { RoomSidebar } from '@/components/layout/RoomSidebar';
+import { TableView } from '@/components/layout/TableView';
 import { getVoteKeyForUser } from '@/utils/room';
 import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { Footer } from '@/components/layout/Footer';
+import { cn } from '@/lib/cn';
 
 const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
 const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
@@ -90,7 +92,10 @@ const RoomScreen = () => {
   const showAuthBanner = connectionIssue?.type === 'auth';
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div className={cn(
+      "flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white",
+      roomData.settings.viewMode === 'table' ? 'h-screen overflow-hidden' : 'min-h-screen'
+    )}>
       {showAuthBanner && (
         <ErrorBannerAuth
           onRetryConnection={retryConnection}
@@ -120,21 +125,39 @@ const RoomScreen = () => {
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
+        onViewModeChange={(viewMode) => {
+          handleUpdateSettings({ ...roomData.settings, viewMode });
+        }}
       />
 
       <motion.div
-        className="flex flex-1 flex-col py-0 md:grid md:grid-cols-[minmax(280px,360px)_1fr] md:items-start"
+        className={
+          roomData.settings.viewMode === 'table'
+            ? 'flex flex-1 flex-col'
+            : 'flex flex-1 flex-col py-0 md:grid md:grid-cols-[minmax(280px,360px)_1fr] md:items-start'
+        }
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <RoomSidebar
-          isQueueEnabled={isQueueEnabled}
-          stats={stats}
-          setIsQueueModalOpen={setIsQueueModalOpen}
-        />
+        {roomData.settings.viewMode !== 'table' && (
+          <RoomSidebar
+            isQueueEnabled={isQueueEnabled}
+            stats={stats}
+            setIsQueueModalOpen={setIsQueueModalOpen}
+          />
+        )}
 
-        <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
+        {roomData.settings.viewMode === 'table' ? (
+          <TableView
+            roomData={roomData}
+            stats={stats}
+            name={name}
+            userVote={typeof userVote === 'object' ? null : userVote}
+            onVote={handleVote}
+          />
+        ) : (
+          <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
           {roomData.settings.showTimer && <Timer />}
 
           {roomData.settings.enableStrudelPlayer && (
@@ -249,7 +272,8 @@ const RoomScreen = () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+          </div>
+        )}
       </motion.div>
 
       <AnimatePresence>

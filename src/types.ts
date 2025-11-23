@@ -134,6 +134,8 @@ export interface VotingCriterion {
   maxScore: number;
 }
 
+export type ViewMode = 'sidebar' | 'table';
+
 export interface RoomSettings {
   estimateOptions: (string | number)[];
   voteOptionsMetadata?: VoteOptionMetadata[];
@@ -160,6 +162,7 @@ export interface RoomSettings {
   autoHandoverModerator?: boolean;
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
+  viewMode?: ViewMode;
 }
 
 export interface ServerDefaults {
