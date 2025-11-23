@@ -1,4 +1,5 @@
 import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import { BetaBadge } from "@/components/BetaBadge";
 
 export function BackgroundMusic({
   localSettings,
@@ -16,7 +17,7 @@ export function BackgroundMusic({
         <span className="inline-block transition-transform group-open:rotate-90">
           ▶
         </span>
-        Background Music (Beta)
+        Background Music <BetaBadge />
       </summary>
       <div className="mb-4">
         <div className="space-y-3 rounded-2xl border border-white/50 bg-white/60 dark:border-white/10 dark:bg-slate-900/40 p-4">

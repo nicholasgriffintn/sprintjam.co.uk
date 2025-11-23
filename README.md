@@ -135,12 +135,3 @@ Contributions are welcome! This project was built quickly and there are definite
 3. Make your changes
 4. Add tests if applicable
 5. Submit a pull request
-
-## 🧭 TODO / Future Enhancements
-
-- [ ] Add workspace support for teams to manage multiple rooms.
-- [ ] Enrich room metadata (team, persona, sprint) so vote distribution filters can operate on meaningful cohorts in both live and historical modes.
-- [ ] Persist past sessions so facilitators can compare rounds (Durable Object snapshots keyed by room + timestamp, lightweight metadata for participants and consensus).
-- [ ] Add a history drawer in `UnifiedResults` to surface trend lines once snapshots exist (avg delta, consensus trend, automatic regression callouts).
-- [ ] Improve accessibility (ARIA roles, keyboard navigation, screen reader support).
-- [ ] Make the background music as awesome as possible (this is something to do on Polychat).

@@ -5,6 +5,7 @@ import type { RoomData, TicketQueueItem } from '@/types';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { HorizontalProgress } from '@/components/ui/HorizontalProgress';
 import { cn } from '@/lib/cn';
+import { BetaBadge } from '@/components/BetaBadge';
 
 interface TicketQueueSidebarProps {
   roomData: RoomData | null;
@@ -169,9 +170,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
             <span className="inline-flex items-center gap-2">
               Queue
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/60 dark:text-amber-200">
-                Beta
-              </span>
+              <BetaBadge />
             </span>
           </div>
           <div className="flex items-center gap-2">

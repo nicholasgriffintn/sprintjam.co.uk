@@ -53,7 +53,7 @@ export function getDefaultRoomSettings(
     autoHandoverModerator: settings?.autoHandoverModerator ?? false,
     enableStrudelPlayer: settings?.enableStrudelPlayer ?? true,
     strudelAutoGenerate: settings?.strudelAutoGenerate ?? false,
-    enableTicketQueue: settings?.enableTicketQueue ?? true,
+    enableTicketQueue: settings?.enableTicketQueue ?? false,
     resultsDisplay: {
       showVoteDistribution: true,
       voteDistributionLabel: 'Vote Distribution',

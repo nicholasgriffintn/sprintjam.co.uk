@@ -24,6 +24,7 @@ import { Logo } from '@/components/Logo';
 import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
+import { BetaBadge } from '@/components/BetaBadge';
 
 const CreateRoomScreen = () => {
   usePageMeta(META_CONFIGS.create);
@@ -46,7 +47,7 @@ const CreateRoomScreen = () => {
     enableJudge: roomDefaults?.enableJudge ?? true,
     externalService: roomDefaults?.externalService ?? 'none',
     showTimer: roomDefaults?.showTimer ?? false,
-    enableTicketQueue: roomDefaults?.enableTicketQueue ?? true,
+    enableTicketQueue: roomDefaults?.enableTicketQueue ?? false,
     allowOthersToShowEstimates:
       roomDefaults?.allowOthersToShowEstimates ?? false,
     allowOthersToDeleteEstimates:
@@ -232,7 +233,7 @@ const CreateRoomScreen = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                        Ticket queue
+                        Ticket queue <BetaBadge />
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         Keep track of your estimations in a queue.
@@ -246,7 +247,7 @@ const CreateRoomScreen = () => {
                         id="enable-ticket-queue-toggle"
                         type="checkbox"
                         className="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-400"
-                        checked={settings.enableTicketQueue ?? true}
+                        checked={settings.enableTicketQueue ?? false}
                         onChange={(e) => {
                           const checked = e.target.checked;
                           handleSettingChange('enableTicketQueue', checked);

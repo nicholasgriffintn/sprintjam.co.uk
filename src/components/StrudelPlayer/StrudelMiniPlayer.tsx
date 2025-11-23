@@ -10,6 +10,7 @@ import {
   toggleStrudelPlayback,
 } from '@/lib/api-service';
 import type { RoomData } from '@/types';
+import { BetaBadge } from "../BetaBadge";
 
 interface StrudelMiniPlayerProps {
   roomData: RoomData;
@@ -134,8 +135,8 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
         variant="subtle"
         padding={isExpanded ? 'sm' : 'none'}
         className={`relative origin-bottom-right overflow-hidden transition-all duration-300 ${isExpanded
-            ? 'w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]'
-            : 'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl'
+          ? 'w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]'
+          : 'flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl'
           }`}
         aria-expanded={isExpanded}
         role={!isExpanded ? 'button' : undefined}
@@ -180,9 +181,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       AI Background Music
                     </span>
-                    <span className="rounded-md bg-brand-500/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400">
-                      Beta
-                    </span>
+                    <BetaBadge />
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCode
