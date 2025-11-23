@@ -1019,10 +1019,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
         return;
       }
 
+      const timerState = ensureTimerState(roomData);
+      if (timerState.running) {
+        return;
+      }
+
       const currentTime = Date.now();
       this.repository.startTimer(currentTime);
 
-      const timerState = ensureTimerState(roomData);
       timerState.running = true;
       timerState.lastUpdateTime = currentTime;
 

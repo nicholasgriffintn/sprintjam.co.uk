@@ -23,7 +23,7 @@ import {
   getTargetDurationSeconds,
 } from '@/utils/timer';
 import { TIMER_DURATION_PRESETS } from '@/constants';
-import { playChime } from '@/lib/audio';
+import { playChime, primeChimeAudio } from '@/lib/audio';
 
 export function TimerChip() {
   const { roomData, isModeratorView } = useRoom();
@@ -138,7 +138,15 @@ export function TimerChip() {
     targetDurationSeconds,
   ]);
 
+  const handleChipClick = () => {
+    if (!isModeratorView) {
+      return;
+    }
+    setShowControls((prev) => !prev);
+  };
+
   const handleToggleTimer = () => {
+    primeChimeAudio();
     try {
       if (timerRunning) {
         pauseTimer();
@@ -221,7 +229,7 @@ export function TimerChip() {
     <div className="relative" ref={controlsRef} data-testid="room-timer">
       <motion.button
         type="button"
-        onClick={() => isModeratorView && setShowControls(!showControls)}
+        onClick={handleChipClick}
         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${chipClass} ${textClass} ${
           isModeratorView ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
         }`}

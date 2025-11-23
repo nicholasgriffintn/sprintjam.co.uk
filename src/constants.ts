@@ -60,6 +60,7 @@ export const TIMER_DURATION_PRESETS: ReadonlyArray<{
   label: string;
   seconds: number;
 }> = [
+  { label: '1m', seconds: 1 * 60 },
   { label: '3m', seconds: 3 * 60 },
   { label: '5m', seconds: 5 * 60 },
   { label: '8m', seconds: 8 * 60 },
