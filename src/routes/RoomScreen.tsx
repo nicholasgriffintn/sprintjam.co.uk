@@ -129,7 +129,7 @@ const RoomScreen = () => {
       <motion.div
         className={
           roomData.settings.viewMode === 'table'
-            ? 'flex flex-1 flex-col py-0'
+            ? 'flex flex-1 flex-col'
             : 'flex flex-1 flex-col py-0 md:grid md:grid-cols-[minmax(280px,360px)_1fr] md:items-start'
         }
         initial={{ opacity: 0, y: 20 }}
@@ -144,10 +144,16 @@ const RoomScreen = () => {
           />
         )}
 
-        <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
-          {roomData.settings.viewMode === 'table' && (
-            <TableView roomData={roomData} stats={stats} name={name} />
-          )}
+        {roomData.settings.viewMode === 'table' ? (
+          <TableView
+            roomData={roomData}
+            stats={stats}
+            name={name}
+            userVote={typeof userVote === 'object' ? null : userVote}
+            onVote={handleVote}
+          />
+        ) : (
+          <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
           {roomData.settings.showTimer && <Timer />}
 
           {roomData.settings.enableStrudelPlayer && (
@@ -262,7 +268,8 @@ const RoomScreen = () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+          </div>
+        )}
       </motion.div>
 
       <AnimatePresence>
