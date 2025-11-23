@@ -1,6 +1,6 @@
 import { Share2, Settings, LogOut } from "lucide-react";
 
-import type { RoomData } from "@/types";
+import type { RoomData, ConnectionStatusState } from '@/types';
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import ConnectionStatus from "@/components/ConnectionStatus";
@@ -9,7 +9,7 @@ import DarkModeToggle from "@/components/Header/DarkModeToggle";
 export interface HeaderProps {
   roomData: RoomData;
   isModeratorView: boolean;
-  isConnected: boolean;
+  connectionStatus: ConnectionStatusState;
   onLeaveRoom: () => void;
   setIsShareModalOpen: (open: boolean) => void;
   setIsSettingsModalOpen: (open: boolean) => void;
@@ -18,7 +18,7 @@ export interface HeaderProps {
 export default function Header({
   roomData,
   isModeratorView,
-  isConnected,
+  connectionStatus,
   onLeaveRoom,
   setIsShareModalOpen,
   setIsSettingsModalOpen,
@@ -63,12 +63,12 @@ export default function Header({
 
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <Badge
-            variant={isModeratorView ? "primary" : "default"}
+            variant={isModeratorView ? 'primary' : 'default'}
             className="hidden sm:inline-flex"
           >
-            {isModeratorView ? "Mod" : "Team"}
+            {isModeratorView ? 'Mod' : 'Team'}
           </Badge>
-          <ConnectionStatus isConnected={isConnected} />
+          <ConnectionStatus status={connectionStatus} />
           <DarkModeToggle />
           {isModeratorView && (
             <button
@@ -76,8 +76,8 @@ export default function Header({
               onClick={() => setIsSettingsModalOpen(true)}
               aria-label="Room settings"
               className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-brand-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100 cursor-pointer",
-                "md:w-auto md:min-w-[3rem] md:gap-2 md:px-4",
+                'flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-brand-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100 cursor-pointer',
+                'md:w-auto md:min-w-[3rem] md:gap-2 md:px-4'
               )}
             >
               <Settings className="h-4 w-4" />
@@ -91,8 +91,8 @@ export default function Header({
             onClick={onLeaveRoom}
             aria-label="Leave room"
             className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/40 text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-rose-500/40 dark:bg-rose-500/5 dark:text-rose-200 dark:hover:border-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-100 cursor-pointer",
-              "md:w-auto md:min-w-[3rem] md:gap-2 md:px-4",
+              'flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/40 text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-rose-500/40 dark:bg-rose-500/5 dark:text-rose-200 dark:hover:border-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-100 cursor-pointer',
+              'md:w-auto md:min-w-[3rem] md:gap-2 md:px-4'
             )}
           >
             <LogOut className="h-4 w-4" />

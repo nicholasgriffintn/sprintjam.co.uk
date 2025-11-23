@@ -1,27 +1,50 @@
 import type { FC } from "react";
 
 import { Badge } from "@/components/ui/Badge";
+import type { ConnectionStatusState } from '@/types';
 
 interface ConnectionStatusProps {
-  isConnected: boolean;
+  status: ConnectionStatusState;
 }
 
-const ConnectionStatus: FC<ConnectionStatusProps> = ({ isConnected }) => {
-  const statusText = isConnected ? "Connected" : "Disconnected";
+const STATUS_CONFIG: Record<
+  ConnectionStatusState,
+  {
+    text: string;
+    variant: 'success' | 'warning' | 'error';
+    dotClass: string;
+  }
+> = {
+  connected: {
+    text: 'Connected',
+    variant: 'success',
+    dotClass: 'bg-emerald-600',
+  },
+  connecting: {
+    text: 'Connecting',
+    variant: 'warning',
+    dotClass: 'bg-amber-500',
+  },
+  disconnected: {
+    text: 'Disconnected',
+    variant: 'error',
+    dotClass: 'bg-rose-600',
+  },
+};
+
+const ConnectionStatus: FC<ConnectionStatusProps> = ({ status }) => {
+  const config = STATUS_CONFIG[status];
 
   return (
     <Badge
-      variant={isConnected ? "success" : "error"}
+      variant={config.variant}
       className="flex items-center"
       data-testid="connection-status"
-      aria-label={`Connection status: ${statusText}`}
+      aria-label={`Connection status: ${config.text}`}
     >
-      <div
-        className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-600" : "bg-red-600"
-          }`}
-      />
+      <div className={`w-2 h-2 rounded-full ${config.dotClass}`} />
       <span className="ml-1.5 text-xs font-medium hidden md:inline">
-        {statusText}
+        {config.text}
       </span>
     </Badge>
   );

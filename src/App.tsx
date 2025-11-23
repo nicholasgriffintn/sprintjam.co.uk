@@ -27,7 +27,14 @@ const AppContent = () => {
     isLoadingDefaults,
     defaultsError,
     handleRetryDefaults,
+    isSocketStatusKnown,
   } = useRoom();
+
+  const showGlobalLoading =
+    screen !== 'room' && (isLoading || isLoadingDefaults);
+
+  const canRenderRoomScreen =
+    Boolean(roomData && serverDefaults && isSocketStatusKnown);
 
   const renderScreen = () => {
     switch (screen) {
@@ -38,12 +45,15 @@ const AppContent = () => {
       case 'join':
         return <JoinRoomScreen />;
       case 'room':
-        if (roomData && serverDefaults) {
+        if (canRenderRoomScreen) {
           return <RoomScreen />;
         }
 
         return (
-          <ScreenLoader title="Loading room" subtitle="Please wait a moment." />
+          <ScreenLoader
+            title="Connecting to room"
+            subtitle="Please wait a moment."
+          />
         );
       case 'privacy':
         return <PrivacyPolicyScreen />;
@@ -56,7 +66,7 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      {(isLoading || isLoadingDefaults) && <LoadingOverlay />}
+      {showGlobalLoading && <LoadingOverlay />}
 
       {defaultsError && (
         <ErrorBannerServerDefaults

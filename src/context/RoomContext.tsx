@@ -61,6 +61,7 @@ interface RoomContextValue {
   isModeratorView: boolean;
   userVote: VoteValue | StructuredVote | null;
   isSocketConnected: boolean;
+  isSocketStatusKnown: boolean;
   connectionIssue: ErrorConnectionIssue | null;
   roomError: string;
   roomErrorKind: ErrorKind | null;
@@ -107,6 +108,9 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     null
   );
   const [isSocketConnected, setIsSocketConnected] = useState<boolean>(() =>
+    isConnected()
+  );
+  const [isSocketStatusKnown, setIsSocketStatusKnown] = useState<boolean>(() =>
     isConnected()
   );
   const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
@@ -181,6 +185,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   const handleConnectionChange = useCallback((connected: boolean) => {
     setIsSocketConnected(connected);
+    setIsSocketStatusKnown(true);
     if (connected) {
       setConnectionIssue(null);
       setRoomErrorKind(null);
@@ -450,6 +455,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     setActiveRoomKey(null);
     setAuthToken(null);
     setUserVote(null);
+    setIsSocketConnected(false);
+    setIsSocketStatusKnown(false);
     setIsModeratorView(false);
     setConnectionIssue(null);
     setPasscode('');
@@ -523,6 +530,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       isModeratorView,
       userVote,
       isSocketConnected,
+      isSocketStatusKnown,
       connectionIssue,
       roomError,
       roomErrorKind,
@@ -553,6 +561,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       isModeratorView,
       userVote,
       isSocketConnected,
+      isSocketStatusKnown,
       connectionIssue,
       roomError,
       roomErrorKind,

@@ -28,6 +28,7 @@ import { Footer } from '@/components/layout/Footer';
 import ShareRoomModal from '@/components/modals/ShareRoomModal';
 import SettingsModal from '@/components/modals/SettingsModal';
 import { UnifiedResults } from '@/components/results/UnifiedResults';
+import type { ConnectionStatusState } from '@/types';
 
 const RoomScreen = () => {
   usePageMeta(META_CONFIGS.room);
@@ -49,6 +50,7 @@ const RoomScreen = () => {
     clearRoomError,
     reportRoomError,
     isSocketConnected,
+    isSocketStatusKnown,
     connectionIssue,
     retryConnection,
     handleLeaveRoom,
@@ -78,9 +80,15 @@ const RoomScreen = () => {
       name: name,
     });
 
+  const connectionStatus: ConnectionStatusState = isSocketStatusKnown
+    ? isSocketConnected
+      ? 'connected'
+      : 'disconnected'
+    : 'connecting';
+
   const showReconnectBanner =
     connectionIssue?.type === 'disconnected' ||
-    (!isSocketConnected && !connectionIssue);
+    (connectionStatus === 'disconnected' && !connectionIssue);
 
   const showAuthBanner = connectionIssue?.type === 'auth';
 
@@ -111,7 +119,7 @@ const RoomScreen = () => {
       <Header
         roomData={roomData}
         isModeratorView={isModeratorView}
-        isConnected={isSocketConnected}
+        connectionStatus={connectionStatus}
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
@@ -130,7 +138,6 @@ const RoomScreen = () => {
         />
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
-
           {roomData.settings.enableStrudelPlayer && (
             <StrudelMiniPlayer
               roomData={roomData}
@@ -139,7 +146,7 @@ const RoomScreen = () => {
           )}
 
           {roomData.settings.enableStructuredVoting &&
-            roomData.settings.votingCriteria ? (
+          roomData.settings.votingCriteria ? (
             <StructuredVotingPanel
               criteria={roomData.settings.votingCriteria}
               currentVote={

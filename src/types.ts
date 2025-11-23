@@ -1,5 +1,7 @@
 export type ErrorKind = string;
 
+export type ConnectionStatusState = 'connected' | 'connecting' | 'disconnected';
+
 export type ErrorConnectionIssue = {
   type: string;
   message: string;
