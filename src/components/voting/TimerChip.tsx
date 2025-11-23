@@ -24,6 +24,7 @@ import {
 } from '@/utils/timer';
 import { TIMER_DURATION_PRESETS } from '@/constants';
 import { playChime } from '@/lib/audio';
+import { test } from '@playwright/test';
 
 export function TimerChip() {
   const { roomData, isModeratorView } = useRoom();
@@ -125,10 +126,18 @@ export function TimerChip() {
     if (!hasCountdownCompleted && remainingSeconds <= 0) {
       playChime();
       setHasCountdownCompleted(true);
-    } else if (hasCountdownCompleted && remainingSeconds > targetDurationSeconds * 0.1) {
+    } else if (
+      hasCountdownCompleted &&
+      remainingSeconds > targetDurationSeconds * 0.1
+    ) {
       setHasCountdownCompleted(false);
     }
-  }, [remainingSeconds, timerRunning, hasCountdownCompleted, targetDurationSeconds]);
+  }, [
+    remainingSeconds,
+    timerRunning,
+    hasCountdownCompleted,
+    targetDurationSeconds,
+  ]);
 
   const handleToggleTimer = () => {
     try {
@@ -242,6 +251,7 @@ export function TimerChip() {
             exit={{ opacity: 0, y: -10 }}
             className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-50"
             role="menu"
+            data-testid="timer-controls"
           >
             <div className="flex flex-col gap-3">
               <div className="flex gap-2">
@@ -249,6 +259,7 @@ export function TimerChip() {
                   onClick={handleToggleTimer}
                   className="flex-1 px-3 py-2 text-xs font-medium rounded bg-blue-500 text-white hover:bg-blue-600"
                   aria-label={timerRunning ? 'Pause timer' : 'Start timer'}
+                  aria-pressed={timerRunning}
                   role="menuitem"
                 >
                   {timerRunning ? 'Pause' : 'Start'}

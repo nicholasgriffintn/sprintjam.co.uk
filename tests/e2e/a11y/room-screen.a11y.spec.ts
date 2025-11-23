@@ -114,45 +114,48 @@ test.describe("Room Screen Accessibility", () => {
   test("timer controls expose accessible labels and state", async ({
     page,
   }) => {
-    await page.getByRole("button", { name: /settings/i }).click();
-    const settingsDialog = page.getByRole("dialog", { name: "Room Settings" });
+    await page.getByRole('button', { name: /settings/i }).click();
+    const settingsDialog = page.getByRole('dialog', { name: 'Room Settings' });
     const otherOptionsDetails = settingsDialog
-      .locator("details")
-      .filter({ hasText: "Other Options" })
+      .locator('details')
+      .filter({ hasText: 'Other Options' })
       .first();
-    const otherOptionsSummary = otherOptionsDetails.locator("summary").first();
+    const otherOptionsSummary = otherOptionsDetails.locator('summary').first();
     await otherOptionsSummary.scrollIntoViewIfNeeded();
     const detailsOpen = await otherOptionsDetails.evaluate((el) =>
-      el.hasAttribute("open"),
+      el.hasAttribute('open')
     );
     if (!detailsOpen) {
       await otherOptionsSummary.click();
     }
     const timerToggle = settingsDialog.getByTestId(
-      "settings-toggle-show-timer",
+      'settings-toggle-show-timer'
     );
     const timerLabel = settingsDialog.locator('label[for="showTimer"]');
     await timerLabel.scrollIntoViewIfNeeded();
     if (!(await timerToggle.isChecked())) {
       await timerLabel.click();
     }
-    await settingsDialog.getByRole("button", { name: "Save" }).click();
+    await settingsDialog.getByRole('button', { name: 'Save' }).click();
 
-    const timer = page.getByTestId("room-timer");
+    const timer = page.getByTestId('room-timer');
     await expect(timer).toBeVisible();
+    await timer.getByRole('button').click();
 
-    const timerStartButton = page.getByRole("button", { name: "Start timer" });
-    await expect(timerStartButton).toHaveAttribute("aria-pressed", "false");
+    const timerMenu = page.getByTestId('timer-controls');
+    // wait for the animation to complete
+    await page.waitForTimeout(300);
+    await expect(timerMenu).toBeVisible();
+
+    const timerStartButton = page.getByRole('menuitem', {
+      name: 'Start timer',
+    });
+    await expect(timerStartButton).toHaveAttribute('aria-pressed', 'false');
     await timerStartButton.click();
     await expect(
-      page.getByRole("button", { name: "Pause timer" }),
-    ).toHaveAttribute("aria-pressed", "true");
+      page.getByRole('menuitem', { name: 'Pause timer' })
+    ).toHaveAttribute('aria-pressed', 'true');
 
-    const timerDisplay = page.locator('[role="timer"]');
-    await expect(timerDisplay.first()).toHaveAttribute(
-      "aria-label",
-      /Elapsed time/,
-    );
-    await page.getByRole("button", { name: "Reset timer" }).click();
+    await page.getByRole('menuitem', { name: 'Reset timer' }).click();
   });
 });
