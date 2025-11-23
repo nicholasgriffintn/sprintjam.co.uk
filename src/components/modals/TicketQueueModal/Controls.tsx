@@ -8,15 +8,19 @@ export function TicketQueueModalControls({
   activeTab,
   setActiveTab,
   completedTickets,
+  externalService,
 }: {
-  activeTab: 'queue' | 'history';
-  setActiveTab: (tab: 'queue' | 'history') => void;
+  activeTab: 'queue' | 'search' | 'history';
+  setActiveTab: (tab: 'queue' | 'search' | 'history') => void;
   completedTickets: TicketQueueItem[];
+  externalService: 'none' | 'jira' | 'linear';
 }) {
   const handleDownloadHistory = () => {
     const csv = buildCsv(completedTickets);
     downloadCsv('sprintjam-past-estimations.csv', csv);
   };
+
+  const showSearchTab = externalService === 'jira' || externalService === 'linear';
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -32,6 +36,19 @@ export function TicketQueueModalControls({
         >
           Queue
         </button>
+        {showSearchTab && (
+          <button
+            type="button"
+            data-testid="queue-tab-search"
+            className={`rounded-full px-3 py-1.5 transition ${activeTab === 'search'
+                ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                : 'text-slate-500 dark:text-slate-300'
+              }`}
+            onClick={() => setActiveTab('search')}
+          >
+            Search & Import
+          </button>
+        )}
         <button
           type="button"
           data-testid="queue-tab-history"

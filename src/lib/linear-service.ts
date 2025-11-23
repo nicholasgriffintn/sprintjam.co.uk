@@ -193,3 +193,147 @@ export async function revokeLinearOAuth(
     throw new Error(errorData.error || "Failed to disconnect Linear");
   }
 }
+
+export interface SearchLinearOptions {
+  query?: string;
+  teamId?: string;
+  stateId?: string;
+  assigneeId?: string;
+  first?: number;
+  after?: string;
+}
+
+export interface SearchLinearResult {
+  tickets: TicketMetadata[];
+  hasNextPage: boolean;
+  endCursor: string | null;
+  totalCount: number;
+}
+
+export async function searchLinearIssues(
+  options: SearchLinearOptions & {
+    roomKey: string;
+    userName: string;
+    sessionToken?: string;
+  },
+): Promise<SearchLinearResult> {
+  try {
+    const sessionToken = resolveSessionToken(options.sessionToken);
+    const params = new URLSearchParams({
+      roomKey: options.roomKey,
+      userName: options.userName,
+      sessionToken,
+    });
+
+    if (options.query) params.append("query", options.query);
+    if (options.teamId) params.append("teamId", options.teamId);
+    if (options.stateId) params.append("stateId", options.stateId);
+    if (options.assigneeId) params.append("assigneeId", options.assigneeId);
+    if (options.first !== undefined)
+      params.append("first", options.first.toString());
+    if (options.after) params.append("after", options.after);
+
+    const response = await fetch(
+      `${API_BASE_URL}/linear/search?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error ||
+        `Failed to search Linear issues: ${response.status}`,
+      );
+    }
+
+    const data = (await response.json()) as SearchLinearResult;
+    return data;
+  } catch (error) {
+    console.error("Error searching Linear issues:", error);
+    throw error;
+  }
+}
+
+export async function importLinearIssuesBatch(
+  issueIds: string[],
+  options: { roomKey: string; userName: string; sessionToken?: string },
+): Promise<TicketMetadata[]> {
+  try {
+    const sessionToken = resolveSessionToken(options.sessionToken);
+    const response = await fetch(`${API_BASE_URL}/linear/import-batch`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        issueIds,
+        roomKey: options.roomKey,
+        userName: options.userName,
+        sessionToken,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error ||
+        `Failed to import Linear issues: ${response.status}`,
+      );
+    }
+
+    const data = await response.json();
+    return data.tickets as TicketMetadata[];
+  } catch (error) {
+    console.error("Error importing Linear issues batch:", error);
+    throw error;
+  }
+}
+
+export interface LinearTeam {
+  id: string;
+  key: string;
+  name: string;
+}
+
+export async function getLinearTeams(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<LinearTeam[]> {
+  try {
+    const token = resolveSessionToken(sessionToken);
+    const params = new URLSearchParams({
+      roomKey,
+      userName,
+      sessionToken: token,
+    });
+
+    const response = await fetch(
+      `${API_BASE_URL}/linear/teams?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `Failed to fetch Linear teams: ${response.status}`,
+      );
+    }
+
+    const data = await response.json();
+    return data.teams as LinearTeam[];
+  } catch (error) {
+    console.error("Error fetching Linear teams:", error);
+    throw error;
+  }
+}

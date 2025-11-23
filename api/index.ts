@@ -17,6 +17,9 @@ import {
 import {
   getJiraTicketController,
   updateJiraStoryPointsController,
+  searchJiraTicketsController,
+  importJiraTicketsBatchController,
+  getJiraProjectsController,
 } from "./controllers/jira-controller";
 import {
   initiateJiraOAuthController,
@@ -29,6 +32,9 @@ import {
 import {
   getLinearIssueController,
   updateLinearEstimateController,
+  searchLinearIssuesController,
+  importLinearIssuesBatchController,
+  getLinearTeamsController,
 } from "./controllers/linear-controller";
 import {
   initiateLinearOAuthController,
@@ -136,6 +142,18 @@ async function handleApiRequest(
     return revokeJiraOAuthController(request, env);
   }
 
+  if (path === "jira/search" && request.method === "GET") {
+    return searchJiraTicketsController(url, env);
+  }
+
+  if (path === "jira/import-batch" && request.method === "POST") {
+    return importJiraTicketsBatchController(request, env);
+  }
+
+  if (path === "jira/projects" && request.method === "GET") {
+    return getJiraProjectsController(url, env);
+  }
+
   if (path === "linear/issue" && request.method === "GET") {
     return getLinearIssueController(url, env);
   }
@@ -163,6 +181,18 @@ async function handleApiRequest(
 
   if (path === "linear/oauth/revoke" && request.method === "DELETE") {
     return revokeLinearOAuthController(request, env);
+  }
+
+  if (path === "linear/search" && request.method === "GET") {
+    return searchLinearIssuesController(url, env);
+  }
+
+  if (path === "linear/import-batch" && request.method === "POST") {
+    return importLinearIssuesBatchController(request, env);
+  }
+
+  if (path === "linear/teams" && request.method === "GET") {
+    return getLinearTeamsController(url, env);
   }
 
   return new Response(JSON.stringify({ error: "Not found" }), {

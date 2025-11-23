@@ -369,3 +369,250 @@ export async function getLinearViewer(
 
   return data.viewer;
 }
+
+export interface SearchLinearOptions {
+  query?: string;
+  teamId?: string;
+  stateId?: string;
+  assigneeId?: string;
+  first?: number;
+  after?: string;
+}
+
+export interface SearchLinearResult {
+  tickets: TicketMetadata[];
+  hasNextPage: boolean;
+  endCursor: string | null;
+  totalCount: number;
+}
+
+export async function searchLinearIssues(
+  credentials: LinearOAuthCredentials,
+  options: SearchLinearOptions,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<SearchLinearResult> {
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const first = options.first || 50;
+      const after = options.after ? `, after: "${options.after}"` : '';
+
+      const filterParts: string[] = [];
+
+      if (options.teamId) {
+        filterParts.push(`team: { id: { eq: "${options.teamId}" } }`);
+      }
+
+      if (options.stateId) {
+        filterParts.push(`state: { id: { eq: "${options.stateId}" } }`);
+      }
+
+      if (options.assigneeId) {
+        filterParts.push(`assignee: { id: { eq: "${options.assigneeId}" } }`);
+      }
+
+      if (options.query) {
+        filterParts.push(`title: { containsIgnoreCase: "${options.query}" }`);
+      }
+
+      const filter = filterParts.length > 0
+        ? `, filter: { ${filterParts.join(', ')} }`
+        : '';
+
+      const query = `
+        query SearchIssues {
+          issues(first: ${first}${after}${filter}, orderBy: createdAt) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            totalCount
+            nodes {
+              id
+              identifier
+              title
+              description
+              estimate
+              url
+              state {
+                name
+              }
+              assignee {
+                name
+              }
+            }
+          }
+        }
+      `;
+
+      const data = await executeGraphQL<{
+        issues: {
+          pageInfo: {
+            hasNextPage: boolean;
+            endCursor: string | null;
+          };
+          totalCount: number;
+          nodes: Array<{
+            id: string;
+            identifier: string;
+            title: string;
+            description?: string;
+            estimate?: number;
+            url: string;
+            state: {
+              name: string;
+            };
+            assignee?: {
+              name: string;
+            };
+          }>;
+        };
+      }>(accessToken, query);
+
+      const tickets: TicketMetadata[] = data.issues.nodes.map((issue) => ({
+        id: issue.id,
+        key: issue.identifier,
+        summary: issue.title,
+        description: issue.description || '',
+        status: issue.state?.name || 'Unknown',
+        assignee: issue.assignee?.name || null,
+        storyPoints: issue.estimate || null,
+        url: issue.url,
+      }));
+
+      return {
+        tickets,
+        hasNextPage: data.issues.pageInfo.hasNextPage,
+        endCursor: data.issues.pageInfo.endCursor,
+        totalCount: data.issues.totalCount,
+      };
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
+
+export async function fetchLinearIssuesBatch(
+  credentials: LinearOAuthCredentials,
+  issueIds: string[],
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<TicketMetadata[]> {
+  if (issueIds.length === 0) {
+    return [];
+  }
+
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const query = `
+        query GetIssues($ids: [String!]!) {
+          issues(filter: { id: { in: $ids } }) {
+            nodes {
+              id
+              identifier
+              title
+              description
+              estimate
+              url
+              state {
+                name
+              }
+              assignee {
+                name
+              }
+            }
+          }
+        }
+      `;
+
+      const data = await executeGraphQL<{
+        issues: {
+          nodes: Array<{
+            id: string;
+            identifier: string;
+            title: string;
+            description?: string;
+            estimate?: number;
+            url: string;
+            state: {
+              name: string;
+            };
+            assignee?: {
+              name: string;
+            };
+          }>;
+        };
+      }>(accessToken, query, { ids: issueIds });
+
+      return data.issues.nodes.map((issue) => ({
+        id: issue.id,
+        key: issue.identifier,
+        summary: issue.title,
+        description: issue.description || '',
+        status: issue.state?.name || 'Unknown',
+        assignee: issue.assignee?.name || null,
+        storyPoints: issue.estimate || null,
+        url: issue.url,
+      }));
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
+
+export async function getLinearTeams(
+  credentials: LinearOAuthCredentials,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<Array<{ id: string; key: string; name: string }>> {
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const query = `
+        query {
+          teams {
+            nodes {
+              id
+              key
+              name
+            }
+          }
+        }
+      `;
+
+      const data = await executeGraphQL<{
+        teams: {
+          nodes: Array<{
+            id: string;
+            key: string;
+            name: string;
+          }>;
+        };
+      }>(accessToken, query);
+
+      return data.teams.nodes;
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
