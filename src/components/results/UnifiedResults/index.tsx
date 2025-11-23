@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type { RoomData, RoomStats, VotingCriterion } from "@/types";
 import { VoteDistribution } from "./VoteDistribution";
@@ -18,6 +18,7 @@ import {
   getTopDistribution,
 } from "./utils";
 import { JudgeResult } from "./JudgeResult";
+import { HistoryDrawer } from "./HistoryDrawer";
 
 interface UnifiedResultsProps {
   roomData: RoomData;
@@ -34,6 +35,7 @@ export function UnifiedResults({
   displayJudge = false,
   showVotes = false,
 }: UnifiedResultsProps) {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const showJudgeAnimation = useJudgeAnimation(roomData);
 
   const resultsDisplay = roomData.settings.resultsDisplay;
@@ -115,9 +117,33 @@ export function UnifiedResults({
         aria-label="Voting results"
       >
         {visibleStatsCount > 0 && (
-          <div className={`grid ${getGridCols(visibleStatsCount)} gap-4`}>
-            {summaryCardElements}
-          </div>
+          <>
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setIsHistoryOpen(true)}
+                className="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                View History
+              </button>
+            </div>
+            <div className={`grid ${getGridCols(visibleStatsCount)} gap-4`}>
+              {summaryCardElements}
+            </div>
+          </>
         )}
 
         {showCriteriaBreakdown && (
@@ -199,6 +225,12 @@ export function UnifiedResults({
           </div>
         )}
       </div>
+
+      <HistoryDrawer
+        roomData={roomData}
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+      />
     </>
   );
 }

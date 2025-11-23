@@ -726,5 +726,120 @@ export async function handleHttpRequest(
     return createJsonResponse({ success: true });
   }
 
+  if (url.pathname === '/metadata' && request.method === 'PUT') {
+    const { name, sessionToken, workspaceId, team, persona, sprintId } =
+      (await request.json()) as {
+        name: string;
+        sessionToken: string;
+        workspaceId?: string;
+        team?: string;
+        persona?: string;
+        sprintId?: string;
+      };
+
+    const roomData = await ctx.getRoomData();
+
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
+
+    if (!tokenValid) {
+      return createJsonResponse({ error: 'Invalid session' }, 401);
+    }
+
+    if (roomData.moderator !== name) {
+      return createJsonResponse(
+        { error: 'Only the moderator can update metadata' },
+        403
+      );
+    }
+
+    ctx.repository.setRoomMetadata({
+      workspaceId,
+      team,
+      persona,
+      sprintId,
+    });
+
+    roomData.workspaceId = workspaceId;
+    roomData.team = team;
+    roomData.persona = persona;
+    roomData.sprintId = sprintId;
+
+    ctx.broadcast({
+      type: 'metadataUpdated',
+      metadata: {
+        workspaceId,
+        team,
+        persona,
+        sprintId,
+      },
+    });
+
+    return createJsonResponse({
+      success: true,
+      metadata: {
+        workspaceId: roomData.workspaceId,
+        team: roomData.team,
+        persona: roomData.persona,
+        sprintId: roomData.sprintId,
+      },
+    });
+  }
+
+  if (url.pathname === '/snapshots' && request.method === 'GET') {
+    const roomKey = url.searchParams.get('roomKey');
+    const userName = url.searchParams.get('userName');
+    const sessionToken = url.searchParams.get('sessionToken');
+    const limit = url.searchParams.get('limit');
+    const offset = url.searchParams.get('offset');
+    const workspaceId = url.searchParams.get('workspaceId');
+    const team = url.searchParams.get('team');
+    const persona = url.searchParams.get('persona');
+    const sprintId = url.searchParams.get('sprintId');
+
+    const roomData = await ctx.getRoomData();
+    if (!roomData || !roomData.key) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    if (!roomKey || !userName || !sessionToken) {
+      return createJsonResponse(
+        { error: 'Missing room key, user name, or session token' },
+        400
+      );
+    }
+
+    if (roomData.key !== roomKey) {
+      return createJsonResponse({ error: 'Room not found' }, 404);
+    }
+
+    const isMember = roomData.users.includes(userName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      userName,
+      sessionToken
+    );
+
+    if (!isMember || !tokenValid) {
+      return createJsonResponse({ error: 'Invalid session' }, 401);
+    }
+
+    const snapshots = ctx.repository.getSnapshots(roomData.key, {
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+      workspaceId: workspaceId ?? undefined,
+      team: team ?? undefined,
+      persona: persona ?? undefined,
+      sprintId: sprintId ?? undefined,
+    });
+
+    return createJsonResponse({
+      success: true,
+      snapshots,
+    });
+  }
+
   return null;
 }
