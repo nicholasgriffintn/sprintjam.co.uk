@@ -28,7 +28,7 @@ import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { Footer } from '@/components/layout/Footer';
-import type { RetroFormat, RetroData } from '@/types';
+import type { RetroFormat } from '@/types';
 
 const SettingsModal = lazy(() => import('@/components/modals/SettingsModal'));
 const ShareRoomModal = lazy(() => import('@/components/modals/ShareRoomModal'));
@@ -52,6 +52,11 @@ const RoomScreen = () => {
     handleAddTicket,
     handleUpdateTicket,
     handleDeleteTicket,
+    handleStartRetro,
+    handleAddRetroItem,
+    handleVoteRetroItem,
+    handleDeleteRetroItem,
+    handleEndRetro,
     roomError,
     roomErrorKind,
     clearRoomError,
@@ -70,9 +75,6 @@ const RoomScreen = () => {
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
   const [activeRetroCategory, setActiveRetroCategory] = useState<string | null>(null);
   const [newRetroItemContent, setNewRetroItemContent] = useState<Record<string, string>>({});
-
-  // Local retro state (will be replaced with server sync)
-  const [localRetroData, setLocalRetroData] = useState<RetroData | null>(null);
 
   if (!roomData || !serverDefaults) {
     return <FallbackLoading />;
@@ -98,70 +100,19 @@ const RoomScreen = () => {
 
   const showAuthBanner = connectionIssue?.type === 'auth';
 
-  const handleStartRetro = (format: RetroFormat) => {
-    // TODO: Add WebSocket handler to sync with server
-    setLocalRetroData({
-      format,
-      items: [],
-      isActive: true,
-      createdAt: Date.now(),
-    });
+  const onStartRetro = (format: RetroFormat) => {
+    handleStartRetro(format);
     setIsRetroFormatModalOpen(false);
   };
 
-  const handleAddRetroItem = (category: string, content: string) => {
-    // TODO: Add WebSocket handler to sync with server
-    if (!localRetroData) return;
-
-    const newItem = {
-      id: `${Date.now()}-${Math.random()}`,
-      category,
-      content,
-      author: name,
-      votes: 0,
-      createdAt: Date.now(),
-    };
-
-    setLocalRetroData({
-      ...localRetroData,
-      items: [...localRetroData.items, newItem],
-    });
-  };
-
-  const handleVoteRetroItem = (itemId: string) => {
-    // TODO: Add WebSocket handler to sync with server
-    if (!localRetroData) return;
-
-    setLocalRetroData({
-      ...localRetroData,
-      items: localRetroData.items.map((item) =>
-        item.id === itemId ? { ...item, votes: item.votes + 1 } : item
-      ),
-    });
-  };
-
-  const handleDeleteRetroItem = (itemId: string) => {
-    // TODO: Add WebSocket handler to sync with server
-    if (!localRetroData) return;
-
-    setLocalRetroData({
-      ...localRetroData,
-      items: localRetroData.items.filter((item) => item.id !== itemId),
-    });
-  };
-
-  const handleEndRetro = () => {
-    // TODO: Add WebSocket handler to sync with server
-    setLocalRetroData(null);
+  const onEndRetro = () => {
+    handleEndRetro();
     setActiveRetroCategory(null);
     setNewRetroItemContent({});
   };
 
-  // Use local retro data or server retro data
-  const activeRetroData = localRetroData || roomData.retroData;
-
   // If retro is active, show the retro view
-  if (activeRetroData?.isActive) {
+  if (roomData.retroData?.isActive) {
     return (
       <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
         {showAuthBanner && (
@@ -187,13 +138,13 @@ const RoomScreen = () => {
         )}
 
         <RetroView
-          retroData={activeRetroData}
+          retroData={roomData.retroData}
           userName={name}
           isModeratorView={isModeratorView}
           onAddItem={handleAddRetroItem}
           onVoteItem={handleVoteRetroItem}
           onDeleteItem={handleDeleteRetroItem}
-          onEndRetro={handleEndRetro}
+          onEndRetro={onEndRetro}
           activeCategory={activeRetroCategory}
           setActiveCategory={setActiveRetroCategory}
           newItemContent={newRetroItemContent}
@@ -396,7 +347,7 @@ const RoomScreen = () => {
 
       <RetroFormatModal
         isOpen={isRetroFormatModalOpen}
-        onSelectFormat={handleStartRetro}
+        onSelectFormat={onStartRetro}
         onCancel={() => setIsRetroFormatModalOpen(false)}
       />
 
