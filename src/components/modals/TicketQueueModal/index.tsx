@@ -4,6 +4,7 @@ import type { TicketQueueItem } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { TicketQueueModalControls } from './Controls';
 import { TicketQueueModalQueueTab } from './tabs/Queue';
+import { TicketQueueModalSearchTab } from './tabs/Search';
 import { TicketQueueModalCompletedTab } from './tabs/Completed';
 
 interface TicketQueueModalProps {
@@ -35,7 +36,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   canManageQueue,
   onError,
 }) => {
-  const [activeTab, setActiveTab] = useState<'queue' | 'history'>('queue');
+  const [activeTab, setActiveTab] = useState<'queue' | 'search' | 'history'>('queue');
 
   const completedTickets = useMemo(
     () => queue.filter((t) => t.status === 'completed'),
@@ -53,6 +54,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           completedTickets={completedTickets}
+          externalService={externalService}
         />
 
         {activeTab === 'queue' ? (
@@ -66,6 +68,15 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             userName={userName}
             canManageQueue={canManageQueue}
             pendingTickets={pendingTickets}
+            onError={onError}
+          />
+        ) : activeTab === 'search' ? (
+          <TicketQueueModalSearchTab
+            externalService={externalService}
+            onAddTicket={onAddTicket}
+            roomKey={roomKey}
+            userName={userName}
+            canManageQueue={canManageQueue}
             onError={onError}
           />
         ) : (
