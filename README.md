@@ -59,6 +59,37 @@ SprintJam is a modern, privacy-focused planning poker application designed for a
 - **Frontend**: React, TypeScript, Tailwind CSS, Framer Motion, Vite, TanStack
 - **Backend**: Cloudflare Workers, Durable Objects
 
+## 🧩 Architecture Updates for Fixits
+
+- Planning APIs now live under `/api/planning/*` and WebSockets under `/ws/planning`. The legacy `/api/*` routes still proxy to the new handlers during the transition, but please update any custom integrations.
+- A dedicated Fixits namespace (`/api/fixits/*`, `/ws/fixits`) plus a `FixitRoom` Durable Object have been scaffolded. The REST leaderboard endpoint is live, and the Durable Object keeps cached standings in sync with webhook updates for WebSocket subscribers.
+- D1 is required for Fixits. Create a database with `wrangler d1 create sprintjam-fixits`, run the SQL in `api/data-model/fixits/001_init.sql`, and replace `REPLACE_WITH_D1_DB_ID` in `wrangler.jsonc` with the generated ID before deploying.
+- Frontend utilities expose `FIXITS_API_BASE_URL`/`FIXITS_WS_BASE_URL` plus reusable hooks/components (`useFixitRuns`, `FixitRunSelector`, `FixitLeaderboardCard`, `useFixitWebSocket`) so UI work can proceed in parallel with the backend.
+
+### GitHub Webhook Setup
+
+- Configure your repository webhook (or GitHub Action) to POST to `/api/github/webhook` with headers:
+  - `X-Hub-Signature-256`: standard GitHub HMAC signature using `GITHUB_WEBHOOK_SECRET`
+  - `X-GitHub-Delivery`: GitHub delivery ID (auto-added by GitHub)
+  - `X-GitHub-Event`: GitHub event type (auto-added by GitHub)
+  - `X-Fixit-Id`: the fixit run identifier (e.g., `2024-Q1`) if you want to override the default set in `FIXITS_DEFAULT_RUN_ID`
+- Each accepted event is stored in D1 and aggregates into the leaderboard that is available via `GET /api/fixits/leaderboard?fixitId=<id>`.
+
+### Fixit Runs Management
+
+- `GET /api/fixits/runs` — List active runs (append `?all=true` to include inactive)
+- `GET /api/fixits/runs/:fixitId` — Fetch a specific run
+- `POST /api/fixits/runs` — Create a run
+- `PUT /api/fixits/runs/:fixitId` — Update a run
+- `DELETE /api/fixits/runs/:fixitId` — Remove a run
+
+`POST`, `PUT`, and `DELETE` endpoints require `Authorization: Bearer <FIXITS_ADMIN_TOKEN>` to keep administrative actions limited to SprintJam moderators.
+
+### Admin Token Setup
+
+- For production, run `wrangler secret put FIXITS_ADMIN_TOKEN` and enter a secure token.
+- For local development, add `FIXITS_ADMIN_TOKEN=your-token` to `.dev.vars`, **or** use a convenience token by prefixing your bearer value with `dev:` (e.g., `Authorization: Bearer dev:test`). The `dev:` fallback only works when the worker does not have a `FIXITS_ADMIN_TOKEN` configured and should never be used in production.
+
 ## 🚀 Quick Start
 
 ### Using the Hosted Version
@@ -93,6 +124,11 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    LINEAR_OAUTH_CLIENT_ID=your-linear-client-id
    LINEAR_OAUTH_CLIENT_SECRET=your-linear-client-secret
    LINEAR_OAUTH_REDIRECT_URI=https://your-domain.com/api/linear/oauth/callback
+
+   # Fixits webhook ingest & admin
+   GITHUB_WEBHOOK_SECRET=super-secret-string
+   FIXITS_DEFAULT_RUN_ID=2024-Q1
+   FIXITS_ADMIN_TOKEN=super-admin-token
    ```
 
    **To enable an external provider:**
@@ -102,7 +138,16 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    c. Copy the client ID/secret into the corresponding env vars.  
    d. In a room, open Settings → Other Options → External Provider and connect Jira or Linear.
 
-4. **Deploy to Cloudflare**
+4. **Provision Fixits datastore**
+
+   ```bash
+   wrangler d1 create sprintjam-fixits
+   wrangler d1 execute sprintjam-fixits --file=api/data-model/fixits/001_init.sql
+   ```
+
+   Update the `wrangler.jsonc` `FIXITS_DB` binding with the database ID returned from the first command.
+
+5. **Deploy to Cloudflare**
    ```bash
    pnpm run deploy
    ```

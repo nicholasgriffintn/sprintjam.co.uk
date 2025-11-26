@@ -1,5 +1,5 @@
 import type { VoteValue, TicketMetadata } from "@/types";
-import { API_BASE_URL } from "@/constants";
+import { PLANNING_API_BASE_URL } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
 
@@ -34,7 +34,7 @@ export async function fetchJiraTicket(
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
-    let url = `${API_BASE_URL}/jira/ticket?ticketId=${encodeURIComponent(
+    let url = `${PLANNING_API_BASE_URL}/jira/ticket?ticketId=${encodeURIComponent(
       ticketId
     )}`;
 
@@ -81,7 +81,7 @@ export async function updateJiraStoryPoints(
   try {
     const sessionToken = resolveSessionToken(options.sessionToken);
     const response = await fetch(
-      `${API_BASE_URL}/jira/ticket/${encodeURIComponent(ticketId)}/storyPoints`,
+      `${PLANNING_API_BASE_URL}/jira/ticket/${encodeURIComponent(ticketId)}/storyPoints`,
       {
         method: "PUT",
         headers: {
@@ -138,7 +138,7 @@ export async function getJiraOAuthStatus(
 ): Promise<JiraOAuthStatus> {
   const token = resolveSessionToken(sessionToken);
   const response = await fetch(
-    `${API_BASE_URL}/jira/oauth/status?roomKey=${encodeURIComponent(
+    `${PLANNING_API_BASE_URL}/jira/oauth/status?roomKey=${encodeURIComponent(
       roomKey,
     )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
       token,
@@ -163,7 +163,7 @@ export async function getJiraFields(
 }> {
   const token = resolveSessionToken(sessionToken);
   const response = await fetch(
-    `${API_BASE_URL}/jira/oauth/fields?roomKey=${encodeURIComponent(
+    `${PLANNING_API_BASE_URL}/jira/oauth/fields?roomKey=${encodeURIComponent(
       roomKey,
     )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
       token,
@@ -188,7 +188,7 @@ export async function authorizeJiraOAuth(
   sessionToken?: string | null,
 ): Promise<{ authorizationUrl: string }> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(`${API_BASE_URL}/jira/oauth/authorize`, {
+  const response = await fetch(`${PLANNING_API_BASE_URL}/jira/oauth/authorize`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -214,7 +214,7 @@ export async function revokeJiraOAuth(
   sessionToken?: string | null,
 ): Promise<void> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(`${API_BASE_URL}/jira/oauth/revoke`, {
+  const response = await fetch(`${PLANNING_API_BASE_URL}/jira/oauth/revoke`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -239,7 +239,7 @@ export async function saveJiraFieldConfiguration(
   sessionToken?: string | null,
 ): Promise<void> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(`${API_BASE_URL}/jira/oauth/fields`, {
+  const response = await fetch(`${PLANNING_API_BASE_URL}/jira/oauth/fields`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

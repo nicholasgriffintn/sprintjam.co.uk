@@ -18,6 +18,8 @@ import TermsConditionsScreen from './routes/TermsConditionsScreen';
 
 const roomScreenLoader = () => import('./routes/RoomScreen');
 const RoomScreen = lazy(roomScreenLoader);
+const FixitsScreen = lazy(() => import('./routes/FixitsScreen'));
+const FixitsAdminScreen = lazy(() => import('./routes/FixitsAdminScreen'));
 const preloadRoomScreen = () => {
   void roomScreenLoader();
 };
@@ -76,6 +78,10 @@ const AppContent = () => {
         return <PrivacyPolicyScreen />;
       case 'terms':
         return <TermsConditionsScreen />;
+      case 'fixits':
+        return <FixitsScreen />;
+      case 'fixitsAdmin':
+        return <FixitsAdminScreen />;
       default:
         return <NotFoundScreen />;
     }

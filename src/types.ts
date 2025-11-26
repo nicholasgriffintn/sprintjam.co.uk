@@ -162,12 +162,16 @@ export interface RoomSettings {
   autoHandoverModerator?: boolean;
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
+  fixitRunId?: string | null;
 }
 
 export interface ServerDefaults {
   roomSettings: RoomSettings;
   votingCriteria: VotingCriterion[];
   structuredVotingOptions: (string | number)[];
+  fixits?: {
+    defaultRunId: string | null;
+  };
 }
 
 export interface JudgeMetadata {

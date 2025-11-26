@@ -9,7 +9,7 @@ import type {
   AvatarId,
   TicketQueueItem,
 } from "@/types";
-import { API_BASE_URL, WS_BASE_URL } from "@/constants";
+import { PLANNING_API_BASE_URL, PLANNING_WS_BASE_URL } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 import {
   SERVER_DEFAULTS_DOCUMENT_KEY,
@@ -62,7 +62,7 @@ export async function createRoom(
   avatar?: AvatarId
 ): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/rooms`, {
+    const response = await fetch(`${PLANNING_API_BASE_URL}/rooms`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -116,7 +116,7 @@ export async function joinRoom(
   authToken?: string
 ): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/rooms/join`, {
+    const response = await fetch(`${PLANNING_API_BASE_URL}/rooms/join`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -183,7 +183,7 @@ export function connectToRoom(
 
   try {
     const socket = new WebSocket(
-      `${WS_BASE_URL}?room=${encodeURIComponent(
+      `${PLANNING_WS_BASE_URL}?room=${encodeURIComponent(
         roomKey
       )}&name=${encodeURIComponent(name)}&token=${encodeURIComponent(
         authToken
@@ -476,7 +476,7 @@ export function getConnectionState(): number | null {
 export async function getRoomSettings(roomKey: string): Promise<RoomSettings> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/rooms/settings?roomKey=${encodeURIComponent(roomKey)}`,
+      `${PLANNING_API_BASE_URL}/rooms/settings?roomKey=${encodeURIComponent(roomKey)}`,
       {
         method: 'GET',
         headers: {
@@ -506,7 +506,7 @@ export async function updateRoomSettings(
   settings: Partial<RoomSettings>
 ): Promise<RoomSettings> {
   try {
-    const response = await fetch(`${API_BASE_URL}/rooms/settings`, {
+    const response = await fetch(`${PLANNING_API_BASE_URL}/rooms/settings`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

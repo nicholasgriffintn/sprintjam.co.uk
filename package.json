@@ -17,7 +17,8 @@
     "test:e2e": "playwright test",
     "test:e2e:all": "PLAYWRIGHT_RUN_A11Y=1 playwright test",
     "test:e2e:a11y": "PLAYWRIGHT_RUN_A11Y=1 playwright test tests/e2e/a11y",
-    "deploy": "npm run build && npm exec wrangler deploy"
+    "deploy": "npm run build && npm exec wrangler deploy",
+    "db:apply": "wrangler d1 migrations apply sprintjam-fixits"
   },
   "dependencies": {
     "@strudel/web": "^1.2.6",

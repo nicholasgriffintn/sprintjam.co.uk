@@ -16,6 +16,8 @@ export type AppScreen =
   | 'create'
   | 'join'
   | 'room'
+  | 'fixits'
+  | 'fixitsAdmin'
   | '404'
   | 'privacy'
   | 'terms';
@@ -38,6 +40,8 @@ interface SessionContextValue {
   goHome: () => void;
   startCreateFlow: () => void;
   startJoinFlow: () => void;
+  startFixitsFlow: () => void;
+  startFixitsAdminFlow: () => void;
 }
 
 const SessionContext = createContext<SessionContextValue | undefined>(
@@ -53,17 +57,24 @@ function getScreenFromPath(path: string): AppScreen {
   const pathWithoutTrailingSlash = pathWithoutQuery.endsWith('/')
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
-  return pathWithoutTrailingSlash === '/create'
-    ? 'create'
-    : pathWithoutTrailingSlash === '/join'
-      ? 'join'
-      : pathWithoutTrailingSlash === '/room'
-        ? 'room'
-        : pathWithoutTrailingSlash === '/privacy'
-          ? 'privacy'
-          : pathWithoutTrailingSlash === '/terms'
-            ? 'terms'
-            : '404';
+  switch (pathWithoutTrailingSlash) {
+    case '/create':
+      return 'create';
+    case '/join':
+      return 'join';
+    case '/room':
+      return 'room';
+    case '/fixits':
+      return 'fixits';
+    case '/fixits/admin':
+      return 'fixitsAdmin';
+    case '/privacy':
+      return 'privacy';
+    case '/terms':
+      return 'terms';
+    default:
+      return '404';
+  }
 }
 
 export const SessionProvider = ({
@@ -113,6 +124,16 @@ export const SessionProvider = ({
     clearError();
   }, [clearError]);
 
+  const startFixitsFlow = useCallback(() => {
+    setScreen('fixits');
+    clearError();
+  }, [clearError]);
+
+  const startFixitsAdminFlow = useCallback(() => {
+    setScreen('fixitsAdmin');
+    clearError();
+  }, [clearError]);
+
   useUrlParams({
     onJoinRoom: (joinRoomKey) => {
       setRoomKey(joinRoomKey);
@@ -144,6 +165,8 @@ export const SessionProvider = ({
       goHome,
       startCreateFlow,
       startJoinFlow,
+      startFixitsFlow,
+      startFixitsAdminFlow,
     }),
     [
       screen,
@@ -158,6 +181,8 @@ export const SessionProvider = ({
       goHome,
       startCreateFlow,
       startJoinFlow,
+      startFixitsFlow,
+      startFixitsAdminFlow,
     ]
   );
 

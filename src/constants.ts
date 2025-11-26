@@ -9,9 +9,15 @@ export const API_BASE_URL = import.meta.env.DEV
   ? "http://localhost:5173/api"
   : `https://${ENV_BASE_URL}/api`;
 
+export const PLANNING_API_BASE_URL = `${API_BASE_URL}/planning`;
+export const FIXITS_API_BASE_URL = `${API_BASE_URL}/fixits`;
+
 export const WS_BASE_URL = import.meta.env.DEV
   ? "ws://localhost:5173/ws"
   : `wss://${ENV_BASE_URL}/ws`;
+
+export const PLANNING_WS_BASE_URL = `${WS_BASE_URL}/planning`;
+export const FIXITS_WS_BASE_URL = `${WS_BASE_URL}/fixits`;
 
 export const SITE_NAME = 'SprintJam';
 export const BASE_DESCRIPTION =

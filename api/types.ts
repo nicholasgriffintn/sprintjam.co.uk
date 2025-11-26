@@ -2,10 +2,13 @@ import type {
   DurableObjectNamespace,
   Fetcher,
   WebSocket as CfWebSocket,
-} from "@cloudflare/workers-types";
+  D1Database,
+} from '@cloudflare/workers-types';
 
 export interface Env {
   PLANNING_ROOM: DurableObjectNamespace;
+  FIXIT_ROOM: DurableObjectNamespace;
+  FIXITS_DB?: D1Database;
   ASSETS: Fetcher;
   JIRA_OAUTH_CLIENT_ID?: string;
   JIRA_OAUTH_CLIENT_SECRET?: string;
@@ -14,6 +17,9 @@ export interface Env {
   LINEAR_OAUTH_CLIENT_SECRET?: string;
   LINEAR_OAUTH_REDIRECT_URI?: string;
   POLYCHAT_API_TOKEN?: string;
+  GITHUB_WEBHOOK_SECRET?: string;
+  FIXITS_DEFAULT_RUN_ID?: string;
+  FIXITS_ADMIN_TOKEN?: string;
 }
 
 export type ClientMessage =

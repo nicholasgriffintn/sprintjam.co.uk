@@ -33,6 +33,22 @@ export const META_CONFIGS: Record<string, MetaTagConfig> = {
       'estimation room, planning poker session, real-time voting, story points, sprint planning',
     ogImage: '/og-image.png',
   },
+  fixits: {
+    title: `Fixits Leaderboard - ${SITE_NAME}`,
+    description:
+      'Run gamified bug bashes and tech-debt slams with live scoring powered by GitHub webhooks and SprintJam Fixits.',
+    keywords:
+      'fixits, bug bash, tech debt, leaderboard, github automation, sprintjam fixits',
+    ogImage: '/og-image.png',
+  },
+  fixitsAdmin: {
+    title: `Fixits Admin - ${SITE_NAME}`,
+    description:
+      'Create and manage Fixit runs, control leaderboard visibility, and configure GitHub integrations.',
+    keywords:
+      'fixits admin, fixit runs, bug bash configuration, leaderboard management',
+    ogImage: '/og-image.png',
+  },
   privacy: {
     title: `Privacy Policy - ${SITE_NAME}`,
     description:

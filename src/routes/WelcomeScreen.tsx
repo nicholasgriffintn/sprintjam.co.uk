@@ -8,6 +8,7 @@ import {
   Timer,
   BarChart3,
   Play,
+  Trophy,
 } from 'lucide-react';
 
 import { useSession } from '@/context/SessionContext';
@@ -20,7 +21,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 
 const WelcomeScreen = () => {
-  const { startCreateFlow, startJoinFlow } = useSession();
+  const { startCreateFlow, startJoinFlow, startFixitsFlow } = useSession();
   usePageMeta(META_CONFIGS.welcome);
   const features = [
     {
@@ -88,6 +89,15 @@ const WelcomeScreen = () => {
             className="w-full sm:w-auto"
           >
             Join a session
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={startFixitsFlow}
+            icon={<Trophy className="h-4 w-4" />}
+            size="lg"
+            className="w-full sm:w-auto"
+          >
+            Explore Fixits
           </Button>
         </div>
 

@@ -6,36 +6,12 @@ import type {
 
 import { Env } from "./types";
 import { getRoomStub } from "./utils/room";
+import { getFixitRoomStub } from "./utils/fixit-room";
 import { PlanningRoom } from "./services/planning-room";
-import { getDefaultsController } from "./controllers/defaults-controller";
-import {
-  createRoomController,
-  getRoomSettingsController,
-  joinRoomController,
-  updateRoomSettingsController,
-} from "./controllers/rooms-controller";
-import {
-  getJiraTicketController,
-  updateJiraStoryPointsController,
-} from "./controllers/jira-controller";
-import {
-  initiateJiraOAuthController,
-  handleJiraOAuthCallbackController,
-  getJiraOAuthStatusController,
-  getJiraFieldsController,
-  updateJiraFieldsController,
-  revokeJiraOAuthController,
-} from "./controllers/jira-oauth-controller";
-import {
-  getLinearIssueController,
-  updateLinearEstimateController,
-} from "./controllers/linear-controller";
-import {
-  initiateLinearOAuthController,
-  handleLinearOAuthCallbackController,
-  getLinearOAuthStatusController,
-  revokeLinearOAuthController,
-} from "./controllers/linear-oauth-controller";
+import { FixitRoom } from "./services/fixit-room";
+import { handlePlanningApiRequest } from "./routes/planning";
+import { handleFixitsApiRequest } from "./routes/fixits";
+import { handleGithubWebhookRequest } from "./controllers/fixits/github-webhook-controller";
 
 async function handleRequest(
   request: CfRequest,
@@ -47,7 +23,7 @@ async function handleRequest(
     return handleApiRequest(url, request, env);
   }
 
-  if (url.pathname === "/ws") {
+  if (url.pathname === "/ws" || url.pathname === "/ws/planning") {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected WebSocket", {
         status: 400,
@@ -69,6 +45,31 @@ async function handleRequest(
     return roomStub.fetch(request);
   }
 
+  if (url.pathname === "/ws/fixits") {
+    if (request.headers.get("Upgrade") !== "websocket") {
+      return new Response("Expected WebSocket", {
+        status: 400,
+      }) as unknown as CfResponse;
+    }
+
+    const fixitId = url.searchParams.get("fixitId");
+
+    if (!fixitId) {
+      return new Response("Missing fixitId query parameter", {
+        status: 400,
+      }) as unknown as CfResponse;
+    }
+
+    if (!env.FIXIT_ROOM) {
+      return new Response("Fixits Durable Object binding not configured", {
+        status: 500,
+      }) as unknown as CfResponse;
+    }
+
+    const fixitStub = getFixitRoomStub(env, fixitId);
+    return fixitStub.fetch(request);
+  }
+
   return env.ASSETS.fetch(request);
 }
 
@@ -78,91 +79,36 @@ async function handleApiRequest(
   env: Env,
 ): Promise<CfResponse> {
   const path = url.pathname.substring(5);
+  const normalizedPath = path.replace(/^\/+/, "");
 
-  if (path === "defaults" && request.method === "GET") {
-    return getDefaultsController();
-  }
-
-  if (path === "rooms" && request.method === "POST") {
-    return createRoomController(request, env);
-  }
-
-  if (path === "rooms/join" && request.method === "POST") {
-    return joinRoomController(request, env);
-  }
-
-  if (path === "rooms/settings" && request.method === "GET") {
-    return getRoomSettingsController(url, env);
-  }
-
-  if (path === "rooms/settings" && request.method === "PUT") {
-    return updateRoomSettingsController(request, env);
-  }
-
-  if (path === "jira/ticket" && request.method === "GET") {
-    return getJiraTicketController(url, env);
+  if (normalizedPath === "github/webhook" && request.method === "POST") {
+    return handleGithubWebhookRequest(request, env);
   }
 
   if (
-    path.startsWith("jira/ticket/") &&
-    path.endsWith("/storyPoints") &&
-    request.method === "PUT"
+    normalizedPath === "fixits" ||
+    normalizedPath.startsWith("fixits/")
   ) {
-    const ticketId = path.split("/")[2];
-    return updateJiraStoryPointsController(ticketId, request, env);
+    const fixitsPath =
+      normalizedPath === "fixits"
+        ? ""
+        : normalizedPath.substring("fixits/".length);
+    return handleFixitsApiRequest(fixitsPath, url, request, env);
   }
 
-  if (path === "jira/oauth/authorize" && request.method === "POST") {
-    return initiateJiraOAuthController(request, env);
-  }
-
-  if (path === "jira/oauth/callback" && request.method === "GET") {
-    return handleJiraOAuthCallbackController(url, env);
-  }
-
-  if (path === "jira/oauth/status" && request.method === "GET") {
-    return getJiraOAuthStatusController(url, env);
-  }
-
-  if (path === "jira/oauth/fields" && request.method === "GET") {
-    return getJiraFieldsController(url, env);
-  }
-
-  if (path === "jira/oauth/fields" && request.method === "PUT") {
-    return updateJiraFieldsController(request, env);
-  }
-
-  if (path === "jira/oauth/revoke" && request.method === "DELETE") {
-    return revokeJiraOAuthController(request, env);
-  }
-
-  if (path === "linear/issue" && request.method === "GET") {
-    return getLinearIssueController(url, env);
-  }
-
-  if (
-    path.startsWith("linear/issue/") &&
-    path.endsWith("/estimate") &&
-    request.method === "PUT"
-  ) {
-    const issueId = path.split("/")[2];
-    return updateLinearEstimateController(issueId, request, env);
-  }
-
-  if (path === "linear/oauth/authorize" && request.method === "POST") {
-    return initiateLinearOAuthController(request, env);
-  }
-
-  if (path === "linear/oauth/callback" && request.method === "GET") {
-    return handleLinearOAuthCallbackController(url, env);
-  }
-
-  if (path === "linear/oauth/status" && request.method === "GET") {
-    return getLinearOAuthStatusController(url, env);
-  }
-
-  if (path === "linear/oauth/revoke" && request.method === "DELETE") {
-    return revokeLinearOAuthController(request, env);
+  const planningPath = normalizedPath.startsWith("planning/")
+    ? normalizedPath.substring("planning/".length)
+    : normalizedPath === "planning"
+      ? ""
+      : normalizedPath;
+  const planningResponse = await handlePlanningApiRequest(
+    planningPath,
+    url,
+    request,
+    env,
+  );
+  if (planningResponse) {
+    return planningResponse;
   }
 
   return new Response(JSON.stringify({ error: "Not found" }), {
@@ -177,4 +123,4 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
-export { PlanningRoom };
+export { PlanningRoom, FixitRoom };

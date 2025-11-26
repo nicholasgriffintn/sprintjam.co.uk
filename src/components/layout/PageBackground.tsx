@@ -3,20 +3,21 @@ import type { FC, PropsWithChildren } from "react";
 import { cn } from "@/lib/cn";
 
 type PageBackgroundProps = PropsWithChildren<{
-  align?: "center" | "start";
-  maxWidth?: "sm" | "md" | "lg" | "xl";
+  align?: 'center' | 'start';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   padded?: boolean;
-  variant?: "hero" | "compact";
+  variant?: 'hero' | 'compact';
 }>;
 
 const maxWidthMap: Record<
-  NonNullable<PageBackgroundProps["maxWidth"]>,
+  NonNullable<PageBackgroundProps['maxWidth']>,
   string
 > = {
-  sm: "max-w-xl",
-  md: "max-w-3xl",
-  lg: "max-w-5xl",
-  xl: "max-w-6xl",
+  sm: 'max-w-xl',
+  md: 'max-w-3xl',
+  lg: 'max-w-5xl',
+  xl: 'max-w-6xl',
+  xxl: 'max-w-7xl',
 };
 
 export const PageBackground: FC<PageBackgroundProps> = ({

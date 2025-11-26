@@ -2,7 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { createCollection, type Collection } from "@tanstack/db";
 import { queryCollectionOptions } from "@tanstack/query-db-collection";
 
-import { API_BASE_URL } from "@/constants";
+import { PLANNING_API_BASE_URL } from "@/constants";
 import type { RoomData, ServerDefaults } from "@/types";
 
 export const SERVER_DEFAULTS_DOCUMENT_KEY = "server-defaults";
@@ -45,7 +45,7 @@ export const serverDefaultsCollection = createCollection(
     id: "server-defaults",
     queryKey: ["server-defaults"],
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/defaults`, {
+      const response = await fetch(`${PLANNING_API_BASE_URL}/defaults`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

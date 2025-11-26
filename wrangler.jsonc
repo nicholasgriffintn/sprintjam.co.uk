@@ -17,6 +17,10 @@
       {
         "name": "PLANNING_ROOM",
         "class_name": "PlanningRoom"
+      },
+      {
+        "name": "FIXIT_ROOM",
+        "class_name": "FixitRoom"
       }
     ]
   },
@@ -24,13 +28,25 @@
     {
       "tag": "v1",
       "new_sqlite_classes": ["PlanningRoom"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["FixitRoom"]
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "FIXITS_DB",
+      "database_name": "sprintjam-fixits",
+      "database_id": "REPLACE_WITH_D1_DB_ID",
+      "migrations_dir": "api/data-model/fixits"
     }
   ],
   "assets": {
     "binding": "ASSETS",
     "directory": "dist/client",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/ws"]
+    "run_worker_first": ["/api/*", "/ws", "/ws/*"]
   },
   "observability": {
     "enabled": true,

@@ -1,5 +1,5 @@
 import type { VoteValue, TicketMetadata } from "@/types";
-import { API_BASE_URL } from "@/constants";
+import { PLANNING_API_BASE_URL } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
 
@@ -26,7 +26,7 @@ export async function fetchLinearIssue(
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
-    let url = `${API_BASE_URL}/linear/issue?issueId=${encodeURIComponent(
+    let url = `${PLANNING_API_BASE_URL}/linear/issue?issueId=${encodeURIComponent(
       issueId
     )}`;
 
@@ -73,7 +73,7 @@ export async function updateLinearEstimate(
   try {
     const sessionToken = resolveSessionToken(options.sessionToken);
     const response = await fetch(
-      `${API_BASE_URL}/linear/issue/${encodeURIComponent(issueId)}/estimate`,
+      `${PLANNING_API_BASE_URL}/linear/issue/${encodeURIComponent(issueId)}/estimate`,
       {
         method: "PUT",
         headers: {
@@ -130,7 +130,7 @@ export async function getLinearOAuthStatus(
 ): Promise<LinearOAuthStatus> {
   const token = resolveSessionToken(sessionToken);
   const response = await fetch(
-    `${API_BASE_URL}/linear/oauth/status?roomKey=${encodeURIComponent(
+    `${PLANNING_API_BASE_URL}/linear/oauth/status?roomKey=${encodeURIComponent(
       roomKey,
     )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
       token,
@@ -150,7 +150,7 @@ export async function authorizeLinearOAuth(
   sessionToken?: string | null,
 ): Promise<{ authorizationUrl: string }> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(`${API_BASE_URL}/linear/oauth/authorize`, {
+  const response = await fetch(`${PLANNING_API_BASE_URL}/linear/oauth/authorize`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export async function revokeLinearOAuth(
   sessionToken?: string | null,
 ): Promise<void> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(`${API_BASE_URL}/linear/oauth/revoke`, {
+  const response = await fetch(`${PLANNING_API_BASE_URL}/linear/oauth/revoke`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
