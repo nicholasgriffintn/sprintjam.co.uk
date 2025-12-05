@@ -1,8 +1,8 @@
-import type { RoomData, RoomSettings } from "../types";
-import { JudgeAlgorithm } from "../types";
-import { VOTING_OPTIONS, STRUCTURED_VOTING_OPTIONS } from "../constants";
-import { generateVoteOptionsMetadata } from "./votes";
-import { getDefaultVotingCriteria } from "./structured-voting";
+import type { PasscodeHashPayload, RoomData, RoomSettings } from '../types';
+import { JudgeAlgorithm } from '../types';
+import { VOTING_OPTIONS, STRUCTURED_VOTING_OPTIONS } from '../constants';
+import { generateVoteOptionsMetadata } from './votes';
+import { getDefaultVotingCriteria } from './structured-voting';
 
 export function getDefaultEstimateOptions(): (string | number)[] {
   return [...VOTING_OPTIONS];
@@ -93,7 +93,7 @@ interface InitialRoomOptions {
   users?: string[];
   moderator?: string;
   connectedUsers?: Record<string, boolean>;
-  passcodeHash?: string;
+  passcodeHash?: PasscodeHashPayload;
   settings?: Partial<RoomSettings>;
 }
 

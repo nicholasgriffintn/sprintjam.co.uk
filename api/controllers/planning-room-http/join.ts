@@ -7,7 +7,7 @@ import {
   sanitizeRoomData,
 } from '../../utils/room-data';
 import { createJsonResponse } from '../../utils/http';
-import { generateSessionToken, hashPasscode } from '../../utils/room-cypto';
+import { generateSessionToken, verifyPasscode } from '../../utils/room-cypto';
 
 import type { CfResponse, PlanningRoomHttpContext } from './types';
 
@@ -39,9 +39,10 @@ export async function handleJoin(
   );
 
   if (storedPasscodeHash && !hasValidSessionToken) {
-    const providedHash = passcode ? await hashPasscode(passcode) : undefined;
+    const isValidPasscode =
+      passcode && (await verifyPasscode(passcode, storedPasscodeHash));
 
-    if (!providedHash || providedHash !== storedPasscodeHash) {
+    if (!isValidPasscode) {
       return createJsonResponse({ error: 'Invalid passcode' }, 401);
     }
   }

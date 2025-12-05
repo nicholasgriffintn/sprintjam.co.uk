@@ -69,7 +69,7 @@ describe('defaults utils', () => {
         users: ['alice'],
         moderator: 'alice',
         connectedUsers: { alice: true },
-        passcodeHash: 'hash',
+        passcodeHash: { hash: 'hash', salt: 'salt', iterations: 1 },
         settings: { allowOthersToShowEstimates: true },
       });
 
@@ -82,7 +82,7 @@ describe('defaults utils', () => {
         moderator: 'alice',
         connectedUsers: { alice: true },
         judgeScore: null,
-        passcodeHash: 'hash',
+        passcodeHash: { hash: 'hash', salt: 'salt', iterations: 1 },
       });
       expect(data.settings.allowOthersToShowEstimates).toBe(true);
       expect(data.settings.voteOptionsMetadata).toEqual(

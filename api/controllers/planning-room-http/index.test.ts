@@ -4,13 +4,13 @@ import { handleHttpRequest } from '.';
 import type { PlanningRoomHttpContext } from '.';
 import { createInitialRoomData } from '../../utils/defaults';
 import { hashPasscode } from '../../utils/room-cypto';
-import type { RoomData } from '../../types';
+import type { PasscodeHashPayload, RoomData } from '../../types';
 
 type TokenMap = Map<string, string>;
 
 const makeContext = (options: {
   roomData: RoomData;
-  passcodeHash?: string | null;
+  passcodeHash?: PasscodeHashPayload | null;
   tokens?: TokenMap;
 }) => {
   let currentRoom = options.roomData;

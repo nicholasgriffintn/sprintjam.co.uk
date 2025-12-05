@@ -316,6 +316,12 @@ export interface TimerState {
   autoResetOnVotesReset?: boolean;
 }
 
+export interface PasscodeHashPayload {
+  hash: string;
+  salt: string;
+  iterations: number;
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -327,7 +333,7 @@ export interface RoomData {
   judgeScore?: string | number | null;
   judgeMetadata?: JudgeMetadata;
   settings: RoomSettings;
-  passcodeHash?: string;
+  passcodeHash?: PasscodeHashPayload;
   userAvatars?: Record<string, string>;
   currentStrudelCode?: string;
   currentStrudelGenerationId?: string;

@@ -6,6 +6,7 @@ import type {
 
 import type {
   JudgeMetadata,
+  PasscodeHashPayload,
   RoomData,
   RoomSettings,
   StructuredVote,
@@ -16,7 +17,11 @@ import type {
 import { serializeJSON, serializeVote } from '../utils/serialize';
 import { parseJudgeScore, parseVote, safeJsonParse } from '../utils/parse';
 import { DEFAULT_TIMER_DURATION_SECONDS } from '../constants';
-import { SESSION_TOKEN_TTL_MS } from '../utils/room-cypto';
+import {
+  SESSION_TOKEN_TTL_MS,
+  parsePasscodeHash,
+  serializePasscodeHash,
+} from '../utils/room-cypto';
 import { TokenCipher } from '../utils/token-crypto';
 
 const ROOM_ROW_ID = 1;
@@ -321,7 +326,7 @@ export class PlanningRoomRepository {
         ? safeJsonParse<JudgeMetadata>(row.judge_metadata)
         : undefined,
       settings,
-      passcodeHash: row.passcode_hash ?? undefined,
+      passcodeHash: parsePasscodeHash(row.passcode_hash) ?? undefined,
       userAvatars:
         Object.keys(userAvatars).length > 0 ? userAvatars : undefined,
       currentStrudelCode: row.current_strudel_code ?? undefined,
@@ -386,7 +391,7 @@ export class PlanningRoomRepository {
         roomData.key,
         roomData.moderator,
         roomData.showVotes ? 1 : 0,
-        roomData.passcodeHash ?? null,
+        serializePasscodeHash(roomData.passcodeHash),
         roomData.judgeScore === undefined || roomData.judgeScore === null
           ? null
           : String(roomData.judgeScore),
@@ -625,21 +630,21 @@ export class PlanningRoomRepository {
     );
   }
 
-  setPasscodeHash(passcodeHash: string | null) {
+  setPasscodeHash(passcodeHash: PasscodeHashPayload | null) {
     this.sql.exec(
       `UPDATE room_meta SET passcode = ? WHERE id = ${ROOM_ROW_ID}`,
-      passcodeHash
+      serializePasscodeHash(passcodeHash)
     );
   }
 
-  getPasscodeHash(): string | null {
+  getPasscodeHash(): PasscodeHashPayload | null {
     const result = this.sql
       .exec<{
         passcode: string | null;
       }>(`SELECT passcode FROM room_meta WHERE id = ${ROOM_ROW_ID}`)
       .toArray()[0];
 
-    return result?.passcode ?? null;
+    return parsePasscodeHash(result?.passcode ?? null);
   }
 
   setSessionToken(userName: string, token: string) {
