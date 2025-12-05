@@ -33,9 +33,9 @@ vi.mock('@/lib/linear-service', () => ({
   updateLinearEstimate: vi.fn(),
 }));
 
-import { useAutoJiraUpdate } from './useAutoJiraUpdate';
+import { useAutoEstimateUpdate } from './useAutoEstimateUpdate';
 
-describe('useAutoJiraUpdate', () => {
+describe('useAutoEstimateUpdate', () => {
   let jiraMutation: MutationMock;
   let linearMutation: MutationMock;
 
@@ -60,7 +60,7 @@ describe('useAutoJiraUpdate', () => {
   it('skips mutation when a request is already pending', () => {
     jiraMutation.isPending = true;
 
-    useAutoJiraUpdate({
+    useAutoEstimateUpdate({
       roomData: {
         key: 'r1',
         users: ['alice'],
@@ -106,7 +106,7 @@ describe('useAutoJiraUpdate', () => {
     const onTicketUpdate = vi.fn();
     jiraMutation.mutateAsync.mockResolvedValueOnce({ key: 'ABC-1' });
 
-    useAutoJiraUpdate({
+    useAutoEstimateUpdate({
       roomData: {
         key: 'r1',
         users: ['alice'],
@@ -161,7 +161,7 @@ describe('useAutoJiraUpdate', () => {
     const onTicketUpdate = vi.fn();
     linearMutation.mutateAsync.mockResolvedValueOnce({ id: 'lin-123' });
 
-    useAutoJiraUpdate({
+    useAutoEstimateUpdate({
       roomData: {
         key: 'r2',
         users: ['bob'],
@@ -216,7 +216,7 @@ describe('useAutoJiraUpdate', () => {
   it('does not sync unsupported providers even when auto-sync enabled', () => {
     const onTicketUpdate = vi.fn();
 
-    useAutoJiraUpdate({
+    useAutoEstimateUpdate({
       roomData: {
         key: 'r3',
         users: ['cora'],

@@ -32,7 +32,7 @@ import { useRoomData } from '@/lib/data/hooks';
 import { safeLocalStorage } from '@/utils/storage';
 import { useServerDefaults } from '@/hooks/useServerDefaults';
 import { useAutoReconnect } from '@/hooks/useAutoReconnect';
-import { useAutoJiraUpdate } from '@/hooks/useAutoJiraUpdate';
+import { useAutoEstimateUpdate } from '@/hooks/useAutoEstimateUpdate';
 import { useRoomConnection } from '@/hooks/useRoomConnection';
 import { useRoomDataSync } from '@/hooks/useRoomDataSync';
 import type {
@@ -228,10 +228,13 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     onModeratorViewChange: setIsModeratorView,
   });
 
-  useAutoJiraUpdate({
+  useAutoEstimateUpdate({
     roomData,
     userName: name,
-    onTicketUpdate: (ticketId, updates) => {
+    onTicketUpdate: (
+      ticketId: number,
+      updates: Partial<TicketQueueItem>
+    ) => {
       try {
         updateTicket(ticketId, updates);
       } catch (err: unknown) {

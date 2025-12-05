@@ -13,40 +13,37 @@ import type {
   StructuredVote,
 } from "@/types";
 
-interface UseAutoJiraUpdateOptions {
+interface UseAutoEstimateUpdateOptions {
   roomData: RoomData | null;
   userName: string;
   onTicketUpdate: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onError: (error: string) => void;
 }
 
-const PROVIDER_LABELS: Record<
-  TicketQueueItem["externalService"],
-  string
-> = {
-  jira: "Jira",
-  linear: "Linear",
-  github: "GitHub",
-  none: "provider",
+const PROVIDER_LABELS: Record<TicketQueueItem['externalService'], string> = {
+  jira: 'Jira',
+  linear: 'Linear',
+  github: 'GitHub',
+  none: 'provider',
 };
 
 const SUPPORTED_AUTO_SYNC_PROVIDERS: Array<
-  Exclude<TicketQueueItem["externalService"], "none">
-> = ["jira", "linear"];
+  Exclude<TicketQueueItem['externalService'], 'none'>
+> = ['jira', 'linear'];
 
-export const useAutoJiraUpdate = ({
+export const useAutoEstimateUpdate = ({
   roomData,
   userName,
   onTicketUpdate,
   onError,
-}: UseAutoJiraUpdateOptions) => {
+}: UseAutoEstimateUpdateOptions) => {
   const lastUpdatedRef = useRef<{
     ticketId: number;
-    provider: TicketQueueItem["externalService"];
+    provider: TicketQueueItem['externalService'];
     value: number;
   } | null>(null);
   const updateStoryPointsMutation = useMutation({
-    mutationKey: ["jira-story-points", userName],
+    mutationKey: ['jira-story-points', userName],
     mutationFn: async (variables: {
       ticketId: string;
       storyPoints: number;
@@ -58,7 +55,7 @@ export const useAutoJiraUpdate = ({
       }),
   });
   const updateLinearEstimateMutation = useMutation({
-    mutationKey: ["linear-estimates", userName],
+    mutationKey: ['linear-estimates', userName],
     mutationFn: async (variables: {
       issueId: string;
       estimate: number;
@@ -100,7 +97,7 @@ export const useAutoJiraUpdate = ({
 
     const metadataId =
       typeof (ticket.externalServiceMetadata as { id?: unknown })?.id ===
-      "string"
+      'string'
         ? (ticket.externalServiceMetadata as { id?: string }).id
         : undefined;
 
@@ -116,11 +113,11 @@ export const useAutoJiraUpdate = ({
     }
 
     const provider = currentTicket.externalService;
-    const roomProvider = roomData.settings.externalService ?? "none";
+    const roomProvider = roomData.settings.externalService ?? 'none';
     const autoSyncEnabled = roomData.settings.autoSyncEstimates ?? true;
 
     if (
-      provider === "none" ||
+      provider === 'none' ||
       !SUPPORTED_AUTO_SYNC_PROVIDERS.includes(provider) ||
       provider !== roomProvider ||
       roomData.showVotes !== true ||
@@ -146,50 +143,70 @@ export const useAutoJiraUpdate = ({
       return;
     }
 
-    const providerMutation =
-      provider === "jira"
-        ? updateStoryPointsMutation
-        : updateLinearEstimateMutation;
+    if (provider === 'jira') {
+      if (updateStoryPointsMutation.isPending) {
+        return;
+      }
 
-    if (providerMutation.isPending) {
+      lastUpdatedRef.current = {
+        ticketId: currentTicket.id,
+        provider,
+        value: estimate,
+      };
+
+      updateStoryPointsMutation
+        .mutateAsync({
+          ticketId: currentTicket.ticketId,
+          storyPoints: estimate,
+          roomKey: roomData.key,
+        })
+        .then((ticket) => {
+          onTicketUpdate(currentTicket.id, {
+            externalServiceMetadata: ticket,
+          });
+        })
+        .catch((err) => {
+          lastUpdatedRef.current = null;
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : `Failed to auto-update ${PROVIDER_LABELS.jira} estimate`;
+          onError(errorMessage);
+        });
       return;
     }
 
-    lastUpdatedRef.current = {
-      ticketId: currentTicket.id,
-      provider,
-      value: estimate,
-    };
+    if (provider === 'linear') {
+      if (updateLinearEstimateMutation.isPending) {
+        return;
+      }
 
-    const mutationPromise =
-      provider === "jira"
-        ? providerMutation.mutateAsync({
-            ticketId: currentTicket.ticketId,
-            storyPoints: estimate,
-            roomKey: roomData.key,
-          })
-        : providerMutation.mutateAsync({
-            issueId: resolveLinearIssueId(currentTicket),
-            estimate,
-            roomKey: roomData.key,
+      lastUpdatedRef.current = {
+        ticketId: currentTicket.id,
+        provider,
+        value: estimate,
+      };
+
+      updateLinearEstimateMutation
+        .mutateAsync({
+          issueId: resolveLinearIssueId(currentTicket),
+          estimate,
+          roomKey: roomData.key,
+        })
+        .then((ticket) => {
+          onTicketUpdate(currentTicket.id, {
+            externalServiceMetadata: ticket,
           });
-
-    mutationPromise
-      .then((ticket) => {
-        onTicketUpdate(currentTicket.id, {
-          externalServiceMetadata: ticket,
+        })
+        .catch((err) => {
+          lastUpdatedRef.current = null;
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : `Failed to auto-update ${PROVIDER_LABELS.linear} estimate`;
+          onError(errorMessage);
         });
-      })
-      .catch((err) => {
-        lastUpdatedRef.current = null;
-        const providerLabel =
-          PROVIDER_LABELS[provider] ?? PROVIDER_LABELS.none;
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : `Failed to auto-update ${providerLabel} estimate`;
-        onError(errorMessage);
-      });
+    }
   }, [
     roomData,
     userName,
