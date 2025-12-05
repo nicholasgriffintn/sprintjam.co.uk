@@ -117,14 +117,14 @@ export async function handleJiraOAuthCallbackController(
     return new Response(
       `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
         error
-      )}</p><script>window.close();</script></body></html>`,
+      )}</p></body></html>`,
       { status: 400, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
 
   if (!code || !state) {
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>Missing code or state</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>Missing code or state</p></body></html>`,
       { status: 400, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
@@ -138,7 +138,7 @@ export async function handleJiraOAuthCallbackController(
 
     if (!clientId || !clientSecret) {
       return new Response(
-        `<html><body><h1>OAuth Error</h1><p>OAuth not configured</p><script>window.close();</script></body></html>`,
+        `<html><body><h1>OAuth Error</h1><p>OAuth not configured</p></body></html>`,
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
@@ -171,7 +171,7 @@ export async function handleJiraOAuthCallbackController(
       const errorData = await tokenResponse.text();
       console.error('Token exchange failed:', errorData);
       return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to exchange code for token</p><script>window.close();</script></body></html>`,
+        `<html><body><h1>OAuth Error</h1><p>Failed to exchange code for token</p></body></html>`,
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
@@ -196,7 +196,7 @@ export async function handleJiraOAuthCallbackController(
 
     if (!resourcesResponse.ok) {
       return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to fetch Jira resources</p><script>window.close();</script></body></html>`,
+        `<html><body><h1>OAuth Error</h1><p>Failed to fetch Jira resources</p></body></html>`,
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
@@ -212,7 +212,7 @@ export async function handleJiraOAuthCallbackController(
 
     if (resources.length === 0) {
       return new Response(
-        `<html><body><h1>OAuth Error</h1><p>No Jira sites accessible</p><script>window.close();</script></body></html>`,
+        `<html><body><h1>OAuth Error</h1><p>No Jira sites accessible</p></body></html>`,
         { status: 400, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
@@ -287,13 +287,13 @@ export async function handleJiraOAuthCallbackController(
 
     if (!saveResponse.ok) {
       return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to save credentials</p><script>window.close();</script></body></html>`,
+        `<html><body><h1>OAuth Error</h1><p>Failed to save credentials</p></body></html>`,
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
 
     return new Response(
-      `<html><body><h1>Success!</h1><p>Jira connected successfully. You can close this window.</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>Success!</h1><p>Jira connected successfully. You can close this window.</p></body></html>`,
       { status: 200, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   } catch (error) {
@@ -302,7 +302,7 @@ export async function handleJiraOAuthCallbackController(
     return new Response(
       `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
         message
-      )}</p><script>window.close();</script></body></html>`,
+      )}</p></body></html>`,
       { status: 500, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }

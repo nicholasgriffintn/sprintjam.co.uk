@@ -422,11 +422,6 @@ export function TicketQueueModalQueueTab({
                   Add GitHub Issue
                 </button>
               )}
-              {githubEnabled && (
-                <span className="rounded-lg bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-                  GitHub queueing coming soon
-                </span>
-              )}
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
                 data-testid="queue-toggle-add"

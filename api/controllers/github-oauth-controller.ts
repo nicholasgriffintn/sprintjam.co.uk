@@ -108,14 +108,14 @@ export async function handleGithubOAuthCallbackController(
     return new Response(
       `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
         error
-      )}</p><script>window.close();</script></body></html>`,
+      )}</p></body></html>`,
       { status: 400, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
 
   if (!code || !state) {
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>Missing code or state</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>Missing code or state</p></body></html>`,
       { status: 400, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
@@ -129,7 +129,7 @@ export async function handleGithubOAuthCallbackController(
 
     if (!clientId || !clientSecret) {
       return new Response(
-        `<html><body><h1>OAuth Error</h1><p>OAuth not configured</p><script>window.close();</script></body></html>`,
+        `<html><body><h1>OAuth Error</h1><p>OAuth not configured</p></body></html>`,
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
@@ -163,7 +163,7 @@ export async function handleGithubOAuthCallbackController(
       const errorData = await tokenResponse.text();
       console.error('GitHub token exchange failed:', errorData);
       return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to exchange code for token</p><script>window.close();</script></body></html>`,
+        `<html><body><h1>OAuth Error</h1><p>Failed to exchange code for token</p></body></html>`,
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
@@ -178,12 +178,13 @@ export async function handleGithubOAuthCallbackController(
       headers: {
         Accept: 'application/vnd.github+json',
         Authorization: `Bearer ${tokenData.access_token}`,
+        'User-Agent': 'SprintJam',
       },
     });
 
     if (!userResponse.ok) {
       return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to fetch GitHub user</p><script>window.close();</script></body></html>`,
+        `<html><body><h1>OAuth Error</h1><p>Failed to fetch GitHub user</p></body></html>`,
         { status: 500, headers: { 'Content-Type': 'text/html' } }
       ) as unknown as CfResponse;
     }
@@ -197,19 +198,25 @@ export async function handleGithubOAuthCallbackController(
     let primaryEmail = userData.email ?? null;
     if (!primaryEmail) {
       try {
-        const emailResponse = await fetch('https://api.github.com/user/emails', {
-          headers: {
-            Accept: 'application/vnd.github+json',
-            Authorization: `Bearer ${tokenData.access_token}`,
-          },
-        });
+        const emailResponse = await fetch(
+          'https://api.github.com/user/emails',
+          {
+            headers: {
+              Accept: 'application/vnd.github+json',
+              Authorization: `Bearer ${tokenData.access_token}`,
+              'User-Agent': 'SprintJam',
+            },
+          }
+        );
         if (emailResponse.ok) {
           const emails = (await emailResponse.json()) as Array<{
             email: string;
             primary?: boolean;
             verified?: boolean;
           }>;
-          const primary = emails.find((entry) => entry.primary && entry.verified);
+          const primary = emails.find(
+            (entry) => entry.primary && entry.verified
+          );
           primaryEmail = primary?.email ?? null;
         }
       } catch (emailError) {
