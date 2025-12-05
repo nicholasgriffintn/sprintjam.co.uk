@@ -49,61 +49,69 @@ const SettingsModal: FC<SettingsModalProps> = ({
       | string
       | null
   ) => {
-    const newSettings = { ...localSettings, [key]: value };
+    let nextEstimateInput: string | null = null;
 
-    if (key === 'enableStructuredVoting' && value === true) {
-      const structuredOptions = Array.from(structuredVotingOptions);
-      newSettings.estimateOptions = structuredOptions;
-      if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
-        newSettings.votingCriteria = defaultSettings.votingCriteria.map(
-          (criterion) => ({ ...criterion })
-        );
+    setLocalSettings((prev) => {
+      const newSettings: RoomSettings = { ...prev, [key]: value };
+
+      if (key === 'enableStructuredVoting' && value === true) {
+        const structuredOptions = Array.from(structuredVotingOptions);
+        newSettings.estimateOptions = structuredOptions;
+        if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
+          newSettings.votingCriteria = defaultSettings.votingCriteria.map(
+            (criterion) => ({ ...criterion })
+          );
+        }
+        nextEstimateInput = structuredOptions
+          .map((option) => option.toString())
+          .join(',');
+      } else if (
+        key === 'enableStructuredVoting' &&
+        value === false &&
+        !newSettings.estimateOptions
+      ) {
+        const defaultOptions = Array.from(defaultSettings.estimateOptions);
+        newSettings.estimateOptions = defaultOptions;
+        if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
+          newSettings.votingCriteria = defaultSettings.votingCriteria.map(
+            (criterion) => ({ ...criterion })
+          );
+        }
+        nextEstimateInput = defaultOptions
+          .map((option) => option.toString())
+          .join(',');
       }
-      setEstimateOptionsInput(
-        structuredOptions.map((option) => option.toString()).join(',')
-      );
-    } else if (
-      key === 'enableStructuredVoting' &&
-      value === false &&
-      !newSettings.estimateOptions
-    ) {
-      const defaultOptions = Array.from(defaultSettings.estimateOptions);
-      newSettings.estimateOptions = defaultOptions;
-      if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
-        newSettings.votingCriteria = defaultSettings.votingCriteria.map(
-          (criterion) => ({ ...criterion })
-        );
+
+      if (
+        key === 'showAverage' ||
+        key === 'showMedian' ||
+        key === 'showTopVotes'
+      ) {
+        if (newSettings.resultsDisplay?.summaryCards) {
+          newSettings.resultsDisplay = {
+            ...newSettings.resultsDisplay,
+            summaryCards: newSettings.resultsDisplay.summaryCards.map((card) => {
+              if (key === 'showAverage' && card.id === 'average') {
+                return { ...card, enabled: value as boolean };
+              }
+              if (key === 'showMedian' && card.id === 'mode') {
+                return { ...card, enabled: value as boolean };
+              }
+              if (key === 'showTopVotes' && card.id === 'topVotes') {
+                return { ...card, enabled: value as boolean };
+              }
+              return card;
+            }),
+          };
+        }
       }
-      setEstimateOptionsInput(
-        defaultOptions.map((option) => option.toString()).join(',')
-      );
+
+      return newSettings;
+    });
+
+    if (nextEstimateInput !== null) {
+      setEstimateOptionsInput(nextEstimateInput);
     }
-
-    if (
-      key === 'showAverage' ||
-      key === 'showMedian' ||
-      key === 'showTopVotes'
-    ) {
-      if (newSettings.resultsDisplay?.summaryCards) {
-        newSettings.resultsDisplay = {
-          ...newSettings.resultsDisplay,
-          summaryCards: newSettings.resultsDisplay.summaryCards.map((card) => {
-            if (key === 'showAverage' && card.id === 'average') {
-              return { ...card, enabled: value as boolean };
-            }
-            if (key === 'showMedian' && card.id === 'mode') {
-              return { ...card, enabled: value as boolean };
-            }
-            if (key === 'showTopVotes' && card.id === 'topVotes') {
-              return { ...card, enabled: value as boolean };
-            }
-            return card;
-          }),
-        };
-      }
-    }
-
-    setLocalSettings(newSettings);
   };
 
   const handleEstimateOptionsChange = (value: string) => {

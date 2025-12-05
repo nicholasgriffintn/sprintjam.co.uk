@@ -50,19 +50,9 @@ export function TicketQueueSettings({
     disconnect: githubDisconnect,
   } = useGithubOAuth();
 
-  const selectedProvider =
-    (localSettings.externalService ?? 'none') as
-      | 'jira'
-      | 'linear'
-      | 'github'
-      | 'none';
-  const autoSyncEnabled =
-    localSettings.autoSyncEstimates ??
-    localSettings.autoUpdateJiraStoryPoints ??
-    false;
+  const autoSyncEnabled = localSettings.autoSyncEstimates ?? true;
   const handleAutoSyncToggle = (checked: boolean) => {
     handleChange('autoSyncEstimates', checked);
-    handleChange('autoUpdateJiraStoryPoints', checked);
   };
   const renderAutoSyncToggle = (
     provider: 'jira' | 'linear',

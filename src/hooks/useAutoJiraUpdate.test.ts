@@ -83,8 +83,7 @@ describe('useAutoJiraUpdate', () => {
           enableJudge: false,
           judgeAlgorithm: 'simpleAverage',
           externalService: 'jira',
-          autoUpdateJiraStoryPoints: true,
-          autoSyncEstimates: false,
+          autoSyncEstimates: true,
         },
         currentTicket: {
           id: 1,

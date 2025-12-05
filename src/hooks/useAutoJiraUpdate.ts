@@ -117,10 +117,7 @@ export const useAutoJiraUpdate = ({
 
     const provider = currentTicket.externalService;
     const roomProvider = roomData.settings.externalService ?? "none";
-    const autoSyncEnabled =
-      roomData.settings.autoSyncEstimates ??
-      roomData.settings.autoUpdateJiraStoryPoints ??
-      false;
+    const autoSyncEnabled = roomData.settings.autoSyncEstimates ?? true;
 
     if (
       provider === "none" ||

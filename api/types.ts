@@ -152,7 +152,6 @@ export interface RoomSettings {
   externalService?: 'jira' | 'linear' | 'github' | 'none';
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
-  autoUpdateJiraStoryPoints?: boolean;
   autoSyncEstimates?: boolean;
   resultsDisplay?: ResultsDisplaySettings;
   structuredVotingDisplay?: StructuredVotingDisplaySettings;

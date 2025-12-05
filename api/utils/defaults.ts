@@ -49,14 +49,7 @@ export function getDefaultRoomSettings(
     externalService: settings?.externalService ?? 'none',
     enableStructuredVoting: settings?.enableStructuredVoting ?? false,
     votingCriteria,
-    autoUpdateJiraStoryPoints:
-      settings?.autoUpdateJiraStoryPoints ??
-      settings?.autoSyncEstimates ??
-      false,
-    autoSyncEstimates:
-      settings?.autoSyncEstimates ??
-      settings?.autoUpdateJiraStoryPoints ??
-      false,
+    autoSyncEstimates: settings?.autoSyncEstimates ?? true,
     autoHandoverModerator: settings?.autoHandoverModerator ?? false,
     enableStrudelPlayer: settings?.enableStrudelPlayer ?? true,
     strudelAutoGenerate: settings?.strudelAutoGenerate ?? false,

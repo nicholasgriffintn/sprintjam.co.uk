@@ -24,7 +24,7 @@ function buildSettings(overrides: Partial<RoomSettings> = {}): RoomSettings {
     externalService: 'none',
     enableStructuredVoting: false,
     votingCriteria: undefined,
-    autoUpdateJiraStoryPoints: false,
+    autoSyncEstimates: true,
     resultsDisplay: undefined,
     structuredVotingDisplay: undefined,
     autoHandoverModerator: false,

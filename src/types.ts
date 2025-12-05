@@ -153,7 +153,6 @@ export interface RoomSettings {
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
   externalService?: 'jira' | 'linear' | 'github' | 'none';
-  autoUpdateJiraStoryPoints?: boolean;
   autoSyncEstimates?: boolean;
   enableTicketQueue?: boolean;
   enableStructuredVoting?: boolean;
