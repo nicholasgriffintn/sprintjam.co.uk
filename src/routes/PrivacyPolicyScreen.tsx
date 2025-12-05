@@ -1,4 +1,11 @@
 import { motion } from 'framer-motion';
+import {
+  CalendarCheck,
+  Database,
+  Lock,
+  ShieldCheck,
+  SlidersHorizontal,
+} from 'lucide-react';
 
 import { PageBackground } from '@/components/layout/PageBackground';
 import { Logo } from '@/components/Logo';
@@ -6,13 +13,80 @@ import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 
+const LAST_UPDATED = '5 December 2025';
+
+const highlightCards = [
+  {
+    title: 'Minimal data footprint',
+    description:
+      'Only the information required to synchronise your room is persisted. No tracking pixels.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Transparency first',
+    description:
+      'Every storage location is documented on this page. Cookies are never used.',
+    icon: Database,
+  },
+  {
+    title: 'Self-host friendly',
+    description:
+      'SprintJam is Apache 2.0 licensed, ready to be deployed on your own account.',
+    icon: SlidersHorizontal,
+  },
+];
+
+const browserStorage = [
+  {
+    label: 'Session + preferences',
+    detail:
+      'Session tokens, display name, avatar emoji, settings, and most-recently room join code are stored in localStorage.',
+  },
+  {
+    label: 'No cross-site cookies',
+    detail:
+      "SprintJam does not set marketing or advertising cookies, nor does it embed remote analytics, it doesn't use cookies at all.",
+  },
+];
+
+const serverStorage = [
+  {
+    label: 'Room state in Durable Objects',
+    detail:
+      'Room key, moderators, hashed passcodes, participant metadata, votes, ticket queue, connection diagnostics and similar details about your room.',
+  },
+  {
+    label: 'Optional Strudel music data',
+    detail:
+      'When music is enabled we store the generated Strudel code alongside the room.',
+  },
+  {
+    label: 'No third parties by default',
+    detail:
+      'Traffic remains inside our Cloudflare zone unless you explicitly configure an integration.',
+  },
+];
+
+const integrationOptions = [
+  {
+    name: 'Jira, Linear and GitHub (optional)',
+    detail:
+      'Moderators can link their external accounts to sync data to and from SprintJam, tokens are only held as long as they are needed and are hashed.',
+  },
+  {
+    name: 'Strudel music (optional)',
+    detail:
+      'We send generated Strudel prompt text only (no participant identifiers) to api.polychat.app to generate snippets.',
+  },
+];
+
 const PrivacyPolicyScreen = () => {
   usePageMeta(META_CONFIGS.privacy);
 
   return (
     <PageBackground maxWidth="xl" variant="compact">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="space-y-14 lg:space-y-16"
@@ -22,126 +96,115 @@ const PrivacyPolicyScreen = () => {
             <Logo size="lg" />
           </a>
         </div>
-        <div className="space-y-8">
+
+        <div className="space-y-12">
           <div className="space-y-4">
             <div className="space-y-2">
               <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
-                Privacy Policy
+                Privacy policy
               </h1>
               <p className="text-lg text-slate-600 dark:text-slate-300">
-                SprintJam keeps your rooms lightweight: no ads, no marketing
-                pixels, and minimal storage. Below is exactly what lives in your
-                browser, what the server retains, and how to keep it private
-                when you self-host.
+                By using SprintJam, you agree to these terms. We keep things
+                simple and focused on providing a great estimation tool.
               </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-200">
+                <CalendarCheck className="h-4 w-4" aria-hidden="true" />
+                Updated {LAST_UPDATED}
+              </div>
             </div>
           </div>
+          <section className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              {highlightCards.map(({ icon: Icon, title, description }) => (
+                <div
+                  key={title}
+                  className="flex flex-col items-center rounded-2xl border border-slate-200/80 bg-white/70 p-5 text-center shadow-sm ring-1 ring-slate-100 dark:border-white/10 dark:bg-white/5 dark:ring-white/10"
+                >
+                  <Icon
+                    className="h-6 w-6 text-slate-900 dark:text-white"
+                    aria-hidden="true"
+                  />
+                  <h2 className="mt-3 text-lg font-semibold text-slate-900 dark:text-white">
+                    {title}
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                    {description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-6 shadow-sm shadow-slate-200/60 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:shadow-none">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          <section className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 text-center shadow-sm shadow-slate-200/60 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+              <h2 className="flex items-center justify-center gap-2 text-xl font-semibold text-slate-900 dark:text-white">
+                <Lock className="h-5 w-5" aria-hidden="true" />
                 What lives in your browser
               </h2>
-              <ul className="mt-3 space-y-2 text-base text-slate-700 dark:text-slate-200 text-left">
-                <li className="flex gap-3 rounded-xl bg-slate-50/80 px-3 py-2 text-sm ring-1 ring-slate-100 dark:bg-white/5 dark:ring-white/10">
-                  <span>
-                    Your display name and theme preference are stored in{' '}
-                    <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm font-semibold text-slate-800 dark:bg-white/10 dark:text-white">
-                      localStorage
-                    </code>{' '}
-                    so you do not need to re-enter them.
-                  </span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-slate-50/80 px-3 py-2 text-sm ring-1 ring-slate-100 dark:bg-white/5 dark:ring-white/10">
-                  <span>
-                    No cookies or cross-site tracking pixels are used.
-                  </span>
-                </li>
+              <ul className="mt-4 space-y-3 text-center">
+                {browserStorage.map(({ label, detail }) => (
+                  <li
+                    key={label}
+                    className="rounded-2xl bg-slate-50/80 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10"
+                  >
+                    <p className="font-medium">{label}</p>
+                    <p className="mt-1 text-slate-600 dark:text-slate-300">
+                      {detail}
+                    </p>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-6 shadow-sm shadow-slate-200/60 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:shadow-none">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 text-center shadow-sm shadow-slate-200/60 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+              <h2 className="flex items-center justify-center gap-2 text-xl font-semibold text-slate-900 dark:text-white">
+                <Database className="h-5 w-5" aria-hidden="true" />
                 What the server keeps
               </h2>
-              <ul className="mt-3 space-y-2 text-base text-slate-700 dark:text-slate-200 text-left">
-                <li className="flex gap-3 rounded-xl bg-slate-50/80 px-3 py-2 text-sm ring-1 ring-slate-100 dark:bg-white/5 dark:ring-white/10">
-                  <span>
-                    Room state stored inside a Cloudflare Durable Object bound
-                    to your account: room key, moderator, hashed passcode,
-                    participant names/avatars, connection status, votes (incl.
-                    structured votes), and ticket queue metadata.
-                  </span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-slate-50/80 px-3 py-2 text-sm ring-1 ring-slate-100 dark:bg-white/5 dark:ring-white/10">
-                  <span>
-                    Optional room music stores the generated Strudel code and
-                    playback state alongside the room.
-                  </span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-slate-50/80 px-3 py-2 text-sm ring-1 ring-slate-100 dark:bg-white/5 dark:ring-white/10">
-                  <span>
-                    Data is not shared with third-party analytics; traffic stays
-                    within your Cloudflare zone unless you enable an
-                    integration.
-                  </span>
-                </li>
+              <ul className="mt-4 space-y-3 text-center">
+                {serverStorage.map(({ label, detail }) => (
+                  <li
+                    key={label}
+                    className="rounded-2xl bg-slate-50/80 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10"
+                  >
+                    <p className="font-medium">{label}</p>
+                    <p className="mt-1 text-slate-600 dark:text-slate-300">
+                      {detail}
+                    </p>
+                  </li>
+                ))}
               </ul>
             </div>
-          </div>
+          </section>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-6 shadow-sm shadow-slate-200/60 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:shadow-none">
-              <h2 className="text-xl font-semibold">Optional integrations</h2>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-100">
-                <li className="rounded-xl bg-white/5 px-4 py-3 ring-1 ring-white/10">
-                  <strong className="text-white">Jira (optional):</strong> Only
-                  used if you set{' '}
-                  <code className="rounded bg-white/10 px-1.5 py-0.5 font-semibold">
-                    JIRA_OAUTH_CLIENT_ID
-                  </code>
-                  ,{' '}
-                  <code className="rounded bg-white/10 px-1.5 py-0.5 font-semibold">
-                    JIRA_OAUTH_CLIENT_SECRET
-                  </code>
-                  , and{' '}
-                  <code className="rounded bg-white/10 px-1.5 py-0.5 font-semibold">
-                    JIRA_OAUTH_REDIRECT_URI
-                  </code>
-                  . When enabled, per-room OAuth tokens and ticket metadata are
-                  stored inside the Durable Object.
-                </li>
-                <li className="rounded-xl bg-white/5 px-4 py-3 ring-1 ring-white/10">
-                  <strong className="text-white">
-                    Strudel music (optional):
-                  </strong>{' '}
-                  Requires{' '}
-                  <code className="rounded bg-white/10 px-1.5 py-0.5 font-semibold">
-                    POLYCHAT_API_TOKEN
-                  </code>
-                  . When set, a short prompt (no room names or user identifiers)
-                  is sent to api.polychat.app to generate code snippets.
-                </li>
+          <section className="grid gap-6 lg:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 shadow-sm shadow-slate-200/60 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+              <div className="border-b border-white/10 px-6 py-5">
+                <h2 className="text-xl font-semibold">Optional integrations</h2>
+                <p className="mt-1 text-sm text-slate-300">
+                  Nothing leaves our Cloudflare zone unless you configure these.
+                </p>
+              </div>
+              <ul className="divide-y divide-white/10 text-sm">
+                {integrationOptions.map(({ name, detail }) => (
+                  <li key={name} className="px-6 py-4">
+                    <p className="font-semibold text-white">{name}</p>
+                    <p className="mt-1 text-slate-200">{detail}</p>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-6 shadow-sm shadow-slate-200/60 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:shadow-none">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                 Privacy configuration for self-hosting
               </h2>
-              <ul className="mt-3 space-y-2 text-base text-slate-700 dark:text-slate-200">
-                <li>
-                  Logging/observability: invocation logs are off by default, but
-                  request sampling is on. Set sampling to{' '}
-                  <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm font-semibold text-slate-800 dark:bg-white/10 dark:text-white">
-                    0
-                  </code>{' '}
-                  (or disable the block) if you need zero log retention in
-                  Cloudflare:
-                </li>
-              </ul>
-              <div className="mt-4 overflow-hidden rounded-xl border border-slate-200/80 bg-slate-900 p-4 text-sm text-slate-100 shadow-sm dark:border-white/10">
-                <pre className="whitespace-pre-wrap font-mono text-xs sm:text-sm text-left">{`{
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Keep your Wrangler config aligned with the privacy posture your
+                team expects before deploying.
+              </p>
+              <div className="mt-4 overflow-hidden rounded-xl border border-slate-200/80 bg-slate-900 p-4 text-xs text-slate-100 shadow-sm dark:border-white/10">
+                <pre className="whitespace-pre-wrap font-mono text-left">{`{
   "observability": {
     "enabled": true,
     "head_sampling_rate": 0,
@@ -149,22 +212,26 @@ const PrivacyPolicyScreen = () => {
   }
 }`}</pre>
               </div>
-              <div className="mt-3 rounded-xl bg-slate-50/80 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10">
-                Adjust this in{' '}
-                <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm font-semibold text-slate-800 dark:bg-white/10 dark:text-white">
+              <p className="mt-3 rounded-2xl bg-slate-50/80 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10">
+                Adjust{' '}
+                <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-800 dark:bg-white/10 dark:text-white">
                   wrangler.jsonc
                 </code>{' '}
-                before deploying to match your policy.
-              </div>
-              <ul className="mt-3 space-y-2 text-base text-slate-700 dark:text-slate-200">
+                before deploy if you require zero logging.
+              </p>
+              <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li>
-                  Serve the site over HTTPS with your own Cloudflare domain and
-                  keep any WAF/Zero Trust rules aligned with your team's privacy
-                  requirements.
+                  Serve SprintJam behind your Cloudflare domain with TLS
+                  enforced.
+                </li>
+                <li>
+                  Align WAF and Workers rules with your privacy and residency
+                  policies.
                 </li>
               </ul>
             </div>
-          </div>
+          </section>
+
           <Footer />
         </div>
       </motion.div>
