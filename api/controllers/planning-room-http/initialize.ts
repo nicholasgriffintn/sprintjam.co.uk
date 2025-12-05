@@ -20,7 +20,17 @@ export async function handleInitialize(
       avatar?: string;
     };
 
-  const passcodeHash = passcode ? await hashPasscode(passcode) : undefined;
+  let passcodeHash;
+  if (passcode) {
+    try {
+      passcodeHash = await hashPasscode(passcode);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Invalid passcode provided';
+      return createJsonResponse({ error: message }, 400);
+    }
+  }
+  
   const roomData = await ctx.getRoomData();
 
   if (roomData?.key) {

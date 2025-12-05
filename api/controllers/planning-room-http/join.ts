@@ -39,8 +39,14 @@ export async function handleJoin(
   );
 
   if (storedPasscodeHash && !hasValidSessionToken) {
-    const isValidPasscode =
-      passcode && (await verifyPasscode(passcode, storedPasscodeHash));
+    let isValidPasscode = false;
+    if (passcode) {
+      try {
+        isValidPasscode = await verifyPasscode(passcode, storedPasscodeHash);
+      } catch {
+        return createJsonResponse({ error: 'Invalid passcode' }, 400);
+      }
+    }
 
     if (!isValidPasscode) {
       return createJsonResponse({ error: 'Invalid passcode' }, 401);

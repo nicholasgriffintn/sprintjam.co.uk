@@ -4,6 +4,8 @@ const encoder = new TextEncoder();
 
 export const PASSCODE_PBKDF2_ITERATIONS = 600_000;
 const PASSCODE_SALT_BYTES = 16;
+export const PASSCODE_MIN_LENGTH = 4;
+export const PASSCODE_MAX_LENGTH = 128;
 export const SESSION_TOKEN_TTL_MS = 1000 * 60 * 60 * 6;
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -52,11 +54,13 @@ export async function hashPasscode(
   salt?: Uint8Array,
   iterations: number = PASSCODE_PBKDF2_ITERATIONS
 ): Promise<PasscodeHashPayload> {
-  if (passcode.length > 128) {
+  if (passcode.length > PASSCODE_MAX_LENGTH) {
     throw new Error('Passcode too long');
   }
-  if (passcode.trim().length < 4) {
-    throw new Error('Passcode cannot be less than 4 characters');
+  if (passcode.trim().length < PASSCODE_MIN_LENGTH) {
+    throw new Error(
+      `Passcode cannot be less than ${PASSCODE_MIN_LENGTH} characters`
+    );
   }
 
   const encoded = encoder.encode(passcode.trim());
