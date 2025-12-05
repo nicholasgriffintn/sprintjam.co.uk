@@ -7,20 +7,45 @@ import {
   markUserConnection,
   normalizeRoomData,
   sanitizeRoomData,
-} from "../utils/room-data";
-import { applySettingsUpdate } from "../utils/room-settings";
-import { createJsonResponse } from "../utils/http";
-import type { PlanningRoomRepository } from "../repositories/planning-room";
-import { generateSessionToken, hashPasscode } from "../utils/security";
+  findCanonicalUserName,
+} from '../utils/room-data';
+import { applySettingsUpdate } from '../utils/room-settings';
+import { createJsonResponse } from '../utils/http';
+import type { PlanningRoomRepository } from '../repositories/planning-room';
+import { generateSessionToken, hashPasscode } from '../utils/security';
 import { calculateTimerSeconds } from '../utils/timer';
 import { ensureTimerState } from '../utils/timer-state';
 
+type PlanningRoomRepositoryShape = Pick<
+  PlanningRoomRepository,
+  | 'getPasscodeHash'
+  | 'validateSessionToken'
+  | 'setSessionToken'
+  | 'ensureUser'
+  | 'setUserConnection'
+  | 'setUserAvatar'
+  | 'setVote'
+  | 'setStructuredVote'
+  | 'setShowVotes'
+  | 'clearVotes'
+  | 'clearStructuredVotes'
+  | 'setSettings'
+  | 'updateTimerConfig'
+  | 'saveJiraOAuthCredentials'
+  | 'getJiraOAuthCredentials'
+  | 'updateJiraOAuthTokens'
+  | 'deleteJiraOAuthCredentials'
+  | 'saveLinearOAuthCredentials'
+  | 'getLinearOAuthCredentials'
+  | 'updateLinearOAuthTokens'
+  | 'deleteLinearOAuthCredentials'
+>;
+
 export interface PlanningRoomHttpContext {
-  repository: PlanningRoomRepository;
+  repository: PlanningRoomRepositoryShape;
   getRoomData(): Promise<RoomData | undefined>;
   putRoomData(roomData: RoomData): Promise<void>;
   broadcast(message: BroadcastMessage): void;
-  findCanonicalUserName(roomData: RoomData, name: string): string | undefined;
   disconnectUserSessions?(userName: string): void;
 }
 
@@ -91,7 +116,7 @@ export async function handleHttpRequest(
       return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
-    const canonicalName = ctx.findCanonicalUserName(roomData, name);
+    const canonicalName = findCanonicalUserName(roomData, name);
 
     if (!canonicalName) {
       return createJsonResponse({ error: 'Invalid session' }, 401);
@@ -126,7 +151,7 @@ export async function handleHttpRequest(
 
     const normalizedRoomData = normalizeRoomData(roomData);
     const canonicalName =
-      ctx.findCanonicalUserName(normalizedRoomData, name) ?? name.trim();
+      findCanonicalUserName(normalizedRoomData, name) ?? name.trim();
     const isConnected = !!normalizedRoomData.connectedUsers?.[canonicalName];
     const storedPasscodeHash = ctx.repository.getPasscodeHash();
     const hasValidSessionToken = ctx.repository.validateSessionToken(
@@ -189,18 +214,20 @@ export async function handleHttpRequest(
       return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
-    if (!roomData.users.includes(name)) {
+    const canonicalName = findCanonicalUserName(roomData, name) ?? name.trim();
+
+    if (!roomData.users.includes(canonicalName)) {
       return createJsonResponse({ error: 'User not found in this room' }, 400);
     }
 
-    roomData.votes[name] = vote;
-    ctx.repository.setVote(name, vote);
+    roomData.votes[canonicalName] = vote;
+    ctx.repository.setVote(canonicalName, vote);
 
-    const structuredVote = roomData.structuredVotes?.[name];
+    const structuredVote = roomData.structuredVotes?.[canonicalName];
 
     ctx.broadcast({
       type: 'vote',
-      user: name,
+      user: canonicalName,
       vote,
       structuredVote,
     });

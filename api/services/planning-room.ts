@@ -30,6 +30,7 @@ import {
   normalizeRoomData,
   getAnonymousUserId,
   anonymizeRoomData,
+  findCanonicalUserName,
 } from '../utils/room-data';
 import { applySettingsUpdate } from '../utils/room-settings';
 import { determineRoomPhase } from '../utils/room-phase';
@@ -73,19 +74,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const normalizedRoomData = normalizeRoomData(roomData);
       await this.putRoomData(normalizedRoomData);
     });
-  }
-
-  private findCanonicalUserName(
-    roomData: RoomData | undefined,
-    candidate: string
-  ): string | null {
-    if (!roomData) {
-      return null;
-    }
-    const target = candidate.trim().toLowerCase();
-    return (
-      roomData.users.find((user) => user.toLowerCase() === target) ?? null
-    );
   }
 
   disconnectUserSessions(userName: string) {
@@ -139,11 +127,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     sessionToken: string
   ) {
     const storedRoom = await this.getRoomData();
-    const canonicalUserName = this.findCanonicalUserName(storedRoom, userName);
+    const canonicalUserName = storedRoom
+      ? findCanonicalUserName(storedRoom, userName)
+      : undefined;
     const hasRoom =
-      storedRoom &&
-      storedRoom.key === roomKey &&
-      !!canonicalUserName;
+      storedRoom && storedRoom.key === roomKey && !!canonicalUserName;
     const hasValidToken = canonicalUserName
       ? this.repository.validateSessionToken(canonicalUserName, sessionToken)
       : false;
@@ -241,7 +229,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
             await this.handleResetVotes(canonicalUserName);
             break;
           case 'updateSettings':
-            await this.handleUpdateSettings(canonicalUserName, validated.settings);
+            await this.handleUpdateSettings(
+              canonicalUserName,
+              validated.settings
+            );
             break;
           case 'generateStrudelCode':
             await this.handleGenerateStrudel(canonicalUserName);
@@ -263,10 +254,16 @@ export class PlanningRoom implements PlanningRoomHttpContext {
             );
             break;
           case 'deleteTicket':
-            await this.handleDeleteTicket(canonicalUserName, validated.ticketId);
+            await this.handleDeleteTicket(
+              canonicalUserName,
+              validated.ticketId
+            );
             break;
           case 'completeTicket':
-            await this.handleCompleteTicket(canonicalUserName, validated.outcome);
+            await this.handleCompleteTicket(
+              canonicalUserName,
+              validated.outcome
+            );
             break;
           case 'startTimer':
             await this.handleStartTimer(canonicalUserName);
@@ -278,7 +275,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
             await this.handleResetTimer(canonicalUserName);
             break;
           case 'configureTimer':
-            await this.handleConfigureTimer(canonicalUserName, validated.config);
+            await this.handleConfigureTimer(
+              canonicalUserName,
+              validated.config
+            );
             break;
         }
       } catch (err: unknown) {

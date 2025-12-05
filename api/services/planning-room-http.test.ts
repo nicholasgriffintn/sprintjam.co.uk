@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { handleHttpRequest } from './planning-room-http';
+import type { PlanningRoomHttpContext } from './planning-room-http';
 import { createInitialRoomData } from '../utils/defaults';
 import { hashPasscode } from '../utils/security';
 import type { RoomData } from '../types';
@@ -15,7 +16,7 @@ const makeContext = (options: {
   let currentRoom = options.roomData;
   const tokens = options.tokens ?? new Map<string, string>();
 
-  const repository = {
+  const repository: PlanningRoomHttpContext['repository'] = {
     getPasscodeHash: () => options.passcodeHash ?? null,
     validateSessionToken: (userName: string, token: string | null) => {
       if (!token) return false;
@@ -27,9 +28,24 @@ const makeContext = (options: {
     ensureUser: vi.fn(),
     setUserConnection: vi.fn(),
     setUserAvatar: vi.fn(),
+    setVote: vi.fn(),
+    setStructuredVote: vi.fn(),
+    setShowVotes: vi.fn(),
+    clearVotes: vi.fn(),
+    clearStructuredVotes: vi.fn(),
+    setSettings: vi.fn(),
+    updateTimerConfig: vi.fn(),
+    saveJiraOAuthCredentials: vi.fn(),
+    getJiraOAuthCredentials: vi.fn().mockReturnValue(null),
+    updateJiraOAuthTokens: vi.fn(),
+    deleteJiraOAuthCredentials: vi.fn(),
+    saveLinearOAuthCredentials: vi.fn(),
+    getLinearOAuthCredentials: vi.fn().mockReturnValue(null),
+    updateLinearOAuthTokens: vi.fn(),
+    deleteLinearOAuthCredentials: vi.fn(),
   };
 
-  const ctx = {
+  const ctx: PlanningRoomHttpContext = {
     repository,
     getRoomData: async () => currentRoom,
     putRoomData: async (room: RoomData) => {
@@ -71,7 +87,7 @@ describe('planning-room-http join flow', () => {
     )) as Response;
 
     expect(response.status).toBe(409);
-    const payload = await response.json();
+    const payload = (await response.json()) as any;
     expect(payload.error).toMatch(/already connected/i);
   });
 
@@ -89,7 +105,7 @@ describe('planning-room-http join flow', () => {
     )) as Response;
 
     expect(response.status).toBe(200);
-    const payload = await response.json();
+    const payload = (await response.json()) as any;
     expect(payload.success).toBe(true);
     expect(payload.authToken).toBeTruthy();
     expect(tokens.size).toBe(1);
@@ -106,7 +122,7 @@ describe('planning-room-http join flow', () => {
     )) as Response;
 
     expect(response.status).toBe(200);
-    const payload = await response.json();
+    const payload = (await response.json()) as any;
     expect(payload.success).toBe(true);
   });
 });

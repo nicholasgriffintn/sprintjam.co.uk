@@ -151,3 +151,13 @@ export function anonymizeRoomData(roomData: RoomData): RoomData {
     ticketQueue,
   });
 }
+
+export function findCanonicalUserName(
+  roomData: RoomData,
+  candidate: string
+): string | undefined {
+  const target = candidate.trim().toLowerCase();
+  return (
+    roomData.users.find((user) => user.toLowerCase() === target) ?? undefined
+  );
+}
