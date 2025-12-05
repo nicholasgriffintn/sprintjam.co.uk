@@ -16,6 +16,9 @@ export interface Env {
   LINEAR_OAUTH_CLIENT_ID?: string;
   LINEAR_OAUTH_CLIENT_SECRET?: string;
   LINEAR_OAUTH_REDIRECT_URI?: string;
+  GITHUB_OAUTH_CLIENT_ID?: string;
+  GITHUB_OAUTH_CLIENT_SECRET?: string;
+  GITHUB_OAUTH_REDIRECT_URI?: string;
   POLYCHAT_API_TOKEN?: string;
 }
 
@@ -146,10 +149,11 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: 'jira' | 'linear' | 'none';
+  externalService?: 'jira' | 'linear' | 'github' | 'none';
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   autoUpdateJiraStoryPoints?: boolean;
+  autoSyncEstimates?: boolean;
   resultsDisplay?: ResultsDisplaySettings;
   structuredVotingDisplay?: StructuredVotingDisplaySettings;
   autoHandoverModerator?: boolean;
@@ -204,6 +208,37 @@ export interface JiraOAuthCredentials {
   jiraUserEmail: string | null;
   storyPointsField: string | null;
   sprintField: string | null;
+  authorizedBy: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface GithubIssue {
+  id: string;
+  key: string;
+  repository: string;
+  number: number;
+  title: string;
+  description?: string;
+  status?: string;
+  assignee?: string;
+  estimate?: number | null;
+  url?: string;
+  labels?: string[];
+}
+
+export interface GithubOAuthCredentials {
+  id: number;
+  roomKey: string;
+  accessToken: string;
+  refreshToken: string | null;
+  tokenType: string;
+  expiresAt: number;
+  scope: string | null;
+  githubLogin: string | null;
+  githubUserEmail: string | null;
+  defaultOwner: string | null;
+  defaultRepo: string | null;
   authorizedBy: string;
   createdAt: number;
   updatedAt: number;
@@ -266,7 +301,7 @@ export interface TicketQueueItem {
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: 'jira' | 'linear' | 'none';
+  externalService: 'jira' | 'linear' | 'github' | 'none';
   externalServiceId?: string;
   externalServiceMetadata?: Record<string, unknown>;
   votes?: TicketVote[];

@@ -108,7 +108,7 @@ test.describe('Jira integration', () => {
       await settingsModal.toggle('settings-toggle-enable-queue', true);
       await settingsModal.selectExternalService('jira');
       await settingsModal.waitForJiraConnection();
-      await settingsModal.toggle('settings-toggle-jira-auto', true);
+      await settingsModal.toggle('settings-toggle-auto-sync', true);
       await settingsModal.save();
 
       const page = moderatorRoom.getPage();

@@ -29,7 +29,7 @@ export class CreateRoomPage {
     enableStructuredVoting?: boolean;
     hideParticipantNames?: boolean;
     enableTicketQueue?: boolean;
-    externalService?: "none" | "jira" | "linear";
+    externalService?: "none" | "jira" | "linear" | "github";
   }) {
     if (!options) {
       return;

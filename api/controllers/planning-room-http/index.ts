@@ -21,6 +21,12 @@ import {
   handleLinearRefresh,
   handleLinearRevoke,
 } from './linear';
+import {
+  handleGithubSaveCredentials,
+  handleGithubStatus,
+  handleGithubCredentials,
+  handleGithubRevoke,
+} from './github';
 
 export type { PlanningRoomHttpContext, PlanningRoomRepositoryShape } from './types';
 
@@ -107,6 +113,25 @@ export async function handleHttpRequest(
 
   if (url.pathname === '/linear/oauth/revoke' && request.method === 'DELETE') {
     return handleLinearRevoke(ctx, request);
+  }
+
+  if (url.pathname === '/github/oauth/save' && request.method === 'POST') {
+    return handleGithubSaveCredentials(ctx, request);
+  }
+
+  if (url.pathname === '/github/oauth/status' && request.method === 'GET') {
+    return handleGithubStatus(ctx, url);
+  }
+
+  if (
+    url.pathname === '/github/oauth/credentials' &&
+    request.method === 'GET'
+  ) {
+    return handleGithubCredentials(ctx);
+  }
+
+  if (url.pathname === '/github/oauth/revoke' && request.method === 'DELETE') {
+    return handleGithubRevoke(ctx, request);
   }
 
   return null;

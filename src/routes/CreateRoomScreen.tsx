@@ -271,7 +271,7 @@ const CreateRoomScreen = () => {
                         Choose a provider
                       </label>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Choose Jira or Linear to sync ticket estimations
+                        Choose Jira, Linear, or GitHub to sync ticket estimations
                         automatically.
                       </p>
                       <select
@@ -285,6 +285,7 @@ const CreateRoomScreen = () => {
                         <option value="none">SprintJam queue</option>
                         <option value="jira">Jira</option>
                         <option value="linear">Linear</option>
+                        <option value="github">GitHub</option>
                       </select>
                     </div>
                   )}

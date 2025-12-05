@@ -43,6 +43,9 @@ const makeContext = (options: {
     getLinearOAuthCredentials: vi.fn().mockReturnValue(null),
     updateLinearOAuthTokens: vi.fn(),
     deleteLinearOAuthCredentials: vi.fn(),
+    saveGithubOAuthCredentials: vi.fn(),
+    getGithubOAuthCredentials: vi.fn().mockReturnValue(null),
+    deleteGithubOAuthCredentials: vi.fn(),
   };
 
   const ctx: PlanningRoomHttpContext = {

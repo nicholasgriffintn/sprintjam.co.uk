@@ -7,7 +7,7 @@ import { createRoomWithParticipant } from './helpers/room-journeys';
 
 async function createRoomWithProvider(
   browser: Browser,
-  provider: 'jira' | 'linear',
+  provider: 'jira' | 'linear' | 'github',
   setupRoutes?: (context: BrowserContext) => Promise<void> | void
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext();
@@ -223,6 +223,77 @@ test.describe("Ticket queue provider setup on room creation", () => {
       await queueDialog.getByTestId("queue-linear-add").click();
       await expect(queueDialog).toContainText(linearIssueKey);
       await expect(queueDialog).toContainText(linearIssue.summary);
+
+      await queueDialog.getByRole("button", { name: "Close modal" }).click();
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("GitHub provider prompts setup modal and allows queueing", async ({
+    browser,
+  }) => {
+    const githubIssueKey = "octocat/hello-world#42";
+    const githubIssue = {
+      key: githubIssueKey,
+      url: `https://github.com/octocat/hello-world/issues/42`,
+      summary: 'GitHub issue to sync',
+      description: 'Verify GitHub provider setup modal works',
+      status: 'open',
+      assignee: 'octocat',
+    };
+
+    const { context, page } = await createRoomWithProvider(
+      browser,
+      "github",
+      async (ctx) => {
+        await ctx.route("**/api/github/oauth/status?**", (route) => {
+          route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              connected: true,
+              githubLogin: 'octocat',
+              githubUserEmail: 'qa@test.sprintjam.co.uk',
+            }),
+          });
+        });
+
+        await ctx.route("**/api/github/issue?**", (route) => {
+          route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ ticket: githubIssue }),
+          });
+        });
+      },
+    );
+
+    try {
+      const providerModal = page.getByRole("dialog", {
+        name: "Connect your queue",
+      });
+      await expect(providerModal).toBeVisible();
+      await expect(providerModal).toContainText("Configure GitHub");
+
+      const openQueueButton = providerModal.getByRole("button", {
+        name: "Open queue setup",
+      });
+      await expect(openQueueButton).toBeEnabled();
+      await openQueueButton.click();
+
+      const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
+      await expect(queueDialog).toBeVisible();
+
+      await queueDialog.getByTestId("queue-add-github-button").click();
+      await queueDialog
+        .getByTestId("queue-github-input")
+        .fill(githubIssueKey);
+      await queueDialog.getByTestId("queue-github-fetch").click();
+      await expect(queueDialog).toContainText(githubIssue.summary);
+      await queueDialog.getByTestId("queue-github-add").click();
+      await expect(queueDialog).toContainText(githubIssueKey);
+      await expect(queueDialog).toContainText(githubIssue.summary);
 
       await queueDialog.getByRole("button", { name: "Close modal" }).click();
     } finally {

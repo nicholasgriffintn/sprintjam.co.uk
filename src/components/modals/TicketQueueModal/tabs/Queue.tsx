@@ -6,14 +6,16 @@ import { GripVertical, Link2, Plus, Loader2, Trash2 } from 'lucide-react';
 import type { TicketQueueItem, TicketMetadata } from '@/types';
 import { fetchJiraTicket } from '@/lib/jira-service';
 import { fetchLinearIssue } from '@/lib/linear-service';
+import { fetchGithubIssue } from '@/lib/github-service';
 import { handleError } from '@/utils/error';
 import { getJiraMetadata } from '@/utils/jira';
 import { getLinearMetadata } from '@/utils/linear';
+import { getGithubMetadata } from '@/utils/github';
 import { ExternalServiceBadge } from '@/components/ExternalServiceBadge';
 
 interface TicketQueueModalQueueTabProps {
   currentTicket?: TicketQueueItem;
-  externalService: 'none' | 'jira' | 'linear';
+  externalService: 'none' | 'jira' | 'linear' | 'github';
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
   onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onDeleteTicket: (ticketId: number) => void;
@@ -39,6 +41,7 @@ export function TicketQueueModalQueueTab({
   const [showAddForm, setShowAddForm] = useState(false);
   const [showJiraForm, setShowJiraForm] = useState(false);
   const [showLinearForm, setShowLinearForm] = useState(false);
+  const [showGithubForm, setShowGithubForm] = useState(false);
   const [newTicketTitle, setNewTicketTitle] = useState('');
   const [newTicketDescription, setNewTicketDescription] = useState('');
 
@@ -53,6 +56,12 @@ export function TicketQueueModalQueueTab({
   );
   const [isFetchingLinear, setIsFetchingLinear] = useState(false);
   const [isSavingLinearAdd, setIsSavingLinearAdd] = useState(false);
+  const [githubLookupKey, setGithubLookupKey] = useState('');
+  const [githubPreview, setGithubPreview] = useState<TicketMetadata | null>(
+    null
+  );
+  const [isFetchingGithub, setIsFetchingGithub] = useState(false);
+  const [isSavingGithubAdd, setIsSavingGithubAdd] = useState(false);
 
   const [linkingTicketId, setLinkingTicketId] = useState<number | null>(null);
   const [linkLookupKey, setLinkLookupKey] = useState('');
@@ -62,19 +71,47 @@ export function TicketQueueModalQueueTab({
 
   const jiraEnabled = externalService === 'jira';
   const linearEnabled = externalService === 'linear';
+  const githubEnabled = externalService === 'github';
 
   const ticketLookup = useMutation({
     mutationKey: ["ticket-lookup", roomKey, userName],
-    mutationFn: async (variables: { provider: "jira" | "linear"; key: string }) =>
-      variables.provider === "jira"
-        ? fetchJiraTicket(variables.key, { roomKey, userName })
-        : fetchLinearIssue(variables.key, { roomKey, userName }),
+    mutationFn: async (variables: { provider: "jira" | "linear" | "github"; key: string }) => {
+      if (variables.provider === "jira") {
+        return fetchJiraTicket(variables.key, { roomKey, userName });
+      }
+      if (variables.provider === "linear") {
+        return fetchLinearIssue(variables.key, { roomKey, userName });
+      }
+      return fetchGithubIssue(variables.key, { roomKey, userName });
+    },
   });
 
   const renderBadge = (ticket?: TicketQueueItem) => {
     if (!ticket) return null;
-    if (ticket.externalService === 'jira') return <ExternalServiceBadge service="jira" getMetadata={(ticket) => ticket.externalServiceMetadata} ticket={ticket} />;
-    if (ticket.externalService === 'linear') return <ExternalServiceBadge service="linear" getMetadata={(ticket) => ticket.externalServiceMetadata} ticket={ticket} />;
+    if (ticket.externalService === 'jira')
+      return (
+        <ExternalServiceBadge
+          service="jira"
+          getMetadata={getJiraMetadata}
+          ticket={ticket}
+        />
+      );
+    if (ticket.externalService === 'linear')
+      return (
+        <ExternalServiceBadge
+          service="linear"
+          getMetadata={getLinearMetadata}
+          ticket={ticket}
+        />
+      );
+    if (ticket.externalService === 'github')
+      return (
+        <ExternalServiceBadge
+          service="github"
+          getMetadata={getGithubMetadata}
+          ticket={ticket}
+        />
+      );
     return null;
   };
 
@@ -94,7 +131,7 @@ export function TicketQueueModalQueueTab({
 
   const lookupExternalTicket = async (
     key: string,
-    provider: 'jira' | 'linear',
+    provider: 'jira' | 'linear' | 'github',
     setPreview: (ticket: TicketMetadata | null) => void,
     setLoading: (loading: boolean) => void
   ) => {
@@ -110,7 +147,13 @@ export function TicketQueueModalQueueTab({
       handleError(
         err instanceof Error
           ? err.message
-          : `Failed to fetch ${provider === 'jira' ? 'Jira ticket' : 'Linear issue'}`,
+          : `Failed to fetch ${
+            provider === 'jira'
+              ? 'Jira ticket'
+              : provider === 'linear'
+                ? 'Linear issue'
+                : 'GitHub issue'
+          }`,
         onError
       );
       setPreview(null);
@@ -120,14 +163,20 @@ export function TicketQueueModalQueueTab({
   };
 
   const handleAddFromExternal = async (
-    provider: 'jira' | 'linear',
+    provider: 'jira' | 'linear' | 'github',
     preview: TicketMetadata | null,
     setSaving: (saving: boolean) => void,
     reset: () => void
   ) => {
     if (!preview) {
       handleError(
-        `Fetch a ${provider === 'jira' ? 'Jira ticket' : 'Linear issue'} before adding it to the queue.`,
+        `Fetch a ${
+          provider === 'jira'
+            ? 'Jira ticket'
+            : provider === 'linear'
+              ? 'Linear issue'
+              : 'GitHub issue'
+        } before adding it to the queue.`,
         onError
       );
       return;
@@ -161,7 +210,12 @@ export function TicketQueueModalQueueTab({
     setLinkingTicketId(ticket.id);
     const jiraMeta = getJiraMetadata(ticket);
     const linearMeta = getLinearMetadata(ticket);
-    const activeMeta = jiraEnabled ? jiraMeta : linearMeta;
+    const githubMeta = getGithubMetadata(ticket);
+    const activeMeta = jiraEnabled
+      ? jiraMeta
+      : linearEnabled
+        ? linearMeta
+        : githubMeta;
     setLinkPreview(activeMeta ?? null);
     setLinkLookupKey(
       (activeMeta?.key as string | undefined) ||
@@ -177,10 +231,16 @@ export function TicketQueueModalQueueTab({
     setLinkPreview(null);
   };
 
-  const handleApplyLink = async (provider: 'jira' | 'linear') => {
+  const handleApplyLink = async (provider: 'jira' | 'linear' | 'github') => {
     if (!linkingTicketId || !linkPreview) {
       handleError(
-        `Fetch a ${provider === 'jira' ? 'Jira ticket' : 'Linear issue'} before linking.`,
+        `Fetch a ${
+          provider === 'jira'
+            ? 'Jira ticket'
+            : provider === 'linear'
+              ? 'Linear issue'
+              : 'GitHub issue'
+        } before linking.`,
         onError
       );
       return;
@@ -214,14 +274,26 @@ export function TicketQueueModalQueueTab({
 
   const renderPreview = (
     ticket: TicketMetadata | null,
-    provider: 'jira' | 'linear'
+    provider: 'jira' | 'linear' | 'github'
   ) => {
     if (!ticket) return null;
     const isJira = provider === 'jira';
+    const isLinear = provider === 'linear';
     const shellClass = isJira
       ? 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
-      : 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-900/20';
-    const chipClass = isJira ? 'bg-blue-600' : 'bg-purple-600';
+      : isLinear
+        ? 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-900/20'
+        : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/20';
+    const chipClass = isJira
+      ? 'bg-blue-600'
+      : isLinear
+        ? 'bg-purple-600'
+        : 'bg-slate-600';
+    const statusClass = isJira
+      ? 'text-blue-700 dark:text-blue-200'
+      : isLinear
+        ? 'text-purple-700 dark:text-purple-200'
+        : 'text-slate-700 dark:text-slate-200';
 
     return (
       <div
@@ -236,7 +308,9 @@ export function TicketQueueModalQueueTab({
               {ticket.summary || (ticket as { title?: string }).title}
             </span>
           </div>
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
+          <span
+            className={`text-[11px] font-semibold uppercase tracking-wide ${statusClass}`}
+          >
             {ticket.status || 'Unknown'}
           </span>
         </div>
@@ -323,6 +397,7 @@ export function TicketQueueModalQueueTab({
                   onClick={() => {
                     setShowLinearForm(!showLinearForm);
                     setShowJiraForm(false);
+                    setShowGithubForm(false);
                     setLinearPreview(null);
                   }}
                   data-testid="queue-add-linear-button"
@@ -331,6 +406,26 @@ export function TicketQueueModalQueueTab({
                   <Link2 className="h-3 w-3" />
                   Add Linear Issue
                 </button>
+              )}
+              {githubEnabled && (
+                <button
+                  onClick={() => {
+                    setShowGithubForm(!showGithubForm);
+                    setShowJiraForm(false);
+                    setShowLinearForm(false);
+                    setGithubPreview(null);
+                  }}
+                  data-testid="queue-add-github-button"
+                  className="flex items-center gap-1 rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
+                >
+                  <Link2 className="h-3 w-3" />
+                  Add GitHub Issue
+                </button>
+              )}
+              {githubEnabled && (
+                <span className="rounded-lg bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                  GitHub queueing coming soon
+                </span>
               )}
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
@@ -553,6 +648,86 @@ export function TicketQueueModalQueueTab({
           )}
         </AnimatePresence>
 
+        <AnimatePresence>
+          {showGithubForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-3 overflow-hidden"
+            >
+              <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/20">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-800 dark:text-slate-200">
+                  GitHub Issue URL or Key
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    placeholder="owner/repo#123 or issue URL"
+                    value={githubLookupKey}
+                    onChange={(e) => setGithubLookupKey(e.target.value)}
+                    data-testid="queue-github-input"
+                    className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/30"
+                  />
+                  <button
+                    onClick={() =>
+                      lookupExternalTicket(
+                        githubLookupKey,
+                        'github',
+                        setGithubPreview,
+                        setIsFetchingGithub
+                      )
+                    }
+                    disabled={isFetchingGithub || !githubLookupKey.trim()}
+                    data-testid="queue-github-fetch"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {isFetchingGithub && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    Fetch
+                  </button>
+                </div>
+                {renderPreview(githubPreview, 'github')}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() =>
+                      handleAddFromExternal(
+                        'github',
+                        githubPreview,
+                        setIsSavingGithubAdd,
+                        () => {
+                          setGithubLookupKey('');
+                          setGithubPreview(null);
+                          setShowGithubForm(false);
+                        }
+                      )
+                    }
+                    disabled={!githubPreview || isSavingGithubAdd}
+                    data-testid="queue-github-add"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-50"
+                  >
+                    {isSavingGithubAdd && (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    )}
+                    Add to Queue
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowGithubForm(false);
+                      setGithubLookupKey('');
+                      setGithubPreview(null);
+                    }}
+                    className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
           {pendingTickets.length === 0 ? (
             <p className="py-4 text-center text-sm text-slate-500">
@@ -562,6 +737,7 @@ export function TicketQueueModalQueueTab({
             pendingTickets.map((ticket) => {
               const jiraMetadata = getJiraMetadata(ticket);
               const linearMetadata = getLinearMetadata(ticket);
+              const githubMetadata = getGithubMetadata(ticket);
               const isLinking = linkingTicketId === ticket.id;
 
               return (
@@ -598,10 +774,15 @@ export function TicketQueueModalQueueTab({
                           {linearMetadata.title || linearMetadata.identifier}
                         </p>
                       )}
+                      {githubMetadata && (
+                        <p className="text-xs text-slate-600 dark:text-slate-200">
+                          {githubMetadata.summary || githubMetadata.key}
+                        </p>
+                      )}
                     </div>
                     {canManageQueue && (
                       <div className="flex items-center gap-1">
-                        {(jiraEnabled || linearEnabled) && (
+                        {externalService !== 'none' && (
                           <button
                             onClick={() =>
                               isLinking
@@ -613,7 +794,13 @@ export function TicketQueueModalQueueTab({
                           >
                             {isLinking
                               ? 'Close'
-                              : `Link ${jiraEnabled ? 'Jira' : 'Linear'}`}
+                              : `Link ${
+                                externalService === 'jira'
+                                  ? 'Jira'
+                                  : externalService === 'linear'
+                                    ? 'Linear'
+                                    : 'GitHub'
+                              }`}
                           </button>
                         )}
                         <button
@@ -627,7 +814,7 @@ export function TicketQueueModalQueueTab({
                   </div>
 
                   <AnimatePresence>
-                    {isLinking && (jiraEnabled || linearEnabled) && (
+                    {isLinking && externalService !== 'none' && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -639,21 +826,27 @@ export function TicketQueueModalQueueTab({
                             type="text"
                             value={linkLookupKey}
                             onChange={(e) => setLinkLookupKey(e.target.value)}
-                            placeholder={jiraEnabled ? 'PROJECT-123' : 'TEAM-123'}
-                            data-testid={`queue-link-${jiraEnabled ? 'jira' : 'linear'}-input-${ticket.id}`}
+                            placeholder={
+                              externalService === 'jira'
+                                ? 'PROJECT-123'
+                                : externalService === 'linear'
+                                  ? 'TEAM-123'
+                                  : 'owner/repo#123'
+                            }
+                            data-testid={`queue-link-${externalService}-input-${ticket.id}`}
                             className="flex-1 rounded-lg border border-blue-200 px-3 py-2 text-sm dark:border-blue-700 dark:bg-blue-900/30"
                           />
                           <button
                             onClick={() =>
                               lookupExternalTicket(
                                 linkLookupKey,
-                                jiraEnabled ? 'jira' : 'linear',
+                                externalService,
                                 setLinkPreview,
                                 setIsFetchingLink
                               )
                             }
                             disabled={isFetchingLink || !linkLookupKey.trim()}
-                            data-testid={`queue-link-${jiraEnabled ? 'jira' : 'linear'}-fetch-${ticket.id}`}
+                            data-testid={`queue-link-${externalService}-fetch-${ticket.id}`}
                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                           >
                             {isFetchingLink && (
@@ -662,14 +855,19 @@ export function TicketQueueModalQueueTab({
                             Fetch
                           </button>
                         </div>
-                        {renderPreview(linkPreview, jiraEnabled ? 'jira' : 'linear')}
+                        {renderPreview(
+                          linkPreview,
+                          externalService as 'jira' | 'linear' | 'github'
+                        )}
                         <div className="mt-2 flex gap-2">
                           <button
                             onClick={() =>
-                              handleApplyLink(jiraEnabled ? 'jira' : 'linear')
+                              handleApplyLink(
+                                externalService as 'jira' | 'linear' | 'github'
+                              )
                             }
                             disabled={!linkPreview || isSavingLink}
-                            data-testid={`queue-link-${jiraEnabled ? 'jira' : 'linear'}-save-${ticket.id}`}
+                            data-testid={`queue-link-${externalService}-save-${ticket.id}`}
                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
                           >
                             {isSavingLink && (

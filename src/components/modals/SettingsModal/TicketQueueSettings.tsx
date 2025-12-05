@@ -2,6 +2,7 @@ import type { RoomSettings, JudgeAlgorithm } from "@/types";
 import type { JiraFieldOption } from "@/lib/jira-service";
 import { useJiraOAuth } from '@/hooks/useJiraOAuth';
 import { useLinearOAuth } from '@/hooks/useLinearOAuth';
+import { useGithubOAuth } from '@/hooks/useGithubOAuth';
 import { BetaBadge } from "@/components/BetaBadge";
 
 export function TicketQueueSettings({
@@ -41,6 +42,54 @@ export function TicketQueueSettings({
     connect: linearConnect,
     disconnect: linearDisconnect,
   } = useLinearOAuth();
+  const {
+    status: githubStatus,
+    loading: githubLoading,
+    error: githubError,
+    connect: githubConnect,
+    disconnect: githubDisconnect,
+  } = useGithubOAuth();
+
+  const selectedProvider =
+    (localSettings.externalService ?? 'none') as
+      | 'jira'
+      | 'linear'
+      | 'github'
+      | 'none';
+  const autoSyncEnabled =
+    localSettings.autoSyncEstimates ??
+    localSettings.autoUpdateJiraStoryPoints ??
+    false;
+  const handleAutoSyncToggle = (checked: boolean) => {
+    handleChange('autoSyncEstimates', checked);
+    handleChange('autoUpdateJiraStoryPoints', checked);
+  };
+  const renderAutoSyncToggle = (
+    provider: 'jira' | 'linear',
+    connected: boolean
+  ) => {
+    if (!connected) return null;
+    const providerLabel = provider === 'jira' ? 'Jira' : 'Linear';
+
+    return (
+      <div className="flex items-center pt-3">
+        <input
+          type="checkbox"
+          id="autoSyncEstimates"
+          checked={autoSyncEnabled}
+          onChange={(e) => handleAutoSyncToggle(e.target.checked)}
+          data-testid="settings-toggle-auto-sync"
+          className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
+        />
+        <label
+          htmlFor="autoSyncEstimates"
+          className="ml-2 text-sm text-slate-700 dark:text-slate-300"
+        >
+          Auto-sync estimates to {providerLabel} when voting completes
+        </label>
+      </div>
+    );
+  };
 
   return (
     <details className="group">
@@ -122,6 +171,7 @@ export function TicketQueueSettings({
                   <option value="none">None</option>
                   <option value="jira">Jira</option>
                   <option value="linear">Linear</option>
+                  <option value="github">GitHub</option>
                 </select>
                 {localSettings.externalService === 'jira' && (
                   <div className="space-y-3">
@@ -180,30 +230,7 @@ export function TicketQueueSettings({
 
                     {jiraStatus.connected && (
                       <div className="space-y-3">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id="autoUpdateJiraStoryPoints"
-                            checked={
-                              localSettings.autoUpdateJiraStoryPoints || false
-                            }
-                            onChange={(e) =>
-                              handleChange(
-                                'autoUpdateJiraStoryPoints',
-                                e.target.checked
-                              )
-                            }
-                            data-testid="settings-toggle-jira-auto"
-                            className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
-                          />
-                          <label
-                            htmlFor="autoUpdateJiraStoryPoints"
-                            className="ml-2 text-sm text-slate-700 dark:text-slate-300"
-                          >
-                            Auto-update story points in Jira when voting completes
-                          </label>
-                        </div>
-
+                        {renderAutoSyncToggle('jira', !!jiraStatus.connected)}
                         <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-800/50 space-y-3">
                           <div className="flex items-center justify-between">
                             <div>
@@ -357,11 +384,76 @@ export function TicketQueueSettings({
                       )}
                     </div>
 
+                    {renderAutoSyncToggle('linear', linearStatus.connected ?? false)}
                     {linearStatus.connected && (
                       <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs text-purple-800 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-100">
                         Estimate field: {linearStatus.estimateField || 'Team default'}
                         <br />
                         Field selection UI is coming soon—using your team default for now.
+                      </div>
+                    )}
+                  </div>
+                )}
+                {localSettings.externalService === 'github' && (
+                  <div className="space-y-3">
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-800/50">
+                      {githubLoading ? (
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          Loading connection status...
+                        </p>
+                      ) : githubStatus.connected ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                ✓ Connected to GitHub
+                              </p>
+                              {githubStatus.githubLogin && (
+                                <p className="text-xs text-slate-600 dark:text-slate-400">
+                                  @{githubStatus.githubLogin}
+                                </p>
+                              )}
+                              {githubStatus.githubUserEmail && (
+                                <p className="text-xs text-slate-600 dark:text-slate-400">
+                                  {githubStatus.githubUserEmail}
+                                </p>
+                              )}
+                            </div>
+                            <button
+                              onClick={githubDisconnect}
+                              disabled={githubLoading}
+                              className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition disabled:opacity-50"
+                            >
+                              Disconnect
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Connect your GitHub account to fetch repository issues.
+                          </p>
+                          <button
+                            onClick={githubConnect}
+                            disabled={githubLoading}
+                            className="w-full px-4 py-2 text-sm bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition disabled:opacity-50"
+                          >
+                            Connect to GitHub
+                          </button>
+                        </div>
+                      )}
+                      {githubError && (
+                        <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                          {githubError}
+                        </p>
+                      )}
+                    </div>
+
+                    {githubStatus.connected && (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/30 dark:text-slate-300">
+                        Enter issues as <code>owner/repo#123</code> or paste a GitHub
+                        issue URL when managing your queue. Default repository settings
+                        are coming soon.
                       </div>
                     )}
                   </div>

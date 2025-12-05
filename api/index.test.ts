@@ -23,6 +23,12 @@ const mocks = vi.hoisted(() => ({
   handleLinearOAuthCallbackController: vi.fn(),
   getLinearOAuthStatusController: vi.fn(),
   revokeLinearOAuthController: vi.fn(),
+  getGithubIssueController: vi.fn(),
+  updateGithubEstimateController: vi.fn(),
+  initiateGithubOAuthController: vi.fn(),
+  handleGithubOAuthCallbackController: vi.fn(),
+  getGithubOAuthStatusController: vi.fn(),
+  revokeGithubOAuthController: vi.fn(),
   getRoomStub: vi.fn(),
 }));
 
@@ -67,6 +73,18 @@ vi.mock('./controllers/linear-oauth-controller', () => ({
     mocks.handleLinearOAuthCallbackController,
   getLinearOAuthStatusController: mocks.getLinearOAuthStatusController,
   revokeLinearOAuthController: mocks.revokeLinearOAuthController,
+}));
+
+vi.mock('./controllers/github-controller', () => ({
+  getGithubIssueController: mocks.getGithubIssueController,
+  updateGithubEstimateController: mocks.updateGithubEstimateController,
+}));
+
+vi.mock('./controllers/github-oauth-controller', () => ({
+  initiateGithubOAuthController: mocks.initiateGithubOAuthController,
+  handleGithubOAuthCallbackController: mocks.handleGithubOAuthCallbackController,
+  getGithubOAuthStatusController: mocks.getGithubOAuthStatusController,
+  revokeGithubOAuthController: mocks.revokeGithubOAuthController,
 }));
 
 vi.mock('./utils/room', () => ({

@@ -40,7 +40,6 @@ export class PlanningRoomRepository {
           passcode TEXT,
           judge_score TEXT,
           judge_metadata TEXT,
-          jira_ticket TEXT,
           settings TEXT NOT NULL,
           current_strudel_code TEXT,
           current_strudel_generation_id TEXT,
@@ -92,7 +91,7 @@ export class PlanningRoomRepository {
           created_at INTEGER NOT NULL,
           completed_at INTEGER,
           ordinal INTEGER NOT NULL,
-          external_service TEXT CHECK(external_service IN ('jira', 'linear', 'clickup', 'asana', 'youtrack', 'zoho', 'trello', 'monday', 'none')) DEFAULT 'none',
+          external_service TEXT CHECK(external_service IN ('jira', 'linear', 'github', 'clickup', 'asana', 'youtrack', 'zoho', 'trello', 'monday', 'none')) DEFAULT 'none',
           external_service_id TEXT,
           external_service_metadata TEXT
         )`
@@ -115,7 +114,7 @@ export class PlanningRoomRepository {
         `CREATE TABLE IF NOT EXISTS oauth_credentials (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           room_key TEXT NOT NULL,
-          provider TEXT NOT NULL CHECK(provider IN ('jira', 'linear')),
+          provider TEXT NOT NULL CHECK(provider IN ('jira', 'linear', 'github', 'clickup', 'asana', 'youtrack', 'zoho', 'trello', 'monday', 'none')),
           access_token TEXT NOT NULL,
           refresh_token TEXT,
           token_type TEXT NOT NULL,
@@ -727,7 +726,7 @@ export class PlanningRoomRepository {
         created_at: number;
         completed_at: number | null;
         ordinal: number;
-        external_service: 'jira' | 'linear' | 'none';
+        external_service: 'jira' | 'linear' | 'github' | 'none';
         external_service_id: string | null;
         external_service_metadata: string | null;
       }>(`SELECT * FROM ticket_queue WHERE id = ?`, id)
@@ -770,7 +769,7 @@ export class PlanningRoomRepository {
         created_at: number;
         completed_at: number | null;
         ordinal: number;
-        external_service: 'jira' | 'linear' | 'none';
+        external_service: 'jira' | 'linear' | 'github' | 'none';
         external_service_id: string | null;
         external_service_metadata: string | null;
       }>('SELECT * FROM ticket_queue ORDER BY ordinal ASC')
@@ -1343,6 +1342,135 @@ export class PlanningRoomRepository {
       estimateField,
       authorizedBy: existing.authorizedBy,
     });
+  }
+
+  getGithubOAuthCredentials(roomKey: string): {
+    id: number;
+    roomKey: string;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    githubLogin: string | null;
+    githubUserEmail: string | null;
+    defaultOwner: string | null;
+    defaultRepo: string | null;
+    authorizedBy: string;
+    createdAt: number;
+    updatedAt: number;
+  } | null {
+    const row = this.sql
+      .exec<{
+        id: number;
+        room_key: string;
+        provider: string;
+        access_token: string;
+        refresh_token: string | null;
+        token_type: string;
+        expires_at: number;
+        scope: string | null;
+        authorized_by: string;
+        metadata: string | null;
+        created_at: number;
+        updated_at: number;
+      }>(
+        `SELECT * FROM oauth_credentials WHERE room_key = ? AND provider = 'github'`,
+        roomKey
+      )
+      .toArray()[0];
+
+    if (!row) {
+      return null;
+    }
+
+    const metadata = safeJsonParse<{
+      githubLogin?: string | null;
+      githubUserEmail?: string | null;
+      defaultOwner?: string | null;
+      defaultRepo?: string | null;
+    }>(row.metadata ?? '{}');
+
+    return {
+      id: row.id,
+      roomKey: row.room_key,
+      accessToken: row.access_token,
+      refreshToken: row.refresh_token,
+      tokenType: row.token_type,
+      expiresAt: row.expires_at,
+      scope: row.scope,
+      githubLogin: metadata?.githubLogin ?? null,
+      githubUserEmail: metadata?.githubUserEmail ?? null,
+      defaultOwner: metadata?.defaultOwner ?? null,
+      defaultRepo: metadata?.defaultRepo ?? null,
+      authorizedBy: row.authorized_by,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  saveGithubOAuthCredentials(credentials: {
+    roomKey: string;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    githubLogin: string | null;
+    githubUserEmail: string | null;
+    defaultOwner: string | null;
+    defaultRepo: string | null;
+    authorizedBy: string;
+  }): void {
+    const now = Date.now();
+    const metadata = JSON.stringify({
+      githubLogin: credentials.githubLogin,
+      githubUserEmail: credentials.githubUserEmail,
+      defaultOwner: credentials.defaultOwner,
+      defaultRepo: credentials.defaultRepo,
+    });
+
+    this.sql.exec(
+      `INSERT INTO oauth_credentials (
+        room_key,
+        provider,
+        access_token,
+        refresh_token,
+        token_type,
+        expires_at,
+        scope,
+        authorized_by,
+        metadata,
+        created_at,
+        updated_at
+      ) VALUES (?, 'github', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(room_key, provider) DO UPDATE SET
+        access_token = excluded.access_token,
+        refresh_token = excluded.refresh_token,
+        token_type = excluded.token_type,
+        expires_at = excluded.expires_at,
+        scope = excluded.scope,
+        authorized_by = excluded.authorized_by,
+        metadata = excluded.metadata,
+        updated_at = excluded.updated_at`,
+      credentials.roomKey,
+      credentials.accessToken,
+      credentials.refreshToken,
+      credentials.tokenType,
+      credentials.expiresAt,
+      credentials.scope,
+      credentials.authorizedBy,
+      metadata,
+      now,
+      now
+    );
+  }
+
+  deleteGithubOAuthCredentials(roomKey: string): void {
+    this.sql.exec(
+      "DELETE FROM oauth_credentials WHERE room_key = ? AND provider = 'github'",
+      roomKey
+    );
   }
 
   private getSql(txn?: DurableObjectTransaction): SqlStorage {

@@ -4,7 +4,7 @@ import type { TicketQueueItem } from '@/types';
 
 interface ExternalServiceBadgeProps {
     ticket: TicketQueueItem;
-    service: 'jira' | 'linear';
+    service: 'jira' | 'linear' | 'github';
     getMetadata: (ticket: TicketQueueItem) => { key?: string; url?: string } | null | undefined;
 }
 
@@ -20,6 +20,12 @@ const serviceConfig = {
         bgClass: 'bg-purple-100 dark:bg-purple-900/40',
         textClass: 'text-purple-700 dark:text-purple-200',
         linkClass: 'text-purple-500',
+    },
+    github: {
+        name: 'GitHub',
+        bgClass: 'bg-slate-100 dark:bg-slate-900/40',
+        textClass: 'text-slate-700 dark:text-slate-200',
+        linkClass: 'text-slate-500',
     },
 };
 

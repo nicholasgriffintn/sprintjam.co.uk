@@ -297,7 +297,7 @@ const RoomScreen = () => {
       {isQueueEnabled && queueProvider !== 'none' && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as 'jira' | 'linear'}
+          provider={queueProvider as 'jira' | 'linear' | 'github'}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);

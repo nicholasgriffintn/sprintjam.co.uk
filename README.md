@@ -28,9 +28,9 @@ SprintJam is a modern, privacy-focused planning poker application designed for a
 
 ### 🔗 **External Provider Integrations**
 
-- OAuth 2.0 per-room connections to Jira or Linear
+- OAuth 2.0 per-room connections to Jira, Linear, or GitHub
 - Fetch ticket details and keep estimates in sync
-- Provider-specific fields (Jira story points/sprint; Linear estimate field)
+- Provider-specific fields (Jira story points/sprint; Linear estimate field; GitHub comments)
 - Automatic token refresh per moderator
 
 ### 🎛️ **Customizable Experience**
@@ -93,14 +93,19 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    LINEAR_OAUTH_CLIENT_ID=your-linear-client-id
    LINEAR_OAUTH_CLIENT_SECRET=your-linear-client-secret
    LINEAR_OAUTH_REDIRECT_URI=https://your-domain.com/api/linear/oauth/callback
+
+   # Optional: GitHub OAuth
+   GITHUB_OAUTH_CLIENT_ID=your-github-client-id
+   GITHUB_OAUTH_CLIENT_SECRET=your-github-client-secret
+   GITHUB_OAUTH_REDIRECT_URI=https://your-domain.com/api/github/oauth/callback
    ```
 
    **To enable an external provider:**
 
-   a. Create an OAuth 2.0 app with the provider (Atlassian Developer Console for Jira; Linear Developer Settings for Linear) and set the redirect URI to match the value above.  
-   b. Add required scopes (only required for Jira: `read:jira-work`, `write:jira-work`, `read:jira-user`, `offline_access`).  
+   a. Create an OAuth 2.0 app with the provider (Atlassian Developer Console for Jira; Linear Developer Settings for Linear; GitHub Developer Settings for GitHub) and set the redirect URI to match the value above.  
+   b. Add required scopes (Jira: `read:jira-work`, `write:jira-work`, `read:jira-user`, `offline_access`; GitHub: `repo`, `user:email`).  
    c. Copy the client ID/secret into the corresponding env vars.  
-   d. In a room, open Settings → Other Options → External Provider and connect Jira or Linear.
+   d. In a room, open Settings → Other Options → External Provider and connect Jira, Linear, or GitHub.
 
 4. **Deploy to Cloudflare**
    ```bash

@@ -44,7 +44,7 @@ export class SettingsModal {
     await expect(this.modal().getByText("Connected to Linear")).toBeVisible();
   }
 
-  async selectExternalService(value: "none" | "jira" | "linear") {
+  async selectExternalService(value: "none" | "jira" | "linear" | "github") {
     await this.expandDetailsSections();
     const select = this.modal().getByTestId("settings-select-external-service");
     await select.scrollIntoViewIfNeeded();

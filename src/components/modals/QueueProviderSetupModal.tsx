@@ -3,12 +3,15 @@ import { AlertCircle, CheckCircle2, Plug2 } from 'lucide-react';
 
 import { useJiraOAuth } from '@/hooks/useJiraOAuth';
 import { useLinearOAuth } from '@/hooks/useLinearOAuth';
+import { useGithubOAuth } from '@/hooks/useGithubOAuth';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 
+type QueueProvider = 'jira' | 'linear' | 'github';
+
 interface QueueProviderSetupModalProps {
   isOpen: boolean;
-  provider: 'jira' | 'linear';
+  provider: QueueProvider;
   onClose: () => void;
   onOpenQueue: () => void;
 }
@@ -21,28 +24,44 @@ export function QueueProviderSetupModal({
 }: QueueProviderSetupModalProps) {
   const jira = useJiraOAuth(provider === 'jira');
   const linear = useLinearOAuth(provider === 'linear');
+  const github = useGithubOAuth(provider === 'github');
 
-  const isJira = provider === 'jira';
-  const authState = isJira ? jira : linear;
+  const authState =
+    provider === 'jira' ? jira : provider === 'linear' ? linear : github;
   const connected = authState.status.connected;
   const loading = authState.loading;
   const error = authState.error;
 
   const copy = useMemo(
     () =>
-      isJira
-        ? {
-          name: 'Jira',
-          description:
-            'Pull tickets directly from your Jira backlog and keep estimates in sync.',
-        }
-        : {
-          name: 'Linear',
-          description:
-            'Connect Linear to queue up issues and capture estimates alongside your cycle.',
-        },
-    [isJira]
+      ((
+        {
+          jira: {
+            name: 'Jira',
+            description:
+              'Pull tickets directly from your Jira backlog and keep estimates in sync.',
+            comingSoon: false,
+          },
+          linear: {
+            name: 'Linear',
+            description:
+              'Connect Linear to queue up issues and capture estimates alongside your cycle.',
+            comingSoon: false,
+          },
+          github: {
+            name: 'GitHub',
+            description:
+              'Connect GitHub to queue repository issues and keep planning context in sync.',
+            comingSoon: false,
+          },
+        } satisfies Record<
+          QueueProvider,
+          { name: string; description: string; comingSoon: boolean }
+        >
+      )[provider]),
+    [provider]
   );
+  const comingSoon = copy.comingSoon;
 
   return (
     <Modal
@@ -74,8 +93,9 @@ export function QueueProviderSetupModal({
                   Connection status
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  We’ll ask you to sign in so SprintJam can read your tickets
-                  and write estimates.
+                  {comingSoon
+                    ? 'This integration is coming soon—stay tuned.'
+                    : 'We’ll ask you to sign in so SprintJam can read your tickets and write estimates.'}
                 </p>
               </div>
               <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 shadow-sm dark:bg-slate-800/80 dark:text-slate-200">
@@ -83,6 +103,11 @@ export function QueueProviderSetupModal({
                   <>
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                     Connected
+                  </>
+                ) : comingSoon ? (
+                  <>
+                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                    Coming Soon
                   </>
                 ) : (
                   <>
@@ -101,11 +126,21 @@ export function QueueProviderSetupModal({
 
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <Button
-                onClick={connected ? authState.disconnect : authState.connect}
-                disabled={loading}
+                onClick={
+                  comingSoon
+                    ? undefined
+                    : connected
+                    ? authState.disconnect
+                    : authState.connect
+                }
+                disabled={loading || comingSoon}
                 fullWidth
               >
-                {connected ? 'Disconnect' : `Connect to ${copy.name}`}
+                {comingSoon
+                  ? 'Available soon'
+                  : connected
+                  ? 'Disconnect'
+                  : `Connect to ${copy.name}`}
               </Button>
             </div>
           </div>
@@ -125,7 +160,7 @@ export function QueueProviderSetupModal({
                 onOpenQueue();
                 onClose();
               }}
-              disabled={!connected}
+              disabled={!connected || comingSoon}
               fullWidth
               variant="primary"
             >

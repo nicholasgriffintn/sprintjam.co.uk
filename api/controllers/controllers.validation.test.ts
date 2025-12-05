@@ -29,6 +29,16 @@ import {
   getLinearOAuthStatusController,
   revokeLinearOAuthController,
 } from './linear-oauth-controller';
+import {
+  getGithubIssueController,
+  updateGithubEstimateController,
+} from './github-controller';
+import {
+  initiateGithubOAuthController,
+  handleGithubOAuthCallbackController,
+  getGithubOAuthStatusController,
+  revokeGithubOAuthController,
+} from './github-oauth-controller';
 import type { Env } from '../types';
 
 const jsonRequest = (
@@ -264,6 +274,85 @@ describe('linear oauth validation', () => {
 
   it('requires room and user when revoking Linear OAuth', async () => {
     const response = (await revokeLinearOAuthController(
+      jsonRequest({}),
+      env
+    )) as Response;
+
+    await expectJsonError(response, 'Room key and user name are required');
+  });
+});
+
+describe('github controller validation', () => {
+  it('requires an issue id when fetching GitHub issues', async () => {
+    const response = (await getGithubIssueController(
+      makeUrl('/api/github/issue?roomKey=room-1&userName=alice'),
+      env
+    )) as Response;
+
+    await expectJsonError(response, 'Issue identifier is required');
+  });
+
+  it('requires room and user when fetching GitHub issues', async () => {
+    const response = (await getGithubIssueController(
+      makeUrl('/api/github/issue?issueId=owner/repo#1'),
+      env
+    )) as Response;
+
+    await expectJsonError(response, 'Room key and user name are required');
+  });
+
+  it('requires estimate when updating GitHub issues', async () => {
+    const response = (await updateGithubEstimateController(
+      'owner/repo#1',
+      jsonRequest({ roomKey: 'room-1', userName: 'alice' }, 'PUT'),
+      env
+    )) as Response;
+
+    await expectJsonError(response, 'Issue identifier and estimate are required');
+  });
+
+  it('requires room and user when updating GitHub issues', async () => {
+    const response = (await updateGithubEstimateController(
+      'owner/repo#1',
+      jsonRequest({ estimate: 5 }, 'PUT'),
+      env
+    )) as Response;
+
+    await expectJsonError(response, 'Room key and user name are required');
+  });
+});
+
+describe('github oauth validation', () => {
+  it('requires room and user when initiating GitHub OAuth', async () => {
+    const response = (await initiateGithubOAuthController(
+      jsonRequest({}),
+      env
+    )) as Response;
+
+    await expectJsonError(response, 'Room key and user name are required');
+  });
+
+  it('returns an html error when GitHub callback is missing code or state', async () => {
+    const response = (await handleGithubOAuthCallbackController(
+      makeUrl('/api/github/oauth/callback'),
+      env
+    )) as Response;
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain('Missing code or state');
+  });
+
+  it('requires room and user when reading GitHub OAuth status', async () => {
+    const response = (await getGithubOAuthStatusController(
+      makeUrl('/api/github/oauth/status'),
+      env
+    )) as Response;
+
+    await expectJsonError(response, 'Room key and user name are required');
+  });
+
+  it('requires room and user when revoking GitHub OAuth', async () => {
+    const response = (await revokeGithubOAuthController(
       jsonRequest({}),
       env
     )) as Response;

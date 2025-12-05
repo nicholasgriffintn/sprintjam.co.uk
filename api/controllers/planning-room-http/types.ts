@@ -28,6 +28,9 @@ export type PlanningRoomRepositoryShape = Pick<
   | 'getLinearOAuthCredentials'
   | 'updateLinearOAuthTokens'
   | 'deleteLinearOAuthCredentials'
+  | 'saveGithubOAuthCredentials'
+  | 'getGithubOAuthCredentials'
+  | 'deleteGithubOAuthCredentials'
 >;
 
 export interface PlanningRoomHttpContext {

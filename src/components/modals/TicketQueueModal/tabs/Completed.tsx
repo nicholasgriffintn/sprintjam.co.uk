@@ -6,6 +6,7 @@ import type { TicketQueueItem } from '@/types';
 import { handleError } from '@/utils/error';
 import { updateJiraStoryPoints } from '@/lib/jira-service';
 import { updateLinearEstimate } from '@/lib/linear-service';
+import { updateGithubEstimate } from '@/lib/github-service';
 import { formatDate } from '@/utils/date';
 import { getVoteSummary, calculateStoryPointsFromVotes } from '@/utils/votes';
 import { downloadCsv } from '@/utils/csv';
@@ -29,7 +30,7 @@ export function TicketQueueModalCompletedTab({
 }: TicketQueueModalCompletedTabProps) {
   const [syncing, setSyncing] = useState<{
     id: number;
-    provider: 'jira' | 'linear';
+    provider: 'jira' | 'linear' | 'github';
   } | null>(null);
   const jiraSyncMutation = useMutation({
     mutationKey: ["jira-sync-ticket", roomKey, userName],
@@ -43,6 +44,14 @@ export function TicketQueueModalCompletedTab({
     mutationKey: ["linear-sync-ticket", roomKey, userName],
     mutationFn: async (variables: { ticketId: string; estimate: number }) =>
       updateLinearEstimate(variables.ticketId, variables.estimate, {
+        roomKey,
+        userName,
+      }),
+  });
+  const githubSyncMutation = useMutation({
+    mutationKey: ["github-sync-ticket", roomKey, userName],
+    mutationFn: async (variables: { ticketId: string; estimate: number }) =>
+      updateGithubEstimate(variables.ticketId, variables.estimate, {
         roomKey,
         userName,
       }),
@@ -128,14 +137,71 @@ export function TicketQueueModalCompletedTab({
     }
   };
 
+  const handleSyncToGithub = async (ticket: TicketQueueItem) => {
+    if (ticket.externalService !== 'github') {
+      handleError('Sync available only for GitHub-linked tickets.', onError);
+      return;
+    }
+
+    const estimate = getStoryPointEstimate(ticket);
+    if (estimate === null) {
+      handleError('No numeric votes available to sync to GitHub.', onError);
+      return;
+    }
+
+    setSyncing({ id: ticket.id, provider: 'github' });
+    try {
+      const updated = await githubSyncMutation.mutateAsync({
+        ticketId: ticket.ticketId,
+        estimate,
+      });
+      if (onUpdateTicket) {
+        onUpdateTicket(ticket.id, {
+          externalServiceMetadata: updated,
+        });
+      }
+    } catch (err) {
+      handleError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to sync estimate to GitHub',
+        onError
+      );
+    } finally {
+      setSyncing(null);
+    }
+  };
+
   const handleDownloadTicket = (ticket: TicketQueueItem) => {
     const csv = buildCsv([ticket]);
     downloadCsv(`${ticket.ticketId}-votes.csv`, csv);
   };
 
   const renderBadge = (ticket: TicketQueueItem) => {
-    if (ticket.externalService === 'jira') return <ExternalServiceBadge service="jira" getMetadata={(ticket) => ticket.externalServiceMetadata} ticket={ticket} />;
-    if (ticket.externalService === 'linear') return <ExternalServiceBadge service="linear" getMetadata={(ticket) => ticket.externalServiceMetadata} ticket={ticket} />;
+    if (ticket.externalService === 'jira')
+      return (
+        <ExternalServiceBadge
+          service="jira"
+          getMetadata={(ticket) => ticket.externalServiceMetadata}
+          ticket={ticket}
+        />
+      );
+    if (ticket.externalService === 'linear')
+      return (
+        <ExternalServiceBadge
+          service="linear"
+          getMetadata={(ticket) => ticket.externalServiceMetadata}
+          ticket={ticket}
+        />
+      );
+    if (ticket.externalService === 'github')
+      return (
+        <ExternalServiceBadge
+          service="github"
+          getMetadata={(ticket) => ticket.externalServiceMetadata}
+          ticket={ticket}
+        />
+      );
     return null;
   };
 
@@ -221,6 +287,24 @@ export function TicketQueueModalCompletedTab({
                         <RefreshCw className="h-3.5 w-3.5" />
                       )}
                       Sync to Linear
+                    </button>
+                  )}
+                  {ticket.externalService === 'github' && (
+                    <button
+                      onClick={() => handleSyncToGithub(ticket)}
+                      disabled={
+                        syncing?.id === ticket.id &&
+                        syncing.provider === 'github'
+                      }
+                      className="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                    >
+                      {syncing?.id === ticket.id &&
+                        syncing.provider === 'github' ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                      Sync to GitHub
                     </button>
                   )}
                 </div>

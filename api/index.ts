@@ -36,6 +36,16 @@ import {
   getLinearOAuthStatusController,
   revokeLinearOAuthController,
 } from "./controllers/linear-oauth-controller";
+import {
+  getGithubIssueController,
+  updateGithubEstimateController,
+} from "./controllers/github-controller";
+import {
+  initiateGithubOAuthController,
+  handleGithubOAuthCallbackController,
+  getGithubOAuthStatusController,
+  revokeGithubOAuthController,
+} from "./controllers/github-oauth-controller";
 
 async function handleRequest(
   request: CfRequest,
@@ -163,6 +173,35 @@ async function handleApiRequest(
 
   if (path === "linear/oauth/revoke" && request.method === "DELETE") {
     return revokeLinearOAuthController(request, env);
+  }
+
+  if (path === "github/issue" && request.method === "GET") {
+    return getGithubIssueController(url, env);
+  }
+
+  if (
+    path.startsWith("github/issue/") &&
+    path.endsWith("/estimate") &&
+    request.method === "PUT"
+  ) {
+    const issueId = decodeURIComponent(path.split("/")[2] ?? "");
+    return updateGithubEstimateController(issueId, request, env);
+  }
+
+  if (path === "github/oauth/authorize" && request.method === "POST") {
+    return initiateGithubOAuthController(request, env);
+  }
+
+  if (path === "github/oauth/callback" && request.method === "GET") {
+    return handleGithubOAuthCallbackController(url, env);
+  }
+
+  if (path === "github/oauth/status" && request.method === "GET") {
+    return getGithubOAuthStatusController(url, env);
+  }
+
+  if (path === "github/oauth/revoke" && request.method === "DELETE") {
+    return revokeGithubOAuthController(request, env);
   }
 
   return new Response(JSON.stringify({ error: "Not found" }), {
