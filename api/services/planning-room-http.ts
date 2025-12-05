@@ -20,15 +20,17 @@ export interface PlanningRoomHttpContext {
   getRoomData(): Promise<RoomData | undefined>;
   putRoomData(roomData: RoomData): Promise<void>;
   broadcast(message: BroadcastMessage): void;
+  findCanonicalUserName(roomData: RoomData, name: string): string | undefined;
+  disconnectUserSessions?(userName: string): void;
 }
 
 export async function handleHttpRequest(
   ctx: PlanningRoomHttpContext,
-  request: Request,
+  request: Request
 ): Promise<CfResponse | null> {
   const url = new URL(request.url);
 
-  if (url.pathname === "/initialize" && request.method === "POST") {
+  if (url.pathname === '/initialize' && request.method === 'POST') {
     const { roomKey, moderator, passcode, settings, avatar } =
       (await request.json()) as {
         roomKey: string;
@@ -89,8 +91,17 @@ export async function handleHttpRequest(
       return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
-    const isMember = roomData.users.includes(name);
-    const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
+    const canonicalName = ctx.findCanonicalUserName(roomData, name);
+
+    if (!canonicalName) {
+      return createJsonResponse({ error: 'Invalid session' }, 401);
+    }
+
+    const isMember = roomData.users.includes(canonicalName);
+    const tokenValid = ctx.repository.validateSessionToken(
+      canonicalName,
+      sessionToken
+    );
 
     if (!isMember || !tokenValid) {
       return createJsonResponse({ error: 'Invalid session' }, 401);
@@ -99,7 +110,7 @@ export async function handleHttpRequest(
     return createJsonResponse({ success: true });
   }
 
-  if (url.pathname === "/join" && request.method === "POST") {
+  if (url.pathname === '/join' && request.method === 'POST') {
     const { name, passcode, avatar, authToken } = (await request.json()) as {
       name: string;
       passcode?: string;
@@ -110,39 +121,51 @@ export async function handleHttpRequest(
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
+    const normalizedRoomData = normalizeRoomData(roomData);
+    const canonicalName =
+      ctx.findCanonicalUserName(normalizedRoomData, name) ?? name.trim();
+    const isConnected = !!normalizedRoomData.connectedUsers?.[canonicalName];
     const storedPasscodeHash = ctx.repository.getPasscodeHash();
     const hasValidSessionToken = ctx.repository.validateSessionToken(
-      name,
-      authToken ?? null,
+      canonicalName,
+      authToken ?? null
     );
 
     if (storedPasscodeHash && !hasValidSessionToken) {
       const providedHash = passcode ? await hashPasscode(passcode) : undefined;
 
       if (!providedHash || providedHash !== storedPasscodeHash) {
-        return createJsonResponse({ error: "Invalid passcode" }, 401);
+        return createJsonResponse({ error: 'Invalid passcode' }, 401);
       }
     }
 
-    const updatedRoomData = normalizeRoomData(roomData);
-    markUserConnection(updatedRoomData, name, true);
-    assignUserAvatar(updatedRoomData, name, avatar);
+    if (isConnected && !hasValidSessionToken) {
+      return createJsonResponse(
+        { error: 'User with this name is already connected' },
+        409
+      );
+    }
 
-    ctx.repository.ensureUser(name);
-    ctx.repository.setUserConnection(name, true);
-    ctx.repository.setUserAvatar(name, avatar);
+    const updatedRoomData = normalizedRoomData;
+    markUserConnection(updatedRoomData, canonicalName, true);
+    assignUserAvatar(updatedRoomData, canonicalName, avatar);
+
+    ctx.repository.ensureUser(canonicalName);
+    ctx.repository.setUserConnection(canonicalName, true);
+    ctx.repository.setUserAvatar(canonicalName, avatar);
 
     ctx.broadcast({
-      type: "userJoined",
-      user: name,
+      type: 'userJoined',
+      user: canonicalName,
       avatar,
     });
 
     const newAuthToken = generateSessionToken();
-    ctx.repository.setSessionToken(name, newAuthToken);
+    ctx.repository.setSessionToken(canonicalName, newAuthToken);
+    ctx.disconnectUserSessions?.(canonicalName);
 
     const defaults = getServerDefaults();
 
@@ -154,7 +177,7 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === "/vote" && request.method === "POST") {
+  if (url.pathname === '/vote' && request.method === 'POST') {
     const { name, vote } = (await request.json()) as {
       name: string;
       vote: string | number;
@@ -163,11 +186,11 @@ export async function handleHttpRequest(
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     if (!roomData.users.includes(name)) {
-      return createJsonResponse({ error: "User not found in this room" }, 400);
+      return createJsonResponse({ error: 'User not found in this room' }, 400);
     }
 
     roomData.votes[name] = vote;
@@ -176,7 +199,7 @@ export async function handleHttpRequest(
     const structuredVote = roomData.structuredVotes?.[name];
 
     ctx.broadcast({
-      type: "vote",
+      type: 'vote',
       user: name,
       vote,
       structuredVote,
@@ -188,13 +211,13 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === "/showVotes" && request.method === "POST") {
+  if (url.pathname === '/showVotes' && request.method === 'POST') {
     const { name } = (await request.json()) as { name: string };
 
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     if (
@@ -202,8 +225,8 @@ export async function handleHttpRequest(
       !roomData.settings.allowOthersToShowEstimates
     ) {
       return createJsonResponse(
-        { error: "Only the moderator can show votes" },
-        403,
+        { error: 'Only the moderator can show votes' },
+        403
       );
     }
 
@@ -211,7 +234,7 @@ export async function handleHttpRequest(
     ctx.repository.setShowVotes(roomData.showVotes);
 
     ctx.broadcast({
-      type: "showVotes",
+      type: 'showVotes',
       showVotes: roomData.showVotes,
     });
 
@@ -221,13 +244,13 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === "/resetVotes" && request.method === "POST") {
+  if (url.pathname === '/resetVotes' && request.method === 'POST') {
     const { name } = (await request.json()) as { name: string };
 
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     if (
@@ -235,8 +258,8 @@ export async function handleHttpRequest(
       !roomData.settings.allowOthersToDeleteEstimates
     ) {
       return createJsonResponse(
-        { error: "Only the moderator can reset votes" },
-        403,
+        { error: 'Only the moderator can reset votes' },
+        403
       );
     }
 
@@ -252,7 +275,7 @@ export async function handleHttpRequest(
     ctx.repository.setSettings(roomData.settings);
 
     ctx.broadcast({
-      type: "resetVotes",
+      type: 'resetVotes',
     });
 
     const timerState = ensureTimerState(roomData);
@@ -275,20 +298,20 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === "/settings" && request.method === "GET") {
+  if (url.pathname === '/settings' && request.method === 'GET') {
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
-    const sessionToken = url.searchParams.get("sessionToken");
-    const name = url.searchParams.get("name");
+    const sessionToken = url.searchParams.get('sessionToken');
+    const name = url.searchParams.get('name');
 
     if (!name || !sessionToken) {
       return createJsonResponse(
-        { error: "Missing name or session token" },
-        401,
+        { error: 'Missing name or session token' },
+        401
       );
     }
 
@@ -296,7 +319,7 @@ export async function handleHttpRequest(
     const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
 
     if (!isMember || !tokenValid) {
-      return createJsonResponse({ error: "Invalid session" }, 401);
+      return createJsonResponse({ error: 'Invalid session' }, 401);
     }
 
     return createJsonResponse({
@@ -305,37 +328,37 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === "/settings" && request.method === "PUT") {
+  if (url.pathname === '/settings' && request.method === 'PUT') {
     const { name, settings, sessionToken } = (await request.json()) as {
       name: string;
-      settings: RoomData["settings"];
+      settings: RoomData['settings'];
       sessionToken?: string;
     };
 
     const roomData = await ctx.getRoomData();
 
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     if (!sessionToken) {
-      return createJsonResponse({ error: "Missing session token" }, 401);
+      return createJsonResponse({ error: 'Missing session token' }, 401);
     }
 
     const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
 
     if (!tokenValid) {
-      return createJsonResponse({ error: "Invalid session" }, 401);
+      return createJsonResponse({ error: 'Invalid session' }, 401);
     }
 
     if (roomData.moderator !== name) {
       return createJsonResponse(
-        { error: "Only the moderator can update settings" },
-        403,
+        { error: 'Only the moderator can update settings' },
+        403
       );
     }
 
-    const providedSettings = settings as Partial<RoomData["settings"]>;
+    const providedSettings = settings as Partial<RoomData['settings']>;
     roomData.settings = applySettingsUpdate({
       currentSettings: roomData.settings,
       settingsUpdate: providedSettings,
@@ -344,7 +367,7 @@ export async function handleHttpRequest(
     ctx.repository.setSettings(roomData.settings);
 
     ctx.broadcast({
-      type: "settingsUpdated",
+      type: 'settingsUpdated',
       settings: roomData.settings,
     });
 
@@ -354,7 +377,7 @@ export async function handleHttpRequest(
     });
   }
 
-  if (url.pathname === "/jira/oauth/save" && request.method === "POST") {
+  if (url.pathname === '/jira/oauth/save' && request.method === 'POST') {
     const credentials = (await request.json()) as {
       accessToken: string;
       refreshToken: string | null;
@@ -372,7 +395,7 @@ export async function handleHttpRequest(
 
     const roomData = await ctx.getRoomData();
     if (!roomData || !roomData.key) {
-      return createJsonResponse({ error: "Room not found" }, 404);
+      return createJsonResponse({ error: 'Room not found' }, 404);
     }
 
     ctx.repository.saveJiraOAuthCredentials({
@@ -392,7 +415,7 @@ export async function handleHttpRequest(
     });
 
     ctx.broadcast({
-      type: "jiraConnected",
+      type: 'jiraConnected',
       jiraDomain: credentials.jiraDomain,
     });
 

@@ -26,6 +26,18 @@ export async function createRoomController(
     return jsonError('Name is required');
   }
 
+  const key = name
+    ? `${name}-${request.headers.get('cf-connecting-ip') ?? 'unknown'}`
+    : request.headers.get('cf-connecting-ip') ?? 'unknown';
+
+  const { success: rateLimitSuccess } = await env.JOIN_RATE_LIMITER.limit({
+    key,
+  });
+
+  if (!rateLimitSuccess) {
+    return jsonError('Rate limit exceeded', 429);
+  }
+
   const roomKey = generateRoomKey();
   const roomObject = getRoomStub(env, roomKey);
 

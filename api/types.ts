@@ -2,9 +2,11 @@ import type {
   DurableObjectNamespace,
   Fetcher,
   WebSocket as CfWebSocket,
-} from "@cloudflare/workers-types";
+  RateLimit,
+} from '@cloudflare/workers-types';
 
 export interface Env {
+  JOIN_RATE_LIMITER: RateLimit;
   PLANNING_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;
   JIRA_OAUTH_CLIENT_ID?: string;
@@ -26,23 +28,23 @@ export type ClientMessage =
   | { type: 'nextTicket' }
   | { type: 'addTicket'; ticket: Partial<TicketQueueItem> }
   | {
-    type: 'updateTicket';
-    ticketId: number;
-    updates: Partial<TicketQueueItem>;
-  }
+      type: 'updateTicket';
+      ticketId: number;
+      updates: Partial<TicketQueueItem>;
+    }
   | { type: 'deleteTicket'; ticketId: number }
   | { type: 'completeTicket'; outcome?: string }
   | { type: 'startTimer' }
   | { type: 'pauseTimer' }
   | { type: 'resetTimer' }
   | {
-    type: 'configureTimer';
-    config: {
-      targetDurationSeconds?: number;
-      autoResetOnVotesReset?: boolean;
-      resetCountdown?: boolean;
-    };
-  }
+      type: 'configureTimer';
+      config: {
+        targetDurationSeconds?: number;
+        autoResetOnVotesReset?: boolean;
+        resetCountdown?: boolean;
+      };
+    }
   | { type: 'ping' };
 
 export type VoteValue = string | number | null | '?' | 'coffee';

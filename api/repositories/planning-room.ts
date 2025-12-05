@@ -16,6 +16,7 @@ import type {
 import { serializeJSON, serializeVote } from '../utils/serialize';
 import { parseJudgeScore, parseVote, safeJsonParse } from '../utils/parse';
 import { DEFAULT_TIMER_DURATION_SECONDS } from '../constants';
+import { SESSION_TOKEN_TTL_MS } from '../utils/security';
 
 const ROOM_ROW_ID = 1;
 type SqlEnabledTransaction = DurableObjectTransaction & { sql: SqlStorage };
@@ -408,7 +409,15 @@ export class PlanningRoomRepository {
     });
   }
 
-  ensureUser(userName: string) {
+  ensureUser(userName: string): string {
+    const existing = this.sql
+      .exec<{ user_name: string }>(
+        `SELECT user_name FROM room_users WHERE LOWER(user_name) = LOWER(?)`,
+        userName
+      )
+      .toArray()[0]?.user_name;
+    const canonicalName = existing ?? userName;
+
     this.sql.exec(
       `INSERT OR IGNORE INTO room_users (user_name, avatar, is_connected, ordinal)
        VALUES (
@@ -417,16 +426,18 @@ export class PlanningRoomRepository {
          0,
          COALESCE((SELECT MAX(ordinal) + 1 FROM room_users), 0)
        )`,
-      userName
+      canonicalName
     );
+
+    return canonicalName;
   }
 
   setUserConnection(userName: string, isConnected: boolean) {
-    this.ensureUser(userName);
+    const canonicalName = this.ensureUser(userName);
     this.sql.exec(
       `UPDATE room_users SET is_connected = ? WHERE user_name = ?`,
       isConnected ? 1 : 0,
-      userName
+      canonicalName
     );
   }
 
@@ -434,11 +445,11 @@ export class PlanningRoomRepository {
     if (!avatar) {
       return;
     }
-    this.ensureUser(userName);
+    const canonicalName = this.ensureUser(userName);
     this.sql.exec(
       `UPDATE room_users SET avatar = ? WHERE user_name = ?`,
       avatar,
-      userName
+      canonicalName
     );
   }
 
@@ -546,12 +557,12 @@ export class PlanningRoomRepository {
   }
 
   setVote(userName: string, vote: string | number) {
-    this.ensureUser(userName);
+    const canonicalName = this.ensureUser(userName);
     this.sql.exec(
       `INSERT INTO room_votes (user_name, vote, structured_vote_payload)
        VALUES (?, ?, NULL)
        ON CONFLICT(user_name) DO UPDATE SET vote = excluded.vote, structured_vote_payload = NULL`,
-      userName,
+      canonicalName,
       serializeVote(vote)
     );
   }
@@ -561,11 +572,11 @@ export class PlanningRoomRepository {
   }
 
   setStructuredVote(userName: string, vote: StructuredVote) {
-    this.ensureUser(userName);
+    const canonicalName = this.ensureUser(userName);
     this.sql.exec(
       `UPDATE room_votes SET structured_vote_payload = ? WHERE user_name = ?`,
       JSON.stringify(vote),
-      userName
+      canonicalName
     );
   }
 
@@ -608,33 +619,55 @@ export class PlanningRoomRepository {
   }
 
   setSessionToken(userName: string, token: string) {
-    this.ensureUser(userName);
+    const canonicalName = this.ensureUser(userName);
+    const existingTokenOwner = this.sql
+      .exec<{ user_name: string }>(
+        `SELECT user_name FROM session_tokens WHERE LOWER(user_name) = LOWER(?)`,
+        canonicalName
+      )
+      .toArray()[0]?.user_name;
+    const tokenOwner = existingTokenOwner ?? canonicalName;
+
     this.sql.exec(
       `INSERT INTO session_tokens (user_name, token, created_at)
        VALUES (?, ?, ?)
        ON CONFLICT(user_name)
        DO UPDATE SET token = excluded.token, created_at = excluded.created_at`,
-      userName,
+      tokenOwner,
       token,
       Date.now()
     );
-  }
-
-  getSessionToken(userName: string): string | null {
-    const result = this.sql
-      .exec<{
-        token: string | null;
-      }>('SELECT token FROM session_tokens WHERE user_name = ?', userName)
-      .toArray()[0];
-    return result?.token ?? null;
   }
 
   validateSessionToken(userName: string, token: string | null): boolean {
     if (!token) {
       return false;
     }
-    const stored = this.getSessionToken(userName);
-    return !!stored && stored === token;
+    const record = this.sql
+      .exec<{
+        token: string | null;
+        created_at: number | null;
+      }>(
+        `SELECT token, created_at
+         FROM session_tokens
+         WHERE LOWER(user_name) = LOWER(?)`,
+        userName
+      )
+      .toArray()[0];
+
+    if (!record?.token) {
+      return false;
+    }
+
+    const isExpired =
+      typeof record.created_at === 'number' &&
+      Date.now() - record.created_at > SESSION_TOKEN_TTL_MS;
+
+    if (isExpired) {
+      return false;
+    }
+
+    return record.token === token;
   }
 
   setStrudelState(options: {

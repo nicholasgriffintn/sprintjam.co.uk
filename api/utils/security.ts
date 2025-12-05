@@ -19,6 +19,8 @@ export function generateSessionToken(): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
+export const SESSION_TOKEN_TTL_MS = 1000 * 60 * 60 * 6;
+
 export async function signState(data: any, secret: string): Promise<string> {
   const json = JSON.stringify(data);
   const key = await crypto.subtle.importKey(

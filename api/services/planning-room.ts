@@ -75,6 +75,29 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     });
   }
 
+  private findCanonicalUserName(
+    roomData: RoomData | undefined,
+    candidate: string
+  ): string | null {
+    if (!roomData) {
+      return null;
+    }
+    const target = candidate.trim().toLowerCase();
+    return (
+      roomData.users.find((user) => user.toLowerCase() === target) ?? null
+    );
+  }
+
+  disconnectUserSessions(userName: string) {
+    for (const [socket, session] of this.sessions.entries()) {
+      if (session.userName.toLowerCase() === userName.trim().toLowerCase()) {
+        socket.close(4004, 'Session superseded');
+        this.sessions.delete(socket);
+        this.heartbeats.delete(socket);
+      }
+    }
+  }
+
   async fetch(request: Request): Promise<CfResponse> {
     const url = new URL(request.url);
 
@@ -116,14 +139,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     sessionToken: string
   ) {
     const storedRoom = await this.getRoomData();
+    const canonicalUserName = this.findCanonicalUserName(storedRoom, userName);
     const hasRoom =
       storedRoom &&
       storedRoom.key === roomKey &&
-      storedRoom.users.includes(userName);
-    const hasValidToken = this.repository.validateSessionToken(
-      userName,
-      sessionToken
-    );
+      !!canonicalUserName;
+    const hasValidToken = canonicalUserName
+      ? this.repository.validateSessionToken(canonicalUserName, sessionToken)
+      : false;
 
     if (!hasRoom || !hasValidToken) {
       webSocket.accept();
@@ -137,7 +160,11 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       return;
     }
 
-    const session = { webSocket, roomKey, userName };
+    if (!canonicalUserName) {
+      return;
+    }
+
+    const session = { webSocket, roomKey, userName: canonicalUserName };
     this.sessions.set(webSocket, session);
 
     webSocket.accept();
@@ -149,13 +176,13 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       }
 
       const normalizedRoomData = normalizeRoomData(roomData);
-      markUserConnection(normalizedRoomData, userName, true);
+      markUserConnection(normalizedRoomData, canonicalUserName, true);
 
-      this.repository.setUserConnection(userName, true);
+      this.repository.setUserConnection(canonicalUserName, true);
 
       this.broadcast({
         type: 'userConnectionStatus',
-        user: userName,
+        user: canonicalUserName,
         isConnected: true,
       });
     });
@@ -205,53 +232,53 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
         switch (validated.type) {
           case 'vote':
-            await this.handleVote(userName, validated.vote);
+            await this.handleVote(canonicalUserName, validated.vote);
             break;
           case 'showVotes':
-            await this.handleShowVotes(userName);
+            await this.handleShowVotes(canonicalUserName);
             break;
           case 'resetVotes':
-            await this.handleResetVotes(userName);
+            await this.handleResetVotes(canonicalUserName);
             break;
           case 'updateSettings':
-            await this.handleUpdateSettings(userName, validated.settings);
+            await this.handleUpdateSettings(canonicalUserName, validated.settings);
             break;
           case 'generateStrudelCode':
-            await this.handleGenerateStrudel(userName);
+            await this.handleGenerateStrudel(canonicalUserName);
             break;
           case 'toggleStrudelPlayback':
-            await this.handleToggleStrudelPlayback(userName);
+            await this.handleToggleStrudelPlayback(canonicalUserName);
             break;
           case 'nextTicket':
-            await this.handleNextTicket(userName);
+            await this.handleNextTicket(canonicalUserName);
             break;
           case 'addTicket':
-            await this.handleAddTicket(userName, validated.ticket);
+            await this.handleAddTicket(canonicalUserName, validated.ticket);
             break;
           case 'updateTicket':
             await this.handleUpdateTicket(
-              userName,
+              canonicalUserName,
               validated.ticketId,
               validated.updates
             );
             break;
           case 'deleteTicket':
-            await this.handleDeleteTicket(userName, validated.ticketId);
+            await this.handleDeleteTicket(canonicalUserName, validated.ticketId);
             break;
           case 'completeTicket':
-            await this.handleCompleteTicket(userName, validated.outcome);
+            await this.handleCompleteTicket(canonicalUserName, validated.outcome);
             break;
           case 'startTimer':
-            await this.handleStartTimer(userName);
+            await this.handleStartTimer(canonicalUserName);
             break;
           case 'pauseTimer':
-            await this.handlePauseTimer(userName);
+            await this.handlePauseTimer(canonicalUserName);
             break;
           case 'resetTimer':
-            await this.handleResetTimer(userName);
+            await this.handleResetTimer(canonicalUserName);
             break;
           case 'configureTimer':
-            await this.handleConfigureTimer(userName, validated.config);
+            await this.handleConfigureTimer(canonicalUserName, validated.config);
             break;
         }
       } catch (err: unknown) {
@@ -268,7 +295,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       this.sessions.delete(webSocket);
       this.heartbeats.delete(webSocket);
       const stillConnected = Array.from(this.sessions.values()).some(
-        (s: SessionInfo) => s.userName === userName
+        (s: SessionInfo) => s.userName === canonicalUserName
       );
 
       if (!stillConnected) {
@@ -276,17 +303,17 @@ export class PlanningRoom implements PlanningRoomHttpContext {
           const roomData = await this.getRoomData();
 
           if (roomData) {
-            markUserConnection(roomData, userName, false);
+            markUserConnection(roomData, canonicalUserName, false);
 
-            this.repository.setUserConnection(userName, false);
+            this.repository.setUserConnection(canonicalUserName, false);
             this.broadcast({
               type: 'userConnectionStatus',
-              user: userName,
+              user: canonicalUserName,
               isConnected: false,
             });
 
             if (
-              userName === roomData.moderator &&
+              canonicalUserName === roomData.moderator &&
               roomData.settings.autoHandoverModerator
             ) {
               const connectedUsers = roomData.users

@@ -60,8 +60,12 @@ const JoinRoomScreen = () => {
   };
 
   const getFormValid = () => {
-    if (currentStep === 'details') return name.trim() && roomKey.trim();
-    if (currentStep === 'avatar') return selectedAvatar;
+    if (currentStep === 'details') {
+      return name.trim() && roomKey.trim();
+    }
+    if (currentStep === 'avatar') {
+      return selectedAvatar;
+    }
     return false;
   };
 
