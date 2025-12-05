@@ -32,7 +32,7 @@ const JoinRoomScreen = () => {
     errorKind,
     clearError,
   } = useSession();
-  const { handleJoinRoom } = useRoom();
+  const { handleJoinRoom, isLoading } = useRoom();
   const [currentStep, setCurrentStep] = useState<'details' | 'avatar'>(
     'details'
   );
@@ -134,8 +134,8 @@ const JoinRoomScreen = () => {
                 {isPermissionError
                   ? "You don't have permission to join this room."
                   : isAuthError
-                    ? 'Session expired. Rejoin with a fresh link.'
-                    : error}
+                  ? 'Session expired. Rejoin with a fresh link.'
+                  : error}
               </Alert>
             )}
 
@@ -173,7 +173,7 @@ const JoinRoomScreen = () => {
                   type="text"
                   value={roomKey}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setRoomKey(e.target.value.toUpperCase())
+                    setRoomKey(e.target.value.replace(/\s+/g, '').toUpperCase())
                   }
                   placeholder="0MTINL"
                   maxLength={6}
@@ -241,7 +241,7 @@ const JoinRoomScreen = () => {
               <Button
                 type="submit"
                 data-testid="join-room-submit"
-                disabled={!getFormValid()}
+                disabled={!getFormValid() || isLoading}
                 className="sm:flex-1"
                 icon={
                   currentStep === 'details' ? (

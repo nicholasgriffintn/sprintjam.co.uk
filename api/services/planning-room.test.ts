@@ -127,4 +127,75 @@ describe('PlanningRoom WebSocket auth', () => {
 
     expect(ws1.close).toHaveBeenCalledWith(4004, 'Session superseded');
   });
+
+  it('prunes broken sockets during broadcast', () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const badSocket = {
+      send: vi.fn(() => {
+        throw new Error('boom');
+      }),
+      close: vi.fn(),
+    } as unknown as CfWebSocket;
+    const goodSocket = {
+      send: vi.fn(),
+      close: vi.fn(),
+    } as unknown as CfWebSocket;
+
+    room.sessions.set(badSocket, {
+      webSocket: badSocket,
+      roomKey: 'r',
+      userName: 'u1',
+    });
+    room.sessions.set(goodSocket, {
+      webSocket: goodSocket,
+      roomKey: 'r',
+      userName: 'u2',
+    });
+
+    room.broadcast({ type: 'ping' });
+
+    expect(room.sessions.has(badSocket)).toBe(false);
+    expect(room.sessions.has(goodSocket)).toBe(true);
+  });
+
+  it('skips blockConcurrencyWhile when requested', async () => {
+    const blockSpy = vi.fn(async (fn: () => Promise<any>) => fn());
+    const state = {
+      ...makeState(),
+      blockConcurrencyWhile: blockSpy,
+    };
+    const room = new PlanningRoom(state as unknown as DurableObjectState, env);
+    room.repository = {
+      getRoomData: vi.fn().mockResolvedValue({
+        key: 'r1',
+        users: [],
+        votes: {},
+        connectedUsers: {},
+        showVotes: false,
+        moderator: 'mod',
+        settings: {
+          estimateOptions: [1],
+          allowOthersToShowEstimates: false,
+          allowOthersToDeleteEstimates: false,
+          showTimer: false,
+          showUserPresence: true,
+          showAverage: false,
+          showMedian: false,
+          showTopVotes: false,
+          topVotesCount: 0,
+          anonymousVotes: false,
+          enableJudge: false,
+          judgeAlgorithm: 'simpleAverage',
+          enableTicketQueue: false,
+        },
+      }),
+    } as any;
+
+    const callsBefore = blockSpy.mock.calls.length;
+    const data = await room.getRoomData({ skipConcurrencyBlock: true });
+
+    expect(data?.key).toBe('r1');
+    expect(blockSpy.mock.calls.length).toBe(callsBefore);
+  });
 });

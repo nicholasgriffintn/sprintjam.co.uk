@@ -52,7 +52,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
   env: Env;
   sessions: Map<CfWebSocket, SessionInfo>;
-  heartbeats: Map<CfWebSocket, number>;
   judge: PlanningPokerJudge;
   repository: PlanningRoomRepository;
 
@@ -60,13 +59,12 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.state = state;
     this.env = env;
     this.sessions = new Map();
-    this.heartbeats = new Map();
     this.judge = new PlanningPokerJudge();
     this.repository = new PlanningRoomRepository(this.state.storage);
 
     this.state.blockConcurrencyWhile(async () => {
       this.repository.initializeSchema();
-      let roomData = await this.getRoomData();
+      let roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) {
         return;
       }
@@ -81,7 +79,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       if (session.userName.toLowerCase() === userName.trim().toLowerCase()) {
         socket.close(4004, 'Session superseded');
         this.sessions.delete(socket);
-        this.heartbeats.delete(socket);
       }
     }
   }
@@ -158,7 +155,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     webSocket.accept();
 
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) {
         return;
       }
@@ -201,7 +198,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
             ? msg.data
             : new TextDecoder().decode(msg.data);
         const data = JSON.parse(messageData);
-        this.heartbeats.set(webSocket, Date.now());
         const validated = validateClientMessage(data);
 
         if ('error' in validated) {
@@ -293,14 +289,15 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     webSocket.addEventListener('close', async () => {
       this.sessions.delete(webSocket);
-      this.heartbeats.delete(webSocket);
       const stillConnected = Array.from(this.sessions.values()).some(
         (s: SessionInfo) => s.userName === canonicalUserName
       );
 
       if (!stillConnected) {
         await this.state.blockConcurrencyWhile(async () => {
-          const roomData = await this.getRoomData();
+          const roomData = await this.getRoomData({
+            skipConcurrencyBlock: true,
+          });
 
           if (roomData) {
             markUserConnection(roomData, canonicalUserName, false);
@@ -340,7 +337,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     let shouldGenerateMusic = false;
 
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) {
         return;
       }
@@ -415,7 +412,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     let shouldGenerateMusic = false;
 
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (
@@ -457,7 +454,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     let shouldGenerateMusic = false;
 
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (
@@ -507,7 +504,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     settings: Partial<RoomData['settings']>
   ) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (roomData.moderator !== userName) {
@@ -598,16 +595,18 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   broadcast(message: BroadcastMessage) {
     const json = JSON.stringify(message);
-    this.sessions.forEach((session) => {
+    this.sessions.forEach((session, socket) => {
       try {
         session.webSocket.send(json);
-      } catch (_err) {}
+      } catch (_err) {
+        this.sessions.delete(socket);
+      }
     });
   }
 
   async calculateAndUpdateJudgeScore() {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
 
       if (!roomData || !roomData.settings.enableJudge || !roomData.showVotes) {
         return;
@@ -768,7 +767,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleNextTicket(userName: string) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (!roomData.settings.enableTicketQueue) {
@@ -820,7 +819,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleAddTicket(userName: string, ticket: Partial<TicketQueueItem>) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (!roomData.settings.enableTicketQueue) {
@@ -889,7 +888,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     updates: Partial<TicketQueueItem>
   ) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (!roomData.settings.enableTicketQueue) {
@@ -960,7 +959,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleDeleteTicket(userName: string, ticketId: number) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (!roomData.settings.enableTicketQueue) {
@@ -995,7 +994,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleCompleteTicket(userName: string, outcome?: string) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (!roomData.settings.enableTicketQueue) {
@@ -1042,7 +1041,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleStartTimer(userName: string) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (roomData.moderator !== userName) {
@@ -1069,7 +1068,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handlePauseTimer(userName: string) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (roomData.moderator !== userName) {
@@ -1079,7 +1078,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       const currentTime = Date.now();
       this.repository.pauseTimer(currentTime);
 
-      const updatedRoomData = await this.getRoomData();
+      const updatedRoomData = await this.getRoomData({
+        skipConcurrencyBlock: true,
+      });
       if (updatedRoomData?.timerState) {
         this.broadcast({
           type: 'timerPaused',
@@ -1091,7 +1092,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleResetTimer(userName: string) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (roomData.moderator !== userName) {
@@ -1122,7 +1123,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     }
   ) {
     await this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.getRoomData();
+      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
       if (!roomData) return;
 
       if (roomData.moderator !== userName) {
@@ -1269,54 +1270,62 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     });
   }
 
-  async getRoomData(): Promise<RoomData | undefined> {
-    return this.state.blockConcurrencyWhile(async () => {
-      const roomData = await this.repository.getRoomData();
-      if (!roomData) {
-        return undefined;
-      }
+  private async readRoomData(): Promise<RoomData | undefined> {
+    const roomData = await this.repository.getRoomData();
+    if (!roomData) {
+      return undefined;
+    }
 
-      if (
-        roomData.currentTicket ||
-        !roomData.settings.enableTicketQueue ||
-        !this.canAutoCreateTicket(roomData)
-      ) {
-        return roomData;
-      }
+    if (
+      roomData.currentTicket ||
+      !roomData.settings.enableTicketQueue ||
+      !this.canAutoCreateTicket(roomData)
+    ) {
+      return roomData;
+    }
 
-      const queue = this.repository.getTicketQueue();
-      const nextTicketId = this.repository.getNextTicketId({
+    const queue = this.repository.getTicketQueue();
+    const nextTicketId = this.repository.getNextTicketId({
+      externalService: roomData.settings.externalService || 'none',
+    });
+    if (!nextTicketId) {
+      return roomData;
+    }
+
+    const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
+
+    const existingTicket =
+      this.repository.getTicketByTicketKey(nextTicketId) ?? null;
+    const created =
+      existingTicket ??
+      this.repository.createTicket({
+        ticketId: nextTicketId,
+        status: 'in_progress',
+        ordinal: maxOrdinal + 1,
         externalService: roomData.settings.externalService || 'none',
       });
-      if (!nextTicketId) {
-        return roomData;
-      }
 
-      const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
+    if (created.status !== 'in_progress') {
+      this.repository.updateTicket(created.id, { status: 'in_progress' });
+    }
 
-      const existingTicket =
-        this.repository.getTicketByTicketKey(nextTicketId) ?? null;
-      const created =
-        existingTicket ??
-        this.repository.createTicket({
-          ticketId: nextTicketId,
-          status: 'in_progress',
-          ordinal: maxOrdinal + 1,
-          externalService: roomData.settings.externalService || 'none',
-        });
+    this.repository.setCurrentTicket(created.id);
 
-      if (created.status !== 'in_progress') {
-        this.repository.updateTicket(created.id, { status: 'in_progress' });
-      }
+    return {
+      ...roomData,
+      currentTicket: created,
+      ticketQueue: this.getQueueWithPrivacy(roomData),
+    };
+  }
 
-      this.repository.setCurrentTicket(created.id);
+  async getRoomData(options?: {
+    skipConcurrencyBlock?: boolean;
+  }): Promise<RoomData | undefined> {
+    if (options?.skipConcurrencyBlock) {
+      return this.readRoomData();
+    }
 
-      return {
-        ...roomData,
-        currentTicket: created,
-        ticketQueue: this.getQueueWithPrivacy(roomData),
-      };
-    });
+    return this.state.blockConcurrencyWhile(async () => this.readRoomData());
   }
 
   async putRoomData(roomData: RoomData): Promise<void> {

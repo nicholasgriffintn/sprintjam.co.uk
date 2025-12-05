@@ -276,12 +276,17 @@ export function connectToRoom(
 
     socket.onerror = (error) => {
       console.error('WebSocket error:', error);
+
       onConnectionStatusChange?.(false);
       triggerEventListeners('error', {
         type: 'error',
         error: 'Connection error occurred',
         closeCode: 1006,
       });
+
+      if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
+        activeSocket.close(1011, 'Connection error');
+      }
     };
 
     activeSocket = socket;
@@ -426,6 +431,10 @@ export function disconnectFromRoom(): void {
   if (activeSocket) {
     activeSocket.close(1000, 'User left the room');
     activeSocket = null;
+  }
+  if (voteDebounceTimer) {
+    clearTimeout(voteDebounceTimer);
+    voteDebounceTimer = null;
   }
   activeAuthToken = null;
   reconnectAttempts = 0;

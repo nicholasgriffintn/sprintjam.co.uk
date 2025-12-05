@@ -56,12 +56,20 @@ export function markUserConnection(
   userName: string,
   isConnected: boolean
 ) {
-  ensureConnectedUsers(roomData);
-  if (!roomData.users.includes(userName)) {
-    roomData.users.push(userName);
+  const normalizedInput = userName.trim();
+  const targetName =
+    findCanonicalUserName(roomData, normalizedInput) ?? normalizedInput;
+
+  if (!targetName) {
+    return;
   }
 
-  roomData.connectedUsers![userName] = isConnected;
+  ensureConnectedUsers(roomData);
+  if (!roomData.users.includes(targetName)) {
+    roomData.users.push(targetName);
+  }
+
+  roomData.connectedUsers![targetName] = isConnected;
 }
 
 export function assignUserAvatar(
@@ -69,15 +77,24 @@ export function assignUserAvatar(
   userName: string,
   avatar?: string
 ) {
-  if (!avatar) {
-    return;
-  }
-
   if (!roomData.userAvatars) {
     roomData.userAvatars = {};
   }
 
-  roomData.userAvatars[userName] = avatar;
+  const normalizedInput = userName.trim();
+  const targetName =
+    findCanonicalUserName(roomData, normalizedInput) ??
+    roomData.users.find(
+      (user) => user.toLowerCase() === normalizedInput.toLowerCase()
+    ) ??
+    normalizedInput;
+
+  if (!avatar) {
+    delete roomData.userAvatars[targetName];
+    return;
+  }
+
+  roomData.userAvatars[targetName] = avatar;
 }
 
 export function sanitizeRoomData(roomData: RoomData): RoomData {

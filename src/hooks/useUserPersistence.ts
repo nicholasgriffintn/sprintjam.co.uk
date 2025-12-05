@@ -24,7 +24,8 @@ export const useUserPersistence = ({
       return;
     }
 
-    if (name === '' && !safeLocalStorage.get(USERNAME_STORAGE_KEY)) {
+    if (name === '') {
+      safeLocalStorage.remove(USERNAME_STORAGE_KEY);
       return;
     }
 

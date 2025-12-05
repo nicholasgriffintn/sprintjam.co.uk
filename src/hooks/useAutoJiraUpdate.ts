@@ -64,8 +64,8 @@ export const useAutoJiraUpdate = ({
 
     if (
       !currentTicket ||
-      currentTicket.externalService !== "jira" ||
-      roomData.settings.externalService !== "jira" ||
+      currentTicket.externalService !== 'jira' ||
+      roomData.settings.externalService !== 'jira' ||
       !roomData.settings.autoUpdateJiraStoryPoints ||
       roomData.showVotes !== true ||
       roomData.moderator !== userName
@@ -73,7 +73,10 @@ export const useAutoJiraUpdate = ({
       return;
     }
 
-    const storyPoints = calculateStoryPoints(roomData.votes, roomData.structuredVotes);
+    const storyPoints = calculateStoryPoints(
+      roomData.votes,
+      roomData.structuredVotes
+    );
     if (storyPoints === null) return;
 
     const lastUpdate = lastUpdatedRef.current;
@@ -86,6 +89,10 @@ export const useAutoJiraUpdate = ({
     }
 
     lastUpdatedRef.current = { ticketId: currentTicket.id, storyPoints };
+
+    if (updateStoryPointsMutation.isPending) {
+      return;
+    }
 
     updateStoryPointsMutation
       .mutateAsync({
@@ -103,8 +110,15 @@ export const useAutoJiraUpdate = ({
         const errorMessage =
           err instanceof Error
             ? err.message
-            : "Failed to auto-update Jira story points";
+            : 'Failed to auto-update Jira story points';
         onError(errorMessage);
       });
-  }, [roomData, userName, onTicketUpdate, onError]);
+  }, [
+    roomData,
+    userName,
+    onTicketUpdate,
+    onError,
+    updateStoryPointsMutation.isPending,
+    updateStoryPointsMutation.mutateAsync,
+  ]);
 };

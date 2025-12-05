@@ -49,6 +49,9 @@ export const useAutoReconnect = ({
 
     const savedRoomKey = safeLocalStorage.get(ROOM_KEY_STORAGE_KEY);
     const savedAuthToken = safeLocalStorage.get(AUTH_TOKEN_STORAGE_KEY);
+
+    let cancelled = false;
+
     if (savedRoomKey) {
       onLoadingChange(true);
       const avatarToUse = selectedAvatar || 'user';
@@ -60,6 +63,9 @@ export const useAutoReconnect = ({
         savedAuthToken || undefined
       )
         .then(async ({ room: joinedRoom, defaults, authToken }) => {
+          if (cancelled) {
+            return;
+          }
           applyServerDefaults(defaults);
           await upsertRoom(joinedRoom);
           safeLocalStorage.set(ROOM_KEY_STORAGE_KEY, joinedRoom.key);
@@ -72,6 +78,10 @@ export const useAutoReconnect = ({
           onReconnectSuccess(joinedRoom.key, joinedRoom.moderator === name);
         })
         .catch((err) => {
+          if (cancelled) {
+            return;
+          }
+
           const errorMessage =
             err instanceof Error ? err.message : 'Failed to reconnect to room';
           onReconnectError(errorMessage);
@@ -79,8 +89,15 @@ export const useAutoReconnect = ({
           safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
           onAuthTokenRefresh?.(null);
         })
-        .finally(() => onLoadingChange(false));
+        .finally(() => {
+          if (!cancelled) {
+            onLoadingChange(false);
+          }
+        });
     }
+    return () => {
+      cancelled = true;
+    };
   }, [
     name,
     screen,

@@ -316,7 +316,9 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const handleJoinRoom = useCallback(async () => {
-    if (!name || !roomKey || !selectedAvatar) return;
+    const trimmedName = name.trim();
+    const normalizedRoomKey = roomKey.trim().toUpperCase();
+    if (!trimmedName || !normalizedRoomKey || !selectedAvatar) return;
 
     setIsLoading(true);
     clearError();
@@ -326,7 +328,12 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         room: joinedRoom,
         defaults,
         authToken: newAuthToken,
-      } = await joinRoom(name, roomKey, passcode || undefined, selectedAvatar);
+      } = await joinRoom(
+        trimmedName,
+        normalizedRoomKey,
+        passcode?.trim() || undefined,
+        selectedAvatar
+      );
       applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
@@ -445,6 +452,9 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     disconnectFromRoom();
     safeLocalStorage.remove(ROOM_KEY_STORAGE_KEY);
     safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
+    setRoomError('');
+    setRoomErrorKind(null);
+    setConnectionIssue(null);
 
     const key = activeRoomKeyRef.current;
     if (key) {
@@ -458,7 +468,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     setIsSocketConnected(false);
     setIsSocketStatusKnown(false);
     setIsModeratorView(false);
-    setConnectionIssue(null);
     setPasscode('');
     setRoomKey('');
     setScreen('welcome');
