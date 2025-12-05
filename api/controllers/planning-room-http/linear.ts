@@ -24,7 +24,7 @@ export async function handleLinearSaveCredentials(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  ctx.repository.saveLinearOAuthCredentials({
+  await ctx.repository.saveLinearOAuthCredentials({
     roomKey: roomData.key,
     accessToken: credentials.accessToken,
     refreshToken: credentials.refreshToken,
@@ -74,7 +74,9 @@ export async function handleLinearStatus(
     return createJsonResponse({ error: 'Invalid session' }, 401);
   }
 
-  const credentials = ctx.repository.getLinearOAuthCredentials(roomData.key);
+  const credentials = await ctx.repository.getLinearOAuthCredentials(
+    roomData.key,
+  );
 
   if (!credentials) {
     return createJsonResponse({
@@ -99,7 +101,9 @@ export async function handleLinearCredentials(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  const credentials = ctx.repository.getLinearOAuthCredentials(roomData.key);
+  const credentials = await ctx.repository.getLinearOAuthCredentials(
+    roomData.key,
+  );
 
   if (!credentials) {
     return createJsonResponse({ error: 'Linear not connected' }, 404);
@@ -123,7 +127,7 @@ export async function handleLinearRefresh(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  ctx.repository.updateLinearOAuthTokens(
+  await ctx.repository.updateLinearOAuthTokens(
     roomData.key,
     accessToken,
     refreshToken,

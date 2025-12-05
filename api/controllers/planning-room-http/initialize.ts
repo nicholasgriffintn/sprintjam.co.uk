@@ -3,7 +3,7 @@ import type { RoomSettings } from '../../types';
 import { createInitialRoomData, getServerDefaults } from '../../utils/defaults';
 import { assignUserAvatar, sanitizeRoomData } from '../../utils/room-data';
 import { createJsonResponse } from '../../utils/http';
-import { generateSessionToken, hashPasscode } from '../../utils/security';
+import { generateSessionToken, hashPasscode } from '../../utils/room-cypto';
 
 import type { CfResponse, PlanningRoomHttpContext } from './types';
 

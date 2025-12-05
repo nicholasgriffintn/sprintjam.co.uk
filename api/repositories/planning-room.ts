@@ -16,7 +16,8 @@ import type {
 import { serializeJSON, serializeVote } from '../utils/serialize';
 import { parseJudgeScore, parseVote, safeJsonParse } from '../utils/parse';
 import { DEFAULT_TIMER_DURATION_SECONDS } from '../constants';
-import { SESSION_TOKEN_TTL_MS } from '../utils/security';
+import { SESSION_TOKEN_TTL_MS } from '../utils/room-cypto';
+import { TokenCipher } from '../utils/token-crypto';
 
 const ROOM_ROW_ID = 1;
 type SqlEnabledTransaction = DurableObjectTransaction & { sql: SqlStorage };
@@ -25,8 +26,32 @@ export class PlanningRoomRepository {
   private readonly sql: SqlStorage;
   private readonly anonymousName = 'Anonymous';
 
-  constructor(private readonly storage: DurableObjectStorage) {
+  constructor(
+    private readonly storage: DurableObjectStorage,
+    private readonly tokenCipher: TokenCipher
+  ) {
+    if (!tokenCipher) {
+      throw new Error('Token cipher is required');
+    }
     this.sql = storage.sql;
+  }
+
+  private async encryptToken(
+    value: string | null | undefined
+  ): Promise<string | null> {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    return this.tokenCipher.encrypt(value);
+  }
+
+  private async decryptToken(
+    value: string | null | undefined
+  ): Promise<string | null> {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    return this.tokenCipher.decrypt(value);
   }
 
   initializeSchema() {
@@ -1022,7 +1047,7 @@ export class PlanningRoomRepository {
     });
   }
 
-  getJiraOAuthCredentials(roomKey: string): {
+  async getJiraOAuthCredentials(roomKey: string): Promise<{
     id: number;
     roomKey: string;
     accessToken: string;
@@ -1039,7 +1064,7 @@ export class PlanningRoomRepository {
     authorizedBy: string;
     createdAt: number;
     updatedAt: number;
-  } | null {
+  } | null> {
     const row = this.sql
       .exec<{
         id: number;
@@ -1071,11 +1096,14 @@ export class PlanningRoomRepository {
       sprintField?: string | null;
     }>(row.metadata ?? '{}');
 
+    const accessToken = await this.tokenCipher.decrypt(row.access_token);
+    const refreshToken = await this.decryptToken(row.refresh_token);
+
     return {
       id: row.id,
       roomKey: row.room_key,
-      accessToken: row.access_token,
-      refreshToken: row.refresh_token,
+      accessToken,
+      refreshToken,
       tokenType: row.token_type,
       expiresAt: row.expires_at,
       scope: row.scope,
@@ -1091,7 +1119,7 @@ export class PlanningRoomRepository {
     };
   }
 
-  saveJiraOAuthCredentials(credentials: {
+  async saveJiraOAuthCredentials(credentials: {
     roomKey: string;
     accessToken: string;
     refreshToken: string | null;
@@ -1105,7 +1133,7 @@ export class PlanningRoomRepository {
     storyPointsField: string | null;
     sprintField: string | null;
     authorizedBy: string;
-  }): void {
+  }): Promise<void> {
     const now = Date.now();
     const metadata = JSON.stringify({
       jiraDomain: credentials.jiraDomain,
@@ -1115,6 +1143,13 @@ export class PlanningRoomRepository {
       storyPointsField: credentials.storyPointsField,
       sprintField: credentials.sprintField,
     });
+    const encryptedAccessToken = await this.tokenCipher.encrypt(
+      credentials.accessToken
+    );
+    const encryptedRefreshToken = await this.encryptToken(
+      credentials.refreshToken
+    );
+
     this.sql.exec(
       `INSERT INTO oauth_credentials (
         room_key,
@@ -1139,8 +1174,8 @@ export class PlanningRoomRepository {
         metadata = excluded.metadata,
         updated_at = excluded.updated_at`,
       credentials.roomKey,
-      credentials.accessToken,
-      credentials.refreshToken,
+      encryptedAccessToken,
+      encryptedRefreshToken,
       credentials.tokenType,
       credentials.expiresAt,
       credentials.scope,
@@ -1151,18 +1186,20 @@ export class PlanningRoomRepository {
     );
   }
 
-  updateJiraOAuthTokens(
+  async updateJiraOAuthTokens(
     roomKey: string,
     accessToken: string,
     refreshToken: string | null,
     expiresAt: number
-  ): void {
+  ): Promise<void> {
+    const encryptedAccessToken = await this.tokenCipher.encrypt(accessToken);
+    const encryptedRefreshToken = await this.encryptToken(refreshToken);
     this.sql.exec(
       `UPDATE oauth_credentials
        SET access_token = ?, refresh_token = ?, expires_at = ?, updated_at = ?
        WHERE room_key = ? AND provider = 'jira'`,
-      accessToken,
-      refreshToken,
+      encryptedAccessToken,
+      encryptedRefreshToken,
       expiresAt,
       Date.now(),
       roomKey
@@ -1176,7 +1213,7 @@ export class PlanningRoomRepository {
     );
   }
 
-  getLinearOAuthCredentials(roomKey: string): {
+  async getLinearOAuthCredentials(roomKey: string): Promise<{
     id: number;
     roomKey: string;
     accessToken: string;
@@ -1191,7 +1228,7 @@ export class PlanningRoomRepository {
     authorizedBy: string;
     createdAt: number;
     updatedAt: number;
-  } | null {
+  } | null> {
     const row = this.sql
       .exec<{
         id: number;
@@ -1221,11 +1258,14 @@ export class PlanningRoomRepository {
       estimateField?: string | null;
     }>(row.metadata ?? '{}');
 
+    const accessToken = await this.tokenCipher.decrypt(row.access_token);
+    const refreshToken = await this.decryptToken(row.refresh_token);
+
     return {
       id: row.id,
       roomKey: row.room_key,
-      accessToken: row.access_token,
-      refreshToken: row.refresh_token,
+      accessToken,
+      refreshToken,
       tokenType: row.token_type,
       expiresAt: row.expires_at,
       scope: row.scope,
@@ -1239,7 +1279,7 @@ export class PlanningRoomRepository {
     };
   }
 
-  saveLinearOAuthCredentials(credentials: {
+  async saveLinearOAuthCredentials(credentials: {
     roomKey: string;
     accessToken: string;
     refreshToken: string | null;
@@ -1251,7 +1291,7 @@ export class PlanningRoomRepository {
     linearUserEmail: string | null;
     estimateField: string | null;
     authorizedBy: string;
-  }): void {
+  }): Promise<void> {
     const now = Date.now();
     const metadata = JSON.stringify({
       linearOrganizationId: credentials.linearOrganizationId,
@@ -1259,6 +1299,13 @@ export class PlanningRoomRepository {
       linearUserEmail: credentials.linearUserEmail,
       estimateField: credentials.estimateField,
     });
+    const encryptedAccessToken = await this.tokenCipher.encrypt(
+      credentials.accessToken
+    );
+    const encryptedRefreshToken = await this.encryptToken(
+      credentials.refreshToken
+    );
+
     this.sql.exec(
       `INSERT INTO oauth_credentials (
         room_key,
@@ -1283,8 +1330,8 @@ export class PlanningRoomRepository {
         metadata = excluded.metadata,
         updated_at = excluded.updated_at`,
       credentials.roomKey,
-      credentials.accessToken,
-      credentials.refreshToken,
+      encryptedAccessToken,
+      encryptedRefreshToken,
       credentials.tokenType,
       credentials.expiresAt,
       credentials.scope,
@@ -1295,18 +1342,20 @@ export class PlanningRoomRepository {
     );
   }
 
-  updateLinearOAuthTokens(
+  async updateLinearOAuthTokens(
     roomKey: string,
     accessToken: string,
     refreshToken: string | null,
     expiresAt: number
-  ): void {
+  ): Promise<void> {
+    const encryptedAccessToken = await this.tokenCipher.encrypt(accessToken);
+    const encryptedRefreshToken = await this.encryptToken(refreshToken);
     this.sql.exec(
       `UPDATE oauth_credentials
        SET access_token = ?, refresh_token = ?, expires_at = ?, updated_at = ?
        WHERE room_key = ? AND provider = 'linear'`,
-      accessToken,
-      refreshToken,
+      encryptedAccessToken,
+      encryptedRefreshToken,
       expiresAt,
       Date.now(),
       roomKey
@@ -1320,16 +1369,16 @@ export class PlanningRoomRepository {
     );
   }
 
-  updateLinearEstimateField(
+  async updateLinearEstimateField(
     roomKey: string,
     estimateField: string | null
-  ): void {
-    const existing = this.getLinearOAuthCredentials(roomKey);
+  ): Promise<void> {
+    const existing = await this.getLinearOAuthCredentials(roomKey);
     if (!existing) {
       return;
     }
 
-    this.saveLinearOAuthCredentials({
+    await this.saveLinearOAuthCredentials({
       roomKey: existing.roomKey,
       accessToken: existing.accessToken,
       refreshToken: existing.refreshToken,
@@ -1344,7 +1393,7 @@ export class PlanningRoomRepository {
     });
   }
 
-  getGithubOAuthCredentials(roomKey: string): {
+  async getGithubOAuthCredentials(roomKey: string): Promise<{
     id: number;
     roomKey: string;
     accessToken: string;
@@ -1359,7 +1408,7 @@ export class PlanningRoomRepository {
     authorizedBy: string;
     createdAt: number;
     updatedAt: number;
-  } | null {
+  } | null> {
     const row = this.sql
       .exec<{
         id: number;
@@ -1391,11 +1440,14 @@ export class PlanningRoomRepository {
       defaultRepo?: string | null;
     }>(row.metadata ?? '{}');
 
+    const accessToken = await this.tokenCipher.decrypt(row.access_token);
+    const refreshToken = await this.decryptToken(row.refresh_token);
+
     return {
       id: row.id,
       roomKey: row.room_key,
-      accessToken: row.access_token,
-      refreshToken: row.refresh_token,
+      accessToken,
+      refreshToken,
       tokenType: row.token_type,
       expiresAt: row.expires_at,
       scope: row.scope,
@@ -1409,7 +1461,7 @@ export class PlanningRoomRepository {
     };
   }
 
-  saveGithubOAuthCredentials(credentials: {
+  async saveGithubOAuthCredentials(credentials: {
     roomKey: string;
     accessToken: string;
     refreshToken: string | null;
@@ -1421,7 +1473,7 @@ export class PlanningRoomRepository {
     defaultOwner: string | null;
     defaultRepo: string | null;
     authorizedBy: string;
-  }): void {
+  }): Promise<void> {
     const now = Date.now();
     const metadata = JSON.stringify({
       githubLogin: credentials.githubLogin,
@@ -1429,6 +1481,13 @@ export class PlanningRoomRepository {
       defaultOwner: credentials.defaultOwner,
       defaultRepo: credentials.defaultRepo,
     });
+
+    const encryptedAccessToken = await this.tokenCipher.encrypt(
+      credentials.accessToken
+    );
+    const encryptedRefreshToken = await this.encryptToken(
+      credentials.refreshToken
+    );
 
     this.sql.exec(
       `INSERT INTO oauth_credentials (
@@ -1454,8 +1513,8 @@ export class PlanningRoomRepository {
         metadata = excluded.metadata,
         updated_at = excluded.updated_at`,
       credentials.roomKey,
-      credentials.accessToken,
-      credentials.refreshToken,
+      encryptedAccessToken,
+      encryptedRefreshToken,
       credentials.tokenType,
       credentials.expiresAt,
       credentials.scope,

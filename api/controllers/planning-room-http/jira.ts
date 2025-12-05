@@ -26,7 +26,7 @@ export async function handleJiraSaveCredentials(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  ctx.repository.saveJiraOAuthCredentials({
+  await ctx.repository.saveJiraOAuthCredentials({
     roomKey: roomData.key,
     accessToken: credentials.accessToken,
     refreshToken: credentials.refreshToken,
@@ -78,7 +78,9 @@ export async function handleJiraStatus(
     return createJsonResponse({ error: 'Invalid session' }, 401);
   }
 
-  const credentials = ctx.repository.getJiraOAuthCredentials(roomData.key);
+  const credentials = await ctx.repository.getJiraOAuthCredentials(
+    roomData.key,
+  );
 
   if (!credentials) {
     return createJsonResponse({
@@ -104,7 +106,9 @@ export async function handleJiraCredentials(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  const credentials = ctx.repository.getJiraOAuthCredentials(roomData.key);
+  const credentials = await ctx.repository.getJiraOAuthCredentials(
+    roomData.key,
+  );
 
   if (!credentials) {
     return createJsonResponse({ error: 'Jira not connected' }, 404);
@@ -128,7 +132,7 @@ export async function handleJiraRefresh(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  ctx.repository.updateJiraOAuthTokens(
+  await ctx.repository.updateJiraOAuthTokens(
     roomData.key,
     accessToken,
     refreshToken,
@@ -152,7 +156,7 @@ export async function handleJiraUpdateFields(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  const existing = ctx.repository.getJiraOAuthCredentials(roomData.key);
+  const existing = await ctx.repository.getJiraOAuthCredentials(roomData.key);
 
   if (!existing) {
     return createJsonResponse(
@@ -161,7 +165,7 @@ export async function handleJiraUpdateFields(
     );
   }
 
-  ctx.repository.saveJiraOAuthCredentials({
+  await ctx.repository.saveJiraOAuthCredentials({
     roomKey: roomData.key,
     accessToken: existing.accessToken,
     refreshToken: existing.refreshToken,

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleHttpRequest } from '.';
 import type { PlanningRoomHttpContext } from '.';
 import { createInitialRoomData } from '../../utils/defaults';
-import { hashPasscode } from '../../utils/security';
+import { hashPasscode } from '../../utils/room-cypto';
 import type { RoomData } from '../../types';
 
 type TokenMap = Map<string, string>;
@@ -35,16 +35,16 @@ const makeContext = (options: {
     clearStructuredVotes: vi.fn(),
     setSettings: vi.fn(),
     updateTimerConfig: vi.fn(),
-    saveJiraOAuthCredentials: vi.fn(),
-    getJiraOAuthCredentials: vi.fn().mockReturnValue(null),
-    updateJiraOAuthTokens: vi.fn(),
+    saveJiraOAuthCredentials: vi.fn().mockResolvedValue(undefined),
+    getJiraOAuthCredentials: vi.fn().mockResolvedValue(null),
+    updateJiraOAuthTokens: vi.fn().mockResolvedValue(undefined),
     deleteJiraOAuthCredentials: vi.fn(),
-    saveLinearOAuthCredentials: vi.fn(),
-    getLinearOAuthCredentials: vi.fn().mockReturnValue(null),
-    updateLinearOAuthTokens: vi.fn(),
+    saveLinearOAuthCredentials: vi.fn().mockResolvedValue(undefined),
+    getLinearOAuthCredentials: vi.fn().mockResolvedValue(null),
+    updateLinearOAuthTokens: vi.fn().mockResolvedValue(undefined),
     deleteLinearOAuthCredentials: vi.fn(),
-    saveGithubOAuthCredentials: vi.fn(),
-    getGithubOAuthCredentials: vi.fn().mockReturnValue(null),
+    saveGithubOAuthCredentials: vi.fn().mockResolvedValue(undefined),
+    getGithubOAuthCredentials: vi.fn().mockResolvedValue(null),
     deleteGithubOAuthCredentials: vi.fn(),
   };
 
@@ -248,16 +248,16 @@ describe('planning-room-http permissions and state updates', () => {
       clearStructuredVotes: vi.fn(),
       setSettings: vi.fn(),
       updateTimerConfig: vi.fn(),
-      saveJiraOAuthCredentials: vi.fn(),
-      getJiraOAuthCredentials: vi.fn().mockReturnValue(null),
-      updateJiraOAuthTokens: vi.fn(),
+      saveJiraOAuthCredentials: vi.fn().mockResolvedValue(undefined),
+      getJiraOAuthCredentials: vi.fn().mockResolvedValue(null),
+      updateJiraOAuthTokens: vi.fn().mockResolvedValue(undefined),
       deleteJiraOAuthCredentials: vi.fn(),
-      saveLinearOAuthCredentials: vi.fn(),
-      getLinearOAuthCredentials: vi.fn().mockReturnValue(null),
-      updateLinearOAuthTokens: vi.fn(),
+      saveLinearOAuthCredentials: vi.fn().mockResolvedValue(undefined),
+      getLinearOAuthCredentials: vi.fn().mockResolvedValue(null),
+      updateLinearOAuthTokens: vi.fn().mockResolvedValue(undefined),
       deleteLinearOAuthCredentials: vi.fn(),
-      saveGithubOAuthCredentials: vi.fn(),
-      getGithubOAuthCredentials: vi.fn().mockReturnValue(null),
+      saveGithubOAuthCredentials: vi.fn().mockResolvedValue(undefined),
+      getGithubOAuthCredentials: vi.fn().mockResolvedValue(null),
       deleteGithubOAuthCredentials: vi.fn(),
     };
 
@@ -324,7 +324,7 @@ describe('planning-room-http permissions and state updates', () => {
     const tokens = new Map<string, string>([['alice', 'valid']]);
     const { ctx } = makeContext({ roomData: baseRoom, tokens });
 
-    ctx.repository.getJiraOAuthCredentials = vi.fn().mockReturnValue({
+    ctx.repository.getJiraOAuthCredentials = vi.fn().mockResolvedValue({
       roomKey: baseRoom.key,
       accessToken: 'token',
       refreshToken: null,

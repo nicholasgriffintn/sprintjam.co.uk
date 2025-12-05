@@ -24,7 +24,7 @@ export async function handleGithubSaveCredentials(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  ctx.repository.saveGithubOAuthCredentials({
+  await ctx.repository.saveGithubOAuthCredentials({
     roomKey: roomData.key,
     accessToken: credentials.accessToken,
     refreshToken: credentials.refreshToken ?? null,
@@ -78,7 +78,9 @@ export async function handleGithubStatus(
     return createJsonResponse({ error: 'Invalid session' }, 401);
   }
 
-  const credentials = ctx.repository.getGithubOAuthCredentials(roomData.key);
+  const credentials = await ctx.repository.getGithubOAuthCredentials(
+    roomData.key,
+  );
 
   if (!credentials) {
     return createJsonResponse({ connected: false });
@@ -102,7 +104,9 @@ export async function handleGithubCredentials(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  const credentials = ctx.repository.getGithubOAuthCredentials(roomData.key);
+  const credentials = await ctx.repository.getGithubOAuthCredentials(
+    roomData.key,
+  );
 
   if (!credentials) {
     return createJsonResponse({ error: 'GitHub not connected' }, 404);

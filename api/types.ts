@@ -10,6 +10,7 @@ export interface Env {
   JOIN_RATE_LIMITER: RateLimit;
   PLANNING_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;
+  TOKEN_ENCRYPTION_SECRET: string;
   JIRA_OAUTH_CLIENT_ID?: string;
   JIRA_OAUTH_CLIENT_SECRET?: string;
   JIRA_OAUTH_REDIRECT_URI?: string;

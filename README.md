@@ -83,6 +83,14 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
 3. **Set up environment variables**
    Create a `.dev.vars` file or configure in Cloudflare dashboard:
 
+   **Required:**
+
+   ```env
+   TOKEN_ENCRYPTION_SECRET=super-secret // Used to encrypt and decrypt tokens.
+   ```
+
+   **Optional:**
+
    ```env
    # Optional: Jira OAuth
    JIRA_OAUTH_CLIENT_ID=your-jira-client-id

@@ -10,7 +10,7 @@ import {
   getLinearOrganization,
   getLinearViewer,
 } from '../services/linear-service';
-import { escapeHtml, signState, verifyState } from "../utils/security";
+import { escapeHtml, signState, verifyState } from '../utils/room-cypto';
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {

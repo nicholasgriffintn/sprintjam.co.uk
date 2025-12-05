@@ -5,6 +5,7 @@ import type {
 } from "@cloudflare/workers-types";
 
 import { PlanningRoomRepository } from "./planning-room";
+import { TokenCipher } from "../utils/token-crypto";
 import { MockSqlStorage } from "../../tests/helpers/mock-sql-helper";
 
 describe("PlanningRoomRepository - Ticket Queue", () => {
@@ -22,7 +23,8 @@ describe("PlanningRoomRepository - Ticket Queue", () => {
       ),
     } as unknown as DurableObjectStorage;
 
-    repository = new PlanningRoomRepository(mockStorage);
+    const tokenCipher = new TokenCipher('test-secret');
+    repository = new PlanningRoomRepository(mockStorage, tokenCipher);
     repository.initializeSchema();
   });
 

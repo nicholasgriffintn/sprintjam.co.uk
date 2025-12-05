@@ -51,6 +51,7 @@ import {
   handleStartTimer as handleStartTimerHandler,
 } from "./timer";
 import { readRoomData } from "./room-helpers";
+import { TokenCipher } from "../../utils/token-crypto";
 
 export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
@@ -64,7 +65,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.env = env;
     this.sessions = new Map();
     this.judge = new PlanningPokerJudge();
-    this.repository = new PlanningRoomRepository(this.state.storage);
+    if (!env.TOKEN_ENCRYPTION_SECRET) {
+      throw new Error('TOKEN_ENCRYPTION_SECRET is not configured');
+    }
+    const tokenCipher = new TokenCipher(env.TOKEN_ENCRYPTION_SECRET);
+    this.repository = new PlanningRoomRepository(
+      this.state.storage,
+      tokenCipher,
+    );
 
     this.state.blockConcurrencyWhile(async () => {
       this.repository.initializeSchema();

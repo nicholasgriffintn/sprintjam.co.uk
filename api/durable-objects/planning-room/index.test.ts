@@ -9,7 +9,7 @@ import type {
 
 import { PlanningRoom } from '.';
 import type { Env } from '../../types';
-import { generateSessionToken } from '../../utils/security';
+import { generateSessionToken } from '../../utils/room-cypto';
 import type { RoomData } from '../../types';
 import { createInitialRoomData } from '../../utils/defaults';
 import { MIN_TIMER_DURATION_SECONDS } from '../../constants';
@@ -66,6 +66,7 @@ describe('PlanningRoom WebSocket auth', () => {
       PLANNING_ROOM: {} as DurableObjectNamespace,
       ASSETS: {} as Fetcher,
       JOIN_RATE_LIMITER: {} as RateLimit,
+      TOKEN_ENCRYPTION_SECRET: 'test-secret',
     };
   });
 
@@ -216,6 +217,7 @@ describe('PlanningRoom critical flows', () => {
       PLANNING_ROOM: {} as DurableObjectNamespace,
       ASSETS: {} as Fetcher,
       JOIN_RATE_LIMITER: {} as RateLimit,
+      TOKEN_ENCRYPTION_SECRET: 'test-secret',
     };
     vi.useRealTimers();
   });

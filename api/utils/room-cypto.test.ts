@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { signState, verifyState, escapeHtml } from './security';
+import { signState, verifyState, escapeHtml } from './room-cypto';
 
 describe('Security Utils', () => {
   const secret = 'test-secret';
