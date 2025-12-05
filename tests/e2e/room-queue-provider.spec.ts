@@ -42,11 +42,11 @@ test.describe("Ticket queue provider setup on room creation", () => {
     const jiraTicketKey = "JIRA-101";
     const jiraTicket = {
       key: jiraTicketKey,
-      url: `https://jira.example.com/browse/${jiraTicketKey}`,
-      summary: "Backlog item",
-      description: "Jira ticket pulled via setup modal",
-      status: "To Do",
-      assignee: "QA Bot",
+      url: `https://jira.test.sprintjam.co.uk/browse/${jiraTicketKey}`,
+      summary: 'Backlog item',
+      description: 'Jira ticket pulled via setup modal',
+      status: 'To Do',
+      assignee: 'QA Bot',
       storyPoints: null,
     };
 
@@ -57,11 +57,11 @@ test.describe("Ticket queue provider setup on room creation", () => {
         await ctx.route("**/api/jira/oauth/status?**", (route) => {
           route.fulfill({
             status: 200,
-            contentType: "application/json",
+            contentType: 'application/json',
             body: JSON.stringify({
               connected: true,
-              jiraDomain: "jira.example.com",
-              jiraUserEmail: "qa@example.com",
+              jiraDomain: 'jira.test.sprintjam.co.uk',
+              jiraUserEmail: 'qa@test.sprintjam.co.uk',
             }),
           });
         });
@@ -126,11 +126,11 @@ test.describe("Ticket queue provider setup on room creation", () => {
     const linearIssue = {
       key: linearIssueKey,
       identifier: linearIssueKey,
-      url: `https://linear.example.com/issue/${linearIssueKey}`,
-      summary: "Linear issue to sync",
-      description: "Verify provider setup modal opens and queues issues",
-      status: "Todo",
-      assignee: "QA Bot",
+      url: `https://linear.test.sprintjam.co.uk/issue/${linearIssueKey}`,
+      summary: 'Linear issue to sync',
+      description: 'Verify provider setup modal opens and queues issues',
+      status: 'Todo',
+      assignee: 'QA Bot',
       estimate: null,
     };
 
@@ -141,12 +141,12 @@ test.describe("Ticket queue provider setup on room creation", () => {
         await ctx.route("**/api/linear/oauth/status?**", (route) => {
           route.fulfill({
             status: 200,
-            contentType: "application/json",
+            contentType: 'application/json',
             body: JSON.stringify({
               connected: true,
-              linearOrganizationId: "eng",
-              linearUserEmail: "qa@example.com",
-              estimateField: "storyPoints",
+              linearOrganizationId: 'eng',
+              linearUserEmail: 'qa@test.sprintjam.co.uk',
+              estimateField: 'storyPoints',
             }),
           });
         });

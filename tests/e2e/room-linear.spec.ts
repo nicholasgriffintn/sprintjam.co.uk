@@ -16,18 +16,18 @@ test.describe("SprintJam Linear integration journeys", () => {
     const secondaryIssueKey = "LIN-456";
     const linearOAuthStatus = {
       connected: true,
-      linearOrganizationId: "eng",
-      linearUserEmail: "qa@example.com",
-      estimateField: "storyPoints",
+      linearOrganizationId: 'eng',
+      linearUserEmail: 'qa@test.sprintjam.co.uk',
+      estimateField: 'storyPoints',
     };
     const initialIssue = {
       key: issueKey,
       identifier: issueKey,
-      url: `https://linear.example.com/issue/${issueKey}`,
-      summary: "Demo Linear issue",
-      description: "Ensure planning poker syncs with Linear",
-      status: "In Progress",
-      assignee: "QA Bot",
+      url: `https://linear.test.sprintjam.co.uk/issue/${issueKey}`,
+      summary: 'Demo Linear issue',
+      description: 'Ensure planning poker syncs with Linear',
+      status: 'In Progress',
+      assignee: 'QA Bot',
       estimate: null,
     };
     const secondaryIssue = {

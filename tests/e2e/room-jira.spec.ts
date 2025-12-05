@@ -16,10 +16,10 @@ test.describe("SprintJam Jira integration journeys", () => {
     const secondaryTicketKey = "TEST-456";
     const jiraOAuthStatus = {
       connected: true,
-      jiraDomain: "jira.example.com",
-      jiraUserEmail: "qa@example.com",
-      storyPointsField: "customfield_10016",
-      sprintField: "customfield_10017",
+      jiraDomain: 'jira.test.sprintjam.co.uk',
+      jiraUserEmail: 'qa@test.sprintjam.co.uk',
+      storyPointsField: 'customfield_10016',
+      sprintField: 'customfield_10017',
     };
     const jiraFields = [
       { id: "customfield_10016", name: "Story Points", type: "number" },
@@ -27,18 +27,18 @@ test.describe("SprintJam Jira integration journeys", () => {
     ];
     const initialTicket = {
       key: ticketKey,
-      url: `https://jira.example.com/browse/${ticketKey}`,
-      summary: "Demo integration ticket",
-      description: "Ensure planning poker syncs with Jira",
-      status: "In Progress",
-      assignee: "QA Bot",
+      url: `https://jira.test.sprintjam.co.uk/browse/${ticketKey}`,
+      summary: 'Demo integration ticket',
+      description: 'Ensure planning poker syncs with Jira',
+      status: 'In Progress',
+      assignee: 'QA Bot',
       storyPoints: null,
     };
     const secondaryTicket = {
       ...initialTicket,
       key: secondaryTicketKey,
-      url: `https://jira.example.com/browse/${secondaryTicketKey}`,
-      summary: "Linked ticket",
+      url: `https://jira.test.sprintjam.co.uk/browse/${secondaryTicketKey}`,
+      summary: 'Linked ticket',
     };
     let storyPointsUpdated = false;
 
