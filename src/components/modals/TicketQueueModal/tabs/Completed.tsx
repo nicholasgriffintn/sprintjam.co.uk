@@ -98,10 +98,17 @@ export function TicketQueueModalCompletedTab({
       return;
     }
 
+    const metadataId =
+      typeof (ticket.externalServiceMetadata as { id?: unknown })?.id ===
+      'string'
+        ? (ticket.externalServiceMetadata as { id?: string }).id
+        : undefined;
+    const issueId = ticket.externalServiceId || metadataId || ticket.ticketId;
+
     setSyncing({ id: ticket.id, provider: 'linear' });
     try {
       const updated = await linearSyncMutation.mutateAsync({
-        ticketId: ticket.ticketId,
+        ticketId: issueId,
         estimate,
       });
       if (onUpdateTicket) {

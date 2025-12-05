@@ -89,10 +89,12 @@ describe('linear-service token refresh and queries', () => {
   });
 
   it('propagates GraphQL errors from fetchLinearIssue', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ errors: [{ message: 'API down' }] }), {
-        status: 200,
-      })
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ errors: [{ message: 'API down' }] }), {
+          status: 200,
+        })
+      )
     );
     vi.stubGlobal('fetch', fetchMock);
 
@@ -110,6 +112,40 @@ describe('linear-service token refresh and queries', () => {
 
     await expect(attempt).rejects.toThrow(/API down/);
   });
+
+  it('falls back to identifier lookup when id query returns no issue', async () => {
+    const fetchMock = vi
+      .fn()
+      // ID lookup returns null issue
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { issue: null } }), { status: 200 })
+      )
+      // Identifier lookup returns the issue
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: { issues: { nodes: [issuePayload.data.issue] } },
+          }),
+          { status: 200 }
+        )
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const ticket = await fetchLinearIssue(
+      { ...baseCredentials, refreshToken: null },
+      'LIN-99',
+      vi.fn(),
+      'client',
+      'secret'
+    );
+
+    expect(ticket.key).toBe('LIN-1');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [, fallbackInit] = fetchMock.mock.calls[1];
+    expect(JSON.parse(fallbackInit?.body as string).query).toContain(
+      'IssueByIdentifier'
+    );
+  });
 });
 
 describe('linear-service mutations and lookups', () => {
@@ -118,19 +154,26 @@ describe('linear-service mutations and lookups', () => {
   });
 
   it('rounds estimates when updating and returns merged ticket data', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          data: {
-            issueUpdate: {
-              success: true,
-              issue: issuePayload.data.issue,
-            },
-          },
-        }),
-        { status: 200 }
+    const fetchMock = vi
+      .fn()
+      // Resolve issue before update
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(issuePayload), { status: 200 })
       )
-    );
+      // Mutation call
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              issueUpdate: {
+                success: true,
+                issue: issuePayload.data.issue,
+              },
+            },
+          }),
+          { status: 200 }
+        )
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     const updated = await updateLinearEstimate(
@@ -147,9 +190,10 @@ describe('linear-service mutations and lookups', () => {
     );
 
     expect(updated.storyPoints).toBe(5);
-    const [, init] = fetchMock.mock.calls[0];
-    const parsed = JSON.parse(init?.body as string);
+    const [, mutationInit] = fetchMock.mock.calls[1];
+    const parsed = JSON.parse(mutationInit?.body as string);
     expect(parsed.variables.estimate).toBe(4);
+    expect(parsed.variables.issueId).toBe('iss-1');
   });
 
   it('returns organization info for the viewer', async () => {
@@ -176,5 +220,53 @@ describe('linear-service mutations and lookups', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(getLinearViewer('bad-token')).rejects.toThrow(/401/i);
+  });
+
+  it('resolves identifiers before updating estimates', async () => {
+    const fetchMock = vi
+      .fn()
+      // ID lookup returns null
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { issue: null } }), { status: 200 })
+      )
+      // Identifier lookup returns an issue
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: { issues: { nodes: [issuePayload.data.issue] } },
+          }),
+          { status: 200 }
+        )
+      )
+      // Mutation request
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              issueUpdate: {
+                success: true,
+                issue: issuePayload.data.issue,
+              },
+            },
+          }),
+          { status: 200 }
+        )
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const updated = await updateLinearEstimate(
+      { ...baseCredentials, refreshToken: null },
+      'LIN-42',
+      8,
+      vi.fn(),
+      'client',
+      'secret'
+    );
+
+    expect(updated.key).toBe('LIN-1');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const mutationInit = fetchMock.mock.calls[2]?.[1];
+    const parsed = JSON.parse(mutationInit?.body as string);
+    expect(parsed.variables.issueId).toBe('iss-1');
   });
 });

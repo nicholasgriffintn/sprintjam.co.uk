@@ -1,6 +1,17 @@
 import type { TicketMetadata } from "../../src/types";
 import type { LinearOAuthCredentials } from '../types';
 
+type LinearIssue = {
+  id: string;
+  identifier: string;
+  title: string;
+  description?: string;
+  estimate?: number;
+  url: string;
+  state?: { name: string };
+  assignee?: { name: string };
+};
+
 function getOAuthHeaders(accessToken: string): Headers {
   return new Headers({
     Authorization: `Bearer ${accessToken}`,
@@ -163,6 +174,100 @@ async function executeGraphQL<T>(
   return data.data;
 }
 
+function mapIssueToTicket(issue: LinearIssue): TicketMetadata {
+  return {
+    id: issue.id,
+    key: issue.identifier,
+    summary: issue.title,
+    description: issue.description || '',
+    status: issue.state?.name || 'Unknown',
+    assignee: issue.assignee?.name || null,
+    storyPoints: issue.estimate ?? null,
+    url: issue.url,
+  };
+}
+
+async function fetchIssueById(
+  accessToken: string,
+  issueId: string
+): Promise<LinearIssue | null> {
+  const query = `
+    query GetIssue($issueId: String!) {
+      issue(id: $issueId) {
+        id
+        identifier
+        title
+        description
+        estimate
+        url
+        state {
+          name
+        }
+        assignee {
+          name
+        }
+      }
+    }
+  `;
+
+  try {
+    const data = await executeGraphQL<{
+      issue: LinearIssue | null;
+    }>(accessToken, query, { issueId });
+    return data.issue ?? null;
+  } catch (error) {
+    console.warn(
+      'Linear issue lookup by id failed; will try identifier',
+      error
+    );
+    return null;
+  }
+}
+
+async function fetchIssueByIdentifier(
+  accessToken: string,
+  identifier: string
+): Promise<LinearIssue | null> {
+  const query = `
+    query IssueByIdentifier($identifier: String!) {
+      issues(filter: { identifier: { eq: $identifier } }, first: 1) {
+        nodes {
+          id
+          identifier
+          title
+          description
+          estimate
+          url
+          state {
+            name
+          }
+          assignee {
+            name
+          }
+        }
+      }
+    }
+  `;
+
+  const data = await executeGraphQL<{
+    issues: { nodes: LinearIssue[] };
+  }>(accessToken, query, { identifier });
+
+  return data.issues?.nodes?.[0] ?? null;
+}
+
+async function resolveIssueByIdOrIdentifier(
+  accessToken: string,
+  issueRef: string
+): Promise<LinearIssue | null> {
+  const byId = await fetchIssueById(accessToken, issueRef);
+  if (byId) {
+    return byId;
+  }
+
+  return await fetchIssueByIdentifier(accessToken, issueRef);
+}
+
 export async function fetchLinearIssue(
   credentials: LinearOAuthCredentials,
   issueId: string,
@@ -177,56 +282,14 @@ export async function fetchLinearIssue(
   return executeWithTokenRefresh(
     credentials,
     async (accessToken) => {
-      const query = `
-        query GetIssue($issueId: String!) {
-          issue(id: $issueId) {
-            id
-            identifier
-            title
-            description
-            estimate
-            url
-            state {
-              name
-            }
-            assignee {
-              name
-            }
-          }
-        }
-      `;
+      const issue =
+        (await resolveIssueByIdOrIdentifier(accessToken, issueId)) ?? null;
 
-      const data = await executeGraphQL<{
-        issue: {
-          id: string;
-          identifier: string;
-          title: string;
-          description?: string;
-          estimate?: number;
-          url: string;
-          state: {
-            name: string;
-          };
-          assignee?: {
-            name: string;
-          };
-        };
-      }>(accessToken, query, { issueId });
+      if (!issue) {
+        throw new Error('Linear issue not found. Verify the issue key or id.');
+      }
 
-      const issue = data.issue;
-
-      const ticket: TicketMetadata = {
-        id: issue.id,
-        key: issue.identifier,
-        summary: issue.title,
-        description: issue.description || '',
-        status: issue.state?.name || 'Unknown',
-        assignee: issue.assignee?.name || null,
-        storyPoints: issue.estimate || null,
-        url: issue.url,
-      };
-
-      return ticket;
+      return mapIssueToTicket(issue);
     },
     onTokenRefresh,
     clientId,
@@ -250,6 +313,13 @@ export async function updateLinearEstimate(
     credentials,
     async (accessToken) => {
       const estimateInt = Math.round(estimate);
+
+      const issue =
+        (await resolveIssueByIdOrIdentifier(accessToken, issueId)) ?? null;
+
+      if (!issue) {
+        throw new Error('Linear issue not found. Verify the issue key or id.');
+      }
 
       const mutation = `
         mutation UpdateIssue($issueId: String!, $estimate: Int) {
@@ -279,39 +349,18 @@ export async function updateLinearEstimate(
       const data = await executeGraphQL<{
         issueUpdate: {
           success: boolean;
-          issue: {
-            id: string;
-            identifier: string;
-            title: string;
-            description?: string;
-            estimate?: number;
-            url: string;
-            state: {
-              name: string;
-            };
-            assignee?: {
-              name: string;
-            };
-          };
+          issue: LinearIssue;
         };
-      }>(accessToken, mutation, { issueId, estimate: estimateInt });
+      }>(accessToken, mutation, {
+        issueId: issue.id,
+        estimate: estimateInt,
+      });
 
       if (!data.issueUpdate.success) {
         throw new Error('Failed to update Linear issue estimate');
       }
 
-      const issue = data.issueUpdate.issue;
-
-      return {
-        id: issue.id,
-        key: issue.identifier,
-        summary: issue.title,
-        description: issue.description || '',
-        status: issue.state?.name || 'Unknown',
-        assignee: issue.assignee?.name || null,
-        storyPoints: issue.estimate || null,
-        url: issue.url,
-      };
+      return mapIssueToTicket(data.issueUpdate.issue);
     },
     onTokenRefresh,
     clientId,
