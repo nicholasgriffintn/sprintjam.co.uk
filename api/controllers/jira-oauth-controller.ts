@@ -32,7 +32,7 @@ async function validateSession(
 
   const roomObject = getRoomStub(env, roomKey);
   const response = await roomObject.fetch(
-    new Request('https://dummy/session/validate', {
+    new Request('https://internal/session/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: userName, sessionToken }),
@@ -115,7 +115,9 @@ export async function handleJiraOAuthCallbackController(
 
   if (error) {
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(error)}</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
+        error
+      )}</p><script>window.close();</script></body></html>`,
       { status: 400, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
@@ -263,7 +265,7 @@ export async function handleJiraOAuthCallbackController(
 
     const roomObject = getRoomStub(env, roomKey);
     const saveResponse = await roomObject.fetch(
-      new Request('https://dummy/jira/oauth/save', {
+      new Request('https://internal/jira/oauth/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -298,7 +300,9 @@ export async function handleJiraOAuthCallbackController(
     console.error('OAuth callback error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(message)}</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
+        message
+      )}</p><script>window.close();</script></body></html>`,
       { status: 500, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
@@ -320,7 +324,7 @@ export async function getJiraOAuthStatusController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
-    const statusUrl = new URL('https://dummy/jira/oauth/status');
+    const statusUrl = new URL('https://internal/jira/oauth/status');
     statusUrl.searchParams.set('roomKey', roomKey);
     statusUrl.searchParams.set('userName', userName);
     statusUrl.searchParams.set('sessionToken', sessionToken ?? '');
@@ -375,7 +379,7 @@ export async function revokeJiraOAuthController(
 
     const roomObject = getRoomStub(env, roomKey);
     const response = await roomObject.fetch(
-      new Request('https://dummy/jira/oauth/revoke', {
+      new Request('https://internal/jira/oauth/revoke', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
@@ -388,7 +392,10 @@ export async function revokeJiraOAuthController(
 
     return jsonResponse({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to revoke OAuth credentials';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Failed to revoke OAuth credentials';
     return jsonError(message, 500);
   }
 }
@@ -417,7 +424,7 @@ export async function getJiraFieldsController(
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://dummy/jira/oauth/credentials', {
+      new Request('https://internal/jira/oauth/credentials', {
         method: 'GET',
       }) as unknown as CfRequest
     );
@@ -456,7 +463,7 @@ export async function getJiraFieldsController(
       expiresAt: number
     ) => {
       await roomObject.fetch(
-        new Request('https://dummy/jira/oauth/refresh', {
+        new Request('https://internal/jira/oauth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
@@ -484,7 +491,8 @@ export async function getJiraFieldsController(
       sprintField: credentials.sprintField,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch Jira fields';
+    const message =
+      error instanceof Error ? error.message : 'Failed to fetch Jira fields';
     const isAuth =
       message.toLowerCase().includes('session') ||
       message.toLowerCase().includes('oauth') ||
@@ -530,7 +538,7 @@ export async function updateJiraFieldsController(
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://dummy/jira/oauth/credentials', {
+      new Request('https://internal/jira/oauth/credentials', {
         method: 'GET',
       }) as unknown as CfRequest
     );
@@ -569,7 +577,7 @@ export async function updateJiraFieldsController(
       expiresAt: number
     ) => {
       await roomObject.fetch(
-        new Request('https://dummy/jira/oauth/refresh', {
+        new Request('https://internal/jira/oauth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
@@ -586,7 +594,10 @@ export async function updateJiraFieldsController(
     const validFieldIds = new Set(fields.map((field) => field.id));
 
     if (storyPointsField && !validFieldIds.has(storyPointsField)) {
-      return jsonError('Selected story points field is not available in Jira', 400);
+      return jsonError(
+        'Selected story points field is not available in Jira',
+        400
+      );
     }
 
     if (sprintField && !validFieldIds.has(sprintField)) {
@@ -594,7 +605,7 @@ export async function updateJiraFieldsController(
     }
 
     const updateResponse = await roomObject.fetch(
-      new Request('https://dummy/jira/oauth/fields', {
+      new Request('https://internal/jira/oauth/fields', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storyPointsField, sprintField }),
@@ -607,7 +618,10 @@ export async function updateJiraFieldsController(
 
     return jsonResponse({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to update Jira field configuration';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Failed to update Jira field configuration';
     const isAuth =
       message.toLowerCase().includes('session') ||
       message.toLowerCase().includes('oauth') ||

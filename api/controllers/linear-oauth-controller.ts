@@ -31,7 +31,7 @@ async function validateSession(
 
   const roomObject = getRoomStub(env, roomKey);
   const response = await roomObject.fetch(
-    new Request('https://dummy/session/validate', {
+    new Request('https://internal/session/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: userName, sessionToken }),
@@ -110,7 +110,9 @@ export async function handleLinearOAuthCallbackController(
 
   if (error) {
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(error)}</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
+        error
+      )}</p><script>window.close();</script></body></html>`,
       { status: 400, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
@@ -143,22 +145,19 @@ export async function handleLinearOAuthCallbackController(
     };
     const { roomKey, userName } = stateData;
 
-    const tokenResponse = await fetch(
-      'https://api.linear.app/oauth/token',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: clientId,
-          client_secret: clientSecret,
-          code,
-          redirect_uri: redirectUri,
-        }).toString(),
-      }
-    );
+    const tokenResponse = await fetch('https://api.linear.app/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        redirect_uri: redirectUri,
+      }).toString(),
+    });
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
@@ -197,7 +196,7 @@ export async function handleLinearOAuthCallbackController(
 
     const roomObject = getRoomStub(env, roomKey);
     const saveResponse = await roomObject.fetch(
-      new Request('https://dummy/linear/oauth/save', {
+      new Request('https://internal/linear/oauth/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -230,7 +229,9 @@ export async function handleLinearOAuthCallbackController(
     console.error('OAuth callback error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(message)}</p><script>window.close();</script></body></html>`,
+      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
+        message
+      )}</p><script>window.close();</script></body></html>`,
       { status: 500, headers: { 'Content-Type': 'text/html' } }
     ) as unknown as CfResponse;
   }
@@ -252,7 +253,7 @@ export async function getLinearOAuthStatusController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
-    const statusUrl = new URL('https://dummy/linear/oauth/status');
+    const statusUrl = new URL('https://internal/linear/oauth/status');
     statusUrl.searchParams.set('roomKey', roomKey);
     statusUrl.searchParams.set('userName', userName);
     statusUrl.searchParams.set('sessionToken', sessionToken ?? '');
@@ -306,7 +307,7 @@ export async function revokeLinearOAuthController(
 
     const roomObject = getRoomStub(env, roomKey);
     const response = await roomObject.fetch(
-      new Request('https://dummy/linear/oauth/revoke', {
+      new Request('https://internal/linear/oauth/revoke', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
@@ -319,7 +320,10 @@ export async function revokeLinearOAuthController(
 
     return jsonResponse({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to revoke OAuth credentials';
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Failed to revoke OAuth credentials';
     return jsonError(message, 500);
   }
 }

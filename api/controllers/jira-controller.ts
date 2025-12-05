@@ -30,7 +30,7 @@ async function validateSession(
 
   const roomObject = getRoomStub(env, roomKey);
   const response = await roomObject.fetch(
-    new Request('https://dummy/session/validate', {
+    new Request('https://internal/session/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: userName, sessionToken }),
@@ -74,7 +74,7 @@ export async function getJiraTicketController(
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://dummy/jira/oauth/credentials', {
+      new Request('https://internal/jira/oauth/credentials', {
         method: 'GET',
       }) as unknown as CfRequest
     );
@@ -113,7 +113,7 @@ export async function getJiraTicketController(
       expiresAt: number
     ) => {
       await roomObject.fetch(
-        new Request('https://dummy/jira/oauth/refresh', {
+        new Request('https://internal/jira/oauth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
@@ -177,7 +177,7 @@ export async function updateJiraStoryPointsController(
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://dummy/jira/oauth/credentials', {
+      new Request('https://internal/jira/oauth/credentials', {
         method: 'GET',
       }) as unknown as CfRequest
     );
@@ -216,7 +216,7 @@ export async function updateJiraStoryPointsController(
       expiresAt: number
     ) => {
       await roomObject.fetch(
-        new Request('https://dummy/jira/oauth/refresh', {
+        new Request('https://internal/jira/oauth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),

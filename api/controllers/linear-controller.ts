@@ -30,7 +30,7 @@ async function validateSession(
 
   const roomObject = getRoomStub(env, roomKey);
   const response = await roomObject.fetch(
-    new Request('https://dummy/session/validate', {
+    new Request('https://internal/session/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: userName, sessionToken }),
@@ -74,7 +74,7 @@ export async function getLinearIssueController(
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://dummy/linear/oauth/credentials', {
+      new Request('https://internal/linear/oauth/credentials', {
         method: 'GET',
       }) as unknown as CfRequest
     );
@@ -111,7 +111,7 @@ export async function getLinearIssueController(
       expiresAt: number
     ) => {
       await roomObject.fetch(
-        new Request('https://dummy/linear/oauth/refresh', {
+        new Request('https://internal/linear/oauth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
@@ -175,7 +175,7 @@ export async function updateLinearEstimateController(
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://dummy/linear/oauth/credentials', {
+      new Request('https://internal/linear/oauth/credentials', {
         method: 'GET',
       }) as unknown as CfRequest
     );
@@ -212,7 +212,7 @@ export async function updateLinearEstimateController(
       expiresAt: number
     ) => {
       await roomObject.fetch(
-        new Request('https://dummy/linear/oauth/refresh', {
+        new Request('https://internal/linear/oauth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
