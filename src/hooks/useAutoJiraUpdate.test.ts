@@ -45,6 +45,7 @@ describe('useAutoJiraUpdate', () => {
         key: 'r1',
         users: ['alice'],
         votes: { alice: 5 },
+        judgeScore: 0,
         connectedUsers: {},
         showVotes: true,
         moderator: 'alice',
