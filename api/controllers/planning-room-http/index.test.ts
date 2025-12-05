@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { handleHttpRequest } from './planning-room-http';
-import type { PlanningRoomHttpContext } from './planning-room-http';
-import { createInitialRoomData } from '../utils/defaults';
-import { hashPasscode } from '../utils/security';
-import type { RoomData } from '../types';
+import { handleHttpRequest } from '.';
+import type { PlanningRoomHttpContext } from '.';
+import { createInitialRoomData } from '../../utils/defaults';
+import { hashPasscode } from '../../utils/security';
+import type { RoomData } from '../../types';
 
 type TokenMap = Map<string, string>;
 

@@ -7,12 +7,12 @@ import type {
   WebSocket as CfWebSocket,
 } from '@cloudflare/workers-types';
 
-import { PlanningRoom } from './planning-room';
-import type { Env } from '../types';
-import { generateSessionToken } from '../utils/security';
-import type { RoomData } from '../types';
-import { createInitialRoomData } from '../utils/defaults';
-import { MIN_TIMER_DURATION_SECONDS } from '../constants';
+import { PlanningRoom } from '.';
+import type { Env } from '../../types';
+import { generateSessionToken } from '../../utils/security';
+import type { RoomData } from '../../types';
+import { createInitialRoomData } from '../../utils/defaults';
+import { MIN_TIMER_DURATION_SECONDS } from '../../constants';
 
 const makeState = () => {
   const sqlStub = {

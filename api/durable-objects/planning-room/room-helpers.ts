@@ -1,0 +1,151 @@
+import type { RoomData, TicketQueueItem } from '../../types';
+import type { PlanningRoom } from '.';
+
+export function shouldAnonymizeVotes(roomData: RoomData): boolean {
+  return (
+    roomData.settings.anonymousVotes ||
+    roomData.settings.hideParticipantNames ||
+    false
+  );
+}
+
+export function getQueueWithPrivacy(
+  room: PlanningRoom,
+  roomData: RoomData
+): TicketQueueItem[] {
+  return room.repository.getTicketQueue({
+    anonymizeVotes: shouldAnonymizeVotes(roomData),
+  });
+}
+
+export function resetVotingState(room: PlanningRoom, roomData: RoomData) {
+  roomData.votes = {};
+  roomData.structuredVotes = {};
+  roomData.showVotes = false;
+  roomData.judgeScore = null;
+  roomData.judgeMetadata = undefined;
+
+  room.repository.clearVotes();
+  room.repository.clearStructuredVotes();
+  room.repository.setShowVotes(false);
+  room.repository.setJudgeState(null);
+}
+
+export function logVotesForTicket(
+  room: PlanningRoom,
+  ticket: TicketQueueItem | undefined | null,
+  roomData: RoomData
+) {
+  if (!ticket || Object.keys(roomData.votes).length === 0) {
+    return;
+  }
+
+  Object.entries(roomData.votes).forEach(([user, vote]) => {
+    room.repository.logTicketVote(
+      ticket.id,
+      user,
+      vote,
+      roomData.structuredVotes?.[user]
+    );
+  });
+}
+
+export function promoteNextPendingTicket(
+  room: PlanningRoom,
+  roomData: RoomData,
+  queue?: TicketQueueItem[]
+): TicketQueueItem | null {
+  const workingQueue = queue ?? getQueueWithPrivacy(room, roomData);
+  const pendingTicket = workingQueue.find((t) => t.status === 'pending');
+
+  if (!pendingTicket) {
+    return null;
+  }
+
+  room.repository.updateTicket(pendingTicket.id, { status: 'in_progress' });
+  const refreshed = room.repository.getTicketById(pendingTicket.id, {
+    anonymizeVotes: shouldAnonymizeVotes(roomData),
+  });
+
+  return refreshed ?? null;
+}
+
+function canAutoCreateTicket(roomData: RoomData): boolean {
+  return roomData.settings.externalService === 'none';
+}
+
+export function createAutoTicket(
+  room: PlanningRoom,
+  roomData: RoomData,
+  queue: TicketQueueItem[]
+): TicketQueueItem | null {
+  if (!canAutoCreateTicket(roomData)) {
+    return null;
+  }
+
+  const ticketId = room.repository.getNextTicketId({
+    externalService: roomData.settings.externalService || 'none',
+  });
+
+  if (!ticketId) {
+    return null;
+  }
+
+  const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
+  return room.repository.createTicket({
+    ticketId,
+    status: 'in_progress',
+    ordinal: maxOrdinal + 1,
+    externalService: roomData.settings.externalService || 'none',
+  });
+}
+
+export async function readRoomData(
+  room: PlanningRoom
+): Promise<RoomData | undefined> {
+  const roomData = await room.repository.getRoomData();
+  if (!roomData) {
+    return undefined;
+  }
+
+  if (
+    roomData.currentTicket ||
+    !roomData.settings.enableTicketQueue ||
+    !canAutoCreateTicket(roomData)
+  ) {
+    return roomData;
+  }
+
+  const queue = room.repository.getTicketQueue();
+  const nextTicketId = room.repository.getNextTicketId({
+    externalService: roomData.settings.externalService || 'none',
+  });
+  if (!nextTicketId) {
+    return roomData;
+  }
+
+  const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
+
+  const existingTicket =
+    room.repository.getTicketByTicketKey(nextTicketId) ?? null;
+  const created =
+    existingTicket ??
+    room.repository.createTicket({
+      ticketId: nextTicketId,
+      status: 'in_progress',
+      ordinal: maxOrdinal + 1,
+      externalService: roomData.settings.externalService || 'none',
+    });
+
+  if (created.status !== 'in_progress') {
+    room.repository.updateTicket(created.id, { status: 'in_progress' });
+  }
+
+  room.repository.setCurrentTicket(created.id);
+
+  return {
+    ...roomData,
+    currentTicket: created,
+    ticketQueue: getQueueWithPrivacy(room, roomData),
+  };
+}
