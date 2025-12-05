@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion';
+import { CalendarCheck } from 'lucide-react';
 
 import { PageBackground } from '@/components/layout/PageBackground';
 import { Logo } from '@/components/Logo';
 import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
+
+const LAST_UPDATED = '22nd November 2025';
 
 const TermsConditionsScreen = () => {
   usePageMeta(META_CONFIGS.terms);
@@ -32,6 +35,10 @@ const TermsConditionsScreen = () => {
                 By using SprintJam, you agree to these terms. We keep things
                 simple and focused on providing a great estimation tool.
               </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-200">
+                <CalendarCheck className="h-4 w-4" aria-hidden="true" />
+                Updated {LAST_UPDATED}
+              </div>
             </div>
           </div>
 
@@ -168,7 +175,7 @@ const TermsConditionsScreen = () => {
               </p>
 
               <h3>Effective Date</h3>
-              <p>These terms became effective on 22nd November 2025.</p>
+              <p>These terms became effective on {LAST_UPDATED}.</p>
             </div>
           </div>
           <Footer />

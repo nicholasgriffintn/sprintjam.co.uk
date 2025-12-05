@@ -13,7 +13,7 @@ import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 
-const LAST_UPDATED = '5 December 2025';
+const LAST_UPDATED = '5th December 2025';
 
 const highlightCards = [
   {
