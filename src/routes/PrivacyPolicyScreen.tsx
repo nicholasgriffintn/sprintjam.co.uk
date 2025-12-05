@@ -53,7 +53,7 @@ const serverStorage = [
   {
     label: 'Room state in Durable Objects',
     detail:
-      'Room key, moderators, hashed passcodes, participant metadata, votes, ticket queue, connection diagnostics and similar details about your room.',
+      'Room key, moderators, encrypted passcodes, participant metadata, votes, ticket queue, connection diagnostics and similar details about your room.',
   },
   {
     label: 'Optional Strudel music data',
@@ -71,7 +71,7 @@ const integrationOptions = [
   {
     name: 'Jira, Linear and GitHub (optional)',
     detail:
-      'Moderators can link their external accounts to sync data to and from SprintJam, tokens are only held as long as they are needed and are hashed.',
+      'Moderators can link their external accounts to sync data to and from SprintJam, tokens are only held as long as they are needed and are encrypted.',
   },
   {
     name: 'Strudel music (optional)',
