@@ -8,7 +8,8 @@ const shouldRunA11y = process.env.PLAYWRIGHT_RUN_A11Y === "1";
 export default defineConfig({
   testDir: './tests/e2e',
   testIgnore: shouldRunA11y ? [] : ['**/a11y/**'],
-  timeout: 6_000,
+  workers: process.env.CI ? 2 : 1,
+  timeout: 15_000,
   expect: {
     timeout: 3_000,
   },

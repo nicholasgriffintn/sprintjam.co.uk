@@ -30,12 +30,14 @@ export async function createRoomController(
     ? `${name}-${request.headers.get('cf-connecting-ip') ?? 'unknown'}`
     : request.headers.get('cf-connecting-ip') ?? 'unknown';
 
-  const { success: rateLimitSuccess } = await env.JOIN_RATE_LIMITER.limit({
-    key,
-  });
+  if (env.ENABLE_JOIN_RATE_LIMIT === 'true') {
+    const { success: rateLimitSuccess } = await env.JOIN_RATE_LIMITER.limit({
+      key,
+    });
 
-  if (!rateLimitSuccess) {
-    return jsonError('Rate limit exceeded', 429);
+    if (!rateLimitSuccess) {
+      return jsonError('Rate limit exceeded', 429);
+    }
   }
 
   const roomKey = generateRoomKey();

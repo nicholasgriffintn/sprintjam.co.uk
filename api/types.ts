@@ -6,6 +6,7 @@ import type {
 } from '@cloudflare/workers-types';
 
 export interface Env {
+  ENABLE_JOIN_RATE_LIMIT?: string;
   JOIN_RATE_LIMITER: RateLimit;
   PLANNING_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;

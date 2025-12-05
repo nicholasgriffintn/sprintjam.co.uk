@@ -3,11 +3,12 @@ import { expect, test, type Browser, type BrowserContext, type Page } from "@pla
 import { WelcomePage } from "./pageObjects/welcome-page";
 import { CreateRoomPage } from "./pageObjects/create-room-page";
 import { RoomPage } from "./pageObjects/room-page";
+import { createRoomWithParticipant } from './helpers/room-journeys';
 
 async function createRoomWithProvider(
   browser: Browser,
-  provider: "jira" | "linear",
-  setupRoutes?: (context: BrowserContext) => Promise<void> | void,
+  provider: 'jira' | 'linear',
+  setupRoutes?: (context: BrowserContext) => Promise<void> | void
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -21,8 +22,8 @@ async function createRoomWithProvider(
   await welcome.startCreateRoom();
 
   const createRoom = new CreateRoomPage(page);
-  await createRoom.completeNameStep("Queue Creator");
-  await createRoom.selectAvatar("avatar-option-robot");
+  await createRoom.completeNameStep('Queue Creator');
+  await createRoom.selectAvatar('avatar-option-robot');
   await createRoom.configureRoomDetails({
     enableTicketQueue: true,
     externalService: provider,
@@ -34,6 +35,44 @@ async function createRoomWithProvider(
 
   return { context, page };
 }
+
+test.describe('Modal interactions', () => {
+  test('ticket queue modal is read-only for participants', async ({
+    browser,
+  }) => {
+    const setup = await createRoomWithParticipant(browser, {
+      enableTicketQueue: true,
+    });
+    const { moderatorRoom, participantRoom, cleanup } = setup;
+
+    try {
+      const moderatorPage = moderatorRoom.getPage();
+      await moderatorPage.getByTestId('next-ticket-button').click();
+      await moderatorPage
+        .getByRole('dialog', { name: 'Review before moving on' })
+        .getByTestId('pre-pointing-confirm')
+        .click();
+
+      await moderatorRoom.openQueueModal();
+      await moderatorRoom.expectQueueManageControlsVisible(true);
+      await moderatorRoom.expectQueueCurrentTicketContains('SPRINTJAM');
+      await moderatorRoom
+        .getPage()
+        .getByRole('button', { name: 'Close modal' })
+        .click();
+
+      await participantRoom.openQueueModal();
+      await participantRoom.expectQueueManageControlsVisible(false);
+      await participantRoom.expectQueueCurrentTicketContains('SPRINTJAM');
+      await participantRoom
+        .getPage()
+        .getByRole('button', { name: 'Close modal' })
+        .click();
+    } finally {
+      await cleanup();
+    }
+  });
+});
 
 test.describe("Ticket queue provider setup on room creation", () => {
   test("Jira provider prompts setup modal and allows queueing", async ({
