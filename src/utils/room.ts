@@ -270,6 +270,16 @@ export function applyRoomUpdate(
       };
     }
 
+    case 'codenamesState': {
+      if (!('codenamesState' in message)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        codenamesState: message.codenamesState,
+      };
+    }
+
     default:
       return prev;
   }

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LucideEye } from 'lucide-react';
 
 import { useRoom } from '@/context/RoomContext';
 import { useSession } from '@/context/SessionContext';
@@ -29,6 +30,9 @@ import ShareRoomModal from '@/components/modals/ShareRoomModal';
 import SettingsModal from '@/components/modals/SettingsModal';
 import { UnifiedResults } from '@/components/results/UnifiedResults';
 import type { ConnectionStatusState } from '@/types';
+import { CodenamesGame } from '@/components/easter-eggs/CodenamesGame';
+import { useCodenamesGame } from '@/hooks/useCodenamesGame';
+import { Button } from '@/components/ui/Button';
 
 const RoomScreen = () => {
   usePageMeta(META_CONFIGS.room);
@@ -61,6 +65,7 @@ const RoomScreen = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
+  const [isCodenamesHidden, setIsCodenamesHidden] = useState(false);
 
   if (!roomData || !serverDefaults) {
     return <FallbackLoading />;
@@ -68,6 +73,14 @@ const RoomScreen = () => {
 
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
+  const codenames = useCodenamesGame(roomData, name);
+  const canStartCodenames = isModeratorView && !roomData.codenamesState;
+
+  useEffect(() => {
+    if (!roomData.codenamesState) {
+      setIsCodenamesHidden(false);
+    }
+  }, [roomData.codenamesState]);
 
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
   const queueProvider = roomData.settings.externalService || 'none';
@@ -247,6 +260,18 @@ const RoomScreen = () => {
                 <Footer displayRepoLink={false} />
               </motion.div>
             )}
+            <div className="mt-3 flex items-center justify-center gap-3">
+              {canStartCodenames && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  icon={<LucideEye className="h-4 w-4" />}
+                  onClick={codenames.start}
+                >
+                  Start Codenames
+                </Button>
+              )}
+            </div>
           </AnimatePresence>
         </div>
       </motion.div>
@@ -324,6 +349,34 @@ const RoomScreen = () => {
           }
         }}
       />
+
+      {roomData.codenamesState && !isCodenamesHidden && codenames.state && (
+        <CodenamesGame
+          state={codenames.state}
+          assignments={codenames.assignments}
+          isSpymaster={codenames.isSpymaster}
+          myTeam={codenames.myTeam}
+          isMyTurn={codenames.isMyTurn}
+          canGuess={codenames.canGuess}
+          canGiveClue={codenames.canGiveClue}
+          onReveal={codenames.reveal}
+          onEnd={() => {
+            setIsCodenamesHidden(true);
+            codenames.end();
+          }}
+          onGiveClue={codenames.giveClue}
+          onPass={codenames.pass}
+          onClose={() => setIsCodenamesHidden(true)}
+        />
+      )}
+
+      {roomData.codenamesState && isCodenamesHidden && (
+        <div className="fixed bottom-6.5 right-20 z-40">
+          <Button size="sm" onClick={() => setIsCodenamesHidden(false)}>
+            Reopen Codenames
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

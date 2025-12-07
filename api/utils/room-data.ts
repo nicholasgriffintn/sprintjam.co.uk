@@ -3,8 +3,32 @@ import type {
   StructuredVote,
   VoteValue,
   TicketQueueItem,
+  CodenamesState,
 } from '../types';
 import { applySettingsUpdate } from './room-settings';
+
+export function redactCodenamesState(
+  state?: CodenamesState
+): CodenamesState | undefined {
+  if (!state) {
+    return state;
+  }
+  const { assignments, ...rest } = state;
+  return { ...rest, assignments: undefined };
+}
+
+function redactGameStates(gameStates?: Record<string, unknown>) {
+  if (!gameStates) {
+    return gameStates;
+  }
+  const copy = { ...gameStates };
+  if (copy.codenames) {
+    copy.codenames = redactCodenamesState(
+      copy.codenames as CodenamesState | undefined
+    );
+  }
+  return copy;
+}
 
 export function getAnonymousUserId(
   roomData: RoomData,
@@ -99,8 +123,10 @@ export function assignUserAvatar(
 
 export function sanitizeRoomData(roomData: RoomData): RoomData {
   const { passcodeHash, ...rest } = roomData;
+  const gameStates = redactGameStates(rest.gameStates);
   return {
     ...rest,
+    gameStates,
   };
 }
 

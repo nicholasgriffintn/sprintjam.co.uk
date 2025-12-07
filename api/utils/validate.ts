@@ -99,6 +99,31 @@ export function validateClientMessage(
         return { type: 'configureTimer', config };
       }
       return { error: 'Timer config payload missing' };
+    case 'codenamesStart':
+      return { type: 'codenamesStart' };
+    case 'codenamesReveal':
+      if (typeof data.index === 'number') {
+        return { type: 'codenamesReveal', index: data.index };
+      }
+      return { error: 'Reveal payload invalid' };
+    case 'codenamesClue':
+      if (
+        typeof data.word === 'string' &&
+        data.word.trim().length > 0 &&
+        typeof data.count === 'number' &&
+        data.count >= 0
+      ) {
+        return {
+          type: 'codenamesClue',
+          word: data.word.trim(),
+          count: data.count,
+        };
+      }
+      return { error: 'Clue payload invalid' };
+    case 'codenamesPass':
+      return { type: 'codenamesPass' };
+    case 'codenamesEnd':
+      return { type: 'codenamesEnd' };
     case 'ping':
       return { type: 'ping' };
     default:

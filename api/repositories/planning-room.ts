@@ -13,6 +13,7 @@ import type {
   TicketQueueItem,
   TicketVote,
   VoteValue,
+  CodenamesState,
 } from '../types';
 import { serializeJSON, serializeVote } from '../utils/serialize';
 import { parseJudgeScore, parseVote, safeJsonParse } from '../utils/parse';
@@ -81,7 +82,8 @@ export class PlanningRoomRepository {
           timer_is_paused INTEGER DEFAULT 0,
           timer_target_duration INTEGER DEFAULT 600,
           timer_round_anchor INTEGER DEFAULT 0,
-          timer_auto_reset INTEGER DEFAULT 1
+          timer_auto_reset INTEGER DEFAULT 1,
+          game_states TEXT
         )`
       );
 
@@ -180,6 +182,7 @@ export class PlanningRoomRepository {
         timer_target_duration: number | null;
         timer_round_anchor: number | null;
         timer_auto_reset: number | null;
+        game_states: string | null;
       }>(
         `SELECT
            room_key,
@@ -198,7 +201,8 @@ export class PlanningRoomRepository {
            timer_is_paused,
            timer_target_duration,
            timer_round_anchor,
-           timer_auto_reset
+           timer_auto_reset,
+           game_states
          FROM room_meta
          WHERE id = ${ROOM_ROW_ID}`
       )
@@ -313,6 +317,17 @@ export class PlanningRoomRepository {
         }
       : undefined;
 
+    const parsedGameStates =
+      row.game_states && row.game_states.length > 0
+        ? safeJsonParse<Record<string, unknown>>(row.game_states) ?? undefined
+        : undefined;
+
+    const codenamesState =
+      (parsedGameStates?.codenames as CodenamesState | undefined) ?? undefined;
+    const gameStates =
+      parsedGameStates ??
+      (codenamesState ? { codenames: codenamesState } : undefined);
+
     const roomData: RoomData = {
       key: row.room_key,
       users: userList,
@@ -339,6 +354,8 @@ export class PlanningRoomRepository {
       currentTicket,
       ticketQueue: ticketQueue.length > 0 ? ticketQueue : undefined,
       timerState,
+      gameStates,
+      codenamesState,
     };
 
     return roomData;
@@ -367,8 +384,9 @@ export class PlanningRoomRepository {
           timer_is_paused,
           timer_target_duration,
           timer_round_anchor,
-          timer_auto_reset
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          timer_auto_reset,
+          game_states
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           room_key = excluded.room_key,
           moderator = excluded.moderator,
@@ -386,7 +404,8 @@ export class PlanningRoomRepository {
           timer_is_paused = excluded.timer_is_paused,
           timer_target_duration = excluded.timer_target_duration,
           timer_round_anchor = excluded.timer_round_anchor,
-          timer_auto_reset = excluded.timer_auto_reset`,
+          timer_auto_reset = excluded.timer_auto_reset,
+          game_states = excluded.game_states`,
         ROOM_ROW_ID,
         roomData.key,
         roomData.moderator,
@@ -407,7 +426,13 @@ export class PlanningRoomRepository {
         roomData.timerState?.targetDurationSeconds ??
           DEFAULT_TIMER_DURATION_SECONDS,
         roomData.timerState?.roundAnchorSeconds ?? 0,
-        roomData.timerState?.autoResetOnVotesReset === false ? 0 : 1
+        roomData.timerState?.autoResetOnVotesReset === false ? 0 : 1,
+        serializeJSON(
+          roomData.gameStates ??
+            (roomData.codenamesState
+              ? { codenames: roomData.codenamesState }
+              : undefined)
+        )
       );
 
       sql.exec('DELETE FROM room_users');

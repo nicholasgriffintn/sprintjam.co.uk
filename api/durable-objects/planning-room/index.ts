@@ -50,8 +50,15 @@ import {
   handleResetTimer as handleResetTimerHandler,
   handleStartTimer as handleStartTimerHandler,
 } from "./timer";
-import { readRoomData } from "./room-helpers";
-import { TokenCipher } from "../../utils/token-crypto";
+import {
+  handleStartCodenames as handleStartCodenamesHandler,
+  handleRevealCodenames as handleRevealCodenamesHandler,
+  handleEndCodenames as handleEndCodenamesHandler,
+  handleCodenamesClue as handleCodenamesClueHandler,
+  handleCodenamesPass as handleCodenamesPassHandler,
+} from './games/codenames';
+import { readRoomData } from './room-helpers';
+import { TokenCipher } from '../../utils/token-crypto';
 
 export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
@@ -71,7 +78,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     const tokenCipher = new TokenCipher(env.TOKEN_ENCRYPTION_SECRET);
     this.repository = new PlanningRoomRepository(
       this.state.storage,
-      tokenCipher,
+      tokenCipher
     );
 
     this.state.blockConcurrencyWhile(async () => {
@@ -144,10 +151,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     );
   }
 
-  async handleVote(
-    userName: string,
-    vote: string | number | StructuredVote
-  ) {
+  async handleVote(userName: string, vote: string | number | StructuredVote) {
     return handleVoteHandler(this, userName, vote);
   }
 
@@ -193,10 +197,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     return handleNextTicketHandler(this, userName);
   }
 
-  async handleAddTicket(
-    userName: string,
-    ticket: Partial<TicketQueueItem>
-  ) {
+  async handleAddTicket(userName: string, ticket: Partial<TicketQueueItem>) {
     return handleAddTicketHandler(this, userName, ticket);
   }
 
@@ -237,6 +238,26 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     }
   ) {
     return handleConfigureTimerHandler(this, userName, config);
+  }
+
+  async handleStartCodenames(userName: string) {
+    return handleStartCodenamesHandler(this, userName);
+  }
+
+  async handleCodenamesClue(userName: string, word: string, count: number) {
+    return handleCodenamesClueHandler(this, userName, word, count);
+  }
+
+  async handleCodenamesPass(userName: string) {
+    return handleCodenamesPassHandler(this, userName);
+  }
+
+  async handleRevealCodenames(userName: string, index: number) {
+    return handleRevealCodenamesHandler(this, userName, index);
+  }
+
+  async handleEndCodenames(userName: string) {
+    return handleEndCodenamesHandler(this, userName);
   }
 
   broadcast(message: BroadcastMessage) {

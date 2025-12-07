@@ -50,6 +50,11 @@ export type ClientMessage =
         resetCountdown?: boolean;
       };
     }
+  | { type: 'codenamesStart' }
+  | { type: 'codenamesReveal'; index: number }
+  | { type: 'codenamesClue'; word: string; count: number }
+  | { type: 'codenamesPass' }
+  | { type: 'codenamesEnd' }
   | { type: 'ping' };
 
 export type VoteValue = string | number | null | '?' | 'coffee';
@@ -342,11 +347,35 @@ export interface RoomData {
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
   timerState?: TimerState;
+  gameStates?: Record<string, unknown>;
+  codenamesState?: CodenamesState;
 }
 
 export interface BroadcastMessage {
   type: string;
   [key: string]: unknown;
+}
+
+export type CodenamesTeam = 'red' | 'blue';
+export type CodenamesCardType = CodenamesTeam | 'neutral' | 'assassin';
+
+export interface CodenamesState {
+  board: string[];
+  assignments?: CodenamesCardType[];
+  revealed: boolean[];
+  activeTeam: CodenamesTeam;
+  startingTeam: CodenamesTeam;
+  remaining: { red: number; blue: number };
+  winner?: CodenamesTeam | 'assassin';
+  version: number;
+  startedBy: string;
+  startedAt: number;
+  teams: { red: string[]; blue: string[] };
+  spymasters: Record<string, CodenamesTeam>;
+  clueWord?: string | null;
+  clueCount?: number | null;
+  guessesRemaining?: number | null;
+  guessesTaken?: number;
 }
 
 export interface SessionInfo {

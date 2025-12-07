@@ -230,6 +230,7 @@ export function connectToRoom(
           case 'timerPaused':
           case 'timerReset':
           case 'timerUpdated':
+          case 'codenamesState':
             triggerEventListeners(data.type, data);
             break;
 
@@ -608,50 +609,50 @@ export function deleteTicket(ticketId: number): void {
 
 export function completeTicket(outcome?: string): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "completeTicket",
+      type: 'completeTicket',
       outcome,
-    }),
+    })
   );
 }
 
 export function startTimer(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "startTimer",
-    }),
+      type: 'startTimer',
+    })
   );
 }
 
 export function pauseTimer(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "pauseTimer",
-    }),
+      type: 'pauseTimer',
+    })
   );
 }
 
 export function resetTimer(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: "resetTimer",
-    }),
+      type: 'resetTimer',
+    })
   );
 }
 
@@ -661,13 +662,71 @@ export function configureTimer(config: {
   resetCountdown?: boolean;
 }): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
+    throw new Error('Not connected to room');
   }
 
   activeSocket.send(
     JSON.stringify({
       type: 'configureTimer',
       config,
+    })
+  );
+}
+
+export function startCodenames(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+  activeSocket.send(
+    JSON.stringify({
+      type: 'codenamesStart',
+    })
+  );
+}
+
+export function revealCodenames(index: number): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+  activeSocket.send(
+    JSON.stringify({
+      type: 'codenamesReveal',
+      index,
+    })
+  );
+}
+
+export function endCodenames(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+  activeSocket.send(
+    JSON.stringify({
+      type: 'codenamesEnd',
+    })
+  );
+}
+
+export function sendCodenamesClue(word: string, count: number): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+  activeSocket.send(
+    JSON.stringify({
+      type: 'codenamesClue',
+      word,
+      count,
+    })
+  );
+}
+
+export function passCodenames(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error('Not connected to room');
+  }
+  activeSocket.send(
+    JSON.stringify({
+      type: 'codenamesPass',
     })
   );
 }

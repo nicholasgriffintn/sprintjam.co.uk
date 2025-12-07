@@ -73,6 +73,18 @@ export async function handleSession(
         roomData: anonymizeRoomData(roomData),
       })
     );
+    if (
+      roomData.codenamesState?.assignments &&
+      roomData.codenamesState.spymasters[canonicalUserName]
+    ) {
+      webSocket.send(
+        JSON.stringify({
+          type: 'codenamesState',
+          codenamesState: roomData.codenamesState,
+          spymasterView: true,
+        })
+      );
+    }
   } else {
     webSocket.send(
       JSON.stringify({
@@ -159,6 +171,25 @@ export async function handleSession(
           break;
         case 'configureTimer':
           await room.handleConfigureTimer(canonicalUserName, validated.config);
+          break;
+        case 'codenamesStart':
+          await room.handleStartCodenames(canonicalUserName);
+          break;
+        case 'codenamesReveal':
+          await room.handleRevealCodenames(canonicalUserName, validated.index);
+          break;
+        case 'codenamesClue':
+          await room.handleCodenamesClue(
+            canonicalUserName,
+            validated.word,
+            validated.count
+          );
+          break;
+        case 'codenamesPass':
+          await room.handleCodenamesPass(canonicalUserName);
+          break;
+        case 'codenamesEnd':
+          await room.handleEndCodenames(canonicalUserName);
           break;
       }
     } catch (err: unknown) {
