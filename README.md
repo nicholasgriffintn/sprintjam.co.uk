@@ -89,6 +89,8 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    TOKEN_ENCRYPTION_SECRET=super-secret // Used to encrypt and decrypt tokens.
    ```
 
+   NOTE: If this token is not set, an insecure default will be used, which is not recommended for production.
+
    **Optional:**
 
    ```env
