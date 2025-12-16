@@ -2,7 +2,7 @@ import type { PasscodeHashPayload } from '../types';
 
 const encoder = new TextEncoder();
 
-export const PASSCODE_PBKDF2_ITERATIONS = 600_000;
+export const PASSCODE_PBKDF2_ITERATIONS = 100_000;
 const PASSCODE_SALT_BYTES = 16;
 export const PASSCODE_MIN_LENGTH = 4;
 export const PASSCODE_MAX_LENGTH = 128;
