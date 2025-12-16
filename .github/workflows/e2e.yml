@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  CI: true
+  TOKEN_ENCRYPTION_SECRET: ${{ secrets.TOKEN_ENCRYPTION_SECRET }}
+
 jobs:
   tests:
     name: Run E2E suite
