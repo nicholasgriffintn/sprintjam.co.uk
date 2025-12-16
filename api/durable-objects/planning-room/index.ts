@@ -65,13 +65,12 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     this.env = env;
     this.sessions = new Map();
     this.judge = new PlanningPokerJudge();
-    if (!env.TOKEN_ENCRYPTION_SECRET) {
-      throw new Error('TOKEN_ENCRYPTION_SECRET is not configured');
-    }
+
     const tokenCipher = new TokenCipher(env.TOKEN_ENCRYPTION_SECRET);
+
     this.repository = new PlanningRoomRepository(
       this.state.storage,
-      tokenCipher,
+      tokenCipher
     );
 
     this.state.blockConcurrencyWhile(async () => {

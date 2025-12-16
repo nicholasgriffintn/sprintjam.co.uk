@@ -24,10 +24,15 @@ export class TokenCipher {
   private readonly secret: string;
 
   constructor(secret: string) {
-    if (!secret || !secret.trim()) {
-      throw new Error('Token encryption secret is required');
+    const secretValue = secret?.trim();
+    if (!secretValue) {
+      console.warn(
+        'TOKEN_ENCRYPTION_SECRET is empty, falling back to insecure cipher.'
+      );
+      this.secret = 'insecure-default-secret';
+      return;
     }
-    this.secret = secret.trim();
+    this.secret = secretValue;
   }
 
   private async deriveKey(salt: Uint8Array): Promise<CryptoKey> {
