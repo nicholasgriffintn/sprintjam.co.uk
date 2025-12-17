@@ -277,6 +277,10 @@ export interface TicketVote {
   votedAt: number;
 }
 
+export type TicketQueueWithVotes = TicketQueueItem & {
+  votes?: TicketVote[];
+};
+
 export interface TimerState {
   running: boolean;
   seconds: number;
@@ -309,8 +313,8 @@ export interface RoomData {
   currentStrudelGenerationId?: string;
   strudelPhase?: string;
   strudelIsPlaying?: boolean;
-  currentTicket?: TicketQueueItem;
-  ticketQueue?: TicketQueueItem[];
+  currentTicket?: TicketQueueWithVotes;
+  ticketQueue?: TicketQueueWithVotes[];
   timerState?: TimerState;
 }
 

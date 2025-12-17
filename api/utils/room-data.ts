@@ -1,5 +1,9 @@
-import type { RoomData, StructuredVote, VoteValue } from '../types';
-import { TicketQueueItem } from '../db/types';
+import type {
+  RoomData,
+  StructuredVote,
+  TicketQueueWithVotes,
+  VoteValue,
+} from '../types';
 import { applySettingsUpdate } from "./room-settings";
 
 export function getAnonymousUserId(
@@ -127,7 +131,7 @@ export const remapStructuredVotes = (
 
 export const remapTicketVotes = (
   idMap: Map<string, string>,
-  ticket?: TicketQueueItem,
+  ticket?: TicketQueueWithVotes,
 ) => {
   if (!ticket?.votes) return ticket;
   return {
@@ -154,7 +158,7 @@ export function anonymizeRoomData(roomData: RoomData): RoomData {
 
   const ticketQueue = roomData.ticketQueue
     ?.map((t) => remapTicketVotes(idMap, t))
-    .filter((t): t is TicketQueueItem => t !== undefined);
+    .filter((t): t is TicketQueueWithVotes => t !== undefined);
 
   return sanitizeRoomData({
     ...roomData,

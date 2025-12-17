@@ -1,5 +1,4 @@
-import type { RoomData } from '../../types';
-import { TicketQueueItem } from '../../db/types';
+import type { RoomData, TicketQueueWithVotes } from '../../types';
 import type { PlanningRoom } from '.';
 
 export function shouldAnonymizeVotes(roomData: RoomData): boolean {
@@ -13,7 +12,7 @@ export function shouldAnonymizeVotes(roomData: RoomData): boolean {
 export function getQueueWithPrivacy(
   room: PlanningRoom,
   roomData: RoomData
-): TicketQueueItem[] {
+): TicketQueueWithVotes[] {
   return room.repository.getTicketQueue({
     anonymizeVotes: shouldAnonymizeVotes(roomData),
   });
@@ -34,7 +33,7 @@ export function resetVotingState(room: PlanningRoom, roomData: RoomData) {
 
 export function logVotesForTicket(
   room: PlanningRoom,
-  ticket: TicketQueueItem | undefined | null,
+  ticket: TicketQueueWithVotes | undefined | null,
   roomData: RoomData
 ) {
   if (!ticket || Object.keys(roomData.votes).length === 0) {
@@ -54,8 +53,8 @@ export function logVotesForTicket(
 export function promoteNextPendingTicket(
   room: PlanningRoom,
   roomData: RoomData,
-  queue?: TicketQueueItem[]
-): TicketQueueItem | null {
+  queue?: TicketQueueWithVotes[]
+): TicketQueueWithVotes | null {
   const workingQueue = queue ?? getQueueWithPrivacy(room, roomData);
   const pendingTicket = workingQueue.find((t) => t.status === 'pending');
 
@@ -78,8 +77,8 @@ function canAutoCreateTicket(roomData: RoomData): boolean {
 export function createAutoTicket(
   room: PlanningRoom,
   roomData: RoomData,
-  queue: TicketQueueItem[]
-): TicketQueueItem | null {
+  queue: TicketQueueWithVotes[]
+): TicketQueueWithVotes | null {
   if (!canAutoCreateTicket(roomData)) {
     return null;
   }

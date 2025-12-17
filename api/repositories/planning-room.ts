@@ -14,7 +14,13 @@ import {
   ticketVotes,
   oauthCredentials,
 } from '../db/schemas';
-import type { DB, InsertRoomMetaItem, TicketQueueItem } from '../db/types';
+import type {
+  DB,
+  InsertRoomMetaItem,
+  TicketCreateInput,
+  TicketQueueItem,
+} from '../db/types';
+import type { TicketQueueWithVotes } from '../types';
 import type {
   JudgeMetadata,
   PasscodeHashPayload,
@@ -26,15 +32,13 @@ import type {
 } from '../types';
 import { serializeJSON, serializeVote } from '../utils/serialize';
 import { parseJudgeScore, parseVote, safeJsonParse } from '../utils/parse';
-import { DEFAULT_TIMER_DURATION_SECONDS } from '../constants';
+import { DEFAULT_TIMER_DURATION_SECONDS, ROOM_ROW_ID } from '../constants';
 import {
   SESSION_TOKEN_TTL_MS,
   parsePasscodeHash,
   serializePasscodeHash,
 } from '../utils/room-cypto';
 import { TokenCipher } from '../utils/token-crypto';
-
-const ROOM_ROW_ID = 1;
 
 export class PlanningRoomRepository {
   private readonly db: DB;
@@ -603,7 +607,7 @@ export class PlanningRoomRepository {
   getTicketById(
     id: number,
     options?: { anonymizeVotes?: boolean }
-  ): TicketQueueItem | undefined {
+  ): TicketQueueWithVotes | undefined {
     const row = this.db
       .select()
       .from(ticketQueue)
@@ -635,7 +639,9 @@ export class PlanningRoomRepository {
     } as unknown as TicketQueueItem;
   }
 
-  getTicketQueue(options?: { anonymizeVotes?: boolean }): TicketQueueItem[] {
+  getTicketQueue(options?: {
+    anonymizeVotes?: boolean;
+  }): TicketQueueWithVotes[] {
     const rows = this.db
       .select()
       .from(ticketQueue)
@@ -692,9 +698,7 @@ export class PlanningRoomRepository {
     });
   }
 
-  createTicket(
-    ticket: Omit<TicketQueueItem, 'id' | 'createdAt' | 'votes'>
-  ): TicketQueueItem {
+  createTicket(ticket: TicketCreateInput): TicketQueueWithVotes {
     const [inserted] = this.db
       .insert(ticketQueue)
       .values({
@@ -706,9 +710,11 @@ export class PlanningRoomRepository {
         createdAt: Date.now(),
         completedAt: ticket.completedAt ?? null,
         ordinal: ticket.ordinal,
-        externalService: ticket.externalService,
+        externalService: ticket.externalService ?? 'none',
         externalServiceId: ticket.externalServiceId ?? null,
-        externalServiceMetadata: serializeJSON(ticket.externalServiceMetadata),
+        externalServiceMetadata: serializeJSON(
+          ticket.externalServiceMetadata ?? null
+        ),
       })
       .returning({ id: ticketQueue.id })
       .all();
@@ -726,7 +732,7 @@ export class PlanningRoomRepository {
 
   updateTicket(
     id: number,
-    updates: Partial<Omit<TicketQueueItem, 'id' | 'createdAt' | 'votes'>>
+    updates: Partial<Omit<TicketQueueWithVotes, 'id' | 'createdAt' | 'votes'>>
   ): void {
     const payload: Partial<typeof ticketQueue.$inferInsert> = {};
 
@@ -789,7 +795,7 @@ export class PlanningRoomRepository {
   getTicketByTicketKey(
     ticketKey: string,
     options?: { anonymizeVotes?: boolean }
-  ): TicketQueueItem | undefined {
+  ): TicketQueueWithVotes | undefined {
     const row = this.db
       .select({ id: ticketQueue.id })
       .from(ticketQueue)

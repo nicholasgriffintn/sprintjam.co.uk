@@ -29,6 +29,13 @@ export type InsertSessionTokensItem = typeof sessionTokens.$inferInsert;
 
 export type TicketQueueItem = typeof ticketQueue.$inferSelect;
 export type InsertTicketQueueItem = typeof ticketQueue.$inferInsert;
+export type TicketCreateInput = Omit<
+  InsertTicketQueueItem,
+  'id' | 'createdAt'
+> & {
+  createdAt?: number;
+  externalServiceMetadata?: Record<string, unknown> | string | null;
+};
 
 export type TicketVotesItem = typeof ticketVotes.$inferSelect;
 export type InsertTicketVotesItem = typeof ticketVotes.$inferInsert;

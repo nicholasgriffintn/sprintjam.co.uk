@@ -1,4 +1,4 @@
-import type { TicketQueueItem } from '../../db/types';
+import type { TicketQueueWithVotes } from '../../types';
 import type { PlanningRoom } from '.';
 import {
   createAutoTicket,
@@ -39,7 +39,7 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
     });
   }
 
-  let nextTicket: TicketQueueItem | null = promoteNextPendingTicket(
+  let nextTicket: TicketQueueWithVotes | null = promoteNextPendingTicket(
     room,
     roomData,
     queue
@@ -65,7 +65,7 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
 export async function handleAddTicket(
   room: PlanningRoom,
   userName: string,
-  ticket: Partial<TicketQueueItem>
+  ticket: Partial<TicketQueueWithVotes>
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -106,13 +106,13 @@ export async function handleAddTicket(
 
     const newTicket = room.repository.createTicket({
       ticketId,
-      title: ticket.title,
-      description: ticket.description,
+      title: ticket.title ?? null,
+      description: ticket.description ?? null,
       status: ticket.status || 'pending',
       ordinal: ticket.ordinal ?? maxOrdinal + 1,
       externalService: externalServiceForTicket,
-      externalServiceId: ticket.externalServiceId,
-      externalServiceMetadata: ticket.externalServiceMetadata,
+      externalServiceId: ticket.externalServiceId ?? null,
+      externalServiceMetadata: ticket.externalServiceMetadata ?? null,
     });
 
     if (newTicket) {
@@ -133,7 +133,7 @@ export async function handleUpdateTicket(
   room: PlanningRoom,
   userName: string,
   ticketId: number,
-  updates: Partial<TicketQueueItem>
+  updates: Partial<TicketQueueWithVotes>
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
