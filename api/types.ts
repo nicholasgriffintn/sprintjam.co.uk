@@ -5,6 +5,8 @@ import type {
   RateLimit,
 } from "@cloudflare/workers-types";
 
+import { TicketQueueItem, OauthCredentialsItem } from './db/types';
+
 export interface Env {
   ENABLE_JOIN_RATE_LIMIT?: string;
   JOIN_RATE_LIMITER: RateLimit;
@@ -194,23 +196,27 @@ export interface JiraTicket {
   url?: string;
 }
 
-export interface JiraOAuthCredentials {
-  id: number;
-  roomKey: string;
-  accessToken: string;
-  refreshToken: string | null;
-  tokenType: string;
-  expiresAt: number;
-  scope: string | null;
+type BaseOAuthCredentials = Pick<
+  OauthCredentialsItem,
+  | "id"
+  | "roomKey"
+  | "accessToken"
+  | "refreshToken"
+  | "tokenType"
+  | "expiresAt"
+  | "scope"
+  | "authorizedBy"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+export interface JiraOAuthCredentials extends BaseOAuthCredentials {
   jiraDomain: string;
   jiraCloudId: string | null;
   jiraUserId: string | null;
   jiraUserEmail: string | null;
   storyPointsField: string | null;
   sprintField: string | null;
-  authorizedBy: string;
-  createdAt: number;
-  updatedAt: number;
 }
 
 export interface GithubIssue {
@@ -227,21 +233,11 @@ export interface GithubIssue {
   labels?: string[];
 }
 
-export interface GithubOAuthCredentials {
-  id: number;
-  roomKey: string;
-  accessToken: string;
-  refreshToken: string | null;
-  tokenType: string;
-  expiresAt: number;
-  scope: string | null;
+export interface GithubOAuthCredentials extends BaseOAuthCredentials {
   githubLogin: string | null;
   githubUserEmail: string | null;
   defaultOwner: string | null;
   defaultRepo: string | null;
-  authorizedBy: string;
-  createdAt: number;
-  updatedAt: number;
 }
 
 export interface JiraFieldDefinition {
@@ -255,21 +251,11 @@ export interface JiraFieldDefinition {
   };
 }
 
-export interface LinearOAuthCredentials {
-  id: number;
-  roomKey: string;
-  accessToken: string;
-  refreshToken: string | null;
-  tokenType: string;
-  expiresAt: number;
-  scope: string | null;
+export interface LinearOAuthCredentials extends BaseOAuthCredentials {
   linearOrganizationId: string | null;
   linearUserId: string | null;
   linearUserEmail: string | null;
   estimateField: string | null;
-  authorizedBy: string;
-  createdAt: number;
-  updatedAt: number;
 }
 
 export interface LinearIssue {
@@ -291,21 +277,9 @@ export interface TicketVote {
   votedAt: number;
 }
 
-export interface TicketQueueItem {
-  id: number;
-  ticketId: string;
-  title?: string;
-  description?: string;
-  status: "pending" | "in_progress" | "completed" | "blocked";
-  outcome?: string;
-  createdAt: number;
-  completedAt?: number;
-  ordinal: number;
-  externalService: "jira" | "linear" | "github" | "none";
-  externalServiceId?: string;
-  externalServiceMetadata?: Record<string, unknown>;
+export type TicketQueueWithVotes = TicketQueueItem & {
   votes?: TicketVote[];
-}
+};
 
 export interface TimerState {
   running: boolean;
@@ -339,8 +313,8 @@ export interface RoomData {
   currentStrudelGenerationId?: string;
   strudelPhase?: string;
   strudelIsPlaying?: boolean;
-  currentTicket?: TicketQueueItem;
-  ticketQueue?: TicketQueueItem[];
+  currentTicket?: TicketQueueWithVotes;
+  ticketQueue?: TicketQueueWithVotes[];
   timerState?: TimerState;
 }
 

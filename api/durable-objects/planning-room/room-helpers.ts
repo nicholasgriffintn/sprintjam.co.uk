@@ -1,5 +1,5 @@
-import type { RoomData, TicketQueueItem } from "../../types";
-import type { PlanningRoom } from ".";
+import type { RoomData, TicketQueueWithVotes } from '../../types';
+import type { PlanningRoom } from '.';
 
 export function shouldAnonymizeVotes(roomData: RoomData): boolean {
   return (
@@ -11,8 +11,8 @@ export function shouldAnonymizeVotes(roomData: RoomData): boolean {
 
 export function getQueueWithPrivacy(
   room: PlanningRoom,
-  roomData: RoomData,
-): TicketQueueItem[] {
+  roomData: RoomData
+): TicketQueueWithVotes[] {
   return room.repository.getTicketQueue({
     anonymizeVotes: shouldAnonymizeVotes(roomData),
   });
@@ -33,8 +33,8 @@ export function resetVotingState(room: PlanningRoom, roomData: RoomData) {
 
 export function logVotesForTicket(
   room: PlanningRoom,
-  ticket: TicketQueueItem | undefined | null,
-  roomData: RoomData,
+  ticket: TicketQueueWithVotes | undefined | null,
+  roomData: RoomData
 ) {
   if (!ticket || Object.keys(roomData.votes).length === 0) {
     return;
@@ -45,7 +45,7 @@ export function logVotesForTicket(
       ticket.id,
       user,
       vote,
-      roomData.structuredVotes?.[user],
+      roomData.structuredVotes?.[user]
     );
   });
 }
@@ -53,16 +53,16 @@ export function logVotesForTicket(
 export function promoteNextPendingTicket(
   room: PlanningRoom,
   roomData: RoomData,
-  queue?: TicketQueueItem[],
-): TicketQueueItem | null {
+  queue?: TicketQueueWithVotes[]
+): TicketQueueWithVotes | null {
   const workingQueue = queue ?? getQueueWithPrivacy(room, roomData);
-  const pendingTicket = workingQueue.find((t) => t.status === "pending");
+  const pendingTicket = workingQueue.find((t) => t.status === 'pending');
 
   if (!pendingTicket) {
     return null;
   }
 
-  room.repository.updateTicket(pendingTicket.id, { status: "in_progress" });
+  room.repository.updateTicket(pendingTicket.id, { status: 'in_progress' });
   const refreshed = room.repository.getTicketById(pendingTicket.id, {
     anonymizeVotes: shouldAnonymizeVotes(roomData),
   });
@@ -71,20 +71,20 @@ export function promoteNextPendingTicket(
 }
 
 function canAutoCreateTicket(roomData: RoomData): boolean {
-  return roomData.settings.externalService === "none";
+  return roomData.settings.externalService === 'none';
 }
 
 export function createAutoTicket(
   room: PlanningRoom,
   roomData: RoomData,
-  queue: TicketQueueItem[],
-): TicketQueueItem | null {
+  queue: TicketQueueWithVotes[]
+): TicketQueueWithVotes | null {
   if (!canAutoCreateTicket(roomData)) {
     return null;
   }
 
   const ticketId = room.repository.getNextTicketId({
-    externalService: roomData.settings.externalService || "none",
+    externalService: roomData.settings.externalService || 'none',
   });
 
   if (!ticketId) {
@@ -94,14 +94,14 @@ export function createAutoTicket(
   const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
   return room.repository.createTicket({
     ticketId,
-    status: "in_progress",
+    status: 'in_progress',
     ordinal: maxOrdinal + 1,
-    externalService: roomData.settings.externalService || "none",
+    externalService: roomData.settings.externalService || 'none',
   });
 }
 
 export async function readRoomData(
-  room: PlanningRoom,
+  room: PlanningRoom
 ): Promise<RoomData | undefined> {
   const roomData = await room.repository.getRoomData();
   if (!roomData) {
@@ -118,7 +118,7 @@ export async function readRoomData(
 
   const queue = room.repository.getTicketQueue();
   const nextTicketId = room.repository.getNextTicketId({
-    externalService: roomData.settings.externalService || "none",
+    externalService: roomData.settings.externalService || 'none',
   });
   if (!nextTicketId) {
     return roomData;
@@ -132,13 +132,13 @@ export async function readRoomData(
     existingTicket ??
     room.repository.createTicket({
       ticketId: nextTicketId,
-      status: "in_progress",
+      status: 'in_progress',
       ordinal: maxOrdinal + 1,
-      externalService: roomData.settings.externalService || "none",
+      externalService: roomData.settings.externalService || 'none',
     });
 
-  if (created.status !== "in_progress") {
-    room.repository.updateTicket(created.id, { status: "in_progress" });
+  if (created.status !== 'in_progress') {
+    room.repository.updateTicket(created.id, { status: 'in_progress' });
   }
 
   room.repository.setCurrentTicket(created.id);

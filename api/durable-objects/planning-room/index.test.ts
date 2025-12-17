@@ -202,7 +202,7 @@ describe("PlanningRoom WebSocket auth", () => {
     } as any;
 
     const callsBefore = blockSpy.mock.calls.length;
-    const data = await room.getRoomData({ skipConcurrencyBlock: true });
+    const data = await room.getRoomData();
 
     expect(data?.key).toBe("r1");
     expect(blockSpy.mock.calls.length).toBe(callsBefore);
