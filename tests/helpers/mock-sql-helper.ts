@@ -2,11 +2,36 @@ export class MockSqlStorage {
   private tables: Map<string, any[]> = new Map();
   private autoIncrements: Map<string, number> = new Map();
 
-  exec<T = any>(query: string, ...params: unknown[]): { toArray: () => T[] } {
+  exec<T = any>(query: string, ...params: unknown[]): {
+    toArray: () => T[];
+    raw: () => { toArray: () => unknown[][] };
+    next: () => { value: T | undefined; done: boolean };
+  } {
     const upperQuery = query.trim().toUpperCase();
+    const normalized = upperQuery.replace(/["`]/g, "");
+    const cursor = (rows: T[] = [] as T[]) => {
+      let index = 0;
+      return {
+        toArray: () => rows,
+        raw: () => ({
+          toArray: () =>
+            rows.map((row: any) =>
+              Array.isArray(row) ? row : Object.values(row),
+            ),
+        }),
+        next: () => {
+          if (index < rows.length) {
+            return { value: rows[index++], done: false };
+          }
+          return { value: undefined, done: true };
+        },
+      };
+    };
 
-    if (upperQuery.startsWith("CREATE TABLE")) {
-      const match = query.match(/CREATE TABLE (?:IF NOT EXISTS )?(\w+)/i);
+    if (normalized.startsWith("CREATE TABLE")) {
+      const match = query.match(
+        /CREATE TABLE (?:IF NOT EXISTS )?[`"]?(\w+)[`"]?/i,
+      );
       if (match) {
         const tableName = match[1];
         if (!this.tables.has(tableName)) {
@@ -14,23 +39,36 @@ export class MockSqlStorage {
           this.autoIncrements.set(tableName, 1);
         }
       }
-      return { toArray: () => [] };
+      return cursor();
     }
 
-    if (upperQuery.includes("SELECT") && upperQuery.includes("TICKET_VOTES")) {
+    if (normalized.startsWith("CREATE INDEX") || normalized.startsWith("CREATE UNIQUE INDEX")) {
+      return cursor();
+    }
+
+    if (normalized.includes("SELECT") && normalized.includes("TICKET_VOTES")) {
       const ticketQueueId = params[0];
       const votes = (this.tables.get("ticket_votes") || []).filter(
         (v: any) => v.ticket_queue_id === ticketQueueId,
       );
-      return {
-        toArray: () =>
-          votes.sort((a: any, b: any) => (a.voted_at || 0) - (b.voted_at || 0)),
-      };
+      const ordered = votes.sort(
+        (a: any, b: any) => (a.voted_at || 0) - (b.voted_at || 0),
+      );
+      return cursor(ordered as T[]);
     }
 
-    if (upperQuery.includes("SELECT") && upperQuery.includes("TICKET_QUEUE")) {
-      if (upperQuery.includes("WHERE TICKET_ID LIKE")) {
-        const tickets = this.tables.get("ticket_queue") || [];
+    if (normalized.includes("SELECT") && normalized.includes("TICKET_QUEUE")) {
+      const tickets = this.tables.get("ticket_queue") || [];
+      const singleColumn =
+        normalized.match(/^SELECT\s+([A-Z_]+)\s+FROM\s+TICKET_QUEUE/)?.[1]?.toLowerCase();
+      const mapRows = (rows: any[]) => {
+        if (!singleColumn) {
+          return rows as T[];
+        }
+        return rows.map((row) => [row?.[singleColumn]] as unknown as T);
+      };
+
+      if (normalized.includes("TICKET_ID LIKE")) {
         const sprintjamTickets = tickets
           .filter((t: any) => t.ticket_id?.startsWith("SPRINTJAM-"))
           .sort((a: any, b: any) => {
@@ -38,16 +76,24 @@ export class MockSqlStorage {
             const bNum = parseInt(b.ticket_id.replace("SPRINTJAM-", ""), 10);
             return bNum - aNum;
           });
-        return {
-          toArray: () =>
-            sprintjamTickets.length > 0 ? [sprintjamTickets[0]] : [],
-        };
+        return cursor(
+          mapRows(sprintjamTickets.length > 0 ? [sprintjamTickets[0]] : []),
+        );
       }
-      const tickets = this.tables.get("ticket_queue") || [];
-      return { toArray: () => tickets as T[] };
+
+      if (
+        normalized.includes("WHERE (ID = ?") ||
+        normalized.includes("WHERE ID = ?")
+      ) {
+        const id = params[0];
+        const matchTicket = (tickets as any[]).find((t) => t.id === id);
+        return cursor(mapRows(matchTicket ? [matchTicket] : []));
+      }
+
+      return cursor(mapRows(tickets));
     }
 
-    if (upperQuery.startsWith("INSERT INTO TICKET_QUEUE")) {
+    if (normalized.startsWith("INSERT INTO TICKET_QUEUE")) {
       const table = this.tables.get("ticket_queue") || [];
       const id = this.autoIncrements.get("ticket_queue") || 1;
 
@@ -70,10 +116,10 @@ export class MockSqlStorage {
       this.tables.set("ticket_queue", table);
       this.autoIncrements.set("ticket_queue", id + 1);
 
-      return { toArray: () => [{ id }] as T[] };
+      return cursor([{ id }] as T[]);
     }
 
-    if (upperQuery.startsWith("INSERT INTO TICKET_VOTES")) {
+    if (normalized.startsWith("INSERT INTO TICKET_VOTES")) {
       const table = this.tables.get("ticket_votes") || [];
       const id = this.autoIncrements.get("ticket_votes") || 1;
 
@@ -101,32 +147,54 @@ export class MockSqlStorage {
 
       this.tables.set("ticket_votes", table);
 
-      return { toArray: () => [] };
+      return cursor();
     }
 
-    if (upperQuery.startsWith("UPDATE TICKET_QUEUE")) {
+    if (normalized.startsWith("UPDATE TICKET_QUEUE")) {
       const table = this.tables.get("ticket_queue") || [];
       const id = params[params.length - 1];
 
-      const ticket = table.find((t: any) => t.id === id);
+      const ticket = (table as any[]).find((t) => t.id === id);
       if (ticket) {
-        if (upperQuery.includes("STATUS")) ticket.status = params[0];
-        if (upperQuery.includes("COMPLETED_AT"))
-          ticket.completed_at = params[1] || params[0];
-        if (upperQuery.includes("OUTCOME")) ticket.outcome = params[0];
+        if (normalized.includes("TICKET_ID")) ticket.ticket_id = params[0];
+        if (normalized.includes("TITLE")) ticket.title = params[1] ?? params[0];
+        if (normalized.includes("DESCRIPTION"))
+          ticket.description = params[2] ?? params[0];
+        if (normalized.includes("STATUS")) ticket.status = params[0];
+        if (normalized.includes("OUTCOME")) ticket.outcome = params[0];
+        if (normalized.includes("COMPLETED_AT"))
+          ticket.completed_at = params[1] ?? params[0];
+        if (normalized.includes("ORDINAL"))
+          ticket.ordinal = params[0] ?? ticket.ordinal;
+        if (normalized.includes("EXTERNAL_SERVICE"))
+          ticket.external_service = params[0];
+        if (normalized.includes("EXTERNAL_SERVICE_ID"))
+          ticket.external_service_id = params[0];
+        if (normalized.includes("EXTERNAL_SERVICE_METADATA"))
+          ticket.external_service_metadata = params[0];
       }
 
-      return { toArray: () => [] };
+      return cursor();
     }
 
-    if (upperQuery.startsWith("DELETE FROM TICKET_QUEUE")) {
+    if (normalized.startsWith("DELETE FROM TICKET_QUEUE")) {
       const table = this.tables.get("ticket_queue") || [];
       const id = params[0];
-      const filtered = table.filter((t: any) => t.id !== id);
+      const filtered = (table as any[]).filter((t) => t.id !== id);
       this.tables.set("ticket_queue", filtered);
-      return { toArray: () => [] };
+      return cursor();
     }
 
-    return { toArray: () => [] };
+    if (normalized.startsWith("DELETE FROM TICKET_VOTES")) {
+      const table = this.tables.get("ticket_votes") || [];
+      const ticketId = params[0];
+      const filtered = (table as any[]).filter(
+        (vote) => vote.ticket_queue_id !== ticketId,
+      );
+      this.tables.set("ticket_votes", filtered);
+      return cursor();
+    }
+
+    return cursor();
   }
 }

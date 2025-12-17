@@ -1,9 +1,5 @@
-import type {
-  RoomData,
-  StructuredVote,
-  VoteValue,
-  TicketQueueItem,
-} from "../types";
+import type { RoomData, StructuredVote, VoteValue } from '../types';
+import { TicketQueueItem } from '../db/types';
 import { applySettingsUpdate } from "./room-settings";
 
 export function getAnonymousUserId(

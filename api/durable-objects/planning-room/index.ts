@@ -15,8 +15,8 @@ import type {
   BroadcastMessage,
   SessionInfo,
   StructuredVote,
-  TicketQueueItem,
-} from "../../types";
+} from '../../types';
+import { TicketQueueItem } from '../../db/types';
 import { normalizeRoomData } from "../../utils/room-data";
 import {
   handleHttpRequest,
@@ -79,7 +79,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   }
 
   private async migrateSchema() {
-    this.repository.initializeSchema();
+    await this.repository.initializeSchema();
 
     const roomData = await this.getRoomData();
     if (roomData) {

@@ -5,6 +5,8 @@ import type {
   RateLimit,
 } from "@cloudflare/workers-types";
 
+import { TicketQueueItem } from './db/types';
+
 export interface Env {
   ENABLE_JOIN_RATE_LIMIT?: string;
   JOIN_RATE_LIMITER: RateLimit;
@@ -289,22 +291,6 @@ export interface TicketVote {
   vote: VoteValue;
   structuredVotePayload?: StructuredVote;
   votedAt: number;
-}
-
-export interface TicketQueueItem {
-  id: number;
-  ticketId: string;
-  title?: string;
-  description?: string;
-  status: "pending" | "in_progress" | "completed" | "blocked";
-  outcome?: string;
-  createdAt: number;
-  completedAt?: number;
-  ordinal: number;
-  externalService: "jira" | "linear" | "github" | "none";
-  externalServiceId?: string;
-  externalServiceMetadata?: Record<string, unknown>;
-  votes?: TicketVote[];
 }
 
 export interface TimerState {
