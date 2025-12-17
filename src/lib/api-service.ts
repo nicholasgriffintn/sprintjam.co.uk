@@ -469,7 +469,7 @@ function triggerEventListeners(
     try {
       callback(data);
     } catch (error) {
-      console.error(`Error in ${event} event listener:`, error);
+      console.error("Error in event listener:", event, error);
     }
   }
 }
