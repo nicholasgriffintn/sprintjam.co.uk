@@ -4,7 +4,7 @@ import { joinRoom } from "@/lib/api-service";
 import { upsertRoom } from "@/lib/data/room-store";
 import { safeLocalStorage } from "@/utils/storage";
 import type { AvatarId, ServerDefaults } from "@/types";
-import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from '@/constants';
+import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from "@/constants";
 
 interface UseAutoReconnectOptions {
   name: string;
@@ -35,7 +35,7 @@ export const useAutoReconnect = ({
     if (didAttemptRestore.current) {
       return;
     }
-    if (screen !== 'welcome') {
+    if (screen !== "welcome") {
       return;
     }
     if (!name) {
@@ -54,13 +54,13 @@ export const useAutoReconnect = ({
 
     if (savedRoomKey) {
       onLoadingChange(true);
-      const avatarToUse = selectedAvatar || 'user';
+      const avatarToUse = selectedAvatar || "user";
       joinRoom(
         name,
         savedRoomKey,
         undefined,
         avatarToUse,
-        savedAuthToken || undefined
+        savedAuthToken || undefined,
       )
         .then(async ({ room: joinedRoom, defaults, authToken }) => {
           if (cancelled) {
@@ -83,7 +83,7 @@ export const useAutoReconnect = ({
           }
 
           const errorMessage =
-            err instanceof Error ? err.message : 'Failed to reconnect to room';
+            err instanceof Error ? err.message : "Failed to reconnect to room";
           onReconnectError(errorMessage);
           safeLocalStorage.remove(ROOM_KEY_STORAGE_KEY);
           safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);

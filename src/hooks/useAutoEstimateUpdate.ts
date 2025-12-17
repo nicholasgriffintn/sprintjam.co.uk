@@ -20,16 +20,16 @@ interface UseAutoEstimateUpdateOptions {
   onError: (error: string) => void;
 }
 
-const PROVIDER_LABELS: Record<TicketQueueItem['externalService'], string> = {
-  jira: 'Jira',
-  linear: 'Linear',
-  github: 'GitHub',
-  none: 'provider',
+const PROVIDER_LABELS: Record<TicketQueueItem["externalService"], string> = {
+  jira: "Jira",
+  linear: "Linear",
+  github: "GitHub",
+  none: "provider",
 };
 
 const SUPPORTED_AUTO_SYNC_PROVIDERS: Array<
-  Exclude<TicketQueueItem['externalService'], 'none'>
-> = ['jira', 'linear'];
+  Exclude<TicketQueueItem["externalService"], "none">
+> = ["jira", "linear"];
 
 export const useAutoEstimateUpdate = ({
   roomData,
@@ -39,11 +39,11 @@ export const useAutoEstimateUpdate = ({
 }: UseAutoEstimateUpdateOptions) => {
   const lastUpdatedRef = useRef<{
     ticketId: number;
-    provider: TicketQueueItem['externalService'];
+    provider: TicketQueueItem["externalService"];
     value: number;
   } | null>(null);
   const updateStoryPointsMutation = useMutation({
-    mutationKey: ['jira-story-points', userName],
+    mutationKey: ["jira-story-points", userName],
     mutationFn: async (variables: {
       ticketId: string;
       storyPoints: number;
@@ -55,7 +55,7 @@ export const useAutoEstimateUpdate = ({
       }),
   });
   const updateLinearEstimateMutation = useMutation({
-    mutationKey: ['linear-estimates', userName],
+    mutationKey: ["linear-estimates", userName],
     mutationFn: async (variables: {
       issueId: string;
       estimate: number;
@@ -69,7 +69,7 @@ export const useAutoEstimateUpdate = ({
 
   const calculateEstimate = (
     votes: Record<string, VoteValue | null>,
-    structuredVotes?: Record<string, StructuredVote>
+    structuredVotes?: Record<string, StructuredVote>,
   ): number | null => {
     const numericVotes = Object.entries(votes)
       .map(([user, vote]) => {
@@ -97,7 +97,7 @@ export const useAutoEstimateUpdate = ({
 
     const metadataId =
       typeof (ticket.externalServiceMetadata as { id?: unknown })?.id ===
-      'string'
+      "string"
         ? (ticket.externalServiceMetadata as { id?: string }).id
         : undefined;
 
@@ -113,11 +113,11 @@ export const useAutoEstimateUpdate = ({
     }
 
     const provider = currentTicket.externalService;
-    const roomProvider = roomData.settings.externalService ?? 'none';
+    const roomProvider = roomData.settings.externalService ?? "none";
     const autoSyncEnabled = roomData.settings.autoSyncEstimates ?? true;
 
     if (
-      provider === 'none' ||
+      provider === "none" ||
       !SUPPORTED_AUTO_SYNC_PROVIDERS.includes(provider) ||
       provider !== roomProvider ||
       roomData.showVotes !== true ||
@@ -129,7 +129,7 @@ export const useAutoEstimateUpdate = ({
 
     const estimate = calculateEstimate(
       roomData.votes,
-      roomData.structuredVotes
+      roomData.structuredVotes,
     );
     if (estimate === null) return;
 
@@ -143,7 +143,7 @@ export const useAutoEstimateUpdate = ({
       return;
     }
 
-    if (provider === 'jira') {
+    if (provider === "jira") {
       if (updateStoryPointsMutation.isPending) {
         return;
       }
@@ -176,7 +176,7 @@ export const useAutoEstimateUpdate = ({
       return;
     }
 
-    if (provider === 'linear') {
+    if (provider === "linear") {
       if (updateLinearEstimateMutation.isPending) {
         return;
       }

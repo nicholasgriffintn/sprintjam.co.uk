@@ -1,19 +1,19 @@
-import { getServerDefaults } from '../../utils/defaults';
+import { getServerDefaults } from "../../utils/defaults";
 import {
   assignUserAvatar,
   findCanonicalUserName,
   markUserConnection,
   normalizeRoomData,
   sanitizeRoomData,
-} from '../../utils/room-data';
-import { createJsonResponse } from '../../utils/http';
-import { generateSessionToken, verifyPasscode } from '../../utils/room-cypto';
+} from "../../utils/room-data";
+import { createJsonResponse } from "../../utils/http";
+import { generateSessionToken, verifyPasscode } from "../../utils/room-cypto";
 
-import type { CfResponse, PlanningRoomHttpContext } from './types';
+import type { CfResponse, PlanningRoomHttpContext } from "./types";
 
 export async function handleJoin(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
   const { name, passcode, avatar, authToken } = (await request.json()) as {
     name: string;
@@ -25,7 +25,7 @@ export async function handleJoin(
   const roomData = await ctx.getRoomData();
 
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   const normalizedRoomData = normalizeRoomData(roomData);
@@ -35,7 +35,7 @@ export async function handleJoin(
   const storedPasscodeHash = ctx.repository.getPasscodeHash();
   const hasValidSessionToken = ctx.repository.validateSessionToken(
     canonicalName,
-    authToken ?? null
+    authToken ?? null,
   );
 
   if (storedPasscodeHash && !hasValidSessionToken) {
@@ -44,19 +44,19 @@ export async function handleJoin(
       try {
         isValidPasscode = await verifyPasscode(passcode, storedPasscodeHash);
       } catch {
-        return createJsonResponse({ error: 'Invalid passcode' }, 400);
+        return createJsonResponse({ error: "Invalid passcode" }, 400);
       }
     }
 
     if (!isValidPasscode) {
-      return createJsonResponse({ error: 'Invalid passcode' }, 401);
+      return createJsonResponse({ error: "Invalid passcode" }, 401);
     }
   }
 
   if (isConnected && !hasValidSessionToken) {
     return createJsonResponse(
-      { error: 'User with this name is already connected' },
-      409
+      { error: "User with this name is already connected" },
+      409,
     );
   }
 
@@ -69,7 +69,7 @@ export async function handleJoin(
   ctx.repository.setUserAvatar(canonicalName, avatar);
 
   ctx.broadcast({
-    type: 'userJoined',
+    type: "userJoined",
     user: canonicalName,
     avatar,
   });

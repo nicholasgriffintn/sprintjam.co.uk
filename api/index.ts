@@ -6,7 +6,7 @@ import type {
 
 import { Env } from "./types";
 import { getRoomStub } from "./utils/room";
-import { PlanningRoom } from './durable-objects/planning-room';
+import { PlanningRoom } from "./durable-objects/planning-room";
 import { getDefaultsController } from "./controllers/defaults-controller";
 import {
   createRoomController,

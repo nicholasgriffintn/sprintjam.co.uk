@@ -1,52 +1,52 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-import { validateClientMessage } from './validate';
+import { validateClientMessage } from "./validate";
 
-describe('validateClientMessage', () => {
-  it('rejects non-object payloads', () => {
+describe("validateClientMessage", () => {
+  it("rejects non-object payloads", () => {
     const result = validateClientMessage(null);
-    expect(result).toEqual({ error: 'Invalid message format' });
+    expect(result).toEqual({ error: "Invalid message format" });
   });
 
-  it('validates vote payloads', () => {
-    const result = validateClientMessage({ type: 'vote', vote: '5' });
-    expect(result).toEqual({ type: 'vote', vote: '5' });
+  it("validates vote payloads", () => {
+    const result = validateClientMessage({ type: "vote", vote: "5" });
+    expect(result).toEqual({ type: "vote", vote: "5" });
   });
 
-  it('errors when vote payload missing', () => {
-    const result = validateClientMessage({ type: 'vote' });
-    expect(result).toEqual({ error: 'Vote payload missing' });
+  it("errors when vote payload missing", () => {
+    const result = validateClientMessage({ type: "vote" });
+    expect(result).toEqual({ error: "Vote payload missing" });
   });
 
-  it('validates configureTimer with typed fields only', () => {
+  it("validates configureTimer with typed fields only", () => {
     const result = validateClientMessage({
-      type: 'configureTimer',
+      type: "configureTimer",
       config: {
         targetDurationSeconds: 30,
         resetCountdown: true,
-        extra: 'nope',
+        extra: "nope",
       },
     });
 
     expect(result).toEqual({
-      type: 'configureTimer',
+      type: "configureTimer",
       config: { targetDurationSeconds: 30, resetCountdown: true },
     });
   });
 
-  it('validates addTicket payload shape', () => {
+  it("validates addTicket payload shape", () => {
     const result = validateClientMessage({
-      type: 'addTicket',
-      ticket: { title: 'A', status: 'pending' },
+      type: "addTicket",
+      ticket: { title: "A", status: "pending" },
     });
     expect(result).toEqual({
-      type: 'addTicket',
-      ticket: { title: 'A', status: 'pending' },
+      type: "addTicket",
+      ticket: { title: "A", status: "pending" },
     });
   });
 
-  it('returns error for unknown message types', () => {
-    const result = validateClientMessage({ type: 'unknown-op' });
-    expect(result).toEqual({ error: 'Unknown message type' });
+  it("returns error for unknown message types", () => {
+    const result = validateClientMessage({ type: "unknown-op" });
+    expect(result).toEqual({ error: "Unknown message type" });
   });
 });

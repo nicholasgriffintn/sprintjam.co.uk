@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest';
-import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
 
-import type { RoomData, RoomSettings, RoomStats } from '@/types';
-import { JudgeResult } from './JudgeResult';
+import type { RoomData, RoomSettings, RoomStats } from "@/types";
+import { JudgeResult } from "./JudgeResult";
 
 function buildSettings(overrides: Partial<RoomSettings> = {}): RoomSettings {
   const base: RoomSettings = {
-    estimateOptions: ['1', '2', '3', '5', '8'],
+    estimateOptions: ["1", "2", "3", "5", "8"],
     voteOptionsMetadata: undefined,
     allowOthersToShowEstimates: false,
     allowOthersToDeleteEstimates: false,
@@ -19,9 +19,9 @@ function buildSettings(overrides: Partial<RoomSettings> = {}): RoomSettings {
     topVotesCount: 3,
     anonymousVotes: false,
     enableJudge: true,
-    judgeAlgorithm: 'smartConsensus',
+    judgeAlgorithm: "smartConsensus",
     hideParticipantNames: false,
-    externalService: 'none',
+    externalService: "none",
     enableStructuredVoting: false,
     votingCriteria: undefined,
     autoSyncEstimates: true,
@@ -42,12 +42,12 @@ function buildSettings(overrides: Partial<RoomSettings> = {}): RoomSettings {
 function buildRoomData(overrides: Partial<RoomData> = {}): RoomData {
   const baseSettings = buildSettings();
   return {
-    key: 'room',
-    users: ['Alice', 'Bob'],
-    votes: { Alice: '5', Bob: '?' },
+    key: "room",
+    users: ["Alice", "Bob"],
+    votes: { Alice: "5", Bob: "?" },
     structuredVotes: undefined,
     showVotes: true,
-    moderator: 'Alice',
+    moderator: "Alice",
     connectedUsers: { Alice: true, Bob: true },
     judgeScore: null,
     settings: baseSettings,
@@ -66,9 +66,9 @@ function buildRoomData(overrides: Partial<RoomData> = {}): RoomData {
 
 function buildStats(overrides: Partial<RoomStats> = {}): RoomStats {
   return {
-    avg: '5.0',
-    mode: '5',
-    distribution: { '5': 1 } as Record<string | number, number>,
+    avg: "5.0",
+    mode: "5",
+    distribution: { "5": 1 } as Record<string | number, number>,
     totalVotes: 1,
     votedUsers: 2,
     totalUsers: 2,
@@ -77,8 +77,8 @@ function buildStats(overrides: Partial<RoomStats> = {}): RoomStats {
   } as RoomStats;
 }
 
-describe('JudgeResult', () => {
-  it('shows a waiting message before the judge metadata arrives', () => {
+describe("JudgeResult", () => {
+  it("shows a waiting message before the judge metadata arrives", () => {
     const roomData = buildRoomData();
     const stats = buildStats();
 
@@ -87,29 +87,29 @@ describe('JudgeResult', () => {
         roomData={roomData}
         stats={stats}
         showJudgeAnimation={false}
-      />
+      />,
     );
 
     expect(html).toContain(
-      'Waiting for the judge to evaluate the revealed votes'
+      "Waiting for the judge to evaluate the revealed votes",
     );
   });
 
-  it('renders participation context and structured criteria when available', () => {
+  it("renders participation context and structured criteria when available", () => {
     const structuredSettings = buildSettings({
       enableStructuredVoting: true,
       votingCriteria: [
         {
-          id: 'complexity',
-          name: 'Complexity',
-          description: '',
+          id: "complexity",
+          name: "Complexity",
+          description: "",
           minScore: 0,
           maxScore: 4,
         },
         {
-          id: 'volume',
-          name: 'Volume',
-          description: '',
+          id: "volume",
+          name: "Volume",
+          description: "",
           minScore: 0,
           maxScore: 4,
         },
@@ -120,10 +120,10 @@ describe('JudgeResult', () => {
       settings: structuredSettings,
       judgeScore: 5,
       judgeMetadata: {
-        confidence: 'high',
+        confidence: "high",
         needsDiscussion: false,
-        reasoning: 'Strong consensus',
-        algorithm: 'smartConsensus',
+        reasoning: "Strong consensus",
+        algorithm: "smartConsensus",
         questionMarkCount: 1,
         numericVoteCount: 3,
         totalVoteCount: 4,
@@ -137,10 +137,10 @@ describe('JudgeResult', () => {
         roomData={roomData}
         stats={stats}
         showJudgeAnimation={false}
-      />
+      />,
     );
 
-    expect(html).toContain('3/4 numeric votes analyzed');
-    expect(html).toContain('1 question mark');
+    expect(html).toContain("3/4 numeric votes analyzed");
+    expect(html).toContain("1 question mark");
   });
 });

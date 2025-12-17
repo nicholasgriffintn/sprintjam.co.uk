@@ -1,49 +1,49 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   CalendarCheck,
   Database,
   Lock,
   ShieldCheck,
   SlidersHorizontal,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { PageBackground } from '@/components/layout/PageBackground';
-import { Logo } from '@/components/Logo';
-import { Footer } from '@/components/layout/Footer';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
+import { PageBackground } from "@/components/layout/PageBackground";
+import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/layout/Footer";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
 
-const LAST_UPDATED = '5th December 2025';
+const LAST_UPDATED = "5th December 2025";
 
 const highlightCards = [
   {
-    title: 'Minimal data footprint',
+    title: "Minimal data footprint",
     description:
-      'Only the information required to synchronise your room is persisted. No tracking pixels.',
+      "Only the information required to synchronise your room is persisted. No tracking pixels.",
     icon: ShieldCheck,
   },
   {
-    title: 'Transparency first',
+    title: "Transparency first",
     description:
-      'Every storage location is documented on this page. Cookies are never used.',
+      "Every storage location is documented on this page. Cookies are never used.",
     icon: Database,
   },
   {
-    title: 'Self-host friendly',
+    title: "Self-host friendly",
     description:
-      'SprintJam is Apache 2.0 licensed, ready to be deployed on your own account.',
+      "SprintJam is Apache 2.0 licensed, ready to be deployed on your own account.",
     icon: SlidersHorizontal,
   },
 ];
 
 const browserStorage = [
   {
-    label: 'Session + preferences',
+    label: "Session + preferences",
     detail:
-      'Session tokens, display name, avatar emoji, settings, and most-recently room join code are stored in localStorage.',
+      "Session tokens, display name, avatar emoji, settings, and most-recently room join code are stored in localStorage.",
   },
   {
-    label: 'No cross-site cookies',
+    label: "No cross-site cookies",
     detail:
       "SprintJam does not set marketing or advertising cookies, nor does it embed remote analytics, it doesn't use cookies at all.",
   },
@@ -51,32 +51,32 @@ const browserStorage = [
 
 const serverStorage = [
   {
-    label: 'Room state in Durable Objects',
+    label: "Room state in Durable Objects",
     detail:
-      'Room key, moderators, encrypted passcodes, participant metadata, votes, ticket queue, connection diagnostics and similar details about your room.',
+      "Room key, moderators, encrypted passcodes, participant metadata, votes, ticket queue, connection diagnostics and similar details about your room.",
   },
   {
-    label: 'Optional Strudel music data',
+    label: "Optional Strudel music data",
     detail:
-      'When music is enabled we store the generated Strudel code alongside the room.',
+      "When music is enabled we store the generated Strudel code alongside the room.",
   },
   {
-    label: 'No third parties by default',
+    label: "No third parties by default",
     detail:
-      'Traffic remains inside our Cloudflare zone unless you explicitly configure an integration.',
+      "Traffic remains inside our Cloudflare zone unless you explicitly configure an integration.",
   },
 ];
 
 const integrationOptions = [
   {
-    name: 'Jira, Linear and GitHub (optional)',
+    name: "Jira, Linear and GitHub (optional)",
     detail:
-      'Moderators can link their external accounts to sync data to and from SprintJam, tokens are only held as long as they are needed and are encrypted.',
+      "Moderators can link their external accounts to sync data to and from SprintJam, tokens are only held as long as they are needed and are encrypted.",
   },
   {
-    name: 'Strudel music (optional)',
+    name: "Strudel music (optional)",
     detail:
-      'We send generated Strudel prompt text only (no participant identifiers) to api.polychat.app to generate snippets.',
+      "We send generated Strudel prompt text only (no participant identifiers) to api.polychat.app to generate snippets.",
   },
 ];
 
@@ -213,10 +213,10 @@ const PrivacyPolicyScreen = () => {
 }`}</pre>
               </div>
               <p className="mt-3 rounded-2xl bg-slate-50/80 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10">
-                Adjust{' '}
+                Adjust{" "}
                 <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-800 dark:bg-white/10 dark:text-white">
                   wrangler.jsonc
-                </code>{' '}
+                </code>{" "}
                 before deploy if you require zero logging.
               </p>
               <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-slate-600 dark:text-slate-300">

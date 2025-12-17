@@ -34,7 +34,7 @@ export function applyRoomUpdate(
   }
 
   switch (message.type) {
-    case 'userJoined': {
+    case "userJoined": {
       const user = message.user;
       if (!user) return prev;
 
@@ -66,9 +66,9 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'userConnectionStatus': {
+    case "userConnectionStatus": {
       const user = message.user;
-      if (!user || typeof message.isConnected !== 'boolean') return prev;
+      if (!user || typeof message.isConnected !== "boolean") return prev;
 
       if (prev.connectedUsers[user] === message.isConnected) {
         return prev;
@@ -83,7 +83,7 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'newModerator': {
+    case "newModerator": {
       if (!message.moderator || message.moderator === prev.moderator) {
         return prev;
       }
@@ -93,7 +93,7 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'vote': {
+    case "vote": {
       const user = message.user;
       if (!user || message.vote === undefined) return prev;
 
@@ -105,7 +105,7 @@ export function applyRoomUpdate(
 
       let structuredVotes = prev.structuredVotes;
       let structuredChanged = false;
-      if (Object.prototype.hasOwnProperty.call(message, 'structuredVote')) {
+      if (Object.prototype.hasOwnProperty.call(message, "structuredVote")) {
         if (message.structuredVote) {
           structuredVotes = {
             ...(prev.structuredVotes ?? {}),
@@ -132,9 +132,9 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'showVotes': {
+    case "showVotes": {
       if (
-        typeof message.showVotes !== 'boolean' ||
+        typeof message.showVotes !== "boolean" ||
         message.showVotes === prev.showVotes
       ) {
         return prev;
@@ -145,7 +145,7 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'resetVotes': {
+    case "resetVotes": {
       return {
         ...prev,
         votes: {},
@@ -156,7 +156,7 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'ticketCompleted': {
+    case "ticketCompleted": {
       return {
         ...prev,
         votes: {},
@@ -169,7 +169,7 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'settingsUpdated': {
+    case "settingsUpdated": {
       if (!message.settings) {
         return prev;
       }
@@ -179,7 +179,7 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'judgeScoreUpdated': {
+    case "judgeScoreUpdated": {
       const newScore = message.judgeScore ?? null;
       const newMetadata = message.judgeMetadata ?? undefined;
       return {
@@ -189,7 +189,7 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'strudelCodeGenerated': {
+    case "strudelCodeGenerated": {
       if (!message.code) {
         return prev;
       }
@@ -201,8 +201,8 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'strudelPlaybackToggled': {
-      if (typeof message.isPlaying !== 'boolean') {
+    case "strudelPlaybackToggled": {
+      if (typeof message.isPlaying !== "boolean") {
         return prev;
       }
       if (prev.strudelIsPlaying === message.isPlaying) {
@@ -214,7 +214,7 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'nextTicket': {
+    case "nextTicket": {
       return {
         ...prev,
         votes: {},
@@ -227,20 +227,20 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'ticketAdded':
-    case 'ticketUpdated':
-    case 'ticketDeleted':
-    case 'queueUpdated': {
+    case "ticketAdded":
+    case "ticketUpdated":
+    case "ticketDeleted":
+    case "queueUpdated": {
       const currentTicket =
         message.ticket &&
-          prev.currentTicket &&
-          (message.ticket as TicketQueueItem).id === prev.currentTicket.id
+        prev.currentTicket &&
+        (message.ticket as TicketQueueItem).id === prev.currentTicket.id
           ? (message.ticket as TicketQueueItem)
           : prev.currentTicket;
 
       if (
-        message.type === 'ticketDeleted' &&
-        'ticketId' in message &&
+        message.type === "ticketDeleted" &&
+        "ticketId" in message &&
         prev.currentTicket &&
         message.ticketId === prev.currentTicket.id
       ) {
@@ -257,10 +257,10 @@ export function applyRoomUpdate(
       };
     }
 
-    case 'timerStarted':
-    case 'timerPaused':
-    case 'timerReset':
-    case 'timerUpdated': {
+    case "timerStarted":
+    case "timerPaused":
+    case "timerReset":
+    case "timerUpdated": {
       if (!message.timerState) {
         return prev;
       }

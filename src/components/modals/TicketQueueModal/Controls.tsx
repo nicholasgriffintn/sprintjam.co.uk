@@ -1,21 +1,21 @@
-import { ArrowDownToLine } from 'lucide-react';
+import { ArrowDownToLine } from "lucide-react";
 
-import type { TicketQueueItem } from '@/types';
-import { downloadCsv } from '@/utils/csv';
-import { buildCsv } from '@/components/modals/TicketQueueModal/utils/csv';
+import type { TicketQueueItem } from "@/types";
+import { downloadCsv } from "@/utils/csv";
+import { buildCsv } from "@/components/modals/TicketQueueModal/utils/csv";
 
 export function TicketQueueModalControls({
   activeTab,
   setActiveTab,
   completedTickets,
 }: {
-  activeTab: 'queue' | 'history';
-  setActiveTab: (tab: 'queue' | 'history') => void;
+  activeTab: "queue" | "history";
+  setActiveTab: (tab: "queue" | "history") => void;
   completedTickets: TicketQueueItem[];
 }) {
   const handleDownloadHistory = () => {
     const csv = buildCsv(completedTickets);
-    downloadCsv('sprintjam-past-estimations.csv', csv);
+    downloadCsv("sprintjam-past-estimations.csv", csv);
   };
 
   return (
@@ -24,27 +24,29 @@ export function TicketQueueModalControls({
         <button
           type="button"
           data-testid="queue-tab-queue"
-          className={`rounded-full px-3 py-1.5 transition ${activeTab === 'queue'
-              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-              : 'text-slate-500 dark:text-slate-300'
-            }`}
-          onClick={() => setActiveTab('queue')}
+          className={`rounded-full px-3 py-1.5 transition ${
+            activeTab === "queue"
+              ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+              : "text-slate-500 dark:text-slate-300"
+          }`}
+          onClick={() => setActiveTab("queue")}
         >
           Queue
         </button>
         <button
           type="button"
           data-testid="queue-tab-history"
-          className={`rounded-full px-3 py-1.5 transition ${activeTab === 'history'
-              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-              : 'text-slate-500 dark:text-slate-300'
-            }`}
-          onClick={() => setActiveTab('history')}
+          className={`rounded-full px-3 py-1.5 transition ${
+            activeTab === "history"
+              ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+              : "text-slate-500 dark:text-slate-300"
+          }`}
+          onClick={() => setActiveTab("history")}
         >
           Past estimations
         </button>
       </div>
-      {activeTab === 'history' && completedTickets.length > 0 && (
+      {activeTab === "history" && completedTickets.length > 0 && (
         <div className="flex items-center gap-2">
           <button
             onClick={handleDownloadHistory}

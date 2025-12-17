@@ -6,7 +6,7 @@ export interface MetaTagConfig {
   ogDescription?: string;
   ogImage?: string;
   ogUrl?: string;
-  twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player';
+  twitterCard?: "summary" | "summary_large_image" | "app" | "player";
   twitterTitle?: string;
   twitterDescription?: string;
   twitterImage?: string;
@@ -19,39 +19,39 @@ export function updateMetaTags(config: MetaTagConfig): void {
   }
 
   if (config.description) {
-    updateMetaTag('name', 'description', config.description);
+    updateMetaTag("name", "description", config.description);
   }
 
   if (config.keywords) {
-    updateMetaTag('name', 'keywords', config.keywords);
+    updateMetaTag("name", "keywords", config.keywords);
   }
 
   if (config.ogTitle) {
-    updateMetaTag('property', 'og:title', config.ogTitle);
+    updateMetaTag("property", "og:title", config.ogTitle);
   }
   if (config.ogDescription) {
-    updateMetaTag('property', 'og:description', config.ogDescription);
+    updateMetaTag("property", "og:description", config.ogDescription);
   }
   if (config.ogImage) {
-    updateMetaTag('property', 'og:image', config.ogImage);
+    updateMetaTag("property", "og:image", config.ogImage);
   }
   if (config.ogUrl) {
-    updateMetaTag('property', 'og:url', config.ogUrl);
+    updateMetaTag("property", "og:url", config.ogUrl);
   }
 
-  updateMetaTag('property', 'og:type', 'website');
+  updateMetaTag("property", "og:type", "website");
 
   if (config.twitterCard) {
-    updateMetaTag('name', 'twitter:card', config.twitterCard);
+    updateMetaTag("name", "twitter:card", config.twitterCard);
   }
   if (config.twitterTitle) {
-    updateMetaTag('name', 'twitter:title', config.twitterTitle);
+    updateMetaTag("name", "twitter:title", config.twitterTitle);
   }
   if (config.twitterDescription) {
-    updateMetaTag('name', 'twitter:description', config.twitterDescription);
+    updateMetaTag("name", "twitter:description", config.twitterDescription);
   }
   if (config.twitterImage) {
-    updateMetaTag('name', 'twitter:image', config.twitterImage);
+    updateMetaTag("name", "twitter:image", config.twitterImage);
   }
 
   if (config.canonical) {
@@ -60,19 +60,19 @@ export function updateMetaTags(config: MetaTagConfig): void {
 }
 
 function updateMetaTag(
-  attributeName: 'name' | 'property',
+  attributeName: "name" | "property",
   attributeValue: string,
-  content: string
+  content: string,
 ): void {
   const selector = `meta[${attributeName}="${attributeValue}"]`;
   let element = document.querySelector(selector);
 
   if (element) {
-    element.setAttribute('content', content);
+    element.setAttribute("content", content);
   } else {
-    const meta = document.createElement('meta');
+    const meta = document.createElement("meta");
     meta.setAttribute(attributeName, attributeValue);
-    meta.setAttribute('content', content);
+    meta.setAttribute("content", content);
     document.head.appendChild(meta);
   }
 }
@@ -83,14 +83,14 @@ function updateCanonicalLink(url: string): void {
   if (link) {
     link.href = url;
   } else {
-    link = document.createElement('link');
-    link.rel = 'canonical';
+    link = document.createElement("link");
+    link.rel = "canonical";
     link.href = url;
     document.head.appendChild(link);
   }
 }
 
-export function getAbsoluteUrl(path: string = ''): string {
+export function getAbsoluteUrl(path: string = ""): string {
   const baseUrl = window.location.origin;
-  return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 }

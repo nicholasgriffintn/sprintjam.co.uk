@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   Users,
   Plus,
@@ -8,16 +8,16 @@ import {
   Timer,
   BarChart3,
   Play,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useSession } from '@/context/SessionContext';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { Button } from '@/components/ui/Button';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { Logo } from '@/components/Logo';
-import { Footer } from '@/components/layout/Footer';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
+import { useSession } from "@/context/SessionContext";
+import { PageBackground } from "@/components/layout/PageBackground";
+import { Button } from "@/components/ui/Button";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/layout/Footer";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
 
 const WelcomeScreen = () => {
   const { startCreateFlow, startJoinFlow } = useSession();
@@ -25,23 +25,23 @@ const WelcomeScreen = () => {
   const features = [
     {
       icon: <Zap className="w-5 h-5" />,
-      title: 'Real-time Voting',
-      description: 'Live collaboration with instant updates',
+      title: "Real-time Voting",
+      description: "Live collaboration with instant updates",
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
-      title: 'Smart Consensus',
-      description: 'Automated consensus detection and recommendations',
+      title: "Smart Consensus",
+      description: "Automated consensus detection and recommendations",
     },
     {
       icon: <Shield className="w-5 h-5" />,
-      title: 'Privacy First',
-      description: 'No ads, no tracking, open source',
+      title: "Privacy First",
+      description: "No ads, no tracking, open source",
     },
     {
       icon: <Timer className="w-5 h-5" />,
-      title: 'Voting Options',
-      description: 'Multi-criteria estimation systems',
+      title: "Voting Options",
+      description: "Multi-criteria estimation systems",
     },
   ];
 
@@ -94,7 +94,7 @@ const WelcomeScreen = () => {
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.97 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           viewport={{ once: true, amount: 0.4 }}
           className="relative mx-auto max-w-2xl px-4 sm:px-6"
         >
@@ -104,7 +104,7 @@ const WelcomeScreen = () => {
               <button
                 type="button"
                 aria-label="Play SprintJam demo video"
-                onClick={() => alert('Video demo coming soon')}
+                onClick={() => alert("Video demo coming soon")}
                 className="group relative block w-full overflow-hidden rounded-[1.75rem] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-400"
               >
                 <img
@@ -113,9 +113,9 @@ const WelcomeScreen = () => {
                   className="block h-[220px] w-full origin-bottom transform-gpu rounded-[1.75rem] border border-white/10 object-cover object-top shadow-[0_40px_120px_-30px_rgba(0,0,0,0.45)] transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01] sm:rotate-[0.6deg]"
                   style={{
                     maskImage:
-                      'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                      "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
                     WebkitMaskImage:
-                      'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                      "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
                   }}
                   loading="lazy"
                 />
@@ -123,8 +123,8 @@ const WelcomeScreen = () => {
                   className="pointer-events-none absolute inset-0 rounded-[1.75rem]"
                   style={{
                     background:
-                      'radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)',
-                    mixBlendMode: 'multiply',
+                      "radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)",
+                    mixBlendMode: "multiply",
                   }}
                 />
                 <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] bg-gradient-to-b from-white/15 via-white/5 to-transparent opacity-30 mix-blend-screen" />

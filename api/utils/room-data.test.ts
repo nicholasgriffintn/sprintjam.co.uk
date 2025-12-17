@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from "vitest";
 
 import {
   assignUserAvatar,
   markUserConnection,
   ensureConnectedUsers,
-} from './room-data';
-import type { RoomData, RoomSettings } from '../types';
-import { JudgeAlgorithm } from '../types';
+} from "./room-data";
+import type { RoomData, RoomSettings } from "../types";
+import { JudgeAlgorithm } from "../types";
 
 const baseSettings: RoomSettings = {
   estimateOptions: [1, 2, 3],
@@ -24,72 +24,72 @@ const baseSettings: RoomSettings = {
 };
 
 const createRoom = (overrides: Partial<RoomData> = {}): RoomData => ({
-  key: 'ROOM',
+  key: "ROOM",
   users: [],
   votes: {},
   connectedUsers: {},
   showVotes: false,
-  moderator: 'mod',
+  moderator: "mod",
   settings: baseSettings,
   ...overrides,
 });
 
-describe('room-data helpers', () => {
-  describe('markUserConnection', () => {
+describe("room-data helpers", () => {
+  describe("markUserConnection", () => {
     let room: RoomData;
 
     beforeEach(() => {
       room = createRoom({
-        users: ['Alice'],
+        users: ["Alice"],
         connectedUsers: { Alice: false },
       });
     });
 
-    it('reuses canonical casing and does not duplicate users', () => {
-      markUserConnection(room, 'alice  ', true);
+    it("reuses canonical casing and does not duplicate users", () => {
+      markUserConnection(room, "alice  ", true);
 
-      expect(room.users).toEqual(['Alice']);
-      expect(room.connectedUsers['Alice']).toBe(true);
+      expect(room.users).toEqual(["Alice"]);
+      expect(room.connectedUsers["Alice"]).toBe(true);
     });
 
-    it('adds trimmed user when not present', () => {
-      markUserConnection(room, '  Bob ', true);
+    it("adds trimmed user when not present", () => {
+      markUserConnection(room, "  Bob ", true);
 
-      expect(room.users).toEqual(['Alice', 'Bob']);
-      expect(room.connectedUsers['Bob']).toBe(true);
+      expect(room.users).toEqual(["Alice", "Bob"]);
+      expect(room.connectedUsers["Bob"]).toBe(true);
     });
 
-    it('initializes connectedUsers when missing', () => {
-      const freshRoom = createRoom({ users: ['Casey'], connectedUsers: {} });
+    it("initializes connectedUsers when missing", () => {
+      const freshRoom = createRoom({ users: ["Casey"], connectedUsers: {} });
 
-      markUserConnection(freshRoom, 'casey', true);
+      markUserConnection(freshRoom, "casey", true);
 
-      expect(ensureConnectedUsers(freshRoom)['Casey']).toBe(true);
+      expect(ensureConnectedUsers(freshRoom)["Casey"]).toBe(true);
     });
   });
 
-  describe('assignUserAvatar', () => {
+  describe("assignUserAvatar", () => {
     let room: RoomData;
 
     beforeEach(() => {
       room = createRoom({
-        users: ['Alice'],
+        users: ["Alice"],
         connectedUsers: { Alice: true },
         userAvatars: {},
       });
     });
 
-    it('reuses canonical casing when setting avatar', () => {
-      assignUserAvatar(room, 'alice', 'cat');
+    it("reuses canonical casing when setting avatar", () => {
+      assignUserAvatar(room, "alice", "cat");
 
-      expect(room.userAvatars?.Alice).toBe('cat');
-      expect(Object.keys(room.userAvatars ?? {})).toEqual(['Alice']);
+      expect(room.userAvatars?.Alice).toBe("cat");
+      expect(Object.keys(room.userAvatars ?? {})).toEqual(["Alice"]);
     });
 
-    it('removes avatar when value is empty', () => {
-      room.userAvatars = { Alice: 'cat' };
+    it("removes avatar when value is empty", () => {
+      room.userAvatars = { Alice: "cat" };
 
-      assignUserAvatar(room, 'ALICE');
+      assignUserAvatar(room, "ALICE");
 
       expect(room.userAvatars?.Alice).toBeUndefined();
     });

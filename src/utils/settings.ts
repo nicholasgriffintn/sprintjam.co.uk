@@ -17,34 +17,34 @@ const cloneRoomSettings = (settings: RoomSettings): RoomSettings => ({
   autoHandoverModerator: settings.autoHandoverModerator ?? false,
   resultsDisplay: settings.resultsDisplay
     ? {
-      ...settings.resultsDisplay,
-      summaryCards: settings.resultsDisplay.summaryCards
-        ? settings.resultsDisplay.summaryCards.map((card) => ({ ...card }))
-        : undefined,
-      criteriaBreakdown: settings.resultsDisplay.criteriaBreakdown
-        ? {
-          ...settings.resultsDisplay.criteriaBreakdown,
-          consensusLabels: settings.resultsDisplay.criteriaBreakdown
-            .consensusLabels
-            ? {
-              ...settings.resultsDisplay.criteriaBreakdown
-                .consensusLabels,
+        ...settings.resultsDisplay,
+        summaryCards: settings.resultsDisplay.summaryCards
+          ? settings.resultsDisplay.summaryCards.map((card) => ({ ...card }))
+          : undefined,
+        criteriaBreakdown: settings.resultsDisplay.criteriaBreakdown
+          ? {
+              ...settings.resultsDisplay.criteriaBreakdown,
+              consensusLabels: settings.resultsDisplay.criteriaBreakdown
+                .consensusLabels
+                ? {
+                    ...settings.resultsDisplay.criteriaBreakdown
+                      .consensusLabels,
+                  }
+                : undefined,
             }
-            : undefined,
-        }
-        : undefined,
-    }
+          : undefined,
+      }
     : undefined,
   structuredVotingDisplay: settings.structuredVotingDisplay
     ? {
-      ...settings.structuredVotingDisplay,
-      infoToggle: settings.structuredVotingDisplay.infoToggle
-        ? { ...settings.structuredVotingDisplay.infoToggle }
-        : undefined,
-      summary: settings.structuredVotingDisplay.summary
-        ? { ...settings.structuredVotingDisplay.summary }
-        : undefined,
-    }
+        ...settings.structuredVotingDisplay,
+        infoToggle: settings.structuredVotingDisplay.infoToggle
+          ? { ...settings.structuredVotingDisplay.infoToggle }
+          : undefined,
+        summary: settings.structuredVotingDisplay.summary
+          ? { ...settings.structuredVotingDisplay.summary }
+          : undefined,
+      }
     : undefined,
 });
 

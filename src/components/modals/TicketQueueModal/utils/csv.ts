@@ -1,10 +1,10 @@
-import type { TicketQueueItem } from '@/types';
-import { formatDate } from '@/utils/date';
-import { csvEscape } from '@/utils/csv';
+import type { TicketQueueItem } from "@/types";
+import { formatDate } from "@/utils/date";
+import { csvEscape } from "@/utils/csv";
 
 export const buildCsv = (tickets: TicketQueueItem[]) => {
   const rows: (string | number | null | undefined)[][] = [
-    ['Ticket', 'User', 'Vote', 'Structured Points', 'Outcome', 'Completed At'],
+    ["Ticket", "User", "Vote", "Structured Points", "Outcome", "Completed At"],
   ];
 
   tickets.forEach((ticket) => {
@@ -13,11 +13,11 @@ export const buildCsv = (tickets: TicketQueueItem[]) => {
     if (votes.length === 0) {
       rows.push([
         ticket.ticketId,
-        '',
-        '',
-        '',
-        ticket.outcome ?? '',
-        ticket.completedAt ? formatDate(ticket.completedAt) : '',
+        "",
+        "",
+        "",
+        ticket.outcome ?? "",
+        ticket.completedAt ? formatDate(ticket.completedAt) : "",
       ]);
       return;
     }
@@ -28,11 +28,11 @@ export const buildCsv = (tickets: TicketQueueItem[]) => {
         vote.userName,
         vote.vote,
         vote.structuredVotePayload?.calculatedStoryPoints,
-        ticket.outcome ?? '',
-        ticket.completedAt ? formatDate(ticket.completedAt) : '',
+        ticket.outcome ?? "",
+        ticket.completedAt ? formatDate(ticket.completedAt) : "",
       ]);
     });
   });
 
-  return rows.map((row) => row.map(csvEscape).join(',')).join('\n');
+  return rows.map((row) => row.map(csvEscape).join(",")).join("\n");
 };

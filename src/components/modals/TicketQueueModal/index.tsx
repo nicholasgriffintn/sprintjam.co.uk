@@ -1,17 +1,17 @@
-import { FC, useMemo, useState } from 'react';
+import { FC, useMemo, useState } from "react";
 
-import type { TicketQueueItem } from '@/types';
-import { Modal } from '@/components/ui/Modal';
-import { TicketQueueModalControls } from './Controls';
-import { TicketQueueModalQueueTab } from './tabs/Queue';
-import { TicketQueueModalCompletedTab } from './tabs/Completed';
+import type { TicketQueueItem } from "@/types";
+import { Modal } from "@/components/ui/Modal";
+import { TicketQueueModalControls } from "./Controls";
+import { TicketQueueModalQueueTab } from "./tabs/Queue";
+import { TicketQueueModalCompletedTab } from "./tabs/Completed";
 
 interface TicketQueueModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentTicket?: TicketQueueItem;
   queue: TicketQueueItem[];
-  externalService: 'none' | 'jira' | 'linear' | 'github';
+  externalService: "none" | "jira" | "linear" | "github";
   roomKey: string;
   userName: string;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
@@ -35,15 +35,15 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   canManageQueue,
   onError,
 }) => {
-  const [activeTab, setActiveTab] = useState<'queue' | 'history'>('queue');
+  const [activeTab, setActiveTab] = useState<"queue" | "history">("queue");
 
   const completedTickets = useMemo(
-    () => queue.filter((t) => t.status === 'completed'),
-    [queue]
+    () => queue.filter((t) => t.status === "completed"),
+    [queue],
   );
   const pendingTickets = useMemo(
-    () => queue.filter((t) => t.status === 'pending'),
-    [queue]
+    () => queue.filter((t) => t.status === "pending"),
+    [queue],
   );
 
   return (
@@ -55,7 +55,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
           completedTickets={completedTickets}
         />
 
-        {activeTab === 'queue' ? (
+        {activeTab === "queue" ? (
           <TicketQueueModalQueueTab
             currentTicket={currentTicket}
             externalService={externalService}

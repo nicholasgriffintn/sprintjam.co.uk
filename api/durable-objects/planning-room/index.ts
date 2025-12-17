@@ -70,25 +70,28 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     this.repository = new PlanningRoomRepository(
       this.state.storage,
-      tokenCipher
+      tokenCipher,
     );
 
     this.state.blockConcurrencyWhile(async () => {
-      this.repository.initializeSchema();
-      const roomData = await this.getRoomData({ skipConcurrencyBlock: true });
-      if (!roomData) {
-        return;
-      }
+      await this.migrateSchema();
+    });
+  }
 
+  private async migrateSchema() {
+    this.repository.initializeSchema();
+
+    const roomData = await this.getRoomData();
+    if (roomData) {
       const normalizedRoomData = normalizeRoomData(roomData);
       await this.putRoomData(normalizedRoomData);
-    });
+    }
   }
 
   disconnectUserSessions(userName: string) {
     for (const [socket, session] of this.sessions.entries()) {
       if (session.userName.toLowerCase() === userName.trim().toLowerCase()) {
-        socket.close(4004, 'Session superseded');
+        socket.close(4004, "Session superseded");
         this.sessions.delete(socket);
       }
     }
@@ -97,14 +100,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   async fetch(request: Request): Promise<CfResponse> {
     const url = new URL(request.url);
 
-    const upgradeHeader = request.headers.get('Upgrade');
-    if (upgradeHeader === 'websocket') {
-      const roomKey = url.searchParams.get('room');
-      const userName = url.searchParams.get('name');
-      const sessionToken = url.searchParams.get('token');
+    const upgradeHeader = request.headers.get("Upgrade");
+    if (upgradeHeader === "websocket") {
+      const roomKey = url.searchParams.get("room");
+      const userName = url.searchParams.get("name");
+      const sessionToken = url.searchParams.get("token");
 
       if (!roomKey || !userName || !sessionToken) {
-        return new Response('Missing room key, user name, or token', {
+        return new Response("Missing room key, user name, or token", {
           status: 400,
         }) as unknown as CfResponse;
       }
@@ -125,28 +128,25 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       return httpResponse;
     }
 
-    return new Response('Not found', { status: 404 }) as unknown as CfResponse;
+    return new Response("Not found", { status: 404 }) as unknown as CfResponse;
   }
 
   async handleSession(
     webSocket: CfWebSocket,
     roomKey: string,
     userName: string,
-    sessionToken: string
+    sessionToken: string,
   ) {
     return handleSessionHandler(
       this,
       webSocket,
       roomKey,
       userName,
-      sessionToken
+      sessionToken,
     );
   }
 
-  async handleVote(
-    userName: string,
-    vote: string | number | StructuredVote
-  ) {
+  async handleVote(userName: string, vote: string | number | StructuredVote) {
     return handleVoteHandler(this, userName, vote);
   }
 
@@ -160,7 +160,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleUpdateSettings(
     userName: string,
-    settings: Partial<RoomData['settings']>
+    settings: Partial<RoomData["settings"]>,
   ) {
     return handleUpdateSettingsHandler(this, userName, settings);
   }
@@ -179,7 +179,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async generateStrudelTrack(
     roomData: RoomData,
-    options?: { notifyOnError?: boolean; logPrefix?: string }
+    options?: { notifyOnError?: boolean; logPrefix?: string },
   ) {
     return generateStrudelTrackHelper(this, roomData, options);
   }
@@ -192,17 +192,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     return handleNextTicketHandler(this, userName);
   }
 
-  async handleAddTicket(
-    userName: string,
-    ticket: Partial<TicketQueueItem>
-  ) {
+  async handleAddTicket(userName: string, ticket: Partial<TicketQueueItem>) {
     return handleAddTicketHandler(this, userName, ticket);
   }
 
   async handleUpdateTicket(
     userName: string,
     ticketId: number,
-    updates: Partial<TicketQueueItem>
+    updates: Partial<TicketQueueItem>,
   ) {
     return handleUpdateTicketHandler(this, userName, ticketId, updates);
   }
@@ -233,7 +230,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       targetDurationSeconds?: number;
       autoResetOnVotesReset?: boolean;
       resetCountdown?: boolean;
-    }
+    },
   ) {
     return handleConfigureTimerHandler(this, userName, config);
   }
@@ -249,14 +246,8 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     });
   }
 
-  async getRoomData(options?: {
-    skipConcurrencyBlock?: boolean;
-  }): Promise<RoomData | undefined> {
-    if (options?.skipConcurrencyBlock) {
-      return readRoomData(this);
-    }
-
-    return this.state.blockConcurrencyWhile(async () => readRoomData(this));
+  async getRoomData(): Promise<RoomData | undefined> {
+    return readRoomData(this);
   }
 
   async putRoomData(roomData: RoomData): Promise<void> {

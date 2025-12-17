@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-vi.mock('@/constants', () => ({
-  API_BASE_URL: 'http://localhost',
-  WS_BASE_URL: 'ws://localhost',
+vi.mock("@/constants", () => ({
+  API_BASE_URL: "http://localhost",
+  WS_BASE_URL: "ws://localhost",
 }));
 
-vi.mock('@/utils/storage', () => {
+vi.mock("@/utils/storage", () => {
   const store = new Map<string, string>();
   return {
     safeLocalStorage: {
@@ -20,7 +20,7 @@ vi.mock('@/utils/storage', () => {
   };
 });
 
-import * as apiService from './api-service';
+import * as apiService from "./api-service";
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
@@ -52,7 +52,7 @@ class MockWebSocket {
 
 const realWebSocket = globalThis.WebSocket;
 
-describe('api-service', () => {
+describe("api-service", () => {
   beforeEach(() => {
     (globalThis as any).WebSocket = MockWebSocket as any;
     (apiService as any).activeSocket = null;
@@ -69,41 +69,41 @@ describe('api-service', () => {
     vi.useRealTimers();
   });
 
-  it('closes the socket on error to trigger reconnect flow', () => {
+  it("closes the socket on error to trigger reconnect flow", () => {
     const onConnectionStatusChange = vi.fn();
     apiService.connectToRoom(
-      'ROOM',
-      'user',
-      'token',
+      "ROOM",
+      "user",
+      "token",
       () => {},
-      onConnectionStatusChange
+      onConnectionStatusChange,
     );
 
     const socket = MockWebSocket.instances.length
       ? MockWebSocket.instances[MockWebSocket.instances.length - 1]
       : undefined;
     if (!socket) {
-      throw new Error('Mock socket missing');
+      throw new Error("Mock socket missing");
     }
 
-    socket.triggerError(new Error('boom'));
+    socket.triggerError(new Error("boom"));
 
-    expect(socket.close).toHaveBeenCalledWith(1011, 'Connection error');
+    expect(socket.close).toHaveBeenCalledWith(1011, "Connection error");
     expect(onConnectionStatusChange).toHaveBeenCalledWith(false);
   });
 
-  it('cancels a queued vote send when disconnecting', () => {
+  it("cancels a queued vote send when disconnecting", () => {
     vi.useFakeTimers();
-    apiService.connectToRoom('ROOM', 'user', 'token', () => {});
+    apiService.connectToRoom("ROOM", "user", "token", () => {});
     const socket = MockWebSocket.instances.length
       ? MockWebSocket.instances[MockWebSocket.instances.length - 1]
       : undefined;
     if (!socket) {
-      throw new Error('Mock socket missing');
+      throw new Error("Mock socket missing");
     }
     const sendSpy = socket.send;
 
-    apiService.submitVote('5');
+    apiService.submitVote("5");
     apiService.disconnectFromRoom();
 
     vi.runAllTimers();

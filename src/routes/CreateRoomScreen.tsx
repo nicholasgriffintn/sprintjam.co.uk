@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Lock,
@@ -9,22 +9,22 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronRight,
-} from 'lucide-react';
+} from "lucide-react";
 
-import type { RoomSettings } from '@/types';
-import { useSession } from '@/context/SessionContext';
-import { useRoom } from '@/context/RoomContext';
-import AvatarSelector from '@/components/AvatarSelector';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Alert } from '@/components/ui/Alert';
-import { Logo } from '@/components/Logo';
-import { Footer } from '@/components/layout/Footer';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
-import { BetaBadge } from '@/components/BetaBadge';
+import type { RoomSettings } from "@/types";
+import { useSession } from "@/context/SessionContext";
+import { useRoom } from "@/context/RoomContext";
+import AvatarSelector from "@/components/AvatarSelector";
+import { PageBackground } from "@/components/layout/PageBackground";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Alert } from "@/components/ui/Alert";
+import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/layout/Footer";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
+import { BetaBadge } from "@/components/BetaBadge";
 
 const CreateRoomScreen = () => {
   usePageMeta(META_CONFIGS.create);
@@ -41,11 +41,11 @@ const CreateRoomScreen = () => {
   } = useSession();
   const { handleCreateRoom, serverDefaults } = useRoom();
   const buildSettingsFromDefaults = (
-    roomDefaults?: RoomSettings | null
+    roomDefaults?: RoomSettings | null,
   ): Partial<RoomSettings> => ({
     enableStructuredVoting: roomDefaults?.enableStructuredVoting ?? false,
     enableJudge: roomDefaults?.enableJudge ?? true,
-    externalService: roomDefaults?.externalService ?? 'none',
+    externalService: roomDefaults?.externalService ?? "none",
     showTimer: roomDefaults?.showTimer ?? false,
     enableTicketQueue: roomDefaults?.enableTicketQueue ?? false,
     allowOthersToShowEstimates:
@@ -56,12 +56,12 @@ const CreateRoomScreen = () => {
     hideParticipantNames: roomDefaults?.hideParticipantNames ?? false,
     anonymousVotes: roomDefaults?.anonymousVotes ?? true,
   });
-  const [currentStep, setCurrentStep] = useState<'name' | 'avatar' | 'details'>(
-    'name'
+  const [currentStep, setCurrentStep] = useState<"name" | "avatar" | "details">(
+    "name",
   );
   const [showSettings, setShowSettings] = useState(true);
   const [settings, setSettings] = useState<Partial<RoomSettings>>(() =>
-    buildSettingsFromDefaults(serverDefaults?.roomSettings)
+    buildSettingsFromDefaults(serverDefaults?.roomSettings),
   );
 
   useEffect(() => {
@@ -75,21 +75,21 @@ const CreateRoomScreen = () => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (currentStep === 'name' && name.trim()) {
-      setCurrentStep('avatar');
-    } else if (currentStep === 'avatar' && selectedAvatar) {
-      setCurrentStep('details');
-    } else if (currentStep === 'details' && name && selectedAvatar) {
+    if (currentStep === "name" && name.trim()) {
+      setCurrentStep("avatar");
+    } else if (currentStep === "avatar" && selectedAvatar) {
+      setCurrentStep("details");
+    } else if (currentStep === "details" && name && selectedAvatar) {
       clearError();
       handleCreateRoom(settings);
     }
   };
 
   const handleBack = () => {
-    if (currentStep === 'avatar') {
-      setCurrentStep('name');
-    } else if (currentStep === 'details') {
-      setCurrentStep('avatar');
+    if (currentStep === "avatar") {
+      setCurrentStep("name");
+    } else if (currentStep === "details") {
+      setCurrentStep("avatar");
     } else {
       goHome();
     }
@@ -97,7 +97,7 @@ const CreateRoomScreen = () => {
 
   const handleSettingChange = (
     key: keyof RoomSettings,
-    value: boolean | string | number
+    value: boolean | string | number,
   ) => {
     setSettings((prev) => ({
       ...prev,
@@ -106,30 +106,30 @@ const CreateRoomScreen = () => {
   };
 
   const getFormValid = () => {
-    if (currentStep === 'name') return name.trim();
-    if (currentStep === 'avatar') return selectedAvatar;
-    if (currentStep === 'details') return name.trim() && selectedAvatar;
+    if (currentStep === "name") return name.trim();
+    if (currentStep === "avatar") return selectedAvatar;
+    if (currentStep === "details") return name.trim() && selectedAvatar;
     return false;
   };
 
   const getButtonText = () => {
-    if (currentStep === 'name') return 'Continue';
-    if (currentStep === 'avatar') return 'Continue';
-    return 'Create';
+    if (currentStep === "name") return "Continue";
+    if (currentStep === "avatar") return "Continue";
+    return "Create";
   };
 
   const getStepTitle = () => {
-    if (currentStep === 'name') return 'Create Room';
-    if (currentStep === 'avatar') return 'Select Your Avatar';
-    return 'Room Settings';
+    if (currentStep === "name") return "Create Room";
+    if (currentStep === "avatar") return "Select Your Avatar";
+    return "Room Settings";
   };
 
   const getStepDescription = () => {
-    if (currentStep === 'name')
-      return 'Set up a new planning poker session for your team';
-    if (currentStep === 'avatar')
-      return 'Choose an avatar to represent you in the room';
-    return 'Configure your room preferences (optional)';
+    if (currentStep === "name")
+      return "Set up a new planning poker session for your team";
+    if (currentStep === "avatar")
+      return "Choose an avatar to represent you in the room";
+    return "Configure your room preferences (optional)";
   };
 
   return (
@@ -154,8 +154,8 @@ const CreateRoomScreen = () => {
           </button>
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-brand-500">
-              Step{' '}
-              {currentStep === 'name' ? 1 : currentStep === 'avatar' ? 2 : 3}
+              Step{" "}
+              {currentStep === "name" ? 1 : currentStep === "avatar" ? 2 : 3}
               /3
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
@@ -181,7 +181,7 @@ const CreateRoomScreen = () => {
               </Alert>
             )}
 
-            {currentStep === 'name' && (
+            {currentStep === "name" && (
               <Input
                 id="create-name"
                 label={
@@ -205,7 +205,7 @@ const CreateRoomScreen = () => {
               />
             )}
 
-            {currentStep === 'details' && (
+            {currentStep === "details" && (
               <div className="space-y-6">
                 <Input
                   id="create-passcode"
@@ -250,14 +250,14 @@ const CreateRoomScreen = () => {
                         checked={settings.enableTicketQueue ?? false}
                         onChange={(e) => {
                           const checked = e.target.checked;
-                          handleSettingChange('enableTicketQueue', checked);
+                          handleSettingChange("enableTicketQueue", checked);
                           if (!checked) {
-                            handleSettingChange('externalService', 'none');
+                            handleSettingChange("externalService", "none");
                           }
                         }}
                       />
                       <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
-                        {settings.enableTicketQueue ? 'Enabled' : 'Disabled'}
+                        {settings.enableTicketQueue ? "Enabled" : "Disabled"}
                       </span>
                     </label>
                   </div>
@@ -271,14 +271,14 @@ const CreateRoomScreen = () => {
                         Choose a provider
                       </label>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Choose Jira, Linear, or GitHub to sync ticket estimations
-                        automatically.
+                        Choose Jira, Linear, or GitHub to sync ticket
+                        estimations automatically.
                       </p>
                       <select
                         id="ticket-queue-provider"
-                        value={settings.externalService || 'none'}
+                        value={settings.externalService || "none"}
                         onChange={(e) =>
-                          handleSettingChange('externalService', e.target.value)
+                          handleSettingChange("externalService", e.target.value)
                         }
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-brand-300 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
                       >
@@ -317,7 +317,7 @@ const CreateRoomScreen = () => {
                     <motion.div
                       id="room-preferences-panel"
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      animate={{ opacity: 1, height: "auto" }}
                       transition={{ duration: 0.2 }}
                       className="space-y-4 rounded-2xl border border-white/70 bg-white/80 p-4 text-sm dark:border-white/10 dark:bg-slate-900/60 max-h-[220px] overflow-y-auto"
                     >
@@ -333,8 +333,8 @@ const CreateRoomScreen = () => {
                             checked={settings.enableStructuredVoting ?? false}
                             onChange={(e) =>
                               handleSettingChange(
-                                'enableStructuredVoting',
-                                e.target.checked
+                                "enableStructuredVoting",
+                                e.target.checked,
                               )
                             }
                           />
@@ -360,8 +360,8 @@ const CreateRoomScreen = () => {
                             checked={settings.anonymousVotes ?? false}
                             onChange={(e) =>
                               handleSettingChange(
-                                'anonymousVotes',
-                                e.target.checked
+                                "anonymousVotes",
+                                e.target.checked,
                               )
                             }
                           />
@@ -386,8 +386,8 @@ const CreateRoomScreen = () => {
                             checked={settings.hideParticipantNames ?? false}
                             onChange={(e) =>
                               handleSettingChange(
-                                'hideParticipantNames',
-                                e.target.checked
+                                "hideParticipantNames",
+                                e.target.checked,
                               )
                             }
                           />
@@ -415,8 +415,8 @@ const CreateRoomScreen = () => {
                             }
                             onChange={(e) =>
                               handleSettingChange(
-                                'allowOthersToShowEstimates',
-                                e.target.checked
+                                "allowOthersToShowEstimates",
+                                e.target.checked,
                               )
                             }
                           />
@@ -444,8 +444,8 @@ const CreateRoomScreen = () => {
                             }
                             onChange={(e) =>
                               handleSettingChange(
-                                'allowOthersToDeleteEstimates',
-                                e.target.checked
+                                "allowOthersToDeleteEstimates",
+                                e.target.checked,
                               )
                             }
                           />
@@ -466,7 +466,7 @@ const CreateRoomScreen = () => {
               </div>
             )}
 
-            {currentStep === 'avatar' && (
+            {currentStep === "avatar" && (
               <div className="space-y-4">
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   Pick an avatar

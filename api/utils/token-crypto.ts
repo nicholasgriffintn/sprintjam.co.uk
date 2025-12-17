@@ -2,10 +2,10 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 const VERSION = 1;
-const ALGO = 'AES-GCM';
-const KDF = 'HKDF';
-const HKDF_INFO = 'token-encryption';
-const KDF_HASH = 'SHA-256';
+const ALGO = "AES-GCM";
+const KDF = "HKDF";
+const HKDF_INFO = "token-encryption";
+const KDF_HASH = "SHA-256";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12;
 const SALT_LENGTH = 16;
@@ -27,9 +27,9 @@ export class TokenCipher {
     const secretValue = secret?.trim();
     if (!secretValue) {
       console.warn(
-        'TOKEN_ENCRYPTION_SECRET is empty, falling back to insecure cipher.'
+        "TOKEN_ENCRYPTION_SECRET is empty, falling back to insecure cipher.",
       );
-      this.secret = 'insecure-default-secret';
+      this.secret = "insecure-default-secret";
       return;
     }
     this.secret = secretValue;
@@ -37,11 +37,11 @@ export class TokenCipher {
 
   private async deriveKey(salt: Uint8Array): Promise<CryptoKey> {
     const keyMaterial = await crypto.subtle.importKey(
-      'raw',
+      "raw",
       encoder.encode(this.secret),
       KDF,
       false,
-      ['deriveKey']
+      ["deriveKey"],
     );
     return crypto.subtle.deriveKey(
       {
@@ -53,7 +53,7 @@ export class TokenCipher {
       keyMaterial,
       { name: ALGO, length: KEY_LENGTH },
       false,
-      ['encrypt', 'decrypt']
+      ["encrypt", "decrypt"],
     );
   }
 
@@ -64,7 +64,7 @@ export class TokenCipher {
     const encrypted = await crypto.subtle.encrypt(
       { name: ALGO, iv },
       key,
-      encoder.encode(value)
+      encoder.encode(value),
     );
     const payload = {
       v: VERSION,
@@ -84,22 +84,22 @@ export class TokenCipher {
     try {
       decoded = JSON.parse(payload);
     } catch (err) {
-      throw new Error('Malformed token payload');
+      throw new Error("Malformed token payload");
     }
     if (
       !decoded ||
-      typeof decoded !== 'object' ||
+      typeof decoded !== "object" ||
       !decoded.iv ||
       !decoded.salt ||
       !decoded.data
     ) {
-      throw new Error('Invalid token structure');
+      throw new Error("Invalid token structure");
     }
     if (decoded.v !== VERSION) {
-      throw new Error('Unsupported token version');
+      throw new Error("Unsupported token version");
     }
     if (decoded.kdf && decoded.kdf !== KDF) {
-      throw new Error('Unsupported key derivation');
+      throw new Error("Unsupported key derivation");
     }
     const iv = base64ToBuffer(decoded.iv);
     const salt = base64ToBuffer(decoded.salt);
@@ -110,10 +110,10 @@ export class TokenCipher {
       decrypted = await crypto.subtle.decrypt(
         { name: ALGO, iv },
         key,
-        cipherBytes
+        cipherBytes,
       );
     } catch (err) {
-      throw new Error('Decryption failed or token integrity compromised');
+      throw new Error("Decryption failed or token integrity compromised");
     }
     return decoder.decode(decrypted);
   }

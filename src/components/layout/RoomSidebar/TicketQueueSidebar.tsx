@@ -1,11 +1,11 @@
-import { FC, useMemo, useId, useState } from 'react';
-import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { FC, useMemo, useId, useState } from "react";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
-import type { RoomData, TicketQueueItem } from '@/types';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { HorizontalProgress } from '@/components/ui/HorizontalProgress';
-import { cn } from '@/lib/cn';
-import { BetaBadge } from '@/components/BetaBadge';
+import type { RoomData, TicketQueueItem } from "@/types";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { HorizontalProgress } from "@/components/ui/HorizontalProgress";
+import { cn } from "@/lib/cn";
+import { BetaBadge } from "@/components/BetaBadge";
 
 interface TicketQueueSidebarProps {
   roomData: RoomData | null;
@@ -32,18 +32,18 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
   const queue = roomData?.ticketQueue || [];
   const pending = useMemo(
-    () => queue.filter((t) => t.status === 'pending'),
-    [queue]
+    () => queue.filter((t) => t.status === "pending"),
+    [queue],
   );
   const hasMultiplePending = pending.length > 1;
   const completedCount = useMemo(
-    () => queue.filter((t) => t.status === 'completed').length,
-    [queue]
+    () => queue.filter((t) => t.status === "completed").length,
+    [queue],
   );
   const totalCount = queue.length;
   const labelText =
     totalCount === 0
-      ? 'No tickets yet'
+      ? "No tickets yet"
       : `${completedCount}/${totalCount} completed`;
 
   const current = roomData?.currentTicket;
@@ -59,11 +59,11 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
     setLocalCollapsed((prev) => !prev);
   };
 
-  const moveTicket = (ticketId: number, direction: 'up' | 'down') => {
+  const moveTicket = (ticketId: number, direction: "up" | "down") => {
     const tickets = [...pending];
     const index = tickets.findIndex((t) => t.id === ticketId);
     if (index === -1) return;
-    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= tickets.length) return;
     const target = tickets[index];
     const swap = tickets[swapIndex];
@@ -72,25 +72,25 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   };
 
   const renderTicketRow = (ticket: TicketQueueItem, label: string) => {
-    const isPendingRow = label === 'Pending';
+    const isPendingRow = label === "Pending";
     const showReorder = canManageQueue && isPendingRow && hasMultiplePending;
     const meta =
-      ticket.externalService === 'jira'
+      ticket.externalService === "jira"
         ? (ticket.externalServiceMetadata as
-          | Record<string, unknown>
-          | undefined)
+            | Record<string, unknown>
+            | undefined)
         : undefined;
     const link =
-      meta && typeof meta === 'object' && 'url' in meta
+      meta && typeof meta === "object" && "url" in meta
         ? String(meta.url)
         : undefined;
 
     return (
       <div
         className={[
-          'rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/60',
-          isPendingRow ? 'max-h-28 overflow-hidden' : '',
-        ].join(' ')}
+          "rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/60",
+          isPendingRow ? "max-h-28 overflow-hidden" : "",
+        ].join(" ")}
       >
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -115,7 +115,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                 {ticket.description}
               </p>
             )}
-            {!isPendingRow && meta && ticket.externalService !== 'none' && (
+            {!isPendingRow && meta && ticket.externalService !== "none" && (
               <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
                 {ticket.externalService}
                 {link && (
@@ -135,14 +135,14 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
           {showReorder && (
             <div className="flex flex-col items-center gap-1">
               <button
-                onClick={() => moveTicket(ticket.id, 'up')}
+                onClick={() => moveTicket(ticket.id, "up")}
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move up"
               >
                 <ChevronUp className="h-4 w-4" />
               </button>
               <button
-                onClick={() => moveTicket(ticket.id, 'down')}
+                onClick={() => moveTicket(ticket.id, "down")}
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move down"
               >
@@ -156,15 +156,15 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   };
 
   return (
-    <aside className={cn('flex h-full flex-col', className)}>
+    <aside className={cn("flex h-full flex-col", className)}>
       <SurfaceCard
         padding="none"
         className="flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800"
       >
         <div
           className={cn(
-            'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
-            collapsed && 'border-b-0 py-2',
+            "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
+            collapsed && "border-b-0 py-2",
           )}
         >
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -185,7 +185,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
               type="button"
               onClick={handleToggle}
               aria-label={
-                collapsed ? 'Expand ticket queue' : 'Collapse ticket queue'
+                collapsed ? "Expand ticket queue" : "Collapse ticket queue"
               }
               aria-expanded={!collapsed}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-white/10 dark:text-white"
@@ -202,8 +202,8 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
         <div
           tabIndex={0}
           className={cn(
-            'flex-1 space-y-3 overflow-y-auto px-4 py-4',
-            collapsed && 'hidden'
+            "flex-1 space-y-3 overflow-y-auto px-4 py-4",
+            collapsed && "hidden",
           )}
         >
           <div
@@ -230,7 +230,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
           {current ? (
             <div data-testid="queue-current-ticket">
-              {renderTicketRow(current, 'Current')}
+              {renderTicketRow(current, "Current")}
             </div>
           ) : (
             <p
@@ -243,7 +243,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
           {next ? (
             <div data-testid="queue-next-ticket">
-              {renderTicketRow(next, 'Pending')}
+              {renderTicketRow(next, "Pending")}
             </div>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">

@@ -22,32 +22,32 @@ export interface LinearOAuthStatus {
 
 export async function fetchLinearIssue(
   issueId: string,
-  options?: { roomKey?: string; userName?: string; sessionToken?: string }
+  options?: { roomKey?: string; userName?: string; sessionToken?: string },
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
     let url = `${API_BASE_URL}/linear/issue?issueId=${encodeURIComponent(
-      issueId
+      issueId,
     )}`;
 
     if (options?.roomKey && options?.userName) {
       url += `&roomKey=${encodeURIComponent(
-        options.roomKey
+        options.roomKey,
       )}&userName=${encodeURIComponent(options.userName)}`;
       url += `&sessionToken=${encodeURIComponent(sessionToken)}`;
     }
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to fetch Linear issue: ${response.status}`
+        errorData.error || `Failed to fetch Linear issue: ${response.status}`,
       );
     }
 
@@ -58,9 +58,9 @@ export async function fetchLinearIssue(
     if (ticket) {
       return ticket;
     }
-    throw new Error('Invalid response format from Linear API');
+    throw new Error("Invalid response format from Linear API");
   } catch (error) {
-    console.error('Error fetching Linear issue:', error);
+    console.error("Error fetching Linear issue:", error);
     throw error;
   }
 }
@@ -92,7 +92,7 @@ export async function updateLinearEstimate(
       const errorData = await response.json();
       throw new Error(
         errorData.error ||
-        `Failed to update Linear estimate: ${response.status}`,
+          `Failed to update Linear estimate: ${response.status}`,
       );
     }
 

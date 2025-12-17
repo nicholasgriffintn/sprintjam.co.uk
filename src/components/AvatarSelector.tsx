@@ -77,10 +77,11 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
               onClick={() => onSelectAvatar(avatar.id)}
               aria-label={`Select ${avatar.label} avatar`}
               aria-pressed={selectedAvatar === avatar.id}
-              className={`w-full aspect-square rounded-full flex items-center justify-center transition-all duration-200 border-2 hover:scale-105 active:scale-95 ${selectedAvatar === avatar.id
+              className={`w-full aspect-square rounded-full flex items-center justify-center transition-all duration-200 border-2 hover:scale-105 active:scale-95 ${
+                selectedAvatar === avatar.id
                   ? "border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg scale-110"
                   : "border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-indigo-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-                }`}
+              }`}
               title={avatar.label}
             >
               {(() => {
@@ -134,10 +135,11 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
                   onClick={() => handleEmojiSelect(emoji)}
                   aria-label={`Select ${emoji} emoji avatar`}
                   aria-pressed={selectedAvatar === emoji}
-                  className={`aspect-square rounded-lg flex items-center justify-center text-2xl transition-all duration-200 hover:scale-110 active:scale-95 border-2 ${selectedAvatar === emoji
+                  className={`aspect-square rounded-lg flex items-center justify-center text-2xl transition-all duration-200 hover:scale-110 active:scale-95 border-2 ${
+                    selectedAvatar === emoji
                       ? "border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg"
                       : "border-transparent hover:border-blue-400 dark:hover:border-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-                    }`}
+                  }`}
                   title={emoji}
                 >
                   {emoji}

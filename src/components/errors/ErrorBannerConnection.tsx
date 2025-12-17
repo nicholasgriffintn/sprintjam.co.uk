@@ -1,6 +1,6 @@
-import { Loader2, WifiOff } from 'lucide-react';
+import { Loader2, WifiOff } from "lucide-react";
 
-import { ErrorConnectionIssue } from '@/types';
+import { ErrorConnectionIssue } from "@/types";
 
 export function ErrorBannerConnection({
   connectionIssue,
@@ -19,7 +19,7 @@ export function ErrorBannerConnection({
         )}
         <p className="text-sm font-semibold">
           {connectionIssue?.message ||
-            'Connection lost. Trying to reconnect...'}
+            "Connection lost. Trying to reconnect..."}
         </p>
       </div>
       <div className="flex items-center gap-2 text-xs">

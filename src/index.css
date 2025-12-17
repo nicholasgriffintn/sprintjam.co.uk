@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @plugin "@tailwindcss/typography";
 @config "../tailwind.config.js";
 
@@ -17,19 +17,23 @@
 
   body {
     @apply bg-[color:var(--surface)] font-sans text-slate-900 antialiased;
-    background-image: radial-gradient(
+    background-image:
+      radial-gradient(
         circle at 1px 1px,
         rgba(15, 23, 42, 0.06) 1px,
         transparent 0
       ),
       linear-gradient(180deg, rgba(15, 23, 42, 0.03), transparent 60%);
-    background-size: 120px 120px, 100% 100%;
+    background-size:
+      120px 120px,
+      100% 100%;
     min-height: 100vh;
   }
 
   .dark body {
     @apply bg-[color:var(--surface-dark)] text-white;
-    background-image: radial-gradient(
+    background-image:
+      radial-gradient(
         circle at 1px 1px,
         rgba(148, 163, 184, 0.12) 1px,
         transparent 0

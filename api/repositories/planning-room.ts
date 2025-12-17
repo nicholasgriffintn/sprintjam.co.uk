@@ -13,36 +13,36 @@ import type {
   TicketQueueItem,
   TicketVote,
   VoteValue,
-} from '../types';
-import { serializeJSON, serializeVote } from '../utils/serialize';
-import { parseJudgeScore, parseVote, safeJsonParse } from '../utils/parse';
-import { DEFAULT_TIMER_DURATION_SECONDS } from '../constants';
+} from "../types";
+import { serializeJSON, serializeVote } from "../utils/serialize";
+import { parseJudgeScore, parseVote, safeJsonParse } from "../utils/parse";
+import { DEFAULT_TIMER_DURATION_SECONDS } from "../constants";
 import {
   SESSION_TOKEN_TTL_MS,
   parsePasscodeHash,
   serializePasscodeHash,
-} from '../utils/room-cypto';
-import { TokenCipher } from '../utils/token-crypto';
+} from "../utils/room-cypto";
+import { TokenCipher } from "../utils/token-crypto";
 
 const ROOM_ROW_ID = 1;
 type SqlEnabledTransaction = DurableObjectTransaction & { sql: SqlStorage };
 
 export class PlanningRoomRepository {
   private readonly sql: SqlStorage;
-  private readonly anonymousName = 'Anonymous';
+  private readonly anonymousName = "Anonymous";
 
   constructor(
     private readonly storage: DurableObjectStorage,
-    private readonly tokenCipher: TokenCipher
+    private readonly tokenCipher: TokenCipher,
   ) {
     if (!tokenCipher) {
-      throw new Error('Token cipher is required');
+      throw new Error("Token cipher is required");
     }
     this.sql = storage.sql;
   }
 
   private async encryptToken(
-    value: string | null | undefined
+    value: string | null | undefined,
   ): Promise<string | null> {
     if (value === null || value === undefined) {
       return null;
@@ -51,7 +51,7 @@ export class PlanningRoomRepository {
   }
 
   private async decryptToken(
-    value: string | null | undefined
+    value: string | null | undefined,
   ): Promise<string | null> {
     if (value === null || value === undefined) {
       return null;
@@ -82,7 +82,7 @@ export class PlanningRoomRepository {
           timer_target_duration INTEGER DEFAULT 600,
           timer_round_anchor INTEGER DEFAULT 0,
           timer_auto_reset INTEGER DEFAULT 1
-        )`
+        )`,
       );
 
       this.sql.exec(
@@ -90,7 +90,7 @@ export class PlanningRoomRepository {
           user_name TEXT PRIMARY KEY,
           token TEXT NOT NULL,
           created_at INTEGER NOT NULL
-        )`
+        )`,
       );
 
       this.sql.exec(
@@ -99,7 +99,7 @@ export class PlanningRoomRepository {
           avatar TEXT,
           is_connected INTEGER NOT NULL DEFAULT 0,
           ordinal INTEGER NOT NULL
-        )`
+        )`,
       );
 
       this.sql.exec(
@@ -107,7 +107,7 @@ export class PlanningRoomRepository {
           user_name TEXT PRIMARY KEY,
           vote TEXT NOT NULL,
           structured_vote_payload TEXT
-        )`
+        )`,
       );
 
       this.sql.exec(
@@ -124,7 +124,7 @@ export class PlanningRoomRepository {
           external_service TEXT CHECK(external_service IN ('jira', 'linear', 'github', 'clickup', 'asana', 'youtrack', 'zoho', 'trello', 'monday', 'none')) DEFAULT 'none',
           external_service_id TEXT,
           external_service_metadata TEXT
-        )`
+        )`,
       );
 
       this.sql.exec(
@@ -137,7 +137,7 @@ export class PlanningRoomRepository {
           voted_at INTEGER NOT NULL,
           FOREIGN KEY (ticket_queue_id) REFERENCES ticket_queue(id) ON DELETE CASCADE,
           UNIQUE(ticket_queue_id, user_name)
-        )`
+        )`,
       );
 
       this.sql.exec(
@@ -155,9 +155,29 @@ export class PlanningRoomRepository {
           created_at INTEGER NOT NULL,
           updated_at INTEGER NOT NULL,
           UNIQUE(room_key, provider)
-        )`
+        )`,
       );
+
+      this.createIndexes();
     });
+  }
+
+  createIndexes() {
+    this.sql.exec(
+      'CREATE INDEX IF NOT EXISTS idx_users_connected ON room_users(is_connected)'
+    );
+    this.sql.exec(
+      'CREATE INDEX IF NOT EXISTS idx_tickets_status_ordinal ON ticket_queue(status, ordinal)'
+    );
+    this.sql.exec(
+      'CREATE INDEX IF NOT EXISTS idx_tickets_external ON ticket_queue(external_service, external_service_id)'
+    );
+    this.sql.exec(
+      'CREATE INDEX IF NOT EXISTS idx_ticket_votes_ticket ON ticket_votes(ticket_queue_id)'
+    );
+    this.sql.exec(
+      'CREATE INDEX IF NOT EXISTS idx_oauth_room_provider ON oauth_credentials(room_key, provider)'
+    );
   }
 
   async getRoomData(): Promise<RoomData | undefined> {
@@ -200,7 +220,7 @@ export class PlanningRoomRepository {
            timer_round_anchor,
            timer_auto_reset
          FROM room_meta
-         WHERE id = ${ROOM_ROW_ID}`
+         WHERE id = ${ROOM_ROW_ID}`,
       )
       .toArray()[0];
 
@@ -216,7 +236,7 @@ export class PlanningRoomRepository {
       }>(
         `SELECT user_name, avatar, is_connected
          FROM room_users
-         ORDER BY ordinal ASC`
+         ORDER BY ordinal ASC`,
       )
       .toArray();
 
@@ -225,7 +245,7 @@ export class PlanningRoomRepository {
         user_name: string;
         vote: string;
         structured_vote_payload: string | null;
-      }>('SELECT * FROM room_votes')
+      }>("SELECT * FROM room_votes")
       .toArray();
 
     const connectedUsers: Record<string, boolean> = {};
@@ -254,7 +274,7 @@ export class PlanningRoomRepository {
       try {
         const structuredVoteData = safeJsonParse<StructuredVote>(payload);
         if (!structuredVoteData) {
-          throw new Error('Failed to parse structured vote from storage');
+          throw new Error("Failed to parse structured vote from storage");
         }
         structuredVoteMap[entry.user_name] = structuredVoteData;
       } catch {
@@ -266,11 +286,11 @@ export class PlanningRoomRepository {
     try {
       const settingsData = safeJsonParse<RoomSettings>(row.settings);
       if (!settingsData) {
-        throw new Error('Failed to parse room settings from storage');
+        throw new Error("Failed to parse room settings from storage");
       }
       settings = settingsData;
     } catch {
-      throw new Error('Failed to parse room settings from storage');
+      throw new Error("Failed to parse room settings from storage");
     }
 
     const anonymizeVotes =
@@ -407,10 +427,10 @@ export class PlanningRoomRepository {
         roomData.timerState?.targetDurationSeconds ??
           DEFAULT_TIMER_DURATION_SECONDS,
         roomData.timerState?.roundAnchorSeconds ?? 0,
-        roomData.timerState?.autoResetOnVotesReset === false ? 0 : 1
+        roomData.timerState?.autoResetOnVotesReset === false ? 0 : 1,
       );
 
-      sql.exec('DELETE FROM room_users');
+      sql.exec("DELETE FROM room_users");
       roomData.users.forEach((user, index) => {
         const isConnected = roomData.connectedUsers?.[user] ? 1 : 0;
         const avatar = roomData.userAvatars?.[user] ?? null;
@@ -420,11 +440,11 @@ export class PlanningRoomRepository {
           user,
           avatar,
           isConnected,
-          index
+          index,
         );
       });
 
-      sql.exec('DELETE FROM room_votes');
+      sql.exec("DELETE FROM room_votes");
       Object.entries(roomData.votes).forEach(([user, vote]) => {
         const structuredVote = roomData.structuredVotes?.[user] ?? null;
         sql.exec(
@@ -432,7 +452,7 @@ export class PlanningRoomRepository {
            VALUES (?, ?, ?)`,
           user,
           serializeVote(vote),
-          structuredVote ? JSON.stringify(structuredVote) : null
+          structuredVote ? JSON.stringify(structuredVote) : null,
         );
       });
     });
@@ -440,10 +460,9 @@ export class PlanningRoomRepository {
 
   ensureUser(userName: string): string {
     const existing = this.sql
-      .exec<{ user_name: string }>(
-        `SELECT user_name FROM room_users WHERE LOWER(user_name) = LOWER(?)`,
-        userName
-      )
+      .exec<{
+        user_name: string;
+      }>(`SELECT user_name FROM room_users WHERE LOWER(user_name) = LOWER(?)`, userName)
       .toArray()[0]?.user_name;
     const canonicalName = existing ?? userName;
 
@@ -455,7 +474,7 @@ export class PlanningRoomRepository {
          0,
          COALESCE((SELECT MAX(ordinal) + 1 FROM room_users), 0)
        )`,
-      canonicalName
+      canonicalName,
     );
 
     return canonicalName;
@@ -466,7 +485,7 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_users SET is_connected = ? WHERE user_name = ?`,
       isConnected ? 1 : 0,
-      canonicalName
+      canonicalName,
     );
   }
 
@@ -478,21 +497,21 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_users SET avatar = ? WHERE user_name = ?`,
       avatar,
-      canonicalName
+      canonicalName,
     );
   }
 
   setModerator(userName: string) {
     this.sql.exec(
       `UPDATE room_meta SET moderator = ? WHERE id = ${ROOM_ROW_ID}`,
-      userName
+      userName,
     );
   }
 
   setShowVotes(showVotes: boolean) {
     this.sql.exec(
       `UPDATE room_meta SET show_votes = ? WHERE id = ${ROOM_ROW_ID}`,
-      showVotes ? 1 : 0
+      showVotes ? 1 : 0,
     );
   }
 
@@ -503,7 +522,7 @@ export class PlanningRoomRepository {
        WHERE id = ${ROOM_ROW_ID}`,
       running ? 1 : 0,
       seconds,
-      lastUpdateTime
+      lastUpdateTime,
     );
   }
 
@@ -516,15 +535,15 @@ export class PlanningRoomRepository {
     const params: number[] = [];
 
     if (config.targetDurationSeconds !== undefined) {
-      updates.push('timer_target_duration = ?');
+      updates.push("timer_target_duration = ?");
       params.push(config.targetDurationSeconds);
     }
     if (config.roundAnchorSeconds !== undefined) {
-      updates.push('timer_round_anchor = ?');
+      updates.push("timer_round_anchor = ?");
       params.push(config.roundAnchorSeconds);
     }
     if (config.autoResetOnVotesReset !== undefined) {
-      updates.push('timer_auto_reset = ?');
+      updates.push("timer_auto_reset = ?");
       params.push(config.autoResetOnVotesReset ? 1 : 0);
     }
 
@@ -534,9 +553,9 @@ export class PlanningRoomRepository {
 
     this.sql.exec(
       `UPDATE room_meta
-       SET ${updates.join(', ')}
+       SET ${updates.join(", ")}
        WHERE id = ${ROOM_ROW_ID}`,
-      ...params
+      ...params,
     );
   }
 
@@ -545,7 +564,7 @@ export class PlanningRoomRepository {
       `UPDATE room_meta
        SET timer_is_paused = 0, timer_last_updated = ?
        WHERE id = ${ROOM_ROW_ID}`,
-      currentTime
+      currentTime,
     );
   }
 
@@ -557,13 +576,13 @@ export class PlanningRoomRepository {
         timer_last_updated: number;
       }>(
         `SELECT timer_is_paused, timer_seconds, timer_last_updated
-         FROM room_meta WHERE id = ${ROOM_ROW_ID}`
+         FROM room_meta WHERE id = ${ROOM_ROW_ID}`,
       )
       .toArray()[0];
 
     if (row && !row.timer_is_paused) {
       const elapsedSinceLastUpdate = Math.floor(
-        (currentTime - row.timer_last_updated) / 1000
+        (currentTime - row.timer_last_updated) / 1000,
       );
       const existingSeconds = row.timer_seconds ?? 0;
       const newSeconds = existingSeconds + elapsedSinceLastUpdate;
@@ -572,7 +591,7 @@ export class PlanningRoomRepository {
          SET timer_is_paused = 1, timer_seconds = ?, timer_last_updated = ?
          WHERE id = ${ROOM_ROW_ID}`,
         newSeconds,
-        currentTime
+        currentTime,
       );
     }
   }
@@ -581,7 +600,7 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_meta
        SET timer_is_paused = 0, timer_seconds = 0, timer_last_updated = 0, timer_round_anchor = 0
-       WHERE id = ${ROOM_ROW_ID}`
+       WHERE id = ${ROOM_ROW_ID}`,
     );
   }
 
@@ -592,12 +611,12 @@ export class PlanningRoomRepository {
        VALUES (?, ?, NULL)
        ON CONFLICT(user_name) DO UPDATE SET vote = excluded.vote, structured_vote_payload = NULL`,
       canonicalName,
-      serializeVote(vote)
+      serializeVote(vote),
     );
   }
 
   clearVotes() {
-    this.sql.exec('DELETE FROM room_votes');
+    this.sql.exec("DELETE FROM room_votes");
   }
 
   setStructuredVote(userName: string, vote: StructuredVote) {
@@ -605,12 +624,12 @@ export class PlanningRoomRepository {
     this.sql.exec(
       `UPDATE room_votes SET structured_vote_payload = ? WHERE user_name = ?`,
       JSON.stringify(vote),
-      canonicalName
+      canonicalName,
     );
   }
 
   clearStructuredVotes() {
-    this.sql.exec('UPDATE room_votes SET structured_vote_payload = NULL');
+    this.sql.exec("UPDATE room_votes SET structured_vote_payload = NULL");
   }
 
   setJudgeState(score: string | number | null, metadata?: JudgeMetadata) {
@@ -619,21 +638,21 @@ export class PlanningRoomRepository {
        SET judge_score = ?, judge_metadata = ?
        WHERE id = ${ROOM_ROW_ID}`,
       score === null || score === undefined ? null : String(score),
-      serializeJSON(metadata)
+      serializeJSON(metadata),
     );
   }
 
   setSettings(settings: RoomSettings) {
     this.sql.exec(
       `UPDATE room_meta SET settings = ? WHERE id = ${ROOM_ROW_ID}`,
-      JSON.stringify(settings)
+      JSON.stringify(settings),
     );
   }
 
   setPasscodeHash(passcodeHash: PasscodeHashPayload | null) {
     this.sql.exec(
       `UPDATE room_meta SET passcode = ? WHERE id = ${ROOM_ROW_ID}`,
-      serializePasscodeHash(passcodeHash)
+      serializePasscodeHash(passcodeHash),
     );
   }
 
@@ -650,10 +669,9 @@ export class PlanningRoomRepository {
   setSessionToken(userName: string, token: string) {
     const canonicalName = this.ensureUser(userName);
     const existingTokenOwner = this.sql
-      .exec<{ user_name: string }>(
-        `SELECT user_name FROM session_tokens WHERE LOWER(user_name) = LOWER(?)`,
-        canonicalName
-      )
+      .exec<{
+        user_name: string;
+      }>(`SELECT user_name FROM session_tokens WHERE LOWER(user_name) = LOWER(?)`, canonicalName)
       .toArray()[0]?.user_name;
     const tokenOwner = existingTokenOwner ?? canonicalName;
 
@@ -664,7 +682,7 @@ export class PlanningRoomRepository {
        DO UPDATE SET token = excluded.token, created_at = excluded.created_at`,
       tokenOwner,
       token,
-      Date.now()
+      Date.now(),
     );
   }
 
@@ -680,7 +698,7 @@ export class PlanningRoomRepository {
         `SELECT token, created_at
          FROM session_tokens
          WHERE LOWER(user_name) = LOWER(?)`,
-        userName
+        userName,
       )
       .toArray()[0];
 
@@ -689,7 +707,7 @@ export class PlanningRoomRepository {
     }
 
     const isExpired =
-      typeof record.created_at === 'number' &&
+      typeof record.created_at === "number" &&
       Date.now() - record.created_at > SESSION_TOKEN_TTL_MS;
 
     if (isExpired) {
@@ -712,7 +730,7 @@ export class PlanningRoomRepository {
        WHERE id = ${ROOM_ROW_ID}`,
       options.code ?? null,
       options.generationId ?? null,
-      options.phase ?? null
+      options.phase ?? null,
     );
   }
 
@@ -721,7 +739,7 @@ export class PlanningRoomRepository {
       `UPDATE room_meta
        SET strudel_is_playing = ?
        WHERE id = ${ROOM_ROW_ID}`,
-      isPlaying ? 1 : 0
+      isPlaying ? 1 : 0,
     );
   }
 
@@ -743,7 +761,7 @@ export class PlanningRoomRepository {
 
   getTicketById(
     id: number,
-    options?: { anonymizeVotes?: boolean }
+    options?: { anonymizeVotes?: boolean },
   ): TicketQueueItem | undefined {
     const row = this.sql
       .exec<{
@@ -751,12 +769,12 @@ export class PlanningRoomRepository {
         ticket_id: string;
         title: string | null;
         description: string | null;
-        status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+        status: "pending" | "in_progress" | "completed" | "blocked";
         outcome: string | null;
         created_at: number;
         completed_at: number | null;
         ordinal: number;
-        external_service: 'jira' | 'linear' | 'github' | 'none';
+        external_service: "jira" | "linear" | "github" | "none";
         external_service_id: string | null;
         external_service_metadata: string | null;
       }>(`SELECT * FROM ticket_queue WHERE id = ?`, id)
@@ -794,15 +812,15 @@ export class PlanningRoomRepository {
         ticket_id: string;
         title: string | null;
         description: string | null;
-        status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+        status: "pending" | "in_progress" | "completed" | "blocked";
         outcome: string | null;
         created_at: number;
         completed_at: number | null;
         ordinal: number;
-        external_service: 'jira' | 'linear' | 'github' | 'none';
+        external_service: "jira" | "linear" | "github" | "none";
         external_service_id: string | null;
         external_service_metadata: string | null;
-      }>('SELECT * FROM ticket_queue ORDER BY ordinal ASC')
+      }>("SELECT * FROM ticket_queue ORDER BY ordinal ASC")
       .toArray();
 
     return rows.map((row) => {
@@ -822,7 +840,7 @@ export class PlanningRoomRepository {
         externalServiceId: row.external_service_id ?? undefined,
         externalServiceMetadata: row.external_service_metadata
           ? safeJsonParse<Record<string, unknown>>(
-              row.external_service_metadata
+              row.external_service_metadata,
             )
           : undefined,
         votes,
@@ -832,7 +850,7 @@ export class PlanningRoomRepository {
 
   getTicketVotes(
     ticketQueueId: number,
-    anonymizeVotes?: boolean
+    anonymizeVotes?: boolean,
   ): TicketVote[] {
     const rows = this.sql
       .exec<{
@@ -843,8 +861,8 @@ export class PlanningRoomRepository {
         structured_vote_payload: string | null;
         voted_at: number;
       }>(
-        'SELECT * FROM ticket_votes WHERE ticket_queue_id = ? ORDER BY voted_at ASC',
-        ticketQueueId
+        "SELECT * FROM ticket_votes WHERE ticket_queue_id = ? ORDER BY voted_at ASC",
+        ticketQueueId,
       )
       .toArray();
 
@@ -865,7 +883,7 @@ export class PlanningRoomRepository {
   }
 
   createTicket(
-    ticket: Omit<TicketQueueItem, 'id' | 'createdAt' | 'votes'>
+    ticket: Omit<TicketQueueItem, "id" | "createdAt" | "votes">,
   ): TicketQueueItem {
     const result = this.sql.exec(
       `INSERT INTO ticket_queue (
@@ -892,62 +910,62 @@ export class PlanningRoomRepository {
       ticket.ordinal,
       ticket.externalService,
       ticket.externalServiceId ?? null,
-      serializeJSON(ticket.externalServiceMetadata)
+      serializeJSON(ticket.externalServiceMetadata),
     );
 
     const insertedId = result.toArray()[0] as { id: number };
     const created = this.getTicketById(insertedId.id);
     if (!created) {
-      throw new Error('Failed to create ticket');
+      throw new Error("Failed to create ticket");
     }
     return created;
   }
 
   updateTicket(
     id: number,
-    updates: Partial<Omit<TicketQueueItem, 'id' | 'createdAt' | 'votes'>>
+    updates: Partial<Omit<TicketQueueItem, "id" | "createdAt" | "votes">>,
   ): void {
     const fields: string[] = [];
     const values: unknown[] = [];
 
     if (updates.ticketId !== undefined) {
-      fields.push('ticket_id = ?');
+      fields.push("ticket_id = ?");
       values.push(updates.ticketId);
     }
     if (updates.title !== undefined) {
-      fields.push('title = ?');
+      fields.push("title = ?");
       values.push(updates.title ?? null);
     }
     if (updates.description !== undefined) {
-      fields.push('description = ?');
+      fields.push("description = ?");
       values.push(updates.description ?? null);
     }
     if (updates.status !== undefined) {
-      fields.push('status = ?');
+      fields.push("status = ?");
       values.push(updates.status);
     }
     if (updates.outcome !== undefined) {
-      fields.push('outcome = ?');
+      fields.push("outcome = ?");
       values.push(updates.outcome ?? null);
     }
     if (updates.completedAt !== undefined) {
-      fields.push('completed_at = ?');
+      fields.push("completed_at = ?");
       values.push(updates.completedAt ?? null);
     }
     if (updates.ordinal !== undefined) {
-      fields.push('ordinal = ?');
+      fields.push("ordinal = ?");
       values.push(updates.ordinal);
     }
     if (updates.externalService !== undefined) {
-      fields.push('external_service = ?');
+      fields.push("external_service = ?");
       values.push(updates.externalService);
     }
     if (updates.externalServiceId !== undefined) {
-      fields.push('external_service_id = ?');
+      fields.push("external_service_id = ?");
       values.push(updates.externalServiceId ?? null);
     }
     if (updates.externalServiceMetadata !== undefined) {
-      fields.push('external_service_metadata = ?');
+      fields.push("external_service_metadata = ?");
       values.push(serializeJSON(updates.externalServiceMetadata));
     }
 
@@ -957,31 +975,30 @@ export class PlanningRoomRepository {
 
     values.push(id);
     this.sql.exec(
-      `UPDATE ticket_queue SET ${fields.join(', ')} WHERE id = ?`,
-      ...values
+      `UPDATE ticket_queue SET ${fields.join(", ")} WHERE id = ?`,
+      ...values,
     );
   }
 
   deleteTicket(id: number): void {
-    this.sql.exec('DELETE FROM ticket_queue WHERE id = ?', id);
+    this.sql.exec("DELETE FROM ticket_queue WHERE id = ?", id);
   }
 
   setCurrentTicket(ticketId: number | null): void {
     this.sql.exec(
       `UPDATE room_meta SET current_ticket_id = ? WHERE id = ${ROOM_ROW_ID}`,
-      ticketId
+      ticketId,
     );
   }
 
   getTicketByTicketKey(
     ticketKey: string,
-    options?: { anonymizeVotes?: boolean }
+    options?: { anonymizeVotes?: boolean },
   ): TicketQueueItem | undefined {
     const row = this.sql
-      .exec<{ id: number }>(
-        `SELECT id FROM ticket_queue WHERE ticket_id = ? LIMIT 1`,
-        ticketKey
-      )
+      .exec<{
+        id: number;
+      }>(`SELECT id FROM ticket_queue WHERE ticket_id = ? LIMIT 1`, ticketKey)
       .toArray()[0];
 
     if (!row) return undefined;
@@ -992,7 +1009,7 @@ export class PlanningRoomRepository {
     ticketQueueId: number,
     userName: string,
     vote: VoteValue,
-    structuredVote?: StructuredVote
+    structuredVote?: StructuredVote,
   ): void {
     this.sql.exec(
       `INSERT INTO ticket_votes (
@@ -1011,43 +1028,43 @@ export class PlanningRoomRepository {
       userName,
       serializeVote(vote),
       structuredVote ? JSON.stringify(structuredVote) : null,
-      Date.now()
+      Date.now(),
     );
   }
 
-  getNextTicketId({ externalService = 'none' }): string {
+  getNextTicketId({ externalService = "none" }): string {
     const maxTicket = this.sql
       .exec<{ ticket_id: string }>(
         `SELECT ticket_id FROM ticket_queue 
          WHERE ticket_id LIKE 'SPRINTJAM-%' 
          ORDER BY CAST(SUBSTR(ticket_id, 11) AS INTEGER) DESC 
-         LIMIT 1`
+         LIMIT 1`,
       )
       .toArray()[0];
 
-    if (!maxTicket && externalService === 'none') {
-      return 'SPRINTJAM-001';
+    if (!maxTicket && externalService === "none") {
+      return "SPRINTJAM-001";
     } else if (!maxTicket) {
-      return '';
+      return "";
     }
 
     const match = maxTicket.ticket_id.match(/SPRINTJAM-(\d+)/);
-    if (!match && externalService === 'none') {
-      return 'SPRINTJAM-001';
+    if (!match && externalService === "none") {
+      return "SPRINTJAM-001";
     } else if (!match) {
-      return '';
+      return "";
     }
 
     const nextNum = parseInt(match[1], 10) + 1;
-    return `SPRINTJAM-${String(nextNum).padStart(3, '0')}`;
+    return `SPRINTJAM-${String(nextNum).padStart(3, "0")}`;
   }
 
   reorderQueue(ticketIds: number[]): void {
     ticketIds.forEach((id, index) => {
       this.sql.exec(
-        'UPDATE ticket_queue SET ordinal = ? WHERE id = ?',
+        "UPDATE ticket_queue SET ordinal = ? WHERE id = ?",
         index,
-        id
+        id,
       );
     });
   }
@@ -1086,7 +1103,7 @@ export class PlanningRoomRepository {
         updated_at: number;
       }>(
         `SELECT * FROM oauth_credentials WHERE room_key = ? AND provider = 'jira'`,
-        roomKey
+        roomKey,
       )
       .toArray()[0];
 
@@ -1099,7 +1116,7 @@ export class PlanningRoomRepository {
       jiraUserEmail?: string | null;
       storyPointsField?: string | null;
       sprintField?: string | null;
-    }>(row.metadata ?? '{}');
+    }>(row.metadata ?? "{}");
 
     const accessToken = await this.tokenCipher.decrypt(row.access_token);
     const refreshToken = await this.decryptToken(row.refresh_token);
@@ -1112,7 +1129,7 @@ export class PlanningRoomRepository {
       tokenType: row.token_type,
       expiresAt: row.expires_at,
       scope: row.scope,
-      jiraDomain: metadata?.jiraDomain ?? '',
+      jiraDomain: metadata?.jiraDomain ?? "",
       jiraCloudId: metadata?.jiraCloudId ?? null,
       jiraUserId: metadata?.jiraUserId ?? null,
       jiraUserEmail: metadata?.jiraUserEmail ?? null,
@@ -1149,10 +1166,10 @@ export class PlanningRoomRepository {
       sprintField: credentials.sprintField,
     });
     const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken
+      credentials.accessToken,
     );
     const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken
+      credentials.refreshToken,
     );
 
     this.sql.exec(
@@ -1187,7 +1204,7 @@ export class PlanningRoomRepository {
       credentials.authorizedBy,
       metadata,
       now,
-      now
+      now,
     );
   }
 
@@ -1195,7 +1212,7 @@ export class PlanningRoomRepository {
     roomKey: string,
     accessToken: string,
     refreshToken: string | null,
-    expiresAt: number
+    expiresAt: number,
   ): Promise<void> {
     const encryptedAccessToken = await this.tokenCipher.encrypt(accessToken);
     const encryptedRefreshToken = await this.encryptToken(refreshToken);
@@ -1207,14 +1224,14 @@ export class PlanningRoomRepository {
       encryptedRefreshToken,
       expiresAt,
       Date.now(),
-      roomKey
+      roomKey,
     );
   }
 
   deleteJiraOAuthCredentials(roomKey: string): void {
     this.sql.exec(
       "DELETE FROM oauth_credentials WHERE room_key = ? AND provider = 'jira'",
-      roomKey
+      roomKey,
     );
   }
 
@@ -1250,7 +1267,7 @@ export class PlanningRoomRepository {
         updated_at: number;
       }>(
         `SELECT * FROM oauth_credentials WHERE room_key = ? AND provider = 'linear'`,
-        roomKey
+        roomKey,
       )
       .toArray()[0];
 
@@ -1261,7 +1278,7 @@ export class PlanningRoomRepository {
       linearUserId?: string | null;
       linearUserEmail?: string | null;
       estimateField?: string | null;
-    }>(row.metadata ?? '{}');
+    }>(row.metadata ?? "{}");
 
     const accessToken = await this.tokenCipher.decrypt(row.access_token);
     const refreshToken = await this.decryptToken(row.refresh_token);
@@ -1305,10 +1322,10 @@ export class PlanningRoomRepository {
       estimateField: credentials.estimateField,
     });
     const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken
+      credentials.accessToken,
     );
     const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken
+      credentials.refreshToken,
     );
 
     this.sql.exec(
@@ -1343,7 +1360,7 @@ export class PlanningRoomRepository {
       credentials.authorizedBy,
       metadata,
       now,
-      now
+      now,
     );
   }
 
@@ -1351,7 +1368,7 @@ export class PlanningRoomRepository {
     roomKey: string,
     accessToken: string,
     refreshToken: string | null,
-    expiresAt: number
+    expiresAt: number,
   ): Promise<void> {
     const encryptedAccessToken = await this.tokenCipher.encrypt(accessToken);
     const encryptedRefreshToken = await this.encryptToken(refreshToken);
@@ -1363,20 +1380,20 @@ export class PlanningRoomRepository {
       encryptedRefreshToken,
       expiresAt,
       Date.now(),
-      roomKey
+      roomKey,
     );
   }
 
   deleteLinearOAuthCredentials(roomKey: string): void {
     this.sql.exec(
       "DELETE FROM oauth_credentials WHERE room_key = ? AND provider = 'linear'",
-      roomKey
+      roomKey,
     );
   }
 
   async updateLinearEstimateField(
     roomKey: string,
-    estimateField: string | null
+    estimateField: string | null,
   ): Promise<void> {
     const existing = await this.getLinearOAuthCredentials(roomKey);
     if (!existing) {
@@ -1430,7 +1447,7 @@ export class PlanningRoomRepository {
         updated_at: number;
       }>(
         `SELECT * FROM oauth_credentials WHERE room_key = ? AND provider = 'github'`,
-        roomKey
+        roomKey,
       )
       .toArray()[0];
 
@@ -1443,7 +1460,7 @@ export class PlanningRoomRepository {
       githubUserEmail?: string | null;
       defaultOwner?: string | null;
       defaultRepo?: string | null;
-    }>(row.metadata ?? '{}');
+    }>(row.metadata ?? "{}");
 
     const accessToken = await this.tokenCipher.decrypt(row.access_token);
     const refreshToken = await this.decryptToken(row.refresh_token);
@@ -1488,10 +1505,10 @@ export class PlanningRoomRepository {
     });
 
     const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken
+      credentials.accessToken,
     );
     const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken
+      credentials.refreshToken,
     );
 
     this.sql.exec(
@@ -1526,19 +1543,19 @@ export class PlanningRoomRepository {
       credentials.authorizedBy,
       metadata,
       now,
-      now
+      now,
     );
   }
 
   deleteGithubOAuthCredentials(roomKey: string): void {
     this.sql.exec(
       "DELETE FROM oauth_credentials WHERE room_key = ? AND provider = 'github'",
-      roomKey
+      roomKey,
     );
   }
 
   private getSql(txn?: DurableObjectTransaction): SqlStorage {
-    if (txn && 'sql' in txn) {
+    if (txn && "sql" in txn) {
       return (txn as SqlEnabledTransaction).sql;
     }
 

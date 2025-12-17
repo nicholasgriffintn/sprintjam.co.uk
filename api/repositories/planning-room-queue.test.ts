@@ -23,7 +23,7 @@ describe("PlanningRoomRepository - Ticket Queue", () => {
       ),
     } as unknown as DurableObjectStorage;
 
-    const tokenCipher = new TokenCipher('test-secret');
+    const tokenCipher = new TokenCipher("test-secret");
     repository = new PlanningRoomRepository(mockStorage, tokenCipher);
     repository.initializeSchema();
   });

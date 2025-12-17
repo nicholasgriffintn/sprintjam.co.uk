@@ -3,13 +3,13 @@ import {
   useEffect,
   useRef,
   useState,
-} from 'react';
+} from "react";
 
-import type { RoomStats } from '@/types';
-import { ParticipantsList } from './ParticipantsList';
-import { TicketQueueSidebar } from './TicketQueueSidebar';
-import { useRoom } from '@/context/RoomContext';
-import { useSession } from '@/context/SessionContext';
+import type { RoomStats } from "@/types";
+import { ParticipantsList } from "./ParticipantsList";
+import { TicketQueueSidebar } from "./TicketQueueSidebar";
+import { useRoom } from "@/context/RoomContext";
+import { useSession } from "@/context/SessionContext";
 
 export function RoomSidebar({
   isQueueEnabled,
@@ -52,16 +52,16 @@ export function RoomSidebar({
       updateSidebarSplit(event.clientY);
     };
     const handleUp = () => setIsDraggingSplit(false);
-    window.addEventListener('pointermove', handleMove);
-    window.addEventListener('pointerup', handleUp);
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
     return () => {
-      window.removeEventListener('pointermove', handleMove);
-      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
     };
   }, [isDraggingSplit]);
 
   const handleSplitPointerDown = (
-    event: ReactPointerEvent<HTMLButtonElement>
+    event: ReactPointerEvent<HTMLButtonElement>,
   ) => {
     event.preventDefault();
     setIsDraggingSplit(true);
@@ -75,11 +75,12 @@ export function RoomSidebar({
         className="flex h-full min-h-0 flex-col gap-3 p-3 shadow-sm backdrop-blur md:sticky md:top-[4.5rem] md:h-[calc(100vh-4.5rem)] md:min-h-[420px]"
       >
         <div
-          className={`flex flex-col overflow-hidden md:min-h-0 ${isParticipantsCollapsed ? 'md:min-h-[54px]' : 'md:min-h-[220px]'
-            }`}
+          className={`flex flex-col overflow-hidden md:min-h-0 ${
+            isParticipantsCollapsed ? "md:min-h-[54px]" : "md:min-h-[220px]"
+          }`}
           style={{
             flex: isParticipantsCollapsed
-              ? '0 0 auto'
+              ? "0 0 auto"
               : `${participantsFlex} 1 0%`,
           }}
         >
@@ -103,10 +104,11 @@ export function RoomSidebar({
               <span className="h-0.5 w-10 rounded-full bg-slate-400/80 dark:bg-slate-500/80" />
             </button>
             <div
-              className={`flex flex-col overflow-hidden md:min-h-0 md:pt-1 ${isQueueCollapsed ? 'md:min-h-[54px]' : 'md:min-h-[180px]'
-                }`}
+              className={`flex flex-col overflow-hidden md:min-h-0 md:pt-1 ${
+                isQueueCollapsed ? "md:min-h-[54px]" : "md:min-h-[180px]"
+              }`}
               style={{
-                flex: isQueueCollapsed ? '0 0 auto' : `${queueFlex} 1 0%`,
+                flex: isQueueCollapsed ? "0 0 auto" : `${queueFlex} 1 0%`,
               }}
             >
               <TicketQueueSidebar

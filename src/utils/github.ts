@@ -24,9 +24,7 @@ export const getGithubMetadata = (ticket: TicketQueueItem) => {
   return {
     key:
       metadata.key ??
-      (typeof metadata.number === "number"
-        ? `#${metadata.number}`
-        : undefined),
+      (typeof metadata.number === "number" ? `#${metadata.number}` : undefined),
     url: metadata.url ?? metadata.html_url,
     summary: metadata.summary ?? metadata.title,
     description: metadata.description ?? metadata.body,

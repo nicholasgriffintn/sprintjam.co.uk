@@ -1,8 +1,8 @@
 export function generateColorFromValue(
   value: number,
-  maxValue: number
+  maxValue: number,
 ): string {
-  if (value === 0) return '#f0f0f0';
+  if (value === 0) return "#f0f0f0";
 
   const normalizedValue = Math.min(value / maxValue, 1);
 
@@ -16,7 +16,7 @@ export function generateColorFromValue(
   const lightness = 75 + normalizedValue * 10;
 
   return `hsl(${Math.round(hue)}, ${Math.round(saturation)}%, ${Math.round(
-    lightness
+    lightness,
   )}%)`;
 }
 

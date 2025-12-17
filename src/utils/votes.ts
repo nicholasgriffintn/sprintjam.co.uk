@@ -1,8 +1,8 @@
-import { TicketQueueItem, TicketVote } from '../types';
-import { convertVoteValueToStoryPoints } from '../lib/jira-service';
+import { TicketQueueItem, TicketVote } from "../types";
+import { convertVoteValueToStoryPoints } from "../lib/jira-service";
 
 export const getVoteSummary = (ticket: TicketQueueItem) => {
-  if (!ticket.votes || ticket.votes.length === 0) return 'No votes';
+  if (!ticket.votes || ticket.votes.length === 0) return "No votes";
 
   const voteValues = ticket.votes.map((v) => String(v.vote));
   const counts: Record<string, number> = {};
@@ -11,11 +11,11 @@ export const getVoteSummary = (ticket: TicketQueueItem) => {
   return Object.entries(counts)
     .sort(([, a], [, b]) => b - a)
     .map(([val, count]) => `${val} (${count})`)
-    .join(', ');
+    .join(", ");
 };
 
 export const calculateStoryPointsFromVotes = (
-  votes?: TicketVote[]
+  votes?: TicketVote[],
 ): number | null => {
   if (!votes || votes.length === 0) {
     return null;
@@ -23,7 +23,7 @@ export const calculateStoryPointsFromVotes = (
 
   const numericVotes = votes
     .map(
-      (vote) => vote.structuredVotePayload?.calculatedStoryPoints ?? vote.vote
+      (vote) => vote.structuredVotePayload?.calculatedStoryPoints ?? vote.vote,
     )
     .map(convertVoteValueToStoryPoints)
     .filter((value): value is number => value !== null);

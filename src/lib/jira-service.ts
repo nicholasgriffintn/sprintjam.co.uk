@@ -30,32 +30,32 @@ export interface JiraFieldOption {
 
 export async function fetchJiraTicket(
   ticketId: string,
-  options?: { roomKey?: string; userName?: string; sessionToken?: string }
+  options?: { roomKey?: string; userName?: string; sessionToken?: string },
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
     let url = `${API_BASE_URL}/jira/ticket?ticketId=${encodeURIComponent(
-      ticketId
+      ticketId,
     )}`;
 
     if (options?.roomKey && options?.userName) {
       url += `&roomKey=${encodeURIComponent(
-        options.roomKey
+        options.roomKey,
       )}&userName=${encodeURIComponent(options.userName)}`;
       url += `&sessionToken=${encodeURIComponent(sessionToken)}`;
     }
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to fetch Jira ticket: ${response.status}`
+        errorData.error || `Failed to fetch Jira ticket: ${response.status}`,
       );
     }
 
@@ -66,9 +66,9 @@ export async function fetchJiraTicket(
     if (ticket) {
       return ticket;
     }
-    throw new Error('Invalid response format from Jira API');
+    throw new Error("Invalid response format from Jira API");
   } catch (error) {
-    console.error('Error fetching Jira ticket:', error);
+    console.error("Error fetching Jira ticket:", error);
     throw error;
   }
 }
@@ -100,7 +100,7 @@ export async function updateJiraStoryPoints(
       const errorData = await response.json();
       throw new Error(
         errorData.error ||
-        `Failed to update Jira story points: ${response.status}`,
+          `Failed to update Jira story points: ${response.status}`,
       );
     }
 

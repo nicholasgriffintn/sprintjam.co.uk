@@ -1,34 +1,34 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-import { useRoom } from '@/context/RoomContext';
-import { useSession } from '@/context/SessionContext';
-import { useRoomStats } from '@/hooks/useRoomStats';
-import { useConsensusCelebration } from '@/hooks/useConsensusCelebration';
-import ErrorBanner from '@/components/ui/ErrorBanner';
-import Header from '@/components/Header';
-import { UserEstimate } from '@/components/voting/UserEstimate';
-import { ResultsControls } from '@/components/results/ResultsControls';
-import { VotesHidden } from '@/components/results/VotesHidden';
-import { StructuredVotingPanel } from '@/components/voting/StructuredVotingPanel';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { StrudelMiniPlayer } from '@/components/StrudelPlayer/StrudelMiniPlayer';
-import { FallbackLoading } from '@/components/ui/FallbackLoading';
-import { TicketQueueModal } from '@/components/modals/TicketQueueModal';
-import { PrePointingSummaryModal } from '@/components/modals/PrePointingSummaryModal';
-import { QueueProviderSetupModal } from '@/components/modals/QueueProviderSetupModal';
-import { ErrorBannerAuth } from '@/components/errors/ErrorBannerAuth';
-import { ErrorBannerConnection } from '@/components/errors/ErrorBannerConnection';
-import { RoomSidebar } from '@/components/layout/RoomSidebar';
-import { getVoteKeyForUser } from '@/utils/room';
-import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
-import { Footer } from '@/components/layout/Footer';
-import ShareRoomModal from '@/components/modals/ShareRoomModal';
-import SettingsModal from '@/components/modals/SettingsModal';
-import { UnifiedResults } from '@/components/results/UnifiedResults';
-import type { ConnectionStatusState } from '@/types';
+import { useRoom } from "@/context/RoomContext";
+import { useSession } from "@/context/SessionContext";
+import { useRoomStats } from "@/hooks/useRoomStats";
+import { useConsensusCelebration } from "@/hooks/useConsensusCelebration";
+import ErrorBanner from "@/components/ui/ErrorBanner";
+import Header from "@/components/Header";
+import { UserEstimate } from "@/components/voting/UserEstimate";
+import { ResultsControls } from "@/components/results/ResultsControls";
+import { VotesHidden } from "@/components/results/VotesHidden";
+import { StructuredVotingPanel } from "@/components/voting/StructuredVotingPanel";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { StrudelMiniPlayer } from "@/components/StrudelPlayer/StrudelMiniPlayer";
+import { FallbackLoading } from "@/components/ui/FallbackLoading";
+import { TicketQueueModal } from "@/components/modals/TicketQueueModal";
+import { PrePointingSummaryModal } from "@/components/modals/PrePointingSummaryModal";
+import { QueueProviderSetupModal } from "@/components/modals/QueueProviderSetupModal";
+import { ErrorBannerAuth } from "@/components/errors/ErrorBannerAuth";
+import { ErrorBannerConnection } from "@/components/errors/ErrorBannerConnection";
+import { RoomSidebar } from "@/components/layout/RoomSidebar";
+import { getVoteKeyForUser } from "@/utils/room";
+import { useDisplayQueueSetup } from "@/hooks/useDisplayQueueSetup";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
+import { Footer } from "@/components/layout/Footer";
+import ShareRoomModal from "@/components/modals/ShareRoomModal";
+import SettingsModal from "@/components/modals/SettingsModal";
+import { UnifiedResults } from "@/components/results/UnifiedResults";
+import type { ConnectionStatusState } from "@/types";
 
 const RoomScreen = () => {
   usePageMeta(META_CONFIGS.room);
@@ -70,7 +70,7 @@ const RoomScreen = () => {
   useConsensusCelebration({ roomData, stats });
 
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
-  const queueProvider = roomData.settings.externalService || 'none';
+  const queueProvider = roomData.settings.externalService || "none";
 
   const { isQueueSetupModalOpen, setIsQueueSetupModalOpen } =
     useDisplayQueueSetup({
@@ -82,15 +82,15 @@ const RoomScreen = () => {
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
-      ? 'connected'
-      : 'disconnected'
-    : 'connecting';
+      ? "connected"
+      : "disconnected"
+    : "connecting";
 
   const showReconnectBanner =
-    connectionIssue?.type === 'disconnected' ||
-    (connectionStatus === 'disconnected' && !connectionIssue);
+    connectionIssue?.type === "disconnected" ||
+    (connectionStatus === "disconnected" && !connectionIssue);
 
-  const showAuthBanner = connectionIssue?.type === 'auth';
+  const showAuthBanner = connectionIssue?.type === "auth";
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
@@ -112,7 +112,7 @@ const RoomScreen = () => {
         <ErrorBanner
           message={roomError}
           onClose={clearRoomError}
-          variant={roomErrorKind === 'permission' ? 'warning' : 'error'}
+          variant={roomErrorKind === "permission" ? "warning" : "error"}
         />
       )}
 
@@ -160,7 +160,7 @@ const RoomScreen = () => {
             <UserEstimate
               roomData={roomData}
               name={name}
-              userVote={typeof userVote === 'object' ? null : userVote}
+              userVote={typeof userVote === "object" ? null : userVote}
               onVote={handleVote}
             />
           )}
@@ -179,10 +179,10 @@ const RoomScreen = () => {
                 const maxOrdinal =
                   pendingQueue.reduce(
                     (max, t) => (t.ordinal > max ? t.ordinal : max),
-                    0
+                    0,
                   ) + 1;
                 await handleUpdateTicket(roomData.currentTicket.id, {
-                  status: 'pending',
+                  status: "pending",
                   ordinal: maxOrdinal,
                 });
                 handleNextTicket();
@@ -280,7 +280,7 @@ const RoomScreen = () => {
           onClose={() => setIsQueueModalOpen(false)}
           currentTicket={roomData.currentTicket}
           queue={roomData.ticketQueue || []}
-          externalService={roomData.settings.externalService || 'none'}
+          externalService={roomData.settings.externalService || "none"}
           roomKey={roomData.key}
           userName={name}
           onAddTicket={handleAddTicket}
@@ -294,10 +294,10 @@ const RoomScreen = () => {
         />
       )}
 
-      {isQueueEnabled && queueProvider !== 'none' && (
+      {isQueueEnabled && queueProvider !== "none" && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as 'jira' | 'linear' | 'github'}
+          provider={queueProvider as "jira" | "linear" | "github"}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);

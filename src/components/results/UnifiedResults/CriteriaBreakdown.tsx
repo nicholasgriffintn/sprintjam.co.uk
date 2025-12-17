@@ -26,12 +26,13 @@ export function CriteriaBreakdownStat({
           {stat.name}
         </h4>
         <span
-          className={`flex-shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs ${stat.consensus === "high"
-            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200"
-            : stat.consensus === "medium"
-              ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
-              : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
-            }`}
+          className={`flex-shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs ${
+            stat.consensus === "high"
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200"
+              : stat.consensus === "medium"
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
+                : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
+          }`}
         >
           {stat.consensus === "high"
             ? consensusLabels.high
@@ -127,5 +128,5 @@ export function CriteriaBreakdown({
         ))}
       </div>
     </div>
-  )
+  );
 }

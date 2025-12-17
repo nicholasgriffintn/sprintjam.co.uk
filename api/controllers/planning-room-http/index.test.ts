@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { handleHttpRequest } from '.';
-import type { PlanningRoomHttpContext } from '.';
-import { createInitialRoomData } from '../../utils/defaults';
-import { hashPasscode } from '../../utils/room-cypto';
-import type { PasscodeHashPayload, RoomData } from '../../types';
+import { handleHttpRequest } from ".";
+import type { PlanningRoomHttpContext } from ".";
+import { createInitialRoomData } from "../../utils/defaults";
+import { hashPasscode } from "../../utils/room-cypto";
+import type { PasscodeHashPayload, RoomData } from "../../types";
 
 type TokenMap = Map<string, string>;
 
@@ -16,7 +16,7 @@ const makeContext = (options: {
   let currentRoom = options.roomData;
   const tokens = options.tokens ?? new Map<string, string>();
 
-  const repository: PlanningRoomHttpContext['repository'] = {
+  const repository: PlanningRoomHttpContext["repository"] = {
     getPasscodeHash: () => options.passcodeHash ?? null,
     validateSessionToken: (userName: string, token: string | null) => {
       if (!token) return false;
@@ -62,44 +62,44 @@ const makeContext = (options: {
 };
 
 const buildJoinRequest = (body: Record<string, unknown>) =>
-  new Request('https://dummy/join', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  new Request("https://dummy/join", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 
 const jsonRequest = (
   path: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-  body?: Record<string, unknown>
+  method: "GET" | "POST" | "PUT" | "DELETE",
+  body?: Record<string, unknown>,
 ) =>
   new Request(`https://dummy${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
 
 const queryRequest = (path: string) => new Request(`https://dummy${path}`);
 
-describe('planning-room-http join flow', () => {
+describe("planning-room-http join flow", () => {
   let baseRoom: RoomData;
 
   beforeEach(() => {
     baseRoom = createInitialRoomData({
-      key: 'room-123',
-      users: ['Alice'],
-      moderator: 'Alice',
+      key: "room-123",
+      users: ["Alice"],
+      moderator: "Alice",
       connectedUsers: { Alice: false },
     });
   });
 
-  it('rejects when the username is currently connected and no valid token is provided', async () => {
+  it("rejects when the username is currently connected and no valid token is provided", async () => {
     baseRoom.connectedUsers = { Alice: true };
     const { ctx } = makeContext({ roomData: baseRoom });
 
     const response = (await handleHttpRequest(
       ctx,
-      buildJoinRequest({ name: 'Alice' })
+      buildJoinRequest({ name: "Alice" }),
     )) as Response;
 
     expect(response.status).toBe(409);
@@ -107,9 +107,9 @@ describe('planning-room-http join flow', () => {
     expect(payload.error).toMatch(/already connected/i);
   });
 
-  it('allows rejoin with the same name when previously disconnected (no stored token), issuing a new token', async () => {
+  it("allows rejoin with the same name when previously disconnected (no stored token), issuing a new token", async () => {
     baseRoom.connectedUsers = { Alice: false };
-    const passcodeHash = await hashPasscode('secret');
+    const passcodeHash = await hashPasscode("secret");
     const { ctx, tokens } = makeContext({
       roomData: baseRoom,
       passcodeHash,
@@ -117,7 +117,7 @@ describe('planning-room-http join flow', () => {
 
     const response = (await handleHttpRequest(
       ctx,
-      buildJoinRequest({ name: 'Alice', passcode: 'secret' })
+      buildJoinRequest({ name: "Alice", passcode: "secret" }),
     )) as Response;
 
     expect(response.status).toBe(200);
@@ -127,14 +127,14 @@ describe('planning-room-http join flow', () => {
     expect(tokens.size).toBe(1);
   });
 
-  it('allows a currently connected username when a valid session token is supplied', async () => {
+  it("allows a currently connected username when a valid session token is supplied", async () => {
     baseRoom.connectedUsers = { Alice: true };
-    const tokens = new Map<string, string>([['alice', 'valid-token']]);
+    const tokens = new Map<string, string>([["alice", "valid-token"]]);
     const { ctx } = makeContext({ roomData: baseRoom, tokens });
 
     const response = (await handleHttpRequest(
       ctx,
-      buildJoinRequest({ name: 'alice', authToken: 'valid-token' })
+      buildJoinRequest({ name: "alice", authToken: "valid-token" }),
     )) as Response;
 
     expect(response.status).toBe(200);
@@ -143,25 +143,25 @@ describe('planning-room-http join flow', () => {
   });
 });
 
-describe('planning-room-http permissions and state updates', () => {
+describe("planning-room-http permissions and state updates", () => {
   let baseRoom: RoomData;
 
   beforeEach(() => {
     baseRoom = createInitialRoomData({
-      key: 'room-777',
-      users: ['Alice', 'Bob'],
-      moderator: 'Alice',
+      key: "room-777",
+      users: ["Alice", "Bob"],
+      moderator: "Alice",
       connectedUsers: { Alice: true, Bob: true },
     });
     vi.useRealTimers();
   });
 
-  it('blocks non-moderators from toggling showVotes when not allowed', async () => {
+  it("blocks non-moderators from toggling showVotes when not allowed", async () => {
     const { ctx } = makeContext({ roomData: baseRoom });
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest('/showVotes', 'POST', { name: 'Bob' })
+      jsonRequest("/showVotes", "POST", { name: "Bob" }),
     )) as Response;
 
     expect(response.status).toBe(403);
@@ -169,11 +169,11 @@ describe('planning-room-http permissions and state updates', () => {
     expect(payload.error).toMatch(/only the moderator/i);
   });
 
-  it('resets votes and timer anchors when auto reset is enabled', async () => {
+  it("resets votes and timer anchors when auto reset is enabled", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-01T00:00:30Z'));
+    vi.setSystemTime(new Date("2024-01-01T00:00:30Z"));
 
-    baseRoom.votes = { Alice: '5' };
+    baseRoom.votes = { Alice: "5" };
     baseRoom.structuredVotes = { Alice: { criteriaScores: { c1: 3 } } as any };
     baseRoom.timerState = {
       running: false,
@@ -187,7 +187,7 @@ describe('planning-room-http permissions and state updates', () => {
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest('/resetVotes', 'POST', { name: 'Alice' })
+      jsonRequest("/resetVotes", "POST", { name: "Alice" }),
     )) as Response;
 
     expect(response.status).toBe(200);
@@ -197,46 +197,46 @@ describe('planning-room-http permissions and state updates', () => {
       roundAnchorSeconds: 45,
     });
     expect(ctx.broadcast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'timerUpdated' })
+      expect.objectContaining({ type: "timerUpdated" }),
     );
   });
 
-  it('rejects settings read without session token', async () => {
+  it("rejects settings read without session token", async () => {
     const { ctx } = makeContext({ roomData: baseRoom });
 
     const response = (await handleHttpRequest(
       ctx,
-      new Request('https://dummy/settings?name=Alice', { method: 'GET' })
+      new Request("https://dummy/settings?name=Alice", { method: "GET" }),
     )) as Response;
 
     expect(response.status).toBe(401);
   });
 
-  it('rejects settings update from non-moderators even with valid token', async () => {
-    const tokens = new Map<string, string>([['bob', 'valid']]);
+  it("rejects settings update from non-moderators even with valid token", async () => {
+    const tokens = new Map<string, string>([["bob", "valid"]]);
     const { ctx } = makeContext({ roomData: baseRoom, tokens });
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest('/settings', 'PUT', {
-        name: 'Bob',
-        sessionToken: 'valid',
+      jsonRequest("/settings", "PUT", {
+        name: "Bob",
+        sessionToken: "valid",
         settings: baseRoom.settings,
-      })
+      }),
     )) as Response;
 
     expect(response.status).toBe(403);
     expect(ctx.repository.setSettings).not.toHaveBeenCalled();
   });
 
-  it('initializes a new room and issues auth token', async () => {
+  it("initializes a new room and issues auth token", async () => {
     let storedRoom: RoomData | undefined;
     const tokens = new Map<string, string>();
-    const repository: PlanningRoomHttpContext['repository'] = {
+    const repository: PlanningRoomHttpContext["repository"] = {
       getPasscodeHash: vi.fn().mockReturnValue(null),
       validateSessionToken: vi.fn().mockReturnValue(false),
       setSessionToken: vi.fn((user, token) =>
-        tokens.set(user.toLowerCase(), token)
+        tokens.set(user.toLowerCase(), token),
       ),
       ensureUser: vi.fn(),
       setUserConnection: vi.fn(),
@@ -273,46 +273,46 @@ describe('planning-room-http permissions and state updates', () => {
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest('/initialize', 'POST', {
-        roomKey: 'room-init',
-        moderator: 'Alice',
-        passcode: 'secret',
+      jsonRequest("/initialize", "POST", {
+        roomKey: "room-init",
+        moderator: "Alice",
+        passcode: "secret",
         settings: { estimateOptions: [1, 2, 3] },
-        avatar: 'cat',
-      })
+        avatar: "cat",
+      }),
     )) as Response;
 
     expect(response.status).toBe(200);
-    expect(storedRoom?.key).toBe('room-init');
-    expect(tokens.get('alice')).toBeTruthy();
+    expect(storedRoom?.key).toBe("room-init");
+    expect(tokens.get("alice")).toBeTruthy();
     expect(ctx.broadcast).not.toHaveBeenCalled();
   });
 
-  it('fails session validation when token is wrong', async () => {
-    const tokens = new Map<string, string>([['alice', 'right']]);
+  it("fails session validation when token is wrong", async () => {
+    const tokens = new Map<string, string>([["alice", "right"]]);
     const { ctx } = makeContext({ roomData: baseRoom, tokens });
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest('/session/validate', 'POST', {
-        name: 'Alice',
-        sessionToken: 'wrong',
-      })
+      jsonRequest("/session/validate", "POST", {
+        name: "Alice",
+        sessionToken: "wrong",
+      }),
     )) as Response;
 
     expect(response.status).toBe(401);
   });
 
-  it('succeeds session validation when token matches', async () => {
-    const tokens = new Map<string, string>([['alice', 'right']]);
+  it("succeeds session validation when token matches", async () => {
+    const tokens = new Map<string, string>([["alice", "right"]]);
     const { ctx } = makeContext({ roomData: baseRoom, tokens });
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest('/session/validate', 'POST', {
-        name: 'alice',
-        sessionToken: 'right',
-      })
+      jsonRequest("/session/validate", "POST", {
+        name: "alice",
+        sessionToken: "right",
+      }),
     )) as Response;
 
     expect(response.status).toBe(200);
@@ -320,82 +320,82 @@ describe('planning-room-http permissions and state updates', () => {
     expect(payload.success).toBe(true);
   });
 
-  it('returns Jira OAuth status when session is valid', async () => {
-    const tokens = new Map<string, string>([['alice', 'valid']]);
+  it("returns Jira OAuth status when session is valid", async () => {
+    const tokens = new Map<string, string>([["alice", "valid"]]);
     const { ctx } = makeContext({ roomData: baseRoom, tokens });
 
     ctx.repository.getJiraOAuthCredentials = vi.fn().mockResolvedValue({
       roomKey: baseRoom.key,
-      accessToken: 'token',
+      accessToken: "token",
       refreshToken: null,
-      tokenType: 'Bearer',
+      tokenType: "Bearer",
       expiresAt: 123,
-      scope: 'read:jira',
-      jiraDomain: 'example.atlassian.net',
-      jiraCloudId: 'cloud',
-      jiraUserId: 'user',
-      jiraUserEmail: 'alice@test.sprintjam.co.uk',
-      storyPointsField: 'customfield_100',
+      scope: "read:jira",
+      jiraDomain: "example.atlassian.net",
+      jiraCloudId: "cloud",
+      jiraUserId: "user",
+      jiraUserEmail: "alice@test.sprintjam.co.uk",
+      storyPointsField: "customfield_100",
       sprintField: null,
-      authorizedBy: 'alice',
+      authorizedBy: "alice",
     });
 
     const response = (await handleHttpRequest(
       ctx,
       queryRequest(
-        `/jira/oauth/status?roomKey=${baseRoom.key}&userName=Alice&sessionToken=valid`
-      )
+        `/jira/oauth/status?roomKey=${baseRoom.key}&userName=Alice&sessionToken=valid`,
+      ),
     )) as Response;
 
     expect(response.status).toBe(200);
     const payload = (await response.json()) as any;
     expect(payload.connected).toBe(true);
-    expect(payload.jiraDomain).toBe('example.atlassian.net');
+    expect(payload.jiraDomain).toBe("example.atlassian.net");
   });
 
-  it('rejects Jira OAuth status requests without params', async () => {
+  it("rejects Jira OAuth status requests without params", async () => {
     const { ctx } = makeContext({ roomData: baseRoom });
 
     const response = (await handleHttpRequest(
       ctx,
-      queryRequest(`/jira/oauth/status`)
+      queryRequest(`/jira/oauth/status`),
     )) as Response;
 
     expect(response.status).toBe(400);
   });
 
-  it('rejects Linear OAuth revoke without session info', async () => {
+  it("rejects Linear OAuth revoke without session info", async () => {
     const { ctx } = makeContext({ roomData: baseRoom });
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest('/linear/oauth/revoke', 'DELETE', {})
+      jsonRequest("/linear/oauth/revoke", "DELETE", {}),
     )) as Response;
 
     expect(response.status).toBe(400);
     expect(ctx.repository.deleteLinearOAuthCredentials).not.toHaveBeenCalled();
   });
 
-  it('allows Linear OAuth revoke with valid session and broadcasts', async () => {
-    const tokens = new Map<string, string>([['alice', 'valid']]);
+  it("allows Linear OAuth revoke with valid session and broadcasts", async () => {
+    const tokens = new Map<string, string>([["alice", "valid"]]);
     const { ctx } = makeContext({ roomData: baseRoom, tokens });
     ctx.broadcast = vi.fn();
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest('/linear/oauth/revoke', 'DELETE', {
+      jsonRequest("/linear/oauth/revoke", "DELETE", {
         roomKey: baseRoom.key,
-        userName: 'Alice',
-        sessionToken: 'valid',
-      })
+        userName: "Alice",
+        sessionToken: "valid",
+      }),
     )) as Response;
 
     expect(response.status).toBe(200);
     expect(ctx.repository.deleteLinearOAuthCredentials).toHaveBeenCalledWith(
-      baseRoom.key
+      baseRoom.key,
     );
     expect(ctx.broadcast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'linearDisconnected' })
+      expect.objectContaining({ type: "linearDisconnected" }),
     );
   });
 });

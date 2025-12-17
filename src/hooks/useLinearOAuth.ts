@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useRoom } from '@/context/RoomContext';
-import { useSession } from '@/context/SessionContext';
+import { useRoom } from "@/context/RoomContext";
+import { useSession } from "@/context/SessionContext";
 import {
   authorizeLinearOAuth,
   getLinearOAuthStatus,
@@ -23,11 +23,7 @@ export function useLinearOAuth(enabled = true) {
     queryKey: ["linear-oauth-status", activeRoomKey, name, authToken],
     enabled: hasRequiredContext,
     queryFn: () =>
-      getLinearOAuthStatus(
-        activeRoomKey ?? "",
-        name ?? "",
-        authToken ?? "",
-      ),
+      getLinearOAuthStatus(activeRoomKey ?? "", name ?? "", authToken ?? ""),
     staleTime: 1000 * 30,
   });
 

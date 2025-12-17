@@ -34,7 +34,7 @@ export const useRoomDataSync = ({
     const nextVote = roomData.votes[name] ?? null;
     const anonymousVote =
       roomData.settings.anonymousVotes && roomData.users.length > 0
-        ? roomData.votes[getVoteKeyForUser(roomData, name)] ?? null
+        ? (roomData.votes[getVoteKeyForUser(roomData, name)] ?? null)
         : null;
     const resolvedVote = anonymousVote ?? nextVote;
     if (resolvedVote !== userVote) {

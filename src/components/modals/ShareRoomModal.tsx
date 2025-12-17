@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { FallbackLoading } from "@/components/ui/FallbackLoading";
 
 const QRCodeSVG = lazy(() =>
-  import("qrcode.react").then((module) => ({ default: module.QRCodeSVG }))
+  import("qrcode.react").then((module) => ({ default: module.QRCodeSVG })),
 );
 
 interface ShareRoomModalProps {
@@ -73,9 +73,7 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
             Or scan this QR code:
           </p>
           <div className="p-4 bg-white/80 dark:bg-slate-900/60 border border-white/50 dark:border-white/10 rounded-2xl shadow-sm">
-            <Suspense
-              fallback={<FallbackLoading />}
-            >
+            <Suspense fallback={<FallbackLoading />}>
               <QRCodeSVG
                 value={shareableUrl}
                 size={200}

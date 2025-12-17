@@ -25,11 +25,11 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
   disabled = false,
 }) => {
   const containerClasses =
-    'inline-flex w-full flex-nowrap items-stretch sm:w-auto sm:items-center overflow-hidden rounded-full border border-slate-200/70 bg-white/80 text-slate-900 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-white/15 dark:bg-white/5 dark:text-white/90';
-  const buttonHeightClasses = 'h-10 sm:h-10';
+    "inline-flex w-full flex-nowrap items-stretch sm:w-auto sm:items-center overflow-hidden rounded-full border border-slate-200/70 bg-white/80 text-slate-900 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-white/15 dark:bg-white/5 dark:text-white/90";
+  const buttonHeightClasses = "h-10 sm:h-10";
   const joinedButtonClasses =
-    '!rounded-none border-0 bg-transparent text-inherit hover:bg-slate-50/70 dark:hover:bg-white/10 focus:z-10 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-0 first:rounded-l-full last:rounded-r-full px-4';
-  const buttonTextClasses = 'text-sm font-semibold tracking-tight';
+    "!rounded-none border-0 bg-transparent text-inherit hover:bg-slate-50/70 dark:hover:bg-white/10 focus:z-10 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-0 first:rounded-l-full last:rounded-r-full px-4";
+  const buttonTextClasses = "text-sm font-semibold tracking-tight";
 
   if (isLoading) {
     return (
@@ -63,9 +63,9 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
             <Play className="h-4 w-4" />
           )
         }
-        aria-label={isPlaying ? 'Pause music' : 'Play music'}
+        aria-label={isPlaying ? "Pause music" : "Play music"}
       >
-        {isPlaying ? 'Pause' : 'Play'}
+        {isPlaying ? "Pause" : "Play"}
       </Button>
 
       <Button
@@ -81,7 +81,7 @@ export const StrudelControls: FC<StrudelControlsProps> = ({
             <Volume2 className="h-4 w-4" />
           )
         }
-        aria-label={isMuted ? 'Unmute' : 'Mute'}
+        aria-label={isMuted ? "Unmute" : "Mute"}
         iconOnly
       />
 

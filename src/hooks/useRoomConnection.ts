@@ -61,7 +61,11 @@ export const useRoomConnection = ({
           data.closeCode === 4003 || message.includes("Invalid session");
         const isDisconnect = data.type === "disconnected";
         onError(message, {
-          reason: isAuthError ? "auth" : isDisconnect ? "disconnect" : undefined,
+          reason: isAuthError
+            ? "auth"
+            : isDisconnect
+              ? "disconnect"
+              : undefined,
           code: data.closeCode,
         });
         onConnectionChange(false);

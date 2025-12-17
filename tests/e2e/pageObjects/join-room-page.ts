@@ -12,28 +12,28 @@ export class JoinRoomPage {
     roomKey: string;
     passcode?: string;
   }) {
-    await this.page.locator('#join-name').fill(name);
-    await this.page.locator('#join-room-key').fill(roomKey);
-    if (typeof passcode === 'string') {
-      await this.page.locator('#join-passcode').fill(passcode);
+    await this.page.locator("#join-name").fill(name);
+    await this.page.locator("#join-room-key").fill(roomKey);
+    if (typeof passcode === "string") {
+      await this.page.locator("#join-passcode").fill(passcode);
     }
-    const continueButton = this.page.getByTestId('join-room-submit');
+    const continueButton = this.page.getByTestId("join-room-submit");
     await expect(continueButton).toBeEnabled();
     await continueButton.click();
   }
 
-  async selectAvatarAndJoin(testId = 'avatar-option-bird') {
+  async selectAvatarAndJoin(testId = "avatar-option-bird") {
     await this.page.getByTestId(testId).first().click();
-    const joinButton = this.page.getByTestId('join-room-submit');
+    const joinButton = this.page.getByTestId("join-room-submit");
     await expect(joinButton).toBeEnabled();
     await joinButton.click();
   }
 
   async updatePasscode(passcode: string) {
-    await this.page.locator('#join-passcode').fill(passcode);
+    await this.page.locator("#join-passcode").fill(passcode);
   }
 
   async expectAlertMessage(message: string) {
-    await expect(this.page.getByRole('alert')).toContainText(message);
+    await expect(this.page.getByRole("alert")).toContainText(message);
   }
 }

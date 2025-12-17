@@ -13,16 +13,16 @@ export const WS_BASE_URL = import.meta.env.DEV
   ? "ws://localhost:5173/ws"
   : `wss://${ENV_BASE_URL}/ws`;
 
-export const SITE_NAME = 'SprintJam';
+export const SITE_NAME = "SprintJam";
 export const BASE_DESCRIPTION =
-  'Plan sprints faster with real-time story point voting, instant consensus insights, and lightweight collaboration. No sign-ups, no distractions.';
+  "Plan sprints faster with real-time story point voting, instant consensus insights, and lightweight collaboration. No sign-ups, no distractions.";
 
-export const AUTH_TOKEN_STORAGE_KEY = 'sprintjam_authToken';
-export const CONFIDENCE_INFO_STORAGE_KEY = 'sprintjam_confidenceInfoSeen';
-export const ROOM_KEY_STORAGE_KEY = 'sprintjam_roomKey';
-export const MUTE_STORAGE_KEY = 'sprintjam_strudelPlayerMuted';
-export const VOLUME_STORAGE_KEY = 'sprintjam_strudelPlayerVolume';
-export const USERNAME_STORAGE_KEY = 'sprintjam_username';
+export const AUTH_TOKEN_STORAGE_KEY = "sprintjam_authToken";
+export const CONFIDENCE_INFO_STORAGE_KEY = "sprintjam_confidenceInfoSeen";
+export const ROOM_KEY_STORAGE_KEY = "sprintjam_roomKey";
+export const MUTE_STORAGE_KEY = "sprintjam_strudelPlayerMuted";
+export const VOLUME_STORAGE_KEY = "sprintjam_strudelPlayerVolume";
+export const USERNAME_STORAGE_KEY = "sprintjam_username";
 export const THEME_STORAGE_KEY = "sprintjam_theme";
 
 export const QUICK_EMOJIS = [
@@ -60,11 +60,11 @@ export const TIMER_DURATION_PRESETS: ReadonlyArray<{
   label: string;
   seconds: number;
 }> = [
-  { label: '1m', seconds: 1 * 60 },
-  { label: '3m', seconds: 3 * 60 },
-  { label: '5m', seconds: 5 * 60 },
-  { label: '8m', seconds: 8 * 60 },
-  { label: '13m', seconds: 13 * 60 },
-  { label: '20m', seconds: 20 * 60 },
-  { label: '30m', seconds: 30 * 60 },
+  { label: "1m", seconds: 1 * 60 },
+  { label: "3m", seconds: 3 * 60 },
+  { label: "5m", seconds: 5 * 60 },
+  { label: "8m", seconds: 8 * 60 },
+  { label: "13m", seconds: 13 * 60 },
+  { label: "20m", seconds: 20 * 60 },
+  { label: "30m", seconds: 30 * 60 },
 ];

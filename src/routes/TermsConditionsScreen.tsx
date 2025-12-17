@@ -1,13 +1,13 @@
-import { motion } from 'framer-motion';
-import { CalendarCheck } from 'lucide-react';
+import { motion } from "framer-motion";
+import { CalendarCheck } from "lucide-react";
 
-import { PageBackground } from '@/components/layout/PageBackground';
-import { Logo } from '@/components/Logo';
-import { Footer } from '@/components/layout/Footer';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
+import { PageBackground } from "@/components/layout/PageBackground";
+import { Logo } from "@/components/Logo";
+import { Footer } from "@/components/layout/Footer";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
 
-const LAST_UPDATED = '22nd November 2025';
+const LAST_UPDATED = "22nd November 2025";
 
 const TermsConditionsScreen = () => {
   usePageMeta(META_CONFIGS.terms);

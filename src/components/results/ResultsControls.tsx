@@ -65,20 +65,20 @@ export function ResultsControls({
         )}
         {(isModeratorView ||
           roomData.settings.allowOthersToDeleteEstimates) && (
-            <motion.button
-              type="button"
-              data-testid="reset-votes-button"
-              onClick={onResetVotes}
-              className={`${buttonBase} bg-red-600 text-white shadow-red-900/25 hover:bg-red-700 focus-visible:ring-red-200/70 focus-visible:ring-offset-red-950/25 dark:bg-red-500/20 dark:text-red-200 dark:hover:bg-red-500/30 dark:shadow-red-900/10`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span className="relative flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                <span>Reset Votes</span>
-              </span>
-            </motion.button>
-          )}
+          <motion.button
+            type="button"
+            data-testid="reset-votes-button"
+            onClick={onResetVotes}
+            className={`${buttonBase} bg-red-600 text-white shadow-red-900/25 hover:bg-red-700 focus-visible:ring-red-200/70 focus-visible:ring-offset-red-950/25 dark:bg-red-500/20 dark:text-red-200 dark:hover:bg-red-500/30 dark:shadow-red-900/10`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <span className="relative flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Reset Votes</span>
+            </span>
+          </motion.button>
+        )}
         {queueEnabled &&
           (isModeratorView || roomData.settings.allowOthersToManageQueue) && (
             <motion.button

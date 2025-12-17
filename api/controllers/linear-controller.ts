@@ -9,12 +9,12 @@ import {
   updateLinearEstimate,
 } from "../services/linear-service";
 import { jsonError } from "../utils/http";
-import { getRoomStub } from '../utils/room';
+import { getRoomStub } from "../utils/room";
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   }) as unknown as CfResponse;
 }
 
@@ -22,44 +22,44 @@ async function validateSession(
   env: Env,
   roomKey: string,
   userName: string,
-  sessionToken?: string | null
+  sessionToken?: string | null,
 ) {
   if (!sessionToken) {
-    throw new Error('Missing session token');
+    throw new Error("Missing session token");
   }
 
   const roomObject = getRoomStub(env, roomKey);
   const response = await roomObject.fetch(
-    new Request('https://internal/session/validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    new Request("https://internal/session/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: userName, sessionToken }),
-    }) as unknown as CfRequest
+    }) as unknown as CfRequest,
   );
 
   if (!response.ok) {
     const error = await response.json<{
       error?: string;
     }>();
-    throw new Error(error.error || 'Invalid session');
+    throw new Error(error.error || "Invalid session");
   }
 }
 
 export async function getLinearIssueController(
   url: URL,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
-  const issueId = url.searchParams.get('issueId');
-  const roomKey = url.searchParams.get('roomKey');
-  const userName = url.searchParams.get('userName');
-  const sessionToken = url.searchParams.get('sessionToken');
+  const issueId = url.searchParams.get("issueId");
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
 
   if (!issueId) {
-    return jsonError('Issue ID is required');
+    return jsonError("Issue ID is required");
   }
 
   if (!roomKey || !userName) {
-    return jsonError('Room key and user name are required');
+    return jsonError("Room key and user name are required");
   }
 
   try {
@@ -69,20 +69,20 @@ export async function getLinearIssueController(
     const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      return jsonError('Linear OAuth not configured', 500);
+      return jsonError("Linear OAuth not configured", 500);
     }
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://internal/linear/oauth/credentials', {
-        method: 'GET',
-      }) as unknown as CfRequest
+      new Request("https://internal/linear/oauth/credentials", {
+        method: "GET",
+      }) as unknown as CfRequest,
     );
 
     if (!credentialsResponse.ok) {
       return jsonError(
-        'Linear not connected. Please connect your Linear account in settings.',
-        401
+        "Linear not connected. Please connect your Linear account in settings.",
+        401,
       );
     }
 
@@ -108,14 +108,14 @@ export async function getLinearIssueController(
     const onTokenRefresh = async (
       accessToken: string,
       refreshToken: string,
-      expiresAt: number
+      expiresAt: number,
     ) => {
       await roomObject.fetch(
-        new Request('https://internal/linear/oauth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        new Request("https://internal/linear/oauth/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-        }) as unknown as CfRequest
+        }) as unknown as CfRequest,
       );
     };
 
@@ -124,17 +124,17 @@ export async function getLinearIssueController(
       issueId,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     return jsonResponse({ ticket: issue });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to fetch Linear issue';
+      error instanceof Error ? error.message : "Failed to fetch Linear issue";
     const isAuth =
-      message.toLowerCase().includes('session') ||
-      message.toLowerCase().includes('oauth') ||
-      message.toLowerCase().includes('reconnect');
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("oauth") ||
+      message.toLowerCase().includes("reconnect");
     return jsonError(message, isAuth ? 401 : 500);
   }
 }
@@ -142,7 +142,7 @@ export async function getLinearIssueController(
 export async function updateLinearEstimateController(
   issueId: string,
   request: CfRequest,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
   const body = await request.json<{
     estimate?: number;
@@ -156,11 +156,11 @@ export async function updateLinearEstimateController(
   const sessionToken = body?.sessionToken;
 
   if (!issueId || estimate === undefined) {
-    return jsonError('Issue ID and estimate are required');
+    return jsonError("Issue ID and estimate are required");
   }
 
   if (!roomKey || !userName) {
-    return jsonError('Room key and user name are required');
+    return jsonError("Room key and user name are required");
   }
 
   try {
@@ -170,20 +170,20 @@ export async function updateLinearEstimateController(
     const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      return jsonError('Linear OAuth not configured', 500);
+      return jsonError("Linear OAuth not configured", 500);
     }
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://internal/linear/oauth/credentials', {
-        method: 'GET',
-      }) as unknown as CfRequest
+      new Request("https://internal/linear/oauth/credentials", {
+        method: "GET",
+      }) as unknown as CfRequest,
     );
 
     if (!credentialsResponse.ok) {
       return jsonError(
-        'Linear not connected. Please connect your Linear account in settings.',
-        401
+        "Linear not connected. Please connect your Linear account in settings.",
+        401,
       );
     }
 
@@ -209,14 +209,14 @@ export async function updateLinearEstimateController(
     const onTokenRefresh = async (
       accessToken: string,
       refreshToken: string,
-      expiresAt: number
+      expiresAt: number,
     ) => {
       await roomObject.fetch(
-        new Request('https://internal/linear/oauth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        new Request("https://internal/linear/oauth/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-        }) as unknown as CfRequest
+        }) as unknown as CfRequest,
       );
     };
 
@@ -225,11 +225,11 @@ export async function updateLinearEstimateController(
       issueId,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     if (!currentIssue) {
-      return jsonError('Linear issue not found', 404);
+      return jsonError("Linear issue not found", 404);
     }
 
     if (currentIssue.storyPoints === estimate) {
@@ -242,7 +242,7 @@ export async function updateLinearEstimateController(
       estimate,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     return jsonResponse({ ticket: updatedIssue });
@@ -250,11 +250,11 @@ export async function updateLinearEstimateController(
     const message =
       error instanceof Error
         ? error.message
-        : 'Failed to update Linear estimate';
+        : "Failed to update Linear estimate";
     const isAuth =
-      message.toLowerCase().includes('session') ||
-      message.toLowerCase().includes('oauth') ||
-      message.toLowerCase().includes('reconnect');
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("oauth") ||
+      message.toLowerCase().includes("reconnect");
     return jsonError(message, isAuth ? 401 : 500);
   }
 }

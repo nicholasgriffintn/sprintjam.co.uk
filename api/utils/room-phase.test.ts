@@ -1,34 +1,34 @@
-import { describe, expect, it } from 'vitest';
-import { determineRoomPhase } from './room-phase';
-import { getDefaultRoomSettings } from './defaults';
+import { describe, expect, it } from "vitest";
+import { determineRoomPhase } from "./room-phase";
+import { getDefaultRoomSettings } from "./defaults";
 
 const baseRoom = {
-  key: 'ROOM',
+  key: "ROOM",
   users: [],
   votes: {},
   structuredVotes: {},
   showVotes: false,
-  moderator: '',
+  moderator: "",
   connectedUsers: {},
   settings: getDefaultRoomSettings(),
 };
 
-describe('room-phase utils', () => {
-  it('returns lobby when no votes have been cast', () => {
-    expect(determineRoomPhase(baseRoom)).toBe('lobby');
+describe("room-phase utils", () => {
+  it("returns lobby when no votes have been cast", () => {
+    expect(determineRoomPhase(baseRoom)).toBe("lobby");
   });
 
-  it('returns voting when votes exist but are not revealed', () => {
+  it("returns voting when votes exist but are not revealed", () => {
     const room = {
       ...baseRoom,
       votes: { alice: 3 },
       showVotes: false,
     };
-    expect(determineRoomPhase(room)).toBe('voting');
+    expect(determineRoomPhase(room)).toBe("voting");
   });
 
-  it('returns discussion when votes are revealed', () => {
+  it("returns discussion when votes are revealed", () => {
     const room = { ...baseRoom, showVotes: true };
-    expect(determineRoomPhase(room)).toBe('discussion');
+    expect(determineRoomPhase(room)).toBe("discussion");
   });
 });

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Info } from "lucide-react";
 
 import { safeLocalStorage } from "@/utils/storage";
-import { CONFIDENCE_INFO_STORAGE_KEY } from '@/constants';
+import { CONFIDENCE_INFO_STORAGE_KEY } from "@/constants";
 
 export function StructuredVotingUpdateNotification() {
   const [showConfidenceInfo, setShowConfidenceInfo] = useState(false);

@@ -1,16 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-import { ensureTimerState } from './timer-state';
-import { DEFAULT_TIMER_DURATION_SECONDS } from '../constants';
-import { type RoomData, JudgeAlgorithm } from '../types';
+import { ensureTimerState } from "./timer-state";
+import { DEFAULT_TIMER_DURATION_SECONDS } from "../constants";
+import { type RoomData, JudgeAlgorithm } from "../types";
 
 const baseRoom = (): RoomData => ({
-  key: 'room',
+  key: "room",
   users: [],
   votes: {},
   connectedUsers: {},
   showVotes: false,
-  moderator: 'mod',
+  moderator: "mod",
   settings: {
     estimateOptions: [1, 2, 3],
     judgeAlgorithm: JudgeAlgorithm.SMART_CONSENSUS,
@@ -27,8 +27,8 @@ const baseRoom = (): RoomData => ({
   },
 });
 
-describe('ensureTimerState', () => {
-  it('initializes timer state with defaults when missing', () => {
+describe("ensureTimerState", () => {
+  it("initializes timer state with defaults when missing", () => {
     const room = baseRoom();
 
     const timerState = ensureTimerState(room);
@@ -44,7 +44,7 @@ describe('ensureTimerState', () => {
     expect(room.timerState).toBe(timerState);
   });
 
-  it('fills in missing timer fields but preserves existing values', () => {
+  it("fills in missing timer fields but preserves existing values", () => {
     const room = baseRoom();
     room.timerState = {
       running: true,
@@ -61,7 +61,7 @@ describe('ensureTimerState', () => {
     expect(timerState.seconds).toBe(12);
     expect(timerState.lastUpdateTime).toBe(50);
     expect(timerState.targetDurationSeconds).toBe(
-      DEFAULT_TIMER_DURATION_SECONDS
+      DEFAULT_TIMER_DURATION_SECONDS,
     );
     expect(timerState.roundAnchorSeconds).toBe(0);
     expect(timerState.autoResetOnVotesReset).toBe(true);

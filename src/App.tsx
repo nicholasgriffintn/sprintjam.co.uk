@@ -1,22 +1,22 @@
-import { Suspense, lazy, useEffect, useRef } from 'react';
-import { MotionConfig } from 'framer-motion';
+import { Suspense, lazy, useEffect, useRef } from "react";
+import { MotionConfig } from "framer-motion";
 
-import ErrorBanner from './components/ui/ErrorBanner';
-import LoadingOverlay from './components/LoadingOverlay';
-import { ScreenLoader } from './components/layout/ScreenLoader';
-import { ErrorBoundary } from './components/errors/ErrorBoundary';
-import { SessionProvider } from './context/SessionContext';
-import { RoomProvider, useRoom } from './context/RoomContext';
-import { useSession } from './context/SessionContext';
-import WelcomeScreen from './routes/WelcomeScreen';
-import CreateRoomScreen from './routes/CreateRoomScreen';
-import JoinRoomScreen from './routes/JoinRoomScreen';
-import NotFoundScreen from './routes/NotFoundScreen';
-import { ErrorBannerServerDefaults } from './components/errors/ErrorBannerServerDefaults';
-import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
-import TermsConditionsScreen from './routes/TermsConditionsScreen';
+import ErrorBanner from "./components/ui/ErrorBanner";
+import LoadingOverlay from "./components/LoadingOverlay";
+import { ScreenLoader } from "./components/layout/ScreenLoader";
+import { ErrorBoundary } from "./components/errors/ErrorBoundary";
+import { SessionProvider } from "./context/SessionContext";
+import { RoomProvider, useRoom } from "./context/RoomContext";
+import { useSession } from "./context/SessionContext";
+import WelcomeScreen from "./routes/WelcomeScreen";
+import CreateRoomScreen from "./routes/CreateRoomScreen";
+import JoinRoomScreen from "./routes/JoinRoomScreen";
+import NotFoundScreen from "./routes/NotFoundScreen";
+import { ErrorBannerServerDefaults } from "./components/errors/ErrorBannerServerDefaults";
+import PrivacyPolicyScreen from "./routes/PrivacyPolicyScreen";
+import TermsConditionsScreen from "./routes/TermsConditionsScreen";
 
-const roomScreenLoader = () => import('./routes/RoomScreen');
+const roomScreenLoader = () => import("./routes/RoomScreen");
 const RoomScreen = lazy(roomScreenLoader);
 const preloadRoomScreen = () => {
   void roomScreenLoader();
@@ -41,27 +41,28 @@ const AppContent = () => {
       return;
     }
 
-    if (screen === 'room' || screen === 'join' || screen === 'create') {
+    if (screen === "room" || screen === "join" || screen === "create") {
       preloadRoomScreen();
       hasPrefetchedRoomScreen.current = true;
     }
   }, [screen]);
 
   const showGlobalLoading =
-    screen !== 'room' && (isLoading || isLoadingDefaults);
+    screen !== "room" && (isLoading || isLoadingDefaults);
 
-  const canRenderRoomScreen =
-    Boolean(roomData && serverDefaults && isSocketStatusKnown);
+  const canRenderRoomScreen = Boolean(
+    roomData && serverDefaults && isSocketStatusKnown,
+  );
 
   const renderScreen = () => {
     switch (screen) {
-      case 'welcome':
+      case "welcome":
         return <WelcomeScreen />;
-      case 'create':
+      case "create":
         return <CreateRoomScreen />;
-      case 'join':
+      case "join":
         return <JoinRoomScreen />;
-      case 'room':
+      case "room":
         if (canRenderRoomScreen) {
           return <RoomScreen />;
         }
@@ -72,9 +73,9 @@ const AppContent = () => {
             subtitle="Please wait a moment."
           />
         );
-      case 'privacy':
+      case "privacy":
         return <PrivacyPolicyScreen />;
-      case 'terms':
+      case "terms":
         return <TermsConditionsScreen />;
       default:
         return <NotFoundScreen />;
@@ -93,7 +94,7 @@ const AppContent = () => {
         />
       )}
 
-      {error && screen !== 'room' && (
+      {error && screen !== "room" && (
         <ErrorBanner message={error} onClose={clearError} />
       )}
 
@@ -110,7 +111,7 @@ const App = () => {
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
-        console.error('App Error Boundary:', error, errorInfo);
+        console.error("App Error Boundary:", error, errorInfo);
       }}
     >
       <SessionProvider currentPath={currentPath}>

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 
 import type { RoomData, RoomStats } from "@/types";
-import { getContrastingTextColor } from '@/utils/colors';
+import { getContrastingTextColor } from "@/utils/colors";
 import { useVoteDistributionControls } from "./hooks/useVoteDistributionControls";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
@@ -88,7 +88,7 @@ export function VoteDistributionItem({
                 {displayLabel}
               </div>
               <div className="text-[11px] text-slate-700 dark:text-slate-300">
-                {viewMode === 'count'
+                {viewMode === "count"
                   ? `${asPercentage.toFixed(1)}% of votes`
                   : `${voteCount} votes`}
               </div>
@@ -135,10 +135,11 @@ export function VoteDistribution({
               key={option.id}
               type="button"
               onClick={() => setDistributionView(option.id)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${distributionView === option.id
-                ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                }`}
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                distributionView === option.id
+                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              }`}
               aria-pressed={distributionView === option.id}
               data-testid={`distribution-view-option-${option.id}`}
             >
@@ -162,5 +163,5 @@ export function VoteDistribution({
         />
       </SurfaceCard>
     </div>
-  )
+  );
 }

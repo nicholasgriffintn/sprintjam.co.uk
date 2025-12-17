@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 import {
   updateMetaTags,
   getAbsoluteUrl,
   type MetaTagConfig,
-} from '@/utils/meta';
+} from "@/utils/meta";
 
 export function usePageMeta(config: MetaTagConfig): void {
   useEffect(() => {
@@ -15,7 +15,7 @@ export function usePageMeta(config: MetaTagConfig): void {
         config.ogUrl ||
         config.canonical ||
         getAbsoluteUrl(window.location.pathname),
-      twitterCard: config.twitterCard || 'summary_large_image',
+      twitterCard: config.twitterCard || "summary_large_image",
       ogTitle: config.ogTitle || config.title,
       twitterTitle: config.twitterTitle || config.title,
       ogDescription: config.ogDescription || config.description,

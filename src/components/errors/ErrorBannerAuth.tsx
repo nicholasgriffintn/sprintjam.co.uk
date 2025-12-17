@@ -1,4 +1,4 @@
-import { ShieldX } from 'lucide-react';
+import { ShieldX } from "lucide-react";
 
 export function ErrorBannerAuth({
   onRetryConnection,

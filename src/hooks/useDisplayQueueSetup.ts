@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface UseDisplayQueueSetupOptions {
   isQueueEnabled: boolean;
@@ -21,7 +21,7 @@ export const useDisplayQueueSetup = ({
       if (!isQueueEnabled) {
         return;
       }
-      if (queueProvider === 'none') {
+      if (queueProvider === "none") {
         return;
       }
       if (didPreviouslyDisplay.current) {
@@ -37,7 +37,7 @@ export const useDisplayQueueSetup = ({
         setIsQueueSetupModalOpen(true);
       }
     } catch (err) {
-      console.error('Failed to display queue setup modal', err);
+      console.error("Failed to display queue setup modal", err);
     }
   }, [isQueueEnabled, queueProvider, roomData, name]);
 

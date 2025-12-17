@@ -18,7 +18,7 @@ import {
   ensureRoomsCollectionReady,
   ensureServerDefaultsCollectionReady,
 } from "./data/collections";
-import { AUTH_TOKEN_STORAGE_KEY } from '@/constants';
+import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
 
 let activeSocket: WebSocket | null = null;
 let activeAuthToken: string | null = null;
@@ -36,7 +36,7 @@ export function getCachedDefaultSettings(): ServerDefaults | null {
 }
 
 export async function fetchDefaultSettings(
-  forceRefresh = false
+  forceRefresh = false,
 ): Promise<ServerDefaults> {
   if (forceRefresh) {
     await serverDefaultsCollection.utils.refetch({ throwOnError: true });
@@ -49,7 +49,7 @@ export async function fetchDefaultSettings(
     serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
 
   if (!defaults) {
-    throw new Error('Unable to load default settings from server');
+    throw new Error("Unable to load default settings from server");
   }
 
   return defaults;
@@ -59,13 +59,13 @@ export async function createRoom(
   name: string,
   passcode?: string,
   settings?: Partial<RoomSettings>,
-  avatar?: AvatarId
+  avatar?: AvatarId,
 ): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ name, passcode, settings, avatar }),
     });
@@ -73,7 +73,7 @@ export async function createRoom(
     if (!response.ok) {
       const errorData = await response.json();
       const error = new Error(
-        errorData.error || `Failed to create room: ${response.status}`
+        errorData.error || `Failed to create room: ${response.status}`,
       ) as Error & { status?: number };
       error.status = response.status;
       throw error;
@@ -87,7 +87,7 @@ export async function createRoom(
     };
 
     if (!data.room) {
-      throw new Error('Invalid response from server while creating room');
+      throw new Error("Invalid response from server while creating room");
     }
 
     await ensureRoomsCollectionReady();
@@ -103,7 +103,7 @@ export async function createRoom(
       authToken: data.authToken,
     };
   } catch (error) {
-    console.error('Error creating room:', error);
+    console.error("Error creating room:", error);
     throw error;
   }
 }
@@ -113,13 +113,13 @@ export async function joinRoom(
   roomKey: string,
   passcode?: string,
   avatar?: AvatarId,
-  authToken?: string
+  authToken?: string,
 ): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ name, roomKey, passcode, avatar, authToken }),
     });
@@ -127,7 +127,7 @@ export async function joinRoom(
     if (!response.ok) {
       const errorData = await response.json();
       const error = new Error(
-        errorData.error || `Failed to join room: ${response.status}`
+        errorData.error || `Failed to join room: ${response.status}`,
       ) as Error & { status?: number };
       error.status = response.status;
       throw error;
@@ -141,7 +141,7 @@ export async function joinRoom(
     };
 
     if (!data.room) {
-      throw new Error('Invalid response from server while joining room');
+      throw new Error("Invalid response from server while joining room");
     }
 
     await ensureRoomsCollectionReady();
@@ -157,7 +157,7 @@ export async function joinRoom(
       authToken: data.authToken,
     };
   } catch (error) {
-    console.error('Error joining room:', error);
+    console.error("Error joining room:", error);
     throw error;
   }
 }
@@ -167,10 +167,10 @@ export function connectToRoom(
   name: string,
   authToken: string,
   onMessage: (data: WebSocketMessage) => void,
-  onConnectionStatusChange?: (isConnected: boolean) => void
+  onConnectionStatusChange?: (isConnected: boolean) => void,
 ): WebSocket {
   if (!authToken) {
-    throw new Error('Missing auth token for room connection');
+    throw new Error("Missing auth token for room connection");
   }
 
   activeAuthToken = authToken;
@@ -184,14 +184,14 @@ export function connectToRoom(
   try {
     const socket = new WebSocket(
       `${WS_BASE_URL}?room=${encodeURIComponent(
-        roomKey
+        roomKey,
       )}&name=${encodeURIComponent(name)}&token=${encodeURIComponent(
-        authToken
-      )}`
+        authToken,
+      )}`,
     );
 
     socket.onopen = () => {
-      console.debug('WebSocket connection established');
+      console.debug("WebSocket connection established");
       reconnectAttempts = 0;
       onConnectionStatusChange?.(true);
     };
@@ -199,61 +199,61 @@ export function connectToRoom(
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as WebSocketMessage;
-        console.debug('Received message:', data);
+        console.debug("Received message:", data);
 
         try {
           onMessage(data);
         } catch (callbackError) {
-          console.error('Error in onMessage handler:', callbackError);
+          console.error("Error in onMessage handler:", callbackError);
         }
 
         switch (data.type) {
-          case 'initialize':
-          case 'userJoined':
-          case 'userLeft':
-          case 'userConnectionStatus':
-          case 'vote':
-          case 'showVotes':
-          case 'resetVotes':
-          case 'newModerator':
-          case 'settingsUpdated':
-          case 'judgeScoreUpdated':
-          case 'strudelCodeGenerated':
-          case 'strudelPlaybackToggled':
-          case 'nextTicket':
-          case 'ticketAdded':
-          case 'ticketUpdated':
-          case 'ticketDeleted':
-          case 'ticketCompleted':
-          case 'queueUpdated':
-          case 'timerStarted':
-          case 'timerPaused':
-          case 'timerReset':
-          case 'timerUpdated':
+          case "initialize":
+          case "userJoined":
+          case "userLeft":
+          case "userConnectionStatus":
+          case "vote":
+          case "showVotes":
+          case "resetVotes":
+          case "newModerator":
+          case "settingsUpdated":
+          case "judgeScoreUpdated":
+          case "strudelCodeGenerated":
+          case "strudelPlaybackToggled":
+          case "nextTicket":
+          case "ticketAdded":
+          case "ticketUpdated":
+          case "ticketDeleted":
+          case "ticketCompleted":
+          case "queueUpdated":
+          case "timerStarted":
+          case "timerPaused":
+          case "timerReset":
+          case "timerUpdated":
             triggerEventListeners(data.type, data);
             break;
 
-          case 'error':
-            console.error('Server error:', data.error);
-            triggerEventListeners('error', data);
+          case "error":
+            console.error("Server error:", data.error);
+            triggerEventListeners("error", data);
             break;
 
           default:
-            console.warn('Unknown message type:', data.type);
+            console.warn("Unknown message type:", data.type);
         }
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error("Error parsing WebSocket message:", error);
       }
     };
 
     socket.onclose = (event) => {
-      console.debug('WebSocket connection closed:', event.code, event.reason);
+      console.debug("WebSocket connection closed:", event.code, event.reason);
       onConnectionStatusChange?.(false);
 
       if (event.code === 4003) {
-        triggerEventListeners('error', {
-          type: 'error',
-          error: 'Session expired. Please rejoin the room.',
+        triggerEventListeners("error", {
+          type: "error",
+          error: "Session expired. Please rejoin the room.",
           closeCode: event.code,
         });
         activeAuthToken = null;
@@ -262,9 +262,9 @@ export function connectToRoom(
       }
 
       if (event.code === 4001) {
-        triggerEventListeners('error', {
-          type: 'error',
-          error: 'Disconnected due to inactivity. Reconnecting...',
+        triggerEventListeners("error", {
+          type: "error",
+          error: "Disconnected due to inactivity. Reconnecting...",
           closeCode: event.code,
         });
       }
@@ -275,29 +275,29 @@ export function connectToRoom(
     };
 
     socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
 
       onConnectionStatusChange?.(false);
-      triggerEventListeners('error', {
-        type: 'error',
-        error: 'Connection error occurred',
+      triggerEventListeners("error", {
+        type: "error",
+        error: "Connection error occurred",
         closeCode: 1006,
       });
 
       if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
-        activeSocket.close(1011, 'Connection error');
+        activeSocket.close(1011, "Connection error");
       }
     };
 
     activeSocket = socket;
     return socket;
   } catch (error) {
-    console.error('Error creating WebSocket:', error);
+    console.error("Error creating WebSocket:", error);
     onConnectionStatusChange?.(false);
-    triggerEventListeners('error', {
-      type: 'error',
+    triggerEventListeners("error", {
+      type: "error",
       error:
-        error instanceof Error ? error.message : 'Failed to connect to server',
+        error instanceof Error ? error.message : "Failed to connect to server",
     });
     throw error;
   }
@@ -307,13 +307,13 @@ function handleReconnect(
   roomKey: string,
   name: string,
   onMessage: (data: WebSocketMessage) => void,
-  onConnectionStatusChange?: (isConnected: boolean) => void
+  onConnectionStatusChange?: (isConnected: boolean) => void,
 ): void {
   if (!activeAuthToken) {
-    console.error('Missing auth token; cannot reconnect');
-    triggerEventListeners('disconnected', {
-      type: 'disconnected',
-      error: 'Session expired. Please rejoin the room.',
+    console.error("Missing auth token; cannot reconnect");
+    triggerEventListeners("disconnected", {
+      type: "disconnected",
+      error: "Session expired. Please rejoin the room.",
     });
     return;
   }
@@ -324,13 +324,13 @@ function handleReconnect(
     const jitter = Math.random() * 0.3 + 0.85; // Random value between 0.85 and 1.15
     const delay = Math.min(
       RECONNECT_BASE_DELAY * 2 ** reconnectAttempts * jitter,
-      MAX_RECONNECT_DELAY
+      MAX_RECONNECT_DELAY,
     );
 
     console.debug(
       `Attempting to reconnect in ${Math.round(
-        delay
-      )}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
+        delay,
+      )}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`,
     );
 
     setTimeout(() => {
@@ -339,24 +339,24 @@ function handleReconnect(
         name,
         activeAuthToken as string,
         onMessage,
-        onConnectionStatusChange
+        onConnectionStatusChange,
       );
     }, delay);
   } else {
-    console.error('Max reconnection attempts reached');
-    triggerEventListeners('disconnected', {
-      type: 'disconnected',
-      error: 'Connection lost. Please refresh the page to reconnect.',
+    console.error("Max reconnection attempts reached");
+    triggerEventListeners("disconnected", {
+      type: "disconnected",
+      error: "Connection lost. Please refresh the page to reconnect.",
     });
   }
 }
 
 export function submitVote(
   vote: VoteValue | StructuredVote,
-  immediate = false
+  immediate = false,
 ): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   if (voteDebounceTimer) {
@@ -366,9 +366,9 @@ export function submitVote(
   const sendVote = () => {
     activeSocket?.send(
       JSON.stringify({
-        type: 'vote',
+        type: "vote",
         vote,
-      })
+      }),
     );
   };
 
@@ -381,55 +381,55 @@ export function submitVote(
 
 export function toggleShowVotes(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'showVotes',
-    })
+      type: "showVotes",
+    }),
   );
 }
 
 export function resetVotes(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'resetVotes',
-    })
+      type: "resetVotes",
+    }),
   );
 }
 
 export function requestStrudelGeneration(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'generateStrudelCode',
-    })
+      type: "generateStrudelCode",
+    }),
   );
 }
 
 export function toggleStrudelPlayback(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'toggleStrudelPlayback',
-    })
+      type: "toggleStrudelPlayback",
+    }),
   );
 }
 
 export function disconnectFromRoom(): void {
   if (activeSocket) {
-    activeSocket.close(1000, 'User left the room');
+    activeSocket.close(1000, "User left the room");
     activeSocket = null;
   }
   if (voteDebounceTimer) {
@@ -442,7 +442,7 @@ export function disconnectFromRoom(): void {
 
 export function addEventListener(
   event: WebSocketMessageType,
-  callback: (data: WebSocketMessage) => void
+  callback: (data: WebSocketMessage) => void,
 ): void {
   if (!eventListeners[event]) {
     eventListeners[event] = [];
@@ -452,7 +452,7 @@ export function addEventListener(
 
 export function removeEventListener(
   event: WebSocketMessageType,
-  callback: (data: WebSocketMessage) => void
+  callback: (data: WebSocketMessage) => void,
 ): void {
   if (!eventListeners[event]) return;
 
@@ -461,7 +461,7 @@ export function removeEventListener(
 
 function triggerEventListeners(
   event: WebSocketMessageType,
-  data: WebSocketMessage
+  data: WebSocketMessage,
 ): void {
   if (!eventListeners[event]) return;
 
@@ -487,24 +487,24 @@ export async function getRoomSettings(roomKey: string): Promise<RoomSettings> {
     const response = await fetch(
       `${API_BASE_URL}/rooms/settings?roomKey=${encodeURIComponent(roomKey)}`,
       {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to get room settings: ${response.status}`
+        errorData.error || `Failed to get room settings: ${response.status}`,
       );
     }
 
     const data = await response.json();
     return data.settings;
   } catch (error) {
-    console.error('Error getting room settings:', error);
+    console.error("Error getting room settings:", error);
     throw error;
   }
 }
@@ -512,13 +512,13 @@ export async function getRoomSettings(roomKey: string): Promise<RoomSettings> {
 export async function updateRoomSettings(
   name: string,
   roomKey: string,
-  settings: Partial<RoomSettings>
+  settings: Partial<RoomSettings>,
 ): Promise<RoomSettings> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/settings`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ name, roomKey, settings }),
     });
@@ -526,83 +526,83 @@ export async function updateRoomSettings(
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error || `Failed to update room settings: ${response.status}`
+        errorData.error || `Failed to update room settings: ${response.status}`,
       );
     }
 
     const data = await response.json();
     return data.settings;
   } catch (error) {
-    console.error('Error updating room settings:', error);
+    console.error("Error updating room settings:", error);
     throw error;
   }
 }
 
 export function updateSettings(settings: Partial<RoomSettings>): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'updateSettings',
+      type: "updateSettings",
       settings,
-    })
+    }),
   );
 }
 
 export function nextTicket(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'nextTicket',
-    })
+      type: "nextTicket",
+    }),
   );
 }
 
 export function addTicket(ticket: Partial<TicketQueueItem>): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'addTicket',
+      type: "addTicket",
       ticket,
-    })
+    }),
   );
 }
 
 export function updateTicket(
   ticketId: number,
-  updates: Partial<TicketQueueItem>
+  updates: Partial<TicketQueueItem>,
 ): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'updateTicket',
+      type: "updateTicket",
       ticketId,
       updates,
-    })
+    }),
   );
 }
 
 export function deleteTicket(ticketId: number): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error('Not connected to room');
+    throw new Error("Not connected to room");
   }
 
   activeSocket.send(
     JSON.stringify({
-      type: 'deleteTicket',
+      type: "deleteTicket",
       ticketId,
-    })
+    }),
   );
 }
 
@@ -666,8 +666,8 @@ export function configureTimer(config: {
 
   activeSocket.send(
     JSON.stringify({
-      type: 'configureTimer',
+      type: "configureTimer",
       config,
-    })
+    }),
   );
 }

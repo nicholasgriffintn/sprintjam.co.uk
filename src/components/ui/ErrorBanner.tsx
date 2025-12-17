@@ -1,21 +1,21 @@
 import type { FC } from "react";
-import { ShieldX, X } from 'lucide-react';
+import { ShieldX, X } from "lucide-react";
 
 interface ErrorBannerProps {
   message: string;
   onClose: () => void;
-  variant?: 'error' | 'warning';
+  variant?: "error" | "warning";
 }
 
 const ErrorBanner: FC<ErrorBannerProps> = ({
   message,
   onClose,
-  variant = 'error',
+  variant = "error",
 }) => {
   const baseStyles =
-    variant === 'warning'
-      ? 'bg-amber-100 dark:bg-amber-900 text-white-800 dark:text-white-300 border-amber-300 dark:border-amber-800'
-      : 'bg-red-100 dark:bg-red-900 text-white-700 dark:text-white-400 border-red-300 dark:border-red-800';
+    variant === "warning"
+      ? "bg-amber-100 dark:bg-amber-900 text-white-800 dark:text-white-300 border-amber-300 dark:border-amber-800"
+      : "bg-red-100 dark:bg-red-900 text-white-700 dark:text-white-400 border-red-300 dark:border-red-800";
 
   return (
     <div

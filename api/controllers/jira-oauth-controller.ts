@@ -5,18 +5,18 @@ import type {
 
 import type { Env, JiraFieldDefinition } from "../types";
 import { jsonError } from "../utils/http";
-import { getRoomStub } from '../utils/room';
+import { getRoomStub } from "../utils/room";
 import {
   fetchJiraFields,
   findDefaultSprintField,
   findDefaultStoryPointsField,
-} from '../services/jira-service';
-import { escapeHtml, signState, verifyState } from '../utils/room-cypto';
+} from "../services/jira-service";
+import { escapeHtml, signState, verifyState } from "../utils/room-cypto";
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   }) as unknown as CfResponse;
 }
 
@@ -24,32 +24,32 @@ async function validateSession(
   env: Env,
   roomKey: string,
   userName: string,
-  sessionToken?: string | null
+  sessionToken?: string | null,
 ) {
   if (!sessionToken) {
-    throw new Error('Missing session token');
+    throw new Error("Missing session token");
   }
 
   const roomObject = getRoomStub(env, roomKey);
   const response = await roomObject.fetch(
-    new Request('https://internal/session/validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    new Request("https://internal/session/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: userName, sessionToken }),
-    }) as unknown as CfRequest
+    }) as unknown as CfRequest,
   );
 
   if (!response.ok) {
     const error = await response.json<{
       error?: string;
     }>();
-    throw new Error(error.error || 'Invalid session');
+    throw new Error(error.error || "Invalid session");
   }
 }
 
 export async function initiateJiraOAuthController(
   request: CfRequest,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
   const body = await request.json<{
     roomKey?: string;
@@ -62,7 +62,7 @@ export async function initiateJiraOAuthController(
   const sessionToken = body?.sessionToken;
 
   if (!roomKey || !userName) {
-    return jsonError('Room key and user name are required');
+    return jsonError("Room key and user name are required");
   }
 
   try {
@@ -71,61 +71,61 @@ export async function initiateJiraOAuthController(
     const clientId = env.JIRA_OAUTH_CLIENT_ID;
     const redirectUri =
       env.JIRA_OAUTH_REDIRECT_URI ||
-      'https://sprintjam.co.uk/api/jira/oauth/callback';
+      "https://sprintjam.co.uk/api/jira/oauth/callback";
 
     if (!clientId || !env.JIRA_OAUTH_CLIENT_SECRET) {
       return jsonError(
-        'OAuth not configured. Please contact administrator.',
-        500
+        "OAuth not configured. Please contact administrator.",
+        500,
       );
     }
 
     const state = await signState(
       { roomKey, userName, nonce: crypto.randomUUID() },
-      env.JIRA_OAUTH_CLIENT_SECRET
+      env.JIRA_OAUTH_CLIENT_SECRET,
     );
 
-    const authUrl = new URL('https://auth.atlassian.com/authorize');
-    authUrl.searchParams.set('audience', 'api.atlassian.com');
-    authUrl.searchParams.set('client_id', clientId);
+    const authUrl = new URL("https://auth.atlassian.com/authorize");
+    authUrl.searchParams.set("audience", "api.atlassian.com");
+    authUrl.searchParams.set("client_id", clientId);
     authUrl.searchParams.set(
-      'scope',
-      'read:jira-work write:jira-work read:jira-user offline_access'
+      "scope",
+      "read:jira-work write:jira-work read:jira-user offline_access",
     );
-    authUrl.searchParams.set('redirect_uri', redirectUri);
-    authUrl.searchParams.set('state', state);
-    authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('prompt', 'consent');
+    authUrl.searchParams.set("redirect_uri", redirectUri);
+    authUrl.searchParams.set("state", state);
+    authUrl.searchParams.set("response_type", "code");
+    authUrl.searchParams.set("prompt", "consent");
 
     return jsonResponse({ authorizationUrl: authUrl.toString(), state });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to initiate OAuth';
+      error instanceof Error ? error.message : "Failed to initiate OAuth";
     return jsonError(message, 500);
   }
 }
 
 export async function handleJiraOAuthCallbackController(
   url: URL,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
-  const code = url.searchParams.get('code');
-  const state = url.searchParams.get('state');
-  const error = url.searchParams.get('error');
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const error = url.searchParams.get("error");
 
   if (error) {
     return new Response(
       `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
-        error
+        error,
       )}</p></body></html>`,
-      { status: 400, headers: { 'Content-Type': 'text/html' } }
+      { status: 400, headers: { "Content-Type": "text/html" } },
     ) as unknown as CfResponse;
   }
 
   if (!code || !state) {
     return new Response(
       `<html><body><h1>OAuth Error</h1><p>Missing code or state</p></body></html>`,
-      { status: 400, headers: { 'Content-Type': 'text/html' } }
+      { status: 400, headers: { "Content-Type": "text/html" } },
     ) as unknown as CfResponse;
   }
 
@@ -134,12 +134,12 @@ export async function handleJiraOAuthCallbackController(
     const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
     const redirectUri =
       env.JIRA_OAUTH_REDIRECT_URI ||
-      'https://sprintjam.co.uk/api/jira/oauth/callback';
+      "https://sprintjam.co.uk/api/jira/oauth/callback";
 
     if (!clientId || !clientSecret) {
       return new Response(
         `<html><body><h1>OAuth Error</h1><p>OAuth not configured</p></body></html>`,
-        { status: 500, headers: { 'Content-Type': 'text/html' } }
+        { status: 500, headers: { "Content-Type": "text/html" } },
       ) as unknown as CfResponse;
     }
 
@@ -151,28 +151,28 @@ export async function handleJiraOAuthCallbackController(
     const { roomKey, userName } = stateData;
 
     const tokenResponse = await fetch(
-      'https://auth.atlassian.com/oauth/token',
+      "https://auth.atlassian.com/oauth/token",
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          grant_type: 'authorization_code',
+          grant_type: "authorization_code",
           client_id: clientId,
           client_secret: clientSecret,
           code,
           redirect_uri: redirectUri,
         }),
-      }
+      },
     );
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
-      console.error('Token exchange failed:', errorData);
+      console.error("Token exchange failed:", errorData);
       return new Response(
         `<html><body><h1>OAuth Error</h1><p>Failed to exchange code for token</p></body></html>`,
-        { status: 500, headers: { 'Content-Type': 'text/html' } }
+        { status: 500, headers: { "Content-Type": "text/html" } },
       ) as unknown as CfResponse;
     }
 
@@ -185,19 +185,19 @@ export async function handleJiraOAuthCallbackController(
     }>();
 
     const resourcesResponse = await fetch(
-      'https://api.atlassian.com/oauth/token/accessible-resources',
+      "https://api.atlassian.com/oauth/token/accessible-resources",
       {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
-          Accept: 'application/json',
+          Accept: "application/json",
         },
-      }
+      },
     );
 
     if (!resourcesResponse.ok) {
       return new Response(
         `<html><body><h1>OAuth Error</h1><p>Failed to fetch Jira resources</p></body></html>`,
-        { status: 500, headers: { 'Content-Type': 'text/html' } }
+        { status: 500, headers: { "Content-Type": "text/html" } },
       ) as unknown as CfResponse;
     }
 
@@ -213,7 +213,7 @@ export async function handleJiraOAuthCallbackController(
     if (resources.length === 0) {
       return new Response(
         `<html><body><h1>OAuth Error</h1><p>No Jira sites accessible</p></body></html>`,
-        { status: 400, headers: { 'Content-Type': 'text/html' } }
+        { status: 400, headers: { "Content-Type": "text/html" } },
       ) as unknown as CfResponse;
     }
     const jiraResource = resources[0];
@@ -224,9 +224,9 @@ export async function handleJiraOAuthCallbackController(
       {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
-          Accept: 'application/json',
+          Accept: "application/json",
         },
-      }
+      },
     );
 
     let jiraUserEmail: string | null = null;
@@ -249,9 +249,9 @@ export async function handleJiraOAuthCallbackController(
         {
           headers: {
             Authorization: `Bearer ${tokenData.access_token}`,
-            Accept: 'application/json',
+            Accept: "application/json",
           },
-        }
+        },
       );
 
       if (fieldsResponse.ok) {
@@ -260,14 +260,14 @@ export async function handleJiraOAuthCallbackController(
         sprintField = findDefaultSprintField(fields);
       }
     } catch (fieldError) {
-      console.error('Failed to pre-select Jira fields', fieldError);
+      console.error("Failed to pre-select Jira fields", fieldError);
     }
 
     const roomObject = getRoomStub(env, roomKey);
     const saveResponse = await roomObject.fetch(
-      new Request('https://internal/jira/oauth/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      new Request("https://internal/jira/oauth/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           accessToken: tokenData.access_token,
           refreshToken: tokenData.refresh_token || null,
@@ -282,61 +282,61 @@ export async function handleJiraOAuthCallbackController(
           storyPointsField,
           sprintField,
         }),
-      }) as unknown as CfRequest
+      }) as unknown as CfRequest,
     );
 
     if (!saveResponse.ok) {
       return new Response(
         `<html><body><h1>OAuth Error</h1><p>Failed to save credentials</p></body></html>`,
-        { status: 500, headers: { 'Content-Type': 'text/html' } }
+        { status: 500, headers: { "Content-Type": "text/html" } },
       ) as unknown as CfResponse;
     }
 
     return new Response(
       `<html><body><h1>Success!</h1><p>Jira connected successfully. You can close this window.</p></body></html>`,
-      { status: 200, headers: { 'Content-Type': 'text/html' } }
+      { status: 200, headers: { "Content-Type": "text/html" } },
     ) as unknown as CfResponse;
   } catch (error) {
-    console.error('OAuth callback error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error("OAuth callback error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
-        message
+        message,
       )}</p></body></html>`,
-      { status: 500, headers: { 'Content-Type': 'text/html' } }
+      { status: 500, headers: { "Content-Type": "text/html" } },
     ) as unknown as CfResponse;
   }
 }
 
 export async function getJiraOAuthStatusController(
   url: URL,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
-  const roomKey = url.searchParams.get('roomKey');
-  const userName = url.searchParams.get('userName');
-  const sessionToken = url.searchParams.get('sessionToken');
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
 
   if (!roomKey || !userName) {
-    return jsonError('Room key and user name are required');
+    return jsonError("Room key and user name are required");
   }
 
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
-    const statusUrl = new URL('https://internal/jira/oauth/status');
-    statusUrl.searchParams.set('roomKey', roomKey);
-    statusUrl.searchParams.set('userName', userName);
-    statusUrl.searchParams.set('sessionToken', sessionToken ?? '');
+    const statusUrl = new URL("https://internal/jira/oauth/status");
+    statusUrl.searchParams.set("roomKey", roomKey);
+    statusUrl.searchParams.set("userName", userName);
+    statusUrl.searchParams.set("sessionToken", sessionToken ?? "");
 
     const response = await roomObject.fetch(
       new Request(statusUrl.toString(), {
-        method: 'GET',
-      }) as unknown as CfRequest
+        method: "GET",
+      }) as unknown as CfRequest,
     );
 
     if (!response.ok) {
-      return jsonError('Failed to get OAuth status', 500);
+      return jsonError("Failed to get OAuth status", 500);
     }
 
     const data = await response.json<{
@@ -351,14 +351,14 @@ export async function getJiraOAuthStatusController(
     return jsonResponse(data);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to get OAuth status';
+      error instanceof Error ? error.message : "Failed to get OAuth status";
     return jsonError(message, 500);
   }
 }
 
 export async function revokeJiraOAuthController(
   request: CfRequest,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
   const body = await request.json<{
     roomKey?: string;
@@ -371,7 +371,7 @@ export async function revokeJiraOAuthController(
   const sessionToken = body?.sessionToken;
 
   if (!roomKey || !userName) {
-    return jsonError('Room key and user name are required');
+    return jsonError("Room key and user name are required");
   }
 
   try {
@@ -379,15 +379,15 @@ export async function revokeJiraOAuthController(
 
     const roomObject = getRoomStub(env, roomKey);
     const response = await roomObject.fetch(
-      new Request('https://internal/jira/oauth/revoke', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+      new Request("https://internal/jira/oauth/revoke", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
-      }) as unknown as CfRequest
+      }) as unknown as CfRequest,
     );
 
     if (!response.ok) {
-      return jsonError('Failed to revoke OAuth credentials', 500);
+      return jsonError("Failed to revoke OAuth credentials", 500);
     }
 
     return jsonResponse({ success: true });
@@ -395,21 +395,21 @@ export async function revokeJiraOAuthController(
     const message =
       error instanceof Error
         ? error.message
-        : 'Failed to revoke OAuth credentials';
+        : "Failed to revoke OAuth credentials";
     return jsonError(message, 500);
   }
 }
 
 export async function getJiraFieldsController(
   url: URL,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
-  const roomKey = url.searchParams.get('roomKey');
-  const userName = url.searchParams.get('userName');
-  const sessionToken = url.searchParams.get('sessionToken');
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
 
   if (!roomKey || !userName) {
-    return jsonError('Room key and user name are required');
+    return jsonError("Room key and user name are required");
   }
 
   try {
@@ -419,20 +419,20 @@ export async function getJiraFieldsController(
     const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      return jsonError('Jira OAuth not configured', 500);
+      return jsonError("Jira OAuth not configured", 500);
     }
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://internal/jira/oauth/credentials', {
-        method: 'GET',
-      }) as unknown as CfRequest
+      new Request("https://internal/jira/oauth/credentials", {
+        method: "GET",
+      }) as unknown as CfRequest,
     );
 
     if (!credentialsResponse.ok) {
       return jsonError(
-        'Jira not connected. Please connect your Jira account in settings.',
-        401
+        "Jira not connected. Please connect your Jira account in settings.",
+        401,
       );
     }
 
@@ -460,14 +460,14 @@ export async function getJiraFieldsController(
     const onTokenRefresh = async (
       accessToken: string,
       refreshToken: string,
-      expiresAt: number
+      expiresAt: number,
     ) => {
       await roomObject.fetch(
-        new Request('https://internal/jira/oauth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        new Request("https://internal/jira/oauth/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-        }) as unknown as CfRequest
+        }) as unknown as CfRequest,
       );
     };
 
@@ -475,7 +475,7 @@ export async function getJiraFieldsController(
       credentials,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     const simplifiedFields = fields.map((field) => ({
@@ -492,18 +492,18 @@ export async function getJiraFieldsController(
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to fetch Jira fields';
+      error instanceof Error ? error.message : "Failed to fetch Jira fields";
     const isAuth =
-      message.toLowerCase().includes('session') ||
-      message.toLowerCase().includes('oauth') ||
-      message.toLowerCase().includes('reconnect');
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("oauth") ||
+      message.toLowerCase().includes("reconnect");
     return jsonError(message, isAuth ? 401 : 500);
   }
 }
 
 export async function updateJiraFieldsController(
   request: CfRequest,
-  env: Env
+  env: Env,
 ): Promise<CfResponse> {
   const body = await request.json<{
     roomKey?: string;
@@ -519,11 +519,11 @@ export async function updateJiraFieldsController(
   const { storyPointsField, sprintField } = body;
 
   if (!roomKey || !userName) {
-    return jsonError('Room key and user name are required');
+    return jsonError("Room key and user name are required");
   }
 
   if (storyPointsField === undefined && sprintField === undefined) {
-    return jsonError('No field updates provided', 400);
+    return jsonError("No field updates provided", 400);
   }
 
   try {
@@ -533,20 +533,20 @@ export async function updateJiraFieldsController(
     const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      return jsonError('Jira OAuth not configured', 500);
+      return jsonError("Jira OAuth not configured", 500);
     }
 
     const roomObject = getRoomStub(env, roomKey);
     const credentialsResponse = await roomObject.fetch(
-      new Request('https://internal/jira/oauth/credentials', {
-        method: 'GET',
-      }) as unknown as CfRequest
+      new Request("https://internal/jira/oauth/credentials", {
+        method: "GET",
+      }) as unknown as CfRequest,
     );
 
     if (!credentialsResponse.ok) {
       return jsonError(
-        'Jira not connected. Please connect your Jira account in settings.',
-        401
+        "Jira not connected. Please connect your Jira account in settings.",
+        401,
       );
     }
 
@@ -574,14 +574,14 @@ export async function updateJiraFieldsController(
     const onTokenRefresh = async (
       accessToken: string,
       refreshToken: string,
-      expiresAt: number
+      expiresAt: number,
     ) => {
       await roomObject.fetch(
-        new Request('https://internal/jira/oauth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        new Request("https://internal/jira/oauth/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-        }) as unknown as CfRequest
+        }) as unknown as CfRequest,
       );
     };
 
@@ -589,31 +589,31 @@ export async function updateJiraFieldsController(
       credentials,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
     const validFieldIds = new Set(fields.map((field) => field.id));
 
     if (storyPointsField && !validFieldIds.has(storyPointsField)) {
       return jsonError(
-        'Selected story points field is not available in Jira',
-        400
+        "Selected story points field is not available in Jira",
+        400,
       );
     }
 
     if (sprintField && !validFieldIds.has(sprintField)) {
-      return jsonError('Selected sprint field is not available in Jira', 400);
+      return jsonError("Selected sprint field is not available in Jira", 400);
     }
 
     const updateResponse = await roomObject.fetch(
-      new Request('https://internal/jira/oauth/fields', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      new Request("https://internal/jira/oauth/fields", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ storyPointsField, sprintField }),
-      }) as unknown as CfRequest
+      }) as unknown as CfRequest,
     );
 
     if (!updateResponse.ok) {
-      return jsonError('Failed to save Jira field configuration', 500);
+      return jsonError("Failed to save Jira field configuration", 500);
     }
 
     return jsonResponse({ success: true });
@@ -621,11 +621,11 @@ export async function updateJiraFieldsController(
     const message =
       error instanceof Error
         ? error.message
-        : 'Failed to update Jira field configuration';
+        : "Failed to update Jira field configuration";
     const isAuth =
-      message.toLowerCase().includes('session') ||
-      message.toLowerCase().includes('oauth') ||
-      message.toLowerCase().includes('reconnect');
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("oauth") ||
+      message.toLowerCase().includes("reconnect");
     return jsonError(message, isAuth ? 401 : 500);
   }
 }

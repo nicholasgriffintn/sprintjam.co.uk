@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { safeLocalStorage } from "@/utils/storage";
-import { USERNAME_STORAGE_KEY } from '@/constants';
+import { USERNAME_STORAGE_KEY } from "@/constants";
 
 interface UseUserPersistenceOptions {
   name: string;
@@ -24,7 +24,7 @@ export const useUserPersistence = ({
       return;
     }
 
-    if (name === '') {
+    if (name === "") {
       safeLocalStorage.remove(USERNAME_STORAGE_KEY);
       return;
     }

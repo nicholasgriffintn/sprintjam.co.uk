@@ -22,7 +22,7 @@ export interface GithubOAuthStatus {
 
 export async function fetchGithubIssue(
   issueId: string,
-  options?: { roomKey?: string; userName?: string; sessionToken?: string }
+  options?: { roomKey?: string; userName?: string; sessionToken?: string },
 ): Promise<TicketMetadata> {
   const sessionToken = resolveSessionToken(options?.sessionToken);
   const params = new URLSearchParams();
@@ -134,8 +134,7 @@ export async function authorizeGithubOAuth(
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error ||
-        "Failed to initiate GitHub OAuth",
+      (data as { error?: string }).error || "Failed to initiate GitHub OAuth",
     );
   }
 
@@ -161,8 +160,7 @@ export async function revokeGithubOAuth(
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error ||
-        "Failed to disconnect GitHub OAuth",
+      (data as { error?: string }).error || "Failed to disconnect GitHub OAuth",
     );
   }
 }

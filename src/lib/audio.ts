@@ -1,46 +1,44 @@
 let cachedAudioContext: AudioContext | null = null;
 
 const getAudioContext = (): AudioContext | null => {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
 
   const AudioContextClass =
     window.AudioContext ||
-    (window as typeof window & {
-      webkitAudioContext?: typeof AudioContext;
-    }).webkitAudioContext;
+    (
+      window as typeof window & {
+        webkitAudioContext?: typeof AudioContext;
+      }
+    ).webkitAudioContext;
 
   if (!AudioContextClass) {
     return null;
   }
 
-  if (!cachedAudioContext || cachedAudioContext.state === 'closed') {
+  if (!cachedAudioContext || cachedAudioContext.state === "closed") {
     cachedAudioContext = new AudioContextClass();
   }
 
   return cachedAudioContext;
 };
 
-const makeBeep = (
-  ctx: AudioContext,
-  timeOffset: number,
-  frequency: number
-) => {
+const makeBeep = (ctx: AudioContext, timeOffset: number, frequency: number) => {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  osc.type = 'sine';
+  osc.type = "sine";
   osc.frequency.setValueAtTime(frequency, ctx.currentTime + timeOffset);
 
   gain.gain.setValueAtTime(0.001, ctx.currentTime + timeOffset);
   gain.gain.exponentialRampToValueAtTime(
     0.3,
-    ctx.currentTime + timeOffset + 0.01
+    ctx.currentTime + timeOffset + 0.01,
   );
   gain.gain.exponentialRampToValueAtTime(
     0.001,
-    ctx.currentTime + timeOffset + 0.25
+    ctx.currentTime + timeOffset + 0.25,
   );
 
   osc.connect(gain);
@@ -66,9 +64,9 @@ export const primeChimeAudio = () => {
     return;
   }
 
-  if (ctx.state === 'suspended') {
+  if (ctx.state === "suspended") {
     ctx.resume().catch((err) => {
-      console.warn('Unable to resume audio context', err);
+      console.warn("Unable to resume audio context", err);
     });
   }
 };
@@ -81,12 +79,12 @@ export const playChime = () => {
 
   const play = () => scheduleChime(ctx);
 
-  if (ctx.state === 'suspended') {
+  if (ctx.state === "suspended") {
     ctx
       .resume()
       .then(play)
       .catch((err) => {
-        console.warn('Unable to resume audio context for timer chime', err);
+        console.warn("Unable to resume audio context for timer chime", err);
       });
     return;
   }

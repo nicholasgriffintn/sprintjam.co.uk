@@ -5,20 +5,20 @@ import {
   useMemo,
   useState,
   type ReactNode,
-} from 'react';
+} from "react";
 
-import { useUserPersistence } from '@/hooks/useUserPersistence';
-import { useUrlParams } from '@/hooks/useUrlParams';
-import type { AvatarId, ErrorKind } from '@/types';
+import { useUserPersistence } from "@/hooks/useUserPersistence";
+import { useUrlParams } from "@/hooks/useUrlParams";
+import type { AvatarId, ErrorKind } from "@/types";
 
 export type AppScreen =
-  | 'welcome'
-  | 'create'
-  | 'join'
-  | 'room'
-  | '404'
-  | 'privacy'
-  | 'terms';
+  | "welcome"
+  | "create"
+  | "join"
+  | "room"
+  | "404"
+  | "privacy"
+  | "terms";
 
 interface SessionContextValue {
   screen: AppScreen;
@@ -41,29 +41,29 @@ interface SessionContextValue {
 }
 
 const SessionContext = createContext<SessionContextValue | undefined>(
-  undefined
+  undefined,
 );
 
 function getScreenFromPath(path: string): AppScreen {
-  if (path === '/' || !path) {
-    return 'welcome';
+  if (path === "/" || !path) {
+    return "welcome";
   }
 
-  const pathWithoutQuery = path.split('?')[0];
-  const pathWithoutTrailingSlash = pathWithoutQuery.endsWith('/')
+  const pathWithoutQuery = path.split("?")[0];
+  const pathWithoutTrailingSlash = pathWithoutQuery.endsWith("/")
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
-  return pathWithoutTrailingSlash === '/create'
-    ? 'create'
-    : pathWithoutTrailingSlash === '/join'
-      ? 'join'
-      : pathWithoutTrailingSlash === '/room'
-        ? 'room'
-        : pathWithoutTrailingSlash === '/privacy'
-          ? 'privacy'
-          : pathWithoutTrailingSlash === '/terms'
-            ? 'terms'
-            : '404';
+  return pathWithoutTrailingSlash === "/create"
+    ? "create"
+    : pathWithoutTrailingSlash === "/join"
+      ? "join"
+      : pathWithoutTrailingSlash === "/room"
+        ? "room"
+        : pathWithoutTrailingSlash === "/privacy"
+          ? "privacy"
+          : pathWithoutTrailingSlash === "/terms"
+            ? "terms"
+            : "404";
 }
 
 export const SessionProvider = ({
@@ -75,11 +75,11 @@ export const SessionProvider = ({
 }) => {
   const screenFromPath = getScreenFromPath(currentPath);
   const [screen, setScreen] = useState<AppScreen>(screenFromPath);
-  const [name, setName] = useState('');
-  const [roomKey, setRoomKey] = useState('');
-  const [passcode, setPasscode] = useState('');
+  const [name, setName] = useState("");
+  const [roomKey, setRoomKey] = useState("");
+  const [passcode, setPasscode] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(null);
-  const [error, setErrorState] = useState('');
+  const [error, setErrorState] = useState("");
   const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
 
   const setError = useCallback(
@@ -87,36 +87,36 @@ export const SessionProvider = ({
       setErrorState(message);
       setErrorKind(kind);
     },
-    []
+    [],
   );
 
   const clearError = useCallback(() => {
-    setErrorState('');
+    setErrorState("");
     setErrorKind(null);
   }, []);
 
   const goHome = useCallback(() => {
-    setPasscode('');
-    setScreen('welcome');
+    setPasscode("");
+    setScreen("welcome");
     clearError();
   }, [clearError]);
 
   const startCreateFlow = useCallback(() => {
-    setPasscode('');
-    setScreen('create');
+    setPasscode("");
+    setScreen("create");
     clearError();
   }, [clearError]);
 
   const startJoinFlow = useCallback(() => {
-    setPasscode('');
-    setScreen('join');
+    setPasscode("");
+    setScreen("join");
     clearError();
   }, [clearError]);
 
   useUrlParams({
     onJoinRoom: (joinRoomKey) => {
       setRoomKey(joinRoomKey);
-      setScreen('join');
+      setScreen("join");
     },
   });
 
@@ -158,7 +158,7 @@ export const SessionProvider = ({
       goHome,
       startCreateFlow,
       startJoinFlow,
-    ]
+    ],
   );
 
   return (
@@ -169,7 +169,7 @@ export const SessionProvider = ({
 export const useSession = (): SessionContextValue => {
   const ctx = useContext(SessionContext);
   if (!ctx) {
-    throw new Error('useSession must be used within SessionProvider');
+    throw new Error("useSession must be used within SessionProvider");
   }
   return ctx;
 };

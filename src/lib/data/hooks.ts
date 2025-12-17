@@ -7,10 +7,10 @@ import {
   serverDefaultsCollection,
 } from "./collections";
 
-const noopSubscribe = () => () => { };
+const noopSubscribe = () => () => {};
 
 function createCollectionSubscriber(
-  subscribeAll: (onChange: () => void) => () => void
+  subscribeAll: (onChange: () => void) => () => void,
 ) {
   return (onChange: () => void) => subscribeAll(onChange);
 }

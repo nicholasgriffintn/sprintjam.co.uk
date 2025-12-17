@@ -3,16 +3,16 @@ import type {
   StructuredVote,
   VoteValue,
   TicketQueueItem,
-} from '../types';
-import { applySettingsUpdate } from './room-settings';
+} from "../types";
+import { applySettingsUpdate } from "./room-settings";
 
 export function getAnonymousUserId(
   roomData: RoomData,
-  userName: string
+  userName: string,
 ): string {
   const index = roomData.users.indexOf(userName);
   if (index === -1) {
-    return 'Anonymous';
+    return "Anonymous";
   }
   return `Anonymous ${index + 1}`;
 }
@@ -32,7 +32,7 @@ export function normalizeRoomData(roomData: RoomData): RoomData {
 }
 
 export function ensureConnectedUsers(
-  roomData: RoomData
+  roomData: RoomData,
 ): Record<string, boolean> {
   if (!roomData.connectedUsers) {
     roomData.connectedUsers = {};
@@ -54,7 +54,7 @@ export function ensureStructuredVotes(roomData: RoomData) {
 export function markUserConnection(
   roomData: RoomData,
   userName: string,
-  isConnected: boolean
+  isConnected: boolean,
 ) {
   const normalizedInput = userName.trim();
   const targetName =
@@ -75,7 +75,7 @@ export function markUserConnection(
 export function assignUserAvatar(
   roomData: RoomData,
   userName: string,
-  avatar?: string
+  avatar?: string,
 ) {
   if (!roomData.userAvatars) {
     roomData.userAvatars = {};
@@ -85,7 +85,7 @@ export function assignUserAvatar(
   const targetName =
     findCanonicalUserName(roomData, normalizedInput) ??
     roomData.users.find(
-      (user) => user.toLowerCase() === normalizedInput.toLowerCase()
+      (user) => user.toLowerCase() === normalizedInput.toLowerCase(),
     ) ??
     normalizedInput;
 
@@ -106,11 +106,11 @@ export function sanitizeRoomData(roomData: RoomData): RoomData {
 
 export const remapVotes = (
   idMap: Map<string, string>,
-  votes: Record<string, VoteValue | null>
+  votes: Record<string, VoteValue | null>,
 ) => {
   const mapped: Record<string, VoteValue | null> = {};
   Object.entries(votes).forEach(([user, vote]) => {
-    const anon = idMap.get(user) ?? 'Anonymous';
+    const anon = idMap.get(user) ?? "Anonymous";
     mapped[anon] = vote;
   });
   return mapped;
@@ -118,12 +118,12 @@ export const remapVotes = (
 
 export const remapStructuredVotes = (
   idMap: Map<string, string>,
-  structured?: Record<string, StructuredVote>
+  structured?: Record<string, StructuredVote>,
 ) => {
   if (!structured) return undefined;
   const mapped: Record<string, StructuredVote> = {};
   Object.entries(structured).forEach(([user, payload]) => {
-    const anon = idMap.get(user) ?? 'Anonymous';
+    const anon = idMap.get(user) ?? "Anonymous";
     mapped[anon] = payload;
   });
   return mapped;
@@ -131,14 +131,14 @@ export const remapStructuredVotes = (
 
 export const remapTicketVotes = (
   idMap: Map<string, string>,
-  ticket?: TicketQueueItem
+  ticket?: TicketQueueItem,
 ) => {
   if (!ticket?.votes) return ticket;
   return {
     ...ticket,
     votes: ticket.votes.map((vote) => ({
       ...vote,
-      userName: idMap.get(vote.userName) ?? 'Anonymous',
+      userName: idMap.get(vote.userName) ?? "Anonymous",
     })),
   };
 };
@@ -171,7 +171,7 @@ export function anonymizeRoomData(roomData: RoomData): RoomData {
 
 export function findCanonicalUserName(
   roomData: RoomData,
-  candidate: string
+  candidate: string,
 ): string | undefined {
   const target = candidate.trim().toLowerCase();
   return (

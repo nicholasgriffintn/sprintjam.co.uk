@@ -1,7 +1,7 @@
 import type { FC } from "react";
 
 import { Badge } from "@/components/ui/Badge";
-import type { ConnectionStatusState } from '@/types';
+import type { ConnectionStatusState } from "@/types";
 
 interface ConnectionStatusProps {
   status: ConnectionStatusState;
@@ -11,24 +11,24 @@ const STATUS_CONFIG: Record<
   ConnectionStatusState,
   {
     text: string;
-    variant: 'success' | 'warning' | 'error';
+    variant: "success" | "warning" | "error";
     dotClass: string;
   }
 > = {
   connected: {
-    text: 'Connected',
-    variant: 'success',
-    dotClass: 'bg-emerald-600',
+    text: "Connected",
+    variant: "success",
+    dotClass: "bg-emerald-600",
   },
   connecting: {
-    text: 'Connecting',
-    variant: 'warning',
-    dotClass: 'bg-amber-500',
+    text: "Connecting",
+    variant: "warning",
+    dotClass: "bg-amber-500",
   },
   disconnected: {
-    text: 'Disconnected',
-    variant: 'error',
-    dotClass: 'bg-rose-600',
+    text: "Disconnected",
+    variant: "error",
+    dotClass: "bg-rose-600",
   },
 };
 

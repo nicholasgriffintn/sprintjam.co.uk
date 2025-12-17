@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useRoom } from '@/context/RoomContext';
-import { useSession } from '@/context/SessionContext';
+import { useRoom } from "@/context/RoomContext";
+import { useSession } from "@/context/SessionContext";
 import {
   authorizeGithubOAuth,
   getGithubOAuthStatus,
   revokeGithubOAuth,
   type GithubOAuthStatus,
-} from '@/lib/github-service';
+} from "@/lib/github-service";
 
 export function useGithubOAuth(enabled = true) {
   const { activeRoomKey, authToken } = useRoom();
@@ -67,11 +67,11 @@ export function useGithubOAuth(enabled = true) {
         (prev) =>
           prev
             ? {
-              ...prev,
-              connected: false,
-              githubLogin: undefined,
-              githubUserEmail: undefined,
-            }
+                ...prev,
+                connected: false,
+                githubLogin: undefined,
+                githubUserEmail: undefined,
+              }
             : prev,
       );
     },

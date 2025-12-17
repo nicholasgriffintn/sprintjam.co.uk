@@ -1,14 +1,20 @@
-import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import {
+  expect,
+  test,
+  type Browser,
+  type BrowserContext,
+  type Page,
+} from "@playwright/test";
 
 import { WelcomePage } from "./pageObjects/welcome-page";
 import { CreateRoomPage } from "./pageObjects/create-room-page";
 import { RoomPage } from "./pageObjects/room-page";
-import { createRoomWithParticipant } from './helpers/room-journeys';
+import { createRoomWithParticipant } from "./helpers/room-journeys";
 
 async function createRoomWithProvider(
   browser: Browser,
-  provider: 'jira' | 'linear' | 'github',
-  setupRoutes?: (context: BrowserContext) => Promise<void> | void
+  provider: "jira" | "linear" | "github",
+  setupRoutes?: (context: BrowserContext) => Promise<void> | void,
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -22,8 +28,8 @@ async function createRoomWithProvider(
   await welcome.startCreateRoom();
 
   const createRoom = new CreateRoomPage(page);
-  await createRoom.completeNameStep('Queue Creator');
-  await createRoom.selectAvatar('avatar-option-robot');
+  await createRoom.completeNameStep("Queue Creator");
+  await createRoom.selectAvatar("avatar-option-robot");
   await createRoom.configureRoomDetails({
     enableTicketQueue: true,
     externalService: provider,
@@ -36,8 +42,8 @@ async function createRoomWithProvider(
   return { context, page };
 }
 
-test.describe('Modal interactions', () => {
-  test('ticket queue modal is read-only for participants', async ({
+test.describe("Modal interactions", () => {
+  test("ticket queue modal is read-only for participants", async ({
     browser,
   }) => {
     const setup = await createRoomWithParticipant(browser, {
@@ -47,26 +53,26 @@ test.describe('Modal interactions', () => {
 
     try {
       const moderatorPage = moderatorRoom.getPage();
-      await moderatorPage.getByTestId('next-ticket-button').click();
+      await moderatorPage.getByTestId("next-ticket-button").click();
       await moderatorPage
-        .getByRole('dialog', { name: 'Review before moving on' })
-        .getByTestId('pre-pointing-confirm')
+        .getByRole("dialog", { name: "Review before moving on" })
+        .getByTestId("pre-pointing-confirm")
         .click();
 
       await moderatorRoom.openQueueModal();
       await moderatorRoom.expectQueueManageControlsVisible(true);
-      await moderatorRoom.expectQueueCurrentTicketContains('SPRINTJAM');
+      await moderatorRoom.expectQueueCurrentTicketContains("SPRINTJAM");
       await moderatorRoom
         .getPage()
-        .getByRole('button', { name: 'Close modal' })
+        .getByRole("button", { name: "Close modal" })
         .click();
 
       await participantRoom.openQueueModal();
       await participantRoom.expectQueueManageControlsVisible(false);
-      await participantRoom.expectQueueCurrentTicketContains('SPRINTJAM');
+      await participantRoom.expectQueueCurrentTicketContains("SPRINTJAM");
       await participantRoom
         .getPage()
-        .getByRole('button', { name: 'Close modal' })
+        .getByRole("button", { name: "Close modal" })
         .click();
     } finally {
       await cleanup();
@@ -82,10 +88,10 @@ test.describe("Ticket queue provider setup on room creation", () => {
     const jiraTicket = {
       key: jiraTicketKey,
       url: `https://jira.test.sprintjam.co.uk/browse/${jiraTicketKey}`,
-      summary: 'Backlog item',
-      description: 'Jira ticket pulled via setup modal',
-      status: 'To Do',
-      assignee: 'QA Bot',
+      summary: "Backlog item",
+      description: "Jira ticket pulled via setup modal",
+      status: "To Do",
+      assignee: "QA Bot",
       storyPoints: null,
     };
 
@@ -96,11 +102,11 @@ test.describe("Ticket queue provider setup on room creation", () => {
         await ctx.route("**/api/jira/oauth/status?**", (route) => {
           route.fulfill({
             status: 200,
-            contentType: 'application/json',
+            contentType: "application/json",
             body: JSON.stringify({
               connected: true,
-              jiraDomain: 'jira.test.sprintjam.co.uk',
-              jiraUserEmail: 'qa@test.sprintjam.co.uk',
+              jiraDomain: "jira.test.sprintjam.co.uk",
+              jiraUserEmail: "qa@test.sprintjam.co.uk",
             }),
           });
         });
@@ -111,7 +117,11 @@ test.describe("Ticket queue provider setup on room creation", () => {
             contentType: "application/json",
             body: JSON.stringify({
               fields: [
-                { id: "customfield_10016", name: "Story Points", type: "number" },
+                {
+                  id: "customfield_10016",
+                  name: "Story Points",
+                  type: "number",
+                },
               ],
               storyPointsField: "customfield_10016",
             }),
@@ -166,10 +176,10 @@ test.describe("Ticket queue provider setup on room creation", () => {
       key: linearIssueKey,
       identifier: linearIssueKey,
       url: `https://linear.test.sprintjam.co.uk/issue/${linearIssueKey}`,
-      summary: 'Linear issue to sync',
-      description: 'Verify provider setup modal opens and queues issues',
-      status: 'Todo',
-      assignee: 'QA Bot',
+      summary: "Linear issue to sync",
+      description: "Verify provider setup modal opens and queues issues",
+      status: "Todo",
+      assignee: "QA Bot",
       estimate: null,
     };
 
@@ -180,12 +190,12 @@ test.describe("Ticket queue provider setup on room creation", () => {
         await ctx.route("**/api/linear/oauth/status?**", (route) => {
           route.fulfill({
             status: 200,
-            contentType: 'application/json',
+            contentType: "application/json",
             body: JSON.stringify({
               connected: true,
-              linearOrganizationId: 'eng',
-              linearUserEmail: 'qa@test.sprintjam.co.uk',
-              estimateField: 'storyPoints',
+              linearOrganizationId: "eng",
+              linearUserEmail: "qa@test.sprintjam.co.uk",
+              estimateField: "storyPoints",
             }),
           });
         });
@@ -229,5 +239,4 @@ test.describe("Ticket queue provider setup on room creation", () => {
       await context.close();
     }
   });
-
 });

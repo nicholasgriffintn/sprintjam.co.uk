@@ -6,8 +6,8 @@ import type { RoomData, RoomStats } from "@/types";
 import { getAvatarInfo } from "@/utils/avatars";
 import { Badge } from "@/components/ui/Badge";
 import { HorizontalProgress } from "@/components/ui/HorizontalProgress";
-import { cn } from '@/lib/cn';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { cn } from "@/lib/cn";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 export type ParticipantsListProps = {
   roomData: RoomData | null;
@@ -61,10 +61,11 @@ const ParticipantItem = memo(
         <div className="flex items-center space-x-3">
           {userAvatar && (
             <div
-              className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${isConnected
-                ? 'border-emerald-300 dark:border-emerald-600'
-                : 'border-slate-200 dark:border-slate-600'
-                }`}
+              className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
+                isConnected
+                  ? "border-emerald-300 dark:border-emerald-600"
+                  : "border-slate-200 dark:border-slate-600"
+              }`}
             >
               {(() => {
                 const avatarInfo = getAvatarInfo(userAvatar);
@@ -80,8 +81,9 @@ const ParticipantItem = memo(
             </div>
           )}
           <span
-            className={`flex items-center gap-2 text-sm ${user === currentUser ? 'font-semibold' : ''
-              }`}
+            className={`flex items-center gap-2 text-sm ${
+              user === currentUser ? "font-semibold" : ""
+            }`}
           >
             {!hideParticipantNames && (
               <>
@@ -98,18 +100,18 @@ const ParticipantItem = memo(
         </div>
         {vote !== undefined && vote !== null && (
           <Badge
-            variant={showVotes ? 'success' : 'default'}
+            variant={showVotes ? "success" : "default"}
             className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
           >
-            {anonymousVotes && showVotes ? '✓' : showVotes ? vote : '✓'}
+            {anonymousVotes && showVotes ? "✓" : showVotes ? vote : "✓"}
           </Badge>
         )}
       </motion.li>
     );
-  }
+  },
 );
 
-ParticipantItem.displayName = 'ParticipantItem';
+ParticipantItem.displayName = "ParticipantItem";
 
 export const ParticipantsList = memo(function ParticipantsList({
   roomData,
@@ -148,8 +150,8 @@ export const ParticipantsList = memo(function ParticipantsList({
     <SurfaceCard
       data-testid="participants-panel"
       className={cn(
-        'flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800',
-        className
+        "flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800",
+        className,
       )}
       padding="none"
       role="region"
@@ -157,8 +159,8 @@ export const ParticipantsList = memo(function ParticipantsList({
     >
       <div
         className={cn(
-          'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
-          collapsed && 'border-b-0 py-2',
+          "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
+          collapsed && "border-b-0 py-2",
         )}
       >
         <h2
@@ -178,7 +180,7 @@ export const ParticipantsList = memo(function ParticipantsList({
           className="inline-flex items-center rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-white/10 dark:text-white"
           onClick={handleToggle}
           aria-label={
-            collapsed ? 'Expand participants' : 'Collapse participants'
+            collapsed ? "Expand participants" : "Collapse participants"
           }
           aria-expanded={!collapsed}
           aria-controls={contentId}
@@ -191,9 +193,9 @@ export const ParticipantsList = memo(function ParticipantsList({
         id={contentId}
         tabIndex={0}
         className={cn(
-          'flex-1 space-y-3 overflow-y-auto px-4 py-4',
-          collapsed && 'hidden',
-          contentClassName
+          "flex-1 space-y-3 overflow-y-auto px-4 py-4",
+          collapsed && "hidden",
+          contentClassName,
         )}
       >
         <div>

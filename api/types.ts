@@ -3,7 +3,7 @@ import type {
   Fetcher,
   WebSocket as CfWebSocket,
   RateLimit,
-} from '@cloudflare/workers-types';
+} from "@cloudflare/workers-types";
 
 export interface Env {
   ENABLE_JOIN_RATE_LIMIT?: string;
@@ -24,35 +24,35 @@ export interface Env {
 }
 
 export type ClientMessage =
-  | { type: 'vote'; vote: string | number | StructuredVote }
-  | { type: 'showVotes' }
-  | { type: 'resetVotes' }
-  | { type: 'updateSettings'; settings: Partial<RoomData['settings']> }
-  | { type: 'generateStrudelCode' }
-  | { type: 'toggleStrudelPlayback' }
-  | { type: 'nextTicket' }
-  | { type: 'addTicket'; ticket: Partial<TicketQueueItem> }
+  | { type: "vote"; vote: string | number | StructuredVote }
+  | { type: "showVotes" }
+  | { type: "resetVotes" }
+  | { type: "updateSettings"; settings: Partial<RoomData["settings"]> }
+  | { type: "generateStrudelCode" }
+  | { type: "toggleStrudelPlayback" }
+  | { type: "nextTicket" }
+  | { type: "addTicket"; ticket: Partial<TicketQueueItem> }
   | {
-      type: 'updateTicket';
+      type: "updateTicket";
       ticketId: number;
       updates: Partial<TicketQueueItem>;
     }
-  | { type: 'deleteTicket'; ticketId: number }
-  | { type: 'completeTicket'; outcome?: string }
-  | { type: 'startTimer' }
-  | { type: 'pauseTimer' }
-  | { type: 'resetTimer' }
+  | { type: "deleteTicket"; ticketId: number }
+  | { type: "completeTicket"; outcome?: string }
+  | { type: "startTimer" }
+  | { type: "pauseTimer" }
+  | { type: "resetTimer" }
   | {
-      type: 'configureTimer';
+      type: "configureTimer";
       config: {
         targetDurationSeconds?: number;
         autoResetOnVotesReset?: boolean;
         resetCountdown?: boolean;
       };
     }
-  | { type: 'ping' };
+  | { type: "ping" };
 
-export type VoteValue = string | number | null | '?' | 'coffee';
+export type VoteValue = string | number | null | "?" | "coffee";
 
 export interface VoteOptionMetadata {
   value: string | number;
@@ -60,24 +60,24 @@ export interface VoteOptionMetadata {
   taskSize: TaskSize | null;
 }
 
-export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type TaskSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 export enum JudgeAlgorithm {
-  SMART_CONSENSUS = 'smartConsensus',
-  CONSERVATIVE_MODE = 'conservativeMode',
-  OPTIMISTIC_MODE = 'optimisticMode',
-  SIMPLE_AVERAGE = 'simpleAverage',
+  SMART_CONSENSUS = "smartConsensus",
+  CONSERVATIVE_MODE = "conservativeMode",
+  OPTIMISTIC_MODE = "optimisticMode",
+  SIMPLE_AVERAGE = "simpleAverage",
 }
 
 export interface JudgeResult {
   score: number | null;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   needsDiscussion: boolean;
   reasoning: string;
 }
 
 export interface JudgeMetadata {
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   needsDiscussion: boolean;
   reasoning: string;
   algorithm: JudgeAlgorithm;
@@ -150,7 +150,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: 'jira' | 'linear' | 'github' | 'none';
+  externalService?: "jira" | "linear" | "github" | "none";
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
   autoSyncEstimates?: boolean;
@@ -296,12 +296,12 @@ export interface TicketQueueItem {
   ticketId: string;
   title?: string;
   description?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  status: "pending" | "in_progress" | "completed" | "blocked";
   outcome?: string;
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: 'jira' | 'linear' | 'github' | 'none';
+  externalService: "jira" | "linear" | "github" | "none";
   externalServiceId?: string;
   externalServiceMetadata?: Record<string, unknown>;
   votes?: TicketVote[];

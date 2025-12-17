@@ -1,8 +1,8 @@
-import type { TimerState } from '../types';
+import type { TimerState } from "../types";
 
 export function calculateTimerSeconds(
   timerState: TimerState | undefined,
-  now: number = Date.now()
+  now: number = Date.now(),
 ): number {
   if (!timerState) {
     return 0;

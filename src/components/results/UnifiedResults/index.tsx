@@ -117,10 +117,7 @@ export function UnifiedResults({
         )}
 
         {showVoteDistributionSection && (
-          <VoteDistribution
-            roomData={roomData}
-            stats={stats}
-          />
+          <VoteDistribution roomData={roomData} stats={stats} />
         )}
       </div>
     </>

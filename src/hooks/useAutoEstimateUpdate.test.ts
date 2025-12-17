@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const effects: Array<() => void | (() => void)> = [];
 
-vi.mock('react', () => ({
+vi.mock("react", () => ({
   useEffect: (fn: () => void | (() => void)) => {
     const cleanup = fn();
     if (cleanup) {
@@ -19,23 +19,23 @@ interface MutationMock {
 
 const useMutationMock = vi.fn();
 
-vi.mock('@tanstack/react-query', () => ({
+vi.mock("@tanstack/react-query", () => ({
   useMutation: (...args: unknown[]) => useMutationMock(...args),
 }));
 
-vi.mock('@/lib/jira-service', () => ({
+vi.mock("@/lib/jira-service", () => ({
   updateJiraStoryPoints: vi.fn(),
   convertVoteValueToStoryPoints: (val: any) =>
-    typeof val === 'number' ? val : Number(val),
+    typeof val === "number" ? val : Number(val),
 }));
 
-vi.mock('@/lib/linear-service', () => ({
+vi.mock("@/lib/linear-service", () => ({
   updateLinearEstimate: vi.fn(),
 }));
 
-import { useAutoEstimateUpdate } from './useAutoEstimateUpdate';
+import { useAutoEstimateUpdate } from "./useAutoEstimateUpdate";
 
-describe('useAutoEstimateUpdate', () => {
+describe("useAutoEstimateUpdate", () => {
   let jiraMutation: MutationMock;
   let linearMutation: MutationMock;
 
@@ -57,18 +57,18 @@ describe('useAutoEstimateUpdate', () => {
       .mockReturnValueOnce(linearMutation);
   });
 
-  it('skips mutation when a request is already pending', () => {
+  it("skips mutation when a request is already pending", () => {
     jiraMutation.isPending = true;
 
     useAutoEstimateUpdate({
       roomData: {
-        key: 'r1',
-        users: ['alice'],
+        key: "r1",
+        users: ["alice"],
         votes: { alice: 5 },
         judgeScore: 0,
         connectedUsers: {},
         showVotes: true,
-        moderator: 'alice',
+        moderator: "alice",
         settings: {
           estimateOptions: [1, 2, 3, 5],
           allowOthersToShowEstimates: false,
@@ -81,20 +81,20 @@ describe('useAutoEstimateUpdate', () => {
           topVotesCount: 0,
           anonymousVotes: false,
           enableJudge: false,
-          judgeAlgorithm: 'simpleAverage',
-          externalService: 'jira',
+          judgeAlgorithm: "simpleAverage",
+          externalService: "jira",
           autoSyncEstimates: true,
         },
         currentTicket: {
           id: 1,
-          ticketId: 'ABC-1',
-          status: 'in_progress',
+          ticketId: "ABC-1",
+          status: "in_progress",
           ordinal: 1,
           createdAt: Date.now(),
-          externalService: 'jira',
+          externalService: "jira",
         },
       },
-      userName: 'alice',
+      userName: "alice",
       onTicketUpdate: vi.fn(),
       onError: vi.fn(),
     });
@@ -102,19 +102,19 @@ describe('useAutoEstimateUpdate', () => {
     expect(jiraMutation.mutateAsync).not.toHaveBeenCalled();
   });
 
-  it('auto-syncs Jira ticket when enabled', async () => {
+  it("auto-syncs Jira ticket when enabled", async () => {
     const onTicketUpdate = vi.fn();
-    jiraMutation.mutateAsync.mockResolvedValueOnce({ key: 'ABC-1' });
+    jiraMutation.mutateAsync.mockResolvedValueOnce({ key: "ABC-1" });
 
     useAutoEstimateUpdate({
       roomData: {
-        key: 'r1',
-        users: ['alice'],
+        key: "r1",
+        users: ["alice"],
         votes: { alice: 5 },
         judgeScore: 0,
         connectedUsers: {},
         showVotes: true,
-        moderator: 'alice',
+        moderator: "alice",
         settings: {
           estimateOptions: [1, 2, 3, 5],
           allowOthersToShowEstimates: false,
@@ -127,20 +127,20 @@ describe('useAutoEstimateUpdate', () => {
           topVotesCount: 0,
           anonymousVotes: false,
           enableJudge: false,
-          judgeAlgorithm: 'simpleAverage',
-          externalService: 'jira',
+          judgeAlgorithm: "simpleAverage",
+          externalService: "jira",
           autoSyncEstimates: true,
         },
         currentTicket: {
           id: 1,
-          ticketId: 'ABC-1',
-          status: 'in_progress',
+          ticketId: "ABC-1",
+          status: "in_progress",
           ordinal: 1,
           createdAt: Date.now(),
-          externalService: 'jira',
+          externalService: "jira",
         },
       },
-      userName: 'alice',
+      userName: "alice",
       onTicketUpdate,
       onError: vi.fn(),
     });
@@ -148,28 +148,28 @@ describe('useAutoEstimateUpdate', () => {
     await Promise.resolve();
 
     expect(jiraMutation.mutateAsync).toHaveBeenCalledWith({
-      roomKey: 'r1',
+      roomKey: "r1",
       storyPoints: 5,
-      ticketId: 'ABC-1',
+      ticketId: "ABC-1",
     });
     expect(onTicketUpdate).toHaveBeenCalledWith(1, {
-      externalServiceMetadata: { key: 'ABC-1' },
+      externalServiceMetadata: { key: "ABC-1" },
     });
   });
 
-  it('auto-syncs Linear ticket using fallback issue id', async () => {
+  it("auto-syncs Linear ticket using fallback issue id", async () => {
     const onTicketUpdate = vi.fn();
-    linearMutation.mutateAsync.mockResolvedValueOnce({ id: 'lin-123' });
+    linearMutation.mutateAsync.mockResolvedValueOnce({ id: "lin-123" });
 
     useAutoEstimateUpdate({
       roomData: {
-        key: 'r2',
-        users: ['bob'],
+        key: "r2",
+        users: ["bob"],
         votes: { bob: 3 },
         judgeScore: 0,
         connectedUsers: {},
         showVotes: true,
-        moderator: 'bob',
+        moderator: "bob",
         settings: {
           estimateOptions: [1, 2, 3, 5],
           allowOthersToShowEstimates: false,
@@ -182,21 +182,21 @@ describe('useAutoEstimateUpdate', () => {
           topVotesCount: 0,
           anonymousVotes: false,
           enableJudge: false,
-          judgeAlgorithm: 'simpleAverage',
-          externalService: 'linear',
+          judgeAlgorithm: "simpleAverage",
+          externalService: "linear",
           autoSyncEstimates: true,
         },
         currentTicket: {
           id: 7,
-          ticketId: 'LIN-7',
-          status: 'in_progress',
+          ticketId: "LIN-7",
+          status: "in_progress",
           ordinal: 1,
           createdAt: Date.now(),
-          externalService: 'linear',
-          externalServiceMetadata: { id: 'issue-1' },
+          externalService: "linear",
+          externalServiceMetadata: { id: "issue-1" },
         },
       },
-      userName: 'bob',
+      userName: "bob",
       onTicketUpdate,
       onError: vi.fn(),
     });
@@ -205,26 +205,26 @@ describe('useAutoEstimateUpdate', () => {
 
     expect(linearMutation.mutateAsync).toHaveBeenCalledWith({
       estimate: 3,
-      issueId: 'issue-1',
-      roomKey: 'r2',
+      issueId: "issue-1",
+      roomKey: "r2",
     });
     expect(onTicketUpdate).toHaveBeenCalledWith(7, {
-      externalServiceMetadata: { id: 'lin-123' },
+      externalServiceMetadata: { id: "lin-123" },
     });
   });
 
-  it('does not sync unsupported providers even when auto-sync enabled', () => {
+  it("does not sync unsupported providers even when auto-sync enabled", () => {
     const onTicketUpdate = vi.fn();
 
     useAutoEstimateUpdate({
       roomData: {
-        key: 'r3',
-        users: ['cora'],
+        key: "r3",
+        users: ["cora"],
         votes: { cora: 8 },
         judgeScore: 0,
         connectedUsers: {},
         showVotes: true,
-        moderator: 'cora',
+        moderator: "cora",
         settings: {
           estimateOptions: [1, 2, 3, 5],
           allowOthersToShowEstimates: false,
@@ -237,20 +237,20 @@ describe('useAutoEstimateUpdate', () => {
           topVotesCount: 0,
           anonymousVotes: false,
           enableJudge: false,
-          judgeAlgorithm: 'simpleAverage',
-          externalService: 'github',
+          judgeAlgorithm: "simpleAverage",
+          externalService: "github",
           autoSyncEstimates: true,
         },
         currentTicket: {
           id: 9,
-          ticketId: '42',
-          status: 'in_progress',
+          ticketId: "42",
+          status: "in_progress",
           ordinal: 1,
           createdAt: Date.now(),
-          externalService: 'github',
+          externalService: "github",
         },
       },
-      userName: 'cora',
+      userName: "cora",
       onTicketUpdate,
       onError: vi.fn(),
     });
