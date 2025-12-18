@@ -65,4 +65,26 @@ test.describe("Room settings", () => {
       await cleanup();
     }
   });
+
+  test("moderator can enable extra voting options", async ({ browser }) => {
+    const setup = await createRoomWithParticipant(browser);
+    const { moderatorRoom, cleanup } = setup;
+
+    const settingsModal = new SettingsModal(moderatorRoom.getPage());
+
+    try {
+      await settingsModal.open();
+      await settingsModal.expectExtraOptionState("unsure", true);
+      await settingsModal.expectExtraOptionState("coffee", false);
+      await settingsModal.expectExtraOptionState("cannot-complete", false);
+
+      await settingsModal.toggleExtraOption("coffee", true);
+      await settingsModal.save();
+
+      await moderatorRoom.expectVoteOptionVisible("☕");
+      await moderatorRoom.castVote("☕");
+    } finally {
+      await cleanup();
+    }
+  });
 });

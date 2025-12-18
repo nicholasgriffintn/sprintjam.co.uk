@@ -11,6 +11,13 @@ const cloneRoomSettings = (settings: RoomSettings): RoomSettings => ({
   voteOptionsMetadata: settings.voteOptionsMetadata
     ? settings.voteOptionsMetadata.map((metadata) => ({ ...metadata }))
     : undefined,
+  extraVoteOptions: settings.extraVoteOptions
+    ? settings.extraVoteOptions.map((option) => ({ ...option }))
+    : undefined,
+  customEstimateOptions: settings.customEstimateOptions
+    ? [...settings.customEstimateOptions]
+    : undefined,
+  votingSequenceId: settings.votingSequenceId,
   votingCriteria: settings.votingCriteria
     ? settings.votingCriteria.map((criterion) => ({ ...criterion }))
     : undefined,
@@ -56,6 +63,15 @@ export const cloneServerDefaults = (
     ...criterion,
   })),
   structuredVotingOptions: [...defaults.structuredVotingOptions],
+  votingSequences: defaults.votingSequences
+    ? defaults.votingSequences.map((sequence) => ({
+        ...sequence,
+        options: [...sequence.options],
+      }))
+    : undefined,
+  extraVoteOptions: defaults.extraVoteOptions
+    ? defaults.extraVoteOptions.map((option) => ({ ...option }))
+    : undefined,
 });
 
 export const buildInitialRoomData = (settings: RoomSettings): RoomData => ({
@@ -63,7 +79,7 @@ export const buildInitialRoomData = (settings: RoomSettings): RoomData => ({
   users: [],
   votes: {} as Record<string, VoteValue | null>,
   structuredVotes: {},
-  showVotes: false,
+  showVotes: settings.alwaysRevealVotes ?? false,
   moderator: "",
   connectedUsers: {},
   judgeScore: null,

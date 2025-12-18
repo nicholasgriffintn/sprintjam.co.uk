@@ -54,7 +54,7 @@ export type ClientMessage =
     }
   | { type: "ping" };
 
-export type VoteValue = string | number | null | "?" | "coffee";
+export type VoteValue = string | number;
 
 export interface VoteOptionMetadata {
   value: string | number;
@@ -86,6 +86,34 @@ export interface JudgeMetadata {
   questionMarkCount?: number;
   numericVoteCount?: number;
   totalVoteCount?: number;
+}
+
+export type VotingSequenceId =
+  | "fibonacci"
+  | "fibonacci-short"
+  | "doubling"
+  | "tshirt"
+  | "planet-scale"
+  | "yes-no"
+  | "simple"
+  | "hours"
+  | "custom";
+
+export interface VotingSequenceTemplate {
+  id: VotingSequenceId;
+  label: string;
+  description?: string;
+  options: (string | number)[];
+}
+
+export interface ExtraVoteOption {
+  id: string;
+  label: string;
+  value: string;
+  description?: string;
+  enabled?: boolean;
+  aliases?: string[];
+  impact?: "none" | "high-alert";
 }
 
 export interface SummaryCardSetting {
@@ -142,6 +170,9 @@ export interface RoomSettings {
   allowOthersToShowEstimates: boolean;
   allowOthersToDeleteEstimates: boolean;
   allowOthersToManageQueue?: boolean;
+  allowVotingAfterReveal?: boolean;
+  enableAutoReveal?: boolean;
+  alwaysRevealVotes?: boolean;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;
@@ -153,15 +184,18 @@ export interface RoomSettings {
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
   externalService?: "jira" | "linear" | "github" | "none";
+  autoSyncEstimates?: boolean;
+  enableTicketQueue?: boolean;
   enableStructuredVoting?: boolean;
   votingCriteria?: VotingCriterion[];
-  autoSyncEstimates?: boolean;
   resultsDisplay?: ResultsDisplaySettings;
   structuredVotingDisplay?: StructuredVotingDisplaySettings;
   autoHandoverModerator?: boolean;
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
-  enableTicketQueue?: boolean;
+  votingSequenceId?: VotingSequenceId;
+  customEstimateOptions?: (string | number)[];
+  extraVoteOptions?: ExtraVoteOption[];
 }
 
 export interface VotingCriterion {
@@ -299,7 +333,7 @@ export interface PasscodeHashPayload {
 export interface RoomData {
   key: string;
   users: string[];
-  votes: Record<string, VoteValue>;
+  votes: Record<string, VoteValue | null>;
   structuredVotes?: Record<string, StructuredVote>;
   showVotes: boolean;
   moderator: string;

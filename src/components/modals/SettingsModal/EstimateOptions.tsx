@@ -1,4 +1,9 @@
-import type { RoomSettings } from "@/types";
+import type {
+  ExtraVoteOption,
+  RoomSettings,
+  VotingSequenceId,
+  VotingSequenceTemplate,
+} from "@/types";
 
 export function EstimateOptions({
   localSettings,
@@ -6,47 +11,142 @@ export function EstimateOptions({
   structuredVotingOptions,
   estimateOptionsInput,
   handleEstimateOptionsChange,
+  votingPresets,
+  selectedSequenceId,
+  onSelectSequence,
+  extraVoteOptions,
+  onToggleExtraVote,
+  defaultSequenceId,
+  hideSelection,
 }: {
   localSettings: RoomSettings;
   defaultSettings: RoomSettings;
   structuredVotingOptions: (string | number)[];
   estimateOptionsInput: string;
   handleEstimateOptionsChange: (value: string) => void;
+  votingPresets: VotingSequenceTemplate[];
+  selectedSequenceId: VotingSequenceId;
+  onSelectSequence: (id: VotingSequenceId) => void;
+  extraVoteOptions: ExtraVoteOption[];
+  onToggleExtraVote: (id: string, enabled: boolean) => void;
+  defaultSequenceId: VotingSequenceId;
+  hideSelection?: boolean;
 }) {
+  const getOptionLabel = (preset: VotingSequenceTemplate) => {
+    if (preset.id === defaultSequenceId) {
+      return `${preset.label} (default)`;
+    }
+    return preset.label;
+  };
+
   return (
-    <div>
-      <label
-        htmlFor="estimateOptions"
-        className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-      >
-        Estimate Options
-      </label>
-      <input
-        id="estimateOptions"
-        type="text"
-        value={
-          localSettings.enableStructuredVoting
-            ? structuredVotingOptions
+    <div className="space-y-3">
+      {!hideSelection && (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <label
+                htmlFor="estimateOptions"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Estimate Options
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Choose a preset or craft your own sequence.
+              </p>
+            </div>
+            <select
+              value={selectedSequenceId}
+              disabled={localSettings.enableStructuredVoting}
+              onChange={(e) =>
+                onSelectSequence(e.target.value as VotingSequenceId)
+              }
+              data-testid="settings-select-voting-sequence"
+              className="rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800"
+            >
+              {votingPresets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {getOptionLabel(preset)}
+                </option>
+              ))}
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <input
+              id="estimateOptions"
+              type="text"
+              value={
+                localSettings.enableStructuredVoting
+                  ? structuredVotingOptions.map((option) => option.toString()).join(",")
+                  : estimateOptionsInput
+              }
+              onChange={(e) => handleEstimateOptionsChange(e.target.value)}
+              placeholder={`e.g., ${defaultSettings.estimateOptions
                 .map((option) => option.toString())
-                .join(",")
-            : estimateOptionsInput
-        }
-        onChange={(e) => handleEstimateOptionsChange(e.target.value)}
-        placeholder={`e.g., ${defaultSettings.estimateOptions
-          .map((option) => option.toString())
-          .join(",")}`}
-        disabled={localSettings.enableStructuredVoting}
-        className={`w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900 ${
-          localSettings.enableStructuredVoting
-            ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
-            : ""
-        }`}
-      />
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        {localSettings.enableStructuredVoting
-          ? "Fixed options for structured voting"
-          : "Separate values with commas"}
-      </p>
+                .join(",")}`}
+              disabled={
+                localSettings.enableStructuredVoting ||
+                selectedSequenceId !== "custom"
+              }
+              className={`w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900 ${
+                localSettings.enableStructuredVoting || selectedSequenceId !== "custom"
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                  : ""
+              }`}
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {localSettings.enableStructuredVoting
+                ? "Fixed options for structured voting"
+                : selectedSequenceId === "custom"
+                  ? "Separate values with commas"
+                  : "Preset selected—switch to custom to edit"}
+            </p>
+          </div>
+        </>
+      )}
+
+      {hideSelection && (
+        <div className="rounded-2xl border border-white/50 bg-white/70 px-4 py-3 text-sm text-slate-800 shadow-sm dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100">
+          Estimate options are fixed to the Fibonacci (short) sequence while
+          structured voting is enabled.
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-white/60 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/50">
+        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+          Extra votes (always available)
+        </p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+          Special actions that won't affect the score but can guide discussion.
+        </p>
+        <div className="space-y-2">
+          {extraVoteOptions.map((option) => (
+            <label
+              key={option.id}
+              className="flex items-start gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm text-slate-800 shadow-sm ring-1 ring-white/60 transition hover:bg-white/80 dark:bg-slate-800/60 dark:text-slate-100 dark:ring-white/10"
+            >
+              <input
+                type="checkbox"
+                checked={option.enabled !== false}
+                onChange={(e) => onToggleExtraVote(option.id, e.target.checked)}
+                data-testid={`extra-option-${option.id}`}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              />
+              <div className="leading-tight">
+                <span className="font-semibold">
+                  {option.value} {option.label}
+                </span>
+                {option.description && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {option.description}
+                  </p>
+                )}
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

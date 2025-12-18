@@ -1,7 +1,10 @@
 import type { RoomData } from "../types";
 import { getVoteKeyForUser } from "./room";
 
-export function getUsersVoteTaskSize(roomData: RoomData, name: string) {
+export function getUsersVoteTaskSize(
+  roomData: RoomData,
+  name: string,
+): string | null {
   const usersVote =
     roomData.votes[getVoteKeyForUser(roomData, name)] ?? roomData.votes[name];
   const metadata = roomData.settings.voteOptionsMetadata?.find(
@@ -21,6 +24,6 @@ export function getUsersVoteTaskSize(roomData: RoomData, name: string) {
     case "xl":
       return "Extra Large";
     default:
-      return "Unknown";
+      return null;
   }
 }

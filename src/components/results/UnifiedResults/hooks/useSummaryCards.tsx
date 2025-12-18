@@ -120,7 +120,7 @@ export function useSummaryCards({
                     {topDistribution.map(([vote, count]) => {
                       const metadata =
                         roomData.settings.voteOptionsMetadata?.find(
-                          (m) => m.value.toString() === vote,
+                          (m) => String(m.value) === vote,
                         );
                       const background = metadata?.background || "#ebf5ff";
 

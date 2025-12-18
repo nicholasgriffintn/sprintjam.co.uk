@@ -16,16 +16,16 @@ describe("Vote Options Metadata", () => {
     });
 
     it("generates metadata for string options", () => {
-      const options = ["?", "coffee"];
+      const options = ["❓", "☕"];
       const metadata = generateVoteOptionsMetadata(options);
 
       expect(metadata).toHaveLength(2);
-      expect(metadata[0].value).toBe("?");
-      expect(metadata[1].value).toBe("coffee");
+      expect(metadata[0].value).toBe("❓");
+      expect(metadata[1].value).toBe("☕");
     });
 
     it("generates metadata for mixed options", () => {
-      const options = [1, 2, 3, 5, 8, "?", "coffee"];
+      const options = [1, 2, 3, 5, 8, "❓", "☕"];
       const metadata = generateVoteOptionsMetadata(options);
 
       expect(metadata).toHaveLength(7);
@@ -35,8 +35,8 @@ describe("Vote Options Metadata", () => {
         3,
         5,
         8,
-        "?",
-        "coffee",
+        "❓",
+        "☕",
       ]);
     });
 
@@ -66,11 +66,12 @@ describe("Vote Options Metadata", () => {
     });
 
     it("uses special colors for known special values", () => {
-      const options = ["?", "coffee"];
+      const options = ["❓", "☕", "♾️"];
       const metadata = generateVoteOptionsMetadata(options);
 
       expect(metadata[0].background).toBeDefined();
       expect(metadata[1].background).toBeDefined();
+      expect(metadata[2].background).toBeDefined();
     });
 
     it("calculates max value correctly for color generation", () => {

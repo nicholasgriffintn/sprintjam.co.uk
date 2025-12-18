@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   createInitialRoomData,
   getDefaultEstimateOptions,
+  getDefaultExtraVoteOptions,
   getDefaultRoomSettings,
   getDefaultStructuredVotingOptions,
+  getVotingTemplates,
   getServerDefaults,
 } from "./defaults";
-import { VOTING_OPTIONS, STRUCTURED_VOTING_OPTIONS } from "../constants";
+import { VOTING_OPTIONS, STRUCTURED_VOTING_OPTIONS } from '../config/constants';
 import { generateVoteOptionsMetadata } from "./votes";
+import { DEFAULT_EXTRA_VOTE_OPTIONS, DEFAULT_VOTING_SEQUENCE_ID } from "../config/voting";
 
 describe("defaults utils", () => {
   describe("default option helpers", () => {
@@ -15,6 +18,11 @@ describe("defaults utils", () => {
       const options = getDefaultEstimateOptions();
       expect(options).toEqual(VOTING_OPTIONS);
       expect(options).not.toBe(VOTING_OPTIONS);
+      DEFAULT_EXTRA_VOTE_OPTIONS.filter((extra) => extra.enabled !== false).forEach(
+        (extra) => {
+          expect(options).toContain(extra.value);
+        },
+      );
     });
 
     it("returns a copy of the structured voting options", () => {
@@ -33,6 +41,8 @@ describe("defaults utils", () => {
       );
       expect(settings.enableStructuredVoting).toBe(false);
       expect(settings.showTimer).toBe(true);
+      expect(settings.votingSequenceId).toBe(DEFAULT_VOTING_SEQUENCE_ID);
+      expect(settings.extraVoteOptions).toEqual(DEFAULT_EXTRA_VOTE_OPTIONS);
       expect(
         settings.resultsDisplay?.criteriaBreakdown?.consensusLabels,
       ).toMatchObject({
@@ -52,13 +62,42 @@ describe("defaults utils", () => {
 
       expect(settings.showTimer).toBe(false);
       expect(settings.allowOthersToShowEstimates).toBe(true);
-      expect(settings.estimateOptions).toEqual(customOptions);
+      expect(settings.estimateOptions.slice(0, customOptions.length)).toEqual(
+        customOptions,
+      );
+      expect(
+        settings.estimateOptions.slice(customOptions.length),
+      ).toEqual(
+        DEFAULT_EXTRA_VOTE_OPTIONS.filter((option) => option.enabled !== false).map(
+          (option) => option.value,
+        ),
+      );
       expect(settings.voteOptionsMetadata).toEqual(
-        generateVoteOptionsMetadata(customOptions),
+        generateVoteOptionsMetadata(settings.estimateOptions),
       );
       // unchanged defaults remain intact
       expect(settings.enableJudge).toBe(true);
       expect(settings.topVotesCount).toBe(4);
+    });
+
+    it("disables judge by default when using non-numeric presets", () => {
+      const settings = getDefaultRoomSettings({
+        votingSequenceId: "tshirt",
+      });
+
+      expect(settings.votingSequenceId).toBe("tshirt");
+      expect(settings.enableJudge).toBe(false);
+    });
+
+    it("forces fibonacci short sequence when structured voting is enabled", () => {
+      const settings = getDefaultRoomSettings({
+        enableStructuredVoting: true,
+        votingSequenceId: "tshirt",
+      });
+
+      expect(settings.votingSequenceId).toBe("fibonacci-short");
+      expect(settings.enableStructuredVoting).toBe(true);
+      expect(settings.estimateOptions).toEqual(VOTING_OPTIONS);
     });
   });
 
@@ -103,6 +142,8 @@ describe("defaults utils", () => {
       expect(defaults.structuredVotingOptions).toEqual(
         getDefaultStructuredVotingOptions(),
       );
+      expect(defaults.votingSequences).toEqual(getVotingTemplates());
+      expect(defaults.extraVoteOptions).toEqual(getDefaultExtraVoteOptions());
     });
   });
 });

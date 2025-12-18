@@ -1,6 +1,12 @@
-import { useState, useEffect, type FC } from "react";
+import { useState, useEffect, useMemo, type FC } from "react";
 
-import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import type {
+  RoomSettings,
+  JudgeAlgorithm,
+  VotingSequenceId,
+  VotingSequenceTemplate,
+  ExtraVoteOption,
+} from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { VotingMode } from "./VotingMode";
@@ -9,6 +15,15 @@ import { TheJudge } from "./TheJudge";
 import { OtherOptions } from "./OtherOptions";
 import { BackgroundMusic } from "./BackgroundMusic";
 import { TicketQueueSettings } from "./TicketQueueSettings";
+import {
+  cloneExtraVoteOptions,
+  cloneVotingPresets,
+  detectPresetId,
+  mergeOptionsWithExtras,
+  normalizeExtraVoteOptions,
+  parseEstimateOptionsInput,
+  splitExtrasFromOptions,
+} from "@/utils/votingOptions";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -17,6 +32,9 @@ interface SettingsModalProps {
   onSaveSettings: (settings: RoomSettings) => void;
   defaultSettings: RoomSettings;
   structuredVotingOptions: (string | number)[];
+  votingPresets?: VotingSequenceTemplate[];
+  extraVoteOptions?: ExtraVoteOption[];
+  defaultSequenceId?: VotingSequenceId;
 }
 
 const SettingsModal: FC<SettingsModalProps> = ({
@@ -26,18 +44,181 @@ const SettingsModal: FC<SettingsModalProps> = ({
   onSaveSettings,
   defaultSettings,
   structuredVotingOptions,
+  votingPresets,
+  extraVoteOptions,
+  defaultSequenceId,
 }) => {
+  const structuredOptions = structuredVotingOptions ?? [];
   const [localSettings, setLocalSettings] = useState<RoomSettings>(settings);
   const [estimateOptionsInput, setEstimateOptionsInput] = useState<string>(
     settings.estimateOptions.join(","),
   );
+  const presets = useMemo(() => {
+    if (votingPresets?.length) {
+      return cloneVotingPresets(votingPresets);
+    }
+
+    const baseOptions =
+      settings.customEstimateOptions?.length &&
+      settings.votingSequenceId === "custom"
+        ? settings.customEstimateOptions
+        : settings.estimateOptions;
+
+    const inferredId =
+      settings.votingSequenceId ??
+      (baseOptions.length ? "custom" : "fibonacci-short");
+
+    return [
+      {
+        id: inferredId as VotingSequenceId,
+        label: "Default",
+        description: "Default sequence from server",
+        options: [...baseOptions],
+      },
+    ];
+  }, [votingPresets, settings]);
+  const defaultSequence = (
+    defaultSequenceId ??
+    settings.votingSequenceId ??
+    presets[0]?.id ??
+    "custom"
+  ) as VotingSequenceId;
+  const baseExtraOptions = useMemo(() => {
+    if (extraVoteOptions?.length) {
+      return cloneExtraVoteOptions(extraVoteOptions);
+    }
+    if (settings.extraVoteOptions?.length) {
+      return cloneExtraVoteOptions(settings.extraVoteOptions);
+    }
+    if (defaultSettings.extraVoteOptions?.length) {
+      return cloneExtraVoteOptions(defaultSettings.extraVoteOptions);
+    }
+    return [];
+  }, [extraVoteOptions, settings.extraVoteOptions, defaultSettings.extraVoteOptions]);
+  const [selectedSequenceId, setSelectedSequenceId] =
+    useState<VotingSequenceId>(defaultSequence);
+  const [extraOptions, setExtraOptions] = useState<ExtraVoteOption[]>(
+    () => cloneExtraVoteOptions(baseExtraOptions),
+  );
+
+  const structuredBaseOptions = useMemo(() => {
+    const fibPreset =
+      presets.find((preset) => preset.id === "fibonacci-short") ?? presets[0];
+    return fibPreset ? [...fibPreset.options] : structuredOptions;
+  }, [presets, structuredOptions]);
+
+  const resolveBaseOptions = (
+    sequenceId: VotingSequenceId,
+    customInput = estimateOptionsInput,
+    structuredVotingEnabled = localSettings.enableStructuredVoting,
+  ): (string | number)[] => {
+    if (structuredVotingEnabled) {
+      return structuredBaseOptions;
+    }
+
+    if (sequenceId === "custom") {
+      return parseEstimateOptionsInput(customInput);
+    }
+
+    const fallbackId = defaultSequenceId ?? defaultSequence;
+    const preset =
+      presets.find((template) => template.id === sequenceId) ??
+      presets.find((template) => template.id === fallbackId);
+
+    return preset ? [...preset.options] : parseEstimateOptionsInput(customInput);
+  };
+
+  const updateEstimateOptions = (
+    sequenceId: VotingSequenceId,
+    extras: ExtraVoteOption[] = extraOptions,
+    customInput = estimateOptionsInput,
+    structuredVotingEnabled = localSettings.enableStructuredVoting,
+  ) => {
+    const baseOptions = resolveBaseOptions(
+      sequenceId,
+      customInput,
+      structuredVotingEnabled,
+    );
+    const mergedExtras = cloneExtraVoteOptions(extras);
+    const combined = mergeOptionsWithExtras(baseOptions, mergedExtras);
+    setLocalSettings((prev) => ({
+      ...prev,
+      estimateOptions: combined,
+      votingSequenceId: sequenceId,
+      customEstimateOptions:
+        sequenceId === "custom" && !structuredVotingEnabled
+          ? baseOptions
+          : undefined,
+      extraVoteOptions: mergedExtras,
+    }));
+  };
 
   useEffect(() => {
-    if (isOpen) {
-      setLocalSettings(settings);
-      setEstimateOptionsInput(settings.estimateOptions.join(","));
-    }
-  }, [isOpen, settings]);
+    if (!isOpen) return;
+
+    const fallbackSequenceId =
+      (defaultSequenceId ??
+        settings.votingSequenceId ??
+        (presets[0]?.id as VotingSequenceId)) ?? "custom";
+
+    const { baseOptions, detectedExtras } = splitExtrasFromOptions(
+      settings.estimateOptions,
+      baseExtraOptions,
+    );
+    const normalizedExtras = normalizeExtraVoteOptions(
+      settings.extraVoteOptions,
+      baseExtraOptions,
+      detectedExtras,
+    );
+    const sequenceId =
+      settings.enableStructuredVoting === true
+        ? settings.votingSequenceId ?? fallbackSequenceId
+        : settings.votingSequenceId ??
+          detectPresetId(baseOptions, presets, fallbackSequenceId);
+    const preset =
+      sequenceId !== "custom"
+        ? presets.find((template) => template.id === sequenceId)
+        : undefined;
+
+    const baseForInput =
+      settings.enableStructuredVoting && structuredBaseOptions.length > 0
+        ? structuredBaseOptions
+        : sequenceId === "custom"
+          ? settings.customEstimateOptions?.length
+            ? settings.customEstimateOptions
+            : baseOptions
+          : preset?.options ??
+            (baseOptions.length
+              ? baseOptions
+              : presets.find((template) => template.id === fallbackSequenceId)
+                  ?.options ?? []);
+
+    const combinedEstimateOptions = mergeOptionsWithExtras(
+      baseForInput,
+      normalizedExtras,
+    );
+
+    setSelectedSequenceId(sequenceId as VotingSequenceId);
+    setEstimateOptionsInput(baseForInput.join(","));
+    setExtraOptions(normalizedExtras);
+    setLocalSettings({
+      ...settings,
+      estimateOptions: combinedEstimateOptions,
+      votingSequenceId: sequenceId as VotingSequenceId,
+      customEstimateOptions:
+        sequenceId === "custom" && !settings.enableStructuredVoting
+          ? [...baseForInput]
+          : settings.customEstimateOptions,
+      extraVoteOptions: normalizedExtras,
+    });
+  }, [
+    isOpen,
+    settings,
+    presets,
+    baseExtraOptions,
+    structuredBaseOptions,
+    defaultSequenceId,
+  ]);
 
   const handleChange = (
     key: keyof RoomSettings,
@@ -49,38 +230,41 @@ const SettingsModal: FC<SettingsModalProps> = ({
       | string
       | null,
   ) => {
-    let nextEstimateInput: string | null = null;
+    if (key === "enableStructuredVoting") {
+      const structuredEnabled = value as boolean;
+      if (structuredEnabled) {
+        setSelectedSequenceId("fibonacci-short");
+        setEstimateOptionsInput(structuredBaseOptions.join(","));
+      }
+      const baseOptions = resolveBaseOptions(
+        structuredEnabled ? "fibonacci-short" : selectedSequenceId,
+        estimateOptionsInput,
+        structuredEnabled,
+      );
+      const combined = mergeOptionsWithExtras(baseOptions, extraOptions);
+      const votingCriteria =
+        structuredEnabled && defaultSettings.votingCriteria
+          ? defaultSettings.votingCriteria.map((criterion) => ({
+              ...criterion,
+            }))
+          : localSettings.votingCriteria;
+
+      setLocalSettings((prev) => ({
+        ...prev,
+        enableStructuredVoting: structuredEnabled,
+        estimateOptions: combined,
+        votingCriteria,
+        customEstimateOptions:
+          selectedSequenceId === "custom" && !structuredEnabled
+            ? parseEstimateOptionsInput(estimateOptionsInput)
+            : undefined,
+        extraVoteOptions: extraOptions,
+      }));
+      return;
+    }
 
     setLocalSettings((prev) => {
       const newSettings: RoomSettings = { ...prev, [key]: value };
-
-      if (key === "enableStructuredVoting" && value === true) {
-        const structuredOptions = Array.from(structuredVotingOptions);
-        newSettings.estimateOptions = structuredOptions;
-        if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
-          newSettings.votingCriteria = defaultSettings.votingCriteria.map(
-            (criterion) => ({ ...criterion }),
-          );
-        }
-        nextEstimateInput = structuredOptions
-          .map((option) => option.toString())
-          .join(",");
-      } else if (
-        key === "enableStructuredVoting" &&
-        value === false &&
-        !newSettings.estimateOptions
-      ) {
-        const defaultOptions = Array.from(defaultSettings.estimateOptions);
-        newSettings.estimateOptions = defaultOptions;
-        if (!newSettings.votingCriteria && defaultSettings.votingCriteria) {
-          newSettings.votingCriteria = defaultSettings.votingCriteria.map(
-            (criterion) => ({ ...criterion }),
-          );
-        }
-        nextEstimateInput = defaultOptions
-          .map((option) => option.toString())
-          .join(",");
-      }
 
       if (
         key === "showAverage" ||
@@ -110,28 +294,42 @@ const SettingsModal: FC<SettingsModalProps> = ({
 
       return newSettings;
     });
-
-    if (nextEstimateInput !== null) {
-      setEstimateOptionsInput(nextEstimateInput);
-    }
   };
 
   const handleEstimateOptionsChange = (value: string) => {
     setEstimateOptionsInput(value);
+    setSelectedSequenceId("custom");
+    updateEstimateOptions("custom", extraOptions, value, false);
+  };
 
-    const options = value
-      .split(",")
-      .map((item) => item.trim())
-      .filter((item) => item !== "")
-      .map((item) => {
-        const num = Number(item);
-        return Number.isNaN(num) ? item : num;
-      });
+  const handleSelectSequence = (sequenceId: VotingSequenceId) => {
+    const baseOptions = resolveBaseOptions(
+      sequenceId,
+      estimateOptionsInput,
+      localSettings.enableStructuredVoting,
+    );
 
-    setLocalSettings({
-      ...localSettings,
-      estimateOptions: options,
-    });
+    setSelectedSequenceId(sequenceId);
+    setEstimateOptionsInput(baseOptions.join(","));
+    updateEstimateOptions(
+      sequenceId,
+      extraOptions,
+      baseOptions.join(","),
+      localSettings.enableStructuredVoting,
+    );
+  };
+
+  const handleToggleExtraOption = (id: string, enabled: boolean) => {
+    const nextExtras = extraOptions.map((option) =>
+      option.id === id ? { ...option, enabled } : option,
+    );
+    setExtraOptions(nextExtras);
+    updateEstimateOptions(
+      selectedSequenceId,
+      nextExtras,
+      estimateOptionsInput,
+      localSettings.enableStructuredVoting,
+    );
   };
 
   const handleSave = () => {
@@ -151,9 +349,20 @@ const SettingsModal: FC<SettingsModalProps> = ({
           <EstimateOptions
             localSettings={localSettings}
             defaultSettings={defaultSettings}
-            structuredVotingOptions={structuredVotingOptions}
+            structuredVotingOptions={structuredOptions}
             estimateOptionsInput={estimateOptionsInput}
             handleEstimateOptionsChange={handleEstimateOptionsChange}
+            votingPresets={presets}
+            selectedSequenceId={selectedSequenceId}
+            onSelectSequence={handleSelectSequence}
+            extraVoteOptions={extraOptions}
+            onToggleExtraVote={handleToggleExtraOption}
+            defaultSequenceId={
+              (defaultSequenceId ??
+                settings.votingSequenceId ??
+                (presets[0]?.id as VotingSequenceId)) ?? "custom"
+            }
+            hideSelection={localSettings.enableStructuredVoting === true}
           />
 
           <TheJudge localSettings={localSettings} handleChange={handleChange} />

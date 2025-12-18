@@ -5,6 +5,7 @@ import {
   type RoomSetupOptions,
 } from "./helpers/room-journeys";
 import { StructuredVotingPanel } from "./pageObjects/structured-voting-panel";
+import { SettingsModal } from "./pageObjects/settings-modal";
 
 test.describe("Structured voting", () => {
   const roomOptions: RoomSetupOptions = {
@@ -47,6 +48,24 @@ test.describe("Structured voting", () => {
       await moderatorRoom.revealVotes();
       await moderatorRoom.expectVoteVisible(moderatorName, "5");
       await moderatorRoom.expectVoteVisible(participantName, "3");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test("hides manual voting sequence selection when structured voting is enabled", async ({
+    browser,
+  }) => {
+    const setup = await createRoomWithParticipant(browser, roomOptions);
+    const { moderatorRoom, cleanup } = setup;
+    const settingsModal = new SettingsModal(moderatorRoom.getPage());
+
+    try {
+      await settingsModal.open();
+      await settingsModal.expectVotingSequenceSelectorVisible(false);
+      await settingsModal.save();
+
+      await moderatorRoom.expectVoteOptionVisible("13");
     } finally {
       await cleanup();
     }

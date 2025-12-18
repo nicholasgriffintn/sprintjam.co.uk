@@ -12,7 +12,7 @@ interface PrePointingSummaryModalProps {
   stats: {
     avg: number | string;
     mode: VoteValue | null;
-    distribution: Record<VoteValue, number>;
+    distribution: Record<string, number>;
     totalVotes: number;
     votedUsers: number;
     totalUsers: number;

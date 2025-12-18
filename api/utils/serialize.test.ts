@@ -22,7 +22,7 @@ describe("serialize utils", () => {
 
     it("returns string votes as-is when truthy", () => {
       expect(serializeVote("?")).toBe("?");
-      expect(serializeVote("coffee")).toBe("coffee");
+      expect(serializeVote("☕")).toBe("☕");
     });
 
     it('returns "null" for nullish or empty values', () => {

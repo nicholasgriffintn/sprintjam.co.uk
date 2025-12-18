@@ -260,6 +260,9 @@ const RoomScreen = () => {
             onSaveSettings={handleUpdateSettings}
             defaultSettings={serverDefaults.roomSettings}
             structuredVotingOptions={serverDefaults.structuredVotingOptions}
+            votingPresets={serverDefaults.votingSequences}
+            extraVoteOptions={serverDefaults.extraVoteOptions}
+            defaultSequenceId={serverDefaults.roomSettings.votingSequenceId}
           />
         )}
       </AnimatePresence>

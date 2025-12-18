@@ -11,17 +11,15 @@ export const useRoomStats = (roomData: RoomData): RoomStats => {
       .filter((v) => !Number.isNaN(Number(v)))
       .map(Number);
 
-    const distribution: Record<VoteValue, number> = {} as Record<
-      VoteValue,
-      number
-    >;
+    const distribution: Record<string, number> = {};
     for (const option of roomData.settings.estimateOptions) {
-      distribution[option] = 0;
+      distribution[String(option)] = 0;
     }
 
     for (const vote of Object.values(roomData.votes)) {
       if (vote !== null) {
-        distribution[vote] = (distribution[vote] || 0) + 1;
+        const key = String(vote);
+        distribution[key] = (distribution[key] || 0) + 1;
       }
     }
 

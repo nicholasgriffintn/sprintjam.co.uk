@@ -107,9 +107,10 @@ export async function updateLinearEstimate(
 }
 
 export function convertVoteValueToEstimate(
-  voteValue: VoteValue,
+  voteValue: VoteValue | null,
 ): number | null {
-  if (voteValue === null || voteValue === "?" || voteValue === "coffee") {
+  const ignoredValues = new Set(["?", "❓", "coffee", "☕", "♾️"]);
+  if (voteValue === null || ignoredValues.has(String(voteValue))) {
     return null;
   }
 

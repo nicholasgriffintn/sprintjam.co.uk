@@ -31,6 +31,10 @@ export class RoomPage {
     await this.page.getByTestId(`vote-option-${option}`).click();
   }
 
+  async expectVoteOptionVisible(option: string | number) {
+    await expect(this.page.getByTestId(`vote-option-${option}`)).toBeVisible();
+  }
+
   async expectVotePendingState() {
     await this.expectVotesHiddenMessage("Votes are hidden");
   }
