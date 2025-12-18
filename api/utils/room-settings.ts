@@ -13,12 +13,27 @@ export function applySettingsUpdate({
     ...(settingsUpdate ?? {}),
   };
 
-  if (settingsUpdate?.estimateOptions || settingsUpdate?.customEstimateOptions) {
-    const customOptions =
-      settingsUpdate.customEstimateOptions ?? settingsUpdate.estimateOptions;
+  const hasExplicitSequence = settingsUpdate?.votingSequenceId !== undefined;
 
-    mergedSettings.votingSequenceId = "custom";
-    mergedSettings.customEstimateOptions = customOptions;
+  if (
+    settingsUpdate?.estimateOptions ||
+    settingsUpdate?.customEstimateOptions
+  ) {
+    const customOptions =
+      settingsUpdate.customEstimateOptions ??
+      settingsUpdate.estimateOptions ??
+      mergedSettings.customEstimateOptions;
+
+    if (!hasExplicitSequence && customOptions) {
+      mergedSettings.votingSequenceId = "custom";
+    }
+
+    if (
+      mergedSettings.votingSequenceId === "custom" ||
+      settingsUpdate?.votingSequenceId === "custom"
+    ) {
+      mergedSettings.customEstimateOptions = customOptions;
+    }
   }
 
   return getDefaultRoomSettings(mergedSettings);

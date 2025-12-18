@@ -65,7 +65,8 @@ test.describe("Structured voting", () => {
       await settingsModal.expectVotingSequenceSelectorVisible(false);
       await settingsModal.save();
 
-      await moderatorRoom.expectVoteOptionVisible("13");
+      await moderatorRoom.expectStructuredPanelVisible();
+      await moderatorRoom.expectVoteOptionHidden("13");
     } finally {
       await cleanup();
     }
