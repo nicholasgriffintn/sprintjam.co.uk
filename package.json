@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "prebuild": "tsc -b",
+    "build": "CLOUDFLARE_ENV=production vite build",
+    "build:staging": "CLOUDFLARE_ENV=staging vite build",
     "typecheck": "tsc --noEmit",
     "format": "npx prettier --write .",
     "lint": "eslint .",
@@ -17,7 +19,8 @@
     "test:e2e": "playwright test",
     "test:e2e:all": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e",
     "test:e2e:a11y": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e tests/e2e/a11y",
-    "deploy": "npm run build && npm exec wrangler deploy",
+    "deploy": "npm run build && wrangler deploy",
+    "deploy:staging": "npm run build:staging && wrangler deploy",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
