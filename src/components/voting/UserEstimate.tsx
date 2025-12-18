@@ -40,9 +40,6 @@ export function UserEstimate({
     [roomData.settings.extraVoteOptions]
   );
 
-  const isVotingDisabled =
-    roomData.showVotes && !roomData.settings.allowVotingAfterReveal;
-
   return (
     <div className="mb-8">
       <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3 mb-4">
