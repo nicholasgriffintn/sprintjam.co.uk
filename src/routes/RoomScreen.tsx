@@ -41,6 +41,7 @@ const RoomScreen = () => {
     handleToggleShowVotes,
     handleResetVotes,
     handleUpdateSettings,
+    handleSelectTicket,
     handleNextTicket,
     handleAddTicket,
     handleUpdateTicket,
@@ -289,6 +290,7 @@ const RoomScreen = () => {
           onAddTicket={handleAddTicket}
           onUpdateTicket={handleUpdateTicket}
           onDeleteTicket={handleDeleteTicket}
+          onSelectTicket={handleSelectTicket}
           canManageQueue={
             isModeratorView ||
             roomData.settings.allowOthersToManageQueue === true

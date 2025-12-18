@@ -125,6 +125,28 @@ export function StructuredVotingPanel({
         className="mb-6 text-slate-900 dark:text-white"
         data-testid="structured-voting-panel"
       >
+        {roomData?.currentTicket && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Currently Voting On
+              </span>
+              <span className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
+                {roomData.currentTicket.ticketId}
+              </span>
+            </div>
+            {roomData.currentTicket.title && (
+              <p className="text-base font-medium text-slate-800 dark:text-slate-100">
+                {roomData.currentTicket.title}
+              </p>
+            )}
+            {roomData.currentTicket.description && (
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                {roomData.currentTicket.description}
+              </p>
+            )}
+          </div>
+        )}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {displaySettings?.panelTitle ?? "Structured Estimation"}

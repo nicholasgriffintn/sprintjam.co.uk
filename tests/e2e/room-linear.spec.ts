@@ -100,6 +100,7 @@ test.describe("Linear integration", () => {
       await queueDialog.getByRole("button", { name: "Save Link" }).click();
       await expect(queueDialog).toContainText(secondaryIssueKey);
 
+      await queueDialog.getByRole("button", { name: "Start Voting" }).first().click();
       await queueDialog.getByLabel("Close modal").click();
 
       await page.getByTestId("next-ticket-button").click();
@@ -115,7 +116,7 @@ test.describe("Linear integration", () => {
       await page.getByTestId("queue-expand").click();
       const reopenedDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await expect(reopenedDialog).toBeVisible();
-      await expect(reopenedDialog).toContainText(issueKey);
+      await expect(reopenedDialog).toContainText(secondaryIssueKey);
       await reopenedDialog.getByTestId("queue-tab-history").click();
       await expect(
         reopenedDialog.getByTestId("queue-history-tab-panel"),

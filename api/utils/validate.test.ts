@@ -45,6 +45,22 @@ describe("validateClientMessage", () => {
     });
   });
 
+  it("validates selectTicket payload", () => {
+    const result = validateClientMessage({
+      type: "selectTicket",
+      ticketId: 123,
+    });
+    expect(result).toEqual({
+      type: "selectTicket",
+      ticketId: 123,
+    });
+  });
+
+  it("errors when selectTicket payload missing ticketId", () => {
+    const result = validateClientMessage({ type: "selectTicket" });
+    expect(result).toEqual({ error: "Select ticket payload invalid" });
+  });
+
   it("returns error for unknown message types", () => {
     const result = validateClientMessage({ type: "unknown-op" });
     expect(result).toEqual({ error: "Unknown message type" });

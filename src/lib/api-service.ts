@@ -551,6 +551,19 @@ export function updateSettings(settings: Partial<RoomSettings>): void {
   );
 }
 
+export function selectTicket(ticketId: number): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error("Not connected to room");
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: "selectTicket",
+      ticketId,
+    }),
+  );
+}
+
 export function nextTicket(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error("Not connected to room");

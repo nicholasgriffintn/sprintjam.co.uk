@@ -33,6 +33,7 @@ export type ClientMessage =
   | { type: "updateSettings"; settings: Partial<RoomData["settings"]> }
   | { type: "generateStrudelCode" }
   | { type: "toggleStrudelPlayback" }
+  | { type: "selectTicket"; ticketId: number }
   | { type: "nextTicket" }
   | { type: "addTicket"; ticket: Partial<TicketQueueItem> }
   | {

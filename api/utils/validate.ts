@@ -30,6 +30,11 @@ export function validateClientMessage(
       return { type: "generateStrudelCode" };
     case "toggleStrudelPlayback":
       return { type: "toggleStrudelPlayback" };
+    case "selectTicket":
+      if (typeof data.ticketId === "number") {
+        return { type: "selectTicket", ticketId: data.ticketId };
+      }
+      return { error: "Select ticket payload invalid" };
     case "nextTicket":
       return { type: "nextTicket" };
     case "addTicket":

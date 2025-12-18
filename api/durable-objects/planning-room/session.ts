@@ -122,6 +122,9 @@ export async function handleSession(
         case "toggleStrudelPlayback":
           await room.handleToggleStrudelPlayback(canonicalUserName);
           break;
+        case "selectTicket":
+          await room.handleSelectTicket(canonicalUserName, validated.ticketId);
+          break;
         case "nextTicket":
           await room.handleNextTicket(canonicalUserName);
           break;

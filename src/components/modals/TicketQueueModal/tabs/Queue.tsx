@@ -19,6 +19,7 @@ interface TicketQueueModalQueueTabProps {
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
   onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onDeleteTicket: (ticketId: number) => void;
+  onSelectTicket?: (ticketId: number) => void;
   roomKey: string;
   userName: string;
   canManageQueue: boolean;
@@ -32,6 +33,7 @@ export function TicketQueueModalQueueTab({
   onAddTicket,
   onUpdateTicket,
   onDeleteTicket,
+  onSelectTicket,
   roomKey,
   userName,
   canManageQueue,
@@ -779,6 +781,17 @@ export function TicketQueueModalQueueTab({
                     </div>
                     {canManageQueue && (
                       <div className="flex items-center gap-1">
+                        {onSelectTicket && (
+                          <button
+                            onClick={() => {
+                              onSelectTicket(ticket.id);
+                            }}
+                            data-testid={`queue-start-voting-${ticket.id}`}
+                            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 dark:text-green-300 dark:hover:bg-green-900/20"
+                          >
+                            Start Voting
+                          </button>
+                        )}
                         {externalService !== "none" && (
                           <button
                             onClick={() =>

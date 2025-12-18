@@ -1,13 +1,77 @@
 import type { TicketQueueWithVotes } from '../../types';
 import type { PlanningRoom } from '.';
 import {
-  createAutoTicket,
   getQueueWithPrivacy,
   logVotesForTicket,
   promoteNextPendingTicket,
   resetVotingState,
   shouldAnonymizeVotes,
 } from './room-helpers';
+
+export async function handleSelectTicket(
+  room: PlanningRoom,
+  userName: string,
+  ticketId: number
+) {
+  const roomData = await room.getRoomData();
+  if (!roomData) {
+    return;
+  }
+
+  if (!roomData.settings.enableTicketQueue) {
+    return;
+  }
+
+  if (
+    roomData.moderator !== userName &&
+    !roomData.settings.allowOthersToManageQueue
+  ) {
+    return;
+  }
+
+  const ticket = room.repository.getTicketById(ticketId);
+  if (!ticket) {
+    room.broadcast({
+      type: 'error',
+      error: `Ticket with ID ${ticketId} not found`,
+    });
+    return;
+  }
+
+  if (ticket.status !== 'pending') {
+    room.broadcast({
+      type: 'error',
+      error: `Ticket ${ticket.ticketId} is not in pending status`,
+    });
+    return;
+  }
+
+  const currentTicket = roomData.currentTicket;
+  logVotesForTicket(room, currentTicket, roomData);
+
+  if (currentTicket && currentTicket.status === 'in_progress') {
+    room.repository.updateTicket(currentTicket.id, {
+      status: 'completed',
+      completedAt: Date.now(),
+    });
+  }
+
+  room.repository.updateTicket(ticketId, { status: 'in_progress' });
+  room.repository.setCurrentTicket(ticketId);
+
+  resetVotingState(room, roomData);
+
+  const updatedTicket = room.repository.getTicketById(ticketId, {
+    anonymizeVotes: shouldAnonymizeVotes(roomData),
+  });
+  const updatedQueue = getQueueWithPrivacy(room, roomData);
+
+  room.broadcast({
+    type: 'nextTicket',
+    ticket: updatedTicket,
+    queue: updatedQueue,
+  });
+}
 
 export async function handleNextTicket(room: PlanningRoom, userName: string) {
   const roomData = await room.getRoomData();
@@ -39,15 +103,11 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
     });
   }
 
-  let nextTicket: TicketQueueWithVotes | null = promoteNextPendingTicket(
+  const nextTicket: TicketQueueWithVotes | null = promoteNextPendingTicket(
     room,
     roomData,
     queue
   );
-
-  if (!nextTicket) {
-    nextTicket = createAutoTicket(room, roomData, queue);
-  }
 
   room.repository.setCurrentTicket(nextTicket ? nextTicket.id : null);
 

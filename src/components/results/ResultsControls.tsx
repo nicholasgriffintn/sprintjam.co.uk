@@ -81,6 +81,7 @@ export function ResultsControls({
           </motion.button>
         )}
         {queueEnabled &&
+          roomData.currentTicket &&
           (isModeratorView || roomData.settings.allowOthersToManageQueue) && (
             <motion.button
               type="button"
