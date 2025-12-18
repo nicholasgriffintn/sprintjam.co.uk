@@ -21,13 +21,14 @@ export function getQueueWithPrivacy(
 export function resetVotingState(room: PlanningRoom, roomData: RoomData) {
   roomData.votes = {};
   roomData.structuredVotes = {};
-  roomData.showVotes = false;
+  const shouldKeepRevealed = roomData.settings.alwaysRevealVotes || false;
+  roomData.showVotes = shouldKeepRevealed;
   roomData.judgeScore = null;
   roomData.judgeMetadata = undefined;
 
   room.repository.clearVotes();
   room.repository.clearStructuredVotes();
-  room.repository.setShowVotes(false);
+  room.repository.setShowVotes(shouldKeepRevealed);
   room.repository.setJudgeState(null);
 }
 

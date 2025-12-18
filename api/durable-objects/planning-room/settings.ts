@@ -38,8 +38,15 @@ export async function handleUpdateSettings(
   const structuredVotingModeChanged =
     oldStructuredVoting !== newStructuredVoting;
 
+  const wasAlwaysReveal = roomData.settings.alwaysRevealVotes || false;
+
   roomData.settings = newSettings;
   room.repository.setSettings(roomData.settings);
+
+  if (newSettings.alwaysRevealVotes && !wasAlwaysReveal && !roomData.showVotes) {
+    roomData.showVotes = true;
+    room.repository.setShowVotes(true);
+  }
 
   if (estimateOptionsChanged) {
     const validOptions = newEstimateOptions;
@@ -67,6 +74,13 @@ export async function handleUpdateSettings(
     type: "settingsUpdated",
     settings: roomData.settings,
   });
+
+  if (newSettings.alwaysRevealVotes && !wasAlwaysReveal) {
+    room.broadcast({
+      type: "showVotes",
+      showVotes: roomData.showVotes,
+    });
+  }
 
   if (
     judgeSettingsChanged &&

@@ -75,7 +75,23 @@ export async function handleVote(
     structuredVote: structuredVotePayload,
   });
 
-  if (roomData.showVotes && roomData.settings.enableJudge) {
+  if (
+    !roomData.showVotes &&
+    roomData.settings.enableAutoReveal &&
+    Object.keys(roomData.votes).length >= roomData.users.length &&
+    roomData.users.length > 0
+  ) {
+    roomData.showVotes = true;
+    room.repository.setShowVotes(true);
+    room.broadcast({
+      type: "showVotes",
+      showVotes: true,
+    });
+
+    if (roomData.settings.enableJudge) {
+      await room.calculateAndUpdateJudgeScore();
+    }
+  } else if (roomData.showVotes && roomData.settings.enableJudge) {
     await room.calculateAndUpdateJudgeScore();
   }
 
@@ -103,6 +119,13 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
     roomData.moderator !== userName &&
     !roomData.settings.allowOthersToShowEstimates
   ) {
+    return;
+  }
+
+  if (roomData.settings.alwaysRevealVotes && roomData.showVotes) {
+    console.warn(
+      `Cannot hide votes in always-reveal mode (requested by ${userName})`,
+    );
     return;
   }
 

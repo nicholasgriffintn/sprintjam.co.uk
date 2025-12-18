@@ -153,7 +153,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: "jira" | "linear" | "github" | "none";
+  externalService?: 'jira' | 'linear' | 'github' | 'none';
   autoSyncEstimates?: boolean;
   enableTicketQueue?: boolean;
   enableStructuredVoting?: boolean;
@@ -163,6 +163,8 @@ export interface RoomSettings {
   autoHandoverModerator?: boolean;
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
+  enableAutoReveal?: boolean;
+  alwaysRevealVotes?: boolean;
 }
 
 export interface ServerDefaults {

@@ -143,6 +143,8 @@ export interface RoomSettings {
   allowOthersToDeleteEstimates: boolean;
   allowOthersToManageQueue?: boolean;
   allowVotingAfterReveal?: boolean;
+  enableAutoReveal?: boolean;
+  alwaysRevealVotes?: boolean;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;

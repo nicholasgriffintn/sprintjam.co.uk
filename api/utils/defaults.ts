@@ -37,6 +37,8 @@ export function getDefaultRoomSettings(
     allowOthersToDeleteEstimates:
       settings?.allowOthersToDeleteEstimates ?? false,
     allowVotingAfterReveal: settings?.allowVotingAfterReveal ?? false,
+    enableAutoReveal: settings?.enableAutoReveal ?? false,
+    alwaysRevealVotes: settings?.alwaysRevealVotes ?? false,
     showTimer: settings?.showTimer ?? true,
     showUserPresence: settings?.showUserPresence ?? false,
     showAverage: settings?.showAverage ?? true,
@@ -115,7 +117,7 @@ export function createInitialRoomData(options: InitialRoomOptions): RoomData {
     users,
     votes: {},
     structuredVotes: {},
-    showVotes: false,
+    showVotes: settingsWithDefaults.alwaysRevealVotes || false,
     moderator,
     connectedUsers,
     judgeScore: null,

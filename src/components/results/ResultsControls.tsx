@@ -42,27 +42,28 @@ export function ResultsControls({
         Results
       </h2>
       <div className="flex flex-wrap gap-2">
-        {(isModeratorView || roomData.settings.allowOthersToShowEstimates) && (
-          <motion.button
-            type="button"
-            data-testid="toggle-votes-button"
-            onClick={onToggleShowVotes}
-            className={voteToggleClasses}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            aria-pressed={roomData.showVotes}
-            aria-label={roomData.showVotes ? "Hide votes" : "Show votes"}
-          >
-            <span className="relative flex items-center gap-2">
-              {roomData.showVotes ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-              <span>{voteToggleLabel}</span>
-            </span>
-          </motion.button>
-        )}
+        {(isModeratorView || roomData.settings.allowOthersToShowEstimates) &&
+          !roomData.settings.alwaysRevealVotes && (
+            <motion.button
+              type="button"
+              data-testid="toggle-votes-button"
+              onClick={onToggleShowVotes}
+              className={voteToggleClasses}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              aria-pressed={roomData.showVotes}
+              aria-label={roomData.showVotes ? "Hide votes" : "Show votes"}
+            >
+              <span className="relative flex items-center gap-2">
+                {roomData.showVotes ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+                <span>{voteToggleLabel}</span>
+              </span>
+            </motion.button>
+          )}
         {(isModeratorView ||
           roomData.settings.allowOthersToDeleteEstimates) && (
           <motion.button
