@@ -38,6 +38,7 @@ export function EstimateOptions({
     }
     return preset.label;
   };
+  const showExtraOptions = !localSettings.enableStructuredVoting;
 
   return (
     <div className="space-y-3">
@@ -107,46 +108,52 @@ export function EstimateOptions({
       )}
 
       {hideSelection && (
-        <div className="rounded-2xl border border-white/50 bg-white/70 px-4 py-3 text-sm text-slate-800 shadow-sm dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100">
-          Estimate options are fixed to the Fibonacci (short) sequence while
-          structured voting is enabled.
-        </div>
+      <div className="rounded-2xl border border-white/50 bg-white/70 px-4 py-3 text-sm text-slate-800 shadow-sm dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100">
+        Estimate options are fixed to the Fibonacci (short) sequence while
+        structured voting is enabled.
+      </div>
       )}
 
-      <div className="rounded-2xl border border-white/60 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/50">
-        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-          Extra votes (always available)
-        </p>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
-          Special actions that won't affect the score but can guide discussion.
-        </p>
-        <div className="space-y-2">
-          {extraVoteOptions.map((option) => (
-            <label
-              key={option.id}
-              className="flex items-start gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm text-slate-800 shadow-sm ring-1 ring-white/60 transition hover:bg-white/80 dark:bg-slate-800/60 dark:text-slate-100 dark:ring-white/10"
-            >
-              <input
-                type="checkbox"
-                checked={option.enabled !== false}
-                onChange={(e) => onToggleExtraVote(option.id, e.target.checked)}
-                data-testid={`extra-option-${option.id}`}
-                className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-              />
-              <div className="leading-tight">
-                <span className="font-semibold">
-                  {option.value} {option.label}
-                </span>
-                {option.description && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {option.description}
-                  </p>
-                )}
-              </div>
-            </label>
-          ))}
+      {showExtraOptions ? (
+        <div className="rounded-2xl border border-white/60 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/50">
+          <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            Extra votes (always available)
+          </p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+            Special actions that won't affect the score but can guide discussion.
+          </p>
+          <div className="space-y-2">
+            {extraVoteOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex items-start gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm text-slate-800 shadow-sm ring-1 ring-white/60 transition hover:bg-white/80 dark:bg-slate-800/60 dark:text-slate-100 dark:ring-white/10"
+              >
+                <input
+                  type="checkbox"
+                  checked={option.enabled !== false}
+                  onChange={(e) => onToggleExtraVote(option.id, e.target.checked)}
+                  data-testid={`extra-option-${option.id}`}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                />
+                <div className="leading-tight">
+                  <span className="font-semibold">
+                    {option.value} {option.label}
+                  </span>
+                  {option.description && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {option.description}
+                    </p>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="rounded-2xl border border-white/50 bg-white/70 px-4 py-3 text-xs text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-200">
+          Extra voting options are hidden while structured voting is on.
+        </div>
+      )}
     </div>
   );
 }

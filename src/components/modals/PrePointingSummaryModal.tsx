@@ -10,13 +10,14 @@ interface PrePointingSummaryModalProps {
   onConfirm: () => void;
   votes: Record<string, VoteValue | null>;
   stats: {
-    avg: number | string;
+    avg: number | string | null;
     mode: VoteValue | null;
     distribution: Record<string, number>;
     totalVotes: number;
     votedUsers: number;
     totalUsers: number;
     judgeScore: VoteValue | null;
+    isNumericScale?: boolean;
   };
   currentTicket?: TicketQueueItem;
   currentUser: string;
@@ -94,7 +95,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
                 Consensus
               </div>
               <div className="text-base font-semibold text-slate-900 dark:text-white">
-                {consensusLabel} · Avg {stats.avg}
+                {consensusLabel} · Avg {stats.avg ?? "N/A"}
               </div>
             </div>
             <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">

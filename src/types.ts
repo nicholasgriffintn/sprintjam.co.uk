@@ -314,13 +314,14 @@ export interface WebSocketMessage {
 }
 
 export interface RoomStats {
-  avg: number | string;
+  avg: number | string | null;
   mode: VoteValue | null;
   distribution: Record<string, number>;
   totalVotes: number;
   votedUsers: number;
   totalUsers: number;
   judgeScore: VoteValue | null;
+  isNumericScale: boolean;
 }
 
 export interface CriteriaStats {

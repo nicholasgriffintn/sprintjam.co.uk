@@ -4,6 +4,7 @@ import type { RoomData, RoomStats } from "@/types";
 import { getContrastingTextColor } from "@/utils/colors";
 import { useVoteDistributionControls } from "./hooks/useVoteDistributionControls";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { getVisibleEstimateOptions } from "@/utils/votingOptions";
 
 export type VoteDistributionViewMode = "count" | "percentage" | "cumulative";
 
@@ -19,12 +20,16 @@ export function VoteDistributionItem({
   viewMode,
 }: VoteDistributionItemProps) {
   const defaultTotal = roomData.users.length || stats.totalUsers || 1;
-  const voteTotal = stats.totalVotes || defaultTotal;
+  const submittedVotes = Object.values(roomData.votes).filter(
+    (vote) => vote !== null,
+  ).length;
+  const voteTotal = stats.totalVotes || submittedVotes || defaultTotal;
+  const visibleOptions = getVisibleEstimateOptions(roomData.settings);
   let cumulativeCount = 0;
 
   return (
     <div>
-      {roomData.settings.estimateOptions.map((option, index) => {
+      {visibleOptions.map((option, index) => {
         const metadata = roomData.settings.voteOptionsMetadata?.find(
           (m) => m.value === option,
         );

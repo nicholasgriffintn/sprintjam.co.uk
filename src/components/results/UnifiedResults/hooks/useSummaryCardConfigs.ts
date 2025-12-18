@@ -16,6 +16,7 @@ export function useSummaryCardConfigs(
   roomData: RoomData,
   resultsDisplay: ResultsDisplaySettings | undefined,
   hasStructuredData: boolean,
+  isNumericScale: boolean,
 ) {
   const useConfiguredSummaryCards = Boolean(
     resultsDisplay?.summaryCards && resultsDisplay.summaryCards.length > 0,
@@ -27,6 +28,9 @@ export function useSummaryCardConfigs(
       return resultsDisplay.summaryCards
         .filter((card) => card.enabled !== false)
         .filter((card) =>
+          card.id === "average" && !isNumericScale ? false : true,
+        )
+        .filter((card) =>
           judgeEnabled ? !judgeSuppressedCards.has(card.id) : true,
         );
     }
@@ -35,7 +39,7 @@ export function useSummaryCardConfigs(
       {
         id: "average",
         label: "Average",
-        enabled: roomData.settings.showAverage,
+        enabled: roomData.settings.showAverage && isNumericScale,
       },
       {
         id: "mode",
@@ -71,6 +75,7 @@ export function useSummaryCardConfigs(
     useConfiguredSummaryCards,
     hasStructuredData,
     judgeEnabled,
+    isNumericScale,
   ]);
 
   return { summaryCardConfigs, useConfiguredSummaryCards };

@@ -40,9 +40,16 @@ export function useSummaryCards({
               return null;
             }
 
-            if (stats.avg === null || stats.avg === undefined) {
+            if (
+              !stats.isNumericScale ||
+              stats.avg === null ||
+              stats.avg === undefined
+            ) {
               return null;
             }
+
+            const displayAverage =
+              typeof stats.avg === "number" ? stats.avg.toFixed(1) : stats.avg;
 
             return (
               <motion.div
@@ -60,7 +67,7 @@ export function useSummaryCards({
                     {card.label}
                   </h4>
                   <div className="text-3xl font-semibold text-brand-600 dark:text-brand-300">
-                    {stats.avg}
+                    {displayAverage}
                   </div>
                 </SurfaceCard>
               </motion.div>
@@ -249,6 +256,7 @@ export function useSummaryCards({
     stats.totalUsers,
     roomData.users.length,
     topDistribution,
+    stats.isNumericScale,
     participationRate,
     consensusSummary.level,
     consensusSummary.score,

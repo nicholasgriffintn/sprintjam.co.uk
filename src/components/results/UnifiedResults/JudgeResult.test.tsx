@@ -73,6 +73,7 @@ function buildStats(overrides: Partial<RoomStats> = {}): RoomStats {
     votedUsers: 2,
     totalUsers: 2,
     judgeScore: null,
+    isNumericScale: true,
     ...overrides,
   } as RoomStats;
 }

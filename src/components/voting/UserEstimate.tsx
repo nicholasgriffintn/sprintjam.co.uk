@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
@@ -5,6 +6,19 @@ import type { RoomData, VoteValue } from "@/types";
 import { getUsersVoteTaskSize } from "@/utils/tasks";
 import { TimerChip } from "./TimerChip";
 import { useRoom } from "@/context/RoomContext";
+import { getContrastingTextColor } from "@/utils/colors";
+import { getExtraVoteValueSet } from "@/utils/votingOptions";
+
+const parseOptionLabel = (optionText: string) => {
+  const [first, ...rest] = optionText.split(" ");
+  const hasLeadingEmoji =
+    first && /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(first);
+
+  return {
+    icon: hasLeadingEmoji ? first : "",
+    label: hasLeadingEmoji ? rest.join(" ").trim() || first : optionText,
+  };
+};
 
 export function UserEstimate({
   roomData,
@@ -21,6 +35,10 @@ export function UserEstimate({
   const isVotingDisabled =
     roomData.showVotes && !roomData.settings.allowVotingAfterReveal;
   const userTaskSize = getUsersVoteTaskSize(roomData, name);
+  const extraVoteValues = useMemo(
+    () => getExtraVoteValueSet(roomData.settings.extraVoteOptions),
+    [roomData.settings.extraVoteOptions],
+  );
 
   return (
     <div className="mb-8">
@@ -48,6 +66,8 @@ export function UserEstimate({
           const background =
             metadata?.background ||
             (option === userVote ? "#ebf5ff" : "#ffffff");
+          const textColor = getContrastingTextColor(background);
+          const { icon, label } = parseOptionLabel(optionLabel);
 
           return (
             <motion.button
@@ -58,7 +78,7 @@ export function UserEstimate({
               disabled={isVotingDisabled}
               aria-label={`Vote ${option}`}
               aria-pressed={userVote === option}
-              className={`w-12 h-16 md:w-16 md:h-24 flex flex-col items-center justify-center text-lg font-medium border-2 rounded-lg ${
+              className={`relative w-12 h-16 md:w-16 md:h-24 px-3 py-3 flex flex-col items-center justify-center gap-1 text-base font-semibold border-2 rounded-lg shadow-sm ${
                 isVotingDisabled
                   ? "opacity-50 cursor-not-allowed border-gray-300 dark:border-gray-600"
                   : userVote === option
@@ -73,17 +93,40 @@ export function UserEstimate({
               }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <div className="relative w-full h-full flex items-center justify-center">
-                {userVote === option && (
-                  <div className="absolute top-1 right-1">
-                    <div className="bg-blue-500 rounded-full p-0.5">
-                      <Check className="text-white" size={12} strokeWidth={3} />
-                    </div>
+              {userVote === option && (
+                <div className="absolute top-1 right-1">
+                  <div className="bg-blue-500 rounded-full p-0.5 shadow-sm">
+                    <Check className="text-white" size={12} strokeWidth={3} />
                   </div>
+                </div>
+              )}
+              <div
+                className={`relative w-full h-full flex flex-col items-center justify-center ${
+                  extraVoteValues.has(String(option)) ? "gap-0.5" : "gap-1"
+                } text-center leading-tight`}
+              >
+                {(icon || extraVoteValues.has(String(option))) && (
+                  <span
+                    className={`${
+                      extraVoteValues.has(String(option))
+                        ? "text-2xl md:text-3xl"
+                        : "text-xl md:text-2xl"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {icon || optionLabel}
+                  </span>
                 )}
-                <span className="text-lg font-semibold text-slate-900">
-                  {option}
-                </span>
+                {!extraVoteValues.has(String(option)) && (
+                  <span
+                    className={`leading-tight ${
+                      icon ? "text-sm md:text-base" : "text-lg md:text-xl"
+                    } font-semibold`}
+                    style={{ color: textColor }}
+                  >
+                    {label}
+                  </span>
+                )}
               </div>
             </motion.button>
           );

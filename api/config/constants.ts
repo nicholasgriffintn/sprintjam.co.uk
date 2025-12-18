@@ -28,6 +28,19 @@ export const SPECIAL_COLORS: Record<string, string> = Object.freeze({
   "☕": "#f5e6d8",
   break: "#f8e8c8",
   "♾️": "#ffe4e6",
+  XS: "#e0f2fe",
+  S: "#c7d2fe",
+  M: "#a5b4fc",
+  L: "#93c5fd",
+  XL: "#7dd3fc",
+  "🌑 Moon": "#e5e7eb",
+  "🌍 Earth": "#c8e6c9",
+  "🔴 Mars": "#fecdd3",
+  "🟠 Jupiter": "#fcd34d",
+  "🪐 Saturn": "#fde68a",
+  "🔵 Uranus": "#bfdbfe",
+  "🌊 Neptune": "#a5b4fc",
+  "❄️ Pluto": "#e0f2fe",
 });
 
 export const DEFAULT_TIMER_DURATION_SECONDS = 3 * 60;

@@ -130,3 +130,31 @@ export function parseEstimateOptionsInput(
       return Number.isNaN(num) ? item : num;
     });
 }
+
+export function getExtraVoteValueSet(
+  extras: ExtraVoteOption[] = [],
+): Set<string> {
+  return new Set(extras.map((extra) => toComparableString(extra.value)));
+}
+
+export function hasNumericBaseOptions(
+  estimateOptions: (string | number)[],
+  extras: ExtraVoteOption[] = [],
+): boolean {
+  const { baseOptions } = splitExtrasFromOptions(estimateOptions, extras);
+  return baseOptions.some((option) => !Number.isNaN(Number(option)));
+}
+
+export function getVisibleEstimateOptions(settings: {
+  estimateOptions: (string | number)[];
+  extraVoteOptions?: ExtraVoteOption[];
+  enableStructuredVoting?: boolean;
+}): (string | number)[] {
+  const extraValues = getExtraVoteValueSet(settings.extraVoteOptions);
+  if (settings.enableStructuredVoting) {
+    return settings.estimateOptions.filter(
+      (option) => !extraValues.has(toComparableString(option)),
+    );
+  }
+  return settings.estimateOptions;
+}
