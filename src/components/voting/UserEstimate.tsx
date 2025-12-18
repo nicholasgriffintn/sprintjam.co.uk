@@ -1,22 +1,22 @@
-import { useMemo } from "react";
-import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 
-import type { RoomData, VoteValue } from "@/types";
-import { getUsersVoteTaskSize } from "@/utils/tasks";
-import { TimerChip } from "./TimerChip";
-import { useRoom } from "@/context/RoomContext";
-import { getContrastingTextColor } from "@/utils/colors";
-import { getExtraVoteValueSet } from "@/utils/votingOptions";
+import type { RoomData, VoteValue } from '@/types';
+import { getUsersVoteTaskSize } from '@/utils/tasks';
+import { TimerChip } from './TimerChip';
+import { useRoom } from '@/context/RoomContext';
+import { getContrastingTextColor } from '@/utils/colors';
+import { getExtraVoteValueSet } from '@/utils/votingOptions';
 
 const parseOptionLabel = (optionText: string) => {
-  const [first, ...rest] = optionText.split(" ");
+  const [first, ...rest] = optionText.split(' ');
   const hasLeadingEmoji =
     first && /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(first);
 
   return {
-    icon: hasLeadingEmoji ? first : "",
-    label: hasLeadingEmoji ? rest.join(" ").trim() || first : optionText,
+    icon: hasLeadingEmoji ? first : '',
+    label: hasLeadingEmoji ? rest.join(' ').trim() || first : optionText,
   };
 };
 
@@ -37,7 +37,7 @@ export function UserEstimate({
   const userTaskSize = getUsersVoteTaskSize(roomData, name);
   const extraVoteValues = useMemo(
     () => getExtraVoteValueSet(roomData.settings.extraVoteOptions),
-    [roomData.settings.extraVoteOptions],
+    [roomData.settings.extraVoteOptions]
   );
 
   return (
@@ -61,11 +61,11 @@ export function UserEstimate({
         {roomData.settings.estimateOptions.map((option) => {
           const optionLabel = `${option}`;
           const metadata = roomData.settings.voteOptionsMetadata?.find(
-            (m) => m.value === option,
+            (m) => m.value === option
           );
           const background =
             metadata?.background ||
-            (option === userVote ? "#ebf5ff" : "#ffffff");
+            (option === userVote ? '#ebf5ff' : '#ffffff');
           const textColor = getContrastingTextColor(background);
           const { icon, label } = parseOptionLabel(optionLabel);
 

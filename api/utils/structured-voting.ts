@@ -224,3 +224,13 @@ export function getDefaultVotingCriteria(): VotingCriterion[] {
 export function isStructuredVote(vote: unknown): vote is StructuredVote {
   return typeof vote === "object" && vote !== null && "criteriaScores" in vote;
 }
+
+export function isStructuredVoteComplete(
+  criteriaScores: Record<string, number>,
+  votingCriteria: VotingCriterion[] = getDefaultVotingCriteria(),
+): boolean {
+  return votingCriteria.every((criterion) => {
+    const score = criteriaScores[criterion.id];
+    return typeof score === "number";
+  });
+}

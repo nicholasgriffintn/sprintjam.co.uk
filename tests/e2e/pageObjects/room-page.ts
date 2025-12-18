@@ -176,4 +176,9 @@ export class RoomPage {
       this.page.getByText("No pending tickets", { exact: false }),
     ).toBeVisible();
   }
+
+  async expectVoteButtonDisabled(option: string | number) {
+    const button = this.page.getByTestId(`vote-option-${option}`);
+    await expect(button).toBeDisabled();
+  }
 }

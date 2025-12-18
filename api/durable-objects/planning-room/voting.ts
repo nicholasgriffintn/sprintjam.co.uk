@@ -2,6 +2,7 @@ import type { StructuredVote } from "../../types";
 import {
   isStructuredVote,
   createStructuredVote,
+  isStructuredVoteComplete,
 } from "../../utils/structured-voting";
 import { determineRoomPhase } from "../../utils/room-phase";
 import { getAnonymousUserId } from "../../utils/room-data";
@@ -17,6 +18,13 @@ export async function handleVote(
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
+    return;
+  }
+
+  if (roomData.showVotes && !roomData.settings.allowVotingAfterReveal) {
+    console.warn(
+      `Vote from ${userName} rejected: voting not allowed after reveal`,
+    );
     return;
   }
 
@@ -68,7 +76,47 @@ export async function handleVote(
     structuredVote: structuredVotePayload,
   });
 
-  if (roomData.showVotes && roomData.settings.enableJudge) {
+  const shouldAutoReveal = (() => {
+    if (roomData.showVotes || !roomData.settings.enableAutoReveal) {
+      return false;
+    }
+
+    const voteCount = Object.keys(roomData.votes).length;
+    const userCount = roomData.users.length;
+
+    if (voteCount < userCount || userCount === 0) {
+      return false;
+    }
+
+    if (roomData.settings.enableStructuredVoting && roomData.structuredVotes) {
+      const allVotesComplete = roomData.users.every((userName) => {
+        const structuredVote = roomData.structuredVotes?.[userName];
+        if (!structuredVote) {
+          return false;
+        }
+        return isStructuredVoteComplete(
+          structuredVote.criteriaScores,
+          roomData.settings.votingCriteria,
+        );
+      });
+      return allVotesComplete;
+    }
+
+    return true;
+  })();
+
+  if (shouldAutoReveal) {
+    roomData.showVotes = true;
+    room.repository.setShowVotes(true);
+    room.broadcast({
+      type: "showVotes",
+      showVotes: true,
+    });
+
+    if (roomData.settings.enableJudge) {
+      await room.calculateAndUpdateJudgeScore();
+    }
+  } else if (roomData.showVotes && roomData.settings.enableJudge) {
     await room.calculateAndUpdateJudgeScore();
   }
 
@@ -96,6 +144,13 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
     roomData.moderator !== userName &&
     !roomData.settings.allowOthersToShowEstimates
   ) {
+    return;
+  }
+
+  if (roomData.settings.alwaysRevealVotes && roomData.showVotes) {
+    console.warn(
+      `Cannot hide votes in always-reveal mode (requested by ${userName})`,
+    );
     return;
   }
 

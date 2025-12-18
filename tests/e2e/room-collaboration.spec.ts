@@ -199,4 +199,23 @@ test.describe("Collaboration journeys", () => {
       await cleanup();
     }
   });
+
+  test("voting is disabled after reveal when allowVotingAfterReveal is false", async ({
+    browser,
+  }) => {
+    const setup = await createRoomWithParticipant(browser);
+    const { moderatorRoom, participantRoom, cleanup } = setup;
+
+    try {
+      await moderatorRoom.castVote("5");
+      await participantRoom.castVote("3");
+      await moderatorRoom.revealVotes();
+      await moderatorRoom.expectResultsVisible();
+
+      await moderatorRoom.expectVoteButtonDisabled("8");
+      await participantRoom.expectVoteButtonDisabled("8");
+    } finally {
+      await cleanup();
+    }
+  });
 });

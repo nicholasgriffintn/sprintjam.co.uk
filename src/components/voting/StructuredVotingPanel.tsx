@@ -22,9 +22,10 @@ interface CriterionRowProps {
   criterion: VotingCriterion;
   score: number | null;
   onScoreChange: (score: number) => void;
+  isDisabled?: boolean;
 }
 
-function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
+function CriterionRow({ criterion, score, onScoreChange, isDisabled }: CriterionRowProps) {
   const scoreButtons = [];
 
   for (let i = criterion.minScore; i <= criterion.maxScore; i++) {
@@ -33,14 +34,17 @@ function CriterionRow({ criterion, score, onScoreChange }: CriterionRowProps) {
         key={i}
         type="button"
         onClick={() => onScoreChange(i)}
+        disabled={isDisabled}
         data-testid={`structured-score-${criterion.id}-${i}`}
         className={`w-8 h-8 flex items-center justify-center text-sm font-medium border rounded ${
-          score === i
-            ? "border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
-            : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-slate-900 dark:text-white"
+          isDisabled
+            ? "opacity-50 cursor-not-allowed"
+            : score === i
+              ? "border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+              : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-700 text-slate-900 dark:text-white"
         }`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={isDisabled ? {} : { scale: 1.05 }}
+        whileTap={isDisabled ? {} : { scale: 0.95 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         aria-pressed={score === i}
         aria-label={`Set ${criterion.name} to ${i}`}
@@ -88,6 +92,9 @@ export function StructuredVotingPanel({
   const infoToggleSettings = displaySettings?.infoToggle;
   const allowScoringInfoToggle = infoToggleSettings?.enabled ?? true;
   const scoringInfoPanelId = useId();
+
+  const isVotingDisabled =
+    roomData?.showVotes && !roomData?.settings.allowVotingAfterReveal;
 
   useEffect(() => {
     if (!currentVote) {
@@ -150,6 +157,7 @@ export function StructuredVotingPanel({
               criterion={criterion}
               score={criteriaScores[criterion.id] ?? null}
               onScoreChange={(score) => handleScoreChange(criterion.id, score)}
+              isDisabled={isVotingDisabled}
             />
           ))}
         </div>

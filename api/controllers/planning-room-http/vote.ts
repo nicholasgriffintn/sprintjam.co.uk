@@ -24,6 +24,13 @@ export async function handleVote(
     return createJsonResponse({ error: "User not found in this room" }, 400);
   }
 
+  if (roomData.showVotes && !roomData.settings.allowVotingAfterReveal) {
+    return createJsonResponse(
+      { error: "Voting is not allowed after votes have been revealed" },
+      403,
+    );
+  }
+
   roomData.votes[canonicalName] = vote;
   ctx.repository.setVote(canonicalName, vote);
 

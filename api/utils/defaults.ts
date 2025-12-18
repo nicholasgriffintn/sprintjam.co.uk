@@ -4,46 +4,46 @@ import type {
   RoomData,
   RoomSettings,
   VotingSequenceTemplate,
-} from "../types";
-import { JudgeAlgorithm } from "../types";
+} from '../types';
+import { JudgeAlgorithm } from '../types';
 import { STRUCTURED_VOTING_OPTIONS } from '../config/constants';
 import {
   DEFAULT_EXTRA_VOTE_OPTIONS,
   DEFAULT_VOTING_SEQUENCE_ID,
   VOTING_SEQUENCE_TEMPLATES,
-} from "../config/voting";
-import { generateVoteOptionsMetadata } from "./votes";
-import { getDefaultVotingCriteria } from "./structured-voting";
+} from '../config/voting';
+import { generateVoteOptionsMetadata } from './votes';
+import { getDefaultVotingCriteria } from './structured-voting';
 
 const DEFAULT_RESULTS_DISPLAY = {
   showVoteDistribution: true,
-  voteDistributionLabel: "Vote Distribution",
+  voteDistributionLabel: 'Vote Distribution',
   criteriaBreakdown: {
     enabled: true,
-    title: "Criteria Breakdown",
+    title: 'Criteria Breakdown',
     consensusLabels: {
-      high: "Consensus",
-      medium: "Some Split",
-      low: "Wide Split",
+      high: 'Consensus',
+      medium: 'Some Split',
+      low: 'Wide Split',
     },
   },
 };
 
 const DEFAULT_STRUCTURED_DISPLAY = {
-  panelTitle: "Structured Estimation",
+  panelTitle: 'Structured Estimation',
   infoToggle: {
     enabled: true,
-    label: "Scoring Info",
-    title: "Weighted Scoring System",
-    rangesDescription: "1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+",
-    rangesLabel: "Story Point Ranges:",
+    label: 'Scoring Info',
+    title: 'Weighted Scoring System',
+    rangesDescription: '1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+',
+    rangesLabel: 'Story Point Ranges:',
     showRangeDetails: true,
     showContributionDetails: true,
     showConversionRules: true,
   },
   summary: {
-    storyPointsLabel: "Story Points",
-    weightedScoreLabel: "Weighted score",
+    storyPointsLabel: 'Story Points',
+    weightedScoreLabel: 'Weighted score',
     showConversionCount: true,
   },
 };
@@ -60,7 +60,7 @@ export function getVotingTemplates(): VotingSequenceTemplate[] {
 }
 
 function cloneExtraVoteOptions(
-  options: ReadonlyArray<ExtraVoteOption> = DEFAULT_EXTRA_VOTE_OPTIONS,
+  options: ReadonlyArray<ExtraVoteOption> = DEFAULT_EXTRA_VOTE_OPTIONS
 ): ExtraVoteOption[] {
   return options.map((option) => ({
     ...option,
@@ -75,20 +75,20 @@ export function getDefaultExtraVoteOptions(): ExtraVoteOption[] {
 
 function findMatchingExtra(
   option: string | number,
-  extras: ReadonlyArray<ExtraVoteOption>,
+  extras: ReadonlyArray<ExtraVoteOption>
 ): ExtraVoteOption | undefined {
   const stringValue = String(option);
   return extras.find(
     (extra) =>
       extra.value === option ||
       extra.value === stringValue ||
-      extra.aliases?.includes(stringValue),
+      extra.aliases?.includes(stringValue)
   );
 }
 
 function splitExtrasFromOptions(
   options: (string | number)[] | undefined,
-  extras: ReadonlyArray<ExtraVoteOption>,
+  extras: ReadonlyArray<ExtraVoteOption>
 ): { baseOptions: (string | number)[]; detectedExtras: Set<string> } {
   const baseOptions: (string | number)[] = [];
   const detectedExtras = new Set<string>();
@@ -107,7 +107,7 @@ function splitExtrasFromOptions(
 
 function normalizeExtraVoteOptions(
   provided?: ExtraVoteOption[],
-  detectedExtras?: Set<string>,
+  detectedExtras?: Set<string>
 ): ExtraVoteOption[] {
   const defaults = cloneExtraVoteOptions();
 
@@ -119,7 +119,7 @@ function normalizeExtraVoteOptions(
     const match =
       provided?.find(
         (candidate) =>
-          candidate.id === option.id || candidate.value === option.value,
+          candidate.id === option.id || candidate.value === option.value
       ) ?? null;
 
     const enabled =
@@ -138,7 +138,7 @@ function normalizeExtraVoteOptions(
 
 function areOptionsEqual(
   a: (string | number)[],
-  b: (string | number)[],
+  b: (string | number)[]
 ): boolean {
   if (a.length !== b.length) return false;
   return a.every((val, index) => String(val) === String(b[index]));
@@ -147,17 +147,17 @@ function areOptionsEqual(
 function detectTemplateId(
   options: (string | number)[],
   templates: VotingSequenceTemplate[],
-  fallbackId: VotingSequenceTemplate["id"] | "custom",
-): VotingSequenceTemplate["id"] | "custom" {
+  fallbackId: VotingSequenceTemplate['id'] | 'custom'
+): VotingSequenceTemplate['id'] | 'custom' {
   const match = templates.find((template) =>
-    areOptionsEqual(template.options, options),
+    areOptionsEqual(template.options, options)
   );
   return match?.id ?? fallbackId;
 }
 
 function buildEstimateOptions(
   baseOptions: (string | number)[],
-  extras: ExtraVoteOption[],
+  extras: ExtraVoteOption[]
 ): (string | number)[] {
   const enabledExtras = extras.filter((option) => option.enabled !== false);
   return [...baseOptions, ...enabledExtras.map((option) => option.value)];
@@ -174,12 +174,12 @@ function getDefaultStructuredVotingDisplay() {
 export function getDefaultEstimateOptions(): (string | number)[] {
   const defaultTemplate =
     VOTING_SEQUENCE_TEMPLATES.find(
-      (preset) => preset.id === DEFAULT_VOTING_SEQUENCE_ID,
+      (preset) => preset.id === DEFAULT_VOTING_SEQUENCE_ID
     ) ?? VOTING_SEQUENCE_TEMPLATES[0];
 
   return buildEstimateOptions(
     [...defaultTemplate.options],
-    cloneExtraVoteOptions(),
+    cloneExtraVoteOptions()
   );
 }
 
@@ -188,7 +188,7 @@ export function getDefaultStructuredVotingOptions(): number[] {
 }
 
 export function getDefaultRoomSettings(
-  settings?: Partial<RoomSettings>,
+  settings?: Partial<RoomSettings>
 ): RoomSettings {
   const templates = cloneVotingTemplates();
   const defaultTemplate =
@@ -199,23 +199,27 @@ export function getDefaultRoomSettings(
   const defaultStructuredDisplay = getDefaultStructuredVotingDisplay();
 
   const { baseOptions: providedBaseOptions, detectedExtras } =
-    splitExtrasFromOptions(settings?.estimateOptions, DEFAULT_EXTRA_VOTE_OPTIONS);
+    splitExtrasFromOptions(
+      settings?.estimateOptions,
+      DEFAULT_EXTRA_VOTE_OPTIONS
+    );
 
   const normalizedExtraOptions = normalizeExtraVoteOptions(
     settings?.extraVoteOptions,
-    detectedExtras,
+    detectedExtras
   );
 
-  const structuredSequenceId: VotingSequenceTemplate["id"] = "fibonacci-short";
-  let sequenceId: VotingSequenceTemplate["id"] | "custom" | undefined;
+  const structuredSequenceId: VotingSequenceTemplate['id'] = 'fibonacci-short';
+  let sequenceId: VotingSequenceTemplate['id'] | 'custom' | undefined;
   if (settings?.enableStructuredVoting && !settings?.votingSequenceId) {
     sequenceId = structuredSequenceId;
   } else if (settings?.votingSequenceId) {
     sequenceId = settings.votingSequenceId;
   } else if (providedBaseOptions.length > 0) {
-    sequenceId = detectTemplateId(providedBaseOptions, templates, "custom");
+    sequenceId = detectTemplateId(providedBaseOptions, templates, 'custom');
   } else {
-    sequenceId = (defaultTemplate?.id ?? DEFAULT_VOTING_SEQUENCE_ID) as VotingSequenceTemplate["id"];
+    sequenceId = (defaultTemplate?.id ??
+      DEFAULT_VOTING_SEQUENCE_ID) as VotingSequenceTemplate['id'];
   }
   let baseOptions: (string | number)[] = [];
   let customEstimateOptions: (string | number)[] | undefined;
@@ -223,16 +227,16 @@ export function getDefaultRoomSettings(
   if (
     settings?.customEstimateOptions &&
     settings.customEstimateOptions.length > 0 &&
-    (sequenceId === "custom" || !sequenceId)
+    (sequenceId === 'custom' || !sequenceId)
   ) {
     baseOptions = [...settings.customEstimateOptions];
     customEstimateOptions = [...settings.customEstimateOptions];
-    sequenceId = "custom";
+    sequenceId = 'custom';
   } else {
     const preset =
       templates.find((template) => template.id === sequenceId) ??
       templates.find((template) =>
-        areOptionsEqual(template.options, providedBaseOptions),
+        areOptionsEqual(template.options, providedBaseOptions)
       );
 
     if (preset) {
@@ -240,7 +244,7 @@ export function getDefaultRoomSettings(
       sequenceId = preset.id;
     } else if (providedBaseOptions.length > 0) {
       baseOptions = [...providedBaseOptions];
-      sequenceId = "custom";
+      sequenceId = 'custom';
       customEstimateOptions = [...providedBaseOptions];
     } else {
       baseOptions = [...defaultTemplate.options];
@@ -251,7 +255,9 @@ export function getDefaultRoomSettings(
   if (settings?.enableStructuredVoting) {
     const structuredPreset =
       templates.find((template) => template.id === structuredSequenceId) ??
-      templates.find((template) => template.id === DEFAULT_VOTING_SEQUENCE_ID) ??
+      templates.find(
+        (template) => template.id === DEFAULT_VOTING_SEQUENCE_ID
+      ) ??
       templates[0];
     baseOptions = [
       ...(structuredPreset?.options ?? getDefaultStructuredVotingOptions()),
@@ -262,11 +268,11 @@ export function getDefaultRoomSettings(
 
   const estimateOptions = buildEstimateOptions(
     baseOptions,
-    normalizedExtraOptions,
+    normalizedExtraOptions
   );
   const voteOptionsMetadata = generateVoteOptionsMetadata(estimateOptions);
   const hasNonNumericBaseOption = baseOptions.some(
-    (option) => Number.isNaN(Number(option)) && typeof option !== "number",
+    (option) => Number.isNaN(Number(option)) && typeof option !== 'number'
   );
 
   const votingCriteriaSource =
@@ -284,10 +290,10 @@ export function getDefaultRoomSettings(
     allowOthersToShowEstimates: settings?.allowOthersToShowEstimates ?? false,
     allowOthersToDeleteEstimates:
       settings?.allowOthersToDeleteEstimates ?? false,
-    allowOthersToManageQueue: settings?.allowOthersToManageQueue ?? false,
     allowVotingAfterReveal: settings?.allowVotingAfterReveal ?? false,
     enableAutoReveal: settings?.enableAutoReveal ?? false,
     alwaysRevealVotes: settings?.alwaysRevealVotes ?? false,
+    allowOthersToManageQueue: settings?.allowOthersToManageQueue ?? false,
     showTimer: settings?.showTimer ?? true,
     showUserPresence: settings?.showUserPresence ?? false,
     showAverage: settings?.showAverage ?? true,
@@ -298,7 +304,7 @@ export function getDefaultRoomSettings(
     enableJudge: settings?.enableJudge ?? !hasNonNumericBaseOption,
     judgeAlgorithm: settings?.judgeAlgorithm ?? JudgeAlgorithm.SMART_CONSENSUS,
     hideParticipantNames: settings?.hideParticipantNames ?? false,
-    externalService: settings?.externalService ?? "none",
+    externalService: settings?.externalService ?? 'none',
     enableStructuredVoting: settings?.enableStructuredVoting ?? false,
     votingCriteria,
     autoSyncEstimates: settings?.autoSyncEstimates ?? true,
@@ -328,9 +334,9 @@ interface InitialRoomOptions {
 
 export function createInitialRoomData(options: InitialRoomOptions): RoomData {
   const {
-    key = "",
+    key = '',
     users = [],
-    moderator = "",
+    moderator = '',
     connectedUsers = {},
     passcodeHash,
     settings,

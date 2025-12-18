@@ -2,6 +2,9 @@
 
 ### December 2025
 
+- Added a setting to restrict voting updates after the votes have been revealed and defaulted to enabled for new rooms
+- Added a setting to auto reveal the votes once all participants have voted
+- Added a setting to have votes always revealed to all users
 - Added new voting option presets:
   - Fibonacci - Classic sequence for broader estimation ranges
   - Fibonacci short - A shorter version of the Fibonacci sequence, the default preset
