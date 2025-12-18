@@ -31,6 +31,18 @@ export class RoomPage {
     await this.page.getByTestId(`vote-option-${option}`).click();
   }
 
+  async expectVoteOptionVisible(option: string | number) {
+    await expect(this.page.getByTestId(`vote-option-${option}`)).toBeVisible();
+  }
+
+  async expectVoteOptionHidden(option: string | number) {
+    await expect(this.page.getByTestId(`vote-option-${option}`)).toHaveCount(0);
+  }
+
+  async expectStructuredPanelVisible() {
+    await expect(this.page.getByTestId("structured-voting-panel")).toBeVisible();
+  }
+
   async expectVotePendingState() {
     await this.expectVotesHiddenMessage("Votes are hidden");
   }

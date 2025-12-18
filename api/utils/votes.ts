@@ -1,5 +1,5 @@
 import { generateColorFromValue, generateColorFromString } from "./colors";
-import { SPECIAL_COLORS } from "../constants";
+import { SPECIAL_COLORS } from '../config/constants';
 import { getTaskSize } from "./tasks";
 import type { VoteOptionMetadata } from "../types";
 

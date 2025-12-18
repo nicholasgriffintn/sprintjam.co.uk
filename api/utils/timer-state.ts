@@ -1,5 +1,5 @@
 import type { RoomData, TimerState } from "../types";
-import { DEFAULT_TIMER_DURATION_SECONDS } from "../constants";
+import { DEFAULT_TIMER_DURATION_SECONDS } from '../config/constants';
 
 export function ensureTimerState(roomData: RoomData): TimerState {
   if (!roomData.timerState) {

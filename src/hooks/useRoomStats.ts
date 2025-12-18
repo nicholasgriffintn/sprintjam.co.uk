@@ -1,34 +1,54 @@
 import { useMemo } from "react";
 
 import type { RoomData, RoomStats, VoteValue } from "@/types";
+import { getExtraVoteValueSet, getVisibleEstimateOptions, hasNumericBaseOptions } from "@/utils/votingOptions";
 
 export const useRoomStats = (roomData: RoomData): RoomStats => {
   return useMemo(() => {
-    const votes = Object.values(roomData.votes).filter(
-      (v): v is VoteValue => v !== null && v !== "?",
+    const extraValues = getExtraVoteValueSet(
+      roomData.settings.extraVoteOptions ?? [],
     );
+    const visibleOptions = getVisibleEstimateOptions(roomData.settings);
+    const includeExtrasInDistribution = !roomData.settings
+      .enableStructuredVoting;
+    const votes = Object.values(roomData.votes).filter((v): v is VoteValue => {
+      if (v === null) return false;
+      if (extraValues.has(String(v))) return false;
+      return true;
+    });
     const numericVotes = votes
       .filter((v) => !Number.isNaN(Number(v)))
       .map(Number);
 
-    const distribution: Record<VoteValue, number> = {} as Record<
-      VoteValue,
-      number
-    >;
-    for (const option of roomData.settings.estimateOptions) {
-      distribution[option] = 0;
+    const distribution: Record<string, number> = {};
+    for (const option of visibleOptions) {
+      const key = String(option);
+      if (!includeExtrasInDistribution && extraValues.has(key)) {
+        continue;
+      }
+      distribution[key] = 0;
     }
 
     for (const vote of Object.values(roomData.votes)) {
       if (vote !== null) {
-        distribution[vote] = (distribution[vote] || 0) + 1;
+        const key = String(vote);
+        if (!includeExtrasInDistribution && extraValues.has(key)) continue;
+        distribution[key] = (distribution[key] || 0) + 1;
       }
     }
 
-    const avg =
-      numericVotes.length > 0
-        ? numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length
-        : 0;
+    const isNumericScale = hasNumericBaseOptions(
+      roomData.settings.estimateOptions,
+      roomData.settings.extraVoteOptions ?? [],
+    );
+    const hasNumericVotes = isNumericScale && numericVotes.length > 0;
+    const avg = hasNumericVotes
+      ? Number(
+          (
+            numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length
+          ).toFixed(1),
+        )
+      : null;
     let maxCount = 0;
     let mode: VoteValue | null = null;
 
@@ -44,18 +64,19 @@ export const useRoomStats = (roomData: RoomData): RoomStats => {
     ).length;
 
     return {
-      avg: Number.isNaN(avg) ? "N/A" : avg.toFixed(1),
+      avg: Number.isNaN(avg as number) ? null : avg,
       mode: maxCount > 0 ? mode : null,
       distribution,
       totalVotes: votes.length,
       votedUsers,
       totalUsers: roomData.users.length,
       judgeScore: roomData.judgeScore,
+      isNumericScale,
     };
   }, [
     roomData.votes,
     roomData.users.length,
-    roomData.settings.estimateOptions,
+    roomData.settings,
     roomData.judgeScore,
   ]);
 };

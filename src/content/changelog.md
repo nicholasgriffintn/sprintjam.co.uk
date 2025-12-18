@@ -1,8 +1,24 @@
-## December 2025
+## 2025
+
+### December 2025
 
 - Added a setting to restrict voting updates after the votes have been revealed and defaulted to enabled for new rooms
 - Added a setting to auto reveal the votes once all participants have voted
 - Added a setting to have votes always revealed to all users
+- Added new voting option presets:
+  - Fibonacci - Classic sequence for broader estimation ranges
+  - Fibonacci short - A shorter version of the Fibonacci sequence, the default preset
+  - Doubling - For fast-growing complexity
+  - T-shirt sizes - Simple relative sizing'
+  - Planet sizes - Fun relative sizing based on planet sizes
+  - Yes / No - Binary go/no-go decisions
+  - Simple - Straight 1-8 scale
+  - Hours - Time-based estimates
+  - Custom - Define your own voting options
+- Added new extra voting options that are always available:
+  - Unknown ❓
+  - Coffee break ☕
+  - Cannot complete ♾️
 - Added this changelog page to document changes
 - Some codebase refactoring and improvements
 - Various security improvements
@@ -13,7 +29,7 @@
 - Improved API performance by not waiting for as long
 - Converted the codebase to use Drizzle instead of directly using the Cloudflare SQL API
 
-## November 2025
+### November 2025
 
 - Minor wording changes and style fixes
 - Improved the size of the frontend build to improve performance
@@ -44,7 +60,7 @@
 - Fully implemented the timer so that it now syncs correctly across clients. Also added quick presets for the timer and an audio notification when the timer ends
 - Improved how the judge displays recommendations
 
-## October 2025
+### October 2025
 
 - Improved performance by integrating Tanstack libraries for calling APIs.
 - Refactored the codebase to source all settings from the backend ensuring that settings remain in sync across clients.
@@ -58,13 +74,13 @@
 - Improved the header
 - Added the ability to set an avatar for participants, this can be chosen when a user creates or joins a room.
 
-## September 2025
+### September 2025
 
 - Made the settings modal scroll
 - Improved the display of results to provide more detail include the top votes and a better distribution chart.
 - Added the option to use structured voting, a method of voting with multiple criteria rather than a single score. This criteria is then transformed into a single score using a weighted algorithm.
 
-## May 2025
+### May 2025
 
 - Some minor style updates
 - Added a judge algorithm that can be enabled in rooms to automatically calculate the story point that should be applied depending on the votes from the room participants. Alongside this, the judge will provided recommendations based on the spread of user votes, recommending dicussion if there is a wide spread of votes.
@@ -72,7 +88,7 @@
 - Added some animations.
 - Started hacking around with integrating Jira syncing.
 
-## April 2025
+### April 2025
 
 - SprintJam was first designed on a train back from Manchester, I was traveling back from team sessions that used third party sprint planning software and I was fed up. With the help of AI, I built sprint jam over the next few weeks.
 - The initial launch was already a Cloudflare Worker that used Durable Objects to sync votes and settings across clients. The software also had to ability to configure and share rooms.

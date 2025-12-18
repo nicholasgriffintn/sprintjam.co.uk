@@ -37,7 +37,12 @@ export function UnifiedResults({
   const criteriaStats = useCriteriaStats(roomData, criteria);
   const hasStructuredData = criteriaStats.length > 0;
   const { summaryCardConfigs, useConfiguredSummaryCards } =
-    useSummaryCardConfigs(roomData, resultsDisplay, hasStructuredData);
+    useSummaryCardConfigs(
+      roomData,
+      resultsDisplay,
+      hasStructuredData,
+      stats.isNumericScale,
+    );
   const topDistribution = useMemo(
     () => getTopDistribution(stats, roomData),
     [stats.distribution, roomData.settings.topVotesCount],
@@ -83,10 +88,11 @@ export function UnifiedResults({
 
   const showVoteDistributionSection =
     resultsDisplay?.showVoteDistribution ?? true;
+  const canShowJudge = displayJudge && showVotes && stats.isNumericScale;
 
   return (
     <>
-      {displayJudge && showVotes && (
+      {canShowJudge && (
         <JudgeResult
           roomData={roomData}
           stats={stats}

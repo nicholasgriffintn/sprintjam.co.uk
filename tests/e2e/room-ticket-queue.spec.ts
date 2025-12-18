@@ -22,7 +22,7 @@ test.describe("Ticket Queue", () => {
       await summary.getByTestId("pre-pointing-confirm").click();
 
       // Wait for WebSocket update
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(250);
 
       // We start with auto-created SPRINTJAM-001 in progress; after Next Ticket we expect SPRINTJAM-002
       await expect(page.getByTestId("queue-ticket-id-current")).toContainText(
@@ -55,7 +55,7 @@ test.describe("Ticket Queue", () => {
         .click();
 
       // Wait for reset
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(250);
 
       // Votes should be cleared
       await moderatorRoom.expectVotesHiddenMessage("No votes yet");
@@ -79,7 +79,7 @@ test.describe("Ticket Queue", () => {
         .getByRole("dialog", { name: "Review before moving on" })
         .getByTestId("pre-pointing-confirm")
         .click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(150);
 
       // Create second ticket
       await page.getByTestId("next-ticket-button").click();
@@ -87,7 +87,7 @@ test.describe("Ticket Queue", () => {
         .getByRole("dialog", { name: "Review before moving on" })
         .getByTestId("pre-pointing-confirm")
         .click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(150);
 
       await expect(page.getByTestId("queue-ticket-id-current")).toContainText(
         "SPRINTJAM-003",

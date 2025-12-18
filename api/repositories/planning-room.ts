@@ -32,7 +32,10 @@ import type {
 } from '../types';
 import { serializeJSON, serializeVote } from '../utils/serialize';
 import { parseJudgeScore, parseVote, safeJsonParse } from '../utils/parse';
-import { DEFAULT_TIMER_DURATION_SECONDS, ROOM_ROW_ID } from '../constants';
+import {
+  DEFAULT_TIMER_DURATION_SECONDS,
+  ROOM_ROW_ID,
+} from '../config/constants';
 import {
   SESSION_TOKEN_TTL_MS,
   parsePasscodeHash,
@@ -810,7 +813,7 @@ export class PlanningRoomRepository {
   logTicketVote(
     ticketQueueId: number,
     userName: string,
-    vote: VoteValue,
+    vote: VoteValue | null,
     structuredVote?: StructuredVote
   ): void {
     this.db

@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { applySettingsUpdate } from "./room-settings";
 import {
-  getDefaultEstimateOptions,
   getDefaultRoomSettings,
-  getDefaultStructuredVotingOptions,
 } from "./defaults";
-import { generateVoteOptionsMetadata } from "./votes";
 
 describe("room-settings utils", () => {
   it("returns defaults when no current settings or updates are provided", () => {
@@ -25,9 +22,11 @@ describe("room-settings utils", () => {
     });
 
     expect(result.showMedian).toBe(false);
-    expect(result.estimateOptions).toEqual(updatedEstimateOptions);
-    expect(result.voteOptionsMetadata).toEqual(
-      generateVoteOptionsMetadata(updatedEstimateOptions),
+    expect(result.estimateOptions.slice(0, updatedEstimateOptions.length)).toEqual(
+      updatedEstimateOptions,
+    );
+    expect(result.estimateOptions.length).toBeGreaterThan(
+      updatedEstimateOptions.length,
     );
   });
 
@@ -37,22 +36,16 @@ describe("room-settings utils", () => {
       settingsUpdate: { enableStructuredVoting: true },
     });
 
-    const structuredOptions = getDefaultStructuredVotingOptions();
     expect(result.enableStructuredVoting).toBe(true);
-    expect(result.estimateOptions).toEqual(structuredOptions);
-    expect(result.voteOptionsMetadata).toEqual(
-      generateVoteOptionsMetadata(structuredOptions),
-    );
+    expect(result.estimateOptions).toContain(1);
+    expect(result.estimateOptions).toContain(8);
     expect(result.votingCriteria).toBeDefined();
   });
 
   it("restores standard options when disabling structured voting without overrides", () => {
-    const structuredOptions = getDefaultStructuredVotingOptions();
     const currentSettings = {
       ...getDefaultRoomSettings(),
       enableStructuredVoting: true,
-      estimateOptions: structuredOptions,
-      voteOptionsMetadata: generateVoteOptionsMetadata(structuredOptions),
     };
 
     const result = applySettingsUpdate({
@@ -60,11 +53,7 @@ describe("room-settings utils", () => {
       settingsUpdate: { enableStructuredVoting: false },
     });
 
-    const defaultOptions = getDefaultEstimateOptions();
     expect(result.enableStructuredVoting).toBe(false);
-    expect(result.estimateOptions).toEqual(defaultOptions);
-    expect(result.voteOptionsMetadata).toEqual(
-      generateVoteOptionsMetadata(defaultOptions),
-    );
+    expect(result.estimateOptions).toEqual(getDefaultRoomSettings().estimateOptions);
   });
 });

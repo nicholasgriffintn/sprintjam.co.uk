@@ -12,7 +12,7 @@ import type { Env } from "../../types";
 import { generateSessionToken } from "../../utils/room-cypto";
 import type { RoomData } from "../../types";
 import { createInitialRoomData } from "../../utils/defaults";
-import { MIN_TIMER_DURATION_SECONDS } from "../../constants";
+import { MIN_TIMER_DURATION_SECONDS } from '../../config/constants';
 
 const makeState = () => {
   const sqlStub = {
@@ -503,6 +503,39 @@ describe("PlanningRoom critical flows", () => {
     });
     expect(room.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({ type: "timerUpdated" }),
+    );
+  });
+
+  it("skips judge calculation when estimate options are non-numeric", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-judge",
+      users: ["mod", "alice"],
+      moderator: "mod",
+      connectedUsers: { mod: true, alice: true },
+      settings: {
+        estimateOptions: ["XS", "S", "M"],
+        enableJudge: true,
+      },
+    });
+    roomData.votes = { mod: "XS", alice: "M" };
+    roomData.showVotes = true;
+
+    const setJudgeState = vi.fn();
+    room.repository = {
+      setJudgeState,
+    } as unknown as PlanningRoom["repository"];
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+
+    await room.calculateAndUpdateJudgeScore();
+
+    expect(roomData.judgeScore).toBeNull();
+    expect(roomData.judgeMetadata).toBeUndefined();
+    expect(setJudgeState).toHaveBeenCalledWith(null);
+    expect(room.broadcast).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "judgeScoreUpdated" }),
     );
   });
 
