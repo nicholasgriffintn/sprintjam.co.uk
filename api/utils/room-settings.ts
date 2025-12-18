@@ -13,5 +13,13 @@ export function applySettingsUpdate({
     ...(settingsUpdate ?? {}),
   };
 
+  if (settingsUpdate?.estimateOptions || settingsUpdate?.customEstimateOptions) {
+    const customOptions =
+      settingsUpdate.customEstimateOptions ?? settingsUpdate.estimateOptions;
+
+    mergedSettings.votingSequenceId = "custom";
+    mergedSettings.customEstimateOptions = customOptions;
+  }
+
   return getDefaultRoomSettings(mergedSettings);
 }
