@@ -185,10 +185,13 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
   }
 
   const allVotes = Object.values(roomData.votes).filter((v) => v !== null);
+  const nonScoringVotes = new Set(["?", "❓", "coffee", "☕", "♾️"]);
   const totalVoteCount = allVotes.length;
-  const questionMarkCount = allVotes.filter((v) => v === "?").length;
+  const questionMarkCount = allVotes.filter(
+    (v) => v === "?" || v === "❓",
+  ).length;
 
-  const votes = allVotes.filter((v) => v !== "?");
+  const votes = allVotes.filter((v) => !nonScoringVotes.has(String(v)));
   const numericVotes = votes
     .filter((v) => !Number.isNaN(Number(v)))
     .map(Number);
@@ -197,6 +200,13 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
     .filter((opt) => !Number.isNaN(Number(opt)))
     .map(Number)
     .sort((a, b) => a - b);
+
+  if (validOptions.length === 0 || numericVotes.length === 0) {
+    roomData.judgeScore = null;
+    roomData.judgeMetadata = undefined;
+    room.repository.setJudgeState(null);
+    return;
+  }
 
   const result = room.judge.calculateJudgeScore(
     numericVotes,

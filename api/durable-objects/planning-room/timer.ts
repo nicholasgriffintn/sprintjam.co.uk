@@ -1,7 +1,7 @@
 import {
   MAX_TIMER_DURATION_SECONDS,
   MIN_TIMER_DURATION_SECONDS,
-} from "../../constants";
+} from '../../config/constants';
 import { calculateTimerSeconds } from "../../utils/timer";
 import { ensureTimerState } from "../../utils/timer-state";
 import type { PlanningRoom } from ".";

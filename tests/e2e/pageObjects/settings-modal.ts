@@ -56,6 +56,41 @@ export class SettingsModal {
     await select.selectOption(value);
   }
 
+  async expectVotingSequenceSelectorVisible(visible: boolean) {
+    const selector = this.modal().getByTestId("settings-select-voting-sequence");
+    if (visible) {
+      await expect(selector).toBeVisible();
+    } else {
+      await expect(selector).toBeHidden();
+    }
+  }
+
+  async expectExtraOptionState(
+    id: "unsure" | "coffee" | "cannot-complete",
+    checked: boolean,
+  ) {
+    await this.expandDetailsSections();
+    const checkbox = this.modal().getByTestId(`extra-option-${id}`);
+    if (checked) {
+      await expect(checkbox).toBeChecked();
+    } else {
+      await expect(checkbox).not.toBeChecked();
+    }
+  }
+
+  async toggleExtraOption(
+    id: "unsure" | "coffee" | "cannot-complete",
+    enabled: boolean,
+  ) {
+    await this.expandDetailsSections();
+    const checkbox = this.modal().getByTestId(`extra-option-${id}`);
+    if (enabled) {
+      await checkbox.check();
+    } else {
+      await checkbox.uncheck();
+    }
+  }
+
   async save() {
     await this.modal().getByRole("button", { name: "Save" }).click();
     await expect(this.modal()).toBeHidden();

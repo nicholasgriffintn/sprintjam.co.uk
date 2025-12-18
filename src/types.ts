@@ -18,6 +18,34 @@ export type JudgeAlgorithm =
 
 export type TaskSize = "xs" | "sm" | "md" | "lg" | "xl";
 
+export type VotingSequenceId =
+  | "fibonacci"
+  | "fibonacci-short"
+  | "doubling"
+  | "tshirt"
+  | "planet-scale"
+  | "yes-no"
+  | "simple"
+  | "hours"
+  | "custom";
+
+export interface VotingSequenceTemplate {
+  id: VotingSequenceId;
+  label: string;
+  description?: string;
+  options: (string | number)[];
+}
+
+export interface ExtraVoteOption {
+  id: string;
+  label: string;
+  value: string;
+  description?: string;
+  enabled?: boolean;
+  aliases?: string[];
+  impact?: "none" | "high-alert";
+}
+
 export type AvatarId =
   | "user"
   | "robot"
@@ -142,6 +170,7 @@ export interface RoomSettings {
   allowOthersToShowEstimates: boolean;
   allowOthersToDeleteEstimates: boolean;
   allowOthersToManageQueue?: boolean;
+  allowVotingAfterReveal?: boolean;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;
@@ -162,12 +191,19 @@ export interface RoomSettings {
   autoHandoverModerator?: boolean;
   enableStrudelPlayer?: boolean;
   strudelAutoGenerate?: boolean;
+  enableAutoReveal?: boolean;
+  alwaysRevealVotes?: boolean;
+  votingSequenceId?: VotingSequenceId;
+  customEstimateOptions?: (string | number)[];
+  extraVoteOptions?: ExtraVoteOption[];
 }
 
 export interface ServerDefaults {
   roomSettings: RoomSettings;
   votingCriteria: VotingCriterion[];
   structuredVotingOptions: (string | number)[];
+  votingSequences?: VotingSequenceTemplate[];
+  extraVoteOptions?: ExtraVoteOption[];
 }
 
 export interface JudgeMetadata {
@@ -278,13 +314,14 @@ export interface WebSocketMessage {
 }
 
 export interface RoomStats {
-  avg: number | string;
+  avg: number | string | null;
   mode: VoteValue | null;
-  distribution: Record<VoteValue, number>;
+  distribution: Record<string, number>;
   totalVotes: number;
   votedUsers: number;
   totalUsers: number;
   judgeScore: VoteValue | null;
+  isNumericScale: boolean;
 }
 
 export interface CriteriaStats {

@@ -115,9 +115,10 @@ export async function updateJiraStoryPoints(
 }
 
 export function convertVoteValueToStoryPoints(
-  voteValue: VoteValue,
+  voteValue: VoteValue | null,
 ): number | null {
-  if (voteValue === null || voteValue === "?" || voteValue === "coffee") {
+  const ignoredValues = new Set(["?", "❓", "coffee", "☕", "♾️"]);
+  if (voteValue === null || ignoredValues.has(String(voteValue))) {
     return null;
   }
 

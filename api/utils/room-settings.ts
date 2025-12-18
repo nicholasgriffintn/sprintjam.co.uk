@@ -1,10 +1,5 @@
 import type { RoomSettings } from "../types";
-import {
-  getDefaultEstimateOptions,
-  getDefaultRoomSettings,
-  getDefaultStructuredVotingOptions,
-} from "./defaults";
-import { generateVoteOptionsMetadata } from "./votes";
+import { getDefaultRoomSettings } from "./defaults";
 
 export function applySettingsUpdate({
   currentSettings,
@@ -13,50 +8,33 @@ export function applySettingsUpdate({
   currentSettings?: RoomSettings;
   settingsUpdate?: Partial<RoomSettings>;
 }): RoomSettings {
-  const defaultSettings = getDefaultRoomSettings();
-  const baseSettings: RoomSettings = {
-    ...defaultSettings,
+  const mergedSettings: Partial<RoomSettings> = {
     ...(currentSettings ?? {}),
+    ...(settingsUpdate ?? {}),
   };
 
-  const updates = settingsUpdate ?? {};
-  let result: RoomSettings = {
-    ...baseSettings,
-    ...updates,
-  };
+  const hasExplicitSequence = settingsUpdate?.votingSequenceId !== undefined;
 
-  if (updates.enableStructuredVoting === true) {
-    const structuredOptions = getDefaultStructuredVotingOptions();
-    result = {
-      ...result,
-      estimateOptions: structuredOptions,
-      voteOptionsMetadata: generateVoteOptionsMetadata(structuredOptions),
-      votingCriteria: result.votingCriteria ?? defaultSettings.votingCriteria,
-    };
-  } else if (
-    updates.enableStructuredVoting === false &&
-    !updates.estimateOptions
+  if (
+    settingsUpdate?.estimateOptions ||
+    settingsUpdate?.customEstimateOptions
   ) {
-    const defaultOptions = getDefaultEstimateOptions();
-    result = {
-      ...result,
-      estimateOptions: defaultOptions,
-      voteOptionsMetadata: generateVoteOptionsMetadata(defaultOptions),
-      votingCriteria: result.votingCriteria ?? defaultSettings.votingCriteria,
-    };
+    const customOptions =
+      settingsUpdate.customEstimateOptions ??
+      settingsUpdate.estimateOptions ??
+      mergedSettings.customEstimateOptions;
+
+    if (!hasExplicitSequence && customOptions) {
+      mergedSettings.votingSequenceId = "custom";
+    }
+
+    if (
+      mergedSettings.votingSequenceId === "custom" ||
+      settingsUpdate?.votingSequenceId === "custom"
+    ) {
+      mergedSettings.customEstimateOptions = customOptions;
+    }
   }
 
-  if (updates.estimateOptions) {
-    result = {
-      ...result,
-      voteOptionsMetadata: generateVoteOptionsMetadata(updates.estimateOptions),
-    };
-  } else if (!result.voteOptionsMetadata && result.estimateOptions) {
-    result = {
-      ...result,
-      voteOptionsMetadata: generateVoteOptionsMetadata(result.estimateOptions),
-    };
-  }
-
-  return result;
+  return getDefaultRoomSettings(mergedSettings);
 }

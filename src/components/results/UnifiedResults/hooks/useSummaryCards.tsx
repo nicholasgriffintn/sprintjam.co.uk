@@ -4,6 +4,18 @@ import { motion } from "framer-motion";
 import type { RoomData, RoomStats, SummaryCardSetting } from "@/types";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import type { ConsensusSummaryResult } from "@/components/results/UnifiedResults/utils";
+import { getContrastingTextColor } from "@/utils/colors";
+
+const parseOptionLabel = (optionText: string) => {
+  const [first, ...rest] = optionText.split(" ");
+  const hasLeadingEmoji =
+    first && /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(first);
+
+  return {
+    icon: hasLeadingEmoji ? first : "",
+    label: hasLeadingEmoji ? rest.join(" ").trim() || first : optionText,
+  };
+};
 
 interface UseSummaryCardsParams {
   summaryCardConfigs: SummaryCardSetting[];
@@ -40,9 +52,16 @@ export function useSummaryCards({
               return null;
             }
 
-            if (stats.avg === null || stats.avg === undefined) {
+            if (
+              !stats.isNumericScale ||
+              stats.avg === null ||
+              stats.avg === undefined
+            ) {
               return null;
             }
+
+            const displayAverage =
+              typeof stats.avg === "number" ? stats.avg.toFixed(1) : stats.avg;
 
             return (
               <motion.div
@@ -60,7 +79,7 @@ export function useSummaryCards({
                     {card.label}
                   </h4>
                   <div className="text-3xl font-semibold text-brand-600 dark:text-brand-300">
-                    {stats.avg}
+                    {displayAverage}
                   </div>
                 </SurfaceCard>
               </motion.div>
@@ -120,17 +139,30 @@ export function useSummaryCards({
                     {topDistribution.map(([vote, count]) => {
                       const metadata =
                         roomData.settings.voteOptionsMetadata?.find(
-                          (m) => m.value.toString() === vote,
+                          (m) => String(m.value) === vote,
                         );
                       const background = metadata?.background || "#ebf5ff";
+                      const { icon, label } = parseOptionLabel(String(vote));
+                      const textColor = getContrastingTextColor(background);
 
                       return (
                         <div key={vote} className="flex items-center gap-1">
                           <div
-                            className="flex h-7 w-7 items-center justify-center rounded-xl text-xs font-semibold text-black"
-                            style={{ backgroundColor: background }}
+                            className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-xl text-xs font-semibold"
+                            style={{ backgroundColor: background, color: textColor }}
                           >
-                            {vote}
+                            {icon ? (
+                              <>
+                                <span aria-hidden="true" className="text-sm leading-none">
+                                  {icon}
+                                </span>
+                                <span className="sr-only">{label}</span>
+                              </>
+                            ) : (
+                              <span className="truncate px-1 leading-tight" title={label}>
+                                {label}
+                              </span>
+                            )}
                           </div>
                           <span className="text-xs text-slate-500 dark:text-slate-300">
                             ×{count}
@@ -249,6 +281,7 @@ export function useSummaryCards({
     stats.totalUsers,
     roomData.users.length,
     topDistribution,
+    stats.isNumericScale,
     participationRate,
     consensusSummary.level,
     consensusSummary.score,

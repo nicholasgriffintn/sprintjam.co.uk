@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { RoomData, RoomStats } from "@/types";
 import type { VoteDistributionViewMode } from "../VoteDistribution";
 import { downloadCsv } from "@/utils/csv";
+import { getVisibleEstimateOptions } from "@/utils/votingOptions";
 
 const VIEW_OPTIONS: { id: VoteDistributionViewMode; label: string }[] = [
   { id: "count", label: "Votes" },
@@ -24,7 +25,9 @@ export function useVoteDistributionControls(
 
     const rows = [["Vote", "Count", "Percentage"]];
     const total = stats.totalVotes || roomData.users.length || 1;
-    roomData.settings.estimateOptions.forEach((option) => {
+    const visibleOptions = getVisibleEstimateOptions(roomData.settings);
+
+    visibleOptions.forEach((option) => {
       const count = stats.distribution[option] || 0;
       const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : "0.0";
       rows.push([String(option), String(count), `${percentage}%`]);
@@ -36,6 +39,8 @@ export function useVoteDistributionControls(
   }, [
     roomData.key,
     roomData.settings.estimateOptions,
+    roomData.settings.extraVoteOptions,
+    roomData.settings.enableStructuredVoting,
     roomData.users.length,
     stats.distribution,
     stats.totalVotes,

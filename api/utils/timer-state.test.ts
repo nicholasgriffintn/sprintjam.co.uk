@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { ensureTimerState } from "./timer-state";
-import { DEFAULT_TIMER_DURATION_SECONDS } from "../constants";
+import { DEFAULT_TIMER_DURATION_SECONDS } from '../config/constants';
 import { type RoomData, JudgeAlgorithm } from "../types";
 
 const baseRoom = (): RoomData => ({
