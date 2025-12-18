@@ -79,39 +79,35 @@ export function EstimateOptions({
               type="text"
               value={
                 localSettings.enableStructuredVoting
-                  ? structuredVotingOptions.map((option) => option.toString()).join(",")
+                  ? structuredVotingOptions
+                      .map((option) => option.toString())
+                      .join(',')
                   : estimateOptionsInput
               }
               onChange={(e) => handleEstimateOptionsChange(e.target.value)}
               placeholder={`e.g., ${defaultSettings.estimateOptions
                 .map((option) => option.toString())
-                .join(",")}`}
+                .join(',')}`}
               disabled={
                 localSettings.enableStructuredVoting ||
-                selectedSequenceId !== "custom"
+                selectedSequenceId !== 'custom'
               }
               className={`w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900 ${
-                localSettings.enableStructuredVoting || selectedSequenceId !== "custom"
-                  ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
-                  : ""
+                localSettings.enableStructuredVoting ||
+                selectedSequenceId !== 'custom'
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                  : ''
               }`}
             />
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {localSettings.enableStructuredVoting
-                ? "Fixed options for structured voting"
-                : selectedSequenceId === "custom"
-                  ? "Separate values with commas"
-                  : "Preset selected—switch to custom to edit"}
+                ? 'Fixed options for structured voting'
+                : selectedSequenceId === 'custom'
+                ? 'Separate values with commas'
+                : 'Preset selected—switch to custom to edit'}
             </p>
           </div>
         </>
-      )}
-
-      {hideSelection && (
-      <div className="rounded-2xl border border-white/50 bg-white/70 px-4 py-3 text-sm text-slate-800 shadow-sm dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-100">
-        Estimate options are fixed to the Fibonacci (short) sequence while
-        structured voting is enabled.
-      </div>
       )}
 
       {showExtraOptions ? (
@@ -120,7 +116,8 @@ export function EstimateOptions({
             Extra votes (always available)
           </p>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
-            Special actions that won't affect the score but can guide discussion.
+            Special actions that won't affect the score but can guide
+            discussion.
           </p>
           <div className="space-y-2">
             {extraVoteOptions.map((option) => (
@@ -131,7 +128,9 @@ export function EstimateOptions({
                 <input
                   type="checkbox"
                   checked={option.enabled !== false}
-                  onChange={(e) => onToggleExtraVote(option.id, e.target.checked)}
+                  onChange={(e) =>
+                    onToggleExtraVote(option.id, e.target.checked)
+                  }
                   data-testid={`extra-option-${option.id}`}
                   className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                 />
@@ -149,11 +148,7 @@ export function EstimateOptions({
             ))}
           </div>
         </div>
-      ) : (
-        <div className="rounded-2xl border border-white/50 bg-white/70 px-4 py-3 text-xs text-slate-700 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-200">
-          Extra voting options are hidden while structured voting is on.
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
