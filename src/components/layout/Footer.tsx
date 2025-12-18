@@ -31,6 +31,13 @@ export const Footer = ({ displayRepoLink = true, fullWidth = true }) => {
         >
           Terms
         </a>
+        <span className="hidden sm:inline">|</span>
+        <a
+          href="/changelog"
+          className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
+        >
+          Changelog
+        </a>
       </div>
 
       {displayRepoLink ? (
