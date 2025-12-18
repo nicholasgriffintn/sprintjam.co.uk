@@ -1,7 +1,8 @@
 ## 2025
 
-### December 2025
+### Coming Next
 
+- Added a new Feedback button to the footer for users to submit their feedback directly from the app. This feedback is filed as issues in a GitHub repository for easy tracking and management.
 - Added a setting to restrict voting updates after the votes have been revealed and defaulted to enabled for new rooms
 - Added a setting to auto reveal the votes once all participants have voted
 - Added a setting to have votes always revealed to all users
@@ -19,6 +20,9 @@
   - Unknown ❓
   - Coffee break ☕
   - Cannot complete ♾️
+
+### December 2025
+
 - Added this changelog page to document changes
 - Some codebase refactoring and improvements
 - Various security improvements
