@@ -4,6 +4,7 @@ import {
   createStructuredVote,
   getDefaultVotingCriteria,
   isStructuredVote,
+  isStructuredVoteComplete,
 } from "./structured-voting";
 
 describe("Structured Voting Calculations", () => {
@@ -340,6 +341,147 @@ describe("Structured Voting Calculations", () => {
 
       expect(vote.percentageScore).toBe(100);
       expect(vote.calculatedStoryPoints).toBe(8);
+    });
+  });
+
+  describe("isStructuredVoteComplete", () => {
+    const defaultCriteria = getDefaultVotingCriteria();
+
+    it("returns true when all 4 criteria are explicitly set", () => {
+      const criteriaScores = {
+        complexity: 2,
+        confidence: 3,
+        volume: 1,
+        unknowns: 0,
+      };
+
+      expect(isStructuredVoteComplete(criteriaScores, defaultCriteria)).toBe(
+        true,
+      );
+    });
+
+    it("returns true when all criteria are set to 0 (valid choice)", () => {
+      const criteriaScores = {
+        complexity: 0,
+        confidence: 0,
+        volume: 0,
+        unknowns: 0,
+      };
+
+      expect(isStructuredVoteComplete(criteriaScores, defaultCriteria)).toBe(
+        true,
+      );
+    });
+
+    it("returns false when missing one criterion", () => {
+      const criteriaScores = {
+        complexity: 2,
+        confidence: 3,
+        volume: 1,
+      };
+
+      expect(isStructuredVoteComplete(criteriaScores, defaultCriteria)).toBe(
+        false,
+      );
+    });
+
+    it("returns false when missing multiple criteria", () => {
+      const criteriaScores = {
+        complexity: 2,
+      };
+
+      expect(isStructuredVoteComplete(criteriaScores, defaultCriteria)).toBe(
+        false,
+      );
+    });
+
+    it("returns false when all criteria are missing", () => {
+      const criteriaScores = {};
+
+      expect(isStructuredVoteComplete(criteriaScores, defaultCriteria)).toBe(
+        false,
+      );
+    });
+
+    it("returns false when criterion is undefined", () => {
+      const criteriaScores = {
+        complexity: 2,
+        confidence: 3,
+        volume: 1,
+        unknowns: undefined as unknown as number,
+      };
+
+      expect(isStructuredVoteComplete(criteriaScores, defaultCriteria)).toBe(
+        false,
+      );
+    });
+
+    it("returns false when criterion is null", () => {
+      const criteriaScores = {
+        complexity: 2,
+        confidence: 3,
+        volume: 1,
+        unknowns: null as unknown as number,
+      };
+
+      expect(isStructuredVoteComplete(criteriaScores, defaultCriteria)).toBe(
+        false,
+      );
+    });
+
+    it("returns true with custom criteria when all are set", () => {
+      const customCriteria = [
+        {
+          id: "custom1",
+          name: "Custom 1",
+          description: "",
+          minScore: 0,
+          maxScore: 5,
+        },
+        {
+          id: "custom2",
+          name: "Custom 2",
+          description: "",
+          minScore: 0,
+          maxScore: 3,
+        },
+      ];
+
+      const criteriaScores = {
+        custom1: 3,
+        custom2: 2,
+      };
+
+      expect(isStructuredVoteComplete(criteriaScores, customCriteria)).toBe(
+        true,
+      );
+    });
+
+    it("returns false with custom criteria when one is missing", () => {
+      const customCriteria = [
+        {
+          id: "custom1",
+          name: "Custom 1",
+          description: "",
+          minScore: 0,
+          maxScore: 5,
+        },
+        {
+          id: "custom2",
+          name: "Custom 2",
+          description: "",
+          minScore: 0,
+          maxScore: 3,
+        },
+      ];
+
+      const criteriaScores = {
+        custom1: 3,
+      };
+
+      expect(isStructuredVoteComplete(criteriaScores, customCriteria)).toBe(
+        false,
+      );
     });
   });
 });
