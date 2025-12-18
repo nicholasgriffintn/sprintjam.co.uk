@@ -42,6 +42,28 @@ export function UserEstimate({
 
   return (
     <div className="mb-8">
+      {roomData.currentTicket && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Currently Voting On
+            </span>
+            <span className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
+              {roomData.currentTicket.ticketId}
+            </span>
+          </div>
+          {roomData.currentTicket.title && (
+            <p className="text-base font-medium text-slate-800 dark:text-slate-100">
+              {roomData.currentTicket.title}
+            </p>
+          )}
+          {roomData.currentTicket.description && (
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+              {roomData.currentTicket.description}
+            </p>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3 mb-4">
         <div className="flex items-center gap-2">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

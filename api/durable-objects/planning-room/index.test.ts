@@ -539,7 +539,7 @@ describe("PlanningRoom critical flows", () => {
     );
   });
 
-  it("promotes or auto-creates next ticket when queue is empty", async () => {
+  it("clears current ticket without auto-creating when queue is empty", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
@@ -559,19 +559,10 @@ describe("PlanningRoom critical flows", () => {
       },
     });
 
-    const newTicket = {
-      id: 1,
-      ticketId: "SPRINTJAM-001",
-      status: "in_progress" as const,
-      ordinal: 1,
-      createdAt: Date.now(),
-      externalService: "none" as const,
-    };
-
     const repository = {
       getTicketQueue: vi.fn().mockReturnValue([]),
-      getNextTicketId: vi.fn().mockReturnValue("SPRINTJAM-001"),
-      createTicket: vi.fn().mockReturnValue(newTicket),
+      getNextTicketId: vi.fn(),
+      createTicket: vi.fn(),
       setCurrentTicket: vi.fn(),
       clearVotes: vi.fn(),
       clearStructuredVotes: vi.fn(),
@@ -585,12 +576,14 @@ describe("PlanningRoom critical flows", () => {
 
     await room.handleNextTicket("mod");
 
-    expect(repository.createTicket).toHaveBeenCalled();
-    expect(repository.setCurrentTicket).toHaveBeenCalledWith(newTicket.id);
+    expect(repository.createTicket).not.toHaveBeenCalled();
+    expect(repository.getNextTicketId).not.toHaveBeenCalled();
+    expect(repository.setCurrentTicket).toHaveBeenCalledWith(null);
     expect(room.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "nextTicket",
-        ticket: expect.objectContaining({ ticketId: "SPRINTJAM-001" }),
+        ticket: null,
+        queue: [],
       }),
     );
   });

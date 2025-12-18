@@ -53,10 +53,16 @@ test.describe("Modal interactions", () => {
 
     try {
       const moderatorPage = moderatorRoom.getPage();
-      await moderatorPage.getByTestId("next-ticket-button").click();
+      await moderatorRoom.openQueueModal();
+      await moderatorPage.getByTestId("queue-toggle-add").click();
+      await moderatorPage.getByPlaceholder("Ticket title").fill("Queue Ticket");
+      await moderatorPage.getByTestId("queue-add-confirm").click();
       await moderatorPage
-        .getByRole("dialog", { name: "Review before moving on" })
-        .getByTestId("pre-pointing-confirm")
+        .getByRole("button", { name: "Start Voting" })
+        .first()
+        .click();
+      await moderatorPage
+        .getByRole("button", { name: "Close modal" })
         .click();
 
       await moderatorRoom.openQueueModal();

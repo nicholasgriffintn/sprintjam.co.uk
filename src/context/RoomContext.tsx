@@ -18,6 +18,7 @@ import {
   resetVotes,
   updateSettings,
   isConnected,
+  selectTicket,
   nextTicket,
   addTicket,
   updateTicket,
@@ -74,6 +75,7 @@ interface RoomContextValue {
   handleToggleShowVotes: () => void;
   handleResetVotes: () => void;
   handleUpdateSettings: (settings: RoomSettings) => void;
+  handleSelectTicket: (ticketId: number) => void;
   handleNextTicket: () => void;
   handleAddTicket: (ticket: Partial<TicketQueueItem>) => Promise<void>;
   handleUpdateTicket: (
@@ -473,6 +475,16 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     setScreen("welcome");
   }, [setPasscode, setRoomKey, setScreen]);
 
+  const handleSelectTicket = useCallback((ticketId: number) => {
+    try {
+      selectTicket(ticketId);
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to select ticket";
+      setRoomError(errorMessage);
+    }
+  }, []);
+
   const handleNextTicket = useCallback(() => {
     try {
       nextTicket();
@@ -552,6 +564,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleToggleShowVotes,
       handleResetVotes,
       handleUpdateSettings,
+      handleSelectTicket,
       handleNextTicket,
       handleAddTicket,
       handleUpdateTicket,
@@ -583,6 +596,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleToggleShowVotes,
       handleResetVotes,
       handleUpdateSettings,
+      handleSelectTicket,
       handleNextTicket,
       handleAddTicket,
       handleUpdateTicket,

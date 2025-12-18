@@ -11,6 +11,7 @@ interface TicketQueueSidebarProps {
   roomData: RoomData | null;
   canManageQueue: boolean;
   onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
+  onSelectTicket?: (ticketId: number) => void;
   onViewQueue: () => void;
   className?: string;
   isCollapsed?: boolean;
@@ -21,6 +22,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   roomData,
   canManageQueue,
   onUpdateTicket,
+  onSelectTicket,
   onViewQueue,
   className,
   isCollapsed,
@@ -229,26 +231,72 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
           />
 
           {current ? (
-            <div data-testid="queue-current-ticket">
-              {renderTicketRow(current, "Current")}
-            </div>
-          ) : (
-            <p
-              className="text-xs text-slate-500 dark:text-slate-400"
-              data-testid="queue-no-current"
-            >
-              No active ticket
-            </p>
-          )}
+            <>
+              <div data-testid="queue-current-ticket">
+                {renderTicketRow(current, "Current")}
+              </div>
 
-          {next ? (
-            <div data-testid="queue-next-ticket">
-              {renderTicketRow(next, "Pending")}
-            </div>
+              {next && (
+                <div data-testid="queue-next-ticket">
+                  {renderTicketRow(next, "Pending")}
+                </div>
+              )}
+            </>
           ) : (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              No upcoming tickets. Add more to keep things moving.
-            </p>
+            <div className="space-y-2" data-testid="queue-no-current">
+              {pending.length === 0 ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-700 dark:bg-slate-800/50">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    No tickets in queue
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+                    Click Expand to add tickets
+                  </p>
+                </div>
+              ) : canManageQueue && onSelectTicket ? (
+                <>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Select a ticket to start
+                  </p>
+                  {pending.slice(0, 3).map((ticket) => (
+                    <button
+                      key={ticket.id}
+                      onClick={() => onSelectTicket(ticket.id)}
+                      className="w-full rounded-lg border border-slate-200 bg-white p-3 text-left text-sm shadow-sm transition hover:border-green-500 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-green-500 dark:hover:bg-green-900/20"
+                      data-testid={`queue-select-ticket-${ticket.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
+                            {ticket.ticketId}
+                          </span>
+                          {ticket.title && (
+                            <p className="mt-1 text-xs text-slate-700 dark:text-slate-200 truncate">
+                              {ticket.title}
+                            </p>
+                          )}
+                        </div>
+                        <ChevronDown className="h-4 w-4 -rotate-90 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      </div>
+                    </button>
+                  ))}
+                  {pending.length > 3 && (
+                    <button
+                      onClick={onViewQueue}
+                      className="w-full text-center text-xs text-blue-600 hover:text-blue-500 dark:text-blue-300"
+                    >
+                      +{pending.length - 3} more tickets
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-700 dark:bg-slate-800/50">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Waiting for moderator to select a ticket
+                  </p>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </SurfaceCard>

@@ -109,44 +109,5 @@ export async function readRoomData(
     return undefined;
   }
 
-  if (
-    roomData.currentTicket ||
-    !roomData.settings.enableTicketQueue ||
-    !canAutoCreateTicket(roomData)
-  ) {
-    return roomData;
-  }
-
-  const queue = room.repository.getTicketQueue();
-  const nextTicketId = room.repository.getNextTicketId({
-    externalService: roomData.settings.externalService || 'none',
-  });
-  if (!nextTicketId) {
-    return roomData;
-  }
-
-  const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
-
-  const existingTicket =
-    room.repository.getTicketByTicketKey(nextTicketId) ?? null;
-  const created =
-    existingTicket ??
-    room.repository.createTicket({
-      ticketId: nextTicketId,
-      status: 'in_progress',
-      ordinal: maxOrdinal + 1,
-      externalService: roomData.settings.externalService || 'none',
-    });
-
-  if (created.status !== 'in_progress') {
-    room.repository.updateTicket(created.id, { status: 'in_progress' });
-  }
-
-  room.repository.setCurrentTicket(created.id);
-
-  return {
-    ...roomData,
-    currentTicket: created,
-    ticketQueue: getQueueWithPrivacy(room, roomData),
-  };
+  return roomData;
 }

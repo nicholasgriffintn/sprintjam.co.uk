@@ -42,6 +42,7 @@ import {
   handleCompleteTicket as handleCompleteTicketHandler,
   handleDeleteTicket as handleDeleteTicketHandler,
   handleNextTicket as handleNextTicketHandler,
+  handleSelectTicket as handleSelectTicketHandler,
   handleUpdateTicket as handleUpdateTicketHandler,
 } from "./tickets";
 import {
@@ -186,6 +187,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleToggleStrudelPlayback(userName: string) {
     return handleToggleStrudelPlaybackHandler(this, userName);
+  }
+
+  async handleSelectTicket(userName: string, ticketId: number) {
+    return handleSelectTicketHandler(this, userName, ticketId);
   }
 
   async handleNextTicket(userName: string) {

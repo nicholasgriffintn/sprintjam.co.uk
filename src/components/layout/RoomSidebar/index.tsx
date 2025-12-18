@@ -20,7 +20,7 @@ export function RoomSidebar({
   stats: RoomStats;
   setIsQueueModalOpen: (isOpen: boolean) => void;
 }) {
-  const { roomData, isModeratorView, handleUpdateTicket } = useRoom();
+  const { roomData, isModeratorView, handleUpdateTicket, handleSelectTicket } = useRoom();
   const { name } = useSession();
 
   const [isParticipantsCollapsed, setIsParticipantsCollapsed] = useState(false);
@@ -119,6 +119,7 @@ export function RoomSidebar({
                 }
                 onViewQueue={() => setIsQueueModalOpen(true)}
                 onUpdateTicket={handleUpdateTicket}
+                onSelectTicket={handleSelectTicket}
                 className="mt-auto"
                 isCollapsed={isQueueCollapsed}
                 onToggleCollapse={() => setIsQueueCollapsed((prev) => !prev)}

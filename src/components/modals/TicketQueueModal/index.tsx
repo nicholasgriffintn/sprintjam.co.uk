@@ -17,6 +17,7 @@ interface TicketQueueModalProps {
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
   onUpdateTicket: (ticketId: number, updates: Partial<TicketQueueItem>) => void;
   onDeleteTicket: (ticketId: number) => void;
+  onSelectTicket?: (ticketId: number) => void;
   canManageQueue: boolean;
   onError?: (message: string) => void;
 }
@@ -32,6 +33,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   onAddTicket,
   onUpdateTicket,
   onDeleteTicket,
+  onSelectTicket,
   canManageQueue,
   onError,
 }) => {
@@ -62,6 +64,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             onAddTicket={onAddTicket}
             onUpdateTicket={onUpdateTicket}
             onDeleteTicket={onDeleteTicket}
+            onSelectTicket={onSelectTicket}
             roomKey={roomKey}
             userName={userName}
             canManageQueue={canManageQueue}
