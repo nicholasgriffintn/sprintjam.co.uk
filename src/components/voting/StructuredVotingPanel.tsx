@@ -94,7 +94,9 @@ export function StructuredVotingPanel({
   const scoringInfoPanelId = useId();
 
   const isVotingDisabled =
-    roomData?.showVotes && !roomData?.settings.allowVotingAfterReveal;
+    roomData?.showVotes &&
+    !roomData?.settings.allowVotingAfterReveal &&
+    !roomData?.settings.alwaysRevealVotes;
 
   useEffect(() => {
     if (!currentVote) {

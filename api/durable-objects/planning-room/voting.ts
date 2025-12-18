@@ -21,7 +21,11 @@ export async function handleVote(
     return;
   }
 
-  if (roomData.showVotes && !roomData.settings.allowVotingAfterReveal) {
+  if (
+    roomData.showVotes &&
+    !roomData.settings.allowVotingAfterReveal &&
+    !roomData.settings.alwaysRevealVotes
+  ) {
     console.warn(
       `Vote from ${userName} rejected: voting not allowed after reveal`,
     );

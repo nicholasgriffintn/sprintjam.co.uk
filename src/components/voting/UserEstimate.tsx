@@ -33,7 +33,9 @@ export function UserEstimate({
 }) {
   const { roomData: contextRoomData } = useRoom();
   const isVotingDisabled =
-    roomData.showVotes && !roomData.settings.allowVotingAfterReveal;
+    roomData.showVotes &&
+    !roomData.settings.allowVotingAfterReveal &&
+    !roomData.settings.alwaysRevealVotes;
   const userTaskSize = getUsersVoteTaskSize(roomData, name);
   const extraVoteValues = useMemo(
     () => getExtraVoteValueSet(roomData.settings.extraVoteOptions),
