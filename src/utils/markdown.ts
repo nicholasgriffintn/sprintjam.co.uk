@@ -31,17 +31,30 @@ function renderInlineMarkdown(text: string): string {
   return escaped;
 }
 
+type ListType = 'ul' | 'ol';
+
 export function renderMarkdownToHtml(markdown: string): string {
   const lines = markdown.replace(/\r\n/g, '\n').split('\n');
   let html = '';
   let inCodeBlock = false;
-  let listType: 'ul' | 'ol' | null = null;
+  const listStack: Array<{ type: ListType; indent: number }> = [];
   let paragraph = '';
 
-  const closeList = () => {
-    if (listType) {
-      html += `</${listType}>`;
-      listType = null;
+  const closeAllLists = () => {
+    while (listStack.length) {
+      const closed = listStack.pop();
+      if (closed) {
+        html += `</${closed.type}>`;
+      }
+    }
+  };
+
+  const closeListsUntilIndent = (indent: number) => {
+    while (listStack.length && listStack[listStack.length - 1].indent > indent) {
+      const closed = listStack.pop();
+      if (closed) {
+        html += `</${closed.type}>`;
+      }
     }
   };
 
@@ -54,13 +67,14 @@ export function renderMarkdownToHtml(markdown: string): string {
 
   for (const rawLine of lines) {
     const line = rawLine.trimEnd();
+    const trimmed = line.trim();
 
     if (line.startsWith('```')) {
       if (inCodeBlock) {
         html += '</code></pre>';
       } else {
         flushParagraph();
-        closeList();
+        closeAllLists();
         const language = line.slice(3).trim();
         html += `<pre class="overflow-auto rounded-2xl bg-slate-900 text-slate-100 p-4 text-sm shadow-lg shadow-slate-900/30 dark:bg-slate-950/80"><code${
           language ? ` class="language-${escapeHtml(language)}"` : ''
@@ -75,16 +89,16 @@ export function renderMarkdownToHtml(markdown: string): string {
       continue;
     }
 
-    if (!line.trim()) {
+    if (!trimmed) {
       flushParagraph();
-      closeList();
+      closeAllLists();
       continue;
     }
 
     const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
       flushParagraph();
-      closeList();
+      closeAllLists();
       const level = headingMatch[1].length;
       const content = headingMatch[2];
       html += `<h${level}>${renderInlineMarkdown(content)}</h${level}>`;
@@ -93,39 +107,71 @@ export function renderMarkdownToHtml(markdown: string): string {
 
     if (/^---+$/.test(line)) {
       flushParagraph();
-      closeList();
+      closeAllLists();
       html += '<hr />';
       continue;
     }
 
     if (line.startsWith('> ')) {
       flushParagraph();
-      closeList();
+      closeAllLists();
       html += `<blockquote>${renderInlineMarkdown(line.slice(2))}</blockquote>`;
       continue;
     }
 
-    const orderedMatch = line.match(/^\d+\.\s+(.*)$/);
+    const orderedMatch = line.match(/^(\s*)\d+\.\s+(.*)$/);
     if (orderedMatch) {
       flushParagraph();
-      if (listType !== 'ol') {
-        closeList();
-        listType = 'ol';
+      const indent = orderedMatch[1].length;
+      const content = orderedMatch[2];
+
+      if (!listStack.length || indent > listStack[listStack.length - 1].indent) {
+        listStack.push({ type: 'ol', indent });
         html += '<ol>';
+      } else {
+        closeListsUntilIndent(indent);
+        const current = listStack[listStack.length - 1];
+        if (!current || current.type !== 'ol' || current.indent !== indent) {
+          if (current && current.type !== 'ol') {
+            const closed = listStack.pop();
+            if (closed) {
+              html += `</${closed.type}>`;
+            }
+          }
+          listStack.push({ type: 'ol', indent });
+          html += '<ol>';
+        }
       }
-      html += `<li>${renderInlineMarkdown(orderedMatch[1])}</li>`;
+
+      html += `<li>${renderInlineMarkdown(content)}</li>`;
       continue;
     }
 
-    const unorderedMatch = line.match(/^[-*+]\s+(.*)$/);
+    const unorderedMatch = line.match(/^(\s*)[-*+]\s+(.*)$/);
     if (unorderedMatch) {
       flushParagraph();
-      if (listType !== 'ul') {
-        closeList();
-        listType = 'ul';
+      const indent = unorderedMatch[1].length;
+      const content = unorderedMatch[2];
+
+      if (!listStack.length || indent > listStack[listStack.length - 1].indent) {
+        listStack.push({ type: 'ul', indent });
         html += '<ul>';
+      } else {
+        closeListsUntilIndent(indent);
+        const current = listStack[listStack.length - 1];
+        if (!current || current.type !== 'ul' || current.indent !== indent) {
+          if (current && current.type !== 'ul') {
+            const closed = listStack.pop();
+            if (closed) {
+              html += `</${closed.type}>`;
+            }
+          }
+          listStack.push({ type: 'ul', indent });
+          html += '<ul>';
+        }
       }
-      html += `<li>${renderInlineMarkdown(unorderedMatch[1])}</li>`;
+
+      html += `<li>${renderInlineMarkdown(content)}</li>`;
       continue;
     }
 
@@ -133,7 +179,7 @@ export function renderMarkdownToHtml(markdown: string): string {
   }
 
   flushParagraph();
-  closeList();
+  closeAllLists();
 
   if (inCodeBlock) {
     html += '</code></pre>';
