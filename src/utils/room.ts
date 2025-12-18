@@ -146,22 +146,24 @@ export function applyRoomUpdate(
     }
 
     case "resetVotes": {
+      const shouldKeepRevealed = prev.settings.alwaysRevealVotes ?? false;
       return {
         ...prev,
         votes: {},
         structuredVotes: undefined,
-        showVotes: false,
+        showVotes: shouldKeepRevealed,
         judgeScore: null,
         judgeMetadata: undefined,
       };
     }
 
     case "ticketCompleted": {
+      const shouldKeepRevealed = prev.settings.alwaysRevealVotes ?? false;
       return {
         ...prev,
         votes: {},
         structuredVotes: undefined,
-        showVotes: false,
+        showVotes: shouldKeepRevealed,
         judgeScore: null,
         judgeMetadata: undefined,
         currentTicket: message.ticket as TicketQueueItem | undefined,
@@ -215,11 +217,12 @@ export function applyRoomUpdate(
     }
 
     case "nextTicket": {
+      const shouldKeepRevealed = prev.settings.alwaysRevealVotes ?? false;
       return {
         ...prev,
         votes: {},
         structuredVotes: undefined,
-        showVotes: false,
+        showVotes: shouldKeepRevealed,
         judgeScore: null,
         judgeMetadata: undefined,
         currentTicket: message.ticket as TicketQueueItem,
