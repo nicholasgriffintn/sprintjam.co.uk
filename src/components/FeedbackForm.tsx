@@ -166,7 +166,7 @@ export function FeedbackForm() {
 
           <Input
             label="Contact (optional)"
-            placeholder="Email or GitHub handle"
+            placeholder="GitHub handle (this will be made public)"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             fullWidth
