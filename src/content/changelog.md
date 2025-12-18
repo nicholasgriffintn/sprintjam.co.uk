@@ -17,7 +17,6 @@
   - Coffee break ☕
   - Cannot complete ♾️
 - Added this changelog page to document changes
-- Improved non-numeric voting scales by hiding judge/average on those presets, refining emoji option visuals (planets, T-shirts), and hiding extra votes when structured voting is enabled
 - Some codebase refactoring and improvements
 - Various security improvements
 - Made a number of fixes for the linear service integration
