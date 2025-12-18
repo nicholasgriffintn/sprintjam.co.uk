@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "tsc -b",
-    "build": "CLOUDFLARE_ENV=production vite build",
+    "build": "vite build",
     "build:staging": "CLOUDFLARE_ENV=staging vite build",
     "typecheck": "tsc --noEmit",
     "format": "npx prettier --write .",
