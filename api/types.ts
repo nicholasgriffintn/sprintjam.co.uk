@@ -9,6 +9,7 @@ import { TicketQueueItem, OauthCredentialsItem } from './db/types';
 
 export interface Env {
   ENABLE_JOIN_RATE_LIMIT?: string;
+  ENVIRONMENT?: string;
   JOIN_RATE_LIMITER: RateLimit;
   PLANNING_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;

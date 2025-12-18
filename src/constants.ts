@@ -4,14 +4,22 @@ const DEFAULT_HOST =
     : "sprintjam.co.uk";
 
 export const ENV_BASE_URL = import.meta.env.VITE_API_URL || DEFAULT_HOST;
+const IS_BASE_URL_LOCALHOST =
+  ENV_BASE_URL.includes('localhost') || ENV_BASE_URL.includes('127.0.0.1');
+const BASE_URL_WITH_PROTOCOL = IS_BASE_URL_LOCALHOST
+  ? `http://${ENV_BASE_URL}`
+  : `https://${ENV_BASE_URL}`;
+const BASE_WS_WITH_PROTOCOL = IS_BASE_URL_LOCALHOST
+  ? `ws://${ENV_BASE_URL}`
+  : `wss://${ENV_BASE_URL}`;
 
 export const API_BASE_URL = import.meta.env.DEV
-  ? "http://localhost:5173/api"
-  : `https://${ENV_BASE_URL}/api`;
+  ? 'http://localhost:5173/api'
+  : `${BASE_URL_WITH_PROTOCOL}/api`;
 
 export const WS_BASE_URL = import.meta.env.DEV
-  ? "ws://localhost:5173/ws"
-  : `wss://${ENV_BASE_URL}/ws`;
+  ? 'ws://localhost:5173/ws'
+  : `${BASE_WS_WITH_PROTOCOL}/ws`;
 
 export const SITE_NAME = "SprintJam";
 export const BASE_DESCRIPTION =

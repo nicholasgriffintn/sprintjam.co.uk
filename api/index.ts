@@ -53,6 +53,21 @@ async function handleRequest(
 ): Promise<CfResponse> {
   const url = new URL(request.url);
 
+  if (url.pathname === '/robots.txt') {
+    const isStaging = env.ENVIRONMENT === 'staging';
+    const robotsBody = isStaging
+      ? 'User-agent: *\nDisallow: /'
+      : 'User-agent: *\nAllow: /';
+
+    return new Response(robotsBody, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        ...(isStaging ? { 'X-Robots-Tag': 'noindex, nofollow' } : {}),
+      },
+    }) as unknown as CfResponse;
+  }
+
   if (url.pathname.startsWith("/api/")) {
     return handleApiRequest(url, request, env);
   }

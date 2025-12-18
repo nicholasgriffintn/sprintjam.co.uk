@@ -12,6 +12,9 @@
   ],
   "workers_dev": false,
   "preview_urls": false,
+  "vars": {
+    "ENVIRONMENT": "production"
+  },
   "ratelimits": [
     {
       "name": "JOIN_RATE_LIMITER",
@@ -47,7 +50,7 @@
     "binding": "ASSETS",
     "directory": "dist/client",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/ws"]
+    "run_worker_first": ["/api/*", "/ws", "/robots.txt"]
   },
   "observability": {
     "enabled": true,
@@ -67,6 +70,9 @@
           "custom_domain": true
         }
       ],
+      "vars": {
+        "ENVIRONMENT": "staging"
+      },
       "durable_objects": {
         "bindings": [
           {
