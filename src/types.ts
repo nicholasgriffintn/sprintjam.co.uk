@@ -72,6 +72,20 @@ export interface TicketVote {
 
 export type TicketMetadata = Record<string, any>;
 
+export interface GithubIssue {
+  id: string;
+  key: string;
+  repository: string;
+  number: number;
+  title: string;
+  description?: string;
+  status?: string;
+  assignee?: string;
+  estimate?: number | null;
+  url?: string;
+  labels?: string[];
+}
+
 export interface TicketQueueItem {
   id: number;
   ticketId: string;

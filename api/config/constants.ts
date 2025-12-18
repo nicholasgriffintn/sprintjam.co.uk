@@ -48,3 +48,7 @@ export const MIN_TIMER_DURATION_SECONDS = 60;
 export const MAX_TIMER_DURATION_SECONDS = 60 * 60;
 
 export const ROOM_ROW_ID = 1;
+
+export const FEEDBACK_GITHUB_OWNER = 'nicholasgriffintn';
+export const FEEDBACK_GITHUB_REPO = 'sprintjam.co.uk';
+export const FEEDBACK_GITHUB_DEFAULT_LABELS = ['feedback', 'from-app'];

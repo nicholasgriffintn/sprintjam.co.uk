@@ -39,6 +39,7 @@ import {
   getGithubOAuthStatusController,
   revokeGithubOAuthController,
 } from "./github-oauth-controller";
+import { submitFeedbackController } from "./feedback-controller";
 import type { Env } from "../types";
 
 const jsonRequest = (
@@ -63,7 +64,7 @@ const expectJsonError = async (
   expect(payload.error).toBe(message);
 };
 
-const env = {} as unknown as Env;
+const env = { FEEDBACK_GITHUB_TOKEN: "token" } as unknown as Env;
 
 describe("rooms controller validation", () => {
   it("requires a name when creating a room", async () => {
@@ -143,6 +144,39 @@ describe("jira controller validation", () => {
     )) as Response;
 
     await expectJsonError(response, "Room key and user name are required");
+  });
+});
+
+describe("feedback controller validation", () => {
+  it("requires a title", async () => {
+    const response = (await submitFeedbackController(
+      jsonRequest({ description: "Example feedback", labels: ["feedback"] }),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Title is required");
+  });
+
+  it("requires a description", async () => {
+    const response = (await submitFeedbackController(
+      jsonRequest({ title: "Short title", labels: ["feedback"] }),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Description is required");
+  });
+
+  it("requires at least one allowed label", async () => {
+    const response = (await submitFeedbackController(
+      jsonRequest({
+        title: "Label-less feedback",
+        description: "Details here",
+        labels: [],
+      }),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "At least one valid label is required");
   });
 });
 
