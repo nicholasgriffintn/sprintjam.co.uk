@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getRoomSettingsController: vi.fn(),
   joinRoomController: vi.fn(),
   updateRoomSettingsController: vi.fn(),
+  submitFeedbackController: vi.fn(),
   getJiraTicketController: vi.fn(),
   updateJiraStoryPointsController: vi.fn(),
   initiateJiraOAuthController: vi.fn(),
@@ -39,6 +40,10 @@ const {
 
 vi.mock("./controllers/defaults-controller", () => ({
   getDefaultsController: mocks.getDefaultsController,
+}));
+
+vi.mock("./controllers/feedback-controller", () => ({
+  submitFeedbackController: mocks.submitFeedbackController,
 }));
 
 vi.mock("./controllers/rooms-controller", () => ({
@@ -159,6 +164,21 @@ describe("api entrypoint routing", () => {
 
     expect(mockGetDefaultsController).toHaveBeenCalled();
     expect(await response.text()).toBe("defaults");
+  });
+
+  it("routes /api/feedback to the feedback controller", async () => {
+    const env = makeEnv();
+    mocks.submitFeedbackController.mockResolvedValue(
+      new Response("feedback-ok"),
+    );
+    const request = cfRequest("https://test.sprintjam.co.uk/api/feedback", {
+      method: "POST",
+    });
+
+    const response = (await handler.fetch(request, env)) as Response;
+
+    expect(mocks.submitFeedbackController).toHaveBeenCalled();
+    expect(await response.text()).toBe("feedback-ok");
   });
 
   it("returns 404 for unknown api paths", async () => {

@@ -203,3 +203,34 @@ export async function updateGithubEstimate(
     `${coords.owner}/${coords.repo}#${coords.issueNumber}`,
   );
 }
+
+export async function createGithubIssue(options: {
+  accessToken: string;
+  owner: string;
+  repo: string;
+  title: string;
+  body: string;
+  labels: string[];
+}): Promise<GithubIssue> {
+  const { accessToken, owner, repo, title, body, labels } = options;
+  const uniqueLabels = Array.from(
+    new Set(labels.map((label) => label.trim()).filter(Boolean)),
+  );
+
+  const issueResponse = await githubRequest(
+    accessToken,
+    `/repos/${owner}/${repo}/issues`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        body,
+        labels: uniqueLabels,
+      }),
+    },
+  );
+
+  const data = await issueResponse.json();
+  return mapIssueResponse(data, { owner, repo });
+}

@@ -46,6 +46,7 @@ import {
   getGithubOAuthStatusController,
   revokeGithubOAuthController,
 } from "./controllers/github-oauth-controller";
+import { submitFeedbackController } from "./controllers/feedback-controller";
 
 async function handleRequest(
   request: CfRequest,
@@ -106,6 +107,10 @@ async function handleApiRequest(
 
   if (path === "defaults" && request.method === "GET") {
     return getDefaultsController();
+  }
+
+  if (path === "feedback" && request.method === "POST") {
+    return submitFeedbackController(request, env);
   }
 
   if (path === "rooms" && request.method === "POST") {

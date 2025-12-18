@@ -166,3 +166,4 @@ pnpm run deploy:staging   # Deploy to staging
 
 - **Initial PROJECT_LOG.md created**
 - Work in progress on `remove-auto-ticketting-flow` branch affecting planning room, ticket queue, and voting components
+- Added GitHub-backed feedback submission form that files labeled issues via new `/api/feedback` endpoint (configure `FEEDBACK_GITHUB_TOKEN` and optional owner/repo/default labels)
