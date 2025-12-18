@@ -8,6 +8,17 @@ import { getVisibleEstimateOptions } from "@/utils/votingOptions";
 
 export type VoteDistributionViewMode = "count" | "percentage" | "cumulative";
 
+const parseOptionLabel = (optionText: string) => {
+  const [first, ...rest] = optionText.split(" ");
+  const hasLeadingEmoji =
+    first && /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(first);
+
+  return {
+    icon: hasLeadingEmoji ? first : "",
+    label: hasLeadingEmoji ? rest.join(" ").trim() || first : optionText,
+  };
+};
+
 interface VoteDistributionItemProps {
   roomData: RoomData;
   stats: RoomStats;
@@ -35,6 +46,7 @@ export function VoteDistributionItem({
         );
         const background = metadata?.background || "#ebf5ff";
         const labelTextColor = getContrastingTextColor(background);
+        const { icon, label } = parseOptionLabel(String(option));
         const voteCount = stats.distribution[option] || 0;
         cumulativeCount += voteCount;
         const asPercentage = voteTotal > 0 ? (voteCount / voteTotal) * 100 : 0;
@@ -69,10 +81,24 @@ export function VoteDistributionItem({
             }}
           >
             <div
-              className="w-10 text-center font-medium rounded"
+              className="relative flex h-10 w-10 items-center justify-center rounded text-center font-medium overflow-hidden"
               style={{ backgroundColor: background, color: labelTextColor }}
             >
-              {option}
+              {icon ? (
+                <>
+                  <span aria-hidden="true" className="text-lg leading-none">
+                    {icon}
+                  </span>
+                  <span className="sr-only">{label}</span>
+                </>
+              ) : (
+                <span
+                  className="text-xs font-semibold leading-tight truncate px-1"
+                  title={label}
+                >
+                  {label}
+                </span>
+              )}
             </div>
             <div className="flex-1 mx-3">
               <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-4 overflow-hidden">
