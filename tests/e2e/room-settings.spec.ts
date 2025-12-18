@@ -65,4 +65,35 @@ test.describe("Room settings", () => {
       await cleanup();
     }
   });
+
+  test('moderator can enable voting after reveal', async ({ browser }) => {
+    const setup = await createRoomWithParticipant(browser);
+    const { moderatorRoom, participantRoom, cleanup } = setup;
+
+    const settingsModal = new SettingsModal(moderatorRoom.getPage());
+
+    try {
+      await moderatorRoom.castVote('5');
+      await participantRoom.castVote('3');
+      await moderatorRoom.revealVotes();
+
+      await moderatorRoom.expectVoteButtonDisabled('8');
+      await participantRoom.expectVoteButtonDisabled('8');
+
+      await settingsModal.open();
+      await settingsModal.toggle(
+        'settings-toggle-allow-voting-after-reveal',
+        true
+      );
+      await settingsModal.save();
+
+      await moderatorRoom.castVote('8');
+      await participantRoom.castVote('13');
+
+      await moderatorRoom.expectVoteVisible('Moderator', '8');
+      await participantRoom.expectVoteVisible('Participant', '13');
+    } finally {
+      await cleanup();
+    }
+  });
 });

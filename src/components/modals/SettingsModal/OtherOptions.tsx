@@ -81,6 +81,24 @@ export function OtherOptions({
                   Auto handover moderator when they leave
                 </label>
               </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="allowVotingAfterReveal"
+                  checked={localSettings.allowVotingAfterReveal || false}
+                  onChange={(e) =>
+                    handleChange("allowVotingAfterReveal", e.target.checked)
+                  }
+                  data-testid="settings-toggle-allow-voting-after-reveal"
+                  className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
+                />
+                <label
+                  htmlFor="allowVotingAfterReveal"
+                  className="ml-2 text-sm text-slate-700 dark:text-slate-300"
+                >
+                  Allow voting after reveal
+                </label>
+              </div>
             </div>
           </div>
           <div className="pt-2">

@@ -19,6 +19,9 @@ export function UserEstimate({
 }) {
   const { roomData: contextRoomData } = useRoom();
 
+  const isVotingDisabled =
+    roomData.showVotes && !roomData.settings.allowVotingAfterReveal;
+
   return (
     <div className="mb-8">
       <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3 mb-4">
@@ -52,16 +55,19 @@ export function UserEstimate({
               key={option}
               data-testid={`vote-option-${optionLabel}`}
               onClick={() => onVote(option)}
+              disabled={isVotingDisabled}
               aria-label={`Vote ${option}`}
               aria-pressed={userVote === option}
               className={`w-12 h-16 md:w-16 md:h-24 flex flex-col items-center justify-center text-lg font-medium border-2 rounded-lg ${
-                userVote === option
-                  ? "border-blue-500 shadow-md"
-                  : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                isVotingDisabled
+                  ? "opacity-50 cursor-not-allowed"
+                  : userVote === option
+                    ? "border-blue-500 shadow-md"
+                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
               }`}
               style={{ backgroundColor: background }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={isVotingDisabled ? {} : { scale: 1.05 }}
+              whileTap={isVotingDisabled ? {} : { scale: 0.95 }}
               animate={{
                 scale: userVote === option ? 1.05 : 1,
               }}

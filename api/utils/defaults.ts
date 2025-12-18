@@ -36,6 +36,7 @@ export function getDefaultRoomSettings(
     allowOthersToShowEstimates: settings?.allowOthersToShowEstimates ?? false,
     allowOthersToDeleteEstimates:
       settings?.allowOthersToDeleteEstimates ?? false,
+    allowVotingAfterReveal: settings?.allowVotingAfterReveal ?? false,
     showTimer: settings?.showTimer ?? true,
     showUserPresence: settings?.showUserPresence ?? false,
     showAverage: settings?.showAverage ?? true,

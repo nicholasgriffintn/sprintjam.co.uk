@@ -20,6 +20,13 @@ export async function handleVote(
     return;
   }
 
+  if (roomData.showVotes && !roomData.settings.allowVotingAfterReveal) {
+    console.warn(
+      `Vote from ${userName} rejected: voting not allowed after reveal`,
+    );
+    return;
+  }
+
   const previousPhase = determineRoomPhase(roomData);
 
   let finalVote: string | number;
