@@ -15,6 +15,7 @@ import NotFoundScreen from "./routes/NotFoundScreen";
 import { ErrorBannerServerDefaults } from "./components/errors/ErrorBannerServerDefaults";
 import PrivacyPolicyScreen from "./routes/PrivacyPolicyScreen";
 import TermsConditionsScreen from "./routes/TermsConditionsScreen";
+import ChangelogScreen from "./routes/ChangelogScreen";
 
 const roomScreenLoader = () => import("./routes/RoomScreen");
 const RoomScreen = lazy(roomScreenLoader);
@@ -77,6 +78,8 @@ const AppContent = () => {
         return <PrivacyPolicyScreen />;
       case "terms":
         return <TermsConditionsScreen />;
+      case "changelog":
+        return <ChangelogScreen />;
       default:
         return <NotFoundScreen />;
     }

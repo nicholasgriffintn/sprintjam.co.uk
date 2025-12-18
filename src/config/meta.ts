@@ -47,6 +47,13 @@ export const META_CONFIGS: Record<string, MetaTagConfig> = {
     keywords: "terms and conditions, terms, conditions",
     ogImage: "/og-image.png",
   },
+  changelog: {
+    title: `Changelog - ${SITE_NAME}`,
+    description:
+      "Keep up with the latest SprintJam updates, improvements, and fixes.",
+    keywords: "changelog, release notes, updates",
+    ogImage: "/og-image.png",
+  },
   notFound: {
     title: `Page Not Found - ${SITE_NAME}`,
     description:
