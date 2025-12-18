@@ -9,7 +9,7 @@ export const VOTING_SEQUENCE_TEMPLATES: ReadonlyArray<VotingSequenceTemplate> =
       id: 'fibonacci',
       label: 'Fibonacci',
       description: 'Classic sequence for broader estimation ranges',
-      options: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34],
+      options: [0, 1, 2, 3, 5, 8, 13, 21, 34],
     },
     {
       id: 'fibonacci-short',
