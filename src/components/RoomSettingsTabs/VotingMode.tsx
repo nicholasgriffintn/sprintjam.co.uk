@@ -1,4 +1,4 @@
-import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import type { RoomSettings, JudgeAlgorithm } from '@/types';
 
 export function VotingMode({
   localSettings,
@@ -7,7 +7,7 @@ export function VotingMode({
   localSettings: RoomSettings;
   handleChange: (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number,
+    value: boolean | (string | number)[] | JudgeAlgorithm | number
   ) => void;
 }) {
   return (
@@ -15,7 +15,7 @@ export function VotingMode({
       <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
         Voting Mode
       </h3>
-      <div className="space-y-3">
+      <div className="space-mt-3">
         <div className="flex items-center">
           <input
             type="checkbox"

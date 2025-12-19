@@ -1,9 +1,9 @@
-import type { RoomSettings, JudgeAlgorithm } from "@/types";
-import type { JiraFieldOption } from "@/lib/jira-service";
-import { useJiraOAuth } from "@/hooks/useJiraOAuth";
-import { useLinearOAuth } from "@/hooks/useLinearOAuth";
-import { useGithubOAuth } from "@/hooks/useGithubOAuth";
-import { BetaBadge } from "@/components/BetaBadge";
+import type { RoomSettings, JudgeAlgorithm } from '@/types';
+import type { JiraFieldOption } from '@/lib/jira-service';
+import { useJiraOAuth } from '@/hooks/useJiraOAuth';
+import { useLinearOAuth } from '@/hooks/useLinearOAuth';
+import { useGithubOAuth } from '@/hooks/useGithubOAuth';
+import { BetaBadge } from '@/components/BetaBadge';
 
 export function TicketQueueSettings({
   localSettings,
@@ -18,7 +18,7 @@ export function TicketQueueSettings({
       | JudgeAlgorithm
       | number
       | string
-      | null,
+      | null
   ) => void;
 }) {
   const {
@@ -52,14 +52,14 @@ export function TicketQueueSettings({
 
   const autoSyncEnabled = localSettings.autoSyncEstimates ?? true;
   const handleAutoSyncToggle = (checked: boolean) => {
-    handleChange("autoSyncEstimates", checked);
+    handleChange('autoSyncEstimates', checked);
   };
   const renderAutoSyncToggle = (
-    provider: "jira" | "linear",
-    connected: boolean,
+    provider: 'jira' | 'linear',
+    connected: boolean
   ) => {
     if (!connected) return null;
-    const providerLabel = provider === "jira" ? "Jira" : "Linear";
+    const providerLabel = provider === 'jira' ? 'Jira' : 'Linear';
 
     return (
       <div className="flex items-center pt-3">
@@ -82,7 +82,7 @@ export function TicketQueueSettings({
   };
 
   return (
-    <div className="space-y-3 rounded-2xl border border-white/50 bg-white/60 p-4 dark:border-white/10 dark:bg-slate-900/40">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <p className="text-sm font-semibold text-slate-900 dark:text-white">
           Ticket Queue <BetaBadge />
@@ -94,7 +94,9 @@ export function TicketQueueSettings({
             type="checkbox"
             id="enableTicketQueue"
             checked={localSettings.enableTicketQueue ?? false}
-            onChange={(e) => handleChange("enableTicketQueue", e.target.checked)}
+            onChange={(e) =>
+              handleChange('enableTicketQueue', e.target.checked)
+            }
             data-testid="settings-toggle-enable-queue"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
@@ -106,7 +108,8 @@ export function TicketQueueSettings({
           </label>
         </div>
         <p className="ml-6 text-xs text-slate-500 dark:text-slate-400">
-          Keep track of tickets in a shared queue and move through them in order.
+          Keep track of tickets in a shared queue and move through them in
+          order.
         </p>
       </div>
 
@@ -117,7 +120,7 @@ export function TicketQueueSettings({
             id="allowOthersToManageQueue"
             checked={localSettings.allowOthersToManageQueue ?? false}
             onChange={(e) =>
-              handleChange("allowOthersToManageQueue", e.target.checked)
+              handleChange('allowOthersToManageQueue', e.target.checked)
             }
             data-testid="settings-toggle-allow-queue"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -145,8 +148,8 @@ export function TicketQueueSettings({
             </label>
             <select
               id="externalService"
-              value={localSettings.externalService || "none"}
-              onChange={(e) => handleChange("externalService", e.target.value)}
+              value={localSettings.externalService || 'none'}
+              onChange={(e) => handleChange('externalService', e.target.value)}
               data-testid="settings-select-external-service"
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
             >
@@ -155,7 +158,7 @@ export function TicketQueueSettings({
               <option value="linear">Linear</option>
               <option value="github">GitHub</option>
             </select>
-            {localSettings.externalService === "jira" && (
+            {localSettings.externalService === 'jira' && (
               <div className="space-y-3">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
                   {jiraLoading ? (
@@ -212,7 +215,7 @@ export function TicketQueueSettings({
 
                 {jiraStatus.connected && (
                   <div className="space-y-3">
-                    {renderAutoSyncToggle("jira", !!jiraStatus.connected)}
+                    {renderAutoSyncToggle('jira', !!jiraStatus.connected)}
                     <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
                       <div className="flex items-center justify-between">
                         <div>
@@ -230,10 +233,10 @@ export function TicketQueueSettings({
                           className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 transition dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 disabled:opacity-50"
                         >
                           {fieldsLoading
-                            ? "Refreshing…"
+                            ? 'Refreshing…'
                             : fieldsLoaded
-                              ? "Refresh"
-                              : "Load fields"}
+                            ? 'Refresh'
+                            : 'Load fields'}
                         </button>
                       </div>
 
@@ -252,7 +255,7 @@ export function TicketQueueSettings({
                             </label>
                             <select
                               id="jiraStoryPointsField"
-                              value={jiraStatus.storyPointsField ?? ""}
+                              value={jiraStatus.storyPointsField ?? ''}
                               onChange={(e) =>
                                 saveFieldConfiguration({
                                   storyPointsField: e.target.value || null,
@@ -265,7 +268,7 @@ export function TicketQueueSettings({
                               {fields.map((field: JiraFieldOption) => (
                                 <option key={field.id} value={field.id}>
                                   {field.name}
-                                  {field.type ? ` (${field.type})` : ""}
+                                  {field.type ? ` (${field.type})` : ''}
                                 </option>
                               ))}
                             </select>
@@ -280,7 +283,7 @@ export function TicketQueueSettings({
                             </label>
                             <select
                               id="jiraSprintField"
-                              value={jiraStatus.sprintField ?? ""}
+                              value={jiraStatus.sprintField ?? ''}
                               onChange={(e) =>
                                 saveFieldConfiguration({
                                   sprintField: e.target.value || null,
@@ -293,7 +296,7 @@ export function TicketQueueSettings({
                               {fields.map((field: JiraFieldOption) => (
                                 <option key={field.id} value={field.id}>
                                   {field.name}
-                                  {field.type ? ` (${field.type})` : ""}
+                                  {field.type ? ` (${field.type})` : ''}
                                 </option>
                               ))}
                             </select>
@@ -311,7 +314,7 @@ export function TicketQueueSettings({
                 )}
               </div>
             )}
-            {localSettings.externalService === "linear" && (
+            {localSettings.externalService === 'linear' && (
               <div className="space-y-3">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
                   {linearLoading ? (
@@ -366,49 +369,56 @@ export function TicketQueueSettings({
                   )}
                 </div>
 
-                {renderAutoSyncToggle("linear", linearStatus.connected ?? false)}
+                {renderAutoSyncToggle(
+                  'linear',
+                  linearStatus.connected ?? false
+                )}
                 {linearStatus.connected && (
                   <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs text-purple-800 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-100">
-                    Estimate field: {linearStatus.estimateField || "Team default"}
+                    Estimate field:{' '}
+                    {linearStatus.estimateField || 'Team default'}
                     <br />
-                    Field selection UI is coming soon—using your team default for
-                    now.
+                    Field selection UI is coming soon—using your team default
+                    for now.
                   </div>
                 )}
               </div>
             )}
-            {localSettings.externalService === "github" && (
-                  <div className="space-y-3">
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                      {githubLoading ? (
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Loading connection status...
-                        </p>
-                      ) : githubStatus.connected ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                ✓ Connected to GitHub
-                              </p>
-                              {(githubStatus.defaultOwner ||
-                                githubStatus.defaultRepo) && (
-                                <p className="text-xs text-slate-600 dark:text-slate-400">
-                                  Repo:{" "}
-                                  {[githubStatus.defaultOwner, githubStatus.defaultRepo]
-                                    .filter(Boolean)
-                                    .join("/")}
-                                </p>
-                              )}
-                              {githubStatus.githubLogin && (
-                                <p className="text-xs text-slate-600 dark:text-slate-400">
-                                  {githubStatus.githubLogin}
-                                </p>
-                              )}
-                            </div>
-                            <button
-                              onClick={githubDisconnect}
-                              disabled={githubLoading}
+            {localSettings.externalService === 'github' && (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+                  {githubLoading ? (
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Loading connection status...
+                    </p>
+                  ) : githubStatus.connected ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            ✓ Connected to GitHub
+                          </p>
+                          {(githubStatus.defaultOwner ||
+                            githubStatus.defaultRepo) && (
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              Repo:{' '}
+                              {[
+                                githubStatus.defaultOwner,
+                                githubStatus.defaultRepo,
+                              ]
+                                .filter(Boolean)
+                                .join('/')}
+                            </p>
+                          )}
+                          {githubStatus.githubLogin && (
+                            <p className="text-xs text-slate-600 dark:text-slate-400">
+                              {githubStatus.githubLogin}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={githubDisconnect}
+                          disabled={githubLoading}
                           className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:bg-red-700 disabled:opacity-50"
                         >
                           Disconnect

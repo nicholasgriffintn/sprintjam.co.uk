@@ -7,12 +7,12 @@ export class SettingsModal {
     return this.page.getByRole("dialog", { name: "Room Settings" });
   }
 
-  private async goToTab(tab: "voting" | "collaboration" | "queue" | "atmosphere") {
+  private async goToTab(tab: "voting" | "results" | "queue" | "atmosphere") {
     const tabLabel =
       tab === "voting"
         ? "Voting"
-        : tab === "collaboration"
-          ? "Collaboration"
+        : tab === "results"
+          ? "Results"
           : tab === "queue"
             ? "Ticket queue"
             : "Atmosphere";
@@ -26,6 +26,21 @@ export class SettingsModal {
   }
 
   private getTabForSetting(settingTestId: string) {
+    const resultsSettings = [
+      "allow-voting-after-reveal",
+      "auto-reveal",
+      "always-reveal",
+      "show-timer",
+      "show-average",
+      "show-median",
+      "show-top-votes",
+      "anonymous-votes",
+    ];
+
+    if (resultsSettings.some((key) => settingTestId.includes(key))) {
+      return "results" as const;
+    }
+
     if (
       settingTestId.includes("queue") ||
       settingTestId.includes("external") ||
@@ -40,10 +55,21 @@ export class SettingsModal {
     ) {
       return "voting" as const;
     }
+    if (
+      settingTestId.includes("allow") ||
+      settingTestId.includes("handover") ||
+      settingTestId.includes("hide-names") ||
+      settingTestId.includes("presence")
+    ) {
+      return "voting" as const;
+    }
+    if (settingTestId.includes("judge")) {
+      return "results" as const;
+    }
     if (settingTestId.includes("strudel")) {
       return "atmosphere" as const;
     }
-    return "collaboration" as const;
+    return "results" as const;
   }
 
   async open() {

@@ -115,7 +115,7 @@ test.describe("Room Screen Accessibility", () => {
   }) => {
     await page.getByRole("button", { name: /settings/i }).click();
     const settingsDialog = page.getByRole("dialog", { name: "Room Settings" });
-    await settingsDialog.getByRole("button", { name: "Collaboration" }).click();
+    await settingsDialog.getByRole("button", { name: "Results" }).click();
     const timerToggle = settingsDialog.getByTestId(
       "settings-toggle-show-timer",
     );

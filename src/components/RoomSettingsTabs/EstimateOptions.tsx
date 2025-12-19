@@ -3,7 +3,8 @@ import type {
   RoomSettings,
   VotingSequenceId,
   VotingSequenceTemplate,
-} from "@/types";
+} from '@/types';
+import { ChevronDown } from 'lucide-react';
 
 export function EstimateOptions({
   localSettings,
@@ -44,16 +45,18 @@ export function EstimateOptions({
     <div className="space-y-3">
       {!hideSelection && (
         <>
-          <div className="flex items-center justify-between gap-3">
-            <label
-              htmlFor="voting-sequence-select"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-            >
-              Estimate Options
-            </label>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Choose a preset or craft your own sequence.
-            </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <label
+                htmlFor="voting-sequence-select"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                Estimate Options
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Choose a preset or craft your own sequence.
+              </p>
+            </div>
             <select
               id="voting-sequence-select"
               value={selectedSequenceId}
@@ -73,10 +76,7 @@ export function EstimateOptions({
             </select>
           </div>
           <div className="space-y-1">
-            <label
-              htmlFor="estimateOptions"
-              className="sr-only"
-            >
+            <label htmlFor="estimateOptions" className="sr-only">
               Custom estimate options
             </label>
             <input
@@ -116,43 +116,49 @@ export function EstimateOptions({
       )}
 
       {showExtraOptions ? (
-        <div className="rounded-2xl border border-white/60 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/50">
-          <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-            Extra votes (always available)
-          </p>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
-            Special actions that won't affect the score but can guide
-            discussion.
-          </p>
-          <div className="space-y-2">
-            {extraVoteOptions.map((option) => (
-              <label
-                key={option.id}
-                className="flex items-start gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm text-slate-800 shadow-sm ring-1 ring-white/60 transition hover:bg-white/80 dark:bg-slate-800/60 dark:text-slate-100 dark:ring-white/10"
-              >
-                <input
-                  type="checkbox"
-                  checked={option.enabled !== false}
-                  onChange={(e) =>
-                    onToggleExtraVote(option.id, e.target.checked)
-                  }
-                  data-testid={`extra-option-${option.id}`}
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                />
-                <div className="leading-tight">
-                  <span className="font-semibold">
-                    {option.value} {option.label}
-                  </span>
-                  {option.description && (
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {option.description}
-                    </p>
-                  )}
-                </div>
-              </label>
-            ))}
+        <details className="group rounded-2xl border border-white/60 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/50">
+          <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-semibold text-slate-700 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white">
+            <span>Extra voting options</span>
+            <ChevronDown
+              className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180 dark:text-slate-400"
+              aria-hidden
+            />
+          </summary>
+          <div className="mt-2 space-y-1">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Special actions that won't affect the score but can guide
+              discussion.
+            </p>
+            <div className="space-y-2">
+              {extraVoteOptions.map((option) => (
+                <label
+                  key={option.id}
+                  className="flex items-start gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm text-slate-800 shadow-sm ring-1 ring-white/60 transition hover:bg-white/80 dark:bg-slate-800/60 dark:text-slate-100 dark:ring-white/10"
+                >
+                  <input
+                    type="checkbox"
+                    checked={option.enabled !== false}
+                    onChange={(e) =>
+                      onToggleExtraVote(option.id, e.target.checked)
+                    }
+                    data-testid={`extra-option-${option.id}`}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                  />
+                  <div className="leading-tight">
+                    <span className="font-semibold">
+                      {option.value} {option.label}
+                    </span>
+                    {option.description && (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {option.description}
+                      </p>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
+        </details>
       ) : null}
     </div>
   );

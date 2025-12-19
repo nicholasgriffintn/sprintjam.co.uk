@@ -1,14 +1,14 @@
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useState, type FC } from 'react';
 
 import type {
   RoomSettings,
   VotingSequenceId,
   VotingSequenceTemplate,
   ExtraVoteOption,
-} from "@/types";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
-import { RoomSettingsTabs } from "@/components/RoomSettingsTabs";
+} from '@/types';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { RoomSettingsTabs } from '@/components/RoomSettingsTabs';
 
 interface SettingsModalProps {
   isOpen: boolean;
