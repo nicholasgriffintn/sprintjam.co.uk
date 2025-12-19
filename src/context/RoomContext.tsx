@@ -68,6 +68,10 @@ interface RoomContextValue {
   roomErrorKind: ErrorKind | null;
   clearRoomError: () => void;
   reportRoomError: (message: string, kind?: ErrorKind | null) => void;
+  pendingCreateSettings: Partial<RoomSettings> | null;
+  setPendingCreateSettings: (
+    settings: Partial<RoomSettings> | null,
+  ) => void;
   handleCreateRoom: (settings?: Partial<RoomSettings>) => Promise<void>;
   handleJoinRoom: () => Promise<void>;
   handleLeaveRoom: () => void;
@@ -122,6 +126,9 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     useState<ErrorConnectionIssue | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [reconnectSignal, setReconnectSignal] = useState<number>(0);
+  const [pendingCreateSettings, setPendingCreateSettings] = useState<
+    Partial<RoomSettings> | null
+  >(null);
 
   const {
     serverDefaults,
@@ -271,6 +278,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     async (settings?: Partial<RoomSettings>) => {
       if (!name || !selectedAvatar) return;
 
+      const resolvedSettings = settings ?? pendingCreateSettings ?? undefined;
+
       setIsLoading(true);
       clearError();
 
@@ -282,7 +291,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         } = await createRoom(
           name,
           passcode || undefined,
-          settings,
+          resolvedSettings,
           selectedAvatar,
         );
         applyServerDefaults(defaults);
@@ -298,6 +307,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsModeratorView(true);
         setScreen("room");
+        setPendingCreateSettings(null);
       } catch (err: unknown) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to create room";
@@ -311,6 +321,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       selectedAvatar,
       passcode,
       applyServerDefaults,
+      pendingCreateSettings,
       clearError,
       setError,
       setScreen,
@@ -564,6 +575,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleToggleShowVotes,
       handleResetVotes,
       handleUpdateSettings,
+      pendingCreateSettings,
+      setPendingCreateSettings,
       handleSelectTicket,
       handleNextTicket,
       handleAddTicket,
@@ -596,6 +609,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleToggleShowVotes,
       handleResetVotes,
       handleUpdateSettings,
+      pendingCreateSettings,
+      setPendingCreateSettings,
       handleSelectTicket,
       handleNextTicket,
       handleAddTicket,

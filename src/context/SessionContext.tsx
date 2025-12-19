@@ -24,6 +24,8 @@ export type AppScreen =
 interface SessionContextValue {
   screen: AppScreen;
   setScreen: (screen: AppScreen) => void;
+  joinFlowMode: "join" | "create";
+  setJoinFlowMode: (mode: "join" | "create") => void;
   name: string;
   setName: (name: string) => void;
   roomKey: string;
@@ -78,6 +80,9 @@ export const SessionProvider = ({
 }) => {
   const screenFromPath = getScreenFromPath(currentPath);
   const [screen, setScreen] = useState<AppScreen>(screenFromPath);
+  const [joinFlowMode, setJoinFlowMode] = useState<"join" | "create">(
+    screenFromPath === "create" ? "create" : "join",
+  );
   const [name, setName] = useState("");
   const [roomKey, setRoomKey] = useState("");
   const [passcode, setPasscode] = useState("");
@@ -100,18 +105,21 @@ export const SessionProvider = ({
 
   const goHome = useCallback(() => {
     setPasscode("");
+    setJoinFlowMode("join");
     setScreen("welcome");
     clearError();
   }, [clearError]);
 
   const startCreateFlow = useCallback(() => {
     setPasscode("");
+    setJoinFlowMode("create");
     setScreen("create");
     clearError();
   }, [clearError]);
 
   const startJoinFlow = useCallback(() => {
     setPasscode("");
+    setJoinFlowMode("join");
     setScreen("join");
     clearError();
   }, [clearError]);
@@ -132,6 +140,8 @@ export const SessionProvider = ({
     () => ({
       screen,
       setScreen,
+      joinFlowMode,
+      setJoinFlowMode,
       name,
       setName,
       roomKey,
@@ -150,6 +160,7 @@ export const SessionProvider = ({
     }),
     [
       screen,
+      joinFlowMode,
       name,
       roomKey,
       passcode,

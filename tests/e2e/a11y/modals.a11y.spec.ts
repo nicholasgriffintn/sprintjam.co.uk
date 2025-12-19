@@ -6,20 +6,13 @@ test.describe("Modal Dialogs Accessibility", () => {
     await page.goto("/");
     await page.getByRole("button", { name: /create.*room/i }).click();
 
-    // Step 1: Name
     await page.locator("#create-name").fill("Modal Test User");
     await page.getByTestId("create-room-submit").click();
     await waitForA11yReady(page);
 
-    // Step 2: Avatar
     await page.getByTestId("avatar-option-robot").first().click();
-    await page.getByTestId("create-room-submit").click();
+    await page.getByTestId("join-room-submit").click();
     await waitForA11yReady(page);
-
-    // Step 3: Final create button
-    const createButton = page.getByTestId("create-room-submit");
-    await expect(createButton).toBeVisible();
-    await createButton.click();
 
     // Wait for room to be created
     await expect(page.getByTestId("participants-panel")).toBeVisible();

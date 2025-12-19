@@ -1,11 +1,20 @@
 import { test, expect } from "@playwright/test";
 import { checkA11y, waitForA11yReady } from "../../helpers/a11y-helpers";
 
+async function createAndOpenAvatarStep(page) {
+  await page.goto("/");
+  await page.getByRole("button", { name: /create.*room/i }).click();
+  await waitForA11yReady(page);
+}
+
+async function proceedToAvatar(page) {
+  await page.getByTestId("create-room-submit").click();
+  await waitForA11yReady(page);
+}
+
 test.describe("Room Creation Flow Accessibility", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: /create.*room/i }).click();
-    await waitForA11yReady(page);
+    await createAndOpenAvatarStep(page);
   });
 
   test("should not have any WCAG A & AA violations on create room screen", async ({
@@ -20,8 +29,7 @@ test.describe("Room Creation Flow Accessibility", () => {
 
   test("avatar selector should be accessible", async ({ page }) => {
     await page.locator("#create-name").fill("Test User");
-    await page.getByTestId("create-room-submit").click();
-    await waitForA11yReady(page);
+    await proceedToAvatar(page);
 
     const results = await checkA11y(page, {
       runOnly: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
@@ -42,24 +50,23 @@ test.describe("Room Creation Flow Accessibility", () => {
     // Should be able to type
     await nameInput.fill("Test User");
 
-    // Navigate to submit button
-    const submitButton = page.getByTestId("create-room-submit");
-    await submitButton.click();
-    await waitForA11yReady(page);
+    // Navigate to submit button and continue
+    await proceedToAvatar(page);
 
-    // Should navigate to avatar selection
-    await expect(page.getByText(/pick an avatar/i)).toBeVisible();
+    // Should navigate to avatar selection (join flow)
+    await expect(
+      page.getByRole("heading", { name: /avatar/i }),
+    ).toBeVisible();
   });
 
   test("custom emoji picker exposes aria-expanded and controls", async ({
     page,
   }) => {
     await page.locator("#create-name").fill("Accessibility Test");
-    await page.getByTestId("create-room-submit").click();
-    await waitForA11yReady(page);
+    await proceedToAvatar(page);
 
     await expect(
-      page.getByRole("heading", { name: /select your avatar/i }),
+      page.getByRole("heading", { name: /avatar/i }),
     ).toBeVisible();
 
     const toggle = page.getByTestId("avatar-emoji-toggle");

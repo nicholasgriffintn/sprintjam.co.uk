@@ -1,5 +1,5 @@
 import type { ChangeEvent, FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Users, Key, Lock, User, ChevronRight } from "lucide-react";
 
@@ -27,33 +27,52 @@ const JoinRoomScreen = () => {
     setRoomKey,
     setPasscode,
     setSelectedAvatar,
+    setScreen,
+    joinFlowMode,
+    setJoinFlowMode,
     goHome,
     error,
     errorKind,
     clearError,
   } = useSession();
-  const { handleJoinRoom, isLoading } = useRoom();
+  const { handleJoinRoom, handleCreateRoom, isLoading } = useRoom();
   const [currentStep, setCurrentStep] = useState<"details" | "avatar">(
-    "details",
+    joinFlowMode === "create" ? "avatar" : "details",
   );
+  const isCreateFlow = joinFlowMode === "create";
   const isPasscodeError = errorKind === "passcode";
   const isPermissionError = errorKind === "permission";
   const isAuthError = errorKind === "auth";
   const shouldShowAlert = !!error && !isPasscodeError;
 
+  useEffect(() => {
+    setCurrentStep(joinFlowMode === "create" ? "avatar" : "details");
+  }, [joinFlowMode]);
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (currentStep === "details" && name.trim() && roomKey.trim()) {
+    if (
+      currentStep === "details" &&
+      name.trim() &&
+      (isCreateFlow || roomKey.trim())
+    ) {
       setCurrentStep("avatar");
     } else if (currentStep === "avatar" && selectedAvatar) {
       clearError();
-      handleJoinRoom();
+      if (isCreateFlow) {
+        void handleCreateRoom();
+        setJoinFlowMode("join");
+      } else {
+        void handleJoinRoom();
+      }
     }
   };
 
   const handleBack = () => {
     if (currentStep === "avatar") {
       setCurrentStep("details");
+    } else if (isCreateFlow) {
+      setScreen("create");
     } else {
       goHome();
     }
@@ -61,6 +80,9 @@ const JoinRoomScreen = () => {
 
   const getFormValid = () => {
     if (currentStep === "details") {
+      if (isCreateFlow) {
+        return name.trim();
+      }
       return name.trim() && roomKey.trim();
     }
     if (currentStep === "avatar") {
@@ -71,18 +93,24 @@ const JoinRoomScreen = () => {
 
   const getButtonText = () => {
     if (currentStep === "details") return "Continue";
-    return "Join";
+    return isCreateFlow ? "Create & join" : "Join";
   };
 
   const getStepTitle = () => {
-    if (currentStep === "details") return "Join Room";
-    return "Select Your Avatar";
+    if (currentStep === "details")
+      return isCreateFlow ? "Details confirmed" : "Join Room";
+    return isCreateFlow ? "Pick your avatar" : "Select Your Avatar";
   };
 
   const getStepDescription = () => {
-    if (currentStep === "details")
-      return "Enter the room details to join your team";
-    return "Choose an avatar to represent you in the room";
+    if (currentStep === "details") {
+      return isCreateFlow
+        ? "We prefilled the basics from your create flow. Adjust your name or passcode if needed."
+        : "Enter the room details to join your team";
+    }
+    return isCreateFlow
+      ? "Choose an avatar to join your new room as moderator"
+      : "Choose an avatar to represent you in the room";
   };
 
   return (
@@ -162,29 +190,33 @@ const JoinRoomScreen = () => {
                   isValid={!!name.trim()}
                 />
 
-                <Input
-                  id="join-room-key"
-                  label={
-                    <span className="flex items-center gap-2">
-                      <Key className="h-4 w-4" />
-                      Room key
-                    </span>
-                  }
-                  type="text"
-                  value={roomKey}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setRoomKey(e.target.value.replace(/\s+/g, "").toUpperCase())
-                  }
-                  placeholder="0MTINL"
-                  maxLength={6}
-                  required
-                  fullWidth
-                  icon={<Key className="h-4 w-4" />}
-                  showValidation
-                  isValid={!!roomKey.trim()}
-                  helperText="Six characters shared by your moderator."
-                  className="font-mono tracking-[0.35em] text-center"
-                />
+                {!isCreateFlow && (
+                  <Input
+                    id="join-room-key"
+                    label={
+                      <span className="flex items-center gap-2">
+                        <Key className="h-4 w-4" />
+                        Room key
+                      </span>
+                    }
+                    type="text"
+                    value={roomKey}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setRoomKey(
+                        e.target.value.replace(/\s+/g, "").toUpperCase(),
+                      )
+                    }
+                    placeholder="0MTINL"
+                    maxLength={6}
+                    required
+                    fullWidth
+                    icon={<Key className="h-4 w-4" />}
+                    showValidation
+                    isValid={!!roomKey.trim()}
+                    helperText="Six characters shared by your moderator."
+                    className="font-mono tracking-[0.35em] text-center"
+                  />
+                )}
 
                 <Input
                   id="join-passcode"

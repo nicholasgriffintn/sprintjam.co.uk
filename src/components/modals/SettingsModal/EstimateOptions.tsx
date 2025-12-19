@@ -45,18 +45,17 @@ export function EstimateOptions({
       {!hideSelection && (
         <>
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <label
-                htmlFor="estimateOptions"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                Estimate Options
-              </label>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Choose a preset or craft your own sequence.
-              </p>
-            </div>
+            <label
+              htmlFor="voting-sequence-select"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
+              Estimate Options
+            </label>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Choose a preset or craft your own sequence.
+            </p>
             <select
+              id="voting-sequence-select"
               value={selectedSequenceId}
               disabled={localSettings.enableStructuredVoting}
               onChange={(e) =>
@@ -74,6 +73,12 @@ export function EstimateOptions({
             </select>
           </div>
           <div className="space-y-1">
+            <label
+              htmlFor="estimateOptions"
+              className="sr-only"
+            >
+              Custom estimate options
+            </label>
             <input
               id="estimateOptions"
               type="text"

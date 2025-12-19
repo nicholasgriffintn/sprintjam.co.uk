@@ -59,17 +59,18 @@ export async function createRoomWithParticipant(
     await welcomeForModerator.startCreateRoom();
 
     const createRoom = new CreateRoomPage(moderatorPage);
-    await createRoom.completeNameStep(moderatorName);
-    await createRoom.selectAvatar("avatar-option-robot");
+    await createRoom.fillBasics(moderatorName, roomPasscode);
 
-    if (roomPasscode || enableStructuredVotingOnCreate) {
-      await createRoom.configureRoomDetails({
-        passcode: roomPasscode,
-        enableStructuredVoting: enableStructuredVotingOnCreate,
-      });
+    if (enableStructuredVotingOnCreate) {
+      await createRoom.openAdvancedSetup();
+      await createRoom.enableStructuredVotingInAdvanced();
+      await createRoom.continueAdvancedSetup();
+    } else {
+      await createRoom.startInstantRoom();
     }
 
-    await createRoom.finishCreation();
+    const joinAfterCreate = new JoinRoomPage(moderatorPage);
+    await joinAfterCreate.selectAvatarOnlyAndJoin("avatar-option-robot");
 
     const moderatorRoom = new RoomPage(moderatorPage);
     await moderatorRoom.waitForLoaded();
