@@ -6,11 +6,13 @@ import { FeedbackForm } from "@/components/FeedbackForm";
 
 type FooterProps = {
   displayRepoLink?: boolean;
+  layout?: 'standard' | 'wide';
   fullWidth?: boolean;
 };
 
 export const Footer = ({
   displayRepoLink = true,
+  layout = 'standard',
   fullWidth = true,
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
@@ -18,11 +20,15 @@ export const Footer = ({
   return (
     <>
       <footer
-        className={`${fullWidth ? "max-w-full" : "max-w-2xl"} mx-auto mt-8 grid grid-cols-1 items-center gap-4 text-sm text-slate-700 dark:text-slate-400 lg:grid-cols-[1fr_auto]`}
+        className={`${fullWidth ? 'max-w-full' : 'max-w-2xl'} ${
+          layout === 'wide'
+            ? 'lg:grid-cols-[1fr_auto] text-center lg:justify-start lg:text-left'
+            : 'grid-cols-1 text-center'
+        } mx-auto mt-8 grid items-center gap-4 text-sm text-slate-700 dark:text-slate-400`}
       >
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center lg:justify-start lg:text-left">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <span>
-            Built by{" "}
+            Built by{' '}
             <a
               href="https://nicholasgriffin.dev"
               target="_blank"
@@ -55,7 +61,11 @@ export const Footer = ({
           </a>
         </div>
 
-        <div className="flex w-full flex-wrap items-center justify-center gap-2 lg:w-auto lg:flex-nowrap lg:justify-end">
+        <div
+          className={`${
+            fullWidth ? ' lg:w-auto lg:flex-nowrap' : ''
+          } flex w-full flex-wrap items-center justify-center gap-2`}
+        >
           <button
             type="button"
             onClick={() => setIsFeedbackOpen(true)}
