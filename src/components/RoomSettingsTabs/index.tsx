@@ -37,6 +37,7 @@ interface RoomSettingsTabsProps {
   className?: string;
   isActive?: boolean;
   resetKey?: string | number;
+  hideVotingModeAndEstimates?: boolean;
 }
 
 export function RoomSettingsTabs({
@@ -50,6 +51,7 @@ export function RoomSettingsTabs({
   className = '',
   isActive = true,
   resetKey = 0,
+  hideVotingModeAndEstimates = false,
 }: RoomSettingsTabsProps) {
   const structuredOptions = structuredVotingOptions ?? [];
   const presets = useMemo(() => {
@@ -371,7 +373,11 @@ export function RoomSettingsTabs({
   };
 
   const tabs: { id: TabId; label: string; description: string }[] = [
-    { id: 'voting', label: 'Voting', description: 'Mode & permissions' },
+    {
+      id: 'voting',
+      label: 'Voting',
+      description: hideVotingModeAndEstimates ? 'Permissions' : 'Mode & permissions',
+    },
     {
       id: 'results',
       label: 'Results',
@@ -385,29 +391,33 @@ export function RoomSettingsTabs({
     if (activeTab === 'voting') {
       return (
         <div className="space-y-6">
-          <VotingMode
-            localSettings={localSettings}
-            handleChange={handleChange}
-          />
-          <EstimateOptions
-            localSettings={localSettings}
-            defaultSettings={defaultSettings}
-            structuredVotingOptions={structuredOptions}
-            estimateOptionsInput={estimateOptionsInput}
-            handleEstimateOptionsChange={handleEstimateOptionsChange}
-            votingPresets={presets}
-            selectedSequenceId={selectedSequenceId}
-            onSelectSequence={handleSelectSequence}
-            extraVoteOptions={extraOptions}
-            onToggleExtraVote={handleToggleExtraOption}
-            defaultSequenceId={
-              defaultSequenceId ??
-              initialSettings.votingSequenceId ??
-              (presets[0]?.id as VotingSequenceId) ??
-              'custom'
-            }
-            hideSelection={localSettings.enableStructuredVoting === true}
-          />
+          {!hideVotingModeAndEstimates && (
+            <>
+              <VotingMode
+                localSettings={localSettings}
+                handleChange={handleChange}
+              />
+              <EstimateOptions
+                localSettings={localSettings}
+                defaultSettings={defaultSettings}
+                structuredVotingOptions={structuredOptions}
+                estimateOptionsInput={estimateOptionsInput}
+                handleEstimateOptionsChange={handleEstimateOptionsChange}
+                votingPresets={presets}
+                selectedSequenceId={selectedSequenceId}
+                onSelectSequence={handleSelectSequence}
+                extraVoteOptions={extraOptions}
+                onToggleExtraVote={handleToggleExtraOption}
+                defaultSequenceId={
+                  defaultSequenceId ??
+                  initialSettings.votingSequenceId ??
+                  (presets[0]?.id as VotingSequenceId) ??
+                  'custom'
+                }
+                hideSelection={localSettings.enableStructuredVoting === true}
+              />
+            </>
+          )}
           <PermissionsOptions
             localSettings={localSettings}
             handleChange={handleChange}

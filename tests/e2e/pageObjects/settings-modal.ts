@@ -80,13 +80,22 @@ export class SettingsModal {
   async toggle(settingTestId: string, enabled: boolean) {
     const tab = this.getTabForSetting(settingTestId);
     await this.goToTab(tab);
-    const checkbox = this.modal().getByTestId(settingTestId);
-    await expect(checkbox).toBeVisible();
-    await checkbox.scrollIntoViewIfNeeded();
-    if (enabled) {
-      await checkbox.check();
+    const element = this.modal().getByTestId(settingTestId);
+    await expect(element).toBeVisible();
+    await element.scrollIntoViewIfNeeded();
+
+    const role = await element.getAttribute("role");
+    if (role === "switch") {
+      const isCurrentlyEnabled = (await element.getAttribute("aria-checked")) === "true";
+      if (isCurrentlyEnabled !== enabled) {
+        await element.click();
+      }
     } else {
-      await checkbox.uncheck();
+      if (enabled) {
+        await element.check();
+      } else {
+        await element.uncheck();
+      }
     }
   }
 

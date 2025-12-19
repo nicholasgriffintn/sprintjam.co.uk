@@ -16,16 +16,16 @@ export class CreateRoomPage {
     await instantButton.click();
   }
 
-  async openAdvancedSetup() {
-    await this.page.getByTestId("create-room-advanced").click();
+  async enableStructuredVoting() {
+    const toggle = this.page.getByTestId("create-voting-mode");
+    const isEnabled = await toggle.getAttribute("aria-checked");
+    if (isEnabled !== "true") {
+      await toggle.click();
+    }
   }
 
-  async enableStructuredVotingInAdvanced() {
-    const toggle = this.page.getByTestId("settings-toggle-structured-voting");
-    const isChecked = await toggle.isChecked();
-    if (!isChecked) {
-      await toggle.check({ force: true });
-    }
+  async openAdvancedSetup() {
+    await this.page.getByTestId("create-room-advanced").click();
   }
 
   async continueAdvancedSetup() {
