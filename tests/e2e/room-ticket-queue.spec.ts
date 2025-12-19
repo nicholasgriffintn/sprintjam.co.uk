@@ -103,7 +103,7 @@ test.describe("Ticket Queue", () => {
       await page.waitForTimeout(250);
 
       // Votes should be cleared
-      await moderatorRoom.expectVotesHiddenMessage('No votes yet');
+      await moderatorRoom.expectVotesHiddenMessage("You haven't voted yet");
     } finally {
       await cleanup();
     }

@@ -2,6 +2,7 @@
 
 ### Coming Next
 
+- Improved the results hidden state display so it's clear what to do next and is based on the individual's votes not the room's.
 - Improved the create room flow. Now it's just a two step process. You can either create an instant room with the default settings or you can use the advanced settings to configure the room as you want before you create it. After creating, you'll just need to select your avatar and then you're ready to go.
 - Added a new Feedback button to the footer for users to submit their feedback directly from the app. This feedback is filed as issues in a GitHub repository for easy tracking and management.
 - Added a setting to restrict voting updates after the votes have been revealed and defaulted to enabled for new rooms

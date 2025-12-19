@@ -44,8 +44,8 @@ test.describe("Collaboration journeys", () => {
       await moderatorRoom.expectResultsVisible();
 
       await moderatorRoom.resetVotes();
-      await moderatorRoom.expectVotesHiddenMessage("No votes yet");
-      await participantRoom.expectVotesHiddenMessage("No votes yet");
+      await moderatorRoom.expectVotesHiddenMessage("You haven't voted yet");
+      await participantRoom.expectVotesHiddenMessage("You haven't voted yet");
     } finally {
       await cleanup();
     }
@@ -165,7 +165,7 @@ test.describe("Collaboration journeys", () => {
         participantName,
         false,
       );
-      await moderatorRoom.expectVotesHiddenMessage("No votes yet");
+      await moderatorRoom.expectVotesHiddenMessage("You haven't voted yet");
     } finally {
       await cleanup();
     }

@@ -44,7 +44,11 @@ export class RoomPage {
   }
 
   async expectVotePendingState() {
-    await this.expectVotesHiddenMessage("Votes are hidden");
+    const panel = this.page.getByTestId("votes-hidden-panel");
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(
+      /(Waiting for (the )?moderator to reveal|You haven't voted yet)/,
+    );
   }
 
   async revealVotes() {

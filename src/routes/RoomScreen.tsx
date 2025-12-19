@@ -241,7 +241,16 @@ const RoomScreen = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.3 }}
                   >
-                    <VotesHidden votes={roomData.votes} />
+                    <VotesHidden
+                      votes={roomData.votes}
+                      structuredVotes={roomData.structuredVotes}
+                      isStructuredVotingEnabled={
+                        roomData.settings.enableStructuredVoting
+                      }
+                      users={roomData.users}
+                      currentUserName={name}
+                      isAnonymousVoting={roomData.settings.anonymousVotes}
+                    />
                   </motion.div>
                 </SurfaceCard>
 
