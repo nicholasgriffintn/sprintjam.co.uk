@@ -446,8 +446,8 @@ export function RoomSettingsTabs({
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      <div className="flex gap-2 overflow-x-auto rounded-2xl border border-white/60 bg-white/60 p-2 dark:border-white/10 dark:bg-slate-900/60">
+    <div className={`space-y-6 ${className}`}>
+      <div className="flex overflow-x-auto border-b border-white/60 dark:border-white/10">
         {tabs.map((tab) => {
           const isActiveTab = tab.id === activeTab;
           return (
@@ -455,16 +455,18 @@ export function RoomSettingsTabs({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex min-w-[140px] flex-none flex-col rounded-xl px-3 py-2 text-left transition ${
+              className={`group relative flex-none px-4 pb-3 pt-1 text-left transition ${
                 isActiveTab
-                  ? 'bg-white text-slate-900 shadow-sm ring-2 ring-brand-200 dark:bg-slate-800 dark:text-white dark:ring-brand-700/60'
-                  : 'bg-transparent text-slate-600 hover:bg-white/70 dark:text-slate-300 dark:hover:bg-slate-800/70'
+                  ? 'text-slate-900 dark:text-white'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              <span className="text-sm font-semibold">{tab.label}</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {tab.description}
+              <span className={`text-sm ${isActiveTab ? 'font-semibold' : 'font-medium'}`}>
+                {tab.label}
               </span>
+              {isActiveTab && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-500 to-brand-600 dark:from-brand-400 dark:to-brand-500" />
+              )}
             </button>
           );
         })}

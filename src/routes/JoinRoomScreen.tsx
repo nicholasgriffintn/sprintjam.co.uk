@@ -36,32 +36,38 @@ const JoinRoomScreen = () => {
     clearError,
   } = useSession();
   const { handleJoinRoom, handleCreateRoom, isLoading } = useRoom();
-  const [currentStep, setCurrentStep] = useState<"details" | "avatar">(
-    joinFlowMode === "create" ? "avatar" : "details",
+  const [currentStep, setCurrentStep] = useState<'details' | 'avatar'>(
+    joinFlowMode === 'create' ? 'avatar' : 'details'
   );
-  const isCreateFlow = joinFlowMode === "create";
-  const isPasscodeError = errorKind === "passcode";
-  const isPermissionError = errorKind === "permission";
-  const isAuthError = errorKind === "auth";
+  const isCreateFlow = joinFlowMode === 'create';
+
+  useEffect(() => {
+    if (currentStep === 'avatar' && !selectedAvatar) {
+      setSelectedAvatar('user');
+    }
+  }, [currentStep, selectedAvatar, setSelectedAvatar]);
+  const isPasscodeError = errorKind === 'passcode';
+  const isPermissionError = errorKind === 'permission';
+  const isAuthError = errorKind === 'auth';
   const shouldShowAlert = !!error && !isPasscodeError;
 
   useEffect(() => {
-    setCurrentStep(joinFlowMode === "create" ? "avatar" : "details");
+    setCurrentStep(joinFlowMode === 'create' ? 'avatar' : 'details');
   }, [joinFlowMode]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (
-      currentStep === "details" &&
+      currentStep === 'details' &&
       name.trim() &&
       (isCreateFlow || roomKey.trim())
     ) {
-      setCurrentStep("avatar");
-    } else if (currentStep === "avatar" && selectedAvatar) {
+      setCurrentStep('avatar');
+    } else if (currentStep === 'avatar' && selectedAvatar) {
       clearError();
       if (isCreateFlow) {
         void handleCreateRoom();
-        setJoinFlowMode("join");
+        setJoinFlowMode('join');
       } else {
         void handleJoinRoom();
       }
@@ -69,48 +75,48 @@ const JoinRoomScreen = () => {
   };
 
   const handleBack = () => {
-    if (currentStep === "avatar") {
-      setCurrentStep("details");
+    if (currentStep === 'avatar') {
+      setCurrentStep('details');
     } else if (isCreateFlow) {
-      setScreen("create");
+      setScreen('create');
     } else {
       goHome();
     }
   };
 
   const getFormValid = () => {
-    if (currentStep === "details") {
+    if (currentStep === 'details') {
       if (isCreateFlow) {
         return name.trim();
       }
       return name.trim() && roomKey.trim();
     }
-    if (currentStep === "avatar") {
+    if (currentStep === 'avatar') {
       return selectedAvatar;
     }
     return false;
   };
 
   const getButtonText = () => {
-    if (currentStep === "details") return "Continue";
-    return isCreateFlow ? "Create & join" : "Join";
+    if (currentStep === 'details') return 'Continue';
+    return isCreateFlow ? 'Create & join' : 'Join';
   };
 
   const getStepTitle = () => {
-    if (currentStep === "details")
-      return isCreateFlow ? "Details confirmed" : "Join Room";
-    return isCreateFlow ? "Pick your avatar" : "Select Your Avatar";
+    if (currentStep === 'details')
+      return isCreateFlow ? 'Details confirmed' : 'Join Room';
+    return isCreateFlow ? 'Pick your avatar' : 'Select Your Avatar';
   };
 
   const getStepDescription = () => {
-    if (currentStep === "details") {
+    if (currentStep === 'details') {
       return isCreateFlow
-        ? "We prefilled the basics from your create flow. Adjust your name or passcode if needed."
-        : "Enter the room details to join your team";
+        ? 'We prefilled the basics from your create flow. Adjust your name or passcode if needed.'
+        : 'Enter the room details to join your team';
     }
     return isCreateFlow
-      ? "Choose an avatar to join your new room as moderator"
-      : "Choose an avatar to represent you in the room";
+      ? 'Choose an avatar to join your new room as moderator'
+      : 'Choose an avatar to represent you in the room';
   };
 
   return (
@@ -135,7 +141,7 @@ const JoinRoomScreen = () => {
           </button>
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-brand-500">
-              Step {currentStep === "details" ? 1 : 2}/2
+              Step {currentStep === 'details' ? 1 : 2}/2
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
               {getStepTitle()}
@@ -156,18 +162,18 @@ const JoinRoomScreen = () => {
           >
             {shouldShowAlert && (
               <Alert
-                variant={isPermissionError || isAuthError ? "warning" : "error"}
+                variant={isPermissionError || isAuthError ? 'warning' : 'error'}
                 onDismiss={clearError}
               >
                 {isPermissionError
                   ? "You don't have permission to join this room."
                   : isAuthError
-                    ? "Session expired. Rejoin with a fresh link."
-                    : error}
+                  ? 'Session expired. Rejoin with a fresh link.'
+                  : error}
               </Alert>
             )}
 
-            {currentStep === "details" && (
+            {currentStep === 'details' && (
               <div className="space-y-6">
                 <Input
                   id="join-name"
@@ -203,7 +209,7 @@ const JoinRoomScreen = () => {
                     value={roomKey}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setRoomKey(
-                        e.target.value.replace(/\s+/g, "").toUpperCase(),
+                        e.target.value.replace(/\s+/g, '').toUpperCase()
                       )
                     }
                     placeholder="0MTINL"
@@ -238,7 +244,7 @@ const JoinRoomScreen = () => {
                   fullWidth
                   error={
                     isPasscodeError
-                      ? "Passcode incorrect. Ask the moderator to confirm it."
+                      ? 'Passcode incorrect. Ask the moderator to confirm it.'
                       : undefined
                   }
                   icon={<Lock className="h-4 w-4" />}
@@ -246,11 +252,8 @@ const JoinRoomScreen = () => {
               </div>
             )}
 
-            {currentStep === "avatar" && (
+            {currentStep === 'avatar' && (
               <div className="space-y-4">
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Choose your avatar
-                </p>
                 <AvatarSelector
                   selectedAvatar={selectedAvatar}
                   onSelectAvatar={setSelectedAvatar}
@@ -276,7 +279,7 @@ const JoinRoomScreen = () => {
                 disabled={!getFormValid() || isLoading}
                 className="sm:flex-1"
                 icon={
-                  currentStep === "details" ? (
+                  currentStep === 'details' ? (
                     <ChevronRight className="h-4 w-4" />
                   ) : (
                     <Users className="h-4 w-4" />
