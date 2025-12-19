@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Settings, Sparkles } from 'lucide-react';
 
-import type { RoomSettings } from '@/types';
+import type { RoomSettings, VotingSequenceId } from '@/types';
 import { useSession } from '@/context/SessionContext';
 import { useRoom } from '@/context/RoomContext';
 import { PageBackground } from '@/components/layout/PageBackground';
@@ -41,12 +41,21 @@ const CreateRoomScreen = () => {
   );
   const advancedSettingsRef = useRef<RoomSettings | null>(defaults ?? null);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
+  const [votingMode, setVotingMode] = useState<'standard' | 'structured'>(
+    'standard'
+  );
+  const [selectedSequenceId, setSelectedSequenceId] =
+    useState<VotingSequenceId>('fibonacci-short');
 
   useEffect(() => {
     if (defaults) {
       setAdvancedSettings(defaults);
       advancedSettingsRef.current = defaults;
       setSettingsResetKey((key) => key + 1);
+      setVotingMode(
+        defaults.enableStructuredVoting ? 'structured' : 'standard'
+      );
+      setSelectedSequenceId(defaults.votingSequenceId ?? 'fibonacci-short');
     }
   }, [defaults]);
 
@@ -64,13 +73,18 @@ const CreateRoomScreen = () => {
     setScreen('join');
   };
 
-  const instantDescription = useMemo(
-    () =>
-      serverDefaults?.roomSettings?.enableStructuredVoting
-        ? 'Instant room uses server defaults with structured voting enabled.'
-        : 'Instant room uses server defaults so you can start pointing fast.',
-    [serverDefaults]
-  );
+  const buildQuickSettings = (): Partial<RoomSettings> | null => {
+    if (!defaults) return null;
+
+    const preset = votingPresets?.find((p) => p.id === selectedSequenceId);
+    const estimateOptions = preset?.options ?? defaults.estimateOptions;
+
+    return {
+      enableStructuredVoting: votingMode === 'structured',
+      votingSequenceId: selectedSequenceId,
+      estimateOptions,
+    };
+  };
 
   return (
     <PageBackground align="start" maxWidth="sm" variant="compact">
@@ -142,6 +156,86 @@ const CreateRoomScreen = () => {
               fullWidth
             />
 
+            <div className="space-y-4 rounded-2xl border border-white/60 bg-white/50 p-4 dark:border-white/10 dark:bg-slate-900/40">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label
+                      htmlFor="voting-mode"
+                      className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                    >
+                      Enable Structured Voting
+                    </label>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Multi-criteria voting with automatic story points
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={votingMode === 'structured'}
+                    id="voting-mode"
+                    onClick={() =>
+                      setVotingMode(
+                        votingMode === 'structured' ? 'standard' : 'structured'
+                      )
+                    }
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                      votingMode === 'structured'
+                        ? 'bg-brand-600 dark:bg-brand-500'
+                        : 'bg-slate-200 dark:bg-slate-700'
+                    }`}
+                    data-testid="create-voting-mode"
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        votingMode === 'structured'
+                          ? 'translate-x-5'
+                          : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="estimate-sequence"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  Estimate options
+                </label>
+                <select
+                  id="estimate-sequence"
+                  value={selectedSequenceId}
+                  onChange={(e) =>
+                    setSelectedSequenceId(e.target.value as VotingSequenceId)
+                  }
+                  disabled={votingMode === 'structured'}
+                  className="mt-1.5 w-full rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800 dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
+                  data-testid="create-estimate-sequence"
+                >
+                  {votingPresets?.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {votingMode === 'structured'
+                    ? '(Always uses the default option for structured voting)'
+                    : (() => {
+                        const preset = votingPresets?.find(
+                          (p) => p.id === selectedSequenceId
+                        );
+                        return preset?.options
+                          ? `Cards: ${preset.options.join(', ')}`
+                          : 'Choose your estimation scale';
+                      })()}
+                </p>
+              </div>
+            </div>
+
             {!showAdvanced ? (
               <>
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -158,20 +252,16 @@ const CreateRoomScreen = () => {
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => handleStartFlow(null)}
+                    onClick={() => handleStartFlow(buildQuickSettings())}
                     disabled={!canStart}
                     className="sm:flex-1"
                     icon={<Sparkles className="h-4 w-4" />}
                     data-testid="create-room-submit"
                     fullWidth
                   >
-                    Create instant room
+                    Create room
                   </Button>
                 </div>
-
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {instantDescription}
-                </p>
               </>
             ) : (
               <div className="space-y-4">
@@ -196,6 +286,7 @@ const CreateRoomScreen = () => {
                       advancedSettingsRef.current = updated;
                     }}
                     resetKey={settingsResetKey}
+                    hideVotingModeAndEstimates={true}
                   />
                 ) : (
                   <div className="rounded-2xl border border-white/60 bg-white/70 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300">
