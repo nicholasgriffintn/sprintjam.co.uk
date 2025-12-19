@@ -30,6 +30,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 }) => {
   const ticketQueueId = useId();
   const progressLabelId = `${ticketQueueId}-progress`;
+  const progressDescriptionId = `${ticketQueueId}-progress-description`;
   const [localCollapsed, setLocalCollapsed] = useState(false);
 
   const queue = roomData?.ticketQueue || [];
@@ -43,10 +44,14 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
     [queue],
   );
   const totalCount = queue.length;
+  const totalTickets = totalCount || pending.length || 0;
+  const remainingTickets = Math.max(totalTickets - completedCount, 0);
+  const progressPercent =
+    totalTickets > 0 ? Math.round((completedCount / totalTickets) * 100) : 0;
   const labelText =
-    totalCount === 0
+    totalTickets === 0
       ? "No tickets yet"
-      : `${completedCount}/${totalCount} completed`;
+      : `${completedCount}/${totalTickets} completed`;
 
   const current = roomData?.currentTicket;
   const next = pending[0];
@@ -202,31 +207,34 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
         </div>
 
         <div
-          tabIndex={0}
           className={cn(
             "flex-1 space-y-3 overflow-y-auto px-4 py-4",
             collapsed && "hidden",
           )}
         >
           <div
-            id={progressLabelId}
             className="flex flex-col gap-0.5 text-sm text-slate-700 dark:text-slate-200"
           >
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span
+              id={progressLabelId}
+              className="text-xs text-slate-500 dark:text-slate-400"
+            >
               Session progress
             </span>
-            <span className="font-semibold">{labelText}</span>
+            <span id={progressDescriptionId} className="font-semibold">
+              {labelText}
+            </span>
           </div>
           <HorizontalProgress
-            total={totalCount || pending.length}
-            completed={completedCount}
+            total={100}
+            completed={progressPercent}
             role="progressbar"
-            aria-valuenow={totalCount || pending.length}
+            aria-valuenow={progressPercent}
             aria-valuemin={0}
-            aria-valuemax={totalCount}
-            aria-label="Session progress"
-            aria-describedby={progressLabelId}
-            aria-valuetext={`${pending.length} tickets remain out of ${completedCount}`}
+            aria-valuemax={100}
+            aria-labelledby={progressLabelId}
+            aria-describedby={progressDescriptionId}
+            aria-valuetext={`${remainingTickets} tickets remain out of ${totalTickets}`}
             data-testid="session-progress-bar"
           />
 
@@ -249,7 +257,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     No tickets in queue
                   </p>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+                  <p className="mt-1 text-sm font-medium text-slate-800 dark:text-white">
                     Click Expand to add tickets
                   </p>
                 </div>

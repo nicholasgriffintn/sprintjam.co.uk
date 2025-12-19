@@ -115,27 +115,28 @@ ParticipantItem.displayName = "ParticipantItem";
 
 export const ParticipantsList = memo(function ParticipantsList({
   roomData,
-  stats,
-  name,
-  className,
-  contentClassName,
-  isCollapsed,
-  onToggleCollapse,
-}: ParticipantsListProps) {
+    stats,
+    name,
+    className,
+    contentClassName,
+    isCollapsed,
+    onToggleCollapse,
+  }: ParticipantsListProps) {
+  const totalParticipants = roomData?.users.length ?? 0;
   const votingProgress = useMemo(() => {
-    if (!roomData) {
+    if (totalParticipants === 0) {
       return 0;
     }
-    return roomData.users.length > 0
-      ? Math.round((stats.votedUsers / roomData.users.length) * 100)
-      : 0;
-  }, [stats.votedUsers, roomData?.users.length]);
+
+    return Math.round((stats.votedUsers / totalParticipants) * 100);
+  }, [stats.votedUsers, totalParticipants]);
 
   const [localCollapsed, setLocalCollapsed] = useState(false);
   const participantsSectionId = useId();
   const contentId = `${participantsSectionId}-content`;
   const headingId = `${participantsSectionId}-heading`;
   const progressLabelId = `${participantsSectionId}-progress`;
+  const progressDescriptionId = `${participantsSectionId}-progress-description`;
   const collapsed = isCollapsed ?? localCollapsed;
 
   const handleToggle = () => {
@@ -191,7 +192,6 @@ export const ParticipantsList = memo(function ParticipantsList({
       </div>
       <div
         id={contentId}
-        tabIndex={0}
         className={cn(
           "flex-1 space-y-3 overflow-y-auto px-4 py-4",
           collapsed && "hidden",
@@ -204,8 +204,8 @@ export const ParticipantsList = memo(function ParticipantsList({
             className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
           >
             <span>Voting progress</span>
-            <span>
-              {stats.votedUsers}/{roomData?.users.length}
+            <span id={progressDescriptionId}>
+              {stats.votedUsers}/{totalParticipants}
             </span>
           </div>
           <HorizontalProgress
@@ -215,9 +215,9 @@ export const ParticipantsList = memo(function ParticipantsList({
             aria-valuenow={votingProgress}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label="Voting progress"
-            aria-describedby={progressLabelId}
-            aria-valuetext={`${stats.votedUsers} of ${roomData?.users.length} participants have voted`}
+            aria-labelledby={progressLabelId}
+            aria-describedby={progressDescriptionId}
+            aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
             data-testid="voting-progress-bar"
           />
         </div>
