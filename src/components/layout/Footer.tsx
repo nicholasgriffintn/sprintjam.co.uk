@@ -28,7 +28,11 @@ export const Footer = ({
             : 'grid-cols-1 text-center'
         } mx-auto mt-8 grid items-center gap-4 text-sm text-slate-700 dark:text-slate-400`}
       >
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        <div
+          className={`${
+            layout === 'wide' ? 'lg:justify-start lg:text-left' : ''
+          } flex flex-wrap items-center justify-center gap-x-4 gap-y-2`}
+        >
           {!priorityLinksOnly && (
             <>
               <span>

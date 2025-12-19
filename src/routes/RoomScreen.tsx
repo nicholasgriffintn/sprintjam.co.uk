@@ -113,7 +113,7 @@ const RoomScreen = () => {
         <ErrorBanner
           message={roomError}
           onClose={clearRoomError}
-          variant={roomErrorKind === "permission" ? "warning" : "error"}
+          variant={roomErrorKind === 'permission' ? 'warning' : 'error'}
         />
       )}
 
@@ -161,7 +161,7 @@ const RoomScreen = () => {
             <UserEstimate
               roomData={roomData}
               name={name}
-              userVote={typeof userVote === "object" ? null : userVote}
+              userVote={typeof userVote === 'object' ? null : userVote}
               onVote={handleVote}
             />
           )}
@@ -180,10 +180,10 @@ const RoomScreen = () => {
                 const maxOrdinal =
                   pendingQueue.reduce(
                     (max, t) => (t.ordinal > max ? t.ordinal : max),
-                    0,
+                    0
                   ) + 1;
                 await handleUpdateTicket(roomData.currentTicket.id, {
-                  status: "pending",
+                  status: 'pending',
                   ordinal: maxOrdinal,
                 });
                 handleNextTicket();
@@ -245,7 +245,7 @@ const RoomScreen = () => {
                   </motion.div>
                 </SurfaceCard>
 
-                <Footer displayRepoLink={false} />
+                <Footer displayRepoLink={false} layout="wide" fullWidth />
               </motion.div>
             )}
           </AnimatePresence>
@@ -284,7 +284,7 @@ const RoomScreen = () => {
           onClose={() => setIsQueueModalOpen(false)}
           currentTicket={roomData.currentTicket}
           queue={roomData.ticketQueue || []}
-          externalService={roomData.settings.externalService || "none"}
+          externalService={roomData.settings.externalService || 'none'}
           roomKey={roomData.key}
           userName={name}
           onAddTicket={handleAddTicket}
@@ -299,10 +299,10 @@ const RoomScreen = () => {
         />
       )}
 
-      {isQueueEnabled && queueProvider !== "none" && (
+      {isQueueEnabled && queueProvider !== 'none' && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as "jira" | "linear" | "github"}
+          provider={queueProvider as 'jira' | 'linear' | 'github'}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);
