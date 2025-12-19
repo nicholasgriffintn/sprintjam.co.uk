@@ -55,7 +55,7 @@ const ChangelogScreen = () => {
           </div>
         </div>
 
-        <Footer />
+        <Footer priorityLinksOnly={false} />
       </motion.div>
     </PageBackground>
   );

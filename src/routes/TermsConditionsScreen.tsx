@@ -178,7 +178,7 @@ const TermsConditionsScreen = () => {
               <p>These terms became effective on {LAST_UPDATED}.</p>
             </div>
           </div>
-          <Footer />
+          <Footer priorityLinksOnly={false} />
         </div>
       </motion.div>
     </PageBackground>

@@ -8,12 +8,14 @@ type FooterProps = {
   displayRepoLink?: boolean;
   layout?: 'standard' | 'wide';
   fullWidth?: boolean;
+  priorityLinksOnly?: boolean;
 };
 
 export const Footer = ({
   displayRepoLink = true,
   layout = 'standard',
   fullWidth = true,
+  priorityLinksOnly = true,
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
@@ -27,18 +29,22 @@ export const Footer = ({
         } mx-auto mt-8 grid items-center gap-4 text-sm text-slate-700 dark:text-slate-400`}
       >
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-          <span>
-            Built by{' '}
-            <a
-              href="https://nicholasgriffin.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
-            >
-              Nicholas Griffin
-            </a>
-          </span>
-          <span className="hidden sm:inline">|</span>
+          {!priorityLinksOnly && (
+            <>
+              <span>
+                Built by{' '}
+                <a
+                  href="https://nicholasgriffin.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
+                >
+                  Nicholas Griffin
+                </a>
+              </span>
+              <span className="hidden sm:inline">|</span>
+            </>
+          )}
           <a
             href="/privacy"
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
