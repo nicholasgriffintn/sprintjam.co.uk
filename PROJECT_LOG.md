@@ -19,43 +19,6 @@
 
 ---
 
-## Current State
-
-### Active Branch
-
-**`remove-auto-ticketting-flow`** - Work in progress to remove automatic ticketing flow functionality.
-
-### Modified Files (as of 2025-12-18)
-
-- `api/durable-objects/planning-room/index.ts`
-- `api/durable-objects/planning-room/room-helpers.ts`
-- `api/durable-objects/planning-room/session.ts`
-- `api/durable-objects/planning-room/tickets.ts`
-- `api/types.ts`
-- `api/utils/validate.test.ts`
-- `api/utils/validate.ts`
-- `src/components/layout/RoomSidebar/TicketQueueSidebar.tsx`
-- `src/components/layout/RoomSidebar/index.tsx`
-- `src/components/modals/TicketQueueModal/index.tsx`
-- `src/components/modals/TicketQueueModal/tabs/Queue.tsx`
-- `src/components/results/ResultsControls.tsx`
-- `src/components/voting/StructuredVotingPanel.tsx`
-- `src/components/voting/UserEstimate.tsx`
-- `src/context/RoomContext.tsx`
-- `src/lib/api-service.ts`
-- `src/routes/RoomScreen.tsx`
-- `tests/e2e/room-ticket-queue.spec.ts`
-
-### Recent Commits
-
-- `2573c92` - feat: expand the reveal configurations (#37)
-- `b88671a` - feat: adding new voting options (#38)
-- `6c6a24a` - fix: remove env var for prod
-- `3b5efe6` - chore: add robots.txt file for staging
-- `4b468fa` - fix: remove environment
-
----
-
 ## Key Features
 
 ### Voting Systems
@@ -164,6 +127,4 @@ pnpm run deploy:staging   # Deploy to staging
 
 ### 2025-12-18
 
-- **Initial PROJECT_LOG.md created**
-- Work in progress on `remove-auto-ticketting-flow` branch affecting planning room, ticket queue, and voting components
-- Added GitHub-backed feedback submission form that files labeled issues via new `/api/feedback` endpoint (configure `FEEDBACK_GITHUB_TOKEN` and optional owner/repo/default labels)
+Refer to [CHANGELOG.md](src/content/changelog.md) for detailed change history (update as new major features are added).
