@@ -45,24 +45,22 @@ test.describe("Dark Mode Accessibility Journey", () => {
     await scrollToBottom(page);
 
     await page.getByTestId("avatar-option-robot").first().click();
-    await page.getByTestId("create-room-submit").click();
+    await page.getByTestId("join-room-submit").click();
     await waitForA11yReady(page);
     await scrollToBottom(page);
-
-    const structuredCheckbox = page.locator("#enable-structured-voting");
-    if (
-      (await structuredCheckbox.isVisible()) &&
-      !(await structuredCheckbox.isChecked())
-    ) {
-      await structuredCheckbox.check();
-    }
 
     const createResults = await checkA11y(page, {
       runOnly: wcagTags,
     });
     expect(createResults.violations).toEqual([]);
 
-    await page.getByTestId("create-room-submit").click();
+    await page.getByRole("button", { name: /settings/i }).click();
+    const dialog = page.getByRole("dialog", { name: "Room Settings" });
+    const structuredToggle = dialog.getByTestId(
+      "settings-toggle-structured-voting",
+    );
+    await structuredToggle.check({ force: true });
+    await dialog.getByRole("button", { name: "Save" }).click();
     await waitForA11yReady(page);
     await scrollToBottom(page);
 

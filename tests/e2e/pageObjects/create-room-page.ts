@@ -3,75 +3,32 @@ import { expect, type Page } from "@playwright/test";
 export class CreateRoomPage {
   constructor(private readonly page: Page) {}
 
-  async completeNameStep(name: string) {
+  async fillBasics(name: string, passcode?: string) {
     await this.page.locator("#create-name").fill(name);
-    const continueButton = this.page.getByTestId("create-room-submit");
-    await expect(continueButton).toBeEnabled();
-    await continueButton.click();
-  }
-
-  async selectAvatar(testId = "avatar-option-robot") {
-    await this.page.getByTestId(testId).first().click();
-    const continueButton = this.page.getByTestId("create-room-submit");
-    await expect(continueButton).toBeEnabled();
-    await continueButton.click();
-  }
-
-  async finishCreation() {
-    const createButton = this.page.getByTestId("create-room-submit");
-    await expect(createButton).toBeVisible();
-    await expect(createButton).toBeEnabled();
-    await createButton.click();
-  }
-
-  async configureRoomDetails(options?: {
-    passcode?: string;
-    enableStructuredVoting?: boolean;
-    hideParticipantNames?: boolean;
-    enableTicketQueue?: boolean;
-    externalService?: "none" | "jira" | "linear" | "github";
-  }) {
-    if (!options) {
-      return;
-    }
-
-    const {
-      passcode,
-      enableStructuredVoting,
-      hideParticipantNames,
-      enableTicketQueue,
-      externalService,
-    } = options;
-
     if (typeof passcode === "string") {
       await this.page.locator("#create-passcode").fill(passcode);
     }
+  }
 
-    if (enableStructuredVoting) {
-      const structuredToggle = this.page
-        .locator('label:has-text("Enable structured voting")')
-        .locator('input[type="checkbox"]');
-      await structuredToggle.check({ force: true });
-    }
+  async startInstantRoom() {
+    const instantButton = this.page.getByTestId("create-room-submit");
+    await expect(instantButton).toBeEnabled();
+    await instantButton.click();
+  }
 
-    if (hideParticipantNames) {
-      const hideNamesToggle = this.page
-        .locator('label:has-text("Hide participant names")')
-        .locator('input[type="checkbox"]');
-      await hideNamesToggle.check({ force: true });
-    }
+  async openAdvancedSetup() {
+    await this.page.getByTestId("create-room-advanced").click();
+  }
 
-    if (typeof enableTicketQueue === "boolean") {
-      const queueToggle = this.page.locator("#enable-ticket-queue-toggle");
-      const isChecked = await queueToggle.isChecked();
-      if (isChecked !== enableTicketQueue) {
-        await queueToggle.check({ force: enableTicketQueue });
-      }
+  async enableStructuredVotingInAdvanced() {
+    const toggle = this.page.getByTestId("settings-toggle-structured-voting");
+    const isChecked = await toggle.isChecked();
+    if (!isChecked) {
+      await toggle.check({ force: true });
     }
+  }
 
-    if (externalService) {
-      const providerSelect = this.page.locator("#ticket-queue-provider");
-      await providerSelect.selectOption(externalService);
-    }
+  async continueAdvancedSetup() {
+    await this.page.getByTestId("create-advanced-continue").click();
   }
 }

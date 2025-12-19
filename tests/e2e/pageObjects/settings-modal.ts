@@ -7,14 +7,43 @@ export class SettingsModal {
     return this.page.getByRole("dialog", { name: "Room Settings" });
   }
 
-  private async expandDetailsSections() {
-    const details = this.modal().locator("details");
-    const count = await details.count();
-    for (let index = 0; index < count; index += 1) {
-      await details
-        .nth(index)
-        .evaluate((element) => element.setAttribute("open", "true"));
+  private async goToTab(tab: "voting" | "collaboration" | "queue" | "atmosphere") {
+    const tabLabel =
+      tab === "voting"
+        ? "Voting"
+        : tab === "collaboration"
+          ? "Collaboration"
+          : tab === "queue"
+            ? "Ticket queue"
+            : "Atmosphere";
+    const tabButton = this.modal().getByRole("button", { name: tabLabel });
+    if (await tabButton.isVisible()) {
+      const pressed = await tabButton.getAttribute("aria-pressed");
+      if (pressed !== "true") {
+        await tabButton.click();
+      }
     }
+  }
+
+  private getTabForSetting(settingTestId: string) {
+    if (
+      settingTestId.includes("queue") ||
+      settingTestId.includes("external") ||
+      settingTestId.includes("auto-sync")
+    ) {
+      return "queue" as const;
+    }
+    if (
+      settingTestId.includes("structured") ||
+      settingTestId.includes("voting-sequence") ||
+      settingTestId.includes("extra-option")
+    ) {
+      return "voting" as const;
+    }
+    if (settingTestId.includes("strudel")) {
+      return "atmosphere" as const;
+    }
+    return "collaboration" as const;
   }
 
   async open() {
@@ -23,7 +52,8 @@ export class SettingsModal {
   }
 
   async toggle(settingTestId: string, enabled: boolean) {
-    await this.expandDetailsSections();
+    const tab = this.getTabForSetting(settingTestId);
+    await this.goToTab(tab);
     const checkbox = this.modal().getByTestId(settingTestId);
     await expect(checkbox).toBeVisible();
     await checkbox.scrollIntoViewIfNeeded();
@@ -35,28 +65,29 @@ export class SettingsModal {
   }
 
   async waitForJiraConnection() {
-    await this.expandDetailsSections();
+    await this.goToTab("queue");
     await expect(this.modal().getByText("Connected to Jira")).toBeVisible();
   }
 
   async waitForLinearConnection() {
-    await this.expandDetailsSections();
+    await this.goToTab("queue");
     await expect(this.modal().getByText("Connected to Linear")).toBeVisible();
   }
 
   async waitForGithubConnection() {
-    await this.expandDetailsSections();
+    await this.goToTab("queue");
     await expect(this.modal().getByText("Connected to GitHub")).toBeVisible();
   }
 
   async selectExternalService(value: "none" | "jira" | "linear" | "github") {
-    await this.expandDetailsSections();
+    await this.goToTab("queue");
     const select = this.modal().getByTestId("settings-select-external-service");
     await select.scrollIntoViewIfNeeded();
     await select.selectOption(value);
   }
 
   async expectVotingSequenceSelectorVisible(visible: boolean) {
+    await this.goToTab("voting");
     const selector = this.modal().getByTestId("settings-select-voting-sequence");
     if (visible) {
       await expect(selector).toBeVisible();
@@ -69,7 +100,7 @@ export class SettingsModal {
     id: "unsure" | "coffee" | "cannot-complete",
     checked: boolean,
   ) {
-    await this.expandDetailsSections();
+    await this.goToTab("voting");
     const checkbox = this.modal().getByTestId(`extra-option-${id}`);
     if (checked) {
       await expect(checkbox).toBeChecked();
@@ -82,7 +113,7 @@ export class SettingsModal {
     id: "unsure" | "coffee" | "cannot-complete",
     enabled: boolean,
   ) {
-    await this.expandDetailsSections();
+    await this.goToTab("voting");
     const checkbox = this.modal().getByTestId(`extra-option-${id}`);
     if (enabled) {
       await checkbox.check();

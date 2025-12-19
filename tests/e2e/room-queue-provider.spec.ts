@@ -8,7 +8,9 @@ import {
 
 import { WelcomePage } from "./pageObjects/welcome-page";
 import { CreateRoomPage } from "./pageObjects/create-room-page";
+import { JoinRoomPage } from "./pageObjects/join-room-page";
 import { RoomPage } from "./pageObjects/room-page";
+import { SettingsModal } from "./pageObjects/settings-modal";
 import { createRoomWithParticipant } from "./helpers/room-journeys";
 
 async function createRoomWithProvider(
@@ -28,16 +30,20 @@ async function createRoomWithProvider(
   await welcome.startCreateRoom();
 
   const createRoom = new CreateRoomPage(page);
-  await createRoom.completeNameStep("Queue Creator");
-  await createRoom.selectAvatar("avatar-option-robot");
-  await createRoom.configureRoomDetails({
-    enableTicketQueue: true,
-    externalService: provider,
-  });
-  await createRoom.finishCreation();
+  await createRoom.fillBasics("Queue Creator");
+  await createRoom.startInstantRoom();
+
+  const joinRoom = new JoinRoomPage(page);
+  await joinRoom.selectAvatarOnlyAndJoin("avatar-option-robot");
 
   const room = new RoomPage(page);
   await room.waitForLoaded();
+
+  const settingsModal = new SettingsModal(page);
+  await settingsModal.open();
+  await settingsModal.toggle("settings-toggle-enable-queue", true);
+  await settingsModal.selectExternalService(provider);
+  await settingsModal.save();
 
   return { context, page };
 }

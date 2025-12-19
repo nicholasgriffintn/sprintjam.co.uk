@@ -5,26 +5,25 @@ import {
   scrollToBottom,
 } from "../../helpers/a11y-helpers";
 
+async function createRoomAndEnter(page) {
+  await page.goto("/");
+  await page.getByRole("button", { name: /create.*room/i }).click();
+  await page.locator("#create-name").fill("A11y Test User");
+  await page.getByTestId("create-room-submit").click();
+  await waitForA11yReady(page);
+
+  const firstAvatar = page.getByTestId("avatar-option-robot").first();
+  await firstAvatar.click();
+  await page.getByTestId("join-room-submit").click();
+
+  await expect(page.getByTestId("participants-panel")).toBeVisible();
+  await waitForA11yReady(page);
+  await scrollToBottom(page);
+}
+
 test.describe("Room Screen Accessibility", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("button", { name: /create.*room/i }).click();
-    await page.locator("#create-name").fill("A11y Test User");
-    await page.getByTestId("create-room-submit").click();
-    await waitForA11yReady(page);
-
-    const firstAvatar = page.getByTestId("avatar-option-robot").first();
-    await firstAvatar.click();
-    await page.getByTestId("create-room-submit").click();
-
-    await waitForA11yReady(page);
-
-    const createButton = page.getByTestId("create-room-submit");
-    await expect(createButton).toBeVisible();
-    await createButton.click();
-    await expect(page.getByTestId("participants-panel")).toBeVisible();
-    await waitForA11yReady(page);
-    await scrollToBottom(page);
+    await createRoomAndEnter(page);
   });
 
   test("should not have any WCAG A & AA violations", async ({ page }) => {
@@ -116,18 +115,7 @@ test.describe("Room Screen Accessibility", () => {
   }) => {
     await page.getByRole("button", { name: /settings/i }).click();
     const settingsDialog = page.getByRole("dialog", { name: "Room Settings" });
-    const otherOptionsDetails = settingsDialog
-      .locator("details")
-      .filter({ hasText: "Other Options" })
-      .first();
-    const otherOptionsSummary = otherOptionsDetails.locator("summary").first();
-    await otherOptionsSummary.scrollIntoViewIfNeeded();
-    const detailsOpen = await otherOptionsDetails.evaluate((el) =>
-      el.hasAttribute("open"),
-    );
-    if (!detailsOpen) {
-      await otherOptionsSummary.click();
-    }
+    await settingsDialog.getByRole("button", { name: "Collaboration" }).click();
     const timerToggle = settingsDialog.getByTestId(
       "settings-toggle-show-timer",
     );
