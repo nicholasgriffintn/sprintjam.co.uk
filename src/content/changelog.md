@@ -1,6 +1,6 @@
-## 2025
+## V1.5
 
-### Coming Next
+A number of enhancements have been made in this version to improve the user experience and add new features that expand the capabilities of SprintJam and making it easier to use.
 
 - Improved the results hidden state display so it's clear what to do next and is based on the individual's votes not the room's.
 - Improved the create room flow. Now it's just a two step process. You can either create an instant room with the default settings or you can use the advanced settings to configure the room as you want before you create it. After creating, you'll just need to select your avatar and then you're ready to go.
@@ -22,6 +22,10 @@
   - Unknown ❓
   - Coffee break ☕
   - Cannot complete ♾️
+
+(Note: we skipped V1-V1.5 on production, previous versions tested on staging first and we're now deploying as one update)
+
+## V1
 
 ### December 2025
 
