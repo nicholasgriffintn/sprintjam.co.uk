@@ -30,8 +30,8 @@ importers:
         specifier: 5.90.2
         version: 5.90.2(@tanstack/react-query@5.90.12(react@19.2.0))(react@19.2.0)
       canvas-confetti:
-        specifier: 1.9.3
-        version: 1.9.3
+        specifier: 1.9.4
+        version: 1.9.4
       drizzle-orm:
         specifier: 0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20251209.0)
@@ -1373,8 +1373,8 @@ packages:
   caniuse-lite@1.0.30001761:
     resolution: {integrity: sha512-JF9ptu1vP2coz98+5051jZ4PwQgd2ni8A+gYSN7EA7dPKIMf0pDlSUxhdmVOaV3/fYK5uWBkgSXJaRLr4+3A6g==}
 
-  canvas-confetti@1.9.3:
-    resolution: {integrity: sha512-rFfTURMvmVEX1gyXFgn5QMn81bYk70qa0HLzcIOSVEyl57n6o9ItHeBtUSWdvKAPY0xlvBHno4/v3QPrT83q9g==}
+  canvas-confetti@1.9.4:
+    resolution: {integrity: sha512-yxQbJkAVrFXWNbTUjPqjF7G+g6pDotOUHGbkZq2NELZUMDpiJ85rIEazVb8GTaAptNW2miJAXbs1BtioA251Pw==}
 
   chai@6.2.1:
     resolution: {integrity: sha512-p4Z49OGG5W/WBCPSS/dH3jQ73kD6tiMmUM+bckNK6Jr5JHMG3k9bg/BvKR8lKmtVBKmOiuVaV2ws8s9oSbwysg==}
@@ -3230,7 +3230,7 @@ snapshots:
 
   caniuse-lite@1.0.30001761: {}
 
-  canvas-confetti@1.9.3: {}
+  canvas-confetti@1.9.4: {}
 
   chai@6.2.1: {}
 
