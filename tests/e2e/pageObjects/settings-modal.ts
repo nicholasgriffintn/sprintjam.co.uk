@@ -34,7 +34,6 @@ export class SettingsModal {
       "show-average",
       "show-median",
       "show-top-votes",
-      "anonymous-votes",
     ];
 
     if (resultsSettings.some((key) => settingTestId.includes(key))) {
@@ -61,6 +60,9 @@ export class SettingsModal {
       settingTestId.includes("hide-names") ||
       settingTestId.includes("presence")
     ) {
+      return "voting" as const;
+    }
+    if (settingTestId.includes("anonymous-votes")) {
       return "voting" as const;
     }
     if (settingTestId.includes("judge")) {

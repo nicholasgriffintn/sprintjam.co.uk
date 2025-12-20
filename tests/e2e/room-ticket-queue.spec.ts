@@ -144,6 +144,64 @@ test.describe("Ticket Queue", () => {
     }
   });
 
+  test("shows summary modal with historical votes before moving to next ticket", async ({
+    browser,
+  }) => {
+    const setup = await createRoomWithParticipant(browser, {
+      enableTicketQueue: true,
+    });
+    const {
+      moderatorRoom,
+      participantRoom,
+      cleanup,
+      moderatorName,
+      participantName,
+    } = setup;
+
+    try {
+      const page = moderatorRoom.getPage();
+
+      await page.getByTestId("queue-expand").click();
+      await page.getByTestId("queue-toggle-add").click();
+      await page.getByPlaceholder("Ticket title").fill("Ticket A");
+      await page.getByTestId("queue-add-confirm").click();
+      await page.waitForTimeout(100);
+
+      await page.getByTestId("queue-toggle-add").click();
+      await page.getByPlaceholder("Ticket title").fill("Ticket B");
+      await page.getByTestId("queue-add-confirm").click();
+      await page.waitForTimeout(100);
+      await page.getByTestId("queue-start-voting-1").click();
+      const currentTicketId = await page
+        .getByTestId("queue-ticket-id-current")
+        .textContent();
+      await page.keyboard.press("Escape");
+
+      await moderatorRoom.castVote("5");
+      await participantRoom.castVote("3");
+      await moderatorRoom.revealVotes();
+
+      await page.getByTestId("next-ticket-button").click();
+      const summary = page.getByRole("dialog", {
+        name: "Review before moving on",
+      });
+      await expect(summary).toBeVisible();
+      await expect(summary).toContainText(currentTicketId?.trim() ?? "");
+      await expect(summary).toContainText("Responded 2/2");
+      await expect(summary).toContainText("Anonymous");
+      await expect(summary).toContainText("5");
+      await expect(summary).toContainText("3");
+
+      await summary.getByTestId("pre-pointing-confirm").click();
+      await page.waitForTimeout(250);
+
+      await moderatorRoom.expectQueueCurrentTicketContains("Ticket B");
+      await moderatorRoom.expectVotesHiddenMessage("You haven't voted yet");
+    } finally {
+      await cleanup();
+    }
+  });
+
   test("should not show Next Ticket button to non-moderator", async ({
     browser,
   }) => {

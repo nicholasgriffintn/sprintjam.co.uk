@@ -185,4 +185,64 @@ export class RoomPage {
     const button = this.page.getByTestId(`vote-option-${option}`);
     await expect(button).toBeDisabled();
   }
+
+  async openTimerControls() {
+    const trigger = this.page
+      .getByTestId("room-timer")
+      .locator('button[aria-haspopup="true"]')
+      .first();
+    await trigger.click();
+    await expect(this.page.getByTestId("timer-controls")).toBeVisible();
+  }
+
+  async startTimer() {
+    await this.openTimerControls();
+    const controls = this.page.getByTestId("timer-controls");
+    const startButton = controls.getByRole("button", { name: /start timer/i });
+    if (await startButton.isVisible()) {
+      await startButton.click();
+    }
+  }
+
+  async pauseTimer() {
+    await this.openTimerControls();
+    const controls = this.page.getByTestId("timer-controls");
+    const pauseButton = controls.getByRole("button", { name: /pause timer/i });
+    if (await pauseButton.isVisible()) {
+      await pauseButton.click();
+    }
+  }
+
+  async resetTimerCountdown() {
+    await this.openTimerControls();
+    await this.page
+      .getByTestId("timer-controls")
+      .getByRole("button", { name: /Reset timer/i })
+      .click();
+    await expect(this.page.getByTestId("timer-controls")).toBeHidden();
+    const label =
+      (await this.page
+        .getByTestId("room-timer")
+        .locator('button[aria-haspopup="true"]')
+        .first()
+        .getAttribute("aria-label")) ?? "";
+    expect(label).toContain("00:00");
+  }
+
+  async selectTimerPreset(label: string) {
+    await this.openTimerControls();
+    await this.page
+      .getByTestId("timer-controls")
+      .getByRole("button", { name: label })
+      .click();
+  }
+
+  async expectTimerLabelContains(text: string | RegExp) {
+    const label = await this.page
+      .getByTestId("room-timer")
+      .locator('button[aria-haspopup="true"]')
+      .first()
+      .getAttribute("aria-label");
+    expect(label ?? "").toMatch(text);
+  }
 }
