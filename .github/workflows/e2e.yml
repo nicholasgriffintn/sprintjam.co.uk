@@ -39,7 +39,7 @@ jobs:
         run: pnpm exec playwright install --with-deps
 
       - name: Create .dev.vars file
-        run: echo "FEEDBACK_GITHUB_TOKEN=test-token" > .dev.vars
+        run: echo "TOKEN_ENCRYPTION_SECRET=test-token" > .dev.vars
 
       - name: Run Playwright tests
         run: pnpm test:e2e
