@@ -36,7 +36,7 @@
     "@tanstack/react-query-devtools": "5.90.2",
     "canvas-confetti": "1.9.3",
     "drizzle-orm": "0.45.1",
-    "framer-motion": "12.23.24",
+    "framer-motion": "12.23.26",
     "lucide-react": "0.545.0",
     "qrcode.react": "4.2.0",
     "react": "19.2.0",
