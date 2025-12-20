@@ -64,7 +64,7 @@ jobs:
         run: pnpm exec playwright install --with-deps
 
       - name: Run smoke tests
-        run: pnpm test:e2e:smoke
+        run: pnpm test:e2e:smoke:staging
 
       - name: Upload test results
         if: failure()

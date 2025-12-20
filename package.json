@@ -18,6 +18,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "PLAYWRIGHT_RUN_SMOKE=1 pnpm test:e2e",
+    "test:e2e:smoke:staging": "PLAYWRIGHT_RUN_SMOKE=1 E2E_BASE_URL=https://staging.sprintjam.co.uk pnpm test:e2e",
+    "test:e2e:smoke:production": "PLAYWRIGHT_RUN_SMOKE=1 E2E_BASE_URL=https://sprintjam.co.uk pnpm test:e2e",
     "test:e2e:all": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e",
     "test:e2e:a11y": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e tests/e2e/a11y",
     "deploy": "npm run build && wrangler deploy",
