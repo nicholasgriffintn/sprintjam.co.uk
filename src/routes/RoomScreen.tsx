@@ -228,7 +228,7 @@ const RoomScreen = () => {
                   </motion.div>
                 </SurfaceCard>
 
-                <Footer displayRepoLink={false} />
+                <Footer displayRepoLink={false} layout="wide" fullWidth />
               </motion.div>
             ) : (
               <motion.div
