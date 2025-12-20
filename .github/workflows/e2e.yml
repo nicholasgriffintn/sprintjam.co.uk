@@ -1,7 +1,8 @@
-name: Playwright E2E
+name: Playwright E2E (Full Suite)
 
 on:
   pull_request:
+    types: [labeled, synchronize, reopened]
     branches:
       - main
   workflow_dispatch:
@@ -10,6 +11,7 @@ jobs:
   tests:
     name: Run E2E suite
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'run-full-e2e') || github.event_name == 'workflow_dispatch'
     env:
       VITE_API_URL: sprintjam.co.uk
     container:
@@ -35,7 +37,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('./package.json').devDependencies['@playwright/test']")" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
 
       - name: Create .dev.vars file
@@ -43,3 +57,13 @@ jobs:
 
       - name: Run Playwright tests
         run: pnpm test:e2e
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-results-production
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

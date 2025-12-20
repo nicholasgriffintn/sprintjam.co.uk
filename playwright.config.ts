@@ -4,11 +4,13 @@ const isCI = !!process.env.CI;
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:5173";
 const shouldStartWebServer = !process.env.E2E_BASE_URL;
 const shouldRunA11y = process.env.PLAYWRIGHT_RUN_A11Y === "1";
+const shouldRunSmoke = process.env.PLAYWRIGHT_RUN_SMOKE === "1";
 const commonTestIgnore = shouldRunA11y ? [] : ['**/a11y/**'];
 
 export default defineConfig({
   testDir: './tests/e2e',
   testIgnore: commonTestIgnore,
+  grep: shouldRunSmoke ? /@smoke/ : undefined,
   workers: isCI ? 2 : 4,
   timeout: 15_000,
   expect: {
