@@ -10,7 +10,7 @@ import {
   Play,
 } from "lucide-react";
 
-import { useSession } from "@/context/SessionContext";
+import { useSessionActions } from "@/context/SessionContext";
 import { PageBackground } from "@/components/layout/PageBackground";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -20,7 +20,7 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 
 const WelcomeScreen = () => {
-  const { startCreateFlow, startJoinFlow } = useSession();
+  const { startCreateFlow, startJoinFlow } = useSessionActions();
   usePageMeta(META_CONFIGS.welcome);
   const features = [
     {

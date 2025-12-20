@@ -234,16 +234,18 @@ export function applyRoomUpdate(
     case "ticketUpdated":
     case "ticketDeleted":
     case "queueUpdated": {
-      const currentTicket =
+      let currentTicket = prev.currentTicket;
+      if (
+        "ticket" in message &&
         message.ticket &&
-        prev.currentTicket &&
-        (message.ticket as TicketQueueItem).id === prev.currentTicket.id
-          ? (message.ticket as TicketQueueItem)
-          : prev.currentTicket;
+        currentTicket &&
+        message.ticket.id === currentTicket.id
+      ) {
+        currentTicket = message.ticket;
+      }
 
       if (
         message.type === "ticketDeleted" &&
-        "ticketId" in message &&
         prev.currentTicket &&
         message.ticketId === prev.currentTicket.id
       ) {

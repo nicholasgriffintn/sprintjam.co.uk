@@ -38,7 +38,8 @@
     "qrcode.react": "4.2.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "tailwindcss": "4.1.14"
+    "tailwindcss": "4.1.14",
+    "zod": "4.2.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.0",

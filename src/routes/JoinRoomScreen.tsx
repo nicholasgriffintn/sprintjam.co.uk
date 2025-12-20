@@ -3,8 +3,12 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Users, Key, Lock, User, ChevronRight } from "lucide-react";
 
-import { useSession } from "@/context/SessionContext";
-import { useRoom } from "@/context/RoomContext";
+import {
+  useSessionActions,
+  useSessionErrors,
+  useSessionState,
+} from "@/context/SessionContext";
+import { useRoomActions, useRoomStatus } from "@/context/RoomContext";
 import AvatarSelector from "@/components/AvatarSelector";
 import { PageBackground } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -15,6 +19,11 @@ import { Logo } from "@/components/Logo";
 import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
+import {
+  formatRoomKey,
+  validateName,
+  validateRoomKey,
+} from "@/utils/validators";
 
 const JoinRoomScreen = () => {
   usePageMeta(META_CONFIGS.join);
@@ -23,23 +32,26 @@ const JoinRoomScreen = () => {
     roomKey,
     passcode,
     selectedAvatar,
+    joinFlowMode,
+  } = useSessionState();
+  const {
     setName,
     setRoomKey,
     setPasscode,
     setSelectedAvatar,
     setScreen,
-    joinFlowMode,
     setJoinFlowMode,
     goHome,
-    error,
-    errorKind,
-    clearError,
-  } = useSession();
-  const { handleJoinRoom, handleCreateRoom, isLoading } = useRoom();
+  } = useSessionActions();
+  const { error, errorKind, clearError } = useSessionErrors();
+  const { handleJoinRoom, handleCreateRoom } = useRoomActions();
+  const { isLoading } = useRoomStatus();
   const [currentStep, setCurrentStep] = useState<'details' | 'avatar'>(
     joinFlowMode === 'create' ? 'avatar' : 'details'
   );
   const isCreateFlow = joinFlowMode === 'create';
+  const isNameValid = validateName(name).ok;
+  const isRoomKeyValid = validateRoomKey(roomKey).ok;
 
   useEffect(() => {
     if (currentStep === 'avatar' && !selectedAvatar) {
@@ -49,7 +61,7 @@ const JoinRoomScreen = () => {
   const isPasscodeError = errorKind === 'passcode';
   const isPermissionError = errorKind === 'permission';
   const isAuthError = errorKind === 'auth';
-  const shouldShowAlert = !!error && !isPasscodeError;
+  const shouldShowAlert = !!error;
 
   useEffect(() => {
     setCurrentStep(joinFlowMode === 'create' ? 'avatar' : 'details');
@@ -59,8 +71,8 @@ const JoinRoomScreen = () => {
     e.preventDefault();
     if (
       currentStep === 'details' &&
-      name.trim() &&
-      (isCreateFlow || roomKey.trim())
+      isNameValid &&
+      (isCreateFlow || isRoomKeyValid)
     ) {
       setCurrentStep('avatar');
     } else if (currentStep === 'avatar' && selectedAvatar) {
@@ -87,9 +99,9 @@ const JoinRoomScreen = () => {
   const getFormValid = () => {
     if (currentStep === 'details') {
       if (isCreateFlow) {
-        return name.trim();
+        return isNameValid;
       }
-      return name.trim() && roomKey.trim();
+      return isNameValid && isRoomKeyValid;
     }
     if (currentStep === 'avatar') {
       return selectedAvatar;
@@ -193,7 +205,7 @@ const JoinRoomScreen = () => {
                   fullWidth
                   icon={<User className="h-4 w-4" />}
                   showValidation
-                  isValid={!!name.trim()}
+                  isValid={isNameValid}
                 />
 
                 {!isCreateFlow && (
@@ -208,9 +220,7 @@ const JoinRoomScreen = () => {
                     type="text"
                     value={roomKey}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setRoomKey(
-                        e.target.value.replace(/\s+/g, '').toUpperCase()
-                      )
+                      setRoomKey(formatRoomKey(e.target.value))
                     }
                     placeholder="0MTINL"
                     maxLength={6}
@@ -218,7 +228,7 @@ const JoinRoomScreen = () => {
                     fullWidth
                     icon={<Key className="h-4 w-4" />}
                     showValidation
-                    isValid={!!roomKey.trim()}
+                    isValid={isRoomKeyValid}
                     helperText="Six characters shared by your moderator."
                     className="font-mono tracking-[0.35em] text-center"
                   />

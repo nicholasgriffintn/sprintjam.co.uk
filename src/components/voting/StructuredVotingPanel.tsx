@@ -9,7 +9,7 @@ import type {
 } from "@/types";
 import { StructuredVotingUpdateNotification } from "./StructuredVotingUpdateNotification";
 import { TimerChip } from "./TimerChip";
-import { useRoom } from "@/context/RoomContext";
+import { useRoomState } from "@/context/RoomContext";
 
 interface StructuredVotingPanelProps {
   criteria: VotingCriterion[];
@@ -78,7 +78,7 @@ export function StructuredVotingPanel({
   onVote,
   displaySettings,
 }: StructuredVotingPanelProps) {
-  const { roomData } = useRoom();
+  const { roomData } = useRoomState();
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>(
     () => {
       if (currentVote?.criteriaScores) {

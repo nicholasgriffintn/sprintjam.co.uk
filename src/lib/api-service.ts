@@ -9,7 +9,7 @@ import type {
   AvatarId,
   TicketQueueItem,
 } from "@/types";
-import { API_BASE_URL, WS_BASE_URL } from "@/constants";
+import { API_BASE_URL, WS_BASE_URL, AUTH_TOKEN_STORAGE_KEY } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 import {
   SERVER_DEFAULTS_DOCUMENT_KEY,
@@ -18,7 +18,7 @@ import {
   ensureRoomsCollectionReady,
   ensureServerDefaultsCollectionReady,
 } from "./data/collections";
-import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
+import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 
 let activeSocket: WebSocket | null = null;
 let activeAuthToken: string | null = null;
@@ -30,6 +30,40 @@ const eventListeners: Record<string, ((data: WebSocketMessage) => void)[]> = {};
 
 let voteDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const VOTE_DEBOUNCE_MS = 300;
+
+interface RequestOptions {
+  signal?: AbortSignal;
+}
+
+const readJsonSafe = async (
+  response: Response,
+): Promise<Record<string, unknown> | null> => {
+  try {
+    return (await response.json()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+};
+
+const handleJsonResponse = async <T>(
+  response: Response,
+  fallbackMessage: string,
+): Promise<T> => {
+  if (!response.ok) {
+    const body = await readJsonSafe(response);
+    throw new HttpError({
+      message: (body?.error as string) || fallbackMessage,
+      status: response.status,
+      code: (body?.code as string) || undefined,
+    });
+  }
+
+  try {
+    return (await response.json()) as T;
+  } catch (error) {
+    throw new NetworkError("Invalid response from server", { cause: error });
+  }
+};
 
 export function getCachedDefaultSettings(): ServerDefaults | null {
   return serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
@@ -60,6 +94,7 @@ export async function createRoom(
   passcode?: string,
   settings?: Partial<RoomSettings>,
   avatar?: AvatarId,
+  options?: RequestOptions,
 ): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
@@ -68,26 +103,18 @@ export async function createRoom(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ name, passcode, settings, avatar }),
+      signal: options?.signal,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      const error = new Error(
-        errorData.error || `Failed to create room: ${response.status}`,
-      ) as Error & { status?: number };
-      error.status = response.status;
-      throw error;
-    }
-
-    const data = (await response.json()) as {
+    const data = await handleJsonResponse<{
       room?: RoomData;
       defaults?: ServerDefaults;
       authToken?: string;
       error?: string;
-    };
+    }>(response, "Failed to create room");
 
     if (!data.room) {
-      throw new Error("Invalid response from server while creating room");
+      throw new NetworkError("Invalid response from server while creating room");
     }
 
     await ensureRoomsCollectionReady();
@@ -103,8 +130,14 @@ export async function createRoom(
       authToken: data.authToken,
     };
   } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
     console.error("Error creating room:", error);
-    throw error;
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to create room", { cause: error });
   }
 }
 
@@ -114,6 +147,7 @@ export async function joinRoom(
   passcode?: string,
   avatar?: AvatarId,
   authToken?: string,
+  options?: RequestOptions,
 ): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
@@ -122,26 +156,18 @@ export async function joinRoom(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ name, roomKey, passcode, avatar, authToken }),
+      signal: options?.signal,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      const error = new Error(
-        errorData.error || `Failed to join room: ${response.status}`,
-      ) as Error & { status?: number };
-      error.status = response.status;
-      throw error;
-    }
-
-    const data = (await response.json()) as {
+    const data = await handleJsonResponse<{
       room?: RoomData;
       defaults?: ServerDefaults;
       authToken?: string;
       error?: string;
-    };
+    }>(response, "Failed to join room");
 
     if (!data.room) {
-      throw new Error("Invalid response from server while joining room");
+      throw new NetworkError("Invalid response from server while joining room");
     }
 
     await ensureRoomsCollectionReady();
@@ -157,8 +183,14 @@ export async function joinRoom(
       authToken: data.authToken,
     };
   } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
     console.error("Error joining room:", error);
-    throw error;
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to join room", { cause: error });
   }
 }
 
@@ -255,6 +287,7 @@ export function connectToRoom(
           type: "error",
           error: "Session expired. Please rejoin the room.",
           closeCode: event.code,
+          reason: "auth",
         });
         activeAuthToken = null;
         safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
@@ -266,6 +299,7 @@ export function connectToRoom(
           type: "error",
           error: "Disconnected due to inactivity. Reconnecting...",
           closeCode: event.code,
+          reason: "disconnect",
         });
       }
 
@@ -282,6 +316,7 @@ export function connectToRoom(
         type: "error",
         error: "Connection error occurred",
         closeCode: 1006,
+        reason: "network",
       });
 
       if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
@@ -298,6 +333,7 @@ export function connectToRoom(
       type: "error",
       error:
         error instanceof Error ? error.message : "Failed to connect to server",
+      reason: "network",
     });
     throw error;
   }
@@ -314,6 +350,7 @@ function handleReconnect(
     triggerEventListeners("disconnected", {
       type: "disconnected",
       error: "Session expired. Please rejoin the room.",
+      reason: "auth",
     });
     return;
   }
@@ -347,6 +384,7 @@ function handleReconnect(
     triggerEventListeners("disconnected", {
       type: "disconnected",
       error: "Connection lost. Please refresh the page to reconnect.",
+      reason: "disconnect",
     });
   }
 }

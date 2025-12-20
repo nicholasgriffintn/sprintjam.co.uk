@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useRoom } from "@/context/RoomContext";
-import { useSession } from "@/context/SessionContext";
+import {
+  useRoomActions,
+  useRoomState,
+  useRoomStatus,
+} from "@/context/RoomContext";
+import { useSessionState } from "@/context/SessionContext";
 import { useRoomStats } from "@/hooks/useRoomStats";
 import { useConsensusCelebration } from "@/hooks/useConsensusCelebration";
 import ErrorBanner from "@/components/ui/ErrorBanner";
@@ -37,6 +41,15 @@ const RoomScreen = () => {
     isModeratorView,
     userVote,
     serverDefaults,
+  } = useRoomState();
+  const {
+    roomError,
+    roomErrorKind,
+    isSocketConnected,
+    isSocketStatusKnown,
+    connectionIssue,
+  } = useRoomStatus();
+  const {
     handleVote,
     handleToggleShowVotes,
     handleResetVotes,
@@ -46,17 +59,12 @@ const RoomScreen = () => {
     handleAddTicket,
     handleUpdateTicket,
     handleDeleteTicket,
-    roomError,
-    roomErrorKind,
     clearRoomError,
     reportRoomError,
-    isSocketConnected,
-    isSocketStatusKnown,
-    connectionIssue,
     retryConnection,
     handleLeaveRoom,
-  } = useRoom();
-  const { name } = useSession();
+  } = useRoomActions();
+  const { name } = useSessionState();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);

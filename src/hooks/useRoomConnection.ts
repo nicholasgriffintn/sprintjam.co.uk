@@ -58,8 +58,11 @@ export const useRoomConnection = ({
       const errorHandler = (data: WebSocketMessage) => {
         const message = data.error || data.message || "Connection error";
         const isAuthError =
-          data.closeCode === 4003 || message.includes("Invalid session");
-        const isDisconnect = data.type === "disconnected";
+          data.reason === "auth" ||
+          data.closeCode === 4003 ||
+          message.includes("Invalid session");
+        const isDisconnect =
+          data.reason === "disconnect" || data.type === "disconnected";
         onError(message, {
           reason: isAuthError
             ? "auth"
