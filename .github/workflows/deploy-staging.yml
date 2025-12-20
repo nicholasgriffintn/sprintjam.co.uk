@@ -47,3 +47,19 @@ jobs:
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run smoke tests
+        run: pnpm test:e2e:smoke
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-results-staging
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

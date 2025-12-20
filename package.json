@@ -17,6 +17,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "PLAYWRIGHT_RUN_SMOKE=1 pnpm test:e2e",
     "test:e2e:all": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e",
     "test:e2e:a11y": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e tests/e2e/a11y",
     "deploy": "npm run build && wrangler deploy",
