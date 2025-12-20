@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "CLOUDFLARE_ENV=development vite",
     "prebuild": "tsc -b",
     "build": "vite build",
     "build:staging": "CLOUDFLARE_ENV=staging vite build",

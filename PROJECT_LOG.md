@@ -125,6 +125,11 @@ pnpm run deploy:staging   # Deploy to staging
 
 ## Change Log
 
+### 2025-12-19
+- Added Playwright coverage for welcome flow, error scenarios (offline voting, reconnect, expired sessions), timer workflows, anonymous voting, feedback form validation, ticket summary modal, and persistence/rejoin journeys.
+- Introduced mobile-focused Playwright project and tests for touch interactions and responsive sidebar/queue behavior.
+- Expanded data persistence checks (localStorage tokens, reload behavior) and timer control helpers to support new e2e scenarios.
+
 ### 2025-12-18
 
 Refer to [CHANGELOG.md](src/content/changelog.md) for detailed change history (update as new major features are added).

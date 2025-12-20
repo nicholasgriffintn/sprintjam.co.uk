@@ -4,11 +4,12 @@ const isCI = !!process.env.CI;
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:5173";
 const shouldStartWebServer = !process.env.E2E_BASE_URL;
 const shouldRunA11y = process.env.PLAYWRIGHT_RUN_A11Y === "1";
+const commonTestIgnore = shouldRunA11y ? [] : ['**/a11y/**'];
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore: shouldRunA11y ? [] : ['**/a11y/**'],
-  workers: 1,
+  testIgnore: commonTestIgnore,
+  workers: isCI ? 2 : 4,
   timeout: 15_000,
   expect: {
     timeout: 3_000,
@@ -28,7 +29,17 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: [...commonTestIgnore, '**/*mobile.spec.ts'],
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'mobile-chromium',
+      testMatch: ['**/*mobile.spec.ts'],
+      use: {
+        ...devices['iPhone 15 Pro'],
+        viewport: devices['iPhone 15 Pro'].viewport,
+        hasTouch: true,
+      },
     },
   ],
   webServer: shouldStartWebServer

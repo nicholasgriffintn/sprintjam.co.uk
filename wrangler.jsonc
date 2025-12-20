@@ -62,6 +62,21 @@
     }
   },
   "env": {
+    "development": {
+      "routes": [],
+      "vars": {
+        "ENVIRONMENT": "development"
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "PLANNING_ROOM",
+            "class_name": "PlanningRoom"
+          }
+        ]
+      },
+      "ratelimits": []
+    },
     "staging": {
       "name": "sprintjam-staging",
       "routes": [
