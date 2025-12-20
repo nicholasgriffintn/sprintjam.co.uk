@@ -5,9 +5,8 @@ import ErrorBanner from "./components/ui/ErrorBanner";
 import LoadingOverlay from "./components/LoadingOverlay";
 import { ScreenLoader } from "./components/layout/ScreenLoader";
 import { ErrorBoundary } from "./components/errors/ErrorBoundary";
-import { SessionProvider } from "./context/SessionContext";
-import { RoomProvider, useRoom } from "./context/RoomContext";
-import { useSession } from "./context/SessionContext";
+import { SessionProvider, useSessionErrors, useSessionState } from "./context/SessionContext";
+import { RoomProvider, useRoomActions, useRoomState, useRoomStatus } from "./context/RoomContext";
 import WelcomeScreen from "./routes/WelcomeScreen";
 import CreateRoomScreen from "./routes/CreateRoomScreen";
 import JoinRoomScreen from "./routes/JoinRoomScreen";
@@ -24,16 +23,16 @@ const preloadRoomScreen = () => {
 };
 
 const AppContent = () => {
-  const { screen, error, clearError } = useSession();
+  const { screen } = useSessionState();
+  const { error, clearError } = useSessionErrors();
+  const { serverDefaults, roomData } = useRoomState();
   const {
-    serverDefaults,
-    roomData,
     isLoading,
     isLoadingDefaults,
     defaultsError,
-    handleRetryDefaults,
     isSocketStatusKnown,
-  } = useRoom();
+  } = useRoomStatus();
+  const { handleRetryDefaults } = useRoomActions();
 
   const hasPrefetchedRoomScreen = useRef(false);
 

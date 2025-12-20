@@ -53,6 +53,9 @@ importers:
       tailwindcss:
         specifier: 4.1.14
         version: 4.1.14
+      zod:
+        specifier: 4.2.1
+        version: 4.2.1
     devDependencies:
       '@axe-core/playwright':
         specifier: 4.11.0
@@ -2065,6 +2068,9 @@ packages:
   zod@3.22.3:
     resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
 
+  zod@4.2.1:
+    resolution: {integrity: sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw==}
+
 snapshots:
 
   '@axe-core/playwright@4.11.0(playwright-core@1.56.1)':
@@ -3779,3 +3785,5 @@ snapshots:
       youch-core: 0.3.3
 
   zod@3.22.3: {}
+
+  zod@4.2.1: {}

@@ -21,31 +21,48 @@ export type AppScreen =
   | "terms"
   | "changelog";
 
-interface SessionContextValue {
+interface SessionStateContextValue {
   screen: AppScreen;
-  setScreen: (screen: AppScreen) => void;
   joinFlowMode: "join" | "create";
-  setJoinFlowMode: (mode: "join" | "create") => void;
   name: string;
-  setName: (name: string) => void;
   roomKey: string;
-  setRoomKey: (key: string) => void;
   passcode: string;
-  setPasscode: (passcode: string) => void;
   selectedAvatar: AvatarId | null;
+}
+
+interface SessionActionsContextValue {
+  setScreen: (screen: AppScreen) => void;
+  setJoinFlowMode: (mode: "join" | "create") => void;
+  setName: (name: string) => void;
+  setRoomKey: (key: string) => void;
+  setPasscode: (passcode: string) => void;
   setSelectedAvatar: (avatar: AvatarId | null) => void;
-  error: string;
-  errorKind: ErrorKind | null;
-  setError: (message: string, kind?: ErrorKind | null) => void;
-  clearError: () => void;
   goHome: () => void;
   startCreateFlow: () => void;
   startJoinFlow: () => void;
 }
 
-const SessionContext = createContext<SessionContextValue | undefined>(
-  undefined,
-);
+interface SessionErrorContextValue {
+  error: string;
+  errorKind: ErrorKind | null;
+  setError: (message: string, kind?: ErrorKind | null) => void;
+  clearError: () => void;
+}
+
+export interface SessionContextValue
+  extends SessionStateContextValue,
+    SessionActionsContextValue,
+    SessionErrorContextValue {}
+
+const SessionStateContext = createContext<
+  SessionStateContextValue | undefined
+>(undefined);
+const SessionActionsContext = createContext<
+  SessionActionsContextValue | undefined
+>(undefined);
+const SessionErrorContext = createContext<
+  SessionErrorContextValue | undefined
+>(undefined);
 
 function getScreenFromPath(path: string): AppScreen {
   if (path === "/" || !path) {
@@ -136,54 +153,99 @@ export const SessionProvider = ({
     onNameLoaded: setName,
   });
 
-  const value = useMemo(
+  const stateValue = useMemo<SessionStateContextValue>(
     () => ({
       screen,
-      setScreen,
       joinFlowMode,
-      setJoinFlowMode,
       name,
-      setName,
       roomKey,
-      setRoomKey,
       passcode,
-      setPasscode,
       selectedAvatar,
+    }),
+    [screen, joinFlowMode, name, roomKey, passcode, selectedAvatar],
+  );
+
+  const actionsValue = useMemo<SessionActionsContextValue>(
+    () => ({
+      setScreen,
+      setJoinFlowMode,
+      setName,
+      setRoomKey,
+      setPasscode,
       setSelectedAvatar,
-      error,
-      errorKind,
-      setError,
-      clearError,
       goHome,
       startCreateFlow,
       startJoinFlow,
     }),
     [
-      screen,
-      joinFlowMode,
-      name,
-      roomKey,
-      passcode,
-      selectedAvatar,
-      error,
-      errorKind,
-      setError,
-      clearError,
+      setScreen,
+      setJoinFlowMode,
+      setName,
+      setRoomKey,
+      setPasscode,
+      setSelectedAvatar,
       goHome,
       startCreateFlow,
       startJoinFlow,
     ],
   );
 
+  const errorValue = useMemo<SessionErrorContextValue>(
+    () => ({
+      error,
+      errorKind,
+      setError,
+      clearError,
+    }),
+    [error, errorKind, setError, clearError],
+  );
+
   return (
-    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+    <SessionStateContext.Provider value={stateValue}>
+      <SessionErrorContext.Provider value={errorValue}>
+        <SessionActionsContext.Provider value={actionsValue}>
+          {children}
+        </SessionActionsContext.Provider>
+      </SessionErrorContext.Provider>
+    </SessionStateContext.Provider>
   );
 };
 
-export const useSession = (): SessionContextValue => {
-  const ctx = useContext(SessionContext);
+export const useSessionState = (): SessionStateContextValue => {
+  const ctx = useContext(SessionStateContext);
   if (!ctx) {
-    throw new Error("useSession must be used within SessionProvider");
+    throw new Error("useSessionState must be used within SessionProvider");
   }
   return ctx;
+};
+
+export const useSessionActions = (): SessionActionsContextValue => {
+  const ctx = useContext(SessionActionsContext);
+  if (!ctx) {
+    throw new Error("useSessionActions must be used within SessionProvider");
+  }
+  return ctx;
+};
+
+export const useSessionErrors = (): SessionErrorContextValue => {
+  const ctx = useContext(SessionErrorContext);
+  if (!ctx) {
+    throw new Error("useSessionErrors must be used within SessionProvider");
+  }
+  return ctx;
+};
+
+export const useSession = (): SessionContextValue => {
+  const state = useSessionState();
+  const errors = useSessionErrors();
+  const actions = useSessionActions();
+
+  return useMemo(
+    () => ({
+      ...state,
+      ...errors,
+      ...actions,
+    }),
+    [state, errors, actions],
+  );
 };

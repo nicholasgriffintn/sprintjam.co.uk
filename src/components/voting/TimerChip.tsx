@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Clock, Hourglass, ChevronDown } from "lucide-react";
 
-import { useRoom } from "@/context/RoomContext";
+import { useRoomState } from "@/context/RoomContext";
 import {
   addEventListener,
   removeEventListener,
@@ -22,7 +22,7 @@ import { TIMER_DURATION_PRESETS } from "@/constants";
 import { playChime, primeChimeAudio } from "@/lib/audio";
 
 export function TimerChip() {
-  const { roomData, isModeratorView } = useRoom();
+  const { roomData, isModeratorView } = useRoomState();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [localSeconds, setLocalSeconds] = useState(0);
   const [hasPlayed, setHasPlayed] = useState(true);
@@ -63,7 +63,7 @@ export function TimerChip() {
 
   useEffect(() => {
     const handleTimerUpdate = (message: WebSocketMessage) => {
-      if (message.timerState) {
+      if ("timerState" in message && message.timerState) {
         const currentSeconds = calculateCurrentSeconds(message.timerState);
         setLocalSeconds(currentSeconds);
         setHasPlayed(false);

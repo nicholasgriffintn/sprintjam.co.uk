@@ -5,7 +5,7 @@ import { Check } from 'lucide-react';
 import type { RoomData, VoteValue } from '@/types';
 import { getUsersVoteTaskSize } from '@/utils/tasks';
 import { TimerChip } from './TimerChip';
-import { useRoom } from '@/context/RoomContext';
+import { useRoomState } from '@/context/RoomContext';
 import { getContrastingTextColor } from '@/utils/colors';
 import { getExtraVoteValueSet } from '@/utils/votingOptions';
 
@@ -31,7 +31,7 @@ export function UserEstimate({
   userVote: VoteValue | null;
   onVote: (value: VoteValue) => void;
 }) {
-  const { roomData: contextRoomData } = useRoom();
+  const { roomData: contextRoomData } = useRoomState();
   const isVotingDisabled =
     roomData.showVotes &&
     !roomData.settings.allowVotingAfterReveal &&

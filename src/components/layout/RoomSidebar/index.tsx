@@ -8,8 +8,8 @@ import {
 import type { RoomStats } from "@/types";
 import { ParticipantsList } from "./ParticipantsList";
 import { TicketQueueSidebar } from "./TicketQueueSidebar";
-import { useRoom } from "@/context/RoomContext";
-import { useSession } from "@/context/SessionContext";
+import { useRoomActions, useRoomState } from "@/context/RoomContext";
+import { useSessionState } from "@/context/SessionContext";
 
 export function RoomSidebar({
   isQueueEnabled,
@@ -20,8 +20,9 @@ export function RoomSidebar({
   stats: RoomStats;
   setIsQueueModalOpen: (isOpen: boolean) => void;
 }) {
-  const { roomData, isModeratorView, handleUpdateTicket, handleSelectTicket } = useRoom();
-  const { name } = useSession();
+  const { roomData, isModeratorView } = useRoomState();
+  const { handleUpdateTicket, handleSelectTicket } = useRoomActions();
+  const { name } = useSessionState();
 
   const [isParticipantsCollapsed, setIsParticipantsCollapsed] = useState(false);
   const [isQueueCollapsed, setIsQueueCollapsed] = useState(false);

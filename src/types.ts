@@ -1,4 +1,10 @@
-export type ErrorKind = string;
+export type ErrorKind =
+  | "permission"
+  | "auth"
+  | "passcode"
+  | "network"
+  | "validation"
+  | "unknown";
 
 export type ConnectionStatusState = 'connected' | 'connecting' | 'disconnected';
 
@@ -262,70 +268,154 @@ export interface RoomData {
   timerState?: TimerState;
 }
 
-export interface WebSocketErrorData {
-  error?: string;
-  message?: string;
-  code?: number;
-}
+export type WebSocketErrorReason =
+  | "auth"
+  | "disconnect"
+  | "permission"
+  | "network";
 
 export type WebSocketMessageType =
-  | 'initialize'
-  | 'userJoined'
-  | 'userLeft'
-  | 'userConnectionStatus'
-  | 'vote'
-  | 'showVotes'
-  | 'resetVotes'
-  | 'newModerator'
-  | 'settingsUpdated'
-  | 'judgeScoreUpdated'
-  | 'error'
-  | 'disconnected'
-  | 'avatarChanged'
-  | 'strudelCodeGenerated'
-  | 'generateStrudelCode'
-  | 'toggleStrudelPlayback'
-  | 'strudelPlaybackToggled'
-  | 'nextTicket'
-  | 'ticketAdded'
-  | 'ticketUpdated'
-  | 'ticketDeleted'
-  | 'ticketCompleted'
-  | 'queueUpdated'
-  | 'timerStarted'
-  | 'timerPaused'
-  | 'timerReset'
-  | 'timerUpdated';
+  | "initialize"
+  | "userJoined"
+  | "userLeft"
+  | "userConnectionStatus"
+  | "vote"
+  | "showVotes"
+  | "resetVotes"
+  | "newModerator"
+  | "settingsUpdated"
+  | "judgeScoreUpdated"
+  | "error"
+  | "disconnected"
+  | "avatarChanged"
+  | "strudelCodeGenerated"
+  | "generateStrudelCode"
+  | "toggleStrudelPlayback"
+  | "strudelPlaybackToggled"
+  | "nextTicket"
+  | "ticketAdded"
+  | "ticketUpdated"
+  | "ticketDeleted"
+  | "ticketCompleted"
+  | "queueUpdated"
+  | "timerStarted"
+  | "timerPaused"
+  | "timerReset"
+  | "timerUpdated";
 
-export interface WebSocketMessage {
-  type: WebSocketMessageType;
-  userAvatar?: AvatarId;
-  avatar?: AvatarId;
-  roomData?: RoomData;
-  settings?: RoomSettings;
+interface WebSocketPayloads {
+  initialize: {
+    roomData: RoomData;
+  };
+  userJoined: {
+    user: string;
+    avatar?: AvatarId;
+    roomData?: RoomData;
+  };
+  userLeft: {
+    user: string;
+  };
+  userConnectionStatus: {
+    user: string;
+    isConnected: boolean;
+  };
+  vote: {
+    user: string;
+    vote?: VoteValue | null;
+    structuredVote?: StructuredVote | null;
+  };
+  showVotes: {
+    showVotes: boolean;
+  };
+  resetVotes: Record<string, never>;
+  newModerator: {
+    moderator: string;
+  };
+  settingsUpdated: {
+    settings: RoomSettings;
+  };
+  judgeScoreUpdated: {
+    judgeScore?: VoteValue | null;
+    judgeMetadata?: JudgeMetadata;
+  };
+  error: {
+    error?: string;
+    message?: string;
+    reason?: WebSocketErrorReason;
+    closeCode?: number;
+    code?: number;
+  };
+  disconnected: {
+    error?: string;
+    reason?: WebSocketErrorReason;
+    closeCode?: number;
+  };
+  avatarChanged: {
+    user: string;
+    avatar: AvatarId;
+  };
+  strudelCodeGenerated: {
+    code: string;
+    generationId?: string;
+    phase?: string;
+  };
+  generateStrudelCode: Record<string, never>;
+  toggleStrudelPlayback: Record<string, never>;
+  strudelPlaybackToggled: {
+    isPlaying: boolean;
+  };
+  nextTicket: {
+    ticket: TicketQueueItem;
+    queue?: TicketQueueItem[];
+  };
+  ticketAdded: {
+    ticket: TicketQueueItem;
+    queue?: TicketQueueItem[];
+  };
+  ticketUpdated: {
+    ticket: TicketQueueItem;
+    updates?: Partial<TicketQueueItem>;
+    queue?: TicketQueueItem[];
+  };
+  ticketDeleted: {
+    ticketId: number;
+    queue?: TicketQueueItem[];
+  };
+  ticketCompleted: {
+    ticket?: TicketQueueItem;
+    queue?: TicketQueueItem[];
+    outcome?: string;
+  };
+  queueUpdated: {
+    queue?: TicketQueueItem[];
+  };
+  timerStarted: {
+    timerState: TimerState;
+  };
+  timerPaused: {
+    timerState: TimerState;
+  };
+  timerReset: {
+    timerState: TimerState;
+  };
+  timerUpdated: {
+    timerState: TimerState;
+  };
+}
+
+interface WebSocketEnvelope {
   error?: string;
   message?: string;
-  user?: string;
-  vote?: VoteValue | null;
-  structuredVote?: StructuredVote | null;
-  showVotes?: boolean;
-  isConnected?: boolean;
-  judgeScore?: VoteValue | null;
-  judgeMetadata?: JudgeMetadata;
-  moderator?: string;
-  ticket?: TicketQueueItem | undefined;
-  ticketId?: number;
-  queue?: TicketQueueItem[];
-  code?: string;
-  generationId?: string;
-  phase?: string;
-  isPlaying?: boolean;
-  updates?: Partial<TicketQueueItem>;
-  outcome?: string;
+  reason?: WebSocketErrorReason;
   closeCode?: number;
-  reason?: string;
-  timerState?: TimerState;
 }
+
+export type WebSocketMessage = ({
+  [Type in WebSocketMessageType]: {
+    type: Type;
+  } & WebSocketPayloads[Type];
+}[WebSocketMessageType]) &
+  WebSocketEnvelope;
 
 export interface RoomStats {
   avg: number | string | null;

@@ -4,8 +4,12 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Settings, Sparkles } from 'lucide-react';
 
 import type { RoomSettings, VotingSequenceId } from '@/types';
-import { useSession } from '@/context/SessionContext';
-import { useRoom } from '@/context/RoomContext';
+import {
+  useSessionActions,
+  useSessionErrors,
+  useSessionState,
+} from '@/context/SessionContext';
+import { useRoomActions, useRoomState } from '@/context/RoomContext';
 import { PageBackground } from '@/components/layout/PageBackground';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { Button } from '@/components/ui/Button';
@@ -15,12 +19,12 @@ import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { RoomSettingsTabs } from '@/components/RoomSettingsTabs';
+import { validateName } from '@/utils/validators';
 
 const CreateRoomScreen = () => {
   usePageMeta(META_CONFIGS.create);
+  const { name, passcode } = useSessionState();
   const {
-    name,
-    passcode,
     setName,
     setPasscode,
     setSelectedAvatar,
@@ -28,9 +32,10 @@ const CreateRoomScreen = () => {
     setScreen,
     setJoinFlowMode,
     goHome,
-    clearError,
-  } = useSession();
-  const { serverDefaults, setPendingCreateSettings } = useRoom();
+  } = useSessionActions();
+  const { clearError } = useSessionErrors();
+  const { serverDefaults } = useRoomState();
+  const { setPendingCreateSettings } = useRoomActions();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const defaults = serverDefaults?.roomSettings;
   const structuredOptions = serverDefaults?.structuredVotingOptions ?? [];
@@ -59,7 +64,7 @@ const CreateRoomScreen = () => {
     }
   }, [defaults]);
 
-  const canStart = name.trim().length > 0;
+  const canStart = validateName(name).ok;
   const advancedReady = Boolean(advancedSettings && defaults);
 
   const handleStartFlow = (settings?: Partial<RoomSettings> | null) => {
@@ -134,7 +139,7 @@ const CreateRoomScreen = () => {
               required
               fullWidth
               showValidation
-              isValid={!!name.trim()}
+              isValid={validateName(name).ok}
             />
 
             <Input

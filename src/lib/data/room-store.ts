@@ -11,24 +11,42 @@ export async function upsertRoom(room: RoomData): Promise<void> {
   roomsCollection.utils.writeUpsert(room);
 }
 
+const extractRoomData = (message: WebSocketMessage): RoomData | undefined => {
+  if (message.type === "initialize" || message.type === "userJoined") {
+    return message.roomData;
+  }
+  return undefined;
+};
+
+const extractRoomKey = (
+  message: WebSocketMessage,
+  fallbackRoomKey?: string | null,
+): string | null => {
+  const roomData = extractRoomData(message);
+  if (roomData?.key) {
+    return roomData.key;
+  }
+  return fallbackRoomKey ?? null;
+};
+
 export async function applyRoomMessageToCollections(
   message: WebSocketMessage,
   fallbackRoomKey?: string | null,
 ): Promise<RoomData | null> {
   await readyRoomsCollection();
 
-  const candidateKey =
-    message.roomData?.key ?? (fallbackRoomKey ? fallbackRoomKey : null);
+  const candidateKey = extractRoomKey(message, fallbackRoomKey);
 
   const currentRoom =
     candidateKey !== null && candidateKey !== undefined
       ? (roomsCollection.get(candidateKey) ?? null)
       : null;
 
-  const baseRoom = currentRoom ?? message.roomData ?? null;
+  const initialRoom = extractRoomData(message);
+  const baseRoom = currentRoom ?? initialRoom ?? null;
   const nextRoom =
-    message.type === "initialize" && message.roomData
-      ? message.roomData
+    message.type === "initialize" && initialRoom
+      ? initialRoom
       : applyRoomUpdate(baseRoom, message);
 
   if (nextRoom && nextRoom !== currentRoom) {
