@@ -1,6 +1,9 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createCollection, type Collection } from "@tanstack/db";
-import { queryCollectionOptions } from "@tanstack/query-db-collection";
+import {
+  queryCollectionOptions,
+  type QueryCollectionConfig,
+} from "@tanstack/query-db-collection";
 
 import { API_BASE_URL } from "@/constants";
 import type { RoomData, ServerDefaults } from "@/types";
@@ -40,43 +43,48 @@ function createEnsureCollectionReady(
   };
 }
 
-export const serverDefaultsCollection = createCollection(
-  queryCollectionOptions<ServerDefaults>({
-    id: "server-defaults",
-    queryKey: ["server-defaults"],
-    queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/defaults`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+const serverDefaultsCollectionConfig = {
+  id: "server-defaults",
+  queryKey: ["server-defaults"],
+  queryFn: async () => {
+    const response = await fetch(`${API_BASE_URL}/defaults`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          errorText || `Failed to fetch defaults: ${response.status}`,
-        );
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        errorText || `Failed to fetch defaults: ${response.status}`,
+      );
+    }
 
-      const defaults = (await response.json()) as ServerDefaults;
-      return [defaults];
-    },
-    getKey: () => SERVER_DEFAULTS_DOCUMENT_KEY,
-    queryClient,
-    staleTime: 1000 * 60 * 5,
-  }),
-);
+    const defaults = (await response.json()) as ServerDefaults;
+    return [defaults];
+  },
+  getKey: () => SERVER_DEFAULTS_DOCUMENT_KEY,
+  queryClient,
+  staleTime: 1000 * 60 * 5,
+} satisfies QueryCollectionConfig<ServerDefaults>;
 
-export const roomsCollection = createCollection(
-  queryCollectionOptions<RoomData>({
-    id: "rooms",
-    queryKey: ["rooms"],
-    startSync: false,
-    queryFn: async () => [],
-    queryClient,
-    getKey: (room) => room.key,
-  }),
+export const serverDefaultsCollection = createCollection<
+  ServerDefaults,
+  string
+>(queryCollectionOptions(serverDefaultsCollectionConfig));
+
+const roomsCollectionConfig = {
+  id: "rooms",
+  queryKey: ["rooms"],
+  startSync: false,
+  queryFn: async () => [],
+  queryClient,
+  getKey: (room) => room.key,
+} satisfies QueryCollectionConfig<RoomData>;
+
+export const roomsCollection = createCollection<RoomData, string>(
+  queryCollectionOptions(roomsCollectionConfig),
 );
 
 export const ensureServerDefaultsCollectionReady = createEnsureCollectionReady(
