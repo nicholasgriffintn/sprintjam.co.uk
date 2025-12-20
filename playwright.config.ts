@@ -9,7 +9,7 @@ const commonTestIgnore = shouldRunA11y ? [] : ['**/a11y/**'];
 export default defineConfig({
   testDir: './tests/e2e',
   testIgnore: commonTestIgnore,
-  workers: 4,
+  workers: isCI ? 2 : 4,
   timeout: 15_000,
   expect: {
     timeout: 3_000,
