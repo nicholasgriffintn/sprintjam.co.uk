@@ -5,6 +5,9 @@ import type {
 
 import type { Env } from "../types";
 import {
+  fetchLinearCycles,
+  fetchLinearIssues,
+  fetchLinearTeams,
   fetchLinearIssue,
   updateLinearEstimate,
 } from "../services/linear-service";
@@ -45,6 +48,53 @@ async function validateSession(
   }
 }
 
+async function getLinearCredentials(env: Env, roomKey: string) {
+  const roomObject = getRoomStub(env, roomKey);
+  const credentialsResponse = await roomObject.fetch(
+    new Request("https://internal/linear/oauth/credentials", {
+      method: "GET",
+    }) as unknown as CfRequest,
+  );
+
+  if (!credentialsResponse.ok) {
+    throw new Error(
+      "Linear not connected. Please connect your Linear account in settings.",
+    );
+  }
+
+  const { credentials } = await credentialsResponse.json<{
+    credentials: {
+      id: number;
+      roomKey: string;
+      accessToken: string;
+      refreshToken: string | null;
+      tokenType: string;
+      expiresAt: number;
+      scope: string | null;
+      linearOrganizationId: string | null;
+      linearUserId: string | null;
+      linearUserEmail: string | null;
+      estimateField: string | null;
+      authorizedBy: string;
+      createdAt: number;
+      updatedAt: number;
+    };
+  }>();
+
+  return { credentials, roomObject };
+}
+
+function createTokenRefreshHandler(roomObject: ReturnType<typeof getRoomStub>) {
+  return async (accessToken: string, refreshToken: string, expiresAt: number) =>
+    roomObject.fetch(
+      new Request("https://internal/linear/oauth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
+      }) as unknown as CfRequest,
+    );
+}
+
 export async function getLinearIssueController(
   url: URL,
   env: Env,
@@ -72,52 +122,11 @@ export async function getLinearIssueController(
       return jsonError("Linear OAuth not configured", 500);
     }
 
-    const roomObject = getRoomStub(env, roomKey);
-    const credentialsResponse = await roomObject.fetch(
-      new Request("https://internal/linear/oauth/credentials", {
-        method: "GET",
-      }) as unknown as CfRequest,
+    const { credentials, roomObject } = await getLinearCredentials(
+      env,
+      roomKey,
     );
-
-    if (!credentialsResponse.ok) {
-      return jsonError(
-        "Linear not connected. Please connect your Linear account in settings.",
-        401,
-      );
-    }
-
-    const { credentials } = await credentialsResponse.json<{
-      credentials: {
-        id: number;
-        roomKey: string;
-        accessToken: string;
-        refreshToken: string | null;
-        tokenType: string;
-        expiresAt: number;
-        scope: string | null;
-        linearOrganizationId: string | null;
-        linearUserId: string | null;
-        linearUserEmail: string | null;
-        estimateField: string | null;
-        authorizedBy: string;
-        createdAt: number;
-        updatedAt: number;
-      };
-    }>();
-
-    const onTokenRefresh = async (
-      accessToken: string,
-      refreshToken: string,
-      expiresAt: number,
-    ) => {
-      await roomObject.fetch(
-        new Request("https://internal/linear/oauth/refresh", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-        }) as unknown as CfRequest,
-      );
-    };
+    const onTokenRefresh = createTokenRefreshHandler(roomObject);
 
     const issue = await fetchLinearIssue(
       credentials,
@@ -173,52 +182,11 @@ export async function updateLinearEstimateController(
       return jsonError("Linear OAuth not configured", 500);
     }
 
-    const roomObject = getRoomStub(env, roomKey);
-    const credentialsResponse = await roomObject.fetch(
-      new Request("https://internal/linear/oauth/credentials", {
-        method: "GET",
-      }) as unknown as CfRequest,
+    const { credentials, roomObject } = await getLinearCredentials(
+      env,
+      roomKey,
     );
-
-    if (!credentialsResponse.ok) {
-      return jsonError(
-        "Linear not connected. Please connect your Linear account in settings.",
-        401,
-      );
-    }
-
-    const { credentials } = await credentialsResponse.json<{
-      credentials: {
-        id: number;
-        roomKey: string;
-        accessToken: string;
-        refreshToken: string | null;
-        tokenType: string;
-        expiresAt: number;
-        scope: string | null;
-        linearOrganizationId: string | null;
-        linearUserId: string | null;
-        linearUserEmail: string | null;
-        estimateField: string | null;
-        authorizedBy: string;
-        createdAt: number;
-        updatedAt: number;
-      };
-    }>();
-
-    const onTokenRefresh = async (
-      accessToken: string,
-      refreshToken: string,
-      expiresAt: number,
-    ) => {
-      await roomObject.fetch(
-        new Request("https://internal/linear/oauth/refresh", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-        }) as unknown as CfRequest,
-      );
-    };
+    const onTokenRefresh = createTokenRefreshHandler(roomObject);
 
     const currentIssue = await fetchLinearIssue(
       credentials,
@@ -251,6 +219,164 @@ export async function updateLinearEstimateController(
       error instanceof Error
         ? error.message
         : "Failed to update Linear estimate";
+    const isAuth =
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("oauth") ||
+      message.toLowerCase().includes("reconnect");
+    return jsonError(message, isAuth ? 401 : 500);
+  }
+}
+
+export async function getLinearTeamsController(
+  url: URL,
+  env: Env,
+): Promise<CfResponse> {
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
+
+  if (!roomKey || !userName) {
+    return jsonError("Room key and user name are required");
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.LINEAR_OAUTH_CLIENT_ID;
+    const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError("Linear OAuth not configured", 500);
+    }
+
+    const { credentials, roomObject } = await getLinearCredentials(
+      env,
+      roomKey,
+    );
+    const onTokenRefresh = createTokenRefreshHandler(roomObject);
+    const teams = await fetchLinearTeams(
+      credentials,
+      onTokenRefresh,
+      clientId,
+      clientSecret,
+    );
+
+    return jsonResponse({ teams });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch Linear teams";
+    const isAuth =
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("oauth") ||
+      message.toLowerCase().includes("reconnect");
+    return jsonError(message, isAuth ? 401 : 500);
+  }
+}
+
+export async function getLinearCyclesController(
+  url: URL,
+  env: Env,
+): Promise<CfResponse> {
+  const teamId = url.searchParams.get("teamId");
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
+
+  if (!teamId) {
+    return jsonError("Team ID is required");
+  }
+
+  if (!roomKey || !userName) {
+    return jsonError("Room key and user name are required");
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.LINEAR_OAUTH_CLIENT_ID;
+    const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError("Linear OAuth not configured", 500);
+    }
+
+    const { credentials, roomObject } = await getLinearCredentials(
+      env,
+      roomKey,
+    );
+    const onTokenRefresh = createTokenRefreshHandler(roomObject);
+    const cycles = await fetchLinearCycles(
+      credentials,
+      teamId,
+      onTokenRefresh,
+      clientId,
+      clientSecret,
+    );
+
+    return jsonResponse({ cycles });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch Linear cycles";
+    const isAuth =
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("oauth") ||
+      message.toLowerCase().includes("reconnect");
+    return jsonError(message, isAuth ? 401 : 500);
+  }
+}
+
+export async function getLinearIssuesController(
+  url: URL,
+  env: Env,
+): Promise<CfResponse> {
+  const teamId = url.searchParams.get("teamId");
+  const cycleId = url.searchParams.get("cycleId");
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
+  const limitParam = url.searchParams.get("limit");
+  const limit = limitParam ? Number(limitParam) : null;
+
+  if (!teamId) {
+    return jsonError("Team ID is required");
+  }
+
+  if (!roomKey || !userName) {
+    return jsonError("Room key and user name are required");
+  }
+
+  if (limitParam && Number.isNaN(limit)) {
+    return jsonError("Limit must be a number");
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.LINEAR_OAUTH_CLIENT_ID;
+    const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError("Linear OAuth not configured", 500);
+    }
+
+    const { credentials, roomObject } = await getLinearCredentials(
+      env,
+      roomKey,
+    );
+    const onTokenRefresh = createTokenRefreshHandler(roomObject);
+    const tickets = await fetchLinearIssues(
+      credentials,
+      teamId,
+      { cycleId, limit },
+      onTokenRefresh,
+      clientId,
+      clientSecret,
+    );
+
+    return jsonResponse({ tickets });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch Linear issues";
     const isAuth =
       message.toLowerCase().includes("session") ||
       message.toLowerCase().includes("oauth") ||

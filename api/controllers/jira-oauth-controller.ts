@@ -89,8 +89,8 @@ export async function initiateJiraOAuthController(
     authUrl.searchParams.set("audience", "api.atlassian.com");
     authUrl.searchParams.set("client_id", clientId);
     authUrl.searchParams.set(
-      "scope",
-      "read:jira-work write:jira-work read:jira-user offline_access",
+      'scope',
+      'read:jira-work write:jira-work read:board-scope:jira-software read:project:jira read:sprint:jira-software read:issue-details:jira read:jql:jira read:jira-user offline_access'
     );
     authUrl.searchParams.set("redirect_uri", redirectUri);
     authUrl.searchParams.set("state", state);
@@ -216,7 +216,15 @@ export async function handleJiraOAuthCallbackController(
         { status: 400, headers: { "Content-Type": "text/html" } },
       ) as unknown as CfResponse;
     }
-    const jiraResource = resources[0];
+    const requiredScopes = [
+      "read:board-scope:jira-software",
+      "read:sprint:jira-software",
+      "read:issue-details:jira",
+    ];
+    const jiraResource =
+      resources.find((resource) =>
+        requiredScopes.every((scope) => resource.scopes.includes(scope)),
+      ) ?? resources[0];
     const jiraDomain = new URL(jiraResource.url).hostname;
 
     const userResponse = await fetch(

@@ -78,6 +78,35 @@ export interface TicketVote {
 
 export type TicketMetadata = Record<string, any>;
 
+export interface ExternalBoardOption {
+  id: string;
+  name: string;
+  key?: string;
+}
+
+export interface ExternalSprintOption {
+  id: string;
+  name: string;
+  number?: number;
+  state?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+export interface ExternalTicketSummary {
+  id: string;
+  key: string;
+  title: string;
+  description?: string;
+  status?: string;
+  assignee?: string | null;
+  storyPoints?: number | null;
+  estimate?: number | null;
+  labels?: string[];
+  url?: string;
+  metadata: TicketMetadata;
+}
+
 export interface GithubIssue {
   id: string;
   key: string;

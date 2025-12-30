@@ -12,6 +12,20 @@ type LinearIssue = {
   assignee?: { name: string };
 };
 
+type LinearTeam = {
+  id: string;
+  name: string;
+  key: string;
+};
+
+type LinearCycle = {
+  id: string;
+  number: number;
+  name?: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+};
+
 function getOAuthHeaders(accessToken: string): Headers {
   return new Headers({
     Authorization: `Bearer ${accessToken}`,
@@ -415,4 +429,146 @@ export async function getLinearViewer(accessToken: string): Promise<{
   }>(accessToken, query);
 
   return data.viewer;
+}
+
+export async function fetchLinearTeams(
+  credentials: LinearOAuthCredentials,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number,
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string,
+): Promise<LinearTeam[]> {
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const query = `
+        query {
+          teams {
+            nodes {
+              id
+              name
+              key
+            }
+          }
+        }
+      `;
+
+      const data = await executeGraphQL<{ teams: { nodes: LinearTeam[] } }>(
+        accessToken,
+        query,
+      );
+
+      return data.teams.nodes ?? [];
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret,
+  );
+}
+
+export async function fetchLinearCycles(
+  credentials: LinearOAuthCredentials,
+  teamId: string,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number,
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string,
+): Promise<LinearCycle[]> {
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const query = `
+        query GetCycles($teamId: String!) {
+          team(id: $teamId) {
+            cycles(first: 50) {
+              nodes {
+                id
+                number
+                name
+                startsAt
+                endsAt
+              }
+            }
+          }
+        }
+      `;
+
+      const data = await executeGraphQL<{
+        team: { cycles: { nodes: LinearCycle[] } } | null;
+      }>(accessToken, query, { teamId });
+
+      return data.team?.cycles?.nodes ?? [];
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret,
+  );
+}
+
+export async function fetchLinearIssues(
+  credentials: LinearOAuthCredentials,
+  teamId: string,
+  options: { cycleId?: string | null; limit?: number | null },
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number,
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string,
+): Promise<TicketMetadata[]> {
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const limit = options.limit ?? 250;
+      const hasCycle = Boolean(options.cycleId);
+      const query = `
+        query GetIssues($teamId: ID!, $limit: Int!${
+          hasCycle ? ", $cycleId: ID!" : ""
+        }) {
+          issues(
+            first: $limit
+            filter: {
+              team: { id: { eq: $teamId } }
+              ${hasCycle ? "cycle: { id: { eq: $cycleId } }" : ""}
+            }
+          ) {
+            nodes {
+              id
+              identifier
+              title
+              description
+              estimate
+              url
+              state {
+                name
+              }
+              assignee {
+                name
+              }
+            }
+          }
+        }
+      `;
+
+      const data = await executeGraphQL<{
+        issues: { nodes: LinearIssue[] };
+      }>(accessToken, query, {
+        teamId,
+        ...(hasCycle ? { cycleId: options.cycleId } : {}),
+        limit,
+      });
+
+      return data.issues.nodes.map(mapIssueToTicket);
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret,
+  );
 }

@@ -9,6 +9,9 @@ import {
 } from "./rooms-controller";
 import {
   getJiraTicketController,
+  getJiraBoardsController,
+  getJiraSprintsController,
+  getJiraIssuesController,
   updateJiraStoryPointsController,
 } from "./jira-controller";
 import {
@@ -21,6 +24,9 @@ import {
 } from "./jira-oauth-controller";
 import {
   getLinearIssueController,
+  getLinearTeamsController,
+  getLinearCyclesController,
+  getLinearIssuesController,
   updateLinearEstimateController,
 } from "./linear-controller";
 import {
@@ -31,6 +37,9 @@ import {
 } from "./linear-oauth-controller";
 import {
   getGithubIssueController,
+  getGithubReposController,
+  getGithubMilestonesController,
+  getGithubIssuesController,
   updateGithubEstimateController,
 } from "./github-controller";
 import {
@@ -140,6 +149,51 @@ describe("jira controller validation", () => {
     const response = (await updateJiraStoryPointsController(
       "ABC-1",
       jsonRequest({ storyPoints: 5 }, "PUT"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
+
+  it("requires room and user when fetching Jira boards", async () => {
+    const response = (await getJiraBoardsController(
+      makeUrl("/api/jira/boards"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
+
+  it("requires board id when fetching Jira sprints", async () => {
+    const response = (await getJiraSprintsController(
+      makeUrl("/api/jira/sprints?roomKey=room&userName=alice"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Board ID is required");
+  });
+
+  it("requires room and user when fetching Jira sprints", async () => {
+    const response = (await getJiraSprintsController(
+      makeUrl("/api/jira/sprints?boardId=1"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
+
+  it("requires board id when fetching Jira issues", async () => {
+    const response = (await getJiraIssuesController(
+      makeUrl("/api/jira/issues?roomKey=room&userName=alice"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Board ID is required");
+  });
+
+  it("requires room and user when fetching Jira issues", async () => {
+    const response = (await getJiraIssuesController(
+      makeUrl("/api/jira/issues?boardId=1"),
       env,
     )) as Response;
 
@@ -275,6 +329,51 @@ describe("linear controller validation", () => {
 
     await expectJsonError(response, "Room key and user name are required");
   });
+
+  it("requires room and user when fetching Linear teams", async () => {
+    const response = (await getLinearTeamsController(
+      makeUrl("/api/linear/teams"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
+
+  it("requires team id when fetching Linear cycles", async () => {
+    const response = (await getLinearCyclesController(
+      makeUrl("/api/linear/cycles?roomKey=room-1&userName=alice"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Team ID is required");
+  });
+
+  it("requires room and user when fetching Linear cycles", async () => {
+    const response = (await getLinearCyclesController(
+      makeUrl("/api/linear/cycles?teamId=team-1"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
+
+  it("requires team id when fetching Linear issues list", async () => {
+    const response = (await getLinearIssuesController(
+      makeUrl("/api/linear/issues?roomKey=room-1&userName=alice"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Team ID is required");
+  });
+
+  it("requires room and user when fetching Linear issues list", async () => {
+    const response = (await getLinearIssuesController(
+      makeUrl("/api/linear/issues?teamId=team-1"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
 });
 
 describe("linear oauth validation", () => {
@@ -352,6 +451,51 @@ describe("github controller validation", () => {
     const response = (await updateGithubEstimateController(
       "owner/repo#1",
       jsonRequest({ estimate: 5 }, "PUT"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
+
+  it("requires room and user when fetching GitHub repos", async () => {
+    const response = (await getGithubReposController(
+      makeUrl("/api/github/repos"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
+
+  it("requires repository when fetching GitHub milestones", async () => {
+    const response = (await getGithubMilestonesController(
+      makeUrl("/api/github/milestones?roomKey=room-1&userName=alice"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Repository is required");
+  });
+
+  it("requires room and user when fetching GitHub milestones", async () => {
+    const response = (await getGithubMilestonesController(
+      makeUrl("/api/github/milestones?repo=owner/repo"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Room key and user name are required");
+  });
+
+  it("requires repository when fetching GitHub issues list", async () => {
+    const response = (await getGithubIssuesController(
+      makeUrl("/api/github/issues?roomKey=room-1&userName=alice"),
+      env,
+    )) as Response;
+
+    await expectJsonError(response, "Repository is required");
+  });
+
+  it("requires room and user when fetching GitHub issues list", async () => {
+    const response = (await getGithubIssuesController(
+      makeUrl("/api/github/issues?repo=owner/repo"),
       env,
     )) as Response;
 

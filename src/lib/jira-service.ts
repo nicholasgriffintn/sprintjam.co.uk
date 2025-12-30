@@ -28,6 +28,20 @@ export interface JiraFieldOption {
   custom?: boolean;
 }
 
+export interface JiraBoard {
+  id: string;
+  name: string;
+  type?: string;
+}
+
+export interface JiraSprint {
+  id: string;
+  name: string;
+  state?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
 export async function fetchJiraTicket(
   ticketId: string,
   options?: { roomKey?: string; userName?: string; sessionToken?: string },
@@ -112,6 +126,92 @@ export async function updateJiraStoryPoints(
     console.error("Error updating Jira story points:", error);
     throw error;
   }
+}
+
+export async function fetchJiraBoards(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<JiraBoard[]> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(
+    `${API_BASE_URL}/jira/boards?roomKey=${encodeURIComponent(
+      roomKey,
+    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
+      token,
+    )}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      (errorData as { error?: string }).error || "Failed to fetch Jira boards",
+    );
+  }
+
+  const data = (await response.json()) as { boards?: JiraBoard[] };
+  return data.boards ?? [];
+}
+
+export async function fetchJiraSprints(
+  boardId: string,
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<JiraSprint[]> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(
+    `${API_BASE_URL}/jira/sprints?boardId=${encodeURIComponent(
+      boardId,
+    )}&roomKey=${encodeURIComponent(roomKey)}&userName=${encodeURIComponent(
+      userName,
+    )}&sessionToken=${encodeURIComponent(token)}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      (errorData as { error?: string }).error || "Failed to fetch Jira sprints",
+    );
+  }
+
+  const data = (await response.json()) as { sprints?: JiraSprint[] };
+  return data.sprints ?? [];
+}
+
+export async function fetchJiraBoardIssues(
+  boardId: string,
+  options: { sprintId?: string | null; limit?: number | null },
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<TicketMetadata[]> {
+  const token = resolveSessionToken(sessionToken);
+  const params = new URLSearchParams();
+  params.set("boardId", boardId);
+  params.set("roomKey", roomKey);
+  params.set("userName", userName);
+  params.set("sessionToken", token);
+  if (options.sprintId) {
+    params.set("sprintId", options.sprintId);
+  }
+  if (options.limit) {
+    params.set("limit", String(options.limit));
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/jira/issues?${params.toString()}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      (errorData as { error?: string }).error || "Failed to fetch Jira issues",
+    );
+  }
+
+  const data = (await response.json()) as { tickets?: TicketMetadata[] };
+  return data.tickets ?? [];
 }
 
 export function convertVoteValueToStoryPoints(

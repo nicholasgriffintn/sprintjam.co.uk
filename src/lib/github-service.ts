@@ -20,6 +20,20 @@ export interface GithubOAuthStatus {
   expiresAt?: number;
 }
 
+export interface GithubRepo {
+  id: string;
+  name: string;
+  fullName: string;
+  owner: string;
+}
+
+export interface GithubMilestone {
+  id: string;
+  number: number;
+  title: string;
+  state?: string;
+}
+
 export async function fetchGithubIssue(
   issueId: string,
   options?: { roomKey?: string; userName?: string; sessionToken?: string },
@@ -163,4 +177,96 @@ export async function revokeGithubOAuth(
       (data as { error?: string }).error || "Failed to disconnect GitHub OAuth",
     );
   }
+}
+
+export async function fetchGithubRepos(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<GithubRepo[]> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(
+    `${API_BASE_URL}/github/repos?roomKey=${encodeURIComponent(
+      roomKey,
+    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
+      token,
+    )}`,
+  );
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      (data as { error?: string }).error || "Failed to fetch GitHub repos",
+    );
+  }
+
+  const result = (await response.json()) as { repos?: GithubRepo[] };
+  return result.repos ?? [];
+}
+
+export async function fetchGithubMilestones(
+  repo: string,
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<GithubMilestone[]> {
+  const token = resolveSessionToken(sessionToken);
+  const params = new URLSearchParams();
+  params.set("repo", repo);
+  params.set("roomKey", roomKey);
+  params.set("userName", userName);
+  params.set("sessionToken", token);
+
+  const response = await fetch(
+    `${API_BASE_URL}/github/milestones?${params.toString()}`,
+  );
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      (data as { error?: string }).error ||
+        "Failed to fetch GitHub milestones",
+    );
+  }
+
+  const result = (await response.json()) as {
+    milestones?: GithubMilestone[];
+  };
+  return result.milestones ?? [];
+}
+
+export async function fetchGithubRepoIssues(
+  repo: string,
+  options: { milestoneNumber?: number | null; limit?: number | null },
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<TicketMetadata[]> {
+  const token = resolveSessionToken(sessionToken);
+  const params = new URLSearchParams();
+  params.set("repo", repo);
+  params.set("roomKey", roomKey);
+  params.set("userName", userName);
+  params.set("sessionToken", token);
+  if (options.milestoneNumber !== undefined && options.milestoneNumber !== null) {
+    params.set("milestoneNumber", String(options.milestoneNumber));
+  }
+  if (options.limit) {
+    params.set("limit", String(options.limit));
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/github/issues?${params.toString()}`,
+  );
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      (data as { error?: string }).error ||
+        "Failed to fetch GitHub issues",
+    );
+  }
+
+  const result = (await response.json()) as { tickets?: TicketMetadata[] };
+  return result.tickets ?? [];
 }

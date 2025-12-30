@@ -16,6 +16,9 @@ import {
 } from "./controllers/rooms-controller";
 import {
   getJiraTicketController,
+  getJiraBoardsController,
+  getJiraSprintsController,
+  getJiraIssuesController,
   updateJiraStoryPointsController,
 } from "./controllers/jira-controller";
 import {
@@ -28,6 +31,9 @@ import {
 } from "./controllers/jira-oauth-controller";
 import {
   getLinearIssueController,
+  getLinearTeamsController,
+  getLinearCyclesController,
+  getLinearIssuesController,
   updateLinearEstimateController,
 } from "./controllers/linear-controller";
 import {
@@ -38,6 +44,9 @@ import {
 } from "./controllers/linear-oauth-controller";
 import {
   getGithubIssueController,
+  getGithubReposController,
+  getGithubMilestonesController,
+  getGithubIssuesController,
   updateGithubEstimateController,
 } from "./controllers/github-controller";
 import {
@@ -133,6 +142,18 @@ async function handleApiRequest(
     return getJiraTicketController(url, env);
   }
 
+  if (path === "jira/boards" && request.method === "GET") {
+    return getJiraBoardsController(url, env);
+  }
+
+  if (path === "jira/sprints" && request.method === "GET") {
+    return getJiraSprintsController(url, env);
+  }
+
+  if (path === "jira/issues" && request.method === "GET") {
+    return getJiraIssuesController(url, env);
+  }
+
   if (
     path.startsWith("jira/ticket/") &&
     path.endsWith("/storyPoints") &&
@@ -170,6 +191,18 @@ async function handleApiRequest(
     return getLinearIssueController(url, env);
   }
 
+  if (path === "linear/teams" && request.method === "GET") {
+    return getLinearTeamsController(url, env);
+  }
+
+  if (path === "linear/cycles" && request.method === "GET") {
+    return getLinearCyclesController(url, env);
+  }
+
+  if (path === "linear/issues" && request.method === "GET") {
+    return getLinearIssuesController(url, env);
+  }
+
   if (
     path.startsWith("linear/issue/") &&
     path.endsWith("/estimate") &&
@@ -197,6 +230,18 @@ async function handleApiRequest(
 
   if (path === "github/issue" && request.method === "GET") {
     return getGithubIssueController(url, env);
+  }
+
+  if (path === "github/repos" && request.method === "GET") {
+    return getGithubReposController(url, env);
+  }
+
+  if (path === "github/milestones" && request.method === "GET") {
+    return getGithubMilestonesController(url, env);
+  }
+
+  if (path === "github/issues" && request.method === "GET") {
+    return getGithubIssuesController(url, env);
   }
 
   if (

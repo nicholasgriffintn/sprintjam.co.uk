@@ -234,3 +234,136 @@ export async function createGithubIssue(options: {
   const data = await issueResponse.json();
   return mapIssueResponse(data, { owner, repo });
 }
+
+export async function fetchGithubRepos(
+  credentials: GithubOAuthCredentials,
+): Promise<Array<{ id: string; name: string; fullName: string; owner: string }>> {
+  const repos: Array<{ id: string; name: string; fullName: string; owner: string }> =
+    [];
+  let page = 1;
+
+  while (true) {
+    const response = await githubRequest(
+      credentials.accessToken,
+      `/user/repos?per_page=100&page=${page}&sort=updated`,
+    );
+    const data = (await response.json()) as Array<{
+      id: number;
+      name: string;
+      full_name: string;
+      owner?: { login?: string };
+    }>;
+
+    const pageRepos = data.map((repo) => ({
+      id: String(repo.id),
+      name: repo.name,
+      fullName: repo.full_name,
+      owner: repo.owner?.login ?? repo.full_name.split("/")[0] ?? "",
+    }));
+
+    repos.push(...pageRepos);
+
+    if (data.length < 100) {
+      break;
+    }
+    page += 1;
+  }
+
+  return repos;
+}
+
+export async function fetchGithubMilestones(
+  credentials: GithubOAuthCredentials,
+  repository: string,
+): Promise<Array<{ id: string; number: number; title: string; state?: string }>> {
+  const [owner, repo] = repository.split("/");
+  if (!owner || !repo) {
+    throw new Error("Invalid GitHub repository identifier.");
+  }
+
+  const milestones: Array<{
+    id: string;
+    number: number;
+    title: string;
+    state?: string;
+  }> = [];
+  let page = 1;
+
+  while (true) {
+    const response = await githubRequest(
+      credentials.accessToken,
+      `/repos/${owner}/${repo}/milestones?state=all&per_page=100&page=${page}`,
+    );
+    const data = (await response.json()) as Array<{
+      id: number;
+      number: number;
+      title: string;
+      state?: string;
+    }>;
+
+    milestones.push(
+      ...data.map((milestone) => ({
+        id: String(milestone.id),
+        number: milestone.number,
+        title: milestone.title,
+        state: milestone.state,
+      })),
+    );
+
+    if (data.length < 100) {
+      break;
+    }
+    page += 1;
+  }
+
+  return milestones;
+}
+
+export async function fetchGithubRepoIssues(
+  credentials: GithubOAuthCredentials,
+  repository: string,
+  options: { milestoneNumber?: number | null; limit?: number | null },
+): Promise<GithubIssue[]> {
+  const [owner, repo] = repository.split("/");
+  if (!owner || !repo) {
+    throw new Error("Invalid GitHub repository identifier.");
+  }
+
+  const issues: GithubIssue[] = [];
+  const limit = options.limit ?? null;
+  let page = 1;
+  let remaining = limit ?? Infinity;
+
+  while (remaining > 0) {
+    const pageSize = Math.min(100, remaining);
+    const params = new URLSearchParams({
+      state: "all",
+      per_page: String(pageSize),
+      page: String(page),
+    });
+    if (options.milestoneNumber !== undefined && options.milestoneNumber !== null) {
+      params.set("milestone", String(options.milestoneNumber));
+    }
+
+    const response = await githubRequest(
+      credentials.accessToken,
+      `/repos/${owner}/${repo}/issues?${params.toString()}`,
+    );
+    const data = (await response.json()) as Array<Record<string, any>>;
+
+    const pageIssues = data
+      .filter((issue) => !issue.pull_request)
+      .map((issue) => mapIssueResponse(issue, { owner, repo }));
+
+    issues.push(...pageIssues);
+
+    remaining -= pageSize;
+
+    if (data.length < pageSize) {
+      break;
+    }
+    page += 1;
+  }
+
+  return issues;
+}

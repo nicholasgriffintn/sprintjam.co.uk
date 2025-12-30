@@ -69,6 +69,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
             userName={userName}
             canManageQueue={canManageQueue}
             pendingTickets={pendingTickets}
+            queue={queue}
             onError={onError}
           />
         ) : (

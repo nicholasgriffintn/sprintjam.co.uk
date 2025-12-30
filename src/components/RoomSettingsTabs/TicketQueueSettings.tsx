@@ -373,15 +373,6 @@ export function TicketQueueSettings({
                   'linear',
                   linearStatus.connected ?? false
                 )}
-                {linearStatus.connected && (
-                  <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-xs text-purple-800 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-100">
-                    Estimate field:{' '}
-                    {linearStatus.estimateField || 'Team default'}
-                    <br />
-                    Field selection UI is coming soon—using your team default
-                    for now.
-                  </div>
-                )}
               </div>
             )}
             {localSettings.externalService === 'github' && (
@@ -446,10 +437,6 @@ export function TicketQueueSettings({
                   )}
                 </div>
 
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-100">
-                  Sync support for GitHub will arrive soon. You'll still be able
-                  to queue issues from GitHub.
-                </div>
               </div>
             )}
           </div>

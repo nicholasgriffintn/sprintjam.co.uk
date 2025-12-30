@@ -373,3 +373,293 @@ export async function updateJiraStoryPoints(
     clientSecret,
   );
 }
+
+export async function fetchJiraBoards(
+  credentials: JiraOAuthCredentials,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<
+  Array<{
+    id: string;
+    name: string;
+    type?: string;
+  }>
+> {
+  if (!credentials.jiraCloudId) {
+    throw new Error('Jira cloud ID missing from credentials.');
+  }
+
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const headers = getOAuthHeaders(accessToken);
+      const boards: Array<{ id: string; name: string; type?: string }> = [];
+      let startAt = 0;
+      let isLast = false;
+
+      while (!isLast) {
+        const response = await fetch(
+          `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/agile/1.0/board?startAt=${startAt}&maxResults=50`,
+          {
+            method: 'GET',
+            headers,
+          }
+        );
+
+        if (!response.ok) {
+          await response.text().catch(() => '');
+          if (response.status === 401) {
+            throw new Error('Unauthorized. Please reconnect Jira.');
+          }
+          throw new Error('Failed to fetch Jira boards.');
+        }
+
+        const data = await response.json<{
+          values?: Array<{ id: number; name: string; type?: string }>;
+          isLast?: boolean;
+          startAt: number;
+          maxResults: number;
+          total?: number;
+        }>();
+
+        const values = data.values ?? [];
+        boards.push(
+          ...values.map((board) => ({
+            id: String(board.id),
+            name: board.name,
+            type: board.type,
+          }))
+        );
+
+        const nextStart = data.startAt + data.maxResults;
+        const total = data.total ?? nextStart;
+        isLast = data.isLast ?? nextStart >= total;
+        startAt = nextStart;
+      }
+
+      return boards;
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
+
+export async function fetchJiraSprints(
+  credentials: JiraOAuthCredentials,
+  boardId: string,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<
+  Array<{
+    id: string;
+    name: string;
+    state?: string;
+    startDate?: string | null;
+    endDate?: string | null;
+  }>
+> {
+  if (!credentials.jiraCloudId) {
+    throw new Error('Jira cloud ID missing from credentials.');
+  }
+
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const headers = getOAuthHeaders(accessToken);
+      const sprints: Array<{
+        id: string;
+        name: string;
+        state?: string;
+        startDate?: string | null;
+        endDate?: string | null;
+      }> = [];
+      let startAt = 0;
+      let isLast = false;
+
+      while (!isLast) {
+        const response = await fetch(
+          `https://api.atlassian.com/ex/jira/${
+            credentials.jiraCloudId
+          }/rest/agile/1.0/board/${encodeURIComponent(
+            boardId
+          )}/sprint?startAt=${startAt}&maxResults=50&state=active,future,closed`,
+          {
+            method: 'GET',
+            headers,
+          }
+        );
+
+        if (!response.ok) {
+          const errorBody = await response.text().catch(() => '');
+          if (response.status === 401) {
+            throw new Error('Unauthorized. Please reconnect Jira.');
+          }
+          throw new Error('Failed to fetch Jira sprints.');
+        }
+
+        const data = await response.json<{
+          values?: Array<{
+            id: number;
+            name: string;
+            state?: string;
+            startDate?: string;
+            endDate?: string;
+          }>;
+          isLast?: boolean;
+          startAt: number;
+          maxResults: number;
+          total?: number;
+        }>();
+
+        const values = data.values ?? [];
+        sprints.push(
+          ...values.map((sprint) => ({
+            id: String(sprint.id),
+            name: sprint.name,
+            state: sprint.state,
+            startDate: sprint.startDate ?? null,
+            endDate: sprint.endDate ?? null,
+          }))
+        );
+
+        const nextStart = data.startAt + data.maxResults;
+        const total = data.total ?? nextStart;
+        isLast = data.isLast ?? nextStart >= total;
+        startAt = nextStart;
+      }
+
+      return sprints;
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
+
+export async function fetchJiraBoardIssues(
+  credentials: JiraOAuthCredentials,
+  boardId: string,
+  options: {
+    sprintId?: string | null;
+    limit?: number | null;
+  },
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<TicketMetadata[]> {
+  if (!credentials.jiraCloudId) {
+    throw new Error('Jira cloud ID missing from credentials.');
+  }
+
+  return executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const headers = getOAuthHeaders(accessToken);
+      const tickets: TicketMetadata[] = [];
+      const sprintId = options.sprintId ?? null;
+      const limit = options.limit ?? null;
+      let startAt = 0;
+      let remaining = limit ?? Infinity;
+
+      while (remaining > 0) {
+        const pageSize = Math.min(50, remaining);
+        const jql = sprintId ? `sprint = ${sprintId}` : undefined;
+        const params = new URLSearchParams({
+          startAt: String(startAt),
+          maxResults: String(pageSize),
+        });
+        if (jql) {
+          params.set('jql', jql);
+        }
+        const fields = ['summary', 'description', 'status', 'assignee'];
+        if (credentials.storyPointsField) {
+          fields.push(credentials.storyPointsField);
+        }
+        params.set('fields', fields.join(','));
+
+        const response = await fetch(
+          `https://api.atlassian.com/ex/jira/${
+            credentials.jiraCloudId
+          }/rest/agile/1.0/board/${encodeURIComponent(
+            boardId
+          )}/issue?${params.toString()}`,
+          {
+            method: 'GET',
+            headers,
+          }
+        );
+
+        if (!response.ok) {
+          const errorBody = await response.text().catch(() => '');
+          if (response.status === 401) {
+            throw new Error('Unauthorized. Please reconnect Jira.');
+          }
+          throw new Error('Failed to fetch Jira issues.');
+        }
+
+        const data = await response.json<{
+          issues?: Array<{
+            id: string;
+            key: string;
+            fields: {
+              summary?: string;
+              description?: unknown;
+              status?: { name?: string };
+              assignee?: { displayName?: string };
+              [key: string]: any;
+            };
+          }>;
+          startAt: number;
+          maxResults: number;
+          total?: number;
+        }>();
+
+        const issues = data.issues ?? [];
+        tickets.push(
+          ...issues.map((issue) => ({
+            id: issue.id,
+            key: issue.key,
+            summary: issue.fields?.summary ?? '',
+            description: parseJiraDescription(issue.fields?.description) || '',
+            status: issue.fields?.status?.name || 'Unknown',
+            assignee: issue.fields?.assignee?.displayName || null,
+            storyPoints: credentials.storyPointsField
+              ? issue.fields?.[credentials.storyPointsField]
+              : null,
+            url: `https://${credentials.jiraDomain}/browse/${issue.key}`,
+          }))
+        );
+
+        startAt = data.startAt + data.maxResults;
+        remaining -= pageSize;
+        const total = data.total ?? startAt;
+        if (startAt >= total) {
+          break;
+        }
+        if (limit !== null && remaining <= 0) {
+          break;
+        }
+      }
+
+      return tickets;
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}

@@ -5,7 +5,10 @@ import type {
 
 import type { Env, GithubOAuthCredentials } from "../types";
 import {
+  fetchGithubMilestones,
   fetchGithubIssue,
+  fetchGithubRepoIssues,
+  fetchGithubRepos,
   updateGithubEstimate,
 } from "../services/github-service";
 import { jsonError } from "../utils/http";
@@ -153,6 +156,141 @@ export async function updateGithubEstimateController(
       error instanceof Error
         ? error.message
         : "Failed to sync estimate to GitHub";
+    const isAuth =
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("connect");
+    return jsonError(message, isAuth ? 401 : 500);
+  }
+}
+
+export async function getGithubReposController(
+  url: URL,
+  env: Env,
+): Promise<CfResponse> {
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
+
+  if (!roomKey || !userName) {
+    return jsonError("Room key and user name are required");
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
+    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError("GitHub OAuth not configured", 500);
+    }
+
+    const credentials = await getGithubCredentials(env, roomKey);
+    const repos = await fetchGithubRepos(credentials);
+
+    return jsonResponse({ repos });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch GitHub repos";
+    const isAuth =
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("connect");
+    return jsonError(message, isAuth ? 401 : 500);
+  }
+}
+
+export async function getGithubMilestonesController(
+  url: URL,
+  env: Env,
+): Promise<CfResponse> {
+  const repository = url.searchParams.get("repo");
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
+
+  if (!repository) {
+    return jsonError("Repository is required");
+  }
+
+  if (!roomKey || !userName) {
+    return jsonError("Room key and user name are required");
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
+    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError("GitHub OAuth not configured", 500);
+    }
+
+    const credentials = await getGithubCredentials(env, roomKey);
+    const milestones = await fetchGithubMilestones(credentials, repository);
+
+    return jsonResponse({ milestones });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch GitHub milestones";
+    const isAuth =
+      message.toLowerCase().includes("session") ||
+      message.toLowerCase().includes("connect");
+    return jsonError(message, isAuth ? 401 : 500);
+  }
+}
+
+export async function getGithubIssuesController(
+  url: URL,
+  env: Env,
+): Promise<CfResponse> {
+  const repository = url.searchParams.get("repo");
+  const milestoneParam = url.searchParams.get("milestoneNumber");
+  const roomKey = url.searchParams.get("roomKey");
+  const userName = url.searchParams.get("userName");
+  const sessionToken = url.searchParams.get("sessionToken");
+  const limitParam = url.searchParams.get("limit");
+  const limit = limitParam ? Number(limitParam) : null;
+  const milestoneNumber = milestoneParam ? Number(milestoneParam) : null;
+
+  if (!repository) {
+    return jsonError("Repository is required");
+  }
+
+  if (!roomKey || !userName) {
+    return jsonError("Room key and user name are required");
+  }
+
+  if (limitParam && Number.isNaN(limit)) {
+    return jsonError("Limit must be a number");
+  }
+
+  if (milestoneParam && Number.isNaN(milestoneNumber)) {
+    return jsonError("Milestone number must be a number");
+  }
+
+  try {
+    await validateSession(env, roomKey, userName, sessionToken);
+
+    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
+    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return jsonError("GitHub OAuth not configured", 500);
+    }
+
+    const credentials = await getGithubCredentials(env, roomKey);
+    const tickets = await fetchGithubRepoIssues(credentials, repository, {
+      milestoneNumber,
+      limit,
+    });
+
+    return jsonResponse({ tickets });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch GitHub issues";
     const isAuth =
       message.toLowerCase().includes("session") ||
       message.toLowerCase().includes("connect");

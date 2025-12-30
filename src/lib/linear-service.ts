@@ -20,6 +20,20 @@ export interface LinearOAuthStatus {
   estimateField?: string | null;
 }
 
+export interface LinearTeam {
+  id: string;
+  name: string;
+  key: string;
+}
+
+export interface LinearCycle {
+  id: string;
+  number: number;
+  name?: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+}
+
 export async function fetchLinearIssue(
   issueId: string,
   options?: { roomKey?: string; userName?: string; sessionToken?: string },
@@ -104,6 +118,95 @@ export async function updateLinearEstimate(
     console.error("Error updating Linear estimate:", error);
     throw error;
   }
+}
+
+export async function fetchLinearTeams(
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<LinearTeam[]> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(
+    `${API_BASE_URL}/linear/teams?roomKey=${encodeURIComponent(
+      roomKey,
+    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
+      token,
+    )}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      (errorData as { error?: string }).error ||
+        "Failed to fetch Linear teams",
+    );
+  }
+
+  const data = (await response.json()) as { teams?: LinearTeam[] };
+  return data.teams ?? [];
+}
+
+export async function fetchLinearCycles(
+  teamId: string,
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<LinearCycle[]> {
+  const token = resolveSessionToken(sessionToken);
+  const response = await fetch(
+    `${API_BASE_URL}/linear/cycles?teamId=${encodeURIComponent(
+      teamId,
+    )}&roomKey=${encodeURIComponent(roomKey)}&userName=${encodeURIComponent(
+      userName,
+    )}&sessionToken=${encodeURIComponent(token)}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      (errorData as { error?: string }).error ||
+        "Failed to fetch Linear cycles",
+    );
+  }
+
+  const data = (await response.json()) as { cycles?: LinearCycle[] };
+  return data.cycles ?? [];
+}
+
+export async function fetchLinearIssues(
+  teamId: string,
+  options: { cycleId?: string | null; limit?: number | null },
+  roomKey: string,
+  userName: string,
+  sessionToken?: string | null,
+): Promise<TicketMetadata[]> {
+  const token = resolveSessionToken(sessionToken);
+  const params = new URLSearchParams();
+  params.set("teamId", teamId);
+  params.set("roomKey", roomKey);
+  params.set("userName", userName);
+  params.set("sessionToken", token);
+  if (options.cycleId) {
+    params.set("cycleId", options.cycleId);
+  }
+  if (options.limit) {
+    params.set("limit", String(options.limit));
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/linear/issues?${params.toString()}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      (errorData as { error?: string }).error ||
+        "Failed to fetch Linear issues",
+    );
+  }
+
+  const data = (await response.json()) as { tickets?: TicketMetadata[] };
+  return data.tickets ?? [];
 }
 
 export function convertVoteValueToEstimate(
