@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import type { RoomData, TicketQueueItem } from "@/types";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { HorizontalProgress } from "@/components/ui/HorizontalProgress";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { BetaBadge } from "@/components/BetaBadge";
 
@@ -181,13 +182,15 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={onViewQueue}
               data-testid="queue-expand"
-              className="cursor-pointer rounded-md px-3 py-1 text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 transition hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:text-blue-300"
+              className="px-3 py-1 text-xs font-semibold"
             >
               Expand
-            </button>
+            </Button>
             <button
               type="button"
               onClick={handleToggle}
