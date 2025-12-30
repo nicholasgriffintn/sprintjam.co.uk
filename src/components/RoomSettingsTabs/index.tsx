@@ -24,7 +24,8 @@ import {
   splitExtrasFromOptions,
 } from '@/utils/votingOptions';
 
-type TabId = 'voting' | 'results' | 'queue' | 'atmosphere';
+export type RoomSettingsTabId = 'voting' | 'results' | 'queue' | 'atmosphere';
+type TabId = RoomSettingsTabId;
 
 interface RoomSettingsTabsProps {
   initialSettings: RoomSettings;
@@ -38,6 +39,7 @@ interface RoomSettingsTabsProps {
   isActive?: boolean;
   resetKey?: string | number;
   hideVotingModeAndEstimates?: boolean;
+  initialTab?: RoomSettingsTabId;
 }
 
 export function RoomSettingsTabs({
@@ -52,6 +54,7 @@ export function RoomSettingsTabs({
   isActive = true,
   resetKey = 0,
   hideVotingModeAndEstimates = false,
+  initialTab,
 }: RoomSettingsTabsProps) {
   const structuredOptions = structuredVotingOptions ?? [];
   const presets = useMemo(() => {
@@ -117,7 +120,7 @@ export function RoomSettingsTabs({
   const [extraOptions, setExtraOptions] = useState<ExtraVoteOption[]>(() =>
     cloneExtraVoteOptions(baseExtraOptions)
   );
-  const [activeTab, setActiveTab] = useState<TabId>('voting');
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab ?? 'voting');
   const lastResetKeyRef = useRef<string | number | null>(null);
 
   const resolveBaseOptions = (
@@ -244,17 +247,23 @@ export function RoomSettingsTabs({
     });
 
     if (resetChanged) {
-      setActiveTab('voting');
+      setActiveTab(initialTab ?? 'voting');
     }
   }, [
     isActive,
     resetKey,
+    initialTab,
     initialSettings,
     presets,
     baseExtraOptions,
     structuredBaseOptions,
     defaultSequenceId,
   ]);
+
+  useEffect(() => {
+    if (!isActive || !initialTab) return;
+    setActiveTab(initialTab);
+  }, [initialTab, isActive]);
 
   useEffect(() => {
     onSettingsChange?.(localSettings);

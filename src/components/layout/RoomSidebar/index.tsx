@@ -15,10 +15,12 @@ export function RoomSidebar({
   isQueueEnabled,
   stats,
   setIsQueueModalOpen,
+  onOpenQueueSettings,
 }: {
   isQueueEnabled: boolean;
   stats: RoomStats;
   setIsQueueModalOpen: (isOpen: boolean) => void;
+  onOpenQueueSettings?: () => void;
 }) {
   const { roomData, isModeratorView } = useRoomState();
   const { handleUpdateTicket, handleSelectTicket } = useRoomActions();
@@ -119,6 +121,7 @@ export function RoomSidebar({
                   roomData?.settings.allowOthersToManageQueue === true
                 }
                 onViewQueue={() => setIsQueueModalOpen(true)}
+                onOpenQueueSettings={onOpenQueueSettings}
                 onUpdateTicket={handleUpdateTicket}
                 onSelectTicket={handleSelectTicket}
                 className="mt-auto"

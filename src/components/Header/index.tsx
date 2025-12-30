@@ -1,6 +1,7 @@
 import { Share2, Settings, LogOut } from "lucide-react";
 
 import type { RoomData, ConnectionStatusState } from "@/types";
+import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import ConnectionStatus from "@/components/ConnectionStatus";
@@ -12,7 +13,7 @@ export interface HeaderProps {
   connectionStatus: ConnectionStatusState;
   onLeaveRoom: () => void;
   setIsShareModalOpen: (open: boolean) => void;
-  setIsSettingsModalOpen: (open: boolean) => void;
+  onOpenSettings: (tab?: RoomSettingsTabId) => void;
 }
 
 export default function Header({
@@ -21,7 +22,7 @@ export default function Header({
   connectionStatus,
   onLeaveRoom,
   setIsShareModalOpen,
-  setIsSettingsModalOpen,
+  onOpenSettings,
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-white/50 bg-white/80 px-4 py-3 text-slate-900 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 dark:text-white">
@@ -73,7 +74,7 @@ export default function Header({
           {isModeratorView && (
             <button
               type="button"
-              onClick={() => setIsSettingsModalOpen(true)}
+              onClick={() => onOpenSettings()}
               aria-label="Room settings"
               className={cn(
                 "flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-brand-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100 cursor-pointer",

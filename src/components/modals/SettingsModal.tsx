@@ -8,7 +8,7 @@ import type {
 } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { RoomSettingsTabs } from '@/components/RoomSettingsTabs';
+import { RoomSettingsTabs, type RoomSettingsTabId } from '@/components/RoomSettingsTabs';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ interface SettingsModalProps {
   votingPresets?: VotingSequenceTemplate[];
   extraVoteOptions?: ExtraVoteOption[];
   defaultSequenceId?: VotingSequenceId;
+  initialTab?: RoomSettingsTabId;
 }
 
 const SettingsModal: FC<SettingsModalProps> = ({
@@ -32,6 +33,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
   votingPresets,
   extraVoteOptions,
   defaultSequenceId,
+  initialTab,
 }) => {
   const [draftSettings, setDraftSettings] = useState<RoomSettings>(settings);
   const [resetKey, setResetKey] = useState(0);
@@ -65,6 +67,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
             onSettingsChange={setDraftSettings}
             isActive={isOpen}
             resetKey={resetKey}
+            initialTab={initialTab}
           />
         </div>
 

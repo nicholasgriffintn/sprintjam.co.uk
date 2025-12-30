@@ -33,6 +33,7 @@ import ShareRoomModal from "@/components/modals/ShareRoomModal";
 import SettingsModal from "@/components/modals/SettingsModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
 import type { ConnectionStatusState } from "@/types";
+import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 
 const RoomScreen = () => {
   usePageMeta(META_CONFIGS.room);
@@ -66,6 +67,9 @@ const RoomScreen = () => {
   } = useRoomActions();
   const { name } = useSessionState();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<
+    RoomSettingsTabId | undefined
+  >(undefined);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
@@ -101,6 +105,16 @@ const RoomScreen = () => {
 
   const showAuthBanner = connectionIssue?.type === "auth";
 
+  const handleOpenSettings = (tab?: RoomSettingsTabId) => {
+    setSettingsInitialTab(tab);
+    setIsSettingsModalOpen(true);
+  };
+
+  const handleCloseSettings = () => {
+    setIsSettingsModalOpen(false);
+    setSettingsInitialTab(undefined);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       {showAuthBanner && (
@@ -131,7 +145,7 @@ const RoomScreen = () => {
         connectionStatus={connectionStatus}
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
-        setIsSettingsModalOpen={setIsSettingsModalOpen}
+        onOpenSettings={handleOpenSettings}
       />
 
       <motion.div
@@ -144,6 +158,9 @@ const RoomScreen = () => {
           isQueueEnabled={isQueueEnabled}
           stats={stats}
           setIsQueueModalOpen={setIsQueueModalOpen}
+          onOpenQueueSettings={
+            isModeratorView ? () => handleOpenSettings("queue") : undefined
+          }
         />
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
@@ -273,7 +290,7 @@ const RoomScreen = () => {
         {isSettingsModalOpen && (
           <SettingsModal
             isOpen={isSettingsModalOpen}
-            onClose={() => setIsSettingsModalOpen(false)}
+            onClose={handleCloseSettings}
             settings={roomData.settings}
             onSaveSettings={handleUpdateSettings}
             defaultSettings={serverDefaults.roomSettings}
@@ -281,6 +298,7 @@ const RoomScreen = () => {
             votingPresets={serverDefaults.votingSequences}
             extraVoteOptions={serverDefaults.extraVoteOptions}
             defaultSequenceId={serverDefaults.roomSettings.votingSequenceId}
+            initialTab={settingsInitialTab}
           />
         )}
       </AnimatePresence>
