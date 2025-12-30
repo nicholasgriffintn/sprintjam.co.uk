@@ -82,7 +82,7 @@ const RoomScreen = () => {
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
 
-  const isQueueEnabled = roomData.settings.enableTicketQueue ?? false;
+  const isQueueEnabled = roomData.settings.enableTicketQueue ?? true;
   const queueProvider = roomData.settings.externalService || "none";
 
   const { isQueueSetupModalOpen, setIsQueueSetupModalOpen } =

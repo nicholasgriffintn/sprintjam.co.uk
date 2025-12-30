@@ -317,7 +317,7 @@ export function getDefaultRoomSettings(
     autoHandoverModerator: settings?.autoHandoverModerator ?? false,
     enableStrudelPlayer: settings?.enableStrudelPlayer ?? true,
     strudelAutoGenerate: settings?.strudelAutoGenerate ?? false,
-    enableTicketQueue: settings?.enableTicketQueue ?? false,
+    enableTicketQueue: settings?.enableTicketQueue ?? true,
     votingSequenceId: sequenceId,
     extraVoteOptions: normalizedExtraOptions,
   };
