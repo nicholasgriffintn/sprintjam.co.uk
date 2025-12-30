@@ -87,14 +87,19 @@ async function getJiraCredentials(env: Env, roomKey: string) {
 }
 
 function createTokenRefreshHandler(roomObject: ReturnType<typeof getRoomStub>) {
-  return async (accessToken: string, refreshToken: string, expiresAt: number) =>
-    roomObject.fetch(
+  return async (accessToken: string, refreshToken: string, expiresAt: number) => {
+    const response = await roomObject.fetch(
       new Request("https://internal/jira/oauth/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
       }) as unknown as CfRequest,
     );
+
+    if (!response.ok) {
+      throw new Error("Failed to persist Jira token refresh.");
+    }
+  };
 }
 
 export async function getJiraTicketController(
@@ -322,6 +327,7 @@ export async function getJiraIssuesController(
 ): Promise<CfResponse> {
   const boardId = url.searchParams.get("boardId");
   const sprintId = url.searchParams.get("sprintId");
+  const search = url.searchParams.get("query");
   const roomKey = url.searchParams.get("roomKey");
   const userName = url.searchParams.get("userName");
   const sessionToken = url.searchParams.get("sessionToken");
@@ -355,7 +361,7 @@ export async function getJiraIssuesController(
     const tickets = await fetchJiraBoardIssues(
       credentials,
       boardId,
-      { sprintId, limit },
+      { sprintId, limit, search },
       onTokenRefresh,
       clientId,
       clientSecret,

@@ -64,29 +64,9 @@ export function TicketQueueModalQueueTab({
   onError,
 }: TicketQueueModalQueueTabProps) {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showJiraForm, setShowJiraForm] = useState(false);
-  const [showLinearForm, setShowLinearForm] = useState(false);
-  const [showGithubForm, setShowGithubForm] = useState(false);
+  const [showProviderImport, setShowProviderImport] = useState(false);
   const [newTicketTitle, setNewTicketTitle] = useState("");
   const [newTicketDescription, setNewTicketDescription] = useState("");
-
-  const [jiraLookupKey, setJiraLookupKey] = useState("");
-  const [jiraPreview, setJiraPreview] = useState<TicketMetadata | null>(null);
-  const [isFetchingJira, setIsFetchingJira] = useState(false);
-  const [isSavingJiraAdd, setIsSavingJiraAdd] = useState(false);
-
-  const [linearLookupKey, setLinearLookupKey] = useState("");
-  const [linearPreview, setLinearPreview] = useState<TicketMetadata | null>(
-    null,
-  );
-  const [isFetchingLinear, setIsFetchingLinear] = useState(false);
-  const [isSavingLinearAdd, setIsSavingLinearAdd] = useState(false);
-  const [githubLookupKey, setGithubLookupKey] = useState("");
-  const [githubPreview, setGithubPreview] = useState<TicketMetadata | null>(
-    null,
-  );
-  const [isFetchingGithub, setIsFetchingGithub] = useState(false);
-  const [isSavingGithubAdd, setIsSavingGithubAdd] = useState(false);
 
   const [selectedBoardId, setSelectedBoardId] = useState("");
   const [selectedSprintId, setSelectedSprintId] = useState("");
@@ -148,6 +128,7 @@ export function TicketQueueModalQueueTab({
     setSelectedSprintId("");
     setTicketSearch("");
     setSelectedTicketIds(new Set());
+    setShowProviderImport(false);
   }, [externalService]);
 
   useEffect(() => {
@@ -158,7 +139,7 @@ export function TicketQueueModalQueueTab({
 
   const boardsQuery = useQuery({
     queryKey: ["external-boards", externalService, roomKey, userName],
-    enabled: externalEnabled && canManageQueue,
+    enabled: externalEnabled && canManageQueue && showProviderImport,
     staleTime: 1000 * 60,
     queryFn: async (): Promise<ExternalBoardOption[]> => {
       if (jiraEnabled) {
@@ -198,6 +179,7 @@ export function TicketQueueModalQueueTab({
     ],
     enabled:
       externalEnabled &&
+      showProviderImport &&
       externalLabels.supportsSprint &&
       Boolean(selectedBoardId) &&
       canManageQueue,
@@ -257,23 +239,34 @@ export function TicketQueueModalQueueTab({
     [selectedSprintId, sprintsQuery.data],
   );
 
+  const searchQuery = ticketSearch.trim();
+
   const ticketsQuery = useQuery({
     queryKey: [
       "external-tickets",
       externalService,
       selectedBoardId,
       selectedSprintId,
+      searchQuery,
       ticketLimit,
       roomKey,
       userName,
     ],
-    enabled: externalEnabled && Boolean(selectedBoardId) && canManageQueue,
+    enabled:
+      externalEnabled &&
+      showProviderImport &&
+      Boolean(selectedBoardId) &&
+      canManageQueue,
     staleTime: 1000 * 20,
     queryFn: async (): Promise<TicketMetadata[]> => {
       if (jiraEnabled) {
         return fetchJiraBoardIssues(
           selectedBoardId,
-          { sprintId: selectedSprintId, limit: ticketLimit },
+          {
+            sprintId: selectedSprintId,
+            limit: ticketLimit,
+            search: searchQuery || undefined,
+          },
           roomKey,
           userName,
         );
@@ -281,7 +274,11 @@ export function TicketQueueModalQueueTab({
       if (linearEnabled) {
         return fetchLinearIssues(
           selectedBoardId,
-          { cycleId: selectedSprintId, limit: ticketLimit },
+          {
+            cycleId: selectedSprintId,
+            limit: ticketLimit,
+            search: searchQuery || undefined,
+          },
           roomKey,
           userName,
         );
@@ -291,7 +288,9 @@ export function TicketQueueModalQueueTab({
           selectedBoardId,
           {
             milestoneNumber: selectedSprint?.number ?? null,
+            milestoneTitle: selectedSprint?.name ?? null,
             limit: ticketLimit,
+            search: searchQuery || undefined,
           },
           roomKey,
           userName,
@@ -377,49 +376,6 @@ export function TicketQueueModalQueueTab({
     }
   };
 
-  const handleAddFromExternal = async (
-    provider: "jira" | "linear" | "github",
-    preview: TicketMetadata | null,
-    setSaving: (saving: boolean) => void,
-    reset: () => void,
-  ) => {
-    if (!preview) {
-      handleError(
-        `Fetch a ${
-          provider === "jira"
-            ? "Jira ticket"
-            : provider === "linear"
-              ? "Linear issue"
-              : "GitHub issue"
-        } before adding it to the queue.`,
-        onError,
-      );
-      return;
-    }
-
-    setSaving(true);
-    try {
-      onAddTicket({
-        ticketId: preview.key || preview.identifier,
-        title: preview.summary || preview.title,
-        description: preview.description || undefined,
-        status: "pending",
-        externalService: provider,
-        externalServiceId: preview.id,
-        externalServiceMetadata: preview,
-      });
-      reset();
-    } catch (err) {
-      handleError(
-        err instanceof Error
-          ? err.message
-          : `Failed to add ${provider === "jira" ? "Jira ticket" : "Linear issue"}`,
-        onError,
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const startLinkTicket = (ticket: TicketQueueItem) => {
     setLinkingTicketId(ticket.id);
@@ -535,23 +491,6 @@ export function TicketQueueModalQueueTab({
     [ticketsQuery.data],
   );
 
-  const filteredExternalTickets = useMemo(() => {
-    if (!ticketSearch.trim()) {
-      return externalTickets;
-    }
-    const query = ticketSearch.trim().toLowerCase();
-    return externalTickets.filter((ticket) => {
-      const haystack = [
-        ticket.key,
-        ticket.title,
-        ticket.description ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(query);
-    });
-  }, [externalTickets, ticketSearch]);
-
   const existingExternalIds = useMemo(() => {
     const ids = new Set<string>();
     queue.forEach((ticket) => {
@@ -567,12 +506,12 @@ export function TicketQueueModalQueueTab({
   }, [queue, externalService]);
 
   const visibleExternalTickets = useMemo(() => {
-    return filteredExternalTickets.filter(
+    return externalTickets.filter(
       (ticket) =>
         !existingExternalIds.has(ticket.id) &&
         !existingExternalIds.has(ticket.key),
     );
-  }, [existingExternalIds, filteredExternalTickets]);
+  }, [existingExternalIds, externalTickets]);
 
   const isTicketEstimated = (ticket: ExternalTicketSummary) => {
     if (jiraEnabled || linearEnabled) {
@@ -747,226 +686,6 @@ export function TicketQueueModalQueueTab({
         </div>
       )}
 
-      {externalEnabled && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
-                Import from {providerName}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Select a {externalLabels.board.toLowerCase()} to load tickets,
-                then choose which ones to add to the queue.
-              </p>
-            </div>
-            {(boardsQuery.isLoading || ticketsQuery.isFetching) && (
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading
-              </div>
-            )}
-          </div>
-
-          {!canManageQueue && (
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-              Only moderators can import tickets from {providerName}.
-            </p>
-          )}
-
-          {canManageExternal && (
-            <>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                  {externalLabels.board}
-                  <select
-                    value={selectedBoardId}
-                    onChange={(e) => setSelectedBoardId(e.target.value)}
-                    disabled={boardsQuery.isLoading}
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                  >
-                    <option value="">
-                      {boardsQuery.isLoading
-                        ? `Loading ${externalLabels.board}...`
-                        : `Select ${externalLabels.board}`}
-                    </option>
-                    {(boardsQuery.data ?? []).map((board) => (
-                      <option key={board.id} value={board.id}>
-                        {board.name}
-                        {board.key ? ` (${board.key})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                {externalLabels.supportsSprint && (
-                  <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                    {externalLabels.sprint}
-                    <select
-                      value={selectedSprintId}
-                      onChange={(e) => setSelectedSprintId(e.target.value)}
-                      disabled={!selectedBoardId}
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                    >
-                      <option value="">
-                        Select {externalLabels.sprint} (optional)
-                      </option>
-                      {(sprintsQuery.data ?? []).map((sprint) => (
-                        <option key={sprint.id} value={sprint.id}>
-                          {sprint.name}
-                          {sprint.state ? ` (${sprint.state})` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-              </div>
-
-              {boardsQuery.error instanceof Error && (
-                <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                  {boardsQuery.error.message}
-                </p>
-              )}
-              {sprintsQuery.error instanceof Error && (
-                <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                  {sprintsQuery.error.message}
-                </p>
-              )}
-              {ticketsQuery.error instanceof Error && (
-                <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                  {ticketsQuery.error.message}
-                </p>
-              )}
-
-              {!selectedBoardId && (
-                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                  A {externalLabels.board.toLowerCase()} must be selected before
-                  loading tickets.
-                </p>
-              )}
-
-              {selectedBoardId && (
-                <>
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Search tickets..."
-                      value={ticketSearch}
-                      onChange={(e) => setTicketSearch(e.target.value)}
-                      className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                    />
-                    <button
-                      onClick={selectAllTickets}
-                      disabled={!hasLoadedTickets}
-                      className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
-                    >
-                      Select all
-                    </button>
-                    <button
-                      onClick={deselectAllTickets}
-                      disabled={!hasLoadedTickets}
-                      className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
-                    >
-                      Deselect all
-                    </button>
-                    <button
-                      onClick={selectUnestimatedTickets}
-                      disabled={!hasLoadedTickets}
-                      className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
-                    >
-                      Select unestimated
-                    </button>
-                  </div>
-
-                  <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
-                    {ticketsQuery.isLoading ? (
-                      <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading tickets...
-                      </div>
-                    ) : visibleExternalTickets.length === 0 ? (
-                      <p className="py-4 text-center text-sm text-slate-500">
-                        No tickets found for this selection.
-                      </p>
-                    ) : (
-                      visibleExternalTickets.map((ticket) => {
-                        const isSelected = selectedTicketIds.has(ticket.id);
-                        const estimated = isTicketEstimated(ticket);
-
-                        return (
-                          <label
-                            key={ticket.id}
-                            className={`flex w-full items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm transition ${
-                              isSelected
-                                ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30"
-                                : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600"
-                            } cursor-pointer`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleTicketSelection(ticket.id)}
-                              className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <div className="flex-1 space-y-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
-                                  {ticket.key}
-                                </span>
-                                {ticket.status && (
-                                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-                                    {ticket.status}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                                {ticket.title}
-                              </p>
-                              {ticket.description && (
-                                <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                                  {ticket.description}
-                                </p>
-                              )}
-                              <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-                                {ticket.assignee && (
-                                  <span>Assignee: {ticket.assignee}</span>
-                                )}
-                                {jiraEnabled || linearEnabled ? (
-                                  <span>
-                                    Story Points:{" "}
-                                    {ticket.storyPoints !== null &&
-                                    ticket.storyPoints !== undefined
-                                      ? ticket.storyPoints
-                                      : "Not set"}
-                                  </span>
-                                ) : (
-                                  <span>
-                                    Points label: {estimated ? "Set" : "Not set"}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })
-                    )}
-                  </div>
-
-                  <div className="mt-3 flex justify-end">
-                    <button
-                      onClick={importSelectedTickets}
-                      disabled={selectedCount === 0}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Import selected ({selectedCount})
-                    </button>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">
@@ -977,9 +696,8 @@ export function TicketQueueModalQueueTab({
               {jiraEnabled && (
                 <button
                   onClick={() => {
-                    setShowJiraForm(!showJiraForm);
-                    setShowLinearForm(false);
-                    setJiraPreview(null);
+                    setShowProviderImport((prev) => !prev);
+                    setShowAddForm(false);
                   }}
                   data-testid="queue-add-jira-button"
                   className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
@@ -991,10 +709,8 @@ export function TicketQueueModalQueueTab({
               {linearEnabled && (
                 <button
                   onClick={() => {
-                    setShowLinearForm(!showLinearForm);
-                    setShowJiraForm(false);
-                    setShowGithubForm(false);
-                    setLinearPreview(null);
+                    setShowProviderImport((prev) => !prev);
+                    setShowAddForm(false);
                   }}
                   data-testid="queue-add-linear-button"
                   className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700"
@@ -1006,10 +722,8 @@ export function TicketQueueModalQueueTab({
               {githubEnabled && (
                 <button
                   onClick={() => {
-                    setShowGithubForm(!showGithubForm);
-                    setShowJiraForm(false);
-                    setShowLinearForm(false);
-                    setGithubPreview(null);
+                    setShowProviderImport((prev) => !prev);
+                    setShowAddForm(false);
                   }}
                   data-testid="queue-add-github-button"
                   className="flex items-center gap-1 rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
@@ -1019,7 +733,10 @@ export function TicketQueueModalQueueTab({
                 </button>
               )}
               <button
-                onClick={() => setShowAddForm(!showAddForm)}
+                onClick={() => {
+                  setShowAddForm(!showAddForm);
+                  setShowProviderImport(false);
+                }}
                 data-testid="queue-toggle-add"
                 className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
               >
@@ -1080,240 +797,240 @@ export function TicketQueueModalQueueTab({
         </AnimatePresence>
 
         <AnimatePresence>
-          {showJiraForm && (
+          {externalEnabled && showProviderImport && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="mb-3 overflow-hidden"
             >
-              <div className="rounded-lg border-2 border-dashed border-blue-200 bg-blue-50 p-4 dark:border-blue-700 dark:bg-blue-900/20">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-blue-800 dark:text-blue-200">
-                  Jira Ticket Key
-                </label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <input
-                    type="text"
-                    placeholder="PROJECT-123"
-                    value={jiraLookupKey}
-                    onChange={(e) => setJiraLookupKey(e.target.value)}
-                    data-testid="queue-jira-input"
-                    className="flex-1 rounded-lg border border-blue-200 px-3 py-2 text-sm dark:border-blue-700 dark:bg-blue-900/30"
-                  />
-                  <button
-                    onClick={() =>
-                      lookupExternalTicket(
-                        jiraLookupKey,
-                        "jira",
-                        setJiraPreview,
-                        setIsFetchingJira,
-                      )
-                    }
-                    disabled={isFetchingJira || !jiraLookupKey.trim()}
-                    data-testid="queue-jira-fetch"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {isFetchingJira && (
+              <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                      Import from {providerName}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Select a {externalLabels.board.toLowerCase()} to load
+                      tickets, then choose which ones to add to the queue.
+                    </p>
+                  </div>
+                  {(boardsQuery.isLoading || ticketsQuery.isFetching) && (
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
-                    Fetch
-                  </button>
+                      Loading
+                    </div>
+                  )}
                 </div>
-                {renderPreview(jiraPreview, "jira")}
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() =>
-                      handleAddFromExternal(
-                        "jira",
-                        jiraPreview,
-                        setIsSavingJiraAdd,
-                        () => {
-                          setJiraLookupKey("");
-                          setJiraPreview(null);
-                          setShowJiraForm(false);
-                        },
-                      )
-                    }
-                    disabled={!jiraPreview || isSavingJiraAdd}
-                    data-testid="queue-jira-add"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
-                  >
-                    {isSavingJiraAdd && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
-                    Add to Queue
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowJiraForm(false);
-                      setJiraLookupKey("");
-                      setJiraPreview(null);
-                    }}
-                    className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        <AnimatePresence>
-          {showLinearForm && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-3 overflow-hidden"
-            >
-              <div className="rounded-lg border-2 border-dashed border-purple-200 bg-purple-50 p-4 dark:border-purple-700 dark:bg-purple-900/20">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-purple-800 dark:text-purple-200">
-                  Linear Issue ID or Key
-                </label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <input
-                    type="text"
-                    placeholder="TEAM-123"
-                    value={linearLookupKey}
-                    onChange={(e) => setLinearLookupKey(e.target.value)}
-                    data-testid="queue-linear-input"
-                    className="flex-1 rounded-lg border border-purple-200 px-3 py-2 text-sm dark:border-purple-700 dark:bg-purple-900/30"
-                  />
-                  <button
-                    onClick={() =>
-                      lookupExternalTicket(
-                        linearLookupKey,
-                        "linear",
-                        setLinearPreview,
-                        setIsFetchingLinear,
-                      )
-                    }
-                    disabled={isFetchingLinear || !linearLookupKey.trim()}
-                    data-testid="queue-linear-fetch"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    {isFetchingLinear && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
-                    Fetch
-                  </button>
-                </div>
-                {renderPreview(linearPreview, "linear")}
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() =>
-                      handleAddFromExternal(
-                        "linear",
-                        linearPreview,
-                        setIsSavingLinearAdd,
-                        () => {
-                          setLinearLookupKey("");
-                          setLinearPreview(null);
-                          setShowLinearForm(false);
-                        },
-                      )
-                    }
-                    disabled={!linearPreview || isSavingLinearAdd}
-                    data-testid="queue-linear-add"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800 disabled:opacity-50"
-                  >
-                    {isSavingLinearAdd && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
-                    Add to Queue
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowLinearForm(false);
-                      setLinearLookupKey("");
-                      setLinearPreview(null);
-                    }}
-                    className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                {!canManageQueue && (
+                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                    Only moderators can import tickets from {providerName}.
+                  </p>
+                )}
 
-        <AnimatePresence>
-          {showGithubForm && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-3 overflow-hidden"
-            >
-              <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/20">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-800 dark:text-slate-200">
-                  GitHub Issue URL or Key
-                </label>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <input
-                    type="text"
-                    placeholder="owner/repo#123 or issue URL"
-                    value={githubLookupKey}
-                    onChange={(e) => setGithubLookupKey(e.target.value)}
-                    data-testid="queue-github-input"
-                    className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/30"
-                  />
-                  <button
-                    onClick={() =>
-                      lookupExternalTicket(
-                        githubLookupKey,
-                        "github",
-                        setGithubPreview,
-                        setIsFetchingGithub,
-                      )
-                    }
-                    disabled={isFetchingGithub || !githubLookupKey.trim()}
-                    data-testid="queue-github-fetch"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-                  >
-                    {isFetchingGithub && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                {canManageExternal && (
+                  <>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                        {externalLabels.board}
+                        <select
+                          value={selectedBoardId}
+                          onChange={(e) => setSelectedBoardId(e.target.value)}
+                          disabled={boardsQuery.isLoading}
+                          data-testid="queue-import-board"
+                          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                          <option value="">
+                            {boardsQuery.isLoading
+                              ? `Loading ${externalLabels.board}...`
+                              : `Select ${externalLabels.board}`}
+                          </option>
+                          {(boardsQuery.data ?? []).map((board) => (
+                            <option key={board.id} value={board.id}>
+                              {board.name}
+                              {board.key ? ` (${board.key})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      {externalLabels.supportsSprint && (
+                        <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                          {externalLabels.sprint}
+                          <select
+                            value={selectedSprintId}
+                            onChange={(e) => setSelectedSprintId(e.target.value)}
+                            disabled={!selectedBoardId}
+                            data-testid="queue-import-sprint"
+                            className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                          >
+                            <option value="">
+                              Select {externalLabels.sprint} (optional)
+                            </option>
+                            {(sprintsQuery.data ?? []).map((sprint) => (
+                              <option key={sprint.id} value={sprint.id}>
+                                {sprint.name}
+                                {sprint.state ? ` (${sprint.state})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                    </div>
+
+                    {boardsQuery.error instanceof Error && (
+                      <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                        {boardsQuery.error.message}
+                      </p>
                     )}
-                    Fetch
-                  </button>
-                </div>
-                {renderPreview(githubPreview, "github")}
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() =>
-                      handleAddFromExternal(
-                        "github",
-                        githubPreview,
-                        setIsSavingGithubAdd,
-                        () => {
-                          setGithubLookupKey("");
-                          setGithubPreview(null);
-                          setShowGithubForm(false);
-                        },
-                      )
-                    }
-                    disabled={!githubPreview || isSavingGithubAdd}
-                    data-testid="queue-github-add"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-50"
-                  >
-                    {isSavingGithubAdd && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    {sprintsQuery.error instanceof Error && (
+                      <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                        {sprintsQuery.error.message}
+                      </p>
                     )}
-                    Add to Queue
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowGithubForm(false);
-                      setGithubLookupKey("");
-                      setGithubPreview(null);
-                    }}
-                    className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                    {ticketsQuery.error instanceof Error && (
+                      <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                        {ticketsQuery.error.message}
+                      </p>
+                    )}
+
+                    {!selectedBoardId && (
+                      <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                        A {externalLabels.board.toLowerCase()} must be selected
+                        before loading tickets.
+                      </p>
+                    )}
+
+                    {selectedBoardId && (
+                      <>
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Search tickets..."
+                            value={ticketSearch}
+                            onChange={(e) => setTicketSearch(e.target.value)}
+                            data-testid="queue-import-search"
+                            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                          />
+                          <button
+                            onClick={selectAllTickets}
+                            disabled={!hasLoadedTickets}
+                            className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                          >
+                            Select all
+                          </button>
+                          <button
+                            onClick={deselectAllTickets}
+                            disabled={!hasLoadedTickets}
+                            className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                          >
+                            Deselect all
+                          </button>
+                          <button
+                            onClick={selectUnestimatedTickets}
+                            disabled={!hasLoadedTickets}
+                            className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
+                          >
+                            Select unestimated
+                          </button>
+                        </div>
+
+                        <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+                          {ticketsQuery.isLoading ? (
+                            <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Loading tickets...
+                            </div>
+                          ) : visibleExternalTickets.length === 0 ? (
+                            <p className="py-4 text-center text-sm text-slate-500">
+                              No tickets found for this selection.
+                            </p>
+                          ) : (
+                            visibleExternalTickets.map((ticket) => {
+                              const isSelected = selectedTicketIds.has(
+                                ticket.id,
+                              );
+                              const estimated = isTicketEstimated(ticket);
+
+                              return (
+                                <label
+                                  key={ticket.id}
+                                  className={`flex w-full items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                                    isSelected
+                                      ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30"
+                                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600"
+                                  } cursor-pointer`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() =>
+                                      toggleTicketSelection(ticket.id)
+                                    }
+                                    className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <div className="flex-1 space-y-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span className="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                        {ticket.key}
+                                      </span>
+                                      {ticket.status && (
+                                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                                          {ticket.status}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                                      {ticket.title}
+                                    </p>
+                                    {ticket.description && (
+                                      <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                                        {ticket.description}
+                                      </p>
+                                    )}
+                                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+                                      {ticket.assignee && (
+                                        <span>
+                                          Assignee: {ticket.assignee}
+                                        </span>
+                                      )}
+                                      {jiraEnabled || linearEnabled ? (
+                                        <span>
+                                          Story Points:{" "}
+                                          {ticket.storyPoints !== null &&
+                                          ticket.storyPoints !== undefined
+                                            ? ticket.storyPoints
+                                            : "Not set"}
+                                        </span>
+                                      ) : (
+                                        <span>
+                                          Points label:{" "}
+                                          {estimated ? "Set" : "Not set"}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </label>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            onClick={importSelectedTickets}
+                            disabled={selectedCount === 0}
+                            data-testid="queue-import-confirm"
+                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Import selected ({selectedCount})
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             </motion.div>
           )}

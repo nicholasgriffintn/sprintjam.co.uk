@@ -25,6 +25,10 @@ function parseJiraDescription(description: any): string {
   return "";
 }
 
+function escapeJqlValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 function getOAuthHeaders(accessToken: string): Headers {
   return new Headers({
     Authorization: `Bearer ${accessToken}`,
@@ -553,6 +557,7 @@ export async function fetchJiraBoardIssues(
   options: {
     sprintId?: string | null;
     limit?: number | null;
+    search?: string | null;
   },
   onTokenRefresh: (
     accessToken: string,
@@ -572,13 +577,28 @@ export async function fetchJiraBoardIssues(
       const headers = getOAuthHeaders(accessToken);
       const tickets: TicketMetadata[] = [];
       const sprintId = options.sprintId ?? null;
+      const search = options.search?.trim() ?? '';
       const limit = options.limit ?? null;
       let startAt = 0;
       let remaining = limit ?? Infinity;
 
       while (remaining > 0) {
         const pageSize = Math.min(50, remaining);
-        const jql = sprintId ? `sprint = ${sprintId}` : undefined;
+        const clauses: string[] = [];
+        if (sprintId) {
+          clauses.push(`sprint = ${sprintId}`);
+        }
+        if (search) {
+          const trimmed = search.trim();
+          const isKeySearch = /^[A-Z][A-Z0-9]+-\d+$/i.test(trimmed);
+          if (isKeySearch) {
+            clauses.push(`key = ${trimmed}`);
+          } else {
+            const escaped = escapeJqlValue(trimmed);
+            clauses.push(`text ~ "${escaped}"`);
+          }
+        }
+        const jql = clauses.length > 0 ? clauses.join(' AND ') : undefined;
         const params = new URLSearchParams({
           startAt: String(startAt),
           maxResults: String(pageSize),
@@ -605,9 +625,14 @@ export async function fetchJiraBoardIssues(
         );
 
         if (!response.ok) {
-          const errorBody = await response.text().catch(() => '');
           if (response.status === 401) {
             throw new Error('Unauthorized. Please reconnect Jira.');
+          }
+          if (response.status === 403) {
+            throw new Error('Jira access denied. Check board permissions.');
+          }
+          if (response.status === 400) {
+            throw new Error('Jira search failed. Try a different query.');
           }
           throw new Error('Failed to fetch Jira issues.');
         }

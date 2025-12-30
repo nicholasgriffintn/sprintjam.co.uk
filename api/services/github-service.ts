@@ -322,48 +322,61 @@ export async function fetchGithubMilestones(
 export async function fetchGithubRepoIssues(
   credentials: GithubOAuthCredentials,
   repository: string,
-  options: { milestoneNumber?: number | null; limit?: number | null },
+  options: {
+    milestoneNumber?: number | null;
+    milestoneTitle?: string | null;
+    limit?: number | null;
+    search?: string | null;
+  },
 ): Promise<GithubIssue[]> {
   const [owner, repo] = repository.split("/");
   if (!owner || !repo) {
     throw new Error("Invalid GitHub repository identifier.");
   }
 
-  const issues: GithubIssue[] = [];
-  const limit = options.limit ?? null;
-  let page = 1;
-  let remaining = limit ?? Infinity;
+  const limit = Math.min(options.limit ?? 50, 100);
+  const search = options.search?.trim() ?? "";
+  const milestoneTitle = options.milestoneTitle?.trim() ?? "";
+  const hasSearch = Boolean(search);
 
-  while (remaining > 0) {
-    const pageSize = Math.min(100, remaining);
-    const params = new URLSearchParams({
-      state: "all",
-      per_page: String(pageSize),
-      page: String(page),
-    });
-    if (options.milestoneNumber !== undefined && options.milestoneNumber !== null) {
-      params.set("milestone", String(options.milestoneNumber));
+  if (hasSearch) {
+    const qualifiers = [`repo:${owner}/${repo}`, "is:issue"];
+    if (milestoneTitle) {
+      qualifiers.push(`milestone:\"${milestoneTitle.replace(/\"/g, "\\\"")}\"`);
     }
-
+    if (/^\\d+$/.test(search)) {
+      qualifiers.push(`number:${search}`);
+    } else {
+      qualifiers.push(`in:title,body ${search}`);
+    }
+    const q = qualifiers.join(" ");
     const response = await githubRequest(
       credentials.accessToken,
-      `/repos/${owner}/${repo}/issues?${params.toString()}`,
+      `/search/issues?q=${encodeURIComponent(q)}&per_page=${limit}&page=1`,
     );
-    const data = (await response.json()) as Array<Record<string, any>>;
-
-    const pageIssues = data
-      .filter((issue) => !issue.pull_request)
-      .map((issue) => mapIssueResponse(issue, { owner, repo }));
-
-    issues.push(...pageIssues);
-
-    remaining -= pageSize;
-
-    if (data.length < pageSize) {
-      break;
-    }
-    page += 1;
+    const data = (await response.json()) as {
+      items?: Array<Record<string, any>>;
+    };
+    const pageItems = data.items ?? [];
+    return pageItems.map((issue) => mapIssueResponse(issue, { owner, repo }));
   }
 
-  return issues;
+  const params = new URLSearchParams({
+    state: "all",
+    per_page: String(limit),
+    page: "1",
+  });
+  if (options.milestoneNumber !== undefined && options.milestoneNumber !== null) {
+    params.set("milestone", String(options.milestoneNumber));
+  }
+
+  const response = await githubRequest(
+    credentials.accessToken,
+    `/repos/${owner}/${repo}/issues?${params.toString()}`,
+  );
+  const data = (await response.json()) as Array<Record<string, any>>;
+
+  return data
+    .filter((issue) => !issue.pull_request)
+    .map((issue) => mapIssueResponse(issue, { owner, repo }));
 }

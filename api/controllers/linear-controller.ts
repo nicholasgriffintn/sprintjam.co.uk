@@ -331,6 +331,7 @@ export async function getLinearIssuesController(
 ): Promise<CfResponse> {
   const teamId = url.searchParams.get("teamId");
   const cycleId = url.searchParams.get("cycleId");
+  const search = url.searchParams.get("query");
   const roomKey = url.searchParams.get("roomKey");
   const userName = url.searchParams.get("userName");
   const sessionToken = url.searchParams.get("sessionToken");
@@ -367,7 +368,7 @@ export async function getLinearIssuesController(
     const tickets = await fetchLinearIssues(
       credentials,
       teamId,
-      { cycleId, limit },
+      { cycleId, limit, search },
       onTokenRefresh,
       clientId,
       clientSecret,

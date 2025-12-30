@@ -175,7 +175,7 @@ export async function fetchLinearCycles(
 
 export async function fetchLinearIssues(
   teamId: string,
-  options: { cycleId?: string | null; limit?: number | null },
+  options: { cycleId?: string | null; limit?: number | null; search?: string | null },
   roomKey: string,
   userName: string,
   sessionToken?: string | null,
@@ -188,6 +188,9 @@ export async function fetchLinearIssues(
   params.set("sessionToken", token);
   if (options.cycleId) {
     params.set("cycleId", options.cycleId);
+  }
+  if (options.search) {
+    params.set("query", options.search);
   }
   if (options.limit) {
     params.set("limit", String(options.limit));

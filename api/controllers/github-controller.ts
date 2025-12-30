@@ -248,6 +248,8 @@ export async function getGithubIssuesController(
 ): Promise<CfResponse> {
   const repository = url.searchParams.get("repo");
   const milestoneParam = url.searchParams.get("milestoneNumber");
+  const milestoneTitle = url.searchParams.get("milestoneTitle");
+  const search = url.searchParams.get("query");
   const roomKey = url.searchParams.get("roomKey");
   const userName = url.searchParams.get("userName");
   const sessionToken = url.searchParams.get("sessionToken");
@@ -284,7 +286,9 @@ export async function getGithubIssuesController(
     const credentials = await getGithubCredentials(env, roomKey);
     const tickets = await fetchGithubRepoIssues(credentials, repository, {
       milestoneNumber,
+      milestoneTitle: milestoneTitle ?? null,
       limit,
+      search,
     });
 
     return jsonResponse({ tickets });

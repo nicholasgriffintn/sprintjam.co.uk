@@ -44,6 +44,42 @@ test.describe("GitHub integration", () => {
       });
     });
 
+    await moderatorContext.route("**/api/github/repos?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          repos: [
+            {
+              id: "1",
+              name: "hello-world",
+              fullName: "octocat/hello-world",
+              owner: "octocat",
+            },
+          ],
+        }),
+      });
+    });
+
+    await moderatorContext.route("**/api/github/milestones?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ milestones: [] }),
+      });
+    });
+
+    await moderatorContext.route("**/api/github/issues?**", (route) => {
+      const url = new URL(route.request().url());
+      const query = url.searchParams.get("query");
+      const matches = query && query.includes("42");
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ tickets: matches ? [initialIssue] : [] }),
+      });
+    });
+
     await moderatorContext.route("**/api/github/issue?**", (route) => {
       const url = new URL(route.request().url());
       const identifier = url.searchParams.get("issueId") ?? "";
@@ -79,10 +115,13 @@ test.describe("GitHub integration", () => {
       await expect(queueDialog).toBeVisible();
 
       await queueDialog.getByTestId("queue-add-github-button").click();
-      await queueDialog.getByTestId("queue-github-input").fill(issueKey);
-      await queueDialog.getByTestId("queue-github-fetch").click();
+      await queueDialog
+        .getByTestId("queue-import-board")
+        .selectOption("octocat/hello-world");
+      await queueDialog.getByTestId("queue-import-search").fill("42");
       await expect(queueDialog).toContainText(initialIssue.summary);
-      await queueDialog.getByTestId("queue-github-add").click();
+      await queueDialog.getByText(issueKey).click();
+      await queueDialog.getByTestId("queue-import-confirm").click();
 
       await queueDialog.getByTestId("queue-toggle-add").click();
       await queueDialog.getByPlaceholder("Ticket title").fill("Local task");
@@ -91,8 +130,8 @@ test.describe("GitHub integration", () => {
       const linkButtons = queueDialog.getByRole("button", {
         name: "Link GitHub",
       });
-      await expect(linkButtons).toHaveCount(2);
-      await linkButtons.nth(1).click();
+      await expect(linkButtons).toHaveCount(1);
+      await linkButtons.first().click();
       await queueDialog
         .getByPlaceholder("owner/repo#123")
         .fill(secondaryIssueKey);

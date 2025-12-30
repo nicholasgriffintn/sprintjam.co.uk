@@ -59,6 +59,35 @@ test.describe("Linear integration", () => {
       });
     });
 
+    await moderatorContext.route("**/api/linear/teams?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          teams: [{ id: "team-1", name: "QA Team", key: "QA" }],
+        }),
+      });
+    });
+
+    await moderatorContext.route("**/api/linear/cycles?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ cycles: [] }),
+      });
+    });
+
+    await moderatorContext.route("**/api/linear/issues?**", (route) => {
+      const url = new URL(route.request().url());
+      const query = url.searchParams.get("query");
+      const matches = query && query.includes(issueKey);
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ tickets: matches ? [initialIssue] : [] }),
+      });
+    });
+
     try {
       await settingsModal.open();
       await settingsModal.toggle("settings-toggle-enable-queue", true);
@@ -80,10 +109,13 @@ test.describe("Linear integration", () => {
       await expect(queueDialog).toBeVisible();
 
       await queueDialog.getByTestId("queue-add-linear-button").click();
-      await queueDialog.getByTestId("queue-linear-input").fill(issueKey);
-      await queueDialog.getByTestId("queue-linear-fetch").click();
+      await queueDialog
+        .getByTestId("queue-import-board")
+        .selectOption("team-1");
+      await queueDialog.getByTestId("queue-import-search").fill(issueKey);
       await expect(queueDialog).toContainText(initialIssue.summary);
-      await queueDialog.getByTestId("queue-linear-add").click();
+      await queueDialog.getByText(issueKey).click();
+      await queueDialog.getByTestId("queue-import-confirm").click();
 
       await queueDialog.getByTestId("queue-toggle-add").click();
       await queueDialog.getByPlaceholder("Ticket title").fill("Local task");
@@ -92,8 +124,8 @@ test.describe("Linear integration", () => {
       const linkButtons = queueDialog.getByRole("button", {
         name: "Link Linear",
       });
-      await expect(linkButtons).toHaveCount(2);
-      await linkButtons.nth(1).click();
+      await expect(linkButtons).toHaveCount(1);
+      await linkButtons.first().click();
       await queueDialog.getByPlaceholder("TEAM-123").fill(secondaryIssueKey);
       await queueDialog.getByRole("button", { name: /^Fetch$/ }).click();
       await expect(queueDialog).toContainText(secondaryIssue.summary);

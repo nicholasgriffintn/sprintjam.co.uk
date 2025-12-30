@@ -140,11 +140,32 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/jira/ticket?**", (route) => {
+        await ctx.route("**/api/jira/boards?**", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
-            body: JSON.stringify({ ticket: jiraTicket }),
+            body: JSON.stringify({
+              boards: [{ id: "1", name: "QA Board" }],
+            }),
+          });
+        });
+
+        await ctx.route("**/api/jira/sprints?**", (route) => {
+          route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ sprints: [] }),
+          });
+        });
+
+        await ctx.route("**/api/jira/issues?**", (route) => {
+          const url = new URL(route.request().url());
+          const query = url.searchParams.get("query");
+          const matches = query && query.includes(jiraTicketKey);
+          route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ tickets: matches ? [jiraTicket] : [] }),
           });
         });
       },
@@ -167,10 +188,13 @@ test.describe("Ticket queue provider setup on room creation", () => {
       await expect(queueDialog).toBeVisible();
 
       await queueDialog.getByTestId("queue-add-jira-button").click();
-      await queueDialog.getByTestId("queue-jira-input").fill(jiraTicketKey);
-      await queueDialog.getByTestId("queue-jira-fetch").click();
+      await queueDialog
+        .getByTestId("queue-import-board")
+        .selectOption("1");
+      await queueDialog.getByTestId("queue-import-search").fill(jiraTicketKey);
       await expect(queueDialog).toContainText(jiraTicket.summary);
-      await queueDialog.getByTestId("queue-jira-add").click();
+      await queueDialog.getByText(jiraTicketKey).click();
+      await queueDialog.getByTestId("queue-import-confirm").click();
       await expect(queueDialog).toContainText(jiraTicketKey);
       await expect(queueDialog).toContainText(jiraTicket.summary);
 
@@ -212,11 +236,32 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/linear/issue?**", (route) => {
+        await ctx.route("**/api/linear/teams?**", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
-            body: JSON.stringify({ ticket: linearIssue }),
+            body: JSON.stringify({
+              teams: [{ id: "team-1", name: "QA Team", key: "QA" }],
+            }),
+          });
+        });
+
+        await ctx.route("**/api/linear/cycles?**", (route) => {
+          route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ cycles: [] }),
+          });
+        });
+
+        await ctx.route("**/api/linear/issues?**", (route) => {
+          const url = new URL(route.request().url());
+          const query = url.searchParams.get("query");
+          const matches = query && query.includes(linearIssueKey);
+          route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ tickets: matches ? [linearIssue] : [] }),
           });
         });
       },
@@ -239,10 +284,13 @@ test.describe("Ticket queue provider setup on room creation", () => {
       await expect(queueDialog).toBeVisible();
 
       await queueDialog.getByTestId("queue-add-linear-button").click();
-      await queueDialog.getByTestId("queue-linear-input").fill(linearIssueKey);
-      await queueDialog.getByTestId("queue-linear-fetch").click();
+      await queueDialog
+        .getByTestId("queue-import-board")
+        .selectOption("team-1");
+      await queueDialog.getByTestId("queue-import-search").fill(linearIssueKey);
       await expect(queueDialog).toContainText(linearIssue.summary);
-      await queueDialog.getByTestId("queue-linear-add").click();
+      await queueDialog.getByText(linearIssueKey).click();
+      await queueDialog.getByTestId("queue-import-confirm").click();
       await expect(queueDialog).toContainText(linearIssueKey);
       await expect(queueDialog).toContainText(linearIssue.summary);
 

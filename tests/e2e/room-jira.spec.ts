@@ -64,6 +64,35 @@ test.describe("Jira integration", () => {
       });
     });
 
+    await moderatorContext.route("**/api/jira/boards?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          boards: [{ id: "board-1", name: "QA Board" }],
+        }),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/sprints?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ sprints: [] }),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/issues?**", (route) => {
+      const url = new URL(route.request().url());
+      const query = url.searchParams.get("query");
+      const matches = query && query.includes(ticketKey);
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ tickets: matches ? [initialTicket] : [] }),
+      });
+    });
+
     await moderatorContext.route("**/api/jira/oauth/fields?**", (route) => {
       route.fulfill({
         status: 200,
@@ -125,10 +154,13 @@ test.describe("Jira integration", () => {
       await expect(queueDialog).toBeVisible();
 
       await queueDialog.getByTestId("queue-add-jira-button").click();
-      await queueDialog.getByTestId("queue-jira-input").fill(ticketKey);
-      await queueDialog.getByTestId("queue-jira-fetch").click();
+      await queueDialog
+        .getByTestId("queue-import-board")
+        .selectOption("board-1");
+      await queueDialog.getByTestId("queue-import-search").fill(ticketKey);
       await expect(queueDialog).toContainText(initialTicket.summary);
-      await queueDialog.getByTestId("queue-jira-add").click();
+      await queueDialog.getByText(ticketKey).click();
+      await queueDialog.getByTestId("queue-import-confirm").click();
 
       await queueDialog.getByTestId("queue-toggle-add").click();
       await queueDialog.getByPlaceholder("Ticket title").fill("Local task");
@@ -137,8 +169,8 @@ test.describe("Jira integration", () => {
       const linkButtons = queueDialog.getByRole("button", {
         name: "Link Jira",
       });
-      await expect(linkButtons).toHaveCount(2);
-      await linkButtons.nth(1).click();
+      await expect(linkButtons).toHaveCount(1);
+      await linkButtons.first().click();
       await queueDialog
         .getByPlaceholder("PROJECT-123")
         .fill(secondaryTicketKey);

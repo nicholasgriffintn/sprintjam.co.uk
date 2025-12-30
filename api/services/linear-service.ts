@@ -201,6 +201,15 @@ function mapIssueToTicket(issue: LinearIssue): TicketMetadata {
   };
 }
 
+function parseLinearIssueNumber(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/(?:[A-Za-z]+-)?(\d+)$/);
+  if (!match) return null;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 async function fetchIssueById(
   accessToken: string,
   issueId: string,
@@ -242,9 +251,13 @@ async function fetchIssueByIdentifier(
   accessToken: string,
   identifier: string,
 ): Promise<LinearIssue | null> {
+  const issueNumber = parseLinearIssueNumber(identifier);
+  if (issueNumber === null) {
+    return null;
+  }
   const query = `
-    query IssueByIdentifier($identifier: String!) {
-      issues(filter: { identifier: { eq: $identifier } }, first: 1) {
+    query IssueByNumber($issueNumber: Int!) {
+      issues(filter: { number: { eq: $issueNumber } }, first: 1) {
         nodes {
           id
           identifier
@@ -265,7 +278,7 @@ async function fetchIssueByIdentifier(
 
   const data = await executeGraphQL<{
     issues: { nodes: LinearIssue[] };
-  }>(accessToken, query, { identifier });
+  }>(accessToken, query, { issueNumber });
 
   return data.issues?.nodes?.[0] ?? null;
 }
@@ -514,7 +527,7 @@ export async function fetchLinearCycles(
 export async function fetchLinearIssues(
   credentials: LinearOAuthCredentials,
   teamId: string,
-  options: { cycleId?: string | null; limit?: number | null },
+  options: { cycleId?: string | null; limit?: number | null; search?: string | null },
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
@@ -528,15 +541,28 @@ export async function fetchLinearIssues(
     async (accessToken) => {
       const limit = options.limit ?? 250;
       const hasCycle = Boolean(options.cycleId);
+      const search = options.search?.trim() ?? "";
+      const hasSearch = Boolean(search);
+      const issueNumber = parseLinearIssueNumber(search);
+      const hasIssueNumber = issueNumber !== null;
       const query = `
         query GetIssues($teamId: ID!, $limit: Int!${
           hasCycle ? ", $cycleId: ID!" : ""
+        }${hasSearch ? ", $search: String!" : ""}${
+          hasIssueNumber ? ", $issueNumber: Int!" : ""
         }) {
           issues(
             first: $limit
             filter: {
               team: { id: { eq: $teamId } }
               ${hasCycle ? "cycle: { id: { eq: $cycleId } }" : ""}
+              ${
+                hasSearch
+                  ? `or: [{ title: { containsIgnoreCase: $search } }, { description: { containsIgnoreCase: $search } }${
+                      hasIssueNumber ? ", { number: { eq: $issueNumber } }" : ""
+                    }]`
+                  : ""
+              }
             }
           ) {
             nodes {
@@ -562,6 +588,8 @@ export async function fetchLinearIssues(
       }>(accessToken, query, {
         teamId,
         ...(hasCycle ? { cycleId: options.cycleId } : {}),
+        ...(hasSearch ? { search } : {}),
+        ...(hasIssueNumber ? { issueNumber } : {}),
         limit,
       });
 

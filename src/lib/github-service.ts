@@ -237,7 +237,12 @@ export async function fetchGithubMilestones(
 
 export async function fetchGithubRepoIssues(
   repo: string,
-  options: { milestoneNumber?: number | null; limit?: number | null },
+  options: {
+    milestoneNumber?: number | null;
+    milestoneTitle?: string | null;
+    limit?: number | null;
+    search?: string | null;
+  },
   roomKey: string,
   userName: string,
   sessionToken?: string | null,
@@ -250,6 +255,12 @@ export async function fetchGithubRepoIssues(
   params.set("sessionToken", token);
   if (options.milestoneNumber !== undefined && options.milestoneNumber !== null) {
     params.set("milestoneNumber", String(options.milestoneNumber));
+  }
+  if (options.milestoneTitle) {
+    params.set("milestoneTitle", options.milestoneTitle);
+  }
+  if (options.search) {
+    params.set("query", options.search);
   }
   if (options.limit) {
     params.set("limit", String(options.limit));

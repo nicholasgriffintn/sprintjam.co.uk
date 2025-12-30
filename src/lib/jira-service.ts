@@ -181,7 +181,7 @@ export async function fetchJiraSprints(
 
 export async function fetchJiraBoardIssues(
   boardId: string,
-  options: { sprintId?: string | null; limit?: number | null },
+  options: { sprintId?: string | null; limit?: number | null; search?: string | null },
   roomKey: string,
   userName: string,
   sessionToken?: string | null,
@@ -194,6 +194,9 @@ export async function fetchJiraBoardIssues(
   params.set("sessionToken", token);
   if (options.sprintId) {
     params.set("sprintId", options.sprintId);
+  }
+  if (options.search) {
+    params.set("query", options.search);
   }
   if (options.limit) {
     params.set("limit", String(options.limit));
