@@ -145,7 +145,7 @@ describe("linear-service token refresh and queries", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const [, fallbackInit] = fetchMock.mock.calls[1];
     expect(JSON.parse(fallbackInit?.body as string).query).toContain(
-      "IssueByIdentifier",
+      "IssueByNumber",
     );
   });
 });

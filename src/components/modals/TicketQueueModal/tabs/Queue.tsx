@@ -85,6 +85,8 @@ export function TicketQueueModalQueueTab({
   const linearEnabled = externalService === "linear";
   const githubEnabled = externalService === "github";
   const externalEnabled = externalService !== "none";
+  const isAddFormOpen = showAddForm;
+  const isProviderImportOpen = showProviderImport;
 
   const externalLabels = useMemo(() => {
     if (jiraEnabled) {
@@ -136,6 +138,20 @@ export function TicketQueueModalQueueTab({
     setTicketSearch("");
     setSelectedTicketIds(new Set());
   }, [selectedBoardId]);
+
+  const closeAddForm = () => {
+    setShowAddForm(false);
+    setNewTicketTitle("");
+    setNewTicketDescription("");
+  };
+
+  const resetProviderImport = () => {
+    setShowProviderImport(false);
+    setSelectedBoardId("");
+    setSelectedSprintId("");
+    setTicketSearch("");
+    setSelectedTicketIds(new Set());
+  };
 
   const boardsQuery = useQuery({
     queryKey: ["external-boards", externalService, roomKey, userName],
@@ -581,6 +597,7 @@ export function TicketQueueModalQueueTab({
     });
 
     setSelectedTicketIds(new Set());
+    resetProviderImport();
   };
 
   const renderPreview = (
@@ -696,11 +713,14 @@ export function TicketQueueModalQueueTab({
               {jiraEnabled && (
                 <button
                   onClick={() => {
-                    setShowProviderImport((prev) => !prev);
-                    setShowAddForm(false);
+                    if (isAddFormOpen) {
+                      closeAddForm();
+                    }
+                    setShowProviderImport(true);
                   }}
+                  disabled={isAddFormOpen || isProviderImportOpen}
                   data-testid="queue-add-jira-button"
-                  className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                  className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Link2 className="h-3 w-3" />
                   Add Jira Ticket
@@ -709,11 +729,14 @@ export function TicketQueueModalQueueTab({
               {linearEnabled && (
                 <button
                   onClick={() => {
-                    setShowProviderImport((prev) => !prev);
-                    setShowAddForm(false);
+                    if (isAddFormOpen) {
+                      closeAddForm();
+                    }
+                    setShowProviderImport(true);
                   }}
+                  disabled={isAddFormOpen || isProviderImportOpen}
                   data-testid="queue-add-linear-button"
-                  className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700"
+                  className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Link2 className="h-3 w-3" />
                   Add Linear Issue
@@ -722,11 +745,14 @@ export function TicketQueueModalQueueTab({
               {githubEnabled && (
                 <button
                   onClick={() => {
-                    setShowProviderImport((prev) => !prev);
-                    setShowAddForm(false);
+                    if (isAddFormOpen) {
+                      closeAddForm();
+                    }
+                    setShowProviderImport(true);
                   }}
+                  disabled={isAddFormOpen || isProviderImportOpen}
                   data-testid="queue-add-github-button"
-                  className="flex items-center gap-1 rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
+                  className="flex items-center gap-1 rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Link2 className="h-3 w-3" />
                   Add GitHub Issue
@@ -734,11 +760,14 @@ export function TicketQueueModalQueueTab({
               )}
               <button
                 onClick={() => {
-                  setShowAddForm(!showAddForm);
-                  setShowProviderImport(false);
+                  if (isProviderImportOpen) {
+                    resetProviderImport();
+                  }
+                  setShowAddForm(true);
                 }}
+                disabled={isAddFormOpen || isProviderImportOpen}
                 data-testid="queue-toggle-add"
-                className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
+                className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Plus className="h-3 w-3" />
                 Add Ticket
@@ -755,23 +784,29 @@ export function TicketQueueModalQueueTab({
               exit={{ opacity: 0, height: 0 }}
               className="mb-3 overflow-hidden"
             >
-              <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-sm shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70">
                 <input
                   type="text"
                   placeholder="Ticket title"
                   value={newTicketTitle}
                   onChange={(e) => setNewTicketTitle(e.target.value)}
-                  className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700"
+                  className="mb-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                   onKeyDown={(e) => e.key === "Enter" && handleAddTicket()}
                 />
                 <textarea
                   placeholder="Description (optional)"
                   value={newTicketDescription}
                   onChange={(e) => setNewTicketDescription(e.target.value)}
-                  className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700"
+                  className="mb-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                   rows={2}
                 />
-                <div className="flex gap-2">
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={closeAddForm}
+                    className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
+                  >
+                    Cancel
+                  </button>
                   <button
                     onClick={handleAddTicket}
                     disabled={!newTicketTitle.trim()}
@@ -779,16 +814,6 @@ export function TicketQueueModalQueueTab({
                     className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                   >
                     Add
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setNewTicketTitle("");
-                      setNewTicketDescription("");
-                    }}
-                    className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
-                  >
-                    Cancel
                   </button>
                 </div>
               </div>
@@ -804,7 +829,7 @@ export function TicketQueueModalQueueTab({
               exit={{ opacity: 0, height: 0 }}
               className="mb-3 overflow-hidden"
             >
-              <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+              <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-sm shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
@@ -815,12 +840,20 @@ export function TicketQueueModalQueueTab({
                       tickets, then choose which ones to add to the queue.
                     </p>
                   </div>
-                  {(boardsQuery.isLoading || ticketsQuery.isFetching) && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {(boardsQuery.isLoading || ticketsQuery.isFetching) && (
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading
+                      </div>
+                    )}
+                    <button
+                      onClick={resetProviderImport}
+                      className="rounded-lg bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
 
                 {!canManageQueue && (
@@ -1036,7 +1069,7 @@ export function TicketQueueModalQueueTab({
           )}
         </AnimatePresence>
 
-        <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
           {pendingTickets.length === 0 ? (
             <p className="py-4 text-center text-sm text-slate-500">
               No pending tickets
@@ -1051,7 +1084,7 @@ export function TicketQueueModalQueueTab({
               return (
                 <div
                   key={ticket.id}
-                  className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"
+                  className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
                 >
                   <div className="flex items-start gap-2">
                     {canManageQueue && (
@@ -1089,14 +1122,14 @@ export function TicketQueueModalQueueTab({
                       )}
                     </div>
                     {canManageQueue && (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-2">
                         {onSelectTicket && (
                           <button
                             onClick={() => {
                               onSelectTicket(ticket.id);
                             }}
                             data-testid={`queue-start-voting-${ticket.id}`}
-                            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-50 dark:text-green-300 dark:hover:bg-green-900/20"
+                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
                           >
                             Start Voting
                           </button>
@@ -1110,7 +1143,11 @@ export function TicketQueueModalQueueTab({
                                 : startLinkTicket(ticket)
                             }
                             data-testid={`queue-link-toggle-${ticket.id}`}
-                            className="rounded-lg px-2 py-1 text-blue-700 hover:bg-blue-50 dark:text-blue-200 dark:hover:bg-blue-900/40"
+                            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
+                              isLinking
+                                ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
+                                : "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
+                            }`}
                           >
                             {isLinking
                               ? "Close"
@@ -1125,7 +1162,7 @@ export function TicketQueueModalQueueTab({
                         )}
                         <button
                           onClick={() => onDeleteTicket(ticket.id)}
-                          className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 shadow-sm hover:bg-red-100 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-200 dark:hover:bg-red-900/40"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
