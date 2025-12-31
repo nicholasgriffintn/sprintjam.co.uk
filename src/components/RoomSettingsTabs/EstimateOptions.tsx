@@ -5,6 +5,7 @@ import type {
   VotingSequenceTemplate,
 } from '@/types';
 import { ChevronDown } from 'lucide-react';
+import { Select } from '@/components/ui/Select';
 
 export function EstimateOptions({
   localSettings,
@@ -40,6 +41,13 @@ export function EstimateOptions({
     return preset.label;
   };
   const showExtraOptions = !localSettings.enableStructuredVoting;
+  const sequenceOptions = [
+    ...votingPresets.map((preset) => ({
+      label: getOptionLabel(preset),
+      value: preset.id,
+    })),
+    { label: 'Custom', value: 'custom' },
+  ];
 
   return (
     <div className="space-y-3">
@@ -57,23 +65,17 @@ export function EstimateOptions({
                 Choose a preset or craft your own sequence.
               </p>
             </div>
-            <select
+            <Select
               id="voting-sequence-select"
               value={selectedSequenceId}
               disabled={localSettings.enableStructuredVoting}
-              onChange={(e) =>
-                onSelectSequence(e.target.value as VotingSequenceId)
+              onValueChange={(value) =>
+                onSelectSequence(value as VotingSequenceId)
               }
               data-testid="settings-select-voting-sequence"
               className="rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800"
-            >
-              {votingPresets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {getOptionLabel(preset)}
-                </option>
-              ))}
-              <option value="custom">Custom</option>
-            </select>
+              options={sequenceOptions}
+            />
           </div>
           <div className="space-y-1">
             <label htmlFor="estimateOptions" className="sr-only">

@@ -1,10 +1,10 @@
 import type { RoomSettings, JudgeAlgorithm } from '@/types';
-import type { JiraFieldOption } from '@/lib/jira-service';
 import { useJiraOAuth } from '@/hooks/useJiraOAuth';
 import { useLinearOAuth } from '@/hooks/useLinearOAuth';
 import { useGithubOAuth } from '@/hooks/useGithubOAuth';
 import { BetaBadge } from '@/components/BetaBadge';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 
 export function TicketQueueSettings({
   localSettings,
@@ -55,6 +55,19 @@ export function TicketQueueSettings({
   const handleAutoSyncToggle = (checked: boolean) => {
     handleChange('autoSyncEstimates', checked);
   };
+  const externalServiceOptions = [
+    { label: 'None', value: 'none' },
+    { label: 'Jira', value: 'jira' },
+    { label: 'Linear', value: 'linear' },
+    { label: 'GitHub', value: 'github' },
+  ];
+  const jiraFieldOptions = [
+    { label: 'Select a field', value: '' },
+    ...fields.map((field) => ({
+      label: `${field.name}${field.type ? ` (${field.type})` : ''}`,
+      value: field.id,
+    })),
+  ];
   const renderAutoSyncToggle = (
     provider: 'jira' | 'linear',
     connected: boolean
@@ -147,18 +160,14 @@ export function TicketQueueSettings({
             >
               Provider
             </label>
-            <select
+            <Select
               id="externalService"
               value={localSettings.externalService || 'none'}
-              onChange={(e) => handleChange('externalService', e.target.value)}
+              onValueChange={(value) => handleChange('externalService', value)}
               data-testid="settings-select-external-service"
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-            >
-              <option value="none">None</option>
-              <option value="jira">Jira</option>
-              <option value="linear">Linear</option>
-              <option value="github">GitHub</option>
-            </select>
+              options={externalServiceOptions}
+            />
             {localSettings.externalService === 'jira' && (
               <div className="space-y-3">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
@@ -257,25 +266,18 @@ export function TicketQueueSettings({
                             >
                               Story points field
                             </label>
-                            <select
+                            <Select
                               id="jiraStoryPointsField"
                               value={jiraStatus.storyPointsField ?? ''}
-                              onChange={(e) =>
+                              onValueChange={(value) =>
                                 saveFieldConfiguration({
-                                  storyPointsField: e.target.value || null,
+                                  storyPointsField: value || null,
                                 })
                               }
                               disabled={savingFields || fields.length === 0}
                               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                            >
-                              <option value="">Select a field</option>
-                              {fields.map((field: JiraFieldOption) => (
-                                <option key={field.id} value={field.id}>
-                                  {field.name}
-                                  {field.type ? ` (${field.type})` : ''}
-                                </option>
-                              ))}
-                            </select>
+                              options={jiraFieldOptions}
+                            />
                           </div>
 
                           <div className="space-y-1">
@@ -285,25 +287,18 @@ export function TicketQueueSettings({
                             >
                               Sprint field
                             </label>
-                            <select
+                            <Select
                               id="jiraSprintField"
                               value={jiraStatus.sprintField ?? ''}
-                              onChange={(e) =>
+                              onValueChange={(value) =>
                                 saveFieldConfiguration({
-                                  sprintField: e.target.value || null,
+                                  sprintField: value || null,
                                 })
                               }
                               disabled={savingFields || fields.length === 0}
                               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                            >
-                              <option value="">Select a field</option>
-                              {fields.map((field: JiraFieldOption) => (
-                                <option key={field.id} value={field.id}>
-                                  {field.name}
-                                  {field.type ? ` (${field.type})` : ''}
-                                </option>
-                              ))}
-                            </select>
+                              options={jiraFieldOptions}
+                            />
                           </div>
 
                           {!jiraStatus.storyPointsField && (

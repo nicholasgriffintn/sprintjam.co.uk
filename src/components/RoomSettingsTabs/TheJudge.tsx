@@ -1,4 +1,5 @@
 import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import { Select } from "@/components/ui/Select";
 
 export function TheJudge({
   localSettings,
@@ -10,6 +11,13 @@ export function TheJudge({
     value: boolean | (string | number)[] | JudgeAlgorithm | number,
   ) => void;
 }) {
+  const judgeAlgorithmOptions = [
+    { label: "Smart Consensus", value: "smartConsensus" },
+    { label: "Conservative Mode", value: "conservativeMode" },
+    { label: "Optimistic Mode", value: "optimisticMode" },
+    { label: "Simple Average", value: "simpleAverage" },
+  ];
+
   return (
     <div className="pt-2">
       <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -39,19 +47,15 @@ export function TheJudge({
             >
               Algorithm
             </label>
-            <select
+            <Select
               id="judgeAlgorithm"
               value={localSettings.judgeAlgorithm}
-              onChange={(e) =>
-                handleChange("judgeAlgorithm", e.target.value as JudgeAlgorithm)
+              onValueChange={(value) =>
+                handleChange("judgeAlgorithm", value as JudgeAlgorithm)
               }
               className="w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
-            >
-              <option value="smartConsensus">Smart Consensus</option>
-              <option value="conservativeMode">Conservative Mode</option>
-              <option value="optimisticMode">Optimistic Mode</option>
-              <option value="simpleAverage">Simple Average</option>
-            </select>
+              options={judgeAlgorithmOptions}
+            />
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
               {localSettings.judgeAlgorithm === "smartConsensus" &&
                 "Intelligently identifies consensus in voting patterns across different scenarios"}

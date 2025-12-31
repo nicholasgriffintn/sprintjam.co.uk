@@ -34,6 +34,7 @@ import { getLinearMetadata } from "@/utils/linear";
 import { getGithubMetadata } from "@/utils/github";
 import { ExternalServiceBadge } from "@/components/ExternalServiceBadge";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 
 interface TicketQueueModalQueueTabProps {
   currentTicket?: TicketQueueItem;
@@ -246,6 +247,25 @@ export function TicketQueueModalQueueTab({
       return [];
     },
   });
+  const boardOptions = [
+    {
+      label: boardsQuery.isLoading
+        ? `Loading ${externalLabels.board}...`
+        : `Select ${externalLabels.board}`,
+      value: "",
+    },
+    ...(boardsQuery.data ?? []).map((board) => ({
+      label: `${board.name}${board.key ? ` (${board.key})` : ""}`,
+      value: board.id,
+    })),
+  ];
+  const sprintOptions = [
+    { label: `Select ${externalLabels.sprint} (optional)`, value: "" },
+    ...(sprintsQuery.data ?? []).map((sprint) => ({
+      label: `${sprint.name}${sprint.state ? ` (${sprint.state})` : ""}`,
+      value: sprint.id,
+    })),
+  ];
 
   const ticketLimit = selectedSprintId ? null : 50;
   const selectedSprint = useMemo(
@@ -875,47 +895,27 @@ export function TicketQueueModalQueueTab({
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                         {externalLabels.board}
-                        <select
+                        <Select
                           value={selectedBoardId}
-                          onChange={(e) => setSelectedBoardId(e.target.value)}
+                          onValueChange={setSelectedBoardId}
                           disabled={boardsQuery.isLoading}
                           data-testid="queue-import-board"
                           className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                        >
-                          <option value="">
-                            {boardsQuery.isLoading
-                              ? `Loading ${externalLabels.board}...`
-                              : `Select ${externalLabels.board}`}
-                          </option>
-                          {(boardsQuery.data ?? []).map((board) => (
-                            <option key={board.id} value={board.id}>
-                              {board.name}
-                              {board.key ? ` (${board.key})` : ""}
-                            </option>
-                          ))}
-                        </select>
+                          options={boardOptions}
+                        />
                       </label>
 
                       {externalLabels.supportsSprint && (
                         <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                           {externalLabels.sprint}
-                          <select
+                          <Select
                             value={selectedSprintId}
-                            onChange={(e) => setSelectedSprintId(e.target.value)}
+                            onValueChange={setSelectedSprintId}
                             disabled={!selectedBoardId}
                             data-testid="queue-import-sprint"
                             className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                          >
-                            <option value="">
-                              Select {externalLabels.sprint} (optional)
-                            </option>
-                            {(sprintsQuery.data ?? []).map((sprint) => (
-                              <option key={sprint.id} value={sprint.id}>
-                                {sprint.name}
-                                {sprint.state ? ` (${sprint.state})` : ""}
-                              </option>
-                            ))}
-                          </select>
+                            options={sprintOptions}
+                          />
                         </label>
                       )}
                     </div>

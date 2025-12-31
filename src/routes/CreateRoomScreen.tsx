@@ -14,6 +14,7 @@ import { PageBackground } from '@/components/layout/PageBackground';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Logo } from '@/components/Logo';
 import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
@@ -51,6 +52,11 @@ const CreateRoomScreen = () => {
   );
   const [selectedSequenceId, setSelectedSequenceId] =
     useState<VotingSequenceId>('fibonacci-short');
+  const votingPresetOptions =
+    votingPresets?.map((preset) => ({
+      label: preset.label,
+      value: preset.id,
+    })) ?? [];
 
   useEffect(() => {
     if (defaults) {
@@ -212,22 +218,17 @@ const CreateRoomScreen = () => {
                 >
                   Estimate options
                 </label>
-                <select
+                <Select
                   id="estimate-sequence"
                   value={selectedSequenceId}
-                  onChange={(e) =>
-                    setSelectedSequenceId(e.target.value as VotingSequenceId)
+                  onValueChange={(value) =>
+                    setSelectedSequenceId(value as VotingSequenceId)
                   }
                   disabled={votingMode === 'structured'}
                   className="mt-1.5 w-full rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800 dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
                   data-testid="create-estimate-sequence"
-                >
-                  {votingPresets?.map((preset) => (
-                    <option key={preset.id} value={preset.id}>
-                      {preset.label}
-                    </option>
-                  ))}
-                </select>
+                  options={votingPresetOptions}
+                />
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   {votingMode === 'structured'
                     ? '(Always uses the default option for structured voting)'
