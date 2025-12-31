@@ -85,14 +85,15 @@ async function getLinearCredentials(env: Env, roomKey: string) {
 }
 
 function createTokenRefreshHandler(roomObject: ReturnType<typeof getRoomStub>) {
-  return async (accessToken: string, refreshToken: string, expiresAt: number) =>
-    roomObject.fetch(
+  return async (accessToken: string, refreshToken: string, expiresAt: number): Promise<void> => {
+    await roomObject.fetch(
       new Request("https://internal/linear/oauth/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
       }) as unknown as CfRequest,
     );
+  };
 }
 
 export async function getLinearIssueController(

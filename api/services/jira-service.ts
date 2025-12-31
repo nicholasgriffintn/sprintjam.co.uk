@@ -505,7 +505,6 @@ export async function fetchJiraSprints(
         );
 
         if (!response.ok) {
-          const errorBody = await response.text().catch(() => '');
           if (response.status === 401) {
             throw new Error('Unauthorized. Please reconnect Jira.');
           }
