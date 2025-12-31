@@ -20,6 +20,7 @@ export async function handleSession(
   const canonicalUserName = storedRoom
     ? findCanonicalUserName(storedRoom, userName)
     : undefined;
+
   const hasRoom =
     storedRoom && storedRoom.key === roomKey && !!canonicalUserName;
   const hasValidToken = canonicalUserName
@@ -64,16 +65,30 @@ export async function handleSession(
 
   room.repository.setUserConnection(canonicalUserName, true);
 
-  room.broadcast({
-    type: "userConnectionStatus",
-    user: canonicalUserName,
-    isConnected: true,
-  });
+  const freshRoomData = await room.getRoomData();
+  const isSpectator =
+    freshRoomData?.spectators?.includes(canonicalUserName) ?? false;
+
+  if (isSpectator) {
+    room.broadcast({
+      type: 'spectatorStatusChanged',
+      user: canonicalUserName,
+      isSpectator: true,
+      users: freshRoomData?.users ?? [],
+      spectators: freshRoomData?.spectators ?? [],
+    });
+  } else {
+    room.broadcast({
+      type: 'userConnectionStatus',
+      user: canonicalUserName,
+      isConnected: true,
+    });
+  }
 
   webSocket.send(
     JSON.stringify({
       type: "initialize",
-      roomData: anonymizeRoomData(roomData),
+      roomData: anonymizeRoomData(freshRoomData ?? roomData),
     }),
   );
 
@@ -155,6 +170,9 @@ export async function handleSession(
           break;
         case "configureTimer":
           await room.handleConfigureTimer(canonicalUserName, validated.config);
+          break;
+        case "toggleSpectator":
+          await room.handleToggleSpectator(canonicalUserName, validated.isSpectator);
           break;
       }
     } catch (err: unknown) {

@@ -15,6 +15,7 @@ import {
   disconnectFromRoom,
   submitVote,
   toggleShowVotes,
+  toggleSpectatorMode,
   resetVotes,
   updateSettings,
   isConnected,
@@ -89,6 +90,7 @@ interface RoomActionsContextValue {
   handleLeaveRoom: () => void;
   handleVote: (value: VoteValue | StructuredVote) => void;
   handleToggleShowVotes: () => void;
+  handleToggleSpectatorMode: (isSpectator: boolean) => void;
   handleResetVotes: () => void;
   handleUpdateSettings: (settings: RoomSettings) => void;
   handleSelectTicket: (ticketId: number) => void;
@@ -482,6 +484,16 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [assignRoomError, roomData, name]);
 
+  const handleToggleSpectatorMode = useCallback((isSpectator: boolean) => {
+    try {
+      toggleSpectatorMode(isSpectator);
+    } catch (err) {
+      console.error("Failed to toggle spectator mode:", err);
+      setRoomError("Failed to toggle spectator mode.");
+      setRoomErrorKind("network");
+    }
+  }, []);
+
   const handleToggleShowVotes = useCallback(() => {
     if (!roomData) {
       return;
@@ -654,6 +666,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleLeaveRoom,
       handleVote,
       handleToggleShowVotes,
+      handleToggleSpectatorMode,
       handleResetVotes,
       handleUpdateSettings,
       handleSelectTicket,
@@ -675,6 +688,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleRetryDefaults,
       handleSelectTicket,
       handleToggleShowVotes,
+      handleToggleSpectatorMode,
       handleUpdateSettings,
       handleUpdateTicket,
       handleVote,

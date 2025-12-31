@@ -20,6 +20,7 @@ interface StructuredVotingPanelProps {
   onVote: (vote: StructuredVote) => void;
   displaySettings?: StructuredVotingDisplaySettings;
   onOpenVotingSettings?: () => void;
+  disabled?: boolean;
 }
 
 interface CriterionRowProps {
@@ -83,6 +84,7 @@ export function StructuredVotingPanel({
   onVote,
   displaySettings,
   onOpenVotingSettings,
+  disabled = false,
 }: StructuredVotingPanelProps) {
   const { roomData } = useRoomState();
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>(
@@ -100,9 +102,10 @@ export function StructuredVotingPanel({
   const scoringInfoPanelId = useId();
 
   const isVotingDisabled =
-    roomData?.showVotes &&
+    disabled ||
+    (roomData?.showVotes &&
     !roomData?.settings.allowVotingAfterReveal &&
-    !roomData?.settings.alwaysRevealVotes;
+    !roomData?.settings.alwaysRevealVotes);
 
   useEffect(() => {
     if (!currentVote) {

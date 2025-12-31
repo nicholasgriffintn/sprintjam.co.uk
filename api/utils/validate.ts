@@ -104,6 +104,11 @@ export function validateClientMessage(
         return { type: "configureTimer", config };
       }
       return { error: "Timer config payload missing" };
+    case "toggleSpectator":
+      if (typeof data.isSpectator === "boolean") {
+        return { type: "toggleSpectator", isSpectator: data.isSpectator };
+      }
+      return { error: "toggleSpectator payload invalid" };
     case "ping":
       return { type: "ping" };
     default:

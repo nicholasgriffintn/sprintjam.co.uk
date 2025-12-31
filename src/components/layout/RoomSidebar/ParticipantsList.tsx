@@ -18,6 +18,7 @@ export type ParticipantsListProps = {
   contentClassName?: string;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  onToggleSpectatorMode?: (isSpectator: boolean) => void;
 };
 
 type ParticipantItemProps = {
@@ -122,6 +123,7 @@ export const ParticipantsList = memo(function ParticipantsList({
     contentClassName,
     isCollapsed,
     onToggleCollapse,
+    onToggleSpectatorMode,
   }: ParticipantsListProps) {
   const totalParticipants = roomData?.users.length ?? 0;
   const votingProgress = useMemo(() => {
@@ -147,6 +149,8 @@ export const ParticipantsList = memo(function ParticipantsList({
     }
     setLocalCollapsed((prev) => !prev);
   };
+
+  const isCurrentUserSpectator = roomData?.spectators?.includes(name) ?? false;
 
   return (
     <SurfaceCard
@@ -200,28 +204,42 @@ export const ParticipantsList = memo(function ParticipantsList({
           contentClassName
         )}
       >
-        <div>
-          <div
-            id={progressLabelId}
-            className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
-          >
-            <span>Voting progress</span>
-            <span id={progressDescriptionId}>
-              {stats.votedUsers}/{totalParticipants}
-            </span>
+        <div className="space-y-3">
+          <div>
+            <div
+              id={progressLabelId}
+              className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
+            >
+              <span>Voting progress</span>
+              <span id={progressDescriptionId}>
+                {stats.votedUsers}/{totalParticipants}
+              </span>
+            </div>
+            <HorizontalProgress
+              completed={votingProgress}
+              total={100}
+              role="progressbar"
+              aria-valuenow={votingProgress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-labelledby={progressLabelId}
+              aria-describedby={progressDescriptionId}
+              aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
+              data-testid="voting-progress-bar"
+            />
           </div>
-          <HorizontalProgress
-            completed={votingProgress}
-            total={100}
-            role="progressbar"
-            aria-valuenow={votingProgress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-labelledby={progressLabelId}
-            aria-describedby={progressDescriptionId}
-            aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
-            data-testid="voting-progress-bar"
-          />
+          {onToggleSpectatorMode && (
+            <Button
+              type="button"
+              variant={isCurrentUserSpectator ? "secondary" : "ghost"}
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => onToggleSpectatorMode(!isCurrentUserSpectator)}
+              data-testid="toggle-spectator-button"
+            >
+              {isCurrentUserSpectator ? 'Join as Participant' : 'Watch as Spectator'}
+            </Button>
+          )}
         </div>
         <ul className="space-y-2 pr-1" data-testid="participants-list">
           {roomData?.users.map((user: string, index: number) => (
@@ -240,6 +258,30 @@ export const ParticipantsList = memo(function ParticipantsList({
             />
           ))}
         </ul>
+        {roomData?.spectators && roomData.spectators.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Spectators
+            </div>
+            <ul className="space-y-2 pr-1" data-testid="spectators-list">
+              {roomData.spectators.map((user: string, index: number) => (
+                <ParticipantItem
+                  key={user}
+                  user={user}
+                  index={index + (roomData.users.length || 0)}
+                  currentUser={name}
+                  moderator={roomData.moderator}
+                  userAvatar={roomData.userAvatars?.[user]}
+                  isConnected={roomData.connectedUsers?.[user] ?? false}
+                  vote={undefined}
+                  showVotes={roomData.showVotes}
+                  anonymousVotes={roomData.settings.anonymousVotes}
+                  hideParticipantNames={roomData.settings.hideParticipantNames}
+                />
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </SurfaceCard>
   );

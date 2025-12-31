@@ -277,6 +277,7 @@ export interface TimerState {
 export interface RoomData {
   key: string;
   users: string[];
+  spectators?: string[];
   votes: Record<string, VoteValue | null>;
   structuredVotes?: Record<string, StructuredVote>;
   showVotes: boolean;
@@ -308,6 +309,7 @@ export type WebSocketMessageType =
   | "userJoined"
   | "userLeft"
   | "userConnectionStatus"
+  | "spectatorStatusChanged"
   | "vote"
   | "showVotes"
   | "resetVotes"
@@ -347,6 +349,12 @@ interface WebSocketPayloads {
   userConnectionStatus: {
     user: string;
     isConnected: boolean;
+  };
+  spectatorStatusChanged: {
+    user: string;
+    isSpectator: boolean;
+    users: string[];
+    spectators: string[];
   };
   vote: {
     user: string;

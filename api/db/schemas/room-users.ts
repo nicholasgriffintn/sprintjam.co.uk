@@ -6,6 +6,7 @@ export const roomUsers = sqliteTable(
     userName: text('user_name').primaryKey().notNull(),
     avatar: text('avatar'),
     isConnected: integer('is_connected').notNull().default(0),
+    isSpectator: integer('is_spectator').notNull().default(0),
     ordinal: integer('ordinal').notNull(),
   },
   (table) => ({

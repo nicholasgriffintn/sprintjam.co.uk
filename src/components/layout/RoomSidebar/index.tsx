@@ -24,7 +24,7 @@ export function RoomSidebar({
   onOpenQueueSettings?: () => void;
 }) {
   const { roomData, isModeratorView } = useRoomState();
-  const { handleUpdateTicket, handleSelectTicket } = useRoomActions();
+  const { handleUpdateTicket, handleSelectTicket, handleToggleSpectatorMode } = useRoomActions();
   const { name } = useSessionState();
 
   const [isParticipantsCollapsed, setIsParticipantsCollapsed] = useState(false);
@@ -94,6 +94,7 @@ export function RoomSidebar({
             name={name}
             isCollapsed={isParticipantsCollapsed}
             onToggleCollapse={() => setIsParticipantsCollapsed((prev) => !prev)}
+            onToggleSpectatorMode={handleToggleSpectatorMode}
           />
         </div>
 

@@ -55,6 +55,7 @@ export type ClientMessage =
         resetCountdown?: boolean;
       };
     }
+  | { type: "toggleSpectator"; isSpectator: boolean }
   | { type: "ping" };
 
 export type VoteValue = string | number;
@@ -336,6 +337,7 @@ export interface PasscodeHashPayload {
 export interface RoomData {
   key: string;
   users: string[];
+  spectators?: string[];
   votes: Record<string, VoteValue | null>;
   structuredVotes?: Record<string, StructuredVote>;
   showVotes: boolean;

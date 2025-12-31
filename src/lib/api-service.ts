@@ -244,6 +244,7 @@ export function connectToRoom(
           case "userJoined":
           case "userLeft":
           case "userConnectionStatus":
+          case "spectatorStatusChanged":
           case "vote":
           case "showVotes":
           case "resetVotes":
@@ -425,6 +426,19 @@ export function toggleShowVotes(): void {
   activeSocket.send(
     JSON.stringify({
       type: "showVotes",
+    }),
+  );
+}
+
+export function toggleSpectatorMode(isSpectator: boolean): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error("Not connected to room");
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: "toggleSpectator",
+      isSpectator,
     }),
   );
 }

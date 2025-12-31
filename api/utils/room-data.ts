@@ -65,7 +65,10 @@ export function markUserConnection(
   }
 
   ensureConnectedUsers(roomData);
-  if (!roomData.users.includes(targetName)) {
+  const isInUsers = roomData.users.includes(targetName);
+  const isInSpectators = roomData.spectators?.includes(targetName) ?? false;
+
+  if (!isInUsers && !isInSpectators) {
     roomData.users.push(targetName);
   }
 
@@ -174,7 +177,10 @@ export function findCanonicalUserName(
   candidate: string,
 ): string | undefined {
   const target = candidate.trim().toLowerCase();
-  return (
-    roomData.users.find((user) => user.toLowerCase() === target) ?? undefined
-  );
+
+  const foundInUsers = roomData.users.find((user) => user.toLowerCase() === target);
+  if (foundInUsers) return foundInUsers;
+
+  const foundInSpectators = roomData.spectators?.find((user) => user.toLowerCase() === target);
+  return foundInSpectators ?? undefined;
 }
