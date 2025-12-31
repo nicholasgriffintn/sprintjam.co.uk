@@ -19,6 +19,7 @@ interface StructuredVotingPanelProps {
   currentVote: StructuredVote | null;
   onVote: (vote: StructuredVote) => void;
   displaySettings?: StructuredVotingDisplaySettings;
+  onOpenVotingSettings?: () => void;
 }
 
 interface CriterionRowProps {
@@ -81,6 +82,7 @@ export function StructuredVotingPanel({
   currentVote,
   onVote,
   displaySettings,
+  onOpenVotingSettings,
 }: StructuredVotingPanelProps) {
   const { roomData } = useRoomState();
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>(
@@ -158,6 +160,16 @@ export function StructuredVotingPanel({
             {displaySettings?.panelTitle ?? 'Structured Estimation'}
           </h2>
           <div className="flex items-center gap-3">
+            {onOpenVotingSettings && (
+              <Button
+                type="button"
+                variant="unstyled"
+                onClick={onOpenVotingSettings}
+                className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-4 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+              >
+                Edit criteria
+              </Button>
+            )}
             {allowScoringInfoToggle && (
               <Button
                 type="button"

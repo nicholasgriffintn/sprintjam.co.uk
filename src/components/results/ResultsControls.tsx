@@ -24,6 +24,7 @@ export function ResultsControls({
   onResetVotes,
   onNextTicket,
   onRevisitLater,
+  onOpenResultsSettings,
 }: {
   roomData: RoomData;
   isModeratorView: boolean;
@@ -32,6 +33,7 @@ export function ResultsControls({
   onResetVotes: () => void;
   onNextTicket: () => void;
   onRevisitLater?: () => void;
+  onOpenResultsSettings?: () => void;
 }) {
   const voteToggleLabel = roomData.showVotes ? "Hide Votes" : "Show Votes";
   const voteToggleClasses = roomData.showVotes
@@ -40,10 +42,22 @@ export function ResultsControls({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pb-3 text-gray-900 dark:text-white">
-      <h2 className="flex items-center gap-2 text-lg font-semibold">
-        <BarChart3 className="h-5 w-5" />
-        Results
-      </h2>
+      <div className="flex items-center gap-3">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
+          <BarChart3 className="h-5 w-5" />
+          Results
+        </h2>
+        {onOpenResultsSettings && (
+          <Button
+            type="button"
+            variant="unstyled"
+            onClick={onOpenResultsSettings}
+            className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-4 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+          >
+            Configure results
+          </Button>
+        )}
+      </div>
       <div className="flex flex-wrap gap-2">
         {(isModeratorView || roomData.settings.allowOthersToShowEstimates) &&
           !roomData.settings.alwaysRevealVotes && (

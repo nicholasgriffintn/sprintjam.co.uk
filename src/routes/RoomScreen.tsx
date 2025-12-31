@@ -159,7 +159,7 @@ const RoomScreen = () => {
           stats={stats}
           setIsQueueModalOpen={setIsQueueModalOpen}
           onOpenQueueSettings={
-            isModeratorView ? () => handleOpenSettings("queue") : undefined
+            isModeratorView ? () => handleOpenSettings('queue') : undefined
           }
         />
 
@@ -181,6 +181,9 @@ const RoomScreen = () => {
               }
               onVote={handleVote}
               displaySettings={roomData.settings.structuredVotingDisplay}
+              onOpenVotingSettings={
+                isModeratorView ? () => handleOpenSettings('voting') : undefined
+              }
             />
           ) : (
             <UserEstimate
@@ -188,6 +191,9 @@ const RoomScreen = () => {
               name={name}
               userVote={typeof userVote === 'object' ? null : userVote}
               onVote={handleVote}
+              onOpenVotingSettings={
+                isModeratorView ? () => handleOpenSettings('voting') : undefined
+              }
             />
           )}
 
@@ -199,6 +205,11 @@ const RoomScreen = () => {
               onToggleShowVotes={handleToggleShowVotes}
               onResetVotes={handleResetVotes}
               onNextTicket={() => setIsSummaryOpen(true)}
+              onOpenResultsSettings={
+                isModeratorView
+                  ? () => handleOpenSettings('results')
+                  : undefined
+              }
               onRevisitLater={async () => {
                 if (!roomData.currentTicket) return;
                 const pendingQueue = roomData.ticketQueue || [];

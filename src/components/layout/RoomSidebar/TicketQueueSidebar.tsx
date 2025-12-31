@@ -59,7 +59,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   const current = roomData?.currentTicket;
   const next = pending[0];
   const externalService = roomData?.settings.externalService ?? 'none';
-  const showProviderHint = externalService === 'none';
+  const showProviderHint = canManageQueue && externalService === 'none';
   const canConfigureProvider = Boolean(onOpenQueueSettings);
 
   const collapsed = isCollapsed ?? localCollapsed;
@@ -321,9 +321,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
           {showProviderHint && (
             <div className="mt-auto grid items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300 sm:grid-cols-[1fr_auto]">
               <span>
-                {canConfigureProvider
-                  ? 'Connect Jira, Linear, or GitHub in Settings to import tickets.'
-                  : 'Ask a moderator to connect a provider in Settings to import tickets.'}
+                Connect Jira, Linear, or GitHub in Settings to import tickets.
               </span>
               {canConfigureProvider && (
                 <div className="justify-self-end">

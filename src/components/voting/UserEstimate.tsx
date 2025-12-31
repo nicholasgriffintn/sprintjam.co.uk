@@ -28,11 +28,13 @@ export function UserEstimate({
   name,
   userVote,
   onVote,
+  onOpenVotingSettings,
 }: {
   roomData: RoomData;
   name: string;
   userVote: VoteValue | null;
   onVote: (value: VoteValue) => void;
+  onOpenVotingSettings?: () => void;
 }) {
   const { roomData: contextRoomData } = useRoomState();
   const isVotingDisabled =
@@ -82,7 +84,19 @@ export function UserEstimate({
             </div>
           )}
         </div>
-        {contextRoomData?.settings.showTimer && <TimerChip />}
+        <div className="flex items-center gap-3">
+          {onOpenVotingSettings && (
+            <Button
+              type="button"
+              variant="unstyled"
+              onClick={onOpenVotingSettings}
+              className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-4 hover:text-blue-500 dark:text-blue-300 dark:hover:text-blue-200"
+            >
+              Edit card set
+            </Button>
+          )}
+          {contextRoomData?.settings.showTimer && <TimerChip />}
+        </div>
       </div>
       <div className="flex flex-wrap gap-2 md:gap-3">
         {roomData.settings.estimateOptions.map((option) => {
