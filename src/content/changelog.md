@@ -1,3 +1,8 @@
+## V1.7
+
+- Added a new spectator mode so that users can join a room and view the voting without participating. This is useful for stakeholders or observers who want to see the voting process without influencing it
+- Updated the database to add an `is_spectator` field to the participants table to track which users are spectators, this might cause issues with existing rooms so please let us know if you encounter any problems
+
 ## V1.6
 
 This release brings in a number of new features for queueing tickets and pointing against those tickets directly from SprintJam. This is currently in beta but it ready for you to check out if you'd like to.
