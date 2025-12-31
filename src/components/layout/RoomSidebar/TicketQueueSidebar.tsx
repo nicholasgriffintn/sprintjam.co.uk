@@ -147,20 +147,22 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
           </div>
           {showReorder && (
             <div className="flex flex-col items-center gap-1">
-              <button
+              <Button
                 onClick={() => moveTicket(ticket.id, 'up')}
+                variant="unstyled"
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move up"
               >
                 <ChevronUp className="h-4 w-4" />
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => moveTicket(ticket.id, 'down')}
+                variant="unstyled"
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move down"
               >
                 <ChevronDown className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -196,21 +198,22 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
             >
               Expand
             </Button>
-            <button
+            <Button
               type="button"
+              variant="unstyled"
               onClick={handleToggle}
               aria-label={
                 collapsed ? 'Expand ticket queue' : 'Collapse ticket queue'
               }
               aria-expanded={!collapsed}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-white/10 dark:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
             >
               {collapsed ? (
                 <ChevronDown className="h-4 w-4" />
               ) : (
                 <ChevronUp className="h-4 w-4" />
               )}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -273,10 +276,11 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                     Select a ticket to start
                   </p>
                   {pending.slice(0, 3).map((ticket) => (
-                    <button
+                    <Button
                       key={ticket.id}
+                      variant="unstyled"
                       onClick={() => onSelectTicket(ticket.id)}
-                      className="w-full rounded-lg border border-slate-200 bg-white p-3 text-left text-sm shadow-sm transition hover:border-green-500 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-green-500 dark:hover:bg-green-900/20"
+                      className="w-full rounded-lg border border-slate-200 bg-white p-3 text-left text-sm shadow-sm transition hover:border-green-500 hover:bg-green-50 focus-visible:ring-green-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-green-500 dark:hover:bg-green-900/20"
                       data-testid={`queue-select-ticket-${ticket.id}`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -292,15 +296,16 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                         </div>
                         <ChevronDown className="h-4 w-4 -rotate-90 text-green-600 dark:text-green-400 flex-shrink-0" />
                       </div>
-                    </button>
+                    </Button>
                   ))}
                   {pending.length > 3 && (
-                    <button
+                    <Button
                       onClick={onViewQueue}
-                      className="w-full text-center text-xs text-blue-600 hover:text-blue-500 dark:text-blue-300"
+                      variant="unstyled"
+                      className="w-full text-center text-xs font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-300"
                     >
                       +{pending.length - 3} more tickets
-                    </button>
+                    </Button>
                   )}
                 </>
               ) : (

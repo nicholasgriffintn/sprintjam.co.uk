@@ -143,14 +143,15 @@ const JoinRoomScreen = () => {
           <Logo size="md" />
         </div>
         <div className="space-y-3 text-left">
-          <button
+          <Button
             type="button"
+            variant="unstyled"
             onClick={goHome}
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            icon={<ArrowLeft className="h-4 w-4" />}
+            className="p-0 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
-            <ArrowLeft className="h-4 w-4" />
             Back to home
-          </button>
+          </Button>
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-brand-500">
               Step {currentStep === 'details' ? 1 : 2}/2

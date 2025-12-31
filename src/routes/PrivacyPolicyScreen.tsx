@@ -97,7 +97,7 @@ const PrivacyPolicyScreen = () => {
           </a>
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-8">
           <div className="space-y-4">
             <div className="space-y-2">
               <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
@@ -107,7 +107,7 @@ const PrivacyPolicyScreen = () => {
                 By using SprintJam, you agree to these terms. We keep things
                 simple and focused on providing a great estimation tool.
               </p>
-              <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-200">
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-200 mt-6">
                 <CalendarCheck className="h-4 w-4" aria-hidden="true" />
                 Updated {LAST_UPDATED}
               </div>

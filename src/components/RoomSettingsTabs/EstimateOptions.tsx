@@ -117,7 +117,7 @@ export function EstimateOptions({
 
       {showExtraOptions ? (
         <details className="group rounded-2xl border border-white/60 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/50">
-          <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-semibold text-slate-700 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white">
+          <summary className="flex  list-none items-center justify-between text-xs font-semibold text-slate-700 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white">
             <span>Extra voting options</span>
             <ChevronDown
               className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180 dark:text-slate-400"

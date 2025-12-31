@@ -125,11 +125,12 @@ export function FeedbackForm() {
               {LABEL_OPTIONS.map((option) => {
                 const isActive = label === option.value;
                 return (
-                  <button
+                  <Button
                     key={option.value}
                     type="button"
+                    variant="unstyled"
                     onClick={() => setLabel(option.value)}
-                    className={`flex items-center justify-center rounded-2xl border px-3 py-2 text-sm font-semibold transition ${
+                    className={`w-full rounded-2xl border px-3 py-2 text-sm font-semibold ${
                       isActive
                         ? 'border-brand-400/70 bg-brand-50 text-brand-700 shadow-sm dark:border-brand-300/60 dark:bg-brand-500/10 dark:text-brand-100'
                         : 'border-white/60 bg-white text-slate-700 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:hover:border-brand-300/60'
@@ -137,7 +138,7 @@ export function FeedbackForm() {
                     aria-pressed={isActive}
                   >
                     {option.title}
-                  </button>
+                  </Button>
                 );
               })}
             </div>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AlertCircle, CheckCircle, Info, X, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface AlertProps {
   variant?: "error" | "warning" | "success" | "info";
@@ -68,13 +69,14 @@ export const Alert = ({
         <div className={`text-sm ${config.text}`}>{children}</div>
       </div>
       {onDismiss && (
-        <button
+        <Button
           onClick={onDismiss}
-          className={`shrink-0 rounded-full p-1 transition hover:bg-black/5 dark:hover:bg-white/5 ${config.icon}`}
+          variant="unstyled"
+          className={`shrink-0 rounded-full p-1 hover:bg-black/5 dark:hover:bg-white/5 ${config.icon}`}
           aria-label="Dismiss alert"
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
       )}
     </div>
   );

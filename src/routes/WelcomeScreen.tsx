@@ -101,11 +101,12 @@ const WelcomeScreen = () => {
           <div className="pointer-events-none absolute inset-x-4 -top-10 -z-20 h-[120%] rounded-[5rem] bg-gradient-to-b from-brand-400/25 via-indigo-600/15 to-transparent opacity-70 blur-[150px] sm:inset-x-12" />
           <div className="rounded-[2.5rem] border border-white/10 bg-white/5 shadow-[0_40px_160px_rgba(8,10,24,0.65)] backdrop-blur-[14px] dark:border-white/5 dark:bg-slate-900/40">
             <div className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-gradient-to-b from-white/10 via-white/5 to-white/0 dark:from-white/10 dark:via-white/5">
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
                 aria-label="Play SprintJam demo video"
                 onClick={() => alert('Video demo coming soon')}
-                className="group relative block w-full overflow-hidden rounded-[1.75rem] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-400"
+                className="group relative block w-full overflow-hidden rounded-[1.75rem] focus-visible:ring-brand-400 focus-visible:ring-offset-4"
               >
                 <img
                   src="/images/screenshot.png"
@@ -138,7 +139,7 @@ const WelcomeScreen = () => {
                   <span>Live demo preview</span>
                   <span>00:42</span>
                 </div>
-              </button>
+              </Button>
               <div className="pointer-events-none absolute inset-x-12 -bottom-6 -z-10 h-8 rounded-[999px] bg-slate-900/45 blur-3xl dark:bg-black/70" />
               <div className="pointer-events-none absolute inset-x-16 -bottom-2 -z-20 h-5 rounded-[999px] bg-black/40 blur-2xl opacity-70" />
             </div>

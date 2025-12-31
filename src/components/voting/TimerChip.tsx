@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Clock, Hourglass, ChevronDown } from "lucide-react";
 
 import { useRoomState } from "@/context/RoomContext";
+import { Button } from "@/components/ui/Button";
 import {
   addEventListener,
   removeEventListener,
@@ -20,6 +21,8 @@ import {
 } from "@/utils/timer";
 import { TIMER_DURATION_PRESETS } from "@/constants";
 import { playChime, primeChimeAudio } from "@/lib/audio";
+
+const MotionButton = motion(Button);
 
 export function TimerChip() {
   const { roomData, isModeratorView } = useRoomState();
@@ -223,19 +226,21 @@ export function TimerChip() {
 
   return (
     <div className="relative" ref={controlsRef} data-testid="room-timer">
-      <motion.button
+      <MotionButton
         type="button"
+        variant="unstyled"
         onClick={handleChipClick}
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${chipClass} ${textClass} ${
-          isModeratorView ? "cursor-pointer hover:opacity-80" : "cursor-default"
+        className={`px-3 py-1.5 rounded-full border text-sm ${chipClass} ${textClass} ${
+          isModeratorView ? 'hover:opacity-80' : ''
         }`}
         aria-label={`Timer: elapsed ${displayElapsed}, ${displayRemaining} left, ${
-          timerRunning ? "Running" : "Paused"
+          timerRunning ? 'Running' : 'Paused'
         }`}
         aria-haspopup={isModeratorView}
         aria-expanded={showControls}
+        cursor={isModeratorView ? "pointer" : "default"}
       >
-        {mode === "stopwatch" ? (
+        {mode === 'stopwatch' ? (
           <Clock className="w-4 h-4" />
         ) : (
           <Hourglass className="w-4 h-4" />
@@ -244,7 +249,7 @@ export function TimerChip() {
           <span className="font-mono font-semibold">{displayElapsed}</span>
         </div>
         {isModeratorView && <ChevronDown className="w-3 h-3" />}
-      </motion.button>
+      </MotionButton>
 
       <AnimatePresence>
         {showControls && isModeratorView && (
@@ -258,25 +263,27 @@ export function TimerChip() {
           >
             <div className="flex flex-col gap-3">
               <div className="flex gap-2">
-                <button
+                <Button
                   onClick={handleToggleTimer}
-                  className="flex-1 px-3 py-2 text-xs font-medium rounded bg-blue-500 text-white hover:bg-blue-600"
-                  aria-label={timerRunning ? "Pause timer" : "Start timer"}
+                  variant="unstyled"
+                  className="flex-1 rounded bg-blue-500 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-600"
+                  aria-label={timerRunning ? 'Pause timer' : 'Start timer'}
                   aria-pressed={timerRunning}
                   role="menuitem"
                 >
-                  {timerRunning ? "Pause" : "Start"}
-                </button>
+                  {timerRunning ? 'Pause' : 'Start'}
+                </Button>
               </div>
 
-              <button
+              <Button
                 onClick={handleResetTimer}
-                className="w-full px-3 py-2 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                variant="unstyled"
+                className="w-full rounded bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                 aria-label="Reset timer"
                 role="menuitem"
               >
                 Reset
-              </button>
+              </Button>
 
               <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
                 <p className="text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1 uppercase tracking-wide">
@@ -286,23 +293,24 @@ export function TimerChip() {
                   {TIMER_DURATION_PRESETS.map((preset) => {
                     const isActive = preset.seconds === targetDurationSeconds;
                     return (
-                      <button
+                      <Button
                         key={preset.seconds}
                         onClick={() => handleSelectDuration(preset.seconds)}
-                        className={`px-2 py-1 text-xs rounded-full border transition ${
+                        variant="unstyled"
+                        className={`rounded-full border px-2 py-1 text-xs ${
                           isActive
-                            ? "bg-blue-500 text-white border-blue-500"
-                            : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-blue-400"
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-blue-400'
                         }`}
                         type="button"
                       >
                         {preset.label}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                  Reset restarts the countdown for{" "}
+                  Reset restarts the countdown for{' '}
                   {formatTime(targetDurationSeconds)}.
                 </p>
               </div>

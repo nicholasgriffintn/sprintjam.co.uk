@@ -33,6 +33,7 @@ import { getJiraMetadata } from "@/utils/jira";
 import { getLinearMetadata } from "@/utils/linear";
 import { getGithubMetadata } from "@/utils/github";
 import { ExternalServiceBadge } from "@/components/ExternalServiceBadge";
+import { Button } from "@/components/ui/Button";
 
 interface TicketQueueModalQueueTabProps {
   currentTicket?: TicketQueueItem;
@@ -711,7 +712,7 @@ export function TicketQueueModalQueueTab({
           {canManageQueue && (
             <div className="flex flex-wrap items-center gap-2">
               {jiraEnabled && (
-                <button
+                <Button
                   onClick={() => {
                     if (isAddFormOpen) {
                       closeAddForm();
@@ -720,14 +721,15 @@ export function TicketQueueModalQueueTab({
                   }}
                   disabled={isAddFormOpen || isProviderImportOpen}
                   data-testid="queue-add-jira-button"
-                  className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  variant="unstyled"
+                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                 >
                   <Link2 className="h-3 w-3" />
                   Add Jira Ticket
-                </button>
+                </Button>
               )}
               {linearEnabled && (
-                <button
+                <Button
                   onClick={() => {
                     if (isAddFormOpen) {
                       closeAddForm();
@@ -736,14 +738,15 @@ export function TicketQueueModalQueueTab({
                   }}
                   disabled={isAddFormOpen || isProviderImportOpen}
                   data-testid="queue-add-linear-button"
-                  className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  variant="unstyled"
+                  className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
                 >
                   <Link2 className="h-3 w-3" />
                   Add Linear Issue
-                </button>
+                </Button>
               )}
               {githubEnabled && (
-                <button
+                <Button
                   onClick={() => {
                     if (isAddFormOpen) {
                       closeAddForm();
@@ -752,13 +755,14 @@ export function TicketQueueModalQueueTab({
                   }}
                   disabled={isAddFormOpen || isProviderImportOpen}
                   data-testid="queue-add-github-button"
-                  className="flex items-center gap-1 rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  variant="unstyled"
+                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
                 >
                   <Link2 className="h-3 w-3" />
                   Add GitHub Issue
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 onClick={() => {
                   if (isProviderImportOpen) {
                     resetProviderImport();
@@ -767,11 +771,12 @@ export function TicketQueueModalQueueTab({
                 }}
                 disabled={isAddFormOpen || isProviderImportOpen}
                 data-testid="queue-toggle-add"
-                className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                variant="unstyled"
+                className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
               >
                 <Plus className="h-3 w-3" />
                 Add Ticket
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -801,20 +806,22 @@ export function TicketQueueModalQueueTab({
                   rows={2}
                 />
                 <div className="flex justify-end gap-2">
-                  <button
+                  <Button
                     onClick={closeAddForm}
+                    variant="unstyled"
                     className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={handleAddTicket}
                     disabled={!newTicketTitle.trim()}
                     data-testid="queue-add-confirm"
+                    variant="unstyled"
                     className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                   >
                     Add
-                  </button>
+                  </Button>
                 </div>
               </div>
             </motion.div>
@@ -847,12 +854,13 @@ export function TicketQueueModalQueueTab({
                         Loading
                       </div>
                     )}
-                    <button
+                    <Button
                       onClick={resetProviderImport}
+                      variant="unstyled"
                       className="rounded-lg bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -946,27 +954,30 @@ export function TicketQueueModalQueueTab({
                             data-testid="queue-import-search"
                             className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                           />
-                          <button
+                          <Button
                             onClick={selectAllTickets}
                             disabled={!hasLoadedTickets}
-                            className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                            variant="unstyled"
+                            className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-200 disabled:opacity-60 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
                           >
                             Select all
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={deselectAllTickets}
                             disabled={!hasLoadedTickets}
-                            className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                            variant="unstyled"
+                            className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-200 disabled:opacity-60 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
                           >
                             Deselect all
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={selectUnestimatedTickets}
                             disabled={!hasLoadedTickets}
-                            className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
+                            variant="unstyled"
+                            className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:opacity-60 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
                           >
                             Select unestimated
-                          </button>
+                          </Button>
                         </div>
 
                         <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
@@ -991,9 +1002,9 @@ export function TicketQueueModalQueueTab({
                                   key={ticket.id}
                                   className={`flex w-full items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm transition ${
                                     isSelected
-                                      ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30"
-                                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600"
-                                  } cursor-pointer`}
+                                      ? 'border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30'
+                                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600'
+                                  } `}
                                 >
                                   <input
                                     type="checkbox"
@@ -1024,22 +1035,20 @@ export function TicketQueueModalQueueTab({
                                     )}
                                     <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
                                       {ticket.assignee && (
-                                        <span>
-                                          Assignee: {ticket.assignee}
-                                        </span>
+                                        <span>Assignee: {ticket.assignee}</span>
                                       )}
                                       {jiraEnabled || linearEnabled ? (
                                         <span>
-                                          Story Points:{" "}
+                                          Story Points:{' '}
                                           {ticket.storyPoints !== null &&
                                           ticket.storyPoints !== undefined
                                             ? ticket.storyPoints
-                                            : "Not set"}
+                                            : 'Not set'}
                                         </span>
                                       ) : (
                                         <span>
-                                          Points label:{" "}
-                                          {estimated ? "Set" : "Not set"}
+                                          Points label:{' '}
+                                          {estimated ? 'Set' : 'Not set'}
                                         </span>
                                       )}
                                     </div>
@@ -1051,14 +1060,15 @@ export function TicketQueueModalQueueTab({
                         </div>
 
                         <div className="mt-3 flex justify-end">
-                          <button
+                          <Button
                             onClick={importSelectedTickets}
                             disabled={selectedCount === 0}
                             data-testid="queue-import-confirm"
-                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            variant="unstyled"
+                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
                           >
                             Import selected ({selectedCount})
-                          </button>
+                          </Button>
                         </div>
                       </>
                     )}
@@ -1124,26 +1134,28 @@ export function TicketQueueModalQueueTab({
                     {canManageQueue && (
                       <div className="flex items-center gap-2">
                         {onSelectTicket && (
-                          <button
+                          <Button
                             onClick={() => {
                               onSelectTicket(ticket.id);
                             }}
                             data-testid={`queue-start-voting-${ticket.id}`}
-                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+                            variant="unstyled"
+                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
                           >
                             Start Voting
-                          </button>
+                          </Button>
                         )}
                         {externalService !== "none" &&
                           ticket.externalService === "none" && (
-                          <button
+                          <Button
                             onClick={() =>
                               isLinking
                                 ? cancelLinking()
                                 : startLinkTicket(ticket)
                             }
                             data-testid={`queue-link-toggle-${ticket.id}`}
-                            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
+                            variant="unstyled"
+                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
                               isLinking
                                 ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
                                 : "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
@@ -1158,14 +1170,15 @@ export function TicketQueueModalQueueTab({
                                       ? "Linear"
                                       : "GitHub"
                                 }`}
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
                           onClick={() => onDeleteTicket(ticket.id)}
-                          className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 shadow-sm hover:bg-red-100 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-200 dark:hover:bg-red-900/40"
+                          variant="unstyled"
+                          className="rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 shadow-sm hover:bg-red-100 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-200 dark:hover:bg-red-900/40"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1193,7 +1206,7 @@ export function TicketQueueModalQueueTab({
                             data-testid={`queue-link-${externalService}-input-${ticket.id}`}
                             className="flex-1 rounded-lg border border-blue-200 px-3 py-2 text-sm dark:border-blue-700 dark:bg-blue-900/30"
                           />
-                          <button
+                          <Button
                             onClick={() =>
                               lookupExternalTicket(
                                 linkLookupKey,
@@ -1204,20 +1217,21 @@ export function TicketQueueModalQueueTab({
                             }
                             disabled={isFetchingLink || !linkLookupKey.trim()}
                             data-testid={`queue-link-${externalService}-fetch-${ticket.id}`}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                            variant="unstyled"
+                            className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                           >
                             {isFetchingLink && (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             )}
                             Fetch
-                          </button>
+                          </Button>
                         </div>
                         {renderPreview(
                           linkPreview,
                           externalService as "jira" | "linear" | "github",
                         )}
                         <div className="mt-2 flex gap-2">
-                          <button
+                          <Button
                             onClick={() =>
                               handleApplyLink(
                                 externalService as "jira" | "linear" | "github",
@@ -1225,19 +1239,21 @@ export function TicketQueueModalQueueTab({
                             }
                             disabled={!linkPreview || isSavingLink}
                             data-testid={`queue-link-${externalService}-save-${ticket.id}`}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                            variant="unstyled"
+                            className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
                           >
                             {isSavingLink && (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             )}
                             Save Link
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={cancelLinking}
+                            variant="unstyled"
                             className="rounded-lg bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </div>
                       </motion.div>
                     )}

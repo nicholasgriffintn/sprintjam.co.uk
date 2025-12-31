@@ -1,4 +1,5 @@
 import type { RoomSettings, JudgeAlgorithm } from '@/types';
+import { Button } from '@/components/ui/Button';
 
 export function VotingMode({
   localSettings,
@@ -25,15 +26,16 @@ export function VotingMode({
           >
             Enable Structured Voting
           </label>
-          <button
+          <Button
             type="button"
+            variant="unstyled"
             role="switch"
             aria-checked={isStructured}
             id="enableStructuredVoting"
             onClick={() =>
               handleChange('enableStructuredVoting', !isStructured)
             }
-            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 justify-start rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:ring-brand-500 ${
               isStructured
                 ? 'bg-brand-600 dark:bg-brand-500'
                 : 'bg-slate-200 dark:bg-slate-700'
@@ -45,7 +47,7 @@ export function VotingMode({
                 isStructured ? 'translate-x-5' : 'translate-x-0'
               }`}
             />
-          </button>
+          </Button>
         </div>
         {isStructured && (
           <div className="bg-white/50 dark:bg-slate-800/50 p-3 rounded-2xl border border-white/50 dark:border-white/10">

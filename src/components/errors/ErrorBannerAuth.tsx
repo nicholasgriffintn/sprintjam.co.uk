@@ -1,4 +1,5 @@
 import { ShieldX } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 export function ErrorBannerAuth({
   onRetryConnection,
@@ -21,20 +22,22 @@ export function ErrorBannerAuth({
         </div>
       </div>
       <div className="flex gap-2">
-        <button
+        <Button
           type="button"
+          variant="unstyled"
           onClick={onRetryConnection}
           className="rounded-lg bg-red-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-800"
         >
           Try again
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="unstyled"
           onClick={onLeaveRoom}
           className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-200 dark:border-red-700 dark:text-red-100 dark:hover:bg-red-800/40"
         >
           Leave room
-        </button>
+        </Button>
       </div>
     </div>
   );

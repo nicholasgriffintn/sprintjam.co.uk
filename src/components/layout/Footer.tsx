@@ -3,6 +3,7 @@ import { Github, MessageSquare } from "lucide-react";
 
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
+import { Button } from '@/components/ui/Button';
 
 type FooterProps = {
   displayRepoLink?: boolean;
@@ -76,14 +77,15 @@ export const Footer = ({
             fullWidth ? ' lg:w-auto lg:flex-nowrap' : ''
           } flex w-full flex-wrap items-center justify-center gap-2`}
         >
-          <button
+          <Button
             type="button"
+            variant="unstyled"
             onClick={() => setIsFeedbackOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60"
+            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60"
           >
             <MessageSquare className="h-3.5 w-3.5" />
             Send feedback
-          </button>
+          </Button>
 
           {displayRepoLink ? (
             <a

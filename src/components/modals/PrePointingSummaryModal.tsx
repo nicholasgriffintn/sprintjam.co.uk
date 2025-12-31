@@ -3,6 +3,7 @@ import { CheckCircle2, Users } from "lucide-react";
 
 import type { TicketQueueItem, VoteValue } from "@/types";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 
 interface PrePointingSummaryModalProps {
   isOpen: boolean;
@@ -57,13 +58,13 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
                   Current Ticket
                 </div>
                 <div className="font-semibold text-slate-900 dark:text-white">
-                  {currentTicket?.ticketId || "N/A"}
+                  {currentTicket?.ticketId || 'N/A'}
                 </div>
               </div>
             </div>
-            {currentTicket?.externalService !== "none" &&
+            {currentTicket?.externalService !== 'none' &&
               currentTicket?.externalServiceMetadata &&
-              "url" in currentTicket.externalServiceMetadata && (
+              'url' in currentTicket.externalServiceMetadata && (
                 <a
                   href={
                     (
@@ -95,7 +96,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
                 Consensus
               </div>
               <div className="text-base font-semibold text-slate-900 dark:text-white">
-                {consensusLabel} · Avg {stats.avg ?? "N/A"}
+                {consensusLabel} · Avg {stats.avg ?? 'N/A'}
               </div>
             </div>
             <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
@@ -130,7 +131,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
               >
                 <span className="font-medium text-slate-800 dark:text-slate-100">
                   {user}
-                  {user === currentUser && " (you)"}
+                  {user === currentUser && ' (you)'}
                 </span>
                 <span className="font-semibold text-slate-900 dark:text-white">
                   {value}
@@ -141,22 +142,24 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-2">
-          <button
+          <Button
             type="button"
+            variant="unstyled"
             onClick={onClose}
             data-testid="pre-pointing-cancel"
             className="rounded-lg bg-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="unstyled"
             onClick={onConfirm}
             data-testid="pre-pointing-confirm"
             className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
           >
             Next Ticket
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

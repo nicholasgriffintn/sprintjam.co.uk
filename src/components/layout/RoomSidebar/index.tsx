@@ -10,6 +10,7 @@ import { ParticipantsList } from "./ParticipantsList";
 import { TicketQueueSidebar } from "./TicketQueueSidebar";
 import { useRoomActions, useRoomState } from "@/context/RoomContext";
 import { useSessionState } from "@/context/SessionContext";
+import { Button } from "@/components/ui/Button";
 
 export function RoomSidebar({
   isQueueEnabled,
@@ -98,14 +99,15 @@ export function RoomSidebar({
 
         {isQueueEnabled && (
           <>
-            <button
+            <Button
               type="button"
+              variant="unstyled"
               onPointerDown={handleSplitPointerDown}
-              className="cursor-row-resize hidden h-4 items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/70 text-[10px] uppercase tracking-wide text-slate-500 transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-white/10 dark:text-slate-300 md:flex"
+              className="cursor-row-resize hidden h-4 items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/70 text-[10px] uppercase tracking-wide text-slate-500 transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-200 dark:border-white/10 dark:bg-white/10 dark:text-slate-300 md:flex"
               aria-label="Resize sidebar sections"
             >
               <span className="h-0.5 w-10 rounded-full bg-slate-400/80 dark:bg-slate-500/80" />
-            </button>
+            </Button>
             <div
               className={`flex flex-col overflow-hidden md:min-h-0 md:pt-1 ${
                 isQueueCollapsed ? "md:min-h-[54px]" : "md:min-h-[180px]"

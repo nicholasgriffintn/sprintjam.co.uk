@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import type { RoomData, RoomStats } from "@/types";
 import { getAvatarInfo } from "@/utils/avatars";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { HorizontalProgress } from "@/components/ui/HorizontalProgress";
 import { cn } from "@/lib/cn";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -151,8 +152,8 @@ export const ParticipantsList = memo(function ParticipantsList({
     <SurfaceCard
       data-testid="participants-panel"
       className={cn(
-        "flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800",
-        className,
+        'flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800',
+        className
       )}
       padding="none"
       role="region"
@@ -160,8 +161,8 @@ export const ParticipantsList = memo(function ParticipantsList({
     >
       <div
         className={cn(
-          "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
-          collapsed && "border-b-0 py-2",
+          'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
+          collapsed && 'border-b-0 py-2'
         )}
       >
         <h2
@@ -176,26 +177,27 @@ export const ParticipantsList = memo(function ParticipantsList({
             </span>
           </span>
         </h2>
-        <button
+        <Button
           type="button"
-          className="inline-flex items-center rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-white/10 dark:text-white"
+          variant="unstyled"
+          className="inline-flex items-center rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
           onClick={handleToggle}
           aria-label={
-            collapsed ? "Expand participants" : "Collapse participants"
+            collapsed ? 'Expand participants' : 'Collapse participants'
           }
           aria-expanded={!collapsed}
           aria-controls={contentId}
           data-testid="participants-toggle"
         >
           {collapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-        </button>
+        </Button>
       </div>
       <div
         id={contentId}
         className={cn(
-          "flex-1 space-y-3 overflow-y-auto px-4 py-4",
-          collapsed && "hidden",
-          contentClassName,
+          'flex-1 space-y-3 overflow-y-auto px-4 py-4',
+          collapsed && 'hidden',
+          contentClassName
         )}
       >
         <div>

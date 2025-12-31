@@ -14,6 +14,7 @@ import { PermissionsOptions } from '@/components/RoomSettingsTabs/PermissionsOpt
 import { ResultsOptions } from '@/components/RoomSettingsTabs/ResultsOptions';
 import { BackgroundMusic } from '@/components/RoomSettingsTabs/BackgroundMusic';
 import { TicketQueueSettings } from '@/components/RoomSettingsTabs/TicketQueueSettings';
+import { Button } from '@/components/ui/Button';
 import {
   cloneExtraVoteOptions,
   cloneVotingPresets,
@@ -470,11 +471,12 @@ export function RoomSettingsTabs({
         {tabs.map((tab) => {
           const isActiveTab = tab.id === activeTab;
           return (
-            <button
+            <Button
               key={tab.id}
               type="button"
+              variant="unstyled"
               onClick={() => setActiveTab(tab.id)}
-              className={`group relative flex-none px-4 pb-3 pt-1 text-left transition ${
+              className={`group relative flex-none px-4 pb-3 pt-1 text-left ${
                 isActiveTab
                   ? 'text-slate-900 dark:text-white'
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
@@ -486,7 +488,7 @@ export function RoomSettingsTabs({
               {isActiveTab && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-500 to-brand-600 dark:from-brand-400 dark:to-brand-500" />
               )}
-            </button>
+            </Button>
           );
         })}
       </div>

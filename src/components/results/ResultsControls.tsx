@@ -9,9 +9,12 @@ import {
 } from "lucide-react";
 
 import type { RoomData } from "@/types";
+import { Button } from "@/components/ui/Button";
 
 const buttonBase =
-  "cursor-pointer group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md transition hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+  ' group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md hover:shadow-lg';
+
+const MotionButton = motion(Button);
 
 export function ResultsControls({
   roomData,
@@ -44,8 +47,9 @@ export function ResultsControls({
       <div className="flex flex-wrap gap-2">
         {(isModeratorView || roomData.settings.allowOthersToShowEstimates) &&
           !roomData.settings.alwaysRevealVotes && (
-            <motion.button
+            <MotionButton
               type="button"
+              variant="unstyled"
               data-testid="toggle-votes-button"
               onClick={onToggleShowVotes}
               className={voteToggleClasses}
@@ -62,12 +66,13 @@ export function ResultsControls({
                 )}
                 <span>{voteToggleLabel}</span>
               </span>
-            </motion.button>
+            </MotionButton>
           )}
         {(isModeratorView ||
           roomData.settings.allowOthersToDeleteEstimates) && (
-          <motion.button
+          <MotionButton
             type="button"
+            variant="unstyled"
             data-testid="reset-votes-button"
             onClick={onResetVotes}
             className={`${buttonBase} bg-red-600 text-white shadow-red-900/25 hover:bg-red-700 focus-visible:ring-red-200/70 focus-visible:ring-offset-red-950/25 dark:bg-red-500/20 dark:text-red-200 dark:hover:bg-red-500/30 dark:shadow-red-900/10`}
@@ -78,13 +83,14 @@ export function ResultsControls({
               <AlertTriangle className="h-4 w-4" />
               <span>Reset Votes</span>
             </span>
-          </motion.button>
+          </MotionButton>
         )}
         {queueEnabled &&
           roomData.currentTicket &&
           (isModeratorView || roomData.settings.allowOthersToManageQueue) && (
-            <motion.button
+            <MotionButton
               type="button"
+              variant="unstyled"
               data-testid="next-ticket-button"
               onClick={onNextTicket}
               className={`${buttonBase} bg-green-700 text-white shadow-green-900/20 hover:bg-green-800 focus-visible:ring-green-200 focus-visible:ring-offset-green-950/30 dark:bg-green-500/20 dark:text-green-200 dark:hover:bg-green-500/30`}
@@ -95,14 +101,15 @@ export function ResultsControls({
                 <ArrowRightCircle className="h-4 w-4" />
                 <span>Next Ticket</span>
               </span>
-            </motion.button>
+            </MotionButton>
           )}
         {queueEnabled &&
           (isModeratorView || roomData.settings.allowOthersToManageQueue) &&
           onRevisitLater &&
           roomData.currentTicket && (
-            <motion.button
+            <MotionButton
               type="button"
+              variant="unstyled"
               data-testid="revisit-ticket-button"
               onClick={onRevisitLater}
               className={`${buttonBase} bg-amber-700 text-white shadow-amber-900/20 hover:bg-amber-800 focus-visible:ring-amber-200 focus-visible:ring-offset-amber-950/30 dark:bg-amber-500/20 dark:text-amber-200 dark:hover:bg-amber-500/30 dark:shadow-amber-900/10`}
@@ -113,7 +120,7 @@ export function ResultsControls({
                 <RotateCcw className="h-4 w-4" />
                 <span>Revisit Later</span>
               </span>
-            </motion.button>
+            </MotionButton>
           )}
       </div>
     </div>

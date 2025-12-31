@@ -3,6 +3,7 @@ import { Music, X, Volume2 } from "lucide-react";
 import { useRef } from "react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Button } from "@/components/ui/Button";
 import { StrudelControls } from "./StrudelControls";
 import { useStrudelPlayer } from "@/hooks/useStrudelPlayer";
 import {
@@ -133,15 +134,15 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-end sm:left-auto sm:right-4 sm:w-auto">
       <SurfaceCard
         variant="subtle"
-        padding={isExpanded ? "sm" : "none"}
+        padding={isExpanded ? 'sm' : 'none'}
         className={`relative origin-bottom-right overflow-hidden transition-all duration-300 ${
           isExpanded
-            ? "w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]"
-            : "flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl"
+            ? 'w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]'
+            : 'flex h-14 w-14  items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl'
         }`}
         aria-expanded={isExpanded}
-        role={!isExpanded ? "button" : undefined}
-        aria-label={!isExpanded ? "Expand Strudel player" : undefined}
+        role={!isExpanded ? 'button' : undefined}
+        aria-label={!isExpanded ? 'Expand Strudel player' : undefined}
         tabIndex={!isExpanded ? 0 : undefined}
         onClick={
           !isExpanded
@@ -153,7 +154,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
         onKeyDown={
           !isExpanded
             ? (event) => {
-                if (event.key === "Enter" || event.key === " ") {
+                if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
                   setIsExpanded(true);
                 }
@@ -163,14 +164,15 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
       >
         {isExpanded ? (
           <>
-            <button
+            <Button
               type="button"
+              variant="unstyled"
               onClick={() => setIsExpanded(false)}
-              className="absolute right-3 top-3 rounded-full p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10"
+              className="absolute right-3 top-3 rounded-full p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10"
               aria-label="Collapse Strudel player"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
 
             <div className="flex flex-col gap-4 pr-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:pr-6">
               <div className="flex min-w-0 items-center gap-2">
@@ -186,10 +188,10 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCode
-                      ? `${isPlaying ? "Playing" : "Paused"} • ${
-                          roomData.strudelPhase || "Unknown"
+                      ? `${isPlaying ? 'Playing' : 'Paused'} • ${
+                          roomData.strudelPhase || 'Unknown'
                         } phase`
-                      : "No music generated yet"}
+                      : 'No music generated yet'}
                   </span>
                 </div>
               </div>

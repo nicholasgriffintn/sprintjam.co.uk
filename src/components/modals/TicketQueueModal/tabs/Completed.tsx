@@ -12,6 +12,7 @@ import { getVoteSummary, calculateStoryPointsFromVotes } from "@/utils/votes";
 import { downloadCsv } from "@/utils/csv";
 import { buildCsv } from "@/components/modals/TicketQueueModal/utils/csv";
 import { ExternalServiceBadge } from "@/components/ExternalServiceBadge";
+import { Button } from "@/components/ui/Button";
 
 interface TicketQueueModalCompletedTabProps {
   completedTickets: TicketQueueItem[];
@@ -242,7 +243,7 @@ export function TicketQueueModalCompletedTab({
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {ticket.completedAt
                       ? `Completed ${formatDate(ticket.completedAt)}`
-                      : "Completed"}
+                      : 'Completed'}
                   </p>
                   {ticket.outcome && (
                     <p className="text-xs text-slate-600 dark:text-slate-300">
@@ -251,86 +252,90 @@ export function TicketQueueModalCompletedTab({
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
+                  <Button
                     onClick={() => handleDownloadTicket(ticket)}
-                    className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                    variant="unstyled"
+                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
                   >
                     <ArrowDownToLine className="h-3.5 w-3.5" />
                     Export CSV
-                  </button>
-                  {ticket.externalService === "jira" && (
-                    <button
+                  </Button>
+                  {ticket.externalService === 'jira' && (
+                    <Button
                       onClick={() => handleSyncToJira(ticket)}
                       disabled={
-                        syncing?.id === ticket.id && syncing.provider === "jira"
+                        syncing?.id === ticket.id && syncing.provider === 'jira'
                       }
-                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                      variant="unstyled"
+                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
                     >
                       {syncing?.id === ticket.id &&
-                      syncing.provider === "jira" ? (
+                      syncing.provider === 'jira' ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <RefreshCw className="h-3.5 w-3.5" />
                       )}
                       Sync to Jira
-                    </button>
+                    </Button>
                   )}
-                  {ticket.externalService === "linear" && (
-                    <button
+                  {ticket.externalService === 'linear' && (
+                    <Button
                       onClick={() => handleSyncToLinear(ticket)}
                       disabled={
                         syncing?.id === ticket.id &&
-                        syncing.provider === "linear"
+                        syncing.provider === 'linear'
                       }
-                      className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
+                      variant="unstyled"
+                      className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
                     >
                       {syncing?.id === ticket.id &&
-                      syncing.provider === "linear" ? (
+                      syncing.provider === 'linear' ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <RefreshCw className="h-3.5 w-3.5" />
                       )}
                       Sync to Linear
-                    </button>
+                    </Button>
                   )}
-                  {ticket.externalService === "github" && (
-                    <button
+                  {ticket.externalService === 'github' && (
+                    <Button
                       onClick={() => handleSyncToGithub(ticket)}
                       disabled={
                         syncing?.id === ticket.id &&
-                        syncing.provider === "github"
+                        syncing.provider === 'github'
                       }
-                      className="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                      variant="unstyled"
+                      className="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
                     >
                       {syncing?.id === ticket.id &&
-                      syncing.provider === "github" ? (
+                      syncing.provider === 'github' ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
                         <RefreshCw className="h-3.5 w-3.5" />
                       )}
                       Sync to GitHub
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
 
               <div className="mt-3 grid gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 md:grid-cols-3">
                 <span>
-                  Votes:{" "}
+                  Votes:{' '}
                   <span className="font-semibold text-slate-800 dark:text-white">
                     {getVoteSummary(ticket)}
                   </span>
                 </span>
                 <span>
-                  Estimate:{" "}
+                  Estimate:{' '}
                   <span className="font-semibold text-slate-800 dark:text-white">
-                    {storyPoints ?? "—"}
+                    {storyPoints ?? '—'}
                   </span>
                 </span>
                 <span className="truncate">
-                  Outcome:{" "}
+                  Outcome:{' '}
                   <span className="font-semibold text-slate-800 dark:text-white">
-                    {ticket.outcome || "Not captured"}
+                    {ticket.outcome || 'Not captured'}
                   </span>
                 </span>
               </div>

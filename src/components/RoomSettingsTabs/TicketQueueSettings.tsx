@@ -4,6 +4,7 @@ import { useJiraOAuth } from '@/hooks/useJiraOAuth';
 import { useLinearOAuth } from '@/hooks/useLinearOAuth';
 import { useGithubOAuth } from '@/hooks/useGithubOAuth';
 import { BetaBadge } from '@/components/BetaBadge';
+import { Button } from '@/components/ui/Button';
 
 export function TicketQueueSettings({
   localSettings,
@@ -183,13 +184,14 @@ export function TicketQueueSettings({
                             </p>
                           )}
                         </div>
-                        <button
+                        <Button
                           onClick={jiraDisconnect}
                           disabled={jiraLoading}
-                          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:bg-red-700 disabled:opacity-50"
+                          variant="unstyled"
+                          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
                         >
                           Disconnect
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -197,13 +199,14 @@ export function TicketQueueSettings({
                       <p className="text-sm text-slate-600 dark:text-slate-400">
                         Connect your Jira account to fetch and update tickets
                       </p>
-                      <button
+                      <Button
                         onClick={jiraConnect}
                         disabled={jiraLoading}
-                        className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm text-white transition hover:bg-brand-700 disabled:opacity-50"
+                        variant="unstyled"
+                        className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
                       >
                         Connect to Jira
-                      </button>
+                      </Button>
                     </div>
                   )}
                   {jiraError && (
@@ -227,17 +230,18 @@ export function TicketQueueSettings({
                             sprint.
                           </p>
                         </div>
-                        <button
+                        <Button
                           onClick={fetchFields}
                           disabled={fieldsLoading}
-                          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 transition dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 disabled:opacity-50"
+                          variant="unstyled"
+                          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 disabled:opacity-50"
                         >
                           {fieldsLoading
                             ? 'Refreshing…'
                             : fieldsLoaded
                             ? 'Refresh'
                             : 'Load fields'}
-                        </button>
+                        </Button>
                       </div>
 
                       {fieldsLoading ? (
@@ -339,13 +343,14 @@ export function TicketQueueSettings({
                             </p>
                           )}
                         </div>
-                        <button
+                        <Button
                           onClick={linearDisconnect}
                           disabled={linearLoading}
-                          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:bg-red-700 disabled:opacity-50"
+                          variant="unstyled"
+                          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
                         >
                           Disconnect
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -353,13 +358,14 @@ export function TicketQueueSettings({
                       <p className="text-sm text-slate-600 dark:text-slate-400">
                         Connect your Linear account to sync estimates.
                       </p>
-                      <button
+                      <Button
                         onClick={linearConnect}
                         disabled={linearLoading}
-                        className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm text-white transition hover:bg-brand-700 disabled:opacity-50"
+                        variant="unstyled"
+                        className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
                       >
                         Connect to Linear
-                      </button>
+                      </Button>
                     </div>
                   )}
                   {linearError && (
@@ -407,13 +413,14 @@ export function TicketQueueSettings({
                             </p>
                           )}
                         </div>
-                        <button
+                        <Button
                           onClick={githubDisconnect}
                           disabled={githubLoading}
-                          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition hover:bg-red-700 disabled:opacity-50"
+                          variant="unstyled"
+                          className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
                         >
                           Disconnect
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -421,13 +428,14 @@ export function TicketQueueSettings({
                       <p className="text-sm text-slate-600 dark:text-slate-400">
                         Connect your GitHub account to sync estimates.
                       </p>
-                      <button
+                      <Button
                         onClick={githubConnect}
                         disabled={githubLoading}
-                        className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm text-white transition hover:bg-brand-700 disabled:opacity-50"
+                        variant="unstyled"
+                        className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
                       >
                         Connect to GitHub
-                      </button>
+                      </Button>
                     </div>
                   )}
                   {githubError && (

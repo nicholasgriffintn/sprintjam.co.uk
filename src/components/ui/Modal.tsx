@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
+import { Button } from "./Button";
 import { SurfaceCard } from "./SurfaceCard";
 
 interface ModalProps {
@@ -115,23 +116,25 @@ export const Modal = ({
               >
                 {title}
               </h2>
-              <button
+              <Button
                 onClick={onClose}
-                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                variant="unstyled"
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                 aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
           )}
           {!title && (
-            <button
+            <Button
               onClick={onClose}
-              className="absolute right-6 top-6 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+              variant="unstyled"
+              className="absolute right-6 top-6 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
               aria-label="Close modal"
             >
               <X className="h-5 w-5" />
-            </button>
+            </Button>
           )}
           {children}
         </SurfaceCard>

@@ -1,6 +1,7 @@
 import { Loader2, WifiOff } from "lucide-react";
 
 import { ErrorConnectionIssue } from "@/types";
+import { Button } from "@/components/ui/Button";
 
 export function ErrorBannerConnection({
   connectionIssue,
@@ -19,20 +20,21 @@ export function ErrorBannerConnection({
         )}
         <p className="text-sm font-semibold">
           {connectionIssue?.message ||
-            "Connection lost. Trying to reconnect..."}
+            'Connection lost. Trying to reconnect...'}
         </p>
       </div>
       <div className="flex items-center gap-2 text-xs">
         <span className="rounded-full bg-white/70 px-2 py-1 font-semibold text-amber-700 dark:bg-amber-800/50 dark:text-amber-100">
           Votes paused until connection is restored.
         </span>
-        <button
+        <Button
           type="button"
+          variant="unstyled"
           onClick={onRetryConnection}
-          className="rounded-lg bg-amber-600 px-3 py-1.5 font-semibold text-white hover:bg-amber-700"
+          className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
         >
           Retry
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -8,6 +8,9 @@ import { TimerChip } from './TimerChip';
 import { useRoomState } from '@/context/RoomContext';
 import { getContrastingTextColor } from '@/utils/colors';
 import { getExtraVoteValueSet } from '@/utils/votingOptions';
+import { Button } from '@/components/ui/Button';
+
+const MotionButton = motion(Button);
 
 const parseOptionLabel = (optionText: string) => {
   const [first, ...rest] = optionText.split(' ');
@@ -94,17 +97,18 @@ export function UserEstimate({
           const { icon, label } = parseOptionLabel(optionLabel);
 
           return (
-            <motion.button
+            <MotionButton
               type="button"
+              variant="unstyled"
               key={option}
               data-testid={`vote-option-${optionLabel}`}
               onClick={() => onVote(option)}
               disabled={isVotingDisabled}
               aria-label={`Vote ${option}`}
               aria-pressed={userVote === option}
-              className={`relative w-14 h-18 md:w-18 md:h-26 px-3 py-3 flex flex-col items-center justify-center gap-1 text-base font-semibold border-2 rounded-lg shadow-sm ${
+              className={`relative w-14 h-18 md:w-18 md:h-26 px-3 py-3 flex-col gap-1 text-base font-semibold border-2 rounded-lg shadow-sm ${
                 isVotingDisabled
-                  ? 'opacity-50 cursor-not-allowed border-gray-300 dark:border-gray-600'
+                  ? 'opacity-50 border-gray-300 dark:border-gray-600'
                   : userVote === option
                   ? 'border-blue-500 shadow-md'
                   : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
@@ -152,7 +156,7 @@ export function UserEstimate({
                   </span>
                 )}
               </div>
-            </motion.button>
+            </MotionButton>
           );
         })}
       </div>

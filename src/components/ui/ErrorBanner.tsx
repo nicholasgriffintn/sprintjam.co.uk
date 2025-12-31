@@ -1,6 +1,8 @@
 import type { FC } from "react";
 import { ShieldX, X } from "lucide-react";
 
+import { Button } from '@/components/ui/Button';
+
 interface ErrorBannerProps {
   message: string;
   onClose: () => void;
@@ -26,14 +28,15 @@ const ErrorBanner: FC<ErrorBannerProps> = ({
           <ShieldX className="h-5 w-5 mr-2" />
           <span>{message}</span>
         </div>
-        <button
+        <Button
           type="button"
+          variant="unstyled"
           onClick={onClose}
-          className="text-inherit hover:opacity-80 focus:outline-none"
+          className="text-inherit hover:opacity-80"
           aria-label="Close error message"
         >
           <X className="h-5 w-5" />
-        </button>
+        </Button>
       </div>
     </div>
   );

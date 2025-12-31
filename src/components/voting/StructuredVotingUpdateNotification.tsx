@@ -4,6 +4,7 @@ import { Info } from "lucide-react";
 
 import { safeLocalStorage } from "@/utils/storage";
 import { CONFIDENCE_INFO_STORAGE_KEY } from "@/constants";
+import { Button } from "@/components/ui/Button";
 
 export function StructuredVotingUpdateNotification() {
   const [showConfidenceInfo, setShowConfidenceInfo] = useState(false);
@@ -53,13 +54,14 @@ export function StructuredVotingUpdateNotification() {
               </div>
             </div>
             <div className="flex justify-end md:ml-auto md:mt-0 flex-shrink-0 w-full md:w-auto">
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
                 onClick={handleDismissConfidenceInfo}
-                className="rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow hover:bg-blue-700 focus:outline-none focus-visible:ring focus-visible:ring-blue-400"
+                className="rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow hover:bg-blue-700 focus-visible:ring-blue-400"
               >
                 Got it
-              </button>
+              </Button>
             </div>
           </div>
         </motion.div>

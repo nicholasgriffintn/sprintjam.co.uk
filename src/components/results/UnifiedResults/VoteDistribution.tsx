@@ -5,6 +5,7 @@ import { getContrastingTextColor } from "@/utils/colors";
 import { useVoteDistributionControls } from "./hooks/useVoteDistributionControls";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { getVisibleEstimateOptions } from "@/utils/votingOptions";
+import { Button } from "@/components/ui/Button";
 
 export type VoteDistributionViewMode = "count" | "percentage" | "cumulative";
 
@@ -162,29 +163,31 @@ export function VoteDistribution({
           data-testid="distribution-view-toggle-group"
         >
           {distributionViewOptions.map((option) => (
-            <button
+            <Button
               key={option.id}
               type="button"
+              variant="unstyled"
               onClick={() => setDistributionView(option.id)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-md px-3 py-1 text-xs font-semibold ${
                 distributionView === option.id
-                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
               }`}
               aria-pressed={distributionView === option.id}
               data-testid={`distribution-view-option-${option.id}`}
             >
               {option.label}
-            </button>
+            </Button>
           ))}
         </div>
-        <button
+        <Button
           type="button"
+          variant="unstyled"
           onClick={handleExportDistribution}
-          className="inline-flex items-center rounded-md border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           Export CSV
-        </button>
+        </Button>
       </div>
       <SurfaceCard padding="sm">
         <VoteDistributionItem
