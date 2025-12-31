@@ -231,7 +231,7 @@ export const ParticipantsList = memo(function ParticipantsList({
           {onToggleSpectatorMode && (
             <Button
               type="button"
-              variant={isCurrentUserSpectator ? "secondary" : "ghost"}
+              variant="secondary"
               size="sm"
               className="w-full text-xs"
               onClick={() => onToggleSpectatorMode(!isCurrentUserSpectator)}
