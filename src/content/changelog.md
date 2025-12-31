@@ -1,3 +1,14 @@
+## V1.6
+
+This release brings in a number of new features for queueing tickets and pointing against those tickets directly from SprintJam. This is currently in beta but it ready for you to check out if you'd like to.
+
+- Defaulted the setting to show the new ticket queuing system for new rooms
+- Extended the backend services to support importing tickets and searching for them from the already configured providers: Jira, Linear and GitHub Issues
+- Added the ability to list tickets from various boards and sprints
+- Updated the user interface to make use of the new backend services and made it easier to import tickets
+
+We hope you enjoy using the new ticket queuing system and we look forward to your feedback!
+
 ## V1.5
 
 A number of enhancements have been made in this version to improve the user experience and add new features that expand the capabilities of SprintJam and making it easier to use.
