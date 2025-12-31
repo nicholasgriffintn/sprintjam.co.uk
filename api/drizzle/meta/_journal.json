@@ -8,6 +8,13 @@
       "when": 1766008113424,
       "tag": "0000_sturdy_doctor_faustus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1767154538458,
+      "tag": "0001_sloppy_dexter_bennett",
+      "breakpoints": true
     }
   ]
 }

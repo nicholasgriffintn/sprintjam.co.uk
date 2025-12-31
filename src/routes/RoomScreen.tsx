@@ -66,6 +66,7 @@ const RoomScreen = () => {
     handleLeaveRoom,
   } = useRoomActions();
   const { name } = useSessionState();
+  const isSpectator = roomData?.spectators?.includes(name) ?? false;
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
     RoomSettingsTabId | undefined
@@ -184,6 +185,7 @@ const RoomScreen = () => {
               onOpenVotingSettings={
                 isModeratorView ? () => handleOpenSettings('voting') : undefined
               }
+              disabled={isSpectator}
             />
           ) : (
             <UserEstimate
@@ -194,6 +196,7 @@ const RoomScreen = () => {
               onOpenVotingSettings={
                 isModeratorView ? () => handleOpenSettings('voting') : undefined
               }
+              disabled={isSpectator}
             />
           )}
 

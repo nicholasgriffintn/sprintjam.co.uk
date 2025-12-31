@@ -29,18 +29,21 @@ export function UserEstimate({
   userVote,
   onVote,
   onOpenVotingSettings,
+  disabled = false,
 }: {
   roomData: RoomData;
   name: string;
   userVote: VoteValue | null;
   onVote: (value: VoteValue) => void;
   onOpenVotingSettings?: () => void;
+  disabled?: boolean;
 }) {
   const { roomData: contextRoomData } = useRoomState();
   const isVotingDisabled =
-    roomData.showVotes &&
+    disabled ||
+    (roomData.showVotes &&
     !roomData.settings.allowVotingAfterReveal &&
-    !roomData.settings.alwaysRevealVotes;
+    !roomData.settings.alwaysRevealVotes);
   const userTaskSize = getUsersVoteTaskSize(roomData, name);
   const extraVoteValues = useMemo(
     () => getExtraVoteValueSet(roomData.settings.extraVoteOptions),

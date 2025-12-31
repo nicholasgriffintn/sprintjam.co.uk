@@ -4,6 +4,7 @@ import {
   assignUserAvatar,
   markUserConnection,
   ensureConnectedUsers,
+  findCanonicalUserName,
 } from "./room-data";
 import type { RoomData, RoomSettings } from "../types";
 import { JudgeAlgorithm } from "../types";
@@ -92,6 +93,117 @@ describe("room-data helpers", () => {
       assignUserAvatar(room, "ALICE");
 
       expect(room.userAvatars?.Alice).toBeUndefined();
+    });
+  });
+
+  describe("spectator mode", () => {
+    describe("markUserConnection", () => {
+      it("does not add spectator to users array on reconnect", () => {
+        const room = createRoom({
+          users: ["Alice"],
+          spectators: ["Bob"],
+          connectedUsers: { Alice: false, Bob: false },
+        });
+
+        markUserConnection(room, "bob", true);
+
+        expect(room.users).toEqual(["Alice"]);
+        expect(room.spectators).toEqual(["Bob"]);
+        expect(room.connectedUsers["Bob"]).toBe(true);
+      });
+
+      it("adds new user to users array if not in spectators", () => {
+        const room = createRoom({
+          users: ["Alice"],
+          spectators: ["Bob"],
+          connectedUsers: {},
+        });
+
+        markUserConnection(room, "Charlie", true);
+
+        expect(room.users).toEqual(["Alice", "Charlie"]);
+        expect(room.spectators).toEqual(["Bob"]);
+        expect(room.connectedUsers["Charlie"]).toBe(true);
+      });
+
+      it("does not duplicate user already in users array", () => {
+        const room = createRoom({
+          users: ["Alice"],
+          spectators: ["Bob"],
+          connectedUsers: { Alice: false },
+        });
+
+        markUserConnection(room, "alice", true);
+
+        expect(room.users).toEqual(["Alice"]);
+        expect(room.spectators).toEqual(["Bob"]);
+        expect(room.connectedUsers["Alice"]).toBe(true);
+      });
+    });
+
+    describe("findCanonicalUserName", () => {
+      it("finds user in users array", () => {
+        const room = createRoom({
+          users: ["Alice", "Bob"],
+          spectators: ["Charlie"],
+        });
+
+        const result = findCanonicalUserName(room, "alice");
+
+        expect(result).toBe("Alice");
+      });
+
+      it("finds user in spectators array", () => {
+        const room = createRoom({
+          users: ["Alice", "Bob"],
+          spectators: ["Charlie"],
+        });
+
+        const result = findCanonicalUserName(room, "charlie");
+
+        expect(result).toBe("Charlie");
+      });
+
+      it("returns undefined if user not found", () => {
+        const room = createRoom({
+          users: ["Alice"],
+          spectators: ["Bob"],
+        });
+
+        const result = findCanonicalUserName(room, "nonexistent");
+
+        expect(result).toBeUndefined();
+      });
+
+      it("handles case-insensitive matching", () => {
+        const room = createRoom({
+          users: ["Alice"],
+          spectators: ["Bob"],
+        });
+
+        expect(findCanonicalUserName(room, "ALICE")).toBe("Alice");
+        expect(findCanonicalUserName(room, "BOB")).toBe("Bob");
+      });
+
+      it("trims whitespace", () => {
+        const room = createRoom({
+          users: ["Alice"],
+          spectators: ["Bob"],
+        });
+
+        expect(findCanonicalUserName(room, "  alice  ")).toBe("Alice");
+        expect(findCanonicalUserName(room, "  bob  ")).toBe("Bob");
+      });
+
+      it("handles empty spectators array", () => {
+        const room = createRoom({
+          users: ["Alice"],
+          spectators: undefined,
+        });
+
+        expect(findCanonicalUserName(room, "alice")).toBe("Alice");
+        expect(findCanonicalUserName(room, "bob")).toBeUndefined();
+      });
     });
   });
 });

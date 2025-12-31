@@ -100,9 +100,14 @@ export class PlanningRoomRepository {
     const connectedUsers: Record<string, boolean> = {};
     const userAvatars: Record<string, string> = {};
     const userList: string[] = [];
+    const spectatorList: string[] = [];
 
     for (const user of users) {
-      userList.push(user.userName);
+      if (user.isSpectator) {
+        spectatorList.push(user.userName);
+      } else {
+        userList.push(user.userName);
+      }
       connectedUsers[user.userName] = !!user.isConnected;
       if (user.avatar) {
         userAvatars[user.userName] = user.avatar;
@@ -185,6 +190,7 @@ export class PlanningRoomRepository {
     const roomData: RoomData = {
       key: row.roomKey,
       users: userList,
+      spectators: spectatorList.length > 0 ? spectatorList : undefined,
       votes: voteMap,
       structuredVotes: structuredVoteMap,
       showVotes: !!row.showVotes,
@@ -256,7 +262,21 @@ export class PlanningRoomRepository {
             userName: user,
             avatar: roomData.userAvatars?.[user] ?? null,
             isConnected: roomData.connectedUsers?.[user] ? 1 : 0,
+            isSpectator: 0,
             ordinal: index,
+          })
+          .run();
+      });
+
+      const spectatorStartIndex = roomData.users.length;
+      roomData.spectators?.forEach((user, index) => {
+        tx.insert(roomUsers)
+          .values({
+            userName: user,
+            avatar: roomData.userAvatars?.[user] ?? null,
+            isConnected: roomData.connectedUsers?.[user] ? 1 : 0,
+            isSpectator: 1,
+            ordinal: spectatorStartIndex + index,
           })
           .run();
       });
@@ -302,12 +322,22 @@ export class PlanningRoomRepository {
         userName: canonicalName,
         avatar: null,
         isConnected: 0,
+        isSpectator: 0,
         ordinal: maxOrdinal + 1,
       })
       .onConflictDoNothing()
       .run();
 
     return canonicalName;
+  }
+
+  setUserSpectatorMode(userName: string, isSpectator: boolean) {
+    const canonicalName = this.ensureUser(userName);
+    this.db
+      .update(roomUsers)
+      .set({ isSpectator: isSpectator ? 1 : 0 })
+      .where(eq(roomUsers.userName, canonicalName))
+      .run();
   }
 
   setUserConnection(userName: string, isConnected: boolean) {
@@ -458,6 +488,10 @@ export class PlanningRoomRepository {
 
   clearVotes() {
     this.db.delete(roomVotes).run();
+  }
+
+  deleteUserVote(userName: string) {
+    this.db.delete(roomVotes).where(eq(roomVotes.userName, userName)).run();
   }
 
   setStructuredVote(userName: string, vote: StructuredVote) {

@@ -61,6 +61,41 @@ describe("validateClientMessage", () => {
     expect(result).toEqual({ error: "Select ticket payload invalid" });
   });
 
+  it("validates toggleSpectator with true", () => {
+    const result = validateClientMessage({
+      type: "toggleSpectator",
+      isSpectator: true,
+    });
+    expect(result).toEqual({
+      type: "toggleSpectator",
+      isSpectator: true,
+    });
+  });
+
+  it("validates toggleSpectator with false", () => {
+    const result = validateClientMessage({
+      type: "toggleSpectator",
+      isSpectator: false,
+    });
+    expect(result).toEqual({
+      type: "toggleSpectator",
+      isSpectator: false,
+    });
+  });
+
+  it("errors when toggleSpectator payload missing isSpectator", () => {
+    const result = validateClientMessage({ type: "toggleSpectator" });
+    expect(result).toEqual({ error: "toggleSpectator payload invalid" });
+  });
+
+  it("errors when toggleSpectator isSpectator is not boolean", () => {
+    const result = validateClientMessage({
+      type: "toggleSpectator",
+      isSpectator: "true",
+    });
+    expect(result).toEqual({ error: "toggleSpectator payload invalid" });
+  });
+
   it("returns error for unknown message types", () => {
     const result = validateClientMessage({ type: "unknown-op" });
     expect(result).toEqual({ error: "Unknown message type" });

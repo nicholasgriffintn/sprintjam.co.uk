@@ -83,6 +83,33 @@ export function applyRoomUpdate(
       };
     }
 
+    case "spectatorStatusChanged": {
+      const { user, isSpectator, users, spectators } = message;
+      if (!user || typeof isSpectator !== "boolean") return prev;
+
+      const updatedVotes = { ...prev.votes };
+      let updatedStructuredVotes = prev.structuredVotes;
+
+      if (isSpectator) {
+        delete updatedVotes[user];
+        if (updatedStructuredVotes && updatedStructuredVotes[user]) {
+          const newStructuredVotes = { ...updatedStructuredVotes };
+          delete newStructuredVotes[user];
+          updatedStructuredVotes = Object.keys(newStructuredVotes).length > 0
+            ? newStructuredVotes
+            : undefined;
+        }
+      }
+
+      return {
+        ...prev,
+        users: users ?? prev.users,
+        spectators: spectators && spectators.length > 0 ? spectators : undefined,
+        votes: updatedVotes,
+        structuredVotes: updatedStructuredVotes,
+      };
+    }
+
     case "newModerator": {
       if (!message.moderator || message.moderator === prev.moderator) {
         return prev;

@@ -20,7 +20,7 @@ export class RoomPage {
   }
 
   participantRows(): Locator {
-    return this.page.getByTestId("participant-row");
+    return this.page.getByTestId("participants-list").getByTestId("participant-row");
   }
 
   async waitForParticipants(count: number) {
@@ -244,5 +244,57 @@ export class RoomPage {
       .first()
       .getAttribute("aria-label");
     expect(label ?? "").toMatch(text);
+  }
+
+  async toggleSpectatorMode() {
+    await this.page.getByTestId("toggle-spectator-button").click();
+  }
+
+  async expectSpectatorListVisible() {
+    await expect(this.page.getByTestId("spectators-list")).toBeVisible();
+  }
+
+  async expectSpectatorVisible(name: string) {
+    const spectatorsList = this.page.getByTestId("spectators-list");
+    const spectatorRow = spectatorsList
+      .getByTestId("participant-row")
+      .filter({ hasText: name });
+    await expect(spectatorRow).toHaveCount(1);
+  }
+
+  async expectParticipantNotInSpectators(name: string) {
+    const spectatorsList = this.page.getByTestId("spectators-list");
+    const spectatorRow = spectatorsList
+      .getByTestId("participant-row")
+      .filter({ hasText: name });
+    await expect(spectatorRow).toHaveCount(0);
+  }
+
+  async expectParticipantNotInParticipantsList(name: string) {
+    const participantsList = this.page.getByTestId("participants-list");
+    const participantRow = participantsList
+      .getByTestId("participant-row")
+      .filter({ hasText: name });
+    await expect(participantRow).toHaveCount(0);
+  }
+
+  spectatorRows(): Locator {
+    return this.page.getByTestId("spectators-list").getByTestId("participant-row");
+  }
+
+  async waitForSpectators(count: number) {
+    if (count === 0) {
+      await expect(this.page.getByTestId("spectators-list")).toHaveCount(0);
+    } else {
+      await expect(this.spectatorRows()).toHaveCount(count);
+    }
+  }
+
+  async expectVotingDisabled() {
+    const voteButtons = this.page.locator('[data-testid^="vote-option-"]');
+    const count = await voteButtons.count();
+    for (let i = 0; i < count; i++) {
+      await expect(voteButtons.nth(i)).toBeDisabled();
+    }
   }
 }

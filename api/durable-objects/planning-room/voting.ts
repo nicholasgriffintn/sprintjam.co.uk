@@ -21,6 +21,11 @@ export async function handleVote(
     return;
   }
 
+  if (roomData.spectators?.includes(userName)) {
+    console.warn(`Vote from ${userName} rejected: spectators cannot vote`);
+    return;
+  }
+
   if (
     roomData.showVotes &&
     !roomData.settings.allowVotingAfterReveal &&
