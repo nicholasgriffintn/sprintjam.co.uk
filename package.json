@@ -48,7 +48,7 @@
     "@axe-core/playwright": "4.11.0",
     "@cloudflare/vite-plugin": "1.17.0",
     "@cloudflare/workers-types": "4.20251217.0",
-    "@playwright/test": "1.56.1",
+    "@playwright/test": "1.57.0",
     "@tailwindcss/vite": "4.1.18",
     "@types/node": "24.10.3",
     "@types/react": "19.2.2",
