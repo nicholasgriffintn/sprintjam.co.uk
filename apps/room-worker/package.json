@@ -1,0 +1,27 @@
+{
+  "name": "@sprintjam/room-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "echo 'Room worker build complete'",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:prod": "wrangler deploy --env production",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sprintjam/types": "workspace:*",
+    "@sprintjam/db": "workspace:*",
+    "@sprintjam/utils": "workspace:*",
+    "@sprintjam/services": "workspace:*",
+    "drizzle-orm": "0.45.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20251217.0",
+    "typescript": "5.9.3",
+    "wrangler": "4.53.0"
+  }
+}

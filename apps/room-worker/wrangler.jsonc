@@ -1,0 +1,64 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sprintjam-room-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-12-18",
+  "workers_dev": true,
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PLANNING_ROOM",
+        "class_name": "PlanningRoom",
+        "script_name": "sprintjam-room-worker"
+      }
+    ]
+  },
+
+  "[[migrations]]": {
+    "tag": "v1",
+    "new_classes": ["PlanningRoom"]
+  },
+
+  "rate_limit": {
+    "simple": {
+      "limit": 5,
+      "period": 60
+    }
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  "limits": {
+    "cpu_ms": 50
+  },
+
+  "env": {
+    "staging": {
+      "name": "sprintjam-room-worker-staging",
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "PLANNING_ROOM",
+            "class_name": "PlanningRoom",
+            "script_name": "sprintjam-room-worker-staging"
+          }
+        ]
+      }
+    },
+    "production": {
+      "name": "sprintjam-room-worker",
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "PLANNING_ROOM",
+            "class_name": "PlanningRoom",
+            "script_name": "sprintjam-room-worker"
+          }
+        ]
+      }
+    }
+  }
+}

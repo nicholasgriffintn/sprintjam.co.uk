@@ -1,1 +1,0 @@
-ALTER TABLE `room_users` ADD `is_spectator` integer DEFAULT 0 NOT NULL;

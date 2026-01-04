@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types/2023-07-01"],
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sprintjam/types": ["../../packages/types/src"],
+      "@sprintjam/db": ["../../packages/db/src"],
+      "@sprintjam/utils": ["../../packages/utils/src"],
+      "@sprintjam/services": ["../../packages/services/src"]
+    }
+  },
+  "include": ["src"]
+}

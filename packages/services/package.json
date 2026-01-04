@@ -1,0 +1,24 @@
+{
+  "name": "@sprintjam/services",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./jira": "./src/jira-service.ts",
+    "./linear": "./src/linear-service.ts",
+    "./github": "./src/github-service.ts",
+    "./email": "./src/email.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sprintjam/types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

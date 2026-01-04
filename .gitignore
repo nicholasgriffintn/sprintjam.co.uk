@@ -1,15 +1,35 @@
+# Dependencies
 node_modules
-.wrangler
+
+# Build outputs
 dist
+.wrangler
+*.tsbuildinfo
+
+# Environment files
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
-.DS_Store
 .dev.vars
 
-test-results
+# OS files
+.DS_Store
 
+# Testing
+test-results
+playwright-report
+
+# IDE
 .claude
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Turborepo
+.turbo

@@ -1,0 +1,100 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "sprintjam",
+  "main": "api/index.ts",
+  "compatibility_date": "2024-12-18",
+
+  "routes": [
+    {
+      "pattern": "sprintjam.co.uk",
+      "custom_domain": true,
+    },
+  ],
+
+  "services": [
+    {
+      "binding": "ROOM_WORKER",
+      "service": "sprintjam-room-worker",
+    },
+    {
+      "binding": "AUTH_WORKER",
+      "service": "sprintjam-auth-worker",
+    },
+  ],
+
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "dist/client",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/ws", "/robots.txt"],
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false,
+    },
+  },
+
+  "limits": {
+    "cpu_ms": 50,
+  },
+
+  "env": {
+    "development": {
+      "name": "sprintjam-dev",
+      "routes": [],
+      "services": [
+        {
+          "binding": "ROOM_WORKER",
+          "service": "sprintjam-room-worker",
+        },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker",
+        },
+      ],
+    },
+    "staging": {
+      "name": "sprintjam-staging",
+      "routes": [
+        {
+          "pattern": "staging.sprintjam.co.uk",
+          "custom_domain": true,
+        },
+      ],
+      "services": [
+        {
+          "binding": "ROOM_WORKER",
+          "service": "sprintjam-room-worker-staging",
+        },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-staging",
+        },
+      ],
+    },
+    "production": {
+      "name": "sprintjam",
+      "routes": [
+        {
+          "pattern": "sprintjam.co.uk",
+          "custom_domain": true,
+        },
+      ],
+      "services": [
+        {
+          "binding": "ROOM_WORKER",
+          "service": "sprintjam-room-worker",
+        },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker",
+        },
+      ],
+    },
+  },
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@sprintjam/auth-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "echo 'Auth worker build complete'",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:prod": "wrangler deploy --env production",
+    "typecheck": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply sprintjam-workspaces --local",
+    "db:migrate:staging": "wrangler d1 migrations apply sprintjam-workspaces --remote --env staging",
+    "db:migrate:prod": "wrangler d1 migrations apply sprintjam-workspaces --remote --env production"
+  },
+  "dependencies": {
+    "@sprintjam/types": "workspace:*",
+    "@sprintjam/db": "workspace:*",
+    "@sprintjam/utils": "workspace:*",
+    "@sprintjam/services": "workspace:*",
+    "drizzle-orm": "0.45.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20251217.0",
+    "typescript": "5.9.3",
+    "wrangler": "4.53.0"
+  }
+}
