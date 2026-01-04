@@ -1,4 +1,5 @@
-import type { TicketQueueWithVotes } from '../../types';
+import type { TicketQueueWithVotes } from '@sprintjam/types';
+
 import type { PlanningRoom } from '.';
 import {
   getQueueWithPrivacy,

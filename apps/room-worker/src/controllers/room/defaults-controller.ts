@@ -1,6 +1,5 @@
 import type { Response as CfResponse } from "@cloudflare/workers-types";
-
-import { getServerDefaults } from "../utils/defaults";
+import { getServerDefaults } from '@sprintjam/utils';
 
 export function getDefaultsController(): CfResponse {
   const defaultsPayload = getServerDefaults();

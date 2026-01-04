@@ -1,4 +1,5 @@
-import type { RoomData, TicketQueueWithVotes } from '../../types';
+import type { RoomData, TicketQueueWithVotes } from '@sprintjam/types';
+
 import type { PlanningRoom } from '.';
 
 export function shouldAnonymizeVotes(roomData: RoomData): boolean {

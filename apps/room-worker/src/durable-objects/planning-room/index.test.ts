@@ -6,13 +6,11 @@ import type {
   DurableObjectState,
   WebSocket as CfWebSocket,
 } from "@cloudflare/workers-types";
+import type { RoomWorkerEnv, RoomData } from '@sprintjam/types';
+import { generateSessionToken, createInitialRoomData } from '@sprintjam/utils';
+import { MIN_TIMER_DURATION_SECONDS } from '@sprintjam/utils/constants';
 
-import { PlanningRoom } from ".";
-import type { RoomWorkerEnv } from '../../types';
-import { generateSessionToken } from "../../utils/room-cypto";
-import type { RoomData } from "../../types";
-import { createInitialRoomData } from "../../utils/defaults";
-import { MIN_TIMER_DURATION_SECONDS } from '../../config/constants';
+import { PlanningRoom } from '.';
 
 const makeState = () => {
   const sqlStub = {
@@ -24,7 +22,7 @@ const makeState = () => {
       sql: sqlStub as any,
       transactionSync: vi.fn((fn: () => void) => fn()),
       transaction: vi.fn(async (fn: (txn: any) => void) =>
-        fn({ sql: sqlStub }),
+        fn({ sql: sqlStub })
       ),
       get: vi.fn(),
       put: vi.fn(),
@@ -40,7 +38,7 @@ type TestSocket = {
   close: ReturnType<typeof vi.fn>;
   addEventListener: (
     type: string,
-    handler: (msg: MessageEvent) => void,
+    handler: (msg: MessageEvent) => void
   ) => void;
 };
 
@@ -64,7 +62,6 @@ describe('PlanningRoom WebSocket auth', () => {
   beforeEach(() => {
     env = {
       PLANNING_ROOM: {} as DurableObjectNamespace,
-      ASSETS: {} as Fetcher,
       JOIN_RATE_LIMITER: {} as RateLimit,
       TOKEN_ENCRYPTION_SECRET: 'test-secret',
     };
@@ -215,7 +212,6 @@ describe('PlanningRoom critical flows', () => {
   beforeEach(() => {
     env = {
       PLANNING_ROOM: {} as DurableObjectNamespace,
-      ASSETS: {} as Fetcher,
       JOIN_RATE_LIMITER: {} as RateLimit,
       TOKEN_ENCRYPTION_SECRET: 'test-secret',
     };

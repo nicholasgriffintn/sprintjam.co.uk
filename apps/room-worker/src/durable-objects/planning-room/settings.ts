@@ -1,12 +1,13 @@
-import type { RoomData } from "../../types";
-import { applySettingsUpdate } from "../../utils/room-settings";
-import type { PlanningRoom } from ".";
-import { resetVotingState } from "./room-helpers";
+import type { RoomData } from '@sprintjam/types';
+import { applySettingsUpdate } from '@sprintjam/utils';
+
+import type { PlanningRoom } from '.';
+import { resetVotingState } from './room-helpers';
 
 export async function handleUpdateSettings(
   room: PlanningRoom,
   userName: string,
-  settings: Partial<RoomData["settings"]>,
+  settings: Partial<RoomData['settings']>
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -43,7 +44,11 @@ export async function handleUpdateSettings(
   roomData.settings = newSettings;
   room.repository.setSettings(roomData.settings);
 
-  if (newSettings.alwaysRevealVotes && !wasAlwaysReveal && !roomData.showVotes) {
+  if (
+    newSettings.alwaysRevealVotes &&
+    !wasAlwaysReveal &&
+    !roomData.showVotes
+  ) {
     roomData.showVotes = true;
     room.repository.setShowVotes(true);
   }
@@ -51,13 +56,13 @@ export async function handleUpdateSettings(
   if (estimateOptionsChanged) {
     const validOptions = newEstimateOptions;
     const invalidVotes = Object.entries(roomData.votes).filter(
-      ([, vote]) => !validOptions.includes(String(vote)),
+      ([, vote]) => !validOptions.includes(String(vote))
     );
 
     if (invalidVotes.length > 0) {
       resetVotingState(room, roomData);
       room.broadcast({
-        type: "resetVotes",
+        type: 'resetVotes',
       });
     }
   } else if (structuredVotingModeChanged && !newStructuredVoting) {
@@ -71,13 +76,13 @@ export async function handleUpdateSettings(
   }
 
   room.broadcast({
-    type: "settingsUpdated",
+    type: 'settingsUpdated',
     settings: roomData.settings,
   });
 
   if (newSettings.alwaysRevealVotes && !wasAlwaysReveal) {
     room.broadcast({
-      type: "showVotes",
+      type: 'showVotes',
       showVotes: roomData.showVotes,
     });
   }
@@ -94,7 +99,7 @@ export async function handleUpdateSettings(
     room.repository.setJudgeState(null);
 
     room.broadcast({
-      type: "judgeScoreUpdated",
+      type: 'judgeScoreUpdated',
       judgeScore: null,
     });
   }

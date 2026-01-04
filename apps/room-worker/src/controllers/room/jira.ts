@@ -1,10 +1,10 @@
-import { createJsonResponse } from "../../utils/http";
+import { createJsonResponse } from '@sprintjam/utils';
 
-import type { CfResponse, PlanningRoomHttpContext } from "./types";
+import type { CfResponse, PlanningRoomHttpContext } from './types';
 
 export async function handleJiraSaveCredentials(
   ctx: PlanningRoomHttpContext,
-  request: Request,
+  request: Request
 ): Promise<CfResponse> {
   const credentials = (await request.json()) as {
     accessToken: string;
@@ -23,7 +23,7 @@ export async function handleJiraSaveCredentials(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   await ctx.repository.saveJiraOAuthCredentials({
@@ -43,7 +43,7 @@ export async function handleJiraSaveCredentials(
   });
 
   ctx.broadcast({
-    type: "jiraConnected",
+    type: 'jiraConnected',
     jiraDomain: credentials.jiraDomain,
   });
 
@@ -52,37 +52,37 @@ export async function handleJiraSaveCredentials(
 
 export async function handleJiraStatus(
   ctx: PlanningRoomHttpContext,
-  url: URL,
+  url: URL
 ): Promise<CfResponse> {
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
+  const roomKey = url.searchParams.get('roomKey');
+  const userName = url.searchParams.get('userName');
+  const sessionToken = url.searchParams.get('sessionToken');
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   if (!roomKey || !userName || !sessionToken) {
     return createJsonResponse(
-      { error: "Missing room key, user name, or session token" },
-      400,
+      { error: 'Missing room key, user name, or session token' },
+      400
     );
   }
   if (roomData.key !== roomKey) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
   const isMember = roomData.users.includes(userName);
   const tokenValid = ctx.repository.validateSessionToken(
     userName,
-    sessionToken,
+    sessionToken
   );
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: "Invalid session" }, 401);
+    return createJsonResponse({ error: 'Invalid session' }, 401);
   }
 
   const credentials = await ctx.repository.getJiraOAuthCredentials(
-    roomData.key,
+    roomData.key
   );
 
   if (!credentials) {
@@ -102,19 +102,19 @@ export async function handleJiraStatus(
 }
 
 export async function handleJiraCredentials(
-  ctx: PlanningRoomHttpContext,
+  ctx: PlanningRoomHttpContext
 ): Promise<CfResponse> {
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   const credentials = await ctx.repository.getJiraOAuthCredentials(
-    roomData.key,
+    roomData.key
   );
 
   if (!credentials) {
-    return createJsonResponse({ error: "Jira not connected" }, 404);
+    return createJsonResponse({ error: 'Jira not connected' }, 404);
   }
 
   return createJsonResponse({ credentials });
@@ -122,7 +122,7 @@ export async function handleJiraCredentials(
 
 export async function handleJiraRefresh(
   ctx: PlanningRoomHttpContext,
-  request: Request,
+  request: Request
 ): Promise<CfResponse> {
   const { accessToken, refreshToken, expiresAt } = (await request.json()) as {
     accessToken: string;
@@ -132,14 +132,14 @@ export async function handleJiraRefresh(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   await ctx.repository.updateJiraOAuthTokens(
     roomData.key,
     accessToken,
     refreshToken,
-    expiresAt,
+    expiresAt
   );
 
   return createJsonResponse({ success: true });
@@ -147,7 +147,7 @@ export async function handleJiraRefresh(
 
 export async function handleJiraUpdateFields(
   ctx: PlanningRoomHttpContext,
-  request: Request,
+  request: Request
 ): Promise<CfResponse> {
   const { storyPointsField, sprintField } = (await request.json()) as {
     storyPointsField?: string | null;
@@ -156,15 +156,15 @@ export async function handleJiraUpdateFields(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   const existing = await ctx.repository.getJiraOAuthCredentials(roomData.key);
 
   if (!existing) {
     return createJsonResponse(
-      { error: "Jira not connected. Please connect first." },
-      400,
+      { error: 'Jira not connected. Please connect first.' },
+      400
     );
   }
 
@@ -188,7 +188,7 @@ export async function handleJiraUpdateFields(
   });
 
   ctx.broadcast({
-    type: "jiraConnected",
+    type: 'jiraConnected',
     jiraDomain: existing.jiraDomain,
   });
 
@@ -197,7 +197,7 @@ export async function handleJiraUpdateFields(
 
 export async function handleJiraRevoke(
   ctx: PlanningRoomHttpContext,
-  request: Request,
+  request: Request
 ): Promise<CfResponse> {
   const body = (await request.json().catch(() => ({}))) as {
     roomKey?: string;
@@ -211,30 +211,30 @@ export async function handleJiraRevoke(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   if (!roomKey || !userName || !sessionToken) {
     return createJsonResponse(
-      { error: "Missing room key, user name, or session token" },
-      400,
+      { error: 'Missing room key, user name, or session token' },
+      400
     );
   }
   if (roomData.key !== roomKey) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
   const isMember = roomData.users.includes(userName);
   const tokenValid = ctx.repository.validateSessionToken(
     userName,
-    sessionToken,
+    sessionToken
   );
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: "Invalid session" }, 401);
+    return createJsonResponse({ error: 'Invalid session' }, 401);
   }
 
   ctx.repository.deleteJiraOAuthCredentials(roomData.key);
 
-  ctx.broadcast({ type: "jiraDisconnected" });
+  ctx.broadcast({ type: 'jiraDisconnected' });
 
   return createJsonResponse({ success: true });
 }

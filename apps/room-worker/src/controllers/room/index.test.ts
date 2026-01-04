@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createInitialRoomData } from '@sprintjam/utils';
+import { hashPasscode } from '@sprintjam/utils';
+import type { PasscodeHashPayload, RoomData } from '@sprintjam/types';
 
 import { handleHttpRequest } from ".";
-import type { PlanningRoomHttpContext } from ".";
-import { createInitialRoomData } from "../../utils/defaults";
-import { hashPasscode } from "../../utils/room-cypto";
-import type { PasscodeHashPayload, RoomData } from "../../types";
+import type { PlanningRoomHttpContext } from '.';
 
 type TokenMap = Map<string, string>;
 

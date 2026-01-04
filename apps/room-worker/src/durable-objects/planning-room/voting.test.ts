@@ -5,10 +5,10 @@ import type {
   RateLimit,
   DurableObjectState,
 } from '@cloudflare/workers-types';
+import type { RoomWorkerEnv, RoomData } from '@sprintjam/types';
+import { createInitialRoomData } from '@sprintjam/utils';
 
 import { PlanningRoom } from '.';
-import type { RoomWorkerEnv, RoomData } from '../../types';
-import { createInitialRoomData } from '../../utils/defaults';
 
 const makeState = () => {
   const sqlStub = {
@@ -31,7 +31,6 @@ const makeState = () => {
 
 const env: RoomWorkerEnv = {
   PLANNING_ROOM: {} as DurableObjectNamespace,
-  ASSETS: {} as Fetcher,
   JOIN_RATE_LIMITER: {} as RateLimit,
   TOKEN_ENCRYPTION_SECRET: 'test-secret',
 };

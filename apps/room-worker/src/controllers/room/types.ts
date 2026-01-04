@@ -1,6 +1,6 @@
 import type { Response as CfResponse } from "@cloudflare/workers-types";
+import type { BroadcastMessage, RoomData } from '@sprintjam/types';
 
-import type { BroadcastMessage, RoomData } from "../../types";
 import type { PlanningRoomRepository } from "../../repositories/planning-room";
 
 export type { CfResponse };

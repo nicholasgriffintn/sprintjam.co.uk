@@ -1,16 +1,14 @@
-import type { RoomData } from "../../types";
-import { determineRoomPhase } from "../../utils/room-phase";
-import { selectPresetForPhase } from "../../utils/strudel";
+import type { RoomData } from '@sprintjam/types';
 import {
+  determineRoomPhase,
+  selectPresetForPhase,
   generateStrudelCode,
   type StrudelGenerateRequest,
-} from "../../lib/polychat-client";
-import type { PlanningRoom } from ".";
+} from '@sprintjam/utils';
 
-export async function handleGenerateStrudel(
-  room: PlanningRoom,
-  userName: string,
-) {
+import type { PlanningRoom } from '.';
+
+export async function handleGenerateStrudel(room: PlanningRoom, userName: string) {
   const roomData = await room.getRoomData();
   if (!roomData) {
     return;
@@ -22,7 +20,7 @@ export async function handleGenerateStrudel(
 
   await generateStrudelTrack(room, roomData, {
     notifyOnError: true,
-    logPrefix: "Failed to generate Strudel code",
+    logPrefix: 'Failed to generate Strudel code',
   });
 }
 
@@ -33,18 +31,18 @@ export async function autoGenerateStrudel(room: PlanningRoom) {
   }
 
   await generateStrudelTrack(room, roomData, {
-    logPrefix: "Failed to auto-generate Strudel code",
+    logPrefix: 'Failed to auto-generate Strudel code',
   });
 }
 
 export async function generateStrudelTrack(
   room: PlanningRoom,
   roomData: RoomData,
-  options: { notifyOnError?: boolean; logPrefix?: string } = {},
+  options: { notifyOnError?: boolean; logPrefix?: string } = {}
 ) {
   const {
     notifyOnError = false,
-    logPrefix = "Failed to generate Strudel code",
+    logPrefix = 'Failed to generate Strudel code',
   } = options;
 
   if (!roomData.settings.enableStrudelPlayer) {
@@ -53,11 +51,11 @@ export async function generateStrudelTrack(
 
   const apiToken = room.env.POLYCHAT_API_TOKEN;
   if (!apiToken) {
-    console.error("POLYCHAT_API_TOKEN not configured");
+    console.error('POLYCHAT_API_TOKEN not configured');
     if (notifyOnError) {
       room.broadcast({
-        type: "error",
-        error: "Music generation is not configured on this server",
+        type: 'error',
+        error: 'Music generation is not configured on this server',
       });
     }
     return;
@@ -77,7 +75,7 @@ export async function generateStrudelTrack(
     const response = await generateStrudelCode(request, apiToken);
 
     if (!response.code || !response.generationId) {
-      throw new Error("Invalid response from music generation service");
+      throw new Error('Invalid response from music generation service');
     }
 
     roomData.currentStrudelCode = response.code;
@@ -91,7 +89,7 @@ export async function generateStrudelTrack(
     });
 
     room.broadcast({
-      type: "strudelCodeGenerated",
+      type: 'strudelCodeGenerated',
       code: response.code,
       generationId: response.generationId,
       phase,
@@ -100,9 +98,9 @@ export async function generateStrudelTrack(
     console.error(`${logPrefix}:`, error);
     if (notifyOnError) {
       room.broadcast({
-        type: "error",
+        type: 'error',
         error:
-          error instanceof Error ? error.message : "Failed to generate music",
+          error instanceof Error ? error.message : 'Failed to generate music',
       });
     }
   }
@@ -110,7 +108,7 @@ export async function generateStrudelTrack(
 
 export async function handleToggleStrudelPlayback(
   room: PlanningRoom,
-  userName: string,
+  userName: string
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -125,7 +123,7 @@ export async function handleToggleStrudelPlayback(
   room.repository.setStrudelPlayback(!!roomData.strudelIsPlaying);
 
   room.broadcast({
-    type: "strudelPlaybackToggled",
+    type: 'strudelPlaybackToggled',
     isPlaying: !!roomData.strudelIsPlaying,
   });
 }

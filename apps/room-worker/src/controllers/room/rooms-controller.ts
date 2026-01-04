@@ -3,9 +3,8 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 
-import type { RoomWorkerEnv, RoomSettings } from '../types';
-import { generateRoomKey, getRoomStub } from "../utils/room";
-import { jsonError } from "../utils/http";
+import type { RoomWorkerEnv, RoomSettings } from '@sprintjam/types';
+import { generateRoomKey, getRoomStub, jsonError } from '@sprintjam/utils';
 
 export async function createRoomController(
   request: CfRequest,
