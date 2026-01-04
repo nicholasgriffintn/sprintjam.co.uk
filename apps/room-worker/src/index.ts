@@ -62,8 +62,22 @@ async function handleRequest(
   env: RoomWorkerEnv
 ): Promise<CfResponse> {
   const url = new URL(request.url);
+  const path = url.pathname;
 
-  if (url.pathname === '/ws') {
+  if (path === '' || path === '/') {
+    return new Response(
+      JSON.stringify({
+        status: 'success',
+        message: 'Sprintjam Room Worker is running.',
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    ) as unknown as CfResponse;
+  }
+
+  if (path === '/ws') {
     if (request.headers.get('Upgrade') !== 'websocket') {
       return new Response('Expected WebSocket', {
         status: 400,
@@ -84,7 +98,7 @@ async function handleRequest(
     return roomStub.fetch(request);
   }
 
-  if (url.pathname.startsWith('/api/')) {
+  if (path.startsWith('/api/')) {
     return handleApiRequest(url, request, env);
   }
 

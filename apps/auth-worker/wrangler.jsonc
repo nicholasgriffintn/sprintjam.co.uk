@@ -33,6 +33,14 @@
       "vars": {
         "ENVIRONMENT": "development",
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sprintjam-workspaces-staging",
+          "database_id": "2f17f84f-02ad-4548-9b66-a9bfa1c54186",
+          "migrations_dir": "./drizzle",
+        },
+      ],
     },
     "staging": {
       "name": "sprintjam-auth-worker-staging",

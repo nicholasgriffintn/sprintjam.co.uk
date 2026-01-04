@@ -33,6 +33,19 @@ async function handleRequest(
     ? url.pathname.substring(5)
     : url.pathname.substring(1);
 
+  if (path === '' || path === '/') {
+    return new Response(
+      JSON.stringify({
+        status: 'success',
+        message: 'Sprintjam Auth Worker is running.',
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    ) as unknown as CfResponse;
+  }
+
   if (path === 'auth/magic-link' && request.method === 'POST') {
     return requestMagicLinkController(request, env);
   }
