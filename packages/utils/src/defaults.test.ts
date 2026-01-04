@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import {
   createInitialRoomData,
   getDefaultEstimateOptions,
@@ -7,10 +8,13 @@ import {
   getDefaultStructuredVotingOptions,
   getVotingTemplates,
   getServerDefaults,
-} from "./defaults";
-import { VOTING_OPTIONS, STRUCTURED_VOTING_OPTIONS } from '../config/constants';
+} from './defaults';
+import { VOTING_OPTIONS, STRUCTURED_VOTING_OPTIONS } from './config/constants';
 import { generateVoteOptionsMetadata } from "./votes";
-import { DEFAULT_EXTRA_VOTE_OPTIONS, DEFAULT_VOTING_SEQUENCE_ID } from "../config/voting";
+import {
+  DEFAULT_EXTRA_VOTE_OPTIONS,
+  DEFAULT_VOTING_SEQUENCE_ID,
+} from './config/voting';
 
 describe("defaults utils", () => {
   describe("default option helpers", () => {

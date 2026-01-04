@@ -3,7 +3,8 @@ import type {
   StructuredVote,
   TicketQueueWithVotes,
   VoteValue,
-} from '../types';
+} from '@sprintjam/types';
+
 import { applySettingsUpdate } from "./room-settings";
 
 export function getAnonymousUserId(

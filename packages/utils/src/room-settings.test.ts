@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { applySettingsUpdate } from "./room-settings";
 import {
   getDefaultRoomSettings,

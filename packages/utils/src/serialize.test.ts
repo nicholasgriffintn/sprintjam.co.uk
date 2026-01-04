@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { serializeJSON, serializeVote } from "./serialize";
 
 describe("serialize utils", () => {

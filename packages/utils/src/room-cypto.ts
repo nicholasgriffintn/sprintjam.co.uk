@@ -1,4 +1,4 @@
-import type { PasscodeHashPayload } from "../types";
+import type { PasscodeHashPayload } from '@sprintjam/types';
 
 const encoder = new TextEncoder();
 
@@ -10,9 +10,9 @@ export const SESSION_TOKEN_TTL_MS = 1000 * 60 * 60 * 6;
 
 function bytesToBase64(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }
 
 function bufferToHex(buffer: ArrayBuffer | ArrayBufferView): string {
@@ -21,19 +21,19 @@ function bufferToHex(buffer: ArrayBuffer | ArrayBufferView): string {
       ? new Uint8Array(buffer)
       : new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
   return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function hexToBytes(hex: string): Uint8Array {
   if (hex.length % 2 !== 0) {
-    throw new Error("Invalid hex string");
+    throw new Error('Invalid hex string');
   }
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i++) {
     const byte = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
     if (Number.isNaN(byte)) {
-      throw new Error("Invalid hex string");
+      throw new Error('Invalid hex string');
     }
     bytes[i] = byte;
   }
@@ -52,14 +52,14 @@ function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
 export async function hashPasscode(
   passcode: string,
   salt?: Uint8Array,
-  iterations: number = PASSCODE_PBKDF2_ITERATIONS,
+  iterations: number = PASSCODE_PBKDF2_ITERATIONS
 ): Promise<PasscodeHashPayload> {
   if (passcode.length > PASSCODE_MAX_LENGTH) {
-    throw new Error("Passcode too long");
+    throw new Error('Passcode too long');
   }
   if (passcode.trim().length < PASSCODE_MIN_LENGTH) {
     throw new Error(
-      `Passcode cannot be less than ${PASSCODE_MIN_LENGTH} characters`,
+      `Passcode cannot be less than ${PASSCODE_MIN_LENGTH} characters`
     );
   }
 
@@ -68,19 +68,19 @@ export async function hashPasscode(
   const actualSalt =
     salt ?? crypto.getRandomValues(new Uint8Array(PASSCODE_SALT_BYTES));
 
-  const key = await crypto.subtle.importKey("raw", encoded, "PBKDF2", false, [
-    "deriveBits",
+  const key = await crypto.subtle.importKey('raw', encoded, 'PBKDF2', false, [
+    'deriveBits',
   ]);
 
   const derivedBits = await crypto.subtle.deriveBits(
     {
-      name: "PBKDF2",
+      name: 'PBKDF2',
       salt: actualSalt,
       iterations,
-      hash: "SHA-256",
+      hash: 'SHA-256',
     },
     key,
-    256,
+    256
   );
 
   return {
@@ -92,7 +92,7 @@ export async function hashPasscode(
 
 export async function verifyPasscode(
   passcode: string,
-  stored: PasscodeHashPayload,
+  stored: PasscodeHashPayload
 ): Promise<boolean> {
   const saltBytes = hexToBytes(stored.salt);
   const iterations = stored.iterations ?? PASSCODE_PBKDF2_ITERATIONS;
@@ -108,7 +108,7 @@ export async function verifyPasscode(
 }
 
 export function serializePasscodeHash(
-  value: PasscodeHashPayload | null | undefined,
+  value: PasscodeHashPayload | null | undefined
 ): string | null {
   if (!value) {
     return null;
@@ -117,7 +117,7 @@ export function serializePasscodeHash(
 }
 
 export function parsePasscodeHash(
-  value: string | null | undefined,
+  value: string | null | undefined
 ): PasscodeHashPayload | null {
   if (!value) {
     return null;
@@ -126,9 +126,9 @@ export function parsePasscodeHash(
     const parsed = JSON.parse(value);
     if (
       parsed &&
-      typeof parsed.hash === "string" &&
-      typeof parsed.salt === "string" &&
-      typeof parsed.iterations === "number"
+      typeof parsed.hash === 'string' &&
+      typeof parsed.salt === 'string' &&
+      typeof parsed.iterations === 'number'
     ) {
       return parsed as PasscodeHashPayload;
     }
@@ -147,13 +147,13 @@ export function generateSessionToken(): string {
 export async function signState(data: any, secret: string): Promise<string> {
   const json = JSON.stringify(data);
   const key = await crypto.subtle.importKey(
-    "raw",
+    'raw',
     encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ["sign"],
+    ['sign']
   );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(json));
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(json));
   const signatureHex = bufferToHex(signature);
   return btoa(JSON.stringify({ data, signature: signatureHex }));
 }
@@ -163,35 +163,35 @@ export async function verifyState(state: string, secret: string): Promise<any> {
     const { data, signature } = JSON.parse(atob(state));
     const json = JSON.stringify(data);
     const key = await crypto.subtle.importKey(
-      "raw",
+      'raw',
       encoder.encode(secret),
-      { name: "HMAC", hash: "SHA-256" },
+      { name: 'HMAC', hash: 'SHA-256' },
       false,
-      ["sign"],
+      ['sign']
     );
     const computedSignature = await crypto.subtle.sign(
-      "HMAC",
+      'HMAC',
       key,
-      encoder.encode(json),
+      encoder.encode(json)
     );
     const sigBytes = hexToBytes(signature);
     const computedSignatureBytes = new Uint8Array(computedSignature);
 
     if (!constantTimeEqual(sigBytes, computedSignatureBytes)) {
-      throw new Error("Invalid state signature");
+      throw new Error('Invalid state signature');
     }
     return data;
   } catch (e) {
-    throw new Error("Invalid state");
+    throw new Error('Invalid state');
   }
 }
 
 export function escapeHtml(str: string): string {
-  if (!str) return "";
+  if (!str) return '';
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

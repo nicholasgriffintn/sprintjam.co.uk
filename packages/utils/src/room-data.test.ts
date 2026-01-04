@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import type { RoomData, RoomSettings } from '@sprintjam/types';
+import { JudgeAlgorithm } from '@sprintjam/types';
 
 import {
   assignUserAvatar,
   markUserConnection,
   ensureConnectedUsers,
   findCanonicalUserName,
-} from "./room-data";
-import type { RoomData, RoomSettings } from "../types";
-import { JudgeAlgorithm } from "../types";
+} from './room-data';
 
 const baseSettings: RoomSettings = {
   estimateOptions: [1, 2, 3],

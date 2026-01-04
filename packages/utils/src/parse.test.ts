@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+
 import { parseJudgeScore, parseVote, safeJsonParse } from "./parse";
 
 describe("parse utils", () => {

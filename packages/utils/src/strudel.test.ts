@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { selectPresetForPhase } from "./strudel";
-import { strudelMusicPresets } from "../lib/strudel";
+
+import { selectPresetForPhase } from './strudel';
+import { strudelMusicPresets } from './lib/strudel';
 
 describe("strudel utils", () => {
   it("selects a preset for a known phase", () => {

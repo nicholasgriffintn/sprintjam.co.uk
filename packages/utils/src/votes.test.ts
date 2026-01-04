@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+
 import { generateVoteOptionsMetadata } from "./votes";
 
 describe("Vote Options Metadata", () => {

@@ -4,14 +4,15 @@ import type {
   RoomData,
   RoomSettings,
   VotingSequenceTemplate,
-} from '../types';
-import { JudgeAlgorithm } from '../types';
-import { STRUCTURED_VOTING_OPTIONS } from '../config/constants';
+} from '@sprintjam/types';
+import { JudgeAlgorithm } from '@sprintjam/types';
+
+import { STRUCTURED_VOTING_OPTIONS } from './config/constants';
 import {
   DEFAULT_EXTRA_VOTE_OPTIONS,
   DEFAULT_VOTING_SEQUENCE_ID,
   VOTING_SEQUENCE_TEMPLATES,
-} from '../config/voting';
+} from './config/voting';
 import { generateVoteOptionsMetadata } from './votes';
 import { getDefaultVotingCriteria } from './structured-voting';
 
@@ -124,7 +125,7 @@ function normalizeExtraVoteOptions(
 
     const enabled =
       match?.enabled ??
-      (detectedExtras?.has(option.id) ? true : option.enabled ?? true);
+      (detectedExtras?.has(option.id) ? true : (option.enabled ?? true));
 
     return {
       ...option,

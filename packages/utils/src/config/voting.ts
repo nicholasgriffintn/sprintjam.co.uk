@@ -1,7 +1,7 @@
-import type { ExtraVoteOption, VotingSequenceTemplate } from "../types";
+import type { ExtraVoteOption, VotingSequenceTemplate } from '@sprintjam/types';
 
-export const DEFAULT_VOTING_SEQUENCE_ID: VotingSequenceTemplate["id"] =
-  "fibonacci-short";
+export const DEFAULT_VOTING_SEQUENCE_ID: VotingSequenceTemplate['id'] =
+  'fibonacci-short';
 
 export const VOTING_SEQUENCE_TEMPLATES: ReadonlyArray<VotingSequenceTemplate> =
   Object.freeze([
@@ -67,30 +67,30 @@ export const VOTING_SEQUENCE_TEMPLATES: ReadonlyArray<VotingSequenceTemplate> =
 export const DEFAULT_EXTRA_VOTE_OPTIONS: ReadonlyArray<ExtraVoteOption> =
   Object.freeze([
     {
-      id: "unsure",
-      label: "Unsure",
-      value: "❓",
-      description: "I am not sure about this one",
+      id: 'unsure',
+      label: 'Unsure',
+      value: '❓',
+      description: 'I am not sure about this one',
       enabled: true,
-      aliases: ["?"],
-      impact: "none",
+      aliases: ['?'],
+      impact: 'none',
     },
     {
-      id: "coffee",
-      label: "Coffee Break",
-      value: "☕",
-      description: "Pause for a quick break",
+      id: 'coffee',
+      label: 'Coffee Break',
+      value: '☕',
+      description: 'Pause for a quick break',
       enabled: false,
-      aliases: ["coffee"],
-      impact: "none",
+      aliases: ['coffee'],
+      impact: 'none',
     },
     {
-      id: "cannot-complete",
-      label: "Cannot Complete",
-      value: "♾️",
-      description: "This task cannot be completed as written",
+      id: 'cannot-complete',
+      label: 'Cannot Complete',
+      value: '♾️',
+      description: 'This task cannot be completed as written',
       enabled: false,
-      aliases: ["∞", "infinity"],
-      impact: "high-alert",
+      aliases: ['∞', 'infinity'],
+      impact: 'high-alert',
     },
   ]);

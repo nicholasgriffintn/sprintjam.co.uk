@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import { type RoomData, JudgeAlgorithm } from '@sprintjam/types';
 
 import { ensureTimerState } from './timer-state';
-import { DEFAULT_TIMER_DURATION_SECONDS } from '../config/constants';
-import { type RoomData, JudgeAlgorithm } from '../types';
+import { DEFAULT_TIMER_DURATION_SECONDS } from './config/constants';
 
 const baseRoom = (): RoomData => ({
   key: 'room',

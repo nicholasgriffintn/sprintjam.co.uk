@@ -52,7 +52,7 @@ export async function generateStrudelCode(
       );
     }
 
-    const data: PolychatAPIResponse = await response.json();
+    const data = (await response.json()) as PolychatAPIResponse;
 
     if (data.status !== "success" || !data.data) {
       throw new Error(data.error || "Failed to generate Strudel code");

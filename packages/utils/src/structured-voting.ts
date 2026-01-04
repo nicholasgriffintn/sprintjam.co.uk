@@ -42,7 +42,7 @@
  * - volume=4 → minimum 8pt (extensive work required)
  */
 
-import type { VotingCriterion, StructuredVote } from "../types";
+import type { VotingCriterion, StructuredVote } from '@sprintjam/types';
 
 function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
   weightedScore: number;

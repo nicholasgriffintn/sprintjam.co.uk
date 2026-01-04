@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { generateColorFromString, generateColorFromValue } from "./colors";
 
 describe("colors utils", () => {
