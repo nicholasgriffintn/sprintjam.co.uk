@@ -12,9 +12,7 @@ import {
 import { sendMagicLinkEmail } from '@sprintjam/services';
 
 import { WorkspaceAuthRepository } from '../repositories/workspace-auth';
-
-const MAGIC_LINK_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
-const SESSION_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+import { MAGIC_LINK_EXPIRY_MS, SESSION_EXPIRY_MS } from '../constants';
 
 /**
  * POST /api/auth/magic-link
