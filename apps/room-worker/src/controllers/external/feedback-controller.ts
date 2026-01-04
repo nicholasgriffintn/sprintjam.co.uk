@@ -3,7 +3,7 @@ import type {
   Response as CfResponse,
 } from '@cloudflare/workers-types';
 import { createGithubIssue } from '@sprintjam/services';
-import type { Env } from '@sprintjam/types';
+import type { RoomWorkerEnv } from '@sprintjam/types';
 import { createJsonResponse, jsonError } from '@sprintjam/utils';
 import {
   FEEDBACK_GITHUB_OWNER,
@@ -26,7 +26,7 @@ function normalize(label: string): string {
 
 export async function submitFeedbackController(
   request: CfRequest,
-  env: Env
+  env: RoomWorkerEnv
 ): Promise<CfResponse> {
   let body: {
     title?: string;
@@ -65,8 +65,8 @@ export async function submitFeedbackController(
   const rawLabels = Array.isArray(body.labels)
     ? body.labels
     : typeof body.labels === 'string'
-    ? [body.labels]
-    : [];
+      ? [body.labels]
+      : [];
 
   const providedLabels = rawLabels
     .filter((label): label is string => typeof label === 'string')

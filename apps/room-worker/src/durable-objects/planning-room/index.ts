@@ -10,7 +10,7 @@ import type {
 
 import { PlanningPokerJudge } from "../../lib/planning-poker-judge";
 import type {
-  Env,
+  RoomWorkerEnv,
   RoomData,
   BroadcastMessage,
   SessionInfo,
@@ -56,12 +56,12 @@ import { TokenCipher } from "../../utils/token-crypto";
 
 export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
-  env: Env;
+  env: RoomWorkerEnv;
   sessions: Map<CfWebSocket, SessionInfo>;
   judge: PlanningPokerJudge;
   repository: PlanningRoomRepository;
 
-  constructor(state: DurableObjectState, env: Env) {
+  constructor(state: DurableObjectState, env: RoomWorkerEnv) {
     this.state = state;
     this.env = env;
     this.sessions = new Map();
@@ -129,10 +129,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       return httpResponse;
     }
 
-  return new Response(JSON.stringify({ error: 'Room Route Not found' }), {
-    status: 404,
-    headers: { 'Content-Type': 'application/json' },
-  }) as unknown as CfResponse;
+    return new Response(JSON.stringify({ error: 'Room Route Not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    }) as unknown as CfResponse;
   }
 
   async handleSession(

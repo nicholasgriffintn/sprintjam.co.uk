@@ -7,7 +7,7 @@ import type {
 } from '@cloudflare/workers-types';
 
 import { PlanningRoom } from '.';
-import type { Env, RoomData } from '../../types';
+import type { RoomWorkerEnv, RoomData } from '../../types';
 import { createInitialRoomData } from '../../utils/defaults';
 
 const makeState = () => {
@@ -29,7 +29,7 @@ const makeState = () => {
   } as unknown as DurableObjectState;
 };
 
-const env: Env = {
+const env: RoomWorkerEnv = {
   PLANNING_ROOM: {} as DurableObjectNamespace,
   ASSETS: {} as Fetcher,
   JOIN_RATE_LIMITER: {} as RateLimit,

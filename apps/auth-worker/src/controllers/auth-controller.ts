@@ -2,7 +2,7 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
-import type { Env } from '@sprintjam/types';
+import type { AuthWorkerEnv } from '@sprintjam/types';
 import {
   jsonError,
   generateToken,
@@ -22,7 +22,7 @@ const SESSION_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
  */
 export async function requestMagicLinkController(
   request: CfRequest,
-  env: Env
+  env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const body = await request.json<{ email?: string }>();
   const email = body?.email?.toLowerCase().trim();
@@ -101,7 +101,7 @@ export async function requestMagicLinkController(
  */
 export async function verifyMagicLinkController(
   request: CfRequest,
-  env: Env
+  env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const body = await request.json<{ token?: string }>();
   const token = body?.token;
@@ -155,7 +155,7 @@ export async function verifyMagicLinkController(
  */
 export async function getCurrentUserController(
   request: CfRequest,
-  env: Env
+  env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
@@ -200,11 +200,11 @@ export async function getCurrentUserController(
  */
 export async function logoutController(
   request: CfRequest,
-  env: Env,
+  env: AuthWorkerEnv
 ): Promise<CfResponse> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return jsonError("Unauthorized", 401);
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return jsonError('Unauthorized', 401);
   }
 
   const token = authHeader.substring(7);

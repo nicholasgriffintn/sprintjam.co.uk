@@ -80,7 +80,7 @@ async function handleRequest(
       }) as unknown as CfResponse;
     }
 
-    const roomStub = getRoomStub(env as any, roomKey);
+    const roomStub = getRoomStub(env, roomKey);
     return roomStub.fetch(request);
   }
 
@@ -109,36 +109,36 @@ async function handleApiRequest(
   }
 
   if (path === 'rooms' && request.method === 'POST') {
-    return createRoomController(request, env as any);
+    return createRoomController(request, env);
   }
 
   if (path === 'rooms/join' && request.method === 'POST') {
-    return joinRoomController(request, env as any);
+    return joinRoomController(request, env);
   }
 
   if (path === 'rooms/settings' && request.method === 'GET') {
-    return getRoomSettingsController(url, env as any);
+    return getRoomSettingsController(url, env);
   }
 
   if (path === 'rooms/settings' && request.method === 'PUT') {
-    return updateRoomSettingsController(request, env as any);
+    return updateRoomSettingsController(request, env);
   }
 
   // Jira routes
   if (path === 'jira/ticket' && request.method === 'GET') {
-    return getJiraTicketController(url, env as any);
+    return getJiraTicketController(url, env);
   }
 
   if (path === 'jira/boards' && request.method === 'GET') {
-    return getJiraBoardsController(url, env as any);
+    return getJiraBoardsController(url, env);
   }
 
   if (path === 'jira/sprints' && request.method === 'GET') {
-    return getJiraSprintsController(url, env as any);
+    return getJiraSprintsController(url, env);
   }
 
   if (path === 'jira/issues' && request.method === 'GET') {
-    return getJiraIssuesController(url, env as any);
+    return getJiraIssuesController(url, env);
   }
 
   if (
@@ -147,48 +147,48 @@ async function handleApiRequest(
     request.method === 'PUT'
   ) {
     const ticketId = path.split('/')[2];
-    return updateJiraStoryPointsController(ticketId!, request, env as any);
+    return updateJiraStoryPointsController(ticketId!, request, env);
   }
 
   if (path === 'jira/oauth/authorize' && request.method === 'POST') {
-    return initiateJiraOAuthController(request, env as any);
+    return initiateJiraOAuthController(request, env);
   }
 
   if (path === 'jira/oauth/callback' && request.method === 'GET') {
-    return handleJiraOAuthCallbackController(url, env as any);
+    return handleJiraOAuthCallbackController(url, env);
   }
 
   if (path === 'jira/oauth/status' && request.method === 'GET') {
-    return getJiraOAuthStatusController(url, env as any);
+    return getJiraOAuthStatusController(url, env);
   }
 
   if (path === 'jira/oauth/fields' && request.method === 'GET') {
-    return getJiraFieldsController(url, env as any);
+    return getJiraFieldsController(url, env);
   }
 
   if (path === 'jira/oauth/fields' && request.method === 'PUT') {
-    return updateJiraFieldsController(request, env as any);
+    return updateJiraFieldsController(request, env);
   }
 
   if (path === 'jira/oauth/revoke' && request.method === 'DELETE') {
-    return revokeJiraOAuthController(request, env as any);
+    return revokeJiraOAuthController(request, env);
   }
 
   // Linear routes
   if (path === 'linear/issue' && request.method === 'GET') {
-    return getLinearIssueController(url, env as any);
+    return getLinearIssueController(url, env);
   }
 
   if (path === 'linear/teams' && request.method === 'GET') {
-    return getLinearTeamsController(url, env as any);
+    return getLinearTeamsController(url, env);
   }
 
   if (path === 'linear/cycles' && request.method === 'GET') {
-    return getLinearCyclesController(url, env as any);
+    return getLinearCyclesController(url, env);
   }
 
   if (path === 'linear/issues' && request.method === 'GET') {
-    return getLinearIssuesController(url, env as any);
+    return getLinearIssuesController(url, env);
   }
 
   if (
@@ -197,40 +197,40 @@ async function handleApiRequest(
     request.method === 'PUT'
   ) {
     const issueId = path.split('/')[2];
-    return updateLinearEstimateController(issueId!, request, env as any);
+    return updateLinearEstimateController(issueId!, request, env);
   }
 
   if (path === 'linear/oauth/authorize' && request.method === 'POST') {
-    return initiateLinearOAuthController(request, env as any);
+    return initiateLinearOAuthController(request, env);
   }
 
   if (path === 'linear/oauth/callback' && request.method === 'GET') {
-    return handleLinearOAuthCallbackController(url, env as any);
+    return handleLinearOAuthCallbackController(url, env);
   }
 
   if (path === 'linear/oauth/status' && request.method === 'GET') {
-    return getLinearOAuthStatusController(url, env as any);
+    return getLinearOAuthStatusController(url, env);
   }
 
   if (path === 'linear/oauth/revoke' && request.method === 'DELETE') {
-    return revokeLinearOAuthController(request, env as any);
+    return revokeLinearOAuthController(request, env);
   }
 
   // GitHub routes
   if (path === 'github/issue' && request.method === 'GET') {
-    return getGithubIssueController(url, env as any);
+    return getGithubIssueController(url, env);
   }
 
   if (path === 'github/repos' && request.method === 'GET') {
-    return getGithubReposController(url, env as any);
+    return getGithubReposController(url, env);
   }
 
   if (path === 'github/milestones' && request.method === 'GET') {
-    return getGithubMilestonesController(url, env as any);
+    return getGithubMilestonesController(url, env);
   }
 
   if (path === 'github/issues' && request.method === 'GET') {
-    return getGithubIssuesController(url, env as any);
+    return getGithubIssuesController(url, env);
   }
 
   if (
@@ -239,28 +239,28 @@ async function handleApiRequest(
     request.method === 'PUT'
   ) {
     const issueId = decodeURIComponent(path.split('/')[2] ?? '');
-    return updateGithubEstimateController(issueId, request, env as any);
+    return updateGithubEstimateController(issueId, request, env);
   }
 
   if (path === 'github/oauth/authorize' && request.method === 'POST') {
-    return initiateGithubOAuthController(request, env as any);
+    return initiateGithubOAuthController(request, env);
   }
 
   if (path === 'github/oauth/callback' && request.method === 'GET') {
-    return handleGithubOAuthCallbackController(url, env as any);
+    return handleGithubOAuthCallbackController(url, env);
   }
 
   if (path === 'github/oauth/status' && request.method === 'GET') {
-    return getGithubOAuthStatusController(url, env as any);
+    return getGithubOAuthStatusController(url, env);
   }
 
   if (path === 'github/oauth/revoke' && request.method === 'DELETE') {
-    return revokeGithubOAuthController(request, env as any);
+    return revokeGithubOAuthController(request, env);
   }
 
   // Feedback route
   if (path === 'feedback' && request.method === 'POST') {
-    return submitFeedbackController(request, env as any);
+    return submitFeedbackController(request, env);
   }
 
   return new Response(JSON.stringify({ error: 'API Route Not found' }), {

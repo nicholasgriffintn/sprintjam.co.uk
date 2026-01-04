@@ -34,40 +34,40 @@ async function handleRequest(
     : url.pathname.substring(1);
 
   if (path === 'auth/magic-link' && request.method === 'POST') {
-    return requestMagicLinkController(request, env as any);
+    return requestMagicLinkController(request, env);
   }
 
   if (path === 'auth/verify' && request.method === 'POST') {
-    return verifyMagicLinkController(request, env as any);
+    return verifyMagicLinkController(request, env);
   }
 
   if (path === 'auth/me' && request.method === 'GET') {
-    return getCurrentUserController(request, env as any);
+    return getCurrentUserController(request, env);
   }
 
   if (path === 'auth/logout' && request.method === 'POST') {
-    return logoutController(request, env as any);
+    return logoutController(request, env);
   }
 
   if (path === 'teams' && request.method === 'GET') {
-    return listTeamsController(request, env as any);
+    return listTeamsController(request, env);
   }
 
   if (path === 'teams' && request.method === 'POST') {
-    return createTeamController(request, env as any);
+    return createTeamController(request, env);
   }
 
   const teamMatch = path.match(/^teams\/(\d+)$/);
   if (teamMatch) {
     const teamId = parseInt(teamMatch[1], 10);
     if (request.method === 'GET') {
-      return getTeamController(request, env as any, teamId);
+      return getTeamController(request, env, teamId);
     }
     if (request.method === 'PUT') {
-      return updateTeamController(request, env as any, teamId);
+      return updateTeamController(request, env, teamId);
     }
     if (request.method === 'DELETE') {
-      return deleteTeamController(request, env as any, teamId);
+      return deleteTeamController(request, env, teamId);
     }
   }
 
@@ -75,10 +75,10 @@ async function handleRequest(
   if (teamSessionsMatch) {
     const teamId = parseInt(teamSessionsMatch[1], 10);
     if (request.method === 'GET') {
-      return listTeamSessionsController(request, env as any, teamId);
+      return listTeamSessionsController(request, env, teamId);
     }
     if (request.method === 'POST') {
-      return createTeamSessionController(request, env as any, teamId);
+      return createTeamSessionController(request, env, teamId);
     }
   }
 
@@ -87,12 +87,12 @@ async function handleRequest(
     const teamId = parseInt(teamSessionMatch[1], 10);
     const sessionId = parseInt(teamSessionMatch[2], 10);
     if (request.method === 'GET') {
-      return getTeamSessionController(request, env as any, teamId, sessionId);
+      return getTeamSessionController(request, env, teamId, sessionId);
     }
   }
 
   if (path === 'workspace/stats' && request.method === 'GET') {
-    return getWorkspaceStatsController(request, env as any);
+    return getWorkspaceStatsController(request, env);
   }
 
   return new Response(JSON.stringify({ error: 'Auth Route Not found' }), {
