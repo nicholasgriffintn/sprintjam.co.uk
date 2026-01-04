@@ -11,11 +11,12 @@ async function authenticateRequest(
   request: CfRequest,
   env: AuthWorkerEnv
 ): Promise<
-  { userId: number; email: string; repo: WorkspaceAuthRepository } | CfResponse
+  | { userId: number; email: string; repo: WorkspaceAuthRepository }
+  | { status: 'error'; code: string }
 > {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
-    return jsonError('Unauthorized', 401);
+    return { status: 'error', code: 'unauthorized' };
   }
 
   const token = authHeader.substring(7);
@@ -24,7 +25,7 @@ async function authenticateRequest(
 
   const session = await repo.validateSession(tokenHash);
   if (!session) {
-    return jsonError('Invalid or expired session', 401);
+    return { status: 'error', code: 'expired' };
   }
 
   return { userId: session.userId, email: session.email, repo };
@@ -35,8 +36,14 @@ export async function listTeamsController(
   env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;
@@ -50,8 +57,14 @@ export async function createTeamController(
   env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;
@@ -83,8 +96,14 @@ export async function getTeamController(
   teamId: number
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;
@@ -108,8 +127,14 @@ export async function updateTeamController(
   teamId: number
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;
@@ -146,8 +171,14 @@ export async function deleteTeamController(
   teamId: number
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;
@@ -172,8 +203,14 @@ export async function listTeamSessionsController(
   teamId: number
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;
@@ -199,8 +236,14 @@ export async function createTeamSessionController(
   teamId: number
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;
@@ -252,8 +295,14 @@ export async function getTeamSessionController(
   sessionId: number
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;
@@ -282,8 +331,14 @@ export async function getWorkspaceStatsController(
   env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const auth = await authenticateRequest(request, env);
-  if (auth instanceof Response) {
-    return auth as unknown as CfResponse;
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
   }
 
   const { userId, repo } = auth;

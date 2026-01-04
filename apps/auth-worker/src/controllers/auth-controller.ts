@@ -14,10 +14,6 @@ import { sendMagicLinkEmail } from '@sprintjam/services';
 import { WorkspaceAuthRepository } from '../repositories/workspace-auth';
 import { MAGIC_LINK_EXPIRY_MS, SESSION_EXPIRY_MS } from '../constants';
 
-/**
- * POST /api/auth/magic-link
- * Request a magic link to be sent to the user's email
- */
 export async function requestMagicLinkController(
   request: CfRequest,
   env: AuthWorkerEnv
@@ -29,7 +25,7 @@ export async function requestMagicLinkController(
     return jsonError('Email is required', 400);
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email)) {
     return jsonError('Invalid email format', 400);
   }
@@ -93,10 +89,6 @@ export async function requestMagicLinkController(
   ) as unknown as CfResponse;
 }
 
-/**
- * POST /api/auth/verify
- * Verify magic link token and create session
- */
 export async function verifyMagicLinkController(
   request: CfRequest,
   env: AuthWorkerEnv
@@ -147,10 +139,6 @@ export async function verifyMagicLinkController(
   ) as unknown as CfResponse;
 }
 
-/**
- * GET /api/auth/me
- * Get current user info from session token
- */
 export async function getCurrentUserController(
   request: CfRequest,
   env: AuthWorkerEnv
@@ -192,10 +180,6 @@ export async function getCurrentUserController(
   ) as unknown as CfResponse;
 }
 
-/**
- * POST /api/auth/logout
- * Logout and invalidate session
- */
 export async function logoutController(
   request: CfRequest,
   env: AuthWorkerEnv
