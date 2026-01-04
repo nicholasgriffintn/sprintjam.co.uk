@@ -3,41 +3,48 @@
   "name": "sprintjam-auth-worker",
   "main": "src/index.ts",
   "compatibility_date": "2025-11-17",
-  "workers_dev": true,
+  "workers_dev": false,
+  "preview_urls": false,
+  "placement": {
+    "mode": "smart",
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+  },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "sprintjam-workspaces",
       "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
-      "migrations_dir": "../../packages/db/src/d1/migrations",
+      "migrations_dir": "./drizzle",
     },
   ],
   "observability": {
     "enabled": true,
-  },
-  "limits": {
-    "cpu_ms": 50,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false,
+    },
   },
   "env": {
+    "development": {
+      "vars": {
+        "ENVIRONMENT": "development",
+      },
+    },
     "staging": {
       "name": "sprintjam-auth-worker-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+      },
       "d1_databases": [
         {
           "binding": "DB",
           "database_name": "sprintjam-workspaces-staging",
           "database_id": "2f17f84f-02ad-4548-9b66-a9bfa1c54186",
-          "migrations_dir": "../../packages/db/src/d1/migrations",
-        },
-      ],
-    },
-    "production": {
-      "name": "sprintjam-auth-worker",
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "sprintjam-workspaces",
-          "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
-          "migrations_dir": "../../packages/db/src/d1/migrations",
+          "migrations_dir": "./drizzle",
         },
       ],
     },
