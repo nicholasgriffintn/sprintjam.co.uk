@@ -12,6 +12,7 @@
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy --env production",
     "typecheck": "tsc --noEmit",
+    "generate:types": "wrangler types --include-runtime=false",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -35,12 +36,14 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.17.0",
     "@cloudflare/workers-types": "4.20251217.0",
+    "@playwright/test": "1.57.0",
     "@tailwindcss/vite": "4.1.18",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@vitejs/plugin-react": "5.1.2",
     "typescript": "5.9.3",
     "vite": "7.2.7",
+    "vitest": "4.0.16",
     "wrangler": "4.53.0"
   }
 }

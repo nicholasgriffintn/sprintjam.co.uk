@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sprintjam/types": "workspace:*",
     "@sprintjam/db": "workspace:*",
+    "@sprintjam/types": "workspace:*",
     "drizzle-orm": "0.45.1"
   },
   "devDependencies": {

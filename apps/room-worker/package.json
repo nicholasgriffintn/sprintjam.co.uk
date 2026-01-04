@@ -13,10 +13,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sprintjam/types": "workspace:*",
     "@sprintjam/db": "workspace:*",
-    "@sprintjam/utils": "workspace:*",
     "@sprintjam/services": "workspace:*",
+    "@sprintjam/types": "workspace:*",
+    "@sprintjam/utils": "workspace:*",
     "drizzle-orm": "0.45.1"
   },
   "devDependencies": {
