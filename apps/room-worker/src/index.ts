@@ -1,5 +1,4 @@
 import type {
-  ExportedHandler,
   Request as CfRequest,
   Response as CfResponse,
 } from '@cloudflare/workers-types';
@@ -56,6 +55,7 @@ import {
   revokeGithubOAuthController,
 } from './controllers/external/github-oauth-controller';
 import { submitFeedbackController } from './controllers/external/feedback-controller';
+import { WorkerEntrypoint } from 'cloudflare:workers';
 
 async function handleRequest(
   request: CfRequest,
@@ -283,10 +283,10 @@ async function handleApiRequest(
   }) as unknown as CfResponse;
 }
 
-export default {
+export class Worker extends WorkerEntrypoint {
   async fetch(request: CfRequest, env: RoomWorkerEnv): Promise<CfResponse> {
     return handleRequest(request, env);
-  },
-} satisfies ExportedHandler<RoomWorkerEnv>;
+  }
+}
 
 export { PlanningRoom };

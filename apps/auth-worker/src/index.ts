@@ -114,7 +114,7 @@ async function handleRequest(
   }) as unknown as CfResponse;
 }
 
-export default class extends WorkerEntrypoint {
+export class Worker extends WorkerEntrypoint {
   async fetch(request: CfRequest, env: AuthWorkerEnv): Promise<CfResponse> {
     return handleRequest(request, env);
   }
