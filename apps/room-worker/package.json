@@ -6,7 +6,6 @@
   "main": "./src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
-    "build": "echo 'Room worker build complete'",
     "db:generate": "drizzle-kit generate",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
@@ -15,7 +14,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
     "@sprintjam/db": "workspace:*",

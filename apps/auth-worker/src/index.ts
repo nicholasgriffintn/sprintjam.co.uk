@@ -1,9 +1,9 @@
 import type {
   Request as CfRequest,
   Response as CfResponse,
-  ExportedHandler,
 } from '@cloudflare/workers-types';
 import type { AuthWorkerEnv } from '@sprintjam/types';
+import { WorkerEntrypoint } from 'cloudflare:workers';
 
 import {
   requestMagicLinkController,
@@ -114,8 +114,8 @@ async function handleRequest(
   }) as unknown as CfResponse;
 }
 
-export default {
+export default class extends WorkerEntrypoint {
   async fetch(request: CfRequest, env: AuthWorkerEnv): Promise<CfResponse> {
     return handleRequest(request, env);
-  },
-} satisfies ExportedHandler<AuthWorkerEnv>;
+  }
+}
