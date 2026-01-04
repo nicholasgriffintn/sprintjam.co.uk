@@ -3,8 +3,8 @@ import type {
   Response as CfResponse,
   ExportedHandler,
 } from '@cloudflare/workers-types';
+import type { AuthWorkerEnv } from '@sprintjam/types';
 
-import type { AuthWorkerEnv } from '@sprintjam/types/env';
 import {
   requestMagicLinkController,
   verifyMagicLinkController,

@@ -2,15 +2,15 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from '@cloudflare/workers-types';
+import { createGithubIssue } from '@sprintjam/services';
+import type { Env } from '@sprintjam/types';
+import { createJsonResponse, jsonError } from '@sprintjam/utils';
 
-import { createGithubIssue } from '../services/github-service';
-import type { Env } from '../types';
-import { createJsonResponse, jsonError } from '../utils/http';
 import {
   FEEDBACK_GITHUB_OWNER,
   FEEDBACK_GITHUB_REPO,
   FEEDBACK_GITHUB_DEFAULT_LABELS,
-} from '../config/constants';
+} from '../../config/constants';
 
 const ALLOWED_FEEDBACK_LABELS = new Set([
   'bug',

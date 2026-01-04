@@ -3,8 +3,7 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from '@cloudflare/workers-types';
-
-import type { DispatchWorkerEnv } from '@sprintjam/types/env';
+import type { DispatchWorkerEnv } from '@sprintjam/types';
 
 function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
   const isStaging = env.ENVIRONMENT === 'staging';

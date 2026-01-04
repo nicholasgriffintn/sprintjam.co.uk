@@ -2,11 +2,10 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
+import type { Env } from '@sprintjam/types';
+import { jsonError, createJsonResponse, hashToken } from '@sprintjam/utils';
 
-import type { Env } from "../types";
-import { jsonError, createJsonResponse } from "../utils/http";
-import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
-import { hashToken } from "../utils/auth-crypto";
+import { WorkspaceAuthRepository } from '../repositories/workspace-auth';
 
 async function authenticateRequest(
   request: CfRequest,

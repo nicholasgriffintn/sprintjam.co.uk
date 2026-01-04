@@ -1,27 +1,23 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sprintjam-auth-worker",
   "main": "src/index.ts",
   "compatibility_date": "2024-12-18",
   "workers_dev": true,
-
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "sprintjam-workspaces",
-      "database_id": "your-database-id-here",
-      "migrations_dir": "../../packages/db/src/d1/migrations"
-    }
+      "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
+      "migrations_dir": "../../packages/db/src/d1/migrations",
+    },
   ],
-
   "observability": {
-    "enabled": true
+    "enabled": true,
   },
-
   "limits": {
-    "cpu_ms": 50
+    "cpu_ms": 50,
   },
-
   "env": {
     "staging": {
       "name": "sprintjam-auth-worker-staging",
@@ -29,10 +25,10 @@
         {
           "binding": "DB",
           "database_name": "sprintjam-workspaces-staging",
-          "database_id": "your-staging-database-id-here",
-          "migrations_dir": "../../packages/db/src/d1/migrations"
-        }
-      ]
+          "database_id": "2f17f84f-02ad-4548-9b66-a9bfa1c54186",
+          "migrations_dir": "../../packages/db/src/d1/migrations",
+        },
+      ],
     },
     "production": {
       "name": "sprintjam-auth-worker",
@@ -40,10 +36,10 @@
         {
           "binding": "DB",
           "database_name": "sprintjam-workspaces",
-          "database_id": "your-production-database-id-here",
-          "migrations_dir": "../../packages/db/src/d1/migrations"
-        }
-      ]
-    }
-  }
+          "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
+          "migrations_dir": "../../packages/db/src/d1/migrations",
+        },
+      ],
+    },
+  },
 }

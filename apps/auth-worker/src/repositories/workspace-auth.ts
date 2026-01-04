@@ -9,8 +9,8 @@ import {
   workspaceSessions,
   teams,
   teamSessions,
-} from '../d1/schemas';
-import { extractDomain } from '../utils/auth-crypto';
+} from '@sprintjam/db';
+import { extractDomain } from '@sprintjam/utils';
 
 export class WorkspaceAuthRepository {
   private db: ReturnType<typeof drizzle>;

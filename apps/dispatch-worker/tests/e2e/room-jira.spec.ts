@@ -1,0 +1,212 @@
+import { expect, test } from "@playwright/test";
+
+import { createRoomWithParticipant } from "./helpers/room-journeys";
+import { SettingsModal } from "./pageObjects/settings-modal";
+
+test.describe("Jira integration", () => {
+  test("moderator can add and link Jira tickets through the queue", async ({
+    browser,
+  }) => {
+    const setup = await createRoomWithParticipant(browser);
+    const { moderatorRoom, participantRoom, cleanup, moderatorContext } = setup;
+
+    const settingsModal = new SettingsModal(moderatorRoom.getPage());
+
+    const ticketKey = "TEST-123";
+    const secondaryTicketKey = "TEST-456";
+    const jiraOAuthStatus = {
+      connected: true,
+      jiraDomain: "jira.test.sprintjam.co.uk",
+      jiraUserEmail: "qa@test.sprintjam.co.uk",
+      storyPointsField: "customfield_10016",
+      sprintField: "customfield_10017",
+    };
+    const jiraFields = [
+      { id: "customfield_10016", name: "Story Points", type: "number" },
+      { id: "customfield_10017", name: "Sprint", type: "string" },
+    ];
+    const initialTicket = {
+      key: ticketKey,
+      url: `https://jira.test.sprintjam.co.uk/browse/${ticketKey}`,
+      summary: "Demo integration ticket",
+      description: "Ensure planning poker syncs with Jira",
+      status: "In Progress",
+      assignee: "QA Bot",
+      storyPoints: null,
+    };
+    const secondaryTicket = {
+      ...initialTicket,
+      key: secondaryTicketKey,
+      url: `https://jira.test.sprintjam.co.uk/browse/${secondaryTicketKey}`,
+      summary: "Linked ticket",
+    };
+    let storyPointsUpdated = false;
+
+    await moderatorContext.route("**/api/jira/ticket?**", (route) => {
+      const url = new URL(route.request().url());
+      const key = url.searchParams.get("ticketId");
+      const ticket =
+        key && key.toUpperCase() === secondaryTicketKey
+          ? secondaryTicket
+          : initialTicket;
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ticket }),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/oauth/status?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(jiraOAuthStatus),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/boards?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          boards: [{ id: "board-1", name: "QA Board" }],
+        }),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/sprints?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ sprints: [] }),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/issues?**", (route) => {
+      const url = new URL(route.request().url());
+      const query = url.searchParams.get("query");
+      const matches = query && query.includes(ticketKey);
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ tickets: matches ? [initialTicket] : [] }),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/oauth/fields?**", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          fields: jiraFields,
+          storyPointsField: jiraOAuthStatus.storyPointsField,
+          sprintField: jiraOAuthStatus.sprintField,
+        }),
+      });
+    });
+
+    await moderatorContext.route("**/api/jira/oauth/fields", (route) => {
+      if (route.request().method() === "PUT") {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ ok: true }),
+        });
+        return;
+      }
+
+      route.fallback();
+    });
+
+    await moderatorContext.route(
+      "**/api/jira/ticket/**/storyPoints",
+      (route) => {
+        storyPointsUpdated = true;
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            ticket: { ...initialTicket, storyPoints: 5 },
+          }),
+        });
+      },
+    );
+
+    try {
+      await settingsModal.open();
+      await settingsModal.toggle("settings-toggle-enable-queue", true);
+      await settingsModal.selectExternalService("jira");
+      await settingsModal.waitForJiraConnection();
+      await settingsModal.toggle("settings-toggle-auto-sync", true);
+      await settingsModal.save();
+
+      const page = moderatorRoom.getPage();
+      // The queue setup modal appears automatically when a provider is selected and queue is empty
+      const setupModal = page.getByRole("dialog", {
+        name: "Connect your queue",
+      });
+      await expect(setupModal).toBeVisible();
+      await setupModal
+        .getByRole("button", { name: "Open queue setup" })
+        .click();
+
+      const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
+      await expect(queueDialog).toBeVisible();
+
+      await queueDialog.getByTestId("queue-add-jira-button").click();
+      await queueDialog
+        .getByTestId("queue-import-board")
+        .selectOption("board-1");
+      await queueDialog.getByTestId("queue-import-search").fill(ticketKey);
+      await expect(queueDialog).toContainText(initialTicket.summary);
+      await queueDialog.getByText(ticketKey).click();
+      await queueDialog.getByTestId("queue-import-confirm").click();
+
+      await queueDialog.getByTestId("queue-toggle-add").click();
+      await queueDialog.getByPlaceholder("Ticket title").fill("Local task");
+      await queueDialog.getByTestId("queue-add-confirm").click();
+
+      const linkButtons = queueDialog.getByRole("button", {
+        name: "Link Jira",
+      });
+      await expect(linkButtons).toHaveCount(1);
+      await linkButtons.first().click();
+      await queueDialog
+        .getByPlaceholder("PROJECT-123")
+        .fill(secondaryTicketKey);
+      await queueDialog.getByRole("button", { name: /^Fetch$/ }).click();
+      await expect(queueDialog).toContainText(secondaryTicket.summary);
+      await queueDialog.getByRole("button", { name: "Save Link" }).click();
+      await expect(queueDialog).toContainText(secondaryTicketKey);
+
+      await queueDialog.getByRole("button", { name: "Start Voting" }).first().click();
+      await queueDialog.getByLabel("Close modal").click();
+
+      await page.getByTestId("next-ticket-button").click();
+      await page
+        .getByRole("dialog", { name: "Review before moving on" })
+        .getByTestId("pre-pointing-confirm")
+        .click();
+
+      await moderatorRoom.castVote("5");
+      await participantRoom.castVote("5");
+      await moderatorRoom.revealVotes();
+
+      await expect
+        .poll(() => storyPointsUpdated, { timeout: 5000 })
+        .toBeTruthy();
+
+      await page.getByTestId("queue-expand").click();
+      const reopenedDialog = page.getByRole("dialog", { name: "Ticket Queue" });
+      await expect(reopenedDialog).toBeVisible();
+      await expect(reopenedDialog).toContainText(ticketKey);
+      await reopenedDialog.getByTestId("queue-tab-history").click();
+      await expect(
+        reopenedDialog.getByTestId("queue-history-tab-panel"),
+      ).toBeVisible();
+      await reopenedDialog.getByRole("button", { name: "Close modal" }).click();
+    } finally {
+      await cleanup();
+    }
+  });
+});
