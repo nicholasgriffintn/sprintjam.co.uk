@@ -284,7 +284,8 @@ async function handleApiRequest(
 }
 
 export class Worker extends WorkerEntrypoint {
-  async fetch(request: CfRequest, env: RoomWorkerEnv): Promise<CfResponse> {
+  async fetch(request: CfRequest): Promise<CfResponse> {
+    const env = this.env as RoomWorkerEnv;
     return handleRequest(request, env);
   }
 }

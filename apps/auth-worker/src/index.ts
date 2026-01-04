@@ -115,7 +115,8 @@ async function handleRequest(
 }
 
 export class Worker extends WorkerEntrypoint {
-  async fetch(request: CfRequest, env: AuthWorkerEnv): Promise<CfResponse> {
+  async fetch(request: CfRequest): Promise<CfResponse> {
+    const env = this.env as AuthWorkerEnv;
     return handleRequest(request, env);
   }
 }
