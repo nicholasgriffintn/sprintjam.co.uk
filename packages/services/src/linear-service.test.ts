@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { LinearOAuthCredentials } from '@sprintjam/types';
 
 import {
   fetchLinearIssue,
   getLinearOrganization,
   getLinearViewer,
   updateLinearEstimate,
-} from "./linear-service";
-import type { LinearOAuthCredentials } from "../types";
+} from './linear-service';
 
 const baseCredentials: LinearOAuthCredentials = {
   id: 1,

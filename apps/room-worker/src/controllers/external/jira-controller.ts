@@ -2,17 +2,15 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
-
-import type { Env } from "../types";
+import type { Env } from '@sprintjam/types';
 import {
   fetchJiraBoardIssues,
   fetchJiraBoards,
   fetchJiraSprints,
   fetchJiraTicket,
   updateJiraStoryPoints,
-} from "../services/jira-service";
-import { jsonError } from "../utils/http";
-import { getRoomStub } from "../utils/room";
+} from '@sprintjam/services';
+import { jsonError, getRoomStub } from '@sprintjam/utils';
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {

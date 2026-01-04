@@ -51,7 +51,7 @@ export interface AuthWorkerEnv extends BaseEnv {
 }
 
 /**
- * Legacy combined environment (for backwards compatibility during migration)
+ * Legacy combined environment
  */
 export interface Env extends BaseEnv {
   ENABLE_JOIN_RATE_LIMIT?: string;

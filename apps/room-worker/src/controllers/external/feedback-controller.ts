@@ -5,12 +5,11 @@ import type {
 import { createGithubIssue } from '@sprintjam/services';
 import type { Env } from '@sprintjam/types';
 import { createJsonResponse, jsonError } from '@sprintjam/utils';
-
 import {
   FEEDBACK_GITHUB_OWNER,
   FEEDBACK_GITHUB_REPO,
   FEEDBACK_GITHUB_DEFAULT_LABELS,
-} from '../../config/constants';
+} from '@sprintjam/utils/constants';
 
 const ALLOWED_FEEDBACK_LABELS = new Set([
   'bug',

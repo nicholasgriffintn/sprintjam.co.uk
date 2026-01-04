@@ -13,10 +13,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
-    "paths": {
-      "@sprintjam/types": ["../types/src"]
-    }
+    "baseUrl": "."
   },
   "include": ["src"]
 }

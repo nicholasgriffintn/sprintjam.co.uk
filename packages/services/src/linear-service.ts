@@ -1,5 +1,6 @@
-import type { TicketMetadata } from '../../src/types';
-import type { LinearOAuthCredentials } from '../types';
+import type { LinearOAuthCredentials } from '@sprintjam/types';
+
+type TicketMetadata = Record<string, any>;
 
 type LinearIssue = {
   id: string;
@@ -63,11 +64,11 @@ async function refreshOAuthToken(
     );
   }
 
-  const data = await response.json<{
+  const data = (await response.json()) as {
     access_token: string;
     refresh_token: string;
     expires_in: number;
-  }>();
+  };
 
   return {
     accessToken: data.access_token,
@@ -87,7 +88,10 @@ async function executeWithTokenRefresh<T>(
   clientId: string,
   clientSecret: string
 ): Promise<T> {
-  const isExpiringSoon = credentials.expiresAt - Date.now() < 5 * 60 * 1000;
+  let isExpiringSoon = false;
+  if (credentials.expiresAt) {
+    isExpiringSoon = credentials.expiresAt - Date.now() < 5 * 60 * 1000;
+  }
 
   if (isExpiringSoon && credentials.refreshToken) {
     try {
@@ -171,10 +175,10 @@ async function executeGraphQL<T>(
     );
   }
 
-  const data = await response.json<{
+  const data = (await response.json()) as {
     data?: T;
     errors?: Array<{ message: string }>;
-  }>();
+  };
 
   if (data.errors && data.errors.length > 0) {
     throw new Error(data.errors[0].message);
