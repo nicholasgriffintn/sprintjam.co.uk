@@ -12,14 +12,17 @@ import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
 
 export type AppScreen =
-  | "welcome"
-  | "create"
-  | "join"
-  | "room"
-  | "404"
-  | "privacy"
-  | "terms"
-  | "changelog";
+  | 'welcome'
+  | 'login'
+  | 'verify'
+  | 'workspace'
+  | 'create'
+  | 'join'
+  | 'room'
+  | '404'
+  | 'privacy'
+  | 'terms'
+  | 'changelog';
 
 interface SessionStateContextValue {
   screen: AppScreen;
@@ -73,19 +76,29 @@ function getScreenFromPath(path: string): AppScreen {
   const pathWithoutTrailingSlash = pathWithoutQuery.endsWith("/")
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
-  return pathWithoutTrailingSlash === "/create"
-    ? "create"
-    : pathWithoutTrailingSlash === "/join"
-      ? "join"
-      : pathWithoutTrailingSlash === "/room"
-        ? "room"
-        : pathWithoutTrailingSlash === "/privacy"
-          ? "privacy"
-          : pathWithoutTrailingSlash === "/terms"
-            ? "terms"
-            : pathWithoutTrailingSlash === "/changelog"
-              ? "changelog"
-              : "404";
+  
+  switch (pathWithoutTrailingSlash) {
+    case '/login':
+      return 'login';
+    case '/verify':
+      return 'verify';
+    case '/workspace':
+      return 'workspace';
+    case '/create':
+      return 'create';
+    case '/join':
+      return 'join';
+    case '/room':
+      return 'room';
+    case '/privacy':
+      return 'privacy';
+    case '/terms':
+      return 'terms';
+    case '/changelog':
+      return 'changelog';
+  }
+
+  return '404';
 }
 
 export const SessionProvider = ({

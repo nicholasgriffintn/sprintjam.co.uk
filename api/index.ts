@@ -56,6 +56,23 @@ import {
   revokeGithubOAuthController,
 } from "./controllers/github-oauth-controller";
 import { submitFeedbackController } from "./controllers/feedback-controller";
+import {
+  requestMagicLinkController,
+  verifyMagicLinkController,
+  getCurrentUserController,
+  logoutController,
+} from "./controllers/auth-controller";
+import {
+  listTeamsController,
+  createTeamController,
+  getTeamController,
+  updateTeamController,
+  deleteTeamController,
+  listTeamSessionsController,
+  createTeamSessionController,
+  getTeamSessionController,
+  getWorkspaceStatsController,
+} from "./controllers/teams-controller";
 
 async function handleRequest(
   request: CfRequest,
@@ -63,17 +80,17 @@ async function handleRequest(
 ): Promise<CfResponse> {
   const url = new URL(request.url);
 
-  if (url.pathname === '/robots.txt') {
-    const isStaging = env.ENVIRONMENT === 'staging';
+  if (url.pathname === "/robots.txt") {
+    const isStaging = env.ENVIRONMENT === "staging";
     const robotsBody = isStaging
-      ? 'User-agent: *\nDisallow: /'
-      : 'User-agent: *\nAllow: /';
+      ? "User-agent: *\nDisallow: /"
+      : "User-agent: *\nAllow: /";
 
     return new Response(robotsBody, {
       status: 200,
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        ...(isStaging ? { 'X-Robots-Tag': 'noindex, nofollow' } : {}),
+        "Content-Type": "text/plain; charset=utf-8",
+        ...(isStaging ? { "X-Robots-Tag": "noindex, nofollow" } : {}),
       },
     }) as unknown as CfResponse;
   }
@@ -120,6 +137,22 @@ async function handleApiRequest(
 
   if (path === "feedback" && request.method === "POST") {
     return submitFeedbackController(request, env);
+  }
+
+  if (path === "auth/magic-link" && request.method === "POST") {
+    return requestMagicLinkController(request, env);
+  }
+
+  if (path === "auth/verify" && request.method === "POST") {
+    return verifyMagicLinkController(request, env);
+  }
+
+  if (path === "auth/me" && request.method === "GET") {
+    return getCurrentUserController(request, env);
+  }
+
+  if (path === "auth/logout" && request.method === "POST") {
+    return logoutController(request, env);
   }
 
   if (path === "rooms" && request.method === "POST") {
@@ -267,6 +300,52 @@ async function handleApiRequest(
 
   if (path === "github/oauth/revoke" && request.method === "DELETE") {
     return revokeGithubOAuthController(request, env);
+  }
+
+  if (path === "teams" && request.method === "GET") {
+    return listTeamsController(request, env);
+  }
+
+  if (path === "teams" && request.method === "POST") {
+    return createTeamController(request, env);
+  }
+
+  const teamMatch = path.match(/^teams\/(\d+)$/);
+  if (teamMatch) {
+    const teamId = parseInt(teamMatch[1], 10);
+    if (request.method === "GET") {
+      return getTeamController(request, env, teamId);
+    }
+    if (request.method === "PUT") {
+      return updateTeamController(request, env, teamId);
+    }
+    if (request.method === "DELETE") {
+      return deleteTeamController(request, env, teamId);
+    }
+  }
+
+  const teamSessionsMatch = path.match(/^teams\/(\d+)\/sessions$/);
+  if (teamSessionsMatch) {
+    const teamId = parseInt(teamSessionsMatch[1], 10);
+    if (request.method === "GET") {
+      return listTeamSessionsController(request, env, teamId);
+    }
+    if (request.method === "POST") {
+      return createTeamSessionController(request, env, teamId);
+    }
+  }
+
+  const teamSessionMatch = path.match(/^teams\/(\d+)\/sessions\/(\d+)$/);
+  if (teamSessionMatch) {
+    const teamId = parseInt(teamSessionMatch[1], 10);
+    const sessionId = parseInt(teamSessionMatch[2], 10);
+    if (request.method === "GET") {
+      return getTeamSessionController(request, env, teamId, sessionId);
+    }
+  }
+
+  if (path === "workspace/stats" && request.method === "GET") {
+    return getWorkspaceStatsController(request, env);
   }
 
   return new Response(JSON.stringify({ error: "Not found" }), {

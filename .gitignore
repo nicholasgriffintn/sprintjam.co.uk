@@ -11,3 +11,5 @@ dist
 .dev.vars
 
 test-results
+
+.claude
