@@ -21,12 +21,10 @@
     {
       "binding": "ROOM_WORKER",
       "service": "sprintjam-room-worker",
-      "entrypoint": "Worker",
     },
     {
       "binding": "AUTH_WORKER",
       "service": "sprintjam-auth-worker",
-      "entrypoint": "Worker",
     },
   ],
   "assets": {

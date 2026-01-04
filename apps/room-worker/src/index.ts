@@ -283,7 +283,7 @@ async function handleApiRequest(
   }) as unknown as CfResponse;
 }
 
-export class Worker extends WorkerEntrypoint {
+export default class extends WorkerEntrypoint {
   async fetch(request: CfRequest): Promise<CfResponse> {
     const env = this.env as RoomWorkerEnv;
     return handleRequest(request, env);
