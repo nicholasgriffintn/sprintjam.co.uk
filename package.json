@@ -14,6 +14,7 @@
     "deploy": "turbo deploy",
     "deploy:staging": "pnpm --filter @sprintjam/auth-worker deploy:staging && pnpm --filter @sprintjam/room-worker deploy:staging && pnpm --filter @sprintjam/dispatch-worker build:staging && pnpm --filter @sprintjam/dispatch-worker deploy:staging",
     "deploy:prod": "pnpm --filter @sprintjam/auth-worker deploy:prod && pnpm --filter @sprintjam/room-worker deploy:prod && pnpm --filter @sprintjam/dispatch-worker build && pnpm --filter @sprintjam/dispatch-worker deploy:prod",
+    "db:migrate:local": "pnpm --filter @sprintjam/auth-worker db:migrate:local",
     "db:migrate:staging": "pnpm --filter @sprintjam/auth-worker db:migrate:staging",
     "db:migrate:prod": "pnpm --filter @sprintjam/auth-worker db:migrate:prod"
   },

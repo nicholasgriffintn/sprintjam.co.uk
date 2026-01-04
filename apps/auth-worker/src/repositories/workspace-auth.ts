@@ -10,13 +10,14 @@ import {
   teams,
   teamSessions,
 } from '@sprintjam/db';
+import * as schema from '@sprintjam/db/d1/schemas';
 import { extractDomain } from '@sprintjam/utils';
 
 export class WorkspaceAuthRepository {
   private db: ReturnType<typeof drizzle>;
 
   constructor(d1: D1Database) {
-    this.db = drizzle(d1);
+    this.db = drizzle(d1, { schema });
   }
 
   async isDomainAllowed(domain: string): Promise<boolean> {

@@ -12,8 +12,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply sprintjam-workspaces --local",
-    "db:migrate:staging": "wrangler d1 migrations apply sprintjam-workspaces --remote --env staging",
-    "db:migrate:prod": "wrangler d1 migrations apply sprintjam-workspaces --remote --env production",
+    "db:migrate:staging": "wrangler d1 migrations apply sprintjam-workspaces-staging --remote --env staging",
+    "db:migrate:prod": "wrangler d1 migrations apply sprintjam-workspaces --remote",
     "generate:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
