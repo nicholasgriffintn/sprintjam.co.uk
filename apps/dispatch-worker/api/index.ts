@@ -41,19 +41,7 @@ async function handleRequest(
       return await env.AUTH_WORKER.fetch(request);
     }
 
-    if (
-      path.startsWith('rooms/') ||
-      path === 'rooms' ||
-      path === 'defaults' ||
-      path === 'feedback' ||
-      path.startsWith('jira/') ||
-      path.startsWith('linear/') ||
-      path.startsWith('github/')
-    ) {
-      return await env.ROOM_WORKER.fetch(request);
-    }
-
-    return new Response('Not Found', { status: 404 }) as unknown as CfResponse;
+    return await env.ROOM_WORKER.fetch(request);
   }
 
   if (url.pathname === '/ws') {
