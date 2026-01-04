@@ -24,7 +24,11 @@
     "test:e2e:a11y": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e tests/e2e/a11y",
     "deploy": "npm run build && wrangler deploy",
     "deploy:staging": "npm run build:staging && wrangler deploy",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:generate:d1": "drizzle-kit generate --config=drizzle.d1.config.ts",
+    "db:migrate:d1:local": "wrangler d1 migrations apply sprintjam-workspaces --local",
+    "db:migrate:d1:staging": "wrangler d1 migrations apply sprintjam-workspaces --remote --env staging",
+    "db:migrate:d1:prod": "wrangler d1 migrations apply sprintjam-workspaces --remote"
   },
   "dependencies": {
     "@strudel/web": "1.2.6",

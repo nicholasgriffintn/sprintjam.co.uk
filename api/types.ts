@@ -3,9 +3,10 @@ import type {
   Fetcher,
   WebSocket as CfWebSocket,
   RateLimit,
+  D1Database,
 } from "@cloudflare/workers-types";
 
-import { TicketQueueItem, OauthCredentialsItem } from './db/types';
+import { TicketQueueItem, OauthCredentialsItem } from "./db/types";
 
 export interface Env {
   ENABLE_JOIN_RATE_LIMIT?: string;
@@ -14,6 +15,8 @@ export interface Env {
   PLANNING_ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;
   TOKEN_ENCRYPTION_SECRET: string;
+  DB: D1Database;
+  RESEND_API_KEY: string;
   JIRA_OAUTH_CLIENT_ID?: string;
   JIRA_OAUTH_CLIENT_SECRET?: string;
   JIRA_OAUTH_REDIRECT_URI?: string;

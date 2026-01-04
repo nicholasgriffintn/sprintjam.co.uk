@@ -33,6 +33,14 @@
       }
     ]
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sprintjam-workspaces",
+      "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
+      "migrations_dir": "api/d1/migrations"
+    }
+  ],
   "rules": [
     {
       "type": "Text",
@@ -75,6 +83,15 @@
           }
         ]
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sprintjam-workspaces",
+          "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
+          "preview_database_id": "local",
+          "migrations_dir": "api/d1/migrations"
+        }
+      ],
       "ratelimits": []
     },
     "staging": {
@@ -96,6 +113,14 @@
           }
         ]
       },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sprintjam-workspaces",
+          "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
+          "migrations_dir": "api/d1/migrations"
+        }
+      ],
       "ratelimits": [
         {
           "name": "JOIN_RATE_LIMITER",

@@ -8,15 +8,18 @@ import { ErrorBoundary } from "./components/errors/ErrorBoundary";
 import { SessionProvider, useSessionErrors, useSessionState } from "./context/SessionContext";
 import { RoomProvider, useRoomActions, useRoomState, useRoomStatus } from "./context/RoomContext";
 import WelcomeScreen from "./routes/WelcomeScreen";
-import CreateRoomScreen from "./routes/CreateRoomScreen";
-import JoinRoomScreen from "./routes/JoinRoomScreen";
-import NotFoundScreen from "./routes/NotFoundScreen";
-import { ErrorBannerServerDefaults } from "./components/errors/ErrorBannerServerDefaults";
-import PrivacyPolicyScreen from "./routes/PrivacyPolicyScreen";
-import TermsConditionsScreen from "./routes/TermsConditionsScreen";
-import ChangelogScreen from "./routes/ChangelogScreen";
+import LoginScreen from './routes/auth/LoginScreen';
+import VerifyScreen from './routes/auth/VerifyScreen';
+import WorkspaceScreen from './routes/workspace/WorkspaceScreen';
+import CreateRoomScreen from './routes/CreateRoomScreen';
+import JoinRoomScreen from './routes/JoinRoomScreen';
+import NotFoundScreen from './routes/NotFoundScreen';
+import { ErrorBannerServerDefaults } from './components/errors/ErrorBannerServerDefaults';
+import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
+import TermsConditionsScreen from './routes/TermsConditionsScreen';
+import ChangelogScreen from './routes/ChangelogScreen';
 
-const roomScreenLoader = () => import("./routes/RoomScreen");
+const roomScreenLoader = () => import('./routes/RoomScreen');
 const RoomScreen = lazy(roomScreenLoader);
 const preloadRoomScreen = () => {
   void roomScreenLoader();
@@ -26,12 +29,8 @@ const AppContent = () => {
   const { screen } = useSessionState();
   const { error, clearError } = useSessionErrors();
   const { serverDefaults, roomData } = useRoomState();
-  const {
-    isLoading,
-    isLoadingDefaults,
-    defaultsError,
-    isSocketStatusKnown,
-  } = useRoomStatus();
+  const { isLoading, isLoadingDefaults, defaultsError, isSocketStatusKnown } =
+    useRoomStatus();
   const { handleRetryDefaults } = useRoomActions();
 
   const hasPrefetchedRoomScreen = useRef(false);
@@ -41,28 +40,34 @@ const AppContent = () => {
       return;
     }
 
-    if (screen === "room" || screen === "join" || screen === "create") {
+    if (screen === 'room' || screen === 'join' || screen === 'create') {
       preloadRoomScreen();
       hasPrefetchedRoomScreen.current = true;
     }
   }, [screen]);
 
   const showGlobalLoading =
-    screen !== "room" && (isLoading || isLoadingDefaults);
+    screen !== 'room' && (isLoading || isLoadingDefaults);
 
   const canRenderRoomScreen = Boolean(
-    roomData && serverDefaults && isSocketStatusKnown,
+    roomData && serverDefaults && isSocketStatusKnown
   );
 
   const renderScreen = () => {
     switch (screen) {
-      case "welcome":
+      case 'welcome':
         return <WelcomeScreen />;
-      case "create":
+      case 'login':
+        return <LoginScreen />;
+      case 'verify':
+        return <VerifyScreen />;
+      case 'workspace':
+        return <WorkspaceScreen />;
+      case 'create':
         return <CreateRoomScreen />;
-      case "join":
+      case 'join':
         return <JoinRoomScreen />;
-      case "room":
+      case 'room':
         if (canRenderRoomScreen) {
           return <RoomScreen />;
         }
@@ -73,11 +78,11 @@ const AppContent = () => {
             subtitle="Please wait a moment."
           />
         );
-      case "privacy":
+      case 'privacy':
         return <PrivacyPolicyScreen />;
-      case "terms":
+      case 'terms':
         return <TermsConditionsScreen />;
-      case "changelog":
+      case 'changelog':
         return <ChangelogScreen />;
       default:
         return <NotFoundScreen />;
@@ -96,7 +101,7 @@ const AppContent = () => {
         />
       )}
 
-      {error && screen !== "room" && (
+      {error && screen !== 'room' && (
         <ErrorBanner message={error} onClose={clearError} />
       )}
 
