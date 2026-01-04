@@ -12,17 +12,17 @@ import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
 
 export type AppScreen =
-  | 'welcome'
-  | 'login'
-  | 'verify'
-  | 'workspace'
-  | 'create'
-  | 'join'
-  | 'room'
-  | '404'
-  | 'privacy'
-  | 'terms'
-  | 'changelog';
+  | "welcome"
+  | "login"
+  | "verify"
+  | "workspace"
+  | "create"
+  | "join"
+  | "room"
+  | "404"
+  | "privacy"
+  | "terms"
+  | "changelog";
 
 interface SessionStateContextValue {
   screen: AppScreen;
@@ -53,19 +53,20 @@ interface SessionErrorContextValue {
 }
 
 export interface SessionContextValue
-  extends SessionStateContextValue,
+  extends
+    SessionStateContextValue,
     SessionActionsContextValue,
     SessionErrorContextValue {}
 
-const SessionStateContext = createContext<
-  SessionStateContextValue | undefined
->(undefined);
+const SessionStateContext = createContext<SessionStateContextValue | undefined>(
+  undefined,
+);
 const SessionActionsContext = createContext<
   SessionActionsContextValue | undefined
 >(undefined);
-const SessionErrorContext = createContext<
-  SessionErrorContextValue | undefined
->(undefined);
+const SessionErrorContext = createContext<SessionErrorContextValue | undefined>(
+  undefined,
+);
 
 function getScreenFromPath(path: string): AppScreen {
   if (path === "/" || !path) {
@@ -76,29 +77,29 @@ function getScreenFromPath(path: string): AppScreen {
   const pathWithoutTrailingSlash = pathWithoutQuery.endsWith("/")
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
-  
+
   switch (pathWithoutTrailingSlash) {
-    case '/login':
-      return 'login';
-    case '/verify':
-      return 'verify';
-    case '/workspace':
-      return 'workspace';
-    case '/create':
-      return 'create';
-    case '/join':
-      return 'join';
-    case '/room':
-      return 'room';
-    case '/privacy':
-      return 'privacy';
-    case '/terms':
-      return 'terms';
-    case '/changelog':
-      return 'changelog';
+    case "/auth/login":
+      return "login";
+    case "/auth/verify":
+      return "verify";
+    case "/workspace":
+      return "workspace";
+    case "/create":
+      return "create";
+    case "/join":
+      return "join";
+    case "/room":
+      return "room";
+    case "/privacy":
+      return "privacy";
+    case "/terms":
+      return "terms";
+    case "/changelog":
+      return "changelog";
   }
 
-  return '404';
+  return "404";
 }
 
 export const SessionProvider = ({
