@@ -45,6 +45,7 @@ import {
   ROOM_ROW_ID,
 } from '@sprintjam/utils/constants';
 
+// @ts-ignore: It's a JS file
 import migrations from '../../drizzle/migrations';
 
 export class PlanningRoomRepository {

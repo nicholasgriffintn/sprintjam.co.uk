@@ -22,7 +22,7 @@ import { PlanningRoomRepository } from '../../repositories/planning-room';
 import {
   handleHttpRequest,
   type PlanningRoomHttpContext,
-} from '../../controllers/room/planning-room-http';
+} from '../../controllers/room';
 import { handleSession as handleSessionHandler } from './session';
 import {
   handleVote as handleVoteHandler,
