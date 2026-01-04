@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sprintjam-room-worker",
   "main": "src/index.ts",
-  "compatibility_date": "2025-11-17",
+  "compatibility_date": "2025-07-15",
   "workers_dev": false,
   "preview_urls": false,
   "placement": {
@@ -64,7 +64,6 @@
       "ratelimits": [],
     },
     "staging": {
-      "name": "sprintjam-room-worker-staging",
       "vars": {
         "ENVIRONMENT": "staging",
       },

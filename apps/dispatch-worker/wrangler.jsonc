@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sprintjam",
   "main": "api/index.ts",
-  "compatibility_date": "2025-11-17",
+  "compatibility_date": "2025-07-15",
   "routes": [
     {
       "pattern": "sprintjam.co.uk",
@@ -20,11 +20,11 @@
   "services": [
     {
       "binding": "ROOM_WORKER",
-      "service": "sprintjam-room-worker",
+      "service": "sprintjam-room-worker-production",
     },
     {
       "binding": "AUTH_WORKER",
-      "service": "sprintjam-auth-worker",
+      "service": "sprintjam-auth-worker-production",
     },
   ],
   "assets": {
@@ -51,11 +51,11 @@
       "services": [
         {
           "binding": "ROOM_WORKER",
-          "service": "sprintjam-room-worker",
+          "service": "sprintjam-room-worker-development",
         },
         {
           "binding": "AUTH_WORKER",
-          "service": "sprintjam-auth-worker",
+          "service": "sprintjam-auth-worker-development",
         },
       ],
     },
