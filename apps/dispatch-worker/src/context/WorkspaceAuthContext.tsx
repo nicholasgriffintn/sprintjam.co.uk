@@ -5,7 +5,6 @@ import {
   useEffect,
   useCallback,
   useMemo,
-  useRef,
   type ReactNode,
 } from "react";
 
@@ -17,6 +16,7 @@ import {
   ensureWorkspaceProfileCollectionReady,
   workspaceProfileCollection,
 } from "@/lib/data/collections";
+import { useSessionState } from "./SessionContext";
 
 interface WorkspaceAuthContextValue {
   user: WorkspaceUser | null;
@@ -32,11 +32,17 @@ const WorkspaceAuthContext = createContext<WorkspaceAuthContextValue | null>(
 );
 
 export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
-  const profile = useWorkspaceProfile();
+  const { screen } = useSessionState();
+  const shouldLoadProfile = screen === "workspace";
+  const profile = useWorkspaceProfile(shouldLoadProfile);
   const [isLoading, setIsLoading] = useState(true);
-  const hasBootstrapped = useRef(false);
 
   const refreshAuth = useCallback(async () => {
+    if (!shouldLoadProfile) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       await ensureWorkspaceProfileCollectionReady();
@@ -49,7 +55,7 @@ export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [shouldLoadProfile]);
 
   const logout = useCallback(async () => {
     try {
@@ -64,12 +70,15 @@ export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hasBootstrapped.current) {
+    if (!shouldLoadProfile) {
+      setIsLoading(false);
       return;
     }
-    hasBootstrapped.current = true;
-    void refreshAuth();
-  }, [refreshAuth]);
+
+    if (profile) {
+      setIsLoading(false);
+    }
+  }, [profile, shouldLoadProfile]);
 
   const value = useMemo<WorkspaceAuthContextValue>(
     () => ({

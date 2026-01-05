@@ -3,7 +3,12 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { jsonError, createJsonResponse, hashToken } from "@sprintjam/utils";
+import {
+  jsonError,
+  createJsonResponse,
+  hashToken,
+  getSessionTokenFromRequest,
+} from "@sprintjam/utils";
 
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 
@@ -14,12 +19,11 @@ async function authenticateRequest(
   | { userId: number; email: string; repo: WorkspaceAuthRepository }
   | { status: "error"; code: string }
 > {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
+  const token = getSessionTokenFromRequest(request);
+  if (!token) {
     return { status: "error", code: "unauthorized" };
   }
 
-  const token = authHeader.substring(7);
   const tokenHash = await hashToken(token);
   const repo = new WorkspaceAuthRepository(env.DB);
 

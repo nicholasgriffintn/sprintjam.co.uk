@@ -19,8 +19,6 @@ import {
   createTeam,
   createTeamSession,
   deleteTeam,
-  getAuthToken,
-  removeAuthToken,
   updateTeam,
   type Team,
   type TeamSession,
@@ -74,7 +72,7 @@ export const useWorkspaceData = () => {
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const sessions = useTeamSessions(selectedTeamId);
 
-  const [isLoading, setIsLoading] = useState<boolean>(Boolean(getAuthToken()));
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const isLoadingSessionsRef = useRef(false);
   const [isMutating, setIsMutating] = useState(false);
@@ -84,7 +82,7 @@ export const useWorkspaceData = () => {
   const lastSessionsTeamRef = useRef<number | null>(null);
   const lastTeamIdsRef = useRef<string | null>(null);
 
-  const isAuthenticated = Boolean(getAuthToken());
+  const isAuthenticated = Boolean(profile?.user);
 
   useEffect(() => {
     if (!profile) {
@@ -119,49 +117,55 @@ export const useWorkspaceData = () => {
     }
   }, [profile, selectedTeamId]);
 
-  const refreshWorkspace = useCallback(
-    async (forceRefresh = false) => {
-      setIsLoading(true);
-      try {
-        await ensureWorkspaceProfileCollectionReady();
+  const refreshWorkspace = useCallback(async (forceRefresh = false) => {
+    setIsLoading(true);
+    try {
+      await ensureWorkspaceProfileCollectionReady();
+
+    if (forceRefresh) {
+      await workspaceProfileCollection.utils.refetch({ throwOnError: true });
+    }
+
+    const currentProfile = workspaceProfileCollection.get(
+      WORKSPACE_PROFILE_DOCUMENT_KEY,
+    );
+    const hasStats =
+      workspaceStatsCollection.get(WORKSPACE_STATS_DOCUMENT_KEY) !== undefined;
+
+    if (currentProfile?.user) {
+      const shouldRefetchStats = forceRefresh || !hasStats;
+
+      if (shouldRefetchStats) {
+        await workspaceStatsCollection.utils.refetch({ throwOnError: true });
+      } else {
         await ensureWorkspaceStatsCollectionReady();
-
-        if (forceRefresh) {
-          await workspaceProfileCollection.utils.refetch({ throwOnError: true });
-          await workspaceStatsCollection.utils.refetch({ throwOnError: true });
-        } else {
-          await workspaceProfileCollection.preload();
-          await workspaceStatsCollection.preload();
-        }
-
-        setError(null);
-      } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Unable to load workspace data right now";
-        setError(message);
-      } finally {
-        setIsLoading(false);
       }
-    },
-    [],
-  );
+    }
+
+    setError(null);
+  } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unable to load workspace data right now";
+
+      if (message === "Unauthorized") {
+        setError(null);
+      } else {
+        setError(message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (hasAttemptedBootstrap) {
       return;
     }
 
-    const token = getAuthToken();
-    if (token) {
-      setHasAttemptedBootstrap(true);
-      void refreshWorkspace();
-      return;
-    }
-
     setHasAttemptedBootstrap(true);
-    setIsLoading(false);
+    void refreshWorkspace();
   }, [hasAttemptedBootstrap, refreshWorkspace]);
 
   useEffect(() => {
@@ -175,7 +179,10 @@ export const useWorkspaceData = () => {
       return;
     }
 
-    if (!isLoadingSessionsRef.current && lastSessionsTeamRef.current === teamId) {
+    if (
+      !isLoadingSessionsRef.current &&
+      lastSessionsTeamRef.current === teamId
+    ) {
       return;
     }
 
@@ -193,7 +200,9 @@ export const useWorkspaceData = () => {
       setActionError(null);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Unable to load sessions for this team";
+        err instanceof Error
+          ? err.message
+          : "Unable to load sessions for this team";
       setActionError(message);
     } finally {
       setIsLoadingSessions(false);
@@ -342,7 +351,7 @@ export const useWorkspaceData = () => {
     }: CreateSessionPayload): Promise<TeamSession | null> => {
       if (!profile) {
         setActionError(
-          'You need to load the workspace before creating sessions'
+          "You need to load the workspace before creating sessions",
         );
         return null;
       }
@@ -374,7 +383,6 @@ export const useWorkspaceData = () => {
     try {
       await workspaceLogout();
     } finally {
-      removeAuthToken();
       await ensureCollectionsReady();
       workspaceProfileCollection.utils.writeDelete(
         WORKSPACE_PROFILE_DOCUMENT_KEY,

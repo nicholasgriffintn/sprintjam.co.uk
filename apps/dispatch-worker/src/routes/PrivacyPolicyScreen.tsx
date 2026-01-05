@@ -13,7 +13,7 @@ import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 
-const LAST_UPDATED = "5th December 2025";
+const LAST_UPDATED = "5th January 2026";
 
 const highlightCards = [
   {
@@ -25,7 +25,7 @@ const highlightCards = [
   {
     title: "Transparency first",
     description:
-      "Every storage location is documented on this page. Cookies are never used.",
+      "Every storage location is documented on this page. Only essential cookies for authentication.",
     icon: Database,
   },
   {
@@ -38,14 +38,19 @@ const highlightCards = [
 
 const browserStorage = [
   {
-    label: "Session + preferences",
+    label: "Essential authentication cookies",
     detail:
-      "Session tokens, display name, avatar emoji, settings, and most-recently room join code are stored in localStorage.",
+      "Workspace session tokens are stored in secure, httpOnly cookies to protect against XSS attacks. These cookies are never shared with third parties.",
   },
   {
-    label: "No cross-site cookies",
+    label: "Local preferences",
     detail:
-      "SprintJam does not set marketing or advertising cookies, nor does it embed remote analytics, it doesn't use cookies at all.",
+      "Display name, avatar emoji, settings, and most-recently room join code are stored in localStorage.",
+  },
+  {
+    label: "No tracking or marketing cookies",
+    detail:
+      "SprintJam does not set marketing or advertising cookies, nor does it embed remote analytics or third-party trackers.",
   },
 ];
 
@@ -213,10 +218,10 @@ const PrivacyPolicyScreen = () => {
 }`}</pre>
               </div>
               <p className="mt-3 rounded-2xl bg-slate-50/80 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10">
-                Adjust{' '}
+                Adjust{" "}
                 <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-800 dark:bg-white/10 dark:text-white">
                   wrangler.jsonc
-                </code>{' '}
+                </code>{" "}
                 before deploy if you require zero logging.
               </p>
               <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-slate-600 dark:text-slate-300">

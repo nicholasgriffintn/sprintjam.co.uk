@@ -81,18 +81,14 @@ export function useRoomData(roomKey: string | null): RoomData | null {
   );
 }
 
-export function useWorkspaceProfile(): WorkspaceProfile | null {
-  useEffect(() => {
-    workspaceProfileCollection
-      .preload()
-      .catch((error) =>
-        console.error("Failed to preload workspace profile", error),
-      );
-  }, []);
-
+export function useWorkspaceProfile(enabled = true): WorkspaceProfile | null {
   const subscribe = useMemo(
     () =>
       createCollectionSubscriber((onChange) => {
+        if (!enabled) {
+          return () => {};
+        }
+
         const subscription = workspaceProfileCollection.subscribeChanges(
           () => onChange(),
           { includeInitialState: true },
@@ -100,24 +96,22 @@ export function useWorkspaceProfile(): WorkspaceProfile | null {
 
         return () => subscription.unsubscribe();
       }),
-    [],
+    [enabled],
   );
 
   const getSnapshot = () =>
-    workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY) ?? null;
+    enabled
+      ? workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY) ?? null
+      : null;
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useSyncExternalStore(
+    enabled ? subscribe : noopSubscribe,
+    getSnapshot,
+    getSnapshot,
+  );
 }
 
 export function useWorkspaceStats(): WorkspaceStats | null {
-  useEffect(() => {
-    workspaceStatsCollection
-      .preload()
-      .catch((error) =>
-        console.error("Failed to preload workspace stats", error),
-      );
-  }, []);
-
   const subscribe = useMemo(
     () =>
       createCollectionSubscriber((onChange) => {

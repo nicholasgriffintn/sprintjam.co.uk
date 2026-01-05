@@ -280,7 +280,6 @@ describe("verifyMagicLinkController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.sessionToken).toBe("session-token-123");
     expect(data.expiresAt).toBeGreaterThan(Date.now());
     expect(data.user).toEqual({
       id: 100,
@@ -288,6 +287,12 @@ describe("verifyMagicLinkController", () => {
       name: "Test User",
       organisationId: 1,
     });
+
+    const setCookie = response.headers.get("Set-Cookie");
+    expect(setCookie).toContain("workspace_session=session-token-123");
+    expect(setCookie).toContain("HttpOnly");
+    expect(setCookie).toContain("Secure");
+    expect(setCookie).toContain("SameSite=Strict");
   });
 
   it("should create organisation and user for new email", async () => {
@@ -480,6 +485,30 @@ describe("getCurrentUserController", () => {
 
     expect(utils.hashToken).toHaveBeenCalledWith("my-session-token-123");
   });
+
+  it("should accept session token from cookie", async () => {
+    mockRepo.validateSession.mockResolvedValue({
+      userId: 100,
+      email: "test@example.com",
+    });
+    mockRepo.getUserByEmail.mockResolvedValue({
+      id: 100,
+      email: "test@example.com",
+      name: "Test User",
+      organisationId: 1,
+    });
+    mockRepo.getUserTeams.mockResolvedValue([]);
+
+    const request = new Request("https://test.com/auth/me", {
+      method: "GET",
+      headers: { Cookie: "workspace_session=cookie-session-token" },
+    });
+
+    const response = await getCurrentUserController(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    expect(utils.hashToken).toHaveBeenCalledWith("cookie-session-token");
+  });
 });
 
 describe("logoutController", () => {
@@ -539,6 +568,10 @@ describe("logoutController", () => {
     expect(response.status).toBe(200);
     expect(data.message).toBe("Logged out successfully");
     expect(mockRepo.invalidateSession).toHaveBeenCalledWith("hashed-token");
+
+    const setCookie = response.headers.get("Set-Cookie");
+    expect(setCookie).toContain("workspace_session=");
+    expect(setCookie).toContain("Max-Age=0");
   });
 
   it("should hash token before invalidation", async () => {

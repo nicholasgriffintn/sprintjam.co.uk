@@ -8,7 +8,6 @@ import {
 import { API_BASE_URL } from "@/constants";
 import {
   workspaceRequest,
-  getAuthToken,
   type WorkspaceProfile,
   type WorkspaceStats,
   type TeamSession,
@@ -86,16 +85,19 @@ export const serverDefaultsCollection = createCollection<
 const workspaceProfileCollectionConfig = {
   id: "workspace-profile",
   queryKey: ["workspace-profile"],
+  startSync: false,
   queryFn: async () => {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error("Not authenticated");
+    try {
+      const profile = await workspaceRequest<WorkspaceProfile>(
+        `${API_BASE_URL}/auth/me`,
+      );
+      return [profile];
+    } catch (error) {
+      if (error instanceof Error && error.message === "Unauthorized") {
+        return [];
+      }
+      throw error;
     }
-
-    const profile = await workspaceRequest<WorkspaceProfile>(
-      `${API_BASE_URL}/auth/me`,
-    );
-    return [profile];
   },
   getKey: () => WORKSPACE_PROFILE_DOCUMENT_KEY,
   queryClient,
@@ -110,16 +112,25 @@ export const workspaceProfileCollection = createCollection<
 const workspaceStatsCollectionConfig = {
   id: "workspace-stats",
   queryKey: ["workspace-stats"],
+  startSync: false,
   queryFn: async () => {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error("Not authenticated");
+    const profile =
+      workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY);
+    if (!profile?.user) {
+      return [];
     }
 
-    const stats = await workspaceRequest<WorkspaceStats>(
-      `${API_BASE_URL}/workspace/stats`,
-    );
-    return [stats];
+    try {
+      const stats = await workspaceRequest<WorkspaceStats>(
+        `${API_BASE_URL}/workspace/stats`,
+      );
+      return [stats];
+    } catch (error) {
+      if (error instanceof Error && error.message === "Unauthorized") {
+        return [];
+      }
+      throw error;
+    }
   },
   getKey: () => WORKSPACE_STATS_DOCUMENT_KEY,
   queryClient,
@@ -171,5 +182,6 @@ export const ensureWorkspaceStatsCollectionReady = createEnsureCollectionReady(
 export const ensureRoomsCollectionReady =
   createEnsureCollectionReady(roomsCollection);
 
-export const ensureTeamSessionsCollectionReady =
-  createEnsureCollectionReady(teamSessionsCollection);
+export const ensureTeamSessionsCollectionReady = createEnsureCollectionReady(
+  teamSessionsCollection,
+);

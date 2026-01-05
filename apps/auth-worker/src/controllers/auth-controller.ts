@@ -8,6 +8,9 @@ import {
   generateToken,
   hashToken,
   extractDomain,
+  createSessionCookie,
+  clearSessionCookie,
+  getSessionTokenFromRequest,
 } from "@sprintjam/utils";
 import { sendMagicLinkEmail } from "@sprintjam/services";
 
@@ -137,9 +140,11 @@ export async function verifyMagicLinkController(
 
   const user = await repo.getUserByEmail(email);
 
+  const maxAge = Math.floor(SESSION_EXPIRY_MS / 1000);
+  const cookieValue = createSessionCookie(sessionToken, maxAge);
+
   return new Response(
     JSON.stringify({
-      sessionToken,
       expiresAt: sessionExpiresAt,
       user: {
         id: user?.id,
@@ -149,7 +154,10 @@ export async function verifyMagicLinkController(
       },
     }),
     {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Set-Cookie": cookieValue,
+      },
     },
   ) as unknown as CfResponse;
 }
@@ -158,12 +166,11 @@ export async function getCurrentUserController(
   request: CfRequest,
   env: AuthWorkerEnv,
 ): Promise<CfResponse> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
+  const token = getSessionTokenFromRequest(request);
+  if (!token) {
     return jsonError("Unauthorized", 401);
   }
 
-  const token = authHeader.substring(7);
   const tokenHash = await hashToken(token);
   const repo = new WorkspaceAuthRepository(env.DB);
 
@@ -199,12 +206,11 @@ export async function logoutController(
   request: CfRequest,
   env: AuthWorkerEnv,
 ): Promise<CfResponse> {
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
+  const token = getSessionTokenFromRequest(request);
+  if (!token) {
     return jsonError("Unauthorized", 401);
   }
 
-  const token = authHeader.substring(7);
   const tokenHash = await hashToken(token);
   const repo = new WorkspaceAuthRepository(env.DB);
 
@@ -215,7 +221,10 @@ export async function logoutController(
       message: "Logged out successfully",
     }),
     {
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Set-Cookie": clearSessionCookie(),
+      },
     },
   ) as unknown as CfResponse;
 }

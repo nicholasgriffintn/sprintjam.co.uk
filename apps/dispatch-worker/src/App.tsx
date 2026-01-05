@@ -131,13 +131,13 @@ const App = () => {
         console.error("App Error Boundary:", error, errorInfo);
       }}
     >
-      <WorkspaceAuthProvider>
-        <SessionProvider currentPath={currentPath}>
+      <SessionProvider currentPath={currentPath}>
+        <WorkspaceAuthProvider>
           <RoomProvider>
             <AppContent />
           </RoomProvider>
-        </SessionProvider>
-      </WorkspaceAuthProvider>
+        </WorkspaceAuthProvider>
+      </SessionProvider>
     </ErrorBoundary>
   );
 };
