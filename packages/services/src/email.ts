@@ -16,7 +16,7 @@ export async function sendMagicLinkEmail({
       Authorization: `Bearer ${resendApiKey}`,
     },
     body: JSON.stringify({
-      from: "SprintJam <noreply@sprintjam.co.uk>",
+      from: "SprintJam <sprintjam@notifications.nicholasgriffin.dev>",
       to: [email],
       subject: "Sign in to SprintJam Workspaces",
       html: `
@@ -26,34 +26,46 @@ export async function sendMagicLinkEmail({
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">SprintJam</h1>
-          </div>
-
-          <div style="background: #ffffff; padding: 40px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="margin-top: 0; color: #333;">Sign in to your workspace</h2>
-
-            <p>Click the button below to sign in to SprintJam Workspaces. This link will expire in 15 minutes.</p>
-
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${magicLink}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">
-                Sign in to SprintJam
-              </a>
+        <body style="margin: 0; padding: 0; background-color: #0a1628; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <!-- Header -->
+            <div style="text-align: center; margin-bottom: 40px;">
+              <div style="display: inline-flex; align-items: center; gap: 12px;">
+                <img src="https://sprintjam.co.uk/logo.png" alt="SprintJam" style="width: 48px; height: 48px; border-radius: 12px;" />
+                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">SprintJam</h1>
+              </div>
             </div>
 
-            <p style="color: #666; font-size: 14px; margin-top: 30px;">
-              If you didn't request this email, you can safely ignore it.
-            </p>
+            <!-- Main Content Card -->
+            <div style="background-color: #0f1d35; border-radius: 16px; padding: 48px 32px; border: 1px solid rgba(255, 255, 255, 0.1);">
+              <h2 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 16px 0;">Sign in to your workspace</h2>
 
-            <p style="color: #666; font-size: 14px;">
-              Or copy and paste this link into your browser:<br>
-              <a href="${magicLink}" style="color: #667eea; word-break: break-all;">${magicLink}</a>
-            </p>
-          </div>
+              <p style="color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+                Click the button below to sign in to SprintJam Workspaces. This link will expire in 15 minutes.
+              </p>
 
-          <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-            <p>SprintJam - Collaborative Planning Poker</p>
+              <!-- Sign In Button -->
+              <a href="${magicLink}" style="display: inline-block; background: linear-gradient(135deg, #2f6dff 0%, #5c7cfa 100%); color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 1rem; font-weight: 600; font-size: 14px; box-shadow: 0px 18px 45px rgba(15, 23, 42, 0.18); margin-bottom: 24px;">
+                Sign in to SprintJam
+              </a>
+
+              <p style="color: #64748b; font-size: 14px; margin: 24px 0 0 0;">
+                If you didn't request this email, you can safely ignore it.
+              </p>
+            </div>
+
+            <!-- Alternative Link -->
+            <div style="margin-top: 24px; padding: 16px; background-color: rgba(15, 29, 53, 0.5); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
+              <p style="color: #64748b; font-size: 12px; margin: 0 0 8px 0;">Or copy and paste this link into your browser:</p>
+              <p style="margin: 0;">
+                <a href="${magicLink}" style="color: #2f6dff; font-size: 12px; word-break: break-all; text-decoration: none;">${magicLink}</a>
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; margin-top: 32px; color: #64748b; font-size: 12px;">
+              <p style="margin: 0;">SprintJam - Collaborative Planning Poker</p>
+            </div>
           </div>
         </body>
         </html>
