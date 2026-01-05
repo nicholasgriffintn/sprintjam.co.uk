@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
@@ -14,8 +14,14 @@ type VerifyState = "verifying" | "success" | "error";
 export default function VerifyScreen() {
   const [state, setState] = useState<VerifyState>("verifying");
   const [error, setError] = useState("");
+  const verifyAttempted = useRef(false);
 
   useEffect(() => {
+    if (verifyAttempted.current) {
+      return;
+    }
+    verifyAttempted.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 

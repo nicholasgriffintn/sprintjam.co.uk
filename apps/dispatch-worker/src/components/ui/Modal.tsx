@@ -39,14 +39,21 @@ export const Modal = ({
         ? document.activeElement
         : null;
 
-    const focusFirstElement = () => {
+    const focusInitialElement = () => {
+      if (
+        modalRef.current?.contains(document.activeElement) &&
+        document.activeElement !== modalRef.current
+      ) {
+        return;
+      }
+
       const focusableElements = getFocusableElements();
       if (focusableElements.length > 0) {
         focusableElements[0].focus();
       }
     };
 
-    focusFirstElement();
+    requestAnimationFrame(focusInitialElement);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
