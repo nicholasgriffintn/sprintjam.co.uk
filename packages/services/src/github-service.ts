@@ -13,6 +13,10 @@ interface GithubIssueCoordinates {
   issueNumber: number;
 }
 
+export function escapeGithubSearchValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 function parseGithubIssueIdentifier(
   identifier: string,
   defaults?: { owner?: string | null; repo?: string | null }
@@ -350,9 +354,11 @@ export async function fetchGithubRepoIssues(
   if (hasSearch) {
     const qualifiers = [`repo:${owner}/${repo}`, 'is:issue'];
     if (milestoneTitle) {
-      qualifiers.push(`milestone:\"${milestoneTitle.replace(/\"/g, '\\"')}\"`);
+      qualifiers.push(
+        `milestone:\\"${escapeGithubSearchValue(milestoneTitle)}\\"`
+      );
     }
-    if (/^\\d+$/.test(search)) {
+    if (/^\d+$/.test(search)) {
       qualifiers.push(`number:${search}`);
     } else {
       qualifiers.push(`in:title,body ${search}`);
