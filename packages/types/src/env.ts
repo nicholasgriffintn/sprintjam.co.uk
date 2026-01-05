@@ -48,4 +48,6 @@ export interface RoomWorkerEnv extends BaseEnv {
 export interface AuthWorkerEnv extends BaseEnv {
   DB: D1Database;
   RESEND_API_KEY: string;
+  ENABLE_MAGIC_LINK_RATE_LIMIT?: string;
+  MAGIC_LINK_RATE_LIMITER: RateLimit;
 }

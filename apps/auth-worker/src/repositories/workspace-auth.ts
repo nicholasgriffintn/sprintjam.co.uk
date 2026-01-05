@@ -1,6 +1,6 @@
-import { drizzle } from 'drizzle-orm/d1';
-import { eq, and, gt, desc } from 'drizzle-orm';
-import type { D1Database } from '@cloudflare/workers-types';
+import { drizzle } from "drizzle-orm/d1";
+import { eq, and, gt, desc, inArray } from "drizzle-orm";
+import type { D1Database } from "@cloudflare/workers-types";
 import {
   allowedDomains,
   organisations,
@@ -9,9 +9,9 @@ import {
   workspaceSessions,
   teams,
   teamSessions,
-} from '@sprintjam/db';
-import * as schema from '@sprintjam/db/d1/schemas';
-import { extractDomain } from '@sprintjam/utils';
+} from "@sprintjam/db";
+import * as schema from "@sprintjam/db/d1/schemas";
+import { extractDomain } from "@sprintjam/utils";
 
 export class WorkspaceAuthRepository {
   private db: ReturnType<typeof drizzle>;
@@ -33,7 +33,7 @@ export class WorkspaceAuthRepository {
   async createMagicLink(
     email: string,
     tokenHash: string,
-    expiresAt: number
+    expiresAt: number,
   ): Promise<void> {
     await this.db.insert(magicLinks).values({
       email: email.toLowerCase(),
@@ -50,8 +50,8 @@ export class WorkspaceAuthRepository {
       .where(
         and(
           eq(magicLinks.tokenHash, tokenHash),
-          gt(magicLinks.expiresAt, Date.now())
-        )
+          gt(magicLinks.expiresAt, Date.now()),
+        ),
       )
       .get();
 
@@ -93,7 +93,7 @@ export class WorkspaceAuthRepository {
 
   async getOrCreateUser(
     email: string,
-    organisationId: number
+    organisationId: number,
   ): Promise<number> {
     const existing = await this.db
       .select()
@@ -128,7 +128,7 @@ export class WorkspaceAuthRepository {
   async createSession(
     userId: number,
     tokenHash: string,
-    expiresAt: number
+    expiresAt: number,
   ): Promise<void> {
     await this.db.insert(workspaceSessions).values({
       userId,
@@ -140,7 +140,7 @@ export class WorkspaceAuthRepository {
   }
 
   async validateSession(
-    tokenHash: string
+    tokenHash: string,
   ): Promise<{ userId: number; email: string } | null> {
     const session = await this.db
       .select({
@@ -204,7 +204,7 @@ export class WorkspaceAuthRepository {
   async createTeam(
     organisationId: number,
     name: string,
-    ownerId: number
+    ownerId: number,
   ): Promise<number> {
     const result = await this.db
       .insert(teams)
@@ -262,7 +262,7 @@ export class WorkspaceAuthRepository {
 
   async isUserInOrganisation(
     userId: number,
-    organisationId: number
+    organisationId: number,
   ): Promise<boolean> {
     const user = await this.db
       .select({ organisationId: users.organisationId })
@@ -277,7 +277,7 @@ export class WorkspaceAuthRepository {
     roomKey: string,
     name: string,
     createdById: number,
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
   ): Promise<number> {
     const result = await this.db
       .insert(teamSessions)
@@ -337,18 +337,29 @@ export class WorkspaceAuthRepository {
 
   async getWorkspaceStats(userId: number) {
     const userTeams = await this.getUserTeams(userId);
+
+    if (userTeams.length === 0) {
+      return {
+        totalTeams: 0,
+        totalSessions: 0,
+        activeSessions: 0,
+        completedSessions: 0,
+      };
+    }
+
     const teamIds = userTeams.map((t) => t.id);
 
-    let totalSessions = 0;
-    let activeSessions = 0;
-    let completedSessions = 0;
+    const sessions = await this.db
+      .select({
+        id: teamSessions.id,
+        completedAt: teamSessions.completedAt,
+      })
+      .from(teamSessions)
+      .where(inArray(teamSessions.teamId, teamIds));
 
-    for (const teamId of teamIds) {
-      const sessions = await this.getTeamSessions(teamId);
-      totalSessions += sessions.length;
-      activeSessions += sessions.filter((s) => !s.completedAt).length;
-      completedSessions += sessions.filter((s) => !!s.completedAt).length;
-    }
+    const totalSessions = sessions.length;
+    const activeSessions = sessions.filter((s) => !s.completedAt).length;
+    const completedSessions = sessions.filter((s) => !!s.completedAt).length;
 
     return {
       totalTeams: userTeams.length,
@@ -377,5 +388,41 @@ export class WorkspaceAuthRepository {
       .update(users)
       .set({ name, updatedAt: Date.now() })
       .where(eq(users.id, userId));
+  }
+
+  async cleanupExpiredMagicLinks(): Promise<number> {
+    const expiredLinks = await this.db
+      .select({ id: magicLinks.id })
+      .from(magicLinks)
+      .where(gt(Date.now(), magicLinks.expiresAt))
+      .all();
+
+    if (expiredLinks.length === 0) {
+      return 0;
+    }
+
+    const ids = expiredLinks.map((link) => link.id);
+    await this.db.delete(magicLinks).where(inArray(magicLinks.id, ids));
+
+    return expiredLinks.length;
+  }
+
+  async cleanupExpiredSessions(): Promise<number> {
+    const expiredSessions = await this.db
+      .select({ tokenHash: workspaceSessions.tokenHash })
+      .from(workspaceSessions)
+      .where(gt(Date.now(), workspaceSessions.expiresAt))
+      .all();
+
+    if (expiredSessions.length === 0) {
+      return 0;
+    }
+
+    const tokenHashes = expiredSessions.map((s) => s.tokenHash);
+    await this.db
+      .delete(workspaceSessions)
+      .where(inArray(workspaceSessions.tokenHash, tokenHashes));
+
+    return expiredSessions.length;
   }
 }
