@@ -22,6 +22,7 @@ import { PageBackground } from '@/components/layout/PageBackground';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Footer } from '@/components/layout/Footer';
@@ -330,31 +331,23 @@ export default function WorkspaceScreen() {
           </div>
 
           {error && (
-            <SurfaceCard className="border border-rose-200/70 bg-rose-50/80 text-rose-800 dark:border-rose-900/40 dark:bg-rose-900/30 dark:text-rose-200">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  <span>{error}</span>
-                </div>
+            <Alert variant="error">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-medium">{error}</span>
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => refreshWorkspace(true)}
-                  icon={<RefreshCcw className="h-3 w-3" />}
+                  icon={<RefreshCcw className="h-3.5 w-3.5" />}
                 >
                   Retry
                 </Button>
               </div>
-            </SurfaceCard>
+            </Alert>
           )}
 
           {actionError && (
-            <SurfaceCard className="border border-amber-200/70 bg-amber-50/80 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/30 dark:text-amber-200">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                <span>{actionError}</span>
-              </div>
-            </SurfaceCard>
+            <Alert variant="warning">{actionError}</Alert>
           )}
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
