@@ -18,6 +18,9 @@
     "deploy": {
       "dependsOn": ["build"],
       "outputs": []
+    },
+    "test": {
+      "outputs": []
     }
   }
 }
