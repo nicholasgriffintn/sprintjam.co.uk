@@ -341,7 +341,9 @@ export const useWorkspaceData = () => {
       roomKey,
     }: CreateSessionPayload): Promise<TeamSession | null> => {
       if (!profile) {
-        setActionError("Load workspace before creating sessions");
+        setActionError(
+          'You need to load the workspace before creating sessions'
+        );
         return null;
       }
 

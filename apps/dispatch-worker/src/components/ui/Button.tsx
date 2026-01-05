@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'unstyled';
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'unstyled';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -23,6 +23,8 @@ const variantStyles: Record<ButtonVariant, string> = {
     'bg-gradient-to-r from-brand-500 to-indigo-500 text-white shadow-floating hover:from-brand-600 hover:to-indigo-600 focus-visible:ring-brand-300',
   secondary:
     'bg-white/90 dark:bg-slate-900/60 text-brand-700 dark:text-white border border-slate-200/60 dark:border-white/10 hover:bg-white dark:hover:bg-slate-900 focus-visible:ring-slate-200',
+  danger:
+    'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-floating hover:from-red-600 hover:to-rose-600 focus-visible:ring-red-300',
   ghost:
     'bg-transparent text-white/80 border border-white/30 hover:border-white hover:text-white focus-visible:ring-white/50',
   unstyled: '',
