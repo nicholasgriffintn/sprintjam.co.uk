@@ -362,9 +362,6 @@ export default function WorkspaceScreen() {
           <SurfaceCard className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-brand-500">
-                  Teams
-                </p>
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                   Manage teams
                 </h2>
@@ -494,9 +491,6 @@ export default function WorkspaceScreen() {
           <SurfaceCard className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-brand-500">
-                  Sessions
-                </p>
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                   Room sessions
                 </h2>

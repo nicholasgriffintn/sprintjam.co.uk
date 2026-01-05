@@ -35,6 +35,7 @@ async function handleRequest(
 
     if (
       path.startsWith('auth/') ||
+      path === 'teams' ||
       path.startsWith('teams/') ||
       path.startsWith('workspace/')
     ) {
