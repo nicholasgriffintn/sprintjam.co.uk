@@ -15,7 +15,9 @@ import {
 } from "./teams-controller";
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 
-vi.mock("../repositories/workspace-auth");
+vi.mock("../repositories/workspace-auth", () => ({
+  WorkspaceAuthRepository: vi.fn(),
+}));
 vi.mock("@sprintjam/utils", async () => {
   const actual = await vi.importActual("@sprintjam/utils");
   return {
@@ -37,7 +39,9 @@ describe("listTeamsController", () => {
       getUserTeams: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 
@@ -106,7 +110,9 @@ describe("createTeamController", () => {
       getTeamById: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 
@@ -253,7 +259,9 @@ describe("getTeamController", () => {
       getUserById: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 
@@ -344,7 +352,9 @@ describe("updateTeamController", () => {
       updateTeam: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 
@@ -412,7 +422,9 @@ describe("deleteTeamController", () => {
       deleteTeam: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 
@@ -477,9 +489,12 @@ describe("listTeamSessionsController", () => {
       getTeamById: vi.fn(),
       getUserById: vi.fn(),
       getTeamSessions: vi.fn(),
+      isTeamOwner: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 
@@ -496,6 +511,7 @@ describe("listTeamSessionsController", () => {
       id: 1,
       organisationId: 1,
     });
+    mockRepo.isTeamOwner.mockResolvedValue(false);
 
     const request = new Request("https://test.com/teams/1/sessions", {
       headers: { Authorization: "Bearer valid-token" },
@@ -505,7 +521,7 @@ describe("listTeamSessionsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe("Access denied");
+    expect(data.error).toBe("Only the team owner can access team sessions");
   });
 
   it("should return team sessions for authorized user", async () => {
@@ -521,6 +537,7 @@ describe("listTeamSessionsController", () => {
       id: 1,
       organisationId: 1,
     });
+    mockRepo.isTeamOwner.mockResolvedValue(true);
     mockRepo.getTeamSessions.mockResolvedValue([
       { id: 1, name: "Session 1", teamId: 1, roomKey: "room1" },
       { id: 2, name: "Session 2", teamId: 1, roomKey: "room2" },
@@ -552,9 +569,12 @@ describe("createTeamSessionController", () => {
       getUserById: vi.fn(),
       createTeamSession: vi.fn(),
       getTeamSessionById: vi.fn(),
+      isTeamOwner: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 
@@ -571,6 +591,7 @@ describe("createTeamSessionController", () => {
       id: 1,
       organisationId: 1,
     });
+    mockRepo.isTeamOwner.mockResolvedValue(true);
 
     const request = new Request("https://test.com/teams/1/sessions", {
       method: "POST",
@@ -598,6 +619,7 @@ describe("createTeamSessionController", () => {
       id: 1,
       organisationId: 1,
     });
+    mockRepo.isTeamOwner.mockResolvedValue(true);
 
     const request = new Request("https://test.com/teams/1/sessions", {
       method: "POST",
@@ -625,6 +647,7 @@ describe("createTeamSessionController", () => {
       id: 1,
       organisationId: 1,
     });
+    mockRepo.isTeamOwner.mockResolvedValue(true);
     mockRepo.createTeamSession.mockResolvedValue(10);
     mockRepo.getTeamSessionById.mockResolvedValue({
       id: 10,
@@ -671,7 +694,9 @@ describe("getWorkspaceStatsController", () => {
       getWorkspaceStats: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 

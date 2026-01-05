@@ -11,7 +11,9 @@ import {
 } from "./auth-controller";
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 
-vi.mock("../repositories/workspace-auth");
+vi.mock("../repositories/workspace-auth", () => ({
+  WorkspaceAuthRepository: vi.fn(),
+}));
 vi.mock("@sprintjam/services");
 vi.mock("@sprintjam/utils", async () => {
   const actual = await vi.importActual("@sprintjam/utils");
@@ -38,7 +40,9 @@ describe("requestMagicLinkController", () => {
       createMagicLink: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.generateToken).mockResolvedValue("mock-token-123");
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token-123");
     vi.mocked(services.sendMagicLinkEmail).mockResolvedValue(undefined);
@@ -212,7 +216,9 @@ describe("verifyMagicLinkController", () => {
       getUserByEmail: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.generateToken).mockResolvedValue("session-token-123");
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-session-123");
   });
@@ -365,7 +371,9 @@ describe("getCurrentUserController", () => {
       getUserTeams: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-session");
   });
 
@@ -525,7 +533,9 @@ describe("logoutController", () => {
       invalidateSession: vi.fn(),
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(() => mockRepo);
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
   });
 
