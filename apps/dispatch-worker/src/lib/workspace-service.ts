@@ -35,7 +35,12 @@ export interface WorkspaceStats {
   completedSessions: number;
 }
 
-function getAuthToken(): string | null {
+export interface WorkspaceProfile {
+  user: WorkspaceUser;
+  teams: Team[];
+}
+
+export function getAuthToken(): string | null {
   return safeLocalStorage.get(WORKSPACE_TOKEN_STORAGE_KEY);
 }
 
@@ -43,22 +48,22 @@ function setAuthToken(token: string): void {
   safeLocalStorage.set(WORKSPACE_TOKEN_STORAGE_KEY, token);
 }
 
-function removeAuthToken(): void {
+export function removeAuthToken(): void {
   safeLocalStorage.remove(WORKSPACE_TOKEN_STORAGE_KEY);
 }
 
-async function fetchWithAuth<T>(
+export async function workspaceRequest<T>(
   url: string,
-  options: RequestInit = {},
+  options: RequestInit = {}
 ): Promise<T> {
   const token = getAuthToken();
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
 
   if (token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(url, {
@@ -66,30 +71,46 @@ async function fetchWithAuth<T>(
     headers,
   });
 
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.error || `Request failed: ${response.status}`);
+  let parsed: unknown = null;
+  try {
+    parsed = await response.json();
+  } catch {
+    parsed = null;
   }
 
-  return response.json();
+  if (!response.ok) {
+    const errorMessage =
+      (parsed as { error?: string })?.error ||
+      response.statusText ||
+      `Request failed: ${response.status}`;
+    if (response.status === 401) {
+      removeAuthToken();
+    }
+    throw new Error(errorMessage);
+  }
+
+  return parsed as T;
 }
 
 export async function requestMagicLink(email: string): Promise<void> {
-  await fetchWithAuth<{ message: string }>(`${API_BASE_URL}/auth/magic-link`, {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
+  await workspaceRequest<{ message: string }>(
+    `${API_BASE_URL}/auth/magic-link`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }
+  );
 }
 
 export async function verifyMagicLink(
-  token: string,
+  token: string
 ): Promise<{ user: WorkspaceUser; sessionToken: string; expiresAt: number }> {
-  const data = await fetchWithAuth<{
+  const data = await workspaceRequest<{
     user: WorkspaceUser;
     sessionToken: string;
     expiresAt: number;
   }>(`${API_BASE_URL}/auth/verify`, {
-    method: "POST",
+    method: 'POST',
     body: JSON.stringify({ token }),
   });
 
@@ -105,8 +126,8 @@ export async function getCurrentUser(): Promise<{
   if (!token) return null;
 
   try {
-    return await fetchWithAuth<{ user: WorkspaceUser; teams: Team[] }>(
-      `${API_BASE_URL}/auth/me`,
+    return await workspaceRequest<{ user: WorkspaceUser; teams: Team[] }>(
+      `${API_BASE_URL}/auth/me`
     );
   } catch {
     removeAuthToken();
@@ -116,50 +137,54 @@ export async function getCurrentUser(): Promise<{
 
 export async function logout(): Promise<void> {
   try {
-    await fetchWithAuth(`${API_BASE_URL}/auth/logout`, { method: "POST" });
+    await workspaceRequest(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
   } finally {
     removeAuthToken();
   }
 }
 
 export async function listTeams(): Promise<Team[]> {
-  const data = await fetchWithAuth<{ teams: Team[] }>(`${API_BASE_URL}/teams`);
+  const data = await workspaceRequest<{ teams: Team[] }>(
+    `${API_BASE_URL}/teams`
+  );
   return data.teams;
 }
 
 export async function createTeam(name: string): Promise<Team> {
-  const data = await fetchWithAuth<{ team: Team }>(`${API_BASE_URL}/teams`, {
-    method: "POST",
+  const data = await workspaceRequest<{ team: Team }>(`${API_BASE_URL}/teams`, {
+    method: 'POST',
     body: JSON.stringify({ name }),
   });
   return data.team;
 }
 
 export async function getTeam(teamId: number): Promise<Team> {
-  const data = await fetchWithAuth<{ team: Team }>(
-    `${API_BASE_URL}/teams/${teamId}`,
+  const data = await workspaceRequest<{ team: Team }>(
+    `${API_BASE_URL}/teams/${teamId}`
   );
   return data.team;
 }
 
 export async function updateTeam(teamId: number, name: string): Promise<Team> {
-  const data = await fetchWithAuth<{ team: Team }>(
+  const data = await workspaceRequest<{ team: Team }>(
     `${API_BASE_URL}/teams/${teamId}`,
     {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify({ name }),
-    },
+    }
   );
   return data.team;
 }
 
 export async function deleteTeam(teamId: number): Promise<void> {
-  await fetchWithAuth(`${API_BASE_URL}/teams/${teamId}`, { method: "DELETE" });
+  await workspaceRequest(`${API_BASE_URL}/teams/${teamId}`, {
+    method: 'DELETE',
+  });
 }
 
 export async function listTeamSessions(teamId: number): Promise<TeamSession[]> {
-  const data = await fetchWithAuth<{ sessions: TeamSession[] }>(
-    `${API_BASE_URL}/teams/${teamId}/sessions`,
+  const data = await workspaceRequest<{ sessions: TeamSession[] }>(
+    `${API_BASE_URL}/teams/${teamId}/sessions`
   );
   return data.sessions;
 }
@@ -168,31 +193,31 @@ export async function createTeamSession(
   teamId: number,
   name: string,
   roomKey: string,
-  metadata?: Record<string, unknown>,
+  metadata?: Record<string, unknown>
 ): Promise<TeamSession> {
-  const data = await fetchWithAuth<{ session: TeamSession }>(
+  const data = await workspaceRequest<{ session: TeamSession }>(
     `${API_BASE_URL}/teams/${teamId}/sessions`,
     {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ name, roomKey, metadata }),
-    },
+    }
   );
   return data.session;
 }
 
 export async function getTeamSession(
   teamId: number,
-  sessionId: number,
+  sessionId: number
 ): Promise<TeamSession> {
-  const data = await fetchWithAuth<{ session: TeamSession }>(
-    `${API_BASE_URL}/teams/${teamId}/sessions/${sessionId}`,
+  const data = await workspaceRequest<{ session: TeamSession }>(
+    `${API_BASE_URL}/teams/${teamId}/sessions/${sessionId}`
   );
   return data.session;
 }
 
 export async function getWorkspaceStats(): Promise<WorkspaceStats> {
-  const data = await fetchWithAuth<{ stats: WorkspaceStats }>(
-    `${API_BASE_URL}/workspace/stats`,
+  const data = await workspaceRequest<{ stats: WorkspaceStats }>(
+    `${API_BASE_URL}/workspace/stats`
   );
   return data.stats;
 }
@@ -200,5 +225,3 @@ export async function getWorkspaceStats(): Promise<WorkspaceStats> {
 export function isAuthenticated(): boolean {
   return !!getAuthToken();
 }
-
-export { getAuthToken, setAuthToken, removeAuthToken };

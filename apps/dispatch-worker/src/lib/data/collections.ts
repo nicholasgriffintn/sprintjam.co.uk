@@ -6,9 +6,18 @@ import {
 } from "@tanstack/query-db-collection";
 
 import { API_BASE_URL } from "@/constants";
+import {
+  workspaceRequest,
+  getAuthToken,
+  type WorkspaceProfile,
+  type WorkspaceStats,
+  type TeamSession,
+} from "@/lib/workspace-service";
 import type { RoomData, ServerDefaults } from "@/types";
 
 export const SERVER_DEFAULTS_DOCUMENT_KEY = "server-defaults";
+export const WORKSPACE_PROFILE_DOCUMENT_KEY = "workspace-profile";
+export const WORKSPACE_STATS_DOCUMENT_KEY = "workspace-stats";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +83,54 @@ export const serverDefaultsCollection = createCollection<
   string
 >(queryCollectionOptions(serverDefaultsCollectionConfig));
 
+const workspaceProfileCollectionConfig = {
+  id: "workspace-profile",
+  queryKey: ["workspace-profile"],
+  queryFn: async () => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error("Not authenticated");
+    }
+
+    const profile = await workspaceRequest<WorkspaceProfile>(
+      `${API_BASE_URL}/auth/me`,
+    );
+    return [profile];
+  },
+  getKey: () => WORKSPACE_PROFILE_DOCUMENT_KEY,
+  queryClient,
+  staleTime: 1000 * 60 * 5,
+} satisfies QueryCollectionConfig<WorkspaceProfile>;
+
+export const workspaceProfileCollection = createCollection<
+  WorkspaceProfile,
+  string
+>(queryCollectionOptions(workspaceProfileCollectionConfig));
+
+const workspaceStatsCollectionConfig = {
+  id: "workspace-stats",
+  queryKey: ["workspace-stats"],
+  queryFn: async () => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error("Not authenticated");
+    }
+
+    const stats = await workspaceRequest<WorkspaceStats>(
+      `${API_BASE_URL}/workspace/stats`,
+    );
+    return [stats];
+  },
+  getKey: () => WORKSPACE_STATS_DOCUMENT_KEY,
+  queryClient,
+  staleTime: 1000 * 60 * 2,
+} satisfies QueryCollectionConfig<WorkspaceStats>;
+
+export const workspaceStatsCollection = createCollection<
+  WorkspaceStats,
+  string
+>(queryCollectionOptions(workspaceStatsCollectionConfig));
+
 const roomsCollectionConfig = {
   id: "rooms",
   queryKey: ["rooms"],
@@ -87,9 +144,32 @@ export const roomsCollection = createCollection<RoomData, string>(
   queryCollectionOptions(roomsCollectionConfig),
 );
 
+const teamSessionsCollectionConfig = {
+  id: "team-sessions",
+  queryKey: ["team-sessions"],
+  startSync: false,
+  queryFn: async () => [],
+  queryClient,
+  getKey: (session) => `${session.teamId}:${session.id}`,
+} satisfies QueryCollectionConfig<TeamSession>;
+
+export const teamSessionsCollection = createCollection<TeamSession, string>(
+  queryCollectionOptions(teamSessionsCollectionConfig),
+);
+
 export const ensureServerDefaultsCollectionReady = createEnsureCollectionReady(
   serverDefaultsCollection,
 );
 
+export const ensureWorkspaceProfileCollectionReady =
+  createEnsureCollectionReady(workspaceProfileCollection);
+
+export const ensureWorkspaceStatsCollectionReady = createEnsureCollectionReady(
+  workspaceStatsCollection,
+);
+
 export const ensureRoomsCollectionReady =
   createEnsureCollectionReady(roomsCollection);
+
+export const ensureTeamSessionsCollectionReady =
+  createEnsureCollectionReady(teamSessionsCollection);

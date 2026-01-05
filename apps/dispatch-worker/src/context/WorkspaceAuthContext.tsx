@@ -5,15 +5,18 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   type ReactNode,
 } from "react";
 
+import { logout as logoutService } from "@/lib/workspace-service";
+import type { Team, WorkspaceUser } from "@/lib/workspace-service";
+import { useWorkspaceProfile } from "@/lib/data/hooks";
 import {
-  getCurrentUser,
-  logout as logoutService,
-  type WorkspaceUser,
-  type Team,
-} from "@/lib/workspace-service";
+  WORKSPACE_PROFILE_DOCUMENT_KEY,
+  ensureWorkspaceProfileCollectionReady,
+  workspaceProfileCollection,
+} from "@/lib/data/collections";
 
 interface WorkspaceAuthContextValue {
   user: WorkspaceUser | null;
@@ -29,24 +32,20 @@ const WorkspaceAuthContext = createContext<WorkspaceAuthContextValue | null>(
 );
 
 export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<WorkspaceUser | null>(null);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const profile = useWorkspaceProfile();
   const [isLoading, setIsLoading] = useState(true);
+  const hasBootstrapped = useRef(false);
 
   const refreshAuth = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await getCurrentUser();
-      if (result) {
-        setUser(result.user);
-        setTeams(result.teams);
-      } else {
-        setUser(null);
-        setTeams([]);
-      }
-    } catch {
-      setUser(null);
-      setTeams([]);
+      await ensureWorkspaceProfileCollectionReady();
+      await workspaceProfileCollection.utils.refetch({ throwOnError: false });
+    } catch (error) {
+      console.error("Failed to refresh workspace auth", error);
+      workspaceProfileCollection.utils.writeDelete(
+        WORKSPACE_PROFILE_DOCUMENT_KEY,
+      );
     } finally {
       setIsLoading(false);
     }
@@ -55,26 +54,33 @@ export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await logoutService();
+      await ensureWorkspaceProfileCollectionReady();
+      workspaceProfileCollection.utils.writeDelete(
+        WORKSPACE_PROFILE_DOCUMENT_KEY,
+      );
     } finally {
-      setUser(null);
-      setTeams([]);
+      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    refreshAuth();
+    if (hasBootstrapped.current) {
+      return;
+    }
+    hasBootstrapped.current = true;
+    void refreshAuth();
   }, [refreshAuth]);
 
   const value = useMemo<WorkspaceAuthContextValue>(
     () => ({
-      user,
-      teams,
+      user: profile?.user ?? null,
+      teams: profile?.teams ?? [],
       isLoading,
-      isAuthenticated: !!user,
+      isAuthenticated: Boolean(profile?.user),
       refreshAuth,
       logout,
     }),
-    [user, teams, isLoading, refreshAuth, logout],
+    [profile, isLoading, refreshAuth, logout],
   );
 
   return (
