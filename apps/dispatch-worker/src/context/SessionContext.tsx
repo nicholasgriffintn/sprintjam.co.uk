@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -10,6 +11,7 @@ import {
 import { useUserPersistence } from "@/hooks/useUserPersistence";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
+import { getScreenFromPath, navigateTo } from "@/utils/navigation";
 
 export type AppScreen =
   | "welcome"
@@ -35,7 +37,7 @@ interface SessionStateContextValue {
 
 interface SessionActionsContextValue {
   setScreen: (screen: AppScreen) => void;
-  setJoinFlowMode: (mode: 'join' | 'create') => void;
+  setJoinFlowMode: (mode: "join" | "create") => void;
   setName: (name: string) => void;
   setRoomKey: (key: string) => void;
   setPasscode: (passcode: string) => void;
@@ -62,48 +64,14 @@ export interface SessionContextValue
     SessionErrorContextValue {}
 
 const SessionStateContext = createContext<SessionStateContextValue | undefined>(
-  undefined
+  undefined,
 );
 const SessionActionsContext = createContext<
   SessionActionsContextValue | undefined
 >(undefined);
 const SessionErrorContext = createContext<SessionErrorContextValue | undefined>(
-  undefined
+  undefined,
 );
-
-function getScreenFromPath(path: string): AppScreen {
-  if (path === '/' || !path) {
-    return 'welcome';
-  }
-
-  const pathWithoutQuery = path.split('?')[0];
-  const pathWithoutTrailingSlash = pathWithoutQuery.endsWith('/')
-    ? pathWithoutQuery.slice(0, -1)
-    : pathWithoutQuery;
-
-  switch (pathWithoutTrailingSlash) {
-    case '/auth/login':
-      return 'login';
-    case '/auth/verify':
-      return 'verify';
-    case '/workspace':
-      return 'workspace';
-    case '/create':
-      return 'create';
-    case '/join':
-      return 'join';
-    case '/room':
-      return 'room';
-    case '/privacy':
-      return 'privacy';
-    case '/terms':
-      return 'terms';
-    case '/changelog':
-      return 'changelog';
-  }
-
-  return '404';
-}
 
 export const SessionProvider = ({
   currentPath,
@@ -114,14 +82,14 @@ export const SessionProvider = ({
 }) => {
   const screenFromPath = getScreenFromPath(currentPath);
   const [screen, setScreen] = useState<AppScreen>(screenFromPath);
-  const [joinFlowMode, setJoinFlowMode] = useState<'join' | 'create'>(
-    screenFromPath === 'create' ? 'create' : 'join'
+  const [joinFlowMode, setJoinFlowMode] = useState<"join" | "create">(
+    screenFromPath === "create" ? "create" : "join",
   );
-  const [name, setName] = useState('');
-  const [roomKey, setRoomKey] = useState('');
-  const [passcode, setPasscode] = useState('');
+  const [name, setName] = useState("");
+  const [roomKey, setRoomKey] = useState("");
+  const [passcode, setPasscode] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(null);
-  const [error, setErrorState] = useState('');
+  const [error, setErrorState] = useState("");
   const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
 
   const setError = useCallback(
@@ -129,64 +97,81 @@ export const SessionProvider = ({
       setErrorState(message);
       setErrorKind(kind);
     },
-    []
+    [],
   );
 
   const clearError = useCallback(() => {
-    setErrorState('');
+    setErrorState("");
     setErrorKind(null);
   }, []);
 
   const goHome = useCallback(() => {
-    setPasscode('');
-    setJoinFlowMode('join');
-    setScreen('welcome');
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("welcome");
+    navigateTo("welcome");
     clearError();
   }, [clearError]);
 
   const goToLogin = useCallback(() => {
-    setPasscode('');
-    setJoinFlowMode('join');
-    setScreen('login');
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("login");
+    navigateTo("login");
     clearError();
   }, [clearError]);
 
   const goToWorkspace = useCallback(() => {
-    setPasscode('');
-    setJoinFlowMode('join');
-    setScreen('workspace');
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("workspace");
+    navigateTo("workspace");
     clearError();
   }, [clearError]);
 
   const goToRoom = useCallback(
     (roomKey: string) => {
       setRoomKey(roomKey);
-      setScreen('room');
+      setScreen("room");
+      navigateTo("room");
       clearError();
     },
-    [clearError]
+    [clearError],
   );
 
   const startCreateFlow = useCallback(() => {
-    setPasscode('');
-    setJoinFlowMode('create');
-    setScreen('create');
+    setPasscode("");
+    setJoinFlowMode("create");
+    setScreen("create");
+    navigateTo("create");
     clearError();
   }, [clearError]);
 
   const startJoinFlow = useCallback(() => {
-    setPasscode('');
-    setJoinFlowMode('join');
-    setScreen('join');
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("join");
+    navigateTo("join");
     clearError();
   }, [clearError]);
 
   useUrlParams({
     onJoinRoom: (joinRoomKey) => {
       setRoomKey(joinRoomKey);
-      setScreen('join');
+      setScreen("join");
     },
   });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const newScreen = getScreenFromPath(window.location.pathname);
+      setScreen(newScreen);
+      clearError();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [clearError]);
 
   useUserPersistence({
     name,
@@ -202,7 +187,7 @@ export const SessionProvider = ({
       passcode,
       selectedAvatar,
     }),
-    [screen, joinFlowMode, name, roomKey, passcode, selectedAvatar]
+    [screen, joinFlowMode, name, roomKey, passcode, selectedAvatar],
   );
 
   const actionsValue = useMemo<SessionActionsContextValue>(
@@ -230,7 +215,7 @@ export const SessionProvider = ({
       goHome,
       startCreateFlow,
       startJoinFlow,
-    ]
+    ],
   );
 
   const errorValue = useMemo<SessionErrorContextValue>(
@@ -240,7 +225,7 @@ export const SessionProvider = ({
       setError,
       clearError,
     }),
-    [error, errorKind, setError, clearError]
+    [error, errorKind, setError, clearError],
   );
 
   return (
