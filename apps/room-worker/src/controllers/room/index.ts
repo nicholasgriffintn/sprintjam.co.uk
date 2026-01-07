@@ -38,10 +38,6 @@ export async function handleHttpRequest(
   request: Request,
 ): Promise<CfResponse | null> {
   try {
-    console.log(
-      '[room-worker] handleHttpRequest called with URL:',
-      request.url
-    );
     const url = new URL(request.url);
 
     if (url.pathname === '/initialize' && request.method === 'POST') {
