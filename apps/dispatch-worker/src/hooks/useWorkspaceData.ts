@@ -122,28 +122,29 @@ export const useWorkspaceData = () => {
     try {
       await ensureWorkspaceProfileCollectionReady();
 
-    if (forceRefresh) {
-      await workspaceProfileCollection.utils.refetch({ throwOnError: true });
-    }
-
-    const currentProfile = workspaceProfileCollection.get(
-      WORKSPACE_PROFILE_DOCUMENT_KEY,
-    );
-    const hasStats =
-      workspaceStatsCollection.get(WORKSPACE_STATS_DOCUMENT_KEY) !== undefined;
-
-    if (currentProfile?.user) {
-      const shouldRefetchStats = forceRefresh || !hasStats;
-
-      if (shouldRefetchStats) {
-        await workspaceStatsCollection.utils.refetch({ throwOnError: true });
-      } else {
-        await ensureWorkspaceStatsCollectionReady();
+      if (forceRefresh) {
+        await workspaceProfileCollection.utils.refetch({ throwOnError: true });
       }
-    }
 
-    setError(null);
-  } catch (err) {
+      const currentProfile = workspaceProfileCollection.get(
+        WORKSPACE_PROFILE_DOCUMENT_KEY
+      );
+      const hasStats =
+        workspaceStatsCollection.get(WORKSPACE_STATS_DOCUMENT_KEY) !==
+        undefined;
+
+      if (currentProfile?.user) {
+        const shouldRefetchStats = forceRefresh || !hasStats;
+
+        if (shouldRefetchStats) {
+          await workspaceStatsCollection.utils.refetch({ throwOnError: true });
+        } else {
+          await ensureWorkspaceStatsCollectionReady();
+        }
+      }
+
+      setError(null);
+    } catch (err) {
       const message =
         err instanceof Error
           ? err.message
@@ -351,7 +352,7 @@ export const useWorkspaceData = () => {
     }: CreateSessionPayload): Promise<TeamSession | null> => {
       if (!profile) {
         setActionError(
-          "You need to load the workspace before creating sessions",
+          'You need to load the workspace before creating sessions'
         );
         return null;
       }
@@ -368,14 +369,14 @@ export const useWorkspaceData = () => {
         return session;
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Unable to create session";
+          err instanceof Error ? err.message : 'Unable to create session';
         setActionError(message);
         return null;
       } finally {
         setIsMutating(false);
       }
     },
-    [refreshSessions],
+    [profile]
   );
 
   const handleLogout = useCallback(async () => {

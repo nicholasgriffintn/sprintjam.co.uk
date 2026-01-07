@@ -68,17 +68,7 @@ export class WorkspaceAuthRepository {
   }
 
   async getOrCreateOrganisation(domain: string): Promise<number> {
-    const existing = await this.db
-      .select()
-      .from(organisations)
-      .where(eq(organisations.domain, domain.toLowerCase()))
-      .get();
-
-    if (existing) {
-      return existing.id;
-    }
-
-    const result = await this.db
+    await this.db
       .insert(organisations)
       .values({
         domain: domain.toLowerCase(),
@@ -86,31 +76,24 @@ export class WorkspaceAuthRepository {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       })
-      .returning({ id: organisations.id });
+      .onConflictDoNothing();
 
-    return result[0].id;
+    const result = await this.db
+      .select()
+      .from(organisations)
+      .where(eq(organisations.domain, domain.toLowerCase()))
+      .get();
+
+    return result!.id;
   }
 
   async getOrCreateUser(
     email: string,
     organisationId: number,
   ): Promise<number> {
-    const existing = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.email, email.toLowerCase()))
-      .get();
-
-    if (existing) {
-      await this.db
-        .update(users)
-        .set({ lastLoginAt: Date.now(), updatedAt: Date.now() })
-        .where(eq(users.id, existing.id));
-      return existing.id;
-    }
-
     const domain = extractDomain(email);
-    const result = await this.db
+
+    await this.db
       .insert(users)
       .values({
         email: email.toLowerCase(),
@@ -120,9 +103,20 @@ export class WorkspaceAuthRepository {
         updatedAt: Date.now(),
         lastLoginAt: Date.now(),
       })
-      .returning({ id: users.id });
+      .onConflictDoNothing();
 
-    return result[0].id;
+    const existing = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .get();
+
+    await this.db
+      .update(users)
+      .set({ lastLoginAt: Date.now(), updatedAt: Date.now() })
+      .where(eq(users.id, existing!.id));
+
+    return existing!.id;
   }
 
   async createSession(
