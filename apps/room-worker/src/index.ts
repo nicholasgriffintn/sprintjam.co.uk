@@ -307,8 +307,19 @@ async function handleApiRequest(
 
 export default class extends WorkerEntrypoint {
   async fetch(request: CfRequest): Promise<CfResponse> {
-    const env = this.env as RoomWorkerEnv;
-    return handleRequest(request, env);
+    try {
+      const env = this.env as RoomWorkerEnv;
+      return handleRequest(request, env);
+    } catch (error) {
+      console.error('[room-worker] fetch errored:', error);
+      return new Response(
+        JSON.stringify({ error: '[room-worker] Internal Server Error' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
+    }
   }
 }
 

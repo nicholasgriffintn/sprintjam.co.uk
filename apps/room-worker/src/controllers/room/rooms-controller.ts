@@ -16,6 +16,7 @@ export async function createRoomController(
     settings?: Partial<RoomSettings>;
     avatar?: string;
   }>();
+
   const name = body?.name;
   const passcode = body?.passcode;
   const settings = body?.settings;
