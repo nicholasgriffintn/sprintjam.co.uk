@@ -45,8 +45,7 @@ import {
   ROOM_ROW_ID,
 } from '@sprintjam/utils/constants';
 
-// TODO: This causes an error: " Unexpected token 'E', "Error: Rol"... is not valid JSON"
-// import migrations from '../../drizzle/migrations';
+import migrations from '../../drizzle/migrations';
 
 export class PlanningRoomRepository {
   private readonly db: DB;
