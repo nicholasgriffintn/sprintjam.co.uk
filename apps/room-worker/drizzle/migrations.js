@@ -1,5 +1,5 @@
 import journal from './meta/_journal.json';
-import m0000 from './0000_cold_squirrel_girl.sql?raw';
+import m0000 from './0000_cold_squirrel_girl.sql';
 
   export default {
     journal,
