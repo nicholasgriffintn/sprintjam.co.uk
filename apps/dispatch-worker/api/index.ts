@@ -24,32 +24,43 @@ async function handleRequest(
   request: CfRequest,
   env: DispatchWorkerEnv
 ): Promise<CfResponse> {
-  const url = new URL(request.url);
+  try {
+    const url = new URL(request.url);
 
-  if (url.pathname === '/robots.txt') {
-    return handleRobotsTxt(env);
-  }
-
-  if (url.pathname.startsWith('/api/')) {
-    const path = url.pathname.substring(5); // Remove '/api/'
-
-    if (
-      path.startsWith('auth/') ||
-      path === 'teams' ||
-      path.startsWith('teams/') ||
-      path.startsWith('workspace/')
-    ) {
-      return await env.AUTH_WORKER.fetch(request);
+    if (url.pathname === '/robots.txt') {
+      return handleRobotsTxt(env);
     }
 
-    return await env.ROOM_WORKER.fetch(request);
-  }
+    if (url.pathname.startsWith('/api/')) {
+      const path = url.pathname.substring(5); // Remove '/api/'
 
-  if (url.pathname === '/ws') {
-    return await env.ROOM_WORKER.fetch(request);
-  }
+      if (
+        path.startsWith('auth/') ||
+        path === 'teams' ||
+        path.startsWith('teams/') ||
+        path.startsWith('workspace/')
+      ) {
+        return await env.AUTH_WORKER.fetch(request);
+      }
 
-  return env.ASSETS.fetch(request);
+      return await env.ROOM_WORKER.fetch(request);
+    }
+
+    if (url.pathname === '/ws') {
+      return await env.ROOM_WORKER.fetch(request);
+    }
+
+    return env.ASSETS.fetch(request);
+  } catch (error) {
+    console.error('[dispatch-worker] Internal Server Error', error);
+    return new Response(
+      JSON.stringify({ error: '[dispatch-worker] handleRequest errored' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    ) as unknown as CfResponse;
+  }
 }
 
 export default {

@@ -61,51 +61,62 @@ async function handleRequest(
   request: CfRequest,
   env: RoomWorkerEnv
 ): Promise<CfResponse> {
-  const url = new URL(request.url);
-  const path = url.pathname;
+  try {
+    const url = new URL(request.url);
+    const path = url.pathname;
 
-  if (path === '' || path === '/') {
+    if (path === '' || path === '/') {
+      return new Response(
+        JSON.stringify({
+          status: 'success',
+          message: 'Sprintjam Room Worker is running.',
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      ) as unknown as CfResponse;
+    }
+
+    if (path === '/ws') {
+      if (request.headers.get('Upgrade') !== 'websocket') {
+        return new Response('Expected WebSocket', {
+          status: 400,
+        }) as unknown as CfResponse;
+      }
+
+      const roomKey = url.searchParams.get('room');
+      const userName = url.searchParams.get('name');
+      const sessionToken = url.searchParams.get('token');
+
+      if (!roomKey || !userName || !sessionToken) {
+        return new Response('Missing room key, user name, or token', {
+          status: 400,
+        }) as unknown as CfResponse;
+      }
+
+      const roomStub = getRoomStub(env, roomKey);
+      return roomStub.fetch(request);
+    }
+
+    if (path.startsWith('/api/')) {
+      return handleApiRequest(url, request, env);
+    }
+
+    return new Response(JSON.stringify({ error: 'Main API Route Not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    }) as unknown as CfResponse;
+  } catch (error) {
+    console.error('[room-worker] handleRequest errored:', error);
     return new Response(
-      JSON.stringify({
-        status: 'success',
-        message: 'Sprintjam Room Worker is running.',
-      }),
+      JSON.stringify({ error: '[room-worker] Internal Server Error' }),
       {
-        status: 200,
+        status: 500,
         headers: { 'Content-Type': 'application/json' },
       }
     ) as unknown as CfResponse;
   }
-
-  if (path === '/ws') {
-    if (request.headers.get('Upgrade') !== 'websocket') {
-      return new Response('Expected WebSocket', {
-        status: 400,
-      }) as unknown as CfResponse;
-    }
-
-    const roomKey = url.searchParams.get('room');
-    const userName = url.searchParams.get('name');
-    const sessionToken = url.searchParams.get('token');
-
-    if (!roomKey || !userName || !sessionToken) {
-      return new Response('Missing room key, user name, or token', {
-        status: 400,
-      }) as unknown as CfResponse;
-    }
-
-    const roomStub = getRoomStub(env, roomKey);
-    return roomStub.fetch(request);
-  }
-
-  if (path.startsWith('/api/')) {
-    return handleApiRequest(url, request, env);
-  }
-
-  return new Response(JSON.stringify({ error: 'Main API Route Not found' }), {
-    status: 404,
-    headers: { 'Content-Type': 'application/json' },
-  }) as unknown as CfResponse;
 }
 
 async function handleApiRequest(
@@ -113,174 +124,185 @@ async function handleApiRequest(
   request: CfRequest,
   env: RoomWorkerEnv
 ): Promise<CfResponse> {
-  const path = url.pathname.startsWith('/api/')
-    ? url.pathname.substring(5)
-    : url.pathname.substring(1);
+  try {
+    const path = url.pathname.startsWith('/api/')
+      ? url.pathname.substring(5)
+      : url.pathname.substring(1);
 
-  // Room management routes
-  if (path === 'defaults' && request.method === 'GET') {
-    return getDefaultsController();
+    // Room management routes
+    if (path === 'defaults' && request.method === 'GET') {
+      return getDefaultsController();
+    }
+
+    if (path === 'rooms' && request.method === 'POST') {
+      return createRoomController(request, env);
+    }
+
+    if (path === 'rooms/join' && request.method === 'POST') {
+      return joinRoomController(request, env);
+    }
+
+    if (path === 'rooms/settings' && request.method === 'GET') {
+      return getRoomSettingsController(url, env);
+    }
+
+    if (path === 'rooms/settings' && request.method === 'PUT') {
+      return updateRoomSettingsController(request, env);
+    }
+
+    // Jira routes
+    if (path === 'jira/ticket' && request.method === 'GET') {
+      return getJiraTicketController(url, env);
+    }
+
+    if (path === 'jira/boards' && request.method === 'GET') {
+      return getJiraBoardsController(url, env);
+    }
+
+    if (path === 'jira/sprints' && request.method === 'GET') {
+      return getJiraSprintsController(url, env);
+    }
+
+    if (path === 'jira/issues' && request.method === 'GET') {
+      return getJiraIssuesController(url, env);
+    }
+
+    if (
+      path.startsWith('jira/ticket/') &&
+      path.endsWith('/storyPoints') &&
+      request.method === 'PUT'
+    ) {
+      const ticketId = path.split('/')[2];
+      return updateJiraStoryPointsController(ticketId!, request, env);
+    }
+
+    if (path === 'jira/oauth/authorize' && request.method === 'POST') {
+      return initiateJiraOAuthController(request, env);
+    }
+
+    if (path === 'jira/oauth/callback' && request.method === 'GET') {
+      return handleJiraOAuthCallbackController(url, env);
+    }
+
+    if (path === 'jira/oauth/status' && request.method === 'GET') {
+      return getJiraOAuthStatusController(url, env);
+    }
+
+    if (path === 'jira/oauth/fields' && request.method === 'GET') {
+      return getJiraFieldsController(url, env);
+    }
+
+    if (path === 'jira/oauth/fields' && request.method === 'PUT') {
+      return updateJiraFieldsController(request, env);
+    }
+
+    if (path === 'jira/oauth/revoke' && request.method === 'DELETE') {
+      return revokeJiraOAuthController(request, env);
+    }
+
+    // Linear routes
+    if (path === 'linear/issue' && request.method === 'GET') {
+      return getLinearIssueController(url, env);
+    }
+
+    if (path === 'linear/teams' && request.method === 'GET') {
+      return getLinearTeamsController(url, env);
+    }
+
+    if (path === 'linear/cycles' && request.method === 'GET') {
+      return getLinearCyclesController(url, env);
+    }
+
+    if (path === 'linear/issues' && request.method === 'GET') {
+      return getLinearIssuesController(url, env);
+    }
+
+    if (
+      path.startsWith('linear/issue/') &&
+      path.endsWith('/estimate') &&
+      request.method === 'PUT'
+    ) {
+      const issueId = path.split('/')[2];
+      return updateLinearEstimateController(issueId!, request, env);
+    }
+
+    if (path === 'linear/oauth/authorize' && request.method === 'POST') {
+      return initiateLinearOAuthController(request, env);
+    }
+
+    if (path === 'linear/oauth/callback' && request.method === 'GET') {
+      return handleLinearOAuthCallbackController(url, env);
+    }
+
+    if (path === 'linear/oauth/status' && request.method === 'GET') {
+      return getLinearOAuthStatusController(url, env);
+    }
+
+    if (path === 'linear/oauth/revoke' && request.method === 'DELETE') {
+      return revokeLinearOAuthController(request, env);
+    }
+
+    // GitHub routes
+    if (path === 'github/issue' && request.method === 'GET') {
+      return getGithubIssueController(url, env);
+    }
+
+    if (path === 'github/repos' && request.method === 'GET') {
+      return getGithubReposController(url, env);
+    }
+
+    if (path === 'github/milestones' && request.method === 'GET') {
+      return getGithubMilestonesController(url, env);
+    }
+
+    if (path === 'github/issues' && request.method === 'GET') {
+      return getGithubIssuesController(url, env);
+    }
+
+    if (
+      path.startsWith('github/issue/') &&
+      path.endsWith('/estimate') &&
+      request.method === 'PUT'
+    ) {
+      const issueId = decodeURIComponent(path.split('/')[2] ?? '');
+      return updateGithubEstimateController(issueId, request, env);
+    }
+
+    if (path === 'github/oauth/authorize' && request.method === 'POST') {
+      return initiateGithubOAuthController(request, env);
+    }
+
+    if (path === 'github/oauth/callback' && request.method === 'GET') {
+      return handleGithubOAuthCallbackController(url, env);
+    }
+
+    if (path === 'github/oauth/status' && request.method === 'GET') {
+      return getGithubOAuthStatusController(url, env);
+    }
+
+    if (path === 'github/oauth/revoke' && request.method === 'DELETE') {
+      return revokeGithubOAuthController(request, env);
+    }
+
+    // Feedback route
+    if (path === 'feedback' && request.method === 'POST') {
+      return submitFeedbackController(request, env);
+    }
+
+    return new Response(JSON.stringify({ error: 'API Route Not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    }) as unknown as CfResponse;
+  } catch (error) {
+    console.error('[room-worker] handleApiRequest errored:', error);
+    return new Response(
+      JSON.stringify({ error: '[room-worker] Internal Server Error' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    ) as unknown as CfResponse;
   }
-
-  if (path === 'rooms' && request.method === 'POST') {
-    return createRoomController(request, env);
-  }
-
-  if (path === 'rooms/join' && request.method === 'POST') {
-    return joinRoomController(request, env);
-  }
-
-  if (path === 'rooms/settings' && request.method === 'GET') {
-    return getRoomSettingsController(url, env);
-  }
-
-  if (path === 'rooms/settings' && request.method === 'PUT') {
-    return updateRoomSettingsController(request, env);
-  }
-
-  // Jira routes
-  if (path === 'jira/ticket' && request.method === 'GET') {
-    return getJiraTicketController(url, env);
-  }
-
-  if (path === 'jira/boards' && request.method === 'GET') {
-    return getJiraBoardsController(url, env);
-  }
-
-  if (path === 'jira/sprints' && request.method === 'GET') {
-    return getJiraSprintsController(url, env);
-  }
-
-  if (path === 'jira/issues' && request.method === 'GET') {
-    return getJiraIssuesController(url, env);
-  }
-
-  if (
-    path.startsWith('jira/ticket/') &&
-    path.endsWith('/storyPoints') &&
-    request.method === 'PUT'
-  ) {
-    const ticketId = path.split('/')[2];
-    return updateJiraStoryPointsController(ticketId!, request, env);
-  }
-
-  if (path === 'jira/oauth/authorize' && request.method === 'POST') {
-    return initiateJiraOAuthController(request, env);
-  }
-
-  if (path === 'jira/oauth/callback' && request.method === 'GET') {
-    return handleJiraOAuthCallbackController(url, env);
-  }
-
-  if (path === 'jira/oauth/status' && request.method === 'GET') {
-    return getJiraOAuthStatusController(url, env);
-  }
-
-  if (path === 'jira/oauth/fields' && request.method === 'GET') {
-    return getJiraFieldsController(url, env);
-  }
-
-  if (path === 'jira/oauth/fields' && request.method === 'PUT') {
-    return updateJiraFieldsController(request, env);
-  }
-
-  if (path === 'jira/oauth/revoke' && request.method === 'DELETE') {
-    return revokeJiraOAuthController(request, env);
-  }
-
-  // Linear routes
-  if (path === 'linear/issue' && request.method === 'GET') {
-    return getLinearIssueController(url, env);
-  }
-
-  if (path === 'linear/teams' && request.method === 'GET') {
-    return getLinearTeamsController(url, env);
-  }
-
-  if (path === 'linear/cycles' && request.method === 'GET') {
-    return getLinearCyclesController(url, env);
-  }
-
-  if (path === 'linear/issues' && request.method === 'GET') {
-    return getLinearIssuesController(url, env);
-  }
-
-  if (
-    path.startsWith('linear/issue/') &&
-    path.endsWith('/estimate') &&
-    request.method === 'PUT'
-  ) {
-    const issueId = path.split('/')[2];
-    return updateLinearEstimateController(issueId!, request, env);
-  }
-
-  if (path === 'linear/oauth/authorize' && request.method === 'POST') {
-    return initiateLinearOAuthController(request, env);
-  }
-
-  if (path === 'linear/oauth/callback' && request.method === 'GET') {
-    return handleLinearOAuthCallbackController(url, env);
-  }
-
-  if (path === 'linear/oauth/status' && request.method === 'GET') {
-    return getLinearOAuthStatusController(url, env);
-  }
-
-  if (path === 'linear/oauth/revoke' && request.method === 'DELETE') {
-    return revokeLinearOAuthController(request, env);
-  }
-
-  // GitHub routes
-  if (path === 'github/issue' && request.method === 'GET') {
-    return getGithubIssueController(url, env);
-  }
-
-  if (path === 'github/repos' && request.method === 'GET') {
-    return getGithubReposController(url, env);
-  }
-
-  if (path === 'github/milestones' && request.method === 'GET') {
-    return getGithubMilestonesController(url, env);
-  }
-
-  if (path === 'github/issues' && request.method === 'GET') {
-    return getGithubIssuesController(url, env);
-  }
-
-  if (
-    path.startsWith('github/issue/') &&
-    path.endsWith('/estimate') &&
-    request.method === 'PUT'
-  ) {
-    const issueId = decodeURIComponent(path.split('/')[2] ?? '');
-    return updateGithubEstimateController(issueId, request, env);
-  }
-
-  if (path === 'github/oauth/authorize' && request.method === 'POST') {
-    return initiateGithubOAuthController(request, env);
-  }
-
-  if (path === 'github/oauth/callback' && request.method === 'GET') {
-    return handleGithubOAuthCallbackController(url, env);
-  }
-
-  if (path === 'github/oauth/status' && request.method === 'GET') {
-    return getGithubOAuthStatusController(url, env);
-  }
-
-  if (path === 'github/oauth/revoke' && request.method === 'DELETE') {
-    return revokeGithubOAuthController(request, env);
-  }
-
-  // Feedback route
-  if (path === 'feedback' && request.method === 'POST') {
-    return submitFeedbackController(request, env);
-  }
-
-  return new Response(JSON.stringify({ error: 'API Route Not found' }), {
-    status: 404,
-    headers: { 'Content-Type': 'application/json' },
-  }) as unknown as CfResponse;
 }
 
 export default class extends WorkerEntrypoint {
