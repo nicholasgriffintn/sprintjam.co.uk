@@ -1,5 +1,5 @@
 {
-  "name": "@sprintjam/dispatch-worker",
+  "name": "@sprintjam/app",
   "version": "0.0.0",
   "private": true,
   "type": "module",

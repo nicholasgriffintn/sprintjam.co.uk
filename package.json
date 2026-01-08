@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @sprintjam/dispatch-worker dev",
+    "dev": "pnpm --filter @sprintjam/app dev",
     "build": "turbo build",
     "typecheck": "turbo typecheck",
     "lint:monorepo": "sherif",
@@ -13,8 +13,8 @@
     "format:check": "prettier --check .",
     "test": "turbo test",
     "deploy": "turbo deploy",
-    "deploy:staging": "pnpm --filter @sprintjam/auth-worker deploy:staging && pnpm --filter @sprintjam/room-worker deploy:staging && pnpm --filter @sprintjam/dispatch-worker build:staging && pnpm --filter @sprintjam/dispatch-worker deploy:staging",
-    "deploy:prod": "pnpm --filter @sprintjam/auth-worker deploy:prod && pnpm --filter @sprintjam/room-worker deploy:prod && pnpm --filter @sprintjam/dispatch-worker build && pnpm --filter @sprintjam/dispatch-worker deploy:prod",
+    "deploy:staging": "pnpm --filter @sprintjam/auth-worker deploy:staging && pnpm --filter @sprintjam/room-worker deploy:staging && pnpm --filter @sprintjam/app build:staging && pnpm --filter @sprintjam/app deploy:staging",
+    "deploy:prod": "pnpm --filter @sprintjam/auth-worker deploy:prod && pnpm --filter @sprintjam/room-worker deploy:prod && pnpm --filter @sprintjam/app build && pnpm --filter @sprintjam/app deploy:prod",
     "db:migrate:local": "pnpm --filter @sprintjam/auth-worker db:migrate:local",
     "db:migrate:staging": "pnpm --filter @sprintjam/auth-worker db:migrate:staging",
     "db:migrate:prod": "pnpm --filter @sprintjam/auth-worker db:migrate:prod"

@@ -52,9 +52,9 @@ async function handleRequest(
 
     return env.ASSETS.fetch(request);
   } catch (error) {
-    console.error('[dispatch-worker] Internal Server Error', error);
+    console.error('[main] Internal Server Error', error);
     return new Response(
-      JSON.stringify({ error: '[dispatch-worker] handleRequest errored' }),
+      JSON.stringify({ error: '[main] handleRequest errored' }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
