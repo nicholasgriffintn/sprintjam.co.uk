@@ -20,6 +20,7 @@ interface UseRoomConnectionOptions {
     meta?: { reason?: "auth" | "disconnect"; code?: number },
   ) => void;
   reconnectSignal?: number;
+  skip?: boolean;
 }
 
 export const useRoomConnection = ({
@@ -31,8 +32,12 @@ export const useRoomConnection = ({
   onConnectionChange,
   onError,
   reconnectSignal = 0,
+  skip = false,
 }: UseRoomConnectionOptions) => {
   useEffect(() => {
+    if (skip) {
+      return;
+    }
     if (screen === "room" && name && activeRoomKey) {
       if (!authToken) {
         onError("Missing session token. Please rejoin the room.");
@@ -89,6 +94,7 @@ export const useRoomConnection = ({
       };
     }
   }, [
+    skip,
     screen,
     activeRoomKey,
     name,

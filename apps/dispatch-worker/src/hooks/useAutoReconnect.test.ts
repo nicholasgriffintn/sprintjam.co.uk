@@ -1,16 +1,8 @@
+/**
+ * @vitest-environment jsdom
+ */
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
-
-const effects: Array<() => void | (() => void)> = [];
-
-vi.mock("react", () => ({
-  useEffect: (fn: () => void | (() => void)) => {
-    const cleanup = fn();
-    if (cleanup) {
-      effects.push(cleanup);
-    }
-  },
-  useRef: (val: any) => ({ current: val }),
-}));
+import { renderHook, waitFor, cleanup } from "@testing-library/react";
 
 vi.mock("@/constants", () => ({
   AUTH_TOKEN_STORAGE_KEY: "AUTH_TOKEN",
@@ -42,46 +34,156 @@ describe("useAutoReconnect", () => {
   const onLoadingChange = vi.fn();
   const applyServerDefaults = vi.fn();
   const onAuthTokenRefresh = vi.fn();
+  const onReconnectComplete = vi.fn();
 
   beforeEach(() => {
     storage.clear();
-    effects.splice(0, effects.length);
     vi.resetAllMocks();
+    cleanup();
   });
 
-  it("avoids calling callbacks after cleanup (cancellation guard)", async () => {
-    const deferred: any = {};
+  it("calls onReconnectComplete after successful reconnect", async () => {
+    (joinRoom as Mock).mockResolvedValue({
+      room: { key: "ROOM1", moderator: "alice" },
+      defaults: undefined,
+      authToken: "tok-new",
+    });
+    storage.set("AUTH_TOKEN", "tok");
+
+    renderHook(() =>
+      useAutoReconnect({
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
+        isLoadingDefaults: false,
+        selectedAvatar: "user",
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onAuthTokenRefresh,
+        onReconnectComplete,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(onReconnectComplete).toHaveBeenCalled();
+    });
+
+    expect(onReconnectSuccess).toHaveBeenCalledWith("ROOM1", true);
+    expect(onAuthTokenRefresh).toHaveBeenCalledWith("tok-new");
+  });
+
+  it("calls onReconnectComplete after failed reconnect", async () => {
+    (joinRoom as Mock).mockRejectedValue(new Error("Connection failed"));
+    storage.set("AUTH_TOKEN", "tok");
+
+    renderHook(() =>
+      useAutoReconnect({
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
+        isLoadingDefaults: false,
+        selectedAvatar: "user",
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onAuthTokenRefresh,
+        onReconnectComplete,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(onReconnectComplete).toHaveBeenCalled();
+    });
+
+    expect(onReconnectError).toHaveBeenCalledWith("Connection failed");
+    expect(onReconnectSuccess).not.toHaveBeenCalled();
+  });
+
+  it("does not call callbacks after unmount (cancellation guard)", async () => {
+    const deferred: { resolve?: (val: unknown) => void } = {};
     (joinRoom as Mock).mockImplementation(
       () =>
-        new Promise((resolve, reject) => {
+        new Promise((resolve) => {
           deferred.resolve = resolve;
-          deferred.reject = reject;
         }),
     );
     storage.set("AUTH_TOKEN", "tok");
 
-    useAutoReconnect({
-      name: "alice",
-      screen: "room",
-      roomKey: "ROOM1",
-      isLoadingDefaults: false,
-      selectedAvatar: "user",
-      onReconnectSuccess,
-      onReconnectError,
-      onLoadingChange,
-      applyServerDefaults,
-      onAuthTokenRefresh,
-    });
+    const { unmount } = renderHook(() =>
+      useAutoReconnect({
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
+        isLoadingDefaults: false,
+        selectedAvatar: "user",
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onAuthTokenRefresh,
+        onReconnectComplete,
+      }),
+    );
 
-    effects.forEach((cleanup) => typeof cleanup === "function" && cleanup());
+    unmount();
 
-    await deferred.resolve?.({
+    deferred.resolve?.({
       room: { key: "ROOM1", moderator: "alice" },
       defaults: undefined,
       authToken: "tok-new",
     });
 
+    await new Promise((r) => setTimeout(r, 10));
+
     expect(onReconnectSuccess).not.toHaveBeenCalled();
     expect(onAuthTokenRefresh).not.toHaveBeenCalled();
+    expect(onReconnectComplete).not.toHaveBeenCalled();
+  });
+
+  it("does not attempt reconnect when not on room screen", () => {
+    storage.set("AUTH_TOKEN", "tok");
+
+    renderHook(() =>
+      useAutoReconnect({
+        name: "alice",
+        screen: "welcome",
+        roomKey: "ROOM1",
+        isLoadingDefaults: false,
+        selectedAvatar: "user",
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onAuthTokenRefresh,
+        onReconnectComplete,
+      }),
+    );
+
+    expect(joinRoom).not.toHaveBeenCalled();
+  });
+
+  it("does not attempt reconnect when roomKey is empty", () => {
+    storage.set("AUTH_TOKEN", "tok");
+
+    renderHook(() =>
+      useAutoReconnect({
+        name: "alice",
+        screen: "room",
+        roomKey: "",
+        isLoadingDefaults: false,
+        selectedAvatar: "user",
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onAuthTokenRefresh,
+        onReconnectComplete,
+      }),
+    );
+
+    expect(joinRoom).not.toHaveBeenCalled();
   });
 });

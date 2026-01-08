@@ -118,9 +118,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { setError, clearError } = useSessionErrors();
 
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(() =>
-    safeLocalStorage.get(AUTH_TOKEN_STORAGE_KEY),
-  );
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [autoReconnectDone, setAutoReconnectDone] = useState(false);
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
     null,
   );
@@ -193,6 +192,9 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     setConnectionIssue(null);
   }, []);
 
+  const needsAutoReconnect =
+    screen === "room" && !!roomKey && !autoReconnectDone;
+
   useAutoReconnect({
     name,
     screen,
@@ -216,6 +218,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     onLoadingChange: setIsLoading,
     applyServerDefaults,
     onAuthTokenRefresh: setAuthToken,
+    onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
   });
 
   const handleRoomMessage = useCallback(
@@ -281,6 +284,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     onConnectionChange: handleConnectionChange,
     onError: handleConnectionError,
     reconnectSignal,
+    skip: needsAutoReconnect,
   });
 
   useRoomDataSync({

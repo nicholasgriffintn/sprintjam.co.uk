@@ -17,6 +17,7 @@ interface UseAutoReconnectOptions {
   onLoadingChange: (isLoading: boolean) => void;
   applyServerDefaults: (defaults?: ServerDefaults) => void;
   onAuthTokenRefresh?: (token: string | null) => void;
+  onReconnectComplete?: () => void;
 }
 
 export const useAutoReconnect = ({
@@ -30,6 +31,7 @@ export const useAutoReconnect = ({
   onLoadingChange,
   applyServerDefaults,
   onAuthTokenRefresh,
+  onReconnectComplete,
 }: UseAutoReconnectOptions) => {
   const didAttemptRestore = useRef(false);
 
@@ -84,6 +86,7 @@ export const useAutoReconnect = ({
       .finally(() => {
         if (!cancelled) {
           onLoadingChange(false);
+          onReconnectComplete?.();
         }
       });
 
@@ -101,5 +104,6 @@ export const useAutoReconnect = ({
     onLoadingChange,
     applyServerDefaults,
     onAuthTokenRefresh,
+    onReconnectComplete,
   ]);
 };
