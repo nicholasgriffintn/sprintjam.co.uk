@@ -24,8 +24,6 @@ export function parsePath(path: string): ParsedPath {
   switch (pathWithoutTrailingSlash) {
     case "/auth/login":
       return { screen: "login" };
-    case "/auth/verify":
-      return { screen: "verify" };
     case "/workspace":
       return { screen: "workspace" };
     case "/create":
@@ -55,8 +53,6 @@ export function getPathFromScreen(screen: AppScreen, roomKey?: string): string {
       return "/";
     case "login":
       return "/auth/login";
-    case "verify":
-      return "/auth/verify";
     case "workspace":
       return "/workspace";
     case "create":

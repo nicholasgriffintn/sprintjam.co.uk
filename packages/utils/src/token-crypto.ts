@@ -15,9 +15,14 @@ function bufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
-function base64ToBuffer(value: string): Uint8Array {
+function base64ToBuffer(value: string): Uint8Array<ArrayBuffer> {
   const binary = atob(value);
-  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  const buffer = new ArrayBuffer(binary.length);
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
 
 export class TokenCipher {
@@ -35,7 +40,7 @@ export class TokenCipher {
     this.secret = secretValue;
   }
 
-  private async deriveKey(salt: Uint8Array): Promise<CryptoKey> {
+  private async deriveKey(salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
     const keyMaterial = await crypto.subtle.importKey(
       "raw",
       encoder.encode(this.secret),
@@ -58,8 +63,12 @@ export class TokenCipher {
   }
 
   async encrypt(value: string): Promise<string> {
-    const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+    const saltBuffer = new ArrayBuffer(SALT_LENGTH);
+    const salt = new Uint8Array(saltBuffer);
+    crypto.getRandomValues(salt);
+    const ivBuffer = new ArrayBuffer(IV_LENGTH);
+    const iv = new Uint8Array(ivBuffer);
+    crypto.getRandomValues(iv);
     const key = await this.deriveKey(salt);
     const encrypted = await crypto.subtle.encrypt(
       { name: ALGO, iv },

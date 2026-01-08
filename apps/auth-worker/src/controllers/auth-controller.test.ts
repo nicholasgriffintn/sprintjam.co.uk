@@ -5,7 +5,7 @@ import * as services from "@sprintjam/services";
 
 import {
   requestMagicLinkController,
-  verifyMagicLinkController,
+  verifyCodeController,
   getCurrentUserController,
   logoutController,
 } from "./auth-controller";
@@ -20,6 +20,7 @@ vi.mock("@sprintjam/utils", async () => {
   return {
     ...actual,
     generateToken: vi.fn(),
+    generateVerificationCode: vi.fn(),
     hashToken: vi.fn(),
   };
 });
@@ -43,9 +44,9 @@ describe("requestMagicLinkController", () => {
     vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
       return mockRepo;
     });
-    vi.mocked(utils.generateToken).mockResolvedValue("mock-token-123");
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-token-123");
-    vi.mocked(services.sendMagicLinkEmail).mockResolvedValue(undefined);
+    vi.mocked(utils.generateVerificationCode).mockReturnValue("123456");
+    vi.mocked(utils.hashToken).mockResolvedValue("hashed-code-123");
+    vi.mocked(services.sendVerificationCodeEmail).mockResolvedValue(undefined);
   });
 
   it("should return error when email is missing", async () => {
@@ -55,7 +56,7 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Email is required");
@@ -68,7 +69,7 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Invalid email format");
@@ -86,7 +87,7 @@ describe("requestMagicLinkController", () => {
 
     expect(mockRepo.createMagicLink).toHaveBeenCalledWith(
       "test@example.com",
-      "hashed-token-123",
+      "hashed-code-123",
       expect.any(Number),
     );
   });
@@ -100,7 +101,7 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(503);
     expect(data.error).toContain("Workspace allowlist is unavailable");
@@ -115,13 +116,13 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(403);
     expect(data.error).toContain("not authorized for workspace access");
   });
 
-  it("should return 500 when magic link creation fails", async () => {
+  it("should return 500 when verification code creation fails", async () => {
     mockRepo.isDomainAllowed.mockResolvedValue(true);
     mockRepo.createMagicLink.mockRejectedValue(new Error("DB Error"));
 
@@ -131,16 +132,16 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(500);
-    expect(data.error).toContain("Unable to create a magic link");
+    expect(data.error).toContain("Unable to create a verification code");
   });
 
   it("should return 500 when email sending fails", async () => {
     mockRepo.isDomainAllowed.mockResolvedValue(true);
     mockRepo.createMagicLink.mockResolvedValue(undefined);
-    vi.mocked(services.sendMagicLinkEmail).mockRejectedValue(
+    vi.mocked(services.sendVerificationCodeEmail).mockRejectedValue(
       new Error("Email Error"),
     );
 
@@ -150,13 +151,13 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe("Failed to send magic link email");
+    expect(data.error).toBe("Failed to send verification code email");
   });
 
-  it("should successfully send magic link for valid email", async () => {
+  it("should successfully send verification code for valid email", async () => {
     mockRepo.isDomainAllowed.mockResolvedValue(true);
     mockRepo.createMagicLink.mockResolvedValue(undefined);
 
@@ -166,18 +167,18 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { message: string };
 
     expect(response.status).toBe(200);
-    expect(data.message).toBe("Magic link sent to your email");
-    expect(services.sendMagicLinkEmail).toHaveBeenCalledWith({
+    expect(data.message).toBe("Verification code sent to your email");
+    expect(services.sendVerificationCodeEmail).toHaveBeenCalledWith({
       email: "test@example.com",
-      magicLink: "https://test.com/auth/verify?token=mock-token-123",
+      code: "123456",
       resendApiKey: "test-api-key",
     });
   });
 
-  it("should generate correct magic link with token", async () => {
+  it("should generate correct verification code and hash it", async () => {
     mockRepo.isDomainAllowed.mockResolvedValue(true);
     mockRepo.createMagicLink.mockResolvedValue(undefined);
 
@@ -188,17 +189,17 @@ describe("requestMagicLinkController", () => {
 
     await requestMagicLinkController(request, mockEnv);
 
-    expect(utils.generateToken).toHaveBeenCalled();
-    expect(utils.hashToken).toHaveBeenCalledWith("mock-token-123");
+    expect(utils.generateVerificationCode).toHaveBeenCalled();
+    expect(utils.hashToken).toHaveBeenCalledWith("123456");
     expect(mockRepo.createMagicLink).toHaveBeenCalledWith(
       "test@example.com",
-      "hashed-token-123",
+      "hashed-code-123",
       expect.any(Number),
     );
   });
 });
 
-describe("verifyMagicLinkController", () => {
+describe("verifyCodeController", () => {
   let mockEnv: AuthWorkerEnv;
   let mockRepo: any;
 
@@ -209,7 +210,7 @@ describe("verifyMagicLinkController", () => {
     } as AuthWorkerEnv;
 
     mockRepo = {
-      validateMagicLink: vi.fn(),
+      validateVerificationCode: vi.fn(),
       getOrCreateOrganisation: vi.fn(),
       getOrCreateUser: vi.fn(),
       createSession: vi.fn(),
@@ -223,51 +224,60 @@ describe("verifyMagicLinkController", () => {
     vi.mocked(utils.hashToken).mockResolvedValue("hashed-session-123");
   });
 
-  it("should return error when token is missing", async () => {
+  it("should return error when email or code is missing", async () => {
     const request = new Request("https://test.com/auth/verify", {
       method: "POST",
       body: JSON.stringify({}),
     });
 
-    const response = await verifyMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const response = await verifyCodeController(request, mockEnv);
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Token is required");
+    expect(data.error).toBe("Email and code are required");
   });
 
-  it("should return 401 when magic link is invalid", async () => {
-    mockRepo.validateMagicLink.mockResolvedValue(null);
+  it("should return 401 when verification code is invalid", async () => {
+    mockRepo.validateVerificationCode.mockResolvedValue({
+      success: false,
+      error: "invalid",
+    });
 
     const request = new Request("https://test.com/auth/verify", {
       method: "POST",
-      body: JSON.stringify({ token: "invalid-token" }),
+      body: JSON.stringify({ email: "test@example.com", code: "000000" }),
     });
 
-    const response = await verifyMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const response = await verifyCodeController(request, mockEnv);
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(401);
-    expect(data.error).toBe("Invalid or expired magic link");
+    expect(data.error).toBe("Invalid verification code");
   });
 
-  it("should return 401 when magic link is expired", async () => {
-    mockRepo.validateMagicLink.mockResolvedValue(null);
+  it("should return 401 when verification code is expired", async () => {
+    mockRepo.validateVerificationCode.mockResolvedValue({
+      success: false,
+      error: "expired",
+    });
 
     const request = new Request("https://test.com/auth/verify", {
       method: "POST",
-      body: JSON.stringify({ token: "expired-token" }),
+      body: JSON.stringify({ email: "test@example.com", code: "123456" }),
     });
 
-    const response = await verifyMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const response = await verifyCodeController(request, mockEnv);
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(401);
-    expect(data.error).toBe("Invalid or expired magic link");
+    expect(data.error).toBe("Verification code has expired");
   });
 
-  it("should successfully verify magic link and create session", async () => {
-    mockRepo.validateMagicLink.mockResolvedValue("test@example.com");
+  it("should successfully verify code and create session", async () => {
+    mockRepo.validateVerificationCode.mockResolvedValue({
+      success: true,
+      email: "test@example.com",
+    });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
     mockRepo.getOrCreateUser.mockResolvedValue(100);
     mockRepo.getUserByEmail.mockResolvedValue({
@@ -279,11 +289,14 @@ describe("verifyMagicLinkController", () => {
 
     const request = new Request("https://test.com/auth/verify", {
       method: "POST",
-      body: JSON.stringify({ token: "valid-token" }),
+      body: JSON.stringify({ email: "test@example.com", code: "123456" }),
     });
 
-    const response = await verifyMagicLinkController(request, mockEnv);
-    const data = await response.json();
+    const response = await verifyCodeController(request, mockEnv);
+    const data = (await response.json()) as {
+      expiresAt: number;
+      user: { id: number; email: string; name: string; organisationId: number };
+    };
 
     expect(response.status).toBe(200);
     expect(data.expiresAt).toBeGreaterThan(Date.now());
@@ -302,7 +315,10 @@ describe("verifyMagicLinkController", () => {
   });
 
   it("should create organisation and user for new email", async () => {
-    mockRepo.validateMagicLink.mockResolvedValue("newuser@newcompany.com");
+    mockRepo.validateVerificationCode.mockResolvedValue({
+      success: true,
+      email: "newuser@newcompany.com",
+    });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(2);
     mockRepo.getOrCreateUser.mockResolvedValue(200);
     mockRepo.getUserByEmail.mockResolvedValue({
@@ -314,10 +330,10 @@ describe("verifyMagicLinkController", () => {
 
     const request = new Request("https://test.com/auth/verify", {
       method: "POST",
-      body: JSON.stringify({ token: "valid-token" }),
+      body: JSON.stringify({ email: "newuser@newcompany.com", code: "123456" }),
     });
 
-    await verifyMagicLinkController(request, mockEnv);
+    await verifyCodeController(request, mockEnv);
 
     expect(mockRepo.getOrCreateOrganisation).toHaveBeenCalledWith(
       "newcompany.com",
@@ -333,8 +349,11 @@ describe("verifyMagicLinkController", () => {
     );
   });
 
-  it("should hash token before validation", async () => {
-    mockRepo.validateMagicLink.mockResolvedValue("test@example.com");
+  it("should hash code before validation", async () => {
+    mockRepo.validateVerificationCode.mockResolvedValue({
+      success: true,
+      email: "test@example.com",
+    });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
     mockRepo.getOrCreateUser.mockResolvedValue(100);
     mockRepo.getUserByEmail.mockResolvedValue({
@@ -346,12 +365,12 @@ describe("verifyMagicLinkController", () => {
 
     const request = new Request("https://test.com/auth/verify", {
       method: "POST",
-      body: JSON.stringify({ token: "plain-token" }),
+      body: JSON.stringify({ email: "test@example.com", code: "654321" }),
     });
 
-    await verifyMagicLinkController(request, mockEnv);
+    await verifyCodeController(request, mockEnv);
 
-    expect(utils.hashToken).toHaveBeenCalledWith("plain-token");
+    expect(utils.hashToken).toHaveBeenCalledWith("654321");
   });
 });
 
@@ -383,7 +402,7 @@ describe("getCurrentUserController", () => {
     });
 
     const response = await getCurrentUserController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -396,7 +415,7 @@ describe("getCurrentUserController", () => {
     });
 
     const response = await getCurrentUserController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -411,7 +430,7 @@ describe("getCurrentUserController", () => {
     });
 
     const response = await getCurrentUserController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Invalid or expired session");
@@ -430,7 +449,7 @@ describe("getCurrentUserController", () => {
     });
 
     const response = await getCurrentUserController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(404);
     expect(data.error).toBe("User not found");
@@ -458,7 +477,15 @@ describe("getCurrentUserController", () => {
     });
 
     const response = await getCurrentUserController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as {
+      user: { id: number; email: string; name: string; organisationId: number };
+      teams: {
+        id: number;
+        name: string;
+        organisationId: number;
+        ownerId: number;
+      }[];
+    };
 
     expect(response.status).toBe(200);
     expect(data.user).toEqual({
@@ -545,7 +572,7 @@ describe("logoutController", () => {
     });
 
     const response = await logoutController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -558,7 +585,7 @@ describe("logoutController", () => {
     });
 
     const response = await logoutController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -573,7 +600,7 @@ describe("logoutController", () => {
     });
 
     const response = await logoutController(request, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as { message: string };
 
     expect(response.status).toBe(200);
     expect(data.message).toBe("Logged out successfully");

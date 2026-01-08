@@ -15,10 +15,6 @@ describe("navigation", () => {
       expect(parsePath("/auth/login")).toEqual({ screen: "login" });
     });
 
-    it("parses auth verify path", () => {
-      expect(parsePath("/auth/verify")).toEqual({ screen: "verify" });
-    });
-
     it("parses workspace path", () => {
       expect(parsePath("/workspace")).toEqual({ screen: "workspace" });
     });
@@ -88,10 +84,6 @@ describe("navigation", () => {
 
     it("returns /auth/login for login", () => {
       expect(getPathFromScreen("login")).toBe("/auth/login");
-    });
-
-    it("returns /auth/verify for verify", () => {
-      expect(getPathFromScreen("verify")).toBe("/auth/verify");
     });
 
     it("returns /workspace for workspace", () => {

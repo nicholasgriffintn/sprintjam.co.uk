@@ -6,13 +6,14 @@ import type { AuthWorkerEnv } from "@sprintjam/types";
 import {
   jsonError,
   generateToken,
+  generateVerificationCode,
   hashToken,
   extractDomain,
   createSessionCookie,
   clearSessionCookie,
   getSessionTokenFromRequest,
 } from "@sprintjam/utils";
-import { sendMagicLinkEmail } from "@sprintjam/services";
+import { sendVerificationCodeEmail } from "@sprintjam/services";
 
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 import { MAGIC_LINK_EXPIRY_MS, SESSION_EXPIRY_MS } from "../constants";
@@ -69,37 +70,34 @@ export async function requestMagicLinkController(
     );
   }
 
-  const token = await generateToken();
-  const tokenHash = await hashToken(token);
+  const code = generateVerificationCode();
+  const codeHash = await hashToken(code);
   const expiresAt = Date.now() + MAGIC_LINK_EXPIRY_MS;
 
   try {
-    await repo.createMagicLink(email, tokenHash, expiresAt);
+    await repo.createMagicLink(email, codeHash, expiresAt);
   } catch (error) {
-    console.error("Failed to persist magic link request:", error);
+    console.error("Failed to persist verification code:", error);
     return jsonError(
-      "Unable to create a magic link right now. Please try again shortly.",
+      "Unable to create a verification code right now. Please try again shortly.",
       500,
     );
   }
 
-  const origin = new URL(request.url).origin;
-  const magicLink = `${origin}/auth/verify?token=${token}`;
-
   try {
-    await sendMagicLinkEmail({
+    await sendVerificationCodeEmail({
       email,
-      magicLink,
+      code,
       resendApiKey: env.RESEND_API_KEY,
     });
   } catch (error) {
-    console.error("Failed to send magic link email:", error);
-    return jsonError("Failed to send magic link email", 500);
+    console.error("Failed to send verification code email:", error);
+    return jsonError("Failed to send verification code email", 500);
   }
 
   return new Response(
     JSON.stringify({
-      message: "Magic link sent to your email",
+      message: "Verification code sent to your email",
     }),
     {
       headers: { "Content-Type": "application/json" },
@@ -107,26 +105,33 @@ export async function requestMagicLinkController(
   ) as unknown as CfResponse;
 }
 
-export async function verifyMagicLinkController(
+export async function verifyCodeController(
   request: CfRequest,
   env: AuthWorkerEnv,
 ): Promise<CfResponse> {
-  const body = await request.json<{ token?: string }>();
-  const token = body?.token;
+  const body = await request.json<{ email?: string; code?: string }>();
+  const email = body?.email?.toLowerCase().trim();
+  const code = body?.code?.trim();
 
-  if (!token) {
-    return jsonError("Token is required", 400);
+  if (!email || !code) {
+    return jsonError("Email and code are required", 400);
   }
 
-  const tokenHash = await hashToken(token);
+  const codeHash = await hashToken(code);
   const repo = new WorkspaceAuthRepository(env.DB);
 
-  const email = await repo.validateMagicLink(tokenHash);
-  if (!email) {
-    return jsonError("Invalid or expired magic link", 401);
+  const result = await repo.validateVerificationCode(email, codeHash);
+  if (!result.success) {
+    const errorMessages = {
+      invalid: "Invalid verification code",
+      expired: "Verification code has expired",
+      used: "Verification code has already been used",
+      locked: "Too many failed attempts. Please request a new code.",
+    };
+    return jsonError(errorMessages[result.error], 401);
   }
 
-  const domain = extractDomain(email);
+  const domain = extractDomain(result.email);
 
   const organisationId = await repo.getOrCreateOrganisation(domain);
 
@@ -180,7 +185,7 @@ export async function getCurrentUserController(
   }
 
   const user = await repo.getUserByEmail(session.email);
-  if (!user) {
+  if (!user?.id) {
     return jsonError("User not found", 404);
   }
 

@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import { eq, and, gt, desc, inArray } from "drizzle-orm";
+import { eq, gt, desc, inArray } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   allowedDomains,
@@ -43,20 +43,42 @@ export class WorkspaceAuthRepository {
     });
   }
 
-  async validateMagicLink(tokenHash: string): Promise<string | null> {
+  async validateVerificationCode(
+    email: string,
+    codeHash: string,
+  ): Promise<
+    | { success: true; email: string }
+    | { success: false; error: "invalid" | "expired" | "used" | "locked" }
+  > {
     const link = await this.db
       .select()
       .from(magicLinks)
-      .where(
-        and(
-          eq(magicLinks.tokenHash, tokenHash),
-          gt(magicLinks.expiresAt, Date.now()),
-        ),
-      )
+      .where(eq(magicLinks.email, email.toLowerCase()))
+      .orderBy(desc(magicLinks.createdAt))
       .get();
 
-    if (!link || link.usedAt) {
-      return null;
+    if (!link) {
+      return { success: false, error: "invalid" };
+    }
+
+    if (link.attempts >= 5) {
+      return { success: false, error: "locked" };
+    }
+
+    if (link.expiresAt < Date.now()) {
+      return { success: false, error: "expired" };
+    }
+
+    if (link.usedAt) {
+      return { success: false, error: "used" };
+    }
+
+    if (link.tokenHash !== codeHash) {
+      await this.db
+        .update(magicLinks)
+        .set({ attempts: link.attempts + 1 })
+        .where(eq(magicLinks.id, link.id));
+      return { success: false, error: "invalid" };
     }
 
     await this.db
@@ -64,7 +86,7 @@ export class WorkspaceAuthRepository {
       .set({ usedAt: Date.now() })
       .where(eq(magicLinks.id, link.id));
 
-    return link.email;
+    return { success: true, email: link.email };
   }
 
   async getOrCreateOrganisation(domain: string): Promise<number> {

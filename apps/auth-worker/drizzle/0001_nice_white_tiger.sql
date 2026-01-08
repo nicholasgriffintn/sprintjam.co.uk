@@ -1,0 +1,1 @@
+ALTER TABLE `magic_links` ADD `attempts` integer DEFAULT 0 NOT NULL;

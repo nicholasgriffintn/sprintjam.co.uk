@@ -21,7 +21,6 @@ import {
 import { WorkspaceAuthProvider } from "./context/WorkspaceAuthContext";
 import WelcomeScreen from "./routes/WelcomeScreen";
 import LoginScreen from "./routes/auth/LoginScreen";
-import VerifyScreen from "./routes/auth/VerifyScreen";
 import WorkspaceScreen from "./routes/workspace/WorkspaceScreen";
 import CreateRoomScreen from "./routes/CreateRoomScreen";
 import JoinRoomScreen from "./routes/JoinRoomScreen";
@@ -79,8 +78,6 @@ const AppContent = () => {
           return <WelcomeScreen />;
         case "login":
           return <LoginScreen />;
-        case "verify":
-          return <VerifyScreen />;
         case "workspace":
           return <WorkspaceScreen />;
         case "create":

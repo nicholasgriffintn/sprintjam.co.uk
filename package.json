@@ -10,6 +10,7 @@
     "lint:monorepo": "sherif",
     "lint": "pnpm lint:monorepo && turbo lint",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "turbo test",
     "deploy": "turbo deploy",
     "deploy:staging": "pnpm --filter @sprintjam/auth-worker deploy:staging && pnpm --filter @sprintjam/room-worker deploy:staging && pnpm --filter @sprintjam/dispatch-worker build:staging && pnpm --filter @sprintjam/dispatch-worker deploy:staging",
@@ -24,7 +25,7 @@
     "sherif": "1.9.0",
     "turbo": "2.7.2",
     "typescript": "5.9.3",
-    "wrangler": "4.53.0"
+    "wrangler": "4.57.0"
   },
   "packageManager": "pnpm@10.27.0"
 }

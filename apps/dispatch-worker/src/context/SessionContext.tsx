@@ -16,7 +16,6 @@ import { navigateTo, parsePath } from "@/utils/navigation";
 export type AppScreen =
   | "welcome"
   | "login"
-  | "verify"
   | "workspace"
   | "create"
   | "join"

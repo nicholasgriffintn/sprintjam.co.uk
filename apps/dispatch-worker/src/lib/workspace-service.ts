@@ -82,15 +82,16 @@ export async function requestMagicLink(email: string): Promise<void> {
   );
 }
 
-export async function verifyMagicLink(
-  token: string,
+export async function verifyCode(
+  email: string,
+  code: string,
 ): Promise<{ user: WorkspaceUser; expiresAt: number }> {
   const data = await workspaceRequest<{
     user: WorkspaceUser;
     expiresAt: number;
   }>(`${API_BASE_URL}/auth/verify`, {
     method: "POST",
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ email, code }),
   });
 
   return data;

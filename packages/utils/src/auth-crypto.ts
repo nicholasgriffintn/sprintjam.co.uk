@@ -1,15 +1,15 @@
-/**
- * Generates a secure random token for magic links or sessions
- */
 export async function generateToken(): Promise<string> {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return bytesToBase64(bytes);
 }
 
-/**
- * Hashes a token using SHA-256
- */
+export function generateVerificationCode(): string {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return String(array[0] % 1000000).padStart(6, "0");
+}
+
 export async function hashToken(token: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(token);
@@ -17,9 +17,6 @@ export async function hashToken(token: string): Promise<string> {
   return bytesToHex(new Uint8Array(hashBuffer));
 }
 
-/**
- * Extracts email domain from an email address
- */
 export function extractDomain(email: string): string {
   const parts = email.toLowerCase().split("@");
   if (parts.length !== 2) {

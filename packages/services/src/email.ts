@@ -1,14 +1,14 @@
-export interface SendMagicLinkEmailParams {
+export interface SendVerificationCodeEmailParams {
   email: string;
-  magicLink: string;
+  code: string;
   resendApiKey: string;
 }
 
-export async function sendMagicLinkEmail({
+export async function sendVerificationCodeEmail({
   email,
-  magicLink,
+  code,
   resendApiKey,
-}: SendMagicLinkEmailParams): Promise<void> {
+}: SendVerificationCodeEmailParams): Promise<void> {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -18,7 +18,7 @@ export async function sendMagicLinkEmail({
     body: JSON.stringify({
       from: "SprintJam <sprintjam@notifications.nicholasgriffin.dev>",
       to: [email],
-      subject: "Sign in to SprintJam Workspaces",
+      subject: "Your SprintJam verification code",
       html: `
         <!DOCTYPE html>
         <html>
@@ -37,28 +37,27 @@ export async function sendMagicLinkEmail({
             </div>
 
             <!-- Main Content Card -->
-            <div style="background-color: #0f1d35; border-radius: 16px; padding: 48px 32px; border: 1px solid rgba(255, 255, 255, 0.1);">
-              <h2 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 16px 0;">Sign in to your workspace</h2>
+            <div style="background-color: #0f1d35; border-radius: 16px; padding: 48px 32px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+              <h2 style="color: #ffffff; font-size: 24px; font-weight: 600; margin: 0 0 16px 0;">Your verification code</h2>
 
-              <p style="color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-                Click the button below to sign in to SprintJam Workspaces. This link will expire in 15 minutes.
+              <p style="color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
+                Enter this code in SprintJam to sign in to your workspace.
               </p>
 
-              <!-- Sign In Button -->
-              <a href="${magicLink}" style="display: inline-block; background: linear-gradient(135deg, #2f6dff 0%, #5c7cfa 100%); color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 1rem; font-weight: 600; font-size: 14px; box-shadow: 0px 18px 45px rgba(15, 23, 42, 0.18); margin-bottom: 24px;">
-                Sign in to SprintJam
-              </a>
+              <!-- Verification Code -->
+              <div style="background: linear-gradient(135deg, #2f6dff 0%, #5c7cfa 100%); border-radius: 12px; padding: 24px 32px; display: inline-block; margin-bottom: 32px;">
+                <span style="color: #ffffff; font-size: 36px; font-weight: 700; letter-spacing: 8px; font-family: 'SF Mono', Monaco, 'Courier New', monospace;">${code}</span>
+              </div>
 
-              <p style="color: #64748b; font-size: 14px; margin: 24px 0 0 0;">
-                If you didn't request this email, you can safely ignore it.
+              <p style="color: #64748b; font-size: 14px; margin: 0;">
+                This code will expire in 15 minutes.
               </p>
             </div>
 
-            <!-- Alternative Link -->
+            <!-- Security Notice -->
             <div style="margin-top: 24px; padding: 16px; background-color: rgba(15, 29, 53, 0.5); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
-              <p style="color: #64748b; font-size: 12px; margin: 0 0 8px 0;">Or copy and paste this link into your browser:</p>
-              <p style="margin: 0;">
-                <a href="${magicLink}" style="color: #2f6dff; font-size: 12px; word-break: break-all; text-decoration: none;">${magicLink}</a>
+              <p style="color: #64748b; font-size: 12px; margin: 0;">
+                If you didn't request this code, you can safely ignore this email.
               </p>
             </div>
 
