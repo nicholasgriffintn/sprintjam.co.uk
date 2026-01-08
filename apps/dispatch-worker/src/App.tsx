@@ -4,11 +4,13 @@ import { MotionConfig } from "framer-motion";
 import ErrorBanner from "./components/ui/ErrorBanner";
 import LoadingOverlay from "./components/LoadingOverlay";
 import { ScreenLoader } from "./components/layout/ScreenLoader";
+import { AppShell } from "./components/layout/AppShell";
 import { ErrorBoundary } from "./components/errors/ErrorBoundary";
 import {
   SessionProvider,
   useSessionErrors,
   useSessionState,
+  type AppScreen,
 } from "./context/SessionContext";
 import {
   RoomProvider,
@@ -28,6 +30,8 @@ import { ErrorBannerServerDefaults } from "./components/errors/ErrorBannerServer
 import PrivacyPolicyScreen from "./routes/PrivacyPolicyScreen";
 import TermsConditionsScreen from "./routes/TermsConditionsScreen";
 import ChangelogScreen from "./routes/ChangelogScreen";
+
+const APP_SHELL_SCREENS: AppScreen[] = ["workspace"];
 
 const roomScreenLoader = () => import("./routes/RoomScreen");
 const RoomScreen = lazy(roomScreenLoader);
@@ -64,39 +68,49 @@ const AppContent = () => {
   );
 
   const renderScreen = () => {
-    switch (screen) {
-      case "welcome":
-        return <WelcomeScreen />;
-      case "login":
-        return <LoginScreen />;
-      case "verify":
-        return <VerifyScreen />;
-      case "workspace":
-        return <WorkspaceScreen />;
-      case "create":
-        return <CreateRoomScreen />;
-      case "join":
-        return <JoinRoomScreen />;
-      case "room":
-        if (canRenderRoomScreen) {
-          return <RoomScreen />;
-        }
+    const getScreenContent = () => {
+      switch (screen) {
+        case "welcome":
+          return <WelcomeScreen />;
+        case "login":
+          return <LoginScreen />;
+        case "verify":
+          return <VerifyScreen />;
+        case "workspace":
+          return <WorkspaceScreen />;
+        case "create":
+          return <CreateRoomScreen />;
+        case "join":
+          return <JoinRoomScreen />;
+        case "room":
+          if (canRenderRoomScreen) {
+            return <RoomScreen />;
+          }
 
-        return (
-          <ScreenLoader
-            title="Connecting to room"
-            subtitle="Please wait a moment."
-          />
-        );
-      case "privacy":
-        return <PrivacyPolicyScreen />;
-      case "terms":
-        return <TermsConditionsScreen />;
-      case "changelog":
-        return <ChangelogScreen />;
-      default:
-        return <NotFoundScreen />;
+          return (
+            <ScreenLoader
+              title="Connecting to room"
+              subtitle="Please wait a moment."
+            />
+          );
+        case "privacy":
+          return <PrivacyPolicyScreen />;
+        case "terms":
+          return <TermsConditionsScreen />;
+        case "changelog":
+          return <ChangelogScreen />;
+        default:
+          return <NotFoundScreen />;
+      }
+    };
+
+    const content = getScreenContent();
+
+    if (APP_SHELL_SCREENS.includes(screen)) {
+      return <AppShell>{content}</AppShell>;
     }
+
+    return content;
   };
 
   return (

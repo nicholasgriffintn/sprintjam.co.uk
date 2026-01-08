@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
   Activity,
   ArrowUpRight,
@@ -8,41 +8,37 @@ import {
   CheckCircle2,
   ChevronRight,
   LogIn,
-  LogOut,
   Pencil,
   Plus,
   RefreshCcw,
   Target,
   Trash2,
   ArrowLeft,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useWorkspaceData } from '@/hooks/useWorkspaceData';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Alert } from '@/components/ui/Alert';
-import { Badge } from '@/components/ui/Badge';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Footer } from '@/components/layout/Footer';
-import { Logo } from '@/components/Logo';
-import { META_CONFIGS } from '@/config/meta';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { Spinner } from '@/components/ui/Spinner';
-import { Modal } from '@/components/ui/Modal';
-import { cn } from '@/lib/cn';
-import { useSessionActions } from '@/context/SessionContext';
-import { BetaBadge } from '@/components/BetaBadge';
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Alert } from "@/components/ui/Alert";
+import { Badge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { META_CONFIGS } from "@/config/meta";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { Spinner } from "@/components/ui/Spinner";
+import { Modal } from "@/components/ui/Modal";
+import { cn } from "@/lib/cn";
+import { useSessionActions } from "@/context/SessionContext";
+import { BetaBadge } from "@/components/BetaBadge";
 
 const formatDate = (timestamp: number | null) => {
-  if (!timestamp) return '—';
+  if (!timestamp) return "—";
   const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return '—';
+  if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 };
 
@@ -63,30 +59,25 @@ export default function WorkspaceScreen() {
     error,
     actionError,
     refreshWorkspace,
-    refreshSessions,
     createTeam,
     updateTeam,
     deleteTeam,
-    createSession,
-    logout,
   } = useWorkspaceData();
 
   const { goHome, goToLogin, goToRoom } = useSessionActions();
 
-  const [newTeamName, setNewTeamName] = useState('');
-  const [teamNameDraft, setTeamNameDraft] = useState('');
-  const [sessionName, setSessionName] = useState('');
-  const [sessionRoomKey, setSessionRoomKey] = useState('');
+  const [newTeamName, setNewTeamName] = useState("");
+  const [teamNameDraft, setTeamNameDraft] = useState("");
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
-  const [renameInput, setRenameInput] = useState('');
+  const [renameInput, setRenameInput] = useState("");
 
   const selectedTeam = useMemo(
     () => teams.find((team) => team.id === selectedTeamId) ?? null,
-    [teams, selectedTeamId]
+    [teams, selectedTeamId],
   );
 
   useEffect(() => {
-    const nextName = selectedTeam?.name ?? '';
+    const nextName = selectedTeam?.name ?? "";
     if (teamNameDraft !== nextName) {
       setTeamNameDraft(nextName);
     }
@@ -98,42 +89,17 @@ export default function WorkspaceScreen() {
     if (!newTeamName.trim()) return;
     const created = await createTeam(newTeamName.trim());
     if (created) {
-      setNewTeamName('');
+      setNewTeamName("");
     }
-  };
-
-  const handleUpdateTeam = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selectedTeamId || !teamNameDraft.trim()) return;
-    await updateTeam(selectedTeamId, teamNameDraft.trim());
   };
 
   const handleDeleteTeam = async () => {
     if (!selectedTeamId) return;
     const confirmed = window.confirm(
-      'Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.'
+      "Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.",
     );
     if (!confirmed) return;
     await deleteTeam(selectedTeamId);
-  };
-
-  const handleCreateSession = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selectedTeamId || !sessionName.trim() || !sessionRoomKey.trim()) {
-      return;
-    }
-
-    const session = await createSession({
-      teamId: selectedTeamId,
-      name: sessionName.trim(),
-      roomKey: sessionRoomKey.trim().toUpperCase(),
-    });
-
-    if (session) {
-      setSessionName('');
-      setSessionRoomKey('');
-      void refreshSessions(selectedTeamId);
-    }
   };
 
   const handleOpenRoom = (roomKey: string) => {
@@ -161,23 +127,23 @@ export default function WorkspaceScreen() {
 
   const statCards = [
     {
-      label: 'Teams',
+      label: "Teams",
       value: stats?.totalTeams ?? teams.length,
       icon: <Building2 className="h-5 w-5 text-brand-500" />,
     },
     {
-      label: 'Sessions',
+      label: "Sessions",
       value: stats?.totalSessions ?? sessions.length,
       icon: <Target className="h-5 w-5 text-indigo-500" />,
     },
     {
-      label: 'Active',
+      label: "Active",
       value:
         stats?.activeSessions ?? sessions.filter((s) => !s.completedAt).length,
       icon: <Activity className="h-5 w-5 text-emerald-500" />,
     },
     {
-      label: 'Completed',
+      label: "Completed",
       value:
         stats?.completedSessions ??
         sessions.filter((s) => s.completedAt).length,
@@ -187,10 +153,7 @@ export default function WorkspaceScreen() {
 
   if (isLoading && !user) {
     return (
-      <PageBackground align="start" maxWidth="sm" variant="compact">
-        <div className="mb-6 flex justify-center">
-          <Logo size="md" />
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-8">
         <SurfaceCard className="flex items-center justify-center">
           <div className="flex items-center gap-3">
             <Spinner />
@@ -199,23 +162,19 @@ export default function WorkspaceScreen() {
             </span>
           </div>
         </SurfaceCard>
-      </PageBackground>
+      </div>
     );
   }
 
   if (showSignedOut) {
     return (
-      <PageBackground align="start" maxWidth="sm" variant="compact">
+      <div className="mx-auto max-w-md px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
           className="space-y-6"
         >
-          <div className="flex justify-center">
-            <Logo size="md" />
-          </div>
-
           <div className="space-y-3 text-left">
             <Button
               type="button"
@@ -275,59 +234,37 @@ export default function WorkspaceScreen() {
             Need help? Ask your workspace administrator for more information.
           </p>
         </motion.div>
-        <Footer displayRepoLink={false} fullWidth={false} priorityLinksOnly />
-      </PageBackground>
+      </div>
     );
   }
 
   return (
     <>
-      <PageBackground align="start" maxWidth="xl" variant="compact">
+      <div className="mx-auto max-w-6xl px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="space-y-6"
         >
-          <div className="flex justify-center">
-            <a
-              href="/"
-              aria-label="SprintJam home"
-              className="hover:opacity-80"
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
+                Dashboard <BetaBadge />
+              </h1>
+              <p className="text-slate-600 dark:text-slate-300">
+                Manage your teams and planning sessions
+              </p>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => refreshWorkspace(true)}
+              isLoading={isLoading}
+              icon={<RefreshCcw className="h-4 w-4" />}
             >
-              <Logo size="md" />
-            </a>
-          </div>
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
-                  Your Workspace <BetaBadge />
-                </h1>
-                <p className="text-lg text-slate-600 dark:text-slate-300">
-                  Link planning rooms back to your workspace, keep sessions
-                  tidy, and jump into the right room fast.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => refreshWorkspace(true)}
-                isLoading={isLoading}
-                icon={<RefreshCcw className="h-4 w-4" />}
-              >
-                Refresh
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={logout}
-                icon={<LogOut className="h-4 w-4" />}
-                disabled={isMutating}
-              >
-                Sign out
-              </Button>
-            </div>
+              Refresh
+            </Button>
           </div>
 
           {error && (
@@ -346,11 +283,9 @@ export default function WorkspaceScreen() {
             </Alert>
           )}
 
-          {actionError && (
-            <Alert variant="warning">{actionError}</Alert>
-          )}
+          {actionError && <Alert variant="warning">{actionError}</Alert>}
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {statCards.map((stat) => (
               <SurfaceCard
                 key={stat.label}
@@ -362,7 +297,7 @@ export default function WorkspaceScreen() {
                     {stat.label}
                   </p>
                   <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                    {stat.value ?? '—'}
+                    {stat.value ?? "—"}
                   </p>
                 </div>
                 <div className="rounded-2xl bg-white/70 p-2 dark:bg-slate-900/40">
@@ -377,7 +312,7 @@ export default function WorkspaceScreen() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    Manage teams
+                    Teams
                   </h2>
                 </div>
                 <Badge variant="primary" size="sm" className="font-semibold">
@@ -419,9 +354,9 @@ export default function WorkspaceScreen() {
                     type="button"
                     onClick={() => setSelectedTeamId(team.id)}
                     className={cn(
-                      'w-full rounded-2xl border border-white/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900',
+                      "w-full rounded-2xl border border-white/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
                       selectedTeamId === team.id &&
-                        'border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20'
+                        "border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20",
                     )}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -434,7 +369,7 @@ export default function WorkspaceScreen() {
                         </p>
                       </div>
                       {selectedTeamId === team.id ? (
-                        <div className="flex flex-col gap-2 items-end">
+                        <div className="flex flex-col items-end gap-2">
                           <Badge variant="primary" size="sm">
                             Selected
                           </Badge>
@@ -462,8 +397,13 @@ export default function WorkspaceScreen() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    Room sessions
+                    Sessions
                   </h2>
+                  {selectedTeam && (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Linked to {selectedTeam.name}
+                    </p>
+                  )}
                 </div>
                 <Badge variant="success" size="sm" className="font-semibold">
                   <Target className="mr-1.5 h-3.5 w-3.5" />
@@ -480,116 +420,79 @@ export default function WorkspaceScreen() {
               )}
 
               {selectedTeam && (
-                <>
-                  <form onSubmit={handleCreateSession} className="space-y-3">
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <Input
-                        label="Session name"
-                        placeholder="Sprint 18 planning"
-                        value={sessionName}
-                        onChange={(event) => setSessionName(event.target.value)}
-                        required
-                        fullWidth
-                      />
-                      <Input
-                        label="Room key"
-                        placeholder="ABCD"
-                        value={sessionRoomKey}
-                        onChange={(event) =>
-                          setSessionRoomKey(event.target.value)
-                        }
-                        helperText="Use the room code from SprintJam"
-                        required
-                        fullWidth
-                      />
+                <div className="space-y-3">
+                  {isLoadingSessions && (
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                      <Spinner size="sm" />
+                      <span>Loading sessions...</span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="submit"
-                        icon={<Plus className="h-4 w-4" />}
-                        isLoading={isMutating}
-                        disabled={!sessionName.trim() || !sessionRoomKey.trim()}
+                  )}
+
+                  {!isLoadingSessions && sessions.length === 0 && (
+                    <EmptyState
+                      icon={<CalendarClock className="h-8 w-8" />}
+                      title="No sessions linked"
+                      description="Use the 'Save' button in a room to link it to this team."
+                    />
+                  )}
+
+                  {sessions.map((session) => {
+                    const isComplete = Boolean(session.completedAt);
+                    return (
+                      <SurfaceCard
+                        key={`${session.teamId}-${session.id}`}
+                        variant="subtle"
+                        padding="sm"
+                        className="flex items-start justify-between gap-4"
                       >
-                        Link session
-                      </Button>
-                    </div>
-                  </form>
-
-                  <div className="space-y-3">
-                    {isLoadingSessions && (
-                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                        <Spinner size="sm" />
-                        <span>Loading sessions...</span>
-                      </div>
-                    )}
-
-                    {!isLoadingSessions && sessions.length === 0 && (
-                      <EmptyState
-                        icon={<CalendarClock className="h-8 w-8" />}
-                        title="No sessions linked"
-                        description="Link a planning room to start tracking it here."
-                      />
-                    )}
-
-                    {sessions.map((session) => {
-                      const isComplete = Boolean(session.completedAt);
-                      return (
-                        <SurfaceCard
-                          key={`${session.teamId}-${session.id}`}
-                          variant="subtle"
-                          padding="sm"
-                          className="flex items-start justify-between gap-4"
-                        >
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                {session.name}
-                              </p>
-                              <Badge
-                                variant={isComplete ? 'default' : 'success'}
-                                size="sm"
-                              >
-                                {isComplete ? 'Completed' : 'Active'}
-                              </Badge>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                              <span className="flex items-center gap-1">
-                                <Target className="h-3.5 w-3.5" />
-                                Room {session.roomKey}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <CalendarClock className="h-3.5 w-3.5" />
-                                Created {formatDate(session.createdAt)}
-                              </span>
-                              {session.completedAt && (
-                                <span className="flex items-center gap-1">
-                                  <CheckCircle2 className="h-3.5 w-3.5" />
-                                  Completed {formatDate(session.completedAt)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                              {session.name}
+                            </p>
+                            <Badge
+                              variant={isComplete ? "default" : "success"}
                               size="sm"
-                              variant="secondary"
-                              icon={<ArrowUpRight className="h-3.5 w-3.5" />}
-                              onClick={() => handleOpenRoom(session.roomKey)}
                             >
-                              Open room
-                            </Button>
+                              {isComplete ? "Completed" : "Active"}
+                            </Badge>
                           </div>
-                        </SurfaceCard>
-                      );
-                    })}
-                  </div>
-                </>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <Target className="h-3.5 w-3.5" />
+                              Room {session.roomKey}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <CalendarClock className="h-3.5 w-3.5" />
+                              Created {formatDate(session.createdAt)}
+                            </span>
+                            {session.completedAt && (
+                              <span className="flex items-center gap-1">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Completed {formatDate(session.completedAt)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<ArrowUpRight className="h-3.5 w-3.5" />}
+                            onClick={() => handleOpenRoom(session.roomKey)}
+                          >
+                            Open room
+                          </Button>
+                        </div>
+                      </SurfaceCard>
+                    );
+                  })}
+                </div>
               )}
             </SurfaceCard>
           </div>
         </motion.div>
-        <Footer displayRepoLink={false} fullWidth={false} priorityLinksOnly />
-      </PageBackground>
+      </div>
 
       <Modal
         isOpen={isTeamModalOpen}

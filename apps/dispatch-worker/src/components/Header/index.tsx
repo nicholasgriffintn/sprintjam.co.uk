@@ -1,29 +1,27 @@
-import { Share2, Settings, LogOut } from "lucide-react";
+import { Share2, Settings, LogOut, Building2 } from "lucide-react";
 
-import type { RoomData, ConnectionStatusState } from "@/types";
+import type { RoomData } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
-import ConnectionStatus from "@/components/ConnectionStatus";
 import DarkModeToggle from "@/components/Header/DarkModeToggle";
 
 export interface HeaderProps {
   roomData: RoomData;
   isModeratorView: boolean;
-  connectionStatus: ConnectionStatusState;
   onLeaveRoom: () => void;
   setIsShareModalOpen: (open: boolean) => void;
   onOpenSettings: (tab?: RoomSettingsTabId) => void;
+  onSaveToWorkspace?: () => void;
 }
 
 export default function Header({
   roomData,
   isModeratorView,
-  connectionStatus,
   onLeaveRoom,
   setIsShareModalOpen,
   onOpenSettings,
+  onSaveToWorkspace,
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-white/50 bg-white/80 px-4 py-3 text-slate-900 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 dark:text-white">
@@ -64,15 +62,25 @@ export default function Header({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-          <Badge
-            variant={isModeratorView ? 'primary' : 'default'}
-            className="hidden sm:inline-flex"
-          >
-            {isModeratorView ? 'Mod' : 'Team'}
-          </Badge>
-          <ConnectionStatus status={connectionStatus} />
+        <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
           <DarkModeToggle />
+          {onSaveToWorkspace && (
+            <Button
+              type="button"
+              variant="unstyled"
+              onClick={onSaveToWorkspace}
+              aria-label="Save to workspace"
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100",
+                "md:w-auto md:min-w-[3rem] md:gap-2 md:px-4",
+              )}
+            >
+              <Building2 className="h-4 w-4" />
+              <span className="hidden text-sm font-semibold md:inline">
+                Save
+              </span>
+            </Button>
+          )}
           {isModeratorView && (
             <Button
               type="button"
@@ -80,8 +88,8 @@ export default function Header({
               onClick={() => onOpenSettings()}
               aria-label="Room settings"
               className={cn(
-                'flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-brand-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100',
-                'md:w-auto md:min-w-[3rem] md:gap-2 md:px-4',
+                "flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-brand-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100",
+                "md:w-auto md:min-w-[3rem] md:gap-2 md:px-4",
               )}
             >
               <Settings className="h-4 w-4" />
@@ -96,8 +104,8 @@ export default function Header({
             onClick={onLeaveRoom}
             aria-label="Leave room"
             className={cn(
-              'flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/40 text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:ring-rose-200 dark:border-rose-500/40 dark:bg-rose-500/5 dark:text-rose-200 dark:hover:border-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-100',
-              'md:w-auto md:min-w-[3rem] md:gap-2 md:px-4',
+              "flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/40 text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:ring-rose-200 dark:border-rose-500/40 dark:bg-rose-500/5 dark:text-rose-200 dark:hover:border-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-100",
+              "md:w-auto md:min-w-[3rem] md:gap-2 md:px-4",
             )}
           >
             <LogOut className="h-4 w-4" />

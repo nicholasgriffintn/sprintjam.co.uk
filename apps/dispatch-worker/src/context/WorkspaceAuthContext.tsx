@@ -5,6 +5,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
   type ReactNode,
 } from "react";
 
@@ -16,7 +17,6 @@ import {
   ensureWorkspaceProfileCollectionReady,
   workspaceProfileCollection,
 } from "@/lib/data/collections";
-import { useSessionState } from "./SessionContext";
 
 interface WorkspaceAuthContextValue {
   user: WorkspaceUser | null;
@@ -32,17 +32,25 @@ const WorkspaceAuthContext = createContext<WorkspaceAuthContextValue | null>(
 );
 
 export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
-  const { screen } = useSessionState();
-  const shouldLoadProfile = screen === "workspace";
-  const profile = useWorkspaceProfile(shouldLoadProfile);
+  const profile = useWorkspaceProfile(true);
   const [isLoading, setIsLoading] = useState(true);
+  const hasInitialized = useRef(false);
+
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    ensureWorkspaceProfileCollectionReady()
+      .then(() => {
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to initialize workspace auth", error);
+        setIsLoading(false);
+      });
+  }, []);
 
   const refreshAuth = useCallback(async () => {
-    if (!shouldLoadProfile) {
-      setIsLoading(false);
-      return;
-    }
-
     setIsLoading(true);
     try {
       await ensureWorkspaceProfileCollectionReady();
@@ -55,7 +63,7 @@ export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [shouldLoadProfile]);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -70,15 +78,10 @@ export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!shouldLoadProfile) {
-      setIsLoading(false);
-      return;
-    }
-
     if (profile) {
       setIsLoading(false);
     }
-  }, [profile, shouldLoadProfile]);
+  }, [profile]);
 
   const value = useMemo<WorkspaceAuthContextValue>(
     () => ({

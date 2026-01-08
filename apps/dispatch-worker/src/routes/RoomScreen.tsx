@@ -31,18 +31,15 @@ import { META_CONFIGS } from "@/config/meta";
 import { Footer } from "@/components/layout/Footer";
 import ShareRoomModal from "@/components/modals/ShareRoomModal";
 import SettingsModal from "@/components/modals/SettingsModal";
+import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
 import type { ConnectionStatusState } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 
 const RoomScreen = () => {
   usePageMeta(META_CONFIGS.room);
-  const {
-    roomData,
-    isModeratorView,
-    userVote,
-    serverDefaults,
-  } = useRoomState();
+  const { roomData, isModeratorView, userVote, serverDefaults } =
+    useRoomState();
   const {
     roomError,
     roomErrorKind,
@@ -73,6 +70,7 @@ const RoomScreen = () => {
   >(undefined);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSaveToWorkspaceOpen, setIsSaveToWorkspaceOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
 
@@ -136,17 +134,17 @@ const RoomScreen = () => {
         <ErrorBanner
           message={roomError}
           onClose={clearRoomError}
-          variant={roomErrorKind === 'permission' ? 'warning' : 'error'}
+          variant={roomErrorKind === "permission" ? "warning" : "error"}
         />
       )}
 
       <Header
         roomData={roomData}
         isModeratorView={isModeratorView}
-        connectionStatus={connectionStatus}
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         onOpenSettings={handleOpenSettings}
+        onSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
       />
 
       <motion.div
@@ -160,7 +158,7 @@ const RoomScreen = () => {
           stats={stats}
           setIsQueueModalOpen={setIsQueueModalOpen}
           onOpenQueueSettings={
-            isModeratorView ? () => handleOpenSettings('queue') : undefined
+            isModeratorView ? () => handleOpenSettings("queue") : undefined
           }
         />
 
@@ -183,7 +181,7 @@ const RoomScreen = () => {
               onVote={handleVote}
               displaySettings={roomData.settings.structuredVotingDisplay}
               onOpenVotingSettings={
-                isModeratorView ? () => handleOpenSettings('voting') : undefined
+                isModeratorView ? () => handleOpenSettings("voting") : undefined
               }
               disabled={isSpectator}
             />
@@ -191,10 +189,10 @@ const RoomScreen = () => {
             <UserEstimate
               roomData={roomData}
               name={name}
-              userVote={typeof userVote === 'object' ? null : userVote}
+              userVote={typeof userVote === "object" ? null : userVote}
               onVote={handleVote}
               onOpenVotingSettings={
-                isModeratorView ? () => handleOpenSettings('voting') : undefined
+                isModeratorView ? () => handleOpenSettings("voting") : undefined
               }
               disabled={isSpectator}
             />
@@ -210,7 +208,7 @@ const RoomScreen = () => {
               onNextTicket={() => setIsSummaryOpen(true)}
               onOpenResultsSettings={
                 isModeratorView
-                  ? () => handleOpenSettings('results')
+                  ? () => handleOpenSettings("results")
                   : undefined
               }
               onRevisitLater={async () => {
@@ -219,10 +217,10 @@ const RoomScreen = () => {
                 const maxOrdinal =
                   pendingQueue.reduce(
                     (max, t) => (t.ordinal > max ? t.ordinal : max),
-                    0
+                    0,
                   ) + 1;
                 await handleUpdateTicket(roomData.currentTicket.id, {
-                  status: 'pending',
+                  status: "pending",
                   ordinal: maxOrdinal,
                 });
                 handleNextTicket();
@@ -333,7 +331,7 @@ const RoomScreen = () => {
           onClose={() => setIsQueueModalOpen(false)}
           currentTicket={roomData.currentTicket}
           queue={roomData.ticketQueue || []}
-          externalService={roomData.settings.externalService || 'none'}
+          externalService={roomData.settings.externalService || "none"}
           roomKey={roomData.key}
           userName={name}
           onAddTicket={handleAddTicket}
@@ -348,10 +346,10 @@ const RoomScreen = () => {
         />
       )}
 
-      {isQueueEnabled && queueProvider !== 'none' && (
+      {isQueueEnabled && queueProvider !== "none" && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as 'jira' | 'linear' | 'github'}
+          provider={queueProvider as "jira" | "linear" | "github"}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);
@@ -377,6 +375,13 @@ const RoomScreen = () => {
             setIsSummaryOpen(false);
           }
         }}
+      />
+
+      <SaveToWorkspaceModal
+        isOpen={isSaveToWorkspaceOpen}
+        onClose={() => setIsSaveToWorkspaceOpen(false)}
+        roomKey={roomData.key}
+        suggestedName={roomData.currentTicket?.title}
       />
     </div>
   );
