@@ -5,6 +5,7 @@ import { upsertRoom } from "@/lib/data/room-store";
 import { safeLocalStorage } from "@/utils/storage";
 import type { AvatarId, ServerDefaults } from "@/types";
 import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
+import { HttpError } from "@/lib/errors";
 
 interface UseAutoReconnectOptions {
   name: string;
@@ -13,7 +14,7 @@ interface UseAutoReconnectOptions {
   isLoadingDefaults: boolean;
   selectedAvatar: AvatarId | null;
   onReconnectSuccess: (roomKey: string, isModerator: boolean) => void;
-  onReconnectError: (error: string) => void;
+  onReconnectError: (error: { message: string; isAuthError: boolean }) => void;
   onLoadingChange: (isLoading: boolean) => void;
   applyServerDefaults: (defaults?: ServerDefaults) => void;
   onAuthTokenRefresh?: (token: string | null) => void;
@@ -79,7 +80,10 @@ export const useAutoReconnect = ({
 
         const errorMessage =
           err instanceof Error ? err.message : "Failed to reconnect to room";
-        onReconnectError(errorMessage);
+        const isAuthError =
+          (err instanceof HttpError && err.status === 401) ||
+          /expired/i.test(errorMessage);
+        onReconnectError({ message: errorMessage, isAuthError });
         safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
         onAuthTokenRefresh?.(null);
       })

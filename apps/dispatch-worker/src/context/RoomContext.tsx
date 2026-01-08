@@ -209,9 +209,12 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       [],
     ),
     onReconnectError: useCallback(
-      (message: string) => {
+      ({ message, isAuthError }) => {
         setError(message);
-        setConnectionIssue({ type: "disconnected", message });
+        setConnectionIssue({
+          type: isAuthError ? "auth" : "disconnected",
+          message,
+        });
       },
       [setError],
     ),

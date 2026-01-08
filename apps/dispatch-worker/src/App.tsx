@@ -43,8 +43,13 @@ const AppContent = () => {
   const { screen } = useSessionState();
   const { error, clearError } = useSessionErrors();
   const { serverDefaults, roomData } = useRoomState();
-  const { isLoading, isLoadingDefaults, defaultsError, isSocketStatusKnown } =
-    useRoomStatus();
+  const {
+    isLoading,
+    isLoadingDefaults,
+    defaultsError,
+    isSocketStatusKnown,
+    connectionIssue,
+  } = useRoomStatus();
   const { handleRetryDefaults } = useRoomActions();
 
   const hasPrefetchedRoomScreen = useRef(false);
@@ -63,9 +68,9 @@ const AppContent = () => {
   const showGlobalLoading =
     screen !== "room" && (isLoading || isLoadingDefaults);
 
-  const canRenderRoomScreen = Boolean(
-    roomData && serverDefaults && isSocketStatusKnown,
-  );
+  const canRenderRoomScreen =
+    Boolean(roomData && serverDefaults && isSocketStatusKnown) ||
+    Boolean(connectionIssue);
 
   const renderScreen = () => {
     const getScreenContent = () => {

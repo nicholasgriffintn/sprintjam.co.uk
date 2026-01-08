@@ -98,7 +98,10 @@ describe("useAutoReconnect", () => {
       expect(onReconnectComplete).toHaveBeenCalled();
     });
 
-    expect(onReconnectError).toHaveBeenCalledWith("Connection failed");
+    expect(onReconnectError).toHaveBeenCalledWith({
+      message: "Connection failed",
+      isAuthError: false,
+    });
     expect(onReconnectSuccess).not.toHaveBeenCalled();
   });
 

@@ -74,8 +74,46 @@ const RoomScreen = () => {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
 
+  const connectionStatus: ConnectionStatusState = isSocketStatusKnown
+    ? isSocketConnected
+      ? "connected"
+      : "disconnected"
+    : "connecting";
+
+  const showReconnectBanner =
+    connectionIssue?.type === "disconnected" ||
+    (connectionStatus === "disconnected" && !connectionIssue);
+
+  const showAuthBanner = connectionIssue?.type === "auth";
+
   if (!roomData || !serverDefaults) {
-    return <FallbackLoading />;
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+        {showAuthBanner && (
+          <ErrorBannerAuth
+            onRetryConnection={retryConnection}
+            onLeaveRoom={handleLeaveRoom}
+          />
+        )}
+
+        {!showAuthBanner && (connectionIssue || showReconnectBanner) && (
+          <ErrorBannerConnection
+            connectionIssue={connectionIssue}
+            onRetryConnection={retryConnection}
+          />
+        )}
+
+        {roomError && (
+          <ErrorBanner
+            message={roomError}
+            onClose={clearRoomError}
+            variant={roomErrorKind === "permission" ? "warning" : "error"}
+          />
+        )}
+
+        <FallbackLoading />
+      </div>
+    );
   }
 
   const stats = useRoomStats(roomData);
@@ -91,18 +129,6 @@ const RoomScreen = () => {
       roomData: roomData,
       name: name,
     });
-
-  const connectionStatus: ConnectionStatusState = isSocketStatusKnown
-    ? isSocketConnected
-      ? "connected"
-      : "disconnected"
-    : "connecting";
-
-  const showReconnectBanner =
-    connectionIssue?.type === "disconnected" ||
-    (connectionStatus === "disconnected" && !connectionIssue);
-
-  const showAuthBanner = connectionIssue?.type === "auth";
 
   const handleOpenSettings = (tab?: RoomSettingsTabId) => {
     setSettingsInitialTab(tab);
