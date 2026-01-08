@@ -1,4 +1,5 @@
 import type { AppScreen } from "@/context/SessionContext";
+import { RETURN_URL_KEY } from "@/constants";
 
 export interface ParsedPath {
   screen: AppScreen;
@@ -80,4 +81,16 @@ export function navigateTo(screen: AppScreen, roomKey?: string): void {
   if (window.location.pathname !== path) {
     window.history.pushState({ screen, roomKey }, "", path);
   }
+}
+
+export function setReturnUrl(url: string): void {
+  sessionStorage.setItem(RETURN_URL_KEY, url);
+}
+
+export function getReturnUrl(): string | null {
+  return sessionStorage.getItem(RETURN_URL_KEY);
+}
+
+export function clearReturnUrl(): void {
+  sessionStorage.removeItem(RETURN_URL_KEY);
 }

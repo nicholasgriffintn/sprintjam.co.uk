@@ -12,6 +12,7 @@ import { useSessionActions } from '@/context/SessionContext';
 import { createTeamSession } from '@/lib/workspace-service';
 import { cn } from '@/lib/cn';
 import { BetaBadge } from '@/components/BetaBadge';
+import { setReturnUrl } from '@/utils/navigation';
 
 interface SaveToWorkspaceModalProps {
   isOpen: boolean;
@@ -73,6 +74,7 @@ export function SaveToWorkspaceModal({
   };
 
   const handleLoginClick = () => {
+    setReturnUrl(window.location.pathname);
     onClose();
     goToLogin();
   };

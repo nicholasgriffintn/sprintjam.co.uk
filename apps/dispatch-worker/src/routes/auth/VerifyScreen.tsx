@@ -17,6 +17,8 @@ import { verifyMagicLink } from '@/lib/workspace-service';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
 import { useSessionActions } from '@/context/SessionContext';
+import { useWorkspaceAuth } from '@/context/WorkspaceAuthContext';
+import { getReturnUrl, clearReturnUrl } from '@/utils/navigation';
 
 type VerifyState = 'verifying' | 'success' | 'error';
 
@@ -24,6 +26,7 @@ export default function VerifyScreen() {
   usePageMeta(META_CONFIGS.verify);
 
   const { goHome, goToLogin, goToWorkspace } = useSessionActions();
+  const { refreshAuth } = useWorkspaceAuth();
 
   const [state, setState] = useState<VerifyState>('verifying');
   const [error, setError] = useState('');
@@ -45,10 +48,18 @@ export default function VerifyScreen() {
     }
 
     verifyMagicLink(token)
-      .then(() => {
+      .then(async () => {
+        await refreshAuth();
         setState('success');
         setTimeout(() => {
-          goToWorkspace();
+          const returnUrl = getReturnUrl();
+          clearReturnUrl();
+
+          if (returnUrl) {
+            window.location.href = returnUrl;
+          } else {
+            goToWorkspace();
+          }
         }, 1500);
       })
       .catch((err) => {

@@ -63,8 +63,8 @@ const WelcomeScreen = () => {
             </h1>
             <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg">
               Plan sprints faster with real-time story point voting, instant
-              consensus insights, and lightweight collaboration. No sign-ups, no
-              distractions.
+              consensus insights, and lightweight collaboration. No sign-ups
+              required, no distractions.
             </p>
           </div>
         </div>
