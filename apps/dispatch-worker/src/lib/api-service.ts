@@ -22,6 +22,7 @@ import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 
 let activeSocket: WebSocket | null = null;
 let activeAuthToken: string | null = null;
+let activeRoomKey: string | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_BASE_DELAY = 1000;
@@ -114,7 +115,9 @@ export async function createRoom(
     }>(response, "Failed to create room");
 
     if (!data.room) {
-      throw new NetworkError("Invalid response from server while creating room");
+      throw new NetworkError(
+        "Invalid response from server while creating room",
+      );
     }
 
     await ensureRoomsCollectionReady();
@@ -205,7 +208,17 @@ export function connectToRoom(
     throw new Error("Missing auth token for room connection");
   }
 
+  if (
+    activeSocket &&
+    activeSocket.readyState === WebSocket.OPEN &&
+    activeRoomKey === roomKey &&
+    activeAuthToken === authToken
+  ) {
+    return activeSocket;
+  }
+
   activeAuthToken = authToken;
+  activeRoomKey = roomKey;
 
   if (activeSocket) {
     activeSocket.close();
@@ -489,6 +502,7 @@ export function disconnectFromRoom(): void {
     voteDebounceTimer = null;
   }
   activeAuthToken = null;
+  activeRoomKey = null;
   reconnectAttempts = 0;
 }
 

@@ -48,7 +48,7 @@ import type {
   VoteValue,
   WebSocketMessage,
 } from "@/types";
-import { AUTH_TOKEN_STORAGE_KEY, ROOM_KEY_STORAGE_KEY } from "@/constants";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
 import { getErrorDetails, isAbortError } from "@/lib/errors";
 import {
   useSessionActions,
@@ -82,9 +82,7 @@ interface RoomActionsContextValue {
   handleRetryDefaults: () => void;
   clearRoomError: () => void;
   reportRoomError: (message: string, kind?: ErrorKind | null) => void;
-  setPendingCreateSettings: (
-    settings: Partial<RoomSettings> | null,
-  ) => void;
+  setPendingCreateSettings: (settings: Partial<RoomSettings> | null) => void;
   handleCreateRoom: (settings?: Partial<RoomSettings>) => Promise<void>;
   handleJoinRoom: () => Promise<void>;
   handleLeaveRoom: () => void;
@@ -116,7 +114,7 @@ const RoomActionsContext = createContext<RoomActionsContextValue | undefined>(
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { screen, name, roomKey, passcode, selectedAvatar } = useSessionState();
-  const { setRoomKey, setScreen, setPasscode } = useSessionActions();
+  const { setRoomKey, setPasscode, goHome, goToRoom } = useSessionActions();
   const { setError, clearError } = useSessionErrors();
 
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
@@ -139,9 +137,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     useState<ErrorConnectionIssue | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [reconnectSignal, setReconnectSignal] = useState<number>(0);
-  const [pendingCreateSettings, setPendingCreateSettings] = useState<
-    Partial<RoomSettings> | null
-  >(null);
+  const [pendingCreateSettings, setPendingCreateSettings] =
+    useState<Partial<RoomSettings> | null>(null);
 
   const {
     serverDefaults,
@@ -199,15 +196,15 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   useAutoReconnect({
     name,
     screen,
+    roomKey,
     isLoadingDefaults,
     selectedAvatar,
     onReconnectSuccess: useCallback(
       (roomKeyValue: string, isModerator: boolean) => {
         setActiveRoomKey(roomKeyValue);
         setIsModeratorView(isModerator);
-        setScreen("room");
       },
-      [setScreen],
+      [],
     ),
     onReconnectError: useCallback(
       (message: string) => {
@@ -350,7 +347,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         applyServerDefaults(defaults);
         await upsertRoom(newRoom);
         setActiveRoomKey(newRoom.key);
-        safeLocalStorage.set(ROOM_KEY_STORAGE_KEY, newRoom.key);
         if (newAuthToken) {
           setAuthToken(newAuthToken);
           safeLocalStorage.set(AUTH_TOKEN_STORAGE_KEY, newAuthToken);
@@ -359,16 +355,13 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
           safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
         }
         setIsModeratorView(true);
-        setScreen("room");
+        goToRoom(newRoom.key);
         setPendingCreateSettings(null);
       } catch (err: unknown) {
         if (isAbortError(err)) {
           return;
         }
-        const { message, kind } = getErrorDetails(
-          err,
-          "Failed to create room",
-        );
+        const { message, kind } = getErrorDetails(err, "Failed to create room");
         setError(message, kind ?? null);
       } finally {
         setIsLoading(false);
@@ -383,7 +376,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       clearError,
       startRoomRequest,
       setError,
-      setScreen,
+      goToRoom,
     ],
   );
 
@@ -412,7 +405,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
-      safeLocalStorage.set(ROOM_KEY_STORAGE_KEY, joinedRoom.key);
       if (newAuthToken) {
         setAuthToken(newAuthToken);
         safeLocalStorage.set(AUTH_TOKEN_STORAGE_KEY, newAuthToken);
@@ -421,7 +413,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
       }
       setIsModeratorView(joinedRoom.moderator === name);
-      setScreen("room");
+      goToRoom(joinedRoom.key);
     } catch (err: unknown) {
       if (isAbortError(err)) {
         return;
@@ -430,7 +422,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       const normalizedKind =
         /passcode/i.test(message) || kind === "passcode"
           ? "passcode"
-          : kind ?? null;
+          : (kind ?? null);
       setError(message, normalizedKind);
     } finally {
       setIsLoading(false);
@@ -444,7 +436,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     clearError,
     startRoomRequest,
     setError,
-    setScreen,
+    goToRoom,
   ]);
 
   const handleVote = useCallback(
@@ -535,7 +527,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const handleLeaveRoom = useCallback(() => {
     latestRoomRequestRef.current?.abort();
     disconnectFromRoom();
-    safeLocalStorage.remove(ROOM_KEY_STORAGE_KEY);
     safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
     setRoomError("");
     setRoomErrorKind(null);
@@ -555,16 +546,19 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     setIsModeratorView(false);
     setPasscode("");
     setRoomKey("");
-    setScreen("welcome");
-  }, [setPasscode, setRoomKey, setScreen]);
+    goHome();
+  }, [setPasscode, setRoomKey, goHome]);
 
-  const handleSelectTicket = useCallback((ticketId: number) => {
-    try {
-      selectTicket(ticketId);
-    } catch (err: unknown) {
-      assignRoomError(err, "Failed to select ticket");
-    }
-  }, [assignRoomError]);
+  const handleSelectTicket = useCallback(
+    (ticketId: number) => {
+      try {
+        selectTicket(ticketId);
+      } catch (err: unknown) {
+        assignRoomError(err, "Failed to select ticket");
+      }
+    },
+    [assignRoomError],
+  );
 
   const handleNextTicket = useCallback(() => {
     try {
@@ -596,13 +590,16 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     [assignRoomError],
   );
 
-  const handleDeleteTicket = useCallback(async (ticketId: number) => {
-    try {
-      await deleteTicket(ticketId);
-    } catch (err: unknown) {
-      assignRoomError(err, "Failed to delete ticket");
-    }
-  }, [assignRoomError]);
+  const handleDeleteTicket = useCallback(
+    async (ticketId: number) => {
+      try {
+        await deleteTicket(ticketId);
+      } catch (err: unknown) {
+        assignRoomError(err, "Failed to delete ticket");
+      }
+    },
+    [assignRoomError],
+  );
 
   const retryConnection = useCallback(() => {
     setConnectionIssue((current) =>

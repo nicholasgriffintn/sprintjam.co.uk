@@ -11,7 +11,7 @@ import {
 import { useUserPersistence } from "@/hooks/useUserPersistence";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
-import { getScreenFromPath, navigateTo } from "@/utils/navigation";
+import { navigateTo, parsePath } from "@/utils/navigation";
 
 export type AppScreen =
   | "welcome"
@@ -80,13 +80,13 @@ export const SessionProvider = ({
   currentPath: string;
   children: ReactNode;
 }) => {
-  const screenFromPath = getScreenFromPath(currentPath);
-  const [screen, setScreen] = useState<AppScreen>(screenFromPath);
+  const initialPath = parsePath(currentPath);
+  const [screen, setScreen] = useState<AppScreen>(initialPath.screen);
   const [joinFlowMode, setJoinFlowMode] = useState<"join" | "create">(
-    screenFromPath === "create" ? "create" : "join",
+    initialPath.screen === "create" ? "create" : "join",
   );
   const [name, setName] = useState("");
-  const [roomKey, setRoomKey] = useState("");
+  const [roomKey, setRoomKey] = useState(initialPath.roomKey ?? "");
   const [passcode, setPasscode] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(null);
   const [error, setErrorState] = useState("");
@@ -130,10 +130,10 @@ export const SessionProvider = ({
   }, [clearError]);
 
   const goToRoom = useCallback(
-    (roomKey: string) => {
-      setRoomKey(roomKey);
+    (key: string) => {
+      setRoomKey(key);
       setScreen("room");
-      navigateTo("room");
+      navigateTo("room", key);
       clearError();
     },
     [clearError],
@@ -164,8 +164,11 @@ export const SessionProvider = ({
 
   useEffect(() => {
     const handlePopState = () => {
-      const newScreen = getScreenFromPath(window.location.pathname);
-      setScreen(newScreen);
+      const parsed = parsePath(window.location.pathname);
+      setScreen(parsed.screen);
+      if (parsed.roomKey) {
+        setRoomKey(parsed.roomKey);
+      }
       clearError();
     };
 

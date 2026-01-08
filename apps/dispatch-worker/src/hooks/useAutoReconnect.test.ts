@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 
 const effects: Array<() => void | (() => void)> = [];
 
-vi.mock('react', () => ({
+vi.mock("react", () => ({
   useEffect: (fn: () => void | (() => void)) => {
     const cleanup = fn();
     if (cleanup) {
@@ -12,21 +12,20 @@ vi.mock('react', () => ({
   useRef: (val: any) => ({ current: val }),
 }));
 
-vi.mock('@/constants', () => ({
-  AUTH_TOKEN_STORAGE_KEY: 'AUTH_TOKEN',
-  ROOM_KEY_STORAGE_KEY: 'ROOM_KEY',
+vi.mock("@/constants", () => ({
+  AUTH_TOKEN_STORAGE_KEY: "AUTH_TOKEN",
 }));
 
-vi.mock('@/lib/api-service', () => ({
+vi.mock("@/lib/api-service", () => ({
   joinRoom: vi.fn(),
 }));
 
-vi.mock('@/lib/data/room-store', () => ({
+vi.mock("@/lib/data/room-store", () => ({
   upsertRoom: vi.fn(),
 }));
 
 const storage = new Map<string, string>();
-vi.mock('@/utils/storage', () => ({
+vi.mock("@/utils/storage", () => ({
   safeLocalStorage: {
     get: (key: string) => storage.get(key) ?? null,
     set: (key: string, value: string) => storage.set(key, value),
@@ -34,10 +33,10 @@ vi.mock('@/utils/storage', () => ({
   },
 }));
 
-import { useAutoReconnect } from './useAutoReconnect';
-import { joinRoom } from '@/lib/api-service';
+import { useAutoReconnect } from "./useAutoReconnect";
+import { joinRoom } from "@/lib/api-service";
 
-describe('useAutoReconnect', () => {
+describe("useAutoReconnect", () => {
   const onReconnectSuccess = vi.fn();
   const onReconnectError = vi.fn();
   const onLoadingChange = vi.fn();
@@ -50,23 +49,23 @@ describe('useAutoReconnect', () => {
     vi.resetAllMocks();
   });
 
-  it('avoids calling callbacks after cleanup (cancellation guard)', async () => {
+  it("avoids calling callbacks after cleanup (cancellation guard)", async () => {
     const deferred: any = {};
     (joinRoom as Mock).mockImplementation(
       () =>
         new Promise((resolve, reject) => {
           deferred.resolve = resolve;
           deferred.reject = reject;
-        })
+        }),
     );
-    storage.set('ROOM_KEY', 'ROOM1');
-    storage.set('AUTH_TOKEN', 'tok');
+    storage.set("AUTH_TOKEN", "tok");
 
     useAutoReconnect({
-      name: 'alice',
-      screen: 'welcome',
+      name: "alice",
+      screen: "room",
+      roomKey: "ROOM1",
       isLoadingDefaults: false,
-      selectedAvatar: 'user',
+      selectedAvatar: "user",
       onReconnectSuccess,
       onReconnectError,
       onLoadingChange,
@@ -74,12 +73,12 @@ describe('useAutoReconnect', () => {
       onAuthTokenRefresh,
     });
 
-    effects.forEach((cleanup) => typeof cleanup === 'function' && cleanup());
+    effects.forEach((cleanup) => typeof cleanup === "function" && cleanup());
 
     await deferred.resolve?.({
-      room: { key: 'ROOM1', moderator: 'alice' },
+      room: { key: "ROOM1", moderator: "alice" },
       defaults: undefined,
-      authToken: 'tok-new',
+      authToken: "tok-new",
     });
 
     expect(onReconnectSuccess).not.toHaveBeenCalled();

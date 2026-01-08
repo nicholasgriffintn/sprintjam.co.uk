@@ -28,7 +28,6 @@ export const BASE_DESCRIPTION =
 export const AUTH_TOKEN_STORAGE_KEY = "sprintjam_authToken";
 export const WORKSPACE_TOKEN_STORAGE_KEY = "sprintjam_workspaceToken";
 export const CONFIDENCE_INFO_STORAGE_KEY = "sprintjam_confidenceInfoSeen";
-export const ROOM_KEY_STORAGE_KEY = "sprintjam_roomKey";
 export const MUTE_STORAGE_KEY = "sprintjam_strudelPlayerMuted";
 export const VOLUME_STORAGE_KEY = "sprintjam_strudelPlayerVolume";
 export const USERNAME_STORAGE_KEY = "sprintjam_username";
