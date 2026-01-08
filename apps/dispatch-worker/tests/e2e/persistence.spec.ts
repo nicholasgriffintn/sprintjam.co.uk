@@ -41,14 +41,14 @@ test.describe("Data persistence", () => {
 
     try {
       const storage = await moderatorRoom.getPage().evaluate(() => ({
-        roomKey: window.localStorage.getItem("sprintjam_roomKey"),
         auth: window.localStorage.getItem("sprintjam_authToken"),
         username: window.localStorage.getItem("sprintjam_username"),
+        pathname: window.location.pathname,
       }));
 
-      expect(storage.roomKey).toBe(roomKey);
       expect(storage.auth).toBeTruthy();
       expect(storage.username).toBeTruthy();
+      expect(storage.pathname).toBe(`/room/${roomKey}`);
     } finally {
       await cleanup();
     }
@@ -79,7 +79,7 @@ test.describe("Data persistence", () => {
     );
 
     const reconnectPage = await reconnectContext.newPage();
-    await reconnectPage.goto("/");
+    await reconnectPage.goto(`/room/${roomKey}`);
     await expect(reconnectPage.getByTestId("participants-panel")).toBeVisible();
 
     await reconnectContext.close();

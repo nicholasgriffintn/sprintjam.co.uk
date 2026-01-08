@@ -40,9 +40,9 @@ test.describe("Error scenarios", () => {
       { savedRoomKey: roomKey, savedAuthToken: authToken, savedName: moderatorName },
     );
 
-    await reconnectPage.goto("/");
+    await reconnectPage.goto(`/room/${roomKey}`);
     await expect(
-      reconnectPage.getByText(/Session expired. Please rejoin the room/i),
+      reconnectPage.getByText(/Session expired.*rejoin the room/i),
     ).toBeVisible();
 
     await reconnectContext.close();
