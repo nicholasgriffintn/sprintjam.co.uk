@@ -27,44 +27,7 @@ importers:
         specifier: 4.57.0
         version: 4.57.0(@cloudflare/workers-types@4.20260107.1)
 
-  apps/auth-worker:
-    dependencies:
-      '@sprintjam/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@sprintjam/services':
-        specifier: workspace:*
-        version: link:../../packages/services
-      '@sprintjam/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@sprintjam/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
-      drizzle-orm:
-        specifier: 0.45.1
-        version: 0.45.1(@cloudflare/workers-types@4.20260107.1)
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: 4.20260107.1
-        version: 4.20260107.1
-      '@vitest/coverage-v8':
-        specifier: 4.0.16
-        version: 4.0.16(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2))
-      drizzle-kit:
-        specifier: 0.31.8
-        version: 0.31.8
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: 4.0.16
-        version: 4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)
-      wrangler:
-        specifier: 4.57.0
-        version: 4.57.0(@cloudflare/workers-types@4.20260107.1)
-
-  apps/dispatch-worker:
+  apps/app:
     dependencies:
       '@sprintjam/types':
         specifier: workspace:*
@@ -148,6 +111,43 @@ importers:
       vite:
         specifier: 7.2.7
         version: 7.2.7(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)
+      vitest:
+        specifier: 4.0.16
+        version: 4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)
+      wrangler:
+        specifier: 4.57.0
+        version: 4.57.0(@cloudflare/workers-types@4.20260107.1)
+
+  apps/auth-worker:
+    dependencies:
+      '@sprintjam/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@sprintjam/services':
+        specifier: workspace:*
+        version: link:../../packages/services
+      '@sprintjam/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@sprintjam/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      drizzle-orm:
+        specifier: 0.45.1
+        version: 0.45.1(@cloudflare/workers-types@4.20260107.1)
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: 4.20260107.1
+        version: 4.20260107.1
+      '@vitest/coverage-v8':
+        specifier: 4.0.16
+        version: 4.0.16(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2))
+      drizzle-kit:
+        specifier: 0.31.8
+        version: 0.31.8
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
       vitest:
         specifier: 4.0.16
         version: 4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)
