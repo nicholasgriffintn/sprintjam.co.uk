@@ -13,7 +13,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 
-import { useSessionActions } from '@/context/SessionContext';
+import { useSessionActions, type AppScreen } from '@/context/SessionContext';
 import { PageBackground } from '@/components/layout/PageBackground';
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -21,12 +21,21 @@ import { Logo } from '@/components/Logo';
 import { Footer } from '@/components/layout/Footer';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { META_CONFIGS } from '@/config/meta';
+import { navigateTo } from '@/utils/navigation';
 
 const WelcomeScreen = () => {
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const { startCreateFlow, startJoinFlow } = useSessionActions();
+
+  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
+
+  const handleNavigate = (screen: AppScreen) => {
+    setScreen(screen);
+    navigateTo(screen);
+  };
+
   usePageMeta(META_CONFIGS.welcome);
+
   const features = [
     {
       icon: <Zap className="w-5 h-5" />,
@@ -211,13 +220,14 @@ const WelcomeScreen = () => {
                     Pull titles, labels, and status into SprintJam while keeping
                     access scoped to the room so moderators stay in control.
                   </p>
-                  <a
-                    href="/integrations"
+                  <button
+                    type="button"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                    onClick={() => handleNavigate('integrations')}
                   >
                     Explore integrations
                     <ArrowUpRight className="h-4 w-4" />
-                  </a>
+                  </button>
                 </div>
                 <div className="relative flex-1 md:max-w-sm">
                   <div className="rounded-xl border border-white/10 bg-black/30 p-3">

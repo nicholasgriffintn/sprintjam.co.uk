@@ -11,12 +11,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { useSessionActions, type AppScreen } from "@/context/SessionContext";
 import { Footer } from "@/components/layout/Footer";
 import { Logo } from "@/components/Logo";
 import { PageBackground } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { navigateTo } from "@/utils/navigation";
 
 const featureCards = [
   {
@@ -85,13 +87,20 @@ const securityHighlights = [
     icon: BadgeCheck,
     cta: {
       label: 'View Privacy Policy',
-      href: '/privacy',
+      screen: 'privacy' as const,
     },
   },
 ];
 
 const GithubIntegrationScreen = () => {
   usePageMeta(META_CONFIGS.integrationsGithub);
+  const { goHome, startCreateFlow, startJoinFlow, setScreen } =
+    useSessionActions();
+
+  const handleNavigate = (screen: AppScreen) => {
+    setScreen(screen);
+    navigateTo(screen);
+  };
 
   return (
     <PageBackground variant="compact" maxWidth="xl">
@@ -102,9 +111,14 @@ const GithubIntegrationScreen = () => {
         className="space-y-14 lg:space-y-16"
       >
         <div className="flex justify-center">
-          <a href="/" aria-label="SprintJam home" className="hover:opacity-80">
+          <button
+            type="button"
+            aria-label="SprintJam home"
+            className="hover:opacity-80"
+            onClick={goHome}
+          >
             <Logo size="lg" />
-          </a>
+          </button>
         </div>
 
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -120,19 +134,21 @@ const GithubIntegrationScreen = () => {
               back without leaving SprintJam.
             </p>
             <div className="flex flex-wrap gap-3">
-              <a
-                href="/create"
+              <button
+                type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                onClick={startCreateFlow}
               >
                 Create a room
-              </a>
-              <a
-                href="/integrations"
+              </button>
+              <button
+                type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                onClick={() => handleNavigate('integrations')}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
-              </a>
+              </button>
             </div>
           </div>
 
@@ -263,13 +279,14 @@ const GithubIntegrationScreen = () => {
                   {detail}
                 </p>
                 {cta ? (
-                  <a
-                    href={cta.href}
+                  <button
+                    type="button"
                     className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                    onClick={() => handleNavigate(cta.screen)}
                   >
                     {cta.label}
                     <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-                  </a>
+                  </button>
                 ) : null}
               </SurfaceCard>
             ))}
@@ -291,18 +308,20 @@ const GithubIntegrationScreen = () => {
               </p>
             </div>
             <div className="flex flex-wrap gap-3 md:justify-end">
-              <a
-                href="/create"
+              <button
+                type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                onClick={startCreateFlow}
               >
                 Start a room
-              </a>
-              <a
-                href="/join"
+              </button>
+              <button
+                type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-brand-300/60"
+                onClick={startJoinFlow}
               >
                 Join with code
-              </a>
+              </button>
             </div>
           </div>
         </SurfaceCard>

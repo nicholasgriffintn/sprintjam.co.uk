@@ -104,8 +104,18 @@ export function getPathFromScreen(screen: AppScreen, roomKey?: string): string {
 
 export function navigateTo(screen: AppScreen, roomKey?: string): void {
   const path = getPathFromScreen(screen, roomKey);
+
   if (window.location.pathname !== path) {
     window.history.pushState({ screen, roomKey }, "", path);
+  }
+
+  const scrollToTop = () =>
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+
+  if ("requestAnimationFrame" in window) {
+    window.requestAnimationFrame(scrollToTop);
+  } else {
+    scrollToTop();
   }
 }
 

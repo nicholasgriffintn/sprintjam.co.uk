@@ -8,33 +8,35 @@ import {
   Workflow,
 } from 'lucide-react';
 
+import { useSessionActions, type AppScreen } from '@/context/SessionContext';
 import { Footer } from '@/components/layout/Footer';
 import { Logo } from '@/components/Logo';
 import { PageBackground } from '@/components/layout/PageBackground';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { META_CONFIGS } from '@/config/meta';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { navigateTo } from '@/utils/navigation';
 
 const providers = [
   {
     name: 'Jira',
     description:
       'Import issues, estimate together, and sync story points back to Jira when you lock consensus.',
-    href: '/integrations/jira',
+    screen: 'integrationsJira',
     badge: 'Atlassian friendly',
   },
   {
     name: 'Linear',
     description:
       'Connect Linear to pull issues, capture estimates, and keep your roadmap aligned without copy-paste.',
-    href: '/integrations/linear',
+    screen: 'integrationsLinear',
     badge: 'Fast and focused',
   },
   {
     name: 'GitHub',
     description:
       'Estimate GitHub issues with the team and keep repos in sync with story points and decisions.',
-    href: '/integrations/github',
+    screen: 'integrationsGithub',
     badge: 'Built for OSS and teams',
   },
 ];
@@ -74,6 +76,13 @@ const highlights = [
 
 const IntegrationsScreen = () => {
   usePageMeta(META_CONFIGS.integrations);
+  const { goHome, startCreateFlow, startJoinFlow, setScreen } =
+    useSessionActions();
+
+  const handleNavigate = (screen: AppScreen) => {
+    setScreen(screen);
+    navigateTo(screen);
+  };
 
   return (
     <PageBackground variant="compact" maxWidth="xl">
@@ -84,9 +93,14 @@ const IntegrationsScreen = () => {
         className="space-y-14 lg:space-y-16"
       >
         <div className="flex justify-center">
-          <a href="/" aria-label="SprintJam home" className="hover:opacity-80">
+          <button
+            type="button"
+            aria-label="SprintJam home"
+            className="hover:opacity-80"
+            onClick={goHome}
+          >
             <Logo size="lg" />
-          </a>
+          </button>
         </div>
 
         <div className="space-y-10">
@@ -104,7 +118,7 @@ const IntegrationsScreen = () => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {providers.map(({ name, description, href, badge }) => (
+            {providers.map(({ name, description, screen, badge }) => (
               <SurfaceCard key={name} className="h-full text-left">
                 <div className="mb-3 inline-flex items-center rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/30">
                   {badge}
@@ -116,13 +130,14 @@ const IntegrationsScreen = () => {
                   {description}
                 </p>
                 <div className="mt-6">
-                  <a
-                    href={href}
+                  <button
+                    type="button"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                    onClick={() => handleNavigate(screen as AppScreen)}
                   >
                     Explore {name}
                     <ArrowUpRight className="h-4 w-4" />
-                  </a>
+                  </button>
                 </div>
               </SurfaceCard>
             ))}
@@ -169,18 +184,20 @@ const IntegrationsScreen = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <a
-              href="/create"
+            <button
+              type="button"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              onClick={startCreateFlow}
             >
               Create a room
-            </a>
-            <a
-              href="/join"
+            </button>
+            <button
+              type="button"
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-brand-300/60"
+              onClick={startJoinFlow}
             >
               Join with a code
-            </a>
+            </button>
           </div>
         </SurfaceCard>
 

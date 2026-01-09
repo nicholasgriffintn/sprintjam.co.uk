@@ -128,6 +128,8 @@ describe("navigation", () => {
       vi.stubGlobal("window", {
         location: { pathname: "/" },
         history: { pushState: vi.fn() },
+        scrollTo: vi.fn(),
+        requestAnimationFrame: (cb: FrameRequestCallback) => cb(0),
       });
     });
 
@@ -138,6 +140,11 @@ describe("navigation", () => {
         "",
         "/workspace",
       );
+      expect(window.scrollTo).toHaveBeenCalledWith({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
     });
 
     it("pushes state with room key", () => {
@@ -147,12 +154,18 @@ describe("navigation", () => {
         "",
         "/room/ABC123",
       );
+      expect(window.scrollTo).toHaveBeenCalled();
     });
 
     it("does not push state when path is same", () => {
       window.location.pathname = "/workspace";
       navigateTo("workspace");
       expect(window.history.pushState).not.toHaveBeenCalled();
+      expect(window.scrollTo).toHaveBeenCalledWith({
+        behavior: "smooth",
+        left: 0,
+        top: 0,
+      });
     });
   });
 });
