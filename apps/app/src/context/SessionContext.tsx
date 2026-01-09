@@ -24,7 +24,11 @@ export type AppScreen =
   | "privacy"
   | "terms"
   | "changelog"
-  | "faq";
+  | "faq"
+  | "integrations"
+  | "integrationsJira"
+  | "integrationsLinear"
+  | "integrationsGithub";
 
 interface SessionStateContextValue {
   screen: AppScreen;

@@ -150,7 +150,7 @@ export const useWorkspaceData = () => {
           ? err.message
           : "Unable to load workspace data right now";
 
-      if (message === "Unauthorized") {
+      if (message === 'Unauthorized') {
         setError(null);
       } else {
         setError(message);

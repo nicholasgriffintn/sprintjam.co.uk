@@ -283,7 +283,7 @@ export default function LoginScreen() {
                 fullWidth
                 required
                 autoFocus
-                disabled={state === "sending"}
+                disabled={state === 'sending'}
               />
 
               <div className="flex flex-col gap-4 sm:flex-row">
@@ -293,9 +293,9 @@ export default function LoginScreen() {
                   className="sm:flex-1"
                   fullWidth
                   size="lg"
-                  isLoading={state === "sending"}
+                  isLoading={state === 'sending'}
                 >
-                  {state === "sending" ? "Sending..." : "Continue"}
+                  {state === 'sending' ? 'Sending...' : 'Continue'}
                 </Button>
               </div>
             </motion.form>

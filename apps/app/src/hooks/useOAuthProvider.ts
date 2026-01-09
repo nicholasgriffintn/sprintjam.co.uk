@@ -16,15 +16,13 @@ interface OAuthContext {
 }
 
 interface UseOAuthProviderOptions<Status> {
-  provider: "jira" | "linear" | "github";
+  provider: 'jira' | 'linear' | 'github';
   providerLabel?: string;
   enabled?: boolean;
   staleTime?: number;
   initialStatus: Status;
   getStatus: (context: OAuthContext) => Promise<Status>;
-  authorize: (
-    context: OAuthContext,
-  ) => Promise<{ authorizationUrl: string }>;
+  authorize: (context: OAuthContext) => Promise<{ authorizationUrl: string }>;
   revoke: (context: OAuthContext) => Promise<void>;
   onDisconnectSuccess?: (context: {
     queryClient: ReturnType<typeof useQueryClient>;
@@ -42,7 +40,7 @@ export interface OAuthProviderResult<Status> {
   refresh: () => Promise<Status | undefined>;
 }
 
-const baseWindowFeatures = "width=600,height=700";
+const baseWindowFeatures = 'width=600,height=700';
 
 const openAuthWindow = (url: string, label: string) => {
   const width = 600;
@@ -53,7 +51,7 @@ const openAuthWindow = (url: string, label: string) => {
   return window.open(
     url,
     `${label} OAuth`,
-    `${baseWindowFeatures},left=${left},top=${top}`,
+    `${baseWindowFeatures},left=${left},top=${top}`
   );
 };
 
@@ -78,16 +76,16 @@ export function useOAuthProvider<Status>({
 
   const context: OAuthContext = useMemo(
     () => ({
-      roomKey: activeRoomKey ?? "",
-      name: name ?? "",
-      authToken: authToken ?? "",
+      roomKey: activeRoomKey ?? '',
+      name: name ?? '',
+      authToken: authToken ?? '',
     }),
-    [activeRoomKey, authToken, name],
+    [activeRoomKey, authToken, name]
   );
 
   const statusQueryKey: QueryKey = [
     provider,
-    "oauth-status",
+    'oauth-status',
     context.roomKey,
     context.name,
     context.authToken,
@@ -101,12 +99,12 @@ export function useOAuthProvider<Status>({
   });
 
   const connectMutation = useMutation({
-    mutationKey: [provider, "oauth-connect", context.roomKey, context.name],
+    mutationKey: [provider, 'oauth-connect', context.roomKey, context.name],
     mutationFn: async () => {
       const { authorizationUrl } = await authorize(context);
       const authWindow = openAuthWindow(
         authorizationUrl,
-        providerLabel ?? provider,
+        providerLabel ?? provider
       );
 
       const pollTimer = setInterval(() => {
@@ -121,7 +119,7 @@ export function useOAuthProvider<Status>({
   });
 
   const disconnectMutation = useMutation({
-    mutationKey: [provider, "oauth-disconnect", context.roomKey, context.name],
+    mutationKey: [provider, 'oauth-disconnect', context.roomKey, context.name],
     mutationFn: async () => {
       await revoke(context);
       onDisconnectSuccess?.({
@@ -136,7 +134,7 @@ export function useOAuthProvider<Status>({
 
   const connect = async () => {
     if (!hasRequiredContext) {
-      setClientError("Missing room key, user name, or session token");
+      setClientError('Missing room key, user name, or session token');
       return;
     }
 
@@ -146,7 +144,7 @@ export function useOAuthProvider<Status>({
 
   const disconnect = async () => {
     if (!hasRequiredContext) {
-      setClientError("Missing room key, user name, or session token");
+      setClientError('Missing room key, user name, or session token');
       return;
     }
 
@@ -170,8 +168,7 @@ export function useOAuthProvider<Status>({
     connectMutation.isPending ||
     disconnectMutation.isPending;
 
-  const status =
-    (hasRequiredContext && statusQuery.data) || initialStatus;
+  const status = (hasRequiredContext && statusQuery.data) || initialStatus;
 
   return {
     status,

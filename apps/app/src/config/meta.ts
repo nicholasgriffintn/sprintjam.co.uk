@@ -85,6 +85,34 @@ export const META_CONFIGS: Record<string, MetaTagConfig> = {
     keywords: 'faq, sprintjam help, planning poker guide, scrum estimation',
     ogImage: '/og-image.png',
   },
+  integrations: {
+    title: `Integrations - ${SITE_NAME}`,
+    description:
+      'Connect SprintJam to Jira, Linear, and GitHub with secure per-room OAuth connections and smart syncing.',
+    keywords: 'jira integration, linear integration, github integration, sprintjam integrations',
+    ogImage: '/og-image.png',
+  },
+  integrationsJira: {
+    title: `Jira Integration - ${SITE_NAME}`,
+    description:
+      'Import Jira issues, estimate with your team, and sync story points back with SprintJam’s secure integration.',
+    keywords: 'jira planning poker, jira integration, story point sync',
+    ogImage: '/og-image.png',
+  },
+  integrationsLinear: {
+    title: `Linear Integration - ${SITE_NAME}`,
+    description:
+      'Bring Linear issues into SprintJam, estimate together, and keep your roadmap aligned with synced results.',
+    keywords: 'linear planning poker, linear integration, story points',
+    ogImage: '/og-image.png',
+  },
+  integrationsGithub: {
+    title: `GitHub Integration - ${SITE_NAME}`,
+    description:
+      'Estimate GitHub issues in SprintJam and keep engineering work in sync with story point updates.',
+    keywords: 'github planning poker, github integration, issue estimation',
+    ogImage: '/og-image.png',
+  },
   notFound: {
     title: `Page Not Found - ${SITE_NAME}`,
     description:

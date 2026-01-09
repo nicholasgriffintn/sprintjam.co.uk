@@ -20,22 +20,22 @@ import { MAGIC_LINK_EXPIRY_MS, SESSION_EXPIRY_MS } from "../constants";
 
 export async function requestMagicLinkController(
   request: CfRequest,
-  env: AuthWorkerEnv,
+  env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const body = await request.json<{ email?: string }>();
   const email = body?.email?.toLowerCase().trim();
 
   if (!email) {
-    return jsonError("Email is required", 400);
+    return jsonError('Email is required', 400);
   }
 
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email)) {
-    return jsonError("Invalid email format", 400);
+    return jsonError('Invalid email format', 400);
   }
 
-  if (env.ENABLE_MAGIC_LINK_RATE_LIMIT === "true") {
-    const key = `${email}-${request.headers.get("cf-connecting-ip") ?? "unknown"}`;
+  if (env.ENABLE_MAGIC_LINK_RATE_LIMIT === 'true') {
+    const key = `${email}-${request.headers.get('cf-connecting-ip') ?? 'unknown'}`;
     const { success: rateLimitSuccess } =
       await env.MAGIC_LINK_RATE_LIMITER.limit({
         key,
@@ -43,8 +43,8 @@ export async function requestMagicLinkController(
 
     if (!rateLimitSuccess) {
       return jsonError(
-        "Rate limit exceeded. Please wait before requesting another magic link.",
-        429,
+        'Rate limit exceeded. Please wait before requesting another magic link.',
+        429
       );
     }
   }
@@ -56,17 +56,17 @@ export async function requestMagicLinkController(
   try {
     isDomainAllowed = await repo.isDomainAllowed(domain);
   } catch (error) {
-    console.error("Failed to check domain allowlist:", error);
+    console.error('Failed to check domain allowlist:', error);
     return jsonError(
-      "Workspace allowlist is unavailable. Please try again in a moment.",
-      503,
+      'Workspace allowlist is unavailable. Please try again in a moment.',
+      503
     );
   }
 
   if (!isDomainAllowed) {
     return jsonError(
-      "Your email domain is not authorized for workspace access. Please contact your administrator.",
-      403,
+      'Your email domain is not authorized for workspace access. Please contact your administrator.',
+      403
     );
   }
 
@@ -77,10 +77,10 @@ export async function requestMagicLinkController(
   try {
     await repo.createMagicLink(email, codeHash, expiresAt);
   } catch (error) {
-    console.error("Failed to persist verification code:", error);
+    console.error('Failed to persist verification code:', error);
     return jsonError(
-      "Unable to create a verification code right now. Please try again shortly.",
-      500,
+      'Unable to create a verification code right now. Please try again shortly.',
+      500
     );
   }
 
@@ -91,30 +91,30 @@ export async function requestMagicLinkController(
       resendApiKey: env.RESEND_API_KEY,
     });
   } catch (error) {
-    console.error("Failed to send verification code email:", error);
-    return jsonError("Failed to send verification code email", 500);
+    console.error('Failed to send verification code email:', error);
+    return jsonError('Failed to send verification code email', 500);
   }
 
   return new Response(
     JSON.stringify({
-      message: "Verification code sent to your email",
+      message: 'Verification code sent to your email',
     }),
     {
-      headers: { "Content-Type": "application/json" },
-    },
+      headers: { 'Content-Type': 'application/json' },
+    }
   ) as unknown as CfResponse;
 }
 
 export async function verifyCodeController(
   request: CfRequest,
-  env: AuthWorkerEnv,
+  env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const body = await request.json<{ email?: string; code?: string }>();
   const email = body?.email?.toLowerCase().trim();
   const code = body?.code?.trim();
 
   if (!email || !code) {
-    return jsonError("Email and code are required", 400);
+    return jsonError('Email and code are required', 400);
   }
 
   const codeHash = await hashToken(code);
@@ -123,10 +123,10 @@ export async function verifyCodeController(
   const result = await repo.validateVerificationCode(email, codeHash);
   if (!result.success) {
     const errorMessages = {
-      invalid: "Invalid verification code",
-      expired: "Verification code has expired",
-      used: "Verification code has already been used",
-      locked: "Too many failed attempts. Please request a new code.",
+      invalid: 'Invalid verification code',
+      expired: 'Verification code has expired',
+      used: 'Verification code has already been used',
+      locked: 'Too many failed attempts. Please request a new code.',
     };
     return jsonError(errorMessages[result.error], 401);
   }
@@ -160,20 +160,20 @@ export async function verifyCodeController(
     }),
     {
       headers: {
-        "Content-Type": "application/json",
-        "Set-Cookie": cookieValue,
+        'Content-Type': 'application/json',
+        'Set-Cookie': cookieValue,
       },
-    },
+    }
   ) as unknown as CfResponse;
 }
 
 export async function getCurrentUserController(
   request: CfRequest,
-  env: AuthWorkerEnv,
+  env: AuthWorkerEnv
 ): Promise<CfResponse> {
   const token = getSessionTokenFromRequest(request);
   if (!token) {
-    return jsonError("Unauthorized", 401);
+    return jsonError('Unauthorized', 401);
   }
 
   const tokenHash = await hashToken(token);
@@ -181,12 +181,12 @@ export async function getCurrentUserController(
 
   const session = await repo.validateSession(tokenHash);
   if (!session) {
-    return jsonError("Invalid or expired session", 401);
+    return jsonError('Invalid or expired session', 401);
   }
 
   const user = await repo.getUserByEmail(session.email);
   if (!user?.id) {
-    return jsonError("User not found", 404);
+    return jsonError('User not found', 404);
   }
 
   const teams = await repo.getUserTeams(user.id);
@@ -202,8 +202,8 @@ export async function getCurrentUserController(
       teams,
     }),
     {
-      headers: { "Content-Type": "application/json" },
-    },
+      headers: { 'Content-Type': 'application/json' },
+    }
   ) as unknown as CfResponse;
 }
 
@@ -213,7 +213,7 @@ export async function logoutController(
 ): Promise<CfResponse> {
   const token = getSessionTokenFromRequest(request);
   if (!token) {
-    return jsonError("Unauthorized", 401);
+    return jsonError('Unauthorized', 401);
   }
 
   const tokenHash = await hashToken(token);

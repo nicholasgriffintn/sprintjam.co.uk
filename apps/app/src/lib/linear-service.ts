@@ -254,13 +254,13 @@ export async function getLinearOAuthStatus(
 export async function authorizeLinearOAuth(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
+  sessionToken?: string | null
 ): Promise<{ authorizationUrl: string }> {
   const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/linear/oauth/authorize`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       roomKey,
@@ -271,7 +271,7 @@ export async function authorizeLinearOAuth(
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to initiate OAuth");
+    throw new Error(errorData.error || 'Failed to initiate OAuth');
   }
 
   return (await response.json()) as { authorizationUrl: string };

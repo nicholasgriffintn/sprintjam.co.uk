@@ -132,12 +132,12 @@ export async function getGithubOAuthStatus(
 export async function authorizeGithubOAuth(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
+  sessionToken?: string | null
 ): Promise<{ authorizationUrl: string }> {
   const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/github/oauth/authorize`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       roomKey,
       userName,
@@ -148,7 +148,7 @@ export async function authorizeGithubOAuth(
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || "Failed to initiate GitHub OAuth",
+      (data as { error?: string }).error || 'Failed to initiate GitHub OAuth'
     );
   }
 

@@ -12,7 +12,7 @@ import {
   saveJiraFieldConfiguration,
   type JiraFieldOption,
   type JiraOAuthStatus,
-} from "@/lib/jira-service";
+} from '@/lib/jira-service';
 
 export function useJiraOAuth(enabled = true) {
   const queryClient = useQueryClient();
@@ -21,22 +21,22 @@ export function useJiraOAuth(enabled = true) {
   const [clientError, setClientError] = useState<string | null>(null);
 
   const fieldsQueryKey = [
-    "jira-oauth-fields",
+    'jira-oauth-fields',
     activeRoomKey,
     name,
     authToken,
   ] as const;
   const statusQueryKey = [
-    "jira",
-    "oauth-status",
+    'jira',
+    'oauth-status',
     activeRoomKey,
     name,
     authToken,
   ] as const;
 
   const oauth = useOAuthProvider<JiraOAuthStatus>({
-    provider: "jira",
-    providerLabel: "Jira",
+    provider: 'jira',
+    providerLabel: 'Jira',
     enabled,
     initialStatus: { connected: false },
     getStatus: ({ roomKey, name, authToken }) =>
@@ -56,7 +56,7 @@ export function useJiraOAuth(enabled = true) {
                 storyPointsField: undefined,
                 sprintField: undefined,
               }
-            : prev,
+            : prev
       );
       queryClient.removeQueries({ queryKey: fieldsQueryKey });
     },
@@ -77,20 +77,20 @@ export function useJiraOAuth(enabled = true) {
       Boolean(oauth.status.connected && !oauth.loading),
     staleTime: 1000 * 60,
     queryFn: () =>
-      getJiraFields(activeRoomKey ?? "", name ?? "", authToken ?? ""),
+      getJiraFields(activeRoomKey ?? '', name ?? '', authToken ?? ''),
   });
 
   const saveFieldsMutation = useMutation({
-    mutationKey: ["jira-oauth-fields-save", activeRoomKey, name],
+    mutationKey: ['jira-oauth-fields-save', activeRoomKey, name],
     mutationFn: async (options: {
       storyPointsField?: string | null;
       sprintField?: string | null;
     }) => {
       await saveJiraFieldConfiguration(
-        activeRoomKey ?? "",
-        name ?? "",
+        activeRoomKey ?? '',
+        name ?? '',
         options,
-        authToken ?? "",
+        authToken ?? ''
       );
 
       queryClient.setQueryData<JiraOAuthStatus | undefined>(
@@ -108,7 +108,7 @@ export function useJiraOAuth(enabled = true) {
                     ? options.sprintField
                     : prev.sprintField,
               }
-            : prev,
+            : prev
       );
       await queryClient.invalidateQueries({ queryKey: fieldsQueryKey });
     },
@@ -119,7 +119,7 @@ export function useJiraOAuth(enabled = true) {
     sprintField?: string | null;
   }) => {
     if (!oauth.hasRequiredContext) {
-      setClientError("Missing room key, user name, or session token");
+      setClientError('Missing room key, user name, or session token');
       return;
     }
 

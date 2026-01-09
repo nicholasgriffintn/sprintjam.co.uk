@@ -83,8 +83,8 @@ export const serverDefaultsCollection = createCollection<
 >(queryCollectionOptions(serverDefaultsCollectionConfig));
 
 const workspaceProfileCollectionConfig = {
-  id: "workspace-profile",
-  queryKey: ["workspace-profile"],
+  id: 'workspace-profile',
+  queryKey: ['workspace-profile'],
   startSync: false,
   queryFn: async () => {
     if (!isWorkspacesEnabled()) {
@@ -93,11 +93,11 @@ const workspaceProfileCollectionConfig = {
 
     try {
       const profile = await workspaceRequest<WorkspaceProfile>(
-        `${API_BASE_URL}/auth/me`,
+        `${API_BASE_URL}/auth/me`
       );
       return [profile];
     } catch (error) {
-      if (error instanceof Error && error.message === "Unauthorized") {
+      if (error instanceof Error && error.message === 'Unauthorized') {
         return [];
       }
       throw error;
@@ -114,12 +114,12 @@ export const workspaceProfileCollection = createCollection<
 >(queryCollectionOptions(workspaceProfileCollectionConfig));
 
 const workspaceStatsCollectionConfig = {
-  id: "workspace-stats",
-  queryKey: ["workspace-stats"],
+  id: 'workspace-stats',
+  queryKey: ['workspace-stats'],
   startSync: false,
   queryFn: async () => {
     const profile = workspaceProfileCollection.get(
-      WORKSPACE_PROFILE_DOCUMENT_KEY,
+      WORKSPACE_PROFILE_DOCUMENT_KEY
     );
     if (!profile?.user) {
       return [];
@@ -127,11 +127,11 @@ const workspaceStatsCollectionConfig = {
 
     try {
       const stats = await workspaceRequest<WorkspaceStats>(
-        `${API_BASE_URL}/workspace/stats`,
+        `${API_BASE_URL}/workspace/stats`
       );
       return [stats];
     } catch (error) {
-      if (error instanceof Error && error.message === "Unauthorized") {
+      if (error instanceof Error && error.message === 'Unauthorized') {
         return [];
       }
       throw error;

@@ -21,6 +21,24 @@ export function parsePath(path: string): ParsedPath {
     return { screen: "room", roomKey: roomMatch[1].toUpperCase() };
   }
 
+  if (pathWithoutTrailingSlash.startsWith("/integrations")) {
+    if (pathWithoutTrailingSlash === "/integrations") {
+      return { screen: "integrations" };
+    }
+
+    if (pathWithoutTrailingSlash === "/integrations/jira") {
+      return { screen: "integrationsJira" };
+    }
+
+    if (pathWithoutTrailingSlash === "/integrations/linear") {
+      return { screen: "integrationsLinear" };
+    }
+
+    if (pathWithoutTrailingSlash === "/integrations/github") {
+      return { screen: "integrationsGithub" };
+    }
+  }
+
   switch (pathWithoutTrailingSlash) {
     case "/auth/login":
       return { screen: "login" };
@@ -71,6 +89,14 @@ export function getPathFromScreen(screen: AppScreen, roomKey?: string): string {
       return "/changelog";
     case "faq":
       return "/faq";
+    case "integrations":
+      return "/integrations";
+    case "integrationsJira":
+      return "/integrations/jira";
+    case "integrationsLinear":
+      return "/integrations/linear";
+    case "integrationsGithub":
+      return "/integrations/github";
     case "404":
       return "/404";
   }

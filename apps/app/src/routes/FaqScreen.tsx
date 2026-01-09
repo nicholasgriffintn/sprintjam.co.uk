@@ -7,6 +7,7 @@ import { Logo } from '@/components/Logo';
 import { PageBackground } from '@/components/layout/PageBackground';
 import { META_CONFIGS } from '@/config/meta';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { SurfaceCard } from '../components/ui';
 
 type FAQItem = {
   question: string;
@@ -514,31 +515,36 @@ const FaqScreen = () => {
             </div>
           </section>
 
-          <section className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-r from-brand-500/10 via-indigo-500/10 to-blue-500/10 p-8 text-left shadow-inner shadow-slate-200/60 dark:border-white/10 dark:bg-slate-900/40 dark:shadow-none sm:p-10">
-            <div className="absolute inset-0 bg-grid-slate-100/30 [background-size:28px_28px] opacity-30 dark:bg-grid-white/10" />
-            <div className="relative grid gap-4 md:grid-cols-[2fr_auto] md:items-center md:gap-6">
+          <SurfaceCard className="text-left">
+            <div className="grid gap-4 md:grid-cols-[1.5fr_auto] md:items-center">
               <div className="space-y-2">
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-700 dark:text-brand-200">
+                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-600">
                   Ready to start planning?
                 </p>
-                <h3 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
+                <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
                   Put your knowledge into practice with our free SprintJam room.
                 </h3>
-                <p className="text-sm text-slate-700 dark:text-slate-200">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   Spin up a fresh room, pick Classic or Structured voting, and
                   invite your team with a single link.
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 md:justify-end">
+              <div className="flex flex-wrap gap-3 md:justify-end">
                 <a
                   href="/create"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-6 py-3 text-base font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                 >
-                  Create instant session
+                  Start a room
+                </a>
+                <a
+                  href="/join"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-brand-300/60"
+                >
+                  Join with code
                 </a>
               </div>
             </div>
-          </section>
+          </SurfaceCard>
 
           <Footer priorityLinksOnly={false} />
         </div>

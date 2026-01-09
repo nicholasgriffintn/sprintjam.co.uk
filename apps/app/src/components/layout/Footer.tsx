@@ -65,6 +65,13 @@ export const Footer = ({
           </a>
           <span className="hidden sm:inline">|</span>
           <a
+            href="/integrations"
+            className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
+          >
+            Integrations
+          </a>
+          <span className="hidden sm:inline">|</span>
+          <a
             href="/faq"
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
@@ -82,7 +89,7 @@ export const Footer = ({
         <div
           className={`${
             fullWidth ? ' lg:w-auto lg:flex-nowrap' : ''
-          } flex w-full flex-wrap items-center justify-center gap-2`}
+          } flex w-full flex-wrap items-center justify-center gap-2 mt-4`}
         >
           <Button
             type="button"

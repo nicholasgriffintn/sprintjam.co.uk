@@ -26,6 +26,10 @@ import CreateRoomScreen from "./routes/CreateRoomScreen";
 import JoinRoomScreen from "./routes/JoinRoomScreen";
 import NotFoundScreen from "./routes/NotFoundScreen";
 import FaqScreen from "./routes/FaqScreen";
+import IntegrationsScreen from "./routes/IntegrationsScreen";
+import JiraIntegrationScreen from "./routes/integrations/JiraIntegrationScreen";
+import LinearIntegrationScreen from "./routes/integrations/LinearIntegrationScreen";
+import GithubIntegrationScreen from "./routes/integrations/GithubIntegrationScreen";
 import { ErrorBannerServerDefaults } from "./components/errors/ErrorBannerServerDefaults";
 import PrivacyPolicyScreen from "./routes/PrivacyPolicyScreen";
 import TermsConditionsScreen from "./routes/TermsConditionsScreen";
@@ -104,6 +108,14 @@ const AppContent = () => {
           return <ChangelogScreen />;
         case "faq":
           return <FaqScreen />;
+        case "integrations":
+          return <IntegrationsScreen />;
+        case "integrationsJira":
+          return <JiraIntegrationScreen />;
+        case "integrationsLinear":
+          return <LinearIntegrationScreen />;
+        case "integrationsGithub":
+          return <GithubIntegrationScreen />;
         default:
           return <NotFoundScreen />;
       }

@@ -326,18 +326,18 @@ describe("planning-room-http permissions and state updates", () => {
 
     ctx.repository.getJiraOAuthCredentials = vi.fn().mockResolvedValue({
       roomKey: baseRoom.key,
-      accessToken: "token",
+      accessToken: 'token',
       refreshToken: null,
-      tokenType: "Bearer",
+      tokenType: 'Bearer',
       expiresAt: 123,
-      scope: "read:jira",
-      jiraDomain: "example.atlassian.net",
-      jiraCloudId: "cloud",
-      jiraUserId: "user",
-      jiraUserEmail: "alice@test.sprintjam.co.uk",
-      storyPointsField: "customfield_100",
+      scope: 'read:jira',
+      jiraDomain: 'example.atlassian.net',
+      jiraCloudId: 'cloud',
+      jiraUserId: 'user',
+      jiraUserEmail: 'alice@test.sprintjam.co.uk',
+      storyPointsField: 'customfield_100',
       sprintField: null,
-      authorizedBy: "alice",
+      authorizedBy: 'alice',
     });
 
     const response = (await handleHttpRequest(

@@ -9,6 +9,8 @@ import {
   Timer,
   BarChart3,
   Play,
+  GitBranch,
+  ArrowUpRight,
 } from 'lucide-react';
 
 import { useSessionActions } from '@/context/SessionContext';
@@ -186,6 +188,68 @@ const WelcomeScreen = () => {
               </SurfaceCard>
             </motion.div>
           ))}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 + features.length * 0.05 }}
+            className="sm:col-span-2 lg:col-span-4"
+          >
+            <SurfaceCard className="text-left">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center">
+                <div className="flex-1 space-y-3 md:pr-4">
+                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
+                    <GitBranch className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                    Connect Jira, Linear, and GitHub to your rooms
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Import issues, estimate together, and sync story points back
+                    with room-scoped OAuth so your backlog stays in lockstep.
+                  </p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Pull titles, labels, and status into SprintJam while keeping
+                    access scoped to the room so moderators stay in control.
+                  </p>
+                  <a
+                    href="/integrations"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                  >
+                    Explore integrations
+                    <ArrowUpRight className="h-4 w-4" />
+                  </a>
+                </div>
+                <div className="relative flex-1 md:max-w-sm">
+                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                    <div className="flex items-center justify-between text-[11px] text-slate-200">
+                      <span>Selected issues</span>
+                      <span>Sync ready</span>
+                    </div>
+                    <div className="mt-2 space-y-2 text-xs">
+                      <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                        <span>SPRT-142 Strudel toggle</span>
+                        <span className="rounded-full bg-brand-500/30 px-2 py-0.5 font-semibold text-brand-100">
+                          5 pts
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                        <span>SPRT-143 Passcode rules</span>
+                        <span className="rounded-full bg-brand-500/30 px-2 py-0.5 font-semibold text-brand-100">
+                          3 pts
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                        <span>SPRT-147 Queue edge cases</span>
+                        <span className="rounded-full bg-brand-500/30 px-2 py-0.5 font-semibold text-brand-100">
+                          8 pts
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </SurfaceCard>
+          </motion.div>
         </div>
 
         <SurfaceCard variant="subtle" className="mx-auto max-w-2xl text-sm">
