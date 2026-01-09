@@ -1,0 +1,187 @@
+import type {
+  RoomData,
+  StructuredVote,
+  TicketQueueWithVotes,
+  VoteValue,
+} from '@sprintjam/types';
+
+import { applySettingsUpdate } from "./room-settings";
+
+export function getAnonymousUserId(
+  roomData: RoomData,
+  userName: string,
+): string {
+  const index = roomData.users.indexOf(userName);
+  if (index === -1) {
+    return "Anonymous";
+  }
+  return `Anonymous ${index + 1}`;
+}
+
+export function normalizeRoomData(roomData: RoomData): RoomData {
+  const normalized: RoomData = {
+    ...roomData,
+    settings: applySettingsUpdate({
+      currentSettings: roomData.settings,
+    }),
+  };
+
+  ensureConnectedUsers(normalized);
+  ensureStructuredVotes(normalized);
+
+  return normalized;
+}
+
+export function ensureConnectedUsers(
+  roomData: RoomData,
+): Record<string, boolean> {
+  if (!roomData.connectedUsers) {
+    roomData.connectedUsers = {};
+    for (const user of roomData.users) {
+      roomData.connectedUsers[user] = false;
+    }
+  }
+
+  return roomData.connectedUsers;
+}
+
+export function ensureStructuredVotes(roomData: RoomData) {
+  if (!roomData.structuredVotes) {
+    roomData.structuredVotes = {};
+  }
+  return roomData.structuredVotes;
+}
+
+export function markUserConnection(
+  roomData: RoomData,
+  userName: string,
+  isConnected: boolean,
+) {
+  const normalizedInput = userName.trim();
+  const targetName =
+    findCanonicalUserName(roomData, normalizedInput) ?? normalizedInput;
+
+  if (!targetName) {
+    return;
+  }
+
+  ensureConnectedUsers(roomData);
+  const isInUsers = roomData.users.includes(targetName);
+  const isInSpectators = roomData.spectators?.includes(targetName) ?? false;
+
+  if (!isInUsers && !isInSpectators) {
+    roomData.users.push(targetName);
+  }
+
+  roomData.connectedUsers![targetName] = isConnected;
+}
+
+export function assignUserAvatar(
+  roomData: RoomData,
+  userName: string,
+  avatar?: string,
+) {
+  if (!roomData.userAvatars) {
+    roomData.userAvatars = {};
+  }
+
+  const normalizedInput = userName.trim();
+  const targetName =
+    findCanonicalUserName(roomData, normalizedInput) ??
+    roomData.users.find(
+      (user) => user.toLowerCase() === normalizedInput.toLowerCase(),
+    ) ??
+    normalizedInput;
+
+  if (!avatar) {
+    delete roomData.userAvatars[targetName];
+    return;
+  }
+
+  roomData.userAvatars[targetName] = avatar;
+}
+
+export function sanitizeRoomData(roomData: RoomData): RoomData {
+  const { passcodeHash, ...rest } = roomData;
+  return {
+    ...rest,
+  };
+}
+
+export const remapVotes = (
+  idMap: Map<string, string>,
+  votes: Record<string, VoteValue | null>,
+) => {
+  const mapped: Record<string, VoteValue | null> = {};
+  Object.entries(votes).forEach(([user, vote]) => {
+    const anon = idMap.get(user) ?? "Anonymous";
+    mapped[anon] = vote;
+  });
+  return mapped;
+};
+
+export const remapStructuredVotes = (
+  idMap: Map<string, string>,
+  structured?: Record<string, StructuredVote>,
+) => {
+  if (!structured) return undefined;
+  const mapped: Record<string, StructuredVote> = {};
+  Object.entries(structured).forEach(([user, payload]) => {
+    const anon = idMap.get(user) ?? "Anonymous";
+    mapped[anon] = payload;
+  });
+  return mapped;
+};
+
+export const remapTicketVotes = (
+  idMap: Map<string, string>,
+  ticket?: TicketQueueWithVotes,
+) => {
+  if (!ticket?.votes) return ticket;
+  return {
+    ...ticket,
+    votes: ticket.votes.map((vote) => ({
+      ...vote,
+      userName: idMap.get(vote.userName) ?? "Anonymous",
+    })),
+  };
+};
+
+export function anonymizeRoomData(roomData: RoomData): RoomData {
+  if (
+    !roomData.settings.anonymousVotes &&
+    !roomData.settings.hideParticipantNames
+  ) {
+    return sanitizeRoomData(roomData);
+  }
+
+  const idMap = new Map<string, string>();
+  roomData.users.forEach((user) => {
+    idMap.set(user, getAnonymousUserId(roomData, user));
+  });
+
+  const ticketQueue = roomData.ticketQueue
+    ?.map((t) => remapTicketVotes(idMap, t))
+    .filter((t): t is TicketQueueWithVotes => t !== undefined);
+
+  return sanitizeRoomData({
+    ...roomData,
+    votes: remapVotes(idMap, roomData.votes),
+    structuredVotes: remapStructuredVotes(idMap, roomData.structuredVotes),
+    currentTicket: remapTicketVotes(idMap, roomData.currentTicket),
+    ticketQueue,
+  });
+}
+
+export function findCanonicalUserName(
+  roomData: RoomData,
+  candidate: string,
+): string | undefined {
+  const target = candidate.trim().toLowerCase();
+
+  const foundInUsers = roomData.users.find((user) => user.toLowerCase() === target);
+  if (foundInUsers) return foundInUsers;
+
+  const foundInSpectators = roomData.spectators?.find((user) => user.toLowerCase() === target);
+  return foundInSpectators ?? undefined;
+}

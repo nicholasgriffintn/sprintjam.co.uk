@@ -1,0 +1,86 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sprintjam-auth-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-07-15",
+  "workers_dev": false,
+  "preview_urls": false,
+  "placement": {
+    "mode": "smart",
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "ENABLE_MAGIC_LINK_RATE_LIMIT": "true",
+  },
+  "ratelimits": [
+    {
+      "name": "MAGIC_LINK_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": {
+        "limit": 3,
+        "period": 60,
+      },
+    },
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sprintjam-workspaces",
+      "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
+      "migrations_dir": "./drizzle",
+    },
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false,
+    },
+  },
+  "triggers": {
+    "crons": ["0 */6 * * *"],
+  },
+  "env": {
+    "development": {
+      "vars": {
+        "ENVIRONMENT": "development",
+        "ENABLE_MAGIC_LINK_RATE_LIMIT": "false",
+      },
+      "ratelimits": [],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sprintjam-workspaces-staging",
+          "database_id": "2f17f84f-02ad-4548-9b66-a9bfa1c54186",
+          "migrations_dir": "./drizzle",
+        },
+      ],
+    },
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "ENABLE_MAGIC_LINK_RATE_LIMIT": "true",
+      },
+      "ratelimits": [
+        {
+          "name": "MAGIC_LINK_RATE_LIMITER",
+          "namespace_id": "1002",
+          "simple": {
+            "limit": 3,
+            "period": 60,
+          },
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sprintjam-workspaces-staging",
+          "database_id": "2f17f84f-02ad-4548-9b66-a9bfa1c54186",
+          "migrations_dir": "./drizzle",
+        },
+      ],
+    },
+  },
+}

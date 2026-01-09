@@ -1,0 +1,92 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sprintjam",
+  "main": "api/index.ts",
+  "compatibility_date": "2025-07-15",
+  "routes": [
+    {
+      "pattern": "sprintjam.co.uk",
+      "custom_domain": true,
+    },
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  "placement": {
+    "mode": "smart",
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+  },
+  "services": [
+    {
+      "binding": "ROOM_WORKER",
+      "service": "sprintjam-room-worker-production",
+    },
+    {
+      "binding": "AUTH_WORKER",
+      "service": "sprintjam-auth-worker-production",
+    },
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "dist/client",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/ws", "/robots.txt"],
+  },
+  "migrations": [
+    {
+      "tag": "<v2>",
+      "deleted_classes": ["PlanningRoom"],
+    },
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false,
+    },
+  },
+  "env": {
+    "development": {
+      "routes": [],
+      "vars": {
+        "ENVIRONMENT": "development",
+      },
+      "services": [
+        {
+          "binding": "ROOM_WORKER",
+          "service": "sprintjam-room-worker-development",
+        },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-development",
+        },
+      ],
+      "migrations": [],
+    },
+    "staging": {
+      "name": "sprintjam-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+      },
+      "routes": [
+        {
+          "pattern": "staging.sprintjam.co.uk",
+          "custom_domain": true,
+        },
+      ],
+      "services": [
+        {
+          "binding": "ROOM_WORKER",
+          "service": "sprintjam-room-worker-staging",
+        },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-staging",
+        },
+      ],
+    },
+  },
+}

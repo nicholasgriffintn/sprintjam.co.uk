@@ -34,11 +34,13 @@ jobs:
 
       - name: Get Playwright version
         id: playwright-version
+        working-directory: apps/app
         run: echo "version=$(node -p "require('./package.json').devDependencies['@playwright/test']")" >> $GITHUB_OUTPUT
 
       - name: Cache Playwright browsers
         uses: actions/cache@v5
         id: playwright-cache
+        working-directory: apps/app
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -46,16 +48,20 @@ jobs:
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
+        working-directory: apps/app
 
       - name: Create .dev.vars file
         run: echo "TOKEN_ENCRYPTION_SECRET=test-token" > .dev.vars
+        working-directory: apps/app
 
       - name: Run smoke tests
         run: pnpm test:e2e:smoke
+        working-directory: apps/app
 
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v6
+        working-directory: apps/app
         with:
           name: playwright-smoke-results
           path: |
