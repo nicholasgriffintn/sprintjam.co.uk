@@ -57,9 +57,11 @@ jobs:
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps
+        working-directory: apps/app
 
       - name: Run smoke tests
         run: pnpm test:e2e:smoke:staging
+        working-directory: apps/app
 
       - name: Upload test results
         if: failure()
@@ -67,6 +69,6 @@ jobs:
         with:
           name: playwright-smoke-results-staging
           path: |
-            playwright-report/
-            test-results/
+            apps/app/playwright-report/
+            apps/app/test-results/
           retention-days: 7

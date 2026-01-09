@@ -34,13 +34,12 @@ jobs:
 
       - name: Get Playwright version
         id: playwright-version
-        working-directory: apps/app
         run: echo "version=$(node -p "require('./package.json').devDependencies['@playwright/test']")" >> $GITHUB_OUTPUT
+        working-directory: apps/app
 
       - name: Cache Playwright browsers
         uses: actions/cache@v5
         id: playwright-cache
-        working-directory: apps/app
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -61,10 +60,9 @@ jobs:
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v6
-        working-directory: apps/app
         with:
           name: playwright-smoke-results
           path: |
-            playwright-report/
-            test-results/
+            apps/app/playwright-report/
+            apps/app/test-results/
           retention-days: 7
