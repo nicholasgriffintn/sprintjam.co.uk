@@ -20,7 +20,7 @@
     "build:staging": "CLOUDFLARE_ENV=staging vite build",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
-    "deploy:prod": "wrangler deploy --env production",
+    "deploy:prod": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "generate:types": "wrangler types --include-runtime=false",
     "preview": "vite preview"
