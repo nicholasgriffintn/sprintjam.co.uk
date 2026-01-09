@@ -333,7 +333,51 @@ export async function revokeGithubOAuthController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
+    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
+    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      return jsonError('GitHub OAuth not configured', 500);
+    }
+
     const roomObject = getRoomStub(env, roomKey);
+    const credentialsResponse = await roomObject.fetch(
+      new Request('https://internal/github/oauth/credentials', {
+        method: 'GET',
+      }) as unknown as CfRequest
+    );
+
+    if (!credentialsResponse.ok) {
+      return jsonError(
+        'GitHub not connected. Please connect your account.',
+        404
+      );
+    }
+
+    const { credentials } = await credentialsResponse.json<{
+      credentials: {
+        accessToken: string;
+      };
+    }>();
+
+    const revokeResponse = await fetch(
+      `https://api.github.com/applications/${clientId}/grant`,
+      {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/vnd.github+json',
+          Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ access_token: credentials.accessToken }),
+      }
+    );
+
+    if (!revokeResponse.ok) {
+      const errorBody = await revokeResponse.text().catch(() => '');
+      console.error('Failed to revoke GitHub token:', errorBody);
+      return jsonError('Failed to revoke GitHub token with provider.', 502);
+    }
+
     const response = await roomObject.fetch(
       new Request('https://internal/github/oauth/revoke', {
         method: 'DELETE',

@@ -49,32 +49,43 @@ const steps = [
 
 const securityHighlights = [
   {
-    title: "Signed OAuth + room auth",
-    detail: "GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.",
+    title: 'Signed OAuth + room auth',
+    detail:
+      'GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.',
     icon: BadgeCheck,
   },
   {
-    title: "Least-privilege scopes",
-    detail: "We request repo access and user email only; no org admin scopes or wider permissions are used.",
+    title: 'Least-privilege scopes',
+    detail:
+      'We request repo access and user email only; no org admin scopes or wider permissions are used.',
     icon: ShieldCheck,
   },
   {
-    title: "Encrypted, room-scoped storage",
-    detail: "Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.",
+    title: 'Encrypted, room-scoped storage',
+    detail:
+      'Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.',
     icon: Database,
   },
   {
-    title: "Controlled egress + rotation",
-    detail: "All GitHub calls go through the room worker; refresh and revocation paths run server-side only.",
+    title: 'Controlled egress + rotation',
+    detail:
+      'All GitHub calls go through the room worker; refresh and revocation paths run server-side only.',
     icon: RefreshCcw,
   },
   {
-    title: "Data handling & privacy",
-    detail: "GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.",
+    title: 'User control & cleanup',
+    detail:
+      'Moderators can revoke at any time; we revoke from GitHub and delete room-side tokens to keep dormant connections closed.',
+    icon: BadgeCheck,
+  },
+  {
+    title: 'Data handling & privacy',
+    detail:
+      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.',
     icon: BadgeCheck,
     cta: {
-      label: "View Privacy Policy",
-      href: "/privacy",
+      label: 'View Privacy Policy',
+      href: '/privacy',
     },
   },
 ];
@@ -105,7 +116,8 @@ const GithubIntegrationScreen = () => {
               Estimate GitHub issues where the team collaborates
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300">
-              Import issues, keep repo context visible, and sync story points back without leaving SprintJam.
+              Import issues, keep repo context visible, and sync story points
+              back without leaving SprintJam.
             </p>
             <div className="flex flex-wrap gap-3">
               <a
@@ -131,7 +143,9 @@ const GithubIntegrationScreen = () => {
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
                   GitHub in SprintJam
                 </p>
-                <p className="text-lg font-semibold">Repo context without tab switching</p>
+                <p className="text-lg font-semibold">
+                  Repo context without tab switching
+                </p>
                 <div className="rounded-xl border border-white/10 bg-black/30 p-4">
                   <div className="flex items-center justify-between text-xs text-slate-200">
                     <span>Repo: sprintjam.co.uk</span>
@@ -159,7 +173,8 @@ const GithubIntegrationScreen = () => {
                   </div>
                 </div>
                 <p className="text-xs text-slate-200">
-                  Pull issues in, vote, and sync points back while keeping the repository as your source of truth.
+                  Pull issues in, vote, and sync points back while keeping the
+                  repository as your source of truth.
                 </p>
               </div>
             </SurfaceCard>
@@ -229,18 +244,13 @@ const GithubIntegrationScreen = () => {
               Room-scoped OAuth with encrypted storage
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Signed OAuth state, session validation, least-privilege scopes, and encrypted tokens keep
-              your repos safe while you estimate.
+              Signed OAuth state, session validation, least-privilege scopes,
+              and encrypted tokens keep your repos safe while you estimate.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {securityHighlights.map(({ title, detail, icon: Icon, cta }, index) => (
-              <SurfaceCard
-                key={title}
-                className={`h-full text-left ${
-                  index === securityHighlights.length - 1 ? "md:col-span-2" : ""
-                }`}
-              >
+            {securityHighlights.map(({ title, detail, icon: Icon, cta }) => (
+              <SurfaceCard key={title} className="h-full text-left">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/30">
                     <Icon className="h-5 w-5" aria-hidden="true" />
@@ -276,7 +286,8 @@ const GithubIntegrationScreen = () => {
                 Start estimating GitHub issues in SprintJam
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Keep your engineering work and story points aligned without extra tabs.
+                Keep your engineering work and story points aligned without
+                extra tabs.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 md:justify-end">

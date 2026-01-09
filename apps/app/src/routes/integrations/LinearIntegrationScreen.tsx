@@ -87,6 +87,12 @@ const securityHighlights = [
     icon: RefreshCcw,
   },
   {
+    title: 'User control & cleanup',
+    detail:
+      'Moderators can revoke at any time; we revoke from Linear and delete room-side tokens to keep dormant connections closed.',
+    icon: BadgeCheck,
+  },
+  {
     title: 'Data handling & privacy',
     detail:
       'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.',
@@ -151,7 +157,9 @@ const LinearIntegrationScreen = () => {
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
                   Linear in SprintJam
                 </p>
-                <p className="text-lg font-semibold">Live labels and statuses</p>
+                <p className="text-lg font-semibold">
+                  Live labels and statuses
+                </p>
                 <div className="rounded-xl border border-white/10 bg-black/30 p-4">
                   <div className="flex items-center justify-between text-xs text-slate-200">
                     <span>Team: Platform</span>
@@ -197,8 +205,8 @@ const LinearIntegrationScreen = () => {
                   </div>
                 </div>
                 <p className="text-xs text-slate-200">
-                  Keep your Linear roadmap aligned while your team collaborates in
-                  SprintJam.
+                  Keep your Linear roadmap aligned while your team collaborates
+                  in SprintJam.
                 </p>
               </div>
             </SurfaceCard>
@@ -268,19 +276,14 @@ const LinearIntegrationScreen = () => {
               Room-scoped OAuth with encrypted storage
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              We follow the same secure patterns as our Jira flow: signed OAuth state,
-              session validation, least-privilege scopes, and encrypted room-side
-              tokens that can be revoked at any time.
+              We follow the same secure patterns as our Jira flow: signed OAuth
+              state, session validation, least-privilege scopes, and encrypted
+              room-side tokens that can be revoked at any time.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {securityHighlights.map(({ title, detail, icon: Icon, cta }, index) => (
-              <SurfaceCard
-                key={title}
-                className={`h-full text-left ${
-                  index === securityHighlights.length - 1 ? 'md:col-span-2' : ''
-                }`}
-              >
+            {securityHighlights.map(({ title, detail, icon: Icon, cta }) => (
+              <SurfaceCard key={title} className="h-full text-left">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/30">
                     <Icon className="h-5 w-5" aria-hidden="true" />
