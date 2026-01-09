@@ -64,6 +64,7 @@
           "service": "sprintjam-auth-worker-development",
         },
       ],
+      "migrations": [],
     },
     "staging": {
       "name": "sprintjam-staging",
