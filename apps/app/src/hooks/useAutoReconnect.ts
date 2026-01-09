@@ -14,11 +14,16 @@ interface UseAutoReconnectOptions {
   isLoadingDefaults: boolean;
   selectedAvatar: AvatarId | null;
   onReconnectSuccess: (roomKey: string, isModerator: boolean) => void;
-  onReconnectError: (error: { message: string; isAuthError: boolean }) => void;
+  onReconnectError: (error: {
+    message: string;
+    isAuthError: boolean;
+    isRoomNotFound: boolean;
+  }) => void;
   onLoadingChange: (isLoading: boolean) => void;
   applyServerDefaults: (defaults?: ServerDefaults) => void;
   onAuthTokenRefresh?: (token: string | null) => void;
   onReconnectComplete?: () => void;
+  onNeedsJoin?: () => void;
 }
 
 export const useAutoReconnect = ({
@@ -33,6 +38,7 @@ export const useAutoReconnect = ({
   applyServerDefaults,
   onAuthTokenRefresh,
   onReconnectComplete,
+  onNeedsJoin,
 }: UseAutoReconnectOptions) => {
   const didAttemptRestore = useRef(false);
 
@@ -43,10 +49,14 @@ export const useAutoReconnect = ({
     if (screen !== "room" || !roomKey) {
       return;
     }
-    if (!name) {
+    if (isLoadingDefaults) {
       return;
     }
-    if (isLoadingDefaults) {
+
+    if (!name) {
+      didAttemptRestore.current = true;
+      onNeedsJoin?.();
+      onReconnectComplete?.();
       return;
     }
 
@@ -83,7 +93,12 @@ export const useAutoReconnect = ({
         const isAuthError =
           (err instanceof HttpError && err.status === 401) ||
           /expired/i.test(errorMessage);
-        onReconnectError({ message: errorMessage, isAuthError });
+        const isRoomNotFound = err instanceof HttpError && err.status === 404;
+        onReconnectError({
+          message: errorMessage,
+          isAuthError,
+          isRoomNotFound,
+        });
         safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
         onAuthTokenRefresh?.(null);
       })
@@ -109,5 +124,6 @@ export const useAutoReconnect = ({
     applyServerDefaults,
     onAuthTokenRefresh,
     onReconnectComplete,
+    onNeedsJoin,
   ]);
 };

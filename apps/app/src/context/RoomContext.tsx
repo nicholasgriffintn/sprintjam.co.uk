@@ -114,7 +114,8 @@ const RoomActionsContext = createContext<RoomActionsContextValue | undefined>(
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { screen, name, roomKey, passcode, selectedAvatar } = useSessionState();
-  const { setRoomKey, setPasscode, goHome, goToRoom } = useSessionActions();
+  const { setScreen, setRoomKey, setPasscode, goHome, goToRoom } =
+    useSessionActions();
   const { setError, clearError } = useSessionErrors();
 
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
@@ -209,19 +210,27 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       [],
     ),
     onReconnectError: useCallback(
-      ({ message, isAuthError }) => {
+      ({ message, isAuthError, isRoomNotFound }) => {
+        if (isRoomNotFound) {
+          goHome();
+          setTimeout(() => setError("Room not found"), 0);
+          return;
+        }
         setError(message);
         setConnectionIssue({
           type: isAuthError ? "auth" : "disconnected",
           message,
         });
       },
-      [setError],
+      [setError, goHome],
     ),
     onLoadingChange: setIsLoading,
     applyServerDefaults,
     onAuthTokenRefresh: setAuthToken,
     onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
+    onNeedsJoin: useCallback(() => {
+      setScreen("join");
+    }, [setScreen]),
   });
 
   const handleRoomMessage = useCallback(

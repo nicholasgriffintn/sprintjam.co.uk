@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 import { createRoomWithParticipant } from "./helpers/room-journeys";
 import { SettingsModal } from "./pageObjects/settings-modal";
+import { JoinRoomPage } from "./pageObjects/join-room-page";
 
 test.describe("Error scenarios", () => {
   test("prompts to rejoin when a stored session has expired", async ({
@@ -37,7 +38,11 @@ test.describe("Error scenarios", () => {
         }
         window.localStorage.setItem("sprintjam_username", savedName);
       },
-      { savedRoomKey: roomKey, savedAuthToken: authToken, savedName: moderatorName },
+      {
+        savedRoomKey: roomKey,
+        savedAuthToken: authToken,
+        savedName: moderatorName,
+      },
     );
 
     await reconnectPage.goto(`/room/${roomKey}`);
@@ -64,5 +69,59 @@ test.describe("Error scenarios", () => {
     } finally {
       await cleanup();
     }
+  });
+
+  test("redirects to join screen when visiting room URL without saved name", async ({
+    page,
+  }) => {
+    await page.goto("/room/ABC123");
+
+    await expect(page.locator("#join-name")).toBeVisible();
+    await expect(page.locator("#join-room-key")).toHaveValue("ABC123");
+  });
+
+  test("can join existing room after being redirected to join screen", async ({
+    browser,
+  }) => {
+    const setup = await createRoomWithParticipant(browser);
+    const { roomKey, cleanup } = setup;
+
+    try {
+      const newContext = await browser.newContext();
+      const newPage = await newContext.newPage();
+
+      await newPage.goto(`/room/${roomKey}`);
+
+      await expect(newPage.locator("#join-name")).toBeVisible();
+      await expect(newPage.locator("#join-room-key")).toHaveValue(roomKey);
+
+      const joinRoomPage = new JoinRoomPage(newPage);
+      await joinRoomPage.completeParticipantDetails({
+        name: "New User",
+      });
+      await joinRoomPage.selectAvatarAndJoin();
+
+      await expect(newPage.getByTestId("participants-panel")).toBeVisible();
+      await expect(newPage.getByTestId("room-key-value")).toContainText(
+        roomKey,
+      );
+
+      await newContext.close();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test("redirects to home with error when visiting non-existent room URL", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("sprintjam_username", "Test User");
+    });
+
+    await page.goto("/room/XXXXXX");
+
+    await expect(page.getByText(/Room not found/i)).toBeVisible();
+    await expect(page).toHaveURL("/");
   });
 });

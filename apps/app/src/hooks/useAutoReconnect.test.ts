@@ -101,6 +101,7 @@ describe("useAutoReconnect", () => {
     expect(onReconnectError).toHaveBeenCalledWith({
       message: "Connection failed",
       isAuthError: false,
+      isRoomNotFound: false,
     });
     expect(onReconnectSuccess).not.toHaveBeenCalled();
   });
@@ -187,6 +188,32 @@ describe("useAutoReconnect", () => {
       }),
     );
 
+    expect(joinRoom).not.toHaveBeenCalled();
+  });
+
+  it("calls onNeedsJoin when name is empty", () => {
+    const onNeedsJoin = vi.fn();
+    storage.set("AUTH_TOKEN", "tok");
+
+    renderHook(() =>
+      useAutoReconnect({
+        name: "",
+        screen: "room",
+        roomKey: "ROOM1",
+        isLoadingDefaults: false,
+        selectedAvatar: "user",
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onAuthTokenRefresh,
+        onReconnectComplete,
+        onNeedsJoin,
+      }),
+    );
+
+    expect(onNeedsJoin).toHaveBeenCalled();
+    expect(onReconnectComplete).toHaveBeenCalled();
     expect(joinRoom).not.toHaveBeenCalled();
   });
 });
