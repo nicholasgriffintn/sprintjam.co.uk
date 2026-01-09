@@ -25,6 +25,7 @@ import WorkspaceScreen from "./routes/workspace/WorkspaceScreen";
 import CreateRoomScreen from "./routes/CreateRoomScreen";
 import JoinRoomScreen from "./routes/JoinRoomScreen";
 import NotFoundScreen from "./routes/NotFoundScreen";
+import FaqScreen from "./routes/FaqScreen";
 import { ErrorBannerServerDefaults } from "./components/errors/ErrorBannerServerDefaults";
 import PrivacyPolicyScreen from "./routes/PrivacyPolicyScreen";
 import TermsConditionsScreen from "./routes/TermsConditionsScreen";
@@ -101,6 +102,8 @@ const AppContent = () => {
           return <TermsConditionsScreen />;
         case "changelog":
           return <ChangelogScreen />;
+        case "faq":
+          return <FaqScreen />;
         default:
           return <NotFoundScreen />;
       }

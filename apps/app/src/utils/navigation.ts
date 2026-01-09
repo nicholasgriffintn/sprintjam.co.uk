@@ -38,6 +38,8 @@ export function parsePath(path: string): ParsedPath {
       return { screen: "terms" };
     case "/changelog":
       return { screen: "changelog" };
+    case "/faq":
+      return { screen: "faq" };
   }
 
   return { screen: "404" };
@@ -67,6 +69,8 @@ export function getPathFromScreen(screen: AppScreen, roomKey?: string): string {
       return "/terms";
     case "changelog":
       return "/changelog";
+    case "faq":
+      return "/faq";
     case "404":
       return "/404";
   }

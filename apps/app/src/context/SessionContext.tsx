@@ -23,7 +23,8 @@ export type AppScreen =
   | "404"
   | "privacy"
   | "terms"
-  | "changelog";
+  | "changelog"
+  | "faq";
 
 interface SessionStateContextValue {
   screen: AppScreen;

@@ -78,6 +78,13 @@ export const META_CONFIGS: Record<string, MetaTagConfig> = {
     keywords: 'changelog, release notes, updates',
     ogImage: '/og-image.png',
   },
+  faq: {
+    title: `FAQ & Planning Guide - ${SITE_NAME}`,
+    description:
+      'Answers to common SprintJam questions plus a quick guide to running effective Scrum planning poker sessions.',
+    keywords: 'faq, sprintjam help, planning poker guide, scrum estimation',
+    ogImage: '/og-image.png',
+  },
   notFound: {
     title: `Page Not Found - ${SITE_NAME}`,
     description:

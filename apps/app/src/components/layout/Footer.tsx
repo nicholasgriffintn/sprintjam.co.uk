@@ -65,6 +65,13 @@ export const Footer = ({
           </a>
           <span className="hidden sm:inline">|</span>
           <a
+            href="/faq"
+            className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
+          >
+            FAQ
+          </a>
+          <span className="hidden sm:inline">|</span>
+          <a
             href="/changelog"
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
