@@ -20,11 +20,11 @@
   "services": [
     {
       "binding": "ROOM_WORKER",
-      "service": "sprintjam-room-worker-production",
+      "service": "sprintjam-room-worker",
     },
     {
       "binding": "AUTH_WORKER",
-      "service": "sprintjam-auth-worker-production",
+      "service": "sprintjam-auth-worker",
     },
   ],
   "assets": {
