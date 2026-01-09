@@ -1,11 +1,11 @@
 ## V2
 
-- Migrated to a new workspaces structure that isolates utilities, libraries, and components into separate packages for better maintainability and scalability. This includes a set of new workers that are linked together through the main app with Cloudflare Service Bindings.
+- Migrated to a new monorepo structure that isolates utilities, libraries, and components into separate packages for better maintainability and scalability. This includes a set of new workers that are linked together through the main app with Cloudflare Service Bindings.
 - Added a new authentication worker that handles signing in as a user with codes that will be sent via an email. This also includes managing user sessions and storing user preferences.
-- Created a new workspaces feature that allows for users to create their own workspace, create teams within that workspace and save their rooms to a team for easy access later.
-  - Note: Workspaces are currently in beta, they are also designed to work without requriring any invites. Users who share the same email domain will be automatically added to the same workspace.
-  - Only pre approved domains will also be allowed to create workspaces, this is to prevent abuse while we test the feature.
-- Fixed some issues with the handling of tokens.
+- Created a new Workspaces feature that allows for users to create their own workspace, create teams within that workspace and save their rooms to a team for easy access later.
+  - Note: Workspaces are currently in beta, they are also designed to work without requiring any invites. Users who share the same email domain will be automatically added to the same workspace.
+  - Only pre-approved domains will also be allowed to create Workspaces, this is to prevent abuse while we test the feature.
+- Fixed some issues with the handling of tokens that caused the room to load with an error.
 
 ## V1.7
 
