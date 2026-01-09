@@ -9,7 +9,7 @@
     "db:generate": "drizzle-kit generate",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
-    "deploy:prod": "wrangler deploy --env production",
+    "deploy:prod": "wrangler deploy",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
