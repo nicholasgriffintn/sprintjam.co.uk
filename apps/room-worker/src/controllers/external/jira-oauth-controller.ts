@@ -388,7 +388,50 @@ export async function revokeJiraOAuthController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
+    const clientId = env.JIRA_OAUTH_CLIENT_ID;
+    if (!clientId) {
+      return jsonError('Jira OAuth not configured', 500);
+    }
+
     const roomObject = getRoomStub(env, roomKey);
+    const credentialsResponse = await roomObject.fetch(
+      new Request('https://internal/jira/oauth/credentials', {
+        method: 'GET',
+      }) as unknown as CfRequest
+    );
+
+    if (!credentialsResponse.ok) {
+      return jsonError('Jira not connected. Please connect your Jira account.', 404);
+    }
+
+    const { credentials } = await credentialsResponse.json<{
+      credentials: {
+        accessToken: string;
+        refreshToken: string | null;
+      };
+    }>();
+
+    const tokenToRevoke = credentials.refreshToken || credentials.accessToken;
+    if (tokenToRevoke) {
+      const revokeResponse = await fetch(
+        'https://auth.atlassian.com/oauth/revoke',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: tokenToRevoke,
+            client_id: clientId,
+          }),
+        }
+      );
+
+      if (!revokeResponse.ok) {
+        const errorBody = await revokeResponse.text().catch(() => '');
+        console.error('Failed to revoke Jira token:', errorBody);
+        return jsonError('Failed to revoke Jira token with Atlassian.', 502);
+      }
+    }
+
     const response = await roomObject.fetch(
       new Request('https://internal/jira/oauth/revoke', {
         method: 'DELETE',

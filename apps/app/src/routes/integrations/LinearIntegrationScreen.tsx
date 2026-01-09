@@ -1,10 +1,14 @@
 import { motion } from 'framer-motion';
 import {
   ArrowUpRight,
+  BadgeCheck,
+  Database,
   Gauge,
-  Zap,
+  RefreshCcw,
   Lock,
+  ShieldCheck,
   SlidersHorizontal,
+  Zap,
 } from 'lucide-react';
 
 import { Footer } from '@/components/layout/Footer';
@@ -54,6 +58,43 @@ const steps = [
   {
     title: 'Estimate and sync',
     detail: 'Reveal, lock consensus, and send points straight back to Linear.',
+  },
+];
+
+const securityHighlights = [
+  {
+    title: 'Signed OAuth + room auth',
+    detail:
+      'Linear OAuth uses signed state + nonce, and every action is gated by a valid room session token.',
+    icon: BadgeCheck,
+  },
+  {
+    title: 'Least-privilege scopes',
+    detail:
+      'We request Linear read/write for issues only—no admin or org-wide actions beyond what sizing requires.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Encrypted, room-scoped storage',
+    detail:
+      'Tokens never live in the browser; they are AES-GCM encrypted with a worker secret and bound to a single room.',
+    icon: Database,
+  },
+  {
+    title: 'Controlled egress + rotation',
+    detail:
+      'All calls flow through the room worker; refreshes persist server-side, and stale tokens force a reconnect.',
+    icon: RefreshCcw,
+  },
+  {
+    title: 'Data handling & privacy',
+    detail:
+      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.',
+    icon: BadgeCheck,
+    cta: {
+      label: 'View Privacy Policy',
+      href: '/privacy',
+    },
   },
 ];
 
@@ -213,6 +254,53 @@ const LinearIntegrationScreen = () => {
                 <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
                   {detail}
                 </p>
+              </SurfaceCard>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="text-left">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-600">
+              Security for Linear
+            </p>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+              Room-scoped OAuth with encrypted storage
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              We follow the same secure patterns as our Jira flow: signed OAuth state,
+              session validation, least-privilege scopes, and encrypted room-side
+              tokens that can be revoked at any time.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {securityHighlights.map(({ title, detail, icon: Icon, cta }, index) => (
+              <SurfaceCard
+                key={title}
+                className={`h-full text-left ${
+                  index === securityHighlights.length - 1 ? 'md:col-span-2' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/30">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {title}
+                  </h3>
+                </div>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                  {detail}
+                </p>
+                {cta ? (
+                  <a
+                    href={cta.href}
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                  >
+                    {cta.label}
+                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                ) : null}
               </SurfaceCard>
             ))}
           </div>

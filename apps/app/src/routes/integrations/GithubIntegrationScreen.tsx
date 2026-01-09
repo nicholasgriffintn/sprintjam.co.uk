@@ -1,5 +1,15 @@
 import { motion } from "framer-motion";
-import { ArrowUpRight, GitCommit, GitPullRequest, Lock, Radio } from "lucide-react";
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  Database,
+  GitCommit,
+  GitPullRequest,
+  Lock,
+  Radio,
+  RefreshCcw,
+  ShieldCheck,
+} from "lucide-react";
 
 import { Footer } from "@/components/layout/Footer";
 import { Logo } from "@/components/Logo";
@@ -35,6 +45,38 @@ const steps = [
   { title: "Connect GitHub", detail: "Authorize SprintJam for your room with OAuth to fetch issues securely." },
   { title: "Pick issues", detail: "Filter by repo or labels to curate the estimation queue." },
   { title: "Estimate and sync", detail: "Vote, reveal, and sync points back to GitHub so work stays aligned." },
+];
+
+const securityHighlights = [
+  {
+    title: "Signed OAuth + room auth",
+    detail: "GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.",
+    icon: BadgeCheck,
+  },
+  {
+    title: "Least-privilege scopes",
+    detail: "We request repo access and user email only; no org admin scopes or wider permissions are used.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Encrypted, room-scoped storage",
+    detail: "Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.",
+    icon: Database,
+  },
+  {
+    title: "Controlled egress + rotation",
+    detail: "All GitHub calls go through the room worker; refresh and revocation paths run server-side only.",
+    icon: RefreshCcw,
+  },
+  {
+    title: "Data handling & privacy",
+    detail: "GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.",
+    icon: BadgeCheck,
+    cta: {
+      label: "View Privacy Policy",
+      href: "/privacy",
+    },
+  },
 ];
 
 const GithubIntegrationScreen = () => {
@@ -173,6 +215,52 @@ const GithubIntegrationScreen = () => {
                 <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
                   {detail}
                 </p>
+              </SurfaceCard>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="text-left">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-600">
+              Security for GitHub
+            </p>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+              Room-scoped OAuth with encrypted storage
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              Signed OAuth state, session validation, least-privilege scopes, and encrypted tokens keep
+              your repos safe while you estimate.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {securityHighlights.map(({ title, detail, icon: Icon, cta }, index) => (
+              <SurfaceCard
+                key={title}
+                className={`h-full text-left ${
+                  index === securityHighlights.length - 1 ? "md:col-span-2" : ""
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/30">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {title}
+                  </h3>
+                </div>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                  {detail}
+                </p>
+                {cta ? (
+                  <a
+                    href={cta.href}
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                  >
+                    {cta.label}
+                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                ) : null}
               </SurfaceCard>
             ))}
           </div>

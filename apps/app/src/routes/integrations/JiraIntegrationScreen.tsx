@@ -1,5 +1,14 @@
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Lock, RefreshCw, Table2, Upload } from 'lucide-react';
+import {
+  ArrowUpRight,
+  BadgeCheck,
+  Database,
+  Lock,
+  RefreshCcw,
+  RefreshCw,
+  Table2,
+  Upload,
+} from 'lucide-react';
 
 import { Footer } from '@/components/layout/Footer';
 import { Logo } from '@/components/Logo';
@@ -48,6 +57,49 @@ const steps = [
   {
     title: 'Estimate together',
     detail: 'Reveal, decide, and sync points back without leaving SprintJam.',
+  },
+];
+
+const securityHighlights = [
+  {
+    title: 'Signed OAuth + room auth',
+    detail:
+      'OAuth 2.0 with Atlassian is wrapped in a signed state + nonce, and every action is gated by a valid room session token.',
+    icon: BadgeCheck,
+  },
+  {
+    title: 'Least-privilege scopes',
+    detail:
+      'Scopes are pinned to Jira issue/board read, sprint read, and story point writes; no broader Jira access or identity changes.',
+    icon: Lock,
+  },
+  {
+    title: 'Encrypted, room-scoped storage',
+    detail:
+      'Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a single room, and cleared on revoke.',
+    icon: Database,
+  },
+  {
+    title: 'Controlled egress + rotation',
+    detail:
+      'All calls flow through the room worker to Atlassian APIs, refreshes persist server-side, and expired/invalid tokens force a reconnect.',
+    icon: RefreshCcw,
+  },
+  {
+    title: 'User control & cleanup',
+    detail:
+      'Moderators can revoke at any time; we revoke at Atlassian and delete room-side tokens to keep dormant connections closed.',
+    icon: BadgeCheck,
+  },
+  {
+    title: 'Data handling & privacy',
+    detail:
+      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same data handling standards.',
+    icon: BadgeCheck,
+    cta: {
+      label: 'View Privacy Policy',
+      href: '/privacy',
+    },
   },
 ];
 
@@ -189,6 +241,49 @@ const JiraIntegrationScreen = () => {
                 <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
                   {detail}
                 </p>
+              </SurfaceCard>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="text-left">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-600">
+              Security for Jira
+            </p>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+              Built to match Atlassian Forge security expectations
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              We follow Atlassian&apos;s guidance on authentication, data isolation,
+              and least privilege so rooms stay locked to the people and scopes you
+              approve. No Jira credentials are stored on the client; tokens are
+              encrypted inside the room worker and removed when access is revoked.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {securityHighlights.map(({ title, detail, icon: Icon, cta }) => (
+              <SurfaceCard key={title} className="h-full text-left">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/30">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {title}
+                  </h3>
+                </div>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                  {detail}
+                </p>
+                {cta ? (
+                  <a
+                    href={cta.href}
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                  >
+                    {cta.label}
+                    <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                ) : null}
               </SurfaceCard>
             ))}
           </div>

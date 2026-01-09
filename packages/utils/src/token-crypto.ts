@@ -31,11 +31,9 @@ export class TokenCipher {
   constructor(secret: string) {
     const secretValue = secret?.trim();
     if (!secretValue) {
-      console.warn(
-        "TOKEN_ENCRYPTION_SECRET is empty, falling back to insecure cipher.",
+      throw new Error(
+        "TOKEN_ENCRYPTION_SECRET is required for secure token encryption.",
       );
-      this.secret = "insecure-default-secret";
-      return;
     }
     this.secret = secretValue;
   }
