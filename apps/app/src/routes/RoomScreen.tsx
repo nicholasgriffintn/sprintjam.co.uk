@@ -28,6 +28,7 @@ import { getVoteKeyForUser } from "@/utils/room";
 import { useDisplayQueueSetup } from "@/hooks/useDisplayQueueSetup";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
+import { isWorkspacesEnabled } from "@/constants";
 import { Footer } from "@/components/layout/Footer";
 import ShareRoomModal from "@/components/modals/ShareRoomModal";
 import SettingsModal from "@/components/modals/SettingsModal";
@@ -170,7 +171,11 @@ const RoomScreen = () => {
         onLeaveRoom={handleLeaveRoom}
         setIsShareModalOpen={setIsShareModalOpen}
         onOpenSettings={handleOpenSettings}
-        onSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
+        onSaveToWorkspace={
+          isWorkspacesEnabled()
+            ? () => setIsSaveToWorkspaceOpen(true)
+            : undefined
+        }
       />
 
       <motion.div

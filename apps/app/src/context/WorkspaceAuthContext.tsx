@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { isWorkspacesEnabled } from "@/constants";
 import { logout as logoutService } from "@/lib/workspace-service";
 import type { Team, WorkspaceUser } from "@/lib/workspace-service";
 import { useWorkspaceProfile } from "@/lib/data/hooks";
@@ -32,13 +33,19 @@ const WorkspaceAuthContext = createContext<WorkspaceAuthContextValue | null>(
 );
 
 export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
-  const profile = useWorkspaceProfile(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const workspacesEnabled = isWorkspacesEnabled();
+  const profile = useWorkspaceProfile(workspacesEnabled);
+  const [isLoading, setIsLoading] = useState(workspacesEnabled);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
+
+    if (!workspacesEnabled) {
+      setIsLoading(false);
+      return;
+    }
 
     ensureWorkspaceProfileCollectionReady()
       .then(() => {
@@ -48,7 +55,7 @@ export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
         console.error("Failed to initialize workspace auth", error);
         setIsLoading(false);
       });
-  }, []);
+  }, [workspacesEnabled]);
 
   const refreshAuth = useCallback(async () => {
     setIsLoading(true);

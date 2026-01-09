@@ -5,7 +5,7 @@ import {
   type QueryCollectionConfig,
 } from "@tanstack/query-db-collection";
 
-import { API_BASE_URL } from "@/constants";
+import { API_BASE_URL, isWorkspacesEnabled } from "@/constants";
 import {
   workspaceRequest,
   type WorkspaceProfile,
@@ -87,6 +87,10 @@ const workspaceProfileCollectionConfig = {
   queryKey: ["workspace-profile"],
   startSync: false,
   queryFn: async () => {
+    if (!isWorkspacesEnabled()) {
+      return [];
+    }
+
     try {
       const profile = await workspaceRequest<WorkspaceProfile>(
         `${API_BASE_URL}/auth/me`,
@@ -114,8 +118,9 @@ const workspaceStatsCollectionConfig = {
   queryKey: ["workspace-stats"],
   startSync: false,
   queryFn: async () => {
-    const profile =
-      workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY);
+    const profile = workspaceProfileCollection.get(
+      WORKSPACE_PROFILE_DOCUMENT_KEY,
+    );
     if (!profile?.user) {
       return [];
     }

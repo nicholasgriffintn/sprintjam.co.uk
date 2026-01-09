@@ -33,6 +33,12 @@ export const VOLUME_STORAGE_KEY = "sprintjam_strudelPlayerVolume";
 export const USERNAME_STORAGE_KEY = "sprintjam_username";
 export const THEME_STORAGE_KEY = "sprintjam_theme";
 export const RETURN_URL_KEY = "sprintjam_return_url";
+export const WORKSPACES_STORAGE_KEY = "sprintjam_workspaces_enabled";
+
+export function isWorkspacesEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(WORKSPACES_STORAGE_KEY) === "true";
+}
 
 export const QUICK_EMOJIS = [
   "😀",
