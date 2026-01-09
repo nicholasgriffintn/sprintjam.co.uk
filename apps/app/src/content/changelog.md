@@ -1,3 +1,8 @@
+## V2.1
+
+- Added a new FAQ page to help answer questions about SprintJam and to provide some guidance on how to conduct sprint planning sessions effectively.
+- Added new integrations pages to describe the available integrations with Jira, Linear and GitHub Issues.
+
 ## V2
 
 - Migrated to a new monorepo structure that isolates utilities, libraries, and components into separate packages for better maintainability and scalability. This includes a set of new workers that are linked together through the main app with Cloudflare Service Bindings.
