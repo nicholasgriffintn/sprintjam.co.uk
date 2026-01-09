@@ -181,8 +181,8 @@ const JoinRoomScreen = () => {
                 {isPermissionError
                   ? "You don't have permission to join this room."
                   : isAuthError
-                  ? 'Session expired. Rejoin with a fresh link.'
-                  : error}
+                    ? 'Session expired. Rejoin with a fresh link.'
+                    : error}
               </Alert>
             )}
 
@@ -231,7 +231,7 @@ const JoinRoomScreen = () => {
                     showValidation
                     isValid={isRoomKeyValid}
                     helperText="Six characters shared by your moderator."
-                    className="font-mono tracking-[0.35em] text-center"
+                    className="font-mono tracking-[0.35em]"
                   />
                 )}
 
