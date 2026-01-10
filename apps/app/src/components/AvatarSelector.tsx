@@ -72,12 +72,12 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
             <Button
               key={avatar.id}
               data-testid={`avatar-option-${avatar.id}`}
-              variant="ghost"
+              variant="unstyled"
               type="button"
               onClick={() => onSelectAvatar(avatar.id)}
               aria-label={`Select ${avatar.label} avatar`}
               aria-pressed={selectedAvatar === avatar.id}
-              className={`w-full aspect-square rounded-full border-2 hover:scale-105 active:scale-95 ${
+              className={`w-full aspect-square rounded-full border-2 p-1 hover:scale-105 active:scale-95 focus-visible:ring-blue-400 dark:focus-visible:ring-indigo-400 ${
                 selectedAvatar === avatar.id
                   ? 'border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg scale-110'
                   : 'border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-indigo-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
