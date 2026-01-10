@@ -3,6 +3,7 @@
 - Improved the rendering of the header and the layout so that it adapts better between navigation for a more unified experience.
 - Added animations to the header elements for a smoother experience.
 - Removed the back to home button on some pages to reduce clutter, favouring the logo as a home link.
+- Added a new user menu to the header for easier access to login, workspaces and logout actions.
 
 ## V2.1
 
