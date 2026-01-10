@@ -1,8 +1,7 @@
 import type { FC } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 
-import { useSessionActions, useSessionState } from '@/context/SessionContext';
-import { useWorkspaceAuth } from '@/context/WorkspaceAuthContext';
+import { useSessionState } from '@/context/SessionContext';
 import { HeaderContainer } from './HeaderContainer';
 import { MarketingHeader } from './HeaderContent/MarketingHeader';
 import { RoomHeader } from './HeaderContent/RoomHeader';
@@ -12,15 +11,8 @@ import { getHeaderVariant, getMarketingVariant } from '@/utils/layout';
 
 export const Header: FC = () => {
   const { screen } = useSessionState();
-  const { goHome, startCreateFlow, goToWorkspace } = useSessionActions();
-  const { logout } = useWorkspaceAuth();
 
   const variant = getHeaderVariant(screen);
-
-  const handleLogout = async () => {
-    await logout();
-    goHome();
-  };
 
   const renderContent = () => {
     switch (variant) {
@@ -33,9 +25,9 @@ export const Header: FC = () => {
             exit={{ opacity: 0 }}
             transition={HEADER_TRANSITION}
             layout
-            className="contents"
+            className="contents w-full"
           >
-            <RoomHeader onNavigateHome={goHome} />
+            <RoomHeader />
           </motion.div>
         );
 
@@ -48,14 +40,9 @@ export const Header: FC = () => {
             exit={{ opacity: 0 }}
             transition={HEADER_TRANSITION}
             layout
-            className="contents"
+            className="contents w-full"
           >
-            <WorkspaceHeader
-              onNewRoom={startCreateFlow}
-              onLogout={handleLogout}
-              onNavigateDashboard={goToWorkspace}
-              onNavigateHome={goHome}
-            />
+            <WorkspaceHeader />
           </motion.div>
         );
       default:
@@ -67,11 +54,9 @@ export const Header: FC = () => {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={HEADER_TRANSITION}
             layout
+            className="w-full"
           >
-            <MarketingHeader
-              variant={getMarketingVariant(screen)}
-              onNavigateHome={goHome}
-            />
+            <MarketingHeader variant={getMarketingVariant(screen)} />
           </motion.div>
         );
     }

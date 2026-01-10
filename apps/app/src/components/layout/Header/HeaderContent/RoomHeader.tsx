@@ -10,11 +10,13 @@ import { cn } from '@/lib/cn';
 import { HeaderLogo } from '../HeaderLogo';
 import DarkModeToggle from '../DarkModeToggle';
 import { HEADER_TRANSITION } from '@/constants';
-import { RoomHeaderProps } from '../types';
+import { HeaderUserMenu } from '../HeaderUserMenu';
+import { useSessionActions } from '@/context/SessionContext';
 
-export const RoomHeader: FC<RoomHeaderProps> = ({ onNavigateHome }) => {
+export const RoomHeader: FC = () => {
   const { roomData, isModeratorView } = useRoomState();
   const roomHeader = useRoomHeaderOptional();
+  const { goHome } = useSessionActions();
 
   if (!roomData || !roomHeader) {
     return null;
@@ -40,7 +42,7 @@ export const RoomHeader: FC<RoomHeaderProps> = ({ onNavigateHome }) => {
         <HeaderLogo
           size="sm"
           showText
-          onClick={onNavigateHome}
+          onClick={goHome}
           layoutId="header-logo"
           className="flex-shrink-0 [&_span]:hidden [&_span]:sm:inline"
         />
@@ -121,6 +123,8 @@ export const RoomHeader: FC<RoomHeaderProps> = ({ onNavigateHome }) => {
             Leave room
           </span>
         </Button>
+
+        <HeaderUserMenu />
       </motion.div>
     </>
   );

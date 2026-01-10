@@ -1,38 +1,32 @@
-import type { FC } from 'react';
+import type { FC, ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { LayoutGrid, LogOut, Plus } from 'lucide-react';
+import { LayoutGrid, Plus } from 'lucide-react';
 
-import { useSessionState } from '@/context/SessionContext';
-import { useWorkspaceAuth } from '@/context/WorkspaceAuthContext';
+import { useSessionActions, useSessionState } from '@/context/SessionContext';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
 import { HeaderLogo } from '../HeaderLogo';
 import DarkModeToggle from '../DarkModeToggle';
 import { HEADER_TRANSITION } from '@/constants';
-import { type WorkspaceHeaderProps } from '../types';
+import { HeaderUserMenu } from '../HeaderUserMenu';
 
 interface NavItem {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   screen: string;
   onClick: () => void;
 }
 
-export const WorkspaceHeader: FC<WorkspaceHeaderProps> = ({
-  onNewRoom,
-  onLogout,
-  onNavigateDashboard,
-  onNavigateHome,
-}) => {
+export const WorkspaceHeader: FC = () => {
   const { screen } = useSessionState();
-  const { user } = useWorkspaceAuth();
+  const { goHome, startCreateFlow, goToWorkspace } = useSessionActions();
 
   const navItems: NavItem[] = [
     {
       icon: <LayoutGrid className="h-4 w-4" />,
       label: 'Dashboard',
       screen: 'workspace',
-      onClick: onNavigateDashboard,
+      onClick: goToWorkspace,
     },
   ];
 
@@ -47,7 +41,7 @@ export const WorkspaceHeader: FC<WorkspaceHeaderProps> = ({
         <HeaderLogo
           size="xs"
           showText
-          onClick={onNavigateHome}
+          onClick={goHome}
           layoutId="header-logo"
         />
 
@@ -80,7 +74,7 @@ export const WorkspaceHeader: FC<WorkspaceHeaderProps> = ({
         <Button
           variant="primary"
           size="sm"
-          onClick={onNewRoom}
+          onClick={startCreateFlow}
           icon={<Plus className="h-4 w-4" />}
         >
           <span className="hidden sm:inline">New Room</span>
@@ -89,33 +83,7 @@ export const WorkspaceHeader: FC<WorkspaceHeaderProps> = ({
 
         <DarkModeToggle />
 
-        {user && (
-          <div className="hidden items-center gap-2 border-l border-slate-200 pl-2 dark:border-white/10 sm:flex">
-            <span className="max-w-[120px] truncate text-sm text-slate-600 dark:text-slate-400">
-              {user.email}
-            </span>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onLogout}
-              icon={<LogOut className="h-4 w-4" />}
-              iconOnly
-              aria-label="Sign out"
-            />
-          </div>
-        )}
-
-        {user && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onLogout}
-            icon={<LogOut className="h-4 w-4" />}
-            className="sm:hidden"
-            iconOnly
-            aria-label="Sign out"
-          />
-        )}
+        <HeaderUserMenu />
       </motion.div>
     </>
   );

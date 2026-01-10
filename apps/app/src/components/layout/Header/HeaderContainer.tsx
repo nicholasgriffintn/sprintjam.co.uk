@@ -19,7 +19,7 @@ export const HeaderContainer: FC<HeaderContainerProps> = ({
   if (isMarketing) {
     return (
       <motion.div
-        className={cn('flex justify-center py-6 sm:py-8', className)}
+        className={cn('flex w-full justify-center px-4 py-6 sm:py-8', className)}
         layout
         transition={HEADER_TRANSITION}
       >

@@ -10,20 +10,8 @@ export interface HeaderLogoProps {
   layoutId?: string;
 }
 
-export interface RoomHeaderProps {
-  onNavigateHome: () => void;
-}
-
-export interface WorkspaceHeaderProps {
-  onNewRoom: () => void;
-  onLogout: () => void;
-  onNavigateDashboard: () => void;
-  onNavigateHome: () => void;
-}
-
 export interface MarketingHeaderProps {
   variant: MarketingVariant;
-  onNavigateHome?: () => void;
 }
 
 export interface HeaderContainerProps {
