@@ -10,7 +10,6 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
   showText = true,
   className = '',
   onClick,
-  layoutId,
 }) => {
   const sizeConfig = LOGO_SIZES[size];
   const textSize = LOGO_TEXT_SIZES[size];
@@ -18,7 +17,6 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
   const content = (
     <>
       <motion.img
-        layoutId={layoutId ? `${layoutId}-image` : undefined}
         src="/logo-192.png"
         alt="SprintJam"
         className={cn(
@@ -30,7 +28,6 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
       />
       {showText && (
         <motion.span
-          layoutId={layoutId ? `${layoutId}-text` : undefined}
           className={cn(
             textSize,
             'font-semibold tracking-tight text-slate-900 dark:text-white'
@@ -54,8 +51,6 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
           onClick();
         }}
         className={cn(containerClass, 'cursor-pointer')}
-        layout
-        layoutId={layoutId}
         transition={HEADER_TRANSITION}
       >
         {content}
@@ -66,8 +61,6 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
   return (
     <motion.div
       className={containerClass}
-      layout
-      layoutId={layoutId}
       transition={HEADER_TRANSITION}
     >
       {content}

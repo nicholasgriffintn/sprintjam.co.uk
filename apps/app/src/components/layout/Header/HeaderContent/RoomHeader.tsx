@@ -32,15 +32,14 @@ export const RoomHeader: FC = () => {
     <>
       <motion.div
         className="flex items-center gap-2 sm:gap-6"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={HEADER_TRANSITION}
       >
         <HeaderLogo
           size="sm"
           showText
           onClick={goHome}
-          layoutId="header-logo"
           className="flex-shrink-0 [&_span]:hidden [&_span]:sm:inline"
         />
         <div className="flex items-center gap-2 text-sm">
@@ -67,8 +66,8 @@ export const RoomHeader: FC = () => {
 
       <motion.div
         className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={HEADER_TRANSITION}
       >
         <DarkModeToggle />

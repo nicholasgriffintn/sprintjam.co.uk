@@ -24,7 +24,6 @@ export const Header: FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={HEADER_TRANSITION}
-            layout
             className="contents w-full"
           >
             <RoomHeader />
@@ -39,7 +38,6 @@ export const Header: FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={HEADER_TRANSITION}
-            layout
             className="contents w-full"
           >
             <WorkspaceHeader />
@@ -53,7 +51,6 @@ export const Header: FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={HEADER_TRANSITION}
-            layout
             className="w-full"
           >
             <MarketingHeader variant={getMarketingVariant(screen)} />
@@ -65,7 +62,7 @@ export const Header: FC = () => {
   return (
     <LayoutGroup>
       <HeaderContainer variant={variant}>
-        <AnimatePresence mode="sync" initial={false}>
+        <AnimatePresence mode="wait" initial={false}>
           {renderContent()}
         </AnimatePresence>
       </HeaderContainer>

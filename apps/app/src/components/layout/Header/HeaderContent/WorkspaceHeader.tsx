@@ -33,16 +33,16 @@ export const WorkspaceHeader: FC = () => {
   return (
     <>
       <motion.div
-        className="flex items-center gap-6"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
+        className="flex items-center gap-2 sm:gap-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={HEADER_TRANSITION}
       >
         <HeaderLogo
           size="xs"
           showText
           onClick={goHome}
-          layoutId="header-logo"
+          className="flex-shrink-0 [&_span]:hidden [&_span]:sm:inline"
         />
 
         <nav className="hidden items-center gap-1 sm:flex">
@@ -66,19 +66,23 @@ export const WorkspaceHeader: FC = () => {
       </motion.div>
 
       <motion.div
-        className="flex items-center gap-2"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
+        className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={HEADER_TRANSITION}
       >
         <Button
-          variant="primary"
-          size="sm"
+          variant="unstyled"
           onClick={startCreateFlow}
           icon={<Plus className="h-4 w-4" />}
+          aria-label="Create room"
+          className={cn(
+            'flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-brand-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/15 dark:bg-white/10 dark:text-brand-100 dark:hover:border-brand-300/60 dark:hover:text-brand-50',
+            'md:w-auto md:min-w-[3rem] md:gap-2 md:px-4'
+          )}
         >
-          <span className="hidden sm:inline">New Room</span>
-          <span className="sm:hidden">New</span>
+          <span className="hidden text-sm font-semibold md:inline">New Room</span>
+          <span className="text-sm font-semibold md:hidden">New</span>
         </Button>
 
         <DarkModeToggle />

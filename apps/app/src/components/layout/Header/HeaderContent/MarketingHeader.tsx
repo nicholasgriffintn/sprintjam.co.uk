@@ -17,7 +17,6 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
         size={logoSize}
         showText
         onClick={goHome}
-        layoutId="header-logo"
         className={variant === 'hero' ? 'scale-95 sm:scale-100' : ''}
       />
       <div className="flex justify-end">
