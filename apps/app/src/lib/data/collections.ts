@@ -5,7 +5,8 @@ import {
   type QueryCollectionConfig,
 } from "@tanstack/query-db-collection";
 
-import { API_BASE_URL, isWorkspacesEnabled } from "@/constants";
+import { API_BASE_URL } from '@/constants';
+import { isWorkspacesEnabled } from '@/utils/feature-flags';
 import {
   workspaceRequest,
   type WorkspaceProfile,

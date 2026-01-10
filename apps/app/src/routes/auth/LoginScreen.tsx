@@ -2,11 +2,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 
-import { PageBackground } from "@/components/layout/PageBackground";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { Logo } from "@/components/Logo";
+import { PageSection } from '@/components/layout/PageBackground';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { Footer } from "@/components/layout/Footer";
 import { requestMagicLink, verifyCode } from "@/lib/workspace-service";
 import { usePageMeta } from "@/hooks/usePageMeta";
@@ -27,28 +26,28 @@ type LoginState =
 export default function LoginScreen() {
   usePageMeta(META_CONFIGS.login);
 
-  const { goHome, goToWorkspace } = useSessionActions();
+  const { goToWorkspace } = useSessionActions();
   const { refreshAuth } = useWorkspaceAuth();
 
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [state, setState] = useState<LoginState>("input");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [state, setState] = useState<LoginState>('input');
+  const [error, setError] = useState('');
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
 
-    setState("sending");
-    setError("");
+    setState('sending');
+    setError('');
 
     try {
       await requestMagicLink(email.trim().toLowerCase());
-      setState("code");
+      setState('code');
     } catch (err) {
-      setState("error");
+      setState('error');
       setError(
-        err instanceof Error ? err.message : "Failed to send verification code",
+        err instanceof Error ? err.message : 'Failed to send verification code'
       );
     }
   };
@@ -57,13 +56,13 @@ export default function LoginScreen() {
     e.preventDefault();
     if (!code.trim() || code.length !== 6) return;
 
-    setState("verifying");
-    setError("");
+    setState('verifying');
+    setError('');
 
     try {
       await verifyCode(email.trim().toLowerCase(), code.trim());
       await refreshAuth();
-      setState("success");
+      setState('success');
       setTimeout(() => {
         const returnUrl = getReturnUrl();
         clearReturnUrl();
@@ -75,33 +74,29 @@ export default function LoginScreen() {
         }
       }, 1500);
     } catch (err) {
-      setState("code");
+      setState('code');
       setError(
-        err instanceof Error ? err.message : "Invalid verification code",
+        err instanceof Error ? err.message : 'Invalid verification code'
       );
     }
   };
 
   const handleStartOver = () => {
-    setState("input");
-    setEmail("");
-    setCode("");
-    setError("");
+    setState('input');
+    setEmail('');
+    setCode('');
+    setError('');
   };
 
-  if (state === "success") {
+  if (state === 'success') {
     return (
-      <PageBackground align="start" maxWidth="sm" variant="compact">
+      <PageSection align="start" maxWidth="sm">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
           className="space-y-6"
         >
-          <div className="flex justify-center">
-            <Logo size="md" />
-          </div>
-
           <SurfaceCard className="text-center">
             <motion.div
               className="space-y-8"
@@ -126,23 +121,19 @@ export default function LoginScreen() {
           </SurfaceCard>
         </motion.div>
         <Footer displayRepoLink={false} fullWidth={false} priorityLinksOnly />
-      </PageBackground>
+      </PageSection>
     );
   }
 
-  if (state === "code" || state === "verifying") {
+  if (state === 'code' || state === 'verifying') {
     return (
-      <PageBackground align="start" maxWidth="sm" variant="compact">
+      <PageSection align="start" maxWidth="sm">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
           className="space-y-6"
         >
-          <div className="flex justify-center">
-            <Logo size="md" />
-          </div>
-
           <div className="space-y-3 text-left">
             <Button
               type="button"
@@ -160,7 +151,7 @@ export default function LoginScreen() {
               <div className="mb-6 text-center">
                 <div className="mb-6 flex justify-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/30">
-                    {state === "verifying" ? (
+                    {state === 'verifying' ? (
                       <Loader2 className="h-8 w-8 animate-spin text-brand-600 dark:text-brand-400" />
                     ) : (
                       <Mail className="h-8 w-8 text-brand-600 dark:text-brand-400" />
@@ -171,7 +162,7 @@ export default function LoginScreen() {
                   Enter verification code
                 </h1>
                 <p className="mt-2 text-slate-600 dark:text-slate-300">
-                  We sent a 6-digit code to{" "}
+                  We sent a 6-digit code to{' '}
                   <span className="font-medium text-slate-900 dark:text-white">
                     {email}
                   </span>
@@ -193,14 +184,14 @@ export default function LoginScreen() {
                   placeholder="000000"
                   value={code}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
                     setCode(value);
                   }}
                   error={error}
                   fullWidth
                   required
                   autoFocus
-                  disabled={state === "verifying"}
+                  disabled={state === 'verifying'}
                   autoComplete="one-time-code"
                   className="text-center text-2xl tracking-widest"
                 />
@@ -211,10 +202,10 @@ export default function LoginScreen() {
                     data-testid="verify-submit"
                     fullWidth
                     size="lg"
-                    isLoading={state === "verifying"}
+                    isLoading={state === 'verifying'}
                     disabled={code.length !== 6}
                   >
-                    {state === "verifying" ? "Verifying..." : "Verify"}
+                    {state === 'verifying' ? 'Verifying...' : 'Verify'}
                   </Button>
                 </div>
 
@@ -226,34 +217,18 @@ export default function LoginScreen() {
           </SurfaceCard>
         </motion.div>
         <Footer displayRepoLink={false} fullWidth={false} priorityLinksOnly />
-      </PageBackground>
+      </PageSection>
     );
   }
 
   return (
-    <PageBackground align="start" maxWidth="sm" variant="compact">
+    <PageSection align="start" maxWidth="sm">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="space-y-6"
       >
-        <div className="flex justify-center">
-          <Logo size="md" />
-        </div>
-
-        <div className="space-y-3 text-left">
-          <Button
-            type="button"
-            variant="unstyled"
-            onClick={goHome}
-            icon={<ArrowLeft className="h-4 w-4" />}
-            className="p-0 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-          >
-            Back to home
-          </Button>
-        </div>
-
         <SurfaceCard>
           <div className="space-y-6">
             <div className="mb-6 text-center">
@@ -308,6 +283,6 @@ export default function LoginScreen() {
         </p>
       </motion.div>
       <Footer displayRepoLink={false} fullWidth={false} priorityLinksOnly />
-    </PageBackground>
+    </PageSection>
   );
 }

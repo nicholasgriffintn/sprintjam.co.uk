@@ -10,12 +10,11 @@ import {
 } from "@/context/SessionContext";
 import { useRoomActions, useRoomStatus } from "@/context/RoomContext";
 import AvatarSelector from "@/components/AvatarSelector";
-import { PageBackground } from "@/components/layout/PageBackground";
+import { PageSection } from '@/components/layout/PageBackground';
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Alert } from "@/components/ui/Alert";
-import { Logo } from "@/components/Logo";
+import { Alert } from '@/components/ui/Alert';
 import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
@@ -27,13 +26,8 @@ import {
 
 const JoinRoomScreen = () => {
   usePageMeta(META_CONFIGS.join);
-  const {
-    name,
-    roomKey,
-    passcode,
-    selectedAvatar,
-    joinFlowMode,
-  } = useSessionState();
+  const { name, roomKey, passcode, selectedAvatar, joinFlowMode } =
+    useSessionState();
   const {
     setName,
     setRoomKey,
@@ -132,26 +126,14 @@ const JoinRoomScreen = () => {
   };
 
   return (
-    <PageBackground align="start" maxWidth="sm" variant="compact">
+    <PageSection align="start" maxWidth="sm">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="space-y-6"
       >
-        <div className="flex justify-center">
-          <Logo size="md" />
-        </div>
         <div className="space-y-3 text-left">
-          <Button
-            type="button"
-            variant="unstyled"
-            onClick={goHome}
-            icon={<ArrowLeft className="h-4 w-4" />}
-            className="p-0 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-          >
-            Back to home
-          </Button>
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-brand-500">
               Step {currentStep === 'details' ? 1 : 2}/2
@@ -309,7 +291,7 @@ const JoinRoomScreen = () => {
         </p>
       </motion.div>
       <Footer displayRepoLink={false} />
-    </PageBackground>
+    </PageSection>
   );
 };
 

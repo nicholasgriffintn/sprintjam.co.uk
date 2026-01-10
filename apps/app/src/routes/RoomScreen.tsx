@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -7,10 +7,10 @@ import {
   useRoomStatus,
 } from "@/context/RoomContext";
 import { useSessionState } from "@/context/SessionContext";
+import { useRoomHeader } from "@/context/RoomHeaderContext";
 import { useRoomStats } from "@/hooks/useRoomStats";
 import { useConsensusCelebration } from "@/hooks/useConsensusCelebration";
 import ErrorBanner from "@/components/ui/ErrorBanner";
-import Header from "@/components/Header";
 import { UserEstimate } from "@/components/voting/UserEstimate";
 import { ResultsControls } from "@/components/results/ResultsControls";
 import { VotesHidden } from "@/components/results/VotesHidden";
@@ -28,7 +28,6 @@ import { getVoteKeyForUser } from "@/utils/room";
 import { useDisplayQueueSetup } from "@/hooks/useDisplayQueueSetup";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
-import { isWorkspacesEnabled } from "@/constants";
 import { Footer } from "@/components/layout/Footer";
 import ShareRoomModal from "@/components/modals/ShareRoomModal";
 import SettingsModal from "@/components/modals/SettingsModal";
@@ -64,16 +63,26 @@ const RoomScreen = () => {
     handleLeaveRoom,
   } = useRoomActions();
   const { name } = useSessionState();
+  const {
+    isShareModalOpen,
+    setIsShareModalOpen,
+    isSettingsModalOpen,
+    openSettings,
+    closeSettings,
+    settingsInitialTab,
+    isSaveToWorkspaceOpen,
+    setIsSaveToWorkspaceOpen,
+    registerLeaveRoom,
+  } = useRoomHeader();
   const isSpectator = roomData?.spectators?.includes(name) ?? false;
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [settingsInitialTab, setSettingsInitialTab] = useState<
-    RoomSettingsTabId | undefined
-  >(undefined);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isSaveToWorkspaceOpen, setIsSaveToWorkspaceOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
+
+  // Register leave room handler for the unified header
+  useEffect(() => {
+    registerLeaveRoom(handleLeaveRoom);
+  }, [registerLeaveRoom, handleLeaveRoom]);
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
@@ -132,13 +141,11 @@ const RoomScreen = () => {
     });
 
   const handleOpenSettings = (tab?: RoomSettingsTabId) => {
-    setSettingsInitialTab(tab);
-    setIsSettingsModalOpen(true);
+    openSettings(tab);
   };
 
   const handleCloseSettings = () => {
-    setIsSettingsModalOpen(false);
-    setSettingsInitialTab(undefined);
+    closeSettings();
   };
 
   return (
@@ -164,19 +171,6 @@ const RoomScreen = () => {
           variant={roomErrorKind === "permission" ? "warning" : "error"}
         />
       )}
-
-      <Header
-        roomData={roomData}
-        isModeratorView={isModeratorView}
-        onLeaveRoom={handleLeaveRoom}
-        setIsShareModalOpen={setIsShareModalOpen}
-        onOpenSettings={handleOpenSettings}
-        onSaveToWorkspace={
-          isWorkspacesEnabled()
-            ? () => setIsSaveToWorkspaceOpen(true)
-            : undefined
-        }
-      />
 
       <motion.div
         className="flex flex-1 flex-col py-0 md:grid md:grid-cols-[minmax(280px,360px)_1fr] md:items-start"

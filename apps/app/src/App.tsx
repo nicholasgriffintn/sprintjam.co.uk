@@ -3,41 +3,41 @@ import { MotionConfig } from "framer-motion";
 
 import ErrorBanner from "./components/ui/ErrorBanner";
 import LoadingOverlay from "./components/LoadingOverlay";
-import { ScreenLoader } from "./components/layout/ScreenLoader";
-import { AppShell } from "./components/layout/AppShell";
-import { ErrorBoundary } from "./components/errors/ErrorBoundary";
+import { ScreenLoader } from './components/layout/ScreenLoader';
+import { ErrorBoundary } from './components/errors/ErrorBoundary';
+import { Header } from './components/layout/Header';
 import {
   SessionProvider,
   useSessionErrors,
   useSessionState,
-  type AppScreen,
-} from "./context/SessionContext";
+} from './context/SessionContext';
 import {
   RoomProvider,
   useRoomActions,
   useRoomState,
   useRoomStatus,
-} from "./context/RoomContext";
-import { WorkspaceAuthProvider } from "./context/WorkspaceAuthContext";
-import WelcomeScreen from "./routes/WelcomeScreen";
-import LoginScreen from "./routes/auth/LoginScreen";
-import WorkspaceScreen from "./routes/workspace/WorkspaceScreen";
-import CreateRoomScreen from "./routes/CreateRoomScreen";
-import JoinRoomScreen from "./routes/JoinRoomScreen";
-import NotFoundScreen from "./routes/NotFoundScreen";
-import FaqScreen from "./routes/FaqScreen";
-import IntegrationsScreen from "./routes/IntegrationsScreen";
-import JiraIntegrationScreen from "./routes/integrations/JiraIntegrationScreen";
-import LinearIntegrationScreen from "./routes/integrations/LinearIntegrationScreen";
-import GithubIntegrationScreen from "./routes/integrations/GithubIntegrationScreen";
-import { ErrorBannerServerDefaults } from "./components/errors/ErrorBannerServerDefaults";
-import PrivacyPolicyScreen from "./routes/PrivacyPolicyScreen";
-import TermsConditionsScreen from "./routes/TermsConditionsScreen";
-import ChangelogScreen from "./routes/ChangelogScreen";
+} from './context/RoomContext';
+import { WorkspaceAuthProvider } from './context/WorkspaceAuthContext';
+import { RoomHeaderProvider } from './context/RoomHeaderContext';
+import WelcomeScreen from './routes/WelcomeScreen';
+import LoginScreen from './routes/auth/LoginScreen';
+import WorkspaceScreen from './routes/workspace/WorkspaceScreen';
+import CreateRoomScreen from './routes/CreateRoomScreen';
+import JoinRoomScreen from './routes/JoinRoomScreen';
+import NotFoundScreen from './routes/NotFoundScreen';
+import FaqScreen from './routes/FaqScreen';
+import IntegrationsScreen from './routes/IntegrationsScreen';
+import JiraIntegrationScreen from './routes/integrations/JiraIntegrationScreen';
+import LinearIntegrationScreen from './routes/integrations/LinearIntegrationScreen';
+import GithubIntegrationScreen from './routes/integrations/GithubIntegrationScreen';
+import { ErrorBannerServerDefaults } from './components/errors/ErrorBannerServerDefaults';
+import PrivacyPolicyScreen from './routes/PrivacyPolicyScreen';
+import TermsConditionsScreen from './routes/TermsConditionsScreen';
+import ChangelogScreen from './routes/ChangelogScreen';
+import { PageBackground } from './components/layout/PageBackground';
+import { getBackgroundVariant } from './utils/layout';
 
-const APP_SHELL_SCREENS: AppScreen[] = ["workspace"];
-
-const roomScreenLoader = () => import("./routes/RoomScreen");
+const roomScreenLoader = () => import('./routes/RoomScreen');
 const RoomScreen = lazy(roomScreenLoader);
 const preloadRoomScreen = () => {
   void roomScreenLoader();
@@ -63,14 +63,14 @@ const AppContent = () => {
       return;
     }
 
-    if (screen === "room" || screen === "join" || screen === "create") {
+    if (screen === 'room' || screen === 'join' || screen === 'create') {
       preloadRoomScreen();
       hasPrefetchedRoomScreen.current = true;
     }
   }, [screen]);
 
   const showGlobalLoading =
-    screen !== "room" && (isLoading || isLoadingDefaults);
+    screen !== 'room' && (isLoading || isLoadingDefaults);
 
   const canRenderRoomScreen =
     Boolean(roomData && serverDefaults && isSocketStatusKnown) ||
@@ -79,17 +79,17 @@ const AppContent = () => {
   const renderScreen = () => {
     const getScreenContent = () => {
       switch (screen) {
-        case "welcome":
+        case 'welcome':
           return <WelcomeScreen />;
-        case "login":
+        case 'login':
           return <LoginScreen />;
-        case "workspace":
+        case 'workspace':
           return <WorkspaceScreen />;
-        case "create":
+        case 'create':
           return <CreateRoomScreen />;
-        case "join":
+        case 'join':
           return <JoinRoomScreen />;
-        case "room":
+        case 'room':
           if (canRenderRoomScreen) {
             return <RoomScreen />;
           }
@@ -100,21 +100,21 @@ const AppContent = () => {
               subtitle="Please wait a moment."
             />
           );
-        case "privacy":
+        case 'privacy':
           return <PrivacyPolicyScreen />;
-        case "terms":
+        case 'terms':
           return <TermsConditionsScreen />;
-        case "changelog":
+        case 'changelog':
           return <ChangelogScreen />;
-        case "faq":
+        case 'faq':
           return <FaqScreen />;
-        case "integrations":
+        case 'integrations':
           return <IntegrationsScreen />;
-        case "integrationsJira":
+        case 'integrationsJira':
           return <JiraIntegrationScreen />;
-        case "integrationsLinear":
+        case 'integrationsLinear':
           return <LinearIntegrationScreen />;
-        case "integrationsGithub":
+        case 'integrationsGithub':
           return <GithubIntegrationScreen />;
         default:
           return <NotFoundScreen />;
@@ -123,15 +123,11 @@ const AppContent = () => {
 
     const content = getScreenContent();
 
-    if (APP_SHELL_SCREENS.includes(screen)) {
-      return <AppShell>{content}</AppShell>;
-    }
-
     return content;
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <PageBackground variant={getBackgroundVariant(screen)}>
       {showGlobalLoading && <LoadingOverlay />}
 
       {defaultsError && (
@@ -142,14 +138,18 @@ const AppContent = () => {
         />
       )}
 
-      {error && screen !== "room" && (
+      {error && screen !== 'room' && (
         <ErrorBanner message={error} onClose={clearError} />
       )}
 
+      <Header />
+
       <MotionConfig reducedMotion="user">
-        <Suspense fallback={<ScreenLoader />}>{renderScreen()}</Suspense>
+        <main className="flex-1">
+          <Suspense fallback={<ScreenLoader />}>{renderScreen()}</Suspense>
+        </main>
       </MotionConfig>
-    </div>
+    </PageBackground>
   );
 };
 
@@ -159,13 +159,15 @@ const App = () => {
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
-        console.error("App Error Boundary:", error, errorInfo);
+        console.error('App Error Boundary:', error, errorInfo);
       }}
     >
       <SessionProvider currentPath={currentPath}>
         <WorkspaceAuthProvider>
           <RoomProvider>
-            <AppContent />
+            <RoomHeaderProvider>
+              <AppContent />
+            </RoomHeaderProvider>
           </RoomProvider>
         </WorkspaceAuthProvider>
       </SessionProvider>

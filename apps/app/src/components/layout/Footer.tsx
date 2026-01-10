@@ -4,6 +4,8 @@ import { Github, MessageSquare } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import { Button } from '@/components/ui/Button';
+import { navigateTo } from '@/utils/navigation';
+import { useSessionActions, type AppScreen } from '@/context/SessionContext';
 
 type FooterProps = {
   displayRepoLink?: boolean;
@@ -19,6 +21,13 @@ export const Footer = ({
   priorityLinksOnly = true,
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
+  const { setScreen } = useSessionActions();
+
+  const handleNavigate = (screen: AppScreen) => {
+    setScreen(screen);
+    navigateTo(screen);
+  };
 
   return (
     <>
@@ -50,40 +59,45 @@ export const Footer = ({
               <span className="hidden sm:inline">|</span>
             </>
           )}
-          <a
-            href="/privacy"
+          <button
+            type="button"
+            onClick={() => handleNavigate('privacy')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Privacy Policy
-          </a>
+          </button>
           <span className="hidden sm:inline">|</span>
-          <a
-            href="/terms"
+          <button
+            type="button"
+            onClick={() => handleNavigate('terms')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Terms
-          </a>
+          </button>
           <span className="hidden sm:inline">|</span>
-          <a
-            href="/integrations"
+          <button
+            type="button"
+            onClick={() => handleNavigate('integrations')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Integrations
-          </a>
+          </button>
           <span className="hidden sm:inline">|</span>
-          <a
-            href="/faq"
+          <button
+            type="button"
+            onClick={() => handleNavigate('faq')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             FAQ
-          </a>
+          </button>
           <span className="hidden sm:inline">|</span>
-          <a
-            href="/changelog"
+          <button
+            type="button"
+            onClick={() => handleNavigate('changelog')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Changelog
-          </a>
+          </button>
         </div>
 
         <div

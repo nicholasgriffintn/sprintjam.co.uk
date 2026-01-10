@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   Users,
   Plus,
@@ -11,17 +11,16 @@ import {
   Play,
   GitBranch,
   ArrowUpRight,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useSessionActions, type AppScreen } from '@/context/SessionContext';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { Button } from '@/components/ui/Button';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { Logo } from '@/components/Logo';
-import { Footer } from '@/components/layout/Footer';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
-import { navigateTo } from '@/utils/navigation';
+import { useSessionActions, type AppScreen } from "@/context/SessionContext";
+import { PageSection } from "@/components/layout/PageBackground";
+import { Button } from "@/components/ui/Button";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Footer } from "@/components/layout/Footer";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
+import { navigateTo } from "@/utils/navigation";
 
 const WelcomeScreen = () => {
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
@@ -39,37 +38,34 @@ const WelcomeScreen = () => {
   const features = [
     {
       icon: <Zap className="w-5 h-5" />,
-      title: 'Real-time Voting',
-      description: 'Live collaboration with instant updates',
+      title: "Real-time Voting",
+      description: "Live collaboration with instant updates",
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
-      title: 'Smart Consensus',
-      description: 'Automated consensus detection and recommendations',
+      title: "Smart Consensus",
+      description: "Automated consensus detection and recommendations",
     },
     {
       icon: <Shield className="w-5 h-5" />,
-      title: 'Privacy First',
-      description: 'No ads, no tracking, open source',
+      title: "Privacy First",
+      description: "No ads, no tracking, open source",
     },
     {
       icon: <Timer className="w-5 h-5" />,
-      title: 'Voting Options',
-      description: 'Multi-criteria estimation systems',
+      title: "Voting Options",
+      description: "Multi-criteria estimation systems",
     },
   ];
 
   return (
-    <PageBackground maxWidth="xl">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="space-y-10 sm:space-y-14"
       >
-        <div className="flex justify-center">
-          <Logo size="lg" className="scale-95 sm:scale-100" />
-        </div>
         <div className="space-y-6">
           <div className="space-y-4">
             <h1 className="text-3xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
@@ -108,7 +104,7 @@ const WelcomeScreen = () => {
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.97 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           viewport={{ once: true, amount: 0.4 }}
           className="relative mx-auto max-w-2xl px-4 sm:px-6"
         >
@@ -143,9 +139,9 @@ const WelcomeScreen = () => {
                     className="block h-[220px] w-full origin-bottom transform-gpu rounded-[1.25rem] border border-white/10 object-cover object-top transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01]"
                     style={{
                       maskImage:
-                        'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                        "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
                       WebkitMaskImage:
-                        'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                        "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
                     }}
                     loading="lazy"
                   />
@@ -153,8 +149,8 @@ const WelcomeScreen = () => {
                     className="pointer-events-none absolute inset-0 rounded-[1.25rem]"
                     style={{
                       background:
-                        'radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)',
-                      mixBlendMode: 'multiply',
+                        "radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)",
+                      mixBlendMode: "multiply",
                     }}
                   />
                   <div className="pointer-events-none absolute inset-0 rounded-[1.25rem] bg-gradient-to-b from-white/12 via-white/5 to-transparent opacity-30 mix-blend-screen" />
@@ -223,7 +219,7 @@ const WelcomeScreen = () => {
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                    onClick={() => handleNavigate('integrations')}
+                    onClick={() => handleNavigate("integrations")}
                   >
                     Explore integrations
                     <ArrowUpRight className="h-4 w-4" />
@@ -289,7 +285,7 @@ const WelcomeScreen = () => {
         fullWidth={false}
         priorityLinksOnly={false}
       />
-    </PageBackground>
+    </PageSection>
   );
 };
 

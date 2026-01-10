@@ -1,13 +1,12 @@
-import { motion } from 'framer-motion';
-import { Compass, Link2, Sparkles } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { motion } from "framer-motion";
+import { Compass, Link2, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { Footer } from '@/components/layout/Footer';
-import { Logo } from '@/components/Logo';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { META_CONFIGS } from '@/config/meta';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { SurfaceCard } from '../components/ui';
+import { Footer } from "@/components/layout/Footer";
+import { PageSection } from "@/components/layout/PageBackground";
+import { META_CONFIGS } from "@/config/meta";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { SurfaceCard } from "../components/ui";
 
 type FAQItem = {
   question: string;
@@ -16,28 +15,28 @@ type FAQItem = {
 
 const quickStart = [
   {
-    title: 'Kick off a room in seconds',
+    title: "Kick off a room in seconds",
     description:
-      'Open SprintJam, type a room key or generate one instantly, and pick Classic or Structured voting before anyone joins.',
+      "Open SprintJam, type a room key or generate one instantly, and pick Classic or Structured voting before anyone joins.",
     icon: Compass,
   },
   {
-    title: 'Share the invite however you like',
+    title: "Share the invite however you like",
     description:
-      'Copy the room link, display the QR code, or just read the room key aloud. Add a passcode if you want extra control.',
+      "Copy the room link, display the QR code, or just read the room key aloud. Add a passcode if you want extra control.",
     icon: Link2,
   },
   {
-    title: 'Guide the reveal and decision',
+    title: "Guide the reveal and decision",
     description:
-      'Reveal together, see the spread, then let The Judge recommend a consensus when votes differ.',
+      "Reveal together, see the spread, then let The Judge recommend a consensus when votes differ.",
     icon: Sparkles,
   },
 ];
 
 const basicsFaqs: FAQItem[] = [
   {
-    question: 'What is Planning Poker and why does it work?',
+    question: "What is Planning Poker and why does it work?",
     answer: (
       <>
         <p>
@@ -55,7 +54,7 @@ const basicsFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'Who is in the room?',
+    question: "Who is in the room?",
     answer: (
       <>
         <p>
@@ -68,7 +67,7 @@ const basicsFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'How do we run a round?',
+    question: "How do we run a round?",
     answer: (
       <>
         <ol className="list-decimal list-inside space-y-1">
@@ -85,7 +84,7 @@ const basicsFaqs: FAQItem[] = [
 
 const sprintjamFaqs: FAQItem[] = [
   {
-    question: 'How do I start a SprintJam session fast?',
+    question: "How do I start a SprintJam session fast?",
     answer: (
       <>
         <p>
@@ -101,7 +100,7 @@ const sprintjamFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'Do teammates need accounts?',
+    question: "Do teammates need accounts?",
     answer: (
       <>
         <p>
@@ -125,7 +124,7 @@ const sprintjamFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'Which estimation modes are available?',
+    question: "Which estimation modes are available?",
     answer: (
       <>
         <ul className="list-disc list-inside space-y-1">
@@ -146,7 +145,7 @@ const sprintjamFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'How does SprintJam handle reveals and disagreements?',
+    question: "How does SprintJam handle reveals and disagreements?",
     answer: (
       <>
         <p>
@@ -158,7 +157,7 @@ const sprintjamFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'Can I pull work from Jira, Linear, or GitHub?',
+    question: "Can I pull work from Jira, Linear, or GitHub?",
     answer: (
       <>
         <p>
@@ -173,7 +172,7 @@ const sprintjamFaqs: FAQItem[] = [
 
 const scrumFaqs: FAQItem[] = [
   {
-    question: 'When should we run estimation?',
+    question: "When should we run estimation?",
     answer: (
       <>
         <p>
@@ -185,7 +184,7 @@ const scrumFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'How do story points relate to hours?',
+    question: "How do story points relate to hours?",
     answer: (
       <>
         <p>
@@ -198,7 +197,7 @@ const scrumFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'Which scale should we start with?',
+    question: "Which scale should we start with?",
     answer: (
       <>
         <p>
@@ -210,7 +209,7 @@ const scrumFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'How do we keep discussions focused?',
+    question: "How do we keep discussions focused?",
     answer: (
       <>
         <ul className="list-disc list-inside space-y-1">
@@ -227,7 +226,7 @@ const scrumFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'What should we do when votes stay far apart?',
+    question: "What should we do when votes stay far apart?",
     answer: (
       <>
         <p>
@@ -243,7 +242,7 @@ const scrumFaqs: FAQItem[] = [
 
 const cardsFaqs: FAQItem[] = [
   {
-    question: 'Why does SprintJam use Fibonacci-style cards?',
+    question: "Why does SprintJam use Fibonacci-style cards?",
     answer: (
       <>
         <p>
@@ -255,7 +254,7 @@ const cardsFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'What do special cards mean?',
+    question: "What do special cards mean?",
     answer: (
       <>
         <ul className="list-disc list-inside space-y-1">
@@ -274,7 +273,7 @@ const cardsFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'Should we convert points to hours?',
+    question: "Should we convert points to hours?",
     answer: (
       <>
         <p>
@@ -289,7 +288,7 @@ const cardsFaqs: FAQItem[] = [
 
 const facilitationFaqs: FAQItem[] = [
   {
-    question: 'How long should a session take?',
+    question: "How long should a session take?",
     answer: (
       <>
         <p>
@@ -301,7 +300,7 @@ const facilitationFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'What if votes are far apart?',
+    question: "What if votes are far apart?",
     answer: (
       <>
         <p>
@@ -313,7 +312,7 @@ const facilitationFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'How do we keep everyone engaged?',
+    question: "How do we keep everyone engaged?",
     answer: (
       <>
         <ul className="list-disc list-inside space-y-1">
@@ -329,7 +328,7 @@ const facilitationFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'When is Planning Poker a bad fit?',
+    question: "When is Planning Poker a bad fit?",
     answer: (
       <>
         <p>
@@ -345,7 +344,7 @@ const facilitationFaqs: FAQItem[] = [
 
 const alternativesFaqs: FAQItem[] = [
   {
-    question: 'What are quick alternatives to Planning Poker?',
+    question: "What are quick alternatives to Planning Poker?",
     answer: (
       <>
         <p>
@@ -358,7 +357,7 @@ const alternativesFaqs: FAQItem[] = [
     ),
   },
   {
-    question: 'When should we switch techniques?',
+    question: "When should we switch techniques?",
     answer: (
       <>
         <p>
@@ -393,19 +392,13 @@ const FaqScreen = () => {
   );
 
   return (
-    <PageBackground variant="compact" maxWidth="xl">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="space-y-14 lg:space-y-16"
       >
-        <div className="flex justify-center">
-          <a href="/" aria-label="SprintJam home" className="hover:opacity-80">
-            <Logo size="lg" />
-          </a>
-        </div>
-
         <div className="space-y-8">
           <div className="space-y-3 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">
@@ -549,7 +542,7 @@ const FaqScreen = () => {
           <Footer priorityLinksOnly={false} />
         </div>
       </motion.div>
-    </PageBackground>
+    </PageSection>
   );
 };
 

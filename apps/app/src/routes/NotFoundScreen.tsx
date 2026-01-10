@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 
-import { PageBackground } from "@/components/layout/PageBackground";
-import { Logo } from "@/components/Logo";
+import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
@@ -10,18 +9,13 @@ const NotFoundScreen = () => {
   usePageMeta(META_CONFIGS.notFound);
 
   return (
-    <PageBackground maxWidth="xl" variant="compact">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="space-y-14"
       >
-        <div className="flex justify-center">
-          <a href="/" aria-label="SprintJam home" className="hover:opacity-80">
-            <Logo size="lg" />
-          </a>
-        </div>
         <div className="space-y-6">
           <div className="space-y-4">
             <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
@@ -34,7 +28,7 @@ const NotFoundScreen = () => {
         </div>
         <Footer fullWidth={false} />
       </motion.div>
-    </PageBackground>
+    </PageSection>
   );
 };
 

@@ -13,8 +13,7 @@ import {
 
 import { useSessionActions, type AppScreen } from "@/context/SessionContext";
 import { Footer } from "@/components/layout/Footer";
-import { Logo } from "@/components/Logo";
-import { PageBackground } from "@/components/layout/PageBackground";
+import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
@@ -23,79 +22,93 @@ import { navigateTo } from "@/utils/navigation";
 const featureCards = [
   {
     title: "Issue import",
-    description: "Bring GitHub issues into SprintJam so the whole squad can size them together.",
+    description:
+      "Bring GitHub issues into SprintJam so the whole squad can size them together.",
     icon: GitCommit,
   },
   {
     title: "Sync story points",
-    description: "Keep repositories in sync by pushing story points back once you lock in consensus.",
+    description:
+      "Keep repositories in sync by pushing story points back once you lock in consensus.",
     icon: Radio,
   },
   {
     title: "Repository filters",
-    description: "Focus your session by selecting only the repos and labels you care about.",
+    description:
+      "Focus your session by selecting only the repos and labels you care about.",
     icon: GitPullRequest,
   },
   {
     title: "Secure by design",
-    description: "Per-room OAuth with encrypted tokens; no persistent access beyond the session.",
+    description:
+      "Per-room OAuth with encrypted tokens; no persistent access beyond the session.",
     icon: Lock,
   },
 ];
 
 const steps = [
-  { title: "Connect GitHub", detail: "Authorize SprintJam for your room with OAuth to fetch issues securely." },
-  { title: "Pick issues", detail: "Filter by repo or labels to curate the estimation queue." },
-  { title: "Estimate and sync", detail: "Vote, reveal, and sync points back to GitHub so work stays aligned." },
+  {
+    title: "Connect GitHub",
+    detail:
+      "Authorize SprintJam for your room with OAuth to fetch issues securely.",
+  },
+  {
+    title: "Pick issues",
+    detail: "Filter by repo or labels to curate the estimation queue.",
+  },
+  {
+    title: "Estimate and sync",
+    detail:
+      "Vote, reveal, and sync points back to GitHub so work stays aligned.",
+  },
 ];
 
 const securityHighlights = [
   {
-    title: 'Signed OAuth + room auth',
+    title: "Signed OAuth + room auth",
     detail:
-      'GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.',
+      "GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.",
     icon: BadgeCheck,
   },
   {
-    title: 'Least-privilege scopes',
+    title: "Least-privilege scopes",
     detail:
-      'We request repo access and user email only; no org admin scopes or wider permissions are used.',
+      "We request repo access and user email only; no org admin scopes or wider permissions are used.",
     icon: ShieldCheck,
   },
   {
-    title: 'Encrypted, room-scoped storage',
+    title: "Encrypted, room-scoped storage",
     detail:
-      'Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.',
+      "Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.",
     icon: Database,
   },
   {
-    title: 'Controlled egress + rotation',
+    title: "Controlled egress + rotation",
     detail:
-      'All GitHub calls go through the room worker; refresh and revocation paths run server-side only.',
+      "All GitHub calls go through the room worker; refresh and revocation paths run server-side only.",
     icon: RefreshCcw,
   },
   {
-    title: 'User control & cleanup',
+    title: "User control & cleanup",
     detail:
-      'Moderators can revoke at any time; we revoke from GitHub and delete room-side tokens to keep dormant connections closed.',
+      "Moderators can revoke at any time; we revoke from GitHub and delete room-side tokens to keep dormant connections closed.",
     icon: BadgeCheck,
   },
   {
-    title: 'Data handling & privacy',
+    title: "Data handling & privacy",
     detail:
-      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.',
+      "GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.",
     icon: BadgeCheck,
     cta: {
-      label: 'View Privacy Policy',
-      screen: 'privacy' as const,
+      label: "View Privacy Policy",
+      screen: "privacy" as const,
     },
   },
 ];
 
 const GithubIntegrationScreen = () => {
   usePageMeta(META_CONFIGS.integrationsGithub);
-  const { goHome, startCreateFlow, startJoinFlow, setScreen } =
-    useSessionActions();
+  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
 
   const handleNavigate = (screen: AppScreen) => {
     setScreen(screen);
@@ -103,24 +116,13 @@ const GithubIntegrationScreen = () => {
   };
 
   return (
-    <PageBackground variant="compact" maxWidth="xl">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="space-y-14 lg:space-y-16"
       >
-        <div className="flex justify-center">
-          <button
-            type="button"
-            aria-label="SprintJam home"
-            className="hover:opacity-80"
-            onClick={goHome}
-          >
-            <Logo size="lg" />
-          </button>
-        </div>
-
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div className="space-y-4 text-left">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">
@@ -144,7 +146,7 @@ const GithubIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate('integrations')}
+                onClick={() => handleNavigate("integrations")}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -328,7 +330,7 @@ const GithubIntegrationScreen = () => {
 
         <Footer priorityLinksOnly={false} />
       </motion.div>
-    </PageBackground>
+    </PageSection>
   );
 };
 

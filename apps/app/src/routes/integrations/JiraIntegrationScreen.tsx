@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -8,107 +8,105 @@ import {
   RefreshCw,
   Table2,
   Upload,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useSessionActions, type AppScreen } from '@/context/SessionContext';
-import { Footer } from '@/components/layout/Footer';
-import { Logo } from '@/components/Logo';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { META_CONFIGS } from '@/config/meta';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { navigateTo } from '@/utils/navigation';
+import { useSessionActions, type AppScreen } from "@/context/SessionContext";
+import { Footer } from "@/components/layout/Footer";
+import { PageSection } from "@/components/layout/PageBackground";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { META_CONFIGS } from "@/config/meta";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { navigateTo } from "@/utils/navigation";
 
 const featureCards = [
   {
-    title: 'One-click import',
+    title: "One-click import",
     description:
-      'Pull Jira issues straight into your SprintJam room without CSVs or copy-paste.',
+      "Pull Jira issues straight into your SprintJam room without CSVs or copy-paste.",
     icon: Upload,
   },
   {
-    title: 'Auto sync back',
+    title: "Auto sync back",
     description:
-      'Lock a consensus and push story points to Jira so the board stays current.',
+      "Lock a consensus and push story points to Jira so the board stays current.",
     icon: RefreshCw,
   },
   {
-    title: 'Project and sprint filters',
+    title: "Project and sprint filters",
     description:
-      'Target the right backlog by filtering projects, boards, or sprints before importing.',
+      "Target the right backlog by filtering projects, boards, or sprints before importing.",
     icon: Table2,
   },
   {
-    title: 'Secure OAuth',
+    title: "Secure OAuth",
     description:
-      'Room-scoped OAuth keeps access limited to what the moderator connects.',
+      "Room-scoped OAuth keeps access limited to what the moderator connects.",
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: 'Connect Jira',
-    detail: 'Use OAuth 2.0 to authorize SprintJam for this room.',
+    title: "Connect Jira",
+    detail: "Use OAuth 2.0 to authorize SprintJam for this room.",
   },
   {
-    title: 'Pick issues',
+    title: "Pick issues",
     detail:
-      'Choose issues from your projects or sprints with filters that match your workflow.',
+      "Choose issues from your projects or sprints with filters that match your workflow.",
   },
   {
-    title: 'Estimate together',
-    detail: 'Reveal, decide, and sync points back without leaving SprintJam.',
+    title: "Estimate together",
+    detail: "Reveal, decide, and sync points back without leaving SprintJam.",
   },
 ];
 
 const securityHighlights = [
   {
-    title: 'Signed OAuth + room auth',
+    title: "Signed OAuth + room auth",
     detail:
-      'OAuth 2.0 with Atlassian is wrapped in a signed state + nonce, and every action is gated by a valid room session token.',
+      "OAuth 2.0 with Atlassian is wrapped in a signed state + nonce, and every action is gated by a valid room session token.",
     icon: BadgeCheck,
   },
   {
-    title: 'Least-privilege scopes',
+    title: "Least-privilege scopes",
     detail:
-      'Scopes are pinned to Jira issue/board read, sprint read, and story point writes; no broader Jira access or identity changes.',
+      "Scopes are pinned to Jira issue/board read, sprint read, and story point writes; no broader Jira access or identity changes.",
     icon: Lock,
   },
   {
-    title: 'Encrypted, room-scoped storage',
+    title: "Encrypted, room-scoped storage",
     detail:
-      'Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a single room, and cleared on revoke.',
+      "Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a single room, and cleared on revoke.",
     icon: Database,
   },
   {
-    title: 'Controlled egress + rotation',
+    title: "Controlled egress + rotation",
     detail:
-      'All calls flow through the room worker to Atlassian APIs, refreshes persist server-side, and expired/invalid tokens force a reconnect.',
+      "All calls flow through the room worker to Atlassian APIs, refreshes persist server-side, and expired/invalid tokens force a reconnect.",
     icon: RefreshCcw,
   },
   {
-    title: 'User control & cleanup',
+    title: "User control & cleanup",
     detail:
-      'Moderators can revoke at any time; we revoke at Atlassian and delete room-side tokens to keep dormant connections closed.',
+      "Moderators can revoke at any time; we revoke at Atlassian and delete room-side tokens to keep dormant connections closed.",
     icon: BadgeCheck,
   },
   {
-    title: 'Data handling & privacy',
+    title: "Data handling & privacy",
     detail:
-      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same data handling standards.',
+      "GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same data handling standards.",
     icon: BadgeCheck,
     cta: {
-      label: 'View Privacy Policy',
-      screen: 'privacy' as const,
+      label: "View Privacy Policy",
+      screen: "privacy" as const,
     },
   },
 ];
 
 const JiraIntegrationScreen = () => {
   usePageMeta(META_CONFIGS.integrationsJira);
-  const { goHome, startCreateFlow, startJoinFlow, setScreen } =
-    useSessionActions();
+  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
 
   const handleNavigate = (screen: AppScreen) => {
     setScreen(screen);
@@ -116,24 +114,13 @@ const JiraIntegrationScreen = () => {
   };
 
   return (
-    <PageBackground variant="compact" maxWidth="xl">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="space-y-14 lg:space-y-16"
       >
-        <div className="flex justify-center">
-          <button
-            type="button"
-            aria-label="SprintJam home"
-            className="hover:opacity-80"
-            onClick={goHome}
-          >
-            <Logo size="lg" />
-          </button>
-        </div>
-
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div className="space-y-4 text-left">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">
@@ -157,7 +144,7 @@ const JiraIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate('integrations')}
+                onClick={() => handleNavigate("integrations")}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -200,8 +187,8 @@ const JiraIntegrationScreen = () => {
                   </div>
                 </div>
                 <p className="text-xs text-slate-200">
-                  Room-scoped connection. No tracking, just the fields you need to
-                  estimate.
+                  Room-scoped connection. No tracking, just the fields you need
+                  to estimate.
                 </p>
               </div>
             </SurfaceCard>
@@ -271,10 +258,11 @@ const JiraIntegrationScreen = () => {
               Built to match Atlassian Forge security expectations
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              We follow Atlassian&apos;s guidance on authentication, data isolation,
-              and least privilege so rooms stay locked to the people and scopes you
-              approve. No Jira credentials are stored on the client; tokens are
-              encrypted inside the room worker and removed when access is revoked.
+              We follow Atlassian&apos;s guidance on authentication, data
+              isolation, and least privilege so rooms stay locked to the people
+              and scopes you approve. No Jira credentials are stored on the
+              client; tokens are encrypted inside the room worker and removed
+              when access is revoked.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -341,7 +329,7 @@ const JiraIntegrationScreen = () => {
 
         <Footer priorityLinksOnly={false} />
       </motion.div>
-    </PageBackground>
+    </PageSection>
   );
 };
 

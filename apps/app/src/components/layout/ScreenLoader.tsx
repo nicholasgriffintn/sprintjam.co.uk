@@ -1,4 +1,4 @@
-import { PageBackground } from "./PageBackground";
+import { PageSection } from "./PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Spinner } from "@/components/ui/Spinner";
 
@@ -7,7 +7,7 @@ export function ScreenLoader({
   subtitle = "Hang tight while we load everything.",
 }) {
   return (
-    <PageBackground maxWidth="sm" variant="compact">
+    <PageSection maxWidth="sm">
       <div className="flex min-h-[60vh] items-center justify-center">
         <SurfaceCard className="flex w-full flex-col items-center gap-4 text-center sm:w-[420px]">
           <Spinner size="lg" className="text-brand-500" />
@@ -21,6 +21,6 @@ export function ScreenLoader({
           </div>
         </SurfaceCard>
       </div>
-    </PageBackground>
+    </PageSection>
   );
 }

@@ -1,3 +1,9 @@
+## V2.2
+
+- Improved the rendering of the header and the layout so that it adapts better between navigation for a more unified experience.
+- Added animations to the header elements for a smoother experience.
+- Removed the back to home button on some pages to reduce clutter, favouring the logo as a home link.
+
 ## V2.1
 
 - Added a new FAQ page to help answer questions about SprintJam and to provide some guidance on how to conduct sprint planning sessions effectively.

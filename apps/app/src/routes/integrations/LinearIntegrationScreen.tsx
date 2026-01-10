@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -9,107 +9,105 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Zap,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useSessionActions, type AppScreen } from '@/context/SessionContext';
-import { Footer } from '@/components/layout/Footer';
-import { Logo } from '@/components/Logo';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { META_CONFIGS } from '@/config/meta';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { navigateTo } from '@/utils/navigation';
+import { useSessionActions, type AppScreen } from "@/context/SessionContext";
+import { Footer } from "@/components/layout/Footer";
+import { PageSection } from "@/components/layout/PageBackground";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { META_CONFIGS } from "@/config/meta";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { navigateTo } from "@/utils/navigation";
 
 const featureCards = [
   {
-    title: 'Fast imports',
+    title: "Fast imports",
     description:
-      'Grab Linear issues into SprintJam in seconds with filters for teams, labels, or projects.',
+      "Grab Linear issues into SprintJam in seconds with filters for teams, labels, or projects.",
     icon: Zap,
   },
   {
-    title: 'Real-time context',
+    title: "Real-time context",
     description:
-      'Status, labels, and assignees stay visible while you estimate so discussions stay grounded.',
+      "Status, labels, and assignees stay visible while you estimate so discussions stay grounded.",
     icon: Gauge,
   },
   {
-    title: 'Story point sync',
+    title: "Story point sync",
     description:
-      'When you reach consensus, push points back to Linear to keep your roadmap aligned.',
+      "When you reach consensus, push points back to Linear to keep your roadmap aligned.",
     icon: SlidersHorizontal,
   },
   {
-    title: 'Scoped OAuth',
+    title: "Scoped OAuth",
     description:
-      'Moderators connect only for the current room; tokens are encrypted and short-lived.',
+      "Moderators connect only for the current room; tokens are encrypted and short-lived.",
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: 'Connect Linear',
-    detail: 'Authorize SprintJam for this room with a quick OAuth flow.',
+    title: "Connect Linear",
+    detail: "Authorize SprintJam for this room with a quick OAuth flow.",
   },
   {
-    title: 'Choose issues',
+    title: "Choose issues",
     detail:
-      'Select the issues you want to size - filter by team, label, or project.',
+      "Select the issues you want to size - filter by team, label, or project.",
   },
   {
-    title: 'Estimate and sync',
-    detail: 'Reveal, lock consensus, and send points straight back to Linear.',
+    title: "Estimate and sync",
+    detail: "Reveal, lock consensus, and send points straight back to Linear.",
   },
 ];
 
 const securityHighlights = [
   {
-    title: 'Signed OAuth + room auth',
+    title: "Signed OAuth + room auth",
     detail:
-      'Linear OAuth uses signed state + nonce, and every action is gated by a valid room session token.',
+      "Linear OAuth uses signed state + nonce, and every action is gated by a valid room session token.",
     icon: BadgeCheck,
   },
   {
-    title: 'Least-privilege scopes',
+    title: "Least-privilege scopes",
     detail:
-      'We request Linear read/write for issues only—no admin or org-wide actions beyond what sizing requires.',
+      "We request Linear read/write for issues only—no admin or org-wide actions beyond what sizing requires.",
     icon: ShieldCheck,
   },
   {
-    title: 'Encrypted, room-scoped storage',
+    title: "Encrypted, room-scoped storage",
     detail:
-      'Tokens never live in the browser; they are AES-GCM encrypted with a worker secret and bound to a single room.',
+      "Tokens never live in the browser; they are AES-GCM encrypted with a worker secret and bound to a single room.",
     icon: Database,
   },
   {
-    title: 'Controlled egress + rotation',
+    title: "Controlled egress + rotation",
     detail:
-      'All calls flow through the room worker; refreshes persist server-side, and stale tokens force a reconnect.',
+      "All calls flow through the room worker; refreshes persist server-side, and stale tokens force a reconnect.",
     icon: RefreshCcw,
   },
   {
-    title: 'User control & cleanup',
+    title: "User control & cleanup",
     detail:
-      'Moderators can revoke at any time; we revoke from Linear and delete room-side tokens to keep dormant connections closed.',
+      "Moderators can revoke at any time; we revoke from Linear and delete room-side tokens to keep dormant connections closed.",
     icon: BadgeCheck,
   },
   {
-    title: 'Data handling & privacy',
+    title: "Data handling & privacy",
     detail:
-      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.',
+      "GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.",
     icon: BadgeCheck,
     cta: {
-      label: 'View Privacy Policy',
-      screen: 'privacy' as const,
+      label: "View Privacy Policy",
+      screen: "privacy" as const,
     },
   },
 ];
 
 const LinearIntegrationScreen = () => {
   usePageMeta(META_CONFIGS.integrationsLinear);
-  const { goHome, startCreateFlow, startJoinFlow, setScreen } =
-    useSessionActions();
+  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
 
   const handleNavigate = (screen: AppScreen) => {
     setScreen(screen);
@@ -117,24 +115,13 @@ const LinearIntegrationScreen = () => {
   };
 
   return (
-    <PageBackground variant="compact" maxWidth="xl">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="space-y-14 lg:space-y-16"
       >
-        <div className="flex justify-center">
-          <button
-            type="button"
-            aria-label="SprintJam home"
-            className="hover:opacity-80"
-            onClick={goHome}
-          >
-            <Logo size="lg" />
-          </button>
-        </div>
-
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div className="space-y-4 text-left">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">
@@ -158,7 +145,7 @@ const LinearIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate('integrations')}
+                onClick={() => handleNavigate("integrations")}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -361,7 +348,7 @@ const LinearIntegrationScreen = () => {
 
         <Footer priorityLinksOnly={false} />
       </motion.div>
-    </PageBackground>
+    </PageSection>
   );
 };
 

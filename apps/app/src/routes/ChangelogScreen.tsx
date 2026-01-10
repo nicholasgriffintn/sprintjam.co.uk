@@ -1,36 +1,29 @@
-import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { motion } from "framer-motion";
+import { useMemo } from "react";
 
-import changelogMd from '@/content/changelog.md?raw';
-import { Footer } from '@/components/layout/Footer';
-import { Logo } from '@/components/Logo';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { META_CONFIGS } from '@/config/meta';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { renderMarkdownToHtml } from '@/utils/markdown';
+import changelogMd from "@/content/changelog.md?raw";
+import { Footer } from "@/components/layout/Footer";
+import { PageSection } from "@/components/layout/PageBackground";
+import { META_CONFIGS } from "@/config/meta";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { renderMarkdownToHtml } from "@/utils/markdown";
 
 const ChangelogScreen = () => {
   usePageMeta(META_CONFIGS.changelog);
 
   const renderedChangelog = useMemo(
     () => renderMarkdownToHtml(changelogMd),
-    []
+    [],
   );
 
   return (
-    <PageBackground variant="compact" maxWidth="xl">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="space-y-14 lg:space-y-16"
       >
-        <div className="flex justify-center">
-          <a href="/" aria-label="SprintJam home" className="hover:opacity-80">
-            <Logo size="lg" />
-          </a>
-        </div>
-
         <div className="space-y-8">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -49,7 +42,7 @@ const ChangelogScreen = () => {
               dangerouslySetInnerHTML={{
                 __html:
                   renderedChangelog ||
-                  '<p>The changelog is empty. Add your first entry in src/content/changelog.md.</p>',
+                  "<p>The changelog is empty. Add your first entry in src/content/changelog.md.</p>",
               }}
             />
           </div>
@@ -57,7 +50,7 @@ const ChangelogScreen = () => {
 
         <Footer priorityLinksOnly={false} />
       </motion.div>
-    </PageBackground>
+    </PageSection>
   );
 };
 

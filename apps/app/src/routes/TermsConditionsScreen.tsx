@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { CalendarCheck } from "lucide-react";
 
-import { PageBackground } from "@/components/layout/PageBackground";
-import { Logo } from "@/components/Logo";
+import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
@@ -13,18 +12,13 @@ const TermsConditionsScreen = () => {
   usePageMeta(META_CONFIGS.terms);
 
   return (
-    <PageBackground maxWidth="xl" variant="compact">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="space-y-14 lg:space-y-16"
       >
-        <div className="flex justify-center">
-          <a href="/" aria-label="SprintJam home" className="hover:opacity-80">
-            <Logo size="lg" />
-          </a>
-        </div>
         <div className="space-y-8">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -181,7 +175,7 @@ const TermsConditionsScreen = () => {
           <Footer priorityLinksOnly={false} />
         </div>
       </motion.div>
-    </PageBackground>
+    </PageSection>
   );
 };
 

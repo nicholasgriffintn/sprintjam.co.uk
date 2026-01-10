@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   GitBranch,
@@ -6,78 +6,76 @@ import {
   ShieldCheck,
   Sparkles,
   Workflow,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useSessionActions, type AppScreen } from '@/context/SessionContext';
-import { Footer } from '@/components/layout/Footer';
-import { Logo } from '@/components/Logo';
-import { PageBackground } from '@/components/layout/PageBackground';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { META_CONFIGS } from '@/config/meta';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { navigateTo } from '@/utils/navigation';
+import { useSessionActions, type AppScreen } from "@/context/SessionContext";
+import { Footer } from "@/components/layout/Footer";
+import { PageSection } from "@/components/layout/PageBackground";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { META_CONFIGS } from "@/config/meta";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { navigateTo } from "@/utils/navigation";
 
 const providers = [
   {
-    name: 'Jira',
+    name: "Jira",
     description:
-      'Import issues, estimate together, and sync story points back to Jira when you lock consensus.',
-    screen: 'integrationsJira',
-    badge: 'Atlassian friendly',
+      "Import issues, estimate together, and sync story points back to Jira when you lock consensus.",
+    screen: "integrationsJira",
+    badge: "Atlassian friendly",
   },
   {
-    name: 'Linear',
+    name: "Linear",
     description:
-      'Connect Linear to pull issues, capture estimates, and keep your roadmap aligned without copy-paste.',
-    screen: 'integrationsLinear',
-    badge: 'Fast and focused',
+      "Connect Linear to pull issues, capture estimates, and keep your roadmap aligned without copy-paste.",
+    screen: "integrationsLinear",
+    badge: "Fast and focused",
   },
   {
-    name: 'GitHub',
+    name: "GitHub",
     description:
-      'Estimate GitHub issues with the team and keep repos in sync with story points and decisions.',
-    screen: 'integrationsGithub',
-    badge: 'Built for OSS and teams',
+      "Estimate GitHub issues with the team and keep repos in sync with story points and decisions.",
+    screen: "integrationsGithub",
+    badge: "Built for OSS and teams",
   },
 ];
 
 const highlights = [
   {
-    title: 'Per-room OAuth',
+    title: "Per-room OAuth",
     description:
-      'Moderators connect providers only for the room they host; tokens stay scoped.',
+      "Moderators connect providers only for the room they host; tokens stay scoped.",
     icon: ShieldCheck,
   },
   {
-    title: 'Two-way context',
+    title: "Two-way context",
     description:
-      'Bring titles, labels, and status in; send estimates back so your backlog reflects reality.',
+      "Bring titles, labels, and status in; send estimates back so your backlog reflects reality.",
     icon: Workflow,
   },
   {
-    title: 'Team-ready defaults',
+    title: "Team-ready defaults",
     description:
-      'Structured voting, passcodes, and The Judge help keep distributed sessions on track.',
+      "Structured voting, passcodes, and The Judge help keep distributed sessions on track.",
     icon: Sparkles,
   },
   {
-    title: 'No vendor lock-in',
+    title: "No vendor lock-in",
     description:
-      'SprintJam is Apache 2.0 licensed - self host and connect your own providers.',
+      "SprintJam is Apache 2.0 licensed - self host and connect your own providers.",
     icon: GitBranch,
   },
   {
-    title: 'Quick start',
+    title: "Quick start",
     description:
-      'Spin up a room, pick a provider, and invite the team with one shareable link.',
+      "Spin up a room, pick a provider, and invite the team with one shareable link.",
     icon: LayoutTemplate,
   },
 ];
 
 const IntegrationsScreen = () => {
   usePageMeta(META_CONFIGS.integrations);
-  const { goHome, startCreateFlow, startJoinFlow, setScreen } =
-    useSessionActions();
+  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
 
   const handleNavigate = (screen: AppScreen) => {
     setScreen(screen);
@@ -85,24 +83,13 @@ const IntegrationsScreen = () => {
   };
 
   return (
-    <PageBackground variant="compact" maxWidth="xl">
+    <PageSection maxWidth="xl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
         className="space-y-14 lg:space-y-16"
       >
-        <div className="flex justify-center">
-          <button
-            type="button"
-            aria-label="SprintJam home"
-            className="hover:opacity-80"
-            onClick={goHome}
-          >
-            <Logo size="lg" />
-          </button>
-        </div>
-
         <div className="space-y-10">
           <div className="space-y-3 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">
@@ -203,7 +190,7 @@ const IntegrationsScreen = () => {
 
         <Footer priorityLinksOnly={false} />
       </motion.div>
-    </PageBackground>
+    </PageSection>
   );
 };
 

@@ -13,8 +13,7 @@ import {
   RefreshCcw,
   Target,
   Trash2,
-  ArrowLeft,
-} from "lucide-react";
+} from 'lucide-react';
 
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -64,20 +63,20 @@ export default function WorkspaceScreen() {
     deleteTeam,
   } = useWorkspaceData();
 
-  const { goHome, goToLogin, goToRoom } = useSessionActions();
+  const { goToLogin, goToRoom } = useSessionActions();
 
-  const [newTeamName, setNewTeamName] = useState("");
-  const [teamNameDraft, setTeamNameDraft] = useState("");
+  const [newTeamName, setNewTeamName] = useState('');
+  const [teamNameDraft, setTeamNameDraft] = useState('');
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
-  const [renameInput, setRenameInput] = useState("");
+  const [renameInput, setRenameInput] = useState('');
 
   const selectedTeam = useMemo(
     () => teams.find((team) => team.id === selectedTeamId) ?? null,
-    [teams, selectedTeamId],
+    [teams, selectedTeamId]
   );
 
   useEffect(() => {
-    const nextName = selectedTeam?.name ?? "";
+    const nextName = selectedTeam?.name ?? '';
     if (teamNameDraft !== nextName) {
       setTeamNameDraft(nextName);
     }
@@ -89,14 +88,14 @@ export default function WorkspaceScreen() {
     if (!newTeamName.trim()) return;
     const created = await createTeam(newTeamName.trim());
     if (created) {
-      setNewTeamName("");
+      setNewTeamName('');
     }
   };
 
   const handleDeleteTeam = async () => {
     if (!selectedTeamId) return;
     const confirmed = window.confirm(
-      "Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.",
+      'Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.'
     );
     if (!confirmed) return;
     await deleteTeam(selectedTeamId);
@@ -127,23 +126,23 @@ export default function WorkspaceScreen() {
 
   const statCards = [
     {
-      label: "Teams",
+      label: 'Teams',
       value: stats?.totalTeams ?? teams.length,
       icon: <Building2 className="h-5 w-5 text-brand-500" />,
     },
     {
-      label: "Sessions",
+      label: 'Sessions',
       value: stats?.totalSessions ?? sessions.length,
       icon: <Target className="h-5 w-5 text-indigo-500" />,
     },
     {
-      label: "Active",
+      label: 'Active',
       value:
         stats?.activeSessions ?? sessions.filter((s) => !s.completedAt).length,
       icon: <Activity className="h-5 w-5 text-emerald-500" />,
     },
     {
-      label: "Completed",
+      label: 'Completed',
       value:
         stats?.completedSessions ??
         sessions.filter((s) => s.completedAt).length,
@@ -175,18 +174,6 @@ export default function WorkspaceScreen() {
           transition={{ duration: 0.35 }}
           className="space-y-6"
         >
-          <div className="space-y-3 text-left">
-            <Button
-              type="button"
-              variant="unstyled"
-              onClick={goHome}
-              icon={<ArrowLeft className="h-4 w-4" />}
-              className="p-0 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            >
-              Back to home
-            </Button>
-          </div>
-
           <SurfaceCard className="text-left">
             <motion.div
               className="space-y-8"
