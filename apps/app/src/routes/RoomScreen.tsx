@@ -72,33 +72,27 @@ const RoomScreen = () => {
     settingsInitialTab,
     isSaveToWorkspaceOpen,
     setIsSaveToWorkspaceOpen,
-    registerLeaveRoom,
   } = useRoomHeader();
   const isSpectator = roomData?.spectators?.includes(name) ?? false;
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
 
-  // Register leave room handler for the unified header
-  useEffect(() => {
-    registerLeaveRoom(handleLeaveRoom);
-  }, [registerLeaveRoom, handleLeaveRoom]);
-
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
-      ? "connected"
-      : "disconnected"
-    : "connecting";
+      ? 'connected'
+      : 'disconnected'
+    : 'connecting';
 
   const showReconnectBanner =
-    connectionIssue?.type === "disconnected" ||
-    (connectionStatus === "disconnected" && !connectionIssue);
+    connectionIssue?.type === 'disconnected' ||
+    (connectionStatus === 'disconnected' && !connectionIssue);
 
-  const showAuthBanner = connectionIssue?.type === "auth";
+  const showAuthBanner = connectionIssue?.type === 'auth';
 
   if (!roomData || !serverDefaults) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <div className="flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
         {showAuthBanner && (
           <ErrorBannerAuth
             onRetryConnection={retryConnection}
@@ -117,7 +111,7 @@ const RoomScreen = () => {
           <ErrorBanner
             message={roomError}
             onClose={clearRoomError}
-            variant={roomErrorKind === "permission" ? "warning" : "error"}
+            variant={roomErrorKind === 'permission' ? 'warning' : 'error'}
           />
         )}
 
@@ -130,7 +124,7 @@ const RoomScreen = () => {
   useConsensusCelebration({ roomData, stats });
 
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? true;
-  const queueProvider = roomData.settings.externalService || "none";
+  const queueProvider = roomData.settings.externalService || 'none';
 
   const { isQueueSetupModalOpen, setIsQueueSetupModalOpen } =
     useDisplayQueueSetup({
@@ -149,7 +143,7 @@ const RoomScreen = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div className="min-h-[calc(100vh-65px)] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       {showAuthBanner && (
         <ErrorBannerAuth
           onRetryConnection={retryConnection}
@@ -168,7 +162,7 @@ const RoomScreen = () => {
         <ErrorBanner
           message={roomError}
           onClose={clearRoomError}
-          variant={roomErrorKind === "permission" ? "warning" : "error"}
+          variant={roomErrorKind === 'permission' ? 'warning' : 'error'}
         />
       )}
 
@@ -183,7 +177,7 @@ const RoomScreen = () => {
           stats={stats}
           setIsQueueModalOpen={setIsQueueModalOpen}
           onOpenQueueSettings={
-            isModeratorView ? () => handleOpenSettings("queue") : undefined
+            isModeratorView ? () => handleOpenSettings('queue') : undefined
           }
         />
 
@@ -206,7 +200,7 @@ const RoomScreen = () => {
               onVote={handleVote}
               displaySettings={roomData.settings.structuredVotingDisplay}
               onOpenVotingSettings={
-                isModeratorView ? () => handleOpenSettings("voting") : undefined
+                isModeratorView ? () => handleOpenSettings('voting') : undefined
               }
               disabled={isSpectator}
             />
@@ -214,10 +208,10 @@ const RoomScreen = () => {
             <UserEstimate
               roomData={roomData}
               name={name}
-              userVote={typeof userVote === "object" ? null : userVote}
+              userVote={typeof userVote === 'object' ? null : userVote}
               onVote={handleVote}
               onOpenVotingSettings={
-                isModeratorView ? () => handleOpenSettings("voting") : undefined
+                isModeratorView ? () => handleOpenSettings('voting') : undefined
               }
               disabled={isSpectator}
             />
@@ -233,7 +227,7 @@ const RoomScreen = () => {
               onNextTicket={() => setIsSummaryOpen(true)}
               onOpenResultsSettings={
                 isModeratorView
-                  ? () => handleOpenSettings("results")
+                  ? () => handleOpenSettings('results')
                   : undefined
               }
               onRevisitLater={async () => {
@@ -242,10 +236,10 @@ const RoomScreen = () => {
                 const maxOrdinal =
                   pendingQueue.reduce(
                     (max, t) => (t.ordinal > max ? t.ordinal : max),
-                    0,
+                    0
                   ) + 1;
                 await handleUpdateTicket(roomData.currentTicket.id, {
-                  status: "pending",
+                  status: 'pending',
                   ordinal: maxOrdinal,
                 });
                 handleNextTicket();
@@ -356,7 +350,7 @@ const RoomScreen = () => {
           onClose={() => setIsQueueModalOpen(false)}
           currentTicket={roomData.currentTicket}
           queue={roomData.ticketQueue || []}
-          externalService={roomData.settings.externalService || "none"}
+          externalService={roomData.settings.externalService || 'none'}
           roomKey={roomData.key}
           userName={name}
           onAddTicket={handleAddTicket}
@@ -371,10 +365,10 @@ const RoomScreen = () => {
         />
       )}
 
-      {isQueueEnabled && queueProvider !== "none" && (
+      {isQueueEnabled && queueProvider !== 'none' && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as "jira" | "linear" | "github"}
+          provider={queueProvider as 'jira' | 'linear' | 'github'}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);

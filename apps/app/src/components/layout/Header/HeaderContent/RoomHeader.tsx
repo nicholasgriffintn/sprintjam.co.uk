@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { motion } from 'framer-motion';
 import { Share2, Settings, LogOut, Building2 } from 'lucide-react';
 
-import { useRoomState } from '@/context/RoomContext';
+import { useRoomActions, useRoomState } from '@/context/RoomContext';
 import { useRoomHeaderOptional } from '@/context/RoomHeaderContext';
 import { isWorkspacesEnabled } from '@/utils/feature-flags';
 import { Button } from '@/components/ui/Button';
@@ -17,17 +17,14 @@ export const RoomHeader: FC = () => {
   const { roomData, isModeratorView } = useRoomState();
   const roomHeader = useRoomHeaderOptional();
   const { goHome } = useSessionActions();
+  const { handleLeaveRoom } = useRoomActions();
 
   if (!roomData || !roomHeader) {
     return null;
   }
 
-  const {
-    setIsShareModalOpen,
-    openSettings,
-    setIsSaveToWorkspaceOpen,
-    onLeaveRoom,
-  } = roomHeader;
+  const { setIsShareModalOpen, openSettings, setIsSaveToWorkspaceOpen } =
+    roomHeader;
 
   const showSaveToWorkspace = isWorkspacesEnabled();
 
@@ -110,8 +107,7 @@ export const RoomHeader: FC = () => {
         <Button
           type="button"
           variant="unstyled"
-          onClick={onLeaveRoom ?? undefined}
-          disabled={!onLeaveRoom}
+          onClick={handleLeaveRoom ?? undefined}
           aria-label="Leave room"
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50/40 text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:ring-rose-200 dark:border-rose-500/40 dark:bg-rose-500/5 dark:text-rose-200 dark:hover:border-rose-400 dark:hover:bg-rose-500/15 dark:hover:text-rose-100',

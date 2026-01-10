@@ -68,7 +68,7 @@ export const PageBackground: FC<PageBackgroundProps> = ({
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
-      {showGradients && (
+      {showGradients && gradients && (
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-50 dark:opacity-35"

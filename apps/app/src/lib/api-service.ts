@@ -372,7 +372,7 @@ function handleReconnect(
   if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     reconnectAttempts++;
 
-    const jitter = Math.random() * 0.3 + 0.85; // Random value between 0.85 and 1.15
+    const jitter = Math.random() * 0.3 + 0.85;
     const delay = Math.min(
       RECONNECT_BASE_DELAY * 2 ** reconnectAttempts * jitter,
       MAX_RECONNECT_DELAY,

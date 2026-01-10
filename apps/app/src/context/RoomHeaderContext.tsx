@@ -11,8 +11,6 @@ interface RoomHeaderContextValue {
   settingsInitialTab: RoomSettingsTabId | undefined;
   isSaveToWorkspaceOpen: boolean;
   setIsSaveToWorkspaceOpen: (open: boolean) => void;
-  onLeaveRoom: (() => void) | null;
-  registerLeaveRoom: (handler: () => void) => void;
 }
 
 const RoomHeaderContext = createContext<RoomHeaderContextValue | null>(null);
@@ -24,9 +22,6 @@ export function RoomHeaderProvider({ children }: { children: ReactNode }) {
     RoomSettingsTabId | undefined
   >(undefined);
   const [isSaveToWorkspaceOpen, setIsSaveToWorkspaceOpen] = useState(false);
-  const [leaveRoomHandler, setLeaveRoomHandler] = useState<(() => void) | null>(
-    null,
-  );
 
   const openSettings = (tab?: RoomSettingsTabId) => {
     setSettingsInitialTab(tab);
@@ -36,10 +31,6 @@ export function RoomHeaderProvider({ children }: { children: ReactNode }) {
   const closeSettings = () => {
     setIsSettingsModalOpen(false);
     setSettingsInitialTab(undefined);
-  };
-
-  const registerLeaveRoom = (handler: () => void) => {
-    setLeaveRoomHandler(() => handler);
   };
 
   return (
@@ -53,8 +44,6 @@ export function RoomHeaderProvider({ children }: { children: ReactNode }) {
         settingsInitialTab,
         isSaveToWorkspaceOpen,
         setIsSaveToWorkspaceOpen,
-        onLeaveRoom: leaveRoomHandler,
-        registerLeaveRoom,
       }}
     >
       {children}
