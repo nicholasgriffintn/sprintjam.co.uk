@@ -23,7 +23,7 @@ const maxWidthMap: Record<NonNullable<PageSectionProps["maxWidth"]>, string> = {
 };
 
 const gradientConfig: Record<
-  Extract<PageBackgroundVariant, "hero" | "compact">,
+  Extract<PageBackgroundVariant, 'hero' | 'compact'>,
   {
     topWrapper: string;
     topInner: string;
@@ -32,17 +32,17 @@ const gradientConfig: Record<
   }
 > = {
   hero: {
-    topWrapper: "absolute inset-x-0 top-[-160px] h-[420px] blur-[120px]",
+    topWrapper: 'absolute inset-x-0 top-[-160px] h-[210px] blur-[120px]',
     topInner:
-      "mx-auto h-full max-w-3xl bg-gradient-to-r from-brand-400/40 via-brand-500/30 to-brand-300/30",
-    bottomWrapper: "absolute inset-x-0 bottom-[-160px] h-[320px] blur-[110px]",
+      'mx-auto h-full max-w-3xl bg-gradient-to-r from-brand-400/40 via-brand-500/30 to-brand-300/30',
+    bottomWrapper: 'absolute inset-x-0 bottom-[-160px] h-[160px] blur-[110px]',
     bottomInner:
-      "mx-auto h-full max-w-4xl bg-gradient-to-r from-indigo-500/20 via-brand-500/10 to-blue-300/20",
+      'mx-auto h-full max-w-4xl bg-gradient-to-r from-indigo-500/20 via-brand-500/10 to-blue-300/20',
   },
   compact: {
-    topWrapper: "absolute inset-x-0 top-[-80px] h-[260px] blur-[90px]",
+    topWrapper: 'absolute inset-x-0 top-[-80px] h-[130px] blur-[90px]',
     topInner:
-      "mx-auto h-full max-w-2xl bg-gradient-to-r from-brand-400/30 via-brand-500/20 to-brand-300/20",
+      'mx-auto h-full max-w-2xl bg-gradient-to-r from-brand-400/30 via-brand-500/20 to-brand-300/20',
     bottomWrapper: null,
     bottomInner: null,
   },
