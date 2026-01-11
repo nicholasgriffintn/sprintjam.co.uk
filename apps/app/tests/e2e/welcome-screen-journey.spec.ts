@@ -12,7 +12,7 @@ test.describe("Welcome screen journey", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: /Effortless team estimations/i,
+        name: /Fast, real-time planning poker for distributed teams/i,
       }),
     ).toBeVisible();
 
