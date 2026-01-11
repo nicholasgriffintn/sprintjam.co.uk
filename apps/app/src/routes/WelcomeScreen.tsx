@@ -21,6 +21,7 @@ import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { navigateTo } from "@/utils/navigation";
+import { SITE_NAME } from '@/constants';
 
 const WelcomeScreen = () => {
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
@@ -129,13 +130,13 @@ const WelcomeScreen = () => {
                 <Button
                   type="button"
                   variant="unstyled"
-                  aria-label="Play SprintJam demo video"
+                  aria-label={`Play the ${SITE_NAME} demo video`}
                   onClick={() => setIsDemoPlaying(true)}
                   className="group relative block w-full overflow-hidden rounded-[1.25rem] focus-visible:ring-brand-400 focus-visible:ring-offset-4"
                 >
                   <img
                     src="/images/screenshot.png"
-                    alt="SprintJam collaborative room preview"
+                    alt={`${SITE_NAME} collaborative room preview`}
                     className="block h-[220px] w-full origin-bottom transform-gpu rounded-[1.25rem] border border-white/10 object-cover object-top transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01]"
                     style={{
                       maskImage:
@@ -213,8 +214,9 @@ const WelcomeScreen = () => {
                     with room-scoped OAuth so your backlog stays in lockstep.
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    Pull titles, labels, and status into SprintJam while keeping
-                    access scoped to the room so moderators stay in control.
+                    Pull titles, labels, and status into {SITE_NAME} while
+                    keeping access scoped to the room so moderators stay in
+                    control.
                   </p>
                   <button
                     type="button"

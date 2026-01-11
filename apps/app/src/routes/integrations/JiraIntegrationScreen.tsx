@@ -17,89 +17,89 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { navigateTo } from "@/utils/navigation";
+import { SITE_NAME } from '@/constants';
 
 const featureCards = [
   {
-    title: "One-click import",
-    description:
-      "Pull Jira issues straight into your SprintJam room without CSVs or copy-paste.",
+    title: 'One-click import',
+    description: `Pull Jira issues straight into your ${SITE_NAME} room without CSVs or copy-paste.`,
     icon: Upload,
   },
   {
-    title: "Auto sync back",
+    title: 'Auto sync back',
     description:
-      "Lock a consensus and push story points to Jira so the board stays current.",
+      'Lock a consensus and push story points to Jira so the board stays current.',
     icon: RefreshCw,
   },
   {
-    title: "Project and sprint filters",
+    title: 'Project and sprint filters',
     description:
-      "Target the right backlog by filtering projects, boards, or sprints before importing.",
+      'Target the right backlog by filtering projects, boards, or sprints before importing.',
     icon: Table2,
   },
   {
-    title: "Secure OAuth",
+    title: 'Secure OAuth',
     description:
-      "Room-scoped OAuth keeps access limited to what the moderator connects.",
+      'Room-scoped OAuth keeps access limited to what the moderator connects.',
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: "Connect Jira",
-    detail: "Use OAuth 2.0 to authorize SprintJam for this room.",
+    title: 'Connect Jira',
+    detail: `Use OAuth 2.0 to authorize ${SITE_NAME} for this room.`,
   },
   {
-    title: "Pick issues",
+    title: 'Pick issues',
     detail:
-      "Choose issues from your projects or sprints with filters that match your workflow.",
+      'Choose issues from your projects or sprints with filters that match your workflow.',
   },
   {
-    title: "Estimate together",
-    detail: "Reveal, decide, and sync points back without leaving SprintJam.",
+    title: 'Estimate together',
+    detail: `Reveal, decide, and sync points back without leaving ${SITE_NAME}.`,
   },
 ];
 
 const securityHighlights = [
   {
-    title: "Signed OAuth + room auth",
+    title: 'Signed OAuth + room auth',
     detail:
-      "OAuth 2.0 with Atlassian is wrapped in a signed state + nonce, and every action is gated by a valid room session token.",
+      'OAuth 2.0 with Atlassian is wrapped in a signed state + nonce, and every action is gated by a valid room session token.',
     icon: BadgeCheck,
   },
   {
-    title: "Least-privilege scopes",
+    title: 'Least-privilege scopes',
     detail:
-      "Scopes are pinned to Jira issue/board read, sprint read, and story point writes; no broader Jira access or identity changes.",
+      'Scopes are pinned to Jira issue/board read, sprint read, and story point writes; no broader Jira access or identity changes.',
     icon: Lock,
   },
   {
-    title: "Encrypted, room-scoped storage",
+    title: 'Encrypted, room-scoped storage',
     detail:
-      "Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a single room, and cleared on revoke.",
+      'Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a single room, and cleared on revoke.',
     icon: Database,
   },
   {
-    title: "Controlled egress + rotation",
+    title: 'Controlled egress + rotation',
     detail:
-      "All calls flow through the room worker to Atlassian APIs, refreshes persist server-side, and expired/invalid tokens force a reconnect.",
+      'All calls flow through the room worker to Atlassian APIs, refreshes persist server-side, and expired/invalid tokens force a reconnect.',
     icon: RefreshCcw,
   },
   {
-    title: "User control & cleanup",
+    title: 'User control & cleanup',
     detail:
-      "Moderators can revoke at any time; we revoke at Atlassian and delete room-side tokens to keep dormant connections closed.",
+      'Moderators can revoke at any time; we revoke at Atlassian and delete room-side tokens to keep dormant connections closed.',
     icon: BadgeCheck,
   },
   {
-    title: "Data handling & privacy",
+    title: 'Data handling & privacy',
     detail:
-      "GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same data handling standards.",
+      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same data handling standards.',
     icon: BadgeCheck,
     cta: {
-      label: "View Privacy Policy",
-      screen: "privacy" as const,
+      label: 'View Privacy Policy',
+      screen: 'privacy' as const,
     },
   },
 ];
@@ -127,7 +127,7 @@ const JiraIntegrationScreen = () => {
               Jira integration
             </p>
             <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl">
-              Seamless Jira planning inside SprintJam
+              Seamless Jira planning inside {SITE_NAME}
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300">
               Import issues, keep labels and status visible, estimate with your
@@ -144,7 +144,7 @@ const JiraIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate("integrations")}
+                onClick={() => handleNavigate('integrations')}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -159,7 +159,7 @@ const JiraIntegrationScreen = () => {
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
                   Demo glimpse
                 </p>
-                <p className="text-lg font-semibold">SprintJam + Jira</p>
+                <p className="text-lg font-semibold">{SITE_NAME} + Jira</p>
                 <div className="rounded-xl border border-white/10 bg-black/30 p-4">
                   <div className="flex items-center justify-between text-xs text-slate-200">
                     <span>Selected issues</span>
@@ -301,7 +301,7 @@ const JiraIntegrationScreen = () => {
                 Ready to connect Jira?
               </p>
               <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                Create a SprintJam room and link your project
+                Create a {SITE_NAME} room and link your project
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 Keep estimation fast, transparent, and synchronized with your

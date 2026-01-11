@@ -3,7 +3,12 @@ import { motion } from 'framer-motion';
 
 import { cn } from '@/lib/cn';
 import { type HeaderLogoProps } from './types';
-import { LOGO_SIZES, LOGO_TEXT_SIZES, HEADER_TRANSITION } from '@/constants';
+import {
+  LOGO_SIZES,
+  LOGO_TEXT_SIZES,
+  HEADER_TRANSITION,
+  SITE_NAME,
+} from '@/constants';
 
 export const HeaderLogo: FC<HeaderLogoProps> = ({
   size = 'md',
@@ -19,7 +24,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
     <>
       <motion.img
         src="/logo-192.png"
-        alt="SprintJam"
+        alt={SITE_NAME}
         className={cn(
           sizeConfig.container,
           sizeConfig.padding,
@@ -36,7 +41,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
           )}
           transition={HEADER_TRANSITION}
         >
-          SprintJam
+          {SITE_NAME}
         </motion.span>
       )}
     </>

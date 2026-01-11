@@ -5,6 +5,7 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
+import { SITE_NAME } from '@/constants';
 
 const LAST_UPDATED = "22nd November 2025";
 
@@ -26,7 +27,7 @@ const TermsConditionsScreen = () => {
                 Terms and Conditions
               </h1>
               <p className="text-lg text-slate-600 dark:text-slate-300">
-                By using SprintJam, you agree to these terms. We keep things
+                By using {SITE_NAME}, you agree to these terms. We keep things
                 simple and focused on providing a great estimation tool.
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-200 mt-6">
@@ -40,7 +41,7 @@ const TermsConditionsScreen = () => {
             <div className="prose prose-slate dark:prose-invert max-w-none text-left">
               <h3>Usage of Service</h3>
               <p>
-                SprintJam is provided "as is" for team estimation and
+                {SITE_NAME} is provided "as is" for team estimation and
                 collaboration. We reserve the right to modify or discontinue the
                 service at any time.
               </p>
@@ -55,7 +56,7 @@ const TermsConditionsScreen = () => {
                 information remains accurate and up to date.
               </p>
               <p>
-                You must be at least 18 years old to use SprintJam without
+                You must be at least 18 years old to use {SITE_NAME} without
                 parental consent. By using our services, you represent that you
                 are above the minimum age required by the laws of your country.
               </p>
@@ -66,7 +67,7 @@ const TermsConditionsScreen = () => {
 
               <h3>Prohibited Use</h3>
               <p>
-                You agree not to use SprintJam for any unlawful or prohibited
+                You agree not to use {SITE_NAME} for any unlawful or prohibited
                 purpose, including but not limited to:
               </p>
               <ul>
@@ -118,7 +119,7 @@ const TermsConditionsScreen = () => {
 
               <h3>Disclaimer & Liability</h3>
               <p>
-                To the maximum extent permitted by law, SprintJam and its
+                To the maximum extent permitted by law, {SITE_NAME} and its
                 contributors shall not be liable for any direct, indirect,
                 incidental, special, consequential, or exemplary damages
                 resulting from your use of the service.
@@ -130,9 +131,9 @@ const TermsConditionsScreen = () => {
 
               <h3>Open Source</h3>
               <p>
-                SprintJam is open source software licensed under the Apache 2.0
-                License. You are free to self-host, modify, and distribute the
-                software in accordance with the license terms.
+                {SITE_NAME} is open source software licensed under the Apache
+                2.0 License. You are free to self-host, modify, and distribute
+                the software in accordance with the license terms.
               </p>
 
               <h3>Termination</h3>

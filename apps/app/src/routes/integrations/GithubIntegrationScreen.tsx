@@ -18,90 +18,89 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { navigateTo } from "@/utils/navigation";
+import { SITE_NAME } from '@/constants';
 
 const featureCards = [
   {
-    title: "Issue import",
-    description:
-      "Bring GitHub issues into SprintJam so the whole squad can size them together.",
+    title: 'Issue import',
+    description: `Bring GitHub issues into ${SITE_NAME} so the whole squad can size them together.`,
     icon: GitCommit,
   },
   {
-    title: "Sync story points",
+    title: 'Sync story points',
     description:
-      "Keep repositories in sync by pushing story points back once you lock in consensus.",
+      'Keep repositories in sync by pushing story points back once you lock in consensus.',
     icon: Radio,
   },
   {
-    title: "Repository filters",
+    title: 'Repository filters',
     description:
-      "Focus your session by selecting only the repos and labels you care about.",
+      'Focus your session by selecting only the repos and labels you care about.',
     icon: GitPullRequest,
   },
   {
-    title: "Secure by design",
+    title: 'Secure by design',
     description:
-      "Per-room OAuth with encrypted tokens; no persistent access beyond the session.",
+      'Per-room OAuth with encrypted tokens; no persistent access beyond the session.',
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: "Connect GitHub",
-    detail:
-      "Authorize SprintJam for your room with OAuth to fetch issues securely.",
+    title: 'Connect GitHub',
+    detail: `Authorize ${SITE_NAME} for your room with OAuth to fetch issues securely.`,
   },
   {
-    title: "Pick issues",
-    detail: "Filter by repo or labels to curate the estimation queue.",
+    title: 'Pick issues',
+    detail: 'Filter by repo or labels to curate the estimation queue.',
   },
   {
-    title: "Estimate and sync",
+    title: 'Estimate and sync',
     detail:
-      "Vote, reveal, and sync points back to GitHub so work stays aligned.",
+      'Vote, reveal, and sync points back to GitHub so work stays aligned.',
   },
 ];
 
 const securityHighlights = [
   {
-    title: "Signed OAuth + room auth",
+    title: 'Signed OAuth + room auth',
     detail:
-      "GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.",
+      'GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.',
     icon: BadgeCheck,
   },
   {
-    title: "Least-privilege scopes",
+    title: 'Least-privilege scopes',
     detail:
-      "We request repo access and user email only; no org admin scopes or wider permissions are used.",
+      'We request repo access and user email only; no org admin scopes or wider permissions are used.',
     icon: ShieldCheck,
   },
   {
-    title: "Encrypted, room-scoped storage",
+    title: 'Encrypted, room-scoped storage',
     detail:
-      "Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.",
+      'Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.',
     icon: Database,
   },
   {
-    title: "Controlled egress + rotation",
+    title: 'Controlled egress + rotation',
     detail:
-      "All GitHub calls go through the room worker; refresh and revocation paths run server-side only.",
+      'All GitHub calls go through the room worker; refresh and revocation paths run server-side only.',
     icon: RefreshCcw,
   },
   {
-    title: "User control & cleanup",
+    title: 'User control & cleanup',
     detail:
-      "Moderators can revoke at any time; we revoke from GitHub and delete room-side tokens to keep dormant connections closed.",
+      'Moderators can revoke at any time; we revoke from GitHub and delete room-side tokens to keep dormant connections closed.',
     icon: BadgeCheck,
   },
   {
-    title: "Data handling & privacy",
+    title: 'Data handling & privacy',
     detail:
-      "GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.",
+      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.',
     icon: BadgeCheck,
     cta: {
-      label: "View Privacy Policy",
-      screen: "privacy" as const,
+      label: 'View Privacy Policy',
+      screen: 'privacy' as const,
     },
   },
 ];
@@ -133,7 +132,7 @@ const GithubIntegrationScreen = () => {
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300">
               Import issues, keep repo context visible, and sync story points
-              back without leaving SprintJam.
+              back without leaving {SITE_NAME}.
             </p>
             <div className="flex flex-wrap gap-3">
               <button
@@ -146,7 +145,7 @@ const GithubIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate("integrations")}
+                onClick={() => handleNavigate('integrations')}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -159,14 +158,14 @@ const GithubIntegrationScreen = () => {
             <SurfaceCard className="relative overflow-hidden text-left border-none bg-transparent p-0 shadow-none">
               <div className="relative space-y-3 rounded-2xl border border-white/15 bg-slate-900/80 p-6 text-white shadow-inner shadow-slate-200/60 dark:border-white/10">
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
-                  GitHub in SprintJam
+                  GitHub in {SITE_NAME}
                 </p>
                 <p className="text-lg font-semibold">
                   Repo context without tab switching
                 </p>
                 <div className="rounded-xl border border-white/10 bg-black/30 p-4">
                   <div className="flex items-center justify-between text-xs text-slate-200">
-                    <span>Repo: sprintjam.co.uk</span>
+                    <span>Repo: sprintjam.app</span>
                     <span>Sync ready</span>
                   </div>
                   <div className="mt-3 space-y-2 text-sm">
@@ -302,7 +301,7 @@ const GithubIntegrationScreen = () => {
                 Ready to connect GitHub?
               </p>
               <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                Start estimating GitHub issues in SprintJam
+                Start estimating GitHub issues in {SITE_NAME}
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 Keep your engineering work and story points aligned without

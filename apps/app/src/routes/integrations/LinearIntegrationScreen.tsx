@@ -18,47 +18,47 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { navigateTo } from "@/utils/navigation";
+import { SITE_NAME } from '@/constants';
 
 const featureCards = [
   {
-    title: "Fast imports",
-    description:
-      "Grab Linear issues into SprintJam in seconds with filters for teams, labels, or projects.",
+    title: 'Fast imports',
+    description: `Grab Linear issues into ${SITE_NAME} in seconds with filters for teams, labels, or projects.`,
     icon: Zap,
   },
   {
-    title: "Real-time context",
+    title: 'Real-time context',
     description:
-      "Status, labels, and assignees stay visible while you estimate so discussions stay grounded.",
+      'Status, labels, and assignees stay visible while you estimate so discussions stay grounded.',
     icon: Gauge,
   },
   {
-    title: "Story point sync",
+    title: 'Story point sync',
     description:
-      "When you reach consensus, push points back to Linear to keep your roadmap aligned.",
+      'When you reach consensus, push points back to Linear to keep your roadmap aligned.',
     icon: SlidersHorizontal,
   },
   {
-    title: "Scoped OAuth",
+    title: 'Scoped OAuth',
     description:
-      "Moderators connect only for the current room; tokens are encrypted and short-lived.",
+      'Moderators connect only for the current room; tokens are encrypted and short-lived.',
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: "Connect Linear",
-    detail: "Authorize SprintJam for this room with a quick OAuth flow.",
+    title: 'Connect Linear',
+    detail: `Authorize ${SITE_NAME} for this room with a quick OAuth flow.`,
   },
   {
-    title: "Choose issues",
+    title: 'Choose issues',
     detail:
-      "Select the issues you want to size - filter by team, label, or project.",
+      'Select the issues you want to size - filter by team, label, or project.',
   },
   {
-    title: "Estimate and sync",
-    detail: "Reveal, lock consensus, and send points straight back to Linear.",
+    title: 'Estimate and sync',
+    detail: 'Reveal, lock consensus, and send points straight back to Linear.',
   },
 ];
 
@@ -128,7 +128,7 @@ const LinearIntegrationScreen = () => {
               Linear integration
             </p>
             <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl">
-              Keep Linear and SprintJam perfectly in sync
+              Keep Linear and {SITE_NAME} perfectly in sync
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300">
               Pull Linear issues into your room, size them together, and push
@@ -145,7 +145,7 @@ const LinearIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate("integrations")}
+                onClick={() => handleNavigate('integrations')}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -158,7 +158,7 @@ const LinearIntegrationScreen = () => {
             <SurfaceCard className="relative overflow-hidden text-left border-none bg-transparent p-0 shadow-none">
               <div className="relative space-y-3 rounded-2xl border border-white/15 bg-slate-900/80 p-6 text-white shadow-inner shadow-slate-200/60 dark:border-white/10">
                 <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
-                  Linear in SprintJam
+                  Linear in {SITE_NAME}
                 </p>
                 <p className="text-lg font-semibold">
                   Live labels and statuses
@@ -209,7 +209,7 @@ const LinearIntegrationScreen = () => {
                 </div>
                 <p className="text-xs text-slate-200">
                   Keep your Linear roadmap aligned while your team collaborates
-                  in SprintJam.
+                  in {SITE_NAME}.
                 </p>
               </div>
             </SurfaceCard>
@@ -320,7 +320,7 @@ const LinearIntegrationScreen = () => {
                 Ready to connect Linear?
               </p>
               <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                Start a SprintJam room with your Linear backlog
+                Start a {SITE_NAME} room with your Linear backlog
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 Keep estimates flowing to your roadmap with zero context

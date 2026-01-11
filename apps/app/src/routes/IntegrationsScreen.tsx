@@ -15,60 +15,60 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { navigateTo } from "@/utils/navigation";
+import { SITE_NAME } from '@/constants';
 
 const providers = [
   {
-    name: "Jira",
+    name: 'Jira',
     description:
-      "Import issues, estimate together, and sync story points back to Jira when you lock consensus.",
-    screen: "integrationsJira",
-    badge: "Atlassian friendly",
+      'Import issues, estimate together, and sync story points back to Jira when you lock consensus.',
+    screen: 'integrationsJira',
+    badge: 'Atlassian friendly',
   },
   {
-    name: "Linear",
+    name: 'Linear',
     description:
-      "Connect Linear to pull issues, capture estimates, and keep your roadmap aligned without copy-paste.",
-    screen: "integrationsLinear",
-    badge: "Fast and focused",
+      'Connect Linear to pull issues, capture estimates, and keep your roadmap aligned without copy-paste.',
+    screen: 'integrationsLinear',
+    badge: 'Fast and focused',
   },
   {
-    name: "GitHub",
+    name: 'GitHub',
     description:
-      "Estimate GitHub issues with the team and keep repos in sync with story points and decisions.",
-    screen: "integrationsGithub",
-    badge: "Built for OSS and teams",
+      'Estimate GitHub issues with the team and keep repos in sync with story points and decisions.',
+    screen: 'integrationsGithub',
+    badge: 'Built for OSS and teams',
   },
 ];
 
 const highlights = [
   {
-    title: "Per-room OAuth",
+    title: 'Per-room OAuth',
     description:
-      "Moderators connect providers only for the room they host; tokens stay scoped.",
+      'Moderators connect providers only for the room they host; tokens stay scoped.',
     icon: ShieldCheck,
   },
   {
-    title: "Two-way context",
+    title: 'Two-way context',
     description:
-      "Bring titles, labels, and status in; send estimates back so your backlog reflects reality.",
+      'Bring titles, labels, and status in; send estimates back so your backlog reflects reality.',
     icon: Workflow,
   },
   {
-    title: "Team-ready defaults",
+    title: 'Team-ready defaults',
     description:
-      "Structured voting, passcodes, and The Judge help keep distributed sessions on track.",
+      'Structured voting, passcodes, and The Judge help keep distributed sessions on track.',
     icon: Sparkles,
   },
   {
-    title: "No vendor lock-in",
-    description:
-      "SprintJam is Apache 2.0 licensed - self host and connect your own providers.",
+    title: 'No vendor lock-in',
+    description: `${SITE_NAME} is Apache 2.0 licensed - self host and connect your own providers.`,
     icon: GitBranch,
   },
   {
-    title: "Quick start",
+    title: 'Quick start',
     description:
-      "Spin up a room, pick a provider, and invite the team with one shareable link.",
+      'Spin up a room, pick a provider, and invite the team with one shareable link.',
     icon: LayoutTemplate,
   },
 ];
@@ -96,7 +96,7 @@ const IntegrationsScreen = () => {
               Integrations
             </p>
             <h1 className="text-4xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
-              Bring your backlog into every SprintJam session
+              Bring your backlog into every {SITE_NAME} session
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300">
               Connect Jira, Linear, or GitHub per room. Keep estimates in sync,
