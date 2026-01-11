@@ -18,6 +18,7 @@ interface UseAutoReconnectOptions {
     message: string;
     isAuthError: boolean;
     isRoomNotFound: boolean;
+    isNameConflict?: boolean;
   }) => void;
   onLoadingChange: (isLoading: boolean) => void;
   applyServerDefaults: (defaults?: ServerDefaults) => void;
@@ -94,13 +95,19 @@ export const useAutoReconnect = ({
           (err instanceof HttpError && err.status === 401) ||
           /expired/i.test(errorMessage);
         const isRoomNotFound = err instanceof HttpError && err.status === 404;
+        const isNameConflict = err instanceof HttpError && err.status === 409;
+
         onReconnectError({
           message: errorMessage,
           isAuthError,
           isRoomNotFound,
+          isNameConflict,
         });
-        safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
-        onAuthTokenRefresh?.(null);
+
+        if (isNameConflict || isAuthError || isRoomNotFound) {
+          safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
+          onAuthTokenRefresh?.(null);
+        }
       })
       .finally(() => {
         if (!cancelled) {

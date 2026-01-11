@@ -207,29 +207,43 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         setActiveRoomKey(roomKeyValue);
         setIsModeratorView(isModerator);
       },
-      [],
+      []
     ),
     onReconnectError: useCallback(
-      ({ message, isAuthError, isRoomNotFound }) => {
+      ({ message, isAuthError, isRoomNotFound, isNameConflict }) => {
         if (isRoomNotFound) {
           goHome();
-          setTimeout(() => setError("Room not found"), 0);
+          setTimeout(() => setError('Room not found'), 0);
           return;
         }
+
+        if (isNameConflict) {
+          setError(
+            'This name is already in use. Please choose a different name.'
+          );
+          setConnectionIssue({
+            type: 'disconnected',
+            message: 'Please choose a different name to join the room.',
+          });
+
+          setScreen('join');
+          return;
+        }
+
         setError(message);
         setConnectionIssue({
-          type: isAuthError ? "auth" : "disconnected",
+          type: isAuthError ? 'auth' : 'disconnected',
           message,
         });
       },
-      [setError, goHome],
+      [setError, goHome, setScreen]
     ),
     onLoadingChange: setIsLoading,
     applyServerDefaults,
     onAuthTokenRefresh: setAuthToken,
     onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
     onNeedsJoin: useCallback(() => {
-      setScreen("join");
+      setScreen('join');
     }, [setScreen]),
   });
 

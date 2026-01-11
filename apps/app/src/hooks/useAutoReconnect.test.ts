@@ -102,6 +102,7 @@ describe("useAutoReconnect", () => {
       message: "Connection failed",
       isAuthError: false,
       isRoomNotFound: false,
+      isNameConflict: false,
     });
     expect(onReconnectSuccess).not.toHaveBeenCalled();
   });
