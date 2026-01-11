@@ -145,7 +145,7 @@ const GithubIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate("integrations")}
+                onClick={() => handleNavigate('integrations')}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -157,10 +157,7 @@ const GithubIntegrationScreen = () => {
             <div className="pointer-events-none absolute inset-[-18px] -z-10 rounded-[1.9rem] bg-gradient-to-br from-brand-500/20 via-indigo-500/18 to-blue-500/18 blur-3xl" />
             <div className="relative space-y-3 overflow-hidden rounded-2xl border border-slate-300/60 bg-slate-900 p-6 text-left text-white shadow-lg ring-1 ring-black/5 dark:border-white/10 dark:ring-white/5">
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
-                GitHub in {SITE_NAME}
-              </p>
-              <p className="text-lg font-semibold">
-                Repo context without tab switching
+                Example
               </p>
               <div className="rounded-xl border border-white/10 bg-black/30 p-4">
                 <div className="flex items-center justify-between text-xs text-slate-200">
@@ -188,10 +185,6 @@ const GithubIntegrationScreen = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-xs text-slate-200">
-                Pull issues in, vote, and sync points back while keeping the
-                repository as your source of truth.
-              </p>
             </div>
           </div>
         </div>
