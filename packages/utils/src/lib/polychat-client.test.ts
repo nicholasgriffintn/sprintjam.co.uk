@@ -45,15 +45,13 @@ describe("generateStrudelCode", () => {
       generationId: "abc123",
     };
 
-    const json = vi
-      .fn()
-      .mockResolvedValue({ status: "success", data: apiData });
+    const json = vi.fn().mockResolvedValue(apiData);
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       statusText: "OK",
       json,
-    } as any);
+    } as unknown as Response);
 
     const result = await generateStrudelCode(sampleRequest, "token-123");
 
@@ -71,7 +69,7 @@ describe("generateStrudelCode", () => {
     );
 
     const [, options] = (globalThis.fetch as unknown as Mock).mock.calls[0];
-    const body = JSON.parse((options as any).body);
+    const body = JSON.parse((options as RequestInit).body as string);
     expect(body).toMatchObject({
       ...sampleRequest,
       model: "cerebras/gpt-oss-120b",
@@ -84,14 +82,14 @@ describe("generateStrudelCode", () => {
       ok: false,
       status: 502,
       statusText: "Bad Gateway",
-    } as any);
+    } as unknown as Response);
 
     await expect(
       generateStrudelCode(sampleRequest, "token-123"),
     ).rejects.toThrow("Polychat API returned 502: Bad Gateway");
   });
 
-  it("throws when the API reports an error payload", async () => {
+  it("throws when the API response lacks code field", async () => {
     const json = vi.fn().mockResolvedValue({
       status: "error",
       error: "Upstream failure",
@@ -101,11 +99,11 @@ describe("generateStrudelCode", () => {
       status: 200,
       statusText: "OK",
       json,
-    } as any);
+    } as unknown as Response);
 
     await expect(
       generateStrudelCode(sampleRequest, "token-123"),
-    ).rejects.toThrow("Upstream failure");
+    ).rejects.toThrow("Invalid response from Polychat API");
   });
 
   it("wraps unexpected fetch errors with a helpful message", async () => {
