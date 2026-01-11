@@ -41,6 +41,7 @@ export const RoomHeader: FC = () => {
           showText
           onClick={goHome}
           className="flex-shrink-0 [&_span]:hidden [&_span]:sm:inline"
+          layoutId="app-header-logo"
         />
         <div className="flex items-center gap-2 text-sm">
           <div className="flex h-9 items-stretch overflow-hidden rounded-2xl border border-black/5 bg-black/5 text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white">

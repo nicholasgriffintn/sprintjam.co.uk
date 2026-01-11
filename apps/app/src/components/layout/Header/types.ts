@@ -7,6 +7,7 @@ export interface HeaderLogoProps {
   showText?: boolean;
   className?: string;
   onClick?: () => void;
+  layoutId?: string;
 }
 
 export interface MarketingHeaderProps {

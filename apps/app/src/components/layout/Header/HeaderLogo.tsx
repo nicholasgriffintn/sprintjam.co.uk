@@ -10,6 +10,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
   showText = true,
   className = '',
   onClick,
+  layoutId = 'header-logo',
 }) => {
   const sizeConfig = LOGO_SIZES[size];
   const textSize = LOGO_TEXT_SIZES[size];
@@ -25,6 +26,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
           'rounded-2xl border border-white/60 bg-white/80 shadow-sm dark:border-white/10 dark:bg-white/5'
         )}
         transition={HEADER_TRANSITION}
+        layoutId={layoutId}
       />
       {showText && (
         <motion.span
@@ -62,6 +64,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
     <motion.div
       className={containerClass}
       transition={HEADER_TRANSITION}
+      layout
     >
       {content}
     </motion.div>
