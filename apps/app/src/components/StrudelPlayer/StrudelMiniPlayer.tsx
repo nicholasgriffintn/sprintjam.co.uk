@@ -1,6 +1,5 @@
-import { type FC, useCallback, useEffect, useState } from "react";
+import { type FC, useCallback, useEffect, useState, useRef } from "react";
 import { Music, X, Volume2 } from "lucide-react";
-import { useRef } from "react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
@@ -30,43 +29,52 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     setTimeout(() => setError(null), 5000);
   }, []);
 
-  const { isMuted, isLoading, pause, toggleMute, playCode, setVolume, volume } =
-    useStrudelPlayer({
-      onError: (err) => {
-        showTemporaryError(err.message);
-      },
-    });
-  const playCodeRef = useRef(playCode);
-  const pauseRef = useRef(pause);
-  const lastPlaybackSignatureRef = useRef<string | null>(null);
+  const {
+    isMuted,
+    isLoading,
+    pause,
+    play,
+    toggleMute,
+    playCode,
+    setVolume,
+    volume,
+  } = useStrudelPlayer({
+    onError: (err) => {
+      showTemporaryError(err.message);
+    },
+  });
+
+  const lastCodeRef = useRef<string | undefined>(undefined);
+  const lastServerPlayingRef = useRef<boolean>(false);
+  const lastMutedRef = useRef<boolean>(isMuted);
+  const isServerPlaying = roomData.strudelIsPlaying ?? false;
+  const currentCode = roomData.currentStrudelCode;
 
   useEffect(() => {
-    playCodeRef.current = playCode;
-    pauseRef.current = pause;
-  }, [playCode, pause]);
+    const codeChanged = currentCode !== lastCodeRef.current;
+    const playingChanged = isServerPlaying !== lastServerPlayingRef.current;
+    const mutedChanged = isMuted !== lastMutedRef.current;
 
-  const isPlaying = roomData.strudelIsPlaying ?? false;
+    lastCodeRef.current = currentCode;
+    lastServerPlayingRef.current = isServerPlaying;
+    lastMutedRef.current = isMuted;
 
-  useEffect(() => {
-    if (!roomData.currentStrudelCode) return;
+    if (!currentCode) return;
 
-    const signature = [
-      roomData.currentStrudelCode,
-      isPlaying ? "1" : "0",
-      isMuted ? "1" : "0",
-    ].join("|");
-
-    if (lastPlaybackSignatureRef.current === signature) {
+    if (playingChanged && !isServerPlaying) {
+      pause();
       return;
     }
-    lastPlaybackSignatureRef.current = signature;
 
-    if (isPlaying && !isMuted) {
-      playCodeRef.current(roomData.currentStrudelCode);
-    } else if (!isPlaying) {
-      pauseRef.current();
+    if (isServerPlaying && (playingChanged || codeChanged)) {
+      playCode(currentCode);
+      return;
     }
-  }, [isPlaying, roomData.currentStrudelCode, isMuted]);
+
+    if (mutedChanged && !isMuted && isServerPlaying) {
+      play();
+    }
+  }, [isServerPlaying, currentCode, isMuted, playCode, pause, play]);
 
   useEffect(() => {
     if (
@@ -134,15 +142,15 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
     <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-end sm:left-auto sm:right-4 sm:w-auto">
       <SurfaceCard
         variant="subtle"
-        padding={isExpanded ? 'sm' : 'none'}
+        padding={isExpanded ? "sm" : "none"}
         className={`relative origin-bottom-right overflow-hidden transition-all duration-300 ${
           isExpanded
-            ? 'w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]'
-            : 'flex h-14 w-14  items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl'
+            ? "w-full max-w-[640px] sm:w-[min(640px,calc(100vw-2rem))]"
+            : "flex h-14 w-14  items-center justify-center rounded-full border-transparent bg-brand-500 text-white shadow-xl"
         }`}
         aria-expanded={isExpanded}
-        role={!isExpanded ? 'button' : undefined}
-        aria-label={!isExpanded ? 'Expand Strudel player' : undefined}
+        role={!isExpanded ? "button" : undefined}
+        aria-label={!isExpanded ? "Expand Strudel player" : undefined}
         tabIndex={!isExpanded ? 0 : undefined}
         onClick={
           !isExpanded
@@ -154,7 +162,7 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
         onKeyDown={
           !isExpanded
             ? (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
+                if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   setIsExpanded(true);
                 }
@@ -188,16 +196,16 @@ export const StrudelMiniPlayer: FC<StrudelMiniPlayerProps> = ({
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCode
-                      ? `${isPlaying ? 'Playing' : 'Paused'} • ${
-                          roomData.strudelPhase || 'Unknown'
+                      ? `${isServerPlaying ? "Playing" : "Paused"} • ${
+                          roomData.strudelPhase || "Unknown"
                         } phase`
-                      : 'No music generated yet'}
+                      : "No music generated yet"}
                   </span>
                 </div>
               </div>
 
               <StrudelControls
-                isPlaying={isPlaying}
+                isPlaying={isServerPlaying}
                 isMuted={isMuted}
                 isLoading={isLoading || isAwaitingGeneration}
                 onPlayPause={handlePlayPause}

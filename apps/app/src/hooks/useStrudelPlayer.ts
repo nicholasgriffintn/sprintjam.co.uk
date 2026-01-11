@@ -128,6 +128,8 @@ export function useStrudelPlayer(
   const initPromiseRef = useRef<Promise<void> | null>(null);
   const currentCodeRef = useRef<string | null>(null);
   const isPlayingRef = useRef(false);
+  const isMutedRef = useRef(isMuted);
+  const isInitializedRef = useRef(false);
   const onErrorRef = useRef<UseStrudelPlayerOptions["onError"]>(onError);
   const reportError = useCallback((error: Error) => {
     onErrorRef.current?.(error);
@@ -136,6 +138,14 @@ export function useStrudelPlayer(
   useEffect(() => {
     onErrorRef.current = onError;
   }, [onError]);
+
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+
+  useEffect(() => {
+    isInitializedRef.current = isInitialized;
+  }, [isInitialized]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -158,9 +168,6 @@ export function useStrudelPlayer(
 
   const ensureInitialized = useCallback(async () => {
     if (sharedInitialized) {
-      if (!isInitialized) {
-        setIsInitialized(true);
-      }
       return;
     }
 
@@ -193,7 +200,7 @@ export function useStrudelPlayer(
     }
 
     await sharedInitPromise;
-  }, [isInitialized, reportError]);
+  }, [reportError]);
 
   useEffect(() => {
     safeLocalStorage.set(MUTE_STORAGE_KEY, String(isMuted));
@@ -207,7 +214,7 @@ export function useStrudelPlayer(
   }, [volume]);
 
   const play = useCallback(async () => {
-    if (!currentCodeRef.current || isMuted) return;
+    if (!currentCodeRef.current || isMutedRef.current) return;
 
     try {
       await ensureInitialized();
@@ -217,7 +224,7 @@ export function useStrudelPlayer(
 
     try {
       await evaluate(currentCodeRef.current);
-      console.info(`StrudelPlayer] Playing code:`, currentCodeRef.current);
+      console.info("[StrudelPlayer] Playing code:", currentCodeRef.current);
       setIsPlaying(true);
     } catch (error) {
       console.error("Failed to play:", error);
@@ -227,16 +234,16 @@ export function useStrudelPlayer(
         );
       }
     }
-  }, [ensureInitialized, isMuted, reportError]);
+  }, [ensureInitialized, reportError]);
 
   const pause = useCallback(() => {
-    if (!isInitialized && !initPromiseRef.current) {
+    if (!isInitializedRef.current && !initPromiseRef.current) {
       setIsPlaying(false);
       return;
     }
 
     try {
-      console.info("StrudelPlayer] Pausing playback");
+      console.info("[StrudelPlayer] Pausing playback");
       hush();
       setIsPlaying(false);
     } catch (error) {
@@ -250,14 +257,14 @@ export function useStrudelPlayer(
   }, [reportError]);
 
   const stop = useCallback(() => {
-    if (!isInitialized && !initPromiseRef.current) {
+    if (!isInitializedRef.current && !initPromiseRef.current) {
       setIsPlaying(false);
       currentCodeRef.current = null;
       return;
     }
 
     try {
-      console.info("StrudelPlayer] Stopping playback");
+      console.info("[StrudelPlayer] Stopping playback");
       hush();
       setIsPlaying(false);
       currentCodeRef.current = null;
@@ -272,13 +279,14 @@ export function useStrudelPlayer(
   }, [reportError]);
 
   const toggleMute = useCallback(() => {
-    const newMuted = !isMuted;
+    const newMuted = !isMutedRef.current;
+    isMutedRef.current = newMuted;
     setIsMuted(newMuted);
 
     if (newMuted && isPlayingRef.current) {
       try {
-        console.info("StrudelPlayer] Muting playback");
-        if (isInitialized || initPromiseRef.current) {
+        console.info("[StrudelPlayer] Muting playback");
+        if (isInitializedRef.current || initPromiseRef.current) {
           hush();
         }
         setIsPlaying(false);
@@ -286,7 +294,7 @@ export function useStrudelPlayer(
         console.error("Failed to mute:", error);
       }
     }
-  }, [isMuted, isInitialized]);
+  }, []);
 
   const setVolume = useCallback((value: number) => {
     if (Number.isFinite(value)) {
@@ -339,14 +347,14 @@ export function useStrudelPlayer(
       }
 
       try {
-        console.info("StrudelPlayer] Stopping any existing playback");
+        console.info("[StrudelPlayer] Stopping any existing playback");
         hush();
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        if (!isMuted && currentCodeRef.current) {
+        if (!isMutedRef.current && currentCodeRef.current) {
           await evaluate(currentCodeRef.current);
-          console.info(`StrudelPlayer] Playing code:`, currentCodeRef.current);
+          console.info("[StrudelPlayer] Playing code:", currentCodeRef.current);
           setIsPlaying(true);
         } else {
           setIsPlaying(false);
@@ -364,7 +372,7 @@ export function useStrudelPlayer(
         setIsLoading(false);
       }
     },
-    [ensureInitialized, isMuted, reportError],
+    [ensureInitialized, reportError],
   );
 
   return {
