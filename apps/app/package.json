@@ -33,7 +33,7 @@
     "@tanstack/query-core": "5.90.12",
     "@tanstack/query-db-collection": "1.0.6",
     "@tanstack/react-query": "5.90.12",
-    "@tanstack/react-query-devtools": "5.90.2",
+    "@tanstack/react-query-devtools": "5.91.2",
     "canvas-confetti": "1.9.4",
     "framer-motion": "12.23.26",
     "lucide-react": "0.545.0",
