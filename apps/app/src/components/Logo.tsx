@@ -1,28 +1,28 @@
 import type { FC } from "react";
 
-import { SITE_NAME } from '@/constants';
+import { SITE_NAME } from "@/constants";
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   showText?: boolean;
   className?: string;
 }
 
 export const Logo: FC<LogoProps> = ({
-  size = 'md',
+  size = "md",
   showText = true,
-  className = '',
+  className = "",
 }) => {
   const sizes = {
-    sm: 'h-8 w-8',
-    md: 'h-12 w-12',
-    lg: 'h-16 w-16',
+    sm: "h-8 w-8",
+    md: "h-12 w-12",
+    lg: "h-16 w-16",
   };
 
   const textSizes = {
-    sm: 'text-xl',
-    md: 'text-2xl',
-    lg: 'text-3xl',
+    sm: "text-xl",
+    md: "text-2xl",
+    lg: "text-3xl",
   };
 
   return (
@@ -30,7 +30,7 @@ export const Logo: FC<LogoProps> = ({
       <img
         src="/logo-192.png"
         alt={SITE_NAME}
-        className={`${sizes[size]} rounded-2xl border border-white/60 bg-white/80 p-1.5 shadow-sm dark:border-white/10 dark:bg-white/5`}
+        className={`${sizes[size]} rounded-2xl border border-slate-200/60 bg-white/80 p-1.5 shadow-sm dark:border-white/10 dark:bg-white/5`}
       />
       {showText && (
         <span

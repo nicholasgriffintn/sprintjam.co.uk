@@ -18,47 +18,47 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { navigateTo } from "@/utils/navigation";
-import { SITE_NAME } from '@/constants';
+import { SITE_NAME } from "@/constants";
 
 const featureCards = [
   {
-    title: 'Fast imports',
+    title: "Fast imports",
     description: `Grab Linear issues into ${SITE_NAME} in seconds with filters for teams, labels, or projects.`,
     icon: Zap,
   },
   {
-    title: 'Real-time context',
+    title: "Real-time context",
     description:
-      'Status, labels, and assignees stay visible while you estimate so discussions stay grounded.',
+      "Status, labels, and assignees stay visible while you estimate so discussions stay grounded.",
     icon: Gauge,
   },
   {
-    title: 'Story point sync',
+    title: "Story point sync",
     description:
-      'When you reach consensus, push points back to Linear to keep your roadmap aligned.',
+      "When you reach consensus, push points back to Linear to keep your roadmap aligned.",
     icon: SlidersHorizontal,
   },
   {
-    title: 'Scoped OAuth',
+    title: "Scoped OAuth",
     description:
-      'Moderators connect only for the current room; tokens are encrypted and short-lived.',
+      "Moderators connect only for the current room; tokens are encrypted and short-lived.",
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: 'Connect Linear',
+    title: "Connect Linear",
     detail: `Authorize ${SITE_NAME} for this room with a quick OAuth flow.`,
   },
   {
-    title: 'Choose issues',
+    title: "Choose issues",
     detail:
-      'Select the issues you want to size - filter by team, label, or project.',
+      "Select the issues you want to size - filter by team, label, or project.",
   },
   {
-    title: 'Estimate and sync',
-    detail: 'Reveal, lock consensus, and send points straight back to Linear.',
+    title: "Estimate and sync",
+    detail: "Reveal, lock consensus, and send points straight back to Linear.",
   },
 ];
 
@@ -145,7 +145,7 @@ const LinearIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate('integrations')}
+                onClick={() => handleNavigate("integrations")}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -155,64 +155,60 @@ const LinearIntegrationScreen = () => {
 
           <div className="relative">
             <div className="pointer-events-none absolute inset-[-18px] -z-10 rounded-[1.9rem] bg-gradient-to-br from-brand-500/20 via-indigo-500/18 to-blue-500/18 blur-3xl" />
-            <SurfaceCard className="relative overflow-hidden text-left border-none bg-transparent p-0 shadow-none">
-              <div className="relative space-y-3 rounded-2xl border border-white/15 bg-slate-900/80 p-6 text-white shadow-inner shadow-slate-200/60 dark:border-white/10">
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
-                  Linear in {SITE_NAME}
-                </p>
-                <p className="text-lg font-semibold">
-                  Live labels and statuses
-                </p>
-                <div className="rounded-xl border border-white/10 bg-black/30 p-4">
-                  <div className="flex items-center justify-between text-xs text-slate-200">
-                    <span>Team: Platform</span>
-                    <span>Sync ready</span>
+            <div className="relative space-y-3 overflow-hidden rounded-2xl border border-slate-300/60 bg-slate-900 p-6 text-left text-white shadow-lg ring-1 ring-black/5 dark:border-white/10 dark:ring-white/5">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
+                Linear in {SITE_NAME}
+              </p>
+              <p className="text-lg font-semibold">Live labels and statuses</p>
+              <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+                <div className="flex items-center justify-between text-xs text-slate-200">
+                  <span>Team: Platform</span>
+                  <span>Sync ready</span>
+                </div>
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full bg-emerald-400"
+                        aria-hidden="true"
+                      />
+                      Improve ticket queue UX
+                    </span>
+                    <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
+                      5 pts
+                    </span>
                   </div>
-                  <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="inline-block h-2 w-2 rounded-full bg-emerald-400"
-                          aria-hidden="true"
-                        />
-                        Improve ticket queue UX
-                      </span>
-                      <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
-                        5 pts
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="inline-block h-2 w-2 rounded-full bg-amber-400"
-                          aria-hidden="true"
-                        />
-                        Structured voting defaults
-                      </span>
-                      <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
-                        3 pts
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="inline-block h-2 w-2 rounded-full bg-sky-400"
-                          aria-hidden="true"
-                        />
-                        WS resilience checks
-                      </span>
-                      <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
-                        8 pts
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full bg-amber-400"
+                        aria-hidden="true"
+                      />
+                      Structured voting defaults
+                    </span>
+                    <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
+                      3 pts
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block h-2 w-2 rounded-full bg-sky-400"
+                        aria-hidden="true"
+                      />
+                      WS resilience checks
+                    </span>
+                    <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
+                      8 pts
+                    </span>
                   </div>
                 </div>
-                <p className="text-xs text-slate-200">
-                  Keep your Linear roadmap aligned while your team collaborates
-                  in {SITE_NAME}.
-                </p>
               </div>
-            </SurfaceCard>
+              <p className="text-xs text-slate-200">
+                Keep your Linear roadmap aligned while your team collaborates in{" "}
+                {SITE_NAME}.
+              </p>
+            </div>
           </div>
         </div>
 

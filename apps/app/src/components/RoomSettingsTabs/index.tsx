@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   RoomSettings,
@@ -6,15 +6,15 @@ import type {
   VotingSequenceId,
   VotingSequenceTemplate,
   ExtraVoteOption,
-} from '@/types';
-import { VotingMode } from '@/components/RoomSettingsTabs/VotingMode';
-import { EstimateOptions } from '@/components/RoomSettingsTabs/EstimateOptions';
-import { TheJudge } from '@/components/RoomSettingsTabs/TheJudge';
-import { PermissionsOptions } from '@/components/RoomSettingsTabs/PermissionsOptions';
-import { ResultsOptions } from '@/components/RoomSettingsTabs/ResultsOptions';
-import { BackgroundMusic } from '@/components/RoomSettingsTabs/BackgroundMusic';
-import { TicketQueueSettings } from '@/components/RoomSettingsTabs/TicketQueueSettings';
-import { Button } from '@/components/ui/Button';
+} from "@/types";
+import { VotingMode } from "@/components/RoomSettingsTabs/VotingMode";
+import { EstimateOptions } from "@/components/RoomSettingsTabs/EstimateOptions";
+import { TheJudge } from "@/components/RoomSettingsTabs/TheJudge";
+import { PermissionsOptions } from "@/components/RoomSettingsTabs/PermissionsOptions";
+import { ResultsOptions } from "@/components/RoomSettingsTabs/ResultsOptions";
+import { BackgroundMusic } from "@/components/RoomSettingsTabs/BackgroundMusic";
+import { TicketQueueSettings } from "@/components/RoomSettingsTabs/TicketQueueSettings";
+import { Button } from "@/components/ui/Button";
 import {
   cloneExtraVoteOptions,
   cloneVotingPresets,
@@ -23,9 +23,9 @@ import {
   normalizeExtraVoteOptions,
   parseEstimateOptionsInput,
   splitExtrasFromOptions,
-} from '@/utils/votingOptions';
+} from "@/utils/votingOptions";
 
-export type RoomSettingsTabId = 'voting' | 'results' | 'queue' | 'atmosphere';
+export type RoomSettingsTabId = "voting" | "results" | "queue" | "atmosphere";
 type TabId = RoomSettingsTabId;
 
 interface RoomSettingsTabsProps {
@@ -51,7 +51,7 @@ export function RoomSettingsTabs({
   extraVoteOptions,
   defaultSequenceId,
   onSettingsChange,
-  className = '',
+  className = "",
   isActive = true,
   resetKey = 0,
   hideVotingModeAndEstimates = false,
@@ -65,19 +65,19 @@ export function RoomSettingsTabs({
 
     const baseOptions =
       initialSettings.customEstimateOptions?.length &&
-      initialSettings.votingSequenceId === 'custom'
+      initialSettings.votingSequenceId === "custom"
         ? initialSettings.customEstimateOptions
         : initialSettings.estimateOptions;
 
     const inferredId =
       initialSettings.votingSequenceId ??
-      (baseOptions.length ? 'custom' : 'fibonacci-short');
+      (baseOptions.length ? "custom" : "fibonacci-short");
 
     return [
       {
         id: inferredId as VotingSequenceId,
-        label: 'Default',
-        description: 'Default sequence from server',
+        label: "Default",
+        description: "Default sequence from server",
         options: [...baseOptions],
       },
     ];
@@ -103,37 +103,37 @@ export function RoomSettingsTabs({
   const defaultSequence = (defaultSequenceId ??
     initialSettings.votingSequenceId ??
     presets[0]?.id ??
-    'custom') as VotingSequenceId;
+    "custom") as VotingSequenceId;
 
   const structuredBaseOptions = useMemo(() => {
     const fibPreset =
-      presets.find((preset) => preset.id === 'fibonacci-short') ?? presets[0];
+      presets.find((preset) => preset.id === "fibonacci-short") ?? presets[0];
     return fibPreset ? [...fibPreset.options] : structuredOptions;
   }, [presets, structuredOptions]);
 
   const [localSettings, setLocalSettings] =
     useState<RoomSettings>(initialSettings);
   const [estimateOptionsInput, setEstimateOptionsInput] = useState<string>(
-    initialSettings.estimateOptions.join(',')
+    initialSettings.estimateOptions.join(","),
   );
   const [selectedSequenceId, setSelectedSequenceId] =
     useState<VotingSequenceId>(defaultSequence);
   const [extraOptions, setExtraOptions] = useState<ExtraVoteOption[]>(() =>
-    cloneExtraVoteOptions(baseExtraOptions)
+    cloneExtraVoteOptions(baseExtraOptions),
   );
-  const [activeTab, setActiveTab] = useState<TabId>(initialTab ?? 'voting');
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab ?? "voting");
   const lastResetKeyRef = useRef<string | number | null>(null);
 
   const resolveBaseOptions = (
     sequenceId: VotingSequenceId,
     customInput = estimateOptionsInput,
-    structuredVotingEnabled = localSettings.enableStructuredVoting
+    structuredVotingEnabled = localSettings.enableStructuredVoting,
   ): (string | number)[] => {
     if (structuredVotingEnabled) {
       return structuredBaseOptions;
     }
 
-    if (sequenceId === 'custom') {
+    if (sequenceId === "custom") {
       return parseEstimateOptionsInput(customInput);
     }
 
@@ -159,12 +159,12 @@ export function RoomSettingsTabs({
     sequenceId: VotingSequenceId,
     extras: ExtraVoteOption[] = extraOptions,
     customInput = estimateOptionsInput,
-    structuredVotingEnabled = localSettings.enableStructuredVoting
+    structuredVotingEnabled = localSettings.enableStructuredVoting,
   ) => {
     const baseOptions = resolveBaseOptions(
       sequenceId,
       customInput,
-      structuredVotingEnabled
+      structuredVotingEnabled,
     );
     const mergedExtras = cloneExtraVoteOptions(extras);
     const combined = mergeOptionsWithExtras(baseOptions, mergedExtras);
@@ -173,7 +173,7 @@ export function RoomSettingsTabs({
       estimateOptions: combined,
       votingSequenceId: sequenceId,
       customEstimateOptions:
-        sequenceId === 'custom' && !structuredVotingEnabled
+        sequenceId === "custom" && !structuredVotingEnabled
           ? baseOptions
           : undefined,
       extraVoteOptions: mergedExtras,
@@ -194,61 +194,61 @@ export function RoomSettingsTabs({
       defaultSequenceId ??
       initialSettings.votingSequenceId ??
       (presets[0]?.id as VotingSequenceId) ??
-      'custom';
+      "custom";
 
     const { baseOptions, detectedExtras } = splitExtrasFromOptions(
       initialSettings.estimateOptions,
-      baseExtraOptions
+      baseExtraOptions,
     );
     const normalizedExtras = normalizeExtraVoteOptions(
       initialSettings.extraVoteOptions,
       baseExtraOptions,
-      detectedExtras
+      detectedExtras,
     );
     const sequenceId =
       initialSettings.enableStructuredVoting === true
-        ? initialSettings.votingSequenceId ?? fallbackSequenceId
-        : initialSettings.votingSequenceId ??
-          detectPresetId(baseOptions, presets, fallbackSequenceId);
+        ? (initialSettings.votingSequenceId ?? fallbackSequenceId)
+        : (initialSettings.votingSequenceId ??
+          detectPresetId(baseOptions, presets, fallbackSequenceId));
     const preset =
-      sequenceId !== 'custom'
+      sequenceId !== "custom"
         ? presets.find((template) => template.id === sequenceId)
         : undefined;
 
     const baseForInput =
       initialSettings.enableStructuredVoting && structuredBaseOptions.length > 0
         ? structuredBaseOptions
-        : sequenceId === 'custom'
-        ? initialSettings.customEstimateOptions?.length
-          ? initialSettings.customEstimateOptions
-          : baseOptions
-        : preset?.options ??
-          (baseOptions.length
-            ? baseOptions
-            : presets.find((template) => template.id === fallbackSequenceId)
-                ?.options ?? []);
+        : sequenceId === "custom"
+          ? initialSettings.customEstimateOptions?.length
+            ? initialSettings.customEstimateOptions
+            : baseOptions
+          : (preset?.options ??
+            (baseOptions.length
+              ? baseOptions
+              : (presets.find((template) => template.id === fallbackSequenceId)
+                  ?.options ?? [])));
 
     const combinedEstimateOptions = mergeOptionsWithExtras(
       baseForInput,
-      normalizedExtras
+      normalizedExtras,
     );
 
     setSelectedSequenceId(sequenceId as VotingSequenceId);
-    setEstimateOptionsInput(baseForInput.join(','));
+    setEstimateOptionsInput(baseForInput.join(","));
     setExtraOptions(normalizedExtras);
     setLocalSettings({
       ...initialSettings,
       estimateOptions: combinedEstimateOptions,
       votingSequenceId: sequenceId as VotingSequenceId,
       customEstimateOptions:
-        sequenceId === 'custom' && !initialSettings.enableStructuredVoting
+        sequenceId === "custom" && !initialSettings.enableStructuredVoting
           ? [...baseForInput]
           : initialSettings.customEstimateOptions,
       extraVoteOptions: normalizedExtras,
     });
 
     if (resetChanged) {
-      setActiveTab(initialTab ?? 'voting');
+      setActiveTab(initialTab ?? "voting");
     }
   }, [
     isActive,
@@ -278,18 +278,18 @@ export function RoomSettingsTabs({
       | JudgeAlgorithm
       | number
       | string
-      | null
+      | null,
   ) => {
-    if (key === 'enableStructuredVoting') {
+    if (key === "enableStructuredVoting") {
       const structuredEnabled = value as boolean;
       if (structuredEnabled) {
-        setSelectedSequenceId('fibonacci-short');
-        setEstimateOptionsInput(structuredBaseOptions.join(','));
+        setSelectedSequenceId("fibonacci-short");
+        setEstimateOptionsInput(structuredBaseOptions.join(","));
       }
       const baseOptions = resolveBaseOptions(
-        structuredEnabled ? 'fibonacci-short' : selectedSequenceId,
+        structuredEnabled ? "fibonacci-short" : selectedSequenceId,
         estimateOptionsInput,
-        structuredEnabled
+        structuredEnabled,
       );
       const combined = mergeOptionsWithExtras(baseOptions, extraOptions);
       const votingCriteria =
@@ -305,7 +305,7 @@ export function RoomSettingsTabs({
         estimateOptions: combined,
         votingCriteria,
         customEstimateOptions:
-          selectedSequenceId === 'custom' && !structuredEnabled
+          selectedSequenceId === "custom" && !structuredEnabled
             ? parseEstimateOptionsInput(estimateOptionsInput)
             : undefined,
         extraVoteOptions: extraOptions,
@@ -317,26 +317,26 @@ export function RoomSettingsTabs({
       const newSettings: RoomSettings = { ...prev, [key]: value };
 
       if (
-        key === 'showAverage' ||
-        key === 'showMedian' ||
-        key === 'showTopVotes'
+        key === "showAverage" ||
+        key === "showMedian" ||
+        key === "showTopVotes"
       ) {
         if (newSettings.resultsDisplay?.summaryCards) {
           newSettings.resultsDisplay = {
             ...newSettings.resultsDisplay,
             summaryCards: newSettings.resultsDisplay.summaryCards.map(
               (card) => {
-                if (key === 'showAverage' && card.id === 'average') {
+                if (key === "showAverage" && card.id === "average") {
                   return { ...card, enabled: value as boolean };
                 }
-                if (key === 'showMedian' && card.id === 'mode') {
+                if (key === "showMedian" && card.id === "mode") {
                   return { ...card, enabled: value as boolean };
                 }
-                if (key === 'showTopVotes' && card.id === 'topVotes') {
+                if (key === "showTopVotes" && card.id === "topVotes") {
                   return { ...card, enabled: value as boolean };
                 }
                 return card;
-              }
+              },
             ),
           };
         }
@@ -348,57 +348,59 @@ export function RoomSettingsTabs({
 
   const handleEstimateOptionsChange = (value: string) => {
     setEstimateOptionsInput(value);
-    setSelectedSequenceId('custom');
-    updateEstimateOptions('custom', extraOptions, value, false);
+    setSelectedSequenceId("custom");
+    updateEstimateOptions("custom", extraOptions, value, false);
   };
 
   const handleSelectSequence = (sequenceId: VotingSequenceId) => {
     const baseOptions = resolveBaseOptions(
       sequenceId,
       estimateOptionsInput,
-      localSettings.enableStructuredVoting
+      localSettings.enableStructuredVoting,
     );
 
     setSelectedSequenceId(sequenceId);
-    setEstimateOptionsInput(baseOptions.join(','));
+    setEstimateOptionsInput(baseOptions.join(","));
     updateEstimateOptions(
       sequenceId,
       extraOptions,
-      baseOptions.join(','),
-      localSettings.enableStructuredVoting
+      baseOptions.join(","),
+      localSettings.enableStructuredVoting,
     );
   };
 
   const handleToggleExtraOption = (id: string, enabled: boolean) => {
     const nextExtras = extraOptions.map((option) =>
-      option.id === id ? { ...option, enabled } : option
+      option.id === id ? { ...option, enabled } : option,
     );
     setExtraOptions(nextExtras);
     updateEstimateOptions(
       selectedSequenceId,
       nextExtras,
       estimateOptionsInput,
-      localSettings.enableStructuredVoting
+      localSettings.enableStructuredVoting,
     );
   };
 
   const tabs: { id: TabId; label: string; description: string }[] = [
     {
-      id: 'voting',
-      label: 'Voting',
-      description: hideVotingModeAndEstimates ? 'Permissions' : 'Mode & permissions',
+      id: "voting",
+      label: "Voting",
+      description: hideVotingModeAndEstimates
+        ? "Permissions"
+        : "Mode & permissions",
     },
     {
-      id: 'results',
-      label: 'Results',
-      description: 'Settings',
+      id: "results",
+      label: "Results",
+      description: "Settings",
     },
-    { id: 'queue', label: 'Ticket queue', description: 'Integrations' },
-    { id: 'atmosphere', label: 'Atmosphere', description: 'Music' },
+    { id: "queue", label: "Ticket queue", description: "Integrations" },
+    { id: "atmosphere", label: "Atmosphere", description: "Music" },
   ];
 
   const renderTabContent = () => {
-    if (activeTab === 'voting') {
+    if (activeTab === "voting") {
       return (
         <div className="space-y-6">
           {!hideVotingModeAndEstimates && (
@@ -422,7 +424,7 @@ export function RoomSettingsTabs({
                   defaultSequenceId ??
                   initialSettings.votingSequenceId ??
                   (presets[0]?.id as VotingSequenceId) ??
-                  'custom'
+                  "custom"
                 }
                 hideSelection={localSettings.enableStructuredVoting === true}
               />
@@ -436,7 +438,7 @@ export function RoomSettingsTabs({
       );
     }
 
-    if (activeTab === 'results') {
+    if (activeTab === "results") {
       return (
         <div className="space-y-6">
           <TheJudge localSettings={localSettings} handleChange={handleChange} />
@@ -448,7 +450,7 @@ export function RoomSettingsTabs({
       );
     }
 
-    if (activeTab === 'queue') {
+    if (activeTab === "queue") {
       return (
         <TicketQueueSettings
           localSettings={localSettings}
@@ -467,7 +469,7 @@ export function RoomSettingsTabs({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <div className="flex overflow-x-auto border-b border-white/60 dark:border-white/10">
+      <div className="flex overflow-x-auto border-b border-slate-200/60 dark:border-white/10">
         {tabs.map((tab) => {
           const isActiveTab = tab.id === activeTab;
           return (
@@ -478,11 +480,13 @@ export function RoomSettingsTabs({
               onClick={() => setActiveTab(tab.id)}
               className={`group relative flex-none px-4 pb-3 pt-1 text-left ${
                 isActiveTab
-                  ? 'text-slate-900 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                  ? "text-slate-900 dark:text-white"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
-              <span className={`text-sm ${isActiveTab ? 'font-semibold' : 'font-medium'}`}>
+              <span
+                className={`text-sm ${isActiveTab ? "font-semibold" : "font-medium"}`}
+              >
                 {tab.label}
               </span>
               {isActiveTab && (
@@ -493,7 +497,7 @@ export function RoomSettingsTabs({
         })}
       </div>
 
-      <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-slate-900/60">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-slate-900/60">
         {renderTabContent()}
       </div>
     </div>

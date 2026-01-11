@@ -21,7 +21,7 @@ import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { navigateTo } from "@/utils/navigation";
-import { SITE_NAME } from '@/constants';
+import { SITE_NAME } from "@/constants";
 
 const WelcomeScreen = () => {
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
@@ -39,23 +39,23 @@ const WelcomeScreen = () => {
   const features = [
     {
       icon: <Zap className="w-5 h-5" />,
-      title: 'Real-time Voting',
-      description: 'Live story point voting with presence and instant reveals',
+      title: "Real-time Voting",
+      description: "Live story point voting with presence and instant reveals",
     },
     {
       icon: <BarChart3 className="w-5 h-5" />,
-      title: 'Smart Consensus',
-      description: 'Calculates median, spread, and outliers to guide agreement',
+      title: "Smart Consensus",
+      description: "Calculates median, spread, and outliers to guide agreement",
     },
     {
       icon: <Shield className="w-5 h-5" />,
-      title: 'Privacy First',
-      description: 'Room-scoped storage, no ads, no tracking, open source',
+      title: "Privacy First",
+      description: "Room-scoped storage, no ads, no tracking, open source",
     },
     {
       icon: <Timer className="w-5 h-5" />,
-      title: 'Voting Options',
-      description: 'Classic planning poker plus structured scoring options',
+      title: "Voting Options",
+      description: "Classic planning poker plus structured scoring options",
     },
   ];
 
@@ -105,13 +105,13 @@ const WelcomeScreen = () => {
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.97 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           viewport={{ once: true, amount: 0.4 }}
           className="relative mx-auto max-w-2xl px-4 sm:px-6"
         >
           <div className="pointer-events-none absolute inset-x-4 -top-10 -z-20 h-[120%] rounded-[5rem] bg-gradient-to-b from-brand-400/25 via-indigo-600/15 to-transparent opacity-70 blur-[150px] sm:inset-x-12" />
-          <div className="rounded-[1.75rem] border border-white/10 bg-white/5 shadow-[0_30px_120px_rgba(8,10,24,0.55)] backdrop-blur-[14px] dark:border-white/5 dark:bg-slate-900/40">
-            <div className="relative overflow-hidden rounded-[1.5rem] border border-white/8 bg-gradient-to-b from-white/10 via-white/5 to-white/0 dark:from-white/10 dark:via-white/5">
+          <div className="rounded-[1.75rem] border border-slate-200/60 bg-slate-900/5 shadow-[0_30px_120px_rgba(8,10,24,0.25)] backdrop-blur-[14px] dark:border-white/5 dark:bg-slate-900/40 dark:shadow-[0_30px_120px_rgba(8,10,24,0.55)]">
+            <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200/40 bg-gradient-to-b from-slate-900/5 via-slate-900/3 to-transparent dark:border-white/8 dark:from-white/10 dark:via-white/5 dark:to-white/0">
               {isDemoPlaying ? (
                 <div className="relative block w-full overflow-hidden rounded-[1.25rem] focus-visible:ring-brand-400 focus-visible:ring-offset-4">
                   <video
@@ -140,9 +140,9 @@ const WelcomeScreen = () => {
                     className="block h-[220px] w-full origin-bottom transform-gpu rounded-[1.25rem] border border-white/10 object-cover object-top transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01]"
                     style={{
                       maskImage:
-                        'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                        "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
                       WebkitMaskImage:
-                        'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                        "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
                     }}
                     loading="lazy"
                   />
@@ -150,8 +150,8 @@ const WelcomeScreen = () => {
                     className="pointer-events-none absolute inset-0 rounded-[1.25rem]"
                     style={{
                       background:
-                        'radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)',
-                      mixBlendMode: 'multiply',
+                        "radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)",
+                      mixBlendMode: "multiply",
                     }}
                   />
                   <div className="pointer-events-none absolute inset-0 rounded-[1.25rem] bg-gradient-to-b from-white/12 via-white/5 to-transparent opacity-30 mix-blend-screen" />
@@ -221,14 +221,14 @@ const WelcomeScreen = () => {
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                    onClick={() => handleNavigate('integrations')}
+                    onClick={() => handleNavigate("integrations")}
                   >
                     Explore integrations
                     <ArrowUpRight className="h-4 w-4" />
                   </button>
                 </div>
                 <div className="relative flex-1 md:max-w-sm">
-                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+                  <div className="rounded-xl border border-slate-300/60 bg-slate-900 p-3 text-white shadow-lg ring-1 ring-black/5 dark:border-white/10 dark:bg-black/30 dark:shadow-none dark:ring-white/5">
                     <div className="flex items-center justify-between text-[11px] text-slate-200">
                       <span>Selected issues</span>
                       <span>Sync ready</span>
@@ -274,7 +274,7 @@ const WelcomeScreen = () => {
               href="https://github.com/nicholasgriffintn/sprintjam.co.uk"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/60 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:text-brand-600 dark:border-white/20 dark:text-white dark:hover:text-brand-200"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:border-brand-200 hover:text-brand-600 dark:border-white/20 dark:bg-transparent dark:text-white dark:shadow-none dark:hover:border-brand-300/60 dark:hover:text-brand-200"
             >
               <Github className="h-4 w-4" />
               View source on GitHub

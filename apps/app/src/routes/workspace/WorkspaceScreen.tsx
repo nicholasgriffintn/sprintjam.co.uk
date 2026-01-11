@@ -13,7 +13,7 @@ import {
   RefreshCcw,
   Target,
   Trash2,
-} from 'lucide-react';
+} from "lucide-react";
 
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -65,18 +65,18 @@ export default function WorkspaceScreen() {
 
   const { goToLogin, goToRoom } = useSessionActions();
 
-  const [newTeamName, setNewTeamName] = useState('');
-  const [teamNameDraft, setTeamNameDraft] = useState('');
+  const [newTeamName, setNewTeamName] = useState("");
+  const [teamNameDraft, setTeamNameDraft] = useState("");
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
-  const [renameInput, setRenameInput] = useState('');
+  const [renameInput, setRenameInput] = useState("");
 
   const selectedTeam = useMemo(
     () => teams.find((team) => team.id === selectedTeamId) ?? null,
-    [teams, selectedTeamId]
+    [teams, selectedTeamId],
   );
 
   useEffect(() => {
-    const nextName = selectedTeam?.name ?? '';
+    const nextName = selectedTeam?.name ?? "";
     if (teamNameDraft !== nextName) {
       setTeamNameDraft(nextName);
     }
@@ -88,14 +88,14 @@ export default function WorkspaceScreen() {
     if (!newTeamName.trim()) return;
     const created = await createTeam(newTeamName.trim());
     if (created) {
-      setNewTeamName('');
+      setNewTeamName("");
     }
   };
 
   const handleDeleteTeam = async () => {
     if (!selectedTeamId) return;
     const confirmed = window.confirm(
-      'Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.'
+      "Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.",
     );
     if (!confirmed) return;
     await deleteTeam(selectedTeamId);
@@ -126,23 +126,23 @@ export default function WorkspaceScreen() {
 
   const statCards = [
     {
-      label: 'Teams',
+      label: "Teams",
       value: stats?.totalTeams ?? teams.length,
       icon: <Building2 className="h-5 w-5 text-brand-500" />,
     },
     {
-      label: 'Sessions',
+      label: "Sessions",
       value: stats?.totalSessions ?? sessions.length,
       icon: <Target className="h-5 w-5 text-indigo-500" />,
     },
     {
-      label: 'Active',
+      label: "Active",
       value:
         stats?.activeSessions ?? sessions.filter((s) => !s.completedAt).length,
       icon: <Activity className="h-5 w-5 text-emerald-500" />,
     },
     {
-      label: 'Completed',
+      label: "Completed",
       value:
         stats?.completedSessions ??
         sessions.filter((s) => s.completedAt).length,
@@ -341,7 +341,7 @@ export default function WorkspaceScreen() {
                     type="button"
                     onClick={() => setSelectedTeamId(team.id)}
                     className={cn(
-                      "w-full rounded-2xl border border-white/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
+                      "w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
                       selectedTeamId === team.id &&
                         "border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20",
                     )}

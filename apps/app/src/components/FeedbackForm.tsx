@@ -1,48 +1,48 @@
-import { type FormEvent, useMemo, useState } from 'react';
-import { Send } from 'lucide-react';
+import { type FormEvent, useMemo, useState } from "react";
+import { Send } from "lucide-react";
 
-import { submitFeedback } from '@/lib/feedback-service';
-import type { GithubIssue } from '@/types';
-import { Input } from './ui/Input';
-import { Button } from './ui/Button';
+import { submitFeedback } from "@/lib/feedback-service";
+import type { GithubIssue } from "@/types";
+import { Input } from "./ui/Input";
+import { Button } from "./ui/Button";
 
 const LABEL_OPTIONS = [
   {
-    value: 'feedback',
-    title: 'General feedback',
-    description: 'Ideas, rough edges, or kudos.',
+    value: "feedback",
+    title: "General feedback",
+    description: "Ideas, rough edges, or kudos.",
   },
   {
-    value: 'bug',
-    title: 'Bug report',
-    description: 'Something broke or doesn’t work as expected.',
+    value: "bug",
+    title: "Bug report",
+    description: "Something broke or doesn’t work as expected.",
   },
   {
-    value: 'enhancement',
-    title: 'Feature request',
-    description: 'Missing capability that would help your team.',
+    value: "enhancement",
+    title: "Feature request",
+    description: "Missing capability that would help your team.",
   },
   {
-    value: 'ui-ux',
-    title: 'UI / UX',
-    description: 'Design, clarity, or accessibility issues.',
+    value: "ui-ux",
+    title: "UI / UX",
+    description: "Design, clarity, or accessibility issues.",
   },
 ];
 
-type SubmissionState = 'idle' | 'submitting' | 'success' | 'error';
+type SubmissionState = "idle" | "submitting" | "success" | "error";
 
 export function FeedbackForm() {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [email, setEmail] = useState('');
-  const [label, setLabel] = useState<string>('feedback');
-  const [status, setStatus] = useState<SubmissionState>('idle');
-  const [error, setError] = useState<string>('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [email, setEmail] = useState("");
+  const [label, setLabel] = useState<string>("feedback");
+  const [status, setStatus] = useState<SubmissionState>("idle");
+  const [error, setError] = useState<string>("");
   const [issue, setIssue] = useState<GithubIssue | null>(null);
 
   const isSubmitDisabled = useMemo(() => {
     return (
-      status === 'submitting' || !title.trim() || !description.trim() || !label
+      status === "submitting" || !title.trim() || !description.trim() || !label
     );
   }, [description, label, status, title]);
 
@@ -59,8 +59,8 @@ export function FeedbackForm() {
     event.preventDefault();
     if (isSubmitDisabled) return;
 
-    setStatus('submitting');
-    setError('');
+    setStatus("submitting");
+    setError("");
     setIssue(null);
 
     try {
@@ -70,24 +70,24 @@ export function FeedbackForm() {
         labels: [label],
         email: email.trim() || undefined,
         pageUrl:
-          typeof window !== 'undefined' ? window.location.href : undefined,
+          typeof window !== "undefined" ? window.location.href : undefined,
       });
 
       setIssue(createdIssue);
-      setStatus('success');
+      setStatus("success");
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
-          : 'Failed to send feedback. Please try again.';
+          : "Failed to send feedback. Please try again.";
       setError(message);
-      setStatus('error');
+      setStatus("error");
     }
   };
 
   return (
     <form className="space-y-4 text-left" onSubmit={handleSubmit}>
-      {status === 'success' && issue ? (
+      {status === "success" && issue ? (
         <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 shadow-sm dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-100">
           <div>
             <p className="font-semibold">
@@ -132,8 +132,8 @@ export function FeedbackForm() {
                     onClick={() => setLabel(option.value)}
                     className={`w-full rounded-2xl border px-3 py-2 text-sm font-semibold ${
                       isActive
-                        ? 'border-brand-400/70 bg-brand-50 text-brand-700 shadow-sm dark:border-brand-300/60 dark:bg-brand-500/10 dark:text-brand-100'
-                        : 'border-white/60 bg-white text-slate-700 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:hover:border-brand-300/60'
+                        ? "border-brand-400/70 bg-brand-50 text-brand-700 shadow-sm dark:border-brand-300/60 dark:bg-brand-500/10 dark:text-brand-100"
+                        : "border-slate-200/60 bg-white text-slate-700 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:hover:border-brand-300/60"
                     }`}
                     aria-pressed={isActive}
                   >
@@ -155,7 +155,7 @@ export function FeedbackForm() {
               id="feedback-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="min-h-[140px] rounded-2xl border border-white/60 bg-white/90 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
+              className="min-h-[140px] rounded-2xl border border-slate-200/60 bg-white/90 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
               placeholder="Share steps to reproduce, expected behavior, and any context."
               required
             />
@@ -188,7 +188,7 @@ export function FeedbackForm() {
               icon={<Send className="h-4 w-4" />}
               disabled={isSubmitDisabled}
             >
-              {status === 'submitting' ? 'Submitting...' : 'Send feedback'}
+              {status === "submitting" ? "Submitting..." : "Send feedback"}
             </Button>
           </div>
         </>

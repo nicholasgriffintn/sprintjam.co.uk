@@ -3,9 +3,9 @@ import type {
   RoomSettings,
   VotingSequenceId,
   VotingSequenceTemplate,
-} from '@/types';
-import { ChevronDown } from 'lucide-react';
-import { Select } from '@/components/ui/Select';
+} from "@/types";
+import { ChevronDown } from "lucide-react";
+import { Select } from "@/components/ui/Select";
 
 export function EstimateOptions({
   localSettings,
@@ -46,7 +46,7 @@ export function EstimateOptions({
       label: getOptionLabel(preset),
       value: preset.id,
     })),
-    { label: 'Custom', value: 'custom' },
+    { label: "Custom", value: "custom" },
   ];
 
   return (
@@ -73,7 +73,7 @@ export function EstimateOptions({
                 onSelectSequence(value as VotingSequenceId)
               }
               data-testid="settings-select-voting-sequence"
-              className="rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800"
+              className="rounded-xl border border-slate-200/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800"
               options={sequenceOptions}
             />
           </div>
@@ -88,37 +88,37 @@ export function EstimateOptions({
                 localSettings.enableStructuredVoting
                   ? structuredVotingOptions
                       .map((option) => option.toString())
-                      .join(',')
+                      .join(",")
                   : estimateOptionsInput
               }
               onChange={(e) => handleEstimateOptionsChange(e.target.value)}
               placeholder={`e.g., ${defaultSettings.estimateOptions
                 .map((option) => option.toString())
-                .join(',')}`}
+                .join(",")}`}
               disabled={
                 localSettings.enableStructuredVoting ||
-                selectedSequenceId !== 'custom'
+                selectedSequenceId !== "custom"
               }
               className={`w-full rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900 ${
                 localSettings.enableStructuredVoting ||
-                selectedSequenceId !== 'custom'
-                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                  : ''
+                selectedSequenceId !== "custom"
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                  : ""
               }`}
             />
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {localSettings.enableStructuredVoting
-                ? 'Fixed options for structured voting'
-                : selectedSequenceId === 'custom'
-                ? 'Separate values with commas'
-                : 'Preset selected—switch to custom to edit'}
+                ? "Fixed options for structured voting"
+                : selectedSequenceId === "custom"
+                  ? "Separate values with commas"
+                  : "Preset selected—switch to custom to edit"}
             </p>
           </div>
         </>
       )}
 
       {showExtraOptions ? (
-        <details className="group rounded-2xl border border-white/60 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/50">
+        <details className="group rounded-2xl border border-slate-200/60 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-slate-900/50">
           <summary className="flex  list-none items-center justify-between text-xs font-semibold text-slate-700 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white">
             <span>Extra voting options</span>
             <ChevronDown

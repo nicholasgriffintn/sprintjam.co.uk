@@ -4,6 +4,7 @@
 - Added animations to the header elements for a smoother experience.
 - Removed the back to home button on some pages to reduce clutter, favouring the logo as a home link.
 - Added a new user menu to the header for easier access to login, workspaces and logout actions.
+- Fixed some issues with light mode styles (although dark mode remains the primary focus).
 
 ## V2.1
 

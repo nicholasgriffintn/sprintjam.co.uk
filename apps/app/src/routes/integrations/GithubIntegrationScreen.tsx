@@ -18,89 +18,89 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { navigateTo } from "@/utils/navigation";
-import { SITE_NAME } from '@/constants';
+import { SITE_NAME } from "@/constants";
 
 const featureCards = [
   {
-    title: 'Issue import',
+    title: "Issue import",
     description: `Bring GitHub issues into ${SITE_NAME} so the whole squad can size them together.`,
     icon: GitCommit,
   },
   {
-    title: 'Sync story points',
+    title: "Sync story points",
     description:
-      'Keep repositories in sync by pushing story points back once you lock in consensus.',
+      "Keep repositories in sync by pushing story points back once you lock in consensus.",
     icon: Radio,
   },
   {
-    title: 'Repository filters',
+    title: "Repository filters",
     description:
-      'Focus your session by selecting only the repos and labels you care about.',
+      "Focus your session by selecting only the repos and labels you care about.",
     icon: GitPullRequest,
   },
   {
-    title: 'Secure by design',
+    title: "Secure by design",
     description:
-      'Per-room OAuth with encrypted tokens; no persistent access beyond the session.',
+      "Per-room OAuth with encrypted tokens; no persistent access beyond the session.",
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: 'Connect GitHub',
+    title: "Connect GitHub",
     detail: `Authorize ${SITE_NAME} for your room with OAuth to fetch issues securely.`,
   },
   {
-    title: 'Pick issues',
-    detail: 'Filter by repo or labels to curate the estimation queue.',
+    title: "Pick issues",
+    detail: "Filter by repo or labels to curate the estimation queue.",
   },
   {
-    title: 'Estimate and sync',
+    title: "Estimate and sync",
     detail:
-      'Vote, reveal, and sync points back to GitHub so work stays aligned.',
+      "Vote, reveal, and sync points back to GitHub so work stays aligned.",
   },
 ];
 
 const securityHighlights = [
   {
-    title: 'Signed OAuth + room auth',
+    title: "Signed OAuth + room auth",
     detail:
-      'GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.',
+      "GitHub OAuth uses signed state + nonce, and every action is gated by a valid room session token.",
     icon: BadgeCheck,
   },
   {
-    title: 'Least-privilege scopes',
+    title: "Least-privilege scopes",
     detail:
-      'We request repo access and user email only; no org admin scopes or wider permissions are used.',
+      "We request repo access and user email only; no org admin scopes or wider permissions are used.",
     icon: ShieldCheck,
   },
   {
-    title: 'Encrypted, room-scoped storage',
+    title: "Encrypted, room-scoped storage",
     detail:
-      'Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.',
+      "Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.",
     icon: Database,
   },
   {
-    title: 'Controlled egress + rotation',
+    title: "Controlled egress + rotation",
     detail:
-      'All GitHub calls go through the room worker; refresh and revocation paths run server-side only.',
+      "All GitHub calls go through the room worker; refresh and revocation paths run server-side only.",
     icon: RefreshCcw,
   },
   {
-    title: 'User control & cleanup',
+    title: "User control & cleanup",
     detail:
-      'Moderators can revoke at any time; we revoke from GitHub and delete room-side tokens to keep dormant connections closed.',
+      "Moderators can revoke at any time; we revoke from GitHub and delete room-side tokens to keep dormant connections closed.",
     icon: BadgeCheck,
   },
   {
-    title: 'Data handling & privacy',
+    title: "Data handling & privacy",
     detail:
-      'GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.',
+      "GDPR rights, retention, and contacts are documented in our Privacy Policy; integrations follow the same standards.",
     icon: BadgeCheck,
     cta: {
-      label: 'View Privacy Policy',
-      screen: 'privacy' as const,
+      label: "View Privacy Policy",
+      screen: "privacy" as const,
     },
   },
 ];
@@ -145,7 +145,7 @@ const GithubIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate('integrations')}
+                onClick={() => handleNavigate("integrations")}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />
@@ -155,46 +155,44 @@ const GithubIntegrationScreen = () => {
 
           <div className="relative">
             <div className="pointer-events-none absolute inset-[-18px] -z-10 rounded-[1.9rem] bg-gradient-to-br from-brand-500/20 via-indigo-500/18 to-blue-500/18 blur-3xl" />
-            <SurfaceCard className="relative overflow-hidden text-left border-none bg-transparent p-0 shadow-none">
-              <div className="relative space-y-3 rounded-2xl border border-white/15 bg-slate-900/80 p-6 text-white shadow-inner shadow-slate-200/60 dark:border-white/10">
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
-                  GitHub in {SITE_NAME}
-                </p>
-                <p className="text-lg font-semibold">
-                  Repo context without tab switching
-                </p>
-                <div className="rounded-xl border border-white/10 bg-black/30 p-4">
-                  <div className="flex items-center justify-between text-xs text-slate-200">
-                    <span>Repo: sprintjam.app</span>
-                    <span>Sync ready</span>
+            <div className="relative space-y-3 overflow-hidden rounded-2xl border border-slate-300/60 bg-slate-900 p-6 text-left text-white shadow-lg ring-1 ring-black/5 dark:border-white/10 dark:ring-white/5">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-200">
+                GitHub in {SITE_NAME}
+              </p>
+              <p className="text-lg font-semibold">
+                Repo context without tab switching
+              </p>
+              <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+                <div className="flex items-center justify-between text-xs text-slate-200">
+                  <span>Repo: sprintjam.app</span>
+                  <span>Sync ready</span>
+                </div>
+                <div className="mt-3 space-y-2 text-sm">
+                  <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                    <span>Improve room presence indicators</span>
+                    <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
+                      5 pts
+                    </span>
                   </div>
-                  <div className="mt-3 space-y-2 text-sm">
-                    <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                      <span>Improve room presence indicators</span>
-                      <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
-                        5 pts
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                      <span>Durable Object resilience checks</span>
-                      <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
-                        8 pts
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                      <span>Workspace auth polish</span>
-                      <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
-                        3 pts
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                    <span>Durable Object resilience checks</span>
+                    <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
+                      8 pts
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                    <span>Workspace auth polish</span>
+                    <span className="rounded-full bg-brand-500/30 px-2 py-0.5 text-xs font-semibold text-brand-100">
+                      3 pts
+                    </span>
                   </div>
                 </div>
-                <p className="text-xs text-slate-200">
-                  Pull issues in, vote, and sync points back while keeping the
-                  repository as your source of truth.
-                </p>
               </div>
-            </SurfaceCard>
+              <p className="text-xs text-slate-200">
+                Pull issues in, vote, and sync points back while keeping the
+                repository as your source of truth.
+              </p>
+            </div>
           </div>
         </div>
 

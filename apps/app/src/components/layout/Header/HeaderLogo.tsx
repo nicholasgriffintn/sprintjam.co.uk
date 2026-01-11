@@ -1,21 +1,21 @@
-import type { FC } from 'react';
-import { motion } from 'framer-motion';
+import type { FC } from "react";
+import { motion } from "framer-motion";
 
-import { cn } from '@/lib/cn';
-import { type HeaderLogoProps } from './types';
+import { cn } from "@/lib/cn";
+import { type HeaderLogoProps } from "./types";
 import {
   LOGO_SIZES,
   LOGO_TEXT_SIZES,
   HEADER_TRANSITION,
   SITE_NAME,
-} from '@/constants';
+} from "@/constants";
 
 export const HeaderLogo: FC<HeaderLogoProps> = ({
-  size = 'md',
+  size = "md",
   showText = true,
-  className = '',
+  className = "",
   onClick,
-  layoutId = 'header-logo',
+  layoutId = "header-logo",
 }) => {
   const sizeConfig = LOGO_SIZES[size];
   const textSize = LOGO_TEXT_SIZES[size];
@@ -28,7 +28,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
         className={cn(
           sizeConfig.container,
           sizeConfig.padding,
-          'rounded-2xl border border-white/60 bg-white/80 shadow-sm dark:border-white/10 dark:bg-white/5'
+          "rounded-2xl border border-slate-200/60 bg-white/80 shadow-sm dark:border-white/10 dark:bg-white/5",
         )}
         transition={HEADER_TRANSITION}
         layoutId={layoutId}
@@ -37,7 +37,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
         <motion.span
           className={cn(
             textSize,
-            'font-semibold tracking-tight text-slate-900 dark:text-white'
+            "font-semibold tracking-tight text-slate-900 dark:text-white",
           )}
           transition={HEADER_TRANSITION}
         >
@@ -47,7 +47,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
     </>
   );
 
-  const containerClass = cn('flex items-center gap-3', className);
+  const containerClass = cn("flex items-center gap-3", className);
 
   if (onClick) {
     return (
@@ -57,7 +57,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
           e.preventDefault();
           onClick();
         }}
-        className={cn(containerClass, 'cursor-pointer')}
+        className={cn(containerClass, "cursor-pointer")}
         transition={HEADER_TRANSITION}
       >
         {content}

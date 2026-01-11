@@ -1,25 +1,25 @@
-import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
-import { motion } from 'framer-motion';
-import { Settings, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
+import { motion } from "framer-motion";
+import { Settings, Sparkles } from "lucide-react";
 
-import type { RoomSettings, VotingSequenceId } from '@/types';
+import type { RoomSettings, VotingSequenceId } from "@/types";
 import {
   useSessionActions,
   useSessionErrors,
   useSessionState,
-} from '@/context/SessionContext';
-import { useRoomActions, useRoomState } from '@/context/RoomContext';
-import { PageSection } from '@/components/layout/PageBackground';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Footer } from '@/components/layout/Footer';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
-import { RoomSettingsTabs } from '@/components/RoomSettingsTabs';
-import { validateName } from '@/utils/validators';
+} from "@/context/SessionContext";
+import { useRoomActions, useRoomState } from "@/context/RoomContext";
+import { PageSection } from "@/components/layout/PageBackground";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Footer } from "@/components/layout/Footer";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
+import { RoomSettingsTabs } from "@/components/RoomSettingsTabs";
+import { validateName } from "@/utils/validators";
 
 const CreateRoomScreen = () => {
   usePageMeta(META_CONFIGS.create);
@@ -41,15 +41,15 @@ const CreateRoomScreen = () => {
   const votingPresets = serverDefaults?.votingSequences;
   const extraVoteOptions = serverDefaults?.extraVoteOptions;
   const [advancedSettings, setAdvancedSettings] = useState<RoomSettings | null>(
-    defaults ?? null
+    defaults ?? null,
   );
   const advancedSettingsRef = useRef<RoomSettings | null>(defaults ?? null);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
-  const [votingMode, setVotingMode] = useState<'standard' | 'structured'>(
-    'standard'
+  const [votingMode, setVotingMode] = useState<"standard" | "structured">(
+    "standard",
   );
   const [selectedSequenceId, setSelectedSequenceId] =
-    useState<VotingSequenceId>('fibonacci-short');
+    useState<VotingSequenceId>("fibonacci-short");
   const votingPresetOptions =
     votingPresets?.map((preset) => ({
       label: preset.label,
@@ -62,9 +62,9 @@ const CreateRoomScreen = () => {
       advancedSettingsRef.current = defaults;
       setSettingsResetKey((key) => key + 1);
       setVotingMode(
-        defaults.enableStructuredVoting ? 'structured' : 'standard'
+        defaults.enableStructuredVoting ? "structured" : "standard",
       );
-      setSelectedSequenceId(defaults.votingSequenceId ?? 'fibonacci-short');
+      setSelectedSequenceId(defaults.votingSequenceId ?? "fibonacci-short");
     }
   }, [defaults]);
 
@@ -76,10 +76,10 @@ const CreateRoomScreen = () => {
 
     clearError();
     setPendingCreateSettings(settings ?? null);
-    setJoinFlowMode('create');
+    setJoinFlowMode("create");
     setSelectedAvatar(null);
-    setRoomKey('');
-    setScreen('join');
+    setRoomKey("");
+    setScreen("join");
   };
 
   const buildQuickSettings = (): Partial<RoomSettings> | null => {
@@ -89,7 +89,7 @@ const CreateRoomScreen = () => {
     const estimateOptions = preset?.options ?? defaults.estimateOptions;
 
     return {
-      enableStructuredVoting: votingMode === 'structured',
+      enableStructuredVoting: votingMode === "structured",
       votingSequenceId: selectedSequenceId,
       estimateOptions,
     };
@@ -154,7 +154,7 @@ const CreateRoomScreen = () => {
               fullWidth
             />
 
-            <div className="space-y-4 rounded-2xl border border-white/60 bg-white/50 p-4 dark:border-white/10 dark:bg-slate-900/40">
+            <div className="space-y-4 rounded-2xl border border-slate-200/60 bg-white/50 p-4 dark:border-white/10 dark:bg-slate-900/40">
               <div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -172,25 +172,25 @@ const CreateRoomScreen = () => {
                     type="button"
                     variant="unstyled"
                     role="switch"
-                    aria-checked={votingMode === 'structured'}
+                    aria-checked={votingMode === "structured"}
                     id="voting-mode"
                     onClick={() =>
                       setVotingMode(
-                        votingMode === 'structured' ? 'standard' : 'structured'
+                        votingMode === "structured" ? "standard" : "structured",
                       )
                     }
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 justify-start rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:ring-brand-500 ${
-                      votingMode === 'structured'
-                        ? 'bg-brand-600 dark:bg-brand-500'
-                        : 'bg-slate-200 dark:bg-slate-700'
+                      votingMode === "structured"
+                        ? "bg-brand-600 dark:bg-brand-500"
+                        : "bg-slate-200 dark:bg-slate-700"
                     }`}
                     data-testid="create-voting-mode"
                   >
                     <span
                       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        votingMode === 'structured'
-                          ? 'translate-x-5'
-                          : 'translate-x-0'
+                        votingMode === "structured"
+                          ? "translate-x-5"
+                          : "translate-x-0"
                       }`}
                     />
                   </Button>
@@ -210,21 +210,21 @@ const CreateRoomScreen = () => {
                   onValueChange={(value) =>
                     setSelectedSequenceId(value as VotingSequenceId)
                   }
-                  disabled={votingMode === 'structured'}
-                  className="mt-1.5 w-full rounded-xl border border-white/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800 dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
+                  disabled={votingMode === "structured"}
+                  className="mt-1.5 w-full rounded-xl border border-slate-200/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800 dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
                   data-testid="create-estimate-sequence"
                   options={votingPresetOptions}
                 />
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {votingMode === 'structured'
-                    ? '(Always uses the default option for structured voting)'
+                  {votingMode === "structured"
+                    ? "(Always uses the default option for structured voting)"
                     : (() => {
                         const preset = votingPresets?.find(
-                          (p) => p.id === selectedSequenceId
+                          (p) => p.id === selectedSequenceId,
                         );
                         return preset?.options
-                          ? `Cards: ${preset.options.join(', ')}`
-                          : 'Choose your estimation scale';
+                          ? `Cards: ${preset.options.join(", ")}`
+                          : "Choose your estimation scale";
                       })()}
                 </p>
               </div>
@@ -283,7 +283,7 @@ const CreateRoomScreen = () => {
                     hideVotingModeAndEstimates={true}
                   />
                 ) : (
-                  <div className="rounded-2xl border border-white/60 bg-white/70 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300">
+                  <div className="rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300">
                     Loading default settings…
                   </div>
                 )}
