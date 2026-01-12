@@ -1,18 +1,19 @@
-import type { TicketQueueWithVotes } from '@sprintjam/types';
+import type { TicketQueueWithVotes } from "@sprintjam/types";
 
-import type { PlanningRoom } from '.';
+import type { PlanningRoom } from ".";
 import {
   getQueueWithPrivacy,
   logVotesForTicket,
+  postRoundToStats,
   promoteNextPendingTicket,
   resetVotingState,
   shouldAnonymizeVotes,
-} from './room-helpers';
+} from "./room-helpers";
 
 export async function handleSelectTicket(
   room: PlanningRoom,
   userName: string,
-  ticketId: number
+  ticketId: number,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -33,15 +34,15 @@ export async function handleSelectTicket(
   const ticket = room.repository.getTicketById(ticketId);
   if (!ticket) {
     room.broadcast({
-      type: 'error',
+      type: "error",
       error: `Ticket with ID ${ticketId} not found`,
     });
     return;
   }
 
-  if (ticket.status !== 'pending') {
+  if (ticket.status !== "pending") {
     room.broadcast({
-      type: 'error',
+      type: "error",
       error: `Ticket ${ticket.ticketId} is not in pending status`,
     });
     return;
@@ -50,14 +51,14 @@ export async function handleSelectTicket(
   const currentTicket = roomData.currentTicket;
   logVotesForTicket(room, currentTicket, roomData);
 
-  if (currentTicket && currentTicket.status === 'in_progress') {
+  if (currentTicket && currentTicket.status === "in_progress") {
     room.repository.updateTicket(currentTicket.id, {
-      status: 'completed',
+      status: "completed",
       completedAt: Date.now(),
     });
   }
 
-  room.repository.updateTicket(ticketId, { status: 'in_progress' });
+  room.repository.updateTicket(ticketId, { status: "in_progress" });
   room.repository.setCurrentTicket(ticketId);
 
   resetVotingState(room, roomData);
@@ -68,7 +69,7 @@ export async function handleSelectTicket(
   const updatedQueue = getQueueWithPrivacy(room, roomData);
 
   room.broadcast({
-    type: 'nextTicket',
+    type: "nextTicket",
     ticket: updatedTicket,
     queue: updatedQueue,
   });
@@ -97,9 +98,9 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
 
   logVotesForTicket(room, currentTicket, roomData);
 
-  if (currentTicket && currentTicket.status === 'in_progress') {
+  if (currentTicket && currentTicket.status === "in_progress") {
     room.repository.updateTicket(currentTicket.id, {
-      status: 'completed',
+      status: "completed",
       completedAt: Date.now(),
     });
   }
@@ -107,7 +108,7 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
   const nextTicket: TicketQueueWithVotes | null = promoteNextPendingTicket(
     room,
     roomData,
-    queue
+    queue,
   );
 
   room.repository.setCurrentTicket(nextTicket ? nextTicket.id : null);
@@ -117,7 +118,7 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
   const updatedQueue = getQueueWithPrivacy(room, roomData);
 
   room.broadcast({
-    type: 'nextTicket',
+    type: "nextTicket",
     ticket: nextTicket,
     queue: updatedQueue,
   });
@@ -126,7 +127,7 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
 export async function handleAddTicket(
   room: PlanningRoom,
   userName: string,
-  ticket: Partial<TicketQueueWithVotes>
+  ticket: Partial<TicketQueueWithVotes>,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -147,7 +148,7 @@ export async function handleAddTicket(
   const queue = room.repository.getTicketQueue();
   const maxOrdinal = Math.max(0, ...queue.map((t) => t.ordinal));
 
-  const externalServiceForTicket = ticket.externalService ?? 'none';
+  const externalServiceForTicket = ticket.externalService ?? "none";
 
   const ticketId =
     ticket.ticketId ||
@@ -159,7 +160,7 @@ export async function handleAddTicket(
     const existingWithKey = room.repository.getTicketByTicketKey(ticketId);
     if (existingWithKey) {
       room.broadcast({
-        type: 'error',
+        type: "error",
         error: `Ticket ${ticketId} already exists in the queue`,
       });
       return;
@@ -169,7 +170,7 @@ export async function handleAddTicket(
       ticketId,
       title: ticket.title ?? null,
       description: ticket.description ?? null,
-      status: ticket.status || 'pending',
+      status: ticket.status || "pending",
       ordinal: ticket.ordinal ?? maxOrdinal + 1,
       externalService: externalServiceForTicket,
       externalServiceId: ticket.externalServiceId ?? null,
@@ -182,7 +183,7 @@ export async function handleAddTicket(
       });
 
       room.broadcast({
-        type: 'ticketAdded',
+        type: "ticketAdded",
         ticket: newTicket,
         queue: updatedQueue,
       });
@@ -194,7 +195,7 @@ export async function handleUpdateTicket(
   room: PlanningRoom,
   userName: string,
   ticketId: number,
-  updates: Partial<TicketQueueWithVotes>
+  updates: Partial<TicketQueueWithVotes>,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -223,7 +224,7 @@ export async function handleUpdateTicket(
     room.repository.getTicketByTicketKey(updates.ticketId)
   ) {
     room.broadcast({
-      type: 'error',
+      type: "error",
       error: `Ticket ${updates.ticketId} already exists in the queue`,
     });
     return;
@@ -232,7 +233,7 @@ export async function handleUpdateTicket(
   if (updates.ordinal !== undefined) {
     const queue = room.repository.getTicketQueue();
     const conflicting = queue.find(
-      (t) => t.id !== ticketId && t.ordinal === updates.ordinal
+      (t) => t.id !== ticketId && t.ordinal === updates.ordinal,
     );
 
     if (conflicting) {
@@ -256,7 +257,7 @@ export async function handleUpdateTicket(
   });
 
   room.broadcast({
-    type: 'ticketUpdated',
+    type: "ticketUpdated",
     ticket: updatedTicket,
     queue: updatedQueue,
   });
@@ -265,7 +266,7 @@ export async function handleUpdateTicket(
 export async function handleDeleteTicket(
   room: PlanningRoom,
   userName: string,
-  ticketId: number
+  ticketId: number,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -293,7 +294,7 @@ export async function handleDeleteTicket(
   });
 
   room.broadcast({
-    type: 'ticketDeleted',
+    type: "ticketDeleted",
     ticketId,
     queue: updatedQueue,
   });
@@ -302,7 +303,7 @@ export async function handleDeleteTicket(
 export async function handleCompleteTicket(
   room: PlanningRoom,
   userName: string,
-  outcome?: string
+  outcome?: string,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -327,8 +328,14 @@ export async function handleCompleteTicket(
 
   logVotesForTicket(room, currentTicket, roomData);
 
+  if (Object.keys(roomData.votes).length > 0) {
+    postRoundToStats(room, roomData, currentTicket.ticketId).catch((err) =>
+      console.error("Failed to post round stats:", err),
+    );
+  }
+
   room.repository.updateTicket(currentTicket.id, {
-    status: 'completed',
+    status: "completed",
     outcome,
     completedAt: Date.now(),
   });
@@ -344,7 +351,7 @@ export async function handleCompleteTicket(
   const updatedQueue = getQueueWithPrivacy(room, roomData);
 
   room.broadcast({
-    type: 'ticketCompleted',
+    type: "ticketCompleted",
     ticket: nextTicket,
     queue: updatedQueue,
   });

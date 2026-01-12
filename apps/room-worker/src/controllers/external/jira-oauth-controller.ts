@@ -8,6 +8,7 @@ import {
   getRoomStub,
   escapeHtml,
   signState,
+  generateID,
   verifyState,
 } from '@sprintjam/utils';
 import {
@@ -19,7 +20,7 @@ import {
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   }) as unknown as CfResponse;
 }
 
@@ -84,7 +85,7 @@ export async function initiateJiraOAuthController(
     }
 
     const state = await signState(
-      { roomKey, userName, nonce: crypto.randomUUID() },
+      { roomKey, userName, nonce: generateID() },
       env.JIRA_OAUTH_CLIENT_SECRET
     );
 

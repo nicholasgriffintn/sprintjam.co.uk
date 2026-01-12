@@ -40,6 +40,12 @@
       },
     },
   ],
+  "services": [
+    {
+      "binding": "STATS_WORKER",
+      "service": "sprintjam-stats-worker",
+    },
+  ],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
@@ -63,6 +69,12 @@
         ],
       },
       "ratelimits": [],
+      "services": [
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-development",
+        },
+      ],
     },
     "staging": {
       "vars": {
@@ -84,6 +96,12 @@
             "limit": 5,
             "period": 60,
           },
+        },
+      ],
+      "services": [
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-staging",
         },
       ],
     },
