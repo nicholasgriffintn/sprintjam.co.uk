@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   Activity,
   ArrowUpRight,
+  BarChart3,
   Building2,
   CalendarClock,
   CheckCircle2,
@@ -13,9 +14,11 @@ import {
   RefreshCcw,
   Target,
   Trash2,
+  Users,
 } from "lucide-react";
 
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
+import { useTeamVotingStats, useBatchRoomStats } from "@/hooks/useVotingStats";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -69,6 +72,18 @@ export default function WorkspaceScreen() {
   const [teamNameDraft, setTeamNameDraft] = useState("");
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [renameInput, setRenameInput] = useState("");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "stats">(
+    "dashboard",
+  );
+
+  const { stats: teamVotingStats, isLoading: isLoadingTeamStats } =
+    useTeamVotingStats(selectedTeamId);
+
+  const sessionRoomKeys = useMemo(
+    () => sessions.map((s) => s.roomKey),
+    [sessions],
+  );
+  const { stats: batchRoomStats } = useBatchRoomStats(sessionRoomKeys);
 
   const selectedTeam = useMemo(
     () => teams.find((team) => team.id === selectedTeamId) ?? null,
@@ -237,10 +252,10 @@ export default function WorkspaceScreen() {
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
-                Dashboard <BetaBadge />
+                Workspace <BetaBadge />
               </h1>
               <p className="text-slate-600 dark:text-slate-300">
-                Manage your teams and planning sessions
+                Manage your teams, sessions, and view stats
               </p>
             </div>
             <Button
@@ -252,6 +267,35 @@ export default function WorkspaceScreen() {
             >
               Refresh
             </Button>
+          </div>
+
+          <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveTab("dashboard")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
+                activeTab === "dashboard"
+                  ? "border-b-2 border-brand-500 text-brand-600 dark:text-brand-400"
+                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200",
+              )}
+            >
+              <Building2 className="h-4 w-4" />
+              Dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("stats")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors",
+                activeTab === "stats"
+                  ? "border-b-2 border-brand-500 text-brand-600 dark:text-brand-400"
+                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200",
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Stats
+            </button>
           </div>
 
           {error && (
@@ -272,212 +316,413 @@ export default function WorkspaceScreen() {
 
           {actionError && <Alert variant="warning">{actionError}</Alert>}
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {statCards.map((stat) => (
-              <SurfaceCard
-                key={stat.label}
-                variant="subtle"
-                className="flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
-                    {stat.label}
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                    {stat.value ?? "—"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/70 p-2 dark:bg-slate-900/40">
-                  {stat.icon}
-                </div>
-              </SurfaceCard>
-            ))}
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-[340px_1fr]">
-            <SurfaceCard className="flex flex-col gap-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    Teams
-                  </h2>
-                </div>
-                <Badge variant="primary" size="sm" className="font-semibold">
-                  <Building2 className="mr-1.5 h-3.5 w-3.5" />
-                  {teams.length}
-                </Badge>
-              </div>
-
-              <form onSubmit={handleCreateTeam} className="space-y-3">
-                <Input
-                  label="New team"
-                  placeholder="Product team"
-                  value={newTeamName}
-                  onChange={(event) => setNewTeamName(event.target.value)}
-                  required
-                  fullWidth
-                />
-                <Button
-                  type="submit"
-                  icon={<Plus className="h-4 w-4" />}
-                  isLoading={isMutating}
-                  disabled={!newTeamName.trim()}
-                  fullWidth
-                >
-                  Create team
-                </Button>
-              </form>
-
-              <div className="space-y-2">
-                {teams.length === 0 && (
-                  <EmptyState
-                    title="No teams yet"
-                    description="Create your first team to start linking rooms."
-                  />
-                )}
-                {teams.map((team) => (
-                  <button
-                    key={team.id}
-                    type="button"
-                    onClick={() => setSelectedTeamId(team.id)}
-                    className={cn(
-                      "w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
-                      selectedTeamId === team.id &&
-                        "border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20",
-                    )}
+          {activeTab === "dashboard" && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {statCards.map((stat) => (
+                  <SurfaceCard
+                    key={stat.label}
+                    variant="subtle"
+                    className="flex items-center justify-between"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                          {team.name}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Team ID: {team.id}
-                        </p>
-                      </div>
-                      {selectedTeamId === team.id ? (
-                        <div className="flex flex-col items-end gap-2">
-                          <Badge variant="primary" size="sm">
-                            Selected
-                          </Badge>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            icon={<Pencil className="h-4 w-4" />}
-                            onClick={handleOpenTeamModal}
-                            disabled={!selectedTeam}
-                            size="sm"
-                          >
-                            Edit team
-                          </Button>
-                        </div>
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                      )}
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                        {stat.label}
+                      </p>
+                      <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                        {stat.value ?? "—"}
+                      </p>
                     </div>
-                  </button>
+                    <div className="rounded-2xl bg-white/70 p-2 dark:bg-slate-900/40">
+                      {stat.icon}
+                    </div>
+                  </SurfaceCard>
                 ))}
               </div>
-            </SurfaceCard>
 
-            <SurfaceCard className="flex flex-col gap-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    Sessions
-                  </h2>
-                  {selectedTeam && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Linked to {selectedTeam.name}
-                    </p>
-                  )}
-                </div>
-                <Badge variant="success" size="sm" className="font-semibold">
-                  <Target className="mr-1.5 h-3.5 w-3.5" />
-                  {sessions.length}
-                </Badge>
-              </div>
-
-              {!selectedTeam && (
-                <EmptyState
-                  icon={<Building2 className="h-8 w-8" />}
-                  title="Select a team"
-                  description="Choose a team on the left to see linked sessions."
-                />
-              )}
-
-              {selectedTeam && (
-                <div className="space-y-3">
-                  {isLoadingSessions && (
-                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                      <Spinner size="sm" />
-                      <span>Loading sessions...</span>
+              <div className="grid gap-4 lg:grid-cols-[340px_1fr]">
+                <SurfaceCard className="flex flex-col gap-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                        Teams
+                      </h2>
                     </div>
-                  )}
+                    <Badge
+                      variant="primary"
+                      size="sm"
+                      className="font-semibold"
+                    >
+                      <Building2 className="mr-1.5 h-3.5 w-3.5" />
+                      {teams.length}
+                    </Badge>
+                  </div>
 
-                  {!isLoadingSessions && sessions.length === 0 && (
+                  <form onSubmit={handleCreateTeam} className="space-y-3">
+                    <Input
+                      label="New team"
+                      placeholder="Product team"
+                      value={newTeamName}
+                      onChange={(event) => setNewTeamName(event.target.value)}
+                      required
+                      fullWidth
+                    />
+                    <Button
+                      type="submit"
+                      icon={<Plus className="h-4 w-4" />}
+                      isLoading={isMutating}
+                      disabled={!newTeamName.trim()}
+                      fullWidth
+                    >
+                      Create team
+                    </Button>
+                  </form>
+
+                  <div className="space-y-2">
+                    {teams.length === 0 && (
+                      <EmptyState
+                        title="No teams yet"
+                        description="Create your first team to start linking rooms."
+                      />
+                    )}
+                    {teams.map((team) => (
+                      <button
+                        key={team.id}
+                        type="button"
+                        onClick={() => setSelectedTeamId(team.id)}
+                        className={cn(
+                          "w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
+                          selectedTeamId === team.id &&
+                            "border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                              {team.name}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Team ID: {team.id}
+                            </p>
+                          </div>
+                          {selectedTeamId === team.id ? (
+                            <div className="flex flex-col items-end gap-2">
+                              <Badge variant="primary" size="sm">
+                                Selected
+                              </Badge>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                icon={<Pencil className="h-4 w-4" />}
+                                onClick={handleOpenTeamModal}
+                                disabled={!selectedTeam}
+                                size="sm"
+                              >
+                                Edit team
+                              </Button>
+                            </div>
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </SurfaceCard>
+
+                <SurfaceCard className="flex flex-col gap-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                        Sessions
+                      </h2>
+                      {selectedTeam && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Linked to {selectedTeam.name}
+                        </p>
+                      )}
+                    </div>
+                    <Badge
+                      variant="success"
+                      size="sm"
+                      className="font-semibold"
+                    >
+                      <Target className="mr-1.5 h-3.5 w-3.5" />
+                      {sessions.length}
+                    </Badge>
+                  </div>
+
+                  {!selectedTeam && (
                     <EmptyState
-                      icon={<CalendarClock className="h-8 w-8" />}
-                      title="No sessions linked"
-                      description="Use the 'Save' button in a room to link it to this team."
+                      icon={<Building2 className="h-8 w-8" />}
+                      title="Select a team"
+                      description="Choose a team on the left to see linked sessions."
                     />
                   )}
 
-                  {sessions.map((session) => {
-                    const isComplete = Boolean(session.completedAt);
-                    return (
-                      <SurfaceCard
-                        key={`${session.teamId}-${session.id}`}
-                        variant="subtle"
-                        padding="sm"
-                        className="flex items-start justify-between gap-4"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {selectedTeam && (
+                    <div className="space-y-3">
+                      {isLoadingSessions && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                          <Spinner size="sm" />
+                          <span>Loading sessions...</span>
+                        </div>
+                      )}
+
+                      {!isLoadingSessions && sessions.length === 0 && (
+                        <EmptyState
+                          icon={<CalendarClock className="h-8 w-8" />}
+                          title="No sessions linked"
+                          description="Use the 'Save' button in a room to link it to this team."
+                        />
+                      )}
+
+                      {sessions.map((session) => {
+                        const isComplete = Boolean(session.completedAt);
+                        return (
+                          <SurfaceCard
+                            key={`${session.teamId}-${session.id}`}
+                            variant="subtle"
+                            padding="sm"
+                            className="flex items-start justify-between gap-4"
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                  {session.name}
+                                </p>
+                                <Badge
+                                  variant={isComplete ? "default" : "success"}
+                                  size="sm"
+                                >
+                                  {isComplete ? "Completed" : "Active"}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                <span className="flex items-center gap-1">
+                                  <Target className="h-3.5 w-3.5" />
+                                  Room {session.roomKey}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <CalendarClock className="h-3.5 w-3.5" />
+                                  Created {formatDate(session.createdAt)}
+                                </span>
+                                {session.completedAt && (
+                                  <span className="flex items-center gap-1">
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    Completed {formatDate(session.completedAt)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                icon={<ArrowUpRight className="h-3.5 w-3.5" />}
+                                onClick={() => handleOpenRoom(session.roomKey)}
+                              >
+                                Open room
+                              </Button>
+                            </div>
+                          </SurfaceCard>
+                        );
+                      })}
+                    </div>
+                  )}
+                </SurfaceCard>
+              </div>
+            </>
+          )}
+
+          {activeTab === "stats" && (
+            <div className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <SurfaceCard
+                  variant="subtle"
+                  className="flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                      Total Rounds
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                      {isLoadingTeamStats ? (
+                        <Spinner size="sm" />
+                      ) : (
+                        (teamVotingStats?.totalRounds ?? 0)
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-2 dark:bg-slate-900/40">
+                    <Target className="h-5 w-5 text-brand-500" />
+                  </div>
+                </SurfaceCard>
+
+                <SurfaceCard
+                  variant="subtle"
+                  className="flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                      Avg Participation
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                      {isLoadingTeamStats ? (
+                        <Spinner size="sm" />
+                      ) : (
+                        `${Math.round(teamVotingStats?.avgParticipation ?? 0)}%`
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-2 dark:bg-slate-900/40">
+                    <Users className="h-5 w-5 text-indigo-500" />
+                  </div>
+                </SurfaceCard>
+
+                <SurfaceCard
+                  variant="subtle"
+                  className="flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                      Consensus Rate
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                      {isLoadingTeamStats ? (
+                        <Spinner size="sm" />
+                      ) : (
+                        `${Math.round(teamVotingStats?.consensusRate ?? 0)}%`
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-2 dark:bg-slate-900/40">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  </div>
+                </SurfaceCard>
+
+                <SurfaceCard
+                  variant="subtle"
+                  className="flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                      Team Members
+                    </p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                      {isLoadingTeamStats ? (
+                        <Spinner size="sm" />
+                      ) : (
+                        (teamVotingStats?.totalMembers ?? 0)
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-2 dark:bg-slate-900/40">
+                    <Building2 className="h-5 w-5 text-amber-500" />
+                  </div>
+                </SurfaceCard>
+              </div>
+
+              {!selectedTeamId && (
+                <EmptyState
+                  icon={<Building2 className="h-8 w-8" />}
+                  title="Select a team"
+                  description="Choose a team from the Dashboard tab to view stats."
+                />
+              )}
+
+              {selectedTeamId &&
+                teamVotingStats?.memberStats &&
+                teamVotingStats.memberStats.length > 0 && (
+                  <SurfaceCard>
+                    <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">
+                      Member Stats
+                    </h2>
+                    <div className="space-y-3">
+                      {teamVotingStats.memberStats.map((member) => (
+                        <div
+                          key={member.userName}
+                          className="flex items-center justify-between rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-900/60"
+                        >
+                          <div>
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              {member.userName}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {member.totalVotes} votes
+                            </p>
+                          </div>
+                          <div className="flex gap-4 text-sm">
+                            <div className="text-right">
+                              <p className="text-slate-500 dark:text-slate-400">
+                                Participation
+                              </p>
+                              <p className="font-semibold text-slate-900 dark:text-white">
+                                {Math.round(member.participationRate)}%
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-slate-500 dark:text-slate-400">
+                                Consensus
+                              </p>
+                              <p className="font-semibold text-slate-900 dark:text-white">
+                                {Math.round(member.consensusAlignment)}%
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SurfaceCard>
+                )}
+
+              {selectedTeamId && sessions.length > 0 && (
+                <SurfaceCard>
+                  <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">
+                    Session Stats
+                  </h2>
+                  <div className="space-y-2">
+                    {sessions.map((session) => {
+                      const roomStats = batchRoomStats[session.roomKey];
+                      return (
+                        <div
+                          key={session.id}
+                          className="flex items-center justify-between rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-900/60"
+                        >
+                          <div>
+                            <p className="font-medium text-slate-900 dark:text-white">
                               {session.name}
                             </p>
-                            <Badge
-                              variant={isComplete ? "default" : "success"}
-                              size="sm"
-                            >
-                              {isComplete ? "Completed" : "Active"}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="flex items-center gap-1">
-                              <Target className="h-3.5 w-3.5" />
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                               Room {session.roomKey}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <CalendarClock className="h-3.5 w-3.5" />
-                              Created {formatDate(session.createdAt)}
-                            </span>
-                            {session.completedAt && (
-                              <span className="flex items-center gap-1">
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                Completed {formatDate(session.completedAt)}
-                              </span>
-                            )}
+                            </p>
+                          </div>
+                          <div className="flex gap-4 text-sm">
+                            <div className="text-right">
+                              <p className="text-slate-500 dark:text-slate-400">
+                                Rounds
+                              </p>
+                              <p className="font-semibold text-slate-900 dark:text-white">
+                                {roomStats?.totalRounds ?? 0}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-slate-500 dark:text-slate-400">
+                                Votes
+                              </p>
+                              <p className="font-semibold text-slate-900 dark:text-white">
+                                {roomStats?.totalVotes ?? 0}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            icon={<ArrowUpRight className="h-3.5 w-3.5" />}
-                            onClick={() => handleOpenRoom(session.roomKey)}
-                          >
-                            Open room
-                          </Button>
-                        </div>
-                      </SurfaceCard>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                </SurfaceCard>
               )}
-            </SurfaceCard>
-          </div>
+            </div>
+          )}
         </motion.div>
       </div>
 

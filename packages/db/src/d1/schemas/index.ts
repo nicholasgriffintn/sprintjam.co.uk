@@ -5,3 +5,6 @@ export * from "./teams";
 export * from "./magic-links";
 export * from "./workspace-sessions";
 export * from "./team-sessions";
+export * from "./round-votes";
+export * from "./vote-records";
+export * from "./room-stats";

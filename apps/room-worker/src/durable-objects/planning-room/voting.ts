@@ -1,4 +1,4 @@
-import type { StructuredVote } from '@sprintjam/types';
+import type { StructuredVote } from "@sprintjam/types";
 import {
   isStructuredVote,
   createStructuredVote,
@@ -7,15 +7,15 @@ import {
   getAnonymousUserId,
   ensureTimerState,
   calculateTimerSeconds,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 
-import type { PlanningRoom } from '.';
-import { resetVotingState } from './room-helpers';
+import type { PlanningRoom } from ".";
+import { resetVotingState, postRoundToStats } from "./room-helpers";
 
 export async function handleVote(
   room: PlanningRoom,
   userName: string,
-  vote: string | number | StructuredVote
+  vote: string | number | StructuredVote,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -33,7 +33,7 @@ export async function handleVote(
     !roomData.settings.alwaysRevealVotes
   ) {
     console.warn(
-      `Vote from ${userName} rejected: voting not allowed after reveal`
+      `Vote from ${userName} rejected: voting not allowed after reveal`,
     );
     return;
   }
@@ -44,7 +44,7 @@ export async function handleVote(
   let structuredVotePayload: StructuredVote | null = null;
   if (isStructuredVote(vote)) {
     const structuredVote = createStructuredVote(vote.criteriaScores);
-    const calculatedPoints = structuredVote.calculatedStoryPoints || '?';
+    const calculatedPoints = structuredVote.calculatedStoryPoints || "?";
     finalVote = calculatedPoints;
     if (!roomData.structuredVotes) {
       roomData.structuredVotes = {};
@@ -59,8 +59,8 @@ export async function handleVote(
   if (!validOptions.includes(String(finalVote))) {
     console.warn(
       `Invalid vote ${finalVote} from ${userName}. Valid options: ${validOptions.join(
-        ', '
-      )}`
+        ", ",
+      )}`,
     );
     return;
   }
@@ -80,7 +80,7 @@ export async function handleVote(
       : userName;
 
   room.broadcast({
-    type: 'vote',
+    type: "vote",
     user: broadcastUser,
     vote: finalVote,
     structuredVote: structuredVotePayload,
@@ -106,7 +106,7 @@ export async function handleVote(
         }
         return isStructuredVoteComplete(
           structuredVote.criteriaScores,
-          roomData.settings.votingCriteria
+          roomData.settings.votingCriteria,
         );
       });
       return allVotesComplete;
@@ -119,7 +119,7 @@ export async function handleVote(
     roomData.showVotes = true;
     room.repository.setShowVotes(true);
     room.broadcast({
-      type: 'showVotes',
+      type: "showVotes",
       showVotes: true,
     });
 
@@ -139,7 +139,7 @@ export async function handleVote(
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error("Background Strudel generation failed:", err),
       );
   }
 }
@@ -159,7 +159,7 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
 
   if (roomData.settings.alwaysRevealVotes && roomData.showVotes) {
     console.warn(
-      `Cannot hide votes in always-reveal mode (requested by ${userName})`
+      `Cannot hide votes in always-reveal mode (requested by ${userName})`,
     );
     return;
   }
@@ -171,7 +171,7 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
   room.repository.setShowVotes(roomData.showVotes);
 
   room.broadcast({
-    type: 'showVotes',
+    type: "showVotes",
     showVotes: roomData.showVotes,
   });
 
@@ -188,7 +188,7 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error("Background Strudel generation failed:", err),
       );
   }
 }
@@ -207,11 +207,18 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
   }
 
   const previousPhase = determineRoomPhase(roomData);
+
+  if (Object.keys(roomData.votes).length > 0) {
+    postRoundToStats(room, roomData).catch((err) =>
+      console.error("Failed to post round stats:", err),
+    );
+  }
+
   resetVotingState(room, roomData);
   const newPhase = determineRoomPhase(roomData);
 
   room.broadcast({
-    type: 'resetVotes',
+    type: "resetVotes",
   });
 
   const timerState = ensureTimerState(roomData);
@@ -223,7 +230,7 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
       roundAnchorSeconds: currentSeconds,
     });
     room.broadcast({
-      type: 'timerUpdated',
+      type: "timerUpdated",
       timerState,
     });
   }
@@ -237,7 +244,7 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error("Background Strudel generation failed:", err),
       );
   }
 }
@@ -250,10 +257,10 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
   }
 
   const allVotes = Object.values(roomData.votes).filter((v) => v !== null);
-  const nonScoringVotes = new Set(['?', '❓', 'coffee', '☕', '♾️']);
+  const nonScoringVotes = new Set(["?", "❓", "coffee", "☕", "♾️"]);
   const totalVoteCount = allVotes.length;
   const questionMarkCount = allVotes.filter(
-    (v) => v === '?' || v === '❓'
+    (v) => v === "?" || v === "❓",
   ).length;
 
   const votes = allVotes.filter((v) => !nonScoringVotes.has(String(v)));
@@ -278,7 +285,7 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
     roomData.settings.judgeAlgorithm,
     validOptions,
     totalVoteCount,
-    questionMarkCount
+    questionMarkCount,
   );
 
   roomData.judgeScore = result.score;
@@ -295,7 +302,7 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
   room.repository.setJudgeState(result.score, roomData.judgeMetadata);
 
   room.broadcast({
-    type: 'judgeScoreUpdated',
+    type: "judgeScoreUpdated",
     judgeScore: result.score,
     judgeMetadata: roomData.judgeMetadata,
   });

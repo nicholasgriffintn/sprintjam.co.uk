@@ -10,6 +10,7 @@ import {
   escapeHtml,
   signState,
   verifyState,
+  generateID,
 } from '@sprintjam/utils';
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
@@ -81,7 +82,7 @@ export async function initiateGithubOAuthController(
     }
 
     const state = await signState(
-      { roomKey, userName, nonce: crypto.randomUUID() },
+      { roomKey, userName, nonce: generateID() },
       clientSecret
     );
 
