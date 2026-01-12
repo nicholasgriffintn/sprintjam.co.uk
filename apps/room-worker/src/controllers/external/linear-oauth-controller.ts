@@ -9,6 +9,7 @@ import {
   escapeHtml,
   signState,
   verifyState,
+  generateID,
 } from '@sprintjam/utils';
 import { getLinearOrganization, getLinearViewer } from '@sprintjam/services';
 
@@ -80,7 +81,7 @@ export async function initiateLinearOAuthController(
     }
 
     const state = await signState(
-      { roomKey, userName, nonce: crypto.randomUUID() },
+      { roomKey, userName, nonce: generateID() },
       env.LINEAR_OAUTH_CLIENT_SECRET
     );
 

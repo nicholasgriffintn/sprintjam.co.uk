@@ -26,6 +26,10 @@
       "binding": "AUTH_WORKER",
       "service": "sprintjam-auth-worker",
     },
+    {
+      "binding": "STATS_WORKER",
+      "service": "sprintjam-stats-worker",
+    },
   ],
   "assets": {
     "binding": "ASSETS",
@@ -63,6 +67,10 @@
           "binding": "AUTH_WORKER",
           "service": "sprintjam-auth-worker-development",
         },
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-development",
+        },
       ],
       "migrations": [],
     },
@@ -85,6 +93,10 @@
         {
           "binding": "AUTH_WORKER",
           "service": "sprintjam-auth-worker-staging",
+        },
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-staging",
         },
       ],
     },

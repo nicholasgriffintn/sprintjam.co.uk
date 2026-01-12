@@ -15,6 +15,13 @@
       "when": 1767898035212,
       "tag": "0001_nice_white_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1768182260881,
+      "tag": "0002_wandering_johnny_storm",
+      "breakpoints": true
     }
   ]
 }
