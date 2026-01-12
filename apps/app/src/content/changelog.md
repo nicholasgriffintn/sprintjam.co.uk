@@ -1,3 +1,9 @@
+## V2.3
+
+- Added a new Complete Session modal that can be opened at the end of a session, this displays a summary of the session including the tickets that are still pending and the completed tickets with their assigned story points.
+  - A save button displays here so that users can save the session data to their workspace for future reference. (In the future, once workspaces are out of beta, this will just happen when you complete a session, rather than requiring two actions).
+  - TODO: This modal should be expanded to ensure that stats are saved for sessions that use the ticket queue and ones that don't. On session completion, the room will be closed and it will show the stats instead of the voting interface.
+
 ## V2.2
 
 - Improved the rendering of the header and the layout so that it adapts better between navigation for a more unified experience.

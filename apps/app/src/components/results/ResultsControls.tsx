@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowRightCircle,
   BarChart3,
+  CheckCircle2,
   Eye,
   EyeOff,
   RotateCcw,
@@ -25,6 +26,7 @@ export function ResultsControls({
   onNextTicket,
   onRevisitLater,
   onOpenResultsSettings,
+  onCompleteSession,
 }: {
   roomData: RoomData;
   isModeratorView: boolean;
@@ -34,6 +36,7 @@ export function ResultsControls({
   onNextTicket: () => void;
   onRevisitLater?: () => void;
   onOpenResultsSettings?: () => void;
+  onCompleteSession?: () => void;
 }) {
   const voteToggleLabel = roomData.showVotes ? "Hide Votes" : "Show Votes";
   const voteToggleClasses = roomData.showVotes
@@ -136,6 +139,22 @@ export function ResultsControls({
               </span>
             </MotionButton>
           )}
+        {onCompleteSession && (
+          <MotionButton
+            type="button"
+            variant="unstyled"
+            data-testid="complete-session-button"
+            onClick={onCompleteSession}
+            className={`${buttonBase} bg-slate-200 text-slate-900 shadow-slate-500/20 hover:bg-slate-300 focus-visible:ring-slate-300/70 focus-visible:ring-offset-slate-200 dark:bg-slate-700/70 dark:text-slate-100 dark:hover:bg-slate-700`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <span className="relative flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Complete Session</span>
+            </span>
+          </MotionButton>
+        )}
       </div>
     </div>
   );

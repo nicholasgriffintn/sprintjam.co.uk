@@ -1,17 +1,15 @@
-import { FC, useMemo, useState } from "react";
+import { FC } from "react";
 
 import type { TicketQueueItem } from "@/types";
 import { Modal } from "@/components/ui/Modal";
-import { TicketQueueModalControls } from "./Controls";
-import { TicketQueueModalQueueTab } from "./tabs/Queue";
-import { TicketQueueModalCompletedTab } from "./tabs/Completed";
+import { TicketQueueModalContent } from "./Content";
 
 interface TicketQueueModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentTicket?: TicketQueueItem;
   queue: TicketQueueItem[];
-  externalService: "none" | "jira" | "linear" | "github";
+  externalService: 'none' | 'jira' | 'linear' | 'github';
   roomKey: string;
   userName: string;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
@@ -37,51 +35,23 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   canManageQueue,
   onError,
 }) => {
-  const [activeTab, setActiveTab] = useState<"queue" | "history">("queue");
-
-  const completedTickets = useMemo(
-    () => queue.filter((t) => t.status === "completed"),
-    [queue],
-  );
-  const pendingTickets = useMemo(
-    () => queue.filter((t) => t.status === "pending"),
-    [queue],
-  );
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Ticket Queue" size="lg">
-      <div className="space-y-6">
-        <TicketQueueModalControls
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          completedTickets={completedTickets}
-        />
-
-        {activeTab === "queue" ? (
-          <TicketQueueModalQueueTab
-            currentTicket={currentTicket}
-            externalService={externalService}
-            onAddTicket={onAddTicket}
-            onUpdateTicket={onUpdateTicket}
-            onDeleteTicket={onDeleteTicket}
-            onSelectTicket={onSelectTicket}
-            roomKey={roomKey}
-            userName={userName}
-            canManageQueue={canManageQueue}
-            pendingTickets={pendingTickets}
-            queue={queue}
-            onError={onError}
-          />
-        ) : (
-          <TicketQueueModalCompletedTab
-            completedTickets={completedTickets}
-            roomKey={roomKey}
-            userName={userName}
-            onError={onError}
-            onUpdateTicket={onUpdateTicket}
-          />
-        )}
-      </div>
+      <TicketQueueModalContent
+        currentTicket={currentTicket}
+        queue={queue}
+        externalService={externalService}
+        roomKey={roomKey}
+        userName={userName}
+        onAddTicket={onAddTicket}
+        onUpdateTicket={onUpdateTicket}
+        onDeleteTicket={onDeleteTicket}
+        onSelectTicket={onSelectTicket}
+        canManageQueue={canManageQueue}
+        initialTab="queue"
+        onError={onError}
+      />
     </Modal>
   );
 };

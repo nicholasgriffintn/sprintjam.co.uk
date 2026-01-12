@@ -1,10 +1,9 @@
 import type { FC } from 'react';
 import { motion } from 'framer-motion';
-import { Share2, Settings, LogOut, Building2 } from 'lucide-react';
+import { Share2, Settings, LogOut } from 'lucide-react';
 
 import { useRoomActions, useRoomState } from '@/context/RoomContext';
 import { useRoomHeaderOptional } from '@/context/RoomHeaderContext';
-import { isWorkspacesEnabled } from '@/utils/feature-flags';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
 import { HeaderLogo } from '../HeaderLogo';
@@ -23,10 +22,7 @@ export const RoomHeader: FC = () => {
     return null;
   }
 
-  const { setIsShareModalOpen, openSettings, setIsSaveToWorkspaceOpen } =
-    roomHeader;
-
-  const showSaveToWorkspace = isWorkspacesEnabled();
+  const { setIsShareModalOpen, openSettings } = roomHeader;
 
   return (
     <>
@@ -72,21 +68,6 @@ export const RoomHeader: FC = () => {
         transition={HEADER_TRANSITION}
       >
         <DarkModeToggle />
-        {showSaveToWorkspace && (
-          <Button
-            type="button"
-            variant="unstyled"
-            onClick={() => setIsSaveToWorkspaceOpen(true)}
-            aria-label="Save to workspace"
-            className={cn(
-              'flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100',
-              'md:w-auto md:min-w-[3rem] md:gap-2 md:px-4'
-            )}
-          >
-            <Building2 className="h-4 w-4" />
-            <span className="hidden text-sm font-semibold md:inline">Save</span>
-          </Button>
-        )}
         {isModeratorView && (
           <Button
             type="button"

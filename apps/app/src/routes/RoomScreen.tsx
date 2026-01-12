@@ -30,7 +30,9 @@ import { Footer } from "@/components/layout/Footer";
 import ShareRoomModal from "@/components/modals/ShareRoomModal";
 import SettingsModal from "@/components/modals/SettingsModal";
 import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
+import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
+import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import type { ConnectionStatusState } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 
@@ -74,6 +76,7 @@ const RoomScreen = () => {
   const isSpectator = roomData?.spectators?.includes(name) ?? false;
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [isCompleteSessionOpen, setIsCompleteSessionOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
@@ -105,6 +108,9 @@ const RoomScreen = () => {
 
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? true;
   const queueProvider = roomData.settings.externalService || "none";
+  const canManageQueue =
+    isModeratorView || roomData.settings.allowOthersToManageQueue === true;
+  const showSaveToWorkspace = isWorkspacesEnabled();
 
   const { isQueueSetupModalOpen, setIsQueueSetupModalOpen } =
     useDisplayQueueSetup({
@@ -193,6 +199,9 @@ const RoomScreen = () => {
               onToggleShowVotes={handleToggleShowVotes}
               onResetVotes={handleResetVotes}
               onNextTicket={() => setIsSummaryOpen(true)}
+              onCompleteSession={
+                canManageQueue ? () => setIsCompleteSessionOpen(true) : undefined
+              }
               onOpenResultsSettings={
                 isModeratorView
                   ? () => handleOpenSettings("results")
@@ -312,26 +321,39 @@ const RoomScreen = () => {
         )}
       </AnimatePresence>
 
-      {isQueueEnabled && (
-        <TicketQueueModal
-          isOpen={isQueueModalOpen}
-          onClose={() => setIsQueueModalOpen(false)}
-          currentTicket={roomData.currentTicket}
-          queue={roomData.ticketQueue || []}
-          externalService={roomData.settings.externalService || "none"}
-          roomKey={roomData.key}
-          userName={name}
-          onAddTicket={handleAddTicket}
-          onUpdateTicket={handleUpdateTicket}
-          onDeleteTicket={handleDeleteTicket}
-          onSelectTicket={handleSelectTicket}
-          canManageQueue={
-            isModeratorView ||
-            roomData.settings.allowOthersToManageQueue === true
-          }
-          onError={reportRoomError}
-        />
-      )}
+      <TicketQueueModal
+        isOpen={isQueueModalOpen}
+        onClose={() => setIsQueueModalOpen(false)}
+        currentTicket={roomData.currentTicket}
+        queue={roomData.ticketQueue || []}
+        externalService={roomData.settings.externalService || "none"}
+        roomKey={roomData.key}
+        userName={name}
+        onAddTicket={handleAddTicket}
+        onUpdateTicket={handleUpdateTicket}
+        onDeleteTicket={handleDeleteTicket}
+        onSelectTicket={handleSelectTicket}
+        canManageQueue={canManageQueue}
+        onError={reportRoomError}
+      />
+
+      <CompleteSessionModal
+        isOpen={isCompleteSessionOpen}
+        onClose={() => setIsCompleteSessionOpen(false)}
+        isQueueEnabled={isQueueEnabled}
+        currentTicket={roomData.currentTicket}
+        queue={roomData.ticketQueue || []}
+        externalService={roomData.settings.externalService || "none"}
+        roomKey={roomData.key}
+        userName={name}
+        onAddTicket={handleAddTicket}
+        onUpdateTicket={handleUpdateTicket}
+        onDeleteTicket={handleDeleteTicket}
+        canManageQueue={false}
+        onSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
+        showSaveToWorkspace={showSaveToWorkspace}
+        onError={reportRoomError}
+      />
 
       {isQueueEnabled && queueProvider !== "none" && (
         <QueueProviderSetupModal
