@@ -9,6 +9,7 @@ import {
   escapeHtml,
   signState,
   verifyState,
+  generateID,
 } from '@sprintjam/utils';
 import {
   fetchJiraFields,
@@ -84,7 +85,7 @@ export async function initiateJiraOAuthController(
     }
 
     const state = await signState(
-      { roomKey, userName, nonce: crypto.randomUUID() },
+      { roomKey, userName, nonce: generateID() },
       env.JIRA_OAUTH_CLIENT_SECRET
     );
 
