@@ -50,6 +50,7 @@ import {
   handleResetTimer as handleResetTimerHandler,
   handleStartTimer as handleStartTimerHandler,
 } from './timer';
+import { handleCompleteSession as handleCompleteSessionHandler } from './status';
 import { readRoomData } from './room-helpers';
 
 export class PlanningRoom implements PlanningRoomHttpContext {
@@ -252,6 +253,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       users: broadcastRoomData?.users ?? [],
       spectators: broadcastRoomData?.spectators ?? [],
     });
+  }
+
+  async handleCompleteSession(userName: string) {
+    return handleCompleteSessionHandler(this, userName);
   }
 
   broadcast(message: BroadcastMessage) {

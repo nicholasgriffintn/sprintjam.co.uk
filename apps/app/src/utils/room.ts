@@ -208,6 +208,16 @@ export function applyRoomUpdate(
       };
     }
 
+    case "roomStatusUpdated": {
+      if (!message.status || message.status === prev.status) {
+        return prev;
+      }
+      return {
+        ...prev,
+        status: message.status,
+      };
+    }
+
     case "judgeScoreUpdated": {
       const newScore = message.judgeScore ?? null;
       const newMetadata = message.judgeMetadata ?? undefined;

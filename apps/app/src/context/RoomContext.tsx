@@ -24,6 +24,7 @@ import {
   addTicket,
   updateTicket,
   deleteTicket,
+  completeSession,
 } from "@/lib/api-service";
 import {
   applyRoomMessageToCollections,
@@ -99,6 +100,7 @@ interface RoomActionsContextValue {
     updates: Partial<TicketQueueItem>,
   ) => Promise<void>;
   handleDeleteTicket: (ticketId: number) => Promise<void>;
+  handleCompleteSession: () => void;
   retryConnection: () => void;
 }
 
@@ -471,6 +473,9 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   const handleVote = useCallback(
     (value: VoteValue | StructuredVote) => {
+      if (roomData?.status === "completed") {
+        return;
+      }
       const previousVote = userVote;
       setUserVote(value);
 
@@ -481,11 +486,15 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         assignRoomError(err, "Failed to submit vote");
       }
     },
-    [assignRoomError, userVote],
+    [assignRoomError, roomData, userVote],
   );
 
   const handleResetVotes = useCallback(() => {
     if (!roomData) {
+      return;
+    }
+
+    if (roomData.status === "completed") {
       return;
     }
 
@@ -521,6 +530,10 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    if (roomData.status === "completed") {
+      return;
+    }
+
     if (
       roomData.moderator !== name &&
       !roomData.settings.allowOthersToShowEstimates
@@ -545,13 +558,17 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      if (roomData?.status === "completed") {
+        return;
+      }
+
       try {
         updateSettings(settings);
       } catch (err: unknown) {
         assignRoomError(err, "Failed to update settings");
       }
     },
-    [assignRoomError, isModeratorView],
+    [assignRoomError, isModeratorView, roomData],
   );
 
   const handleLeaveRoom = useCallback(() => {
@@ -581,55 +598,95 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   const handleSelectTicket = useCallback(
     (ticketId: number) => {
+      if (roomData?.status === "completed") {
+        return;
+      }
       try {
         selectTicket(ticketId);
       } catch (err: unknown) {
         assignRoomError(err, "Failed to select ticket");
       }
     },
-    [assignRoomError],
+    [assignRoomError, roomData],
   );
 
   const handleNextTicket = useCallback(() => {
+    if (roomData?.status === "completed") {
+      return;
+    }
     try {
       nextTicket();
     } catch (err: unknown) {
       assignRoomError(err, "Failed to move to next ticket");
     }
-  }, [assignRoomError]);
+  }, [assignRoomError, roomData]);
 
   const handleAddTicket = useCallback(
     async (ticket: Partial<TicketQueueItem>) => {
+      if (roomData?.status === "completed") {
+        return;
+      }
       try {
         await addTicket(ticket);
       } catch (err: unknown) {
         assignRoomError(err, "Failed to add ticket");
       }
     },
-    [assignRoomError],
+    [assignRoomError, roomData],
   );
 
   const handleUpdateTicket = useCallback(
     async (ticketId: number, updates: Partial<TicketQueueItem>) => {
+      if (roomData?.status === "completed") {
+        return;
+      }
       try {
         await updateTicket(ticketId, updates);
       } catch (err: unknown) {
         assignRoomError(err, "Failed to update ticket");
       }
     },
-    [assignRoomError],
+    [assignRoomError, roomData],
   );
 
   const handleDeleteTicket = useCallback(
     async (ticketId: number) => {
+      if (roomData?.status === "completed") {
+        return;
+      }
       try {
         await deleteTicket(ticketId);
       } catch (err: unknown) {
         assignRoomError(err, "Failed to delete ticket");
       }
     },
-    [assignRoomError],
+    [assignRoomError, roomData],
   );
+
+  const handleCompleteSession = useCallback(() => {
+    if (!roomData) {
+      return;
+    }
+
+    if (roomData.status === "completed") {
+      return;
+    }
+
+    if (
+      roomData.moderator !== name &&
+      !roomData.settings.allowOthersToManageQueue
+    ) {
+      setRoomError("You don't have permission to complete the session.");
+      setRoomErrorKind("permission");
+      return;
+    }
+
+    try {
+      completeSession();
+    } catch (err: unknown) {
+      assignRoomError(err, "Failed to complete session");
+    }
+  }, [assignRoomError, name, roomData]);
 
   const retryConnection = useCallback(() => {
     setConnectionIssue((current) =>
@@ -701,11 +758,13 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleAddTicket,
       handleUpdateTicket,
       handleDeleteTicket,
+      handleCompleteSession,
       retryConnection,
     }),
     [
       clearRoomError,
       handleAddTicket,
+      handleCompleteSession,
       handleCreateRoom,
       handleDeleteTicket,
       handleJoinRoom,

@@ -101,6 +101,8 @@ export function validateClientMessage(
         return { type: 'toggleSpectator', isSpectator: data.isSpectator };
       }
       return { error: 'toggleSpectator payload invalid' };
+    case 'completeSession':
+      return { type: 'completeSession' };
     case 'ping':
       return { type: 'ping' };
     default:

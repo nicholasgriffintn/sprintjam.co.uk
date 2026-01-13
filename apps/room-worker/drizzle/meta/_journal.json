@@ -8,6 +8,13 @@
       "when": 1767558551959,
       "tag": "0000_cold_squirrel_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1768279561897,
+      "tag": "0001_luxuriant_medusa",
+      "breakpoints": true
     }
   ]
 }

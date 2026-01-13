@@ -274,6 +274,8 @@ export interface TimerState {
   autoResetOnVotesReset?: boolean;
 }
 
+export type RoomStatus = "active" | "completed";
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -286,6 +288,7 @@ export interface RoomData {
   createdAt?: string;
   lastActivity?: string;
   settings: RoomSettings;
+  status?: RoomStatus;
   judgeScore: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
   userAvatars?: Record<string, AvatarId>;
@@ -315,6 +318,7 @@ export type WebSocketMessageType =
   | "resetVotes"
   | "newModerator"
   | "settingsUpdated"
+  | "roomStatusUpdated"
   | "judgeScoreUpdated"
   | "error"
   | "disconnected"
@@ -370,6 +374,9 @@ interface WebSocketPayloads {
   };
   settingsUpdated: {
     settings: RoomSettings;
+  };
+  roomStatusUpdated: {
+    status: RoomStatus;
   };
   judgeScoreUpdated: {
     judgeScore?: VoteValue | null;
