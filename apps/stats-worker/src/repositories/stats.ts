@@ -68,8 +68,9 @@ export class StatsRepository {
   async ingestRound(data: RoundIngestData): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
 
-    await this.db.batch([
-      this.db.insert(roundVotes).values({
+    const inserted = await this.db
+      .insert(roundVotes)
+      .values({
         roomKey: data.roomKey,
         roundId: data.roundId,
         ticketId: data.ticketId ?? null,
@@ -79,23 +80,30 @@ export class StatsRepository {
           : null,
         roundEndedAt: data.roundEndedAt,
         createdAt: now,
-      }),
-      ...(data.votes.length > 0
-        ? [
-            this.db.insert(voteRecords).values(
-              data.votes.map((v) => ({
-                roundId: data.roundId,
-                userName: v.userName,
-                vote: v.vote,
-                structuredVotePayload: v.structuredVote
-                  ? JSON.stringify(v.structuredVote)
-                  : null,
-                votedAt: v.votedAt,
-              })),
-            ),
-          ]
-        : []),
-    ]);
+      })
+      .onConflictDoNothing()
+      .returning({ roundId: roundVotes.roundId });
+
+    if (inserted.length === 0) {
+      return;
+    }
+
+    if (data.votes.length > 0) {
+      await this.db
+        .insert(voteRecords)
+        .values(
+          data.votes.map((v) => ({
+            roundId: data.roundId,
+            userName: v.userName,
+            vote: v.vote,
+            structuredVotePayload: v.structuredVote
+              ? JSON.stringify(v.structuredVote)
+              : null,
+            votedAt: v.votedAt,
+          })),
+        )
+        .onConflictDoNothing();
+    }
 
     await this.updateRoomStats(data.roomKey, data.votes.length);
   }

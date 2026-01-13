@@ -37,19 +37,19 @@ async function handleRequest(
     }
 
     if (path === "ingest/round" && request.method === "POST") {
-      return ingestRoundController(request, env);
+      return await ingestRoundController(request, env);
     }
 
     const roomStatsMatch = path.match(/^stats\/room\/([^/]+)$/);
     if (roomStatsMatch && request.method === "GET") {
-      return getRoomStatsController(request, env, roomStatsMatch[1]);
+      return await getRoomStatsController(request, env, roomStatsMatch[1]);
     }
 
     const userRoomStatsMatch = path.match(
       /^stats\/room\/([^/]+)\/user\/([^/]+)$/,
     );
     if (userRoomStatsMatch && request.method === "GET") {
-      return getUserRoomStatsController(
+      return await getUserRoomStatsController(
         request,
         env,
         userRoomStatsMatch[1],
@@ -58,12 +58,12 @@ async function handleRequest(
     }
 
     if (path === "stats/rooms" && request.method === "GET") {
-      return getBatchRoomStatsController(request, env);
+      return await getBatchRoomStatsController(request, env);
     }
 
     const teamStatsMatch = path.match(/^stats\/team\/(\d+)$/);
     if (teamStatsMatch && request.method === "GET") {
-      return getTeamStatsController(
+      return await getTeamStatsController(
         request,
         env,
         parseInt(teamStatsMatch[1], 10),
