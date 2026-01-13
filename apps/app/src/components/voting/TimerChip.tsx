@@ -15,7 +15,6 @@ import {
 import type { WebSocketMessage } from "@/types";
 import { formatTime } from "@/utils/time";
 import {
-  calculateCurrentSeconds,
   calculateRemainingSeconds,
   getTargetDurationSeconds,
 } from "@/utils/timer";
@@ -35,17 +34,29 @@ export function TimerChip() {
 
   const mode = "stopwatch";
 
+  const lastSyncRef = useRef<{ seconds: number; time: number } | null>(null);
+
   useEffect(() => {
-    const currentSeconds = calculateCurrentSeconds(roomData?.timerState);
-    setLocalSeconds(currentSeconds);
-  }, [roomData?.timerState]);
+    const timerState = roomData?.timerState;
+    if (!timerState) {
+      setLocalSeconds(0);
+      lastSyncRef.current = null;
+      return;
+    }
+
+    setLocalSeconds(timerState.seconds);
+    lastSyncRef.current = { seconds: timerState.seconds, time: Date.now() };
+  }, [roomData?.timerState?.seconds, roomData?.timerState?.running]);
 
   useEffect(() => {
     if (roomData?.timerState?.running) {
       timerRef.current = setInterval(() => {
-        setLocalSeconds((prev) => {
-          return prev + 1;
-        });
+        if (lastSyncRef.current) {
+          const elapsedSinceSync = Math.floor(
+            (Date.now() - lastSyncRef.current.time) / 1000,
+          );
+          setLocalSeconds(lastSyncRef.current.seconds + elapsedSinceSync);
+        }
       }, 1000);
     } else if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -56,7 +67,7 @@ export function TimerChip() {
         clearInterval(timerRef.current);
       }
     };
-  }, [roomData?.timerState?.running, mode]);
+  }, [roomData?.timerState?.running]);
 
   useEffect(() => {
     if (localSeconds > 0) {
@@ -67,8 +78,9 @@ export function TimerChip() {
   useEffect(() => {
     const handleTimerUpdate = (message: WebSocketMessage) => {
       if ("timerState" in message && message.timerState) {
-        const currentSeconds = calculateCurrentSeconds(message.timerState);
-        setLocalSeconds(currentSeconds);
+        const timerState = message.timerState;
+        setLocalSeconds(timerState.seconds);
+        lastSyncRef.current = { seconds: timerState.seconds, time: Date.now() };
         setHasPlayed(false);
       }
     };
@@ -163,7 +175,6 @@ export function TimerChip() {
       configureTimer({
         resetCountdown: true,
       });
-      startTimer();
     } catch (error) {
       console.error("Failed to reset timer:", error);
     }
@@ -231,16 +242,16 @@ export function TimerChip() {
         variant="unstyled"
         onClick={handleChipClick}
         className={`px-3 py-1.5 rounded-full border text-sm ${chipClass} ${textClass} ${
-          isModeratorView ? 'hover:opacity-80' : ''
+          isModeratorView ? "hover:opacity-80" : ""
         }`}
         aria-label={`Timer: elapsed ${displayElapsed}, ${displayRemaining} left, ${
-          timerRunning ? 'Running' : 'Paused'
+          timerRunning ? "Running" : "Paused"
         }`}
         aria-haspopup={isModeratorView}
         aria-expanded={showControls}
         cursor={isModeratorView ? "pointer" : "default"}
       >
-        {mode === 'stopwatch' ? (
+        {mode === "stopwatch" ? (
           <Clock className="w-4 h-4" />
         ) : (
           <Hourglass className="w-4 h-4" />
@@ -267,11 +278,11 @@ export function TimerChip() {
                   onClick={handleToggleTimer}
                   variant="unstyled"
                   className="flex-1 rounded bg-blue-500 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-600"
-                  aria-label={timerRunning ? 'Pause timer' : 'Start timer'}
+                  aria-label={timerRunning ? "Pause timer" : "Start timer"}
                   aria-pressed={timerRunning}
                   role="menuitem"
                 >
-                  {timerRunning ? 'Pause' : 'Start'}
+                  {timerRunning ? "Pause" : "Start"}
                 </Button>
               </div>
 
@@ -299,8 +310,8 @@ export function TimerChip() {
                         variant="unstyled"
                         className={`rounded-full border px-2 py-1 text-xs ${
                           isActive
-                            ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-blue-400'
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-blue-400"
                         }`}
                         type="button"
                       >
@@ -310,7 +321,7 @@ export function TimerChip() {
                   })}
                 </div>
                 <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                  Reset restarts the countdown for{' '}
+                  Reset restarts the countdown for{" "}
                   {formatTime(targetDurationSeconds)}.
                 </p>
               </div>
