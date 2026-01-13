@@ -36,7 +36,7 @@
     "@tanstack/react-query-devtools": "5.91.2",
     "canvas-confetti": "1.9.4",
     "framer-motion": "12.23.26",
-    "lucide-react": "0.545.0",
+    "lucide-react": "0.562.0",
     "qrcode.react": "4.2.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
