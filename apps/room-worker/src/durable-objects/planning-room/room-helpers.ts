@@ -136,7 +136,10 @@ export async function postRoundToStats(
     roundId,
     ticketId,
     votes,
-    judgeScore: roomData.judgeScore ? String(roomData.judgeScore) : undefined,
+    judgeScore:
+      roomData.judgeScore === null || roomData.judgeScore === undefined
+        ? undefined
+        : String(roomData.judgeScore),
     judgeMetadata: roomData.judgeMetadata,
     roundEndedAt: now,
   });

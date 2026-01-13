@@ -15,7 +15,14 @@ const samplePayload: RoundStatsPayload = {
     },
   ],
   judgeScore: "5",
-  judgeMetadata: { consensus: true, max: 8, min: 3, totalVotes: 4 },
+  judgeMetadata: {
+    confidence: "high",
+    needsDiscussion: false,
+    reasoning: "Consensus reached.",
+    algorithm: "smartConsensus",
+    numericVoteCount: 4,
+    totalVoteCount: 4,
+  },
   roundEndedAt: 1700000001000,
 };
 
