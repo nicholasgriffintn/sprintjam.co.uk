@@ -1,0 +1,56 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sprintjam-stats-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-07-15",
+  "workers_dev": false,
+  "preview_urls": false,
+  "placement": {
+    "mode": "smart",
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sprintjam-workspaces",
+      "database_id": "683f5126-8f0f-492d-80a4-bea41ebce1ab",
+    },
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false,
+    },
+  },
+  "env": {
+    "development": {
+      "vars": {
+        "ENVIRONMENT": "development",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sprintjam-workspaces-staging",
+          "database_id": "2f17f84f-02ad-4548-9b66-a9bfa1c54186",
+        },
+      ],
+    },
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging",
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sprintjam-workspaces-staging",
+          "database_id": "2f17f84f-02ad-4548-9b66-a9bfa1c54186",
+        },
+      ],
+    },
+  },
+}

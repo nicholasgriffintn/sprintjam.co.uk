@@ -20,6 +20,7 @@ export interface DispatchWorkerEnv extends BaseEnv {
   ASSETS: Fetcher;
   ROOM_WORKER: Fetcher;
   AUTH_WORKER: Fetcher;
+  STATS_WORKER: Fetcher;
 }
 
 /**
@@ -40,6 +41,8 @@ export interface RoomWorkerEnv extends BaseEnv {
   GITHUB_OAUTH_REDIRECT_URI?: string;
   FEEDBACK_GITHUB_TOKEN?: string;
   POLYCHAT_API_TOKEN?: string;
+  STATS_WORKER: Fetcher;
+  STATS_INGEST_TOKEN?: string;
 }
 
 /**
@@ -50,4 +53,12 @@ export interface AuthWorkerEnv extends BaseEnv {
   RESEND_API_KEY: string;
   ENABLE_MAGIC_LINK_RATE_LIMIT?: string;
   MAGIC_LINK_RATE_LIMITER: RateLimit;
+}
+
+/**
+ * Environment for the stats worker
+ */
+export interface StatsWorkerEnv extends BaseEnv {
+  DB: D1Database;
+  STATS_INGEST_TOKEN: string;
 }

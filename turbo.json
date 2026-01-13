@@ -5,6 +5,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".wrangler/**"]
     },
+    "build:staging": {
+      "dependsOn": ["^build:staging"],
+      "outputs": ["dist/**", ".wrangler/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
@@ -16,6 +20,14 @@
       "outputs": []
     },
     "deploy": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "deploy:staging": {
+      "dependsOn": ["build:staging"],
+      "outputs": []
+    },
+    "deploy:prod": {
       "dependsOn": ["build"],
       "outputs": []
     },

@@ -1,0 +1,30 @@
+{
+  "name": "@sprintjam/stats-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:prod": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "generate:types": "wrangler types --include-runtime=false"
+  },
+  "dependencies": {
+    "@sprintjam/db": "workspace:*",
+    "@sprintjam/types": "workspace:*",
+    "@sprintjam/utils": "workspace:*",
+    "drizzle-orm": "0.45.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260107.1",
+    "@vitest/coverage-v8": "4.0.16",
+    "typescript": "5.9.3",
+    "vitest": "4.0.16",
+    "wrangler": "4.57.0"
+  }
+}
