@@ -11,6 +11,7 @@ import {
 
 import type { RoomData } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { isWorkspacesEnabled } from '@/utils/feature-flags';
 
 const buttonBase =
   ' group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md hover:shadow-lg';
@@ -38,10 +39,12 @@ export function ResultsControls({
   onOpenResultsSettings?: () => void;
   onCompleteSession?: () => void;
 }) {
-  const voteToggleLabel = roomData.showVotes ? "Hide Votes" : "Show Votes";
+  const voteToggleLabel = roomData.showVotes ? 'Hide Votes' : 'Show Votes';
   const voteToggleClasses = roomData.showVotes
     ? `${buttonBase} bg-blue-900 text-white shadow-blue-950/40 hover:bg-blue-950 focus-visible:ring-blue-200/80 focus-visible:ring-offset-slate-900/40 dark:bg-blue-500/40 dark:text-blue-200 dark:hover:bg-blue-500/50`
     : `${buttonBase} bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-200 focus-visible:ring-offset-slate-900/30 dark:bg-blue-500/20 dark:text-blue-200 dark:hover:bg-blue-500/30`;
+
+  const showCompleteButton = isWorkspacesEnabled();
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pb-3 text-gray-900 dark:text-white">
@@ -73,7 +76,7 @@ export function ResultsControls({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               aria-pressed={roomData.showVotes}
-              aria-label={roomData.showVotes ? "Hide votes" : "Show votes"}
+              aria-label={roomData.showVotes ? 'Hide votes' : 'Show votes'}
             >
               <span className="relative flex items-center gap-2">
                 {roomData.showVotes ? (
@@ -139,7 +142,7 @@ export function ResultsControls({
               </span>
             </MotionButton>
           )}
-        {onCompleteSession && (
+        {showCompleteButton && onCompleteSession && (
           <MotionButton
             type="button"
             variant="unstyled"
