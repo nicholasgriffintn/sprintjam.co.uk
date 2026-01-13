@@ -1,25 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Fetcher } from "@cloudflare/workers-types";
+import { JudgeAlgorithm } from '@sprintjam/types';
+
 import { postRoundStats, type RoundStatsPayload } from "./stats-client";
 
 const samplePayload: RoundStatsPayload = {
-  roomKey: "room-123",
-  roundId: "round-456",
-  ticketId: "ticket-789",
+  roomKey: 'room-123',
+  roundId: 'round-456',
+  ticketId: 'ticket-789',
   votes: [
     {
-      userName: "Alex",
-      vote: "5",
+      userName: 'Alex',
+      vote: '5',
       structuredVote: { complexity: 3 },
       votedAt: 1700000000000,
     },
   ],
-  judgeScore: "5",
+  judgeScore: '5',
   judgeMetadata: {
-    confidence: "high",
+    confidence: 'high',
     needsDiscussion: false,
-    reasoning: "Consensus reached.",
-    algorithm: "smartConsensus",
+    reasoning: 'Consensus reached.',
+    algorithm: JudgeAlgorithm.SMART_CONSENSUS,
     numericVoteCount: 4,
     totalVoteCount: 4,
   },
