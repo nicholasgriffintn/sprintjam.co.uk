@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": ["CLOUDFLARE_API_TOKEN"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
