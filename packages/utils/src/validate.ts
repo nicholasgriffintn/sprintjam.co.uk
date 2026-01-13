@@ -60,14 +60,6 @@ export function validateClientMessage(
         return { type: 'deleteTicket', ticketId: data.ticketId };
       }
       return { error: 'Ticket delete payload invalid' };
-    case 'completeTicket':
-      if (
-        typeof data.outcome === 'string' ||
-        typeof data.outcome === 'undefined'
-      ) {
-        return { type: 'completeTicket', outcome: data.outcome };
-      }
-      return { error: 'CompleteTicket outcome must be a string or undefined' };
     case 'startTimer':
       return { type: 'startTimer' };
     case 'pauseTimer':

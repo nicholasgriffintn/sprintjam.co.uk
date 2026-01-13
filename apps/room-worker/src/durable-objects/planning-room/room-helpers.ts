@@ -1,4 +1,5 @@
 import type { RoomData, TicketQueueWithVotes } from '@sprintjam/types';
+import { postRoundStats, generateID } from '@sprintjam/utils';
 
 import type { PlanningRoom } from '.';
 
@@ -111,4 +112,32 @@ export async function readRoomData(
   }
 
   return roomData;
+}
+
+export async function postRoundToStats(
+  room: PlanningRoom,
+  roomData: RoomData,
+  ticketId?: string
+): Promise<void> {
+  if (Object.keys(roomData.votes).length === 0) return;
+
+  const roundId = generateID();
+  const now = Date.now();
+
+  const votes = Object.entries(roomData.votes).map(([user, vote]) => ({
+    userName: user,
+    vote: String(vote),
+    structuredVote: roomData.structuredVotes?.[user],
+    votedAt: now,
+  }));
+
+  await postRoundStats(room.env.STATS_WORKER, room.env.STATS_INGEST_TOKEN, {
+    roomKey: roomData.key,
+    roundId,
+    ticketId,
+    votes,
+    judgeScore: roomData.judgeScore ? String(roomData.judgeScore) : undefined,
+    judgeMetadata: roomData.judgeMetadata,
+    roundEndedAt: now,
+  });
 }

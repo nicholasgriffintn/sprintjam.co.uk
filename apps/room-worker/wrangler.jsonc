@@ -30,6 +30,12 @@
       "new_sqlite_classes": ["PlanningRoom"],
     },
   ],
+  "services": [
+    {
+      "binding": "STATS_WORKER",
+      "service": "sprintjam-stats-worker",
+    },
+  ],
   "ratelimits": [
     {
       "name": "JOIN_RATE_LIMITER",
@@ -62,6 +68,12 @@
           },
         ],
       },
+      "services": [
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-development",
+        },
+      ],
       "ratelimits": [],
     },
     "staging": {
@@ -76,6 +88,12 @@
           },
         ],
       },
+      "services": [
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-staging",
+        },
+      ],
       "ratelimits": [
         {
           "name": "JOIN_RATE_LIMITER",

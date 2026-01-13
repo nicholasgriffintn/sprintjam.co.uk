@@ -39,7 +39,6 @@ import {
 } from './strudel';
 import {
   handleAddTicket as handleAddTicketHandler,
-  handleCompleteTicket as handleCompleteTicketHandler,
   handleDeleteTicket as handleDeleteTicketHandler,
   handleNextTicket as handleNextTicketHandler,
   handleSelectTicket as handleSelectTicketHandler,
@@ -213,10 +212,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleDeleteTicket(userName: string, ticketId: number) {
     return handleDeleteTicketHandler(this, userName, ticketId);
-  }
-
-  async handleCompleteTicket(userName: string, outcome?: string) {
-    return handleCompleteTicketHandler(this, userName, outcome);
   }
 
   async handleStartTimer(userName: string) {

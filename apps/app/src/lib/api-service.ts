@@ -685,19 +685,6 @@ export function deleteTicket(ticketId: number): void {
   );
 }
 
-export function completeTicket(outcome?: string): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "completeTicket",
-      outcome,
-    }),
-  );
-}
-
 export function startTimer(): void {
   if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
     throw new Error("Not connected to room");

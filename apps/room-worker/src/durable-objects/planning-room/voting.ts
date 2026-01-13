@@ -10,7 +10,7 @@ import {
 } from '@sprintjam/utils';
 
 import type { PlanningRoom } from '.';
-import { resetVotingState } from './room-helpers';
+import { resetVotingState, postRoundToStats } from './room-helpers';
 
 export async function handleVote(
   room: PlanningRoom,
@@ -207,6 +207,13 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
   }
 
   const previousPhase = determineRoomPhase(roomData);
+
+  if (Object.keys(roomData.votes).length > 0) {
+    postRoundToStats(room, roomData).catch((err) =>
+      console.error('Failed to post round stats:', err)
+    );
+  }
+
   resetVotingState(room, roomData);
   const newPhase = determineRoomPhase(roomData);
 
