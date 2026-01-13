@@ -156,9 +156,6 @@ export async function handleSession(
         case 'deleteTicket':
           await room.handleDeleteTicket(canonicalUserName, validated.ticketId);
           break;
-        case 'completeTicket':
-          await room.handleCompleteTicket(canonicalUserName, validated.outcome);
-          break;
         case 'startTimer':
           await room.handleStartTimer(canonicalUserName);
           break;

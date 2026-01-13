@@ -41,6 +41,9 @@ export default defineConfig(({ command }) => ({
         {
           configPath: '../auth-worker/wrangler.jsonc',
         },
+        {
+          configPath: '../stats-worker/wrangler.jsonc',
+        },
       ],
       persistState: {
         path: '../../.data',

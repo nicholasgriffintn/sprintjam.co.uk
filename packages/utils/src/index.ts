@@ -20,3 +20,4 @@ export * from './validate';
 export * from './strudel';
 export * from './lib/polychat-client';
 export * from './generate-id';
+export * from './lib/stats-client';

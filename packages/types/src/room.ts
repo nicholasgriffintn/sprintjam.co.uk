@@ -259,7 +259,6 @@ export type ClientMessage =
       updates: Partial<TicketQueueItem>;
     }
   | { type: "deleteTicket"; ticketId: number }
-  | { type: "completeTicket"; outcome?: string }
   | { type: "startTimer" }
   | { type: "pauseTimer" }
   | { type: "resetTimer" }

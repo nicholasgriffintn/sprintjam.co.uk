@@ -7,6 +7,7 @@ import {
   promoteNextPendingTicket,
   resetVotingState,
   shouldAnonymizeVotes,
+  postRoundToStats,
 } from './room-helpers';
 
 export async function handleSelectTicket(
@@ -49,6 +50,12 @@ export async function handleSelectTicket(
 
   const currentTicket = roomData.currentTicket;
   logVotesForTicket(room, currentTicket, roomData);
+
+  if (Object.keys(roomData.votes).length > 0 && currentTicket) {
+    postRoundToStats(room, roomData, currentTicket.ticketId).catch((err) =>
+      console.error('Failed to post round stats:', err)
+    );
+  }
 
   if (currentTicket && currentTicket.status === 'in_progress') {
     room.repository.updateTicket(currentTicket.id, {
@@ -96,6 +103,12 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
   const queue = getQueueWithPrivacy(room, roomData);
 
   logVotesForTicket(room, currentTicket, roomData);
+
+  if (Object.keys(roomData.votes).length > 0 && currentTicket) {
+    postRoundToStats(room, roomData, currentTicket.ticketId).catch((err) =>
+      console.error('Failed to post round stats:', err)
+    );
+  }
 
   if (currentTicket && currentTicket.status === 'in_progress') {
     room.repository.updateTicket(currentTicket.id, {
@@ -295,57 +308,6 @@ export async function handleDeleteTicket(
   room.broadcast({
     type: 'ticketDeleted',
     ticketId,
-    queue: updatedQueue,
-  });
-}
-
-export async function handleCompleteTicket(
-  room: PlanningRoom,
-  userName: string,
-  outcome?: string
-) {
-  const roomData = await room.getRoomData();
-  if (!roomData) {
-    return;
-  }
-
-  if (!roomData.settings.enableTicketQueue) {
-    return;
-  }
-
-  if (
-    roomData.moderator !== userName &&
-    !roomData.settings.allowOthersToManageQueue
-  ) {
-    return;
-  }
-
-  const currentTicket = roomData.currentTicket;
-  if (!currentTicket) {
-    return;
-  }
-
-  logVotesForTicket(room, currentTicket, roomData);
-
-  room.repository.updateTicket(currentTicket.id, {
-    status: 'completed',
-    outcome,
-    completedAt: Date.now(),
-  });
-
-  resetVotingState(room, roomData);
-
-  const queueAfterCompletion = getQueueWithPrivacy(room, roomData);
-  const nextTicket =
-    promoteNextPendingTicket(room, roomData, queueAfterCompletion) || null;
-
-  room.repository.setCurrentTicket(nextTicket ? nextTicket.id : null);
-
-  const updatedQueue = getQueueWithPrivacy(room, roomData);
-
-  room.broadcast({
-    type: 'ticketCompleted',
-    ticket: nextTicket,
     queue: updatedQueue,
   });
 }
