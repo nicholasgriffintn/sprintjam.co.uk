@@ -200,6 +200,7 @@ export class PlanningRoomRepository {
       showVotes: !!row.showVotes,
       moderator: row.moderator,
       connectedUsers,
+      status: row.roomStatus === 'completed' ? 'completed' : 'active',
       judgeScore: parseJudgeScore(row.judgeScore),
       judgeMetadata: row.judgeMetadata
         ? safeJsonParse<JudgeMetadata>(row.judgeMetadata)
@@ -229,6 +230,7 @@ export class PlanningRoomRepository {
         roomKey: roomData.key,
         moderator: roomData.moderator,
         showVotes: roomData.showVotes ? 1 : 0,
+        roomStatus: roomData.status ?? 'active',
         passcode: serializePasscodeHash(roomData.passcodeHash),
         judgeScore:
           roomData.judgeScore === undefined || roomData.judgeScore === null
@@ -377,6 +379,14 @@ export class PlanningRoomRepository {
     this.db
       .update(roomMeta)
       .set({ showVotes: showVotes ? 1 : 0 })
+      .where(eq(roomMeta.id, ROOM_ROW_ID))
+      .run();
+  }
+
+  setRoomStatus(status: 'active' | 'completed') {
+    this.db
+      .update(roomMeta)
+      .set({ roomStatus: status })
       .where(eq(roomMeta.id, ROOM_ROW_ID))
       .run();
   }

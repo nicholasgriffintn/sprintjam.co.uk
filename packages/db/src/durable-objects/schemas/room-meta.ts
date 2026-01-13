@@ -10,6 +10,7 @@ export const roomMeta = sqliteTable('room_meta', {
   roomKey: text('room_key').notNull(),
   moderator: text('moderator').notNull(),
   showVotes: integer('show_votes').notNull().default(0),
+  roomStatus: text('room_status').notNull().default('active'),
   passcode: text('passcode'),
   judgeScore: text('judge_score'),
   judgeMetadata: text('judge_metadata'),

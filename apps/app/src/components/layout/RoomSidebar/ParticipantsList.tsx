@@ -16,6 +16,7 @@ export type ParticipantsListProps = {
   name: string;
   className?: string;
   contentClassName?: string;
+  isCompleted?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   onToggleSpectatorMode?: (isSpectator: boolean) => void;
@@ -117,14 +118,15 @@ ParticipantItem.displayName = "ParticipantItem";
 
 export const ParticipantsList = memo(function ParticipantsList({
   roomData,
-    stats,
-    name,
-    className,
-    contentClassName,
-    isCollapsed,
-    onToggleCollapse,
-    onToggleSpectatorMode,
-  }: ParticipantsListProps) {
+  stats,
+  name,
+  className,
+  contentClassName,
+  isCollapsed,
+  onToggleCollapse,
+  onToggleSpectatorMode,
+  isCompleted,
+}: ParticipantsListProps) {
   const totalParticipants = roomData?.users.length ?? 0;
   const votingProgress = useMemo(() => {
     if (totalParticipants === 0) {
@@ -204,43 +206,47 @@ export const ParticipantsList = memo(function ParticipantsList({
           contentClassName
         )}
       >
-        <div className="space-y-3">
-          <div>
-            <div
-              id={progressLabelId}
-              className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
-            >
-              <span>Voting progress</span>
-              <span id={progressDescriptionId}>
-                {stats.votedUsers}/{totalParticipants}
-              </span>
+        {!isCompleted ? (
+          <div className="space-y-3">
+            <div>
+              <div
+                id={progressLabelId}
+                className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
+              >
+                <span>Voting progress</span>
+                <span id={progressDescriptionId}>
+                  {stats.votedUsers}/{totalParticipants}
+                </span>
+              </div>
+              <HorizontalProgress
+                completed={votingProgress}
+                total={100}
+                role="progressbar"
+                aria-valuenow={votingProgress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-labelledby={progressLabelId}
+                aria-describedby={progressDescriptionId}
+                aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
+                data-testid="voting-progress-bar"
+              />
             </div>
-            <HorizontalProgress
-              completed={votingProgress}
-              total={100}
-              role="progressbar"
-              aria-valuenow={votingProgress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-labelledby={progressLabelId}
-              aria-describedby={progressDescriptionId}
-              aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
-              data-testid="voting-progress-bar"
-            />
+            {onToggleSpectatorMode && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => onToggleSpectatorMode(!isCurrentUserSpectator)}
+                data-testid="toggle-spectator-button"
+              >
+                {isCurrentUserSpectator
+                  ? 'Join as Participant'
+                  : 'Watch as Spectator'}
+              </Button>
+            )}
           </div>
-          {onToggleSpectatorMode && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => onToggleSpectatorMode(!isCurrentUserSpectator)}
-              data-testid="toggle-spectator-button"
-            >
-              {isCurrentUserSpectator ? 'Join as Participant' : 'Watch as Spectator'}
-            </Button>
-          )}
-        </div>
+        ) : null}
         <ul className="space-y-2 pr-1" data-testid="participants-list">
           {roomData?.users.map((user: string, index: number) => (
             <ParticipantItem

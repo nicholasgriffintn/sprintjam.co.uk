@@ -17,11 +17,13 @@ export function RoomSidebar({
   stats,
   setIsQueueModalOpen,
   onOpenQueueSettings,
+  isCompleted,
 }: {
   isQueueEnabled: boolean;
   stats: RoomStats;
   setIsQueueModalOpen: (isOpen: boolean) => void;
   onOpenQueueSettings?: () => void;
+  isCompleted: boolean;
 }) {
   const { roomData, isModeratorView } = useRoomState();
   const { handleUpdateTicket, handleSelectTicket, handleToggleSpectatorMode } =
@@ -34,8 +36,8 @@ export function RoomSidebar({
   const [isDraggingSplit, setIsDraggingSplit] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
 
-  const participantsFlex = isQueueEnabled ? sidebarSplit : 1;
-  const queueFlex = isQueueEnabled ? 1 - sidebarSplit : 0;
+  const participantsFlex = !isCompleted && isQueueEnabled ? sidebarSplit : 1;
+  const queueFlex = !isCompleted && isQueueEnabled ? 1 - sidebarSplit : 0;
 
   const clamp = (value: number, min: number, max: number) =>
     Math.min(max, Math.max(min, value));
@@ -57,16 +59,16 @@ export function RoomSidebar({
       updateSidebarSplit(event.clientY);
     };
     const handleUp = () => setIsDraggingSplit(false);
-    window.addEventListener("pointermove", handleMove);
-    window.addEventListener("pointerup", handleUp);
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
     return () => {
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerup", handleUp);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
     };
   }, [isDraggingSplit]);
 
   const handleSplitPointerDown = (
-    event: ReactPointerEvent<HTMLButtonElement>,
+    event: ReactPointerEvent<HTMLButtonElement>
   ) => {
     event.preventDefault();
     setIsDraggingSplit(true);
@@ -81,11 +83,11 @@ export function RoomSidebar({
       >
         <div
           className={`flex min-w-0 flex-col md:min-h-0 ${
-            isParticipantsCollapsed ? "md:min-h-[54px]" : "md:min-h-[220px]"
+            isParticipantsCollapsed ? 'md:min-h-[54px]' : 'md:min-h-[220px]'
           }`}
           style={{
             flex: isParticipantsCollapsed
-              ? "0 0 auto"
+              ? '0 0 auto'
               : `${participantsFlex} 1 0%`,
           }}
         >
@@ -96,10 +98,11 @@ export function RoomSidebar({
             isCollapsed={isParticipantsCollapsed}
             onToggleCollapse={() => setIsParticipantsCollapsed((prev) => !prev)}
             onToggleSpectatorMode={handleToggleSpectatorMode}
+            isCompleted={isCompleted}
           />
         </div>
 
-        {isQueueEnabled && (
+        {!isCompleted && isQueueEnabled && (
           <>
             <Button
               type="button"
@@ -112,10 +115,10 @@ export function RoomSidebar({
             </Button>
             <div
               className={`flex min-w-0 flex-col md:min-h-0 md:pt-1 ${
-                isQueueCollapsed ? "md:min-h-[54px]" : "md:min-h-[180px]"
+                isQueueCollapsed ? 'md:min-h-[54px]' : 'md:min-h-[180px]'
               }`}
               style={{
-                flex: isQueueCollapsed ? "0 0 auto" : `${queueFlex} 1 0%`,
+                flex: isQueueCollapsed ? '0 0 auto' : `${queueFlex} 1 0%`,
               }}
             >
               <TicketQueueSidebar

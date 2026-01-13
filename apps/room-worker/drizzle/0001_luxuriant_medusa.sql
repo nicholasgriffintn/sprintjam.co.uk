@@ -1,0 +1,1 @@
+ALTER TABLE `room_meta` ADD `room_status` text DEFAULT 'active' NOT NULL;

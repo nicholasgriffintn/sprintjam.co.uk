@@ -203,6 +203,8 @@ export interface TimerState {
   autoResetOnVotesReset?: boolean;
 }
 
+export type RoomStatus = 'active' | 'completed';
+
 export interface PasscodeHashPayload {
   hash: string;
   salt: string;
@@ -221,6 +223,7 @@ export interface RoomData {
   judgeScore?: string | number | null;
   judgeMetadata?: JudgeMetadata;
   settings: RoomSettings;
+  status?: RoomStatus;
   passcodeHash?: PasscodeHashPayload;
   userAvatars?: Record<string, string>;
   currentStrudelCode?: string;
@@ -271,4 +274,5 @@ export type ClientMessage =
       };
     }
   | { type: "toggleSpectator"; isSpectator: boolean }
+  | { type: "completeSession" }
   | { type: "ping" };

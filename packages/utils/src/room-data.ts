@@ -26,10 +26,18 @@ export function normalizeRoomData(roomData: RoomData): RoomData {
     }),
   };
 
+  ensureRoomStatus(normalized);
   ensureConnectedUsers(normalized);
   ensureStructuredVotes(normalized);
 
   return normalized;
+}
+
+export function ensureRoomStatus(roomData: RoomData) {
+  if (!roomData.status) {
+    roomData.status = 'active';
+  }
+  return roomData.status;
 }
 
 export function ensureConnectedUsers(

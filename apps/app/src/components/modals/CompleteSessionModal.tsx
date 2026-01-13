@@ -21,6 +21,7 @@ interface CompleteSessionModalProps {
   canManageQueue: boolean;
   onSaveToWorkspace?: () => void;
   showSaveToWorkspace?: boolean;
+  onCompleteSession?: () => void;
   onError?: (message: string) => void;
 }
 
@@ -40,8 +41,14 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
   canManageQueue,
   onSaveToWorkspace,
   showSaveToWorkspace = false,
+  onCompleteSession,
   onError,
 }) => {
+  const handleComplete = () => {
+    onCompleteSession?.();
+    onClose();
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Complete session" size="lg">
       <div className="space-y-6">
@@ -69,10 +76,7 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
         )}
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
-          <small>
-            Note: At the moment, completing the session only closes this modal,
-            in the future, stats for the room will be displayed.
-          </small>
+          <small>Note: Completing the session locks the room.</small>
           {showSaveToWorkspace && onSaveToWorkspace && (
             <Button
               type="button"
@@ -82,7 +86,7 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
               Save to workspace
             </Button>
           )}
-          <Button type="button" onClick={onClose}>
+          <Button type="button" onClick={handleComplete}>
             Complete session
           </Button>
         </div>

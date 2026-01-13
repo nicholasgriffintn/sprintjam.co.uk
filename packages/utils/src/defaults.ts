@@ -355,6 +355,7 @@ export function createInitialRoomData(options: InitialRoomOptions): RoomData {
     connectedUsers,
     judgeScore: null,
     settings: settingsWithDefaults,
+    status: 'active',
     passcodeHash,
   };
 }

@@ -115,6 +115,14 @@ export async function handleSession(
         return;
       }
 
+      const roomData = await room.getRoomData();
+      if (
+        roomData?.status === 'completed' &&
+        validated.type !== 'completeSession'
+      ) {
+        return;
+      }
+
       switch (validated.type) {
         case 'vote':
           await room.handleVote(canonicalUserName, validated.vote);
@@ -173,6 +181,9 @@ export async function handleSession(
             canonicalUserName,
             validated.isSpectator
           );
+          break;
+        case 'completeSession':
+          await room.handleCompleteSession(canonicalUserName);
           break;
       }
     } catch (err: unknown) {

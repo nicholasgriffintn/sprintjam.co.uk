@@ -61,6 +61,7 @@ const RoomScreen = () => {
     reportRoomError,
     retryConnection,
     handleLeaveRoom,
+    handleCompleteSession,
   } = useRoomActions();
   const { name } = useSessionState();
   const {
@@ -81,9 +82,9 @@ const RoomScreen = () => {
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
-      ? "connected"
-      : "disconnected"
-    : "connecting";
+      ? 'connected'
+      : 'disconnected'
+    : 'connecting';
 
   if (!roomData || !serverDefaults) {
     return (
@@ -107,7 +108,7 @@ const RoomScreen = () => {
   useConsensusCelebration({ roomData, stats });
 
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? true;
-  const queueProvider = roomData.settings.externalService || "none";
+  const queueProvider = roomData.settings.externalService || 'none';
   const canManageQueue =
     isModeratorView || roomData.settings.allowOthersToManageQueue === true;
   const showSaveToWorkspace = isWorkspacesEnabled();
@@ -119,6 +120,15 @@ const RoomScreen = () => {
       roomData: roomData,
       name: name,
     });
+
+  const totalTickets = roomData.ticketQueue?.length ?? 0;
+  const completedTickets =
+    roomData.ticketQueue?.filter((ticket) => ticket.status === 'completed')
+      .length ?? 0;
+  const totalVotes = stats.totalVotes ?? Object.keys(roomData.votes).length;
+  const ticketLabel = isQueueEnabled
+    ? `${completedTickets}/${totalTickets}`
+    : 'Queue off';
 
   const handleOpenSettings = (tab?: RoomSettingsTabId) => {
     openSettings(tab);
@@ -151,146 +161,212 @@ const RoomScreen = () => {
           stats={stats}
           setIsQueueModalOpen={setIsQueueModalOpen}
           onOpenQueueSettings={
-            isModeratorView ? () => handleOpenSettings("queue") : undefined
+            isModeratorView ? () => handleOpenSettings('queue') : undefined
           }
+          isCompleted={roomData.status === 'completed'}
         />
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
-          {roomData.settings.enableStrudelPlayer && (
-            <StrudelMiniPlayer
-              roomData={roomData}
-              isModeratorView={isModeratorView}
-            />
-          )}
+          {roomData?.status === 'completed' ? (
+            <>
+              <SurfaceCard padding="md" className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Session complete
+                </p>
+                <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+                  This room is now read-only.
+                </h1>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  A post-session summary will live here soon.
+                </p>
+              </SurfaceCard>
 
-          {roomData.settings.enableStructuredVoting &&
-          roomData.settings.votingCriteria ? (
-            <StructuredVotingPanel
-              criteria={roomData.settings.votingCriteria}
-              currentVote={
-                roomData.structuredVotes?.[getVoteKeyForUser(roomData, name)] ||
-                null
-              }
-              onVote={handleVote}
-              displaySettings={roomData.settings.structuredVotingDisplay}
-              onOpenVotingSettings={
-                isModeratorView ? () => handleOpenSettings("voting") : undefined
-              }
-              disabled={isSpectator}
-            />
+              <SurfaceCard
+                padding="md"
+                variant="subtle"
+                className="grid gap-4 text-sm text-slate-600 dark:text-slate-300 md:grid-cols-3"
+              >
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Participants
+                  </div>
+                  <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {roomData.users.length}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Tickets
+                  </div>
+                  <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {ticketLabel}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Votes
+                  </div>
+                  <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {totalVotes}
+                  </div>
+                </div>
+              </SurfaceCard>
+
+              <SurfaceCard padding="md" className="space-y-2 text-sm">
+                <p className="text-slate-600 dark:text-slate-300">
+                  Coming next: highlights, outcomes, and exports for this
+                  session.
+                </p>
+              </SurfaceCard>
+
+              <Footer displayRepoLink={false} layout="wide" fullWidth />
+            </>
           ) : (
-            <UserEstimate
-              roomData={roomData}
-              name={name}
-              userVote={typeof userVote === "object" ? null : userVote}
-              onVote={handleVote}
-              onOpenVotingSettings={
-                isModeratorView ? () => handleOpenSettings("voting") : undefined
-              }
-              disabled={isSpectator}
-            />
-          )}
+            <>
+              {roomData.settings.enableStrudelPlayer && (
+                <StrudelMiniPlayer
+                  roomData={roomData}
+                  isModeratorView={isModeratorView}
+                />
+              )}
 
-          {roomData.users.length > 0 && (
-            <ResultsControls
-              roomData={roomData}
-              isModeratorView={isModeratorView}
-              queueEnabled={isQueueEnabled}
-              onToggleShowVotes={handleToggleShowVotes}
-              onResetVotes={handleResetVotes}
-              onNextTicket={() => setIsSummaryOpen(true)}
-              onCompleteSession={
-                canManageQueue ? () => setIsCompleteSessionOpen(true) : undefined
-              }
-              onOpenResultsSettings={
-                isModeratorView
-                  ? () => handleOpenSettings("results")
-                  : undefined
-              }
-              onRevisitLater={async () => {
-                if (!roomData.currentTicket) return;
-                const pendingQueue = roomData.ticketQueue || [];
-                const maxOrdinal =
-                  pendingQueue.reduce(
-                    (max, t) => (t.ordinal > max ? t.ordinal : max),
-                    0,
-                  ) + 1;
-                await handleUpdateTicket(roomData.currentTicket.id, {
-                  status: "pending",
-                  ordinal: maxOrdinal,
-                });
-                handleNextTicket();
-              }}
-            />
-          )}
+              {roomData.settings.enableStructuredVoting &&
+              roomData.settings.votingCriteria ? (
+                <StructuredVotingPanel
+                  criteria={roomData.settings.votingCriteria}
+                  currentVote={
+                    roomData.structuredVotes?.[
+                      getVoteKeyForUser(roomData, name)
+                    ] || null
+                  }
+                  onVote={handleVote}
+                  displaySettings={roomData.settings.structuredVotingDisplay}
+                  onOpenVotingSettings={
+                    isModeratorView
+                      ? () => handleOpenSettings('voting')
+                      : undefined
+                  }
+                  disabled={isSpectator}
+                />
+              ) : (
+                <UserEstimate
+                  roomData={roomData}
+                  name={name}
+                  userVote={typeof userVote === 'object' ? null : userVote}
+                  onVote={handleVote}
+                  onOpenVotingSettings={
+                    isModeratorView
+                      ? () => handleOpenSettings('voting')
+                      : undefined
+                  }
+                  disabled={isSpectator}
+                />
+              )}
 
-          <AnimatePresence mode="wait">
-            {roomData.showVotes ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.3 }}
-                key="results"
-              >
-                <SurfaceCard
-                  padding="sm"
-                  className="space-y-5"
-                  data-testid="results-panel"
-                >
+              {roomData.users.length > 0 && (
+                <ResultsControls
+                  roomData={roomData}
+                  isModeratorView={isModeratorView}
+                  queueEnabled={isQueueEnabled}
+                  onToggleShowVotes={handleToggleShowVotes}
+                  onResetVotes={handleResetVotes}
+                  onNextTicket={() => setIsSummaryOpen(true)}
+                  onCompleteSession={
+                    canManageQueue
+                      ? () => setIsCompleteSessionOpen(true)
+                      : undefined
+                  }
+                  onOpenResultsSettings={
+                    isModeratorView
+                      ? () => handleOpenSettings('results')
+                      : undefined
+                  }
+                  onRevisitLater={async () => {
+                    if (!roomData.currentTicket) return;
+                    const pendingQueue = roomData.ticketQueue || [];
+                    const maxOrdinal =
+                      pendingQueue.reduce(
+                        (max, t) => (t.ordinal > max ? t.ordinal : max),
+                        0
+                      ) + 1;
+                    await handleUpdateTicket(roomData.currentTicket.id, {
+                      status: 'pending',
+                      ordinal: maxOrdinal,
+                    });
+                    handleNextTicket();
+                  }}
+                />
+              )}
+
+              <AnimatePresence mode="wait">
+                {roomData.showVotes ? (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
                     transition={{ duration: 0.3 }}
+                    key="results"
                   >
-                    <UnifiedResults
-                      roomData={roomData}
-                      stats={stats}
-                      criteria={roomData.settings.votingCriteria}
-                      displayJudge={roomData.settings.enableJudge}
-                      showVotes={roomData.showVotes}
-                    />
-                  </motion.div>
-                </SurfaceCard>
+                    <SurfaceCard
+                      padding="sm"
+                      className="space-y-5"
+                      data-testid="results-panel"
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <UnifiedResults
+                          roomData={roomData}
+                          stats={stats}
+                          criteria={roomData.settings.votingCriteria}
+                          displayJudge={roomData.settings.enableJudge}
+                          showVotes={roomData.showVotes}
+                        />
+                      </motion.div>
+                    </SurfaceCard>
 
-                <Footer displayRepoLink={false} layout="wide" fullWidth />
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.3 }}
-                key="waiting"
-              >
-                <SurfaceCard
-                  padding="sm"
-                  variant="subtle"
-                  className="flex items-center justify-center border-dashed text-center dark:border-slate-800/80"
-                  data-testid="votes-hidden-panel"
-                >
+                    <Footer displayRepoLink={false} layout="wide" fullWidth />
+                  </motion.div>
+                ) : (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2, duration: 0.3 }}
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ duration: 0.3 }}
+                    key="waiting"
                   >
-                    <VotesHidden
-                      votes={roomData.votes}
-                      structuredVotes={roomData.structuredVotes}
-                      isStructuredVotingEnabled={
-                        roomData.settings.enableStructuredVoting
-                      }
-                      users={roomData.users}
-                      currentUserName={name}
-                      isAnonymousVoting={roomData.settings.anonymousVotes}
-                    />
-                  </motion.div>
-                </SurfaceCard>
+                    <SurfaceCard
+                      padding="sm"
+                      variant="subtle"
+                      className="flex items-center justify-center border-dashed text-center dark:border-slate-800/80"
+                      data-testid="votes-hidden-panel"
+                    >
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2, duration: 0.3 }}
+                      >
+                        <VotesHidden
+                          votes={roomData.votes}
+                          structuredVotes={roomData.structuredVotes}
+                          isStructuredVotingEnabled={
+                            roomData.settings.enableStructuredVoting
+                          }
+                          users={roomData.users}
+                          currentUserName={name}
+                          isAnonymousVoting={roomData.settings.anonymousVotes}
+                        />
+                      </motion.div>
+                    </SurfaceCard>
 
-                <Footer displayRepoLink={false} layout="wide" fullWidth />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                    <Footer displayRepoLink={false} layout="wide" fullWidth />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
         </div>
       </motion.div>
 
@@ -326,7 +402,7 @@ const RoomScreen = () => {
         onClose={() => setIsQueueModalOpen(false)}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || "none"}
+        externalService={roomData.settings.externalService || 'none'}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -343,7 +419,7 @@ const RoomScreen = () => {
         isQueueEnabled={isQueueEnabled}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || "none"}
+        externalService={roomData.settings.externalService || 'none'}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -352,13 +428,14 @@ const RoomScreen = () => {
         canManageQueue={false}
         onSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
         showSaveToWorkspace={showSaveToWorkspace}
+        onCompleteSession={handleCompleteSession}
         onError={reportRoomError}
       />
 
-      {isQueueEnabled && queueProvider !== "none" && (
+      {isQueueEnabled && queueProvider !== 'none' && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as "jira" | "linear" | "github"}
+          provider={queueProvider as 'jira' | 'linear' | 'github'}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);

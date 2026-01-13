@@ -263,6 +263,7 @@ export function connectToRoom(
           case "resetVotes":
           case "newModerator":
           case "settingsUpdated":
+          case "roomStatusUpdated":
           case "judgeScoreUpdated":
           case "strudelCodeGenerated":
           case "strudelPlaybackToggled":
@@ -734,6 +735,18 @@ export function configureTimer(config: {
     JSON.stringify({
       type: "configureTimer",
       config,
+    }),
+  );
+}
+
+export function completeSession(): void {
+  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+    throw new Error("Not connected to room");
+  }
+
+  activeSocket.send(
+    JSON.stringify({
+      type: "completeSession",
     }),
   );
 }

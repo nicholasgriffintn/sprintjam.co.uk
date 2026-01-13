@@ -96,6 +96,11 @@ describe("validateClientMessage", () => {
     expect(result).toEqual({ error: "toggleSpectator payload invalid" });
   });
 
+  it("validates completeSession", () => {
+    const result = validateClientMessage({ type: "completeSession" });
+    expect(result).toEqual({ type: "completeSession" });
+  });
+
   it("returns error for unknown message types", () => {
     const result = validateClientMessage({ type: "unknown-op" });
     expect(result).toEqual({ error: "Unknown message type" });
