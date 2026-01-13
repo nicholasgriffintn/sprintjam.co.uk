@@ -30,7 +30,12 @@ interface CriterionRowProps {
   isDisabled?: boolean;
 }
 
-function CriterionRow({ criterion, score, onScoreChange, isDisabled }: CriterionRowProps) {
+function CriterionRow({
+  criterion,
+  score,
+  onScoreChange,
+  isDisabled,
+}: CriterionRowProps) {
   const scoreButtons = [];
 
   for (let i = criterion.minScore; i <= criterion.maxScore; i++) {
@@ -104,8 +109,8 @@ export function StructuredVotingPanel({
   const isVotingDisabled =
     disabled ||
     (roomData?.showVotes &&
-    !roomData?.settings.allowVotingAfterReveal &&
-    !roomData?.settings.alwaysRevealVotes);
+      !roomData?.settings.allowVotingAfterReveal &&
+      !roomData?.settings.alwaysRevealVotes);
 
   useEffect(() => {
     if (!currentVote) {
@@ -152,7 +157,7 @@ export function StructuredVotingPanel({
               </p>
             )}
             {roomData.currentTicket.description && (
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2 break-all">
                 {roomData.currentTicket.description}
               </p>
             )}
@@ -160,7 +165,7 @@ export function StructuredVotingPanel({
         )}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {displaySettings?.panelTitle ?? 'Structured Estimation'}
+            {displaySettings?.panelTitle ?? "Structured Estimation"}
           </h2>
           <div className="flex items-center gap-3">
             {onOpenVotingSettings && (
@@ -180,14 +185,14 @@ export function StructuredVotingPanel({
                 onClick={() => setShowScoringInfo(!showScoringInfo)}
                 className={`rounded px-2 py-1 text-xs font-semibold ${
                   showScoringInfo
-                    ? 'text-slate-900 border border-slate-300 bg-white/80 hover:border-slate-400 dark:border-slate-600 dark:bg-white/10 dark:text-white'
-                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white border border-transparent'
+                    ? "text-slate-900 border border-slate-300 bg-white/80 hover:border-slate-400 dark:border-slate-600 dark:bg-white/10 dark:text-white"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white border border-transparent"
                 }`}
                 aria-expanded={showScoringInfo}
                 aria-controls={scoringInfoPanelId}
               >
                 <Info size={14} />
-                {infoToggleSettings?.label ?? 'Scoring Info'}
+                {infoToggleSettings?.label ?? "Scoring Info"}
               </Button>
             )}
             {roomData?.settings.showTimer && <TimerChip />}
@@ -216,7 +221,7 @@ export function StructuredVotingPanel({
               aria-live="polite"
             >
               <div className="text-sm font-medium text-slate-900 dark:text-slate-200 mb-3">
-                {infoToggleSettings?.title ?? 'Weighted Scoring System'}
+                {infoToggleSettings?.title ?? "Weighted Scoring System"}
               </div>
               <div className="text-xs text-slate-700 dark:text-slate-200 space-y-2">
                 {(infoToggleSettings?.showContributionDetails ?? true) && (
@@ -231,8 +236,8 @@ export function StructuredVotingPanel({
                         >
                           <span className="font-medium">{criterionName}:</span>
                           <span className="text-right">
-                            {c.score}/{c.maxScore} ×{' '}
-                            {c.weightPercent.toFixed(0)}% ={' '}
+                            {c.score}/{c.maxScore} ×{" "}
+                            {c.weightPercent.toFixed(0)}% ={" "}
                             {c.contributionPercent.toFixed(1)}%
                           </span>
                         </div>
@@ -251,12 +256,12 @@ export function StructuredVotingPanel({
                 {(infoToggleSettings?.showRangeDetails ?? true) && (
                   <div className="mt-3 text-xs">
                     <div className="font-medium mb-1">
-                      {infoToggleSettings?.rangesLabel ?? 'Story Point Ranges:'}
+                      {infoToggleSettings?.rangesLabel ?? "Story Point Ranges:"}
                     </div>
                     <div className="space-y-0.5">
                       <div>
                         {infoToggleSettings?.rangesDescription ??
-                          '1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+'}
+                          "1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+"}
                       </div>
                     </div>
                   </div>
@@ -272,7 +277,7 @@ export function StructuredVotingPanel({
                           <div key={conversion} className="text-yellow-700">
                             {conversion}
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                   )}
@@ -290,13 +295,13 @@ export function StructuredVotingPanel({
         >
           <div>
             <div className="font-medium text-slate-900 dark:text-white">
-              {displaySettings?.summary?.storyPointsLabel ?? 'Story Points'}:{' '}
+              {displaySettings?.summary?.storyPointsLabel ?? "Story Points"}:{" "}
               <span data-testid="structured-summary-points">
-                {calculatedVote?.calculatedStoryPoints || '?'}
+                {calculatedVote?.calculatedStoryPoints || "?"}
               </span>
             </div>
             <div className="text-xs text-slate-600 dark:text-slate-200">
-              {displaySettings?.summary?.weightedScoreLabel ?? 'Weighted score'}
+              {displaySettings?.summary?.weightedScoreLabel ?? "Weighted score"}
               : {(calculatedVote?.percentageScore ?? 0).toFixed(1)}%
             </div>
           </div>
@@ -305,8 +310,8 @@ export function StructuredVotingPanel({
               <div className="text-xs text-slate-600 dark:text-slate-200">
                 {calculatedVote?.appliedConversionRules?.length} rule
                 {(calculatedVote?.appliedConversionRules?.length ?? 0) > 1
-                  ? 's'
-                  : ''}{' '}
+                  ? "s"
+                  : ""}{" "}
                 applied
               </div>
             )}

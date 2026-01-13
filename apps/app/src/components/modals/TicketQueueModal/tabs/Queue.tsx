@@ -413,7 +413,6 @@ export function TicketQueueModalQueueTab({
     }
   };
 
-
   const startLinkTicket = (ticket: TicketQueueItem) => {
     setLinkingTicketId(ticket.id);
     const jiraMeta = getJiraMetadata(ticket);
@@ -500,9 +499,7 @@ export function TicketQueueModalQueueTab({
       (ticket as { name?: string }).name ??
       key;
     const description =
-      ticket.description ??
-      (ticket as { body?: string }).body ??
-      undefined;
+      ticket.description ?? (ticket as { body?: string }).body ?? undefined;
     const url = ticket.url ?? (ticket as { html_url?: string }).html_url;
 
     return {
@@ -598,10 +595,7 @@ export function TicketQueueModalQueueTab({
     );
 
     if (ticketsToImport.length === 0) {
-      handleError(
-        "All selected tickets are already in the queue.",
-        onError,
-      );
+      handleError("All selected tickets are already in the queue.", onError);
       return;
     }
 
@@ -664,7 +658,7 @@ export function TicketQueueModalQueueTab({
           </span>
         </div>
         {ticket.description && (
-          <p className="mt-2 line-clamp-2 text-slate-600 dark:text-slate-300">
+          <p className="mt-2 line-clamp-2 break-all text-slate-600 dark:text-slate-300">
             {ticket.description}
           </p>
         )}
@@ -716,7 +710,7 @@ export function TicketQueueModalQueueTab({
               <p className="text-sm font-medium">{currentTicket.title}</p>
             )}
             {currentTicket.description && (
-              <p className="text-xs text-slate-600 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 break-all">
                 {currentTicket.description}
               </p>
             )}
@@ -1002,8 +996,8 @@ export function TicketQueueModalQueueTab({
                                   key={ticket.id}
                                   className={`flex w-full items-start gap-3 rounded-lg border px-3 py-2 text-left text-sm transition ${
                                     isSelected
-                                      ? 'border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30'
-                                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600'
+                                      ? "border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/30"
+                                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600"
                                   } `}
                                 >
                                   <input
@@ -1029,7 +1023,7 @@ export function TicketQueueModalQueueTab({
                                       {ticket.title}
                                     </p>
                                     {ticket.description && (
-                                      <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+                                      <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400 break-all">
                                         {ticket.description}
                                       </p>
                                     )}
@@ -1039,16 +1033,16 @@ export function TicketQueueModalQueueTab({
                                       )}
                                       {jiraEnabled || linearEnabled ? (
                                         <span>
-                                          Story Points:{' '}
+                                          Story Points:{" "}
                                           {ticket.storyPoints !== null &&
                                           ticket.storyPoints !== undefined
                                             ? ticket.storyPoints
-                                            : 'Not set'}
+                                            : "Not set"}
                                         </span>
                                       ) : (
                                         <span>
-                                          Points label:{' '}
-                                          {estimated ? 'Set' : 'Not set'}
+                                          Points label:{" "}
+                                          {estimated ? "Set" : "Not set"}
                                         </span>
                                       )}
                                     </div>
@@ -1111,7 +1105,7 @@ export function TicketQueueModalQueueTab({
                         )}
                       </div>
                       {ticket.description && (
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 break-all">
                           {ticket.description}
                         </p>
                       )}
@@ -1147,31 +1141,31 @@ export function TicketQueueModalQueueTab({
                         )}
                         {externalService !== "none" &&
                           ticket.externalService === "none" && (
-                          <Button
-                            onClick={() =>
-                              isLinking
-                                ? cancelLinking()
-                                : startLinkTicket(ticket)
-                            }
-                            data-testid={`queue-link-toggle-${ticket.id}`}
-                            variant="unstyled"
-                            className={`rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
-                              isLinking
-                                ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
-                                : "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
-                            }`}
-                          >
-                            {isLinking
-                              ? "Close"
-                              : `Link ${
-                                  externalService === "jira"
-                                    ? "Jira"
-                                    : externalService === "linear"
-                                      ? "Linear"
-                                      : "GitHub"
-                                }`}
-                          </Button>
-                        )}
+                            <Button
+                              onClick={() =>
+                                isLinking
+                                  ? cancelLinking()
+                                  : startLinkTicket(ticket)
+                              }
+                              data-testid={`queue-link-toggle-${ticket.id}`}
+                              variant="unstyled"
+                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
+                                isLinking
+                                  ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
+                                  : "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
+                              }`}
+                            >
+                              {isLinking
+                                ? "Close"
+                                : `Link ${
+                                    externalService === "jira"
+                                      ? "Jira"
+                                      : externalService === "linear"
+                                        ? "Linear"
+                                        : "GitHub"
+                                  }`}
+                            </Button>
+                          )}
                         <Button
                           onClick={() => onDeleteTicket(ticket.id)}
                           variant="unstyled"

@@ -58,13 +58,13 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
                   Current Ticket
                 </div>
                 <div className="font-semibold text-slate-900 dark:text-white">
-                  {currentTicket?.ticketId || 'N/A'}
+                  {currentTicket?.ticketId || "N/A"}
                 </div>
               </div>
             </div>
-            {currentTicket?.externalService !== 'none' &&
+            {currentTicket?.externalService !== "none" &&
               currentTicket?.externalServiceMetadata &&
-              'url' in currentTicket.externalServiceMetadata && (
+              "url" in currentTicket.externalServiceMetadata && (
                 <a
                   href={
                     (
@@ -83,7 +83,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
               )}
           </div>
           {currentTicket?.description && (
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 break-all">
               {currentTicket.description}
             </p>
           )}
@@ -96,7 +96,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
                 Consensus
               </div>
               <div className="text-base font-semibold text-slate-900 dark:text-white">
-                {consensusLabel} · Avg {stats.avg ?? 'N/A'}
+                {consensusLabel} · Avg {stats.avg ?? "N/A"}
               </div>
             </div>
             <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
@@ -131,7 +131,7 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
               >
                 <span className="font-medium text-slate-800 dark:text-slate-100">
                   {user}
-                  {user === currentUser && ' (you)'}
+                  {user === currentUser && " (you)"}
                 </span>
                 <span className="font-semibold text-slate-900 dark:text-white">
                   {value}
