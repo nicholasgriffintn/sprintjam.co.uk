@@ -11,6 +11,8 @@ interface RoomHeaderContextValue {
   settingsInitialTab: RoomSettingsTabId | undefined;
   isSaveToWorkspaceOpen: boolean;
   setIsSaveToWorkspaceOpen: (open: boolean) => void;
+  isHelpPanelOpen: boolean;
+  setIsHelpPanelOpen: (open: boolean) => void;
 }
 
 const RoomHeaderContext = createContext<RoomHeaderContextValue | null>(null);
@@ -22,6 +24,7 @@ export function RoomHeaderProvider({ children }: { children: ReactNode }) {
     RoomSettingsTabId | undefined
   >(undefined);
   const [isSaveToWorkspaceOpen, setIsSaveToWorkspaceOpen] = useState(false);
+  const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
 
   const openSettings = (tab?: RoomSettingsTabId) => {
     setSettingsInitialTab(tab);
@@ -44,6 +47,8 @@ export function RoomHeaderProvider({ children }: { children: ReactNode }) {
         settingsInitialTab,
         isSaveToWorkspaceOpen,
         setIsSaveToWorkspaceOpen,
+        isHelpPanelOpen,
+        setIsHelpPanelOpen,
       }}
     >
       {children}

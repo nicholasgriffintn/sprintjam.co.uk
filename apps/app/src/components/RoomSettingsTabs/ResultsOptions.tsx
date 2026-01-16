@@ -175,6 +175,45 @@ function DisplayOptionsSection({
   );
 }
 
+function FacilitationOptionsSection({
+  localSettings,
+  handleChange,
+}: {
+  localSettings: RoomSettings;
+  handleChange: HandleChange;
+}) {
+  return (
+    <div className="pt-2">
+      <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+        Facilitation Guidance
+      </h3>
+      <div className="space-y-2">
+        <div className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            id="enableFacilitationGuidance"
+            checked={localSettings.enableFacilitationGuidance || false}
+            onChange={(e) =>
+              handleChange('enableFacilitationGuidance', e.target.checked)
+            }
+            data-testid="settings-toggle-facilitation-guidance"
+            className="mt-1 h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
+          />
+          <label
+            htmlFor="enableFacilitationGuidance"
+            className="text-sm text-slate-700 dark:text-slate-300"
+          >
+            Show contextual facilitation prompts in the room
+          </label>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Visible only to moderators and never interrupts the session.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function ResultsOptions({
   localSettings,
   handleChange,
@@ -189,6 +228,10 @@ export function ResultsOptions({
         handleChange={handleChange}
       />
       <DisplayOptionsSection
+        localSettings={localSettings}
+        handleChange={handleChange}
+      />
+      <FacilitationOptionsSection
         localSettings={localSettings}
         handleChange={handleChange}
       />

@@ -25,13 +25,19 @@ export const SITE_NAME = 'SprintJam';
 
 export const AUTH_TOKEN_STORAGE_KEY = 'sprintjam_authToken';
 export const WORKSPACE_TOKEN_STORAGE_KEY = 'sprintjam_workspaceToken';
-export const CONFIDENCE_INFO_STORAGE_KEY = 'sprintjam_confidenceInfoSeen';
 export const MUTE_STORAGE_KEY = 'sprintjam_strudelPlayerMuted';
 export const VOLUME_STORAGE_KEY = 'sprintjam_strudelPlayerVolume';
 export const USERNAME_STORAGE_KEY = 'sprintjam_username';
 export const THEME_STORAGE_KEY = 'sprintjam_theme';
 export const RETURN_URL_KEY = 'sprintjam_return_url';
 export const WORKSPACES_STORAGE_KEY = 'sprintjam_workspaces_enabled';
+export const ROOM_HINTS_DISMISSED_STORAGE_KEY = 'sprintjam_roomHintsDismissed';
+export const ROOM_JOINED_STORAGE_KEY = 'sprintjam_roomJoinedBefore';
+export const ROOM_MODERATOR_STORAGE_KEY = 'sprintjam_roomModeratorSeen';
+export const ROOM_STRUCTURED_STORAGE_KEY = 'sprintjam_roomStructuredSeen';
+export const ROOM_SPREAD_HINT_STORAGE_KEY = 'sprintjam_roomSpreadHintSeen';
+export const ROOM_FACILITATION_PROMPT_SEEN_STORAGE_KEY =
+  'sprintjam_roomFacilitationPromptSeen';
 
 export const QUICK_EMOJIS = [
   '😀',

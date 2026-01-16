@@ -126,6 +126,7 @@ export interface RoomSettings {
   showTopVotes: boolean;
   topVotesCount: number;
   anonymousVotes: boolean;
+  enableFacilitationGuidance?: boolean;
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;

@@ -1,40 +1,45 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import {
   useRoomActions,
   useRoomState,
   useRoomStatus,
-} from "@/context/RoomContext";
-import { useSessionState } from "@/context/SessionContext";
-import { useRoomHeader } from "@/context/RoomHeaderContext";
-import { useRoomStats } from "@/hooks/useRoomStats";
-import { useConsensusCelebration } from "@/hooks/useConsensusCelebration";
-import { UserEstimate } from "@/components/voting/UserEstimate";
-import { ResultsControls } from "@/components/results/ResultsControls";
-import { VotesHidden } from "@/components/results/VotesHidden";
-import { StructuredVotingPanel } from "@/components/voting/StructuredVotingPanel";
-import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { StrudelMiniPlayer } from "@/components/StrudelPlayer/StrudelMiniPlayer";
-import { FallbackLoading } from "@/components/ui/FallbackLoading";
-import { TicketQueueModal } from "@/components/modals/TicketQueueModal";
-import { PrePointingSummaryModal } from "@/components/modals/PrePointingSummaryModal";
-import { QueueProviderSetupModal } from "@/components/modals/QueueProviderSetupModal";
-import { RoomErrorBanners } from "@/components/errors/RoomErrorBanners";
-import { RoomSidebar } from "@/components/layout/RoomSidebar";
-import { getVoteKeyForUser } from "@/utils/room";
-import { useDisplayQueueSetup } from "@/hooks/useDisplayQueueSetup";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
-import { Footer } from "@/components/layout/Footer";
-import ShareRoomModal from "@/components/modals/ShareRoomModal";
-import SettingsModal from "@/components/modals/SettingsModal";
-import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
-import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
-import { UnifiedResults } from "@/components/results/UnifiedResults";
-import { isWorkspacesEnabled } from "@/utils/feature-flags";
-import type { ConnectionStatusState } from "@/types";
-import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
+} from '@/context/RoomContext';
+import { useSessionState } from '@/context/SessionContext';
+import { useRoomHeader } from '@/context/RoomHeaderContext';
+import { useRoomStats } from '@/hooks/useRoomStats';
+import { useConsensusCelebration } from '@/hooks/useConsensusCelebration';
+import { UserEstimate } from '@/components/voting/UserEstimate';
+import { ResultsControls } from '@/components/results/ResultsControls';
+import { VotesHidden } from '@/components/results/VotesHidden';
+import { StructuredVotingPanel } from '@/components/voting/StructuredVotingPanel';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { StrudelMiniPlayer } from '@/components/StrudelPlayer/StrudelMiniPlayer';
+import { FallbackLoading } from '@/components/ui/FallbackLoading';
+import { TicketQueueModal } from '@/components/modals/TicketQueueModal';
+import { PrePointingSummaryModal } from '@/components/modals/PrePointingSummaryModal';
+import { QueueProviderSetupModal } from '@/components/modals/QueueProviderSetupModal';
+import { RoomErrorBanners } from '@/components/errors/RoomErrorBanners';
+import { RoomSidebar } from '@/components/layout/RoomSidebar';
+import { getVoteKeyForUser } from '@/utils/room';
+import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { META_CONFIGS } from '@/config/meta';
+import { Footer } from '@/components/layout/Footer';
+import ShareRoomModal from '@/components/modals/ShareRoomModal';
+import SettingsModal from '@/components/modals/SettingsModal';
+import { SaveToWorkspaceModal } from '@/components/modals/SaveToWorkspaceModal';
+import { CompleteSessionModal } from '@/components/modals/CompleteSessionModal';
+import { UnifiedResults } from '@/components/results/UnifiedResults';
+import { isWorkspacesEnabled } from '@/utils/feature-flags';
+import { RoomGuidancePanel } from '@/components/room/RoomGuidancePanel';
+import { RoomCalloutCard } from '@/components/room/RoomCalloutCard';
+import { getVoteSpreadSummary } from '@/utils/room-guidance';
+import { useRoomOnboardingHints } from '@/hooks/useRoomOnboardingHints';
+import { useFacilitationPrompt } from '@/hooks/useFacilitationPrompt';
+import type { ConnectionStatusState } from '@/types';
+import type { RoomSettingsTabId } from '@/components/RoomSettingsTabs';
 
 const RoomScreen = () => {
   usePageMeta(META_CONFIGS.room);
@@ -73,6 +78,8 @@ const RoomScreen = () => {
     settingsInitialTab,
     isSaveToWorkspaceOpen,
     setIsSaveToWorkspaceOpen,
+    isHelpPanelOpen,
+    setIsHelpPanelOpen,
   } = useRoomHeader();
   const isSpectator = roomData?.spectators?.includes(name) ?? false;
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
@@ -106,6 +113,31 @@ const RoomScreen = () => {
 
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
+  const spreadSummary = useMemo(
+    () => getVoteSpreadSummary(roomData),
+    [roomData.votes, roomData.settings, roomData.judgeMetadata],
+  );
+  const {
+    showOnboardingHints,
+    showSpreadHint,
+    showFacilitationOptIn,
+    isFirstRoomJoin,
+    isFirstModerator,
+    isFirstStructured,
+    dismissHints,
+    enableFacilitationGuidance,
+    dismissFacilitationOptIn,
+  } = useRoomOnboardingHints({
+    roomData,
+    isModeratorView,
+    spreadSummary,
+    onUpdateSettings: handleUpdateSettings,
+  });
+  const facilitationPrompt = useFacilitationPrompt({
+    roomData,
+    isModeratorView,
+    spreadSummary,
+  });
 
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? true;
   const queueProvider = roomData.settings.externalService || 'none';
@@ -230,6 +262,55 @@ const RoomScreen = () => {
                 />
               )}
 
+              {showOnboardingHints && (
+                <div className="space-y-3">
+                  {showFacilitationOptIn ? (
+                    <RoomCalloutCard
+                      badge="Moderator tip"
+                      title="Enable facilitation prompts?"
+                      body="We can surface lightweight prompts as the session moves through voting and reveal."
+                      primaryAction={{
+                        label: 'Enable prompts',
+                        onClick: enableFacilitationGuidance,
+                      }}
+                      secondaryAction={{
+                        label: 'Not now',
+                        onClick: dismissFacilitationOptIn,
+                      }}
+                    />
+                  ) : isFirstModerator ? (
+                    <RoomCalloutCard
+                      badge="Hint"
+                      title="You're facilitating"
+                      body="Use Reveal when everyone's voted, or Reset to start over."
+                      primaryAction={{ label: 'Got it', onClick: dismissHints }}
+                    />
+                  ) : isFirstStructured ? (
+                    <RoomCalloutCard
+                      badge="Hint"
+                      title="Structured voting enabled"
+                      body="Score each criterion, then submit to calculate the final story points."
+                      primaryAction={{ label: 'Got it', onClick: dismissHints }}
+                    />
+                  ) : isFirstRoomJoin ? (
+                    <RoomCalloutCard
+                      badge="Hint"
+                      title="First time? Tap any card to vote."
+                      body="Votes stay hidden until the moderator reveals."
+                      primaryAction={{ label: 'Got it', onClick: dismissHints }}
+                    />
+                  ) : null}
+                </div>
+              )}
+
+              {facilitationPrompt && (
+                <RoomCalloutCard
+                  badge="Facilitation prompt"
+                  title={facilitationPrompt.title}
+                  body={facilitationPrompt.body}
+                />
+              )}
+
               {roomData.settings.enableStructuredVoting &&
               roomData.settings.votingCriteria ? (
                 <StructuredVotingPanel
@@ -287,7 +368,7 @@ const RoomScreen = () => {
                     const maxOrdinal =
                       pendingQueue.reduce(
                         (max, t) => (t.ordinal > max ? t.ordinal : max),
-                        0
+                        0,
                       ) + 1;
                     await handleUpdateTicket(roomData.currentTicket.id, {
                       status: 'pending',
@@ -295,6 +376,20 @@ const RoomScreen = () => {
                     });
                     handleNextTicket();
                   }}
+                />
+              )}
+
+              {showSpreadHint && (
+                <RoomCalloutCard
+                  badge="Hint"
+                  title="Wide spread after reveal"
+                  body={
+                    spreadSummary.highestVoteValue !== null &&
+                    spreadSummary.lowestVoteValue !== null
+                      ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
+                      : 'Ask the highest and lowest voters to explain their thinking.'
+                  }
+                  primaryAction={{ label: 'Got it', onClick: dismissHints }}
                 />
               )}
 
@@ -369,6 +464,16 @@ const RoomScreen = () => {
           )}
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {isHelpPanelOpen && (
+          <RoomGuidancePanel
+            roomData={roomData}
+            isModeratorView={isModeratorView}
+            onClose={() => setIsHelpPanelOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isSettingsModalOpen && (

@@ -47,6 +47,7 @@ describe("defaults utils", () => {
       expect(settings.showTimer).toBe(true);
       expect(settings.votingSequenceId).toBe(DEFAULT_VOTING_SEQUENCE_ID);
       expect(settings.extraVoteOptions).toEqual(DEFAULT_EXTRA_VOTE_OPTIONS);
+      expect(settings.enableFacilitationGuidance).toBe(false);
       expect(
         settings.resultsDisplay?.criteriaBreakdown?.consensusLabels,
       ).toMatchObject({

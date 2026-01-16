@@ -159,13 +159,13 @@ export const JudgeResult = memo(function JudgeResult({
         )}
 
         {roomData.judgeMetadata?.needsDiscussion && (
-          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start">
-            <AlertTriangle className="w-4 h-4 text-amber-800 mr-2 flex-shrink-0 mt-0.5" />
+          <div className="mt-3 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-700/40 rounded-md p-3 flex items-start">
+            <AlertTriangle className="w-4 h-4 text-amber-800 dark:text-amber-200 mr-2 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-amber-800">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                 Discussion Recommended
               </p>
-              <p className="text-sm text-amber-700">
+              <p className="text-sm text-amber-700 dark:text-amber-300">
                 Wide spread suggests different understanding of requirements.
               </p>
             </div>

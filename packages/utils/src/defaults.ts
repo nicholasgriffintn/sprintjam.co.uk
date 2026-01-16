@@ -302,6 +302,7 @@ export function getDefaultRoomSettings(
     showTopVotes: settings?.showTopVotes ?? true,
     topVotesCount: settings?.topVotesCount ?? 4,
     anonymousVotes: settings?.anonymousVotes ?? true,
+    enableFacilitationGuidance: settings?.enableFacilitationGuidance ?? false,
     enableJudge: settings?.enableJudge ?? !hasNonNumericBaseOption,
     judgeAlgorithm: settings?.judgeAlgorithm ?? JudgeAlgorithm.SMART_CONSENSUS,
     hideParticipantNames: settings?.hideParticipantNames ?? false,
