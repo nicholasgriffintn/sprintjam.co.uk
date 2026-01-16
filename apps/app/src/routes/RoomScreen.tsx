@@ -268,7 +268,7 @@ const RoomScreen = () => {
                     <RoomCalloutCard
                       badge="Moderator tip"
                       title="Enable facilitation prompts?"
-                      body="We can surface lightweight prompts as the session moves through voting and reveal."
+                      body="Prompts will be displayed as the session progresses with tips to run a successful session."
                       primaryAction={{
                         label: 'Enable prompts',
                         onClick: enableFacilitationGuidance,
