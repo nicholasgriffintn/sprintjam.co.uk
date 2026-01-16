@@ -16,4 +16,21 @@ describe("renderMarkdownToHtml", () => {
     );
     expect(html).not.toContain('class="language-js" onmouseover="alert(1)"');
   });
+
+  it("renders markdown tables", () => {
+    const markdown = [
+      "| Col A | Col B |",
+      "| --- | --- |",
+      "| **Bold** | Link |",
+      "| A | `code` |",
+    ].join("\n");
+
+    const html = renderMarkdownToHtml(markdown);
+
+    expect(html).toContain("<table>");
+    expect(html).toContain("<th>Col A</th>");
+    expect(html).toContain("<th>Col B</th>");
+    expect(html).toContain("<td><strong>Bold</strong></td>");
+    expect(html).toContain("<td><code>code</code></td>");
+  });
 });

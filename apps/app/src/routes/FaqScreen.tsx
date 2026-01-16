@@ -1,42 +1,45 @@
 import { motion } from "framer-motion";
 import { Compass, Link2, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
-import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { SurfaceCard } from '@/components/ui';
-import { SITE_NAME } from '@/constants';
+import { SurfaceCard } from "@/components/ui";
+import { SITE_NAME } from "@/constants";
+import { generateFAQSchema } from "@/utils/structured-data";
+import type { MetaTagConfig } from "@/utils/meta";
 
 type FAQItem = {
   question: string;
   answer: ReactNode;
+  plainText: string;
 };
 
 const quickStart = [
   {
-    title: 'Kick off a room in seconds',
+    title: "Kick off a room in seconds",
     description: `Open ${SITE_NAME}, type a room key or generate one instantly, and pick Classic or Structured voting before anyone joins.`,
     icon: Compass,
   },
   {
-    title: 'Share the invite however you like',
+    title: "Share the invite however you like",
     description:
-      'Copy the room link, display the QR code, or just read the room key aloud. Add a passcode if you want extra control.',
+      "Copy the room link, display the QR code, or just read the room key aloud. Add a passcode if you want extra control.",
     icon: Link2,
   },
   {
-    title: 'Guide the reveal and decision',
+    title: "Guide the reveal and decision",
     description:
-      'Reveal together, see the spread, then let The Judge recommend a consensus when votes differ.',
+      "Reveal together, see the spread, then let The Judge recommend a consensus when votes differ.",
     icon: Sparkles,
   },
 ];
 
 const basicsFaqs: FAQItem[] = [
   {
-    question: 'What is Planning Poker and why does it work?',
+    question: "What is Planning Poker and why does it work?",
     answer: (
       <>
         <p>
@@ -52,9 +55,11 @@ const basicsFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Planning Poker (also called Scrum Poker or Pointing Poker) is a consensus-driven way for teams to size work. Everyone votes at the same time, which cuts anchoring bias and surfaces different assumptions before a sprint begins. It keeps estimates relative instead of time-based, so the team calibrates around effort, risk, and uncertainty rather than a specific hour count.",
   },
   {
-    question: 'Who is in the room?',
+    question: "Who is in the room?",
     answer: (
       <>
         <p>
@@ -65,9 +70,11 @@ const basicsFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "The delivery team votes (devs, QA, design, anyone doing the work). Product Owners clarify scope and priority but do not set the number. Scrum Masters facilitate, keep timeboxes, and guard against pressure for optimistic estimates.",
   },
   {
-    question: 'How do we run a round?',
+    question: "How do we run a round?",
     answer: (
       <>
         <ol className="list-decimal list-inside space-y-1">
@@ -79,6 +86,8 @@ const basicsFaqs: FAQItem[] = [
         </ol>
       </>
     ),
+    plainText:
+      "1. Present the story and acceptance criteria. 2. Everyone votes privately. 3. Reveal together to avoid anchoring. 4. Let the high and low explain their thinking. 5. Revote after clarifications until you have a consensus size.",
   },
 ];
 
@@ -98,9 +107,10 @@ const sprintjamFaqs: FAQItem[] = [
         </ol>
       </>
     ),
+    plainText: `Use the home page for a one-click room, or open the Create flow if you want to set a passcode or switch voting styles before anyone joins. 1. Enter your name. 2. Choose Classic (Fibonacci cards) or Structured voting. 3. Share the link or key - no accounts required for guests.`,
   },
   {
-    question: 'Do teammates need accounts?',
+    question: "Do teammates need accounts?",
     answer: (
       <>
         <p>
@@ -110,6 +120,8 @@ const sprintjamFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Guests can join and vote without signing in. Logging in unlocks workspace features, lets moderators keep provider connections, and makes it easier to revisit recent rooms.",
   },
   {
     question: "What's the best way to invite people?",
@@ -122,9 +134,11 @@ const sprintjamFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Inside any room you can copy the invite link, surface a QR code for quick scans, or just share the room key. Add a passcode if you need to keep the room private to invited teammates.",
   },
   {
-    question: 'Which estimation modes are available?',
+    question: "Which estimation modes are available?",
     answer: (
       <>
         <ul className="list-disc list-inside space-y-1">
@@ -143,6 +157,8 @@ const sprintjamFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Classic Planning Poker: Fibonacci-inspired values (plus ?) for quick sizing. Structured Voting: score Complexity (35%), Confidence (25%), Volume (25%), and Unknowns (15%) with automatic weighted results. Moderators can swap modes between items if a story needs more nuance.",
   },
   {
     question: `How does ${SITE_NAME} handle reveals and disagreements?`,
@@ -155,9 +171,10 @@ const sprintjamFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText: `Votes stay hidden until you reveal. If the spread is wide, The Judge proposes a consensus score so you can decide to lock it in or re-vote. When people converge, reveal and keep moving.`,
   },
   {
-    question: 'Can I pull work from Jira, Linear, or GitHub?',
+    question: "Can I pull work from Jira, Linear, or GitHub?",
     answer: (
       <>
         <p>
@@ -167,12 +184,14 @@ const sprintjamFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Yes. Sign in, connect the provider for your room, and import issues to estimate. Story point results can be synced back, and tokens stay scoped to the room connection.",
   },
 ];
 
 const scrumFaqs: FAQItem[] = [
   {
-    question: 'When should we run estimation?',
+    question: "When should we run estimation?",
     answer: (
       <>
         <p>
@@ -182,9 +201,11 @@ const scrumFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Keep estimation lightweight by doing it during backlog refinement or just ahead of sprint planning. Arrive with clear acceptance criteria so the team can focus on sizing, not discovery.",
   },
   {
-    question: 'How do story points relate to hours?',
+    question: "How do story points relate to hours?",
     answer: (
       <>
         <p>
@@ -195,9 +216,11 @@ const scrumFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Points are a relative measure, not a time guarantee. Track your velocity for a few sprints to see how many points you typically finish in two weeks, then plan capacity from that trend, not a fixed hours-to-points conversion.",
   },
   {
-    question: 'Which scale should we start with?',
+    question: "Which scale should we start with?",
     answer: (
       <>
         <p>
@@ -207,9 +230,11 @@ const scrumFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Fibonacci cards work well for most teams because gaps widen as work grows. Use ? for unclear stories, or switch to Structured voting when you need to weigh complexity versus uncertainty explicitly.",
   },
   {
-    question: 'How do we keep discussions focused?',
+    question: "How do we keep discussions focused?",
     answer: (
       <>
         <ul className="list-disc list-inside space-y-1">
@@ -224,9 +249,11 @@ const scrumFaqs: FAQItem[] = [
         </ul>
       </>
     ),
+    plainText:
+      "Timebox the conversation and capture follow-up tasks. Ask the highest and lowest voters to share their reasoning first. Re-vote quickly after clarifications instead of chasing perfect precision.",
   },
   {
-    question: 'What should we do when votes stay far apart?',
+    question: "What should we do when votes stay far apart?",
     answer: (
       <>
         <p>
@@ -237,6 +264,8 @@ const scrumFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Check scope first - did assumptions change between voters? If yes, trim or split the story. If not, use The Judge's suggested consensus as a starting point, or run a second reveal after agreeing on constraints.",
   },
 ];
 
@@ -252,9 +281,10 @@ const cardsFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText: `Gaps grow as the numbers increase, which acknowledges higher uncertainty on larger work. When votes land far apart, it is a prompt to discuss scope or complexity instead of chasing false precision.`,
   },
   {
-    question: 'What do special cards mean?',
+    question: "What do special cards mean?",
     answer: (
       <>
         <ul className="list-disc list-inside space-y-1">
@@ -271,9 +301,11 @@ const cardsFaqs: FAQItem[] = [
         </ul>
       </>
     ),
+    plainText:
+      "0: essentially no effort or already done. ?: not enough clarity to size - discuss or split first. Break: step back and reset if the team is stuck.",
   },
   {
-    question: 'Should we convert points to hours?',
+    question: "Should we convert points to hours?",
     answer: (
       <>
         <p>
@@ -283,12 +315,14 @@ const cardsFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Avoid it. Points are relative; velocity over a few sprints will tell you how many points you usually finish. Converting to hours invites false accuracy and undermines the benefits of relative sizing.",
   },
 ];
 
 const facilitationFaqs: FAQItem[] = [
   {
-    question: 'How long should a session take?',
+    question: "How long should a session take?",
     answer: (
       <>
         <p>
@@ -298,9 +332,11 @@ const facilitationFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Keep it timeboxed. Backlog grooming rounds often run 30-60 minutes, while full sprint planning might take 1-2 hours depending on the backlog size. If energy drops, pause and resume later.",
   },
   {
-    question: 'What if votes are far apart?',
+    question: "What if votes are far apart?",
     answer: (
       <>
         <p>
@@ -310,9 +346,11 @@ const facilitationFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Ask the highest and lowest voters to explain their reasoning. Clarify scope, risks, or hidden work, then vote again. If disagreement stays high, split the story or capture follow-ups before committing.",
   },
   {
-    question: 'How do we keep everyone engaged?',
+    question: "How do we keep everyone engaged?",
     answer: (
       <>
         <ul className="list-disc list-inside space-y-1">
@@ -326,9 +364,11 @@ const facilitationFaqs: FAQItem[] = [
         </ul>
       </>
     ),
+    plainText:
+      "Rotate who kicks off summaries to avoid the same voices. Use short timeboxes per item and capture tangents as follow-ups. Encourage quieter members first when explaining high/low votes.",
   },
   {
-    question: 'When is Planning Poker a bad fit?',
+    question: "When is Planning Poker a bad fit?",
     answer: (
       <>
         <p>
@@ -339,25 +379,28 @@ const facilitationFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "If work is highly repetitive, continuously flowing, or already well-benchmarked, formal rounds may add overhead. Use lighter techniques (like T-shirt sizing) or rely on historical cycle time instead.",
   },
 ];
 
 const alternativesFaqs: FAQItem[] = [
   {
-    question: 'What are quick alternatives to Planning Poker?',
+    question: "What are quick alternatives to Planning Poker?",
     answer: (
       <>
         <p>
           Try T-shirt sizing for rapid grouping, affinity/bucket estimation for
           sorting a big backlog, or a Wideband Delphi style when you need
-          anonymous rounds. ${SITE_NAME}'s Structured voting is great when you
+          anonymous rounds. {SITE_NAME}'s Structured voting is great when you
           want to weigh confidence and unknowns explicitly.
         </p>
       </>
     ),
+    plainText: `Try T-shirt sizing for rapid grouping, affinity/bucket estimation for sorting a big backlog, or a Wideband Delphi style when you need anonymous rounds. ${SITE_NAME}'s Structured voting is great when you want to weigh confidence and unknowns explicitly.`,
   },
   {
-    question: 'When should we switch techniques?',
+    question: "When should we switch techniques?",
     answer: (
       <>
         <p>
@@ -368,11 +411,45 @@ const alternativesFaqs: FAQItem[] = [
         </p>
       </>
     ),
+    plainText:
+      "Use Planning Poker when a story needs shared understanding. Use T-shirt sizing early in discovery, then switch to cards as items get closer to ready. For distributed teams with async needs, collect votes ahead of the meeting and reveal together.",
   },
 ];
 
+const allFaqs = [
+  ...basicsFaqs,
+  ...sprintjamFaqs,
+  ...scrumFaqs,
+  ...cardsFaqs,
+  ...facilitationFaqs,
+  ...alternativesFaqs,
+];
+
 const FaqScreen = () => {
-  usePageMeta(META_CONFIGS.faq);
+  const faqSchema = useMemo(
+    () =>
+      generateFAQSchema(
+        allFaqs.map((faq) => ({
+          question: faq.question,
+          answer: faq.plainText,
+        })),
+      ),
+    [],
+  );
+
+  const metaConfig: MetaTagConfig = useMemo(
+    () => ({
+      title: `FAQ & Planning Guide - ${SITE_NAME}`,
+      description: `Answers to common ${SITE_NAME} questions plus a quick guide to running effective Scrum planning poker sessions.`,
+      keywords:
+        "faq, sprintjam help, planning poker guide, scrum estimation, story points, agile estimation, sprint planning",
+      ogImage: "/og-image.png",
+      jsonLd: faqSchema,
+    }),
+    [faqSchema],
+  );
+
+  usePageMeta(metaConfig);
 
   const renderFaqCard = ({ question, answer }: FAQItem) => (
     <details
@@ -508,6 +585,29 @@ const FaqScreen = () => {
             </div>
           </section>
 
+          <SurfaceCard variant="subtle" className="text-left">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-600">
+                  Go deeper
+                </p>
+                <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
+                  Explore our estimation guides
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  In-depth articles on Planning Poker, Fibonacci scales, session
+                  facilitation, and more.
+                </p>
+              </div>
+              <a
+                href="/guides"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:border-brand-300/60"
+              >
+                Browse guides
+              </a>
+            </div>
+          </SurfaceCard>
+
           <SurfaceCard className="text-left">
             <div className="grid gap-4 md:grid-cols-[1.5fr_auto] md:items-center">
               <div className="space-y-2">
@@ -515,7 +615,7 @@ const FaqScreen = () => {
                   Ready to start planning?
                 </p>
                 <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                  Put your knowledge into practice with our free {SITE_NAME}{' '}
+                  Put your knowledge into practice with our free {SITE_NAME}{" "}
                   room.
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300">

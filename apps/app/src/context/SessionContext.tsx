@@ -28,7 +28,23 @@ export type AppScreen =
   | "integrations"
   | "integrationsJira"
   | "integrationsLinear"
-  | "integrationsGithub";
+  | "integrationsGithub"
+  | "guides"
+  | "guidesPlanningPoker"
+  | "guidesFibonacciScale"
+  | "guidesFibonacciShort"
+  | "guidesDoublingScale"
+  | "guidesTshirtSizing"
+  | "guidesPlanetScale"
+  | "guidesYesNo"
+  | "guidesSimpleScale"
+  | "guidesHoursEstimates"
+  | "guidesSessionRoles"
+  | "guidesRemoteEstimation"
+  | "guidesStoryPoints"
+  | "guidesSprintPlanning"
+  | "guidesConsensusBuilding"
+  | "guidesStructuredVoting";
 
 interface SessionStateContextValue {
   screen: AppScreen;

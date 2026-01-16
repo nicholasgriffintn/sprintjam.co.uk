@@ -41,6 +41,15 @@ export function renderMarkdownToHtml(markdown: string): string {
   let inCodeBlock = false;
   const listStack: Array<{ type: ListType; indent: number }> = [];
   let paragraph = '';
+  const isTableSeparator = (line: string) =>
+    /^\s*\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?\s*$/.test(line);
+  const parseTableRow = (line: string) =>
+    line
+      .trim()
+      .replace(/^\|/, '')
+      .replace(/\|$/, '')
+      .split('|')
+      .map((cell) => cell.trim());
 
   const closeAllLists = () => {
     while (listStack.length) {
@@ -67,7 +76,8 @@ export function renderMarkdownToHtml(markdown: string): string {
     }
   };
 
-  for (const rawLine of lines) {
+  for (let i = 0; i < lines.length; i += 1) {
+    const rawLine = lines[i] ?? '';
     const line = rawLine.trimEnd();
     const trimmed = line.trim();
 
@@ -94,6 +104,38 @@ export function renderMarkdownToHtml(markdown: string): string {
     if (!trimmed) {
       flushParagraph();
       closeAllLists();
+      continue;
+    }
+
+    if (
+      line.includes('|') &&
+      i + 1 < lines.length &&
+      isTableSeparator(lines[i + 1]?.trim() ?? '')
+    ) {
+      flushParagraph();
+      closeAllLists();
+      const headerCells = parseTableRow(line);
+      html += '<table><thead><tr>';
+      html += headerCells
+        .map((cell) => `<th>${renderInlineMarkdown(cell)}</th>`)
+        .join('');
+      html += '</tr></thead><tbody>';
+      i += 1;
+      while (i + 1 < lines.length) {
+        const rowLine = lines[i + 1] ?? '';
+        const rowTrimmed = rowLine.trim();
+        if (!rowTrimmed || !rowLine.includes('|')) {
+          break;
+        }
+        const rowCells = parseTableRow(rowLine);
+        html += '<tr>';
+        html += rowCells
+          .map((cell) => `<td>${renderInlineMarkdown(cell)}</td>`)
+          .join('');
+        html += '</tr>';
+        i += 1;
+      }
+      html += '</tbody></table>';
       continue;
     }
 

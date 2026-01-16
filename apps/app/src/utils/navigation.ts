@@ -39,6 +39,72 @@ export function parsePath(path: string): ParsedPath {
     }
   }
 
+  if (pathWithoutTrailingSlash.startsWith("/guides")) {
+    if (pathWithoutTrailingSlash === "/guides") {
+      return { screen: "guides" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/planning-poker") {
+      return { screen: "guidesPlanningPoker" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/fibonacci-scale") {
+      return { screen: "guidesFibonacciScale" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/fibonacci-short") {
+      return { screen: "guidesFibonacciShort" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/doubling-scale") {
+      return { screen: "guidesDoublingScale" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/tshirt-sizing") {
+      return { screen: "guidesTshirtSizing" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/planet-scale") {
+      return { screen: "guidesPlanetScale" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/yes-no") {
+      return { screen: "guidesYesNo" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/simple-scale") {
+      return { screen: "guidesSimpleScale" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/hours-estimates") {
+      return { screen: "guidesHoursEstimates" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/session-roles") {
+      return { screen: "guidesSessionRoles" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/remote-estimation") {
+      return { screen: "guidesRemoteEstimation" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/story-points") {
+      return { screen: "guidesStoryPoints" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/sprint-planning") {
+      return { screen: "guidesSprintPlanning" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/consensus-building") {
+      return { screen: "guidesConsensusBuilding" };
+    }
+
+    if (pathWithoutTrailingSlash === "/guides/structured-voting") {
+      return { screen: "guidesStructuredVoting" };
+    }
+  }
+
   switch (pathWithoutTrailingSlash) {
     case "/auth/login":
       return { screen: "login" };
@@ -97,6 +163,38 @@ export function getPathFromScreen(screen: AppScreen, roomKey?: string): string {
       return "/integrations/linear";
     case "integrationsGithub":
       return "/integrations/github";
+    case "guides":
+      return "/guides";
+    case "guidesPlanningPoker":
+      return "/guides/planning-poker";
+    case "guidesFibonacciScale":
+      return "/guides/fibonacci-scale";
+    case "guidesFibonacciShort":
+      return "/guides/fibonacci-short";
+    case "guidesDoublingScale":
+      return "/guides/doubling-scale";
+    case "guidesTshirtSizing":
+      return "/guides/tshirt-sizing";
+    case "guidesPlanetScale":
+      return "/guides/planet-scale";
+    case "guidesYesNo":
+      return "/guides/yes-no";
+    case "guidesSimpleScale":
+      return "/guides/simple-scale";
+    case "guidesHoursEstimates":
+      return "/guides/hours-estimates";
+    case "guidesSessionRoles":
+      return "/guides/session-roles";
+    case "guidesRemoteEstimation":
+      return "/guides/remote-estimation";
+    case "guidesStoryPoints":
+      return "/guides/story-points";
+    case "guidesSprintPlanning":
+      return "/guides/sprint-planning";
+    case "guidesConsensusBuilding":
+      return "/guides/consensus-building";
+    case "guidesStructuredVoting":
+      return "/guides/structured-voting";
     case "404":
       return "/404";
   }

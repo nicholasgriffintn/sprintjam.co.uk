@@ -11,6 +11,7 @@ export interface MetaTagConfig {
   twitterDescription?: string;
   twitterImage?: string;
   canonical?: string;
+  jsonLd?: Record<string, unknown>;
 }
 
 export function updateMetaTags(config: MetaTagConfig): void {
@@ -57,6 +58,10 @@ export function updateMetaTags(config: MetaTagConfig): void {
   if (config.canonical) {
     updateCanonicalLink(config.canonical);
   }
+
+  if (config.jsonLd) {
+    updateJsonLd(config.jsonLd);
+  }
 }
 
 function updateMetaTag(
@@ -93,4 +98,29 @@ function updateCanonicalLink(url: string): void {
 export function getAbsoluteUrl(path: string = ""): string {
   const baseUrl = window.location.origin;
   return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+const JSON_LD_SCRIPT_ID = "sprintjam-json-ld";
+
+function updateJsonLd(data: Record<string, unknown>): void {
+  let script = document.getElementById(
+    JSON_LD_SCRIPT_ID,
+  ) as HTMLScriptElement | null;
+
+  if (script) {
+    script.textContent = JSON.stringify(data);
+  } else {
+    script = document.createElement("script");
+    script.id = JSON_LD_SCRIPT_ID;
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(data);
+    document.head.appendChild(script);
+  }
+}
+
+export function removeJsonLd(): void {
+  const script = document.getElementById(JSON_LD_SCRIPT_ID);
+  if (script) {
+    script.remove();
+  }
 }
