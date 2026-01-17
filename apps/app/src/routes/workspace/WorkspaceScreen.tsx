@@ -390,10 +390,17 @@ export default function WorkspaceScreen() {
                   />
                 )}
                 {teams.map((team) => (
-                  <button
+                  <div
                     key={team.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedTeamId(team.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedTeamId(team.id);
+                      }
+                    }}
                     className={cn(
                       "w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
                       selectedTeamId === team.id &&
@@ -418,7 +425,10 @@ export default function WorkspaceScreen() {
                             type="button"
                             variant="secondary"
                             icon={<Pencil className="h-4 w-4" />}
-                            onClick={handleOpenTeamModal}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleOpenTeamModal();
+                            }}
                             disabled={!selectedTeam}
                             size="sm"
                           >
@@ -429,7 +439,7 @@ export default function WorkspaceScreen() {
                         <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                       )}
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </SurfaceCard>

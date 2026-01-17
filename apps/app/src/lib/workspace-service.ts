@@ -220,10 +220,10 @@ export async function getWorkspaceStats(): Promise<WorkspaceStats> {
 export async function getTeamInsights(
   teamId: number,
   limit = 6,
-): Promise<TeamInsights> {
+): Promise<TeamInsights | null> {
   const params = new URLSearchParams();
   params.set("limit", String(limit));
-  const data = await workspaceRequest<{ insights: TeamInsights }>(
+  const data = await workspaceRequest<{ insights: TeamInsights | null }>(
     `${API_BASE_URL}/stats/team/${teamId}/insights?${params.toString()}`,
   );
   return data.insights;

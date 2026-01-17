@@ -38,9 +38,14 @@ async function handleRequest(
         path.startsWith('auth/') ||
         path === 'teams' ||
         path.startsWith('teams/') ||
-        path.startsWith('workspace/')
+        path.startsWith('workspace/') ||
+        path === 'sessions/complete'
       ) {
         return await env.AUTH_WORKER.fetch(request);
+      }
+
+      if (path.startsWith('stats/')) {
+        return await env.STATS_WORKER.fetch(request);
       }
 
       return await env.ROOM_WORKER.fetch(request);

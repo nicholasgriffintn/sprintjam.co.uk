@@ -326,7 +326,7 @@ describe("getTeamInsightsController", () => {
     expect(data.error).toBe("You do not have access to this team's stats");
   });
 
-  it("should return 404 when insights not found", async () => {
+  it("should return an empty insights payload when not found", async () => {
     vi.mocked(auth.authenticateRequest).mockResolvedValue({
       userId: 1,
       email: "test@example.com",
@@ -342,8 +342,8 @@ describe("getTeamInsightsController", () => {
     const response = await getTeamInsightsController(request as any, mockEnv, 1);
     const data = await response.json();
 
-    expect(response.status).toBe(404);
-    expect(data.error).toBe("Team insights not found");
+    expect(response.status).toBe(200);
+    expect(data.insights).toBeNull();
   });
 
   it("should return insights when found", async () => {

@@ -163,7 +163,7 @@ export async function getTeamInsightsController(
   const insights = await repo.getTeamInsights(teamId, { limit });
 
   if (!insights) {
-    return errorResponse("Team insights not found", 404);
+    return successResponse({ insights: null }, true);
   }
 
   return successResponse({ insights }, true);
