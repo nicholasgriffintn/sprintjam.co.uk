@@ -1,45 +1,45 @@
-import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   useRoomActions,
   useRoomState,
   useRoomStatus,
-} from '@/context/RoomContext';
-import { useSessionState } from '@/context/SessionContext';
-import { useRoomHeader } from '@/context/RoomHeaderContext';
-import { useRoomStats } from '@/hooks/useRoomStats';
-import { useConsensusCelebration } from '@/hooks/useConsensusCelebration';
-import { UserEstimate } from '@/components/voting/UserEstimate';
-import { ResultsControls } from '@/components/results/ResultsControls';
-import { VotesHidden } from '@/components/results/VotesHidden';
-import { StructuredVotingPanel } from '@/components/voting/StructuredVotingPanel';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { StrudelMiniPlayer } from '@/components/StrudelPlayer/StrudelMiniPlayer';
-import { FallbackLoading } from '@/components/ui/FallbackLoading';
-import { TicketQueueModal } from '@/components/modals/TicketQueueModal';
-import { PrePointingSummaryModal } from '@/components/modals/PrePointingSummaryModal';
-import { QueueProviderSetupModal } from '@/components/modals/QueueProviderSetupModal';
-import { RoomErrorBanners } from '@/components/errors/RoomErrorBanners';
-import { RoomSidebar } from '@/components/layout/RoomSidebar';
-import { getVoteKeyForUser } from '@/utils/room';
-import { useDisplayQueueSetup } from '@/hooks/useDisplayQueueSetup';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
-import { Footer } from '@/components/layout/Footer';
-import ShareRoomModal from '@/components/modals/ShareRoomModal';
-import SettingsModal from '@/components/modals/SettingsModal';
-import { SaveToWorkspaceModal } from '@/components/modals/SaveToWorkspaceModal';
-import { CompleteSessionModal } from '@/components/modals/CompleteSessionModal';
-import { UnifiedResults } from '@/components/results/UnifiedResults';
-import { isWorkspacesEnabled } from '@/utils/feature-flags';
-import { RoomGuidancePanel } from '@/components/room/RoomGuidancePanel';
-import { RoomCalloutCard } from '@/components/room/RoomCalloutCard';
-import { getVoteSpreadSummary } from '@/utils/room-guidance';
-import { useRoomOnboardingHints } from '@/hooks/useRoomOnboardingHints';
-import { useFacilitationPrompt } from '@/hooks/useFacilitationPrompt';
-import type { ConnectionStatusState } from '@/types';
-import type { RoomSettingsTabId } from '@/components/RoomSettingsTabs';
+} from "@/context/RoomContext";
+import { useSessionState } from "@/context/SessionContext";
+import { useRoomHeader } from "@/context/RoomHeaderContext";
+import { useRoomStats } from "@/hooks/useRoomStats";
+import { useConsensusCelebration } from "@/hooks/useConsensusCelebration";
+import { UserEstimate } from "@/components/voting/UserEstimate";
+import { ResultsControls } from "@/components/results/ResultsControls";
+import { VotesHidden } from "@/components/results/VotesHidden";
+import { StructuredVotingPanel } from "@/components/voting/StructuredVotingPanel";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { StrudelMiniPlayer } from "@/components/StrudelPlayer/StrudelMiniPlayer";
+import { FallbackLoading } from "@/components/ui/FallbackLoading";
+import { TicketQueueModal } from "@/components/modals/TicketQueueModal";
+import { PrePointingSummaryModal } from "@/components/modals/PrePointingSummaryModal";
+import { QueueProviderSetupModal } from "@/components/modals/QueueProviderSetupModal";
+import { RoomErrorBanners } from "@/components/errors/RoomErrorBanners";
+import { RoomSidebar } from "@/components/layout/RoomSidebar";
+import { getVoteKeyForUser } from "@/utils/room";
+import { useDisplayQueueSetup } from "@/hooks/useDisplayQueueSetup";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
+import { Footer } from "@/components/layout/Footer";
+import ShareRoomModal from "@/components/modals/ShareRoomModal";
+import SettingsModal from "@/components/modals/SettingsModal";
+import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
+import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
+import { UnifiedResults } from "@/components/results/UnifiedResults";
+import { isWorkspacesEnabled } from "@/utils/feature-flags";
+import { RoomGuidancePanel } from "@/components/room/RoomGuidancePanel";
+import { RoomCalloutCard } from "@/components/room/RoomCalloutCard";
+import { getVoteSpreadSummary } from "@/utils/room-guidance";
+import { useRoomOnboardingHints } from "@/hooks/useRoomOnboardingHints";
+import { useFacilitationPrompt } from "@/hooks/useFacilitationPrompt";
+import type { ConnectionStatusState } from "@/types";
+import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 
 const RoomScreen = () => {
   usePageMeta(META_CONFIGS.room);
@@ -86,13 +86,13 @@ const RoomScreen = () => {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isCompleteSessionOpen, setIsCompleteSessionOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
-  const [summaryNote, setSummaryNote] = useState('');
+  const [summaryNote, setSummaryNote] = useState("");
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
-      ? 'connected'
-      : 'disconnected'
-    : 'connecting';
+      ? "connected"
+      : "disconnected"
+    : "connecting";
 
   if (!roomData || !serverDefaults) {
     return (
@@ -141,7 +141,7 @@ const RoomScreen = () => {
   });
 
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? true;
-  const queueProvider = roomData.settings.externalService || 'none';
+  const queueProvider = roomData.settings.externalService || "none";
   const canManageQueue =
     isModeratorView || roomData.settings.allowOthersToManageQueue === true;
   const showSaveToWorkspace = isWorkspacesEnabled();
@@ -156,35 +156,32 @@ const RoomScreen = () => {
 
   const totalTickets = roomData.ticketQueue?.length ?? 0;
   const completedTickets =
-    roomData.ticketQueue?.filter((ticket) => ticket.status === 'completed')
+    roomData.ticketQueue?.filter((ticket) => ticket.status === "completed")
       .length ?? 0;
   const completedTicketList =
-    roomData.ticketQueue?.filter((ticket) => ticket.status === 'completed') ??
+    roomData.ticketQueue?.filter((ticket) => ticket.status === "completed") ??
     [];
   const completedTicketVotes = completedTicketList.reduce(
     (total, ticket) => total + (ticket.votes?.length ?? 0),
     0,
   );
-  const completedTicketVoters = completedTicketList.reduce(
-    (voters, ticket) => {
-      ticket.votes?.forEach((vote) => voters.add(vote.userName));
-      return voters;
-    },
-    new Set<string>(),
-  );
+  const completedTicketVoters = completedTicketList.reduce((voters, ticket) => {
+    ticket.votes?.forEach((vote) => voters.add(vote.userName));
+    return voters;
+  }, new Set<string>());
   const totalVotes = stats.totalVotes ?? Object.keys(roomData.votes).length;
   const ticketLabel = isQueueEnabled
     ? `${completedTickets}/${totalTickets}`
-    : 'Queue off';
+    : "Queue off";
 
   const getSuggestedNote = () => {
     if (spreadSummary.unknownVoteCount > 0) {
-      return 'Unknowns flagged; clarify acceptance criteria.';
+      return "Unknowns flagged; clarify acceptance criteria.";
     }
     if (spreadSummary.isWideSpread) {
-      return 'Wide spread; align on scope or split the work.';
+      return "Wide spread; align on scope or split the work.";
     }
-    return '';
+    return "";
   };
 
   const handleOpenSettings = (tab?: RoomSettingsTabId) => {
@@ -213,18 +210,20 @@ const RoomScreen = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <RoomSidebar
-          isQueueEnabled={isQueueEnabled}
-          stats={stats}
-          setIsQueueModalOpen={setIsQueueModalOpen}
-          onOpenQueueSettings={
-            isModeratorView ? () => handleOpenSettings('queue') : undefined
-          }
-          isCompleted={roomData.status === 'completed'}
-        />
+        <div className="order-2 md:order-none">
+          <RoomSidebar
+            isQueueEnabled={isQueueEnabled}
+            stats={stats}
+            setIsQueueModalOpen={setIsQueueModalOpen}
+            onOpenQueueSettings={
+              isModeratorView ? () => handleOpenSettings("queue") : undefined
+            }
+            isCompleted={roomData.status === "completed"}
+          />
+        </div>
 
-        <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4">
-          {roomData?.status === 'completed' ? (
+        <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4 order-1 md:order-none">
+          {roomData?.status === "completed" ? (
             <>
               <SurfaceCard padding="md" className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -350,11 +349,11 @@ const RoomScreen = () => {
                       title="Enable facilitation prompts?"
                       body="Prompts will be displayed as the session progresses with tips to run a successful session."
                       primaryAction={{
-                        label: 'Enable prompts',
+                        label: "Enable prompts",
                         onClick: enableFacilitationGuidance,
                       }}
                       secondaryAction={{
-                        label: 'Not now',
+                        label: "Not now",
                         onClick: dismissFacilitationOptIn,
                       }}
                     />
@@ -363,21 +362,21 @@ const RoomScreen = () => {
                       badge="Hint"
                       title="You're facilitating"
                       body="Use Reveal when everyone's voted, or Reset to start over."
-                      primaryAction={{ label: 'Got it', onClick: dismissHints }}
+                      primaryAction={{ label: "Got it", onClick: dismissHints }}
                     />
                   ) : isFirstStructured ? (
                     <RoomCalloutCard
                       badge="Hint"
                       title="Structured voting enabled"
                       body="Score each criterion, then submit to calculate the final story points."
-                      primaryAction={{ label: 'Got it', onClick: dismissHints }}
+                      primaryAction={{ label: "Got it", onClick: dismissHints }}
                     />
                   ) : isFirstRoomJoin ? (
                     <RoomCalloutCard
                       badge="Hint"
                       title="First time? Tap any card to vote."
                       body="Votes stay hidden until the moderator reveals."
-                      primaryAction={{ label: 'Got it', onClick: dismissHints }}
+                      primaryAction={{ label: "Got it", onClick: dismissHints }}
                     />
                   ) : null}
                 </div>
@@ -405,7 +404,7 @@ const RoomScreen = () => {
                   currentUserVote={userVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('voting')
+                      ? () => handleOpenSettings("voting")
                       : undefined
                   }
                   disabled={isSpectator}
@@ -414,11 +413,11 @@ const RoomScreen = () => {
                 <UserEstimate
                   roomData={roomData}
                   name={name}
-                  userVote={typeof userVote === 'object' ? null : userVote}
+                  userVote={typeof userVote === "object" ? null : userVote}
                   onVote={handleVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('voting')
+                      ? () => handleOpenSettings("voting")
                       : undefined
                   }
                   disabled={isSpectator}
@@ -433,7 +432,7 @@ const RoomScreen = () => {
                   onToggleShowVotes={handleToggleShowVotes}
                   onResetVotes={handleResetVotes}
                   onNextTicket={() => {
-                    const existingNote = roomData.currentTicket?.outcome ?? '';
+                    const existingNote = roomData.currentTicket?.outcome ?? "";
                     setSummaryNote(existingNote || getSuggestedNote());
                     setIsSummaryOpen(true);
                   }}
@@ -444,7 +443,7 @@ const RoomScreen = () => {
                   }
                   onOpenResultsSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('results')
+                      ? () => handleOpenSettings("results")
                       : undefined
                   }
                   onRevisitLater={async () => {
@@ -456,7 +455,7 @@ const RoomScreen = () => {
                         0,
                       ) + 1;
                     await handleUpdateTicket(roomData.currentTicket.id, {
-                      status: 'pending',
+                      status: "pending",
                       ordinal: maxOrdinal,
                     });
                     handleNextTicket();
@@ -482,10 +481,10 @@ const RoomScreen = () => {
                             spreadSummary.highestVoteValue !== null &&
                             spreadSummary.lowestVoteValue !== null
                               ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
-                              : 'Ask the highest and lowest voters to explain their thinking.'
+                              : "Ask the highest and lowest voters to explain their thinking."
                           }
                           primaryAction={{
-                            label: 'Got it',
+                            label: "Got it",
                             onClick: dismissHints,
                           }}
                         />
@@ -597,7 +596,7 @@ const RoomScreen = () => {
         onClose={() => setIsQueueModalOpen(false)}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || 'none'}
+        externalService={roomData.settings.externalService || "none"}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -614,7 +613,7 @@ const RoomScreen = () => {
         isQueueEnabled={isQueueEnabled}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || 'none'}
+        externalService={roomData.settings.externalService || "none"}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -627,10 +626,10 @@ const RoomScreen = () => {
         onError={reportRoomError}
       />
 
-      {isQueueEnabled && queueProvider !== 'none' && (
+      {isQueueEnabled && queueProvider !== "none" && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as 'jira' | 'linear' | 'github'}
+          provider={queueProvider as "jira" | "linear" | "github"}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);
@@ -654,7 +653,7 @@ const RoomScreen = () => {
           try {
             const trimmedNote = summaryNote.trim();
             if (roomData.currentTicket) {
-              const existingNote = roomData.currentTicket.outcome ?? '';
+              const existingNote = roomData.currentTicket.outcome ?? "";
               if (trimmedNote !== existingNote) {
                 await handleUpdateTicket(roomData.currentTicket.id, {
                   outcome: trimmedNote || undefined,
