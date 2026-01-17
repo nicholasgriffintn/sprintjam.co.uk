@@ -307,7 +307,7 @@ const RoomScreen = () => {
                           <div className="mt-3 flex flex-wrap gap-2 text-xs">
                             {ticket.votes.map((vote) => (
                               <span
-                                key={`${ticket.id}-${vote.userName}`}
+                                key={`${ticket.id}-${vote.id}`}
                                 className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                               >
                                 <span className="uppercase tracking-wide text-slate-500 dark:text-slate-400">

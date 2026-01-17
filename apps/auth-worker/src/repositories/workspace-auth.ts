@@ -371,7 +371,7 @@ export class WorkspaceAuthRepository {
       .from(teamSessions)
       .innerJoin(teams, eq(teamSessions.teamId, teams.id))
       .where(
-        sql`${teamSessions.roomKey} = ${roomKey} AND ${teams.organisationId} = ${user.organisationId} AND ${teamSessions.completedAt} IS NULL`,
+        sql`${teamSessions.roomKey} = ${roomKey} AND ${teams.organisationId} = ${user.organisationId} AND ${teams.ownerId} = ${userId} AND ${teamSessions.completedAt} IS NULL`,
       )
       .orderBy(desc(teamSessions.createdAt))
       .limit(1)
