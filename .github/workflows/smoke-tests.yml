@@ -51,7 +51,7 @@ jobs:
 
       - name: Create .dev.vars file
         run: echo "TOKEN_ENCRYPTION_SECRET=test-token" > .dev.vars
-        working-directory: apps/app
+        working-directory: apps/room-worker
 
       - name: Run smoke tests
         run: pnpm test:e2e:smoke
