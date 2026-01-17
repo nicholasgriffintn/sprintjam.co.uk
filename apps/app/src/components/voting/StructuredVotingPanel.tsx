@@ -98,7 +98,7 @@ function CriterionRow({
       </div>
       <div className="flex flex-col gap-2 md:min-w-[220px]">
         <div
-          className={`flex gap-2 ${steps === 3 ? 'justify-center' : 'justify-end'}`}
+          className={`flex gap-2 justify-end`}
           role="radiogroup"
           aria-labelledby={titleId}
           aria-describedby={descriptionId}
