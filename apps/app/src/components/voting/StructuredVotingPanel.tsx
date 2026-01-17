@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect, useId } from 'react';
-import { Check, Info } from 'lucide-react';
+import { Check, Info, AlertTriangle } from 'lucide-react';
 
 import type {
   VotingCriterion,
@@ -558,20 +558,23 @@ export function StructuredVotingPanel({
                           {(infoToggleSettings?.showConversionRules ?? true) &&
                             (calculatedVote?.appliedConversionRules?.length ??
                               0) > 0 && (
-                              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                                <div className="font-medium text-yellow-800 mb-1">
-                                  Applied Rules:
+                              <div className="mt-2 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-700/40 rounded-md p-3 flex items-start">
+                                <AlertTriangle className="w-4 h-4 text-amber-800 dark:text-amber-200 mr-2 flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
+                                    Applied Rules:
+                                  </div>
+                                  {calculatedVote?.appliedConversionRules?.map(
+                                    (conversion) => (
+                                      <div
+                                        key={conversion}
+                                        className="text-sm text-amber-700 dark:text-amber-300"
+                                      >
+                                        {conversion}
+                                      </div>
+                                    ),
+                                  )}
                                 </div>
-                                {calculatedVote?.appliedConversionRules?.map(
-                                  (conversion) => (
-                                    <div
-                                      key={conversion}
-                                      className="text-yellow-700"
-                                    >
-                                      {conversion}
-                                    </div>
-                                  ),
-                                )}
                               </div>
                             )}
                         </div>
