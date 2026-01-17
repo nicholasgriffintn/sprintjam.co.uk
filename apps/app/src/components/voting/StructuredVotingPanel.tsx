@@ -31,13 +31,6 @@ interface CriterionRowProps {
   isDisabled?: boolean;
 }
 
-const parseCriterionDescription = (description: string) => {
-  const match = description.match(/^(.*?)(?:\s*\((.*)\))?$/);
-  const shortLabel = match?.[1]?.trim() || description;
-  const details = match?.[2]?.trim() || '';
-  return { shortLabel, details };
-};
-
 const getScaleLabels = (criterion: VotingCriterion) => {
   switch (criterion.id) {
     case 'volume':
@@ -48,11 +41,6 @@ const getScaleLabels = (criterion: VotingCriterion) => {
   }
 };
 
-const getStepLabel = (criterion: VotingCriterion) => {
-  const steps = criterion.maxScore - criterion.minScore + 1;
-  return steps === 3 ? '3-step scale' : '';
-};
-
 function CriterionRow({
   criterion,
   score,
@@ -61,12 +49,7 @@ function CriterionRow({
 }: CriterionRowProps) {
   const titleId = useId();
   const descriptionId = useId();
-  const tooltipId = useId();
-  const { shortLabel, details } = parseCriterionDescription(
-    criterion.description,
-  );
   const scaleLabels = getScaleLabels(criterion);
-  const stepLabel = getStepLabel(criterion);
   const steps = criterion.maxScore - criterion.minScore + 1;
   const scoreButtons = [];
 
@@ -115,48 +98,18 @@ function CriterionRow({
             className="font-semibold text-slate-900 dark:text-white"
           >
             {criterion.name}
-            {score !== null && (
-              <span className="text-slate-500 dark:text-slate-300">
-                {' '}
-                — {score}
-              </span>
-            )}
           </div>
-          {details && (
-            <div className="relative group">
-              <button
-                type="button"
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:border-blue-300 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
-                aria-label={`More info about ${criterion.name}`}
-                aria-describedby={tooltipId}
-              >
-                <Info size={14} aria-hidden="true" />
-              </button>
-              <div
-                id={tooltipId}
-                role="tooltip"
-                className="pointer-events-none absolute right-0 top-8 z-10 w-56 rounded-xl border border-slate-200/80 bg-white/95 p-2 text-xs text-slate-700 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 dark:border-slate-700/70 dark:bg-slate-900/95 dark:text-slate-200"
-              >
-                {details}
-              </div>
-            </div>
-          )}
         </div>
         <div
           id={descriptionId}
           className="text-xs text-slate-600 dark:text-slate-200"
         >
-          {shortLabel}
+          {criterion.description}
         </div>
       </div>
       <div className="flex flex-col gap-2 md:min-w-[220px]">
         <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           <span>{scaleLabels.low}</span>
-          {stepLabel && (
-            <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-              {stepLabel}
-            </span>
-          )}
           <span>{scaleLabels.high}</span>
         </div>
         <div
@@ -423,7 +376,7 @@ export function StructuredVotingPanel({
             <div className="mt-4 lg:mt-0">
               <div className="lg:sticky lg:top-24 space-y-3">
                 <div
-                  className="rounded-2xl border border-blue-200/70 bg-gradient-to-br from-white via-blue-50/60 to-blue-100/70 p-4 text-slate-900 shadow-sm dark:border-blue-800/60 dark:from-slate-900 dark:via-slate-900/90 dark:to-blue-950/40 dark:text-white"
+                  className="rounded-2xl border border-blue-200/70 bg-gradient-to-br from-white via-blue-50/60 to-blue-100/70 p-4 text-slate-900 shadow-sm dark:border-blue-800/60 dark:from-slate-900 dark:via-slate-900/90 dark:to-blue-950/40 dark:text-white max-h-[320px] overflow-y-auto"
                   data-testid="structured-summary"
                   role="status"
                   aria-live="polite"
