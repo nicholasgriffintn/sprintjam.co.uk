@@ -1,19 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { LayoutGrid, Loader2, LogIn, LogOut, UserRound } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { KeyRound, LayoutGrid, Loader2, LogOut, UserRound } from "lucide-react";
 
-import { Button } from '@/components/ui/Button';
-import { useWorkspaceAuth } from '@/context/WorkspaceAuthContext';
-import { cn } from '@/lib/cn';
-import { isWorkspacesEnabled } from '@/utils/feature-flags';
-import { useSessionActions } from '@/context/SessionContext';
+import { Button } from "@/components/ui/Button";
+import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
+import { cn } from "@/lib/cn";
+import { isWorkspacesEnabled } from "@/utils/feature-flags";
+import { useSessionActions } from "@/context/SessionContext";
+import type { MarketingVariant } from "./types";
 
 const getInitials = (nameOrEmail: string | null | undefined) => {
   if (!nameOrEmail) return null;
   const trimmed = nameOrEmail.trim();
   if (!trimmed) return null;
 
-  const parts = trimmed.split(' ');
+  const parts = trimmed.split(" ");
   if (parts.length > 1) {
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
@@ -21,7 +22,11 @@ const getInitials = (nameOrEmail: string | null | undefined) => {
   return trimmed.slice(0, 2).toUpperCase();
 };
 
-export const HeaderUserMenu = () => {
+interface HeaderUserMenuProps {
+  variant?: MarketingVariant;
+}
+
+export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -29,6 +34,7 @@ export const HeaderUserMenu = () => {
   const { goHome, goToWorkspace, goToLogin } = useSessionActions();
 
   const showNavigation = isWorkspacesEnabled();
+  const isHero = variant === "hero";
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -43,31 +49,31 @@ export const HeaderUserMenu = () => {
     };
 
     const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeydown);
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeydown);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeydown);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeydown);
     };
   }, [isMenuOpen]);
 
   const displayName = useMemo(
-    () => user?.name || user?.email || 'Workspace user',
-    [user]
+    () => user?.name || user?.email || "Workspace user",
+    [user],
   );
 
   const avatarLabel = useMemo(
     () =>
       getInitials(user?.name) ||
       getInitials(user?.email) ||
-      (isAuthenticated ? 'WS' : null),
-    [isAuthenticated, user]
+      (isAuthenticated ? "WS" : null),
+    [isAuthenticated, user],
   );
 
   const handleLogout = async () => {
@@ -95,12 +101,18 @@ export const HeaderUserMenu = () => {
       <Button
         variant="secondary"
         size="sm"
-        icon={<LogIn className="h-5 w-5" />}
+        icon={<KeyRound className={cn("h-4 w-4", isHero && "sm:h-5 sm:w-5")} />}
         iconOnly
+        expandOnHover
         aria-label="Sign in"
         onClick={goToLogin}
-        className="border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white"
-      />
+        className={cn(
+          "min-h-9 min-w-9 border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white",
+          isHero && "sm:min-h-10 sm:min-w-10",
+        )}
+      >
+        Sign in
+      </Button>
     );
   }
 
@@ -109,9 +121,9 @@ export const HeaderUserMenu = () => {
       <button
         type="button"
         className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-gradient-to-br from-brand-500 to-indigo-500 text-sm font-semibold uppercase text-white shadow-md transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 dark:border-white/10 dark:from-brand-600 dark:to-indigo-600',
+          "flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-gradient-to-br from-brand-500 to-indigo-500 text-sm font-semibold uppercase text-white shadow-md transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 dark:border-white/10 dark:from-brand-600 dark:to-indigo-600",
           isMenuOpen &&
-            'ring-2 ring-brand-200 ring-offset-2 ring-offset-transparent'
+            "ring-2 ring-brand-200 ring-offset-2 ring-offset-transparent",
         )}
         aria-haspopup="menu"
         aria-expanded={isMenuOpen}
