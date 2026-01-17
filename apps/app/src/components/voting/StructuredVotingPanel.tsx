@@ -1,16 +1,16 @@
-import { motion } from 'framer-motion';
-import { useState, useEffect, useId } from 'react';
-import { Check, AlertTriangle } from 'lucide-react';
+import { motion } from "framer-motion";
+import { useState, useEffect, useId } from "react";
+import { Check, AlertTriangle } from "lucide-react";
 
 import type {
   VotingCriterion,
   StructuredVote,
   StructuredVotingDisplaySettings,
   VoteValue,
-} from '@/types';
-import { TimerChip } from './TimerChip';
-import { useRoomState } from '@/context/RoomContext';
-import { Button } from '@/components/ui/Button';
+} from "@/types";
+import { TimerChip } from "./TimerChip";
+import { useRoomState } from "@/context/RoomContext";
+import { Button } from "@/components/ui/Button";
 
 const MotionButton = motion(Button);
 
@@ -53,14 +53,14 @@ function CriterionRow({
         data-testid={`structured-score-${criterion.id}-${i}`}
         className={`relative h-10 w-10 rounded-lg border text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${
           isDisabled
-            ? 'opacity-40 cursor-not-allowed'
+            ? "opacity-40 cursor-not-allowed"
             : score === i
-              ? 'border-blue-500 bg-blue-600 text-white shadow-[0_0_0_2px_rgba(59,130,246,0.25),0_10px_20px_rgba(37,99,235,0.35)]'
-              : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-400 bg-white dark:bg-gray-800/70 text-slate-900 dark:text-white hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)]'
+              ? "border-blue-500 bg-blue-600 text-white shadow-[0_0_0_2px_rgba(59,130,246,0.25),0_10px_20px_rgba(37,99,235,0.35)]"
+              : "border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-400 bg-white dark:bg-gray-800/70 text-slate-900 dark:text-white hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)]"
         }`}
         whileHover={isDisabled ? {} : { scale: 1.06, y: -2 }}
         whileTap={isDisabled ? {} : { scale: 0.95 }}
-        transition={{ type: 'spring', stiffness: 420, damping: 20 }}
+        transition={{ type: "spring", stiffness: 420, damping: 20 }}
         role="radio"
         aria-checked={score === i}
         aria-label={`${criterion.name} ${i}`}
@@ -114,13 +114,13 @@ const normalizeVoteValue = (value: string | number) =>
   String(value).trim().toLowerCase();
 
 const parseOptionLabel = (optionText: string) => {
-  const [first, ...rest] = optionText.split(' ');
+  const [first, ...rest] = optionText.split(" ");
   const hasLeadingEmoji =
     first && /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(first);
 
   return {
-    icon: hasLeadingEmoji ? first : '',
-    label: hasLeadingEmoji ? rest.join(' ').trim() || first : optionText,
+    icon: hasLeadingEmoji ? first : "",
+    label: hasLeadingEmoji ? rest.join(" ").trim() || first : optionText,
   };
 };
 
@@ -166,8 +166,13 @@ export function StructuredVotingPanel({
       setCriteriaScores({ ...currentVote.criteriaScores });
       return;
     }
+    // Only reset criteriaScores if the user hasn't actively entered any scores
+    // This prevents wiping scores when switching from exception vote back to criteria voting
+    if (Object.keys(criteriaScores).length > 0) {
+      return;
+    }
     setCriteriaScores({});
-  }, [currentVote, hideSubmittedVote]);
+  }, [currentVote, hideSubmittedVote, criteriaScores]);
 
   useEffect(() => {
     if (!allowScoringInfoToggle) {
@@ -180,7 +185,7 @@ export function StructuredVotingPanel({
       (option) => option.enabled !== false,
     ) ?? [];
   const normalizedCurrentVote =
-    currentUserVote !== null && typeof currentUserVote !== 'object'
+    currentUserVote !== null && typeof currentUserVote !== "object"
       ? normalizeVoteValue(currentUserVote)
       : null;
   const selectedExtraOption =
@@ -200,7 +205,7 @@ export function StructuredVotingPanel({
   const calculatedVote = hideSubmittedVote ? null : currentVote;
   const isExceptionActive = Boolean(selectedExtraOption);
   const summaryValue = isExceptionActive
-    ? '—'
+    ? "—"
     : (calculatedVote?.calculatedStoryPoints ?? null);
   const weightedScore = isExceptionActive
     ? null
@@ -251,7 +256,7 @@ export function StructuredVotingPanel({
         )}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {displaySettings?.panelTitle ?? 'Structured Estimation'}
+            {displaySettings?.panelTitle ?? "Structured Estimation"}
           </h2>
           <div className="flex items-center gap-3">
             {onOpenVotingSettings && (
@@ -330,15 +335,15 @@ export function StructuredVotingPanel({
                           aria-checked={isSelected}
                           className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-colors ${
                             isVotingDisabled
-                              ? 'opacity-50 cursor-not-allowed'
+                              ? "opacity-50 cursor-not-allowed"
                               : isSelected
-                                ? 'border-amber-400/80 bg-amber-50 text-amber-900 shadow-[0_0_0_2px_rgba(251,191,36,0.2)] dark:border-amber-400/60 dark:bg-amber-500/10 dark:text-amber-200'
-                                : 'border-slate-200 bg-white text-slate-700 hover:border-amber-300 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200'
+                                ? "border-amber-400/80 bg-amber-50 text-amber-900 shadow-[0_0_0_2px_rgba(251,191,36,0.2)] dark:border-amber-400/60 dark:bg-amber-500/10 dark:text-amber-200"
+                                : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
                           }`}
                           whileHover={isVotingDisabled ? {} : { scale: 1.03 }}
                           whileTap={isVotingDisabled ? {} : { scale: 0.97 }}
                           transition={{
-                            type: 'spring',
+                            type: "spring",
                             stiffness: 400,
                             damping: 20,
                           }}
@@ -370,11 +375,11 @@ export function StructuredVotingPanel({
                 >
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
                     {displaySettings?.summary?.storyPointsLabel ??
-                      'Story Points'}
+                      "Story Points"}
                   </div>
                   <div className="mt-1 text-3xl font-semibold">
                     <span data-testid="structured-summary-points">
-                      {summaryValue ?? '—'}
+                      {summaryValue ?? "—"}
                     </span>
                   </div>
                   {isExceptionActive && selectedExtraOption && (
@@ -396,10 +401,10 @@ export function StructuredVotingPanel({
                   {!isExceptionActive && Boolean(calculatedVote) && (
                     <div className="mt-2 text-xs text-slate-600 dark:text-slate-200">
                       {displaySettings?.summary?.weightedScoreLabel ??
-                        'Weighted score'}
-                      :{' '}
+                        "Weighted score"}
+                      :{" "}
                       {weightedScore === null
-                        ? '—'
+                        ? "—"
                         : `${weightedScore.toFixed(1)}%`}
                     </div>
                   )}
@@ -410,8 +415,8 @@ export function StructuredVotingPanel({
                         {calculatedVote?.appliedConversionRules?.length} rule
                         {(calculatedVote?.appliedConversionRules?.length ?? 0) >
                         1
-                          ? 's'
-                          : ''}{' '}
+                          ? "s"
+                          : ""}{" "}
                         applied
                       </div>
                     )}
@@ -424,7 +429,7 @@ export function StructuredVotingPanel({
                       aria-expanded={showScoringInfo}
                       aria-controls={scoringInfoPanelId}
                     >
-                      {showScoringInfo ? 'Hide breakdown' : 'Show breakdown'}
+                      {showScoringInfo ? "Hide breakdown" : "Show breakdown"}
                     </Button>
                   )}
                   {allowScoringInfoToggle &&
@@ -438,7 +443,7 @@ export function StructuredVotingPanel({
                       >
                         <div className="text-sm font-medium text-slate-900 dark:text-slate-200 mb-3">
                           {infoToggleSettings?.title ??
-                            'Weighted Scoring System'}
+                            "Weighted Scoring System"}
                         </div>
                         <div className="text-xs text-slate-700 dark:text-slate-200 space-y-2">
                           {(infoToggleSettings?.showContributionDetails ??
@@ -458,8 +463,8 @@ export function StructuredVotingPanel({
                                         {criterionName}:
                                       </span>
                                       <span className="text-right">
-                                        {c.score}/{c.maxScore} ×{' '}
-                                        {c.weightPercent.toFixed(0)}% ={' '}
+                                        {c.score}/{c.maxScore} ×{" "}
+                                        {c.weightPercent.toFixed(0)}% ={" "}
                                         {c.contributionPercent.toFixed(1)}%
                                       </span>
                                     </div>
@@ -483,12 +488,12 @@ export function StructuredVotingPanel({
                             <div className="mt-3 text-xs">
                               <div className="font-medium mb-1">
                                 {infoToggleSettings?.rangesLabel ??
-                                  'Story Point Ranges:'}
+                                  "Story Point Ranges:"}
                               </div>
                               <div className="space-y-0.5">
                                 <div>
                                   {infoToggleSettings?.rangesDescription ??
-                                    '1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+'}
+                                    "1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+"}
                                 </div>
                               </div>
                             </div>
