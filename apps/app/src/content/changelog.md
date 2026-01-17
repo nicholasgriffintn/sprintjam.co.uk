@@ -10,6 +10,7 @@
 - Added new guides for running sprint planning sessions with InnerSource principles as well as guides on how to use SprintJam effectively.
 - Made structured voting compatible with extra voting options.
 - Updated the judge to consider extra votes.
+- Adjusted the structured voting UI slightly
 
 ## V2.2
 

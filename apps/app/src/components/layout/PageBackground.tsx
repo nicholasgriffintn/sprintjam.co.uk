@@ -67,7 +67,13 @@ export const PageBackground: FC<PageBackgroundProps> = ({
   const showGrid = variant === "hero" || variant === "compact";
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div
+      className={cn(
+        'relative min-h-screen',
+        variant !== 'room' && 'overflow-hidden',
+        'bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white',
+      )}
+    >
       {showGradients && gradients && (
         <div
           aria-hidden

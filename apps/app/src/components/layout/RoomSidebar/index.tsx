@@ -79,7 +79,7 @@ export function RoomSidebar({
     <div className="md:relative md:min-h-0 md:h-full border-b border-white/30 dark:border-white/10 md:border-b-0 md:border-r">
       <div
         ref={sidebarRef}
-        className="flex h-full min-h-0 flex-col gap-3 p-3 shadow-sm backdrop-blur md:sticky md:top-[4.5rem] md:h-[calc(100vh-4.5rem)] md:min-h-[420px]"
+        className="flex h-full min-h-0 flex-col gap-3 p-3 shadow-sm backdrop-blur md:sticky md:top-[65px] md:h-[calc(100vh-65px)] md:min-h-[420px]"
       >
         <div
           className={`flex min-w-0 flex-col md:min-h-0 ${
