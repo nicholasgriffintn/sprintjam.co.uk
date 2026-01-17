@@ -14,12 +14,13 @@ export interface RoundStatsPayload {
   judgeScore?: string;
   judgeMetadata?: JudgeMetadata;
   roundEndedAt: number;
+  type: 'reset' | 'next_ticket';
 }
 
 export async function postRoundStats(
   statsWorker: Fetcher,
   token: string | undefined,
-  data: RoundStatsPayload
+  data: RoundStatsPayload,
 ): Promise<void> {
   if (!token) {
     console.warn('[stats-client] No STATS_INGEST_TOKEN configured, skipping');
@@ -36,13 +37,13 @@ export async function postRoundStats(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
-      }
+      },
     );
 
     if (!response.ok) {
       const text = await response.text();
       console.error(
-        `[stats-client] Failed to post stats: ${response.status} ${text}`
+        `[stats-client] Failed to post stats: ${response.status} ${text}`,
       );
     }
   } catch (error) {

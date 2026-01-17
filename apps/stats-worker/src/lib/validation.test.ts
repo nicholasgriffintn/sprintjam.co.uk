@@ -1,182 +1,183 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-import { validateRoundIngestPayload, LIMITS } from './validation';
+import { validateRoundIngestPayload, LIMITS } from "./validation";
 
-describe('validateRoundIngestPayload', () => {
+describe("validateRoundIngestPayload", () => {
   const validPayload = {
-    roomKey: 'room-123',
-    roundId: 'round-456',
+    roomKey: "room-123",
+    roundId: "round-456",
     votes: [
-      { userName: 'alice', vote: '5', votedAt: 1700000000 },
-      { userName: 'bob', vote: '3', votedAt: 1700000001 },
+      { userName: "alice", vote: "5", votedAt: 1700000000 },
+      { userName: "bob", vote: "3", votedAt: 1700000001 },
     ],
     roundEndedAt: 1700000010,
+    type: "reset" as const,
   };
 
-  describe('required fields', () => {
-    it('accepts valid payload with all required fields', () => {
+  describe("required fields", () => {
+    it("accepts valid payload with all required fields", () => {
       const result = validateRoundIngestPayload(validPayload);
       expect(result.valid).toBe(true);
     });
 
-    it('rejects null body', () => {
+    it("rejects null body", () => {
       const result = validateRoundIngestPayload(null);
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'Request body must be an object');
+      expect(result).toHaveProperty("error", "Request body must be an object");
     });
 
-    it('rejects non-object body', () => {
-      const result = validateRoundIngestPayload('string');
+    it("rejects non-object body", () => {
+      const result = validateRoundIngestPayload("string");
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'Request body must be an object');
+      expect(result).toHaveProperty("error", "Request body must be an object");
     });
 
-    it('rejects missing roomKey', () => {
+    it("rejects missing roomKey", () => {
       const { roomKey, ...payload } = validPayload;
       const result = validateRoundIngestPayload(payload);
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'Missing required fields');
+      expect(result).toHaveProperty("error", "Missing required fields");
     });
 
-    it('rejects missing roundId', () => {
+    it("rejects missing roundId", () => {
       const { roundId, ...payload } = validPayload;
       const result = validateRoundIngestPayload(payload);
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'Missing required fields');
+      expect(result).toHaveProperty("error", "Missing required fields");
     });
 
-    it('rejects missing votes', () => {
+    it("rejects missing votes", () => {
       const { votes, ...payload } = validPayload;
       const result = validateRoundIngestPayload(payload);
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'Missing required fields');
+      expect(result).toHaveProperty("error", "Missing required fields");
     });
 
-    it('rejects missing roundEndedAt', () => {
+    it("rejects missing roundEndedAt", () => {
       const { roundEndedAt, ...payload } = validPayload;
       const result = validateRoundIngestPayload(payload);
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'Missing required fields');
+      expect(result).toHaveProperty("error", "Missing required fields");
     });
   });
 
-  describe('roomKey validation', () => {
-    it('rejects non-string roomKey', () => {
+  describe("roomKey validation", () => {
+    it("rejects non-string roomKey", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         roomKey: 123,
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `roomKey must be a string with max ${LIMITS.MAX_ROOM_KEY_LENGTH} characters`
+        "error",
+        `roomKey must be a string with max ${LIMITS.MAX_ROOM_KEY_LENGTH} characters`,
       );
     });
 
-    it('rejects roomKey exceeding max length', () => {
+    it("rejects roomKey exceeding max length", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        roomKey: 'a'.repeat(LIMITS.MAX_ROOM_KEY_LENGTH + 1),
+        roomKey: "a".repeat(LIMITS.MAX_ROOM_KEY_LENGTH + 1),
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `roomKey must be a string with max ${LIMITS.MAX_ROOM_KEY_LENGTH} characters`
+        "error",
+        `roomKey must be a string with max ${LIMITS.MAX_ROOM_KEY_LENGTH} characters`,
       );
     });
 
-    it('accepts roomKey at max length', () => {
+    it("accepts roomKey at max length", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        roomKey: 'a'.repeat(LIMITS.MAX_ROOM_KEY_LENGTH),
+        roomKey: "a".repeat(LIMITS.MAX_ROOM_KEY_LENGTH),
       });
       expect(result.valid).toBe(true);
     });
   });
 
-  describe('roundId validation', () => {
-    it('rejects non-string roundId', () => {
+  describe("roundId validation", () => {
+    it("rejects non-string roundId", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         roundId: 123,
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `roundId must be a string with max ${LIMITS.MAX_ROUND_ID_LENGTH} characters`
+        "error",
+        `roundId must be a string with max ${LIMITS.MAX_ROUND_ID_LENGTH} characters`,
       );
     });
 
-    it('rejects roundId exceeding max length', () => {
+    it("rejects roundId exceeding max length", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        roundId: 'a'.repeat(LIMITS.MAX_ROUND_ID_LENGTH + 1),
+        roundId: "a".repeat(LIMITS.MAX_ROUND_ID_LENGTH + 1),
       });
       expect(result.valid).toBe(false);
     });
   });
 
-  describe('ticketId validation', () => {
-    it('accepts valid ticketId', () => {
+  describe("ticketId validation", () => {
+    it("accepts valid ticketId", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        ticketId: 'TICKET-123',
+        ticketId: "TICKET-123",
       });
       expect(result.valid).toBe(true);
     });
 
-    it('accepts undefined ticketId', () => {
+    it("accepts undefined ticketId", () => {
       const result = validateRoundIngestPayload(validPayload);
       expect(result.valid).toBe(true);
     });
 
-    it('rejects non-string ticketId', () => {
+    it("rejects non-string ticketId", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         ticketId: 123,
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `ticketId must be a string with max ${LIMITS.MAX_TICKET_ID_LENGTH} characters`
+        "error",
+        `ticketId must be a string with max ${LIMITS.MAX_TICKET_ID_LENGTH} characters`,
       );
     });
 
-    it('rejects ticketId exceeding max length', () => {
+    it("rejects ticketId exceeding max length", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        ticketId: 'a'.repeat(LIMITS.MAX_TICKET_ID_LENGTH + 1),
+        ticketId: "a".repeat(LIMITS.MAX_TICKET_ID_LENGTH + 1),
       });
       expect(result.valid).toBe(false);
     });
   });
 
-  describe('roundEndedAt validation', () => {
-    it('rejects non-number roundEndedAt', () => {
+  describe("roundEndedAt validation", () => {
+    it("rejects non-number roundEndedAt", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        roundEndedAt: '1700000010',
+        roundEndedAt: "1700000010",
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        'roundEndedAt must be a positive number'
+        "error",
+        "roundEndedAt must be a positive number",
       );
     });
 
-    it('rejects negative roundEndedAt', () => {
+    it("rejects negative roundEndedAt", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         roundEndedAt: -1,
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        'roundEndedAt must be a positive number'
+        "error",
+        "roundEndedAt must be a positive number",
       );
     });
 
-    it('accepts zero roundEndedAt', () => {
+    it("accepts zero roundEndedAt", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         roundEndedAt: 0,
@@ -185,17 +186,17 @@ describe('validateRoundIngestPayload', () => {
     });
   });
 
-  describe('votes array validation', () => {
-    it('rejects non-array votes', () => {
+  describe("votes array validation", () => {
+    it("rejects non-array votes", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        votes: 'not-an-array',
+        votes: "not-an-array",
       });
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'votes must be an array');
+      expect(result).toHaveProperty("error", "votes must be an array");
     });
 
-    it('accepts empty votes array', () => {
+    it("accepts empty votes array", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         votes: [],
@@ -203,75 +204,75 @@ describe('validateRoundIngestPayload', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('rejects votes array exceeding max length', () => {
+    it("rejects votes array exceeding max length", () => {
       const votes = Array.from(
         { length: LIMITS.MAX_VOTES_PER_ROUND + 1 },
         (_, i) => ({
           userName: `user${i}`,
-          vote: '5',
+          vote: "5",
           votedAt: 1700000000,
-        })
+        }),
       );
       const result = validateRoundIngestPayload({ ...validPayload, votes });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `Maximum ${LIMITS.MAX_VOTES_PER_ROUND} votes per round`
+        "error",
+        `Maximum ${LIMITS.MAX_VOTES_PER_ROUND} votes per round`,
       );
     });
 
-    it('accepts votes array at max length', () => {
+    it("accepts votes array at max length", () => {
       const votes = Array.from(
         { length: LIMITS.MAX_VOTES_PER_ROUND },
         (_, i) => ({
           userName: `user${i}`,
-          vote: '5',
+          vote: "5",
           votedAt: 1700000000,
-        })
+        }),
       );
       const result = validateRoundIngestPayload({ ...validPayload, votes });
       expect(result.valid).toBe(true);
     });
   });
 
-  describe('individual vote validation', () => {
-    it('rejects non-object vote', () => {
+  describe("individual vote validation", () => {
+    it("rejects non-object vote", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        votes: ['not-an-object'],
+        votes: ["not-an-object"],
       });
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'votes[0] must be an object');
+      expect(result).toHaveProperty("error", "votes[0] must be an object");
     });
 
-    it('rejects null vote', () => {
+    it("rejects null vote", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         votes: [null],
       });
       expect(result.valid).toBe(false);
-      expect(result).toHaveProperty('error', 'votes[0] must be an object');
+      expect(result).toHaveProperty("error", "votes[0] must be an object");
     });
 
-    it('rejects empty userName', () => {
+    it("rejects empty userName", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        votes: [{ userName: '', vote: '5', votedAt: 1700000000 }],
+        votes: [{ userName: "", vote: "5", votedAt: 1700000000 }],
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `votes[0].userName must be a non-empty string with max ${LIMITS.MAX_USERNAME_LENGTH} characters`
+        "error",
+        `votes[0].userName must be a non-empty string with max ${LIMITS.MAX_USERNAME_LENGTH} characters`,
       );
     });
 
-    it('rejects userName exceeding max length', () => {
+    it("rejects userName exceeding max length", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         votes: [
           {
-            userName: 'a'.repeat(LIMITS.MAX_USERNAME_LENGTH + 1),
-            vote: '5',
+            userName: "a".repeat(LIMITS.MAX_USERNAME_LENGTH + 1),
+            vote: "5",
             votedAt: 1700000000,
           },
         ],
@@ -279,25 +280,25 @@ describe('validateRoundIngestPayload', () => {
       expect(result.valid).toBe(false);
     });
 
-    it('rejects empty vote value', () => {
+    it("rejects empty vote value", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        votes: [{ userName: 'alice', vote: '', votedAt: 1700000000 }],
+        votes: [{ userName: "alice", vote: "", votedAt: 1700000000 }],
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `votes[0].vote must be a non-empty string with max ${LIMITS.MAX_VOTE_LENGTH} characters`
+        "error",
+        `votes[0].vote must be a non-empty string with max ${LIMITS.MAX_VOTE_LENGTH} characters`,
       );
     });
 
-    it('rejects vote value exceeding max length', () => {
+    it("rejects vote value exceeding max length", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         votes: [
           {
-            userName: 'alice',
-            vote: 'a'.repeat(LIMITS.MAX_VOTE_LENGTH + 1),
+            userName: "alice",
+            vote: "a".repeat(LIMITS.MAX_VOTE_LENGTH + 1),
             votedAt: 1700000000,
           },
         ],
@@ -305,49 +306,49 @@ describe('validateRoundIngestPayload', () => {
       expect(result.valid).toBe(false);
     });
 
-    it('rejects non-number votedAt', () => {
+    it("rejects non-number votedAt", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        votes: [{ userName: 'alice', vote: '5', votedAt: '1700000000' }],
+        votes: [{ userName: "alice", vote: "5", votedAt: "1700000000" }],
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        'votes[0].votedAt must be a positive number'
+        "error",
+        "votes[0].votedAt must be a positive number",
       );
     });
 
-    it('rejects negative votedAt', () => {
+    it("rejects negative votedAt", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        votes: [{ userName: 'alice', vote: '5', votedAt: -1 }],
+        votes: [{ userName: "alice", vote: "5", votedAt: -1 }],
       });
       expect(result.valid).toBe(false);
     });
 
-    it('accepts valid structuredVote', () => {
+    it("accepts valid structuredVote", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         votes: [
           {
-            userName: 'alice',
-            vote: '5',
+            userName: "alice",
+            vote: "5",
             votedAt: 1700000000,
-            structuredVote: { complexity: 'high', confidence: 0.9 },
+            structuredVote: { complexity: "high", confidence: 0.9 },
           },
         ],
       });
       expect(result.valid).toBe(true);
     });
 
-    it('rejects structuredVote exceeding max size', () => {
-      const largeObject = { data: 'x'.repeat(LIMITS.MAX_STRUCTURED_VOTE_SIZE) };
+    it("rejects structuredVote exceeding max size", () => {
+      const largeObject = { data: "x".repeat(LIMITS.MAX_STRUCTURED_VOTE_SIZE) };
       const result = validateRoundIngestPayload({
         ...validPayload,
         votes: [
           {
-            userName: 'alice',
-            vote: '5',
+            userName: "alice",
+            vote: "5",
             votedAt: 1700000000,
             structuredVote: largeObject,
           },
@@ -355,80 +356,80 @@ describe('validateRoundIngestPayload', () => {
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `votes[0].structuredVote exceeds max size of ${LIMITS.MAX_STRUCTURED_VOTE_SIZE} bytes`
+        "error",
+        `votes[0].structuredVote exceeds max size of ${LIMITS.MAX_STRUCTURED_VOTE_SIZE} bytes`,
       );
     });
 
-    it('reports correct index for invalid vote in array', () => {
+    it("reports correct index for invalid vote in array", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         votes: [
-          { userName: 'alice', vote: '5', votedAt: 1700000000 },
-          { userName: 'bob', vote: '3', votedAt: 1700000001 },
-          { userName: '', vote: '5', votedAt: 1700000002 },
+          { userName: "alice", vote: "5", votedAt: 1700000000 },
+          { userName: "bob", vote: "3", votedAt: 1700000001 },
+          { userName: "", vote: "5", votedAt: 1700000002 },
         ],
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `votes[2].userName must be a non-empty string with max ${LIMITS.MAX_USERNAME_LENGTH} characters`
+        "error",
+        `votes[2].userName must be a non-empty string with max ${LIMITS.MAX_USERNAME_LENGTH} characters`,
       );
     });
   });
 
-  describe('judgeScore validation', () => {
-    it('accepts valid judgeScore', () => {
+  describe("judgeScore validation", () => {
+    it("accepts valid judgeScore", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        judgeScore: '5',
+        judgeScore: "5",
       });
       expect(result.valid).toBe(true);
     });
 
-    it('accepts undefined judgeScore', () => {
+    it("accepts undefined judgeScore", () => {
       const result = validateRoundIngestPayload(validPayload);
       expect(result.valid).toBe(true);
     });
 
-    it('rejects non-string judgeScore', () => {
+    it("rejects non-string judgeScore", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
         judgeScore: 5,
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `judgeScore must be a string with max ${LIMITS.MAX_JUDGE_SCORE_LENGTH} characters`
+        "error",
+        `judgeScore must be a string with max ${LIMITS.MAX_JUDGE_SCORE_LENGTH} characters`,
       );
     });
 
-    it('rejects judgeScore exceeding max length', () => {
+    it("rejects judgeScore exceeding max length", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        judgeScore: 'a'.repeat(LIMITS.MAX_JUDGE_SCORE_LENGTH + 1),
+        judgeScore: "a".repeat(LIMITS.MAX_JUDGE_SCORE_LENGTH + 1),
       });
       expect(result.valid).toBe(false);
     });
   });
 
-  describe('judgeMetadata validation', () => {
-    it('accepts valid judgeMetadata', () => {
+  describe("judgeMetadata validation", () => {
+    it("accepts valid judgeMetadata", () => {
       const result = validateRoundIngestPayload({
         ...validPayload,
-        judgeMetadata: { confidence: 0.9, reasoning: 'High consensus' },
+        judgeMetadata: { confidence: 0.9, reasoning: "High consensus" },
       });
       expect(result.valid).toBe(true);
     });
 
-    it('accepts undefined judgeMetadata', () => {
+    it("accepts undefined judgeMetadata", () => {
       const result = validateRoundIngestPayload(validPayload);
       expect(result.valid).toBe(true);
     });
 
-    it('rejects judgeMetadata exceeding max size', () => {
+    it("rejects judgeMetadata exceeding max size", () => {
       const largeMetadata = {
-        data: 'x'.repeat(LIMITS.MAX_JUDGE_METADATA_SIZE),
+        data: "x".repeat(LIMITS.MAX_JUDGE_METADATA_SIZE),
       };
       const result = validateRoundIngestPayload({
         ...validPayload,
@@ -436,30 +437,31 @@ describe('validateRoundIngestPayload', () => {
       });
       expect(result.valid).toBe(false);
       expect(result).toHaveProperty(
-        'error',
-        `judgeMetadata exceeds max size of ${LIMITS.MAX_JUDGE_METADATA_SIZE} bytes`
+        "error",
+        `judgeMetadata exceeds max size of ${LIMITS.MAX_JUDGE_METADATA_SIZE} bytes`,
       );
     });
   });
 
-  describe('complete payload validation', () => {
-    it('accepts complete valid payload with all optional fields', () => {
+  describe("complete payload validation", () => {
+    it("accepts complete valid payload with all optional fields", () => {
       const result = validateRoundIngestPayload({
-        roomKey: 'room-123',
-        roundId: 'round-456',
-        ticketId: 'TICKET-789',
+        roomKey: "room-123",
+        roundId: "round-456",
+        ticketId: "TICKET-789",
         votes: [
           {
-            userName: 'alice',
-            vote: '5',
+            userName: "alice",
+            vote: "5",
             votedAt: 1700000000,
-            structuredVote: { complexity: 'high' },
+            structuredVote: { complexity: "high" },
           },
-          { userName: 'bob', vote: '3', votedAt: 1700000001 },
+          { userName: "bob", vote: "3", votedAt: 1700000001 },
         ],
-        judgeScore: '5',
+        judgeScore: "5",
         judgeMetadata: { confidence: 0.9 },
         roundEndedAt: 1700000010,
+        type: "reset" as const,
       });
       expect(result.valid).toBe(true);
     });

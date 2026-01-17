@@ -20,7 +20,7 @@ function validateToken(request: CfRequest, env: StatsWorkerEnv): boolean {
 
 export async function ingestRoundController(
   request: CfRequest,
-  env: StatsWorkerEnv
+  env: StatsWorkerEnv,
 ): Promise<CfResponse> {
   if (!validateToken(request, env)) {
     return errorResponse('Unauthorized', 401);
@@ -44,6 +44,7 @@ export async function ingestRoundController(
     judgeScore: payload.judgeScore,
     judgeMetadata: payload.judgeMetadata,
     roundEndedAt: payload.roundEndedAt,
+    type: payload.type,
   };
 
   await repo.ingestRound(data);

@@ -1,0 +1,1 @@
+ALTER TABLE `round_votes` ADD `type` text;

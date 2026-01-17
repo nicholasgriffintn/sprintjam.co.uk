@@ -1,13 +1,13 @@
-import type { D1Database } from "@cloudflare/workers-types";
-import { eq, inArray, desc } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/d1";
+import type { D1Database } from '@cloudflare/workers-types';
+import { eq, inArray, desc } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/d1';
 
 import {
   roundVotes,
   voteRecords,
   roomStats,
   teamSessions,
-} from "@sprintjam/db/d1/schemas";
+} from '@sprintjam/db/d1/schemas';
 
 export interface RoundIngestData {
   roomKey: string;
@@ -22,6 +22,7 @@ export interface RoundIngestData {
   judgeScore?: string;
   judgeMetadata?: object;
   roundEndedAt: number;
+  type: 'reset' | 'next_ticket';
 }
 
 export interface RoomStatsResult {
@@ -90,6 +91,7 @@ export class StatsRepository {
           ? JSON.stringify(data.judgeMetadata)
           : null,
         roundEndedAt: data.roundEndedAt,
+        type: data.type,
         createdAt: now,
       })
       .onConflictDoNothing()
@@ -234,7 +236,7 @@ export class StatsRepository {
 
     const roundConsensus = new Map<string, string>();
     for (const [roundId, counts] of roundVoteCounts) {
-      let maxVote = "";
+      let maxVote = '';
       let maxCount = 0;
       for (const [vote, count] of counts) {
         if (count > maxCount) {
@@ -319,7 +321,7 @@ export class StatsRepository {
 
     const roundConsensus = new Map<string, string>();
     for (const [roundId, counts] of roundVoteCounts) {
-      let maxVote = "";
+      let maxVote = '';
       let maxCount = 0;
       for (const [vote, count] of counts) {
         if (count > maxCount) {
@@ -434,9 +436,7 @@ export class StatsRepository {
 
     const completedSessions = sessions
       .filter((session) => session.completedAt)
-      .sort(
-        (a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0),
-      )
+      .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0))
       .slice(0, limit);
 
     if (completedSessions.length === 0) {
@@ -472,10 +472,7 @@ export class StatsRepository {
 
     const roundsPerTicket = new Map<string, number>();
     const ticketsByRoom = new Map<string, Set<string>>();
-    const roundsByRoom = new Map<
-      string,
-      { min: number; max: number }
-    >();
+    const roundsByRoom = new Map<string, { min: number; max: number }>();
     const votesPerRound = new Map<string, number>();
     const participantsByRoom = new Map<string, Set<string>>();
 
@@ -507,7 +504,7 @@ export class StatsRepository {
         vote.roundId,
         (votesPerRound.get(vote.roundId) ?? 0) + 1,
       );
-      if (vote.vote === "?") {
+      if (vote.vote === '?') {
         questionMarkVotes++;
       }
       if (!participantsByRoom.has(vote.roomKey)) {

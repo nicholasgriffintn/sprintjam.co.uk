@@ -16,32 +16,29 @@ const normalizeVoteValue = (value: string | number) =>
   String(value).trim().toLowerCase();
 
 const getEnabledExtraVoteOptions = (
-  options: ExtraVoteOption[] = []
+  options: ExtraVoteOption[] = [],
 ): ExtraVoteOption[] => options.filter((option) => option.enabled !== false);
 
 const buildExtraVoteValueSet = (
-  options: ExtraVoteOption[] = []
+  options: ExtraVoteOption[] = [],
 ): Set<string> => {
   const values = new Set<string>();
   getEnabledExtraVoteOptions(options).forEach((option) => {
     values.add(normalizeVoteValue(option.value));
-    option.aliases?.forEach((alias) =>
-      values.add(normalizeVoteValue(alias))
-    );
+    option.aliases?.forEach((alias) => values.add(normalizeVoteValue(alias)));
   });
   return values;
 };
 
-const buildUnsureValueSet = (
-  options: ExtraVoteOption[] = []
-): Set<string> => {
+const buildUnsureValueSet = (options: ExtraVoteOption[] = []): Set<string> => {
   const values = new Set<string>(['?', '❓'].map(normalizeVoteValue));
   getEnabledExtraVoteOptions(options).forEach((option) => {
-    if (option.id === 'unsure' || option.label.toLowerCase().includes('unsure')) {
+    if (
+      option.id === 'unsure' ||
+      option.label.toLowerCase().includes('unsure')
+    ) {
       values.add(normalizeVoteValue(option.value));
-      option.aliases?.forEach((alias) =>
-        values.add(normalizeVoteValue(alias))
-      );
+      option.aliases?.forEach((alias) => values.add(normalizeVoteValue(alias)));
     }
   });
   return values;
@@ -50,7 +47,7 @@ const buildUnsureValueSet = (
 export async function handleVote(
   room: PlanningRoom,
   userName: string,
-  vote: string | number | StructuredVote
+  vote: string | number | StructuredVote,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -68,7 +65,7 @@ export async function handleVote(
     !roomData.settings.alwaysRevealVotes
   ) {
     console.warn(
-      `Vote from ${userName} rejected: voting not allowed after reveal`
+      `Vote from ${userName} rejected: voting not allowed after reveal`,
     );
     return;
   }
@@ -97,8 +94,8 @@ export async function handleVote(
   if (!validOptions.includes(String(finalVote))) {
     console.warn(
       `Invalid vote ${finalVote} from ${userName}. Valid options: ${validOptions.join(
-        ', '
-      )}`
+        ', ',
+      )}`,
     );
     return;
   }
@@ -138,7 +135,7 @@ export async function handleVote(
 
     if (roomData.settings.enableStructuredVoting && roomData.structuredVotes) {
       const extraVoteValues = buildExtraVoteValueSet(
-        roomData.settings.extraVoteOptions ?? []
+        roomData.settings.extraVoteOptions ?? [],
       );
       const allVotesComplete = roomData.users.every((userName) => {
         const userVote = roomData.votes[userName];
@@ -154,7 +151,7 @@ export async function handleVote(
         }
         return isStructuredVoteComplete(
           structuredVote.criteriaScores,
-          roomData.settings.votingCriteria
+          roomData.settings.votingCriteria,
         );
       });
       return allVotesComplete;
@@ -187,7 +184,7 @@ export async function handleVote(
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error('Background Strudel generation failed:', err),
       );
   }
 }
@@ -207,7 +204,7 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
 
   if (roomData.settings.alwaysRevealVotes && roomData.showVotes) {
     console.warn(
-      `Cannot hide votes in always-reveal mode (requested by ${userName})`
+      `Cannot hide votes in always-reveal mode (requested by ${userName})`,
     );
     return;
   }
@@ -236,7 +233,7 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error('Background Strudel generation failed:', err),
       );
   }
 }
@@ -257,8 +254,8 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
   const previousPhase = determineRoomPhase(roomData);
 
   if (Object.keys(roomData.votes).length > 0) {
-    postRoundToStats(room, roomData).catch((err) =>
-      console.error('Failed to post round stats:', err)
+    postRoundToStats(room, roomData, undefined, 'reset').catch((err) =>
+      console.error('Failed to post round stats:', err),
     );
   }
 
@@ -292,7 +289,7 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err)
+        console.error('Background Strudel generation failed:', err),
       );
   }
 }
@@ -306,22 +303,20 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
 
   const allVotes = Object.values(roomData.votes).filter((v) => v !== null);
   const extraVoteValues = buildExtraVoteValueSet(
-    roomData.settings.extraVoteOptions ?? []
+    roomData.settings.extraVoteOptions ?? [],
   );
-  const nonScoringVotes = new Set<string>(
-    ['?', '❓'].map(normalizeVoteValue)
-  );
+  const nonScoringVotes = new Set<string>(['?', '❓'].map(normalizeVoteValue));
   extraVoteValues.forEach((value) => nonScoringVotes.add(value));
   const totalVoteCount = allVotes.length;
   const unsureVoteValues = buildUnsureValueSet(
-    roomData.settings.extraVoteOptions ?? []
+    roomData.settings.extraVoteOptions ?? [],
   );
   const questionMarkCount = allVotes.filter((vote) =>
-    unsureVoteValues.has(normalizeVoteValue(vote))
+    unsureVoteValues.has(normalizeVoteValue(vote)),
   ).length;
 
   const votes = allVotes.filter(
-    (vote) => !nonScoringVotes.has(normalizeVoteValue(vote))
+    (vote) => !nonScoringVotes.has(normalizeVoteValue(vote)),
   );
   const numericVotes = votes
     .filter((v) => !Number.isNaN(Number(v)))
@@ -344,7 +339,7 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
     roomData.settings.judgeAlgorithm,
     validOptions,
     totalVoteCount,
-    questionMarkCount
+    questionMarkCount,
   );
 
   roomData.judgeScore = result.score;
