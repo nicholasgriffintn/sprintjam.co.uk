@@ -30,7 +30,7 @@
     "@strudel/web": "1.2.6",
     "@tailwindcss/typography": "0.5.19",
     "@tanstack/db": "0.4.10",
-    "@tanstack/query-core": "5.90.12",
+    "@tanstack/query-core": "5.90.16",
     "@tanstack/query-db-collection": "1.0.6",
     "@tanstack/react-query": "5.90.12",
     "@tanstack/react-query-devtools": "5.91.2",
