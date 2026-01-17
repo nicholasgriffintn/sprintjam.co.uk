@@ -314,8 +314,8 @@ const RoomScreen = () => {
                                   {vote.userName}
                                 </span>
                                 <span className="font-mono text-sm text-slate-900 dark:text-white">
-                                  {vote.structuredVotePayload?.calculatedStoryPoints ??
-                                    vote.vote}
+                                  {vote.structuredVotePayload
+                                    ?.calculatedStoryPoints ?? vote.vote}
                                 </span>
                               </span>
                             ))}
@@ -464,20 +464,6 @@ const RoomScreen = () => {
                 />
               )}
 
-              {showSpreadHint && (
-                <RoomCalloutCard
-                  badge="Hint"
-                  title="Wide spread after reveal"
-                  body={
-                    spreadSummary.highestVoteValue !== null &&
-                    spreadSummary.lowestVoteValue !== null
-                      ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
-                      : 'Ask the highest and lowest voters to explain their thinking.'
-                  }
-                  primaryAction={{ label: 'Got it', onClick: dismissHints }}
-                />
-              )}
-
               <AnimatePresence mode="wait">
                 {roomData.showVotes ? (
                   <motion.div
@@ -487,6 +473,25 @@ const RoomScreen = () => {
                     transition={{ duration: 0.3 }}
                     key="results"
                   >
+                    {showSpreadHint && (
+                      <div className="mb-4">
+                        <RoomCalloutCard
+                          badge="Hint"
+                          title="Wide spread after reveal"
+                          body={
+                            spreadSummary.highestVoteValue !== null &&
+                            spreadSummary.lowestVoteValue !== null
+                              ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
+                              : 'Ask the highest and lowest voters to explain their thinking.'
+                          }
+                          primaryAction={{
+                            label: 'Got it',
+                            onClick: dismissHints,
+                          }}
+                        />
+                      </div>
+                    )}
+
                     <SurfaceCard
                       padding="sm"
                       className="space-y-5"
