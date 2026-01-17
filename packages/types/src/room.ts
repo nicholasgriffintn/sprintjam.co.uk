@@ -180,16 +180,27 @@ export interface TicketVote {
 export interface TicketQueueItem {
   id: number;
   roomKey: string;
-  ticketKey: string;
+  ticketId: string;
   title: string;
   description?: string;
-  url?: string;
-  estimate?: number | null;
-  completed: boolean;
-  completedAt?: number | null;
+  status?: 'pending' | 'in_progress' | 'blocked' | 'completed';
   outcome?: string | null;
   createdAt: number;
-  position: number;
+  completedAt?: number | null;
+  ordinal: number;
+  externalService:
+    | 'jira'
+    | 'linear'
+    | 'github'
+    | 'clickup'
+    | 'asana'
+    | 'youtrack'
+    | 'zoho'
+    | 'trello'
+    | 'monday'
+    | 'none';
+  externalServiceId?: string | null;
+  externalServiceMetadata?: string | null;
 }
 
 export type TicketQueueWithVotes = TicketQueueItem & {
