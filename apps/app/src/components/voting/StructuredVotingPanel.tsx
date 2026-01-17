@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect, useId } from 'react';
-import { Check, Info, AlertTriangle } from 'lucide-react';
+import { Check, AlertTriangle } from 'lucide-react';
 
 import type {
   VotingCriterion,
@@ -31,16 +31,6 @@ interface CriterionRowProps {
   isDisabled?: boolean;
 }
 
-const getScaleLabels = (criterion: VotingCriterion) => {
-  switch (criterion.id) {
-    case 'volume':
-    case 'unknowns':
-      return { low: 'None', high: 'Lots' };
-    default:
-      return { low: 'Low', high: 'High' };
-  }
-};
-
 function CriterionRow({
   criterion,
   score,
@@ -49,7 +39,6 @@ function CriterionRow({
 }: CriterionRowProps) {
   const titleId = useId();
   const descriptionId = useId();
-  const scaleLabels = getScaleLabels(criterion);
   const steps = criterion.maxScore - criterion.minScore + 1;
   const scoreButtons = [];
 
@@ -108,10 +97,6 @@ function CriterionRow({
         </div>
       </div>
       <div className="flex flex-col gap-2 md:min-w-[220px]">
-        <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          <span>{scaleLabels.low}</span>
-          <span>{scaleLabels.high}</span>
-        </div>
         <div
           className={`flex gap-2 ${steps === 3 ? 'justify-center' : 'justify-end'}`}
           role="radiogroup"
