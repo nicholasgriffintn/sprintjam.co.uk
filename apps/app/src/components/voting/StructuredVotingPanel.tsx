@@ -269,9 +269,6 @@ export function StructuredVotingPanel({
             )}
             {roomData?.settings.showTimer && (
               <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300">
-                <span className="font-semibold uppercase tracking-wide">
-                  Round timer
-                </span>
                 <TimerChip />
               </div>
             )}

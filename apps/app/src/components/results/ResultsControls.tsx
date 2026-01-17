@@ -47,7 +47,7 @@ export function ResultsControls({
   const showCompleteButton = isWorkspacesEnabled();
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 text-gray-900 dark:text-white">
+    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 pb-3 text-gray-900 dark:text-white">
       <div className="flex items-center gap-3">
         <h2 className="flex items-center gap-2 text-lg font-semibold">
           <BarChart3 className="h-5 w-5" />
