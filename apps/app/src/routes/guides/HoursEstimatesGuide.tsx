@@ -2,17 +2,12 @@ import { useMemo } from 'react';
 
 import { CardPreview } from '@/components/guides/CardPreview';
 import { GuideLayout } from '@/components/guides/GuideLayout';
-import { SITE_NAME } from '@/constants';
 import { cardDecks } from '@/content/guides/cardDecks';
 import guideMarkdown from '@/content/guides/hours-estimates.md?raw';
 import { renderMarkdownToHtml } from '@/utils/markdown';
 
 const HoursEstimatesGuide = () => {
-  const renderedGuide = useMemo(
-    () =>
-      renderMarkdownToHtml(guideMarkdown.replaceAll('{{SITE_NAME}}', SITE_NAME)),
-    []
-  );
+  const renderedGuide = useMemo(() => renderMarkdownToHtml(guideMarkdown), []);
 
   return (
     <GuideLayout

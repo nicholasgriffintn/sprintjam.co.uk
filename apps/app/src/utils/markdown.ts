@@ -1,3 +1,5 @@
+import { SITE_NAME } from '../constants';
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -14,20 +16,20 @@ function renderInlineMarkdown(text: string): string {
     /\[([^\]]+)\]\(([^)]+)\)/g,
     (_, label: string, url: string) =>
       `<a href="${escapeHtml(
-        url
-      )}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`
+        url,
+      )}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`,
   );
   escaped = escaped.replace(
     /\*\*([^*]+)\*\*/g,
-    (_, bold: string) => `<strong>${escapeHtml(bold)}</strong>`
+    (_, bold: string) => `<strong>${escapeHtml(bold)}</strong>`,
   );
   escaped = escaped.replace(
     /\*([^*]+)\*/g,
-    (_, italic: string) => `<em>${escapeHtml(italic)}</em>`
+    (_, italic: string) => `<em>${escapeHtml(italic)}</em>`,
   );
   escaped = escaped.replace(
     /`([^`]+)`/g,
-    (_, code: string) => `<code>${escapeHtml(code)}</code>`
+    (_, code: string) => `<code>${escapeHtml(code)}</code>`,
   );
 
   return escaped;
@@ -36,11 +38,17 @@ function renderInlineMarkdown(text: string): string {
 type ListType = 'ul' | 'ol';
 
 export function renderMarkdownToHtml(markdown: string): string {
-  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+  const markdownWithSiteName = markdown.replaceAll('{{SITE_NAME}}', SITE_NAME);
+
+  const lines = markdownWithSiteName.replace(/\r\n/g, '\n').split('\n');
+
   let html = '';
   let inCodeBlock = false;
+
   const listStack: Array<{ type: ListType; indent: number }> = [];
+
   let paragraph = '';
+
   const isTableSeparator = (line: string) =>
     /^\s*\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?\s*$/.test(line);
   const parseTableRow = (line: string) =>
@@ -61,7 +69,10 @@ export function renderMarkdownToHtml(markdown: string): string {
   };
 
   const closeListsUntilIndent = (indent: number) => {
-    while (listStack.length && listStack[listStack.length - 1].indent > indent) {
+    while (
+      listStack.length &&
+      listStack[listStack.length - 1].indent > indent
+    ) {
       const closed = listStack.pop();
       if (closed) {
         html += `</${closed.type}>`;
@@ -169,7 +180,10 @@ export function renderMarkdownToHtml(markdown: string): string {
       const indent = orderedMatch[1].length;
       const content = orderedMatch[2];
 
-      if (!listStack.length || indent > listStack[listStack.length - 1].indent) {
+      if (
+        !listStack.length ||
+        indent > listStack[listStack.length - 1].indent
+      ) {
         listStack.push({ type: 'ol', indent });
         html += '<ol>';
       } else {
@@ -197,7 +211,10 @@ export function renderMarkdownToHtml(markdown: string): string {
       const indent = unorderedMatch[1].length;
       const content = unorderedMatch[2];
 
-      if (!listStack.length || indent > listStack[listStack.length - 1].indent) {
+      if (
+        !listStack.length ||
+        indent > listStack[listStack.length - 1].indent
+      ) {
         listStack.push({ type: 'ul', indent });
         html += '<ul>';
       } else {

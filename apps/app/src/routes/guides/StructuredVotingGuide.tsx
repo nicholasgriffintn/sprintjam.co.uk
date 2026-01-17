@@ -1,15 +1,11 @@
 import { useMemo } from 'react';
 
 import { GuideLayout } from '@/components/guides/GuideLayout';
-import { SITE_NAME } from '@/constants';
 import guideMarkdown from '@/content/guides/structured-voting.md?raw';
 import { renderMarkdownToHtml } from '@/utils/markdown';
 
 const StructuredVotingGuide = () => {
-  const renderedGuide = useMemo(
-    () => renderMarkdownToHtml(guideMarkdown.replaceAll('{{SITE_NAME}}', SITE_NAME)),
-    []
-  );
+  const renderedGuide = useMemo(() => renderMarkdownToHtml(guideMarkdown), []);
 
   return (
     <GuideLayout

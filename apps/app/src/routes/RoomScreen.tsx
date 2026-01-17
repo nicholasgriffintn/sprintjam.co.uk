@@ -154,10 +154,6 @@ const RoomScreen = () => {
       name: name,
     });
 
-  const totalTickets = roomData.ticketQueue?.length ?? 0;
-  const completedTickets =
-    roomData.ticketQueue?.filter((ticket) => ticket.status === "completed")
-      .length ?? 0;
   const completedTicketList =
     roomData.ticketQueue?.filter((ticket) => ticket.status === "completed") ??
     [];
@@ -169,10 +165,6 @@ const RoomScreen = () => {
     ticket.votes?.forEach((vote) => voters.add(vote.userName));
     return voters;
   }, new Set<string>());
-  const totalVotes = stats.totalVotes ?? Object.keys(roomData.votes).length;
-  const ticketLabel = isQueueEnabled
-    ? `${completedTickets}/${totalTickets}`
-    : "Queue off";
 
   const getSuggestedNote = () => {
     if (spreadSummary.unknownVoteCount > 0) {
