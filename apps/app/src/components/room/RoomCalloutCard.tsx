@@ -43,7 +43,7 @@ export const RoomCalloutCard: FC<RoomCalloutCardProps> = ({
                 type="button"
                 variant="unstyled"
                 onClick={primaryAction.onClick}
-                className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow hover:bg-slate-800 focus-visible:ring-slate-400 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 dark:focus-visible:ring-white/60"
+                className="flex-shrink-0 whitespace-nowrap rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-white shadow hover:bg-slate-800 focus-visible:ring-slate-400 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 dark:focus-visible:ring-white/60"
               >
                 {primaryAction.label}
               </Button>
@@ -53,7 +53,7 @@ export const RoomCalloutCard: FC<RoomCalloutCardProps> = ({
                 type="button"
                 variant="unstyled"
                 onClick={secondaryAction.onClick}
-                className="rounded-full border border-slate-200/70 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow-sm hover:border-slate-300 hover:text-slate-900 focus-visible:ring-slate-300 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:border-white/20 dark:hover:text-white dark:focus-visible:ring-white/30"
+                className="flex-shrink-0 whitespace-nowrap rounded-full border border-slate-200/70 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow-sm hover:border-slate-300 hover:text-slate-900 focus-visible:ring-slate-300 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:border-white/20 dark:hover:text-white dark:focus-visible:ring-white/30"
               >
                 {secondaryAction.label}
               </Button>
