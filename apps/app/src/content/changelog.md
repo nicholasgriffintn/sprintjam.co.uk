@@ -9,6 +9,7 @@
 - Created a new stats recording service that will keep a log of how voting rounds went in your rooms. This will be used to provide insights into your sessions and a history of how your team has been estimating over time in the future.
 - Added new guides for running sprint planning sessions with InnerSource principles as well as guides on how to use SprintJam effectively.
 - Made structured voting compatible with extra voting options.
+- Updated the judge to consider extra votes.
 
 ## V2.2
 

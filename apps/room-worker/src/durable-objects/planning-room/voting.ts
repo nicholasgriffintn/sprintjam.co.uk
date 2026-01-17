@@ -332,7 +332,7 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
     .map(Number)
     .sort((a, b) => a - b);
 
-  if (validOptions.length === 0 || numericVotes.length === 0) {
+  if (validOptions.length === 0 || totalVoteCount === 0) {
     roomData.judgeScore = null;
     roomData.judgeMetadata = undefined;
     room.repository.setJudgeState(null);

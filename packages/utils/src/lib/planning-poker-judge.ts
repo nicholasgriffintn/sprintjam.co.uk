@@ -14,10 +14,30 @@ export class PlanningPokerJudge {
     const actualQuestionMarks = questionMarkCount ?? 0;
 
     if (numericVotes.length === 0) {
+      const extraOptionCount = Math.max(
+        actualTotalVotes - actualQuestionMarks,
+        0
+      );
+      const contextParts: string[] = [];
+
+      if (actualQuestionMarks > 0) {
+        contextParts.push(
+          `${actualQuestionMarks} "?" vote${actualQuestionMarks > 1 ? 's' : ''}`
+        );
+      }
+      if (extraOptionCount > 0) {
+        contextParts.push(
+          `${extraOptionCount} extra option vote${extraOptionCount > 1 ? 's' : ''}`
+        );
+      }
+
       const reasoning =
-        actualQuestionMarks > 0
-          ? `No numeric votes to analyze (${actualQuestionMarks} "?" vote${actualQuestionMarks > 1 ? 's' : ''})`
+        actualTotalVotes > 0
+          ? `No numeric votes to analyze${
+              contextParts.length ? ` (${contextParts.join(', ')})` : ''
+            }`
           : 'No votes to analyze';
+
       return {
         score: null,
         confidence: 'low',

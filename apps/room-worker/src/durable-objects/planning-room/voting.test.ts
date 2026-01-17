@@ -576,5 +576,47 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(roomData.judgeMetadata?.numericVoteCount).toBe(2);
       expect(roomData.judgeMetadata?.totalVoteCount).toBe(3);
     });
+
+    it('keeps judge metadata when only extra options are selected', async () => {
+      const state = makeState();
+      const room = new PlanningRoom(state, env);
+      const roomData: RoomData = createInitialRoomData({
+        key: 'test-room',
+        users: ['user1', 'user2'],
+        moderator: 'user1',
+        connectedUsers: { user1: true, user2: true },
+        settings: {
+          enableJudge: true,
+          estimateOptions: [1, 2, 3, 'coffee'],
+          extraVoteOptions: [
+            {
+              id: 'coffee',
+              label: 'Coffee Break',
+              value: 'coffee',
+            },
+          ],
+        },
+      });
+      roomData.showVotes = true;
+      roomData.votes = {
+        user1: 'coffee',
+        user2: 'coffee',
+      };
+
+      const repository = {
+        setJudgeState: vi.fn(),
+      } as unknown as PlanningRoom['repository'];
+
+      room.repository = repository;
+      room.broadcast = vi.fn();
+      room.getRoomData = vi.fn(async () => roomData);
+
+      await room.calculateAndUpdateJudgeScore();
+
+      expect(roomData.judgeScore).toBeNull();
+      expect(roomData.judgeMetadata).toBeDefined();
+      expect(roomData.judgeMetadata?.numericVoteCount).toBe(0);
+      expect(roomData.judgeMetadata?.totalVoteCount).toBe(2);
+    });
   });
 });

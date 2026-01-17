@@ -29,6 +29,21 @@ describe("PlanningPokerJudge", () => {
       expect(result.confidence).toBe("low");
       expect(result.reasoning).toBe("No consensus possible");
     });
+
+    it("handles extra option votes without numeric votes", () => {
+      const result = judge.calculateJudgeScore(
+        [],
+        JudgeAlgorithm.SMART_CONSENSUS,
+        fibonacciOptions,
+        3,
+        1,
+      );
+      expect(result.score).toBe(null);
+      expect(result.confidence).toBe("low");
+      expect(result.reasoning).toBe(
+        'No numeric votes to analyze (1 "?" vote, 2 extra option votes)',
+      );
+    });
   });
 
   describe("smartConsensus algorithm", () => {
