@@ -207,9 +207,17 @@ function mapIssueToTicket(issue: LinearIssue): TicketMetadata {
 function parseLinearIssueNumber(value: string): number | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
-  const match = trimmed.match(/(?:[A-Za-z]+-)?(\d+)$/);
-  if (!match) return null;
-  const parsed = Number(match[1]);
+
+  let index = trimmed.length - 1;
+  while (index >= 0 && trimmed[index] >= '0' && trimmed[index] <= '9') {
+    index -= 1;
+  }
+
+  if (index === trimmed.length - 1) {
+    return null;
+  }
+
+  const parsed = Number(trimmed.slice(index + 1));
   return Number.isFinite(parsed) ? parsed : null;
 }
 
