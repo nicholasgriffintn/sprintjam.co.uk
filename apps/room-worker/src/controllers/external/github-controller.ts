@@ -4,6 +4,7 @@ import type {
 } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv, GithubOAuthCredentials } from '@sprintjam/types';
 import {
+  addGithubComment,
   fetchGithubMilestones,
   fetchGithubIssue,
   fetchGithubRepoIssues,
@@ -121,11 +122,13 @@ export async function updateGithubEstimateController(
     roomKey?: string;
     userName?: string;
     sessionToken?: string;
+    note?: string;
   }>();
   const estimate = body?.estimate;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
   const sessionToken = body?.sessionToken;
+  const note = typeof body?.note === 'string' ? body.note.trim() : '';
 
   if (!issueId || estimate === undefined) {
     return jsonError('Issue identifier and estimate are required');
@@ -147,6 +150,14 @@ export async function updateGithubEstimateController(
 
     const credentials = await getGithubCredentials(env, roomKey);
     const ticket = await updateGithubEstimate(credentials, issueId, estimate);
+
+    if (note) {
+      await addGithubComment(
+        credentials,
+        issueId,
+        `SprintJam decision note: ${note}`
+      );
+    }
 
     return jsonResponse({ ticket });
   } catch (error) {

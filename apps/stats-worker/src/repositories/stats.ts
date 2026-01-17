@@ -1,5 +1,5 @@
 import type { D1Database } from "@cloudflare/workers-types";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 
 import {
@@ -46,6 +46,17 @@ export interface TeamStatsResult {
   avgParticipation: number;
   consensusRate: number;
   memberStats: UserRoomStatsResult[];
+}
+
+export interface TeamInsightsResult {
+  sessionsAnalyzed: number;
+  totalTickets: number;
+  totalRounds: number;
+  participationRate: number;
+  firstRoundConsensusRate: number;
+  discussionRate: number;
+  estimationVelocity: number | null;
+  questionMarkRate: number;
 }
 
 export interface PaginationOptions {
@@ -403,6 +414,166 @@ export class StatsRepository {
       avgParticipation,
       consensusRate,
       memberStats: paginatedMemberStats,
+    };
+  }
+
+  async getTeamInsights(
+    teamId: number,
+    options?: { limit?: number },
+  ): Promise<TeamInsightsResult | null> {
+    const limit = Math.min(options?.limit ?? 6, 12);
+    const sessions = await this.db
+      .select({
+        roomKey: teamSessions.roomKey,
+        completedAt: teamSessions.completedAt,
+      })
+      .from(teamSessions)
+      .where(eq(teamSessions.teamId, teamId))
+      .orderBy(desc(teamSessions.completedAt))
+      .all();
+
+    const completedSessions = sessions
+      .filter((session) => session.completedAt)
+      .sort(
+        (a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0),
+      )
+      .slice(0, limit);
+
+    if (completedSessions.length === 0) {
+      return null;
+    }
+
+    const roomKeys = Array.from(
+      new Set(completedSessions.map((session) => session.roomKey)),
+    );
+
+    const [rounds, votes] = await Promise.all([
+      this.db
+        .select()
+        .from(roundVotes)
+        .where(inArray(roundVotes.roomKey, roomKeys))
+        .all(),
+      this.db
+        .select({
+          roundId: voteRecords.roundId,
+          userName: voteRecords.userName,
+          vote: voteRecords.vote,
+          roomKey: roundVotes.roomKey,
+        })
+        .from(voteRecords)
+        .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
+        .where(inArray(roundVotes.roomKey, roomKeys))
+        .all(),
+    ]);
+
+    if (rounds.length === 0) {
+      return null;
+    }
+
+    const roundsPerTicket = new Map<string, number>();
+    const ticketsByRoom = new Map<string, Set<string>>();
+    const roundsByRoom = new Map<
+      string,
+      { min: number; max: number }
+    >();
+    const votesPerRound = new Map<string, number>();
+    const participantsByRoom = new Map<string, Set<string>>();
+
+    for (const round of rounds) {
+      if (round.ticketId) {
+        roundsPerTicket.set(
+          round.ticketId,
+          (roundsPerTicket.get(round.ticketId) ?? 0) + 1,
+        );
+        if (!ticketsByRoom.has(round.roomKey)) {
+          ticketsByRoom.set(round.roomKey, new Set());
+        }
+        ticketsByRoom.get(round.roomKey)!.add(round.ticketId);
+      }
+
+      const existing = roundsByRoom.get(round.roomKey);
+      const endedAt = round.roundEndedAt;
+      if (!existing) {
+        roundsByRoom.set(round.roomKey, { min: endedAt, max: endedAt });
+      } else {
+        existing.min = Math.min(existing.min, endedAt);
+        existing.max = Math.max(existing.max, endedAt);
+      }
+    }
+
+    let questionMarkVotes = 0;
+    for (const vote of votes) {
+      votesPerRound.set(
+        vote.roundId,
+        (votesPerRound.get(vote.roundId) ?? 0) + 1,
+      );
+      if (vote.vote === "?") {
+        questionMarkVotes++;
+      }
+      if (!participantsByRoom.has(vote.roomKey)) {
+        participantsByRoom.set(vote.roomKey, new Set());
+      }
+      participantsByRoom.get(vote.roomKey)!.add(vote.userName);
+    }
+
+    let participationSum = 0;
+    let participationSamples = 0;
+    for (const round of rounds) {
+      const participants = participantsByRoom.get(round.roomKey)?.size ?? 0;
+      if (participants === 0) continue;
+      const roundVotesCount = votesPerRound.get(round.roundId) ?? 0;
+      participationSum += (roundVotesCount / participants) * 100;
+      participationSamples++;
+    }
+
+    let totalTickets = 0;
+    let firstRoundTickets = 0;
+    let multiRoundTickets = 0;
+    for (const count of roundsPerTicket.values()) {
+      totalTickets++;
+      if (count === 1) {
+        firstRoundTickets++;
+      } else if (count > 1) {
+        multiRoundTickets++;
+      }
+    }
+
+    let velocityTickets = 0;
+    let velocityHours = 0;
+    for (const [roomKey, range] of roundsByRoom) {
+      const tickets = ticketsByRoom.get(roomKey);
+      if (!tickets || tickets.size === 0) {
+        continue;
+      }
+      const durationMs = range.max - range.min;
+      if (durationMs <= 0) {
+        continue;
+      }
+      const hours = durationMs / (1000 * 60 * 60);
+      velocityTickets += tickets.size;
+      velocityHours += hours;
+    }
+
+    const participationRate =
+      participationSamples > 0 ? participationSum / participationSamples : 0;
+    const firstRoundConsensusRate =
+      totalTickets > 0 ? (firstRoundTickets / totalTickets) * 100 : 0;
+    const discussionRate =
+      totalTickets > 0 ? (multiRoundTickets / totalTickets) * 100 : 0;
+    const estimationVelocity =
+      velocityHours > 0 ? velocityTickets / velocityHours : null;
+    const questionMarkRate =
+      votes.length > 0 ? (questionMarkVotes / votes.length) * 100 : 0;
+
+    return {
+      sessionsAnalyzed: completedSessions.length,
+      totalTickets,
+      totalRounds: rounds.length,
+      participationRate,
+      firstRoundConsensusRate,
+      discussionRate,
+      estimationVelocity,
+      questionMarkRate,
     };
   }
 }

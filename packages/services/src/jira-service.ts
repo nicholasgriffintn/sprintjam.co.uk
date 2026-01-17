@@ -383,6 +383,66 @@ export async function updateJiraStoryPoints(
   );
 }
 
+export async function addJiraComment(
+  credentials: JiraOAuthCredentials,
+  ticketId: string,
+  comment: string,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<void> {
+  const trimmed = comment.trim();
+  if (!trimmed) {
+    return;
+  }
+
+  await executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const headers = getOAuthHeaders(accessToken);
+      const response = await fetch(
+        `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/api/3/issue/${ticketId}/comment`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            body: {
+              type: 'doc',
+              version: 1,
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text: trimmed }],
+                },
+              ],
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('401: Unauthorized');
+        }
+        const errorData = (await response.json()) as {
+          errorMessages: string[];
+        };
+        throw new Error(
+          errorData.errorMessages?.[0] ||
+            `Failed to add Jira comment: ${response.status}`
+        );
+      }
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
+
 export async function fetchJiraBoards(
   credentials: JiraOAuthCredentials,
   onTokenRefresh: (

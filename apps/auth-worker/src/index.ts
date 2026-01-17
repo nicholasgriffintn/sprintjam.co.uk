@@ -21,6 +21,7 @@ import {
   listTeamSessionsController,
   createTeamSessionController,
   getTeamSessionController,
+  completeSessionByRoomKeyController,
   getWorkspaceStatsController,
 } from "./controllers/teams-controller";
 import { WorkspaceAuthRepository } from "./repositories/workspace-auth";
@@ -105,6 +106,10 @@ async function handleRequest(
       if (request.method === "GET") {
         return getTeamSessionController(request, env, teamId, sessionId);
       }
+    }
+
+    if (path === "sessions/complete" && request.method === "POST") {
+      return completeSessionByRoomKeyController(request, env);
     }
 
     if (path === "workspace/stats" && request.method === "GET") {

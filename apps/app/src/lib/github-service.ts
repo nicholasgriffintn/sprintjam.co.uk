@@ -74,7 +74,12 @@ export async function fetchGithubIssue(
 export async function updateGithubEstimate(
   issueId: string,
   estimate: number,
-  options: { roomKey: string; userName: string; sessionToken?: string },
+  options: {
+    roomKey: string;
+    userName: string;
+    sessionToken?: string;
+    note?: string;
+  },
 ): Promise<TicketMetadata> {
   const sessionToken = resolveSessionToken(options.sessionToken);
   const encodedId = encodeURIComponent(issueId);
@@ -83,14 +88,15 @@ export async function updateGithubEstimate(
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        estimate,
-        roomKey: options.roomKey,
-        userName: options.userName,
-        sessionToken,
-      }),
-    },
-  );
+        body: JSON.stringify({
+          estimate,
+          roomKey: options.roomKey,
+          userName: options.userName,
+          sessionToken,
+          note: options.note,
+        }),
+      },
+    );
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));

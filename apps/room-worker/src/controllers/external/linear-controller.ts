@@ -4,6 +4,7 @@ import type {
 } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from '@sprintjam/types';
 import {
+  addLinearComment,
   fetchLinearCycles,
   fetchLinearIssues,
   fetchLinearTeams,
@@ -157,11 +158,13 @@ export async function updateLinearEstimateController(
     roomKey?: string;
     userName?: string;
     sessionToken?: string;
+    note?: string;
   }>();
   const estimate = body?.estimate;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
   const sessionToken = body?.sessionToken;
+  const note = typeof body?.note === 'string' ? body.note.trim() : '';
 
   if (!issueId || estimate === undefined) {
     return jsonError('Issue ID and estimate are required');
@@ -200,6 +203,16 @@ export async function updateLinearEstimateController(
     }
 
     if (currentIssue.storyPoints === estimate) {
+      if (note) {
+        await addLinearComment(
+          credentials,
+          issueId,
+          `SprintJam decision note: ${note}`,
+          onTokenRefresh,
+          clientId,
+          clientSecret
+        );
+      }
       return jsonResponse({ ticket: currentIssue });
     }
 
@@ -211,6 +224,17 @@ export async function updateLinearEstimateController(
       clientId,
       clientSecret
     );
+
+    if (note) {
+      await addLinearComment(
+        credentials,
+        issueId,
+        `SprintJam decision note: ${note}`,
+        onTokenRefresh,
+        clientId,
+        clientSecret
+      );
+    }
 
     return jsonResponse({ ticket: updatedIssue });
   } catch (error) {

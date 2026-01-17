@@ -140,3 +140,31 @@ export async function getTeamStatsController(
 
   return successResponse({ stats }, true);
 }
+
+export async function getTeamInsightsController(
+  request: CfRequest,
+  env: StatsWorkerEnv,
+  teamId: number,
+): Promise<CfResponse> {
+  const authResult = await authenticateRequest(request, env.DB);
+  if ("status" in authResult && authResult.status === "error") {
+    return errorResponse(getAuthError(authResult.code), 401);
+  }
+
+  const isMember = await isUserInTeam(env.DB, authResult.userId, teamId);
+  if (!isMember) {
+    return errorResponse("You do not have access to this team's stats", 403);
+  }
+
+  const url = new URL(request.url);
+  const limit = parseInt(url.searchParams.get("limit") || "6", 10);
+
+  const repo = new StatsRepository(env.DB);
+  const insights = await repo.getTeamInsights(teamId, { limit });
+
+  if (!insights) {
+    return errorResponse("Team insights not found", 404);
+  }
+
+  return successResponse({ insights }, true);
+}

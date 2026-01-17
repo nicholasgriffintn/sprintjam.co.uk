@@ -7,6 +7,7 @@ import { HorizontalProgress } from "@/components/ui/HorizontalProgress";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { BetaBadge } from "@/components/BetaBadge";
+import { calculateStoryPointsFromVotes } from "@/utils/votes";
 
 interface TicketQueueSidebarProps {
   roomData: RoomData | null;
@@ -55,6 +56,35 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
     totalTickets === 0
       ? "No tickets yet"
       : `${completedCount}/${totalTickets} completed`;
+
+  const capacityPoints = roomData?.settings.capacityPoints ?? null;
+  const completedTickets = useMemo(
+    () => queue.filter((t) => t.status === "completed"),
+    [queue],
+  );
+  const capacityUsed = useMemo(() => {
+    return completedTickets.reduce((total, ticket) => {
+      const points = calculateStoryPointsFromVotes(ticket.votes);
+      if (points === null) return total;
+      return total + points;
+    }, 0);
+  }, [completedTickets]);
+  const capacityPercent =
+    capacityPoints && capacityPoints > 0
+      ? Math.round((capacityUsed / capacityPoints) * 100)
+      : null;
+  const capacityStatus =
+    capacityPercent !== null && capacityPercent >= 100
+      ? "over"
+      : capacityPercent !== null && capacityPercent >= 80
+      ? "near"
+      : "ok";
+  const capacityBadgeClasses =
+    capacityStatus === "over"
+      ? "bg-red-600 text-white"
+      : capacityStatus === "near"
+        ? "bg-amber-500 text-white"
+        : "bg-emerald-500 text-white";
 
   const current = roomData?.currentTicket;
   const next = pending[0];
@@ -246,6 +276,42 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
             aria-valuetext={`${remainingTickets} tickets remain out of ${totalTickets}`}
             data-testid="session-progress-bar"
           />
+
+          {capacityPoints !== null && capacityPoints > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+              <div className="flex items-center justify-between">
+                <span className="uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Sprint capacity
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${capacityBadgeClasses}`}
+                >
+                  {capacityPercent ?? 0}%
+                </span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-sm font-semibold text-slate-900 dark:text-white">
+                <span>
+                  {capacityUsed}/{capacityPoints} points
+                </span>
+                {capacityStatus === "over" && (
+                  <span className="text-xs font-semibold text-red-600 dark:text-red-400">
+                    Over capacity
+                  </span>
+                )}
+                {capacityStatus === "near" && (
+                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                    Near capacity
+                  </span>
+                )}
+              </div>
+              {capacityStatus === "over" && (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  Sprint at {capacityPercent}% capacity. Consider moving the lowest
+                  priority item.
+                </p>
+              )}
+            </div>
+          )}
 
           {current ? (
             <>

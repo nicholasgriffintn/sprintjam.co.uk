@@ -398,6 +398,60 @@ export async function updateLinearEstimate(
   );
 }
 
+export async function addLinearComment(
+  credentials: LinearOAuthCredentials,
+  issueId: string,
+  comment: string,
+  onTokenRefresh: (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number
+  ) => Promise<void>,
+  clientId: string,
+  clientSecret: string
+): Promise<void> {
+  const trimmed = comment.trim();
+  if (!trimmed) {
+    return;
+  }
+
+  await executeWithTokenRefresh(
+    credentials,
+    async (accessToken) => {
+      const issue =
+        (await resolveIssueByIdOrIdentifier(accessToken, issueId)) ?? null;
+
+      if (!issue) {
+        throw new Error('Linear issue not found. Verify the issue key or id.');
+      }
+
+      const mutation = `
+        mutation CommentCreate($issueId: String!, $body: String!) {
+          commentCreate(input: { issueId: $issueId, body: $body }) {
+            success
+          }
+        }
+      `;
+
+      const data = await executeGraphQL<{
+        commentCreate: {
+          success: boolean;
+        };
+      }>(accessToken, mutation, {
+        issueId: issue.id,
+        body: trimmed,
+      });
+
+      if (!data.commentCreate.success) {
+        throw new Error('Failed to add Linear comment');
+      }
+    },
+    onTokenRefresh,
+    clientId,
+    clientSecret
+  );
+}
+
 export async function getLinearOrganization(accessToken: string): Promise<{
   id: string;
   name: string;

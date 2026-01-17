@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import { eq, gt, desc, inArray } from "drizzle-orm";
+import { eq, gt, desc, inArray, sql } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   allowedDomains,
@@ -349,6 +349,40 @@ export class WorkspaceAuthRepository {
       .update(teamSessions)
       .set({ completedAt: Date.now() })
       .where(eq(teamSessions.id, sessionId));
+  }
+
+  async completeLatestSessionByRoomKey(roomKey: string, userId: number) {
+    const user = await this.getUserById(userId);
+    if (!user) {
+      return null;
+    }
+
+    const session = await this.db
+      .select({
+        id: teamSessions.id,
+        teamId: teamSessions.teamId,
+        roomKey: teamSessions.roomKey,
+        name: teamSessions.name,
+        createdById: teamSessions.createdById,
+        createdAt: teamSessions.createdAt,
+        completedAt: teamSessions.completedAt,
+        metadata: teamSessions.metadata,
+      })
+      .from(teamSessions)
+      .innerJoin(teams, eq(teamSessions.teamId, teams.id))
+      .where(
+        sql`${teamSessions.roomKey} = ${roomKey} AND ${teams.organisationId} = ${user.organisationId} AND ${teamSessions.completedAt} IS NULL`,
+      )
+      .orderBy(desc(teamSessions.createdAt))
+      .limit(1)
+      .get();
+
+    if (!session) {
+      return null;
+    }
+
+    await this.completeTeamSession(session.id);
+    return await this.getTeamSessionById(session.id);
   }
 
   async getWorkspaceStats(userId: number) {

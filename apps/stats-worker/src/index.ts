@@ -11,6 +11,7 @@ import {
   getUserRoomStatsController,
   getBatchRoomStatsController,
   getTeamStatsController,
+  getTeamInsightsController,
 } from "./routes/query";
 
 async function handleRequest(
@@ -67,6 +68,15 @@ async function handleRequest(
         request,
         env,
         parseInt(teamStatsMatch[1], 10),
+      );
+    }
+
+    const teamInsightsMatch = path.match(/^stats\/team\/(\d+)\/insights$/);
+    if (teamInsightsMatch && request.method === "GET") {
+      return await getTeamInsightsController(
+        request,
+        env,
+        parseInt(teamInsightsMatch[1], 10),
       );
     }
 

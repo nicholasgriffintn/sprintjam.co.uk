@@ -295,6 +295,8 @@ export function getDefaultRoomSettings(
     enableAutoReveal: settings?.enableAutoReveal ?? false,
     alwaysRevealVotes: settings?.alwaysRevealVotes ?? false,
     allowOthersToManageQueue: settings?.allowOthersToManageQueue ?? false,
+    capacityPoints:
+      settings?.capacityPoints === undefined ? null : settings.capacityPoints,
     showTimer: settings?.showTimer ?? true,
     showUserPresence: settings?.showUserPresence ?? false,
     showAverage: settings?.showAverage ?? true,

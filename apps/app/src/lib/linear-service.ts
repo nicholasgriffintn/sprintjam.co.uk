@@ -82,7 +82,12 @@ export async function fetchLinearIssue(
 export async function updateLinearEstimate(
   issueId: string,
   estimate: number,
-  options: { roomKey: string; userName: string; sessionToken?: string },
+  options: {
+    roomKey: string;
+    userName: string;
+    sessionToken?: string;
+    note?: string;
+  },
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options.sessionToken);
@@ -98,6 +103,7 @@ export async function updateLinearEstimate(
           roomKey: options.roomKey,
           userName: options.userName,
           sessionToken,
+          note: options.note,
         }),
       },
     );

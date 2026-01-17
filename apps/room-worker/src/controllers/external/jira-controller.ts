@@ -4,6 +4,7 @@ import type {
 } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from '@sprintjam/types';
 import {
+  addJiraComment,
   fetchJiraBoardIssues,
   fetchJiraBoards,
   fetchJiraSprints,
@@ -160,11 +161,13 @@ export async function updateJiraStoryPointsController(
     roomKey?: string;
     userName?: string;
     sessionToken?: string;
+    note?: string;
   }>();
   const storyPoints = body?.storyPoints;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
   const sessionToken = body?.sessionToken;
+  const note = typeof body?.note === 'string' ? body.note.trim() : '';
 
   if (!ticketId || storyPoints === undefined) {
     return jsonError('Ticket ID and story points are required');
@@ -200,6 +203,16 @@ export async function updateJiraStoryPointsController(
     }
 
     if (currentTicket.storyPoints === storyPoints) {
+      if (note) {
+        await addJiraComment(
+          credentials,
+          ticketId,
+          `SprintJam decision note: ${note}`,
+          onTokenRefresh,
+          clientId,
+          clientSecret
+        );
+      }
       return jsonResponse({ ticket: currentTicket });
     }
 
@@ -212,6 +225,17 @@ export async function updateJiraStoryPointsController(
       clientId,
       clientSecret
     );
+
+    if (note) {
+      await addJiraComment(
+        credentials,
+        ticketId,
+        `SprintJam decision note: ${note}`,
+        onTokenRefresh,
+        clientId,
+        clientSecret
+      );
+    }
 
     return jsonResponse({ ticket: updatedTicket });
   } catch (error) {

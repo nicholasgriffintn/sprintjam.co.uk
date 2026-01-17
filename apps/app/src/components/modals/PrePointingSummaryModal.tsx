@@ -22,6 +22,8 @@ interface PrePointingSummaryModalProps {
   };
   currentTicket?: TicketQueueItem;
   currentUser: string;
+  note: string;
+  onNoteChange: (note: string) => void;
 }
 
 export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
@@ -32,6 +34,8 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
   stats,
   currentTicket,
   currentUser,
+  note,
+  onNoteChange,
 }) => {
   const voteEntries = useMemo(
     () =>
@@ -139,6 +143,23 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800">
+          <label
+            htmlFor="decision-note"
+            className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
+            Decision note (optional)
+          </label>
+          <textarea
+            id="decision-note"
+            value={note}
+            onChange={(event) => onNoteChange(event.target.value)}
+            placeholder="Add a quick note for future reference"
+            rows={3}
+            className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
         </div>
 
         <div className="flex items-center justify-end gap-2">

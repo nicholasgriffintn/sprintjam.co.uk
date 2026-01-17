@@ -1,5 +1,3 @@
-import type { RoomStatus } from '@sprintjam/types';
-
 import type { PlanningRoom } from '.';
 
 export async function handleCompleteSession(
