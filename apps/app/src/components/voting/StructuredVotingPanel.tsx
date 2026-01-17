@@ -39,7 +39,6 @@ function CriterionRow({
 }: CriterionRowProps) {
   const titleId = useId();
   const descriptionId = useId();
-  const steps = criterion.maxScore - criterion.minScore + 1;
   const scoreButtons = [];
 
   for (let i = criterion.minScore; i <= criterion.maxScore; i++) {
@@ -166,8 +165,7 @@ export function StructuredVotingPanel({
       setCriteriaScores({ ...currentVote.criteriaScores });
       return;
     }
-    // Only reset criteriaScores if the user hasn't actively entered any scores
-    // This prevents wiping scores when switching from exception vote back to criteria voting
+
     if (Object.keys(criteriaScores).length > 0) {
       return;
     }
@@ -229,7 +227,7 @@ export function StructuredVotingPanel({
   return (
     <>
       <div
-        className="mb-4 text-slate-900 dark:text-white"
+        className="text-slate-900 dark:text-white"
         data-testid="structured-voting-panel"
       >
         {roomData?.currentTicket && (
@@ -256,7 +254,7 @@ export function StructuredVotingPanel({
         )}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            {displaySettings?.panelTitle ?? "Structured Estimation"}
+            {displaySettings?.panelTitle ?? 'Structured Estimation'}
           </h2>
           <div className="flex items-center gap-3">
             {onOpenVotingSettings && (
@@ -286,8 +284,8 @@ export function StructuredVotingPanel({
               <div className="bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl p-2 mb-4">
                 {isExceptionActive && selectedExtraOption && (
                   <div className="mb-3 rounded-2xl border border-amber-200/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-                    Override active: {selectedExtraOption.label}. Scoring will
-                    replace this exception.
+                    The {selectedExtraOption.label} option has been selected.
+                    This will override any scores submitted.
                   </div>
                 )}
                 {criteria.map((criterion) => (
@@ -304,58 +302,63 @@ export function StructuredVotingPanel({
               </div>
 
               {enabledExtraOptions.length > 0 && (
-                <div className="mb-4">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                    Exceptions
-                  </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                    These override scoring and flag your vote.
+                <div>
+                  <div className="text-xs text-slate-600 dark:text-slate-300 mt-3 text-left">
+                    Alternative voting options that replace regular scoring:
                   </div>
                   <div
                     className="mt-3 flex flex-wrap gap-2"
                     role="radiogroup"
-                    aria-label="Exceptions"
+                    aria-label="Alternative voting options"
                   >
                     {enabledExtraOptions.map((option) => {
                       const { icon, label } = parseOptionLabel(
                         `${option.value} ${option.label}`,
                       );
-                      const isSelected = selectedExtraOption?.id === option.id;
+                      const isSelected = Boolean(
+                        selectedExtraOption &&
+                        'id' in selectedExtraOption &&
+                        selectedExtraOption.id === option.id,
+                      );
 
                       return (
-                        <MotionButton
+                        <div
                           key={option.id}
-                          type="button"
-                          variant="unstyled"
-                          onClick={() => handleExtraVote(option.value)}
-                          disabled={isVotingDisabled}
-                          data-testid={`structured-extra-option-${option.id}`}
-                          aria-label={`Vote ${option.label}`}
-                          role="radio"
-                          aria-checked={isSelected}
-                          className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-colors ${
-                            isVotingDisabled
-                              ? "opacity-50 cursor-not-allowed"
-                              : isSelected
-                                ? "border-amber-400/80 bg-amber-50 text-amber-900 shadow-[0_0_0_2px_rgba(251,191,36,0.2)] dark:border-amber-400/60 dark:bg-amber-500/10 dark:text-amber-200"
-                                : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
-                          }`}
-                          whileHover={isVotingDisabled ? {} : { scale: 1.03 }}
-                          whileTap={isVotingDisabled ? {} : { scale: 0.97 }}
-                          transition={{
-                            type: "spring",
-                            stiffness: 400,
-                            damping: 20,
-                          }}
+                          className="flex flex-col items-center gap-2"
                         >
-                          <span
-                            aria-hidden="true"
-                            className="text-base leading-none"
+                          <MotionButton
+                            type="button"
+                            variant="unstyled"
+                            onClick={() => handleExtraVote(option.value)}
+                            disabled={isVotingDisabled}
+                            data-testid={`structured-extra-option-${option.id}`}
+                            aria-label={`Vote ${option.label}`}
+                            role="radio"
+                            aria-checked={isSelected}
+                            className={`flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-colors ${
+                              isVotingDisabled
+                                ? 'opacity-50 cursor-not-allowed'
+                                : isSelected
+                                  ? 'border-amber-400/80 bg-amber-50 text-amber-900 shadow-[0_0_0_2px_rgba(251,191,36,0.2)] dark:border-amber-400/60 dark:bg-amber-500/10 dark:text-amber-200'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-amber-300 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200'
+                            }`}
+                            whileHover={isVotingDisabled ? {} : { scale: 1.03 }}
+                            whileTap={isVotingDisabled ? {} : { scale: 0.97 }}
+                            transition={{
+                              type: 'spring',
+                              stiffness: 400,
+                              damping: 20,
+                            }}
                           >
-                            {icon || option.value}
-                          </span>
-                          <span>{label}</span>
-                        </MotionButton>
+                            <span
+                              aria-hidden="true"
+                              className="text-base leading-none"
+                            >
+                              {icon || option.value}
+                            </span>
+                            <span>{label}</span>
+                          </MotionButton>
+                        </div>
                       );
                     })}
                   </div>
@@ -375,11 +378,11 @@ export function StructuredVotingPanel({
                 >
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
                     {displaySettings?.summary?.storyPointsLabel ??
-                      "Story Points"}
+                      'Story Points'}
                   </div>
                   <div className="mt-1 text-3xl font-semibold">
                     <span data-testid="structured-summary-points">
-                      {summaryValue ?? "—"}
+                      {summaryValue ?? '—'}
                     </span>
                   </div>
                   {isExceptionActive && selectedExtraOption && (
@@ -401,10 +404,10 @@ export function StructuredVotingPanel({
                   {!isExceptionActive && Boolean(calculatedVote) && (
                     <div className="mt-2 text-xs text-slate-600 dark:text-slate-200">
                       {displaySettings?.summary?.weightedScoreLabel ??
-                        "Weighted score"}
-                      :{" "}
+                        'Weighted score'}
+                      :{' '}
                       {weightedScore === null
-                        ? "—"
+                        ? '—'
                         : `${weightedScore.toFixed(1)}%`}
                     </div>
                   )}
@@ -415,8 +418,8 @@ export function StructuredVotingPanel({
                         {calculatedVote?.appliedConversionRules?.length} rule
                         {(calculatedVote?.appliedConversionRules?.length ?? 0) >
                         1
-                          ? "s"
-                          : ""}{" "}
+                          ? 's'
+                          : ''}{' '}
                         applied
                       </div>
                     )}
@@ -429,7 +432,7 @@ export function StructuredVotingPanel({
                       aria-expanded={showScoringInfo}
                       aria-controls={scoringInfoPanelId}
                     >
-                      {showScoringInfo ? "Hide breakdown" : "Show breakdown"}
+                      {showScoringInfo ? 'Hide breakdown' : 'Show breakdown'}
                     </Button>
                   )}
                   {allowScoringInfoToggle &&
@@ -443,7 +446,7 @@ export function StructuredVotingPanel({
                       >
                         <div className="text-sm font-medium text-slate-900 dark:text-slate-200 mb-3">
                           {infoToggleSettings?.title ??
-                            "Weighted Scoring System"}
+                            'Weighted Scoring System'}
                         </div>
                         <div className="text-xs text-slate-700 dark:text-slate-200 space-y-2">
                           {(infoToggleSettings?.showContributionDetails ??
@@ -463,8 +466,8 @@ export function StructuredVotingPanel({
                                         {criterionName}:
                                       </span>
                                       <span className="text-right">
-                                        {c.score}/{c.maxScore} ×{" "}
-                                        {c.weightPercent.toFixed(0)}% ={" "}
+                                        {c.score}/{c.maxScore} ×{' '}
+                                        {c.weightPercent.toFixed(0)}% ={' '}
                                         {c.contributionPercent.toFixed(1)}%
                                       </span>
                                     </div>
@@ -488,12 +491,12 @@ export function StructuredVotingPanel({
                             <div className="mt-3 text-xs">
                               <div className="font-medium mb-1">
                                 {infoToggleSettings?.rangesLabel ??
-                                  "Story Point Ranges:"}
+                                  'Story Point Ranges:'}
                               </div>
                               <div className="space-y-0.5">
                                 <div>
                                   {infoToggleSettings?.rangesDescription ??
-                                    "1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+"}
+                                    '1pt: 0-34% | 3pt: 35-49% | 5pt: 50-79% | 8pt: 80%+'}
                                 </div>
                               </div>
                             </div>

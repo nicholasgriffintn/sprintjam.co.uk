@@ -119,7 +119,6 @@ async function executeWithTokenRefresh<T>(
       return await operation(refreshed.accessToken);
     } catch (error) {
       console.error('Token refresh failed:', error);
-      // Try with existing token anyway
     }
   }
 
