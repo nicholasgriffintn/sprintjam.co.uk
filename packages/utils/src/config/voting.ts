@@ -80,7 +80,7 @@ export const DEFAULT_EXTRA_VOTE_OPTIONS: ReadonlyArray<ExtraVoteOption> =
       label: 'Coffee Break',
       value: '☕',
       description: 'Pause for a quick break',
-      enabled: false,
+      enabled: true,
       aliases: ['coffee'],
       impact: 'none',
     },
