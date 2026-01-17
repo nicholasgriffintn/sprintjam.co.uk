@@ -8,6 +8,7 @@
 - Updated the workspaces interface to display insights once multiple sessions are completed in a team and hooked up completed status tracking.
 - Created a new stats recording service that will keep a log of how voting rounds went in your rooms. This will be used to provide insights into your sessions and a history of how your team has been estimating over time in the future.
 - Added new guides for running sprint planning sessions with InnerSource principles as well as guides on how to use SprintJam effectively.
+- Made structured voting compatible with extra voting options.
 
 ## V2.2
 

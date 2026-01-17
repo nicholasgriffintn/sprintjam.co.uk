@@ -1,4 +1,4 @@
-import type { StructuredVote } from '@sprintjam/types';
+import type { ExtraVoteOption, StructuredVote } from '@sprintjam/types';
 import {
   isStructuredVote,
   createStructuredVote,
@@ -11,6 +11,41 @@ import {
 
 import type { PlanningRoom } from '.';
 import { resetVotingState, postRoundToStats } from './room-helpers';
+
+const normalizeVoteValue = (value: string | number) =>
+  String(value).trim().toLowerCase();
+
+const getEnabledExtraVoteOptions = (
+  options: ExtraVoteOption[] = []
+): ExtraVoteOption[] => options.filter((option) => option.enabled !== false);
+
+const buildExtraVoteValueSet = (
+  options: ExtraVoteOption[] = []
+): Set<string> => {
+  const values = new Set<string>();
+  getEnabledExtraVoteOptions(options).forEach((option) => {
+    values.add(normalizeVoteValue(option.value));
+    option.aliases?.forEach((alias) =>
+      values.add(normalizeVoteValue(alias))
+    );
+  });
+  return values;
+};
+
+const buildUnsureValueSet = (
+  options: ExtraVoteOption[] = []
+): Set<string> => {
+  const values = new Set<string>(['?', '❓'].map(normalizeVoteValue));
+  getEnabledExtraVoteOptions(options).forEach((option) => {
+    if (option.id === 'unsure' || option.label.toLowerCase().includes('unsure')) {
+      values.add(normalizeVoteValue(option.value));
+      option.aliases?.forEach((alias) =>
+        values.add(normalizeVoteValue(alias))
+      );
+    }
+  });
+  return values;
+};
 
 export async function handleVote(
   room: PlanningRoom,
@@ -53,6 +88,9 @@ export async function handleVote(
     structuredVotePayload = structuredVote;
   } else {
     finalVote = vote;
+    if (roomData.structuredVotes?.[userName]) {
+      delete roomData.structuredVotes[userName];
+    }
   }
 
   const validOptions = roomData.settings.estimateOptions.map(String);
@@ -99,7 +137,17 @@ export async function handleVote(
     }
 
     if (roomData.settings.enableStructuredVoting && roomData.structuredVotes) {
+      const extraVoteValues = buildExtraVoteValueSet(
+        roomData.settings.extraVoteOptions ?? []
+      );
       const allVotesComplete = roomData.users.every((userName) => {
+        const userVote = roomData.votes[userName];
+        if (
+          userVote !== null &&
+          extraVoteValues.has(normalizeVoteValue(userVote))
+        ) {
+          return true;
+        }
         const structuredVote = roomData.structuredVotes?.[userName];
         if (!structuredVote) {
           return false;
@@ -257,13 +305,24 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
   }
 
   const allVotes = Object.values(roomData.votes).filter((v) => v !== null);
-  const nonScoringVotes = new Set(['?', '❓', 'coffee', '☕', '♾️']);
+  const extraVoteValues = buildExtraVoteValueSet(
+    roomData.settings.extraVoteOptions ?? []
+  );
+  const nonScoringVotes = new Set<string>(
+    ['?', '❓'].map(normalizeVoteValue)
+  );
+  extraVoteValues.forEach((value) => nonScoringVotes.add(value));
   const totalVoteCount = allVotes.length;
-  const questionMarkCount = allVotes.filter(
-    (v) => v === '?' || v === '❓'
+  const unsureVoteValues = buildUnsureValueSet(
+    roomData.settings.extraVoteOptions ?? []
+  );
+  const questionMarkCount = allVotes.filter((vote) =>
+    unsureVoteValues.has(normalizeVoteValue(vote))
   ).length;
 
-  const votes = allVotes.filter((v) => !nonScoringVotes.has(String(v)));
+  const votes = allVotes.filter(
+    (vote) => !nonScoringVotes.has(normalizeVoteValue(vote))
+  );
   const numericVotes = votes
     .filter((v) => !Number.isNaN(Number(v)))
     .map(Number);

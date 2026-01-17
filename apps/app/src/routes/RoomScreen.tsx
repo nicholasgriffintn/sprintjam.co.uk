@@ -402,6 +402,7 @@ const RoomScreen = () => {
                   }
                   onVote={handleVote}
                   displaySettings={roomData.settings.structuredVotingDisplay}
+                  currentUserVote={userVote}
                   onOpenVotingSettings={
                     isModeratorView
                       ? () => handleOpenSettings('voting')

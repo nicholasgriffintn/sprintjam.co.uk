@@ -300,6 +300,48 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(repository.setShowVotes).toHaveBeenCalledWith(true);
     });
 
+    it('should auto-reveal when a user votes with an extra option', async () => {
+      const state = makeState();
+      const room = new PlanningRoom(state, env);
+      const roomData: RoomData = createInitialRoomData({
+        key: 'test-room',
+        users: ['user1', 'user2'],
+        moderator: 'user1',
+        connectedUsers: { user1: true, user2: true },
+        settings: {
+          enableAutoReveal: true,
+          enableStructuredVoting: true,
+        },
+      });
+
+      const repository = {
+        setVote: vi.fn(),
+        setStructuredVote: vi.fn(),
+        setShowVotes: vi.fn(),
+        setJudgeState: vi.fn(),
+      } as unknown as PlanningRoom['repository'];
+
+      room.repository = repository;
+      room.broadcast = vi.fn();
+      room.getRoomData = vi.fn(async () => roomData);
+      room.calculateAndUpdateJudgeScore = vi.fn();
+
+      await room.handleVote('user1', '❓');
+      expect(roomData.showVotes).toBe(false);
+
+      await room.handleVote('user2', {
+        criteriaScores: {
+          complexity: 3,
+          confidence: 2,
+          volume: 2,
+          unknowns: 1,
+        },
+      });
+
+      expect(roomData.showVotes).toBe(true);
+      expect(repository.setShowVotes).toHaveBeenCalledWith(true);
+    });
+
     it('should not auto-reveal when last user has incomplete vote (missing criteria)', async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
@@ -496,6 +538,43 @@ describe('PlanningRoom voting reveal settings', () => {
         },
       });
       expect(roomData.showVotes).toBe(true);
+    });
+  });
+
+  describe('judge metadata with extra options', () => {
+    it('counts unsure extra options toward question mark count', async () => {
+      const state = makeState();
+      const room = new PlanningRoom(state, env);
+      const roomData: RoomData = createInitialRoomData({
+        key: 'test-room',
+        users: ['user1', 'user2', 'user3'],
+        moderator: 'user1',
+        connectedUsers: { user1: true, user2: true, user3: true },
+        settings: {
+          enableJudge: true,
+          enableStructuredVoting: true,
+        },
+      });
+      roomData.showVotes = true;
+      roomData.votes = {
+        user1: '❓',
+        user2: 5,
+        user3: 8,
+      };
+
+      const repository = {
+        setJudgeState: vi.fn(),
+      } as unknown as PlanningRoom['repository'];
+
+      room.repository = repository;
+      room.broadcast = vi.fn();
+      room.getRoomData = vi.fn(async () => roomData);
+
+      await room.calculateAndUpdateJudgeScore();
+
+      expect(roomData.judgeMetadata?.questionMarkCount).toBe(1);
+      expect(roomData.judgeMetadata?.numericVoteCount).toBe(2);
+      expect(roomData.judgeMetadata?.totalVoteCount).toBe(3);
     });
   });
 });

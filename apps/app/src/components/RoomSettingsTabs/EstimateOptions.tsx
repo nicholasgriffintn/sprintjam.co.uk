@@ -40,7 +40,7 @@ export function EstimateOptions({
     }
     return preset.label;
   };
-  const showExtraOptions = !localSettings.enableStructuredVoting;
+  const showExtraOptions = extraVoteOptions.length > 0;
   const sequenceOptions = [
     ...votingPresets.map((preset) => ({
       label: getOptionLabel(preset),

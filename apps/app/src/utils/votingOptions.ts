@@ -150,11 +150,5 @@ export function getVisibleEstimateOptions(settings: {
   extraVoteOptions?: ExtraVoteOption[];
   enableStructuredVoting?: boolean;
 }): (string | number)[] {
-  const extraValues = getExtraVoteValueSet(settings.extraVoteOptions);
-  if (settings.enableStructuredVoting) {
-    return settings.estimateOptions.filter(
-      (option) => !extraValues.has(toComparableString(option)),
-    );
-  }
   return settings.estimateOptions;
 }

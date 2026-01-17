@@ -9,30 +9,23 @@ export const useRoomStats = (roomData: RoomData): RoomStats => {
       roomData.settings.extraVoteOptions ?? [],
     );
     const visibleOptions = getVisibleEstimateOptions(roomData.settings);
-    const includeExtrasInDistribution = !roomData.settings
-      .enableStructuredVoting;
-    const votes = Object.values(roomData.votes).filter((v): v is VoteValue => {
-      if (v === null) return false;
-      if (extraValues.has(String(v))) return false;
-      return true;
-    });
+    const votes = Object.values(roomData.votes).filter(
+      (v): v is VoteValue => v !== null,
+    );
     const numericVotes = votes
+      .filter((v) => !extraValues.has(String(v)))
       .filter((v) => !Number.isNaN(Number(v)))
       .map(Number);
 
     const distribution: Record<string, number> = {};
     for (const option of visibleOptions) {
       const key = String(option);
-      if (!includeExtrasInDistribution && extraValues.has(key)) {
-        continue;
-      }
       distribution[key] = 0;
     }
 
     for (const vote of Object.values(roomData.votes)) {
       if (vote !== null) {
         const key = String(vote);
-        if (!includeExtrasInDistribution && extraValues.has(key)) continue;
         distribution[key] = (distribution[key] || 0) + 1;
       }
     }

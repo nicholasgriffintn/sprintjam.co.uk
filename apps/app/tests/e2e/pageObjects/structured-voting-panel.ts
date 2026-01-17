@@ -22,4 +22,8 @@ export class StructuredVotingPanel {
   async expectPanelVisible() {
     await expect(this.panel()).toBeVisible();
   }
+
+  async selectExtraOption(id: "unsure" | "coffee" | "cannot-complete") {
+    await this.panel().getByTestId(`structured-extra-option-${id}`).click();
+  }
 }

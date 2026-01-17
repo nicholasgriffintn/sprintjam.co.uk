@@ -6,6 +6,7 @@ import type {
   VotingCriterion,
   StructuredVote,
   StructuredVotingDisplaySettings,
+  VoteValue,
 } from '@/types';
 import { TimerChip } from "./TimerChip";
 import { useRoomState } from "@/context/RoomContext";
@@ -16,10 +17,11 @@ const MotionButton = motion(Button);
 interface StructuredVotingPanelProps {
   criteria: VotingCriterion[];
   currentVote: StructuredVote | null;
-  onVote: (vote: StructuredVote) => void;
+  onVote: (vote: VoteValue | StructuredVote) => void;
   displaySettings?: StructuredVotingDisplaySettings;
   onOpenVotingSettings?: () => void;
   disabled?: boolean;
+  currentUserVote?: VoteValue | StructuredVote | null;
 }
 
 interface CriterionRowProps {
@@ -82,6 +84,20 @@ function CriterionRow({
   );
 }
 
+const normalizeVoteValue = (value: string | number) =>
+  String(value).trim().toLowerCase();
+
+const parseOptionLabel = (optionText: string) => {
+  const [first, ...rest] = optionText.split(" ");
+  const hasLeadingEmoji =
+    first && /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(first);
+
+  return {
+    icon: hasLeadingEmoji ? first : "",
+    label: hasLeadingEmoji ? rest.join(" ").trim() || first : optionText,
+  };
+};
+
 export function StructuredVotingPanel({
   criteria,
   currentVote,
@@ -89,6 +105,7 @@ export function StructuredVotingPanel({
   displaySettings,
   onOpenVotingSettings,
   disabled = false,
+  currentUserVote = null,
 }: StructuredVotingPanelProps) {
   const { roomData } = useRoomState();
   const [criteriaScores, setCriteriaScores] = useState<Record<string, number>>(
@@ -123,14 +140,45 @@ export function StructuredVotingPanel({
     }
   }, [allowScoringInfoToggle]);
 
+  const enabledExtraOptions =
+    roomData?.settings.extraVoteOptions?.filter(
+      (option) => option.enabled !== false,
+    ) ?? [];
+  const normalizedCurrentVote =
+    currentUserVote !== null && typeof currentUserVote !== "object"
+      ? normalizeVoteValue(currentUserVote)
+      : null;
+  const selectedExtraOption =
+    normalizedCurrentVote &&
+    enabledExtraOptions.find((option) => {
+      if (normalizeVoteValue(option.value) === normalizedCurrentVote) {
+        return true;
+      }
+      return (
+        option.aliases?.some(
+          (alias) => normalizeVoteValue(alias) === normalizedCurrentVote,
+        ) ?? false
+      );
+    });
+
   const calculatedVote = currentVote;
   const hasAnyScores = Object.keys(criteriaScores).length > 0;
+  const summaryValue =
+    selectedExtraOption?.value ?? calculatedVote?.calculatedStoryPoints ?? "?";
+  const weightedScore = selectedExtraOption
+    ? null
+    : calculatedVote?.percentageScore ?? 0;
 
   const handleScoreChange = (criterionId: string, score: number) => {
     const newScores = { ...criteriaScores, [criterionId]: score };
     setCriteriaScores(newScores);
 
     onVote({ criteriaScores: newScores });
+  };
+
+  const handleExtraVote = (value: string) => {
+    setCriteriaScores({});
+    onVote(value);
   };
 
   return (
@@ -208,6 +256,50 @@ export function StructuredVotingPanel({
             />
           ))}
         </div>
+
+        {enabledExtraOptions.length > 0 && (
+          <div className="mb-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Extra options
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {enabledExtraOptions.map((option) => {
+                const { icon, label } = parseOptionLabel(
+                  `${option.value} ${option.label}`,
+                );
+                const isSelected = selectedExtraOption?.id === option.id;
+
+                return (
+                  <MotionButton
+                    key={option.id}
+                    type="button"
+                    variant="unstyled"
+                    onClick={() => handleExtraVote(option.value)}
+                    disabled={isVotingDisabled}
+                    data-testid={`structured-extra-option-${option.id}`}
+                    aria-label={`Vote ${option.label}`}
+                    aria-pressed={isSelected}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${
+                      isVotingDisabled
+                        ? "opacity-50 cursor-not-allowed"
+                        : isSelected
+                          ? "border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
+                    }`}
+                    whileHover={isVotingDisabled ? {} : { scale: 1.03 }}
+                    whileTap={isVotingDisabled ? {} : { scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  >
+                    <span aria-hidden="true" className="text-base leading-none">
+                      {icon || option.value}
+                    </span>
+                    <span>{label}</span>
+                  </MotionButton>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {allowScoringInfoToggle &&
           showScoringInfo &&
@@ -295,12 +387,15 @@ export function StructuredVotingPanel({
             <div className="font-medium text-slate-900 dark:text-white">
               {displaySettings?.summary?.storyPointsLabel ?? 'Story Points'}:{' '}
               <span data-testid="structured-summary-points">
-                {calculatedVote?.calculatedStoryPoints || '?'}
+                {summaryValue}
               </span>
             </div>
             <div className="text-xs text-slate-600 dark:text-slate-200">
               {displaySettings?.summary?.weightedScoreLabel ?? 'Weighted score'}
-              : {(calculatedVote?.percentageScore ?? 0).toFixed(1)}%
+              :{" "}
+              {weightedScore === null
+                ? "N/A"
+                : `${weightedScore.toFixed(1)}%`}
             </div>
           </div>
           {(displaySettings?.summary?.showConversionCount ?? true) &&
