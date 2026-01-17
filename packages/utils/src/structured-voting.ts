@@ -97,28 +97,28 @@ function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
 
   const contributions = [
     {
-      id: "complexity",
+      id: 'complexity',
       weightPercent: complexityWeight * 100,
       score: complexity,
       maxScore: maxComplexityScore,
       contributionPercent: complexityContribution,
     },
     {
-      id: "confidence",
+      id: 'confidence',
       weightPercent: confidenceWeight * 100,
       score: confidenceInput,
       maxScore: maxConfidenceScore,
       contributionPercent: confidenceContribution,
     },
     {
-      id: "volume",
+      id: 'volume',
       weightPercent: volumeWeight * 100,
       score: volume,
       maxScore: maxVolumeScore,
       contributionPercent: volumeContribution,
     },
     {
-      id: "unknowns",
+      id: 'unknowns',
       weightPercent: unknownsWeight * 100,
       score: unknowns,
       maxScore: maxUnknownsScore,
@@ -135,15 +135,15 @@ function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
 
   if (unknowns === 2) {
     finalScore = Math.max(finalScore, minUnknowns2Score);
-    appliedConversionRules.push("Unknowns=2 → minimum 8pt");
+    appliedConversionRules.push('Unknowns=2 → minimum 8pt');
   } else if (unknowns === 1) {
     finalScore = Math.max(finalScore, minUnknowns1Score);
-    appliedConversionRules.push("Unknowns=1 → minimum 3pt");
+    appliedConversionRules.push('Unknowns=1 → minimum 3pt');
   }
 
   if (volume === 4) {
     finalScore = Math.max(finalScore, minVolume4Score);
-    appliedConversionRules.push("Volume=4 → minimum 8pt");
+    appliedConversionRules.push('Volume=4 → minimum 8pt');
   }
 
   return { weightedScore, finalScore, appliedConversionRules, contributions };
@@ -222,7 +222,7 @@ export function getDefaultVotingCriteria(): VotingCriterion[] {
 }
 
 export function isStructuredVote(vote: unknown): vote is StructuredVote {
-  return typeof vote === "object" && vote !== null && "criteriaScores" in vote;
+  return typeof vote === 'object' && vote !== null && 'criteriaScores' in vote;
 }
 
 export function isStructuredVoteComplete(
@@ -231,6 +231,6 @@ export function isStructuredVoteComplete(
 ): boolean {
   return votingCriteria.every((criterion) => {
     const score = criteriaScores[criterion.id];
-    return typeof score === "number";
+    return typeof score === 'number';
   });
 }
