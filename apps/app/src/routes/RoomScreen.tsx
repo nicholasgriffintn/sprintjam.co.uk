@@ -651,7 +651,7 @@ const RoomScreen = () => {
               const existingNote = roomData.currentTicket.outcome ?? '';
               if (trimmedNote !== existingNote) {
                 await handleUpdateTicket(roomData.currentTicket.id, {
-                  outcome: trimmedNote || null,
+                  outcome: trimmedNote || undefined,
                 });
               }
             }
