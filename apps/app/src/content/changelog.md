@@ -1,4 +1,4 @@
-## Coming Soon
+## V2.3
 
 - Added an in-room help panel with contextual guidance tied to voting state, including card meanings and structured voting notes.
 - Added progressive onboarding hints in rooms with a single opt-in prompt for facilitation guidance.
