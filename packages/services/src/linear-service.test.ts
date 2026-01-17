@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LinearOAuthCredentials } from '@sprintjam/types';
 
 import {
+  addLinearComment,
   fetchLinearIssue,
   getLinearOrganization,
   getLinearViewer,
@@ -196,6 +197,40 @@ describe("linear-service mutations and lookups", () => {
     const parsed = JSON.parse(mutationInit?.body as string);
     expect(parsed.variables.estimate).toBe(4);
     expect(parsed.variables.issueId).toBe("iss-1");
+  });
+
+  it("adds comments using trimmed body text", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(issuePayload), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              commentCreate: { success: true },
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await addLinearComment(
+      { ...baseCredentials, refreshToken: null },
+      "iss-1",
+      "  Decision note  ",
+      vi.fn(),
+      "client-id",
+      "client-secret",
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [, mutationInit] = fetchMock.mock.calls[1];
+    const parsed = JSON.parse(mutationInit?.body as string);
+    expect(parsed.variables.issueId).toBe("iss-1");
+    expect(parsed.variables.body).toBe("Decision note");
   });
 
   it("returns organization info for the viewer", async () => {

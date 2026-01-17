@@ -38,6 +38,7 @@ import { useAutoReconnect } from "@/hooks/useAutoReconnect";
 import { useAutoEstimateUpdate } from "@/hooks/useAutoEstimateUpdate";
 import { useRoomConnection } from "@/hooks/useRoomConnection";
 import { useRoomDataSync } from "@/hooks/useRoomDataSync";
+import { completeSessionByRoomKey } from "@/lib/workspace-service";
 import type {
   ErrorConnectionIssue,
   ErrorKind,
@@ -683,10 +684,14 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       completeSession();
+      void completeSessionByRoomKey(roomData.key).catch((err: unknown) => {
+        assignRoomError(err, "Failed to update workspace session");
+      });
     } catch (err: unknown) {
       assignRoomError(err, "Failed to complete session");
     }
   }, [assignRoomError, name, roomData]);
+
 
   const retryConnection = useCallback(() => {
     setConnectionIssue((current) =>

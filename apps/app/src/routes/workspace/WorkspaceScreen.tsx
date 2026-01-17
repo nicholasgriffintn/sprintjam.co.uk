@@ -7,12 +7,16 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronRight,
+  Gauge,
+  HelpCircle,
   LogIn,
+  MessagesSquare,
   Pencil,
   Plus,
   RefreshCcw,
   Target,
   Trash2,
+  Users,
 } from "lucide-react";
 
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
@@ -29,6 +33,10 @@ import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/cn";
 import { useSessionActions } from "@/context/SessionContext";
 import { BetaBadge } from "@/components/BetaBadge";
+import {
+  getTeamInsights,
+  type TeamInsights,
+} from "@/lib/workspace-service";
 
 const formatDate = (timestamp: number | null) => {
   if (!timestamp) return "—";
@@ -69,6 +77,12 @@ export default function WorkspaceScreen() {
   const [teamNameDraft, setTeamNameDraft] = useState("");
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [renameInput, setRenameInput] = useState("");
+  const [activePanel, setActivePanel] = useState<"sessions" | "insights">(
+    "sessions",
+  );
+  const [insights, setInsights] = useState<TeamInsights | null>(null);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
 
   const selectedTeam = useMemo(
     () => teams.find((team) => team.id === selectedTeamId) ?? null,
@@ -82,6 +96,36 @@ export default function WorkspaceScreen() {
     }
     setRenameInput(nextName);
   }, [selectedTeam, teamNameDraft]);
+
+  useEffect(() => {
+    if (!selectedTeamId || activePanel !== "insights") {
+      return;
+    }
+    let isActive = true;
+    setIsLoadingInsights(true);
+    setInsightsError(null);
+    setInsights(null);
+    getTeamInsights(selectedTeamId)
+      .then((data) => {
+        if (isActive) {
+          setInsights(data);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!isActive) return;
+        setInsightsError(
+          err instanceof Error ? err.message : "Unable to load insights",
+        );
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoadingInsights(false);
+        }
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [selectedTeamId, activePanel]);
 
   const handleCreateTeam = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -119,6 +163,16 @@ export default function WorkspaceScreen() {
     if (!selectedTeamId || !renameInput.trim()) return;
     await updateTeam(selectedTeamId, renameInput.trim());
     setIsTeamModalOpen(false);
+  };
+
+  const formatPercent = (value: number | null) => {
+    if (value === null || Number.isNaN(value)) return "—";
+    return `${value.toFixed(1)}%`;
+  };
+
+  const formatVelocity = (value: number | null) => {
+    if (value === null || Number.isNaN(value)) return "—";
+    return `${value.toFixed(1)} items/hr`;
   };
 
   const showSignedOut =
@@ -336,10 +390,17 @@ export default function WorkspaceScreen() {
                   />
                 )}
                 {teams.map((team) => (
-                  <button
+                  <div
                     key={team.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedTeamId(team.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedTeamId(team.id);
+                      }
+                    }}
                     className={cn(
                       "w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
                       selectedTeamId === team.id &&
@@ -364,7 +425,10 @@ export default function WorkspaceScreen() {
                             type="button"
                             variant="secondary"
                             icon={<Pencil className="h-4 w-4" />}
-                            onClick={handleOpenTeamModal}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleOpenTeamModal();
+                            }}
                             disabled={!selectedTeam}
                             size="sm"
                           >
@@ -375,13 +439,13 @@ export default function WorkspaceScreen() {
                         <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                       )}
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </SurfaceCard>
 
             <SurfaceCard className="flex flex-col gap-5">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                     Sessions
@@ -392,89 +456,196 @@ export default function WorkspaceScreen() {
                     </p>
                   )}
                 </div>
-                <Badge variant="success" size="sm" className="font-semibold">
-                  <Target className="mr-1.5 h-3.5 w-3.5" />
-                  {sessions.length}
-                </Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="success" size="sm" className="font-semibold">
+                    <Target className="mr-1.5 h-3.5 w-3.5" />
+                    {sessions.length}
+                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={activePanel === "sessions" ? "primary" : "secondary"}
+                      onClick={() => setActivePanel("sessions")}
+                    >
+                      Sessions
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={activePanel === "insights" ? "primary" : "secondary"}
+                      onClick={() => setActivePanel("insights")}
+                    >
+                      Insights
+                    </Button>
+                  </div>
+                </div>
               </div>
 
-              {!selectedTeam && (
-                <EmptyState
-                  icon={<Building2 className="h-8 w-8" />}
-                  title="Select a team"
-                  description="Choose a team on the left to see linked sessions."
-                />
-              )}
-
-              {selectedTeam && (
-                <div className="space-y-3">
-                  {isLoadingSessions && (
-                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                      <Spinner size="sm" />
-                      <span>Loading sessions...</span>
-                    </div>
-                  )}
-
-                  {!isLoadingSessions && sessions.length === 0 && (
+              {activePanel === "sessions" ? (
+                <>
+                  {!selectedTeam && (
                     <EmptyState
-                      icon={<CalendarClock className="h-8 w-8" />}
-                      title="No sessions linked"
-                      description="Use the 'Save' button in a room to link it to this team."
+                      icon={<Building2 className="h-8 w-8" />}
+                      title="Select a team"
+                      description="Choose a team on the left to see linked sessions."
                     />
                   )}
 
-                  {sessions.map((session) => {
-                    const isComplete = Boolean(session.completedAt);
-                    return (
-                      <SurfaceCard
-                        key={`${session.teamId}-${session.id}`}
-                        variant="subtle"
-                        padding="sm"
-                        className="flex items-start justify-between gap-4"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                              {session.name}
-                            </p>
-                            <Badge
-                              variant={isComplete ? "default" : "success"}
-                              size="sm"
-                            >
-                              {isComplete ? "Completed" : "Active"}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="flex items-center gap-1">
-                              <Target className="h-3.5 w-3.5" />
-                              Room {session.roomKey}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <CalendarClock className="h-3.5 w-3.5" />
-                              Created {formatDate(session.createdAt)}
-                            </span>
-                            {session.completedAt && (
-                              <span className="flex items-center gap-1">
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                Completed {formatDate(session.completedAt)}
-                              </span>
-                            )}
-                          </div>
+                  {selectedTeam && (
+                    <div className="space-y-3">
+                      {isLoadingSessions && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                          <Spinner size="sm" />
+                          <span>Loading sessions...</span>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            icon={<ArrowUpRight className="h-3.5 w-3.5" />}
-                            onClick={() => handleOpenRoom(session.roomKey)}
+                      )}
+
+                      {!isLoadingSessions && sessions.length === 0 && (
+                        <EmptyState
+                          icon={<CalendarClock className="h-8 w-8" />}
+                          title="No sessions linked"
+                          description="Use the 'Save' button in a room to link it to this team."
+                        />
+                      )}
+
+                      {sessions.map((session) => {
+                        const isComplete = Boolean(session.completedAt);
+                        return (
+                          <SurfaceCard
+                            key={`${session.teamId}-${session.id}`}
+                            variant="subtle"
+                            padding="sm"
+                            className="flex items-start justify-between gap-4"
                           >
-                            Open room
-                          </Button>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                  {session.name}
+                                </p>
+                                <Badge
+                                  variant={isComplete ? "default" : "success"}
+                                  size="sm"
+                                >
+                                  {isComplete ? "Completed" : "Active"}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                                <span className="flex items-center gap-1">
+                                  <Target className="h-3.5 w-3.5" />
+                                  Room {session.roomKey}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <CalendarClock className="h-3.5 w-3.5" />
+                                  Created {formatDate(session.createdAt)}
+                                </span>
+                                {session.completedAt && (
+                                  <span className="flex items-center gap-1">
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    Completed {formatDate(session.completedAt)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                icon={<ArrowUpRight className="h-3.5 w-3.5" />}
+                                onClick={() => handleOpenRoom(session.roomKey)}
+                              >
+                                Open room
+                              </Button>
+                            </div>
+                          </SurfaceCard>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {!selectedTeam && (
+                    <EmptyState
+                      icon={<Building2 className="h-8 w-8" />}
+                      title="Select a team"
+                      description="Choose a team on the left to see insights."
+                    />
+                  )}
+
+                  {selectedTeam && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Based on the last {insights?.sessionsAnalyzed ?? 0} completed sessions.
+                      </p>
+
+                      {isLoadingInsights && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                          <Spinner size="sm" />
+                          <span>Loading insights...</span>
                         </div>
-                      </SurfaceCard>
-                    );
-                  })}
-                </div>
+                      )}
+
+                      {insightsError && <Alert variant="warning">{insightsError}</Alert>}
+
+                      {!isLoadingInsights && !insights && !insightsError && (
+                        <EmptyState
+                          icon={<Activity className="h-8 w-8" />}
+                          title="No insights yet"
+                          description="Complete a few sessions to build this team's trends."
+                        />
+                      )}
+
+                      {insights && (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <SurfaceCard variant="subtle" padding="sm">
+                            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              <Users className="h-4 w-4" />
+                              Participation rate
+                            </div>
+                            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                              {formatPercent(insights.participationRate)}
+                            </div>
+                          </SurfaceCard>
+                          <SurfaceCard variant="subtle" padding="sm">
+                            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              <CheckCircle2 className="h-4 w-4" />
+                              First-round consensus
+                            </div>
+                            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                              {formatPercent(insights.firstRoundConsensusRate)}
+                            </div>
+                          </SurfaceCard>
+                          <SurfaceCard variant="subtle" padding="sm">
+                            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              <MessagesSquare className="h-4 w-4" />
+                              Discussion frequency
+                            </div>
+                            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                              {formatPercent(insights.discussionRate)}
+                            </div>
+                          </SurfaceCard>
+                          <SurfaceCard variant="subtle" padding="sm">
+                            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              <Gauge className="h-4 w-4" />
+                              Estimation velocity
+                            </div>
+                            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                              {formatVelocity(insights.estimationVelocity)}
+                            </div>
+                          </SurfaceCard>
+                          <SurfaceCard variant="subtle" padding="sm">
+                            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              <HelpCircle className="h-4 w-4" />
+                              ? vote frequency
+                            </div>
+                            <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                              {formatPercent(insights.questionMarkRate)}
+                            </div>
+                          </SurfaceCard>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </SurfaceCard>
           </div>

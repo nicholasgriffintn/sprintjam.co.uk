@@ -11,6 +11,7 @@ import {
   listTeamSessionsController,
   createTeamSessionController,
   getTeamSessionController,
+  completeSessionByRoomKeyController,
   getWorkspaceStatsController,
 } from "./teams-controller";
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
@@ -677,6 +678,54 @@ describe("createTeamSessionController", () => {
       "Session 1",
       1,
       { type: "sprint-planning" },
+    );
+  });
+});
+
+describe("completeSessionByRoomKeyController", () => {
+  let mockEnv: AuthWorkerEnv;
+  let mockRepo: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEnv = { DB: {} as any } as AuthWorkerEnv;
+
+    mockRepo = {
+      validateSession: vi.fn(),
+      completeLatestSessionByRoomKey: vi.fn(),
+    };
+
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
+    vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
+  });
+
+  it("marks latest session complete for room key", async () => {
+    mockRepo.validateSession.mockResolvedValue({
+      userId: 1,
+      email: "test@example.com",
+    });
+    mockRepo.completeLatestSessionByRoomKey.mockResolvedValue({
+      id: 2,
+      teamId: 1,
+      completedAt: 1700000000000,
+    });
+
+    const request = new Request("https://test.com/sessions/complete", {
+      method: "POST",
+      body: JSON.stringify({ roomKey: "ROOM1" }),
+      headers: { Authorization: "Bearer valid-token" },
+    });
+
+    const response = await completeSessionByRoomKeyController(request, mockEnv);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.session.completedAt).toBe(1700000000000);
+    expect(mockRepo.completeLatestSessionByRoomKey).toHaveBeenCalledWith(
+      "ROOM1",
+      1,
     );
   });
 });

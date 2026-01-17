@@ -22,8 +22,13 @@ export const Modal = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
   const generatedId = useId();
   const titleId = title ? `${generatedId}-modal-title` : undefined;
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -57,7 +62,7 @@ export const Modal = ({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -87,7 +92,7 @@ export const Modal = ({
       previousFocusRef.current?.focus();
       previousFocusRef.current = null;
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   const sizeClasses = {
     sm: "max-w-md",

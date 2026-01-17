@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GithubOAuthCredentials } from '@sprintjam/types';
 
 import {
+  addGithubComment,
   escapeGithubSearchValue,
   fetchGithubRepoIssues,
 } from './github-service';
@@ -56,5 +57,32 @@ describe("fetchGithubRepoIssues search qualifiers", () => {
         milestoneTitle,
       )}\\" in:title,body login issue`,
     );
+  });
+});
+
+describe("addGithubComment", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("posts trimmed comments to the issue endpoint", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await addGithubComment(
+      baseCredentials,
+      "octo/repo#12",
+      "  Decision note  ",
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe(
+      "https://api.github.com/repos/octo/repo/issues/12/comments",
+    );
+    const body = JSON.parse(init?.body as string);
+    expect(body.body).toBe("Decision note");
   });
 });

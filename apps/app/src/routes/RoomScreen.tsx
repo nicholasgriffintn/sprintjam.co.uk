@@ -86,6 +86,7 @@ const RoomScreen = () => {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isCompleteSessionOpen, setIsCompleteSessionOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
+  const [summaryNote, setSummaryNote] = useState('');
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
@@ -157,10 +158,34 @@ const RoomScreen = () => {
   const completedTickets =
     roomData.ticketQueue?.filter((ticket) => ticket.status === 'completed')
       .length ?? 0;
+  const completedTicketList =
+    roomData.ticketQueue?.filter((ticket) => ticket.status === 'completed') ??
+    [];
+  const completedTicketVotes = completedTicketList.reduce(
+    (total, ticket) => total + (ticket.votes?.length ?? 0),
+    0,
+  );
+  const completedTicketVoters = completedTicketList.reduce(
+    (voters, ticket) => {
+      ticket.votes?.forEach((vote) => voters.add(vote.userName));
+      return voters;
+    },
+    new Set<string>(),
+  );
   const totalVotes = stats.totalVotes ?? Object.keys(roomData.votes).length;
   const ticketLabel = isQueueEnabled
     ? `${completedTickets}/${totalTickets}`
     : 'Queue off';
+
+  const getSuggestedNote = () => {
+    if (spreadSummary.unknownVoteCount > 0) {
+      return 'Unknowns flagged; clarify acceptance criteria.';
+    }
+    if (spreadSummary.isWideSpread) {
+      return 'Wide spread; align on scope or split the work.';
+    }
+    return '';
+  };
 
   const handleOpenSettings = (tab?: RoomSettingsTabId) => {
     openSettings(tab);
@@ -203,13 +228,13 @@ const RoomScreen = () => {
             <>
               <SurfaceCard padding="md" className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Session complete
+                  Session summary
                 </p>
                 <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
                   This room is now read-only.
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                  A post-session summary will live here soon.
+                  Review the notes and votes captured for each ticket.
                 </p>
               </SurfaceCard>
 
@@ -223,32 +248,87 @@ const RoomScreen = () => {
                     Participants
                   </div>
                   <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {roomData.users.length}
+                    {roomData.users.length || completedTicketVoters.size}
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Tickets
+                    Items estimated
                   </div>
                   <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {ticketLabel}
+                    {completedTicketList.length}
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Votes
+                    Votes recorded
                   </div>
                   <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {totalVotes}
+                    {completedTicketVotes}
                   </div>
                 </div>
               </SurfaceCard>
 
-              <SurfaceCard padding="md" className="space-y-2 text-sm">
-                <p className="text-slate-600 dark:text-slate-300">
-                  Coming next: highlights, outcomes, and exports for this
-                  session.
+              <SurfaceCard padding="md" className="space-y-3 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Ticket recap
                 </p>
+                {completedTicketList.length === 0 ? (
+                  <p className="text-slate-600 dark:text-slate-300">
+                    No completed tickets recorded for this session.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {completedTicketList.map((ticket) => (
+                      <div
+                        key={ticket.id}
+                        className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+                                {ticket.ticketId}
+                              </span>
+                              {ticket.title && (
+                                <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                                  {ticket.title}
+                                </span>
+                              )}
+                            </div>
+                            {ticket.outcome && (
+                              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                Note: {ticket.outcome}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {ticket.votes && ticket.votes.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            {ticket.votes.map((vote) => (
+                              <span
+                                key={`${ticket.id}-${vote.id}`}
+                                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                              >
+                                <span className="uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                  {vote.userName}
+                                </span>
+                                <span className="font-mono text-sm text-slate-900 dark:text-white">
+                                  {vote.structuredVotePayload?.calculatedStoryPoints ??
+                                    vote.vote}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                            No votes recorded for this ticket.
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </SurfaceCard>
 
               <Footer displayRepoLink={false} layout="wide" fullWidth />
@@ -351,7 +431,11 @@ const RoomScreen = () => {
                   queueEnabled={isQueueEnabled}
                   onToggleShowVotes={handleToggleShowVotes}
                   onResetVotes={handleResetVotes}
-                  onNextTicket={() => setIsSummaryOpen(true)}
+                  onNextTicket={() => {
+                    const existingNote = roomData.currentTicket?.outcome ?? '';
+                    setSummaryNote(existingNote || getSuggestedNote());
+                    setIsSummaryOpen(true);
+                  }}
                   onCompleteSession={
                     canManageQueue
                       ? () => setIsCompleteSessionOpen(true)
@@ -556,10 +640,21 @@ const RoomScreen = () => {
         stats={stats}
         currentTicket={roomData.currentTicket}
         currentUser={name}
+        note={summaryNote}
+        onNoteChange={setSummaryNote}
         onConfirm={async () => {
           if (pendingNextTicket) return;
           setPendingNextTicket(true);
           try {
+            const trimmedNote = summaryNote.trim();
+            if (roomData.currentTicket) {
+              const existingNote = roomData.currentTicket.outcome ?? '';
+              if (trimmedNote !== existingNote) {
+                await handleUpdateTicket(roomData.currentTicket.id, {
+                  outcome: trimmedNote || undefined,
+                });
+              }
+            }
             handleNextTicket();
           } finally {
             setPendingNextTicket(false);

@@ -220,6 +220,7 @@ export interface RoomSettings {
   allowOthersToDeleteEstimates: boolean;
   allowOthersToManageQueue?: boolean;
   allowVotingAfterReveal?: boolean;
+  capacityPoints?: number | null;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;

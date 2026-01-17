@@ -208,6 +208,36 @@ export async function updateGithubEstimate(
   );
 }
 
+export async function addGithubComment(
+  credentials: GithubOAuthCredentials,
+  identifier: string,
+  commentBody: string
+): Promise<void> {
+  const trimmed = commentBody.trim();
+  if (!trimmed) {
+    return;
+  }
+
+  const coords = parseGithubIssueIdentifier(identifier, {
+    owner: credentials.defaultOwner ?? credentials.githubLogin ?? undefined,
+    repo: credentials.defaultRepo ?? undefined,
+  });
+
+  if (!coords.owner || !coords.repo || Number.isNaN(coords.issueNumber)) {
+    throw new Error('Invalid GitHub issue identifier');
+  }
+
+  await githubRequest(
+    credentials.accessToken,
+    `/repos/${coords.owner}/${coords.repo}/issues/${coords.issueNumber}/comments`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: trimmed }),
+    }
+  );
+}
+
 export async function createGithubIssue(options: {
   accessToken: string;
   owner: string;

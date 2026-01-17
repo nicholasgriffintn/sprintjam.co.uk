@@ -34,6 +34,17 @@ export interface WorkspaceStats {
   completedSessions: number;
 }
 
+export interface TeamInsights {
+  sessionsAnalyzed: number;
+  totalTickets: number;
+  totalRounds: number;
+  participationRate: number;
+  firstRoundConsensusRate: number;
+  discussionRate: number;
+  estimationVelocity: number | null;
+  questionMarkRate: number;
+}
+
 export interface WorkspaceProfile {
   user: WorkspaceUser;
   teams: Team[];
@@ -186,11 +197,36 @@ export async function getTeamSession(
   return data.session;
 }
 
+export async function completeSessionByRoomKey(
+  roomKey: string,
+): Promise<TeamSession> {
+  const data = await workspaceRequest<{ session: TeamSession }>(
+    `${API_BASE_URL}/sessions/complete`,
+    {
+      method: "POST",
+      body: JSON.stringify({ roomKey }),
+    },
+  );
+  return data.session;
+}
+
 export async function getWorkspaceStats(): Promise<WorkspaceStats> {
   const data = await workspaceRequest<{ stats: WorkspaceStats }>(
     `${API_BASE_URL}/workspace/stats`,
   );
   return data.stats;
+}
+
+export async function getTeamInsights(
+  teamId: number,
+  limit = 6,
+): Promise<TeamInsights | null> {
+  const params = new URLSearchParams();
+  params.set("limit", String(limit));
+  const data = await workspaceRequest<{ insights: TeamInsights | null }>(
+    `${API_BASE_URL}/stats/team/${teamId}/insights?${params.toString()}`,
+  );
+  return data.insights;
 }
 
 export async function isAuthenticated(): Promise<boolean> {

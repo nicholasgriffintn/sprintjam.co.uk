@@ -5,6 +5,7 @@ import type {
 } from '@sprintjam/types';
 
 import {
+  addJiraComment,
   fetchJiraFields,
   fetchJiraTicket,
   findDefaultSprintField,
@@ -254,5 +255,27 @@ describe("jira-service field and update operations", () => {
     );
 
     await expect(attempt).rejects.toThrow(/story points field not configured/i);
+  });
+
+  it("adds a Jira comment using the document format", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await addJiraComment(
+      baseCredentials,
+      "ISS-1",
+      "Decision note",
+      vi.fn(),
+      "client-id",
+      "client-secret",
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toContain("/issue/ISS-1/comment");
+    const body = JSON.parse(init?.body as string);
+    expect(body.body.content[0].content[0].text).toBe("Decision note");
   });
 });

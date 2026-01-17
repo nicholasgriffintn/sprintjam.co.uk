@@ -119,6 +119,7 @@ export interface RoomSettings {
   allowVotingAfterReveal?: boolean;
   enableAutoReveal?: boolean;
   alwaysRevealVotes?: boolean;
+  capacityPoints?: number | null;
   showTimer: boolean;
   showUserPresence: boolean;
   showAverage: boolean;

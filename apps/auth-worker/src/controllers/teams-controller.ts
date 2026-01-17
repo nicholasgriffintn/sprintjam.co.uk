@@ -337,6 +337,41 @@ export async function getTeamSessionController(
   return createJsonResponse({ session });
 }
 
+export async function completeSessionByRoomKeyController(
+  request: CfRequest,
+  env: AuthWorkerEnv
+): Promise<CfResponse> {
+  const auth = await authenticateRequest(request, env);
+
+  if ('status' in auth) {
+    if (auth.code === 'unauthorized') {
+      return jsonError('Unauthorized', 401);
+    } else if (auth.code === 'expired') {
+      return jsonError('Session expired', 401);
+    }
+    return jsonError('Unknown authentication error', 401);
+  }
+
+  const { userId, repo } = auth;
+  const body = await request.json<{ roomKey?: string }>();
+  const roomKey = body?.roomKey?.trim();
+
+  if (!roomKey) {
+    return jsonError('Room key is required', 400);
+  }
+
+  const updatedSession = await repo.completeLatestSessionByRoomKey(
+    roomKey,
+    userId
+  );
+
+  if (!updatedSession) {
+    return jsonError('Session not found', 404);
+  }
+
+  return createJsonResponse({ session: updatedSession });
+}
+
 export async function getWorkspaceStatsController(
   request: CfRequest,
   env: AuthWorkerEnv

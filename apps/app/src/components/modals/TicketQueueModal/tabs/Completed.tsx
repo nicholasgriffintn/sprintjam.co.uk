@@ -38,26 +38,41 @@ export function TicketQueueModalCompletedTab({
   } | null>(null);
   const jiraSyncMutation = useMutation({
     mutationKey: ["jira-sync-ticket", roomKey, userName],
-    mutationFn: async (variables: { ticketId: string; storyPoints: number }) =>
+    mutationFn: async (variables: {
+      ticketId: string;
+      storyPoints: number;
+      note?: string;
+    }) =>
       updateJiraStoryPoints(variables.ticketId, variables.storyPoints, {
         roomKey,
         userName,
+        note: variables.note,
       }),
   });
   const linearSyncMutation = useMutation({
     mutationKey: ["linear-sync-ticket", roomKey, userName],
-    mutationFn: async (variables: { ticketId: string; estimate: number }) =>
+    mutationFn: async (variables: {
+      ticketId: string;
+      estimate: number;
+      note?: string;
+    }) =>
       updateLinearEstimate(variables.ticketId, variables.estimate, {
         roomKey,
         userName,
+        note: variables.note,
       }),
   });
   const githubSyncMutation = useMutation({
     mutationKey: ["github-sync-ticket", roomKey, userName],
-    mutationFn: async (variables: { ticketId: string; estimate: number }) =>
+    mutationFn: async (variables: {
+      ticketId: string;
+      estimate: number;
+      note?: string;
+    }) =>
       updateGithubEstimate(variables.ticketId, variables.estimate, {
         roomKey,
         userName,
+        note: variables.note,
       }),
   });
 
@@ -81,6 +96,7 @@ export function TicketQueueModalCompletedTab({
       const updated = await jiraSyncMutation.mutateAsync({
         ticketId: ticket.ticketId,
         storyPoints,
+        note: ticket.outcome ?? undefined,
       });
       if (onUpdateTicket) {
         onUpdateTicket(ticket.id, {
@@ -123,6 +139,7 @@ export function TicketQueueModalCompletedTab({
       const updated = await linearSyncMutation.mutateAsync({
         ticketId: issueId,
         estimate,
+        note: ticket.outcome ?? undefined,
       });
       if (onUpdateTicket) {
         onUpdateTicket(ticket.id, {
@@ -158,6 +175,7 @@ export function TicketQueueModalCompletedTab({
       const updated = await githubSyncMutation.mutateAsync({
         ticketId: ticket.ticketId,
         estimate,
+        note: ticket.outcome ?? undefined,
       });
       if (onUpdateTicket) {
         onUpdateTicket(ticket.id, {
@@ -348,7 +366,7 @@ export function TicketQueueModalCompletedTab({
                   <div className="mt-2 flex flex-wrap gap-2">
                     {ticket.votes.map((vote) => (
                       <span
-                        key={`${ticket.id}-${vote.userName}`}
+                        key={`${ticket.id}-${vote.id}`}
                         className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       >
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-600 dark:bg-slate-700 dark:text-slate-200">

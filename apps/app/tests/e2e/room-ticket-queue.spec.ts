@@ -191,12 +191,20 @@ test.describe("Ticket Queue", () => {
       await expect(summary).toContainText("Anonymous");
       await expect(summary).toContainText("5");
       await expect(summary).toContainText("3");
+      await summary
+        .getByLabel("Decision note (optional)")
+        .fill("Needs API clarification");
 
       await summary.getByTestId("pre-pointing-confirm").click();
       await page.waitForTimeout(250);
 
       await moderatorRoom.expectQueueCurrentTicketContains("Ticket B");
       await moderatorRoom.expectVotesHiddenMessage("You haven't voted yet");
+
+      await page.getByTestId("queue-expand").click();
+      await page.getByTestId("queue-tab-history").click();
+      const history = page.getByTestId("queue-history-tab-panel");
+      await expect(history).toContainText("Needs API clarification");
     } finally {
       await cleanup();
     }

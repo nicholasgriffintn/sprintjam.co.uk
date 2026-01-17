@@ -4,6 +4,7 @@ import { useLinearOAuth } from '@/hooks/useLinearOAuth';
 import { useGithubOAuth } from '@/hooks/useGithubOAuth';
 import { BetaBadge } from '@/components/BetaBadge';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 
 export function TicketQueueSettings({
@@ -145,6 +146,34 @@ export function TicketQueueSettings({
           >
             Allow others to manage ticket queue
           </label>
+        </div>
+      )}
+
+      {localSettings.enableTicketQueue && (
+        <div className="space-y-2">
+          <Input
+            type="number"
+            label="Sprint capacity (points)"
+            placeholder="40"
+            min={0}
+            value={
+              localSettings.capacityPoints === null ||
+              localSettings.capacityPoints === undefined
+                ? ''
+                : String(localSettings.capacityPoints)
+            }
+            onChange={(event) => {
+              const next = event.target.value;
+              handleChange(
+                'capacityPoints',
+                next === '' ? null : Number(next),
+              );
+            }}
+            fullWidth
+          />
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Optional. Track estimated points against sprint capacity.
+          </p>
         </div>
       )}
 

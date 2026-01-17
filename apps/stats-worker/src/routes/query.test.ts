@@ -6,6 +6,7 @@ import {
   getUserRoomStatsController,
   getBatchRoomStatsController,
   getTeamStatsController,
+  getTeamInsightsController,
 } from "./query";
 import { StatsRepository } from "../repositories/stats";
 import * as auth from "../lib/auth";
@@ -269,6 +270,113 @@ describe("getUserRoomStatsController", () => {
     expect(data.stats.userName).toBe("alice");
     expect(data.stats.totalVotes).toBe(8);
     expect(data.stats.participationRate).toBe(80);
+  });
+});
+
+describe("getTeamInsightsController", () => {
+  let mockEnv: StatsWorkerEnv;
+  let mockRepo: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEnv = { DB: {} as any } as StatsWorkerEnv;
+
+    mockRepo = {
+      getTeamInsights: vi.fn(),
+    };
+
+    vi.mocked(StatsRepository).mockImplementation(function () {
+      return mockRepo;
+    });
+  });
+
+  it("should return 401 when not authenticated", async () => {
+    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+      status: "error",
+      code: "unauthorized",
+    });
+
+    const request = new Request("https://test.com/stats/team/1/insights", {
+      method: "GET",
+    });
+
+    const response = await getTeamInsightsController(request as any, mockEnv, 1);
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe("Unauthorized");
+  });
+
+  it("should return 403 when user is not in team", async () => {
+    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+      userId: 1,
+      email: "test@example.com",
+      organisationId: 1,
+    });
+    vi.mocked(auth.isUserInTeam).mockResolvedValue(false);
+
+    const request = new Request("https://test.com/stats/team/1/insights", {
+      method: "GET",
+    });
+
+    const response = await getTeamInsightsController(request as any, mockEnv, 1);
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe("You do not have access to this team's stats");
+  });
+
+  it("should return an empty insights payload when not found", async () => {
+    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+      userId: 1,
+      email: "test@example.com",
+      organisationId: 1,
+    });
+    vi.mocked(auth.isUserInTeam).mockResolvedValue(true);
+    mockRepo.getTeamInsights.mockResolvedValue(null);
+
+    const request = new Request("https://test.com/stats/team/1/insights", {
+      method: "GET",
+    });
+
+    const response = await getTeamInsightsController(request as any, mockEnv, 1);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.insights).toBeNull();
+  });
+
+  it("should return insights when found", async () => {
+    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+      userId: 1,
+      email: "test@example.com",
+      organisationId: 1,
+    });
+    vi.mocked(auth.isUserInTeam).mockResolvedValue(true);
+    mockRepo.getTeamInsights.mockResolvedValue({
+      sessionsAnalyzed: 4,
+      totalTickets: 10,
+      totalRounds: 12,
+      participationRate: 85,
+      firstRoundConsensusRate: 60,
+      discussionRate: 40,
+      estimationVelocity: 3.2,
+      questionMarkRate: 5,
+    });
+
+    const request = new Request(
+      "https://test.com/stats/team/1/insights?limit=6",
+      {
+        method: "GET",
+      },
+    );
+
+    const response = await getTeamInsightsController(request as any, mockEnv, 1);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.insights.totalTickets).toBe(10);
+    expect(data.insights.participationRate).toBe(85);
   });
 });
 
