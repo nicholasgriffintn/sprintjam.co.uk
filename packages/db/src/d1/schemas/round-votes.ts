@@ -10,6 +10,7 @@ export const roundVotes = sqliteTable(
     judgeScore: text('judge_score'),
     judgeMetadata: text('judge_metadata'),
     roundEndedAt: integer('round_ended_at').notNull(),
+    type: text('type', { enum: ['reset', 'next_ticket'] }),
     createdAt: integer('created_at')
       .notNull()
       .$defaultFn(() => Math.floor(Date.now() / 1000)),
@@ -17,5 +18,5 @@ export const roundVotes = sqliteTable(
   (table) => [
     index('idx_round_votes_room').on(table.roomKey),
     index('idx_round_votes_ended').on(table.roundEndedAt),
-  ]
+  ],
 );

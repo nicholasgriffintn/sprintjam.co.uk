@@ -13,7 +13,7 @@ export function shouldAnonymizeVotes(roomData: RoomData): boolean {
 
 export function getQueueWithPrivacy(
   room: PlanningRoom,
-  roomData: RoomData
+  roomData: RoomData,
 ): TicketQueueWithVotes[] {
   return room.repository.getTicketQueue({
     anonymizeVotes: shouldAnonymizeVotes(roomData),
@@ -37,7 +37,7 @@ export function resetVotingState(room: PlanningRoom, roomData: RoomData) {
 export function logVotesForTicket(
   room: PlanningRoom,
   ticket: TicketQueueWithVotes | undefined | null,
-  roomData: RoomData
+  roomData: RoomData,
 ) {
   if (!ticket || Object.keys(roomData.votes).length === 0) {
     return;
@@ -48,7 +48,7 @@ export function logVotesForTicket(
       ticket.id,
       user,
       vote,
-      roomData.structuredVotes?.[user]
+      roomData.structuredVotes?.[user],
     );
   });
 }
@@ -56,7 +56,7 @@ export function logVotesForTicket(
 export function promoteNextPendingTicket(
   room: PlanningRoom,
   roomData: RoomData,
-  queue?: TicketQueueWithVotes[]
+  queue?: TicketQueueWithVotes[],
 ): TicketQueueWithVotes | null {
   const workingQueue = queue ?? getQueueWithPrivacy(room, roomData);
   const pendingTicket = workingQueue.find((t) => t.status === 'pending');
@@ -80,7 +80,7 @@ function canAutoCreateTicket(roomData: RoomData): boolean {
 export function createAutoTicket(
   room: PlanningRoom,
   roomData: RoomData,
-  queue: TicketQueueWithVotes[]
+  queue: TicketQueueWithVotes[],
 ): TicketQueueWithVotes | null {
   if (!canAutoCreateTicket(roomData)) {
     return null;
@@ -104,7 +104,7 @@ export function createAutoTicket(
 }
 
 export async function readRoomData(
-  room: PlanningRoom
+  room: PlanningRoom,
 ): Promise<RoomData | undefined> {
   const roomData = await room.repository.getRoomData();
   if (!roomData) {
@@ -117,7 +117,8 @@ export async function readRoomData(
 export async function postRoundToStats(
   room: PlanningRoom,
   roomData: RoomData,
-  ticketId?: string
+  ticketId?: string,
+  type: 'reset' | 'next_ticket' = 'reset',
 ): Promise<void> {
   if (Object.keys(roomData.votes).length === 0) return;
 
@@ -142,5 +143,6 @@ export async function postRoundToStats(
         : String(roomData.judgeScore),
     judgeMetadata: roomData.judgeMetadata,
     roundEndedAt: now,
+    type,
   });
 }

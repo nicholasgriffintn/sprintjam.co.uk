@@ -13,7 +13,7 @@ import {
 export async function handleSelectTicket(
   room: PlanningRoom,
   userName: string,
-  ticketId: number
+  ticketId: number,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -52,9 +52,12 @@ export async function handleSelectTicket(
   logVotesForTicket(room, currentTicket, roomData);
 
   if (Object.keys(roomData.votes).length > 0 && currentTicket) {
-    postRoundToStats(room, roomData, currentTicket.ticketId).catch((err) =>
-      console.error('Failed to post round stats:', err)
-    );
+    postRoundToStats(
+      room,
+      roomData,
+      currentTicket.ticketId,
+      'next_ticket',
+    ).catch((err) => console.error('Failed to post round stats:', err));
   }
 
   if (currentTicket && currentTicket.status === 'in_progress') {
@@ -105,9 +108,12 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
   logVotesForTicket(room, currentTicket, roomData);
 
   if (Object.keys(roomData.votes).length > 0 && currentTicket) {
-    postRoundToStats(room, roomData, currentTicket.ticketId).catch((err) =>
-      console.error('Failed to post round stats:', err)
-    );
+    postRoundToStats(
+      room,
+      roomData,
+      currentTicket.ticketId,
+      'next_ticket',
+    ).catch((err) => console.error('Failed to post round stats:', err));
   }
 
   if (currentTicket && currentTicket.status === 'in_progress') {
@@ -120,7 +126,7 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
   const nextTicket: TicketQueueWithVotes | null = promoteNextPendingTicket(
     room,
     roomData,
-    queue
+    queue,
   );
 
   room.repository.setCurrentTicket(nextTicket ? nextTicket.id : null);
@@ -139,7 +145,7 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
 export async function handleAddTicket(
   room: PlanningRoom,
   userName: string,
-  ticket: Partial<TicketQueueWithVotes>
+  ticket: Partial<TicketQueueWithVotes>,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -207,7 +213,7 @@ export async function handleUpdateTicket(
   room: PlanningRoom,
   userName: string,
   ticketId: number,
-  updates: Partial<TicketQueueWithVotes>
+  updates: Partial<TicketQueueWithVotes>,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -245,7 +251,7 @@ export async function handleUpdateTicket(
   if (updates.ordinal !== undefined) {
     const queue = room.repository.getTicketQueue();
     const conflicting = queue.find(
-      (t) => t.id !== ticketId && t.ordinal === updates.ordinal
+      (t) => t.id !== ticketId && t.ordinal === updates.ordinal,
     );
 
     if (conflicting) {
@@ -278,7 +284,7 @@ export async function handleUpdateTicket(
 export async function handleDeleteTicket(
   room: PlanningRoom,
   userName: string,
-  ticketId: number
+  ticketId: number,
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
