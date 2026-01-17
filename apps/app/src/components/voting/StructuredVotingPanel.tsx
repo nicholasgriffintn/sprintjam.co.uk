@@ -170,7 +170,7 @@ export function StructuredVotingPanel({
       return;
     }
     setCriteriaScores({});
-  }, [currentVote, hideSubmittedVote, criteriaScores]);
+  }, [currentVote, hideSubmittedVote]);
 
   useEffect(() => {
     if (!allowScoringInfoToggle) {
