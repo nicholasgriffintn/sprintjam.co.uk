@@ -1,6 +1,6 @@
-import { motion } from "framer-motion";
-import { useState, useEffect, useId } from "react";
-import { Check, Info } from "lucide-react";
+import { motion } from 'framer-motion';
+import { useState, useEffect, useId } from 'react';
+import { Check, Info } from 'lucide-react';
 
 import type {
   VotingCriterion,
@@ -8,9 +8,9 @@ import type {
   StructuredVotingDisplaySettings,
   VoteValue,
 } from '@/types';
-import { TimerChip } from "./TimerChip";
-import { useRoomState } from "@/context/RoomContext";
-import { Button } from "@/components/ui/Button";
+import { TimerChip } from './TimerChip';
+import { useRoomState } from '@/context/RoomContext';
+import { Button } from '@/components/ui/Button';
 
 const MotionButton = motion(Button);
 
@@ -34,23 +34,23 @@ interface CriterionRowProps {
 const parseCriterionDescription = (description: string) => {
   const match = description.match(/^(.*?)(?:\s*\((.*)\))?$/);
   const shortLabel = match?.[1]?.trim() || description;
-  const details = match?.[2]?.trim() || "";
+  const details = match?.[2]?.trim() || '';
   return { shortLabel, details };
 };
 
 const getScaleLabels = (criterion: VotingCriterion) => {
   switch (criterion.id) {
-    case "volume":
-    case "unknowns":
-      return { low: "None", high: "Lots" };
+    case 'volume':
+    case 'unknowns':
+      return { low: 'None', high: 'Lots' };
     default:
-      return { low: "Low", high: "High" };
+      return { low: 'Low', high: 'High' };
   }
 };
 
 const getStepLabel = (criterion: VotingCriterion) => {
   const steps = criterion.maxScore - criterion.minScore + 1;
-  return steps === 3 ? "3-step scale" : "";
+  return steps === 3 ? '3-step scale' : '';
 };
 
 function CriterionRow({
@@ -81,14 +81,14 @@ function CriterionRow({
         data-testid={`structured-score-${criterion.id}-${i}`}
         className={`relative h-10 w-10 rounded-lg border text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 ${
           isDisabled
-            ? "opacity-40 cursor-not-allowed"
+            ? 'opacity-40 cursor-not-allowed'
             : score === i
-              ? "border-blue-500 bg-blue-600 text-white shadow-[0_0_0_2px_rgba(59,130,246,0.25),0_10px_20px_rgba(37,99,235,0.35)]"
-              : "border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-400 bg-white dark:bg-gray-800/70 text-slate-900 dark:text-white hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)]"
+              ? 'border-blue-500 bg-blue-600 text-white shadow-[0_0_0_2px_rgba(59,130,246,0.25),0_10px_20px_rgba(37,99,235,0.35)]'
+              : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-400 bg-white dark:bg-gray-800/70 text-slate-900 dark:text-white hover:shadow-[0_6px_16px_rgba(15,23,42,0.12)]'
         }`}
         whileHover={isDisabled ? {} : { scale: 1.06, y: -2 }}
         whileTap={isDisabled ? {} : { scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 420, damping: 20 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 20 }}
         role="radio"
         aria-checked={score === i}
         aria-label={`${criterion.name} ${i}`}
@@ -117,7 +117,7 @@ function CriterionRow({
             {criterion.name}
             {score !== null && (
               <span className="text-slate-500 dark:text-slate-300">
-                {" "}
+                {' '}
                 — {score}
               </span>
             )}
@@ -160,7 +160,7 @@ function CriterionRow({
           <span>{scaleLabels.high}</span>
         </div>
         <div
-          className={`flex gap-2 ${steps === 3 ? "justify-center" : "justify-end"}`}
+          className={`flex gap-2 ${steps === 3 ? 'justify-center' : 'justify-end'}`}
           role="radiogroup"
           aria-labelledby={titleId}
           aria-describedby={descriptionId}
@@ -176,13 +176,13 @@ const normalizeVoteValue = (value: string | number) =>
   String(value).trim().toLowerCase();
 
 const parseOptionLabel = (optionText: string) => {
-  const [first, ...rest] = optionText.split(" ");
+  const [first, ...rest] = optionText.split(' ');
   const hasLeadingEmoji =
     first && /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u.test(first);
 
   return {
-    icon: hasLeadingEmoji ? first : "",
-    label: hasLeadingEmoji ? rest.join(" ").trim() || first : optionText,
+    icon: hasLeadingEmoji ? first : '',
+    label: hasLeadingEmoji ? rest.join(' ').trim() || first : optionText,
   };
 };
 
@@ -242,7 +242,7 @@ export function StructuredVotingPanel({
       (option) => option.enabled !== false,
     ) ?? [];
   const normalizedCurrentVote =
-    currentUserVote !== null && typeof currentUserVote !== "object"
+    currentUserVote !== null && typeof currentUserVote !== 'object'
       ? normalizeVoteValue(currentUserVote)
       : null;
   const selectedExtraOption =
@@ -262,8 +262,8 @@ export function StructuredVotingPanel({
   const calculatedVote = hideSubmittedVote ? null : currentVote;
   const isExceptionActive = Boolean(selectedExtraOption);
   const summaryValue = isExceptionActive
-    ? "—"
-    : calculatedVote?.calculatedStoryPoints ?? null;
+    ? '—'
+    : (calculatedVote?.calculatedStoryPoints ?? null);
   const weightedScore = isExceptionActive
     ? null
     : (calculatedVote?.percentageScore ?? null);
