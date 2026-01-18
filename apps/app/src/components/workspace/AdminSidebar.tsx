@@ -1,40 +1,23 @@
-import { LayoutDashboard, Users } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-
 import { cn } from "@/lib/cn";
-import { useSessionActions, type AppScreen } from "@/context/SessionContext";
-
-interface AdminNavItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  screen: AppScreen;
-  onClick: () => void;
-}
+import {
+  getAdminSidebarItems,
+  navigateTo,
+  type AppScreen,
+} from "@/config/routes";
+import { useSessionActions } from "@/context/SessionContext";
 
 interface AdminSidebarProps {
   activeScreen: AppScreen;
 }
 
 export function AdminSidebar({ activeScreen }: AdminSidebarProps) {
-  const { goToWorkspaceAdmin, goToWorkspaceAdminTeams } = useSessionActions();
+  const { setScreen } = useSessionActions();
+  const items = getAdminSidebarItems();
 
-  const items: AdminNavItem[] = [
-    {
-      id: "overview",
-      label: "Overview",
-      icon: LayoutDashboard,
-      screen: "workspaceAdmin",
-      onClick: goToWorkspaceAdmin,
-    },
-    {
-      id: "teams",
-      label: "Teams",
-      icon: Users,
-      screen: "workspaceAdminTeams",
-      onClick: goToWorkspaceAdminTeams,
-    },
-  ];
+  const handleNavigate = (screen: AppScreen) => {
+    setScreen(screen);
+    navigateTo(screen);
+  };
 
   return (
     <aside className="w-full lg:w-60">
@@ -45,9 +28,9 @@ export function AdminSidebar({ activeScreen }: AdminSidebarProps) {
 
           return (
             <button
-              key={item.id}
+              key={item.screen}
               type="button"
-              onClick={item.onClick}
+              onClick={() => handleNavigate(item.screen)}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition",
                 isActive
@@ -55,7 +38,7 @@ export function AdminSidebar({ activeScreen }: AdminSidebarProps) {
                   : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
               )}
             >
-              <Icon className="h-5 w-5" />
+              {Icon && <Icon className="h-5 w-5" />}
               {item.label}
             </button>
           );

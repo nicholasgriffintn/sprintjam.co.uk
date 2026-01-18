@@ -13,14 +13,14 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 
-import { useSessionActions, type AppScreen } from "@/context/SessionContext";
+import { useSessionActions } from '@/context/SessionContext';
 import { PageSection } from "@/components/layout/PageBackground";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
-import { navigateTo } from "@/utils/navigation";
+import { navigateTo, type AppScreen } from '@/config/routes';
 import { SITE_NAME } from "@/constants";
 
 const WelcomeScreen = () => {

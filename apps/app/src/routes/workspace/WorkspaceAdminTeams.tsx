@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Building2, Trash2 } from "lucide-react";
+
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { AdminSidebar } from "@/components/workspace/AdminSidebar";
 import { TeamsList } from "@/components/workspace/TeamsList";
@@ -14,8 +15,10 @@ import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import type { Team } from "@/lib/workspace-service";
+
 export default function WorkspaceAdminTeams() {
   usePageMeta(META_CONFIGS.workspaceAdminTeams);
+
   const {
     user,
     teams,
@@ -31,34 +34,40 @@ export default function WorkspaceAdminTeams() {
     updateTeam,
     deleteTeam,
   } = useWorkspaceData();
+
   const { goToLogin } = useSessionActions();
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [renameInput, setRenameInput] = useState("");
+  const [renameInput, setRenameInput] = useState('');
+
   const handleCreateTeam = async (name: string) => {
     await createTeam(name);
   };
+
   const handleEditTeam = (team: Team) => {
     setEditingTeam(team);
     setRenameInput(team.name);
     setIsTeamModalOpen(true);
   };
+
   const handleSaveTeamName = async () => {
     if (!editingTeam || !renameInput.trim()) return;
     await updateTeam(editingTeam.id, renameInput.trim());
     setIsTeamModalOpen(false);
     setEditingTeam(null);
   };
+
   const handleDeleteTeam = async () => {
     if (!editingTeam) return;
     const confirmed = window.confirm(
-      "Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.",
+      'Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.',
     );
     if (!confirmed) return;
     await deleteTeam(editingTeam.id);
     setIsTeamModalOpen(false);
     setEditingTeam(null);
   };
+
   return (
     <WorkspaceLayout
       isLoading={isLoading}

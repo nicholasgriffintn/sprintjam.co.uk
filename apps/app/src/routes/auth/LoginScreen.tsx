@@ -13,7 +13,7 @@ import { META_CONFIGS } from "@/config/meta";
 import { useSessionActions } from "@/context/SessionContext";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { BetaBadge } from "@/components/BetaBadge";
-import { getReturnUrl, clearReturnUrl } from "@/utils/navigation";
+import { getReturnUrl, clearReturnUrl } from '@/config/routes';
 
 type LoginState =
   | "input"

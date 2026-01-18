@@ -13,8 +13,8 @@ import {
   generateBreadcrumbSchema,
 } from '@/utils/structured-data';
 import type { MetaTagConfig } from '@/utils/meta';
-import { useSessionActions, type AppScreen } from '@/context/SessionContext';
-import { navigateTo } from '@/utils/navigation';
+import { useSessionActions } from '@/context/SessionContext';
+import { navigateTo, type AppScreen } from '@/config/routes';
 import { guides, type GuideInfo } from '@/routes/guides/GuidesScreen';
 
 interface GuideLayoutProps {

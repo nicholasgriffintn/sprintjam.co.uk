@@ -11,43 +11,7 @@ import {
 import { useUserPersistence } from "@/hooks/useUserPersistence";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
-import { navigateTo, parsePath } from "@/utils/navigation";
-
-export type AppScreen =
-  | "welcome"
-  | "login"
-  | "workspace"
-  | "workspaceSessions"
-  | "workspaceAdmin"
-  | "workspaceAdminTeams"
-  | "create"
-  | "join"
-  | "room"
-  | "404"
-  | "privacy"
-  | "terms"
-  | "changelog"
-  | "faq"
-  | "integrations"
-  | "integrationsJira"
-  | "integrationsLinear"
-  | "integrationsGithub"
-  | "guides"
-  | "guidesPlanningPoker"
-  | "guidesFibonacciScale"
-  | "guidesFibonacciShort"
-  | "guidesDoublingScale"
-  | "guidesTshirtSizing"
-  | "guidesPlanetScale"
-  | "guidesYesNo"
-  | "guidesSimpleScale"
-  | "guidesHoursEstimates"
-  | "guidesSessionRoles"
-  | "guidesRemoteEstimation"
-  | "guidesStoryPoints"
-  | "guidesSprintPlanning"
-  | "guidesConsensusBuilding"
-  | "guidesStructuredVoting";
+import { navigateTo, parsePath, type AppScreen } from '@/config/routes';
 
 interface SessionStateContextValue {
   screen: AppScreen;

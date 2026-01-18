@@ -23,6 +23,7 @@ export interface TeamSession {
   name: string;
   createdById: number;
   createdAt: number;
+  updatedAt: number | null;
   completedAt: number | null;
   metadata: string | null;
 }
@@ -261,7 +262,7 @@ export async function getTeamInsights(
   limit = 6,
 ): Promise<TeamInsights | null> {
   const params = new URLSearchParams();
-  params.set('limit', String(limit));
+  params.set("limit", String(limit));
   const data = await workspaceRequest<TeamInsights | null>(
     `${API_BASE_URL}/stats/team/${teamId}/insights?${params.toString()}`,
   );
@@ -273,8 +274,8 @@ export async function getWorkspaceInsights(
   contributorsLimit = 10,
 ): Promise<WorkspaceInsights | null> {
   const params = new URLSearchParams();
-  params.set('sessionsLimit', String(sessionsLimit));
-  params.set('contributorsLimit', String(contributorsLimit));
+  params.set("sessionsLimit", String(sessionsLimit));
+  params.set("contributorsLimit", String(contributorsLimit));
   const data = await workspaceRequest<WorkspaceInsights | null>(
     `${API_BASE_URL}/stats/workspace/insights?${params.toString()}`,
   );
@@ -295,7 +296,7 @@ export async function getBatchSessionStats(
 ): Promise<Record<string, SessionStats>> {
   if (roomKeys.length === 0) return {};
   const params = new URLSearchParams();
-  params.set('keys', roomKeys.join(','));
+  params.set("keys", roomKeys.join(","));
   const data = await workspaceRequest<Record<string, SessionStats>>(
     `${API_BASE_URL}/stats/sessions?${params.toString()}`,
   );

@@ -12,8 +12,8 @@ import {
   generateSoftwareApplicationSchema,
 } from '@/utils/structured-data';
 import type { MetaTagConfig } from '@/utils/meta';
-import { useSessionActions, type AppScreen } from '@/context/SessionContext';
-import { navigateTo } from '@/utils/navigation';
+import { useSessionActions } from '@/context/SessionContext';
+import { navigateTo, type AppScreen } from '@/config/routes';
 
 export interface GuideInfo {
   slug: string;

@@ -8,13 +8,13 @@ import {
   Workflow,
 } from "lucide-react";
 
-import { useSessionActions, type AppScreen } from "@/context/SessionContext";
+import { useSessionActions } from '@/context/SessionContext';
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { navigateTo } from "@/utils/navigation";
+import { navigateTo, type AppScreen } from '@/config/routes';
 import { SITE_NAME } from '@/constants';
 
 const providers = [
