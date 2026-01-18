@@ -1,63 +1,59 @@
-import { useMemo } from "react";
-import type { WorkspaceStats } from "@/lib/workspace-service";
-
-interface SessionTimelineData {
-  period: string;
-  count: number;
-}
-
-interface OrgInsights {
-  totalVotes: number;
-  avgSessionDuration: number;
-  teamsActive: number;
-}
+import { useState, useEffect, useCallback } from "react";
+import type {
+  WorkspaceStats,
+  WorkspaceInsights,
+  SessionTimelineData,
+} from "@/lib/workspace-service";
+import { getWorkspaceInsights } from "@/lib/workspace-service";
 
 interface WorkspaceStatsReturn {
   sessionsOverTime: SessionTimelineData[];
-  orgInsights: OrgInsights | null;
+  insights: WorkspaceInsights | null;
   isLoading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
 }
 
 export function useWorkspaceStats(
   stats: WorkspaceStats | null,
 ): WorkspaceStatsReturn {
-  const sessionsOverTime = useMemo<SessionTimelineData[]>(() => {
-    if (!stats) return [];
+  const [insights, setInsights] = useState<WorkspaceInsights | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-    const now = new Date();
-    const currentMonth = now.toLocaleString("default", { month: "short" });
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  const fetchInsights = useCallback(async () => {
+    if (!stats || stats.totalTeams === 0) {
+      setInsights(null);
+      return;
+    }
 
-    return [
-      {
-        period: twoMonthsAgo.toLocaleString("default", { month: "short" }),
-        count: Math.floor((stats.totalSessions || 0) * 0.3),
-      },
-      {
-        period: lastMonth.toLocaleString("default", { month: "short" }),
-        count: Math.floor((stats.totalSessions || 0) * 0.35),
-      },
-      {
-        period: currentMonth,
-        count: Math.floor((stats.totalSessions || 0) * 0.35),
-      },
-    ];
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await getWorkspaceInsights();
+      setInsights(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err : new Error("Failed to fetch insights"),
+      );
+      setInsights(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [stats]);
 
-  const orgInsights = useMemo<OrgInsights | null>(() => {
-    if (!stats) return null;
+  useEffect(() => {
+    fetchInsights();
+  }, [fetchInsights]);
 
-    return {
-      totalVotes: (stats.totalSessions || 0) * 25,
-      avgSessionDuration: 18,
-      teamsActive: stats.totalTeams || 0,
-    };
-  }, [stats]);
+  const sessionsOverTime = stats?.sessionTimeline ?? [];
 
   return {
     sessionsOverTime,
-    orgInsights,
-    isLoading: !stats,
+    insights,
+    isLoading: !stats || isLoading,
+    error,
+    refetch: fetchInsights,
   };
 }

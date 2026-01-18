@@ -390,5 +390,5 @@ export async function getWorkspaceStatsController(
   const { userId, repo } = auth;
   const stats = await repo.getWorkspaceStats(userId);
 
-  return createJsonResponse({ stats });
+  return createJsonResponse(stats);
 }

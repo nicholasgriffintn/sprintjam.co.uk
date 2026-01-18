@@ -132,9 +132,9 @@ describe("getRoomStatsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.stats.roomKey).toBe("test-room");
-    expect(data.stats.totalRounds).toBe(10);
-    expect(data.stats.totalVotes).toBe(50);
+    expect(data.roomKey).toBe("test-room");
+    expect(data.totalRounds).toBe(10);
+    expect(data.totalVotes).toBe(50);
   });
 });
 
@@ -267,9 +267,9 @@ describe("getUserRoomStatsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.stats.userName).toBe("alice");
-    expect(data.stats.totalVotes).toBe(8);
-    expect(data.stats.participationRate).toBe(80);
+    expect(data.userName).toBe("alice");
+    expect(data.totalVotes).toBe(8);
+    expect(data.participationRate).toBe(80);
   });
 });
 
@@ -300,7 +300,11 @@ describe("getTeamInsightsController", () => {
       method: "GET",
     });
 
-    const response = await getTeamInsightsController(request as any, mockEnv, 1);
+    const response = await getTeamInsightsController(
+      request as any,
+      mockEnv,
+      1,
+    );
     const data = await response.json();
 
     expect(response.status).toBe(401);
@@ -319,7 +323,11 @@ describe("getTeamInsightsController", () => {
       method: "GET",
     });
 
-    const response = await getTeamInsightsController(request as any, mockEnv, 1);
+    const response = await getTeamInsightsController(
+      request as any,
+      mockEnv,
+      1,
+    );
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -339,11 +347,15 @@ describe("getTeamInsightsController", () => {
       method: "GET",
     });
 
-    const response = await getTeamInsightsController(request as any, mockEnv, 1);
+    const response = await getTeamInsightsController(
+      request as any,
+      mockEnv,
+      1,
+    );
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.insights).toBeNull();
+    expect(data).toBeNull();
   });
 
   it("should return insights when found", async () => {
@@ -371,12 +383,16 @@ describe("getTeamInsightsController", () => {
       },
     );
 
-    const response = await getTeamInsightsController(request as any, mockEnv, 1);
+    const response = await getTeamInsightsController(
+      request as any,
+      mockEnv,
+      1,
+    );
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.insights.totalTickets).toBe(10);
-    expect(data.insights.participationRate).toBe(85);
+    expect(data.totalTickets).toBe(10);
+    expect(data.participationRate).toBe(85);
   });
 });
 
@@ -476,8 +492,8 @@ describe("getBatchRoomStatsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.stats.room1.totalRounds).toBe(5);
-    expect(data.stats.room2.totalRounds).toBe(3);
+    expect(data.room1.totalRounds).toBe(5);
+    expect(data.room2.totalRounds).toBe(3);
     expect(mockRepo.getBatchRoomStats).toHaveBeenCalledWith(["room1", "room2"]);
     expect(auth.filterAccessibleRoomKeys).toHaveBeenCalledWith(mockEnv.DB, 1, [
       "room1",
@@ -506,7 +522,7 @@ describe("getBatchRoomStatsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.stats).toEqual({});
+    expect(data).toEqual({});
   });
 });
 
@@ -636,10 +652,10 @@ describe("getTeamStatsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.stats.totalMembers).toBe(5);
-    expect(data.stats.totalRounds).toBe(20);
-    expect(data.stats.memberStats).toHaveLength(1);
-    expect(data.stats.memberStats[0].userName).toBe("alice");
+    expect(data.totalMembers).toBe(5);
+    expect(data.totalRounds).toBe(20);
+    expect(data.memberStats).toHaveLength(1);
+    expect(data.memberStats[0].userName).toBe("alice");
   });
 
   it("should pass pagination parameters to repository", async () => {

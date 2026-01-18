@@ -10,8 +10,9 @@ import {
   isUserInTeam,
   canUserAccessRoom,
   filterAccessibleRoomKeys,
+  getUserTeamIds,
   type AuthResult,
-} from "../lib/auth";
+} from '../lib/auth';
 import { errorResponse, successResponse } from "../lib/response";
 
 function getAuthError(code: "unauthorized" | "expired"): string {
@@ -45,7 +46,7 @@ export async function getRoomStatsController(
     return errorResponse("Room not found", 404);
   }
 
-  return successResponse({ stats }, true);
+  return successResponse(stats, true);
 }
 
 export async function getUserRoomStatsController(
@@ -76,7 +77,7 @@ export async function getUserRoomStatsController(
     return errorResponse("User stats not found", 404);
   }
 
-  return successResponse({ stats }, true);
+  return successResponse(stats, true);
 }
 
 export async function getBatchRoomStatsController(
@@ -109,7 +110,7 @@ export async function getBatchRoomStatsController(
 
   const stats = Object.fromEntries(statsMap);
 
-  return successResponse({ stats }, true);
+  return successResponse(stats, true);
 }
 
 export async function getTeamStatsController(
@@ -138,7 +139,7 @@ export async function getTeamStatsController(
     return errorResponse("Team stats not found", 404);
   }
 
-  return successResponse({ stats }, true);
+  return successResponse(stats, true);
 }
 
 export async function getTeamInsightsController(
@@ -147,7 +148,7 @@ export async function getTeamInsightsController(
   teamId: number,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ("status" in authResult && authResult.status === "error") {
+  if ('status' in authResult && authResult.status === 'error') {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -157,14 +158,112 @@ export async function getTeamInsightsController(
   }
 
   const url = new URL(request.url);
-  const limit = parseInt(url.searchParams.get("limit") || "6", 10);
+  const limit = parseInt(url.searchParams.get('limit') || '6', 10);
 
   const repo = new StatsRepository(env.DB);
   const insights = await repo.getTeamInsights(teamId, { limit });
 
   if (!insights) {
-    return successResponse({ insights: null }, true);
+    return successResponse(null, true);
   }
 
-  return successResponse({ insights }, true);
+  return successResponse(insights, true);
+}
+
+export async function getWorkspaceInsightsController(
+  request: CfRequest,
+  env: StatsWorkerEnv,
+): Promise<CfResponse> {
+  const authResult = await authenticateRequest(request, env.DB);
+  if ('status' in authResult && authResult.status === 'error') {
+    return errorResponse(getAuthError(authResult.code), 401);
+  }
+
+  const auth = authResult as AuthResult;
+  const teamIds = await getUserTeamIds(env.DB, auth.userId);
+
+  if (teamIds.length === 0) {
+    return successResponse(null, true);
+  }
+
+  const url = new URL(request.url);
+  const sessionsLimit = parseInt(
+    url.searchParams.get('sessionsLimit') || '20',
+    10,
+  );
+  const contributorsLimit = parseInt(
+    url.searchParams.get('contributorsLimit') || '10',
+    10,
+  );
+
+  const repo = new StatsRepository(env.DB);
+  const insights = await repo.getWorkspaceInsights(teamIds, {
+    sessionsLimit,
+    contributorsLimit,
+  });
+
+  return successResponse(insights, true);
+}
+
+export async function getSessionStatsController(
+  request: CfRequest,
+  env: StatsWorkerEnv,
+  roomKey: string,
+): Promise<CfResponse> {
+  const authResult = await authenticateRequest(request, env.DB);
+  if ('status' in authResult && authResult.status === 'error') {
+    return errorResponse(getAuthError(authResult.code), 401);
+  }
+
+  const auth = authResult as AuthResult;
+  const hasAccess = await canUserAccessRoom(
+    env.DB,
+    auth.organisationId,
+    roomKey,
+  );
+  if (!hasAccess) {
+    return errorResponse("You do not have access to this session's stats", 403);
+  }
+
+  const repo = new StatsRepository(env.DB);
+  const stats = await repo.getSessionStats(roomKey);
+
+  if (!stats) {
+    return successResponse(null, true);
+  }
+
+  return successResponse(stats, true);
+}
+
+export async function getBatchSessionStatsController(
+  request: CfRequest,
+  env: StatsWorkerEnv,
+): Promise<CfResponse> {
+  const authResult = await authenticateRequest(request, env.DB);
+  if ('status' in authResult && authResult.status === 'error') {
+    return errorResponse(getAuthError(authResult.code), 401);
+  }
+
+  const url = new URL(request.url);
+  const keysParam = url.searchParams.get('keys');
+
+  if (!keysParam) {
+    return errorResponse('Missing keys query parameter', 400);
+  }
+
+  const roomKeys = keysParam.split(',').filter(Boolean);
+
+  const auth = authResult as AuthResult;
+  const accessibleRoomKeys = await filterAccessibleRoomKeys(
+    env.DB,
+    auth.organisationId,
+    roomKeys,
+  );
+
+  const repo = new StatsRepository(env.DB);
+  const statsMap = await repo.getBatchSessionStats(accessibleRoomKeys);
+
+  const stats = Object.fromEntries(statsMap);
+
+  return successResponse(stats, true);
 }

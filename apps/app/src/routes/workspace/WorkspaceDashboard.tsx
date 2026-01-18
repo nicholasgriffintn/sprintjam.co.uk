@@ -29,7 +29,7 @@ export default function WorkspaceDashboard() {
 
   const { goToLogin } = useSessionActions();
 
-  const { sessionsOverTime, orgInsights } = useWorkspaceStats(stats);
+  const { sessionsOverTime, insights } = useWorkspaceStats(stats);
 
   return (
     <WorkspaceLayout
@@ -63,6 +63,7 @@ export default function WorkspaceDashboard() {
 
         <StatCards
           stats={stats}
+          insights={insights}
           teamCount={teams.length}
           sessionCount={sessions.length}
         />
@@ -73,7 +74,7 @@ export default function WorkspaceDashboard() {
           </SurfaceCard>
 
           <SurfaceCard>
-            <InsightsGrid insights={orgInsights} />
+            <InsightsGrid insights={insights} />
           </SurfaceCard>
         </div>
       </div>

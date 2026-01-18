@@ -3,6 +3,7 @@ import { CalendarClock } from "lucide-react";
 import { SessionCard } from "./SessionCard";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useSessionStats } from "@/hooks/useSessionStats";
 import type { TeamSession } from "@/lib/workspace-service";
 
 interface SessionListProps {
@@ -16,6 +17,8 @@ export function SessionList({
   isLoading,
   onOpenRoom,
 }: SessionListProps) {
+  const { statsMap, isLoading: isLoadingStats } = useSessionStats(sessions);
+
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
@@ -37,10 +40,17 @@ export function SessionList({
 
   return (
     <div className="space-y-3">
+      {isLoadingStats && sessions.length > 0 && (
+        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 pb-1">
+          <Spinner size="sm" />
+          <span>Loading session stats...</span>
+        </div>
+      )}
       {sessions.map((session) => (
         <SessionCard
           key={`${session.teamId}-${session.id}`}
           session={session}
+          stats={statsMap[session.roomKey] ?? null}
           onOpenRoom={onOpenRoom}
         />
       ))}

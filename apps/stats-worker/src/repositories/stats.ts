@@ -1,13 +1,13 @@
-import type { D1Database } from '@cloudflare/workers-types';
-import { eq, inArray, desc } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/d1';
+import type { D1Database } from "@cloudflare/workers-types";
+import { eq, inArray, desc } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
 
 import {
   roundVotes,
   voteRecords,
   roomStats,
   teamSessions,
-} from '@sprintjam/db/d1/schemas';
+} from "@sprintjam/db/d1/schemas";
 
 export interface RoundIngestData {
   roomKey: string;
@@ -22,7 +22,7 @@ export interface RoundIngestData {
   judgeScore?: string;
   judgeMetadata?: object;
   roundEndedAt: number;
-  type: 'reset' | 'next_ticket';
+  type: "reset" | "next_ticket";
 }
 
 export interface RoomStatsResult {
@@ -58,6 +58,38 @@ export interface TeamInsightsResult {
   discussionRate: number;
   estimationVelocity: number | null;
   questionMarkRate: number;
+}
+
+export interface WorkspaceInsightsResult {
+  totalVotes: number;
+  totalRounds: number;
+  totalTickets: number;
+  participationRate: number;
+  firstRoundConsensusRate: number;
+  discussionRate: number;
+  estimationVelocity: number | null;
+  questionMarkRate: number;
+  teamCount: number;
+  sessionsAnalyzed: number;
+  topContributors: Array<{
+    userName: string;
+    totalVotes: number;
+    participationRate: number;
+    consensusAlignment: number;
+  }>;
+}
+
+export interface SessionStatsResult {
+  roomKey: string;
+  totalRounds: number;
+  totalVotes: number;
+  uniqueParticipants: number;
+  participationRate: number;
+  consensusRate: number;
+  firstRoundConsensusRate: number;
+  discussionRate: number;
+  estimationVelocity: number | null;
+  durationMinutes: number | null;
 }
 
 export interface PaginationOptions {
@@ -236,7 +268,7 @@ export class StatsRepository {
 
     const roundConsensus = new Map<string, string>();
     for (const [roundId, counts] of roundVoteCounts) {
-      let maxVote = '';
+      let maxVote = "";
       let maxCount = 0;
       for (const [vote, count] of counts) {
         if (count > maxCount) {
@@ -321,7 +353,7 @@ export class StatsRepository {
 
     const roundConsensus = new Map<string, string>();
     for (const [roundId, counts] of roundVoteCounts) {
-      let maxVote = '';
+      let maxVote = "";
       let maxCount = 0;
       for (const [vote, count] of counts) {
         if (count > maxCount) {
@@ -478,9 +510,10 @@ export class StatsRepository {
 
     for (const round of rounds) {
       if (round.ticketId) {
+        const ticketKey = `${round.roomKey}:${round.ticketId}`;
         roundsPerTicket.set(
-          round.ticketId,
-          (roundsPerTicket.get(round.ticketId) ?? 0) + 1,
+          ticketKey,
+          (roundsPerTicket.get(ticketKey) ?? 0) + 1,
         );
         if (!ticketsByRoom.has(round.roomKey)) {
           ticketsByRoom.set(round.roomKey, new Set());
@@ -504,7 +537,7 @@ export class StatsRepository {
         vote.roundId,
         (votesPerRound.get(vote.roundId) ?? 0) + 1,
       );
-      if (vote.vote === '?') {
+      if (vote.vote === "?") {
         questionMarkVotes++;
       }
       if (!participantsByRoom.has(vote.roomKey)) {
@@ -572,5 +605,496 @@ export class StatsRepository {
       estimationVelocity,
       questionMarkRate,
     };
+  }
+
+  async getWorkspaceInsights(
+    teamIds: number[],
+    options?: { sessionsLimit?: number; contributorsLimit?: number },
+  ): Promise<WorkspaceInsightsResult | null> {
+    const sessionsLimit = options?.sessionsLimit ?? 20;
+    const contributorsLimit = options?.contributorsLimit ?? 10;
+
+    if (teamIds.length === 0) {
+      return null;
+    }
+
+    const sessions = await this.db
+      .select({
+        roomKey: teamSessions.roomKey,
+        teamId: teamSessions.teamId,
+        completedAt: teamSessions.completedAt,
+      })
+      .from(teamSessions)
+      .where(inArray(teamSessions.teamId, teamIds))
+      .orderBy(desc(teamSessions.completedAt))
+      .all();
+
+    const completedSessions = sessions
+      .filter((s) => s.completedAt)
+      .slice(0, sessionsLimit);
+
+    if (completedSessions.length === 0) {
+      return null;
+    }
+
+    const roomKeys = Array.from(
+      new Set(completedSessions.map((s) => s.roomKey)),
+    );
+    const uniqueTeamIds = new Set(completedSessions.map((s) => s.teamId));
+
+    const [rounds, votes] = await Promise.all([
+      this.db
+        .select()
+        .from(roundVotes)
+        .where(inArray(roundVotes.roomKey, roomKeys))
+        .all(),
+      this.db
+        .select({
+          roundId: voteRecords.roundId,
+          userName: voteRecords.userName,
+          vote: voteRecords.vote,
+          roomKey: roundVotes.roomKey,
+        })
+        .from(voteRecords)
+        .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
+        .where(inArray(roundVotes.roomKey, roomKeys))
+        .all(),
+    ]);
+
+    if (rounds.length === 0) {
+      return null;
+    }
+
+    const roundsPerTicket = new Map<string, number>();
+    const ticketsByRoom = new Map<string, Set<string>>();
+    const roundsByRoom = new Map<string, { min: number; max: number }>();
+    const votesPerRound = new Map<string, number>();
+    const participantsByRoom = new Map<string, Set<string>>();
+
+    for (const round of rounds) {
+      if (round.ticketId) {
+        const ticketKey = `${round.roomKey}:${round.ticketId}`;
+        roundsPerTicket.set(
+          ticketKey,
+          (roundsPerTicket.get(ticketKey) ?? 0) + 1,
+        );
+        if (!ticketsByRoom.has(round.roomKey)) {
+          ticketsByRoom.set(round.roomKey, new Set());
+        }
+        ticketsByRoom.get(round.roomKey)!.add(round.ticketId);
+      }
+
+      const existing = roundsByRoom.get(round.roomKey);
+      const endedAt = round.roundEndedAt;
+      if (!existing) {
+        roundsByRoom.set(round.roomKey, { min: endedAt, max: endedAt });
+      } else {
+        existing.min = Math.min(existing.min, endedAt);
+        existing.max = Math.max(existing.max, endedAt);
+      }
+    }
+
+    const roundVoteCounts = new Map<string, Map<string, number>>();
+    let questionMarkVotes = 0;
+
+    for (const vote of votes) {
+      votesPerRound.set(
+        vote.roundId,
+        (votesPerRound.get(vote.roundId) ?? 0) + 1,
+      );
+      if (vote.vote === "?") {
+        questionMarkVotes++;
+      }
+      if (!participantsByRoom.has(vote.roomKey)) {
+        participantsByRoom.set(vote.roomKey, new Set());
+      }
+      participantsByRoom.get(vote.roomKey)!.add(vote.userName);
+
+      if (!roundVoteCounts.has(vote.roundId)) {
+        roundVoteCounts.set(vote.roundId, new Map());
+      }
+      const counts = roundVoteCounts.get(vote.roundId)!;
+      counts.set(vote.vote, (counts.get(vote.vote) || 0) + 1);
+    }
+
+    const roundConsensus = new Map<string, string>();
+    for (const [roundId, counts] of roundVoteCounts) {
+      let maxVote = "";
+      let maxCount = 0;
+      for (const [vote, count] of counts) {
+        if (count > maxCount) {
+          maxCount = count;
+          maxVote = vote;
+        }
+      }
+      roundConsensus.set(roundId, maxVote);
+    }
+
+    let participationSum = 0;
+    let participationSamples = 0;
+    for (const round of rounds) {
+      const participants = participantsByRoom.get(round.roomKey)?.size ?? 0;
+      if (participants === 0) continue;
+      const roundVotesCount = votesPerRound.get(round.roundId) ?? 0;
+      participationSum += (roundVotesCount / participants) * 100;
+      participationSamples++;
+    }
+
+    let totalTickets = 0;
+    let firstRoundTickets = 0;
+    let multiRoundTickets = 0;
+    for (const count of roundsPerTicket.values()) {
+      totalTickets++;
+      if (count === 1) {
+        firstRoundTickets++;
+      } else if (count > 1) {
+        multiRoundTickets++;
+      }
+    }
+
+    let velocityTickets = 0;
+    let velocityHours = 0;
+    for (const [roomKey, range] of roundsByRoom) {
+      const tickets = ticketsByRoom.get(roomKey);
+      if (!tickets || tickets.size === 0) {
+        continue;
+      }
+      const durationMs = range.max - range.min;
+      if (durationMs <= 0) {
+        continue;
+      }
+      const hours = durationMs / (1000 * 60 * 60);
+      velocityTickets += tickets.size;
+      velocityHours += hours;
+    }
+
+    const contributorData = new Map<
+      string,
+      {
+        votes: typeof votes;
+        consensusMatches: number;
+      }
+    >();
+
+    for (const vote of votes) {
+      if (!contributorData.has(vote.userName)) {
+        contributorData.set(vote.userName, { votes: [], consensusMatches: 0 });
+      }
+      const data = contributorData.get(vote.userName)!;
+      data.votes.push(vote);
+      if (vote.vote === roundConsensus.get(vote.roundId)) {
+        data.consensusMatches++;
+      }
+    }
+
+    const topContributors = Array.from(contributorData.entries())
+      .map(([userName, data]) => ({
+        userName,
+        totalVotes: data.votes.length,
+        participationRate:
+          rounds.length > 0 ? (data.votes.length / rounds.length) * 100 : 0,
+        consensusAlignment:
+          data.votes.length > 0
+            ? (data.consensusMatches / data.votes.length) * 100
+            : 0,
+      }))
+      .sort((a, b) => b.totalVotes - a.totalVotes)
+      .slice(0, contributorsLimit);
+
+    const participationRate =
+      participationSamples > 0 ? participationSum / participationSamples : 0;
+    const firstRoundConsensusRate =
+      totalTickets > 0 ? (firstRoundTickets / totalTickets) * 100 : 0;
+    const discussionRate =
+      totalTickets > 0 ? (multiRoundTickets / totalTickets) * 100 : 0;
+    const estimationVelocity =
+      velocityHours > 0 ? velocityTickets / velocityHours : null;
+    const questionMarkRate =
+      votes.length > 0 ? (questionMarkVotes / votes.length) * 100 : 0;
+
+    return {
+      totalVotes: votes.length,
+      totalRounds: rounds.length,
+      totalTickets,
+      participationRate,
+      firstRoundConsensusRate,
+      discussionRate,
+      estimationVelocity,
+      questionMarkRate,
+      teamCount: uniqueTeamIds.size,
+      sessionsAnalyzed: completedSessions.length,
+      topContributors,
+    };
+  }
+
+  async getSessionStats(roomKey: string): Promise<SessionStatsResult | null> {
+    const [rounds, votes] = await Promise.all([
+      this.db
+        .select()
+        .from(roundVotes)
+        .where(eq(roundVotes.roomKey, roomKey))
+        .all(),
+      this.db
+        .select({
+          roundId: voteRecords.roundId,
+          userName: voteRecords.userName,
+          vote: voteRecords.vote,
+        })
+        .from(voteRecords)
+        .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
+        .where(eq(roundVotes.roomKey, roomKey))
+        .all(),
+    ]);
+
+    if (rounds.length === 0) {
+      return null;
+    }
+
+    const roundsPerTicket = new Map<string, number>();
+    let minTime = Infinity;
+    let maxTime = 0;
+
+    for (const round of rounds) {
+      if (round.ticketId) {
+        roundsPerTicket.set(
+          round.ticketId,
+          (roundsPerTicket.get(round.ticketId) ?? 0) + 1,
+        );
+      }
+      minTime = Math.min(minTime, round.roundEndedAt);
+      maxTime = Math.max(maxTime, round.roundEndedAt);
+    }
+
+    const uniqueParticipants = new Set(votes.map((v) => v.userName));
+    const votesPerRound = new Map<string, number>();
+    const roundVoteCounts = new Map<string, Map<string, number>>();
+
+    for (const vote of votes) {
+      votesPerRound.set(
+        vote.roundId,
+        (votesPerRound.get(vote.roundId) ?? 0) + 1,
+      );
+      if (!roundVoteCounts.has(vote.roundId)) {
+        roundVoteCounts.set(vote.roundId, new Map());
+      }
+      const counts = roundVoteCounts.get(vote.roundId)!;
+      counts.set(vote.vote, (counts.get(vote.vote) || 0) + 1);
+    }
+
+    const roundConsensus = new Map<string, string>();
+    for (const [roundId, counts] of roundVoteCounts) {
+      let maxVote = "";
+      let maxCount = 0;
+      for (const [vote, count] of counts) {
+        if (count > maxCount) {
+          maxCount = count;
+          maxVote = vote;
+        }
+      }
+      roundConsensus.set(roundId, maxVote);
+    }
+
+    let consensusVotes = 0;
+    for (const vote of votes) {
+      if (vote.vote === roundConsensus.get(vote.roundId)) {
+        consensusVotes++;
+      }
+    }
+
+    let participationSum = 0;
+    for (const round of rounds) {
+      const roundVotesCount = votesPerRound.get(round.roundId) ?? 0;
+      if (uniqueParticipants.size > 0) {
+        participationSum += (roundVotesCount / uniqueParticipants.size) * 100;
+      }
+    }
+
+    let totalTickets = 0;
+    let firstRoundTickets = 0;
+    let multiRoundTickets = 0;
+    for (const count of roundsPerTicket.values()) {
+      totalTickets++;
+      if (count === 1) {
+        firstRoundTickets++;
+      } else if (count > 1) {
+        multiRoundTickets++;
+      }
+    }
+
+    const durationMs = maxTime > minTime ? maxTime - minTime : 0;
+    const durationMinutes = durationMs > 0 ? durationMs / (1000 * 60) : null;
+    const durationHours = durationMs > 0 ? durationMs / (1000 * 60 * 60) : 0;
+    const estimationVelocity =
+      durationHours > 0 && totalTickets > 0
+        ? totalTickets / durationHours
+        : null;
+
+    return {
+      roomKey,
+      totalRounds: rounds.length,
+      totalVotes: votes.length,
+      uniqueParticipants: uniqueParticipants.size,
+      participationRate:
+        rounds.length > 0 ? participationSum / rounds.length : 0,
+      consensusRate:
+        votes.length > 0 ? (consensusVotes / votes.length) * 100 : 0,
+      firstRoundConsensusRate:
+        totalTickets > 0 ? (firstRoundTickets / totalTickets) * 100 : 0,
+      discussionRate:
+        totalTickets > 0 ? (multiRoundTickets / totalTickets) * 100 : 0,
+      estimationVelocity,
+      durationMinutes,
+    };
+  }
+
+  async getBatchSessionStats(
+    roomKeys: string[],
+  ): Promise<Map<string, SessionStatsResult>> {
+    if (roomKeys.length === 0) return new Map();
+
+    const [rounds, votes] = await Promise.all([
+      this.db
+        .select()
+        .from(roundVotes)
+        .where(inArray(roundVotes.roomKey, roomKeys))
+        .all(),
+      this.db
+        .select({
+          roundId: voteRecords.roundId,
+          userName: voteRecords.userName,
+          vote: voteRecords.vote,
+          roomKey: roundVotes.roomKey,
+        })
+        .from(voteRecords)
+        .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
+        .where(inArray(roundVotes.roomKey, roomKeys))
+        .all(),
+    ]);
+
+    const roundsByRoom = new Map<string, typeof rounds>();
+    const votesByRoom = new Map<string, typeof votes>();
+
+    for (const round of rounds) {
+      if (!roundsByRoom.has(round.roomKey)) {
+        roundsByRoom.set(round.roomKey, []);
+      }
+      roundsByRoom.get(round.roomKey)!.push(round);
+    }
+
+    for (const vote of votes) {
+      if (!votesByRoom.has(vote.roomKey)) {
+        votesByRoom.set(vote.roomKey, []);
+      }
+      votesByRoom.get(vote.roomKey)!.push(vote);
+    }
+
+    const results = new Map<string, SessionStatsResult>();
+
+    for (const roomKey of roomKeys) {
+      const roomRounds = roundsByRoom.get(roomKey) ?? [];
+      const roomVotes = votesByRoom.get(roomKey) ?? [];
+
+      if (roomRounds.length === 0) {
+        continue;
+      }
+
+      const roundsPerTicket = new Map<string, number>();
+      let minTime = Infinity;
+      let maxTime = 0;
+
+      for (const round of roomRounds) {
+        if (round.ticketId) {
+          roundsPerTicket.set(
+            round.ticketId,
+            (roundsPerTicket.get(round.ticketId) ?? 0) + 1,
+          );
+        }
+        minTime = Math.min(minTime, round.roundEndedAt);
+        maxTime = Math.max(maxTime, round.roundEndedAt);
+      }
+
+      const uniqueParticipants = new Set(roomVotes.map((v) => v.userName));
+      const votesPerRound = new Map<string, number>();
+      const roundVoteCounts = new Map<string, Map<string, number>>();
+
+      for (const vote of roomVotes) {
+        votesPerRound.set(
+          vote.roundId,
+          (votesPerRound.get(vote.roundId) ?? 0) + 1,
+        );
+        if (!roundVoteCounts.has(vote.roundId)) {
+          roundVoteCounts.set(vote.roundId, new Map());
+        }
+        const counts = roundVoteCounts.get(vote.roundId)!;
+        counts.set(vote.vote, (counts.get(vote.vote) || 0) + 1);
+      }
+
+      const roundConsensus = new Map<string, string>();
+      for (const [roundId, counts] of roundVoteCounts) {
+        let maxVote = "";
+        let maxCount = 0;
+        for (const [vote, count] of counts) {
+          if (count > maxCount) {
+            maxCount = count;
+            maxVote = vote;
+          }
+        }
+        roundConsensus.set(roundId, maxVote);
+      }
+
+      let consensusVotes = 0;
+      for (const vote of roomVotes) {
+        if (vote.vote === roundConsensus.get(vote.roundId)) {
+          consensusVotes++;
+        }
+      }
+
+      let participationSum = 0;
+      for (const round of roomRounds) {
+        const roundVotesCount = votesPerRound.get(round.roundId) ?? 0;
+        if (uniqueParticipants.size > 0) {
+          participationSum += (roundVotesCount / uniqueParticipants.size) * 100;
+        }
+      }
+
+      let totalTickets = 0;
+      let firstRoundTickets = 0;
+      let multiRoundTickets = 0;
+      for (const count of roundsPerTicket.values()) {
+        totalTickets++;
+        if (count === 1) {
+          firstRoundTickets++;
+        } else if (count > 1) {
+          multiRoundTickets++;
+        }
+      }
+
+      const durationMs = maxTime > minTime ? maxTime - minTime : 0;
+      const durationMinutes = durationMs > 0 ? durationMs / (1000 * 60) : null;
+      const durationHours = durationMs > 0 ? durationMs / (1000 * 60 * 60) : 0;
+      const estimationVelocity =
+        durationHours > 0 && totalTickets > 0
+          ? totalTickets / durationHours
+          : null;
+
+      results.set(roomKey, {
+        roomKey,
+        totalRounds: roomRounds.length,
+        totalVotes: roomVotes.length,
+        uniqueParticipants: uniqueParticipants.size,
+        participationRate:
+          roomRounds.length > 0 ? participationSum / roomRounds.length : 0,
+        consensusRate:
+          roomVotes.length > 0 ? (consensusVotes / roomVotes.length) * 100 : 0,
+        firstRoundConsensusRate:
+          totalTickets > 0 ? (firstRoundTickets / totalTickets) * 100 : 0,
+        discussionRate:
+          totalTickets > 0 ? (multiRoundTickets / totalTickets) * 100 : 0,
+        estimationVelocity,
+        durationMinutes,
+      });
+    }
+
+    return results;
   }
 }

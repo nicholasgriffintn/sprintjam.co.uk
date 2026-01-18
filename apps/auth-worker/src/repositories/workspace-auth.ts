@@ -394,6 +394,7 @@ export class WorkspaceAuthRepository {
         totalSessions: 0,
         activeSessions: 0,
         completedSessions: 0,
+        sessionTimeline: [],
       };
     }
 
@@ -402,6 +403,7 @@ export class WorkspaceAuthRepository {
     const sessions = await this.db
       .select({
         id: teamSessions.id,
+        createdAt: teamSessions.createdAt,
         completedAt: teamSessions.completedAt,
       })
       .from(teamSessions)
@@ -411,12 +413,52 @@ export class WorkspaceAuthRepository {
     const activeSessions = sessions.filter((s) => !s.completedAt).length;
     const completedSessions = sessions.filter((s) => !!s.completedAt).length;
 
+    const sessionTimeline = this.buildSessionTimeline(sessions);
+
     return {
       totalTeams: userTeams.length,
       totalSessions,
       activeSessions,
       completedSessions,
+      sessionTimeline,
     };
+  }
+
+  private buildSessionTimeline(
+    sessions: Array<{ createdAt: number; completedAt: number | null }>,
+  ) {
+    const now = Date.now();
+    const sixMonthsAgo = now - 6 * 30 * 24 * 60 * 60 * 1000;
+
+    const monthCounts = new Map<string, number>();
+
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(1);
+      date.setMonth(date.getMonth() - i);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      monthCounts.set(key, 0);
+    }
+
+    for (const session of sessions) {
+      if (session.createdAt >= sixMonthsAgo) {
+        const date = new Date(session.createdAt);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        if (monthCounts.has(key)) {
+          monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
+        }
+      }
+    }
+
+    return Array.from(monthCounts.entries()).map(([period, count]) => {
+      const [year, month] = period.split("-");
+      const date = new Date(parseInt(year), parseInt(month) - 1);
+      return {
+        period: date.toLocaleString("default", { month: "short" }),
+        yearMonth: period,
+        count,
+      };
+    });
   }
 
   async getUserById(userId: number) {
