@@ -53,7 +53,7 @@ describe("getRoomStatsController", () => {
       mockEnv,
       "test-room",
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -76,7 +76,7 @@ describe("getRoomStatsController", () => {
       mockEnv,
       "test-room",
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(403);
     expect(data.error).toBe("You do not have access to this room's stats");
@@ -100,7 +100,7 @@ describe("getRoomStatsController", () => {
       mockEnv,
       "test-room",
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(404);
     expect(data.error).toBe("Room not found");
@@ -129,7 +129,7 @@ describe("getRoomStatsController", () => {
       mockEnv,
       "test-room",
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.roomKey).toBe("test-room");
@@ -174,7 +174,7 @@ describe("getUserRoomStatsController", () => {
       "test-room",
       "alice",
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -201,7 +201,7 @@ describe("getUserRoomStatsController", () => {
       "test-room",
       "alice",
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(403);
     expect(data.error).toBe("You do not have access to this room's stats");
@@ -229,7 +229,7 @@ describe("getUserRoomStatsController", () => {
       "test-room",
       "alice",
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(404);
     expect(data.error).toBe("User stats not found");
@@ -264,7 +264,7 @@ describe("getUserRoomStatsController", () => {
       "test-room",
       "alice",
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.userName).toBe("alice");
@@ -305,7 +305,7 @@ describe("getTeamInsightsController", () => {
       mockEnv,
       1,
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -328,7 +328,7 @@ describe("getTeamInsightsController", () => {
       mockEnv,
       1,
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(403);
     expect(data.error).toBe("You do not have access to this team's stats");
@@ -352,7 +352,7 @@ describe("getTeamInsightsController", () => {
       mockEnv,
       1,
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data).toBeNull();
@@ -388,7 +388,7 @@ describe("getTeamInsightsController", () => {
       mockEnv,
       1,
     );
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.totalTickets).toBe(10);
@@ -424,7 +424,7 @@ describe("getBatchRoomStatsController", () => {
     });
 
     const response = await getBatchRoomStatsController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -442,7 +442,7 @@ describe("getBatchRoomStatsController", () => {
     });
 
     const response = await getBatchRoomStatsController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Missing keys query parameter");
@@ -489,7 +489,7 @@ describe("getBatchRoomStatsController", () => {
     );
 
     const response = await getBatchRoomStatsController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.room1.totalRounds).toBe(5);
@@ -519,7 +519,7 @@ describe("getBatchRoomStatsController", () => {
     );
 
     const response = await getBatchRoomStatsController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data).toEqual({});
@@ -554,7 +554,7 @@ describe("getTeamStatsController", () => {
     });
 
     const response = await getTeamStatsController(request as any, mockEnv, 1);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -572,7 +572,7 @@ describe("getTeamStatsController", () => {
     });
 
     const response = await getTeamStatsController(request as any, mockEnv, 1);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Session expired");
@@ -592,7 +592,7 @@ describe("getTeamStatsController", () => {
     });
 
     const response = await getTeamStatsController(request as any, mockEnv, 1);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(403);
     expect(data.error).toBe("You do not have access to this team's stats");
@@ -613,7 +613,7 @@ describe("getTeamStatsController", () => {
     });
 
     const response = await getTeamStatsController(request as any, mockEnv, 1);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(404);
     expect(data.error).toBe("Team stats not found");
@@ -649,7 +649,7 @@ describe("getTeamStatsController", () => {
     });
 
     const response = await getTeamStatsController(request as any, mockEnv, 1);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.totalMembers).toBe(5);

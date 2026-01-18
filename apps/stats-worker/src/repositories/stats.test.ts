@@ -51,6 +51,7 @@ describe("StatsRepository ingestRound", () => {
       roundId: "round-1",
       votes: [{ userName: "alice", vote: "5", votedAt: 1 }],
       roundEndedAt: 2,
+      type: "reset",
     });
 
     expect(insert).toHaveBeenCalledWith(roundVotes);
@@ -81,6 +82,7 @@ describe("StatsRepository ingestRound", () => {
       roundId: "round-1",
       votes: [{ userName: "alice", vote: "5", votedAt: 1 }],
       roundEndedAt: 2,
+      type: "reset",
     });
 
     expect(insert).toHaveBeenCalledWith(roundVotes);

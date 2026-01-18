@@ -11,8 +11,9 @@ import {
   canUserAccessRoom,
   filterAccessibleRoomKeys,
   getUserTeamIds,
+  isAuthError,
   type AuthResult,
-} from '../lib/auth';
+} from "../lib/auth";
 import { errorResponse, successResponse } from "../lib/response";
 
 function getAuthError(code: "unauthorized" | "expired"): string {
@@ -119,7 +120,7 @@ export async function getTeamStatsController(
   teamId: number,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ("status" in authResult && authResult.status === "error") {
+  if (isAuthError(authResult)) {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -148,7 +149,7 @@ export async function getTeamInsightsController(
   teamId: number,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ('status' in authResult && authResult.status === 'error') {
+  if (isAuthError(authResult)) {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -158,7 +159,7 @@ export async function getTeamInsightsController(
   }
 
   const url = new URL(request.url);
-  const limit = parseInt(url.searchParams.get('limit') || '6', 10);
+  const limit = parseInt(url.searchParams.get("limit") || "6", 10);
 
   const repo = new StatsRepository(env.DB);
   const insights = await repo.getTeamInsights(teamId, { limit });
@@ -175,7 +176,7 @@ export async function getWorkspaceInsightsController(
   env: StatsWorkerEnv,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ('status' in authResult && authResult.status === 'error') {
+  if ("status" in authResult && authResult.status === "error") {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -188,11 +189,11 @@ export async function getWorkspaceInsightsController(
 
   const url = new URL(request.url);
   const sessionsLimit = parseInt(
-    url.searchParams.get('sessionsLimit') || '20',
+    url.searchParams.get("sessionsLimit") || "20",
     10,
   );
   const contributorsLimit = parseInt(
-    url.searchParams.get('contributorsLimit') || '10',
+    url.searchParams.get("contributorsLimit") || "10",
     10,
   );
 
@@ -211,7 +212,7 @@ export async function getSessionStatsController(
   roomKey: string,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ('status' in authResult && authResult.status === 'error') {
+  if ("status" in authResult && authResult.status === "error") {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -240,18 +241,18 @@ export async function getBatchSessionStatsController(
   env: StatsWorkerEnv,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ('status' in authResult && authResult.status === 'error') {
+  if ("status" in authResult && authResult.status === "error") {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
   const url = new URL(request.url);
-  const keysParam = url.searchParams.get('keys');
+  const keysParam = url.searchParams.get("keys");
 
   if (!keysParam) {
-    return errorResponse('Missing keys query parameter', 400);
+    return errorResponse("Missing keys query parameter", 400);
   }
 
-  const roomKeys = keysParam.split(',').filter(Boolean);
+  const roomKeys = keysParam.split(",").filter(Boolean);
 
   const auth = authResult as AuthResult;
   const accessibleRoomKeys = await filterAccessibleRoomKeys(

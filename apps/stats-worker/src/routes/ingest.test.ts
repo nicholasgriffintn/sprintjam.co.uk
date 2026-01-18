@@ -35,7 +35,7 @@ describe("ingestRoundController", () => {
     });
 
     const response = await ingestRoundController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -49,7 +49,7 @@ describe("ingestRoundController", () => {
     });
 
     const response = await ingestRoundController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
@@ -63,7 +63,7 @@ describe("ingestRoundController", () => {
     });
 
     const response = await ingestRoundController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Missing required fields");
@@ -81,7 +81,7 @@ describe("ingestRoundController", () => {
     });
 
     const response = await ingestRoundController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Missing required fields");
@@ -106,7 +106,7 @@ describe("ingestRoundController", () => {
     });
 
     const response = await ingestRoundController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.status).toBe("ingested");
@@ -144,7 +144,7 @@ describe("ingestRoundController", () => {
     });
 
     const response = await ingestRoundController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.status).toBe("ingested");
@@ -176,7 +176,7 @@ describe("ingestRoundController", () => {
     });
 
     const response = await ingestRoundController(request as any, mockEnv);
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     expect(response.status).toBe(200);
     expect(data.status).toBe("ingested");

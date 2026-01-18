@@ -18,6 +18,12 @@ export interface AuthError {
   code: "unauthorized" | "expired";
 }
 
+export function isAuthError(
+  result: AuthResult | AuthError,
+): result is AuthError {
+  return "status" in result && result.status === "error";
+}
+
 export async function authenticateRequest(
   request: CfRequest,
   db: D1Database,
