@@ -18,6 +18,7 @@ export interface TeamSession {
   name: string;
   createdById: number;
   createdAt: number;
+  updatedAt: number | null;
   completedAt: number | null;
   metadata: string | null;
 }
