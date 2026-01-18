@@ -21,7 +21,7 @@
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "generate:types": "wrangler types --include-runtime=false",
     "preview": "vite preview"
   },

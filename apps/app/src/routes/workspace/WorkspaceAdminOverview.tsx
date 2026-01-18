@@ -6,8 +6,10 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
+
 export default function WorkspaceAdminOverview() {
   usePageMeta(META_CONFIGS.workspaceAdmin);
+
   const {
     user,
     isAuthenticated,
@@ -16,7 +18,9 @@ export default function WorkspaceAdminOverview() {
     actionError,
     refreshWorkspace,
   } = useWorkspaceData();
+
   const { goToLogin } = useSessionActions();
+
   return (
     <WorkspaceLayout
       isLoading={isLoading}

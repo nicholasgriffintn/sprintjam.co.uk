@@ -4,8 +4,8 @@ import { Github, MessageSquare } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import { Button } from "@/components/ui/Button";
-import { navigateTo } from "@/utils/navigation";
-import { useSessionActions, type AppScreen } from "@/context/SessionContext";
+import { navigateTo, type AppScreen } from '@/config/routes';
+import { useSessionActions } from '@/context/SessionContext';
 
 type FooterProps = {
   displayRepoLink?: boolean;

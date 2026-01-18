@@ -12,7 +12,7 @@ import { useSessionActions } from '@/context/SessionContext';
 import { createTeamSession } from '@/lib/workspace-service';
 import { cn } from '@/lib/cn';
 import { BetaBadge } from '@/components/BetaBadge';
-import { setReturnUrl } from '@/utils/navigation';
+import { setReturnUrl } from '@/config/routes';
 
 interface SaveToWorkspaceModalProps {
   isOpen: boolean;

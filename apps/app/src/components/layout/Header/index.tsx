@@ -7,7 +7,7 @@ import { MarketingHeader } from './HeaderContent/MarketingHeader';
 import { RoomHeader } from './HeaderContent/RoomHeader';
 import { WorkspaceHeader } from './HeaderContent/WorkspaceHeader';
 import { HEADER_TRANSITION } from '@/constants';
-import { getHeaderVariant, getMarketingVariant } from '@/utils/layout';
+import { getHeaderVariant, getMarketingVariant } from '@/config/routes';
 
 export const Header: FC = () => {
   const { screen } = useSessionState();

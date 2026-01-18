@@ -1,8 +1,13 @@
-import type { FC, ReactNode } from "react";
+import type { FC } from "react";
 import { motion } from "framer-motion";
-import { LayoutGrid, Plus, Target, Settings } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { useSessionActions, useSessionState } from "@/context/SessionContext";
+import {
+  getWorkspaceNavItems,
+  navigateTo,
+  type AppScreen,
+} from "@/config/routes";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { HeaderLogo } from "../HeaderLogo";
@@ -10,43 +15,15 @@ import DarkModeToggle from "../DarkModeToggle";
 import { HEADER_TRANSITION } from "@/constants";
 import { HeaderUserMenu } from "../HeaderUserMenu";
 
-interface NavItem {
-  icon: ReactNode;
-  label: string;
-  screen: string;
-  onClick: () => void;
-}
-
 export const WorkspaceHeader: FC = () => {
   const { screen } = useSessionState();
-  const {
-    goHome,
-    startCreateFlow,
-    goToWorkspace,
-    goToWorkspaceSessions,
-    goToWorkspaceAdmin,
-  } = useSessionActions();
+  const { goHome, startCreateFlow, setScreen } = useSessionActions();
+  const navItems = getWorkspaceNavItems();
 
-  const navItems: NavItem[] = [
-    {
-      icon: <LayoutGrid className="h-4 w-4" />,
-      label: "Dashboard",
-      screen: "workspace",
-      onClick: goToWorkspace,
-    },
-    {
-      icon: <Target className="h-4 w-4" />,
-      label: "Sessions",
-      screen: "workspaceSessions",
-      onClick: goToWorkspaceSessions,
-    },
-    {
-      icon: <Settings className="h-4 w-4" />,
-      label: "Admin",
-      screen: "workspaceAdmin",
-      onClick: goToWorkspaceAdmin,
-    },
-  ];
+  const handleNavigate = (targetScreen: AppScreen) => {
+    setScreen(targetScreen);
+    navigateTo(targetScreen);
+  };
 
   return (
     <>
@@ -65,17 +42,14 @@ export const WorkspaceHeader: FC = () => {
         />
         <div className="hidden sm:flex items-center gap-2 text-sm">
           {navItems.map((item) => {
-            const isActive =
-              screen === item.screen ||
-              (item.screen === "workspaceAdmin" &&
-                (screen === "workspaceAdminTeams" ||
-                  screen === "workspaceAdmin"));
+            const isActive = item.activeForScreens.includes(screen);
+            const Icon = item.icon;
 
             return (
               <button
-                key={item.label}
+                key={item.screen}
                 type="button"
-                onClick={item.onClick}
+                onClick={() => handleNavigate(item.screen)}
                 className={cn(
                   "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition",
                   isActive
@@ -83,7 +57,7 @@ export const WorkspaceHeader: FC = () => {
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white",
                 )}
               >
-                {item.icon}
+                {Icon && <Icon className="h-4 w-4" />}
                 {item.label}
               </button>
             );
