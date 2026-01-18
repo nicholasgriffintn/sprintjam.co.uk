@@ -9,7 +9,7 @@ function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
   const isStaging = env.ENVIRONMENT === 'staging';
   const robotsBody = isStaging
     ? 'User-agent: *\nDisallow: /'
-    : 'User-agent: *\nAllow: /';
+    : 'User-agent: *\nAllow: / Sitemap: https://sprintjam.co.uk/sitemap.xml';
 
   return new Response(robotsBody, {
     status: 200,
