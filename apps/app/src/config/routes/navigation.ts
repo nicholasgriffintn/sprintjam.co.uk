@@ -9,14 +9,28 @@ export interface ParsedPath {
 
 type RouteEntry = RouteConfig<AppScreen>;
 
-const dynamicRoutes = (ROUTES as readonly RouteEntry[]).filter(
-  (r) => r.pathPattern,
-);
-const staticPathToScreen = new Map<string, AppScreen>(
-  (ROUTES as readonly RouteEntry[])
-    .filter((r) => typeof r.path === "string")
-    .map((r) => [r.path as string, r.screen]),
-);
+let dynamicRoutes: RouteEntry[] | undefined;
+let staticPathToScreen: Map<string, AppScreen> | undefined;
+
+function getDynamicRoutes(): RouteEntry[] {
+  if (!dynamicRoutes) {
+    dynamicRoutes = (ROUTES as readonly RouteEntry[]).filter(
+      (r) => r.pathPattern,
+    );
+  }
+  return dynamicRoutes;
+}
+
+function getStaticPathToScreen(): Map<string, AppScreen> {
+  if (!staticPathToScreen) {
+    staticPathToScreen = new Map<string, AppScreen>(
+      (ROUTES as readonly RouteEntry[])
+        .filter((r) => typeof r.path === "string")
+        .map((r) => [r.path as string, r.screen]),
+    );
+  }
+  return staticPathToScreen;
+}
 
 export function parsePath(path: string): ParsedPath {
   if (path === "/" || !path) {
@@ -28,23 +42,23 @@ export function parsePath(path: string): ParsedPath {
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
 
-  for (const route of dynamicRoutes) {
+  for (const route of getDynamicRoutes()) {
     const match = normalizedPath.match(route.pathPattern!);
     if (match) {
       if (route.screen === "room") {
         const roomKey = match[1];
 
         if (!roomKey) {
-          return { screen: '404' };
+          return { screen: "404" };
         }
 
-        return { screen: 'room', roomKey: roomKey.toUpperCase() };
+        return { screen: "room", roomKey: roomKey.toUpperCase() };
       }
       return { screen: route.screen };
     }
   }
 
-  const screen = staticPathToScreen.get(normalizedPath);
+  const screen = getStaticPathToScreen().get(normalizedPath);
   if (screen) {
     return { screen };
   }

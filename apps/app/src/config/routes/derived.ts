@@ -9,9 +9,16 @@ import type { MetaTagConfig } from "@/utils/meta";
 
 type RouteEntry = RouteConfig<AppScreen>;
 
-const routeByScreen = new Map<AppScreen, RouteEntry>(
-  (ROUTES as readonly RouteEntry[]).map((route) => [route.screen, route]),
-);
+let routeByScreen: Map<AppScreen, RouteEntry> | undefined;
+
+function getRouteByScreen(): Map<AppScreen, RouteEntry> {
+  if (!routeByScreen) {
+    routeByScreen = new Map<AppScreen, RouteEntry>(
+      (ROUTES as readonly RouteEntry[]).map((route) => [route.screen, route]),
+    );
+  }
+  return routeByScreen;
+}
 
 const GROUP_BACKGROUNDS: Record<RouteGroup, PageBackgroundVariant> = {
   marketing: "compact",
@@ -30,30 +37,30 @@ const GROUP_HEADERS: Record<RouteGroup, HeaderVariant> = {
 };
 
 export function getRouteConfig(screen: AppScreen): RouteEntry | undefined {
-  return routeByScreen.get(screen);
+  return getRouteByScreen().get(screen);
 }
 
 export function getBackgroundVariant(screen: AppScreen): PageBackgroundVariant {
-  const route = routeByScreen.get(screen);
+  const route = getRouteByScreen().get(screen);
   if (!route) return "compact";
   if (route.layout?.background) return route.layout.background;
   return GROUP_BACKGROUNDS[route.group];
 }
 
 export function getHeaderVariant(screen: AppScreen): HeaderVariant {
-  const route = routeByScreen.get(screen);
+  const route = getRouteByScreen().get(screen);
   if (!route) return "marketing";
   if (route.layout?.header) return route.layout.header;
   return GROUP_HEADERS[route.group];
 }
 
 export function getMarketingVariant(screen: AppScreen): MarketingVariant {
-  const route = routeByScreen.get(screen);
+  const route = getRouteByScreen().get(screen);
   return route?.layout?.marketingVariant ?? "compact";
 }
 
 export function getMetaConfig(screen: AppScreen): MetaTagConfig | undefined {
-  return routeByScreen.get(screen)?.meta;
+  return getRouteByScreen().get(screen)?.meta;
 }
 
 export function getWorkspaceNavItems() {

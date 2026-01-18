@@ -19,6 +19,8 @@ vi.mock("../lib/auth", () => ({
   isUserInTeam: vi.fn(),
   canUserAccessRoom: vi.fn(),
   filterAccessibleRoomKeys: vi.fn(),
+  isAuthError: (result: { status?: string }) =>
+    "status" in result && result.status === "error",
 }));
 
 describe("getRoomStatsController", () => {
