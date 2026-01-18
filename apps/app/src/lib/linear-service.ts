@@ -40,22 +40,16 @@ export async function fetchLinearIssue(
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
-    let url = `${API_BASE_URL}/linear/issue?issueId=${encodeURIComponent(
-      issueId,
-    )}`;
 
-    if (options?.roomKey && options?.userName) {
-      url += `&roomKey=${encodeURIComponent(
-        options.roomKey,
-      )}&userName=${encodeURIComponent(options.userName)}`;
-      url += `&sessionToken=${encodeURIComponent(sessionToken)}`;
-    }
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+    const response = await fetch(`${API_BASE_URL}/linear/issue`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        issueId,
+        roomKey: options?.roomKey,
+        userName: options?.userName,
+        sessionToken,
+      }),
     });
 
     if (!response.ok) {
@@ -132,19 +126,16 @@ export async function fetchLinearTeams(
   sessionToken?: string | null,
 ): Promise<LinearTeam[]> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(
-    `${API_BASE_URL}/linear/teams?roomKey=${encodeURIComponent(
-      roomKey,
-    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
-      token,
-    )}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/linear/teams`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      (errorData as { error?: string }).error ||
-        "Failed to fetch Linear teams",
+      (errorData as { error?: string }).error || "Failed to fetch Linear teams",
     );
   }
 
@@ -159,13 +150,11 @@ export async function fetchLinearCycles(
   sessionToken?: string | null,
 ): Promise<LinearCycle[]> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(
-    `${API_BASE_URL}/linear/cycles?teamId=${encodeURIComponent(
-      teamId,
-    )}&roomKey=${encodeURIComponent(roomKey)}&userName=${encodeURIComponent(
-      userName,
-    )}&sessionToken=${encodeURIComponent(token)}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/linear/cycles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ teamId, roomKey, userName, sessionToken: token }),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -181,30 +170,29 @@ export async function fetchLinearCycles(
 
 export async function fetchLinearIssues(
   teamId: string,
-  options: { cycleId?: string | null; limit?: number | null; search?: string | null },
+  options: {
+    cycleId?: string | null;
+    limit?: number | null;
+    search?: string | null;
+  },
   roomKey: string,
   userName: string,
   sessionToken?: string | null,
 ): Promise<TicketMetadata[]> {
   const token = resolveSessionToken(sessionToken);
-  const params = new URLSearchParams();
-  params.set("teamId", teamId);
-  params.set("roomKey", roomKey);
-  params.set("userName", userName);
-  params.set("sessionToken", token);
-  if (options.cycleId) {
-    params.set("cycleId", options.cycleId);
-  }
-  if (options.search) {
-    params.set("query", options.search);
-  }
-  if (options.limit) {
-    params.set("limit", String(options.limit));
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}/linear/issues?${params.toString()}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/linear/issues`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      teamId,
+      roomKey,
+      userName,
+      sessionToken: token,
+      cycleId: options.cycleId,
+      query: options.search,
+      limit: options.limit,
+    }),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -242,13 +230,11 @@ export async function getLinearOAuthStatus(
   sessionToken?: string | null,
 ): Promise<LinearOAuthStatus> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(
-    `${API_BASE_URL}/linear/oauth/status?roomKey=${encodeURIComponent(
-      roomKey,
-    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
-      token,
-    )}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/linear/oauth/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch OAuth status");
@@ -260,13 +246,13 @@ export async function getLinearOAuthStatus(
 export async function authorizeLinearOAuth(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null
+  sessionToken?: string | null,
 ): Promise<{ authorizationUrl: string }> {
   const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/linear/oauth/authorize`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       roomKey,
@@ -277,7 +263,7 @@ export async function authorizeLinearOAuth(
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to initiate OAuth');
+    throw new Error(errorData.error || "Failed to initiate OAuth");
   }
 
   return (await response.json()) as { authorizationUrl: string };

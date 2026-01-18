@@ -53,6 +53,8 @@ export interface AuthWorkerEnv extends BaseEnv {
   RESEND_API_KEY: string;
   ENABLE_MAGIC_LINK_RATE_LIMIT?: string;
   MAGIC_LINK_RATE_LIMITER: RateLimit;
+  VERIFICATION_RATE_LIMITER: RateLimit;
+  IP_RATE_LIMITER: RateLimit;
 }
 
 /**

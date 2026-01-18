@@ -21,6 +21,22 @@
         "period": 60,
       },
     },
+    {
+      "name": "VERIFICATION_RATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": {
+        "limit": 5,
+        "period": 300,
+      },
+    },
+    {
+      "name": "IP_RATE_LIMITER",
+      "namespace_id": "1004",
+      "simple": {
+        "limit": 20,
+        "period": 60,
+      },
+    },
   ],
   "d1_databases": [
     {
@@ -69,6 +85,22 @@
           "namespace_id": "1002",
           "simple": {
             "limit": 3,
+            "period": 60,
+          },
+        },
+        {
+          "name": "VERIFICATION_RATE_LIMITER",
+          "namespace_id": "1003",
+          "simple": {
+            "limit": 5,
+            "period": 300,
+          },
+        },
+        {
+          "name": "IP_RATE_LIMITER",
+          "namespace_id": "1004",
+          "simple": {
+            "limit": 20,
             "period": 60,
           },
         },

@@ -94,13 +94,19 @@ function createTokenRefreshHandler(roomObject: ReturnType<typeof getRoomStub>) {
 }
 
 export async function getLinearIssueController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
-  const issueId = url.searchParams.get("issueId");
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
+  const body = await request.json<{
+    issueId?: string;
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  }>();
+  const issueId = body?.issueId;
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
 
   if (!issueId) {
     return jsonError("Issue ID is required");
@@ -249,12 +255,17 @@ export async function updateLinearEstimateController(
 }
 
 export async function getLinearTeamsController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
+  const body = await request.json<{
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  }>();
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -295,13 +306,19 @@ export async function getLinearTeamsController(
 }
 
 export async function getLinearCyclesController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
-  const teamId = url.searchParams.get("teamId");
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
+  const body = await request.json<{
+    teamId?: string;
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  }>();
+  const teamId = body?.teamId;
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
 
   if (!teamId) {
     return jsonError("Team ID is required");
@@ -347,17 +364,25 @@ export async function getLinearCyclesController(
 }
 
 export async function getLinearIssuesController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
-  const teamId = url.searchParams.get("teamId");
-  const cycleId = url.searchParams.get("cycleId");
-  const search = url.searchParams.get("query");
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
-  const limitParam = url.searchParams.get("limit");
-  const limit = limitParam ? Number(limitParam) : null;
+  const body = await request.json<{
+    teamId?: string;
+    cycleId?: string;
+    query?: string;
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+    limit?: number;
+  }>();
+  const teamId = body?.teamId;
+  const cycleId = body?.cycleId ?? null;
+  const search = body?.query ?? null;
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
+  const limit = body?.limit ?? null;
 
   if (!teamId) {
     return jsonError("Team ID is required");
@@ -365,10 +390,6 @@ export async function getLinearIssuesController(
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
-  }
-
-  if (limitParam && Number.isNaN(limit)) {
-    return jsonError("Limit must be a number");
   }
 
   try {

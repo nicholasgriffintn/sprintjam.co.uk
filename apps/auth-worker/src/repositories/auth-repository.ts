@@ -59,7 +59,7 @@ export class AuthRepository {
       return { success: false, error: "invalid" };
     }
 
-    if (link.attempts >= 5) {
+    if (link.attempts >= 3) {
       return { success: false, error: "locked" };
     }
 

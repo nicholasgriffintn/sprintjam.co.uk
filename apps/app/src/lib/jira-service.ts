@@ -48,22 +48,16 @@ export async function fetchJiraTicket(
 ): Promise<TicketMetadata> {
   try {
     const sessionToken = resolveSessionToken(options?.sessionToken);
-    let url = `${API_BASE_URL}/jira/ticket?ticketId=${encodeURIComponent(
-      ticketId,
-    )}`;
 
-    if (options?.roomKey && options?.userName) {
-      url += `&roomKey=${encodeURIComponent(
-        options.roomKey,
-      )}&userName=${encodeURIComponent(options.userName)}`;
-      url += `&sessionToken=${encodeURIComponent(sessionToken)}`;
-    }
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+    const response = await fetch(`${API_BASE_URL}/jira/ticket`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ticketId,
+        roomKey: options?.roomKey,
+        userName: options?.userName,
+        sessionToken,
+      }),
     });
 
     if (!response.ok) {
@@ -140,13 +134,11 @@ export async function fetchJiraBoards(
   sessionToken?: string | null,
 ): Promise<JiraBoard[]> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(
-    `${API_BASE_URL}/jira/boards?roomKey=${encodeURIComponent(
-      roomKey,
-    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
-      token,
-    )}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/jira/boards`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -166,13 +158,11 @@ export async function fetchJiraSprints(
   sessionToken?: string | null,
 ): Promise<JiraSprint[]> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(
-    `${API_BASE_URL}/jira/sprints?boardId=${encodeURIComponent(
-      boardId,
-    )}&roomKey=${encodeURIComponent(roomKey)}&userName=${encodeURIComponent(
-      userName,
-    )}&sessionToken=${encodeURIComponent(token)}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/jira/sprints`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ boardId, roomKey, userName, sessionToken: token }),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -187,30 +177,29 @@ export async function fetchJiraSprints(
 
 export async function fetchJiraBoardIssues(
   boardId: string,
-  options: { sprintId?: string | null; limit?: number | null; search?: string | null },
+  options: {
+    sprintId?: string | null;
+    limit?: number | null;
+    search?: string | null;
+  },
   roomKey: string,
   userName: string,
   sessionToken?: string | null,
 ): Promise<TicketMetadata[]> {
   const token = resolveSessionToken(sessionToken);
-  const params = new URLSearchParams();
-  params.set("boardId", boardId);
-  params.set("roomKey", roomKey);
-  params.set("userName", userName);
-  params.set("sessionToken", token);
-  if (options.sprintId) {
-    params.set("sprintId", options.sprintId);
-  }
-  if (options.search) {
-    params.set("query", options.search);
-  }
-  if (options.limit) {
-    params.set("limit", String(options.limit));
-  }
-
-  const response = await fetch(
-    `${API_BASE_URL}/jira/issues?${params.toString()}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/jira/issues`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      boardId,
+      roomKey,
+      userName,
+      sessionToken: token,
+      sprintId: options.sprintId,
+      query: options.search,
+      limit: options.limit,
+    }),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -247,13 +236,11 @@ export async function getJiraOAuthStatus(
   sessionToken?: string | null,
 ): Promise<JiraOAuthStatus> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(
-    `${API_BASE_URL}/jira/oauth/status?roomKey=${encodeURIComponent(
-      roomKey,
-    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
-      token,
-    )}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/jira/oauth/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch OAuth status");
@@ -272,13 +259,11 @@ export async function getJiraFields(
   sprintField?: string | null;
 }> {
   const token = resolveSessionToken(sessionToken);
-  const response = await fetch(
-    `${API_BASE_URL}/jira/oauth/fields?roomKey=${encodeURIComponent(
-      roomKey,
-    )}&userName=${encodeURIComponent(userName)}&sessionToken=${encodeURIComponent(
-      token,
-    )}`,
-  );
+  const response = await fetch(`${API_BASE_URL}/jira/oauth/fields`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+  });
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -295,13 +280,13 @@ export async function getJiraFields(
 export async function authorizeJiraOAuth(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null
+  sessionToken?: string | null,
 ): Promise<{ authorizationUrl: string }> {
   const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/jira/oauth/authorize`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       roomKey,
@@ -312,7 +297,7 @@ export async function authorizeJiraOAuth(
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to initiate OAuth');
+    throw new Error(errorData.error || "Failed to initiate OAuth");
   }
 
   return (await response.json()) as { authorizationUrl: string };

@@ -1,20 +1,20 @@
-import { describe, expect, it } from 'vitest';
-import type { Request as CfRequest } from '@cloudflare/workers-types';
-import type { RoomWorkerEnv } from '@sprintjam/types';
+import { describe, expect, it } from "vitest";
+import type { Request as CfRequest } from "@cloudflare/workers-types";
+import type { RoomWorkerEnv } from "@sprintjam/types";
 
 import {
   createRoomController,
   getRoomSettingsController,
   joinRoomController,
   updateRoomSettingsController,
-} from './room/rooms-controller';
+} from "./room/rooms-controller";
 import {
   getJiraTicketController,
   getJiraBoardsController,
   getJiraSprintsController,
   getJiraIssuesController,
   updateJiraStoryPointsController,
-} from './external/jira-controller';
+} from "./external/jira-controller";
 import {
   initiateJiraOAuthController,
   handleJiraOAuthCallbackController,
@@ -22,42 +22,42 @@ import {
   getJiraFieldsController,
   updateJiraFieldsController,
   revokeJiraOAuthController,
-} from './external/jira-oauth-controller';
+} from "./external/jira-oauth-controller";
 import {
   getLinearIssueController,
   getLinearTeamsController,
   getLinearCyclesController,
   getLinearIssuesController,
   updateLinearEstimateController,
-} from './external/linear-controller';
+} from "./external/linear-controller";
 import {
   initiateLinearOAuthController,
   handleLinearOAuthCallbackController,
   getLinearOAuthStatusController,
   revokeLinearOAuthController,
-} from './external/linear-oauth-controller';
+} from "./external/linear-oauth-controller";
 import {
   getGithubIssueController,
   getGithubReposController,
   getGithubMilestonesController,
   getGithubIssuesController,
   updateGithubEstimateController,
-} from './external/github-controller';
+} from "./external/github-controller";
 import {
   initiateGithubOAuthController,
   handleGithubOAuthCallbackController,
   getGithubOAuthStatusController,
   revokeGithubOAuthController,
-} from './external/github-oauth-controller';
-import { submitFeedbackController } from './external/feedback-controller';
+} from "./external/github-oauth-controller";
+import { submitFeedbackController } from "./external/feedback-controller";
 
 const jsonRequest = (
   body: Record<string, unknown>,
-  method: 'POST' | 'PUT' = 'POST'
+  method: "POST" | "PUT" = "POST",
 ) =>
-  new Request('https://test.sprintjam.co.uk', {
+  new Request("https://test.sprintjam.co.uk", {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   }) as unknown as CfRequest;
 
@@ -66,478 +66,478 @@ const makeUrl = (path: string) =>
 const expectJsonError = async (
   response: Response,
   message: string,
-  status = 400
+  status = 400,
 ) => {
   const payload = (await response.json()) as { error: string };
   expect(response.status).toBe(status);
   expect(payload.error).toBe(message);
 };
 
-const env = { FEEDBACK_GITHUB_TOKEN: 'token' } as unknown as RoomWorkerEnv;
+const env = { FEEDBACK_GITHUB_TOKEN: "token" } as unknown as RoomWorkerEnv;
 
-describe('rooms controller validation', () => {
-  it('requires a name when creating a room', async () => {
+describe("rooms controller validation", () => {
+  it("requires a name when creating a room", async () => {
     const response = (await createRoomController(
       jsonRequest({}),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Name is required');
+    await expectJsonError(response, "Name is required");
   });
 
-  it('requires name and room key when joining', async () => {
+  it("requires name and room key when joining", async () => {
     const response = (await joinRoomController(
       jsonRequest({}),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Name and room key are required');
+    await expectJsonError(response, "Name and room key are required");
   });
 
-  it('requires room key when reading settings', async () => {
+  it("requires room key when reading settings", async () => {
     const response = (await getRoomSettingsController(
-      makeUrl('/api/rooms/settings'),
-      env
+      makeUrl("/api/rooms/settings"),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key is required');
+    await expectJsonError(response, "Room key is required");
   });
 
-  it('requires name, room key, and settings when updating settings', async () => {
+  it("requires name, room key, and settings when updating settings", async () => {
     const response = (await updateRoomSettingsController(
-      jsonRequest({}, 'PUT'),
-      env
+      jsonRequest({}, "PUT"),
+      env,
     )) as Response;
 
     await expectJsonError(
       response,
-      'Name, room key, and settings are required'
+      "Name, room key, and settings are required",
     );
   });
 });
 
-describe('jira controller validation', () => {
-  it('requires a ticket id when fetching Jira tickets', async () => {
+describe("jira controller validation", () => {
+  it("requires a ticket id when fetching Jira tickets", async () => {
     const response = (await getJiraTicketController(
-      makeUrl('/api/jira/ticket?roomKey=123&userName=test'),
-      env
+      jsonRequest({ roomKey: "123", userName: "test" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Ticket ID is required');
+    await expectJsonError(response, "Ticket ID is required");
   });
 
-  it('requires room and user when fetching Jira tickets', async () => {
+  it("requires room and user when fetching Jira tickets", async () => {
     const response = (await getJiraTicketController(
-      makeUrl('/api/jira/ticket?ticketId=ABC-1'),
-      env
+      jsonRequest({ ticketId: "ABC-1" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires story points when updating Jira tickets', async () => {
+  it("requires story points when updating Jira tickets", async () => {
     const response = (await updateJiraStoryPointsController(
-      'ABC-1',
-      jsonRequest({ roomKey: 'room-1', userName: 'alice' }, 'PUT'),
-      env
+      "ABC-1",
+      jsonRequest({ roomKey: "room-1", userName: "alice" }, "PUT"),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Ticket ID and story points are required');
+    await expectJsonError(response, "Ticket ID and story points are required");
   });
 
-  it('requires room and user when updating Jira tickets', async () => {
+  it("requires room and user when updating Jira tickets", async () => {
     const response = (await updateJiraStoryPointsController(
-      'ABC-1',
-      jsonRequest({ storyPoints: 5 }, 'PUT'),
-      env
+      "ABC-1",
+      jsonRequest({ storyPoints: 5 }, "PUT"),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires room and user when fetching Jira boards', async () => {
+  it("requires room and user when fetching Jira boards", async () => {
     const response = (await getJiraBoardsController(
-      makeUrl('/api/jira/boards'),
-      env
+      jsonRequest({}),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires board id when fetching Jira sprints', async () => {
+  it("requires board id when fetching Jira sprints", async () => {
     const response = (await getJiraSprintsController(
-      makeUrl('/api/jira/sprints?roomKey=room&userName=alice'),
-      env
+      jsonRequest({ roomKey: "room", userName: "alice" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Board ID is required');
+    await expectJsonError(response, "Board ID is required");
   });
 
-  it('requires room and user when fetching Jira sprints', async () => {
+  it("requires room and user when fetching Jira sprints", async () => {
     const response = (await getJiraSprintsController(
-      makeUrl('/api/jira/sprints?boardId=1'),
-      env
+      jsonRequest({ boardId: "1" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires board id when fetching Jira issues', async () => {
+  it("requires board id when fetching Jira issues", async () => {
     const response = (await getJiraIssuesController(
-      makeUrl('/api/jira/issues?roomKey=room&userName=alice'),
-      env
+      jsonRequest({ roomKey: "room", userName: "alice" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Board ID is required');
+    await expectJsonError(response, "Board ID is required");
   });
 
-  it('requires room and user when fetching Jira issues', async () => {
+  it("requires room and user when fetching Jira issues", async () => {
     const response = (await getJiraIssuesController(
-      makeUrl('/api/jira/issues?boardId=1'),
-      env
+      jsonRequest({ boardId: "1" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 });
 
-describe('feedback controller validation', () => {
-  it('requires a title', async () => {
+describe("feedback controller validation", () => {
+  it("requires a title", async () => {
     const response = (await submitFeedbackController(
-      jsonRequest({ description: 'Example feedback', labels: ['feedback'] }),
-      env
+      jsonRequest({ description: "Example feedback", labels: ["feedback"] }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Title is required');
+    await expectJsonError(response, "Title is required");
   });
 
-  it('requires a description', async () => {
+  it("requires a description", async () => {
     const response = (await submitFeedbackController(
-      jsonRequest({ title: 'Short title', labels: ['feedback'] }),
-      env
+      jsonRequest({ title: "Short title", labels: ["feedback"] }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Description is required');
+    await expectJsonError(response, "Description is required");
   });
 
-  it('requires at least one allowed label', async () => {
+  it("requires at least one allowed label", async () => {
     const response = (await submitFeedbackController(
       jsonRequest({
-        title: 'Label-less feedback',
-        description: 'Details here',
+        title: "Label-less feedback",
+        description: "Details here",
         labels: [],
       }),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'At least one valid label is required');
+    await expectJsonError(response, "At least one valid label is required");
   });
 });
 
-describe('jira oauth validation', () => {
-  it('requires room and user when initiating Jira OAuth', async () => {
+describe("jira oauth validation", () => {
+  it("requires room and user when initiating Jira OAuth", async () => {
     const response = (await initiateJiraOAuthController(
       jsonRequest({}),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('returns an html error when callback is missing code or state', async () => {
+  it("returns an html error when callback is missing code or state", async () => {
     const response = (await handleJiraOAuthCallbackController(
-      makeUrl('/api/jira/oauth/callback'),
-      env
+      makeUrl("/api/jira/oauth/callback"),
+      env,
     )) as Response;
 
     expect(response.status).toBe(400);
-    expect(await response.text()).toContain('Missing code or state');
+    expect(await response.text()).toContain("Missing code or state");
   });
 
-  it('requires room and user when reading Jira OAuth status', async () => {
+  it("requires room and user when reading Jira OAuth status", async () => {
     const response = (await getJiraOAuthStatusController(
-      makeUrl('/api/jira/oauth/status'),
-      env
+      jsonRequest({}),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires room and user when fetching Jira fields', async () => {
+  it("requires room and user when fetching Jira fields", async () => {
     const response = (await getJiraFieldsController(
-      makeUrl('/api/jira/oauth/fields'),
-      env
+      jsonRequest({}),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires updates when changing Jira fields', async () => {
+  it("requires updates when changing Jira fields", async () => {
     const response = (await updateJiraFieldsController(
-      jsonRequest({ roomKey: 'room-1', userName: 'alice' }, 'PUT'),
-      env
+      jsonRequest({ roomKey: "room-1", userName: "alice" }, "PUT"),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'No field updates provided');
+    await expectJsonError(response, "No field updates provided");
   });
 
-  it('requires room and user when revoking Jira OAuth', async () => {
+  it("requires room and user when revoking Jira OAuth", async () => {
     const response = (await revokeJiraOAuthController(
       jsonRequest({}),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 });
 
-describe('linear controller validation', () => {
-  it('requires an issue id when fetching Linear issues', async () => {
+describe("linear controller validation", () => {
+  it("requires an issue id when fetching Linear issues", async () => {
     const response = (await getLinearIssueController(
-      makeUrl('/api/linear/issue?roomKey=room-1&userName=alice'),
-      env
+      jsonRequest({ roomKey: "room-1", userName: "alice" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Issue ID is required');
+    await expectJsonError(response, "Issue ID is required");
   });
 
-  it('requires room and user when fetching Linear issues', async () => {
+  it("requires room and user when fetching Linear issues", async () => {
     const response = (await getLinearIssueController(
-      makeUrl('/api/linear/issue?issueId=LIN-1'),
-      env
+      jsonRequest({ issueId: "LIN-1" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires estimate when updating Linear issues', async () => {
+  it("requires estimate when updating Linear issues", async () => {
     const response = (await updateLinearEstimateController(
-      'LIN-1',
-      jsonRequest({ roomKey: 'room-1', userName: 'alice' }, 'PUT'),
-      env
+      "LIN-1",
+      jsonRequest({ roomKey: "room-1", userName: "alice" }, "PUT"),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Issue ID and estimate are required');
+    await expectJsonError(response, "Issue ID and estimate are required");
   });
 
-  it('requires room and user when updating Linear issues', async () => {
+  it("requires room and user when updating Linear issues", async () => {
     const response = (await updateLinearEstimateController(
-      'LIN-1',
-      jsonRequest({ estimate: 3 }, 'PUT'),
-      env
+      "LIN-1",
+      jsonRequest({ estimate: 3 }, "PUT"),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires room and user when fetching Linear teams', async () => {
+  it("requires room and user when fetching Linear teams", async () => {
     const response = (await getLinearTeamsController(
-      makeUrl('/api/linear/teams'),
-      env
+      jsonRequest({}),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires team id when fetching Linear cycles', async () => {
+  it("requires team id when fetching Linear cycles", async () => {
     const response = (await getLinearCyclesController(
-      makeUrl('/api/linear/cycles?roomKey=room-1&userName=alice'),
-      env
+      jsonRequest({ roomKey: "room-1", userName: "alice" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Team ID is required');
+    await expectJsonError(response, "Team ID is required");
   });
 
-  it('requires room and user when fetching Linear cycles', async () => {
+  it("requires room and user when fetching Linear cycles", async () => {
     const response = (await getLinearCyclesController(
-      makeUrl('/api/linear/cycles?teamId=team-1'),
-      env
+      jsonRequest({ teamId: "team-1" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires team id when fetching Linear issues list', async () => {
+  it("requires team id when fetching Linear issues list", async () => {
     const response = (await getLinearIssuesController(
-      makeUrl('/api/linear/issues?roomKey=room-1&userName=alice'),
-      env
+      jsonRequest({ roomKey: "room-1", userName: "alice" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Team ID is required');
+    await expectJsonError(response, "Team ID is required");
   });
 
-  it('requires room and user when fetching Linear issues list', async () => {
+  it("requires room and user when fetching Linear issues list", async () => {
     const response = (await getLinearIssuesController(
-      makeUrl('/api/linear/issues?teamId=team-1'),
-      env
+      jsonRequest({ teamId: "team-1" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 });
 
-describe('linear oauth validation', () => {
-  it('requires room and user when initiating Linear OAuth', async () => {
+describe("linear oauth validation", () => {
+  it("requires room and user when initiating Linear OAuth", async () => {
     const response = (await initiateLinearOAuthController(
       jsonRequest({}),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('returns an html error when linear callback is missing code or state', async () => {
+  it("returns an html error when linear callback is missing code or state", async () => {
     const response = (await handleLinearOAuthCallbackController(
-      makeUrl('/api/linear/oauth/callback'),
-      env
+      makeUrl("/api/linear/oauth/callback"),
+      env,
     )) as Response;
 
     expect(response.status).toBe(400);
-    expect(await response.text()).toContain('Missing code or state');
+    expect(await response.text()).toContain("Missing code or state");
   });
 
-  it('requires room and user when reading Linear OAuth status', async () => {
+  it("requires room and user when reading Linear OAuth status", async () => {
     const response = (await getLinearOAuthStatusController(
-      makeUrl('/api/linear/oauth/status'),
-      env
+      jsonRequest({}),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires room and user when revoking Linear OAuth', async () => {
+  it("requires room and user when revoking Linear OAuth", async () => {
     const response = (await revokeLinearOAuthController(
       jsonRequest({}),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 });
 
-describe('github controller validation', () => {
-  it('requires an issue id when fetching GitHub issues', async () => {
+describe("github controller validation", () => {
+  it("requires an issue id when fetching GitHub issues", async () => {
     const response = (await getGithubIssueController(
-      makeUrl('/api/github/issue?roomKey=room-1&userName=alice'),
-      env
+      jsonRequest({ roomKey: "room-1", userName: "alice" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Issue identifier is required');
+    await expectJsonError(response, "Issue identifier is required");
   });
 
-  it('requires room and user when fetching GitHub issues', async () => {
+  it("requires room and user when fetching GitHub issues", async () => {
     const response = (await getGithubIssueController(
-      makeUrl('/api/github/issue?issueId=owner/repo#1'),
-      env
+      jsonRequest({ issueId: "owner/repo#1" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires estimate when updating GitHub issues', async () => {
+  it("requires estimate when updating GitHub issues", async () => {
     const response = (await updateGithubEstimateController(
-      'owner/repo#1',
-      jsonRequest({ roomKey: 'room-1', userName: 'alice' }, 'PUT'),
-      env
+      "owner/repo#1",
+      jsonRequest({ roomKey: "room-1", userName: "alice" }, "PUT"),
+      env,
     )) as Response;
 
     await expectJsonError(
       response,
-      'Issue identifier and estimate are required'
+      "Issue identifier and estimate are required",
     );
   });
 
-  it('requires room and user when updating GitHub issues', async () => {
+  it("requires room and user when updating GitHub issues", async () => {
     const response = (await updateGithubEstimateController(
-      'owner/repo#1',
-      jsonRequest({ estimate: 5 }, 'PUT'),
-      env
+      "owner/repo#1",
+      jsonRequest({ estimate: 5 }, "PUT"),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires room and user when fetching GitHub repos', async () => {
+  it("requires room and user when fetching GitHub repos", async () => {
     const response = (await getGithubReposController(
-      makeUrl('/api/github/repos'),
-      env
+      jsonRequest({}),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires repository when fetching GitHub milestones', async () => {
+  it("requires repository when fetching GitHub milestones", async () => {
     const response = (await getGithubMilestonesController(
-      makeUrl('/api/github/milestones?roomKey=room-1&userName=alice'),
-      env
+      jsonRequest({ roomKey: "room-1", userName: "alice" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Repository is required');
+    await expectJsonError(response, "Repository is required");
   });
 
-  it('requires room and user when fetching GitHub milestones', async () => {
+  it("requires room and user when fetching GitHub milestones", async () => {
     const response = (await getGithubMilestonesController(
-      makeUrl('/api/github/milestones?repo=owner/repo'),
-      env
+      jsonRequest({ repo: "owner/repo" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires repository when fetching GitHub issues list', async () => {
+  it("requires repository when fetching GitHub issues list", async () => {
     const response = (await getGithubIssuesController(
-      makeUrl('/api/github/issues?roomKey=room-1&userName=alice'),
-      env
+      jsonRequest({ roomKey: "room-1", userName: "alice" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Repository is required');
+    await expectJsonError(response, "Repository is required");
   });
 
-  it('requires room and user when fetching GitHub issues list', async () => {
+  it("requires room and user when fetching GitHub issues list", async () => {
     const response = (await getGithubIssuesController(
-      makeUrl('/api/github/issues?repo=owner/repo'),
-      env
+      jsonRequest({ repo: "owner/repo" }),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 });
 
-describe('github oauth validation', () => {
-  it('requires room and user when initiating GitHub OAuth', async () => {
+describe("github oauth validation", () => {
+  it("requires room and user when initiating GitHub OAuth", async () => {
     const response = (await initiateGithubOAuthController(
       jsonRequest({}),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('returns an html error when GitHub callback is missing code or state', async () => {
+  it("returns an html error when GitHub callback is missing code or state", async () => {
     const response = (await handleGithubOAuthCallbackController(
-      makeUrl('/api/github/oauth/callback'),
-      env
+      makeUrl("/api/github/oauth/callback"),
+      env,
     )) as Response;
 
     expect(response.status).toBe(400);
-    expect(await response.text()).toContain('Missing code or state');
+    expect(await response.text()).toContain("Missing code or state");
   });
 
-  it('requires room and user when reading GitHub OAuth status', async () => {
+  it("requires room and user when reading GitHub OAuth status", async () => {
     const response = (await getGithubOAuthStatusController(
-      makeUrl('/api/github/oauth/status'),
-      env
+      jsonRequest({}),
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 
-  it('requires room and user when revoking GitHub OAuth', async () => {
+  it("requires room and user when revoking GitHub OAuth", async () => {
     const response = (await revokeGithubOAuthController(
       jsonRequest({}),
-      env
+      env,
     )) as Response;
 
-    await expectJsonError(response, 'Room key and user name are required');
+    await expectJsonError(response, "Room key and user name are required");
   });
 });
