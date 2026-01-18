@@ -10,10 +10,9 @@ import {
   deleteTeamController,
   listTeamSessionsController,
   createTeamSessionController,
-  getTeamSessionController,
   completeSessionByRoomKeyController,
   getWorkspaceStatsController,
-} from "./teams-controller";
+} from './teams-controller';
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 
 vi.mock("../repositories/workspace-auth", () => ({
@@ -52,9 +51,10 @@ describe("listTeamsController", () => {
     });
 
     const response = await listTeamsController(request, mockEnv);
-    const data = await response.json();
+    const data = await response.json()
 
     expect(response.status).toBe(401);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Unauthorized");
   });
 
@@ -67,9 +67,10 @@ describe("listTeamsController", () => {
     });
 
     const response = await listTeamsController(request, mockEnv);
-    const data = await response.json();
+    const data = await response.json()
 
     expect(response.status).toBe(401);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Session expired");
   });
 
@@ -89,7 +90,7 @@ describe("listTeamsController", () => {
     });
 
     const response = await listTeamsController(request, mockEnv);
-    const data = await response.json();
+    const data = await response.json() as { teams: unknown[] };
 
     expect(response.status).toBe(200);
     expect(data.teams).toHaveLength(2);
@@ -140,9 +141,10 @@ describe("createTeamController", () => {
     });
 
     const response = await createTeamController(request, mockEnv);
-    const data = await response.json();
+    const data = await response.json()
 
     expect(response.status).toBe(400);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Team name is required");
   });
 
@@ -159,30 +161,32 @@ describe("createTeamController", () => {
     });
 
     const response = await createTeamController(request, mockEnv);
-    const data = await response.json();
+    const data = await response.json()
 
     expect(response.status).toBe(400);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Team name must be 100 characters or less");
   });
 
   it("should return 404 when user not found", async () => {
     mockRepo.validateSession.mockResolvedValue({
       userId: 1,
-      email: "test@example.com",
+      email: 'test@example.com',
     });
     mockRepo.getUserById.mockResolvedValue(null);
 
-    const request = new Request("https://test.com/teams", {
-      method: "POST",
-      body: JSON.stringify({ name: "New Team" }),
-      headers: { Authorization: "Bearer valid-token" },
+    const request = new Request('https://test.com/teams', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'New Team' }),
+      headers: { Authorization: 'Bearer valid-token' },
     });
 
     const response = await createTeamController(request, mockEnv);
     const data = await response.json();
 
     expect(response.status).toBe(404);
-    expect(data.error).toBe("User not found");
+    // @ts-ignore - Just a test
+    expect(data.error).toBe('User not found');
   });
 
   it("should successfully create team", async () => {
@@ -213,6 +217,7 @@ describe("createTeamController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(201);
+    // @ts-ignore - Just a test
     expect(data.team.name).toBe("New Team");
     expect(mockRepo.createTeam).toHaveBeenCalledWith(1, "New Team", 1);
   });
@@ -281,6 +286,7 @@ describe("getTeamController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(404);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Team not found");
   });
 
@@ -308,6 +314,7 @@ describe("getTeamController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(403);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Access denied");
   });
 
@@ -335,6 +342,7 @@ describe("getTeamController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    // @ts-ignore - Just a test
     expect(data.team.name).toBe("Team A");
   });
 });
@@ -380,6 +388,7 @@ describe("updateTeamController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(403);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Only the team owner can update the team");
   });
 
@@ -402,6 +411,7 @@ describe("updateTeamController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    // @ts-ignore - Just a test
     expect(data.team.name).toBe("Updated Team");
     expect(mockRepo.updateTeam).toHaveBeenCalledWith(1, {
       name: "Updated Team",
@@ -449,6 +459,7 @@ describe("deleteTeamController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(403);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Only the team owner can delete the team");
   });
 
@@ -472,6 +483,7 @@ describe("deleteTeamController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    // @ts-ignore - Just a test
     expect(data.message).toBe("Team deleted successfully");
     expect(mockRepo.deleteTeam).toHaveBeenCalledWith(1);
   });
@@ -522,6 +534,7 @@ describe("listTeamSessionsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(403);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Only the team owner can access team sessions");
   });
 
@@ -552,6 +565,7 @@ describe("listTeamSessionsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    // @ts-ignore - Just a test
     expect(data.sessions).toHaveLength(2);
   });
 });
@@ -604,6 +618,7 @@ describe("createTeamSessionController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Session name is required");
   });
 
@@ -632,6 +647,7 @@ describe("createTeamSessionController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
+    // @ts-ignore - Just a test
     expect(data.error).toBe("Room key is required");
   });
 
@@ -671,6 +687,7 @@ describe("createTeamSessionController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(201);
+    // @ts-ignore - Just a test
     expect(data.session.name).toBe("Session 1");
     expect(mockRepo.createTeamSession).toHaveBeenCalledWith(
       1,
@@ -722,6 +739,7 @@ describe("completeSessionByRoomKeyController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    // @ts-ignore - Just a test
     expect(data.session.completedAt).toBe(1700000000000);
     expect(mockRepo.completeLatestSessionByRoomKey).toHaveBeenCalledWith(
       "ROOM1",
@@ -769,7 +787,9 @@ describe("getWorkspaceStatsController", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    // @ts-ignore - Just a test
     expect(data.totalTeams).toBe(3);
+    // @ts-ignore - Just a test
     expect(data.totalSessions).toBe(15);
   });
 });

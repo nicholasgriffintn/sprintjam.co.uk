@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply sprintjam-workspaces-staging --local --persist-to ../../.data --env development",
     "db:migrate:staging": "wrangler d1 migrations apply sprintjam-workspaces-staging --remote --env staging",

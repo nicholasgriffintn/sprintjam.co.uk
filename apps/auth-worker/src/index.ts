@@ -1,7 +1,6 @@
 import type {
   Request as CfRequest,
   Response as CfResponse,
-  ScheduledController,
 } from "@cloudflare/workers-types";
 import type { AuthWorkerEnv } from "@sprintjam/types";
 import { WorkerEntrypoint } from "cloudflare:workers";

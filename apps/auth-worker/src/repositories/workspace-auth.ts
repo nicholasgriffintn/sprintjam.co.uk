@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import { eq, gt, desc, inArray, sql } from "drizzle-orm";
+import { eq, desc, inArray, sql, lt } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   allowedDomains,
@@ -106,7 +106,11 @@ export class WorkspaceAuthRepository {
       .where(eq(organisations.domain, domain.toLowerCase()))
       .get();
 
-    return result!.id;
+    if (!result) {
+      throw new Error("Failed to create or retrieve organisation");
+    }
+
+    return result.id;
   }
 
   async getOrCreateUser(
@@ -133,12 +137,16 @@ export class WorkspaceAuthRepository {
       .where(eq(users.email, email.toLowerCase()))
       .get();
 
+    if (!existing) {
+      throw new Error("Failed to create or retrieve user");
+    }
+
     await this.db
       .update(users)
       .set({ lastLoginAt: Date.now(), updatedAt: Date.now() })
-      .where(eq(users.id, existing!.id));
+      .where(eq(users.id, existing.id));
 
-    return existing!.id;
+    return existing.id;
   }
 
   async createSession(
@@ -452,7 +460,10 @@ export class WorkspaceAuthRepository {
 
     return Array.from(monthCounts.entries()).map(([period, count]) => {
       const [year, month] = period.split("-");
-      const date = new Date(parseInt(year), parseInt(month) - 1);
+      const date = new Date(
+        Number.parseInt(year, 10),
+        Number.parseInt(month, 10) - 1,
+      );
       return {
         period: date.toLocaleString("default", { month: "short" }),
         yearMonth: period,
@@ -486,7 +497,7 @@ export class WorkspaceAuthRepository {
     const expiredLinks = await this.db
       .select({ id: magicLinks.id })
       .from(magicLinks)
-      .where(gt(Date.now(), magicLinks.expiresAt))
+      .where(lt(magicLinks.expiresAt, Date.now()))
       .all();
 
     if (expiredLinks.length === 0) {
@@ -503,7 +514,7 @@ export class WorkspaceAuthRepository {
     const expiredSessions = await this.db
       .select({ tokenHash: workspaceSessions.tokenHash })
       .from(workspaceSessions)
-      .where(gt(Date.now(), workspaceSessions.expiresAt))
+      .where(lt(workspaceSessions.expiresAt, Date.now()))
       .all();
 
     if (expiredSessions.length === 0) {
