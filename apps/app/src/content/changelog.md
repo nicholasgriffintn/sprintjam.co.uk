@@ -1,3 +1,10 @@
+## V2.4
+
+- Added MFA support for accounts to improve security. Users will be asked to setup either TOTP or WebAuthn after verifying their email, at least one is required.
+- Added recovery codes for MFA so that users can regain access to their accounts if they lose their authentication device.
+- Made various security improvements around authentication and session management.
+- Made some improvements to the workspaces UI, currently in beta.
+
 ## V2.3
 
 - Added an in-room help panel with contextual guidance tied to voting state, including card meanings and structured voting notes.
