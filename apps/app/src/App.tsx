@@ -21,7 +21,10 @@ import { WorkspaceAuthProvider } from "./context/WorkspaceAuthContext";
 import { RoomHeaderProvider } from "./context/RoomHeaderContext";
 import WelcomeScreen from "./routes/WelcomeScreen";
 import LoginScreen from "./routes/auth/LoginScreen";
-import WorkspaceScreen from "./routes/workspace/WorkspaceScreen";
+import WorkspaceDashboard from "./routes/workspace/WorkspaceDashboard";
+import WorkspaceSessions from "./routes/workspace/WorkspaceSessions";
+import WorkspaceAdminOverview from "./routes/workspace/WorkspaceAdminOverview";
+import WorkspaceAdminTeams from "./routes/workspace/WorkspaceAdminTeams";
 import CreateRoomScreen from "./routes/CreateRoomScreen";
 import JoinRoomScreen from "./routes/JoinRoomScreen";
 import NotFoundScreen from "./routes/NotFoundScreen";
@@ -100,7 +103,13 @@ const AppContent = () => {
         case "login":
           return <LoginScreen />;
         case "workspace":
-          return <WorkspaceScreen />;
+          return <WorkspaceDashboard />;
+        case "workspaceSessions":
+          return <WorkspaceSessions />;
+        case "workspaceAdmin":
+          return <WorkspaceAdminOverview />;
+        case "workspaceAdminTeams":
+          return <WorkspaceAdminTeams />;
         case "create":
           return <CreateRoomScreen />;
         case "join":

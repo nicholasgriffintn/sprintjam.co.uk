@@ -17,6 +17,9 @@ export type AppScreen =
   | "welcome"
   | "login"
   | "workspace"
+  | "workspaceSessions"
+  | "workspaceAdmin"
+  | "workspaceAdminTeams"
   | "create"
   | "join"
   | "room"
@@ -65,6 +68,9 @@ interface SessionActionsContextValue {
   goHome: () => void;
   goToLogin: () => void;
   goToWorkspace: () => void;
+  goToWorkspaceSessions: () => void;
+  goToWorkspaceAdmin: () => void;
+  goToWorkspaceAdminTeams: () => void;
   goToRoom: (roomKey: string) => void;
   startCreateFlow: () => void;
   startJoinFlow: () => void;
@@ -149,6 +155,30 @@ export const SessionProvider = ({
     clearError();
   }, [clearError]);
 
+  const goToWorkspaceSessions = useCallback(() => {
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("workspaceSessions");
+    navigateTo("workspaceSessions");
+    clearError();
+  }, [clearError]);
+
+  const goToWorkspaceAdmin = useCallback(() => {
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("workspaceAdmin");
+    navigateTo("workspaceAdmin");
+    clearError();
+  }, [clearError]);
+
+  const goToWorkspaceAdminTeams = useCallback(() => {
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("workspaceAdminTeams");
+    navigateTo("workspaceAdminTeams");
+    clearError();
+  }, [clearError]);
+
   const goToRoom = useCallback(
     (key: string) => {
       setRoomKey(key);
@@ -224,18 +254,21 @@ export const SessionProvider = ({
       goHome,
       goToLogin,
       goToWorkspace,
+      goToWorkspaceSessions,
+      goToWorkspaceAdmin,
+      goToWorkspaceAdminTeams,
       goToRoom,
       startCreateFlow,
       startJoinFlow,
     }),
     [
-      setScreen,
-      setJoinFlowMode,
-      setName,
-      setRoomKey,
-      setPasscode,
-      setSelectedAvatar,
       goHome,
+      goToLogin,
+      goToWorkspace,
+      goToWorkspaceSessions,
+      goToWorkspaceAdmin,
+      goToWorkspaceAdminTeams,
+      goToRoom,
       startCreateFlow,
       startJoinFlow,
     ],

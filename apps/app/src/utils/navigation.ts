@@ -110,6 +110,12 @@ export function parsePath(path: string): ParsedPath {
       return { screen: "login" };
     case "/workspace":
       return { screen: "workspace" };
+    case "/workspace/sessions":
+      return { screen: "workspaceSessions" };
+    case "/workspace/admin":
+      return { screen: "workspaceAdmin" };
+    case "/workspace/admin/teams":
+      return { screen: "workspaceAdminTeams" };
     case "/create":
       return { screen: "create" };
     case "/join":
@@ -141,6 +147,12 @@ export function getPathFromScreen(screen: AppScreen, roomKey?: string): string {
       return "/auth/login";
     case "workspace":
       return "/workspace";
+    case "workspaceSessions":
+      return "/workspace/sessions";
+    case "workspaceAdmin":
+      return "/workspace/admin";
+    case "workspaceAdminTeams":
+      return "/workspace/admin/teams";
     case "create":
       return "/create";
     case "join":

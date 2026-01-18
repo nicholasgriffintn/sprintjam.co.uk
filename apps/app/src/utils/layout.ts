@@ -1,36 +1,46 @@
-import type { AppScreen } from '@/context/SessionContext';
-import { type PageBackgroundVariant } from '@/components/layout/PageBackground';
+import type { AppScreen } from "@/context/SessionContext";
+import { type PageBackgroundVariant } from "@/components/layout/PageBackground";
 import {
   HeaderVariant,
   MarketingVariant,
-} from '@/components/layout/Header/types';
+} from "@/components/layout/Header/types";
 
 export const getBackgroundVariant = (
-  screen: AppScreen
+  screen: AppScreen,
 ): PageBackgroundVariant => {
-  if (screen === 'room') {
-    return 'room';
+  if (screen === "room") {
+    return "room";
   }
 
-  if (screen === 'workspace') {
-    return 'plain';
+  if (
+    screen === "workspace" ||
+    screen === "workspaceSessions" ||
+    screen === "workspaceAdmin" ||
+    screen === "workspaceAdminTeams"
+  ) {
+    return "plain";
   }
 
   return getMarketingVariant(screen);
 };
 
 export const getHeaderVariant = (screen: AppScreen): HeaderVariant => {
-  if (screen === 'room') {
-    return 'room';
+  if (screen === "room") {
+    return "room";
   }
 
-  if (screen === 'workspace') {
-    return 'workspace';
+  if (
+    screen === "workspace" ||
+    screen === "workspaceSessions" ||
+    screen === "workspaceAdmin" ||
+    screen === "workspaceAdminTeams"
+  ) {
+    return "workspace";
   }
 
-  return 'marketing';
+  return "marketing";
 };
 
 export const getMarketingVariant = (screen: AppScreen): MarketingVariant => {
-  return screen === 'welcome' ? 'hero' : 'compact';
+  return screen === "welcome" ? "hero" : "compact";
 };
