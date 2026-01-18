@@ -374,7 +374,7 @@ export async function getLinearIssuesController(
     roomKey?: string;
     userName?: string;
     sessionToken?: string;
-    limit?: number;
+    limit?: unknown;
   }>();
   const teamId = body?.teamId;
   const cycleId = body?.cycleId ?? null;
@@ -382,7 +382,14 @@ export async function getLinearIssuesController(
   const roomKey = body?.roomKey;
   const userName = body?.userName;
   const sessionToken = body?.sessionToken;
-  const limit = body?.limit ?? null;
+  const limit =
+    body?.limit === undefined || body?.limit === null
+      ? null
+      : typeof body.limit === "number"
+        ? body.limit
+        : typeof body.limit === "string" && !Number.isNaN(Number(body.limit))
+          ? Number(body.limit)
+          : null;
 
   if (!teamId) {
     return jsonError("Team ID is required");

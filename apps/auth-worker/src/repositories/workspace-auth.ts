@@ -68,6 +68,86 @@ export class WorkspaceAuthRepository {
     return this.auth.getUserById(userId);
   }
 
+  logAuditEvent(params: {
+    userId?: number | null;
+    email?: string | null;
+    event: string;
+    status: "success" | "failure";
+    reason?: string | null;
+    ip?: string | null;
+    userAgent?: string | null;
+  }): Promise<void> {
+    return this.auth.logAuditEvent(params);
+  }
+
+  createAuthChallenge(params: {
+    userId: number;
+    tokenHash: string;
+    type: "setup" | "verify";
+    method?: string | null;
+    metadata?: string | null;
+    expiresAt: number;
+  }): Promise<number> {
+    return this.auth.createAuthChallenge(params);
+  }
+
+  getAuthChallengeByTokenHash(tokenHash: string) {
+    return this.auth.getAuthChallengeByTokenHash(tokenHash);
+  }
+
+  markAuthChallengeUsed(id: number): Promise<void> {
+    return this.auth.markAuthChallengeUsed(id);
+  }
+
+  updateAuthChallengeMetadata(
+    id: number,
+    metadata: string,
+    method?: string | null,
+  ): Promise<void> {
+    return this.auth.updateAuthChallengeMetadata(id, metadata, method);
+  }
+
+  listMfaCredentials(userId: number) {
+    return this.auth.listMfaCredentials(userId);
+  }
+
+  getTotpCredential(userId: number) {
+    return this.auth.getTotpCredential(userId);
+  }
+
+  listWebAuthnCredentials(userId: number) {
+    return this.auth.listWebAuthnCredentials(userId);
+  }
+
+  getWebAuthnCredentialById(credentialId: string) {
+    return this.auth.getWebAuthnCredentialById(credentialId);
+  }
+
+  createTotpCredential(userId: number, secretEncrypted: string): Promise<void> {
+    return this.auth.createTotpCredential(userId, secretEncrypted);
+  }
+
+  createWebAuthnCredential(params: {
+    userId: number;
+    credentialId: string;
+    publicKey: string;
+    counter: number;
+  }): Promise<void> {
+    return this.auth.createWebAuthnCredential(params);
+  }
+
+  updateWebAuthnCounter(id: number, counter: number): Promise<void> {
+    return this.auth.updateWebAuthnCounter(id, counter);
+  }
+
+  storeRecoveryCodes(userId: number, codeHashes: string[]): Promise<void> {
+    return this.auth.storeRecoveryCodes(userId, codeHashes);
+  }
+
+  consumeRecoveryCode(userId: number, codeHash: string): Promise<boolean> {
+    return this.auth.consumeRecoveryCode(userId, codeHash);
+  }
+
   getUserTeams(userId: number) {
     return this.teams.getUserTeams(userId);
   }

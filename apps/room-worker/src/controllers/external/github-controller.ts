@@ -274,7 +274,7 @@ export async function getGithubIssuesController(
     roomKey?: string;
     userName?: string;
     sessionToken?: string;
-    limit?: number;
+    limit?: unknown;
   }>();
   const repository = body?.repo;
   const milestoneNumber = body?.milestoneNumber ?? null;
@@ -283,7 +283,14 @@ export async function getGithubIssuesController(
   const roomKey = body?.roomKey;
   const userName = body?.userName;
   const sessionToken = body?.sessionToken;
-  const limit = body?.limit ?? null;
+  const limit =
+    body?.limit === undefined || body?.limit === null
+      ? null
+      : typeof body.limit === "number"
+        ? body.limit
+        : typeof body.limit === "string" && !Number.isNaN(Number(body.limit))
+          ? Number(body.limit)
+          : null;
 
   if (!repository) {
     return jsonError("Repository is required");

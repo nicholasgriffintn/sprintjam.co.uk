@@ -7,6 +7,57 @@ export interface WorkspaceUser {
   organisationId: number;
 }
 
+export type MfaMethod = "totp" | "webauthn";
+
+export type VerifyCodeResponse =
+  | {
+      status: "authenticated";
+      user: WorkspaceUser;
+      expiresAt: number;
+      recoveryCodes?: string[];
+    }
+  | {
+      status: "mfa_required";
+      mode: "setup" | "verify";
+      challengeToken: string;
+      methods: MfaMethod[];
+    };
+
+export interface WebAuthnRegistrationOptions {
+  rp: { id: string; name: string };
+  user: { id: string; name: string; displayName: string };
+  challenge: string;
+  pubKeyCredParams: Array<{ type: "public-key"; alg: number }>;
+  timeout: number;
+  attestation: "none";
+  authenticatorSelection: {
+    residentKey: "preferred";
+    userVerification: "preferred";
+  };
+}
+
+export interface WebAuthnAuthenticationOptions {
+  rpId: string;
+  challenge: string;
+  allowCredentials: Array<{ type: "public-key"; id: string }>;
+  timeout: number;
+  userVerification: "preferred";
+}
+
+export interface WebAuthnCredential {
+  id: string;
+  rawId: string;
+  type: "public-key";
+  clientExtensionResults: AuthenticationExtensionsClientOutputs;
+  response: {
+    clientDataJSON: string;
+    attestationObject?: string;
+    authenticatorData?: string;
+    signature?: string;
+    userHandle?: string;
+  };
+}
+
 export interface Team {
   id: number;
   name: string;
@@ -136,16 +187,61 @@ export async function requestMagicLink(email: string): Promise<void> {
 export async function verifyCode(
   email: string,
   code: string,
-): Promise<{ user: WorkspaceUser; expiresAt: number }> {
-  const data = await workspaceRequest<{
-    user: WorkspaceUser;
-    expiresAt: number;
-  }>(`${API_BASE_URL}/auth/verify`, {
-    method: "POST",
-    body: JSON.stringify({ email, code }),
-  });
+): Promise<VerifyCodeResponse> {
+  const data = await workspaceRequest<VerifyCodeResponse>(
+    `${API_BASE_URL}/auth/verify`,
+    {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+    },
+  );
 
   return data;
+}
+
+export async function startMfaSetup(
+  challengeToken: string,
+  method: MfaMethod,
+): Promise<
+  | { method: "totp"; secret: string; otpauthUrl: string }
+  | { method: "webauthn"; options: WebAuthnRegistrationOptions }
+> {
+  return workspaceRequest(`${API_BASE_URL}/auth/mfa/setup/start`, {
+    method: "POST",
+    body: JSON.stringify({ challengeToken, method }),
+  });
+}
+
+export async function verifyMfaSetup(
+  challengeToken: string,
+  method: MfaMethod,
+  payload: { code?: string; credential?: WebAuthnCredential },
+): Promise<VerifyCodeResponse> {
+  return workspaceRequest(`${API_BASE_URL}/auth/mfa/setup/verify`, {
+    method: "POST",
+    body: JSON.stringify({ challengeToken, method, ...payload }),
+  });
+}
+
+export async function startMfaVerify(
+  challengeToken: string,
+  method: "webauthn",
+): Promise<{ method: "webauthn"; options: WebAuthnAuthenticationOptions }> {
+  return workspaceRequest(`${API_BASE_URL}/auth/mfa/verify/start`, {
+    method: "POST",
+    body: JSON.stringify({ challengeToken, method }),
+  });
+}
+
+export async function verifyMfa(
+  challengeToken: string,
+  method: "totp" | "webauthn" | "recovery",
+  payload: { code?: string; credential?: WebAuthnCredential },
+): Promise<VerifyCodeResponse> {
+  return workspaceRequest(`${API_BASE_URL}/auth/mfa/verify`, {
+    method: "POST",
+    body: JSON.stringify({ challengeToken, method, ...payload }),
+  });
 }
 
 export async function getCurrentUser(): Promise<{
