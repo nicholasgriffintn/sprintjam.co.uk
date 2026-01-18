@@ -93,8 +93,8 @@
           "name": "VERIFICATION_RATE_LIMITER",
           "namespace_id": "1003",
           "simple": {
-            "limit": 5,
-            "period": 300,
+            "limit": 3,
+            "period": 60,
           },
         },
         {
