@@ -202,7 +202,7 @@ const RoomScreen = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="order-2 md:order-none">
+        <div className="order-2 md:order-none md:h-full md:min-h-0">
           <RoomSidebar
             isQueueEnabled={isQueueEnabled}
             stats={stats}
