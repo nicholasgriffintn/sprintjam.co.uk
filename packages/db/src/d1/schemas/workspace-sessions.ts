@@ -19,5 +19,9 @@ export const workspaceSessions = sqliteTable(
       table.userId,
       table.expiresAt,
     ),
+    index("workspace_sessions_user_last_used_idx").on(
+      table.userId,
+      table.lastUsedAt,
+    ),
   ],
 );

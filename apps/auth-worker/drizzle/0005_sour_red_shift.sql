@@ -1,0 +1,1 @@
+CREATE INDEX `workspace_sessions_user_last_used_idx` ON `workspace_sessions` (`user_id`,`last_used_at`);

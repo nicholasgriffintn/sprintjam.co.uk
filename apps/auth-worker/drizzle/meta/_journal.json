@@ -36,6 +36,13 @@
       "when": 1768769660092,
       "tag": "0004_add-security-indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1768770485415,
+      "tag": "0005_sour_red_shift",
+      "breakpoints": true
     }
   ]
 }
