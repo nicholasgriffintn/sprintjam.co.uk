@@ -1,0 +1,2 @@
+CREATE INDEX `magic_links_email_expires_idx` ON `magic_links` (`email`,`expires_at`);--> statement-breakpoint
+CREATE INDEX `workspace_sessions_user_expires_idx` ON `workspace_sessions` (`user_id`,`expires_at`);

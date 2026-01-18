@@ -1,10 +1,10 @@
-import { createJsonResponse } from '@sprintjam/utils';
+import { createJsonResponse } from "@sprintjam/utils";
 
-import type { CfResponse, PlanningRoomHttpContext } from './types';
+import type { CfResponse, PlanningRoomHttpContext } from "./types";
 
 export async function handleLinearSaveCredentials(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
   const credentials = (await request.json()) as {
     accessToken: string;
@@ -21,7 +21,7 @@ export async function handleLinearSaveCredentials(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   await ctx.repository.saveLinearOAuthCredentials({
@@ -39,7 +39,7 @@ export async function handleLinearSaveCredentials(
   });
 
   ctx.broadcast({
-    type: 'linearConnected',
+    type: "linearConnected",
     linearOrganizationId: credentials.linearOrganizationId,
   });
 
@@ -48,37 +48,41 @@ export async function handleLinearSaveCredentials(
 
 export async function handleLinearStatus(
   ctx: PlanningRoomHttpContext,
-  url: URL
+  request: Request,
 ): Promise<CfResponse> {
-  const roomKey = url.searchParams.get('roomKey');
-  const userName = url.searchParams.get('userName');
-  const sessionToken = url.searchParams.get('sessionToken');
+  const { roomKey, userName, sessionToken } = (await request
+    .json()
+    .catch(() => ({}))) as {
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  };
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   if (!roomKey || !userName || !sessionToken) {
     return createJsonResponse(
-      { error: 'Missing room key, user name, or session token' },
-      400
+      { error: "Missing room key, user name, or session token" },
+      400,
     );
   }
   if (roomData.key !== roomKey) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
   const isMember = roomData.users.includes(userName);
   const tokenValid = ctx.repository.validateSessionToken(
     userName,
-    sessionToken
+    sessionToken,
   );
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: 'Invalid session' }, 401);
+    return createJsonResponse({ error: "Invalid session" }, 401);
   }
 
   const credentials = await ctx.repository.getLinearOAuthCredentials(
-    roomData.key
+    roomData.key,
   );
 
   if (!credentials) {
@@ -97,19 +101,19 @@ export async function handleLinearStatus(
 }
 
 export async function handleLinearCredentials(
-  ctx: PlanningRoomHttpContext
+  ctx: PlanningRoomHttpContext,
 ): Promise<CfResponse> {
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   const credentials = await ctx.repository.getLinearOAuthCredentials(
-    roomData.key
+    roomData.key,
   );
 
   if (!credentials) {
-    return createJsonResponse({ error: 'Linear not connected' }, 404);
+    return createJsonResponse({ error: "Linear not connected" }, 404);
   }
 
   return createJsonResponse({ credentials });
@@ -117,7 +121,7 @@ export async function handleLinearCredentials(
 
 export async function handleLinearRefresh(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
   const { accessToken, refreshToken, expiresAt } = (await request.json()) as {
     accessToken: string;
@@ -127,14 +131,14 @@ export async function handleLinearRefresh(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   await ctx.repository.updateLinearOAuthTokens(
     roomData.key,
     accessToken,
     refreshToken,
-    expiresAt
+    expiresAt,
   );
 
   return createJsonResponse({ success: true });
@@ -142,7 +146,7 @@ export async function handleLinearRefresh(
 
 export async function handleLinearRevoke(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
   const body = (await request.json().catch(() => ({}))) as {
     roomKey?: string;
@@ -156,30 +160,30 @@ export async function handleLinearRevoke(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   if (!roomKey || !userName || !sessionToken) {
     return createJsonResponse(
-      { error: 'Missing room key, user name, or session token' },
-      400
+      { error: "Missing room key, user name, or session token" },
+      400,
     );
   }
   if (roomData.key !== roomKey) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
   const isMember = roomData.users.includes(userName);
   const tokenValid = ctx.repository.validateSessionToken(
     userName,
-    sessionToken
+    sessionToken,
   );
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: 'Invalid session' }, 401);
+    return createJsonResponse({ error: "Invalid session" }, 401);
   }
 
   ctx.repository.deleteLinearOAuthCredentials(roomData.key);
 
-  ctx.broadcast({ type: 'linearDisconnected' });
+  ctx.broadcast({ type: "linearDisconnected" });
 
   return createJsonResponse({ success: true });
 }

@@ -37,6 +37,28 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
   note,
   onNoteChange,
 }) => {
+  const externalMetadata = useMemo(() => {
+    if (!currentTicket?.externalServiceMetadata) {
+      return null;
+    }
+
+    const metadata = currentTicket.externalServiceMetadata;
+    if (typeof metadata === "string") {
+      try {
+        const parsed = JSON.parse(metadata) as unknown;
+        return parsed && typeof parsed === "object"
+          ? (parsed as Record<string, unknown>)
+          : null;
+      } catch {
+        return null;
+      }
+    }
+
+    return typeof metadata === "object"
+      ? (metadata as Record<string, unknown>)
+      : null;
+  }, [currentTicket?.externalServiceMetadata]);
+
   const voteEntries = useMemo(
     () =>
       Object.entries(votes).filter(
@@ -67,22 +89,15 @@ export const PrePointingSummaryModal: FC<PrePointingSummaryModalProps> = ({
               </div>
             </div>
             {currentTicket?.externalService !== "none" &&
-              currentTicket?.externalServiceMetadata &&
-              "url" in currentTicket.externalServiceMetadata && (
+              externalMetadata &&
+              typeof externalMetadata.url === "string" && (
                 <a
-                  href={
-                    (
-                      currentTicket.externalServiceMetadata as Record<
-                        string,
-                        string
-                      >
-                    ).url
-                  }
+                  href={externalMetadata.url}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs font-semibold text-blue-600 underline decoration-dotted underline-offset-2 hover:text-blue-500 dark:text-blue-300"
                 >
-                  Open in {currentTicket.externalService.toUpperCase()}
+                  Open in {currentTicket?.externalService.toUpperCase()}
                 </a>
               )}
           </div>

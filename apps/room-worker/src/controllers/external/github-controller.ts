@@ -66,13 +66,19 @@ async function getGithubCredentials(
 }
 
 export async function getGithubIssueController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
-  const issueId = url.searchParams.get("issueId");
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
+  const body = await request.json<{
+    issueId?: string;
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  }>();
+  const issueId = body?.issueId;
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
 
   if (!issueId) {
     return jsonError("Issue identifier is required");
@@ -167,12 +173,17 @@ export async function updateGithubEstimateController(
 }
 
 export async function getGithubReposController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
+  const body = await request.json<{
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  }>();
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -203,13 +214,19 @@ export async function getGithubReposController(
 }
 
 export async function getGithubMilestonesController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
-  const repository = url.searchParams.get("repo");
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
+  const body = await request.json<{
+    repo?: string;
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+  }>();
+  const repository = body?.repo;
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
 
   if (!repository) {
     return jsonError("Repository is required");
@@ -246,19 +263,27 @@ export async function getGithubMilestonesController(
 }
 
 export async function getGithubIssuesController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
-  const repository = url.searchParams.get("repo");
-  const milestoneParam = url.searchParams.get("milestoneNumber");
-  const milestoneTitle = url.searchParams.get("milestoneTitle");
-  const search = url.searchParams.get("query");
-  const roomKey = url.searchParams.get("roomKey");
-  const userName = url.searchParams.get("userName");
-  const sessionToken = url.searchParams.get("sessionToken");
-  const limitParam = url.searchParams.get("limit");
-  const limit = limitParam ? Number(limitParam) : null;
-  const milestoneNumber = milestoneParam ? Number(milestoneParam) : null;
+  const body = await request.json<{
+    repo?: string;
+    milestoneNumber?: number;
+    milestoneTitle?: string;
+    query?: string;
+    roomKey?: string;
+    userName?: string;
+    sessionToken?: string;
+    limit?: number;
+  }>();
+  const repository = body?.repo;
+  const milestoneNumber = body?.milestoneNumber ?? null;
+  const milestoneTitle = body?.milestoneTitle ?? null;
+  const search = body?.query ?? null;
+  const roomKey = body?.roomKey;
+  const userName = body?.userName;
+  const sessionToken = body?.sessionToken;
+  const limit = body?.limit ?? null;
 
   if (!repository) {
     return jsonError("Repository is required");
@@ -266,14 +291,6 @@ export async function getGithubIssuesController(
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
-  }
-
-  if (limitParam && Number.isNaN(limit)) {
-    return jsonError("Limit must be a number");
-  }
-
-  if (milestoneParam && Number.isNaN(milestoneNumber)) {
-    return jsonError("Milestone number must be a number");
   }
 
   try {

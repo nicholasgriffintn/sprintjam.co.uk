@@ -110,20 +110,20 @@ async function handleApiRoutes(
     return updateRoomSettingsController(request, env);
   }
 
-  if (path === "jira/ticket" && method === "GET") {
-    return getJiraTicketController(url, env);
+  if (path === "jira/ticket" && method === "POST") {
+    return getJiraTicketController(request, env);
   }
 
-  if (path === "jira/boards" && method === "GET") {
-    return getJiraBoardsController(url, env);
+  if (path === "jira/boards" && method === "POST") {
+    return getJiraBoardsController(request, env);
   }
 
-  if (path === "jira/sprints" && method === "GET") {
-    return getJiraSprintsController(url, env);
+  if (path === "jira/sprints" && method === "POST") {
+    return getJiraSprintsController(request, env);
   }
 
-  if (path === "jira/issues" && method === "GET") {
-    return getJiraIssuesController(url, env);
+  if (path === "jira/issues" && method === "POST") {
+    return getJiraIssuesController(request, env);
   }
 
   if (
@@ -145,12 +145,12 @@ async function handleApiRoutes(
     return handleJiraOAuthCallbackController(url, env);
   }
 
-  if (path === "jira/oauth/status" && method === "GET") {
-    return getJiraOAuthStatusController(url, env);
+  if (path === "jira/oauth/status" && method === "POST") {
+    return getJiraOAuthStatusController(request, env);
   }
 
-  if (path === "jira/oauth/fields" && method === "GET") {
-    return getJiraFieldsController(url, env);
+  if (path === "jira/oauth/fields" && method === "POST") {
+    return getJiraFieldsController(request, env);
   }
 
   if (path === "jira/oauth/fields" && method === "PUT") {
@@ -161,20 +161,20 @@ async function handleApiRoutes(
     return revokeJiraOAuthController(request, env);
   }
 
-  if (path === "linear/issue" && method === "GET") {
-    return getLinearIssueController(url, env);
+  if (path === "linear/issue" && method === "POST") {
+    return getLinearIssueController(request, env);
   }
 
-  if (path === "linear/teams" && method === "GET") {
-    return getLinearTeamsController(url, env);
+  if (path === "linear/teams" && method === "POST") {
+    return getLinearTeamsController(request, env);
   }
 
-  if (path === "linear/cycles" && method === "GET") {
-    return getLinearCyclesController(url, env);
+  if (path === "linear/cycles" && method === "POST") {
+    return getLinearCyclesController(request, env);
   }
 
-  if (path === "linear/issues" && method === "GET") {
-    return getLinearIssuesController(url, env);
+  if (path === "linear/issues" && method === "POST") {
+    return getLinearIssuesController(request, env);
   }
 
   if (
@@ -196,28 +196,28 @@ async function handleApiRoutes(
     return handleLinearOAuthCallbackController(url, env);
   }
 
-  if (path === "linear/oauth/status" && method === "GET") {
-    return getLinearOAuthStatusController(url, env);
+  if (path === "linear/oauth/status" && method === "POST") {
+    return getLinearOAuthStatusController(request, env);
   }
 
   if (path === "linear/oauth/revoke" && method === "DELETE") {
     return revokeLinearOAuthController(request, env);
   }
 
-  if (path === "github/issue" && method === "GET") {
-    return getGithubIssueController(url, env);
+  if (path === "github/issue" && method === "POST") {
+    return getGithubIssueController(request, env);
   }
 
-  if (path === "github/repos" && method === "GET") {
-    return getGithubReposController(url, env);
+  if (path === "github/repos" && method === "POST") {
+    return getGithubReposController(request, env);
   }
 
-  if (path === "github/milestones" && method === "GET") {
-    return getGithubMilestonesController(url, env);
+  if (path === "github/milestones" && method === "POST") {
+    return getGithubMilestonesController(request, env);
   }
 
-  if (path === "github/issues" && method === "GET") {
-    return getGithubIssuesController(url, env);
+  if (path === "github/issues" && method === "POST") {
+    return getGithubIssuesController(request, env);
   }
 
   if (
@@ -239,8 +239,8 @@ async function handleApiRoutes(
     return handleGithubOAuthCallbackController(url, env);
   }
 
-  if (path === "github/oauth/status" && method === "GET") {
-    return getGithubOAuthStatusController(url, env);
+  if (path === "github/oauth/status" && method === "POST") {
+    return getGithubOAuthStatusController(request, env);
   }
 
   if (path === "github/oauth/revoke" && method === "DELETE") {

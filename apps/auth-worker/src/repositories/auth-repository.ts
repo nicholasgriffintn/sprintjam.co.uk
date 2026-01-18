@@ -59,7 +59,7 @@ export class AuthRepository {
       return { success: false, error: "invalid" };
     }
 
-    if (link.attempts >= 5) {
+    if (link.attempts >= 3) {
       return { success: false, error: "locked" };
     }
 
@@ -116,6 +116,7 @@ export class AuthRepository {
     organisationId: number,
   ): Promise<number> {
     const domain = extractDomain(email);
+    const now = Date.now();
 
     await this.db
       .insert(users)
@@ -123,11 +124,17 @@ export class AuthRepository {
         email: email.toLowerCase(),
         emailDomain: domain,
         organisationId,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        lastLoginAt: Date.now(),
+        createdAt: now,
+        updatedAt: now,
+        lastLoginAt: now,
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: users.email,
+        set: {
+          lastLoginAt: now,
+          updatedAt: now,
+        },
+      });
 
     const existing = await this.db
       .select()
@@ -138,11 +145,6 @@ export class AuthRepository {
     if (!existing) {
       throw new Error("Failed to create or retrieve user");
     }
-
-    await this.db
-      .update(users)
-      .set({ lastLoginAt: Date.now(), updatedAt: Date.now() })
-      .where(eq(users.id, existing.id));
 
     return existing.id;
   }

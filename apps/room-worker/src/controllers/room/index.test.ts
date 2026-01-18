@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createInitialRoomData } from '@sprintjam/utils';
-import { hashPasscode } from '@sprintjam/utils';
-import type { PasscodeHashPayload, RoomData } from '@sprintjam/types';
+import { createInitialRoomData } from "@sprintjam/utils";
+import { hashPasscode } from "@sprintjam/utils";
+import type { PasscodeHashPayload, RoomData } from "@sprintjam/types";
 
 import { handleHttpRequest } from ".";
-import type { PlanningRoomHttpContext } from '.';
+import type { PlanningRoomHttpContext } from ".";
 
 type TokenMap = Map<string, string>;
 
@@ -78,8 +78,6 @@ const jsonRequest = (
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
-
-const queryRequest = (path: string) => new Request(`https://dummy${path}`);
 
 describe("planning-room-http join flow", () => {
   let baseRoom: RoomData;
@@ -326,25 +324,27 @@ describe("planning-room-http permissions and state updates", () => {
 
     ctx.repository.getJiraOAuthCredentials = vi.fn().mockResolvedValue({
       roomKey: baseRoom.key,
-      accessToken: 'token',
+      accessToken: "token",
       refreshToken: null,
-      tokenType: 'Bearer',
+      tokenType: "Bearer",
       expiresAt: 123,
-      scope: 'read:jira',
-      jiraDomain: 'example.atlassian.net',
-      jiraCloudId: 'cloud',
-      jiraUserId: 'user',
-      jiraUserEmail: 'alice@test.sprintjam.co.uk',
-      storyPointsField: 'customfield_100',
+      scope: "read:jira",
+      jiraDomain: "example.atlassian.net",
+      jiraCloudId: "cloud",
+      jiraUserId: "user",
+      jiraUserEmail: "alice@test.sprintjam.co.uk",
+      storyPointsField: "customfield_100",
       sprintField: null,
-      authorizedBy: 'alice',
+      authorizedBy: "alice",
     });
 
     const response = (await handleHttpRequest(
       ctx,
-      queryRequest(
-        `/jira/oauth/status?roomKey=${baseRoom.key}&userName=Alice&sessionToken=valid`,
-      ),
+      jsonRequest("/jira/oauth/status", "POST", {
+        roomKey: baseRoom.key,
+        userName: "Alice",
+        sessionToken: "valid",
+      }),
     )) as Response;
 
     expect(response.status).toBe(200);
@@ -358,7 +358,7 @@ describe("planning-room-http permissions and state updates", () => {
 
     const response = (await handleHttpRequest(
       ctx,
-      queryRequest(`/jira/oauth/status`),
+      jsonRequest("/jira/oauth/status", "POST"),
     )) as Response;
 
     expect(response.status).toBe(400);
