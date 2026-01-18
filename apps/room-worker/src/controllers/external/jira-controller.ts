@@ -11,20 +11,15 @@ import {
   fetchJiraTicket,
   updateJiraStoryPoints,
 } from '@sprintjam/services';
-import { jsonError, getRoomStub } from '@sprintjam/utils';
+import { getRoomStub } from '@sprintjam/utils';
 
-function jsonResponse(payload: unknown, status = 200): CfResponse {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  }) as unknown as CfResponse;
-}
+import { jsonError, jsonResponse } from '../../lib/response';
 
 async function validateSession(
   env: RoomWorkerEnv,
   roomKey: string,
   userName: string,
-  sessionToken?: string | null
+  sessionToken?: string | null,
 ) {
   if (!sessionToken) {
     throw new Error('Missing session token');
@@ -36,7 +31,7 @@ async function validateSession(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: userName, sessionToken }),
-    }) as unknown as CfRequest
+    }) as unknown as CfRequest,
   );
 
   if (!response.ok) {
@@ -52,12 +47,12 @@ async function getJiraCredentials(env: RoomWorkerEnv, roomKey: string) {
   const credentialsResponse = await roomObject.fetch(
     new Request('https://internal/jira/oauth/credentials', {
       method: 'GET',
-    }) as unknown as CfRequest
+    }) as unknown as CfRequest,
   );
 
   if (!credentialsResponse.ok) {
     throw new Error(
-      'Jira not connected. Please connect your Jira account in settings.'
+      'Jira not connected. Please connect your Jira account in settings.',
     );
   }
 
@@ -86,24 +81,28 @@ async function getJiraCredentials(env: RoomWorkerEnv, roomKey: string) {
 }
 
 function createTokenRefreshHandler(roomObject: ReturnType<typeof getRoomStub>) {
-  return async (accessToken: string, refreshToken: string, expiresAt: number) => {
+  return async (
+    accessToken: string,
+    refreshToken: string,
+    expiresAt: number,
+  ) => {
     const response = await roomObject.fetch(
-      new Request("https://internal/jira/oauth/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      new Request('https://internal/jira/oauth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
       }) as unknown as CfRequest,
     );
 
     if (!response.ok) {
-      throw new Error("Failed to persist Jira token refresh.");
+      throw new Error('Failed to persist Jira token refresh.');
     }
   };
 }
 
 export async function getJiraTicketController(
   url: URL,
-  env: RoomWorkerEnv
+  env: RoomWorkerEnv,
 ): Promise<CfResponse> {
   const ticketId = url.searchParams.get('ticketId');
   const roomKey = url.searchParams.get('roomKey');
@@ -136,7 +135,7 @@ export async function getJiraTicketController(
       ticketId,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     return jsonResponse({ ticket });
@@ -154,7 +153,7 @@ export async function getJiraTicketController(
 export async function updateJiraStoryPointsController(
   ticketId: string,
   request: CfRequest,
-  env: RoomWorkerEnv
+  env: RoomWorkerEnv,
 ): Promise<CfResponse> {
   const body = await request.json<{
     storyPoints?: number;
@@ -195,7 +194,7 @@ export async function updateJiraStoryPointsController(
       ticketId,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     if (!currentTicket) {
@@ -210,7 +209,7 @@ export async function updateJiraStoryPointsController(
           `SprintJam decision note: ${note}`,
           onTokenRefresh,
           clientId,
-          clientSecret
+          clientSecret,
         );
       }
       return jsonResponse({ ticket: currentTicket });
@@ -223,7 +222,7 @@ export async function updateJiraStoryPointsController(
       currentTicket,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     if (note) {
@@ -233,7 +232,7 @@ export async function updateJiraStoryPointsController(
         `SprintJam decision note: ${note}`,
         onTokenRefresh,
         clientId,
-        clientSecret
+        clientSecret,
       );
     }
 
@@ -253,7 +252,7 @@ export async function updateJiraStoryPointsController(
 
 export async function getJiraBoardsController(
   url: URL,
-  env: RoomWorkerEnv
+  env: RoomWorkerEnv,
 ): Promise<CfResponse> {
   const roomKey = url.searchParams.get('roomKey');
   const userName = url.searchParams.get('userName');
@@ -279,7 +278,7 @@ export async function getJiraBoardsController(
       credentials,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     return jsonResponse({ boards });
@@ -296,7 +295,7 @@ export async function getJiraBoardsController(
 
 export async function getJiraSprintsController(
   url: URL,
-  env: RoomWorkerEnv
+  env: RoomWorkerEnv,
 ): Promise<CfResponse> {
   const boardId = url.searchParams.get('boardId');
   const roomKey = url.searchParams.get('roomKey');
@@ -328,7 +327,7 @@ export async function getJiraSprintsController(
       boardId,
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     return jsonResponse({ sprints });
@@ -345,7 +344,7 @@ export async function getJiraSprintsController(
 
 export async function getJiraIssuesController(
   url: URL,
-  env: RoomWorkerEnv
+  env: RoomWorkerEnv,
 ): Promise<CfResponse> {
   const boardId = url.searchParams.get('boardId');
   const sprintId = url.searchParams.get('sprintId');
@@ -386,7 +385,7 @@ export async function getJiraIssuesController(
       { sprintId, limit, search },
       onTokenRefresh,
       clientId,
-      clientSecret
+      clientSecret,
     );
 
     return jsonResponse({ tickets });

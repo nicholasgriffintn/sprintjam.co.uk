@@ -1,23 +1,23 @@
 import type {
   Request as CfRequest,
   Response as CfResponse,
-} from '@cloudflare/workers-types';
-import { createGithubIssue } from '@sprintjam/services';
-import type { RoomWorkerEnv } from '@sprintjam/types';
-import { createJsonResponse, jsonError } from '@sprintjam/utils';
+} from "@cloudflare/workers-types";
+import type { RoomWorkerEnv } from "@sprintjam/types";
+import { createGithubIssue } from "@sprintjam/services";
 import {
   FEEDBACK_GITHUB_OWNER,
   FEEDBACK_GITHUB_REPO,
   FEEDBACK_GITHUB_DEFAULT_LABELS,
-} from '@sprintjam/utils/constants';
+} from "@sprintjam/utils/constants";
+import { jsonError, jsonResponse } from "../../lib/response";
 
 const ALLOWED_FEEDBACK_LABELS = new Set([
-  'bug',
-  'enhancement',
-  'question',
-  'ui-ux',
-  'performance',
-  'docs',
+  "bug",
+  "enhancement",
+  "question",
+  "ui-ux",
+  "performance",
+  "docs",
 ]);
 
 function normalize(label: string): string {
@@ -26,7 +26,7 @@ function normalize(label: string): string {
 
 export async function submitFeedbackController(
   request: CfRequest,
-  env: RoomWorkerEnv
+  env: RoomWorkerEnv,
 ): Promise<CfResponse> {
   let body: {
     title?: string;
@@ -39,21 +39,21 @@ export async function submitFeedbackController(
   try {
     body = await request.json();
   } catch {
-    return jsonError('Invalid JSON body');
+    return jsonError("Invalid JSON body");
   }
 
-  const title = typeof body.title === 'string' ? body.title.trim() : '';
+  const title = typeof body.title === "string" ? body.title.trim() : "";
   const description =
-    typeof body.description === 'string' ? body.description.trim() : '';
-  const email = typeof body.email === 'string' ? body.email.trim() : '';
-  const pageUrl = typeof body.pageUrl === 'string' ? body.pageUrl.trim() : '';
+    typeof body.description === "string" ? body.description.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const pageUrl = typeof body.pageUrl === "string" ? body.pageUrl.trim() : "";
 
   if (!title) {
-    return jsonError('Title is required');
+    return jsonError("Title is required");
   }
 
   if (!description) {
-    return jsonError('Description is required');
+    return jsonError("Description is required");
   }
   const baseLabels = FEEDBACK_GITHUB_DEFAULT_LABELS;
 
@@ -64,21 +64,21 @@ export async function submitFeedbackController(
 
   const rawLabels = Array.isArray(body.labels)
     ? body.labels
-    : typeof body.labels === 'string'
+    : typeof body.labels === "string"
       ? [body.labels]
       : [];
 
   const providedLabels = rawLabels
-    .filter((label): label is string => typeof label === 'string')
+    .filter((label): label is string => typeof label === "string")
     .map((label) => label.trim())
     .filter(Boolean);
 
   const sanitizedProvided = providedLabels.filter((label) =>
-    allowedLabels.has(normalize(label))
+    allowedLabels.has(normalize(label)),
   );
 
   if (sanitizedProvided.length === 0) {
-    return jsonError('At least one valid label is required');
+    return jsonError("At least one valid label is required");
   }
 
   const labelMap = new Map<string, string>();
@@ -95,15 +95,15 @@ export async function submitFeedbackController(
   const repo = FEEDBACK_GITHUB_REPO;
 
   if (!accessToken) {
-    return jsonError('Feedback submissions are temporarily unavailable', 503);
+    return jsonError("Feedback submissions are temporarily unavailable", 503);
   }
 
   const details: string[] = [];
   details.push(description);
-  details.push('');
-  details.push('---');
-  details.push('Submitted via SprintJam feedback form.');
-  details.push(`Contact: ${email || 'not provided'}`);
+  details.push("");
+  details.push("---");
+  details.push("Submitted via SprintJam feedback form.");
+  details.push(`Contact: ${email || "not provided"}`);
   if (pageUrl) {
     details.push(`Page: ${pageUrl}`);
   }
@@ -114,16 +114,16 @@ export async function submitFeedbackController(
       owner,
       repo,
       title,
-      body: details.join('\n'),
+      body: details.join("\n"),
       labels,
     });
 
-    return createJsonResponse({ issue }, 201);
+    return jsonResponse({ issue }, 201);
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
-        : 'Failed to submit feedback to GitHub';
+        : "Failed to submit feedback to GitHub";
     return jsonError(message, 500);
   }
 }
