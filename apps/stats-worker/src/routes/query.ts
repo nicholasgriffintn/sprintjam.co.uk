@@ -15,6 +15,7 @@ import {
   type AuthResult,
 } from "../lib/auth";
 import { errorResponse, successResponse } from "../lib/response";
+import { parsePagination } from '../lib/pagination';
 
 function getAuthError(code: "unauthorized" | "expired"): string {
   return code === "unauthorized" ? "Unauthorized" : "Session expired";
@@ -26,7 +27,7 @@ export async function getRoomStatsController(
   roomKey: string,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ("status" in authResult && authResult.status === "error") {
+  if (isAuthError(authResult)) {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -57,7 +58,7 @@ export async function getUserRoomStatsController(
   userName: string,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ("status" in authResult && authResult.status === "error") {
+  if (isAuthError(authResult)) {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -86,7 +87,7 @@ export async function getBatchRoomStatsController(
   env: StatsWorkerEnv,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ("status" in authResult && authResult.status === "error") {
+  if (isAuthError(authResult)) {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -130,11 +131,10 @@ export async function getTeamStatsController(
   }
 
   const url = new URL(request.url);
-  const limit = parseInt(url.searchParams.get("limit") || "50", 10);
-  const offset = parseInt(url.searchParams.get("offset") || "0", 10);
+  const pagination = parsePagination(url, { defaultLimit: 50 });
 
   const repo = new StatsRepository(env.DB);
-  const stats = await repo.getTeamStats(teamId, { limit, offset });
+  const stats = await repo.getTeamStats(teamId, pagination);
 
   if (!stats) {
     return errorResponse("Team stats not found", 404);
@@ -159,10 +159,12 @@ export async function getTeamInsightsController(
   }
 
   const url = new URL(request.url);
-  const limit = parseInt(url.searchParams.get("limit") || "6", 10);
+  const pagination = parsePagination(url, { defaultLimit: 6 });
 
   const repo = new StatsRepository(env.DB);
-  const insights = await repo.getTeamInsights(teamId, { limit });
+  const insights = await repo.getTeamInsights(teamId, {
+    limit: pagination.limit,
+  });
 
   if (!insights) {
     return successResponse(null, true);
@@ -176,7 +178,7 @@ export async function getWorkspaceInsightsController(
   env: StatsWorkerEnv,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ("status" in authResult && authResult.status === "error") {
+  if (isAuthError(authResult)) {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -188,19 +190,13 @@ export async function getWorkspaceInsightsController(
   }
 
   const url = new URL(request.url);
-  const sessionsLimit = parseInt(
-    url.searchParams.get("sessionsLimit") || "20",
-    10,
-  );
-  const contributorsLimit = parseInt(
-    url.searchParams.get("contributorsLimit") || "10",
-    10,
-  );
+  const sessionsPagination = parsePagination(url, { defaultLimit: 20 });
+  const contributorsPagination = parsePagination(url, { defaultLimit: 10 });
 
   const repo = new StatsRepository(env.DB);
   const insights = await repo.getWorkspaceInsights(teamIds, {
-    sessionsLimit,
-    contributorsLimit,
+    sessionsLimit: sessionsPagination.limit,
+    contributorsLimit: contributorsPagination.limit,
   });
 
   return successResponse(insights, true);
@@ -212,7 +208,7 @@ export async function getSessionStatsController(
   roomKey: string,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ("status" in authResult && authResult.status === "error") {
+  if (isAuthError(authResult)) {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
@@ -241,7 +237,7 @@ export async function getBatchSessionStatsController(
   env: StatsWorkerEnv,
 ): Promise<CfResponse> {
   const authResult = await authenticateRequest(request, env.DB);
-  if ("status" in authResult && authResult.status === "error") {
+  if (isAuthError(authResult)) {
     return errorResponse(getAuthError(authResult.code), 401);
   }
 

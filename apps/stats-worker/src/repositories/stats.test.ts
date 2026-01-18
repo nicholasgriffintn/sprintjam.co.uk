@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   roundVotes,
   voteRecords,
+  roomStats,
   teamSessions,
 } from "@sprintjam/db/d1/schemas";
 import { drizzle } from "drizzle-orm/d1";
@@ -71,6 +72,11 @@ describe("StatsRepository ingestRound", () => {
         const values = vi.fn(() => ({ onConflictDoNothing }));
         return { values };
       }
+      if (table === roomStats) {
+        const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined);
+        const values = vi.fn(() => ({ onConflictDoUpdate }));
+        return { values };
+      }
       throw new Error("Unexpected insert table");
     });
 
@@ -87,7 +93,7 @@ describe("StatsRepository ingestRound", () => {
 
     expect(insert).toHaveBeenCalledWith(roundVotes);
     expect(insert).toHaveBeenCalledWith(voteRecords);
-    expect(mockD1.batch).toHaveBeenCalled();
+    expect(insert).toHaveBeenCalledWith(roomStats);
   });
 });
 
