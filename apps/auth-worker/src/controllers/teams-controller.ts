@@ -3,75 +3,59 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 import type { AuthWorkerEnv } from "@sprintjam/types";
+import { jsonError } from '@sprintjam/utils';
+
+import { authenticateRequest, isAuthError, type AuthResult } from '../lib/auth';
 import {
-  jsonError,
-  createJsonResponse,
-  hashToken,
-  getSessionTokenFromRequest,
-} from "@sprintjam/utils";
+  jsonResponse,
+  unauthorizedResponse,
+  forbiddenResponse,
+  notFoundResponse,
+} from '../lib/response';
 
-import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
-
-async function authenticateRequest(
+async function getAuthOrError(
   request: CfRequest,
-  env: AuthWorkerEnv
-): Promise<
-  | { userId: number; email: string; repo: WorkspaceAuthRepository }
-  | { status: 'error'; code: string }
-> {
-  const token = getSessionTokenFromRequest(request);
-  if (!token) {
-    return { status: 'error', code: 'unauthorized' };
+  env: AuthWorkerEnv,
+): Promise<{ result: AuthResult } | { response: CfResponse }> {
+  const result = await authenticateRequest(request, env.DB);
+
+  if (isAuthError(result)) {
+    if (result.code === 'unauthorized') {
+      return { response: unauthorizedResponse() };
+    }
+    return { response: unauthorizedResponse('Session expired') };
   }
 
-  const tokenHash = await hashToken(token);
-  const repo = new WorkspaceAuthRepository(env.DB);
-
-  const session = await repo.validateSession(tokenHash);
-  if (!session) {
-    return { status: 'error', code: 'expired' };
-  }
-
-  return { userId: session.userId, email: session.email, repo };
+  return { result };
 }
 
 export async function listTeamsController(
   request: CfRequest,
-  env: AuthWorkerEnv
+  env: AuthWorkerEnv,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const teams = await repo.getUserTeams(userId);
 
-  return createJsonResponse({ teams });
+  return jsonResponse({ teams });
 }
 
 export async function createTeamController(
   request: CfRequest,
-  env: AuthWorkerEnv
+  env: AuthWorkerEnv,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const body = await request.json<{ name?: string }>();
   const name = body?.name?.trim();
 
@@ -85,71 +69,61 @@ export async function createTeamController(
 
   const user = await repo.getUserById(userId);
   if (!user) {
-    return jsonError('User not found', 404);
+    return notFoundResponse('User not found');
   }
 
   const teamId = await repo.createTeam(user.organisationId, name, userId);
   const team = await repo.getTeamById(teamId);
 
-  return createJsonResponse({ team }, 201);
+  return jsonResponse({ team }, 201);
 }
 
 export async function getTeamController(
   request: CfRequest,
   env: AuthWorkerEnv,
-  teamId: number
+  teamId: number,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return jsonError('Team not found', 404);
+    return notFoundResponse('Team not found');
   }
 
   const user = await repo.getUserById(userId);
   if (!user || user.organisationId !== team.organisationId) {
-    return jsonError('Access denied', 403);
+    return forbiddenResponse();
   }
 
-  return createJsonResponse({ team });
+  return jsonResponse({ team });
 }
 
 export async function updateTeamController(
   request: CfRequest,
   env: AuthWorkerEnv,
-  teamId: number
+  teamId: number,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return jsonError('Team not found', 404);
+    return notFoundResponse('Team not found');
   }
 
   if (team.ownerId !== userId) {
-    return jsonError('Only the team owner can update the team', 403);
+    return forbiddenResponse('Only the team owner can update the team');
   }
 
   const body = await request.json<{ name?: string }>();
@@ -166,100 +140,85 @@ export async function updateTeamController(
   await repo.updateTeam(teamId, { name });
   const updatedTeam = await repo.getTeamById(teamId);
 
-  return createJsonResponse({ team: updatedTeam });
+  return jsonResponse({ team: updatedTeam });
 }
 
 export async function deleteTeamController(
   request: CfRequest,
   env: AuthWorkerEnv,
-  teamId: number
+  teamId: number,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return jsonError('Team not found', 404);
+    return notFoundResponse('Team not found');
   }
 
   if (team.ownerId !== userId) {
-    return jsonError('Only the team owner can delete the team', 403);
+    return forbiddenResponse('Only the team owner can delete the team');
   }
 
   await repo.deleteTeam(teamId);
 
-  return createJsonResponse({ message: 'Team deleted successfully' });
+  return jsonResponse({ message: 'Team deleted successfully' });
 }
 
 export async function listTeamSessionsController(
   request: CfRequest,
   env: AuthWorkerEnv,
-  teamId: number
+  teamId: number,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return jsonError('Team not found', 404);
+    return notFoundResponse('Team not found');
   }
 
   const isOwner = await repo.isTeamOwner(teamId, userId);
   if (!isOwner) {
-    return jsonError('Only the team owner can access team sessions', 403);
+    return forbiddenResponse('Only the team owner can access team sessions');
   }
 
   const sessions = await repo.getTeamSessions(teamId);
 
-  return createJsonResponse({ sessions });
+  return jsonResponse({ sessions });
 }
 
 export async function createTeamSessionController(
   request: CfRequest,
   env: AuthWorkerEnv,
-  teamId: number
+  teamId: number,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return jsonError('Team not found', 404);
+    return notFoundResponse('Team not found');
   }
 
   const isOwner = await repo.isTeamOwner(teamId, userId);
   if (!isOwner) {
-    return jsonError('Only the team owner can create team sessions', 403);
+    return forbiddenResponse('Only the team owner can access team sessions');
   }
 
   const body = await request.json<{
@@ -291,68 +250,58 @@ export async function createTeamSessionController(
     roomKey,
     name,
     userId,
-    body?.metadata
+    body?.metadata,
   );
 
   const session = await repo.getTeamSessionById(sessionId);
 
-  return createJsonResponse({ session }, 201);
+  return jsonResponse({ session }, 201);
 }
 
 export async function getTeamSessionController(
   request: CfRequest,
   env: AuthWorkerEnv,
   teamId: number,
-  sessionId: number
+  sessionId: number,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return jsonError('Team not found', 404);
+    return notFoundResponse('Team not found');
   }
 
   const isOwner = await repo.isTeamOwner(teamId, userId);
   if (!isOwner) {
-    return jsonError('Only the team owner can access team sessions', 403);
+    return forbiddenResponse('Only the team owner can access team sessions');
   }
 
   const session = await repo.getTeamSessionById(sessionId);
 
   if (!session || session.teamId !== teamId) {
-    return jsonError('Session not found', 404);
+    return notFoundResponse('Session not found');
   }
 
-  return createJsonResponse({ session });
+  return jsonResponse({ session });
 }
 
 export async function completeSessionByRoomKeyController(
   request: CfRequest,
-  env: AuthWorkerEnv
+  env: AuthWorkerEnv,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const body = await request.json<{ roomKey?: string }>();
   const roomKey = body?.roomKey?.trim();
 
@@ -362,33 +311,28 @@ export async function completeSessionByRoomKeyController(
 
   const updatedSession = await repo.completeLatestSessionByRoomKey(
     roomKey,
-    userId
+    userId,
   );
 
   if (!updatedSession) {
-    return jsonError('Session not found', 404);
+    return notFoundResponse('Session not found');
   }
 
-  return createJsonResponse({ session: updatedSession });
+  return jsonResponse({ session: updatedSession });
 }
 
 export async function getWorkspaceStatsController(
   request: CfRequest,
-  env: AuthWorkerEnv
+  env: AuthWorkerEnv,
 ): Promise<CfResponse> {
-  const auth = await authenticateRequest(request, env);
+  const auth = await getAuthOrError(request, env);
 
-  if ('status' in auth) {
-    if (auth.code === 'unauthorized') {
-      return jsonError('Unauthorized', 401);
-    } else if (auth.code === 'expired') {
-      return jsonError('Session expired', 401);
-    }
-    return jsonError('Unknown authentication error', 401);
+  if ('response' in auth) {
+    return auth.response;
   }
 
-  const { userId, repo } = auth;
+  const { userId, repo } = auth.result;
   const stats = await repo.getWorkspaceStats(userId);
 
-  return createJsonResponse(stats);
+  return jsonResponse(stats);
 }

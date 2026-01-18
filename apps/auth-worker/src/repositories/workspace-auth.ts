@@ -1,531 +1,142 @@
-import { drizzle } from "drizzle-orm/d1";
-import { eq, desc, inArray, sql, lt } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
-import {
-  allowedDomains,
-  organisations,
-  users,
-  magicLinks,
-  workspaceSessions,
-  teams,
-  teamSessions,
-} from "@sprintjam/db";
-import * as schema from "@sprintjam/db/d1/schemas";
-import { extractDomain } from "@sprintjam/utils";
+
+import { AuthRepository } from "./auth-repository";
+import { TeamRepository } from "./team-repository";
 
 export class WorkspaceAuthRepository {
-  private db: ReturnType<typeof drizzle>;
+  private auth: AuthRepository;
+  private teams: TeamRepository;
 
   constructor(d1: D1Database) {
-    this.db = drizzle(d1, { schema });
+    this.auth = new AuthRepository(d1);
+    this.teams = new TeamRepository(d1);
   }
 
-  async isDomainAllowed(domain: string): Promise<boolean> {
-    const result = await this.db
-      .select()
-      .from(allowedDomains)
-      .where(eq(allowedDomains.domain, domain.toLowerCase()))
-      .get();
-
-    return !!result;
+  isDomainAllowed(domain: string): Promise<boolean> {
+    return this.auth.isDomainAllowed(domain);
   }
 
-  async createMagicLink(
+  createMagicLink(
     email: string,
     tokenHash: string,
     expiresAt: number,
   ): Promise<void> {
-    await this.db.insert(magicLinks).values({
-      email: email.toLowerCase(),
-      tokenHash,
-      expiresAt,
-      createdAt: Date.now(),
-    });
+    return this.auth.createMagicLink(email, tokenHash, expiresAt);
   }
 
-  async validateVerificationCode(
+  validateVerificationCode(
     email: string,
     codeHash: string,
   ): Promise<
     | { success: true; email: string }
     | { success: false; error: "invalid" | "expired" | "used" | "locked" }
   > {
-    const link = await this.db
-      .select()
-      .from(magicLinks)
-      .where(eq(magicLinks.email, email.toLowerCase()))
-      .orderBy(desc(magicLinks.createdAt))
-      .get();
-
-    if (!link) {
-      return { success: false, error: "invalid" };
-    }
-
-    if (link.attempts >= 5) {
-      return { success: false, error: "locked" };
-    }
-
-    if (link.expiresAt < Date.now()) {
-      return { success: false, error: "expired" };
-    }
-
-    if (link.usedAt) {
-      return { success: false, error: "used" };
-    }
-
-    if (link.tokenHash !== codeHash) {
-      await this.db
-        .update(magicLinks)
-        .set({ attempts: link.attempts + 1 })
-        .where(eq(magicLinks.id, link.id));
-      return { success: false, error: "invalid" };
-    }
-
-    await this.db
-      .update(magicLinks)
-      .set({ usedAt: Date.now() })
-      .where(eq(magicLinks.id, link.id));
-
-    return { success: true, email: link.email };
+    return this.auth.validateVerificationCode(email, codeHash);
   }
 
-  async getOrCreateOrganisation(domain: string): Promise<number> {
-    await this.db
-      .insert(organisations)
-      .values({
-        domain: domain.toLowerCase(),
-        name: domain,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      .onConflictDoNothing();
-
-    const result = await this.db
-      .select()
-      .from(organisations)
-      .where(eq(organisations.domain, domain.toLowerCase()))
-      .get();
-
-    if (!result) {
-      throw new Error("Failed to create or retrieve organisation");
-    }
-
-    return result.id;
+  getOrCreateOrganisation(domain: string): Promise<number> {
+    return this.auth.getOrCreateOrganisation(domain);
   }
 
-  async getOrCreateUser(
-    email: string,
-    organisationId: number,
-  ): Promise<number> {
-    const domain = extractDomain(email);
-
-    await this.db
-      .insert(users)
-      .values({
-        email: email.toLowerCase(),
-        emailDomain: domain,
-        organisationId,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        lastLoginAt: Date.now(),
-      })
-      .onConflictDoNothing();
-
-    const existing = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.email, email.toLowerCase()))
-      .get();
-
-    if (!existing) {
-      throw new Error("Failed to create or retrieve user");
-    }
-
-    await this.db
-      .update(users)
-      .set({ lastLoginAt: Date.now(), updatedAt: Date.now() })
-      .where(eq(users.id, existing.id));
-
-    return existing.id;
+  getOrCreateUser(email: string, organisationId: number): Promise<number> {
+    return this.auth.getOrCreateUser(email, organisationId);
   }
 
-  async createSession(
+  createSession(
     userId: number,
     tokenHash: string,
     expiresAt: number,
   ): Promise<void> {
-    await this.db.insert(workspaceSessions).values({
-      userId,
-      tokenHash,
-      expiresAt,
-      createdAt: Date.now(),
-      lastUsedAt: Date.now(),
-    });
+    return this.auth.createSession(userId, tokenHash, expiresAt);
   }
 
-  async validateSession(
+  validateSession(
     tokenHash: string,
   ): Promise<{ userId: number; email: string } | null> {
-    const session = await this.db
-      .select({
-        userId: workspaceSessions.userId,
-        expiresAt: workspaceSessions.expiresAt,
-        email: users.email,
-      })
-      .from(workspaceSessions)
-      .innerJoin(users, eq(users.id, workspaceSessions.userId))
-      .where(eq(workspaceSessions.tokenHash, tokenHash))
-      .get();
-
-    if (!session || session.expiresAt < Date.now()) {
-      return null;
-    }
-
-    await this.db
-      .update(workspaceSessions)
-      .set({ lastUsedAt: Date.now() })
-      .where(eq(workspaceSessions.tokenHash, tokenHash));
-
-    return {
-      userId: session.userId,
-      email: session.email,
-    };
+    return this.auth.validateSession(tokenHash);
   }
 
-  async invalidateSession(tokenHash: string): Promise<void> {
-    await this.db
-      .delete(workspaceSessions)
-      .where(eq(workspaceSessions.tokenHash, tokenHash));
+  invalidateSession(tokenHash: string): Promise<void> {
+    return this.auth.invalidateSession(tokenHash);
   }
 
-  async getUserByEmail(email: string) {
-    return await this.db
-      .select({
-        id: users.id,
-        email: users.email,
-        emailDomain: users.emailDomain,
-        organisationId: users.organisationId,
-        name: users.name,
-      })
-      .from(users)
-      .where(eq(users.email, email.toLowerCase()))
-      .get();
+  getUserByEmail(email: string) {
+    return this.auth.getUserByEmail(email);
   }
 
-  async getUserTeams(userId: number) {
-    return await this.db
-      .select({
-        id: teams.id,
-        name: teams.name,
-        organisationId: teams.organisationId,
-        ownerId: teams.ownerId,
-        createdAt: teams.createdAt,
-      })
-      .from(teams)
-      .where(eq(teams.ownerId, userId));
+  getUserById(userId: number) {
+    return this.auth.getUserById(userId);
   }
 
-  async createTeam(
+  getUserTeams(userId: number) {
+    return this.teams.getUserTeams(userId);
+  }
+
+  createTeam(
     organisationId: number,
     name: string,
     ownerId: number,
   ): Promise<number> {
-    const result = await this.db
-      .insert(teams)
-      .values({
-        organisationId,
-        name,
-        ownerId,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      })
-      .returning({ id: teams.id });
-
-    return result[0].id;
+    return this.teams.createTeam(organisationId, name, ownerId);
   }
 
-  async getTeamById(teamId: number) {
-    return await this.db
-      .select({
-        id: teams.id,
-        name: teams.name,
-        organisationId: teams.organisationId,
-        ownerId: teams.ownerId,
-        createdAt: teams.createdAt,
-        updatedAt: teams.updatedAt,
-      })
-      .from(teams)
-      .where(eq(teams.id, teamId))
-      .get();
+  getTeamById(teamId: number) {
+    return this.teams.getTeamById(teamId);
   }
 
-  async updateTeam(teamId: number, updates: { name?: string }): Promise<void> {
-    await this.db
-      .update(teams)
-      .set({
-        ...updates,
-        updatedAt: Date.now(),
-      })
-      .where(eq(teams.id, teamId));
+  updateTeam(teamId: number, updates: { name?: string }): Promise<void> {
+    return this.teams.updateTeam(teamId, updates);
   }
 
-  async deleteTeam(teamId: number): Promise<void> {
-    await this.db.delete(teamSessions).where(eq(teamSessions.teamId, teamId));
-
-    await this.db.delete(teams).where(eq(teams.id, teamId));
+  deleteTeam(teamId: number): Promise<void> {
+    return this.teams.deleteTeam(teamId);
   }
 
-  async isTeamOwner(teamId: number, userId: number): Promise<boolean> {
-    const team = await this.db
-      .select({ ownerId: teams.ownerId })
-      .from(teams)
-      .where(eq(teams.id, teamId))
-      .get();
-    return team?.ownerId === userId;
+  isTeamOwner(teamId: number, userId: number): Promise<boolean> {
+    return this.teams.isTeamOwner(teamId, userId);
   }
 
-  async isUserInOrganisation(
-    userId: number,
-    organisationId: number,
-  ): Promise<boolean> {
-    const user = await this.db
-      .select({ organisationId: users.organisationId })
-      .from(users)
-      .where(eq(users.id, userId))
-      .get();
-    return user?.organisationId === organisationId;
-  }
-
-  async createTeamSession(
+  createTeamSession(
     teamId: number,
     roomKey: string,
     name: string,
     createdById: number,
     metadata?: Record<string, unknown>,
   ): Promise<number> {
-    const result = await this.db
-      .insert(teamSessions)
-      .values({
-        teamId,
-        roomKey,
-        name,
-        createdById,
-        createdAt: Date.now(),
-        metadata: metadata ? JSON.stringify(metadata) : null,
-      })
-      .returning({ id: teamSessions.id });
-
-    return result[0].id;
+    return this.teams.createTeamSession(
+      teamId,
+      roomKey,
+      name,
+      createdById,
+      metadata,
+    );
   }
 
-  async getTeamSessions(teamId: number) {
-    return await this.db
-      .select({
-        id: teamSessions.id,
-        teamId: teamSessions.teamId,
-        roomKey: teamSessions.roomKey,
-        name: teamSessions.name,
-        createdById: teamSessions.createdById,
-        createdAt: teamSessions.createdAt,
-        completedAt: teamSessions.completedAt,
-        metadata: teamSessions.metadata,
-      })
-      .from(teamSessions)
-      .where(eq(teamSessions.teamId, teamId))
-      .orderBy(desc(teamSessions.createdAt));
+  getTeamSessions(teamId: number) {
+    return this.teams.getTeamSessions(teamId);
   }
 
-  async getTeamSessionById(sessionId: number) {
-    return await this.db
-      .select({
-        id: teamSessions.id,
-        teamId: teamSessions.teamId,
-        roomKey: teamSessions.roomKey,
-        name: teamSessions.name,
-        createdById: teamSessions.createdById,
-        createdAt: teamSessions.createdAt,
-        completedAt: teamSessions.completedAt,
-        metadata: teamSessions.metadata,
-      })
-      .from(teamSessions)
-      .where(eq(teamSessions.id, sessionId))
-      .get();
+  getTeamSessionById(sessionId: number) {
+    return this.teams.getTeamSessionById(sessionId);
   }
 
-  async completeTeamSession(sessionId: number): Promise<void> {
-    await this.db
-      .update(teamSessions)
-      .set({ completedAt: Date.now() })
-      .where(eq(teamSessions.id, sessionId));
+  completeTeamSession(sessionId: number): Promise<void> {
+    return this.teams.completeTeamSession(sessionId);
   }
 
-  async completeLatestSessionByRoomKey(roomKey: string, userId: number) {
-    const user = await this.getUserById(userId);
-    if (!user) {
-      return null;
-    }
-
-    const session = await this.db
-      .select({
-        id: teamSessions.id,
-        teamId: teamSessions.teamId,
-        roomKey: teamSessions.roomKey,
-        name: teamSessions.name,
-        createdById: teamSessions.createdById,
-        createdAt: teamSessions.createdAt,
-        completedAt: teamSessions.completedAt,
-        metadata: teamSessions.metadata,
-      })
-      .from(teamSessions)
-      .innerJoin(teams, eq(teamSessions.teamId, teams.id))
-      .where(
-        sql`${teamSessions.roomKey} = ${roomKey} AND ${teams.organisationId} = ${user.organisationId} AND ${teams.ownerId} = ${userId} AND ${teamSessions.completedAt} IS NULL`,
-      )
-      .orderBy(desc(teamSessions.createdAt))
-      .limit(1)
-      .get();
-
-    if (!session) {
-      return null;
-    }
-
-    await this.completeTeamSession(session.id);
-    return await this.getTeamSessionById(session.id);
+  completeLatestSessionByRoomKey(roomKey: string, userId: number) {
+    return this.teams.completeLatestSessionByRoomKey(roomKey, userId);
   }
 
-  async getWorkspaceStats(userId: number) {
-    const userTeams = await this.getUserTeams(userId);
-
-    if (userTeams.length === 0) {
-      return {
-        totalTeams: 0,
-        totalSessions: 0,
-        activeSessions: 0,
-        completedSessions: 0,
-        sessionTimeline: [],
-      };
-    }
-
-    const teamIds = userTeams.map((t) => t.id);
-
-    const sessions = await this.db
-      .select({
-        id: teamSessions.id,
-        createdAt: teamSessions.createdAt,
-        completedAt: teamSessions.completedAt,
-      })
-      .from(teamSessions)
-      .where(inArray(teamSessions.teamId, teamIds));
-
-    const totalSessions = sessions.length;
-    const activeSessions = sessions.filter((s) => !s.completedAt).length;
-    const completedSessions = sessions.filter((s) => !!s.completedAt).length;
-
-    const sessionTimeline = this.buildSessionTimeline(sessions);
-
-    return {
-      totalTeams: userTeams.length,
-      totalSessions,
-      activeSessions,
-      completedSessions,
-      sessionTimeline,
-    };
+  getWorkspaceStats(userId: number) {
+    return this.teams.getWorkspaceStats(userId);
   }
 
-  private buildSessionTimeline(
-    sessions: Array<{ createdAt: number; completedAt: number | null }>,
-  ) {
-    const now = Date.now();
-    const sixMonthsAgo = now - 6 * 30 * 24 * 60 * 60 * 1000;
-
-    const monthCounts = new Map<string, number>();
-
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(1);
-      date.setMonth(date.getMonth() - i);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      monthCounts.set(key, 0);
-    }
-
-    for (const session of sessions) {
-      if (session.createdAt >= sixMonthsAgo) {
-        const date = new Date(session.createdAt);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-        if (monthCounts.has(key)) {
-          monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
-        }
-      }
-    }
-
-    return Array.from(monthCounts.entries()).map(([period, count]) => {
-      const [year, month] = period.split("-");
-      const date = new Date(
-        Number.parseInt(year, 10),
-        Number.parseInt(month, 10) - 1,
-      );
-      return {
-        period: date.toLocaleString("default", { month: "short" }),
-        yearMonth: period,
-        count,
-      };
-    });
+  cleanupExpiredMagicLinks(): Promise<number> {
+    return this.auth.cleanupExpiredMagicLinks();
   }
 
-  async getUserById(userId: number) {
-    return await this.db
-      .select({
-        id: users.id,
-        email: users.email,
-        emailDomain: users.emailDomain,
-        organisationId: users.organisationId,
-        name: users.name,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .get();
-  }
-
-  async updateUserName(userId: number, name: string): Promise<void> {
-    await this.db
-      .update(users)
-      .set({ name, updatedAt: Date.now() })
-      .where(eq(users.id, userId));
-  }
-
-  async cleanupExpiredMagicLinks(): Promise<number> {
-    const expiredLinks = await this.db
-      .select({ id: magicLinks.id })
-      .from(magicLinks)
-      .where(lt(magicLinks.expiresAt, Date.now()))
-      .all();
-
-    if (expiredLinks.length === 0) {
-      return 0;
-    }
-
-    const ids = expiredLinks.map((link) => link.id);
-    await this.db.delete(magicLinks).where(inArray(magicLinks.id, ids));
-
-    return expiredLinks.length;
-  }
-
-  async cleanupExpiredSessions(): Promise<number> {
-    const expiredSessions = await this.db
-      .select({ tokenHash: workspaceSessions.tokenHash })
-      .from(workspaceSessions)
-      .where(lt(workspaceSessions.expiresAt, Date.now()))
-      .all();
-
-    if (expiredSessions.length === 0) {
-      return 0;
-    }
-
-    const tokenHashes = expiredSessions.map((s) => s.tokenHash);
-    await this.db
-      .delete(workspaceSessions)
-      .where(inArray(workspaceSessions.tokenHash, tokenHashes));
-
-    return expiredSessions.length;
+  cleanupExpiredSessions(): Promise<number> {
+    return this.auth.cleanupExpiredSessions();
   }
 }
