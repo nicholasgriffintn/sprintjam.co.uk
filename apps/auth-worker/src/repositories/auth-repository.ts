@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   allowedDomains,
@@ -466,10 +466,11 @@ export class AuthRepository {
   }
 
   async cleanupExpiredMagicLinks(): Promise<number> {
+    const now = Date.now();
     const expiredLinks = await this.db
       .select({ id: magicLinks.id })
       .from(magicLinks)
-      .where(eq(magicLinks.expiresAt, Date.now()))
+      .where(lt(magicLinks.expiresAt, now))
       .all();
 
     if (expiredLinks.length === 0) {
@@ -483,10 +484,11 @@ export class AuthRepository {
   }
 
   async cleanupExpiredSessions(): Promise<number> {
+    const now = Date.now();
     const expiredSessions = await this.db
       .select({ tokenHash: workspaceSessions.tokenHash })
       .from(workspaceSessions)
-      .where(eq(workspaceSessions.expiresAt, Date.now()))
+      .where(lt(workspaceSessions.expiresAt, now))
       .all();
 
     if (expiredSessions.length === 0) {
