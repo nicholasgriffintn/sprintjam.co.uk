@@ -1,16 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type {
   DurableObjectNamespace,
-  Fetcher,
   RateLimit,
   DurableObjectState,
   WebSocket as CfWebSocket,
 } from "@cloudflare/workers-types";
-import type { RoomWorkerEnv, RoomData } from '@sprintjam/types';
-import { generateSessionToken, createInitialRoomData } from '@sprintjam/utils';
-import { MIN_TIMER_DURATION_SECONDS } from '@sprintjam/utils/constants';
+import type { RoomWorkerEnv, RoomData } from "@sprintjam/types";
+import { generateSessionToken, createInitialRoomData } from "@sprintjam/utils";
+import { MIN_TIMER_DURATION_SECONDS } from "@sprintjam/utils/constants";
 
-import { PlanningRoom } from '.';
+import { PlanningRoom } from ".";
 
 const makeState = () => {
   const sqlStub = {
@@ -22,7 +21,7 @@ const makeState = () => {
       sql: sqlStub as any,
       transactionSync: vi.fn((fn: () => void) => fn()),
       transaction: vi.fn(async (fn: (txn: any) => void) =>
-        fn({ sql: sqlStub })
+        fn({ sql: sqlStub }),
       ),
       get: vi.fn(),
       put: vi.fn(),
@@ -38,7 +37,7 @@ type TestSocket = {
   close: ReturnType<typeof vi.fn>;
   addEventListener: (
     type: string,
-    handler: (msg: MessageEvent) => void
+    handler: (msg: MessageEvent) => void,
   ) => void;
 };
 
@@ -56,26 +55,27 @@ const makeSocketPair = () => {
   return { server, client: client as CfWebSocket };
 };
 
-describe('PlanningRoom WebSocket auth', () => {
+describe("PlanningRoom WebSocket auth", () => {
   let env: RoomWorkerEnv;
 
   beforeEach(() => {
     env = {
       PLANNING_ROOM: {} as DurableObjectNamespace,
       JOIN_RATE_LIMITER: {} as RateLimit,
-      TOKEN_ENCRYPTION_SECRET: 'test-secret',
+      TOKEN_ENCRYPTION_SECRET: "test-secret",
+      STATS_WORKER: {} as any,
     };
   });
 
-  it('rejects expired tokens with 4003 close', async () => {
+  it("rejects expired tokens with 4003 close", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const token = generateSessionToken();
 
     const storedRoom: RoomData = createInitialRoomData({
-      key: 'room-1',
-      users: ['alice'],
-      moderator: 'alice',
+      key: "room-1",
+      users: ["alice"],
+      moderator: "alice",
       connectedUsers: { alice: true },
     });
 
@@ -89,27 +89,27 @@ describe('PlanningRoom WebSocket auth', () => {
     const { server } = makeSocketPair();
     await room.handleSession(
       server as unknown as CfWebSocket,
-      'room-1',
-      'alice',
-      token
+      "room-1",
+      "alice",
+      token,
     );
 
     expect(server.accept).toHaveBeenCalled();
-    expect(server.close).toHaveBeenCalledWith(4003, 'Invalid session token');
+    expect(server.close).toHaveBeenCalledWith(4003, "Invalid session token");
     expect(
-      server.sent.some((msg) => msg.includes('Invalid or expired session'))
+      server.sent.some((msg) => msg.includes("Invalid or expired session")),
     ).toBe(true);
   });
 
-  it('closes existing sockets when a new session is issued for the same user (4004)', async () => {
+  it("closes existing sockets when a new session is issued for the same user (4004)", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const token1 = generateSessionToken();
 
     const storedRoom: RoomData = createInitialRoomData({
-      key: 'room-2',
-      users: ['bob'],
-      moderator: 'bob',
+      key: "room-2",
+      users: ["bob"],
+      moderator: "bob",
       connectedUsers: { bob: true },
     });
 
@@ -117,29 +117,29 @@ describe('PlanningRoom WebSocket auth', () => {
     room.broadcast = vi.fn();
     room.repository = {
       validateSessionToken: (u: string, t: string) =>
-        u.toLowerCase() === 'bob' && t === token1,
+        u.toLowerCase() === "bob" && t === token1,
       setUserConnection: vi.fn(),
     } as any;
 
     const { server: ws1 } = makeSocketPair();
     await room.handleSession(
       ws1 as unknown as CfWebSocket,
-      'room-2',
-      'bob',
-      token1
+      "room-2",
+      "bob",
+      token1,
     );
 
-    room.disconnectUserSessions('bob');
+    room.disconnectUserSessions("bob");
 
-    expect(ws1.close).toHaveBeenCalledWith(4004, 'Session superseded');
+    expect(ws1.close).toHaveBeenCalledWith(4004, "Session superseded");
   });
 
-  it('prunes broken sockets during broadcast', () => {
+  it("prunes broken sockets during broadcast", () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const badSocket = {
       send: vi.fn(() => {
-        throw new Error('boom');
+        throw new Error("boom");
       }),
       close: vi.fn(),
     } as unknown as CfWebSocket;
@@ -150,22 +150,22 @@ describe('PlanningRoom WebSocket auth', () => {
 
     room.sessions.set(badSocket, {
       webSocket: badSocket,
-      roomKey: 'r',
-      userName: 'u1',
+      roomKey: "r",
+      userName: "u1",
     });
     room.sessions.set(goodSocket, {
       webSocket: goodSocket,
-      roomKey: 'r',
-      userName: 'u2',
+      roomKey: "r",
+      userName: "u2",
     });
 
-    room.broadcast({ type: 'ping' });
+    room.broadcast({ type: "ping" });
 
     expect(room.sessions.has(badSocket)).toBe(false);
     expect(room.sessions.has(goodSocket)).toBe(true);
   });
 
-  it('skips blockConcurrencyWhile when requested', async () => {
+  it("skips blockConcurrencyWhile when requested", async () => {
     const blockSpy = vi.fn(async (fn: () => Promise<any>) => fn());
     const state = {
       ...makeState(),
@@ -174,12 +174,12 @@ describe('PlanningRoom WebSocket auth', () => {
     const room = new PlanningRoom(state as unknown as DurableObjectState, env);
     room.repository = {
       getRoomData: vi.fn().mockResolvedValue({
-        key: 'r1',
+        key: "r1",
         users: [],
         votes: {},
         connectedUsers: {},
         showVotes: false,
-        moderator: 'mod',
+        moderator: "mod",
         settings: {
           estimateOptions: [1],
           allowOthersToShowEstimates: false,
@@ -192,7 +192,7 @@ describe('PlanningRoom WebSocket auth', () => {
           topVotesCount: 0,
           anonymousVotes: false,
           enableJudge: false,
-          judgeAlgorithm: 'simpleAverage',
+          judgeAlgorithm: "simpleAverage",
           enableTicketQueue: false,
         },
       }),
@@ -201,50 +201,51 @@ describe('PlanningRoom WebSocket auth', () => {
     const callsBefore = blockSpy.mock.calls.length;
     const data = await room.getRoomData();
 
-    expect(data?.key).toBe('r1');
+    expect(data?.key).toBe("r1");
     expect(blockSpy.mock.calls.length).toBe(callsBefore);
   });
 });
 
-describe('PlanningRoom critical flows', () => {
+describe("PlanningRoom critical flows", () => {
   let env: RoomWorkerEnv;
 
   beforeEach(() => {
     env = {
       PLANNING_ROOM: {} as DurableObjectNamespace,
       JOIN_RATE_LIMITER: {} as RateLimit,
-      TOKEN_ENCRYPTION_SECRET: 'test-secret',
+      TOKEN_ENCRYPTION_SECRET: "test-secret",
+      STATS_WORKER: {} as any,
     };
     vi.useRealTimers();
   });
 
-  it('clears invalid votes and judge state when estimate options change', async () => {
+  it("clears invalid votes and judge state when estimate options change", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
-      key: 'room-3',
-      users: ['mod'],
-      moderator: 'mod',
+      key: "room-3",
+      users: ["mod"],
+      moderator: "mod",
       connectedUsers: { mod: true },
       settings: {
         ...createInitialRoomData({
-          key: 'room-3',
+          key: "room-3",
           users: [],
-          moderator: 'mod',
+          moderator: "mod",
           connectedUsers: {},
         }).settings,
         estimateOptions: [1, 2, 3],
         enableJudge: true,
       },
     });
-    roomData.votes = { mod: '5' };
+    roomData.votes = { mod: "5" };
     roomData.structuredVotes = { mod: { criteriaScores: { a: 5 } } as any };
     roomData.judgeScore = 8;
     roomData.judgeMetadata = {
-      confidence: 'high',
+      confidence: "high",
       needsDiscussion: false,
-      reasoning: '',
-      algorithm: 'simpleAverage',
+      reasoning: "",
+      algorithm: "simpleAverage",
     } as any;
 
     const repository = {
@@ -253,13 +254,13 @@ describe('PlanningRoom critical flows', () => {
       clearStructuredVotes: vi.fn(),
       setShowVotes: vi.fn(),
       setJudgeState: vi.fn(),
-    } as unknown as PlanningRoom['repository'];
+    } as unknown as PlanningRoom["repository"];
 
     room.repository = repository;
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
 
-    await room.handleUpdateSettings('mod', { estimateOptions: [1, 2] });
+    await room.handleUpdateSettings("mod", { estimateOptions: [1, 2] });
 
     expect(roomData.votes).toEqual({});
     expect(roomData.structuredVotes).toEqual({});
@@ -270,23 +271,23 @@ describe('PlanningRoom critical flows', () => {
     expect(repository.clearStructuredVotes).toHaveBeenCalled();
     expect(repository.setJudgeState).toHaveBeenCalledWith(null);
     expect(room.broadcast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'resetVotes' })
+      expect.objectContaining({ type: "resetVotes" }),
     );
     expect(room.broadcast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'settingsUpdated' })
+      expect.objectContaining({ type: "settingsUpdated" }),
     );
   });
 
-  it('clamps and broadcasts timer configuration updates', async () => {
+  it("clamps and broadcasts timer configuration updates", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-01T00:00:30Z'));
+    vi.setSystemTime(new Date("2024-01-01T00:00:30Z"));
 
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
-      key: 'room-4',
-      users: ['alice'],
-      moderator: 'alice',
+      key: "room-4",
+      users: ["alice"],
+      moderator: "alice",
       connectedUsers: { alice: true },
     });
     roomData.timerState = {
@@ -301,18 +302,18 @@ describe('PlanningRoom critical flows', () => {
     const updateTimerConfig = vi.fn();
     room.repository = {
       updateTimerConfig,
-    } as unknown as PlanningRoom['repository'];
+    } as unknown as PlanningRoom["repository"];
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
 
-    await room.handleConfigureTimer('alice', {
+    await room.handleConfigureTimer("alice", {
       targetDurationSeconds: 10,
       autoResetOnVotesReset: false,
       resetCountdown: true,
     });
 
     expect(roomData.timerState?.targetDurationSeconds).toBe(
-      MIN_TIMER_DURATION_SECONDS
+      MIN_TIMER_DURATION_SECONDS,
     );
     expect(roomData.timerState?.autoResetOnVotesReset).toBe(false);
     expect(roomData.timerState?.roundAnchorSeconds).toBe(30);
@@ -322,23 +323,23 @@ describe('PlanningRoom critical flows', () => {
       roundAnchorSeconds: 30,
     });
     expect(room.broadcast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'timerUpdated' })
+      expect.objectContaining({ type: "timerUpdated" }),
     );
   });
 
-  it('rejects invalid vote options and avoids persisting or broadcasting', async () => {
+  it("rejects invalid vote options and avoids persisting or broadcasting", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
-      key: 'room-5',
-      users: ['mod', 'alice'],
-      moderator: 'mod',
+      key: "room-5",
+      users: ["mod", "alice"],
+      moderator: "mod",
       connectedUsers: { mod: true, alice: true },
       settings: {
         ...createInitialRoomData({
-          key: 'room-5',
+          key: "room-5",
           users: [],
-          moderator: 'mod',
+          moderator: "mod",
           connectedUsers: {},
         }).settings,
         estimateOptions: [1, 2],
@@ -353,34 +354,34 @@ describe('PlanningRoom critical flows', () => {
       clearStructuredVotes: vi.fn(),
       setJudgeState: vi.fn(),
       setSettings: vi.fn(),
-    } as unknown as PlanningRoom['repository'];
+    } as unknown as PlanningRoom["repository"];
 
     room.repository = repository;
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
 
-    await room.handleVote('alice', '99');
+    await room.handleVote("alice", "99");
 
     expect(repository.setVote).not.toHaveBeenCalled();
     expect(room.broadcast).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'vote' })
+      expect.objectContaining({ type: "vote" }),
     );
-    expect(roomData.votes['alice']).toBeUndefined();
+    expect(roomData.votes["alice"]).toBeUndefined();
   });
 
-  it('persists structured votes and broadcasts structured payloads', async () => {
+  it("persists structured votes and broadcasts structured payloads", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
-      key: 'room-6',
-      users: ['alice'],
-      moderator: 'alice',
+      key: "room-6",
+      users: ["alice"],
+      moderator: "alice",
       connectedUsers: { alice: true },
       settings: {
         ...createInitialRoomData({
-          key: 'room-6',
+          key: "room-6",
           users: [],
-          moderator: 'alice',
+          moderator: "alice",
           connectedUsers: {},
         }).settings,
         enableStructuredVoting: true,
@@ -395,45 +396,45 @@ describe('PlanningRoom critical flows', () => {
       clearStructuredVotes: vi.fn(),
       setJudgeState: vi.fn(),
       setSettings: vi.fn(),
-    } as unknown as PlanningRoom['repository'];
+    } as unknown as PlanningRoom["repository"];
 
     room.repository = repository;
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
 
-    await room.handleVote('alice', {
+    await room.handleVote("alice", {
       criteriaScores: { impact: 5, effort: 1 },
     } as any);
 
     expect(repository.setStructuredVote).toHaveBeenCalledWith(
-      'alice',
+      "alice",
       expect.objectContaining({
         criteriaScores: { impact: 5, effort: 1 },
-      })
+      }),
     );
     expect(room.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'vote',
+        type: "vote",
         structuredVote: expect.objectContaining({
           criteriaScores: { impact: 5, effort: 1 },
         }),
-      })
+      }),
     );
   });
 
-  it('respects moderator-only showVotes when disallowed for others', async () => {
+  it("respects moderator-only showVotes when disallowed for others", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
-      key: 'room-7',
-      users: ['mod', 'guest'],
-      moderator: 'mod',
+      key: "room-7",
+      users: ["mod", "guest"],
+      moderator: "mod",
       connectedUsers: { mod: true, guest: true },
       settings: {
         ...createInitialRoomData({
-          key: 'room-7',
+          key: "room-7",
           users: [],
-          moderator: 'mod',
+          moderator: "mod",
           connectedUsers: {},
         }).settings,
         allowOthersToShowEstimates: false,
@@ -443,31 +444,31 @@ describe('PlanningRoom critical flows', () => {
     const repository = {
       setShowVotes: vi.fn(),
       setSettings: vi.fn(),
-    } as unknown as PlanningRoom['repository'];
+    } as unknown as PlanningRoom["repository"];
 
     room.repository = repository;
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
 
-    await room.handleShowVotes('guest');
+    await room.handleShowVotes("guest");
 
     expect(repository.setShowVotes).not.toHaveBeenCalled();
     expect(room.broadcast).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'showVotes' })
+      expect.objectContaining({ type: "showVotes" }),
     );
     expect(roomData.showVotes).toBe(false);
   });
 
-  it('auto-resets timer anchor on resetVotes when configured', async () => {
+  it("auto-resets timer anchor on resetVotes when configured", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-01T00:00:45Z'));
+    vi.setSystemTime(new Date("2024-01-01T00:00:45Z"));
 
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
-      key: 'room-8',
-      users: ['mod'],
-      moderator: 'mod',
+      key: "room-8",
+      users: ["mod"],
+      moderator: "mod",
       connectedUsers: { mod: true },
     });
     roomData.timerState = {
@@ -486,42 +487,42 @@ describe('PlanningRoom critical flows', () => {
       setJudgeState: vi.fn(),
       updateTimerConfig: vi.fn(),
       setSettings: vi.fn(),
-    } as unknown as PlanningRoom['repository'];
+    } as unknown as PlanningRoom["repository"];
 
     room.repository = repository;
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
 
-    await room.handleResetVotes('mod');
+    await room.handleResetVotes("mod");
 
     expect(repository.updateTimerConfig).toHaveBeenCalledWith({
       roundAnchorSeconds: 15,
     });
     expect(room.broadcast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'timerUpdated' })
+      expect.objectContaining({ type: "timerUpdated" }),
     );
   });
 
-  it('skips judge calculation when estimate options are non-numeric', async () => {
+  it("skips judge calculation when estimate options are non-numeric", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
-      key: 'room-judge',
-      users: ['mod', 'alice'],
-      moderator: 'mod',
+      key: "room-judge",
+      users: ["mod", "alice"],
+      moderator: "mod",
       connectedUsers: { mod: true, alice: true },
       settings: {
-        estimateOptions: ['XS', 'S', 'M'],
+        estimateOptions: ["XS", "S", "M"],
         enableJudge: true,
       },
     });
-    roomData.votes = { mod: 'XS', alice: 'M' };
+    roomData.votes = { mod: "XS", alice: "M" };
     roomData.showVotes = true;
 
     const setJudgeState = vi.fn();
     room.repository = {
       setJudgeState,
-    } as unknown as PlanningRoom['repository'];
+    } as unknown as PlanningRoom["repository"];
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
 
@@ -531,27 +532,27 @@ describe('PlanningRoom critical flows', () => {
     expect(roomData.judgeMetadata).toBeUndefined();
     expect(setJudgeState).toHaveBeenCalledWith(null);
     expect(room.broadcast).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'judgeScoreUpdated' })
+      expect.objectContaining({ type: "judgeScoreUpdated" }),
     );
   });
 
-  it('clears current ticket without auto-creating when queue is empty', async () => {
+  it("clears current ticket without auto-creating when queue is empty", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
-      key: 'room-9',
-      users: ['mod'],
-      moderator: 'mod',
+      key: "room-9",
+      users: ["mod"],
+      moderator: "mod",
       connectedUsers: { mod: true },
       settings: {
         ...createInitialRoomData({
-          key: 'room-9',
+          key: "room-9",
           users: [],
-          moderator: 'mod',
+          moderator: "mod",
           connectedUsers: {},
         }).settings,
         enableTicketQueue: true,
-        externalService: 'none',
+        externalService: "none",
       },
     });
 
@@ -564,23 +565,23 @@ describe('PlanningRoom critical flows', () => {
       clearStructuredVotes: vi.fn(),
       setShowVotes: vi.fn(),
       setJudgeState: vi.fn(),
-    } as unknown as PlanningRoom['repository'];
+    } as unknown as PlanningRoom["repository"];
 
     room.repository = repository;
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
 
-    await room.handleNextTicket('mod');
+    await room.handleNextTicket("mod");
 
     expect(repository.createTicket).not.toHaveBeenCalled();
     expect(repository.getNextTicketId).not.toHaveBeenCalled();
     expect(repository.setCurrentTicket).toHaveBeenCalledWith(null);
     expect(room.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'nextTicket',
+        type: "nextTicket",
         ticket: null,
         queue: [],
-      })
+      }),
     );
   });
 });

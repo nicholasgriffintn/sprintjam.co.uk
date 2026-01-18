@@ -1,14 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from "vitest";
 import type {
   DurableObjectNamespace,
-  Fetcher,
   RateLimit,
   DurableObjectState,
-} from '@cloudflare/workers-types';
-import type { RoomWorkerEnv, RoomData } from '@sprintjam/types';
-import { createInitialRoomData } from '@sprintjam/utils';
+} from "@cloudflare/workers-types";
+import type { RoomWorkerEnv, RoomData } from "@sprintjam/types";
+import { createInitialRoomData } from "@sprintjam/utils";
 
-import { PlanningRoom } from '.';
+import { PlanningRoom } from ".";
 
 const makeState = () => {
   const sqlStub = {
@@ -20,7 +19,7 @@ const makeState = () => {
       sql: sqlStub as any,
       transactionSync: vi.fn((fn: () => void) => fn()),
       transaction: vi.fn(async (fn: (txn: any) => void) =>
-        fn({ sql: sqlStub })
+        fn({ sql: sqlStub }),
       ),
       get: vi.fn(),
       put: vi.fn(),
@@ -32,18 +31,19 @@ const makeState = () => {
 const env: RoomWorkerEnv = {
   PLANNING_ROOM: {} as DurableObjectNamespace,
   JOIN_RATE_LIMITER: {} as RateLimit,
-  TOKEN_ENCRYPTION_SECRET: 'test-secret',
+  TOKEN_ENCRYPTION_SECRET: "test-secret",
+  STATS_WORKER: {} as any,
 };
 
-describe('PlanningRoom voting reveal settings', () => {
-  describe('auto-reveal when everyone voted', () => {
-    it('should auto-reveal votes when everyone has voted and setting is enabled', async () => {
+describe("PlanningRoom voting reveal settings", () => {
+  describe("auto-reveal when everyone voted", () => {
+    it("should auto-reveal votes when everyone has voted and setting is enabled", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: true,
@@ -54,34 +54,34 @@ describe('PlanningRoom voting reveal settings', () => {
         setVote: vi.fn(),
         setShowVotes: vi.fn(),
         setJudgeState: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
       room.calculateAndUpdateJudgeScore = vi.fn();
 
-      await room.handleVote('user1', '5');
+      await room.handleVote("user1", "5");
       expect(roomData.showVotes).toBe(false);
 
-      await room.handleVote('user2', '8');
+      await room.handleVote("user2", "8");
       expect(roomData.showVotes).toBe(true);
       expect(repository.setShowVotes).toHaveBeenCalledWith(true);
       expect(room.broadcast).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'showVotes',
+          type: "showVotes",
           showVotes: true,
-        })
+        }),
       );
     });
 
-    it('should not auto-reveal when setting is disabled', async () => {
+    it("should not auto-reveal when setting is disabled", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: false,
@@ -91,26 +91,26 @@ describe('PlanningRoom voting reveal settings', () => {
       const repository = {
         setVote: vi.fn(),
         setShowVotes: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
 
-      await room.handleVote('user1', '5');
-      await room.handleVote('user2', '8');
+      await room.handleVote("user1", "5");
+      await room.handleVote("user2", "8");
 
       expect(roomData.showVotes).toBe(false);
       expect(repository.setShowVotes).not.toHaveBeenCalled();
     });
 
-    it('should not auto-reveal if votes are already shown', async () => {
+    it("should not auto-reveal if votes are already shown", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: true,
@@ -121,27 +121,27 @@ describe('PlanningRoom voting reveal settings', () => {
       const repository = {
         setVote: vi.fn(),
         setShowVotes: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
 
-      await room.handleVote('user1', '5');
-      await room.handleVote('user2', '8');
+      await room.handleVote("user1", "5");
+      await room.handleVote("user2", "8");
 
       expect(repository.setShowVotes).not.toHaveBeenCalledWith(true);
     });
   });
 
-  describe('always-reveal mode', () => {
-    it('should prevent hiding votes when always-reveal is enabled', async () => {
+  describe("always-reveal mode", () => {
+    it("should prevent hiding votes when always-reveal is enabled", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1"],
+        moderator: "user1",
         connectedUsers: { user1: true },
         settings: {
           alwaysRevealVotes: true,
@@ -151,23 +151,23 @@ describe('PlanningRoom voting reveal settings', () => {
 
       const repository = {
         setShowVotes: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
 
-      await room.handleShowVotes('user1');
+      await room.handleShowVotes("user1");
 
       expect(roomData.showVotes).toBe(true);
       expect(repository.setShowVotes).not.toHaveBeenCalled();
     });
 
-    it('should show votes when setting is enabled on creation', async () => {
+    it("should show votes when setting is enabled on creation", async () => {
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1"],
+        moderator: "user1",
         connectedUsers: { user1: true },
         settings: {
           alwaysRevealVotes: true,
@@ -177,19 +177,19 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(roomData.showVotes).toBe(true);
     });
 
-    it('should keep votes revealed after reset when always-reveal is enabled', async () => {
+    it("should keep votes revealed after reset when always-reveal is enabled", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1"],
+        moderator: "user1",
         connectedUsers: { user1: true },
         settings: {
           alwaysRevealVotes: true,
         },
       });
-      roomData.votes = { user1: '5' };
+      roomData.votes = { user1: "5" };
       roomData.showVotes = true;
 
       const repository = {
@@ -198,27 +198,27 @@ describe('PlanningRoom voting reveal settings', () => {
         setShowVotes: vi.fn(),
         setJudgeState: vi.fn(),
         updateTimerConfig: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
 
-      await room.handleResetVotes('user1');
+      await room.handleResetVotes("user1");
 
       expect(roomData.showVotes).toBe(true);
       expect(repository.setShowVotes).toHaveBeenCalledWith(true);
     });
   });
 
-  describe('always-reveal and auto-reveal combined', () => {
-    it('should work together when both enabled', async () => {
+  describe("always-reveal and auto-reveal combined", () => {
+    it("should work together when both enabled", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: true,
@@ -235,30 +235,30 @@ describe('PlanningRoom voting reveal settings', () => {
         clearStructuredVotes: vi.fn(),
         setJudgeState: vi.fn(),
         updateTimerConfig: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
 
-      await room.handleVote('user1', '5');
-      await room.handleVote('user2', '8');
+      await room.handleVote("user1", "5");
+      await room.handleVote("user2", "8");
 
       expect(roomData.showVotes).toBe(true);
 
-      await room.handleResetVotes('user1');
+      await room.handleResetVotes("user1");
       expect(roomData.showVotes).toBe(true);
     });
   });
 
-  describe('auto-reveal with structured voting', () => {
-    it('should auto-reveal when all users complete all 4 criteria', async () => {
+  describe("auto-reveal with structured voting", () => {
+    it("should auto-reveal when all users complete all 4 criteria", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: true,
@@ -271,14 +271,14 @@ describe('PlanningRoom voting reveal settings', () => {
         setStructuredVote: vi.fn(),
         setShowVotes: vi.fn(),
         setJudgeState: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
       room.calculateAndUpdateJudgeScore = vi.fn();
 
-      await room.handleVote('user1', {
+      await room.handleVote("user1", {
         criteriaScores: {
           complexity: 2,
           confidence: 3,
@@ -288,7 +288,7 @@ describe('PlanningRoom voting reveal settings', () => {
       });
       expect(roomData.showVotes).toBe(false);
 
-      await room.handleVote('user2', {
+      await room.handleVote("user2", {
         criteriaScores: {
           complexity: 3,
           confidence: 2,
@@ -300,13 +300,13 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(repository.setShowVotes).toHaveBeenCalledWith(true);
     });
 
-    it('should auto-reveal when a user votes with an extra option', async () => {
+    it("should auto-reveal when a user votes with an extra option", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: true,
@@ -319,17 +319,17 @@ describe('PlanningRoom voting reveal settings', () => {
         setStructuredVote: vi.fn(),
         setShowVotes: vi.fn(),
         setJudgeState: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
       room.calculateAndUpdateJudgeScore = vi.fn();
 
-      await room.handleVote('user1', '❓');
+      await room.handleVote("user1", "❓");
       expect(roomData.showVotes).toBe(false);
 
-      await room.handleVote('user2', {
+      await room.handleVote("user2", {
         criteriaScores: {
           complexity: 3,
           confidence: 2,
@@ -342,13 +342,13 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(repository.setShowVotes).toHaveBeenCalledWith(true);
     });
 
-    it('should not auto-reveal when last user has incomplete vote (missing criteria)', async () => {
+    it("should not auto-reveal when last user has incomplete vote (missing criteria)", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: true,
@@ -360,13 +360,13 @@ describe('PlanningRoom voting reveal settings', () => {
         setVote: vi.fn(),
         setStructuredVote: vi.fn(),
         setShowVotes: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
 
-      await room.handleVote('user1', {
+      await room.handleVote("user1", {
         criteriaScores: {
           complexity: 2,
           confidence: 3,
@@ -375,7 +375,7 @@ describe('PlanningRoom voting reveal settings', () => {
         },
       });
 
-      await room.handleVote('user2', {
+      await room.handleVote("user2", {
         criteriaScores: {
           complexity: 3,
           confidence: 2,
@@ -386,13 +386,13 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(repository.setShowVotes).not.toHaveBeenCalled();
     });
 
-    it('should not auto-reveal when first user has incomplete vote', async () => {
+    it("should not auto-reveal when first user has incomplete vote", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: true,
@@ -404,19 +404,19 @@ describe('PlanningRoom voting reveal settings', () => {
         setVote: vi.fn(),
         setStructuredVote: vi.fn(),
         setShowVotes: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
 
-      await room.handleVote('user1', {
+      await room.handleVote("user1", {
         criteriaScores: {
           complexity: 2,
         },
       });
 
-      await room.handleVote('user2', {
+      await room.handleVote("user2", {
         criteriaScores: {
           complexity: 3,
           confidence: 2,
@@ -429,13 +429,13 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(repository.setShowVotes).not.toHaveBeenCalled();
     });
 
-    it('should auto-reveal when all criteria are explicitly set to 0', async () => {
+    it("should auto-reveal when all criteria are explicitly set to 0", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableAutoReveal: true,
@@ -448,14 +448,14 @@ describe('PlanningRoom voting reveal settings', () => {
         setStructuredVote: vi.fn(),
         setShowVotes: vi.fn(),
         setJudgeState: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
       room.calculateAndUpdateJudgeScore = vi.fn();
 
-      await room.handleVote('user1', {
+      await room.handleVote("user1", {
         criteriaScores: {
           complexity: 0,
           confidence: 0,
@@ -464,7 +464,7 @@ describe('PlanningRoom voting reveal settings', () => {
         },
       });
 
-      await room.handleVote('user2', {
+      await room.handleVote("user2", {
         criteriaScores: {
           complexity: 0,
           confidence: 0,
@@ -477,13 +477,13 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(repository.setShowVotes).toHaveBeenCalledWith(true);
     });
 
-    it('should auto-reveal in mixed mode when last user completes their vote', async () => {
+    it("should auto-reveal in mixed mode when last user completes their vote", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2', 'user3'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2", "user3"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true, user3: true },
         settings: {
           enableAutoReveal: true,
@@ -496,14 +496,14 @@ describe('PlanningRoom voting reveal settings', () => {
         setStructuredVote: vi.fn(),
         setShowVotes: vi.fn(),
         setJudgeState: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
       room.getRoomData = vi.fn(async () => roomData);
       room.calculateAndUpdateJudgeScore = vi.fn();
 
-      await room.handleVote('user1', {
+      await room.handleVote("user1", {
         criteriaScores: {
           complexity: 2,
           confidence: 3,
@@ -512,14 +512,14 @@ describe('PlanningRoom voting reveal settings', () => {
         },
       });
 
-      await room.handleVote('user2', {
+      await room.handleVote("user2", {
         criteriaScores: {
           complexity: 1,
         },
       });
       expect(roomData.showVotes).toBe(false);
 
-      await room.handleVote('user2', {
+      await room.handleVote("user2", {
         criteriaScores: {
           complexity: 1,
           confidence: 4,
@@ -529,7 +529,7 @@ describe('PlanningRoom voting reveal settings', () => {
       });
       expect(roomData.showVotes).toBe(false);
 
-      await room.handleVote('user3', {
+      await room.handleVote("user3", {
         criteriaScores: {
           complexity: 3,
           confidence: 2,
@@ -541,14 +541,14 @@ describe('PlanningRoom voting reveal settings', () => {
     });
   });
 
-  describe('judge metadata with extra options', () => {
-    it('counts unsure extra options toward question mark count', async () => {
+  describe("judge metadata with extra options", () => {
+    it("counts unsure extra options toward question mark count", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2', 'user3'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2", "user3"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true, user3: true },
         settings: {
           enableJudge: true,
@@ -557,14 +557,14 @@ describe('PlanningRoom voting reveal settings', () => {
       });
       roomData.showVotes = true;
       roomData.votes = {
-        user1: '❓',
+        user1: "❓",
         user2: 5,
         user3: 8,
       };
 
       const repository = {
         setJudgeState: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();
@@ -577,35 +577,35 @@ describe('PlanningRoom voting reveal settings', () => {
       expect(roomData.judgeMetadata?.totalVoteCount).toBe(3);
     });
 
-    it('keeps judge metadata when only extra options are selected', async () => {
+    it("keeps judge metadata when only extra options are selected", async () => {
       const state = makeState();
       const room = new PlanningRoom(state, env);
       const roomData: RoomData = createInitialRoomData({
-        key: 'test-room',
-        users: ['user1', 'user2'],
-        moderator: 'user1',
+        key: "test-room",
+        users: ["user1", "user2"],
+        moderator: "user1",
         connectedUsers: { user1: true, user2: true },
         settings: {
           enableJudge: true,
-          estimateOptions: [1, 2, 3, 'coffee'],
+          estimateOptions: [1, 2, 3, "coffee"],
           extraVoteOptions: [
             {
-              id: 'coffee',
-              label: 'Coffee Break',
-              value: 'coffee',
+              id: "coffee",
+              label: "Coffee Break",
+              value: "coffee",
             },
           ],
         },
       });
       roomData.showVotes = true;
       roomData.votes = {
-        user1: 'coffee',
-        user2: 'coffee',
+        user1: "coffee",
+        user2: "coffee",
       };
 
       const repository = {
         setJudgeState: vi.fn(),
-      } as unknown as PlanningRoom['repository'];
+      } as unknown as PlanningRoom["repository"];
 
       room.repository = repository;
       room.broadcast = vi.fn();

@@ -7,51 +7,51 @@ import type {
   WebSocket as CfWebSocket,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
-import { PlanningPokerJudge } from '@sprintjam/utils';
+import { PlanningPokerJudge } from "@sprintjam/utils";
 import type {
   RoomWorkerEnv,
   RoomData,
   BroadcastMessage,
   SessionInfo,
   StructuredVote,
-} from '@sprintjam/types';
-import { TicketQueueItem } from '@sprintjam/db';
-import { normalizeRoomData, TokenCipher } from '@sprintjam/utils';
+  TicketQueueItem,
+} from "@sprintjam/types";
+import { normalizeRoomData, TokenCipher } from "@sprintjam/utils";
 
-import { PlanningRoomRepository } from '../../repositories/planning-room';
+import { PlanningRoomRepository } from "../../repositories/planning-room";
 import {
   handleHttpRequest,
   type PlanningRoomHttpContext,
-} from '../../controllers/room';
-import { handleSession as handleSessionHandler } from './session';
+} from "../../controllers/room";
+import { handleSession as handleSessionHandler } from "./session";
 import {
   handleVote as handleVoteHandler,
   handleShowVotes as handleShowVotesHandler,
   handleResetVotes as handleResetVotesHandler,
   calculateAndUpdateJudgeScore as calculateAndUpdateJudgeScoreHandler,
-} from './voting';
-import { handleUpdateSettings as handleUpdateSettingsHandler } from './settings';
+} from "./voting";
+import { handleUpdateSettings as handleUpdateSettingsHandler } from "./settings";
 import {
   autoGenerateStrudel as autoGenerateStrudelHandler,
   generateStrudelTrack as generateStrudelTrackHelper,
   handleGenerateStrudel as handleGenerateStrudelHandler,
   handleToggleStrudelPlayback as handleToggleStrudelPlaybackHandler,
-} from './strudel';
+} from "./strudel";
 import {
   handleAddTicket as handleAddTicketHandler,
   handleDeleteTicket as handleDeleteTicketHandler,
   handleNextTicket as handleNextTicketHandler,
   handleSelectTicket as handleSelectTicketHandler,
   handleUpdateTicket as handleUpdateTicketHandler,
-} from './tickets';
+} from "./tickets";
 import {
   handleConfigureTimer as handleConfigureTimerHandler,
   handlePauseTimer as handlePauseTimerHandler,
   handleResetTimer as handleResetTimerHandler,
   handleStartTimer as handleStartTimerHandler,
-} from './timer';
-import { handleCompleteSession as handleCompleteSessionHandler } from './status';
-import { readRoomData } from './room-helpers';
+} from "./timer";
+import { handleCompleteSession as handleCompleteSessionHandler } from "./status";
+import { readRoomData } from "./room-helpers";
 
 export class PlanningRoom implements PlanningRoomHttpContext {
   state: DurableObjectState;
@@ -70,7 +70,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     this.repository = new PlanningRoomRepository(
       this.state.storage,
-      tokenCipher
+      tokenCipher,
     );
 
     this.state.blockConcurrencyWhile(async () => {
@@ -91,7 +91,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   disconnectUserSessions(userName: string) {
     for (const [socket, session] of this.sessions.entries()) {
       if (session.userName.toLowerCase() === userName.trim().toLowerCase()) {
-        socket.close(4004, 'Session superseded');
+        socket.close(4004, "Session superseded");
         this.sessions.delete(socket);
       }
     }
@@ -100,14 +100,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   async fetch(request: Request): Promise<CfResponse> {
     const url = new URL(request.url);
 
-    const upgradeHeader = request.headers.get('Upgrade');
-    if (upgradeHeader === 'websocket') {
-      const roomKey = url.searchParams.get('room');
-      const userName = url.searchParams.get('name');
-      const sessionToken = url.searchParams.get('token');
+    const upgradeHeader = request.headers.get("Upgrade");
+    if (upgradeHeader === "websocket") {
+      const roomKey = url.searchParams.get("room");
+      const userName = url.searchParams.get("name");
+      const sessionToken = url.searchParams.get("token");
 
       if (!roomKey || !userName || !sessionToken) {
-        return new Response('Missing room key, user name, or token', {
+        return new Response("Missing room key, user name, or token", {
           status: 400,
         }) as unknown as CfResponse;
       }
@@ -128,9 +128,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       return httpResponse;
     }
 
-    return new Response(JSON.stringify({ error: 'Room Route Not found' }), {
+    return new Response(JSON.stringify({ error: "Room Route Not found" }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     }) as unknown as CfResponse;
   }
 
@@ -138,14 +138,14 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     webSocket: CfWebSocket,
     roomKey: string,
     userName: string,
-    sessionToken: string
+    sessionToken: string,
   ) {
     return handleSessionHandler(
       this,
       webSocket,
       roomKey,
       userName,
-      sessionToken
+      sessionToken,
     );
   }
 
@@ -163,7 +163,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleUpdateSettings(
     userName: string,
-    settings: Partial<RoomData['settings']>
+    settings: Partial<RoomData["settings"]>,
   ) {
     return handleUpdateSettingsHandler(this, userName, settings);
   }
@@ -182,7 +182,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async generateStrudelTrack(
     roomData: RoomData,
-    options?: { notifyOnError?: boolean; logPrefix?: string }
+    options?: { notifyOnError?: boolean; logPrefix?: string },
   ) {
     return generateStrudelTrackHelper(this, roomData, options);
   }
@@ -206,7 +206,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   async handleUpdateTicket(
     userName: string,
     ticketId: number,
-    updates: Partial<TicketQueueItem>
+    updates: Partial<TicketQueueItem>,
   ) {
     return handleUpdateTicketHandler(this, userName, ticketId, updates);
   }
@@ -233,7 +233,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       targetDurationSeconds?: number;
       autoResetOnVotesReset?: boolean;
       resetCountdown?: boolean;
-    }
+    },
   ) {
     return handleConfigureTimerHandler(this, userName, config);
   }
@@ -247,7 +247,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     const broadcastRoomData = await this.getRoomData();
     this.broadcast({
-      type: 'spectatorStatusChanged',
+      type: "spectatorStatusChanged",
       user: userName,
       isSpectator,
       users: broadcastRoomData?.users ?? [],

@@ -1,9 +1,9 @@
-import type { DurableObjectStorage } from '@cloudflare/workers-types';
-import { drizzle } from 'drizzle-orm/durable-sqlite';
-import { migrate } from 'drizzle-orm/durable-sqlite/migrator';
-import { eq, and, desc, like, sql as sqlOperator } from 'drizzle-orm';
+import type { DurableObjectStorage } from "@cloudflare/workers-types";
+import { drizzle } from "drizzle-orm/durable-sqlite";
+import { migrate } from "drizzle-orm/durable-sqlite/migrator";
+import { eq, and, desc, like, sql as sqlOperator } from "drizzle-orm";
 
-import * as schema from '@sprintjam/db/durable-objects/schemas';
+import * as schema from "@sprintjam/db/durable-objects/schemas";
 import {
   roomMeta,
   roomUsers,
@@ -12,13 +12,8 @@ import {
   ticketQueue,
   ticketVotes,
   oauthCredentials,
-} from '@sprintjam/db/durable-objects/schemas';
-import type {
-  DB,
-  InsertRoomMetaItem,
-  TicketCreateInput,
-  TicketQueueItem,
-} from '@sprintjam/db';
+} from "@sprintjam/db/durable-objects/schemas";
+import type { DB, InsertRoomMetaItem, TicketCreateInput } from "@sprintjam/db";
 import type {
   TicketQueueWithVotes,
   JudgeMetadata,
@@ -28,7 +23,7 @@ import type {
   StructuredVote,
   TicketVote,
   VoteValue,
-} from '@sprintjam/types';
+} from "@sprintjam/types";
 import {
   serializeJSON,
   serializeVote,
@@ -39,30 +34,30 @@ import {
   parsePasscodeHash,
   serializePasscodeHash,
   TokenCipher,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 import {
   DEFAULT_TIMER_DURATION_SECONDS,
   ROOM_ROW_ID,
-} from '@sprintjam/utils/constants';
+} from "@sprintjam/utils/constants";
 
-import migrations from '../../drizzle/migrations';
+import migrations from "../../drizzle/migrations";
 
 export class PlanningRoomRepository {
   private readonly db: DB;
-  private readonly anonymousName = 'Anonymous';
+  private readonly anonymousName = "Anonymous";
 
   constructor(
     storage: DurableObjectStorage,
-    private readonly tokenCipher: TokenCipher
+    private readonly tokenCipher: TokenCipher,
   ) {
     if (!tokenCipher) {
-      throw new Error('Token cipher is required');
+      throw new Error("Token cipher is required");
     }
     this.db = drizzle(storage, { schema });
   }
 
   private async encryptToken(
-    value: string | null | undefined
+    value: string | null | undefined,
   ): Promise<string | null> {
     if (value === null || value === undefined) {
       return null;
@@ -71,7 +66,7 @@ export class PlanningRoomRepository {
   }
 
   private async decryptToken(
-    value: string | null | undefined
+    value: string | null | undefined,
   ): Promise<string | null> {
     if (value === null || value === undefined) {
       return null;
@@ -132,7 +127,7 @@ export class PlanningRoomRepository {
       try {
         const structuredVoteData = safeJsonParse<StructuredVote>(payload);
         if (!structuredVoteData) {
-          throw new Error('Failed to parse structured vote from storage');
+          throw new Error("Failed to parse structured vote from storage");
         }
         structuredVoteMap[entry.userName] = structuredVoteData;
       } catch {
@@ -144,11 +139,11 @@ export class PlanningRoomRepository {
     try {
       const settingsData = safeJsonParse<RoomSettings>(row.settings);
       if (!settingsData) {
-        throw new Error('Failed to parse room settings from storage');
+        throw new Error("Failed to parse room settings from storage");
       }
       settings = settingsData;
     } catch {
-      throw new Error('Failed to parse room settings from storage');
+      throw new Error("Failed to parse room settings from storage");
     }
 
     const anonymizeVotes =
@@ -156,9 +151,11 @@ export class PlanningRoomRepository {
 
     const currentTicket = this.getCurrentTicket({
       anonymizeVotes,
+      roomKey: row.roomKey,
     });
     const ticketQueue = this.getTicketQueue({
       anonymizeVotes,
+      roomKey: row.roomKey,
     });
 
     const timerPausedValue =
@@ -200,7 +197,7 @@ export class PlanningRoomRepository {
       showVotes: !!row.showVotes,
       moderator: row.moderator,
       connectedUsers,
-      status: row.roomStatus === 'completed' ? 'completed' : 'active',
+      status: row.roomStatus === "completed" ? "completed" : "active",
       judgeScore: parseJudgeScore(row.judgeScore),
       judgeMetadata: row.judgeMetadata
         ? safeJsonParse<JudgeMetadata>(row.judgeMetadata)
@@ -230,7 +227,7 @@ export class PlanningRoomRepository {
         roomKey: roomData.key,
         moderator: roomData.moderator,
         showVotes: roomData.showVotes ? 1 : 0,
-        roomStatus: roomData.status ?? 'active',
+        roomStatus: roomData.status ?? "active",
         passcode: serializePasscodeHash(roomData.passcodeHash),
         judgeScore:
           roomData.judgeScore === undefined || roomData.judgeScore === null
@@ -383,7 +380,7 @@ export class PlanningRoomRepository {
       .run();
   }
 
-  setRoomStatus(status: 'active' | 'completed') {
+  setRoomStatus(status: "active" | "completed") {
     this.db
       .update(roomMeta)
       .set({ roomStatus: status })
@@ -452,7 +449,7 @@ export class PlanningRoomRepository {
 
     if (row && !row.timerIsPaused) {
       const elapsedSinceLastUpdate = Math.floor(
-        (currentTime - (row.timerLastUpdated ?? 0)) / 1000
+        (currentTime - (row.timerLastUpdated ?? 0)) / 1000,
       );
       const existingSeconds = row.timerSeconds ?? 0;
       const newSeconds = existingSeconds + elapsedSinceLastUpdate;
@@ -565,7 +562,7 @@ export class PlanningRoomRepository {
       .select({ userName: sessionTokens.userName })
       .from(sessionTokens)
       .where(
-        sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${canonicalName})`
+        sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${canonicalName})`,
       )
       .get()?.userName;
     const tokenOwner = existingTokenOwner ?? canonicalName;
@@ -605,7 +602,7 @@ export class PlanningRoomRepository {
     }
 
     const isExpired =
-      typeof record.createdAt === 'number' &&
+      typeof record.createdAt === "number" &&
       Date.now() - record.createdAt > SESSION_TOKEN_TTL_MS;
 
     if (isExpired) {
@@ -641,7 +638,8 @@ export class PlanningRoomRepository {
 
   getCurrentTicket(options?: {
     anonymizeVotes?: boolean;
-  }): TicketQueueItem | undefined {
+    roomKey?: string;
+  }): TicketQueueWithVotes | undefined {
     const currentTicketId = this.db
       .select({ currentTicketId: roomMeta.currentTicketId })
       .from(roomMeta)
@@ -657,7 +655,7 @@ export class PlanningRoomRepository {
 
   getTicketById(
     id: number,
-    options?: { anonymizeVotes?: boolean }
+    options?: { anonymizeVotes?: boolean; roomKey?: string },
   ): TicketQueueWithVotes | undefined {
     const row = this.db
       .select()
@@ -673,25 +671,25 @@ export class PlanningRoomRepository {
 
     return {
       id: row.id,
+      roomKey: options?.roomKey ?? "",
       ticketId: row.ticketId,
-      title: row.title ?? null,
-      description: row.description ?? null,
+      title: row.title ?? "",
+      description: row.description ?? undefined,
       status: row.status,
-      outcome: row.outcome ?? null,
+      outcome: row.outcome ?? undefined,
       createdAt: row.createdAt,
-      completedAt: row.completedAt ?? null,
+      completedAt: row.completedAt ?? undefined,
       ordinal: row.ordinal,
-      externalService: row.externalService ?? 'none',
-      externalServiceId: row.externalServiceId ?? null,
-      externalServiceMetadata: row.externalServiceMetadata
-        ? safeJsonParse<Record<string, unknown>>(row.externalServiceMetadata)
-        : null,
+      externalService: row.externalService ?? "none",
+      externalServiceId: row.externalServiceId ?? undefined,
+      externalServiceMetadata: row.externalServiceMetadata ?? undefined,
       votes,
-    } as unknown as TicketQueueItem;
+    };
   }
 
   getTicketQueue(options?: {
     anonymizeVotes?: boolean;
+    roomKey?: string;
   }): TicketQueueWithVotes[] {
     const rows = this.db
       .select()
@@ -704,27 +702,26 @@ export class PlanningRoomRepository {
 
       return {
         id: row.id,
+        roomKey: options?.roomKey ?? "",
         ticketId: row.ticketId,
-        title: row.title ?? null,
-        description: row.description ?? null,
+        title: row.title ?? "",
+        description: row.description ?? undefined,
         status: row.status,
-        outcome: row.outcome ?? null,
+        outcome: row.outcome ?? undefined,
         createdAt: row.createdAt,
-        completedAt: row.completedAt ?? null,
+        completedAt: row.completedAt ?? undefined,
         ordinal: row.ordinal,
-        externalService: row.externalService ?? 'none',
-        externalServiceId: row.externalServiceId ?? null,
-        externalServiceMetadata: row.externalServiceMetadata
-          ? safeJsonParse<Record<string, unknown>>(row.externalServiceMetadata)
-          : null,
+        externalService: row.externalService ?? "none",
+        externalServiceId: row.externalServiceId ?? undefined,
+        externalServiceMetadata: row.externalServiceMetadata ?? undefined,
         votes,
-      } as unknown as TicketQueueItem;
+      };
     });
   }
 
   getTicketVotes(
     ticketQueueId: number,
-    anonymizeVotes?: boolean
+    anonymizeVotes?: boolean,
   ): TicketVote[] {
     const rows = this.db
       .select()
@@ -761,29 +758,29 @@ export class PlanningRoomRepository {
         createdAt: Date.now(),
         completedAt: ticket.completedAt ?? null,
         ordinal: ticket.ordinal,
-        externalService: ticket.externalService ?? 'none',
+        externalService: ticket.externalService ?? "none",
         externalServiceId: ticket.externalServiceId ?? null,
         externalServiceMetadata: serializeJSON(
-          ticket.externalServiceMetadata ?? null
+          ticket.externalServiceMetadata ?? null,
         ),
       })
       .returning({ id: ticketQueue.id })
       .all();
 
     if (!inserted) {
-      throw new Error('Failed to create ticket');
+      throw new Error("Failed to create ticket");
     }
 
     const created = this.getTicketById(inserted.id);
     if (!created) {
-      throw new Error('Failed to create ticket');
+      throw new Error("Failed to create ticket");
     }
     return created;
   }
 
   updateTicket(
     id: number,
-    updates: Partial<Omit<TicketQueueWithVotes, 'id' | 'createdAt' | 'votes'>>
+    updates: Partial<Omit<TicketQueueWithVotes, "id" | "createdAt" | "votes">>,
   ): void {
     const payload: Partial<typeof ticketQueue.$inferInsert> = {};
 
@@ -816,7 +813,7 @@ export class PlanningRoomRepository {
     }
     if (updates.externalServiceMetadata !== undefined) {
       payload.externalServiceMetadata = serializeJSON(
-        updates.externalServiceMetadata
+        updates.externalServiceMetadata,
       );
     }
 
@@ -845,7 +842,7 @@ export class PlanningRoomRepository {
 
   getTicketByTicketKey(
     ticketKey: string,
-    options?: { anonymizeVotes?: boolean }
+    options?: { anonymizeVotes?: boolean },
   ): TicketQueueWithVotes | undefined {
     const row = this.db
       .select({ id: ticketQueue.id })
@@ -862,7 +859,7 @@ export class PlanningRoomRepository {
     ticketQueueId: number,
     userName: string,
     vote: VoteValue | null,
-    structuredVote?: StructuredVote
+    structuredVote?: StructuredVote,
   ): void {
     this.db
       .insert(ticketVotes)
@@ -888,37 +885,37 @@ export class PlanningRoomRepository {
       .run();
   }
 
-  getNextTicketId({ externalService = 'none' }): string {
+  getNextTicketId({ externalService = "none" }): string {
     const maxTicket = this.db
       .select({ ticketId: ticketQueue.ticketId })
       .from(ticketQueue)
-      .where(like(ticketQueue.ticketId, 'SPRINTJAM-%'))
+      .where(like(ticketQueue.ticketId, "SPRINTJAM-%"))
       .orderBy(
-        desc(sqlOperator`CAST(SUBSTR(${ticketQueue.ticketId}, 11) AS INTEGER)`)
+        desc(sqlOperator`CAST(SUBSTR(${ticketQueue.ticketId}, 11) AS INTEGER)`),
       )
       .limit(1)
       .get();
 
-    if (!maxTicket && externalService === 'none') {
-      return 'SPRINTJAM-001';
+    if (!maxTicket && externalService === "none") {
+      return "SPRINTJAM-001";
     } else if (!maxTicket) {
-      return '';
+      return "";
     }
 
     const ticketKey =
-      typeof maxTicket.ticketId === 'string'
+      typeof maxTicket.ticketId === "string"
         ? maxTicket.ticketId
-        : String(maxTicket.ticketId ?? '');
+        : String(maxTicket.ticketId ?? "");
 
     const match = ticketKey.match(/SPRINTJAM-(\d+)/);
-    if (!match && externalService === 'none') {
-      return 'SPRINTJAM-001';
+    if (!match && externalService === "none") {
+      return "SPRINTJAM-001";
     } else if (!match) {
-      return '';
+      return "";
     }
 
     const nextNum = parseInt(match[1], 10) + 1;
-    return `SPRINTJAM-${String(nextNum).padStart(3, '0')}`;
+    return `SPRINTJAM-${String(nextNum).padStart(3, "0")}`;
   }
 
   reorderQueue(ticketIds: number[]): void {
@@ -955,8 +952,8 @@ export class PlanningRoomRepository {
       .where(
         and(
           eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, 'jira')
-        )
+          eq(oauthCredentials.provider, "jira"),
+        ),
       )
       .get();
 
@@ -969,7 +966,7 @@ export class PlanningRoomRepository {
       jiraUserEmail?: string | null;
       storyPointsField?: string | null;
       sprintField?: string | null;
-    }>(row.metadata ?? '{}');
+    }>(row.metadata ?? "{}");
 
     const accessToken = await this.tokenCipher.decrypt(row.accessToken);
     const refreshToken = await this.decryptToken(row.refreshToken);
@@ -982,7 +979,7 @@ export class PlanningRoomRepository {
       tokenType: row.tokenType,
       expiresAt: row.expiresAt,
       scope: row.scope,
-      jiraDomain: metadata?.jiraDomain ?? '',
+      jiraDomain: metadata?.jiraDomain ?? "",
       jiraCloudId: metadata?.jiraCloudId ?? null,
       jiraUserId: metadata?.jiraUserId ?? null,
       jiraUserEmail: metadata?.jiraUserEmail ?? null,
@@ -1019,17 +1016,17 @@ export class PlanningRoomRepository {
       sprintField: credentials.sprintField,
     });
     const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken
+      credentials.accessToken,
     );
     const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken
+      credentials.refreshToken,
     );
 
     this.db
       .insert(oauthCredentials)
       .values({
         roomKey: credentials.roomKey,
-        provider: 'jira',
+        provider: "jira",
         accessToken: encryptedAccessToken,
         refreshToken: encryptedRefreshToken,
         tokenType: credentials.tokenType,
@@ -1060,7 +1057,7 @@ export class PlanningRoomRepository {
     roomKey: string,
     accessToken: string,
     refreshToken: string | null,
-    expiresAt: number
+    expiresAt: number,
   ): Promise<void> {
     const encryptedAccessToken = await this.tokenCipher.encrypt(accessToken);
     const encryptedRefreshToken = await this.encryptToken(refreshToken);
@@ -1075,8 +1072,8 @@ export class PlanningRoomRepository {
       .where(
         and(
           eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, 'jira')
-        )
+          eq(oauthCredentials.provider, "jira"),
+        ),
       )
       .run();
   }
@@ -1087,8 +1084,8 @@ export class PlanningRoomRepository {
       .where(
         and(
           eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, 'jira')
-        )
+          eq(oauthCredentials.provider, "jira"),
+        ),
       )
       .run();
   }
@@ -1115,8 +1112,8 @@ export class PlanningRoomRepository {
       .where(
         and(
           eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, 'linear')
-        )
+          eq(oauthCredentials.provider, "linear"),
+        ),
       )
       .get();
 
@@ -1127,7 +1124,7 @@ export class PlanningRoomRepository {
       linearUserId?: string | null;
       linearUserEmail?: string | null;
       estimateField?: string | null;
-    }>(row.metadata ?? '{}');
+    }>(row.metadata ?? "{}");
 
     const accessToken = await this.tokenCipher.decrypt(row.accessToken);
     const refreshToken = await this.decryptToken(row.refreshToken);
@@ -1171,17 +1168,17 @@ export class PlanningRoomRepository {
       estimateField: credentials.estimateField,
     });
     const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken
+      credentials.accessToken,
     );
     const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken
+      credentials.refreshToken,
     );
 
     this.db
       .insert(oauthCredentials)
       .values({
         roomKey: credentials.roomKey,
-        provider: 'linear',
+        provider: "linear",
         accessToken: encryptedAccessToken,
         refreshToken: encryptedRefreshToken,
         tokenType: credentials.tokenType,
@@ -1212,7 +1209,7 @@ export class PlanningRoomRepository {
     roomKey: string,
     accessToken: string,
     refreshToken: string | null,
-    expiresAt: number
+    expiresAt: number,
   ): Promise<void> {
     const encryptedAccessToken = await this.tokenCipher.encrypt(accessToken);
     const encryptedRefreshToken = await this.encryptToken(refreshToken);
@@ -1227,8 +1224,8 @@ export class PlanningRoomRepository {
       .where(
         and(
           eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, 'linear')
-        )
+          eq(oauthCredentials.provider, "linear"),
+        ),
       )
       .run();
   }
@@ -1239,15 +1236,15 @@ export class PlanningRoomRepository {
       .where(
         and(
           eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, 'linear')
-        )
+          eq(oauthCredentials.provider, "linear"),
+        ),
       )
       .run();
   }
 
   async updateLinearEstimateField(
     roomKey: string,
-    estimateField: string | null
+    estimateField: string | null,
   ): Promise<void> {
     const existing = await this.getLinearOAuthCredentials(roomKey);
     if (!existing) {
@@ -1291,8 +1288,8 @@ export class PlanningRoomRepository {
       .where(
         and(
           eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, 'github')
-        )
+          eq(oauthCredentials.provider, "github"),
+        ),
       )
       .get();
 
@@ -1305,7 +1302,7 @@ export class PlanningRoomRepository {
       githubUserEmail?: string | null;
       defaultOwner?: string | null;
       defaultRepo?: string | null;
-    }>(row.metadata ?? '{}');
+    }>(row.metadata ?? "{}");
 
     const accessToken = await this.tokenCipher.decrypt(row.accessToken);
     const refreshToken = await this.decryptToken(row.refreshToken);
@@ -1350,17 +1347,17 @@ export class PlanningRoomRepository {
     });
 
     const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken
+      credentials.accessToken,
     );
     const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken
+      credentials.refreshToken,
     );
 
     this.db
       .insert(oauthCredentials)
       .values({
         roomKey: credentials.roomKey,
-        provider: 'github',
+        provider: "github",
         accessToken: encryptedAccessToken,
         refreshToken: encryptedRefreshToken,
         tokenType: credentials.tokenType,
@@ -1393,8 +1390,8 @@ export class PlanningRoomRepository {
       .where(
         and(
           eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, 'github')
-        )
+          eq(oauthCredentials.provider, "github"),
+        ),
       )
       .run();
   }
