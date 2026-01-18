@@ -510,9 +510,10 @@ export class StatsRepository {
 
     for (const round of rounds) {
       if (round.ticketId) {
+        const ticketKey = `${round.roomKey}:${round.ticketId}`;
         roundsPerTicket.set(
-          round.ticketId,
-          (roundsPerTicket.get(round.ticketId) ?? 0) + 1,
+          ticketKey,
+          (roundsPerTicket.get(ticketKey) ?? 0) + 1,
         );
         if (!ticketsByRoom.has(round.roomKey)) {
           ticketsByRoom.set(round.roomKey, new Set());
@@ -672,9 +673,10 @@ export class StatsRepository {
 
     for (const round of rounds) {
       if (round.ticketId) {
+        const ticketKey = `${round.roomKey}:${round.ticketId}`;
         roundsPerTicket.set(
-          round.ticketId,
-          (roundsPerTicket.get(round.ticketId) ?? 0) + 1,
+          ticketKey,
+          (roundsPerTicket.get(ticketKey) ?? 0) + 1,
         );
         if (!ticketsByRoom.has(round.roomKey)) {
           ticketsByRoom.set(round.roomKey, new Set());

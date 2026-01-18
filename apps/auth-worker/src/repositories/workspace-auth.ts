@@ -434,6 +434,7 @@ export class WorkspaceAuthRepository {
 
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now);
+      date.setDate(1);
       date.setMonth(date.getMonth() - i);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       monthCounts.set(key, 0);
