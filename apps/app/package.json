@@ -26,8 +26,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@sprintjam/utils": "workspace:*",
     "@sprintjam/types": "workspace:*",
+    "@sprintjam/utils": "workspace:*",
     "@strudel/web": "1.2.6",
     "@tailwindcss/typography": "0.5.19",
     "@tanstack/db": "0.5.11",

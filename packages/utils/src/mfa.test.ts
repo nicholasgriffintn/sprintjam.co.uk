@@ -1,8 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
 import {
-  base32Decode,
-  base32Encode,
   generateRecoveryCodes,
   generateTotpCode,
   hashRecoveryCode,
@@ -11,13 +9,6 @@ import {
 } from "./mfa";
 
 describe("mfa", () => {
-  it("encodes and decodes base32 values", () => {
-    const bytes = new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]);
-    const encoded = base32Encode(bytes);
-    expect(encoded).toBe("JBSWY3DP");
-    expect(base32Decode(encoded)).toEqual(bytes);
-  });
-
   it("generates and verifies TOTP codes for the current window", async () => {
     const secret = "JBSWY3DPEHPK3PXP"; // base32 for "Hello!1234"
     const timestamp = 1_700_000_000_000;

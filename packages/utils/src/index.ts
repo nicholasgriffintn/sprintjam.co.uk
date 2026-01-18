@@ -17,6 +17,7 @@ export * from './colors';
 export * from './lib/planning-poker-judge';
 export * from './token-crypto';
 export * from './mfa';
+export * from './base32';
 export * from './base64';
 export * from './validate';
 export * from './strudel';

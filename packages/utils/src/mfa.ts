@@ -1,4 +1,3 @@
-const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 const encoder = new TextEncoder();
 
 function normalizeBase32(value: string): string {
