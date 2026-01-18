@@ -25,6 +25,7 @@
     "@sprintjam/services": "workspace:*",
     "@sprintjam/types": "workspace:*",
     "@sprintjam/utils": "workspace:*",
+    "@simplewebauthn/server": "10.0.1",
     "drizzle-orm": "0.45.1"
   },
   "devDependencies": {

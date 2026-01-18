@@ -16,6 +16,7 @@
     "deploy:staging": "turbo run deploy:staging --filter=\"...[HEAD^]\"",
     "deploy:prod": "turbo run deploy:prod --filter=\"...[HEAD^]\"",
     "deploy:prod:all": "turbo run deploy:prod",
+    "db:generate": "pnpm --filter @sprintjam/auth-worker db:generate",
     "db:migrate:local": "pnpm --filter @sprintjam/auth-worker db:migrate:local",
     "db:migrate:staging": "pnpm --filter @sprintjam/auth-worker db:migrate:staging",
     "db:migrate:prod": "pnpm --filter @sprintjam/auth-worker db:migrate:prod"

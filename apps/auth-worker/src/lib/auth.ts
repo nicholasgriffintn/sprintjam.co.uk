@@ -1,15 +1,13 @@
-import type {
-  Request as CfRequest,
-  D1Database,
-} from "@cloudflare/workers-types";
+import type { D1Database } from "@cloudflare/workers-types";
 
-import { getSessionTokenFromRequest, hashToken } from "@sprintjam/utils";
+import { hashToken } from "@sprintjam/utils";
 import { drizzle } from "drizzle-orm/d1";
 import { eq, gt, and } from "drizzle-orm";
 import { workspaceSessions, users } from "@sprintjam/db";
 import * as schema from "@sprintjam/db/d1/schemas";
 
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
+import { getSessionTokenFromRequest } from "./session";
 
 export interface AuthResult {
   userId: number;
@@ -29,7 +27,7 @@ export function isAuthError(
 }
 
 export async function authenticateRequest(
-  request: CfRequest,
+  request: Request,
   db: D1Database,
 ): Promise<AuthResult | AuthError> {
   const token = getSessionTokenFromRequest(request);

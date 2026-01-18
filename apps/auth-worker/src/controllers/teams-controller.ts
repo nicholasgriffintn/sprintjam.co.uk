@@ -1,9 +1,5 @@
-import type {
-  Request as CfRequest,
-  Response as CfResponse,
-} from "@cloudflare/workers-types";
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { jsonError } from '@sprintjam/utils';
+import { jsonError } from "../lib/response";
 
 import { authenticateRequest, isAuthError, type AuthResult } from '../lib/auth';
 import {
@@ -14,9 +10,9 @@ import {
 } from '../lib/response';
 
 async function getAuthOrError(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
-): Promise<{ result: AuthResult } | { response: CfResponse }> {
+): Promise<{ result: AuthResult } | { response: Response }> {
   const result = await authenticateRequest(request, env.DB);
 
   if (isAuthError(result)) {
@@ -30,9 +26,9 @@ async function getAuthOrError(
 }
 
 export async function listTeamsController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -46,9 +42,9 @@ export async function listTeamsController(
 }
 
 export async function createTeamController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -79,10 +75,10 @@ export async function createTeamController(
 }
 
 export async function getTeamController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
   teamId: number,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -105,10 +101,10 @@ export async function getTeamController(
 }
 
 export async function updateTeamController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
   teamId: number,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -144,10 +140,10 @@ export async function updateTeamController(
 }
 
 export async function deleteTeamController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
   teamId: number,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -171,10 +167,10 @@ export async function deleteTeamController(
 }
 
 export async function listTeamSessionsController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
   teamId: number,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -199,10 +195,10 @@ export async function listTeamSessionsController(
 }
 
 export async function createTeamSessionController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
   teamId: number,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -259,11 +255,11 @@ export async function createTeamSessionController(
 }
 
 export async function getTeamSessionController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
   teamId: number,
   sessionId: number,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -292,9 +288,9 @@ export async function getTeamSessionController(
 }
 
 export async function completeSessionByRoomKeyController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {
@@ -322,9 +318,9 @@ export async function completeSessionByRoomKeyController(
 }
 
 export async function getWorkspaceStatsController(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
-): Promise<CfResponse> {
+): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
   if ('response' in auth) {

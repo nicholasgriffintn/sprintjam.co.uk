@@ -15,6 +15,11 @@ import {
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 import * as auth from "../lib/auth";
 
+const makeRequest = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Request => new Request(input, init);
+
 vi.mock("../repositories/workspace-auth", () => ({
   WorkspaceAuthRepository: vi.fn(),
 }));
@@ -48,7 +53,7 @@ describe("listTeamsController", () => {
       code: "unauthorized",
     });
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "GET",
     });
 
@@ -65,7 +70,7 @@ describe("listTeamsController", () => {
       code: "expired",
     });
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "GET",
       headers: { Authorization: "Bearer expired-token" },
     });
@@ -88,7 +93,7 @@ describe("listTeamsController", () => {
       { id: 2, name: "Team B", organisationId: 1, ownerId: 1 },
     ]);
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "GET",
       headers: { Authorization: "Bearer valid-token" },
     });
@@ -126,7 +131,7 @@ describe("createTeamController", () => {
       code: "unauthorized",
     });
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "POST",
       body: JSON.stringify({ name: "New Team" }),
     });
@@ -142,7 +147,7 @@ describe("createTeamController", () => {
       repo: mockRepo,
     });
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "POST",
       body: JSON.stringify({}),
       headers: { Authorization: "Bearer valid-token" },
@@ -162,7 +167,7 @@ describe("createTeamController", () => {
       repo: mockRepo,
     });
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "POST",
       body: JSON.stringify({ name: "a".repeat(101) }),
       headers: { Authorization: "Bearer valid-token" },
@@ -183,7 +188,7 @@ describe("createTeamController", () => {
     });
     mockRepo.getUserById.mockResolvedValue(null);
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "POST",
       body: JSON.stringify({ name: "New Team" }),
       headers: { Authorization: "Bearer valid-token" },
@@ -215,7 +220,7 @@ describe("createTeamController", () => {
       ownerId: 1,
     });
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "POST",
       body: JSON.stringify({ name: "New Team" }),
       headers: { Authorization: "Bearer valid-token" },
@@ -247,7 +252,7 @@ describe("createTeamController", () => {
       ownerId: 1,
     });
 
-    const request = new Request("https://test.com/teams", {
+    const request = makeRequest("https://test.com/teams", {
       method: "POST",
       body: JSON.stringify({ name: "  Trimmed Team  " }),
       headers: { Authorization: "Bearer valid-token" },
@@ -285,7 +290,7 @@ describe("getTeamController", () => {
     });
     mockRepo.getTeamById.mockResolvedValue(null);
 
-    const request = new Request("https://test.com/teams/1", {
+    const request = makeRequest("https://test.com/teams/1", {
       headers: { Authorization: "Bearer valid-token" },
     });
 
@@ -313,7 +318,7 @@ describe("getTeamController", () => {
       organisationId: 1,
     });
 
-    const request = new Request("https://test.com/teams/1", {
+    const request = makeRequest("https://test.com/teams/1", {
       headers: { Authorization: "Bearer valid-token" },
     });
 
@@ -341,7 +346,7 @@ describe("getTeamController", () => {
       organisationId: 1,
     });
 
-    const request = new Request("https://test.com/teams/1", {
+    const request = makeRequest("https://test.com/teams/1", {
       headers: { Authorization: "Bearer valid-token" },
     });
 
@@ -383,7 +388,7 @@ describe("updateTeamController", () => {
       ownerId: 1,
     });
 
-    const request = new Request("https://test.com/teams/1", {
+    const request = makeRequest("https://test.com/teams/1", {
       method: "PUT",
       body: JSON.stringify({ name: "Updated Team" }),
       headers: { Authorization: "Bearer valid-token" },
@@ -406,7 +411,7 @@ describe("updateTeamController", () => {
       .mockResolvedValueOnce({ id: 1, name: "Old Team", ownerId: 1 })
       .mockResolvedValueOnce({ id: 1, name: "Updated Team", ownerId: 1 });
 
-    const request = new Request("https://test.com/teams/1", {
+    const request = makeRequest("https://test.com/teams/1", {
       method: "PUT",
       body: JSON.stringify({ name: "Updated Team" }),
       headers: { Authorization: "Bearer valid-token" },
@@ -453,7 +458,7 @@ describe("deleteTeamController", () => {
       ownerId: 1,
     });
 
-    const request = new Request("https://test.com/teams/1", {
+    const request = makeRequest("https://test.com/teams/1", {
       method: "DELETE",
       headers: { Authorization: "Bearer valid-token" },
     });
@@ -477,7 +482,7 @@ describe("deleteTeamController", () => {
       ownerId: 1,
     });
 
-    const request = new Request("https://test.com/teams/1", {
+    const request = makeRequest("https://test.com/teams/1", {
       method: "DELETE",
       headers: { Authorization: "Bearer valid-token" },
     });
@@ -527,7 +532,7 @@ describe("listTeamSessionsController", () => {
     });
     mockRepo.isTeamOwner.mockResolvedValue(false);
 
-    const request = new Request("https://test.com/teams/1/sessions", {
+    const request = makeRequest("https://test.com/teams/1/sessions", {
       headers: { Authorization: "Bearer valid-token" },
     });
 
@@ -558,7 +563,7 @@ describe("listTeamSessionsController", () => {
       { id: 2, name: "Session 2", teamId: 1, roomKey: "room2" },
     ]);
 
-    const request = new Request("https://test.com/teams/1/sessions", {
+    const request = makeRequest("https://test.com/teams/1/sessions", {
       headers: { Authorization: "Bearer valid-token" },
     });
 
@@ -607,7 +612,7 @@ describe("createTeamSessionController", () => {
     });
     mockRepo.isTeamOwner.mockResolvedValue(true);
 
-    const request = new Request("https://test.com/teams/1/sessions", {
+    const request = makeRequest("https://test.com/teams/1/sessions", {
       method: "POST",
       body: JSON.stringify({ roomKey: "room1" }),
       headers: { Authorization: "Bearer valid-token" },
@@ -636,7 +641,7 @@ describe("createTeamSessionController", () => {
     });
     mockRepo.isTeamOwner.mockResolvedValue(true);
 
-    const request = new Request("https://test.com/teams/1/sessions", {
+    const request = makeRequest("https://test.com/teams/1/sessions", {
       method: "POST",
       body: JSON.stringify({ name: "Session 1" }),
       headers: { Authorization: "Bearer valid-token" },
@@ -672,7 +677,7 @@ describe("createTeamSessionController", () => {
       roomKey: "room1",
     });
 
-    const request = new Request("https://test.com/teams/1/sessions", {
+    const request = makeRequest("https://test.com/teams/1/sessions", {
       method: "POST",
       body: JSON.stringify({
         name: "Session 1",
@@ -726,7 +731,7 @@ describe("completeSessionByRoomKeyController", () => {
       completedAt: 1700000000000,
     });
 
-    const request = new Request("https://test.com/sessions/complete", {
+    const request = makeRequest("https://test.com/sessions/complete", {
       method: "POST",
       body: JSON.stringify({ roomKey: "ROOM1" }),
       headers: { Authorization: "Bearer valid-token" },
@@ -776,7 +781,7 @@ describe("getWorkspaceStatsController", () => {
       completedSessions: 13,
     });
 
-    const request = new Request("https://test.com/workspace/stats", {
+    const request = makeRequest("https://test.com/workspace/stats", {
       headers: { Authorization: "Bearer valid-token" },
     });
 

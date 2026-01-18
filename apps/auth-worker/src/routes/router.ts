@@ -1,15 +1,15 @@
-import type {
-  Request as CfRequest,
-  Response as CfResponse,
-} from "@cloudflare/workers-types";
 import type { AuthWorkerEnv } from "@sprintjam/types";
 
 import {
   requestMagicLinkController,
   verifyCodeController,
+  startMfaSetupController,
+  verifyMfaSetupController,
+  startMfaVerifyController,
+  verifyMfaController,
   getCurrentUserController,
   logoutController,
-} from "../controllers/auth-controller";
+} from '../controllers/auth-controller';
 import {
   listTeamsController,
   createTeamController,
@@ -22,115 +22,183 @@ import {
   completeSessionByRoomKeyController,
   getWorkspaceStatsController,
 } from "../controllers/teams-controller";
+import { jsonError } from "../lib/response";
 
-type HandlerParams = Array<string | number>;
+type HandlerParam = string | number;
+type HandlerParams = HandlerParam[];
+type RouteHandler = (
+  request: Request,
+  env: AuthWorkerEnv,
+  params: HandlerParams,
+) => Response | Promise<Response>;
 
 interface RouteDefinition {
   method: string;
   pattern: RegExp;
-  handler: (
-    request: CfRequest,
-    env: AuthWorkerEnv,
-    ...params: HandlerParams
-  ) => Promise<CfResponse>;
+  handler: RouteHandler;
   paramTypes: ("none" | "string" | "number")[];
+}
+
+function requireNumberParam(
+  value: HandlerParam,
+  name: string,
+): { ok: true; value: number } | { ok: false; response: Response } {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return { ok: false, response: jsonError(`Invalid ${name}`, 400) };
+  }
+  return { ok: true, value };
 }
 
 const ROUTES: RouteDefinition[] = [
   {
-    method: "POST",
+    method: 'POST',
     pattern: /^auth\/magic-link$/,
-    handler: requestMagicLinkController as RouteDefinition["handler"],
-    paramTypes: ["none"],
+    handler: (request, env) => requestMagicLinkController(request, env),
+    paramTypes: ['none'],
   },
   {
-    method: "POST",
+    method: 'POST',
     pattern: /^auth\/verify$/,
-    handler: verifyCodeController as RouteDefinition["handler"],
-    paramTypes: ["none"],
+    handler: (request, env) => verifyCodeController(request, env),
+    paramTypes: ['none'],
   },
   {
-    method: "GET",
+    method: 'POST',
+    pattern: /^auth\/mfa\/setup\/start$/,
+    handler: (request, env) => startMfaSetupController(request, env),
+    paramTypes: ['none'],
+  },
+  {
+    method: 'POST',
+    pattern: /^auth\/mfa\/setup\/verify$/,
+    handler: (request, env) => verifyMfaSetupController(request, env),
+    paramTypes: ['none'],
+  },
+  {
+    method: 'POST',
+    pattern: /^auth\/mfa\/verify\/start$/,
+    handler: (request, env) => startMfaVerifyController(request, env),
+    paramTypes: ['none'],
+  },
+  {
+    method: 'POST',
+    pattern: /^auth\/mfa\/verify$/,
+    handler: (request, env) => verifyMfaController(request, env),
+    paramTypes: ['none'],
+  },
+  {
+    method: 'GET',
     pattern: /^auth\/me$/,
-    handler: getCurrentUserController as RouteDefinition["handler"],
-    paramTypes: ["none"],
+    handler: (request, env) => getCurrentUserController(request, env),
+    paramTypes: ['none'],
   },
   {
-    method: "POST",
+    method: 'POST',
     pattern: /^auth\/logout$/,
-    handler: logoutController as RouteDefinition["handler"],
-    paramTypes: ["none"],
+    handler: (request, env) => logoutController(request, env),
+    paramTypes: ['none'],
   },
   {
-    method: "GET",
+    method: 'GET',
     pattern: /^teams$/,
-    handler: listTeamsController as RouteDefinition["handler"],
-    paramTypes: ["none"],
+    handler: (request, env) => listTeamsController(request, env),
+    paramTypes: ['none'],
   },
   {
-    method: "POST",
+    method: 'POST',
     pattern: /^teams$/,
-    handler: createTeamController as RouteDefinition["handler"],
-    paramTypes: ["none"],
+    handler: (request, env) => createTeamController(request, env),
+    paramTypes: ['none'],
   },
   {
-    method: "GET",
+    method: 'GET',
     pattern: /^teams\/(\d+)$/,
-    handler: getTeamController as RouteDefinition["handler"],
-    paramTypes: ["number"],
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return getTeamController(request, env, teamIdResult.value);
+    },
+    paramTypes: ['number'],
   },
   {
-    method: "PUT",
+    method: 'PUT',
     pattern: /^teams\/(\d+)$/,
-    handler: updateTeamController as RouteDefinition["handler"],
-    paramTypes: ["number"],
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return updateTeamController(request, env, teamIdResult.value);
+    },
+    paramTypes: ['number'],
   },
   {
-    method: "DELETE",
+    method: 'DELETE',
     pattern: /^teams\/(\d+)$/,
-    handler: deleteTeamController as RouteDefinition["handler"],
-    paramTypes: ["number"],
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return deleteTeamController(request, env, teamIdResult.value);
+    },
+    paramTypes: ['number'],
   },
   {
-    method: "GET",
+    method: 'GET',
     pattern: /^teams\/(\d+)\/sessions$/,
-    handler: listTeamSessionsController as RouteDefinition["handler"],
-    paramTypes: ["number"],
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamSessionsController(request, env, teamIdResult.value);
+    },
+    paramTypes: ['number'],
   },
   {
-    method: "POST",
+    method: 'POST',
     pattern: /^teams\/(\d+)\/sessions$/,
-    handler: createTeamSessionController as RouteDefinition["handler"],
-    paramTypes: ["number"],
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return createTeamSessionController(request, env, teamIdResult.value);
+    },
+    paramTypes: ['number'],
   },
   {
-    method: "GET",
+    method: 'GET',
     pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
-    handler: getTeamSessionController as RouteDefinition["handler"],
-    paramTypes: ["number", "number"],
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const sessionIdResult = requireNumberParam(params[1], "sessionId");
+      if (!sessionIdResult.ok) return sessionIdResult.response;
+      return getTeamSessionController(
+        request,
+        env,
+        teamIdResult.value,
+        sessionIdResult.value,
+      );
+    },
+    paramTypes: ['number', 'number'],
   },
   {
-    method: "POST",
+    method: 'POST',
     pattern: /^sessions\/complete$/,
-    handler: completeSessionByRoomKeyController as RouteDefinition["handler"],
-    paramTypes: ["none"],
+    handler: (request, env) => completeSessionByRoomKeyController(request, env),
+    paramTypes: ['none'],
   },
   {
-    method: "GET",
+    method: 'GET',
     pattern: /^workspace\/stats$/,
-    handler: getWorkspaceStatsController as RouteDefinition["handler"],
-    paramTypes: ["none"],
+    handler: (request, env) => getWorkspaceStatsController(request, env),
+    paramTypes: ['none'],
   },
 ];
 
-function notFoundResponse(): CfResponse {
+function notFoundResponse(): Response {
   return new Response(JSON.stringify({ error: "Auth Route Not found" }), {
     status: 404,
     headers: { "Content-Type": "application/json" },
-  }) as unknown as CfResponse;
+  });
 }
 
-function rootResponse(): CfResponse {
+function rootResponse(): Response {
   return new Response(
     JSON.stringify({
       status: "success",
@@ -140,14 +208,14 @@ function rootResponse(): CfResponse {
       status: 200,
       headers: { "Content-Type": "application/json" },
     },
-  ) as unknown as CfResponse;
+  );
 }
 
 function parseParams(
   match: RegExpMatchArray,
   paramTypes: RouteDefinition["paramTypes"],
 ): HandlerParams {
-  const params: HandlerParams = [];
+  const params: HandlerParam[] = [];
   for (let i = 1; i < match.length; i++) {
     const paramType = paramTypes[i - 1];
     if (paramType === "number") {
@@ -160,9 +228,9 @@ function parseParams(
 }
 
 export async function handleRequest(
-  request: CfRequest,
+  request: Request,
   env: AuthWorkerEnv,
-): Promise<CfResponse> {
+): Promise<Response> {
   try {
     const url = new URL(request.url);
     const path = url.pathname.startsWith("/api/")
@@ -180,7 +248,7 @@ export async function handleRequest(
       if (!match) continue;
 
       const params = parseParams(match, route.paramTypes);
-      return route.handler(request, env, ...params);
+      return route.handler(request, env, params);
     }
 
     return notFoundResponse();
@@ -192,6 +260,6 @@ export async function handleRequest(
         status: 500,
         headers: { "Content-Type": "application/json" },
       },
-    ) as unknown as CfResponse;
+    );
   }
 }
