@@ -1,12 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { CalendarDays } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
-
-interface SessionTimelineData {
-  period: string;
-  count: number;
-}
+import type { SessionTimelineData } from "@/lib/workspace-service";
 
 interface SessionsChartProps {
   data: SessionTimelineData[];
@@ -15,9 +12,24 @@ interface SessionsChartProps {
 type TimeRange = "month" | "quarter" | "all";
 
 export function SessionsChart({ data }: SessionsChartProps) {
-  const [timeRange, setTimeRange] = useState<TimeRange>("quarter");
+  const [timeRange, setTimeRange] = useState<TimeRange>("all");
 
-  const maxCount = Math.max(...data.map((d) => d.count), 1);
+  const filteredData = useMemo(() => {
+    if (data.length === 0) return [];
+
+    switch (timeRange) {
+      case "month":
+        return data.slice(-1);
+      case "quarter":
+        return data.slice(-3);
+      case "all":
+      default:
+        return data;
+    }
+  }, [data, timeRange]);
+
+  const maxCount = Math.max(...filteredData.map((d) => d.count), 1);
+  const totalSessions = filteredData.reduce((sum, d) => sum + d.count, 0);
 
   const timeRangeOptions = [
     { id: "month" as const, label: "This month" },
@@ -25,12 +37,36 @@ export function SessionsChart({ data }: SessionsChartProps) {
     { id: "all" as const, label: "All time" },
   ];
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+  if (data.length === 0) {
+    return (
+      <div className="space-y-4">
         <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300">
           Sessions over time
         </h3>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 py-8 dark:border-slate-700 dark:bg-slate-800/50">
+          <CalendarDays className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            No session data yet
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Sessions will appear here as they are created
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+            Sessions over time
+          </h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            {totalSessions} sessions in selected period
+          </p>
+        </div>
         <div
           className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-sm dark:bg-slate-800"
           role="group"
@@ -55,29 +91,33 @@ export function SessionsChart({ data }: SessionsChartProps) {
       </div>
 
       <div className="space-y-3">
-        {data.map((item, index) => {
-          const percentage = (item.count / maxCount) * 100;
+        {filteredData.map((item, index) => {
+          const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
 
           return (
-            <div key={item.period} className="space-y-1">
+            <div key={item.yearMonth} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-slate-700 dark:text-slate-200">
                   {item.period}
                 </span>
                 <span className="text-slate-600 dark:text-slate-300">
-                  {item.count} sessions
+                  {item.count} {item.count === 1 ? "session" : "sessions"}
                 </span>
               </div>
               <div className="h-8 w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${percentage}%` }}
+                  animate={{ width: `${Math.max(percentage, 2)}%` }}
                   transition={{
                     duration: 0.8,
                     delay: 0.1 * index,
                     ease: "easeOut",
                   }}
-                  className="h-full rounded-lg bg-gradient-to-r from-brand-500 to-brand-600"
+                  className={`h-full rounded-lg ${
+                    item.count > 0
+                      ? "bg-gradient-to-r from-brand-500 to-brand-600"
+                      : "bg-slate-200 dark:bg-slate-700"
+                  }`}
                 />
               </div>
             </div>

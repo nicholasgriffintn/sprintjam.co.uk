@@ -12,6 +12,9 @@ import {
   getBatchRoomStatsController,
   getTeamStatsController,
   getTeamInsightsController,
+  getWorkspaceInsightsController,
+  getSessionStatsController,
+  getBatchSessionStatsController,
 } from "./routes/query";
 
 async function handleRequest(
@@ -78,6 +81,23 @@ async function handleRequest(
         env,
         parseInt(teamInsightsMatch[1], 10),
       );
+    }
+
+    if (path === "stats/workspace/insights" && request.method === "GET") {
+      return await getWorkspaceInsightsController(request, env);
+    }
+
+    const sessionStatsMatch = path.match(/^stats\/session\/([^/]+)$/);
+    if (sessionStatsMatch && request.method === "GET") {
+      return await getSessionStatsController(
+        request,
+        env,
+        sessionStatsMatch[1],
+      );
+    }
+
+    if (path === "stats/sessions" && request.method === "GET") {
+      return await getBatchSessionStatsController(request, env);
     }
 
     return new Response(JSON.stringify({ error: "Stats Route Not found" }), {

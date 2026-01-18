@@ -1,11 +1,11 @@
 import type {
   Request as CfRequest,
   D1Database,
-} from '@cloudflare/workers-types';
-import { getSessionTokenFromRequest, hashToken } from '@sprintjam/utils';
-import { drizzle } from 'drizzle-orm/d1';
-import { eq, and, gt, inArray } from 'drizzle-orm';
-import { workspaceSessions, users, teams, teamSessions } from '@sprintjam/db';
+} from "@cloudflare/workers-types";
+import { getSessionTokenFromRequest, hashToken } from "@sprintjam/utils";
+import { drizzle } from "drizzle-orm/d1";
+import { eq, and, gt, inArray } from "drizzle-orm";
+import { workspaceSessions, users, teams, teamSessions } from "@sprintjam/db";
 
 export interface AuthResult {
   userId: number;
@@ -14,17 +14,17 @@ export interface AuthResult {
 }
 
 export interface AuthError {
-  status: 'error';
-  code: 'unauthorized' | 'expired';
+  status: "error";
+  code: "unauthorized" | "expired";
 }
 
 export async function authenticateRequest(
   request: CfRequest,
-  db: D1Database
+  db: D1Database,
 ): Promise<AuthResult | AuthError> {
   const token = getSessionTokenFromRequest(request);
   if (!token) {
-    return { status: 'error', code: 'unauthorized' };
+    return { status: "error", code: "unauthorized" };
   }
 
   const tokenHash = await hashToken(token);
@@ -42,13 +42,13 @@ export async function authenticateRequest(
     .where(
       and(
         eq(workspaceSessions.tokenHash, tokenHash),
-        gt(workspaceSessions.expiresAt, now)
-      )
+        gt(workspaceSessions.expiresAt, now),
+      ),
     )
     .get();
 
   if (!result) {
-    return { status: 'error', code: 'expired' };
+    return { status: "error", code: "expired" };
   }
 
   return {
@@ -61,7 +61,7 @@ export async function authenticateRequest(
 export async function isUserInTeam(
   db: D1Database,
   userId: number,
-  teamId: number
+  teamId: number,
 ): Promise<boolean> {
   const drizzleDb = drizzle(db);
 
@@ -87,7 +87,7 @@ export async function isUserInTeam(
 export async function canUserAccessRoom(
   db: D1Database,
   organisationId: number,
-  roomKey: string
+  roomKey: string,
 ): Promise<boolean> {
   const drizzleDb = drizzle(db);
 
@@ -111,7 +111,7 @@ export async function canUserAccessRoom(
 export async function filterAccessibleRoomKeys(
   db: D1Database,
   organisationId: number,
-  roomKeys: string[]
+  roomKeys: string[],
 ): Promise<string[]> {
   if (roomKeys.length === 0) return [];
 
@@ -126,10 +126,25 @@ export async function filterAccessibleRoomKeys(
     .where(
       and(
         inArray(teamSessions.roomKey, roomKeys),
-        eq(teams.organisationId, organisationId)
-      )
+        eq(teams.organisationId, organisationId),
+      ),
     )
     .all();
 
   return accessibleSessions.map((s) => s.roomKey);
+}
+
+export async function getUserTeamIds(
+  db: D1Database,
+  userId: number,
+): Promise<number[]> {
+  const drizzleDb = drizzle(db);
+
+  const userTeams = await drizzleDb
+    .select({ id: teams.id })
+    .from(teams)
+    .where(eq(teams.ownerId, userId))
+    .all();
+
+  return userTeams.map((t) => t.id);
 }
