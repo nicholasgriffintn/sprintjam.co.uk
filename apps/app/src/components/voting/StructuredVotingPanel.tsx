@@ -76,7 +76,7 @@ function CriterionRow({
 
   return (
     <div
-      className="grid gap-3 py-2 border-b border-slate-200/70 dark:border-slate-700/70 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+      className="grid gap-3 py-2 border-b border-slate-200/70 dark:border-slate-700/70 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto] md:items-center px-2"
       data-testid={`structured-criterion-${criterion.id}`}
     >
       <div className="min-w-0">
@@ -97,7 +97,7 @@ function CriterionRow({
       </div>
       <div className="flex flex-col gap-2 md:min-w-[220px]">
         <div
-          className={`flex gap-2 justify-end`}
+          className="flex gap-2 justify-start md:justify-end"
           role="radiogroup"
           aria-labelledby={titleId}
           aria-describedby={descriptionId}
