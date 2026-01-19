@@ -1,4 +1,5 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
+import { validateRequestBodySize } from '@sprintjam/utils';
 
 import {
   requestMagicLinkController,
@@ -114,7 +115,7 @@ const ROUTES: RouteDefinition[] = [
     method: 'GET',
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+      const teamIdResult = requireNumberParam(params[0], 'teamId');
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamController(request, env, teamIdResult.value);
     },
@@ -124,7 +125,7 @@ const ROUTES: RouteDefinition[] = [
     method: 'PUT',
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+      const teamIdResult = requireNumberParam(params[0], 'teamId');
       if (!teamIdResult.ok) return teamIdResult.response;
       return updateTeamController(request, env, teamIdResult.value);
     },
@@ -134,7 +135,7 @@ const ROUTES: RouteDefinition[] = [
     method: 'DELETE',
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+      const teamIdResult = requireNumberParam(params[0], 'teamId');
       if (!teamIdResult.ok) return teamIdResult.response;
       return deleteTeamController(request, env, teamIdResult.value);
     },
@@ -144,7 +145,7 @@ const ROUTES: RouteDefinition[] = [
     method: 'GET',
     pattern: /^teams\/(\d+)\/sessions$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+      const teamIdResult = requireNumberParam(params[0], 'teamId');
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamSessionsController(request, env, teamIdResult.value);
     },
@@ -154,7 +155,7 @@ const ROUTES: RouteDefinition[] = [
     method: 'POST',
     pattern: /^teams\/(\d+)\/sessions$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+      const teamIdResult = requireNumberParam(params[0], 'teamId');
       if (!teamIdResult.ok) return teamIdResult.response;
       return createTeamSessionController(request, env, teamIdResult.value);
     },
@@ -164,9 +165,9 @@ const ROUTES: RouteDefinition[] = [
     method: 'GET',
     pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+      const teamIdResult = requireNumberParam(params[0], 'teamId');
       if (!teamIdResult.ok) return teamIdResult.response;
-      const sessionIdResult = requireNumberParam(params[1], "sessionId");
+      const sessionIdResult = requireNumberParam(params[1], 'sessionId');
       if (!sessionIdResult.ok) return sessionIdResult.response;
       return getTeamSessionController(
         request,
@@ -239,6 +240,13 @@ export async function handleRequest(
 
     if (path === "" || path === "/") {
       return rootResponse();
+    }
+
+    if (request.method === 'POST' || request.method === 'PUT') {
+      const bodySizeCheck = validateRequestBodySize(request);
+      if (!bodySizeCheck.ok) {
+        return bodySizeCheck.response as unknown as Response;
+      }
     }
 
     for (const route of ROUTES) {
