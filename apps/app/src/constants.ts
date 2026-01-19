@@ -28,8 +28,6 @@ export const RETURN_URL_KEY = 'sprintjam_return_url';
 export const WORKSPACES_STORAGE_KEY = 'sprintjam_workspaces_enabled';
 export const ROOM_HINTS_DISMISSED_STORAGE_KEY = 'sprintjam_roomHintsDismissed';
 export const ROOM_JOINED_STORAGE_KEY = 'sprintjam_roomJoinedBefore';
-export const ROOM_MODERATOR_STORAGE_KEY = 'sprintjam_roomModeratorSeen';
-export const ROOM_STRUCTURED_STORAGE_KEY = 'sprintjam_roomStructuredSeen';
 export const ROOM_SPREAD_HINT_STORAGE_KEY = 'sprintjam_roomSpreadHintSeen';
 export const ROOM_FACILITATION_PROMPT_SEEN_STORAGE_KEY =
   'sprintjam_roomFacilitationPromptSeen';

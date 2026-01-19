@@ -5,10 +5,8 @@ import {
   ROOM_FACILITATION_PROMPT_SEEN_STORAGE_KEY,
   ROOM_HINTS_DISMISSED_STORAGE_KEY,
   ROOM_JOINED_STORAGE_KEY,
-  ROOM_MODERATOR_STORAGE_KEY,
   ROOM_SPREAD_HINT_STORAGE_KEY,
-  ROOM_STRUCTURED_STORAGE_KEY,
-} from "@/constants";
+} from '@/constants';
 import { safeLocalStorage } from "@/utils/storage";
 import type { VoteSpreadSummary } from "@/utils/room-guidance";
 
@@ -27,7 +25,6 @@ export const useRoomOnboardingHints = ({
 }: UseRoomOnboardingHintsParams) => {
   const [hintsDismissed, setHintsDismissed] = useState(false);
   const [isFirstRoomJoin, setIsFirstRoomJoin] = useState(false);
-  const [isFirstModerator, setIsFirstModerator] = useState(false);
   const [isFirstStructured, setIsFirstStructured] = useState(false);
   const [showSpreadHint, setShowSpreadHint] = useState(false);
   const [showFacilitationOptIn, setShowFacilitationOptIn] = useState(false);
@@ -39,26 +36,6 @@ export const useRoomOnboardingHints = ({
     const hasJoined = safeLocalStorage.get(ROOM_JOINED_STORAGE_KEY) === "true";
     setIsFirstRoomJoin(!hasJoined);
   }, []);
-
-  useEffect(() => {
-    if (!isModeratorView) {
-      setIsFirstModerator(false);
-      return;
-    }
-    const hasModerated =
-      safeLocalStorage.get(ROOM_MODERATOR_STORAGE_KEY) === "true";
-    setIsFirstModerator(!hasModerated);
-  }, [isModeratorView]);
-
-  useEffect(() => {
-    if (!roomData.settings.enableStructuredVoting) {
-      setIsFirstStructured(false);
-      return;
-    }
-    const hasStructured =
-      safeLocalStorage.get(ROOM_STRUCTURED_STORAGE_KEY) === "true";
-    setIsFirstStructured(!hasStructured);
-  }, [roomData.settings.enableStructuredVoting]);
 
   useEffect(() => {
     if (hintsDismissed || !roomData.showVotes || !spreadSummary.isWideSpread) {
@@ -90,17 +67,10 @@ export const useRoomOnboardingHints = ({
   const dismissHints = () => {
     setHintsDismissed(true);
     setIsFirstRoomJoin(false);
-    setIsFirstModerator(false);
     setIsFirstStructured(false);
     setShowSpreadHint(false);
     safeLocalStorage.set(ROOM_HINTS_DISMISSED_STORAGE_KEY, "true");
-    safeLocalStorage.set(ROOM_JOINED_STORAGE_KEY, "true");
-    if (isModeratorView) {
-      safeLocalStorage.set(ROOM_MODERATOR_STORAGE_KEY, "true");
-    }
-    if (roomData.settings.enableStructuredVoting) {
-      safeLocalStorage.set(ROOM_STRUCTURED_STORAGE_KEY, "true");
-    }
+    safeLocalStorage.set(ROOM_JOINED_STORAGE_KEY, 'true');
     if (showSpreadHint) {
       safeLocalStorage.set(ROOM_SPREAD_HINT_STORAGE_KEY, "true");
     }
@@ -122,14 +92,14 @@ export const useRoomOnboardingHints = ({
 
   const showOnboardingHints =
     !hintsDismissed &&
-    (isFirstRoomJoin || isFirstModerator || isFirstStructured);
+    (showFacilitationOptIn ||
+      (!isModeratorView && (isFirstRoomJoin || isFirstStructured)));
 
   return {
     showOnboardingHints,
     showSpreadHint,
     showFacilitationOptIn,
     isFirstRoomJoin,
-    isFirstModerator,
     isFirstStructured,
     dismissHints,
     enableFacilitationGuidance,

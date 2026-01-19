@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { createRoomWithParticipant } from "./helpers/room-journeys";
 
 test.describe("Room onboarding hints", () => {
-  test("shows facilitation opt-in then moderator hint", async ({ browser }) => {
+  test("shows facilitation opt-in", async ({ browser }) => {
     const setup = await createRoomWithParticipant(browser);
     const { moderatorRoom, cleanup } = setup;
     const page = moderatorRoom.getPage();
@@ -14,10 +14,6 @@ test.describe("Room onboarding hints", () => {
       ).toBeVisible();
 
       await page.getByRole("button", { name: "Not now" }).click();
-
-      await expect(
-        page.getByText("You're facilitating", { exact: true }),
-      ).toBeVisible();
     } finally {
       await cleanup();
     }
