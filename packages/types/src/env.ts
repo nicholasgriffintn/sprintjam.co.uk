@@ -28,6 +28,7 @@ export interface DispatchWorkerEnv extends BaseEnv {
  */
 export interface RoomWorkerEnv extends BaseEnv {
   JOIN_RATE_LIMITER: RateLimit;
+  FEEDBACK_RATE_LIMITER: RateLimit;
   PLANNING_ROOM: DurableObjectNamespace;
   TOKEN_ENCRYPTION_SECRET: string;
   JIRA_OAUTH_CLIENT_ID?: string;

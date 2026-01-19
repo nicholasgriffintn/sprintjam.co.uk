@@ -28,6 +28,23 @@ export async function submitFeedbackController(
   request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
+  if (!env.FEEDBACK_RATE_LIMITER) {
+    return jsonError('This service is temporarily unavailable', 500);
+  }
+
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+
+  const { success: rateLimitSuccess } = await env.FEEDBACK_RATE_LIMITER.limit({
+    key: `feedback:ip:${ip}`,
+  });
+
+  if (!rateLimitSuccess) {
+    return jsonError(
+      'Rate limit exceeded. Please wait before submitting more feedback.',
+      429,
+    );
+  }
+
   let body: {
     title?: string;
     description?: string;
