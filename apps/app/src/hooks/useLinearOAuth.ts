@@ -1,4 +1,4 @@
-import { useOAuthProvider } from "./useOAuthProvider";
+import { useOAuthProvider } from '@/hooks/useOAuthProvider';
 import {
   authorizeLinearOAuth,
   getLinearOAuthStatus,

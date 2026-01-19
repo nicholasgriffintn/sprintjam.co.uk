@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/cn";
-import { type HeaderLogoProps } from "./types";
+import { type HeaderLogoProps } from '@/components/layout/Header/types';
 import {
   LOGO_SIZES,
   LOGO_TEXT_SIZES,

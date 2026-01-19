@@ -56,7 +56,7 @@ import {
   useSessionActions,
   useSessionErrors,
   useSessionState,
-} from "./SessionContext";
+} from '@/context/SessionContext';
 import { formatRoomKey } from "@/utils/validators";
 
 interface RoomStateContextValue {

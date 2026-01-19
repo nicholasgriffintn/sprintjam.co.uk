@@ -20,7 +20,7 @@ vi.mock("@/utils/storage", () => {
   };
 });
 
-import * as apiService from "./api-service";
+import * as apiService from '@/lib/api-service';
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];

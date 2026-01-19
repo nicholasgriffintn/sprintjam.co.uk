@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useOAuthProvider } from "./useOAuthProvider";
+import { useOAuthProvider } from '@/hooks/useOAuthProvider';
 import { useRoomState } from "@/context/RoomContext";
 import { useSessionState } from "@/context/SessionContext";
 import {

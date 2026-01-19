@@ -1,32 +1,32 @@
 import { Suspense, useEffect, useRef } from "react";
 import { MotionConfig } from "framer-motion";
 
-import ErrorBanner from "./components/ui/ErrorBanner";
-import LoadingOverlay from "./components/LoadingOverlay";
-import { ScreenLoader } from "./components/layout/ScreenLoader";
-import { ErrorBoundary } from "./components/errors/ErrorBoundary";
-import { Header } from "./components/layout/Header";
+import ErrorBanner from '@/components/ui/ErrorBanner';
+import LoadingOverlay from '@/components/LoadingOverlay';
+import { ScreenLoader } from '@/components/layout/ScreenLoader';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
+import { Header } from '@/components/layout/Header';
 import {
   SessionProvider,
   useSessionErrors,
   useSessionState,
-} from "./context/SessionContext";
+} from '@/context/SessionContext';
 import {
   RoomProvider,
   useRoomActions,
   useRoomState,
   useRoomStatus,
-} from "./context/RoomContext";
-import { WorkspaceAuthProvider } from "./context/WorkspaceAuthContext";
-import { RoomHeaderProvider } from "./context/RoomHeaderContext";
-import { ErrorBannerServerDefaults } from "./components/errors/ErrorBannerServerDefaults";
-import { PageBackground } from "./components/layout/PageBackground";
+} from '@/context/RoomContext';
+import { WorkspaceAuthProvider } from '@/context/WorkspaceAuthContext';
+import { RoomHeaderProvider } from '@/context/RoomHeaderContext';
+import { ErrorBannerServerDefaults } from '@/components/errors/ErrorBannerServerDefaults';
+import { PageBackground } from '@/components/layout/PageBackground';
 import {
   ROUTES,
   getBackgroundVariant,
   getRouteConfig,
   getRoomScreenLoader,
-} from "./config/routes";
+} from '@/config/routes';
 
 const preloadRoomScreen = () => {
   void getRoomScreenLoader();

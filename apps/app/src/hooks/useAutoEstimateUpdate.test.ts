@@ -33,7 +33,7 @@ vi.mock("@/lib/linear-service", () => ({
   updateLinearEstimate: vi.fn(),
 }));
 
-import { useAutoEstimateUpdate } from "./useAutoEstimateUpdate";
+import { useAutoEstimateUpdate } from '@/hooks/useAutoEstimateUpdate';
 
 describe("useAutoEstimateUpdate", () => {
   let jiraMutation: MutationMock;

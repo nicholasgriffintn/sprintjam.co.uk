@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/cn";
-import { type HeaderContainerProps } from "./types";
+import { type HeaderContainerProps } from '@/components/layout/Header/types';
 import { Z_INDEX, HEADER_TRANSITION } from "@/constants";
 
 const GLASSMORPHISM_STYLES =

@@ -11,7 +11,7 @@ import {
   getReturnUrl,
   clearReturnUrl,
   getScreenFromPath,
-} from './navigation';
+} from '@/config/routes/navigation';
 import {
   getRouteConfig,
   getBackgroundVariant,
@@ -21,8 +21,8 @@ import {
   getWorkspaceNavItems,
   getAdminSidebarItems,
   getScreensInGroup,
-} from './derived';
-import { ROUTES, type AppScreen } from './registry';
+} from '@/config/routes/derived';
+import { ROUTES, type AppScreen } from '@/config/routes/registry';
 
 describe('navigation', () => {
   describe('parsePath', () => {

@@ -1,10 +1,10 @@
-import { PageSection } from "./PageBackground";
-import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { Spinner } from "@/components/ui/Spinner";
+import { PageSection } from '@/components/layout/PageBackground';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { Spinner } from '@/components/ui/Spinner';
 
 export function ScreenLoader({
-  title = "Preparing your view",
-  subtitle = "Hang tight while we load everything.",
+  title = 'Preparing your view',
+  subtitle = 'Hang tight while we load everything.',
 }) {
   return (
     <PageSection maxWidth="sm">

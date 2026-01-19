@@ -25,7 +25,7 @@ vi.mock("@/utils/storage", () => ({
   },
 }));
 
-import { useAutoReconnect } from "./useAutoReconnect";
+import { useAutoReconnect } from '@/hooks/useAutoReconnect';
 import { joinRoom } from "@/lib/api-service";
 
 describe("useAutoReconnect", () => {

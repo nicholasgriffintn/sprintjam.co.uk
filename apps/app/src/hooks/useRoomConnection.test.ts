@@ -16,7 +16,7 @@ vi.mock("@/lib/api-service", () => ({
   removeEventListener: (...args: unknown[]) => mockRemoveEventListener(...args),
 }));
 
-import { useRoomConnection } from "./useRoomConnection";
+import { useRoomConnection } from '@/hooks/useRoomConnection';
 
 describe("useRoomConnection", () => {
   const onMessage = vi.fn();

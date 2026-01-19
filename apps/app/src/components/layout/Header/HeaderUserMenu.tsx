@@ -7,7 +7,7 @@ import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { cn } from "@/lib/cn";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { useSessionActions } from "@/context/SessionContext";
-import type { MarketingVariant } from "./types";
+import type { MarketingVariant } from '@/components/layout/Header/types';
 
 const getInitials = (nameOrEmail: string | null | undefined) => {
   if (!nameOrEmail) return null;

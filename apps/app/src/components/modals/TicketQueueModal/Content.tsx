@@ -1,9 +1,9 @@
 import { FC, useMemo, useState } from "react";
 
 import type { TicketQueueItem } from "@/types";
-import { TicketQueueModalControls } from "./Controls";
-import { TicketQueueModalQueueTab } from "./tabs/Queue";
-import { TicketQueueModalCompletedTab } from "./tabs/Completed";
+import { TicketQueueModalControls } from '@/components/modals/TicketQueueModal/Controls';
+import { TicketQueueModalQueueTab } from '@/components/modals/TicketQueueModal/tabs/Queue';
+import { TicketQueueModalCompletedTab } from '@/components/modals/TicketQueueModal/tabs/Completed';
 
 interface TicketQueueModalContentProps {
   currentTicket?: TicketQueueItem;

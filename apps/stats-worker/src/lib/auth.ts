@@ -35,7 +35,7 @@ export async function authenticateRequest(
 
   const tokenHash = await hashToken(token);
   const drizzleDb = drizzle(db);
-  const now = Math.floor(Date.now() / 1000);
+  const now = Date.now();
 
   const result = await drizzleDb
     .select({

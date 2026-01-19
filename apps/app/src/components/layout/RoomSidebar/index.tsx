@@ -6,8 +6,8 @@ import {
 } from "react";
 
 import type { RoomStats } from "@/types";
-import { ParticipantsList } from "./ParticipantsList";
-import { TicketQueueSidebar } from "./TicketQueueSidebar";
+import { ParticipantsList } from '@/components/layout/RoomSidebar/ParticipantsList';
+import { TicketQueueSidebar } from '@/components/layout/RoomSidebar/TicketQueueSidebar';
 import { useRoomActions, useRoomState } from "@/context/RoomContext";
 import { useSessionState } from "@/context/SessionContext";
 import { Button } from "@/components/ui/Button";

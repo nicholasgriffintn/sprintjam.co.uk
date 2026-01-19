@@ -2,10 +2,10 @@ import type { FC } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 
 import { useSessionState } from '@/context/SessionContext';
-import { HeaderContainer } from './HeaderContainer';
-import { MarketingHeader } from './HeaderContent/MarketingHeader';
-import { RoomHeader } from './HeaderContent/RoomHeader';
-import { WorkspaceHeader } from './HeaderContent/WorkspaceHeader';
+import { HeaderContainer } from '@/components/layout/Header/HeaderContainer';
+import { MarketingHeader } from '@/components/layout/Header/HeaderContent/MarketingHeader';
+import { RoomHeader } from '@/components/layout/Header/HeaderContent/RoomHeader';
+import { WorkspaceHeader } from '@/components/layout/Header/HeaderContent/WorkspaceHeader';
 import { HEADER_TRANSITION } from '@/constants';
 import { getHeaderVariant, getMarketingVariant } from '@/config/routes';
 
