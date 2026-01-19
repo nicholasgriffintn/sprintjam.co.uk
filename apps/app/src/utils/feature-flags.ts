@@ -9,6 +9,7 @@ export function isWorkspacesEnabled(): boolean {
 
   if (
     currentHost.includes('localhost') ||
+    currentHost.includes('127.0.0.1') ||
     currentHost.includes('staging.sprintjam.co.uk')
   ) {
     return true;

@@ -111,7 +111,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
       browser,
       "jira",
       async (ctx) => {
-        await ctx.route("**/api/jira/oauth/status?**", (route) => {
+        await ctx.route("**/api/jira/oauth/status", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
@@ -123,7 +123,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/jira/oauth/fields?**", (route) => {
+        await ctx.route("**/api/jira/oauth/fields", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
@@ -140,7 +140,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/jira/boards?**", (route) => {
+        await ctx.route("**/api/jira/boards", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
@@ -150,7 +150,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/jira/sprints?**", (route) => {
+        await ctx.route("**/api/jira/sprints", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
@@ -158,9 +158,11 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/jira/issues?**", (route) => {
-          const url = new URL(route.request().url());
-          const query = url.searchParams.get("query");
+        await ctx.route("**/api/jira/issues", async (route) => {
+          const payload = (await route.request().postDataJSON()) as {
+            query?: string | null;
+          };
+          const query = payload.query;
           const matches = query && query.includes(jiraTicketKey);
           route.fulfill({
             status: 200,
@@ -223,7 +225,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
       browser,
       "linear",
       async (ctx) => {
-        await ctx.route("**/api/linear/oauth/status?**", (route) => {
+        await ctx.route("**/api/linear/oauth/status", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
@@ -236,7 +238,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/linear/teams?**", (route) => {
+        await ctx.route("**/api/linear/teams", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
@@ -246,7 +248,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/linear/cycles?**", (route) => {
+        await ctx.route("**/api/linear/cycles", (route) => {
           route.fulfill({
             status: 200,
             contentType: "application/json",
@@ -254,9 +256,11 @@ test.describe("Ticket queue provider setup on room creation", () => {
           });
         });
 
-        await ctx.route("**/api/linear/issues?**", (route) => {
-          const url = new URL(route.request().url());
-          const query = url.searchParams.get("query");
+        await ctx.route("**/api/linear/issues", async (route) => {
+          const payload = (await route.request().postDataJSON()) as {
+            query?: string | null;
+          };
+          const query = payload.query;
           const matches = query && query.includes(linearIssueKey);
           route.fulfill({
             status: 200,

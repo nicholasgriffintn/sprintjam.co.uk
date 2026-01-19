@@ -35,18 +35,23 @@ test.describe("Data persistence", () => {
     }
   });
 
-  test("stores room and auth tokens in localStorage", async ({ browser }) => {
+  test("stores room session cookie and username in localStorage", async ({
+    browser,
+  }) => {
     const setup = await createRoomWithParticipant(browser);
-    const { moderatorRoom, cleanup, roomKey } = setup;
+    const { moderatorRoom, cleanup, roomKey, moderatorContext } = setup;
 
     try {
       const storage = await moderatorRoom.getPage().evaluate(() => ({
-        auth: window.localStorage.getItem("sprintjam_authToken"),
         username: window.localStorage.getItem("sprintjam_username"),
         pathname: window.location.pathname,
       }));
+      const cookies = await moderatorContext.cookies();
+      const sessionCookie = cookies.find(
+        (cookie) => cookie.name === "room_session",
+      );
 
-      expect(storage.auth).toBeTruthy();
+      expect(sessionCookie?.value).toBeTruthy();
       expect(storage.username).toBeTruthy();
       expect(storage.pathname).toBe(`/room/${roomKey}`);
     } finally {
@@ -58,24 +63,26 @@ test.describe("Data persistence", () => {
     browser,
   }) => {
     const setup = await createRoomWithParticipant(browser);
-    const { moderatorRoom, cleanup, roomKey, moderatorName } = setup;
+    const { moderatorRoom, cleanup, roomKey, moderatorName, moderatorContext } =
+      setup;
 
-    const { authToken } = await moderatorRoom.getPage().evaluate(() => ({
-      authToken: window.localStorage.getItem("sprintjam_authToken"),
-    }));
+    const cookies = await moderatorContext.cookies();
+    const sessionCookie = cookies.find(
+      (cookie) => cookie.name === "room_session",
+    );
+    expect(sessionCookie?.value).toBeTruthy();
 
     await cleanup();
 
     const reconnectContext = await browser.newContext();
+    if (sessionCookie) {
+      await reconnectContext.addCookies([sessionCookie]);
+    }
     await reconnectContext.addInitScript(
-      ({ savedRoomKey, savedAuthToken, savedName }) => {
-        window.localStorage.setItem("sprintjam_roomKey", savedRoomKey);
-        if (savedAuthToken) {
-          window.localStorage.setItem("sprintjam_authToken", savedAuthToken);
-        }
+      ({ savedName }) => {
         window.localStorage.setItem("sprintjam_username", savedName);
       },
-      { savedRoomKey: roomKey, savedAuthToken: authToken, savedName: moderatorName },
+      { savedName: moderatorName },
     );
 
     const reconnectPage = await reconnectContext.newPage();

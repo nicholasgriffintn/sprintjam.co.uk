@@ -20,9 +20,7 @@ test.describe("Feedback form", () => {
     });
 
     await page.goto("/");
-    const footerButton = page
-      .getByRole("contentinfo")
-      .getByRole("button", { name: "Send feedback" });
+    const footerButton = page.getByRole("button", { name: "Send feedback" });
     await footerButton.click();
     const modal = page.getByRole("dialog", { name: "Send feedback" });
     await expect(modal).toBeVisible();
@@ -55,9 +53,7 @@ test.describe("Feedback form", () => {
     );
 
     await page.goto("/");
-    const footerButton = page
-      .getByRole("contentinfo")
-      .getByRole("button", { name: "Send feedback" });
+    const footerButton = page.getByRole("button", { name: "Send feedback" });
     await footerButton.click();
 
     const modal = page.getByRole("dialog", { name: "Send feedback" });
