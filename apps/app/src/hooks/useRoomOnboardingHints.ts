@@ -25,7 +25,6 @@ export const useRoomOnboardingHints = ({
 }: UseRoomOnboardingHintsParams) => {
   const [hintsDismissed, setHintsDismissed] = useState(false);
   const [isFirstRoomJoin, setIsFirstRoomJoin] = useState(false);
-  const [isFirstStructured, setIsFirstStructured] = useState(false);
   const [showSpreadHint, setShowSpreadHint] = useState(false);
   const [showFacilitationOptIn, setShowFacilitationOptIn] = useState(false);
 
@@ -67,7 +66,6 @@ export const useRoomOnboardingHints = ({
   const dismissHints = () => {
     setHintsDismissed(true);
     setIsFirstRoomJoin(false);
-    setIsFirstStructured(false);
     setShowSpreadHint(false);
     safeLocalStorage.set(ROOM_HINTS_DISMISSED_STORAGE_KEY, "true");
     safeLocalStorage.set(ROOM_JOINED_STORAGE_KEY, 'true');
@@ -92,15 +90,13 @@ export const useRoomOnboardingHints = ({
 
   const showOnboardingHints =
     !hintsDismissed &&
-    (showFacilitationOptIn ||
-      (!isModeratorView && (isFirstRoomJoin || isFirstStructured)));
+    (showFacilitationOptIn || (!isModeratorView && isFirstRoomJoin));
 
   return {
     showOnboardingHints,
     showSpreadHint,
     showFacilitationOptIn,
     isFirstRoomJoin,
-    isFirstStructured,
     dismissHints,
     enableFacilitationGuidance,
     dismissFacilitationOptIn,

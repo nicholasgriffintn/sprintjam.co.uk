@@ -123,7 +123,6 @@ const RoomScreen = () => {
     showSpreadHint,
     showFacilitationOptIn,
     isFirstRoomJoin,
-    isFirstStructured,
     dismissHints,
     enableFacilitationGuidance,
     dismissFacilitationOptIn,
