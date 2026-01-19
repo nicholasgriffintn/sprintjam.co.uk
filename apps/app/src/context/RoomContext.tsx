@@ -31,8 +31,7 @@ import {
   removeRoomFromCollection,
   upsertRoom,
 } from "@/lib/data/room-store";
-import { useRoomData } from "@/lib/data/hooks";
-import { safeLocalStorage } from "@/utils/storage";
+import { useRoomData } from '@/lib/data/hooks';
 import { useServerDefaults } from "@/hooks/useServerDefaults";
 import { useAutoReconnect } from "@/hooks/useAutoReconnect";
 import { useAutoEstimateUpdate } from "@/hooks/useAutoEstimateUpdate";
@@ -49,8 +48,7 @@ import type {
   TicketQueueItem,
   VoteValue,
   WebSocketMessage,
-} from "@/types";
-import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
+} from '@/types';
 import { getErrorDetails, isAbortError } from "@/lib/errors";
 import {
   useSessionActions,
@@ -63,7 +61,6 @@ interface RoomStateContextValue {
   serverDefaults: ServerDefaults | null;
   roomData: RoomData | null;
   activeRoomKey: string | null;
-  authToken: string | null;
   isModeratorView: boolean;
   userVote: VoteValue | StructuredVote | null;
   pendingCreateSettings: Partial<RoomSettings> | null;
@@ -122,7 +119,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { setError, clearError } = useSessionErrors();
 
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
   const [autoReconnectDone, setAutoReconnectDone] = useState(false);
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
     null,
@@ -210,7 +206,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         setActiveRoomKey(roomKeyValue);
         setIsModeratorView(isModerator);
       },
-      []
+      [],
     ),
     onReconnectError: useCallback(
       ({ message, isAuthError, isRoomNotFound, isNameConflict }) => {
@@ -222,7 +218,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
         if (isNameConflict) {
           setError(
-            'This name is already in use. Please choose a different name.'
+            'This name is already in use. Please choose a different name.',
           );
           setConnectionIssue({
             type: 'disconnected',
@@ -239,11 +235,10 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
           message,
         });
       },
-      [setError, goHome, setScreen]
+      [setError, goHome, setScreen],
     ),
     onLoadingChange: setIsLoading,
     applyServerDefaults,
-    onAuthTokenRefresh: setAuthToken,
     onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
     onNeedsJoin: useCallback(() => {
       setScreen('join');
@@ -308,7 +303,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     screen,
     name,
     activeRoomKey,
-    authToken,
     onMessage: handleRoomMessage,
     onConnectionChange: handleConnectionChange,
     onError: handleConnectionError,
@@ -366,11 +360,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       const controller = startRoomRequest();
 
       try {
-        const {
-          room: newRoom,
-          defaults,
-          authToken: newAuthToken,
-        } = await createRoom(
+        const { room: newRoom, defaults } = await createRoom(
           name,
           passcode || undefined,
           resolvedSettings,
@@ -380,13 +370,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
         applyServerDefaults(defaults);
         await upsertRoom(newRoom);
         setActiveRoomKey(newRoom.key);
-        if (newAuthToken) {
-          setAuthToken(newAuthToken);
-          safeLocalStorage.set(AUTH_TOKEN_STORAGE_KEY, newAuthToken);
-        } else {
-          setAuthToken(null);
-          safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
-        }
         setIsModeratorView(true);
         goToRoom(newRoom.key);
         setPendingCreateSettings(null);
@@ -423,28 +406,16 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     const controller = startRoomRequest();
 
     try {
-      const {
-        room: joinedRoom,
-        defaults,
-        authToken: newAuthToken,
-      } = await joinRoom(
+      const { room: joinedRoom, defaults } = await joinRoom(
         trimmedName,
         normalizedRoomKey,
         passcode?.trim() || undefined,
         selectedAvatar,
-        undefined,
         { signal: controller.signal },
       );
       applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
-      if (newAuthToken) {
-        setAuthToken(newAuthToken);
-        safeLocalStorage.set(AUTH_TOKEN_STORAGE_KEY, newAuthToken);
-      } else {
-        setAuthToken(null);
-        safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
-      }
       setIsModeratorView(joinedRoom.moderator === name);
       goToRoom(joinedRoom.key);
     } catch (err: unknown) {
@@ -575,7 +546,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const handleLeaveRoom = useCallback(() => {
     latestRoomRequestRef.current?.abort();
     disconnectFromRoom();
-    safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
     setRoomError("");
     setRoomErrorKind(null);
     setConnectionIssue(null);
@@ -587,7 +557,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       });
     }
     setActiveRoomKey(null);
-    setAuthToken(null);
     setUserVote(null);
     setIsSocketConnected(false);
     setIsSocketStatusKnown(false);
@@ -692,7 +661,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [assignRoomError, name, roomData]);
 
-
   const retryConnection = useCallback(() => {
     setConnectionIssue((current) =>
       current ? { ...current, reconnecting: true } : null,
@@ -705,14 +673,12 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       serverDefaults: derivedServerDefaults,
       roomData,
       activeRoomKey,
-      authToken,
       isModeratorView,
       userVote,
       pendingCreateSettings,
     }),
     [
       activeRoomKey,
-      authToken,
       derivedServerDefaults,
       isModeratorView,
       pendingCreateSettings,

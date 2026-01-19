@@ -23,7 +23,6 @@ export const WS_BASE_URL = import.meta.env.DEV
 
 export const SITE_NAME = 'SprintJam';
 
-export const AUTH_TOKEN_STORAGE_KEY = 'sprintjam_authToken';
 export const WORKSPACE_TOKEN_STORAGE_KEY = 'sprintjam_workspaceToken';
 export const MUTE_STORAGE_KEY = 'sprintjam_strudelPlayerMuted';
 export const VOLUME_STORAGE_KEY = 'sprintjam_strudelPlayerVolume';

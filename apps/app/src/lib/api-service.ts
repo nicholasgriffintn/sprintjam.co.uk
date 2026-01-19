@@ -9,8 +9,7 @@ import type {
   AvatarId,
   TicketQueueItem,
 } from "@/types";
-import { API_BASE_URL, WS_BASE_URL, AUTH_TOKEN_STORAGE_KEY } from "@/constants";
-import { safeLocalStorage } from "@/utils/storage";
+import { API_BASE_URL, WS_BASE_URL } from "@/constants";
 import {
   SERVER_DEFAULTS_DOCUMENT_KEY,
   roomsCollection,
@@ -21,7 +20,6 @@ import {
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 
 let activeSocket: WebSocket | null = null;
-let activeAuthToken: string | null = null;
 let activeRoomKey: string | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -96,7 +94,7 @@ export async function createRoom(
   settings?: Partial<RoomSettings>,
   avatar?: AvatarId,
   options?: RequestOptions,
-): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
+): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
       method: "POST",
@@ -105,12 +103,12 @@ export async function createRoom(
       },
       body: JSON.stringify({ name, passcode, settings, avatar }),
       signal: options?.signal,
+      credentials: "include",
     });
 
     const data = await handleJsonResponse<{
       room?: RoomData;
       defaults?: ServerDefaults;
-      authToken?: string;
       error?: string;
     }>(response, "Failed to create room");
 
@@ -130,7 +128,6 @@ export async function createRoom(
     return {
       room: data.room,
       defaults: data.defaults,
-      authToken: data.authToken,
     };
   } catch (error) {
     if (isAbortError(error)) {
@@ -149,23 +146,22 @@ export async function joinRoom(
   roomKey: string,
   passcode?: string,
   avatar?: AvatarId,
-  authToken?: string,
   options?: RequestOptions,
-): Promise<{ room: RoomData; defaults?: ServerDefaults; authToken?: string }> {
+): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, roomKey, passcode, avatar, authToken }),
+      body: JSON.stringify({ name, roomKey, passcode, avatar }),
       signal: options?.signal,
+      credentials: "include",
     });
 
     const data = await handleJsonResponse<{
       room?: RoomData;
       defaults?: ServerDefaults;
-      authToken?: string;
       error?: string;
     }>(response, "Failed to join room");
 
@@ -183,7 +179,6 @@ export async function joinRoom(
     return {
       room: data.room,
       defaults: data.defaults,
-      authToken: data.authToken,
     };
   } catch (error) {
     if (isAbortError(error)) {
@@ -200,24 +195,17 @@ export async function joinRoom(
 export function connectToRoom(
   roomKey: string,
   name: string,
-  authToken: string,
   onMessage: (data: WebSocketMessage) => void,
   onConnectionStatusChange?: (isConnected: boolean) => void,
 ): WebSocket {
-  if (!authToken) {
-    throw new Error("Missing auth token for room connection");
-  }
-
   if (
     activeSocket &&
     activeSocket.readyState === WebSocket.OPEN &&
-    activeRoomKey === roomKey &&
-    activeAuthToken === authToken
+    activeRoomKey === roomKey
   ) {
     return activeSocket;
   }
 
-  activeAuthToken = authToken;
   activeRoomKey = roomKey;
 
   if (activeSocket) {
@@ -228,11 +216,7 @@ export function connectToRoom(
 
   try {
     const socket = new WebSocket(
-      `${WS_BASE_URL}?room=${encodeURIComponent(
-        roomKey,
-      )}&name=${encodeURIComponent(name)}&token=${encodeURIComponent(
-        authToken,
-      )}`,
+      `${WS_BASE_URL}?room=${encodeURIComponent(roomKey)}&name=${encodeURIComponent(name)}`,
     );
 
     socket.onopen = () => {
@@ -304,8 +288,6 @@ export function connectToRoom(
           closeCode: event.code,
           reason: "auth",
         });
-        activeAuthToken = null;
-        safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
         return;
       }
 
@@ -360,16 +342,6 @@ function handleReconnect(
   onMessage: (data: WebSocketMessage) => void,
   onConnectionStatusChange?: (isConnected: boolean) => void,
 ): void {
-  if (!activeAuthToken) {
-    console.error("Missing auth token; cannot reconnect");
-    triggerEventListeners("disconnected", {
-      type: "disconnected",
-      error: "Session expired. Please rejoin the room.",
-      reason: "auth",
-    });
-    return;
-  }
-
   if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
     reconnectAttempts++;
 
@@ -386,13 +358,7 @@ function handleReconnect(
     );
 
     setTimeout(() => {
-      connectToRoom(
-        roomKey,
-        name,
-        activeAuthToken as string,
-        onMessage,
-        onConnectionStatusChange,
-      );
+      connectToRoom(roomKey, name, onMessage, onConnectionStatusChange);
     }, delay);
   } else {
     console.error("Max reconnection attempts reached");
@@ -502,7 +468,6 @@ export function disconnectFromRoom(): void {
     clearTimeout(voteDebounceTimer);
     voteDebounceTimer = null;
   }
-  activeAuthToken = null;
   activeRoomKey = null;
   reconnectAttempts = 0;
 }

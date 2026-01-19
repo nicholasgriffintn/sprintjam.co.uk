@@ -1,6 +1,6 @@
-import { createJsonResponse } from "@sprintjam/utils";
+import { createJsonResponse, getRoomSessionToken } from '@sprintjam/utils';
 
-import type { CfResponse, PlanningRoomHttpContext } from "./types";
+import type { CfResponse, PlanningRoomHttpContext } from './types';
 
 export async function handleGithubSaveCredentials(
   ctx: PlanningRoomHttpContext,
@@ -21,7 +21,7 @@ export async function handleGithubSaveCredentials(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   await ctx.repository.saveGithubOAuthCredentials({
@@ -39,8 +39,8 @@ export async function handleGithubSaveCredentials(
   });
 
   ctx.broadcast({
-    type: "githubConnected",
-    githubLogin: credentials.githubLogin ?? "",
+    type: 'githubConnected',
+    githubLogin: credentials.githubLogin ?? '',
   });
 
   return createJsonResponse({ success: true });
@@ -50,28 +50,27 @@ export async function handleGithubStatus(
   ctx: PlanningRoomHttpContext,
   request: Request,
 ): Promise<CfResponse> {
-  const { roomKey, userName, sessionToken } = (await request
-    .json()
-    .catch(() => ({}))) as {
+  const { roomKey, userName } = (await request.json().catch(() => ({}))) as {
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   };
+
+  const sessionToken = getRoomSessionToken(request);
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   if (!roomKey || !userName || !sessionToken) {
     return createJsonResponse(
-      { error: "Missing room key, user name, or session token" },
+      { error: 'Missing room key, user name, or session token' },
       400,
     );
   }
 
   if (roomData.key !== roomKey) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   const isMember = roomData.users.includes(userName);
@@ -79,8 +78,9 @@ export async function handleGithubStatus(
     userName,
     sessionToken,
   );
+
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: "Invalid session" }, 401);
+    return createJsonResponse({ error: 'Invalid session' }, 401);
   }
 
   const credentials = await ctx.repository.getGithubOAuthCredentials(
@@ -106,7 +106,7 @@ export async function handleGithubCredentials(
 ): Promise<CfResponse> {
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   const credentials = await ctx.repository.getGithubOAuthCredentials(
@@ -114,7 +114,7 @@ export async function handleGithubCredentials(
   );
 
   if (!credentials) {
-    return createJsonResponse({ error: "GitHub not connected" }, 404);
+    return createJsonResponse({ error: 'GitHub not connected' }, 404);
   }
 
   return createJsonResponse({ credentials });
@@ -127,27 +127,27 @@ export async function handleGithubRevoke(
   const body = (await request.json().catch(() => ({}))) as {
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   };
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   if (!roomKey || !userName || !sessionToken) {
     return createJsonResponse(
-      { error: "Missing room key, user name, or session token" },
+      { error: 'Missing room key, user name, or session token' },
       400,
     );
   }
 
   if (roomData.key !== roomKey) {
-    return createJsonResponse({ error: "Room not found" }, 404);
+    return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
   const isMember = roomData.users.includes(userName);
@@ -156,11 +156,11 @@ export async function handleGithubRevoke(
     sessionToken,
   );
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: "Invalid session" }, 401);
+    return createJsonResponse({ error: 'Invalid session' }, 401);
   }
 
   ctx.repository.deleteGithubOAuthCredentials(roomData.key);
-  ctx.broadcast({ type: "githubDisconnected" });
+  ctx.broadcast({ type: 'githubDisconnected' });
 
   return createJsonResponse({ success: true });
 }

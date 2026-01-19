@@ -12,7 +12,6 @@ import { useSessionState } from "@/context/SessionContext";
 interface OAuthContext {
   roomKey: string;
   name: string;
-  authToken: string;
 }
 
 interface UseOAuthProviderOptions<Status> {
@@ -66,21 +65,19 @@ export function useOAuthProvider<Status>({
   revoke,
   onDisconnectSuccess,
 }: UseOAuthProviderOptions<Status>): OAuthProviderResult<Status> {
-  const { activeRoomKey, authToken } = useRoomState();
+  const { activeRoomKey } = useRoomState();
   const { name } = useSessionState();
   const queryClient = useQueryClient();
   const [clientError, setClientError] = useState<string | null>(null);
 
-  const hasRequiredContext =
-    enabled && Boolean(activeRoomKey && name && authToken);
+  const hasRequiredContext = enabled && Boolean(activeRoomKey && name);
 
   const context: OAuthContext = useMemo(
     () => ({
       roomKey: activeRoomKey ?? '',
       name: name ?? '',
-      authToken: authToken ?? '',
     }),
-    [activeRoomKey, authToken, name]
+    [activeRoomKey, name],
   );
 
   const statusQueryKey: QueryKey = [
@@ -88,7 +85,6 @@ export function useOAuthProvider<Status>({
     'oauth-status',
     context.roomKey,
     context.name,
-    context.authToken,
   ];
 
   const statusQuery = useQuery<Status>({

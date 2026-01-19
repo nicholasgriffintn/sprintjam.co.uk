@@ -72,11 +72,13 @@ describe('provider revoke controllers', () => {
     const response = (await revokeJiraOAuthController(
       new Request('https://test/api/jira/oauth/revoke', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: 'room_session=token',
+        },
         body: JSON.stringify({
           roomKey: 'room-1',
           userName: 'alice',
-          sessionToken: 'token',
         }),
       }),
       env
@@ -125,11 +127,13 @@ describe('provider revoke controllers', () => {
     const response = (await revokeLinearOAuthController(
       new Request('https://test/api/linear/oauth/revoke', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: 'room_session=token',
+        },
         body: JSON.stringify({
           roomKey: 'room-1',
           userName: 'alice',
-          sessionToken: 'token',
         }),
       }),
       env
@@ -177,11 +181,13 @@ describe('provider revoke controllers', () => {
     const response = (await revokeGithubOAuthController(
       new Request('https://test/api/github/oauth/revoke', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: 'room_session=token',
+        },
         body: JSON.stringify({
           roomKey: 'room-1',
           userName: 'alice',
-          sessionToken: 'token',
         }),
       }),
       env

@@ -10,7 +10,7 @@ import {
   internalErrorResponse,
   jsonError,
 } from "../lib/response";
-import { getRoomStub } from "@sprintjam/utils";
+import { getRoomSessionToken, getRoomStub } from "@sprintjam/utils";
 import { getDefaultsController } from "../controllers/room/defaults-controller";
 import {
   createRoomController,
@@ -72,7 +72,8 @@ async function handleWebSocket(
   const url = new URL(request.url);
   const roomKey = url.searchParams.get("room");
   const userName = url.searchParams.get("name");
-  const sessionToken = url.searchParams.get("token");
+  const sessionToken =
+    getRoomSessionToken(request) ?? url.searchParams.get("token");
 
   if (!roomKey || !userName || !sessionToken) {
     return jsonError("Missing room key, user name, or token", 400);
@@ -103,7 +104,7 @@ async function handleApiRoutes(
   }
 
   if (path === "rooms/settings" && method === "GET") {
-    return getRoomSettingsController(url, env);
+    return getRoomSettingsController(request, env);
   }
 
   if (path === "rooms/settings" && method === "PUT") {

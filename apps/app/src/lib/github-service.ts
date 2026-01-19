@@ -1,15 +1,5 @@
 import type { TicketMetadata } from "@/types";
-import { API_BASE_URL, AUTH_TOKEN_STORAGE_KEY } from "@/constants";
-import { safeLocalStorage } from "@/utils/storage";
-
-function resolveSessionToken(provided?: string | null): string {
-  if (provided) return provided;
-  const stored = safeLocalStorage.get(AUTH_TOKEN_STORAGE_KEY);
-  if (!stored) {
-    throw new Error("Missing session token. Please rejoin the room.");
-  }
-  return stored;
-}
+import { API_BASE_URL } from '@/constants';
 
 export interface GithubOAuthStatus {
   connected: boolean;
@@ -36,19 +26,17 @@ export interface GithubMilestone {
 
 export async function fetchGithubIssue(
   issueId: string,
-  options?: { roomKey?: string; userName?: string; sessionToken?: string },
+  options?: { roomKey?: string; userName?: string },
 ): Promise<TicketMetadata> {
-  const sessionToken = resolveSessionToken(options?.sessionToken);
-
   const response = await fetch(`${API_BASE_URL}/github/issue`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       issueId,
       roomKey: options?.roomKey,
       userName: options?.userName,
-      sessionToken,
     }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -61,7 +49,7 @@ export async function fetchGithubIssue(
 
   const data = (await response.json()) as { ticket?: TicketMetadata };
   if (!data.ticket) {
-    throw new Error("Invalid response format from GitHub API");
+    throw new Error('Invalid response format from GitHub API');
   }
   return data.ticket;
 }
@@ -72,24 +60,23 @@ export async function updateGithubEstimate(
   options: {
     roomKey: string;
     userName: string;
-    sessionToken?: string;
     note?: string;
   },
 ): Promise<TicketMetadata> {
-  const sessionToken = resolveSessionToken(options.sessionToken);
   const encodedId = encodeURIComponent(issueId);
+
   const response = await fetch(
     `${API_BASE_URL}/github/issue/${encodedId}/estimate`,
     {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         estimate,
         roomKey: options.roomKey,
         userName: options.userName,
-        sessionToken,
         note: options.note,
       }),
+      credentials: 'include',
     },
   );
 
@@ -108,20 +95,19 @@ export async function updateGithubEstimate(
 export async function getGithubOAuthStatus(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<GithubOAuthStatus> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/github/oauth/status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomKey, userName }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
       (data as { error?: string }).error ||
-        "Failed to fetch GitHub OAuth status",
+        'Failed to fetch GitHub OAuth status',
     );
   }
 
@@ -131,23 +117,21 @@ export async function getGithubOAuthStatus(
 export async function authorizeGithubOAuth(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<{ authorizationUrl: string }> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/github/oauth/authorize`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       roomKey,
       userName,
-      sessionToken: token,
     }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || "Failed to initiate GitHub OAuth",
+      (data as { error?: string }).error || 'Failed to initiate GitHub OAuth',
     );
   }
 
@@ -157,23 +141,21 @@ export async function authorizeGithubOAuth(
 export async function revokeGithubOAuth(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<void> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/github/oauth/revoke`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       roomKey,
       userName,
-      sessionToken: token,
     }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || "Failed to disconnect GitHub OAuth",
+      (data as { error?: string }).error || 'Failed to disconnect GitHub OAuth',
     );
   }
 }
@@ -181,19 +163,18 @@ export async function revokeGithubOAuth(
 export async function fetchGithubRepos(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<GithubRepo[]> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/github/repos`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomKey, userName }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || "Failed to fetch GitHub repos",
+      (data as { error?: string }).error || 'Failed to fetch GitHub repos',
     );
   }
 
@@ -205,19 +186,18 @@ export async function fetchGithubMilestones(
   repo: string,
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<GithubMilestone[]> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/github/milestones`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ repo, roomKey, userName, sessionToken: token }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repo, roomKey, userName }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || "Failed to fetch GitHub milestones",
+      (data as { error?: string }).error || 'Failed to fetch GitHub milestones',
     );
   }
 
@@ -237,28 +217,26 @@ export async function fetchGithubRepoIssues(
   },
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<TicketMetadata[]> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/github/issues`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       repo,
       roomKey,
       userName,
-      sessionToken: token,
       milestoneNumber: options.milestoneNumber,
       milestoneTitle: options.milestoneTitle,
       query: options.search,
       limit: options.limit,
     }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || "Failed to fetch GitHub issues",
+      (data as { error?: string }).error || 'Failed to fetch GitHub issues',
     );
   }
 

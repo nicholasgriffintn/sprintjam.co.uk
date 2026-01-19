@@ -101,7 +101,9 @@ describe("rooms controller validation", () => {
 
   it("requires room key when reading settings", async () => {
     const response = (await getRoomSettingsController(
-      makeUrl("/api/rooms/settings"),
+      new Request(
+        "https://test.sprintjam.co.uk/api/rooms/settings",
+      ) as CfRequest,
       env,
     )) as Response;
 

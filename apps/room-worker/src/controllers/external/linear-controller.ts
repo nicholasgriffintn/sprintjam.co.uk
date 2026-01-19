@@ -11,7 +11,7 @@ import {
   fetchLinearIssue,
   updateLinearEstimate,
 } from "@sprintjam/services";
-import { getRoomStub } from "@sprintjam/utils";
+import { getRoomSessionToken, getRoomStub } from '@sprintjam/utils';
 import { jsonError, jsonResponse } from "../../lib/response";
 
 async function validateSession(
@@ -101,12 +101,12 @@ export async function getLinearIssueController(
     issueId?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const issueId = body?.issueId;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!issueId) {
     return jsonError("Issue ID is required");
@@ -161,14 +161,14 @@ export async function updateLinearEstimateController(
     estimate?: number;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
     note?: string;
   }>();
   const estimate = body?.estimate;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
   const note = typeof body?.note === "string" ? body.note.trim() : "";
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!issueId || estimate === undefined) {
     return jsonError("Issue ID and estimate are required");
@@ -261,11 +261,11 @@ export async function getLinearTeamsController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -313,12 +313,12 @@ export async function getLinearCyclesController(
     teamId?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const teamId = body?.teamId;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!teamId) {
     return jsonError("Team ID is required");
@@ -373,7 +373,6 @@ export async function getLinearIssuesController(
     query?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
     limit?: unknown;
   }>();
   const teamId = body?.teamId;
@@ -381,7 +380,6 @@ export async function getLinearIssuesController(
   const search = body?.query ?? null;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
   const limit =
     body?.limit === undefined || body?.limit === null
       ? null
@@ -391,6 +389,8 @@ export async function getLinearIssuesController(
           ? Number(body.limit)
           : null;
 
+  const sessionToken = getRoomSessionToken(request);
+  
   if (!teamId) {
     return jsonError("Team ID is required");
   }

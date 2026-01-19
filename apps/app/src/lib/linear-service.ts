@@ -1,16 +1,5 @@
 import type { VoteValue, TicketMetadata } from "@/types";
-import { API_BASE_URL } from "@/constants";
-import { safeLocalStorage } from "@/utils/storage";
-import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
-
-function resolveSessionToken(provided?: string | null): string {
-  if (provided) return provided;
-  const stored = safeLocalStorage.get(AUTH_TOKEN_STORAGE_KEY);
-  if (!stored) {
-    throw new Error("Missing session token. Please rejoin the room.");
-  }
-  return stored;
-}
+import { API_BASE_URL } from '@/constants';
 
 export interface LinearOAuthStatus {
   connected: boolean;
@@ -36,20 +25,18 @@ export interface LinearCycle {
 
 export async function fetchLinearIssue(
   issueId: string,
-  options?: { roomKey?: string; userName?: string; sessionToken?: string },
+  options?: { roomKey?: string; userName?: string },
 ): Promise<TicketMetadata> {
   try {
-    const sessionToken = resolveSessionToken(options?.sessionToken);
-
     const response = await fetch(`${API_BASE_URL}/linear/issue`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         issueId,
         roomKey: options?.roomKey,
         userName: options?.userName,
-        sessionToken,
       }),
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -66,9 +53,9 @@ export async function fetchLinearIssue(
     if (ticket) {
       return ticket;
     }
-    throw new Error("Invalid response format from Linear API");
+    throw new Error('Invalid response format from Linear API');
   } catch (error) {
-    console.error("Error fetching Linear issue:", error);
+    console.error('Error fetching Linear issue:', error);
     throw error;
   }
 }
@@ -79,26 +66,24 @@ export async function updateLinearEstimate(
   options: {
     roomKey: string;
     userName: string;
-    sessionToken?: string;
     note?: string;
   },
 ): Promise<TicketMetadata> {
   try {
-    const sessionToken = resolveSessionToken(options.sessionToken);
     const response = await fetch(
       `${API_BASE_URL}/linear/issue/${encodeURIComponent(issueId)}/estimate`,
       {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           estimate,
           roomKey: options.roomKey,
           userName: options.userName,
-          sessionToken,
           note: options.note,
         }),
+        credentials: 'include',
       },
     );
 
@@ -115,7 +100,7 @@ export async function updateLinearEstimate(
 
     return ticket;
   } catch (error) {
-    console.error("Error updating Linear estimate:", error);
+    console.error('Error updating Linear estimate:', error);
     throw error;
   }
 }
@@ -123,19 +108,18 @@ export async function updateLinearEstimate(
 export async function fetchLinearTeams(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<LinearTeam[]> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/linear/teams`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomKey, userName }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      (errorData as { error?: string }).error || "Failed to fetch Linear teams",
+      (errorData as { error?: string }).error || 'Failed to fetch Linear teams',
     );
   }
 
@@ -147,20 +131,19 @@ export async function fetchLinearCycles(
   teamId: string,
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<LinearCycle[]> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/linear/cycles`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ teamId, roomKey, userName, sessionToken: token }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ teamId, roomKey, userName }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
       (errorData as { error?: string }).error ||
-        "Failed to fetch Linear cycles",
+        'Failed to fetch Linear cycles',
     );
   }
 
@@ -177,28 +160,26 @@ export async function fetchLinearIssues(
   },
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<TicketMetadata[]> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/linear/issues`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       teamId,
       roomKey,
       userName,
-      sessionToken: token,
       cycleId: options.cycleId,
       query: options.search,
       limit: options.limit,
     }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
       (errorData as { error?: string }).error ||
-        "Failed to fetch Linear issues",
+        'Failed to fetch Linear issues',
     );
   }
 
@@ -227,17 +208,16 @@ export function convertVoteValueToEstimate(
 export async function getLinearOAuthStatus(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<LinearOAuthStatus> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/linear/oauth/status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roomKey, userName, sessionToken: token }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomKey, userName }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch OAuth status");
+    throw new Error('Failed to fetch OAuth status');
   }
 
   return (await response.json()) as LinearOAuthStatus;
@@ -246,24 +226,22 @@ export async function getLinearOAuthStatus(
 export async function authorizeLinearOAuth(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<{ authorizationUrl: string }> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/linear/oauth/authorize`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       roomKey,
       userName,
-      sessionToken: token,
     }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to initiate OAuth");
+    throw new Error(errorData.error || 'Failed to initiate OAuth');
   }
 
   return (await response.json()) as { authorizationUrl: string };
@@ -272,23 +250,21 @@ export async function authorizeLinearOAuth(
 export async function revokeLinearOAuth(
   roomKey: string,
   userName: string,
-  sessionToken?: string | null,
 ): Promise<void> {
-  const token = resolveSessionToken(sessionToken);
   const response = await fetch(`${API_BASE_URL}/linear/oauth/revoke`, {
-    method: "DELETE",
+    method: 'DELETE',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       roomKey,
       userName,
-      sessionToken: token,
     }),
+    credentials: 'include',
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to disconnect Linear");
+    throw new Error(errorData.error || 'Failed to disconnect Linear');
   }
 }

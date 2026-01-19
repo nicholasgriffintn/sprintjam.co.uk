@@ -10,7 +10,8 @@ import {
   signState,
   verifyState,
   generateID,
-} from "@sprintjam/utils";
+  getRoomSessionToken,
+} from '@sprintjam/utils';
 import {
   fetchJiraFields,
   findDefaultSprintField,
@@ -58,12 +59,12 @@ export async function initiateJiraOAuthController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -327,12 +328,12 @@ export async function getJiraOAuthStatusController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -345,7 +346,10 @@ export async function getJiraOAuthStatusController(
     const response = await roomObject.fetch(
       new Request("https://internal/jira/oauth/status", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+        },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
       }) as unknown as CfRequest,
     );
@@ -378,12 +382,12 @@ export async function revokeJiraOAuthController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -442,7 +446,10 @@ export async function revokeJiraOAuthController(
     const response = await roomObject.fetch(
       new Request("https://internal/jira/oauth/revoke", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+        },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
       }) as unknown as CfRequest,
     );
@@ -468,12 +475,12 @@ export async function getJiraFieldsController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -575,15 +582,15 @@ export async function updateJiraFieldsController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
     storyPointsField?: string | null;
     sprintField?: string | null;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
   const { storyPointsField, sprintField } = body;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
