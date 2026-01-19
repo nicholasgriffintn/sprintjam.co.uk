@@ -43,7 +43,7 @@ export async function waitForA11yReady(page: Page) {
   await page.waitForLoadState("networkidle");
   await page.waitForLoadState("domcontentloaded");
   // Wait a bit for any animations to settle
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(800);
 }
 
 export async function scrollToBottom(page: Page) {

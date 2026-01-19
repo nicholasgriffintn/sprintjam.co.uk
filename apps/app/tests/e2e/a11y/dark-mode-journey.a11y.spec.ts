@@ -73,7 +73,7 @@ test.describe("Dark Mode Accessibility Journey", () => {
     await complexityButton.click();
 
     const scoringInfoToggle = page.getByRole("button", {
-      name: /scoring info/i,
+      name: /show breakdown|hide breakdown/i,
     });
     await scoringInfoToggle.click();
     await waitForA11yReady(page);

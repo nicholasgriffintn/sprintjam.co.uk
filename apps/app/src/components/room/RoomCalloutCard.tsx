@@ -28,7 +28,7 @@ export const RoomCalloutCard: FC<RoomCalloutCardProps> = ({
     <SurfaceCard padding="sm" variant="subtle" className="text-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">
             {badge}
           </p>
           <p className="text-base font-semibold text-slate-900 dark:text-white">
