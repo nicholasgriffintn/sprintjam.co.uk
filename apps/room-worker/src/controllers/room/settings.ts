@@ -1,11 +1,16 @@
-import { createJsonResponse, applySettingsUpdate } from '@sprintjam/utils';
+import {
+  createJsonResponse,
+  applySettingsUpdate,
+  getRoomSessionToken,
+} from '@sprintjam/utils';
 import type { RoomData } from '@sprintjam/types';
+import type { Request as CfRequest } from '@cloudflare/workers-types';
 
 import type { CfResponse, PlanningRoomHttpContext } from './types';
 
 export async function handleGetSettings(
   ctx: PlanningRoomHttpContext,
-  url: URL
+  request: Request
 ): Promise<CfResponse> {
   const roomData = await ctx.getRoomData();
 
@@ -13,7 +18,8 @@ export async function handleGetSettings(
     return createJsonResponse({ error: 'Room not found' }, 404);
   }
 
-  const sessionToken = url.searchParams.get('sessionToken');
+  const url = new URL(request.url);
+  const sessionToken = getRoomSessionToken(request as unknown as CfRequest);
   const name = url.searchParams.get('name');
 
   if (!name || !sessionToken) {

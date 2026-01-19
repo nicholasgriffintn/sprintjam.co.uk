@@ -65,7 +65,7 @@ export async function handleHttpRequest(
     }
 
     if (url.pathname === "/settings" && request.method === "GET") {
-      return handleGetSettings(ctx, url);
+      return handleGetSettings(ctx, request);
     }
 
     if (url.pathname === "/settings" && request.method === "PUT") {

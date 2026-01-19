@@ -72,11 +72,10 @@ async function handleWebSocket(
   const url = new URL(request.url);
   const roomKey = url.searchParams.get("room");
   const userName = url.searchParams.get("name");
-  const sessionToken =
-    getRoomSessionToken(request) ?? url.searchParams.get("token");
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName || !sessionToken) {
-    return jsonError("Missing room key, user name, or token", 400);
+    return jsonError("Missing room key, user name, or session token", 400);
   }
 
   const roomStub = getRoomStub(env, roomKey);
