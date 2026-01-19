@@ -10,7 +10,8 @@ import {
   signState,
   verifyState,
   generateID,
-} from "@sprintjam/utils";
+  getRoomSessionToken,
+} from '@sprintjam/utils';
 import { getLinearOrganization, getLinearViewer } from "@sprintjam/services";
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
@@ -54,12 +55,12 @@ export async function initiateLinearOAuthController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -245,12 +246,12 @@ export async function getLinearOAuthStatusController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -263,7 +264,10 @@ export async function getLinearOAuthStatusController(
     const response = await roomObject.fetch(
       new Request("https://internal/linear/oauth/status", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+        },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
       }) as unknown as CfRequest,
     );
@@ -295,12 +299,12 @@ export async function revokeLinearOAuthController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -363,7 +367,10 @@ export async function revokeLinearOAuthController(
     const response = await roomObject.fetch(
       new Request("https://internal/linear/oauth/revoke", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+        },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
       }) as unknown as CfRequest,
     );

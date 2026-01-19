@@ -36,7 +36,7 @@ test.describe("GitHub integration", () => {
       summary: "Linked GitHub issue",
     };
 
-    await moderatorContext.route("**/api/github/oauth/status?**", (route) => {
+    await moderatorContext.route("**/api/github/oauth/status", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -44,7 +44,7 @@ test.describe("GitHub integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/github/repos?**", (route) => {
+    await moderatorContext.route("**/api/github/repos", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -61,7 +61,7 @@ test.describe("GitHub integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/github/milestones?**", (route) => {
+    await moderatorContext.route("**/api/github/milestones", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -69,9 +69,11 @@ test.describe("GitHub integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/github/issues?**", (route) => {
-      const url = new URL(route.request().url());
-      const query = url.searchParams.get("query");
+    await moderatorContext.route("**/api/github/issues", async (route) => {
+      const payload = (await route.request().postDataJSON()) as {
+        query?: string | null;
+      };
+      const query = payload.query;
       const matches = query && query.includes("42");
       route.fulfill({
         status: 200,
@@ -80,9 +82,11 @@ test.describe("GitHub integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/github/issue?**", (route) => {
-      const url = new URL(route.request().url());
-      const identifier = url.searchParams.get("issueId") ?? "";
+    await moderatorContext.route("**/api/github/issue", async (route) => {
+      const payload = (await route.request().postDataJSON()) as {
+        issueId?: string | null;
+      };
+      const identifier = payload.issueId ?? "";
       const normalized = identifier.toLowerCase();
       const ticket =
         normalized === secondaryIssueKey.toLowerCase()

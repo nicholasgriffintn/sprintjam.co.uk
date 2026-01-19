@@ -13,17 +13,12 @@ const BASE_WS_WITH_PROTOCOL = IS_BASE_URL_LOCALHOST
   ? `ws://${ENV_BASE_URL}`
   : `wss://${ENV_BASE_URL}`;
 
-export const API_BASE_URL = import.meta.env.DEV
-  ? 'http://localhost:5173/api'
-  : `${BASE_URL_WITH_PROTOCOL}/api`;
+export const API_BASE_URL = `${BASE_URL_WITH_PROTOCOL}/api`;
 
-export const WS_BASE_URL = import.meta.env.DEV
-  ? 'ws://localhost:5173/ws'
-  : `${BASE_WS_WITH_PROTOCOL}/ws`;
+export const WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws`;
 
 export const SITE_NAME = 'SprintJam';
 
-export const AUTH_TOKEN_STORAGE_KEY = 'sprintjam_authToken';
 export const WORKSPACE_TOKEN_STORAGE_KEY = 'sprintjam_workspaceToken';
 export const MUTE_STORAGE_KEY = 'sprintjam_strudelPlayerMuted';
 export const VOLUME_STORAGE_KEY = 'sprintjam_strudelPlayerVolume';

@@ -16,7 +16,12 @@ import type {
   StructuredVote,
   TicketQueueItem,
 } from "@sprintjam/types";
-import { normalizeRoomData, TokenCipher } from "@sprintjam/utils";
+import {
+  normalizeRoomData,
+  TokenCipher,
+  getRoomSessionToken,
+} from "@sprintjam/utils";
+import type { Request as CfRequest } from "@cloudflare/workers-types";
 
 import { PlanningRoomRepository } from "../../repositories/planning-room";
 import {
@@ -104,10 +109,10 @@ export class PlanningRoom implements PlanningRoomHttpContext {
     if (upgradeHeader === "websocket") {
       const roomKey = url.searchParams.get("room");
       const userName = url.searchParams.get("name");
-      const sessionToken = url.searchParams.get("token");
+      const sessionToken = getRoomSessionToken(request as unknown as CfRequest);
 
       if (!roomKey || !userName || !sessionToken) {
-        return new Response("Missing room key, user name, or token", {
+        return new Response("Missing room key, user name, or session", {
           status: 400,
         }) as unknown as CfResponse;
       }

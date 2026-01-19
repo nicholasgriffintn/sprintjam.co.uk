@@ -12,11 +12,8 @@ export function useLinearOAuth(enabled = true) {
     providerLabel: 'Linear',
     enabled,
     initialStatus: { connected: false },
-    getStatus: ({ roomKey, name, authToken }) =>
-      getLinearOAuthStatus(roomKey, name, authToken),
-    authorize: ({ roomKey, name, authToken }) =>
-      authorizeLinearOAuth(roomKey, name, authToken),
-    revoke: ({ roomKey, name, authToken }) =>
-      revokeLinearOAuth(roomKey, name, authToken),
+    getStatus: ({ roomKey, name }) => getLinearOAuthStatus(roomKey, name),
+    authorize: ({ roomKey, name }) => authorizeLinearOAuth(roomKey, name),
+    revoke: ({ roomKey, name }) => revokeLinearOAuth(roomKey, name),
   });
 }

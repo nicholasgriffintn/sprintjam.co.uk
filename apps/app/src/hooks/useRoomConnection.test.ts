@@ -31,10 +31,9 @@ describe("useRoomConnection", () => {
   it("connects when on room screen with valid params", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: "room",
-        name: "alice",
-        activeRoomKey: "ROOM1",
-        authToken: "token123",
+        screen: 'room',
+        name: 'alice',
+        activeRoomKey: 'ROOM1',
         onMessage,
         onConnectionChange,
         onError,
@@ -44,19 +43,17 @@ describe("useRoomConnection", () => {
     expect(mockConnectToRoom).toHaveBeenCalledWith(
       "ROOM1",
       "alice",
-      "token123",
       onMessage,
       onConnectionChange,
     );
   });
 
-  it("does not connect when skip is true", () => {
+  it('does not connect when skip is true', () => {
     renderHook(() =>
       useRoomConnection({
-        screen: "room",
-        name: "alice",
-        activeRoomKey: "ROOM1",
-        authToken: "token123",
+        screen: 'room',
+        name: 'alice',
+        activeRoomKey: 'ROOM1',
         onMessage,
         onConnectionChange,
         onError,
@@ -67,32 +64,12 @@ describe("useRoomConnection", () => {
     expect(mockConnectToRoom).not.toHaveBeenCalled();
   });
 
-  it("does not connect when authToken is missing", () => {
-    renderHook(() =>
-      useRoomConnection({
-        screen: "room",
-        name: "alice",
-        activeRoomKey: "ROOM1",
-        authToken: null,
-        onMessage,
-        onConnectionChange,
-        onError,
-      }),
-    );
-
-    expect(mockConnectToRoom).not.toHaveBeenCalled();
-    expect(onError).toHaveBeenCalledWith(
-      "Missing session token. Please rejoin the room.",
-    );
-  });
-
   it("does not connect when screen is not room", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: "welcome",
-        name: "alice",
-        activeRoomKey: "ROOM1",
-        authToken: "token123",
+        screen: 'welcome',
+        name: 'alice',
+        activeRoomKey: 'ROOM1',
         onMessage,
         onConnectionChange,
         onError,
@@ -105,10 +82,9 @@ describe("useRoomConnection", () => {
   it("does not connect when activeRoomKey is null", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: "room",
-        name: "alice",
+        screen: 'room',
+        name: 'alice',
         activeRoomKey: null,
-        authToken: "token123",
         onMessage,
         onConnectionChange,
         onError,
@@ -121,10 +97,9 @@ describe("useRoomConnection", () => {
   it("disconnects on unmount", () => {
     const { unmount } = renderHook(() =>
       useRoomConnection({
-        screen: "room",
-        name: "alice",
-        activeRoomKey: "ROOM1",
-        authToken: "token123",
+        screen: 'room',
+        name: 'alice',
+        activeRoomKey: 'ROOM1',
         onMessage,
         onConnectionChange,
         onError,
@@ -140,10 +115,9 @@ describe("useRoomConnection", () => {
   it("does not disconnect on unmount when skip was true", () => {
     const { unmount } = renderHook(() =>
       useRoomConnection({
-        screen: "room",
-        name: "alice",
-        activeRoomKey: "ROOM1",
-        authToken: "token123",
+        screen: 'room',
+        name: 'alice',
+        activeRoomKey: 'ROOM1',
         onMessage,
         onConnectionChange,
         onError,
@@ -159,10 +133,9 @@ describe("useRoomConnection", () => {
   it("registers error event listeners on connect", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: "room",
-        name: "alice",
-        activeRoomKey: "ROOM1",
-        authToken: "token123",
+        screen: 'room',
+        name: 'alice',
+        activeRoomKey: 'ROOM1',
         onMessage,
         onConnectionChange,
         onError,
@@ -182,10 +155,9 @@ describe("useRoomConnection", () => {
   it("removes event listeners on unmount", () => {
     const { unmount } = renderHook(() =>
       useRoomConnection({
-        screen: "room",
-        name: "alice",
-        activeRoomKey: "ROOM1",
-        authToken: "token123",
+        screen: 'room',
+        name: 'alice',
+        activeRoomKey: 'ROOM1',
         onMessage,
         onConnectionChange,
         onError,

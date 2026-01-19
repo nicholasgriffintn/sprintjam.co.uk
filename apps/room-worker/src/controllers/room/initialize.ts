@@ -7,13 +7,15 @@ import {
   createJsonResponse,
   generateSessionToken,
   hashPasscode,
+  createRoomSessionCookie,
+  SESSION_TOKEN_TTL_MS,
 } from '@sprintjam/utils';
 
 import type { CfResponse, PlanningRoomHttpContext } from './types';
 
 export async function handleInitialize(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
   const { roomKey, moderator, passcode, settings, avatar } =
     (await request.json()) as {
@@ -59,10 +61,21 @@ export async function handleInitialize(
 
   const defaults = getServerDefaults();
 
-  return createJsonResponse({
-    success: true,
-    room: sanitizeRoomData(newRoomData),
-    defaults,
-    authToken,
-  });
+  const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
+  const cookie = createRoomSessionCookie(authToken, maxAgeSeconds);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      room: sanitizeRoomData(newRoomData),
+      defaults,
+    }),
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': cookie,
+      },
+    },
+  ) as unknown as CfResponse;
 }

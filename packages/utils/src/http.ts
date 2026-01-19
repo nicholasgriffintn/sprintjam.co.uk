@@ -61,3 +61,21 @@ export function createSessionCookie(
 export function clearSessionCookie(): string {
   return "workspace_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0";
 }
+
+export function createRoomSessionCookie(
+  token: string,
+  maxAgeSeconds: number,
+  isSecure = true,
+): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `room_session=${token}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
+}
+
+export function clearRoomSessionCookie(isSecure = true): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `room_session=; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=0`;
+}
+
+export function getRoomSessionToken(request: CfRequest): string | null {
+  return getCookieValue(request, "room_session");
+}

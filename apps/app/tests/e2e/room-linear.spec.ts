@@ -37,9 +37,11 @@ test.describe("Linear integration", () => {
       summary: "Linked Linear issue",
     };
 
-    await moderatorContext.route("**/api/linear/issue?**", (route) => {
-      const url = new URL(route.request().url());
-      const key = url.searchParams.get("issueId");
+    await moderatorContext.route("**/api/linear/issue", async (route) => {
+      const payload = (await route.request().postDataJSON()) as {
+        issueId?: string | null;
+      };
+      const key = payload.issueId;
       const ticket =
         key && key.toUpperCase() === secondaryIssueKey
           ? secondaryIssue
@@ -51,7 +53,7 @@ test.describe("Linear integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/linear/oauth/status?**", (route) => {
+    await moderatorContext.route("**/api/linear/oauth/status", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -59,7 +61,7 @@ test.describe("Linear integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/linear/teams?**", (route) => {
+    await moderatorContext.route("**/api/linear/teams", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -69,7 +71,7 @@ test.describe("Linear integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/linear/cycles?**", (route) => {
+    await moderatorContext.route("**/api/linear/cycles", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -77,9 +79,11 @@ test.describe("Linear integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/linear/issues?**", (route) => {
-      const url = new URL(route.request().url());
-      const query = url.searchParams.get("query");
+    await moderatorContext.route("**/api/linear/issues", async (route) => {
+      const payload = (await route.request().postDataJSON()) as {
+        query?: string | null;
+      };
+      const query = payload.query;
       const matches = query && query.includes(issueKey);
       route.fulfill({
         status: 200,

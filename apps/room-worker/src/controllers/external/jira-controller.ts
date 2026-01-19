@@ -11,7 +11,7 @@ import {
   fetchJiraTicket,
   updateJiraStoryPoints,
 } from "@sprintjam/services";
-import { getRoomStub } from "@sprintjam/utils";
+import { getRoomSessionToken, getRoomStub } from '@sprintjam/utils';
 
 import { jsonError, jsonResponse } from "../../lib/response";
 
@@ -108,12 +108,12 @@ export async function getJiraTicketController(
     ticketId?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const ticketId = body?.ticketId;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!ticketId) {
     return jsonError("Ticket ID is required");
@@ -165,14 +165,14 @@ export async function updateJiraStoryPointsController(
     storyPoints?: number;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
     note?: string;
   }>();
   const storyPoints = body?.storyPoints;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
   const note = typeof body?.note === "string" ? body.note.trim() : "";
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!ticketId || storyPoints === undefined) {
     return jsonError("Ticket ID and story points are required");
@@ -263,11 +263,11 @@ export async function getJiraBoardsController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -312,12 +312,12 @@ export async function getJiraSprintsController(
     boardId?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const boardId = body?.boardId;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!boardId) {
     return jsonError("Board ID is required");
@@ -369,7 +369,6 @@ export async function getJiraIssuesController(
     query?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
     limit?: number;
   }>();
   const boardId = body?.boardId;
@@ -377,8 +376,9 @@ export async function getJiraIssuesController(
   const search = body?.query ?? null;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
   const limit = body?.limit ?? null;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!boardId) {
     return jsonError("Board ID is required");

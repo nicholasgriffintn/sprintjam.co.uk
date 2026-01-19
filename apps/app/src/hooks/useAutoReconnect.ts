@@ -2,9 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { joinRoom } from "@/lib/api-service";
 import { upsertRoom } from "@/lib/data/room-store";
-import { safeLocalStorage } from "@/utils/storage";
 import type { AvatarId, ServerDefaults } from "@/types";
-import { AUTH_TOKEN_STORAGE_KEY } from "@/constants";
 import { HttpError } from "@/lib/errors";
 
 interface UseAutoReconnectOptions {
@@ -22,7 +20,6 @@ interface UseAutoReconnectOptions {
   }) => void;
   onLoadingChange: (isLoading: boolean) => void;
   applyServerDefaults: (defaults?: ServerDefaults) => void;
-  onAuthTokenRefresh?: (token: string | null) => void;
   onReconnectComplete?: () => void;
   onNeedsJoin?: () => void;
 }
@@ -37,7 +34,6 @@ export const useAutoReconnect = ({
   onReconnectError,
   onLoadingChange,
   applyServerDefaults,
-  onAuthTokenRefresh,
   onReconnectComplete,
   onNeedsJoin,
 }: UseAutoReconnectOptions) => {
@@ -63,25 +59,17 @@ export const useAutoReconnect = ({
 
     didAttemptRestore.current = true;
 
-    const savedAuthToken = safeLocalStorage.get(AUTH_TOKEN_STORAGE_KEY);
-
     let cancelled = false;
 
     onLoadingChange(true);
     const avatarToUse = selectedAvatar || "user";
-    joinRoom(name, roomKey, undefined, avatarToUse, savedAuthToken || undefined)
-      .then(async ({ room: joinedRoom, defaults, authToken }) => {
+    joinRoom(name, roomKey, undefined, avatarToUse)
+      .then(async ({ room: joinedRoom, defaults }) => {
         if (cancelled) {
           return;
         }
         applyServerDefaults(defaults);
         await upsertRoom(joinedRoom);
-        if (authToken) {
-          safeLocalStorage.set(AUTH_TOKEN_STORAGE_KEY, authToken);
-        } else {
-          safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
-        }
-        onAuthTokenRefresh?.(authToken ?? null);
         onReconnectSuccess(joinedRoom.key, joinedRoom.moderator === name);
       })
       .catch((err) => {
@@ -103,11 +91,6 @@ export const useAutoReconnect = ({
           isRoomNotFound,
           isNameConflict,
         });
-
-        if (isNameConflict || isAuthError || isRoomNotFound) {
-          safeLocalStorage.remove(AUTH_TOKEN_STORAGE_KEY);
-          onAuthTokenRefresh?.(null);
-        }
       })
       .finally(() => {
         if (!cancelled) {
@@ -129,7 +112,6 @@ export const useAutoReconnect = ({
     onReconnectError,
     onLoadingChange,
     applyServerDefaults,
-    onAuthTokenRefresh,
     onReconnectComplete,
     onNeedsJoin,
   ]);

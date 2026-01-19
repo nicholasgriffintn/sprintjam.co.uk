@@ -41,10 +41,16 @@ import {
 } from "@sprintjam/services";
 import { getRoomStub } from "@sprintjam/utils";
 
-const makeRequest = (body: Record<string, unknown>) =>
+const makeRequest = (
+  body: Record<string, unknown>,
+  sessionToken = "token",
+) =>
   new Request("https://test.sprintjam.co.uk", {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `room_session=${sessionToken}`,
+    },
     body: JSON.stringify(body),
   }) as unknown as CfRequest;
 
@@ -96,7 +102,6 @@ describe("external controllers note handling", () => {
         storyPoints: 3,
         roomKey: "room-1",
         userName: "alice",
-        sessionToken: "token",
         note: "Decision note",
       }),
       env,
@@ -135,7 +140,6 @@ describe("external controllers note handling", () => {
         estimate: 5,
         roomKey: "room-1",
         userName: "alice",
-        sessionToken: "token",
         note: "Need more detail",
       }),
       env,
@@ -174,7 +178,6 @@ describe("external controllers note handling", () => {
         estimate: 8,
         roomKey: "room-1",
         userName: "alice",
-        sessionToken: "token",
         note: "Split suggested",
       }),
       env,

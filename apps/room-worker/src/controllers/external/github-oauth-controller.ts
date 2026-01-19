@@ -11,7 +11,8 @@ import {
   signState,
   verifyState,
   generateID,
-} from "@sprintjam/utils";
+  getRoomSessionToken,
+} from '@sprintjam/utils';
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
@@ -54,12 +55,12 @@ export async function initiateGithubOAuthController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -272,12 +273,12 @@ export async function getGithubOAuthStatusController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -290,7 +291,10 @@ export async function getGithubOAuthStatusController(
     const response = await roomObject.fetch(
       new Request("https://internal/github/oauth/status", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+        },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
       }) as unknown as CfRequest,
     );
@@ -323,12 +327,12 @@ export async function revokeGithubOAuthController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
 
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -385,7 +389,10 @@ export async function revokeGithubOAuthController(
     const response = await roomObject.fetch(
       new Request("https://internal/github/oauth/revoke", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+        },
         body: JSON.stringify({ roomKey, userName, sessionToken }),
       }) as unknown as CfRequest,
     );

@@ -61,10 +61,16 @@ const makeContext = (options: {
   return { ctx, tokens };
 };
 
-const buildJoinRequest = (body: Record<string, unknown>) =>
+const buildJoinRequest = (
+  body: Record<string, unknown>,
+  sessionToken?: string,
+) =>
   new Request("https://dummy/join", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+    },
     body: JSON.stringify(body),
   });
 
@@ -72,10 +78,14 @@ const jsonRequest = (
   path: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
   body?: Record<string, unknown>,
+  sessionToken?: string,
 ) =>
   new Request(`https://dummy${path}`, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
 
@@ -121,8 +131,8 @@ describe("planning-room-http join flow", () => {
     expect(response.status).toBe(200);
     const payload = (await response.json()) as any;
     expect(payload.success).toBe(true);
-    expect(payload.authToken).toBeTruthy();
     expect(tokens.size).toBe(1);
+    expect(response.headers.get("Set-Cookie")).toMatch(/room_session=/);
   });
 
   it("allows a currently connected username when a valid session token is supplied", async () => {
@@ -132,7 +142,7 @@ describe("planning-room-http join flow", () => {
 
     const response = (await handleHttpRequest(
       ctx,
-      buildJoinRequest({ name: "alice", authToken: "valid-token" }),
+      buildJoinRequest({ name: "alice" }, "valid-token"),
     )) as Response;
 
     expect(response.status).toBe(200);
@@ -284,6 +294,7 @@ describe("planning-room-http permissions and state updates", () => {
     expect(storedRoom?.key).toBe("room-init");
     expect(tokens.get("alice")).toBeTruthy();
     expect(ctx.broadcast).not.toHaveBeenCalled();
+    expect(response.headers.get("Set-Cookie")).toMatch(/room_session=/);
   });
 
   it("fails session validation when token is wrong", async () => {
@@ -343,8 +354,7 @@ describe("planning-room-http permissions and state updates", () => {
       jsonRequest("/jira/oauth/status", "POST", {
         roomKey: baseRoom.key,
         userName: "Alice",
-        sessionToken: "valid",
-      }),
+      }, "valid"),
     )) as Response;
 
     expect(response.status).toBe(200);
@@ -386,8 +396,7 @@ describe("planning-room-http permissions and state updates", () => {
       jsonRequest("/linear/oauth/revoke", "DELETE", {
         roomKey: baseRoom.key,
         userName: "Alice",
-        sessionToken: "valid",
-      }),
+      }, "valid"),
     )) as Response;
 
     expect(response.status).toBe(200);

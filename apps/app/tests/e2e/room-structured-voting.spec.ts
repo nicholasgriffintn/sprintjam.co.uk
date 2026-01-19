@@ -75,7 +75,7 @@ test.describe("Structured voting", () => {
       await participantPanel.expectPanelVisible();
 
       await moderatorPanel.selectExtraOption("unsure");
-      await moderatorPanel.expectStoryPoints("❓");
+      await moderatorPanel.expectStoryPoints("—");
 
       await participantPanel.selectScore("complexity", 2);
       await participantPanel.selectScore("confidence", 2);

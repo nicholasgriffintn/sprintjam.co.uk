@@ -11,7 +11,7 @@ import {
   fetchGithubRepos,
   updateGithubEstimate,
 } from "@sprintjam/services";
-import { getRoomStub } from "@sprintjam/utils";
+import { getRoomStub, getRoomSessionToken } from '@sprintjam/utils';
 import { jsonError, jsonResponse } from "../../lib/response";
 
 async function validateSession(
@@ -73,12 +73,12 @@ export async function getGithubIssueController(
     issueId?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const issueId = body?.issueId;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!issueId) {
     return jsonError("Issue identifier is required");
@@ -121,14 +121,14 @@ export async function updateGithubEstimateController(
     estimate?: number;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
     note?: string;
   }>();
   const estimate = body?.estimate;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
   const note = typeof body?.note === "string" ? body.note.trim() : "";
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!issueId || estimate === undefined) {
     return jsonError("Issue identifier and estimate are required");
@@ -179,11 +179,11 @@ export async function getGithubReposController(
   const body = await request.json<{
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName) {
     return jsonError("Room key and user name are required");
@@ -221,12 +221,12 @@ export async function getGithubMilestonesController(
     repo?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
   }>();
   const repository = body?.repo;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!repository) {
     return jsonError("Repository is required");
@@ -273,7 +273,6 @@ export async function getGithubIssuesController(
     query?: string;
     roomKey?: string;
     userName?: string;
-    sessionToken?: string;
     limit?: unknown;
   }>();
   const repository = body?.repo;
@@ -282,7 +281,6 @@ export async function getGithubIssuesController(
   const search = body?.query ?? null;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const sessionToken = body?.sessionToken;
   const limit =
     body?.limit === undefined || body?.limit === null
       ? null
@@ -291,6 +289,8 @@ export async function getGithubIssuesController(
         : typeof body.limit === "string" && !Number.isNaN(Number(body.limit))
           ? Number(body.limit)
           : null;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!repository) {
     return jsonError("Repository is required");

@@ -51,6 +51,8 @@ interface TicketQueueModalQueueTabProps {
   onError?: (message: string) => void;
 }
 
+const MAX_TICKET_DESCRIPTION_LENGTH = 10000;
+
 export function TicketQueueModalQueueTab({
   currentTicket,
   externalService,
@@ -455,12 +457,20 @@ export function TicketQueueModalQueueTab({
 
     setIsSavingLink(true);
     try {
+      const description =
+        typeof linkPreview.description === "string"
+          ? linkPreview.description.trim()
+          : undefined;
+      const clampedDescription =
+        description && description.length > MAX_TICKET_DESCRIPTION_LENGTH
+          ? description.slice(0, MAX_TICKET_DESCRIPTION_LENGTH)
+          : description;
       onUpdateTicket(linkingTicketId, {
         ticketId:
           linkPreview.key ||
           (linkPreview as { identifier?: string }).identifier,
         title: linkPreview.summary || (linkPreview as { title?: string }).title,
-        description: linkPreview.description || undefined,
+        description: clampedDescription || undefined,
         externalService: provider,
         externalServiceId: linkPreview.id,
         externalServiceMetadata: linkPreview,
@@ -600,10 +610,16 @@ export function TicketQueueModalQueueTab({
     }
 
     ticketsToImport.forEach((ticket) => {
+      const description =
+        typeof ticket.description === "string" ? ticket.description.trim() : "";
+      const clampedDescription =
+        description.length > MAX_TICKET_DESCRIPTION_LENGTH
+          ? description.slice(0, MAX_TICKET_DESCRIPTION_LENGTH)
+          : description;
       onAddTicket({
         ticketId: ticket.key,
         title: ticket.title,
-        description: ticket.description || undefined,
+        description: clampedDescription || undefined,
         status: "pending",
         externalService,
         externalServiceId: ticket.id,

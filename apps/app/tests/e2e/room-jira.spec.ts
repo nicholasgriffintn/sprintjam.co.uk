@@ -42,9 +42,11 @@ test.describe("Jira integration", () => {
     };
     let storyPointsUpdated = false;
 
-    await moderatorContext.route("**/api/jira/ticket?**", (route) => {
-      const url = new URL(route.request().url());
-      const key = url.searchParams.get("ticketId");
+    await moderatorContext.route("**/api/jira/ticket", async (route) => {
+      const payload = (await route.request().postDataJSON()) as {
+        ticketId?: string | null;
+      };
+      const key = payload.ticketId;
       const ticket =
         key && key.toUpperCase() === secondaryTicketKey
           ? secondaryTicket
@@ -56,7 +58,7 @@ test.describe("Jira integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/jira/oauth/status?**", (route) => {
+    await moderatorContext.route("**/api/jira/oauth/status", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -64,7 +66,7 @@ test.describe("Jira integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/jira/boards?**", (route) => {
+    await moderatorContext.route("**/api/jira/boards", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -74,7 +76,7 @@ test.describe("Jira integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/jira/sprints?**", (route) => {
+    await moderatorContext.route("**/api/jira/sprints", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -82,26 +84,16 @@ test.describe("Jira integration", () => {
       });
     });
 
-    await moderatorContext.route("**/api/jira/issues?**", (route) => {
-      const url = new URL(route.request().url());
-      const query = url.searchParams.get("query");
+    await moderatorContext.route("**/api/jira/issues", async (route) => {
+      const payload = (await route.request().postDataJSON()) as {
+        query?: string | null;
+      };
+      const query = payload.query;
       const matches = query && query.includes(ticketKey);
       route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ tickets: matches ? [initialTicket] : [] }),
-      });
-    });
-
-    await moderatorContext.route("**/api/jira/oauth/fields?**", (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          fields: jiraFields,
-          storyPointsField: jiraOAuthStatus.storyPointsField,
-          sprintField: jiraOAuthStatus.sprintField,
-        }),
       });
     });
 
@@ -115,7 +107,15 @@ test.describe("Jira integration", () => {
         return;
       }
 
-      route.fallback();
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          fields: jiraFields,
+          storyPointsField: jiraOAuthStatus.storyPointsField,
+          sprintField: jiraOAuthStatus.sprintField,
+        }),
+      });
     });
 
     await moderatorContext.route(
@@ -199,7 +199,7 @@ test.describe("Jira integration", () => {
       await page.getByTestId("queue-expand").click();
       const reopenedDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await expect(reopenedDialog).toBeVisible();
-      await expect(reopenedDialog).toContainText(ticketKey);
+      await expect(reopenedDialog).toContainText(secondaryTicketKey);
       await reopenedDialog.getByTestId("queue-tab-history").click();
       await expect(
         reopenedDialog.getByTestId("queue-history-tab-panel"),

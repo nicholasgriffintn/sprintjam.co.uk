@@ -16,35 +16,21 @@ import {
 
 export function useJiraOAuth(enabled = true) {
   const queryClient = useQueryClient();
-  const { activeRoomKey, authToken } = useRoomState();
+  const { activeRoomKey } = useRoomState();
   const { name } = useSessionState();
   const [clientError, setClientError] = useState<string | null>(null);
 
-  const fieldsQueryKey = [
-    'jira-oauth-fields',
-    activeRoomKey,
-    name,
-    authToken,
-  ] as const;
-  const statusQueryKey = [
-    'jira',
-    'oauth-status',
-    activeRoomKey,
-    name,
-    authToken,
-  ] as const;
+  const fieldsQueryKey = ['jira-oauth-fields', activeRoomKey, name] as const;
+  const statusQueryKey = ['jira', 'oauth-status', activeRoomKey, name] as const;
 
   const oauth = useOAuthProvider<JiraOAuthStatus>({
     provider: 'jira',
     providerLabel: 'Jira',
     enabled,
     initialStatus: { connected: false },
-    getStatus: ({ roomKey, name, authToken }) =>
-      getJiraOAuthStatus(roomKey, name, authToken),
-    authorize: ({ roomKey, name, authToken }) =>
-      authorizeJiraOAuth(roomKey, name, authToken),
-    revoke: ({ roomKey, name, authToken }) =>
-      revokeJiraOAuth(roomKey, name, authToken),
+    getStatus: ({ roomKey, name }) => getJiraOAuthStatus(roomKey, name),
+    authorize: ({ roomKey, name }) => authorizeJiraOAuth(roomKey, name),
+    revoke: ({ roomKey, name }) => revokeJiraOAuth(roomKey, name),
     onDisconnectSuccess: () => {
       queryClient.setQueryData<JiraOAuthStatus | undefined>(
         statusQueryKey,
@@ -56,7 +42,7 @@ export function useJiraOAuth(enabled = true) {
                 storyPointsField: undefined,
                 sprintField: undefined,
               }
-            : prev
+            : prev,
       );
       queryClient.removeQueries({ queryKey: fieldsQueryKey });
     },
@@ -76,8 +62,7 @@ export function useJiraOAuth(enabled = true) {
       oauth.hasRequiredContext &&
       Boolean(oauth.status.connected && !oauth.loading),
     staleTime: 1000 * 60,
-    queryFn: () =>
-      getJiraFields(activeRoomKey ?? '', name ?? '', authToken ?? ''),
+    queryFn: () => getJiraFields(activeRoomKey ?? '', name ?? ''),
   });
 
   const saveFieldsMutation = useMutation({
@@ -90,7 +75,6 @@ export function useJiraOAuth(enabled = true) {
         activeRoomKey ?? '',
         name ?? '',
         options,
-        authToken ?? ''
       );
 
       queryClient.setQueryData<JiraOAuthStatus | undefined>(

@@ -4,7 +4,11 @@ import type {
 } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv, RoomSettings } from "@sprintjam/types";
 
-import { generateRoomKey, getRoomStub } from "@sprintjam/utils";
+import {
+  generateRoomKey,
+  getRoomSessionToken,
+  getRoomStub,
+} from '@sprintjam/utils';
 import { jsonError } from "../../lib/response";
 
 export async function createRoomController(
@@ -75,6 +79,7 @@ export async function joinRoomController(
   const passcode = body?.passcode;
   const avatar = body?.avatar;
   const authToken = body?.authToken;
+  const sessionToken = getRoomSessionToken(request) ?? authToken;
 
   if (!name || !roomKey) {
     return jsonError("Name and room key are required");
@@ -85,19 +90,23 @@ export async function joinRoomController(
   return roomObject.fetch(
     new Request("https://internal/join", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+      },
       body: JSON.stringify({ name, passcode, avatar, authToken }),
     }) as unknown as CfRequest,
   );
 }
 
 export async function getRoomSettingsController(
-  url: URL,
+  request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
+  const url = new URL(request.url);
   const roomKey = url.searchParams.get("roomKey");
-  const sessionToken = url.searchParams.get("sessionToken");
   const name = url.searchParams.get("name");
+  const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey) {
     return jsonError("Room key is required");
@@ -105,9 +114,6 @@ export async function getRoomSettingsController(
 
   const roomObject = getRoomStub(env, roomKey);
   const doUrl = new URL("https://internal/settings");
-  if (sessionToken) {
-    doUrl.searchParams.set("sessionToken", sessionToken);
-  }
   if (name) {
     doUrl.searchParams.set("name", name);
   }
@@ -115,6 +121,9 @@ export async function getRoomSettingsController(
   return roomObject.fetch(
     new Request(doUrl.toString(), {
       method: "GET",
+      headers: {
+        ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
+      },
     }) as unknown as CfRequest,
   );
 }
@@ -127,13 +136,13 @@ export async function updateRoomSettingsController(
     name?: string;
     roomKey?: string;
     settings?: Record<string, unknown>;
-    sessionToken?: string;
   }>();
 
   const name = body?.name;
   const roomKey = body?.roomKey;
   const settings = body?.settings;
-  const sessionToken = body?.sessionToken;
+
+  const sessionToken = getRoomSessionToken(request);
 
   if (!name || !roomKey || !settings) {
     return jsonError("Name, room key, and settings are required");

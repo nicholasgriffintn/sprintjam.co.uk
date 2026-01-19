@@ -16,12 +16,9 @@ export function useGithubOAuth(enabled = true) {
     providerLabel: 'GitHub',
     enabled,
     initialStatus: { connected: false },
-    getStatus: ({ roomKey, name, authToken }) =>
-      getGithubOAuthStatus(roomKey, name, authToken),
-    authorize: ({ roomKey, name, authToken }) =>
-      authorizeGithubOAuth(roomKey, name, authToken),
-    revoke: ({ roomKey, name, authToken }) =>
-      revokeGithubOAuth(roomKey, name, authToken),
+    getStatus: ({ roomKey, name }) => getGithubOAuthStatus(roomKey, name),
+    authorize: ({ roomKey, name }) => authorizeGithubOAuth(roomKey, name),
+    revoke: ({ roomKey, name }) => revokeGithubOAuth(roomKey, name),
     onDisconnectSuccess: ({ queryKey }) => {
       queryClient.setQueryData<GithubOAuthStatus | undefined>(
         queryKey,
@@ -33,7 +30,7 @@ export function useGithubOAuth(enabled = true) {
                 githubLogin: undefined,
                 githubUserEmail: undefined,
               }
-            : prev
+            : prev,
       );
     },
   });

@@ -8,25 +8,30 @@ import {
   createJsonResponse,
   generateSessionToken,
   verifyPasscode,
-} from '@sprintjam/utils';
+  createRoomSessionCookie,
+  getRoomSessionToken,
+  SESSION_TOKEN_TTL_MS,
+} from "@sprintjam/utils";
+import type { Request as CfRequest } from "@cloudflare/workers-types";
 
-import type { CfResponse, PlanningRoomHttpContext } from './types';
+import type { CfResponse, PlanningRoomHttpContext } from "./types";
 
 export async function handleJoin(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
-  const { name, passcode, avatar, authToken } = (await request.json()) as {
+  const { name, passcode, avatar } = (await request.json()) as {
     name: string;
     passcode?: string;
     avatar?: string;
-    authToken?: string;
   };
+
+  const authToken = getRoomSessionToken(request as unknown as CfRequest);
 
   const roomData = await ctx.getRoomData();
 
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   const normalizedRoomData = normalizeRoomData(roomData);
@@ -36,7 +41,7 @@ export async function handleJoin(
   const storedPasscodeHash = ctx.repository.getPasscodeHash();
   const hasValidSessionToken = ctx.repository.validateSessionToken(
     canonicalName,
-    authToken ?? null
+    authToken ?? null,
   );
 
   if (storedPasscodeHash && !hasValidSessionToken) {
@@ -45,19 +50,19 @@ export async function handleJoin(
       try {
         isValidPasscode = await verifyPasscode(passcode, storedPasscodeHash);
       } catch {
-        return createJsonResponse({ error: 'Invalid passcode' }, 400);
+        return createJsonResponse({ error: "Invalid passcode" }, 400);
       }
     }
 
     if (!isValidPasscode) {
-      return createJsonResponse({ error: 'Invalid passcode' }, 401);
+      return createJsonResponse({ error: "Invalid passcode" }, 401);
     }
   }
 
   if (isConnected && !hasValidSessionToken) {
     return createJsonResponse(
-      { error: 'User with this name is already connected' },
-      409
+      { error: "User with this name is already connected" },
+      409,
     );
   }
 
@@ -70,7 +75,7 @@ export async function handleJoin(
   ctx.repository.setUserAvatar(canonicalName, avatar);
 
   ctx.broadcast({
-    type: 'userJoined',
+    type: "userJoined",
     user: canonicalName,
     avatar,
   });
@@ -81,10 +86,21 @@ export async function handleJoin(
 
   const defaults = getServerDefaults();
 
-  return createJsonResponse({
-    success: true,
-    room: sanitizeRoomData(updatedRoomData),
-    defaults,
-    authToken: newAuthToken,
-  });
+  const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
+  const cookie = createRoomSessionCookie(newAuthToken, maxAgeSeconds);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      room: sanitizeRoomData(updatedRoomData),
+      defaults,
+    }),
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Set-Cookie": cookie,
+      },
+    },
+  ) as unknown as CfResponse;
 }
