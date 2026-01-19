@@ -45,6 +45,98 @@ describe("validateClientMessage", () => {
     });
   });
 
+  it("rejects addTicket with title too long", () => {
+    const result = validateClientMessage({
+      type: "addTicket",
+      ticket: { title: "A".repeat(501) },
+    });
+    expect(result).toEqual({ error: "Ticket title too long (max 500 chars)" });
+  });
+
+  it("rejects addTicket with description too long", () => {
+    const result = validateClientMessage({
+      type: "addTicket",
+      ticket: { description: "A".repeat(10001) },
+    });
+    expect(result).toEqual({
+      error: "Ticket description too long (max 10000 chars)",
+    });
+  });
+
+  it("rejects addTicket with metadata too long", () => {
+    const result = validateClientMessage({
+      type: "addTicket",
+      ticket: { externalServiceMetadata: "A".repeat(10001) },
+    });
+    expect(result).toEqual({
+      error: "Ticket metadata too long (max 10000 chars)",
+    });
+  });
+
+  it("rejects addTicket with invalid title type", () => {
+    const result = validateClientMessage({
+      type: "addTicket",
+      ticket: { title: 123 },
+    });
+    expect(result).toEqual({
+      error: "Ticket title must be a string or null",
+    });
+  });
+
+  it("rejects addTicket with invalid description type", () => {
+    const result = validateClientMessage({
+      type: "addTicket",
+      ticket: { description: 123 },
+    });
+    expect(result).toEqual({
+      error: "Ticket description must be a string or null",
+    });
+  });
+
+  it("validates updateTicket payload shape", () => {
+    const result = validateClientMessage({
+      type: "updateTicket",
+      ticketId: 1,
+      updates: { title: "Updated" },
+    });
+    expect(result).toEqual({
+      type: "updateTicket",
+      ticketId: 1,
+      updates: { title: "Updated" },
+    });
+  });
+
+  it("rejects updateTicket with title too long", () => {
+    const result = validateClientMessage({
+      type: "updateTicket",
+      ticketId: 1,
+      updates: { title: "A".repeat(501) },
+    });
+    expect(result).toEqual({ error: "Ticket title too long (max 500 chars)" });
+  });
+
+  it("rejects updateTicket with description too long", () => {
+    const result = validateClientMessage({
+      type: "updateTicket",
+      ticketId: 1,
+      updates: { description: "A".repeat(10001) },
+    });
+    expect(result).toEqual({
+      error: "Ticket description too long (max 10000 chars)",
+    });
+  });
+
+  it("rejects updateTicket with metadata too long", () => {
+    const result = validateClientMessage({
+      type: "updateTicket",
+      ticketId: 1,
+      updates: { externalServiceMetadata: "A".repeat(10001) },
+    });
+    expect(result).toEqual({
+      error: "Ticket metadata too long (max 10000 chars)",
+    });
+  });
+
   it("validates selectTicket payload", () => {
     const result = validateClientMessage({
       type: "selectTicket",

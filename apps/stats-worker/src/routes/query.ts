@@ -15,7 +15,7 @@ import {
   type AuthResult,
 } from "../lib/auth";
 import { errorResponse, successResponse } from "../lib/response";
-import { parsePagination } from '../lib/pagination';
+import { parsePagination, isPaginationError } from '../lib/pagination';
 
 function getAuthError(code: "unauthorized" | "expired"): string {
   return code === "unauthorized" ? "Unauthorized" : "Session expired";
@@ -100,6 +100,10 @@ export async function getBatchRoomStatsController(
 
   const roomKeys = keysParam.split(",").filter(Boolean);
 
+  if (roomKeys.length > 100) {
+    return errorResponse('Too many keys requested (max 100)', 400);
+  }
+
   const auth = authResult as AuthResult;
   const accessibleRoomKeys = await filterAccessibleRoomKeys(
     env.DB,
@@ -133,6 +137,10 @@ export async function getTeamStatsController(
   const url = new URL(request.url);
   const pagination = parsePagination(url, { defaultLimit: 50 });
 
+  if (isPaginationError(pagination)) {
+    return errorResponse(pagination.error, 400);
+  }
+
   const repo = new StatsRepository(env.DB);
   const stats = await repo.getTeamStats(teamId, pagination);
 
@@ -160,6 +168,10 @@ export async function getTeamInsightsController(
 
   const url = new URL(request.url);
   const pagination = parsePagination(url, { defaultLimit: 6 });
+
+  if (isPaginationError(pagination)) {
+    return errorResponse(pagination.error, 400);
+  }
 
   const repo = new StatsRepository(env.DB);
   const insights = await repo.getTeamInsights(teamId, {
@@ -191,7 +203,16 @@ export async function getWorkspaceInsightsController(
 
   const url = new URL(request.url);
   const sessionsPagination = parsePagination(url, { defaultLimit: 20 });
+
+  if (isPaginationError(sessionsPagination)) {
+    return errorResponse(sessionsPagination.error, 400);
+  }
+  
   const contributorsPagination = parsePagination(url, { defaultLimit: 10 });
+
+  if (isPaginationError(contributorsPagination)) {
+    return errorResponse(contributorsPagination.error, 400);
+  }
 
   const repo = new StatsRepository(env.DB);
   const insights = await repo.getWorkspaceInsights(teamIds, {
@@ -249,6 +270,10 @@ export async function getBatchSessionStatsController(
   }
 
   const roomKeys = keysParam.split(",").filter(Boolean);
+
+  if (roomKeys.length > 100) {
+    return errorResponse('Too many keys requested (max 100)', 400);
+  }
 
   const auth = authResult as AuthResult;
   const accessibleRoomKeys = await filterAccessibleRoomKeys(

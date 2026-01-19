@@ -4,6 +4,8 @@ import type { D1Database } from "@cloudflare/workers-types";
 import { teams, teamSessions, users } from "@sprintjam/db";
 import * as schema from "@sprintjam/db/d1/schemas";
 
+const MAX_SESSIONS_FOR_STATS = 5000;
+
 export class TeamRepository {
   private db: ReturnType<typeof drizzle>;
 
@@ -213,7 +215,9 @@ export class TeamRepository {
         completedAt: teamSessions.completedAt,
       })
       .from(teamSessions)
-      .where(inArray(teamSessions.teamId, teamIds));
+      .where(inArray(teamSessions.teamId, teamIds))
+      .orderBy(desc(teamSessions.createdAt))
+      .limit(MAX_SESSIONS_FOR_STATS);
 
     const totalSessions = sessions.length;
     const activeSessions = sessions.filter((s) => !s.completedAt).length;

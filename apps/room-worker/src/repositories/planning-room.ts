@@ -1,7 +1,7 @@
 import type { DurableObjectStorage } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/durable-sqlite";
 import { migrate } from "drizzle-orm/durable-sqlite/migrator";
-import { eq, and, desc, like, sql as sqlOperator } from "drizzle-orm";
+import { eq, and, desc, like, sql as sqlOperator, inArray } from "drizzle-orm";
 
 import * as schema from "@sprintjam/db/durable-objects/schemas";
 import {
@@ -697,8 +697,43 @@ export class PlanningRoomRepository {
       .orderBy(ticketQueue.ordinal)
       .all();
 
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const ticketIds = rows.map((row) => row.id);
+    const allVotes = this.db
+      .select()
+      .from(ticketVotes)
+      .where(inArray(ticketVotes.ticketQueueId, ticketIds))
+      .orderBy(ticketVotes.votedAt)
+      .all();
+
+    const votesByTicket = new Map<number, typeof allVotes>();
+    for (const vote of allVotes) {
+      const existing = votesByTicket.get(vote.ticketQueueId) ?? [];
+      existing.push(vote);
+      votesByTicket.set(vote.ticketQueueId, existing);
+    }
+
     return rows.map((row) => {
-      const votes = this.getTicketVotes(row.id, options?.anonymizeVotes);
+      const ticketVoteRows = votesByTicket.get(row.id) ?? [];
+      const votes = ticketVoteRows.map((voteRow) => {
+        const structuredVotePayload = voteRow.structuredVotePayload
+          ? safeJsonParse<StructuredVote>(voteRow.structuredVotePayload)
+          : undefined;
+
+        return {
+          id: voteRow.id,
+          ticketQueueId: voteRow.ticketQueueId,
+          userName: options?.anonymizeVotes
+            ? this.anonymousName
+            : voteRow.userName,
+          vote: parseVote(voteRow.vote),
+          structuredVotePayload,
+          votedAt: voteRow.votedAt,
+        };
+      });
 
       return {
         id: row.id,

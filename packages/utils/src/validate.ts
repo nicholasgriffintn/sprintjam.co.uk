@@ -5,7 +5,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 export function validateClientMessage(
-  data: unknown
+  data: unknown,
 ): ClientMessage | { error: string } {
   if (!isObject(data) || typeof data.type !== 'string') {
     return { error: 'Invalid message format' };
@@ -39,6 +39,43 @@ export function validateClientMessage(
       return { type: 'nextTicket' };
     case 'addTicket':
       if ('ticket' in data && isObject(data.ticket)) {
+        const ticket = data.ticket;
+        if (
+          ticket.title !== undefined &&
+          typeof ticket.title !== 'string' &&
+          ticket.title !== null
+        ) {
+          return { error: 'Ticket title must be a string or null' };
+        }
+        if (
+          ticket.description !== undefined &&
+          typeof ticket.description !== 'string' &&
+          ticket.description !== null
+        ) {
+          return { error: 'Ticket description must be a string or null' };
+        }
+        if (
+          ticket.title &&
+          typeof ticket.title === 'string' &&
+          ticket.title.length > 500
+        ) {
+          return { error: 'Ticket title too long (max 500 chars)' };
+        }
+        if (
+          ticket.description &&
+          typeof ticket.description === 'string' &&
+          ticket.description.length > 10000
+        ) {
+          return { error: 'Ticket description too long (max 10000 chars)' };
+        }
+        if (
+          ticket.externalServiceMetadata !== undefined &&
+          ticket.externalServiceMetadata !== null &&
+          typeof ticket.externalServiceMetadata === 'string' &&
+          ticket.externalServiceMetadata.length > 10000
+        ) {
+          return { error: 'Ticket metadata too long (max 10000 chars)' };
+        }
         return { type: 'addTicket', ticket: data.ticket };
       }
       return { error: 'Ticket payload missing' };
@@ -48,6 +85,43 @@ export function validateClientMessage(
         'updates' in data &&
         isObject(data.updates)
       ) {
+        const updates = data.updates;
+        if (
+          updates.title !== undefined &&
+          typeof updates.title !== 'string' &&
+          updates.title !== null
+        ) {
+          return { error: 'Ticket title must be a string or null' };
+        }
+        if (
+          updates.description !== undefined &&
+          typeof updates.description !== 'string' &&
+          updates.description !== null
+        ) {
+          return { error: 'Ticket description must be a string or null' };
+        }
+        if (
+          updates.title &&
+          typeof updates.title === 'string' &&
+          updates.title.length > 500
+        ) {
+          return { error: 'Ticket title too long (max 500 chars)' };
+        }
+        if (
+          updates.description &&
+          typeof updates.description === 'string' &&
+          updates.description.length > 10000
+        ) {
+          return { error: 'Ticket description too long (max 10000 chars)' };
+        }
+        if (
+          updates.externalServiceMetadata !== undefined &&
+          updates.externalServiceMetadata !== null &&
+          typeof updates.externalServiceMetadata === 'string' &&
+          updates.externalServiceMetadata.length > 10000
+        ) {
+          return { error: 'Ticket metadata too long (max 10000 chars)' };
+        }
         return {
           type: 'updateTicket',
           ticketId: data.ticketId,

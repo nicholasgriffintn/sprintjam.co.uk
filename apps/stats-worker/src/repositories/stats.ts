@@ -26,6 +26,9 @@ import {
 
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "../lib/pagination";
 
+const MAX_SESSIONS_FOR_AGGREGATION = 1000;
+const MAX_VOTES_FOR_AGGREGATION = 50000;
+
 interface InsightsQueryData {
   rounds: Array<{
     roundId: string;
@@ -322,6 +325,8 @@ export class StatsRepository {
       .select()
       .from(teamSessions)
       .where(eq(teamSessions.teamId, teamId))
+      .orderBy(desc(teamSessions.createdAt))
+      .limit(MAX_SESSIONS_FOR_AGGREGATION)
       .all();
 
     if (sessions.length === 0) return null;
@@ -350,6 +355,7 @@ export class StatsRepository {
             .from(voteRecords)
             .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
             .where(inArray(roundVotes.roomKey, roomKeys))
+            .limit(MAX_VOTES_FOR_AGGREGATION)
             .all()
         : Promise.resolve([]),
     ]);

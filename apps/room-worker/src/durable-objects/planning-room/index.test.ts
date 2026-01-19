@@ -62,6 +62,7 @@ describe("PlanningRoom WebSocket auth", () => {
     env = {
       PLANNING_ROOM: {} as DurableObjectNamespace,
       JOIN_RATE_LIMITER: {} as RateLimit,
+      FEEDBACK_RATE_LIMITER: {} as RateLimit,
       TOKEN_ENCRYPTION_SECRET: "test-secret",
       STATS_WORKER: {} as any,
     };
@@ -213,6 +214,7 @@ describe("PlanningRoom critical flows", () => {
     env = {
       PLANNING_ROOM: {} as DurableObjectNamespace,
       JOIN_RATE_LIMITER: {} as RateLimit,
+      FEEDBACK_RATE_LIMITER: {} as RateLimit,
       TOKEN_ENCRYPTION_SECRET: "test-secret",
       STATS_WORKER: {} as any,
     };

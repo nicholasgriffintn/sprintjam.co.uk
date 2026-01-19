@@ -73,7 +73,12 @@ const expectJsonError = async (
   expect(payload.error).toBe(message);
 };
 
-const env = { FEEDBACK_GITHUB_TOKEN: "token" } as unknown as RoomWorkerEnv;
+const env = {
+  FEEDBACK_GITHUB_TOKEN: "token",
+  FEEDBACK_RATE_LIMITER: {
+    limit: async () => ({ success: true }),
+  },
+} as unknown as RoomWorkerEnv;
 
 describe("rooms controller validation", () => {
   it("requires a name when creating a room", async () => {
