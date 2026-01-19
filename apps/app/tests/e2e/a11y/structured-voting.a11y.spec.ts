@@ -41,13 +41,13 @@ test.describe("Structured Voting Accessibility", () => {
     expect(results.violations).toEqual([]);
   });
 
-  test("score buttons expose aria-pressed state", async ({ page }) => {
+  test("score buttons expose aria-checked state", async ({ page }) => {
     const scoreButton = page
       .locator('[data-testid^="structured-score-"]')
       .first();
 
     await scoreButton.click();
-    await expect(scoreButton).toHaveAttribute("aria-pressed", "true");
+    await expect(scoreButton).toHaveAttribute("aria-checked", "true");
   });
 
   test("structured summary is announced to assistive tech", async ({
