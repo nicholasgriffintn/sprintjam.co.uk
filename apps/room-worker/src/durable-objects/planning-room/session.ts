@@ -14,7 +14,7 @@ export async function handleSession(
   webSocket: CfWebSocket,
   roomKey: string,
   userName: string,
-  sessionToken: string
+  sessionToken: string,
 ) {
   const storedRoom = await room.getRoomData();
   const canonicalUserName = storedRoom
@@ -33,7 +33,7 @@ export async function handleSession(
       JSON.stringify({
         type: 'error',
         error: 'Invalid or expired session. Please rejoin the room.',
-      })
+      }),
     );
     webSocket.close(4003, 'Invalid session token');
     return;
@@ -54,7 +54,7 @@ export async function handleSession(
       JSON.stringify({
         type: 'error',
         error: 'Unable to load room data',
-      })
+      }),
     );
     webSocket.close(1011, 'Room data unavailable');
     return;
@@ -89,7 +89,7 @@ export async function handleSession(
     JSON.stringify({
       type: 'initialize',
       roomData: anonymizeRoomData(freshRoomData ?? roomData),
-    })
+    }),
   );
 
   webSocket.addEventListener('message', async (msg) => {
@@ -106,7 +106,7 @@ export async function handleSession(
           JSON.stringify({
             type: 'error',
             error: validated.error,
-          })
+          }),
         );
         return;
       }
@@ -136,7 +136,7 @@ export async function handleSession(
         case 'updateSettings':
           await room.handleUpdateSettings(
             canonicalUserName,
-            validated.settings
+            validated.settings,
           );
           break;
         case 'generateStrudelCode':
@@ -158,7 +158,7 @@ export async function handleSession(
           await room.handleUpdateTicket(
             canonicalUserName,
             validated.ticketId,
-            validated.updates
+            validated.updates,
           );
           break;
         case 'deleteTicket':
@@ -179,7 +179,7 @@ export async function handleSession(
         case 'toggleSpectator':
           await room.handleToggleSpectator(
             canonicalUserName,
-            validated.isSpectator
+            validated.isSpectator,
           );
           break;
         case 'completeSession':
@@ -187,11 +187,12 @@ export async function handleSession(
           break;
       }
     } catch (err: unknown) {
+      console.error('WebSocket message error:', err);
       webSocket.send(
         JSON.stringify({
           type: 'error',
-          error: err instanceof Error ? err.message : String(err),
-        })
+          error: 'An error occurred',
+        }),
       );
     }
   });
@@ -199,7 +200,7 @@ export async function handleSession(
   webSocket.addEventListener('close', async () => {
     room.sessions.delete(webSocket);
     const stillConnected = Array.from(room.sessions.values()).some(
-      (s) => s.userName === canonicalUserName
+      (s) => s.userName === canonicalUserName,
     );
 
     if (!stillConnected) {
