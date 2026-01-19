@@ -4,9 +4,8 @@ import type { RoomData, RoomSettings } from "@/types";
 import {
   ROOM_FACILITATION_PROMPT_SEEN_STORAGE_KEY,
   ROOM_HINTS_DISMISSED_STORAGE_KEY,
-  ROOM_JOINED_STORAGE_KEY,
   ROOM_SPREAD_HINT_STORAGE_KEY,
-} from '@/constants';
+} from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 import type { VoteSpreadSummary } from "@/utils/room-guidance";
 
@@ -24,7 +23,6 @@ export const useRoomOnboardingHints = ({
   onUpdateSettings,
 }: UseRoomOnboardingHintsParams) => {
   const [hintsDismissed, setHintsDismissed] = useState(false);
-  const [isFirstRoomJoin, setIsFirstRoomJoin] = useState(false);
   const [showSpreadHint, setShowSpreadHint] = useState(false);
   const [showFacilitationOptIn, setShowFacilitationOptIn] = useState(false);
 
@@ -32,8 +30,6 @@ export const useRoomOnboardingHints = ({
     const storedDismissed =
       safeLocalStorage.get(ROOM_HINTS_DISMISSED_STORAGE_KEY) === "true";
     setHintsDismissed(storedDismissed);
-    const hasJoined = safeLocalStorage.get(ROOM_JOINED_STORAGE_KEY) === "true";
-    setIsFirstRoomJoin(!hasJoined);
   }, []);
 
   useEffect(() => {
@@ -50,7 +46,7 @@ export const useRoomOnboardingHints = ({
   }, [hintsDismissed, roomData.showVotes, spreadSummary.isWideSpread]);
 
   useEffect(() => {
-    if (!isModeratorView || !isFirstRoomJoin) {
+    if (!isModeratorView) {
       setShowFacilitationOptIn(false);
       return;
     }
@@ -59,16 +55,15 @@ export const useRoomOnboardingHints = ({
       return;
     }
     const promptSeen =
-      safeLocalStorage.get(ROOM_FACILITATION_PROMPT_SEEN_STORAGE_KEY) === "true";
+      safeLocalStorage.get(ROOM_FACILITATION_PROMPT_SEEN_STORAGE_KEY) ===
+      "true";
     setShowFacilitationOptIn(!promptSeen);
-  }, [isModeratorView, isFirstRoomJoin, roomData.settings.enableFacilitationGuidance]);
+  }, [isModeratorView, roomData.settings.enableFacilitationGuidance]);
 
   const dismissHints = () => {
     setHintsDismissed(true);
-    setIsFirstRoomJoin(false);
     setShowSpreadHint(false);
     safeLocalStorage.set(ROOM_HINTS_DISMISSED_STORAGE_KEY, "true");
-    safeLocalStorage.set(ROOM_JOINED_STORAGE_KEY, 'true');
     if (showSpreadHint) {
       safeLocalStorage.set(ROOM_SPREAD_HINT_STORAGE_KEY, "true");
     }
@@ -88,15 +83,9 @@ export const useRoomOnboardingHints = ({
     setShowFacilitationOptIn(false);
   };
 
-  const showOnboardingHints =
-    !hintsDismissed &&
-    (showFacilitationOptIn || (!isModeratorView && isFirstRoomJoin));
-
   return {
-    showOnboardingHints,
     showSpreadHint,
     showFacilitationOptIn,
-    isFirstRoomJoin,
     dismissHints,
     enableFacilitationGuidance,
     dismissFacilitationOptIn,

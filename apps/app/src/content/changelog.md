@@ -8,7 +8,6 @@
 ## V2.3
 
 - Added an in-room help panel with contextual guidance tied to voting state, including card meanings and structured voting notes.
-- Added progressive onboarding hints in rooms with a single opt-in prompt for facilitation guidance.
 - Added moderation prompts that surface facilitation tips when enabled.
 - Added a new Complete Session modal that can be opened at the end of a session, this displays a summary of the session including the tickets that are still pending and the completed tickets with their assigned story points.
   - A save button displays here so that users can save the session data to their workspace for future reference. (In the future, once workspaces are out of beta, this will just happen when you complete a session, rather than requiring two actions).

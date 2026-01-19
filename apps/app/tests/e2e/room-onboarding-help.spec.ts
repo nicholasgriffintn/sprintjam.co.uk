@@ -19,39 +19,6 @@ test.describe("Room onboarding hints", () => {
     }
   });
 
-  test("shows first-join hint for participants", async ({ browser }) => {
-    const setup = await createRoomWithParticipant(browser);
-    const { participantRoom, cleanup } = setup;
-    const page = participantRoom.getPage();
-
-    try {
-      const hint = page.getByText("First time? Tap any card to vote.", {
-        exact: true,
-      });
-      await expect(hint).toBeVisible();
-      await page.getByRole("button", { name: "Got it" }).click();
-      await expect(hint).toHaveCount(0);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  test("shows structured voting hint when enabled", async ({ browser }) => {
-    const setup = await createRoomWithParticipant(browser, {
-      enableStructuredVotingOnCreate: true,
-    });
-    const { participantRoom, cleanup } = setup;
-    const page = participantRoom.getPage();
-
-    try {
-      await expect(
-        page.getByText("Structured voting enabled", { exact: true }),
-      ).toBeVisible();
-    } finally {
-      await cleanup();
-    }
-  });
-
   test("shows wide-spread hint after reveal", async ({ browser }) => {
     const setup = await createRoomWithParticipant(browser);
     const { moderatorRoom, participantRoom, cleanup } = setup;

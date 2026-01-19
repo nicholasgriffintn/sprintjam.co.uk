@@ -119,10 +119,8 @@ const RoomScreen = () => {
     [roomData.votes, roomData.settings, roomData.judgeMetadata],
   );
   const {
-    showOnboardingHints,
     showSpreadHint,
     showFacilitationOptIn,
-    isFirstRoomJoin,
     dismissHints,
     enableFacilitationGuidance,
     dismissFacilitationOptIn,
@@ -206,14 +204,14 @@ const RoomScreen = () => {
             stats={stats}
             setIsQueueModalOpen={setIsQueueModalOpen}
             onOpenQueueSettings={
-              isModeratorView ? () => handleOpenSettings('queue') : undefined
+              isModeratorView ? () => handleOpenSettings("queue") : undefined
             }
-            isCompleted={roomData.status === 'completed'}
+            isCompleted={roomData.status === "completed"}
           />
         </div>
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4 order-1 md:order-none">
-          {roomData?.status === 'completed' ? (
+          {roomData?.status === "completed" ? (
             <>
               <SurfaceCard padding="md" className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -331,35 +329,20 @@ const RoomScreen = () => {
                 />
               )}
 
-              {showOnboardingHints && (
-                <div className="space-y-3">
-                  {showFacilitationOptIn ? (
-                    <RoomCalloutCard
-                      badge="Moderator tip"
-                      title="Enable facilitation prompts?"
-                      body="Prompts will be displayed as the session progresses with tips to run a successful session."
-                      primaryAction={{
-                        label: 'Enable prompts',
-                        onClick: enableFacilitationGuidance,
-                      }}
-                      secondaryAction={{
-                        label: 'Not now',
-                        onClick: dismissFacilitationOptIn,
-                      }}
-                    />
-                  ) : isFirstRoomJoin ? (
-                    <RoomCalloutCard
-                      badge="Hint"
-                      title={
-                        roomData.settings.enableStructuredVoting
-                          ? 'First time? Vote on each criterion to score this ticket.'
-                          : 'First time? Tap any card to vote.'
-                      }
-                      body="Votes will stay hidden until the moderator reveals."
-                      primaryAction={{ label: 'Got it', onClick: dismissHints }}
-                    />
-                  ) : null}
-                </div>
+              {showFacilitationOptIn && (
+                <RoomCalloutCard
+                  badge="Moderator tip"
+                  title="Enable facilitation prompts?"
+                  body="Prompts will be displayed as the session progresses with tips to run a successful session."
+                  primaryAction={{
+                    label: "Enable prompts",
+                    onClick: enableFacilitationGuidance,
+                  }}
+                  secondaryAction={{
+                    label: "Not now",
+                    onClick: dismissFacilitationOptIn,
+                  }}
+                />
               )}
 
               {facilitationPrompt && (
@@ -384,7 +367,7 @@ const RoomScreen = () => {
                   currentUserVote={userVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('voting')
+                      ? () => handleOpenSettings("voting")
                       : undefined
                   }
                   disabled={isSpectator}
@@ -393,11 +376,11 @@ const RoomScreen = () => {
                 <UserEstimate
                   roomData={roomData}
                   name={name}
-                  userVote={typeof userVote === 'object' ? null : userVote}
+                  userVote={typeof userVote === "object" ? null : userVote}
                   onVote={handleVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('voting')
+                      ? () => handleOpenSettings("voting")
                       : undefined
                   }
                   disabled={isSpectator}
@@ -412,7 +395,7 @@ const RoomScreen = () => {
                   onToggleShowVotes={handleToggleShowVotes}
                   onResetVotes={handleResetVotes}
                   onNextTicket={() => {
-                    const existingNote = roomData.currentTicket?.outcome ?? '';
+                    const existingNote = roomData.currentTicket?.outcome ?? "";
                     setSummaryNote(existingNote || getSuggestedNote());
                     setIsSummaryOpen(true);
                   }}
@@ -423,7 +406,7 @@ const RoomScreen = () => {
                   }
                   onOpenResultsSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('results')
+                      ? () => handleOpenSettings("results")
                       : undefined
                   }
                   onRevisitLater={async () => {
@@ -435,7 +418,7 @@ const RoomScreen = () => {
                         0,
                       ) + 1;
                     await handleUpdateTicket(roomData.currentTicket.id, {
-                      status: 'pending',
+                      status: "pending",
                       ordinal: maxOrdinal,
                     });
                     handleNextTicket();
@@ -461,10 +444,10 @@ const RoomScreen = () => {
                             spreadSummary.highestVoteValue !== null &&
                             spreadSummary.lowestVoteValue !== null
                               ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
-                              : 'Ask the highest and lowest voters to explain their thinking.'
+                              : "Ask the highest and lowest voters to explain their thinking."
                           }
                           primaryAction={{
-                            label: 'Got it',
+                            label: "Got it",
                             onClick: dismissHints,
                           }}
                         />
@@ -576,7 +559,7 @@ const RoomScreen = () => {
         onClose={() => setIsQueueModalOpen(false)}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || 'none'}
+        externalService={roomData.settings.externalService || "none"}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -593,7 +576,7 @@ const RoomScreen = () => {
         isQueueEnabled={isQueueEnabled}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || 'none'}
+        externalService={roomData.settings.externalService || "none"}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -606,10 +589,10 @@ const RoomScreen = () => {
         onError={reportRoomError}
       />
 
-      {isQueueEnabled && queueProvider !== 'none' && (
+      {isQueueEnabled && queueProvider !== "none" && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as 'jira' | 'linear' | 'github'}
+          provider={queueProvider as "jira" | "linear" | "github"}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);
@@ -633,7 +616,7 @@ const RoomScreen = () => {
           try {
             const trimmedNote = summaryNote.trim();
             if (roomData.currentTicket) {
-              const existingNote = roomData.currentTicket.outcome ?? '';
+              const existingNote = roomData.currentTicket.outcome ?? "";
               if (trimmedNote !== existingNote) {
                 await handleUpdateTicket(roomData.currentTicket.id, {
                   outcome: trimmedNote || undefined,
