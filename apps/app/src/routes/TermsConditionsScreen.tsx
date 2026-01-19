@@ -7,7 +7,7 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { SITE_NAME } from '@/constants';
 
-const LAST_UPDATED = "22nd November 2025";
+const LAST_UPDATED = '19th January 2025';
 
 const TermsConditionsScreen = () => {
   usePageMeta(META_CONFIGS.terms);
@@ -62,7 +62,7 @@ const TermsConditionsScreen = () => {
               </p>
               <p>
                 You will notify us immediately if you become aware of any
-                security breaches or unauthorized access to your account.
+                security breaches or unauthorised access to your account.
               </p>
 
               <h3>Prohibited Use</h3>

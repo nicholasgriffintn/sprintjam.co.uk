@@ -732,7 +732,7 @@ export default function LoginScreen() {
               fullWidth
               required
               autoFocus
-              disabled={state === "sending"}
+              disabled={state === 'sending'}
             />
 
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -742,9 +742,9 @@ export default function LoginScreen() {
                 className="sm:flex-1"
                 fullWidth
                 size="lg"
-                isLoading={state === "sending"}
+                isLoading={state === 'sending'}
               >
-                {state === "sending" ? "Sending..." : "Continue"}
+                {state === 'sending' ? 'Sending...' : 'Continue'}
               </Button>
             </div>
           </motion.form>
@@ -752,7 +752,7 @@ export default function LoginScreen() {
       </SurfaceCard>
 
       <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-        Workspaces are available for authorized domains only. Contact your
+        Workspaces are available for authorised domains only. Contact your
         administrator if you need access.
       </p>
     </AuthPage>

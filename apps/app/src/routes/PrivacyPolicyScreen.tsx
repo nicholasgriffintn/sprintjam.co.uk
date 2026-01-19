@@ -13,7 +13,7 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { SITE_NAME } from "@/constants";
 
-const LAST_UPDATED = "5th January 2026";
+const LAST_UPDATED = '19th January 2026';
 
 const highlightCards = [
   {
@@ -37,17 +37,17 @@ const highlightCards = [
 
 const browserStorage = [
   {
-    label: "Essential authentication cookies",
+    label: 'Essential authentication cookies',
     detail:
-      "Workspace session tokens are stored in secure, httpOnly cookies to protect against XSS attacks. These cookies are never shared with third parties.",
+      'Auth tokens are stored in secure, httpOnly cookies to protect them. These cookies are never shared with third parties.',
   },
   {
-    label: "Local preferences",
+    label: 'Local preferences',
     detail:
-      "Display name, avatar emoji, settings, and most-recently room join code are stored in localStorage.",
+      'Display name, avatar emoji, settings, and most-recently room join code are stored in localStorage.',
   },
   {
-    label: "No tracking or marketing cookies",
+    label: 'No tracking or marketing cookies',
     detail: `${SITE_NAME} does not set marketing or advertising cookies, nor does it embed remote analytics or third-party trackers.`,
   },
 ];
