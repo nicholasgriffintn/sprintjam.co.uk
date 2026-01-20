@@ -166,9 +166,6 @@ export function StructuredVotingPanel({
       return;
     }
 
-    if (Object.keys(criteriaScores).length > 0) {
-      return;
-    }
     setCriteriaScores({});
   }, [currentVote, hideSubmittedVote]);
 
