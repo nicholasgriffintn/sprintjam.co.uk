@@ -19,10 +19,8 @@ type WheelEventMessage =
   | { type: "disconnected"; error: string; reason: "disconnect" };
 type WheelEventType = WheelEventMessage["type"];
 
-const eventListeners: Record<
-  string,
-  ((data: WheelEventMessage) => void)[]
-> = {};
+const eventListeners: Record<string, ((data: WheelEventMessage) => void)[]> =
+  {};
 
 export interface CreateWheelResponse {
   wheel: WheelData;
@@ -147,7 +145,9 @@ export async function joinWheel(
     );
 
     if (!data.wheel) {
-      throw new NetworkError("Invalid response from server while joining wheel");
+      throw new NetworkError(
+        "Invalid response from server while joining wheel",
+      );
     }
 
     return data;
@@ -228,7 +228,10 @@ export function connectToWheel(
             break;
 
           default:
-            console.warn("Unknown wheel message type:", data.type);
+            console.warn(
+              "Unknown wheel message type:",
+              (data as { type: string }).type,
+            );
         }
       } catch (error) {
         console.error("Error parsing wheel message:", error);
@@ -236,7 +239,11 @@ export function connectToWheel(
     };
 
     socket.onclose = (event) => {
-      console.debug("Wheel WebSocket connection closed:", event.code, event.reason);
+      console.debug(
+        "Wheel WebSocket connection closed:",
+        event.code,
+        event.reason,
+      );
       onConnectionStatusChange?.(false);
 
       if (event.code === 4003) {
@@ -491,4 +498,39 @@ export function updateWheelSettings(settings: Partial<WheelSettings>): void {
       settings,
     }),
   );
+}
+
+export async function updateWheelPasscode(
+  wheelKey: string,
+  userName: string,
+  passcode: string | null,
+): Promise<void> {
+  try {
+    const response = await fetch(
+      `${WHEEL_API_BASE_URL}/wheels/${wheelKey}/passcode`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userName, passcode }),
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok) {
+      const body = await readJsonSafe(response);
+      throw new HttpError({
+        message: (body?.error as string) || "Failed to update passcode",
+        status: response.status,
+        code: (body?.code as string) || undefined,
+      });
+    }
+  } catch (error) {
+    console.error("Error updating passcode:", error);
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to update passcode", { cause: error });
+  }
 }

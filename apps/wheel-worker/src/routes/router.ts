@@ -25,9 +25,6 @@ async function handleWebSocket(
   const userName = url.searchParams.get('name');
   const sessionToken = getWheelSessionToken(request);
 
-  console.log('WebSocket request for wheel:', wheelKey, 'user:', userName);
-  console.log('Session token:', sessionToken);
-
   if (!wheelKey || !userName || !sessionToken) {
     return jsonError('Missing wheel key, user name, or session token', 400);
   }
@@ -177,7 +174,37 @@ async function handleApiRoutes(
     return getWheelSettingsController(request, env);
   }
 
+  if (path.match(/^wheels\/[^/]+\/passcode$/) && method === 'PUT') {
+    return updateWheelPasscodeController(request, env);
+  }
+
   return notFoundResponse('API');
+}
+
+async function updateWheelPasscodeController(
+  request: CfRequest,
+  env: WheelWorkerEnv,
+): Promise<CfResponse> {
+  const url = new URL(request.url);
+  const wheelKey = url.pathname.match(/wheels\/([^/]+)\/passcode/)?.[1];
+  const sessionToken = getWheelSessionToken(request);
+
+  if (!wheelKey) {
+    return jsonError('Wheel key is required');
+  }
+
+  const wheelObject = getWheelStub(env, wheelKey);
+
+  return wheelObject.fetch(
+    new Request('https://internal/passcode', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(sessionToken ? { Cookie: `wheel_session=${sessionToken}` } : {}),
+      },
+      body: request.body,
+    }) as unknown as CfRequest,
+  );
 }
 
 export async function handleRequest(

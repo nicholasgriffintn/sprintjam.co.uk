@@ -83,6 +83,7 @@ export const Z_INDEX = {
     marketing: 10,
     room: 20,
     workspace: 50,
+    wheel: 20,
   },
   modal: 50,
   loading: 60,

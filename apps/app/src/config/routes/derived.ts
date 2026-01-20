@@ -35,7 +35,7 @@ const GROUP_HEADERS: Record<RouteGroup, HeaderVariant> = {
   room: "room",
   auth: "marketing",
   flow: "marketing",
-  wheel: "marketing",
+  wheel: "wheel",
 };
 
 export function getRouteConfig(screen: AppScreen): RouteEntry | undefined {

@@ -377,6 +377,14 @@ export class WheelRoomRepository {
     return parsePasscodeHash(result?.passcode ?? null);
   }
 
+  setPasscodeHash(passcodeHash: PasscodeHashPayload | undefined) {
+    this.db
+      .update(wheelMeta)
+      .set({ passcode: serializePasscodeHash(passcodeHash) })
+      .where(eq(wheelMeta.id, WHEEL_ROW_ID))
+      .run();
+  }
+
   setSessionToken(userName: string, token: string) {
     const canonicalName = this.ensureUser(userName);
     const existingTokenOwner = this.db

@@ -21,7 +21,9 @@ export async function handleSpin(wheel: WheelRoom, userName: string) {
     throw new Error('Need at least 2 entries to spin');
   }
 
-  const targetIndex = Math.floor(Math.random() * enabledEntries.length);
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  const targetIndex = array[0] % enabledEntries.length;
 
   const spinState: SpinState = {
     isSpinning: true,

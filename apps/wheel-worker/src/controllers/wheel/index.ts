@@ -36,6 +36,10 @@ export async function handleHttpRequest(
     return handleGetSettings(context, request);
   }
 
+  if (path === '/passcode' && request.method === 'PUT') {
+    return handleUpdatePasscode(context, request);
+  }
+
   return null;
 }
 
@@ -183,5 +187,38 @@ async function handleGetSettings(
     settings: wheelData.settings,
     moderator: wheelData.moderator,
     isModerator: name ? wheelData.moderator === name : false,
+  });
+}
+
+async function handleUpdatePasscode(
+  context: WheelRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const body = await request.json<{
+    userName: string;
+    passcode: string | null;
+  }>();
+
+  const { userName, passcode } = body;
+
+  if (!userName) {
+    return jsonError('User name is required');
+  }
+
+  const wheelData = await context.getWheelData();
+  if (!wheelData) {
+    return jsonError('Wheel not found', 404);
+  }
+
+  if (wheelData.moderator !== userName) {
+    return jsonError('Only the moderator can update the passcode', 403);
+  }
+
+  const passcodeHash = passcode ? await hashPasscode(passcode) : undefined;
+  context.repository.setPasscodeHash(passcodeHash);
+
+  return jsonResponse({
+    success: true,
+    hasPasscode: !!passcode,
   });
 }

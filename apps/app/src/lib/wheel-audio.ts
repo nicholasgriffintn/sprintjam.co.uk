@@ -48,8 +48,7 @@ export function playTickSound(speed = 1): void {
   oscillator.frequency.value = 800 + speed * 200;
 
   gain.gain.setValueAtTime(0.15, ctx.currentTime);
-  gain.gain.exponentialDecayTo?.(0.001, ctx.currentTime + 0.05) ??
-    gain.gain.setTargetAtTime(0.001, ctx.currentTime, 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
 
   oscillator.connect(gain);
   gain.connect(ctx.destination);
@@ -79,8 +78,7 @@ export function playCelebrationSound(): void {
     const startTime = ctx.currentTime + index * duration;
     gain.gain.setValueAtTime(0, startTime);
     gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
-    gain.gain.exponentialDecayTo?.(0.001, startTime + duration) ??
-      gain.gain.setTargetAtTime(0.001, startTime + 0.05, 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
     oscillator.connect(gain);
     gain.connect(ctx.destination);

@@ -1,4 +1,5 @@
 import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
+import type { PasscodeHashPayload } from "./room";
 
 export interface WheelEntry {
   id: string;
@@ -28,12 +29,6 @@ export interface WheelSettings {
 }
 
 export type WheelStatus = "active" | "completed";
-
-export interface PasscodeHashPayload {
-  hash: string;
-  salt: string;
-  iterations: number;
-}
 
 export interface WheelData {
   key: string;

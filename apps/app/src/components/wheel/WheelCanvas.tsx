@@ -1,18 +1,19 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
-import { motion, useAnimation, useMotionValue } from 'framer-motion';
-import type { WheelEntry, SpinState } from '@sprintjam/types';
+import { useRef, useEffect, useState, useCallback } from "react";
+import { motion, useAnimation, useMotionValue } from "framer-motion";
+import type { WheelEntry, SpinState } from "@sprintjam/types";
 
-import { playTickSound } from '@/lib/wheel-audio';
+import { playTickSound } from "@/lib/wheel-audio";
 
+// TODO: Generate colours with an algo and ensure sufficient contrast
 const WHEEL_COLORS = [
-  '#E53935',
-  '#1E88E5',
-  '#43A047',
-  '#FDD835',
-  '#8E24AA',
-  '#00ACC1',
-  '#FB8C00',
-  '#3949AB',
+  "#E53935",
+  "#1E88E5",
+  "#43A047",
+  "#FDD835",
+  "#8E24AA",
+  "#00ACC1",
+  "#FB8C00",
+  "#3949AB",
 ];
 
 interface WheelCanvasProps {
@@ -22,6 +23,15 @@ interface WheelCanvasProps {
   disabled?: boolean;
   onSpin?: () => void;
   playSounds?: boolean;
+}
+
+function getSegmentAtAngle(rotation: number, numSegments: number): number {
+  if (numSegments === 0) return 0;
+  const segmentAngle = 360 / numSegments;
+  const adjustedRotation = rotation + 90;
+  const normalizedRotation = ((adjustedRotation % 360) + 360) % 360;
+  const segmentIndex = Math.floor(normalizedRotation / segmentAngle);
+  return segmentIndex % numSegments;
 }
 
 export function WheelCanvas({
@@ -35,29 +45,44 @@ export function WheelCanvas({
   const controls = useAnimation();
   const rotation = useMotionValue(0);
   const lastTickRotation = useRef(0);
+  const spinIdRef = useRef<string | null>(null);
   const enabledEntries = entries.filter((e) => e.enabled);
-  const [isSpinning, setIsSpinning] = useState(false);
+  const [currentSegment, setCurrentSegment] = useState(0);
 
   const segmentAngle =
     enabledEntries.length > 0 ? 360 / enabledEntries.length : 360;
+
+  useEffect(() => {
+    const unsubscribe = rotation.on('change', (latest) => {
+      const segment = getSegmentAtAngle(latest, enabledEntries.length);
+      setCurrentSegment(segment);
+    });
+    return () => unsubscribe();
+  }, [rotation, enabledEntries.length]);
 
   useEffect(() => {
     if (!spinState?.isSpinning || enabledEntries.length === 0) {
       return;
     }
 
-    setIsSpinning(true);
+    const currentSpinId = `${spinState.startedAt}-${spinState.targetIndex}`;
+    if (spinIdRef.current === currentSpinId) {
+      return;
+    }
+    spinIdRef.current = currentSpinId;
 
     const targetIndex = spinState.targetIndex ?? 0;
     const segmentAngle = 360 / enabledEntries.length;
-    const targetAngle = 360 - targetIndex * segmentAngle - segmentAngle / 2;
+    const targetAngle = targetIndex * segmentAngle + segmentAngle / 2;
     const fullRotations = 5;
-    const finalRotation = fullRotations * 360 + targetAngle;
 
-    const startRotation = rotation.get() % 360;
+    const currentRotation = rotation.get();
+    const baseRotation = Math.floor(currentRotation / 360) * 360;
+    const finalRotation =
+      baseRotation + fullRotations * 360 + (90 - targetAngle);
 
     controls.start({
-      rotate: startRotation + finalRotation,
+      rotate: finalRotation,
       transition: {
         duration: spinState.duration / 1000,
         ease: [0.2, 0.8, 0.3, 1],
@@ -83,8 +108,8 @@ export function WheelCanvas({
     }, 50);
 
     const timeout = setTimeout(() => {
-      setIsSpinning(false);
       clearInterval(tickInterval);
+      spinIdRef.current = null;
       onSpinComplete?.();
     }, spinState.duration);
 
@@ -102,14 +127,19 @@ export function WheelCanvas({
   ]);
 
   const handleClick = useCallback(() => {
-    if (!disabled && !isSpinning && enabledEntries.length >= 2 && onSpin) {
+    if (!disabled && !spinState?.isSpinning && enabledEntries.length >= 2 && onSpin) {
       onSpin();
     }
-  }, [disabled, isSpinning, enabledEntries.length, onSpin]);
+  }, [disabled, spinState?.isSpinning, enabledEntries.length, onSpin]);
+
+  const arrowColour =
+    enabledEntries.length > 0
+      ? WHEEL_COLORS[currentSegment % WHEEL_COLORS.length]
+      : '#FDD835';
 
   if (enabledEntries.length === 0) {
     return (
-      <div className="relative aspect-square w-full max-w-[500px]">
+      <div className="relative aspect-square w-full">
         <div className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-800/50 border-4 border-slate-700">
           <p className="text-slate-400 text-center px-8">
             Add entries to spin the wheel
@@ -120,7 +150,7 @@ export function WheelCanvas({
   }
 
   return (
-    <div className="relative aspect-square w-full max-w-[500px]">
+    <div className="relative aspect-square w-full">
       <div
         className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10"
         style={{
@@ -128,8 +158,9 @@ export function WheelCanvas({
           height: 0,
           borderTop: '20px solid transparent',
           borderBottom: '20px solid transparent',
-          borderRight: '30px solid #FDD835',
+          borderRight: `30px solid ${arrowColour}`,
           filter: 'drop-shadow(-2px 0 4px rgba(0,0,0,0.3))',
+          transition: 'border-right-color 0.1s ease-out',
         }}
       />
 
@@ -158,7 +189,6 @@ export function WheelCanvas({
             const textY = 50 + 30 * Math.sin(midAngle);
             const textRotation = (startAngle + endAngle) / 2 + 90;
 
-            // TODO: Generate colours with an algo and ensure sufficient contrast
             const color = WHEEL_COLORS[index % WHEEL_COLORS.length];
 
             return (
@@ -200,13 +230,11 @@ export function WheelCanvas({
         </svg>
       </motion.div>
 
-      {!isSpinning && enabledEntries.length >= 2 && (
+      {!spinState?.isSpinning && enabledEntries.length >= 2 && onSpin && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-white/80 text-center">
-            <p className="text-lg font-medium drop-shadow-lg">Click to spin</p>
-            {!onSpin && (
-              <p className="text-sm opacity-70">or press ctrl+enter</p>
-            )}
+          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/10">
+            <p className="text-lg font-semibold text-white">Click to spin</p>
+            <p className="text-sm text-white/70">or press ctrl+enter</p>
           </div>
         </div>
       )}
