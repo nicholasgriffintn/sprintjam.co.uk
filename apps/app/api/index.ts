@@ -34,6 +34,10 @@ async function handleRequest(
     if (url.pathname.startsWith('/api/')) {
       const path = url.pathname.substring(5); // Remove '/api/'
 
+      if (path.startsWith('wheels')) {
+        return await env.WHEEL_WORKER.fetch(request);
+      }
+
       if (
         path.startsWith('auth/') ||
         path === 'teams' ||
@@ -53,6 +57,12 @@ async function handleRequest(
 
     if (url.pathname === '/ws') {
       return await env.ROOM_WORKER.fetch(request);
+    }
+
+    if (url.pathname === '/ws/wheel') {
+      const proxyUrl = new URL(request.url);
+      proxyUrl.pathname = '/ws';
+      return await env.WHEEL_WORKER.fetch(request);
     }
 
     return env.ASSETS.fetch(request);

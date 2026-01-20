@@ -42,6 +42,11 @@ export function parsePath(path: string): ParsedPath {
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
 
+  const screen = getStaticPathToScreen().get(normalizedPath);
+  if (screen) {
+    return { screen };
+  }
+
   for (const route of getDynamicRoutes()) {
     const match = normalizedPath.match(route.pathPattern!);
     if (match) {
@@ -58,31 +63,49 @@ export function parsePath(path: string): ParsedPath {
     }
   }
 
-  const screen = getStaticPathToScreen().get(normalizedPath);
-  if (screen) {
-    return { screen };
-  }
-
   return { screen: "404" };
 }
 
-export function getPathFromScreen(screen: AppScreen, roomKey?: string): string {
+export type RouteParams = { roomKey?: string; wheelKey?: string };
+
+function normaliseParams(
+  params?: RouteParams | string,
+): RouteParams | undefined {
+  if (typeof params === "string") {
+    return { roomKey: params };
+  }
+  return params;
+}
+
+export function getPathFromScreen(
+  screen: AppScreen,
+  params?: RouteParams | string,
+): string {
   const route = (ROUTES as readonly RouteEntry[]).find(
     (r) => r.screen === screen,
   );
   if (!route) return "/404";
 
+  const resolvedParams = normaliseParams(params);
+
   if (typeof route.path === "function") {
-    return route.path({ roomKey });
+    return route.path({
+      roomKey: resolvedParams?.roomKey,
+      wheelKey: resolvedParams?.wheelKey,
+    });
   }
   return route.path;
 }
 
-export function navigateTo(screen: AppScreen, roomKey?: string): void {
-  const path = getPathFromScreen(screen, roomKey);
+export function navigateTo(
+  screen: AppScreen,
+  params?: RouteParams | string,
+): void {
+  const resolvedParams = normaliseParams(params);
+  const path = getPathFromScreen(screen, resolvedParams);
 
   if (window.location.pathname !== path) {
-    window.history.pushState({ screen, roomKey }, "", path);
+    window.history.pushState({ screen, ...resolvedParams }, "", path);
   }
 
   const scrollToTop = () =>

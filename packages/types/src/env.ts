@@ -21,6 +21,7 @@ export interface DispatchWorkerEnv extends BaseEnv {
   ROOM_WORKER: Fetcher;
   AUTH_WORKER: Fetcher;
   STATS_WORKER: Fetcher;
+  WHEEL_WORKER: Fetcher;
 }
 
 /**
@@ -65,4 +66,12 @@ export interface AuthWorkerEnv extends BaseEnv {
 export interface StatsWorkerEnv extends BaseEnv {
   DB: D1Database;
   STATS_INGEST_TOKEN: string;
+}
+
+/**
+ * Environment for the wheel worker
+ */
+export interface WheelWorkerEnv extends BaseEnv {
+  WHEEL_ROOM: DurableObjectNamespace;
+  TOKEN_ENCRYPTION_SECRET: string;
 }

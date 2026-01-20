@@ -23,6 +23,10 @@
       "service": "sprintjam-room-worker",
     },
     {
+      "binding": "WHEEL_WORKER",
+      "service": "sprintjam-wheel-worker",
+    },
+    {
       "binding": "AUTH_WORKER",
       "service": "sprintjam-auth-worker",
     },
@@ -35,7 +39,7 @@
     "binding": "ASSETS",
     "directory": "dist/client",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/ws", "/robots.txt"],
+    "run_worker_first": ["/api/*", "/ws", "/ws/wheel", "/robots.txt"],
   },
   "migrations": [
     {
@@ -71,6 +75,10 @@
           "binding": "STATS_WORKER",
           "service": "sprintjam-stats-worker-development",
         },
+        {
+          "binding": "WHEEL_WORKER",
+          "service": "sprintjam-wheel-worker-development",
+        },
       ],
       "migrations": [],
     },
@@ -97,6 +105,10 @@
         {
           "binding": "STATS_WORKER",
           "service": "sprintjam-stats-worker-staging",
+        },
+        {
+          "binding": "WHEEL_WORKER",
+          "service": "sprintjam-wheel-worker-staging",
         },
       ],
     },

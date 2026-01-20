@@ -1,0 +1,70 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sprintjam-wheel-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-07-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "placement": {
+    "mode": "smart",
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "WHEEL_ROOM",
+        "class_name": "WheelRoom",
+      },
+    ],
+  },
+  "rules": [
+    {
+      "type": "Text",
+      "globs": ["**/*.sql"],
+      "fallthrough": true,
+    },
+  ],
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["WheelRoom"],
+    },
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false,
+    },
+  },
+  "env": {
+    "development": {
+      "vars": {
+        "ENVIRONMENT": "development",
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "WHEEL_ROOM",
+            "class_name": "WheelRoom",
+          },
+        ],
+      },
+    },
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging",
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "WHEEL_ROOM",
+            "class_name": "WheelRoom",
+          },
+        ],
+      },
+    },
+  },
+}

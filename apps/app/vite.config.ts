@@ -39,6 +39,9 @@ export default defineConfig(({ command }) => ({
           configPath: '../room-worker/wrangler.jsonc',
         },
         {
+          configPath: '../wheel-worker/wrangler.jsonc',
+        },
+        {
           configPath: '../auth-worker/wrangler.jsonc',
         },
         {
