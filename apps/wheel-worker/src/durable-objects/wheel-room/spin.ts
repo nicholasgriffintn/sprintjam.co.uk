@@ -21,15 +21,23 @@ export async function handleSpin(wheel: WheelRoom, userName: string) {
     throw new Error('Need at least 2 entries to spin');
   }
 
-  const array = new Uint32Array(1);
-  crypto.getRandomValues(array);
-  const targetIndex = array[0] % enabledEntries.length;
+  const maxValue =
+    Math.floor(0xffffffff / enabledEntries.length) * enabledEntries.length;
+  let randomValue: number;
+  do {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    randomValue = array[0];
+  } while (randomValue >= maxValue);
+
+  const targetIndex = randomValue % enabledEntries.length;
 
   const spinState: SpinState = {
     isSpinning: true,
     startedAt: Date.now(),
     targetIndex,
     duration: wheelData.settings.spinDurationMs,
+    status: wheelData.spinState?.status ?? 'active',
   };
 
   wheel.repository.setSpinState(spinState);

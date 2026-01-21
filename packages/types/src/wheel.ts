@@ -12,6 +12,7 @@ export interface SpinState {
   startedAt: number;
   targetIndex: number | null;
   duration: number;
+  status: 'active' | 'completed';
 }
 
 export interface SpinResult {
