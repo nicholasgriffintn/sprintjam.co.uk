@@ -18,7 +18,7 @@ import {
   ensureServerDefaultsCollectionReady,
 } from "./data/collections";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
-import { readJsonSafe, handleJsonResponse } from "@/lib/api-utils";
+import { handleJsonResponse } from "@/lib/api-utils";
 import {
   createReconnectState,
   resetReconnectAttempts,

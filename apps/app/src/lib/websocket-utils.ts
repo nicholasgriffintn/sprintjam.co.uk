@@ -42,7 +42,9 @@ export function incrementReconnectAttempts(state: ReconnectState): void {
   state.attempts++;
 }
 
-export function isWebSocketOpen(socket: WebSocket | null): boolean {
+export function isWebSocketOpen(
+  socket: WebSocket | null,
+): socket is WebSocket {
   return socket !== null && socket.readyState === WebSocket.OPEN;
 }
 
