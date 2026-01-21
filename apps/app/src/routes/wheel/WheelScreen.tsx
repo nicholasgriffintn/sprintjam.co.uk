@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 
-import { WheelCanvas, WheelConfetti } from "@/components/wheel";
+import { WheelCanvas } from "@/components/wheel";
+import { useWheelConfetti } from "@/hooks/useWheelConfetti";
 import { WheelSidebar } from "@/components/wheel/WheelSidebar";
 import { ShareWheelModal } from "@/components/wheel/ShareWheelModal";
 import { WheelSettingsModal } from "@/components/wheel/WheelSettingsModal";
@@ -103,6 +104,11 @@ function WheelRoomContent({
     setShowConfetti(false);
   }, []);
 
+  useWheelConfetti({
+    trigger: showConfetti,
+    onComplete: handleConfettiComplete,
+  });
+
   const handleSpinClick = useCallback(() => {
     const enabledCount =
       wheelData?.entries.filter((e) => e.enabled).length ?? 0;
@@ -159,11 +165,6 @@ function WheelRoomContent({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <WheelConfetti
-        trigger={showConfetti}
-        onComplete={handleConfettiComplete}
-      />
-
       <ShareWheelModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}

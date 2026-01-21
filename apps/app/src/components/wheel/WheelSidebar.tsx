@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { WheelEntry, SpinResult } from '@sprintjam/types';
+
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 
 interface WheelSidebarProps {
