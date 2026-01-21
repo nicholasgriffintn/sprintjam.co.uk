@@ -1,3 +1,7 @@
+## V2.5
+
+- Added a wheel spinner feature that allows teams to make random selections during their planning sessions. This can be used for selecting tasks, assigning roles, or making decisions in a fun and engaging way. Feel free to try it out at https://sprintjam.co.uk/wheel
+
 ## V2.4
 
 - Added MFA support for accounts to improve security. Users will be asked to setup either TOTP or WebAuthn after verifying their email, at least one is required.

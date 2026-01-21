@@ -139,6 +139,12 @@ describe('navigation', () => {
       expect(getPathFromScreen('room', 'ABC123')).toBe('/room/ABC123');
     });
 
+    it('generates wheel path with wheel key', () => {
+      expect(getPathFromScreen('wheel', { wheelKey: '512D3O' })).toBe(
+        '/wheel/512D3O',
+      );
+    });
+
     it('generates room path without room key', () => {
       expect(getPathFromScreen('room')).toBe('/room');
     });
@@ -173,7 +179,7 @@ describe('navigation', () => {
     it('navigates to screen using pushState', () => {
       navigateTo('create');
       expect(pushStateSpy).toHaveBeenCalledWith(
-        { screen: 'create', roomKey: undefined },
+        { screen: 'create' },
         '',
         '/create',
       );
@@ -188,6 +194,15 @@ describe('navigation', () => {
       );
     });
 
+    it('navigates to wheel with wheel key', () => {
+      navigateTo('wheel', { wheelKey: '512D3O' });
+      expect(pushStateSpy).toHaveBeenCalledWith(
+        { screen: 'wheel', wheelKey: '512D3O' },
+        '',
+        '/wheel/512D3O',
+      );
+    });
+
     it('scrolls to top on navigation', () => {
       navigateTo('create');
       expect(scrollToSpy).toHaveBeenCalledWith({
@@ -198,11 +213,7 @@ describe('navigation', () => {
     });
 
     it('does not navigate if already on the same path', () => {
-      window.history.replaceState(
-        { screen: 'create', roomKey: undefined },
-        '',
-        '/create',
-      );
+      window.history.replaceState({ screen: 'create' }, '', '/create');
       navigateTo('create');
       expect(pushStateSpy).not.toHaveBeenCalled();
     });
@@ -489,7 +500,14 @@ describe('ROUTES registry', () => {
   });
 
   it('has valid route groups', () => {
-    const validGroups = ['marketing', 'workspace', 'room', 'auth', 'flow'];
+    const validGroups = [
+      'marketing',
+      'workspace',
+      'room',
+      'auth',
+      'flow',
+      'wheel',
+    ];
     for (const route of ROUTES) {
       expect(validGroups).toContain(route.group);
     }

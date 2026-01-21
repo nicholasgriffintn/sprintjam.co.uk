@@ -17,6 +17,9 @@ export const API_BASE_URL = `${BASE_URL_WITH_PROTOCOL}/api`;
 
 export const WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws`;
 
+export const WHEEL_API_BASE_URL = API_BASE_URL;
+export const WHEEL_WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws/wheel`;
+
 export const SITE_NAME = "SprintJam";
 
 export const WORKSPACE_TOKEN_STORAGE_KEY = "sprintjam_workspaceToken";
@@ -80,6 +83,7 @@ export const Z_INDEX = {
     marketing: 10,
     room: 20,
     workspace: 50,
+    wheel: 20,
   },
   modal: 50,
   loading: 60,

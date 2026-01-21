@@ -14,6 +14,7 @@ import WorkspaceAdminOverview from "@/routes/workspace/WorkspaceAdminOverview";
 import WorkspaceAdminTeams from "@/routes/workspace/WorkspaceAdminTeams";
 import CreateRoomScreen from "@/routes/CreateRoomScreen";
 import JoinRoomScreen from "@/routes/JoinRoomScreen";
+import WheelScreen from "@/routes/wheel/WheelScreen";
 import NotFoundScreen from "@/routes/NotFoundScreen";
 import FaqScreen from "@/routes/FaqScreen";
 import IntegrationsScreen from "@/routes/IntegrationsScreen";
@@ -412,7 +413,22 @@ export const ROUTES = [
       ogImage: "/og-image.png",
     },
   },
-
+  {
+    screen: "wheel",
+    path: (params) =>
+      params.wheelKey ? `/wheel/${params.wheelKey}` : "/wheel",
+    pathPattern: /^\/wheel(?:\/([A-Z0-9]+))?$/i,
+    group: "wheel",
+    component: WheelScreen,
+    meta: {
+      title: `Wheel Spinner - ${SITE_NAME}`,
+      description:
+        "Spin the wheel to randomly select team members. Perfect for standups, code reviews, or any team activity.",
+      keywords:
+        "wheel spinner, random picker, team selection, name picker, standup picker",
+      ogImage: "/og-image.png",
+    },
+  },
   {
     screen: "workspace",
     path: "/workspace",

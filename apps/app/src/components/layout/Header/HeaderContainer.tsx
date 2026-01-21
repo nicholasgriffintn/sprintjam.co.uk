@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/cn";
-import { type HeaderContainerProps } from '@/components/layout/Header/types';
+import { type HeaderContainerProps } from "@/components/layout/Header/types";
 import { Z_INDEX, HEADER_TRANSITION } from "@/constants";
 
 const GLASSMORPHISM_STYLES =
@@ -36,7 +36,7 @@ export const HeaderContainer: FC<HeaderContainerProps> = ({
       className={cn(
         "sticky top-0",
         GLASSMORPHISM_STYLES,
-        variant === "room" || variant === "workspace"
+        variant === "room" || variant === "workspace" || variant === "wheel"
           ? "px-4 py-3 shadow-sm"
           : "",
         className,

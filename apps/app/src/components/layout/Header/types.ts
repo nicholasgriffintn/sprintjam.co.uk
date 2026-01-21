@@ -1,6 +1,6 @@
-export type HeaderVariant = 'marketing' | 'room' | 'workspace';
-export type MarketingVariant = 'hero' | 'compact';
-export type LogoSize = 'xs' | 'sm' | 'md' | 'lg';
+export type HeaderVariant = "marketing" | "room" | "workspace" | "wheel";
+export type MarketingVariant = "hero" | "compact";
+export type LogoSize = "xs" | "sm" | "md" | "lg";
 
 export interface HeaderLogoProps {
   size?: LogoSize;

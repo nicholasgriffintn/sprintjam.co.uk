@@ -7,7 +7,13 @@ import type {
   MarketingVariant,
 } from "@/components/layout/Header/types";
 
-export type RouteGroup = "marketing" | "workspace" | "room" | "auth" | "flow";
+export type RouteGroup =
+  | 'marketing'
+  | 'workspace'
+  | 'room'
+  | 'wheel'
+  | 'auth'
+  | 'flow';
 
 export interface RouteNavConfig {
   label: string;
@@ -24,7 +30,7 @@ export interface RouteLayoutConfig {
 
 export interface RouteConfig<TScreen extends string = string> {
   screen: TScreen;
-  path: string | ((params: { roomKey?: string }) => string);
+  path: string | ((params: { roomKey?: string; wheelKey?: string }) => string);
   group: RouteGroup;
   component: FC | LazyExoticComponent<ComponentType<unknown>>;
   meta: MetaTagConfig;

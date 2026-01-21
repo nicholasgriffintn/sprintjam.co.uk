@@ -134,7 +134,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
       return new Response(null, {
         status: 101,
-        webSocket: client as any,
+        webSocket: client,
       });
     }
 

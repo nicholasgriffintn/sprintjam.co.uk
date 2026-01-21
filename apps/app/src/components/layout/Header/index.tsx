@@ -1,13 +1,14 @@
-import type { FC } from 'react';
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import type { FC } from "react";
+import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 
-import { useSessionState } from '@/context/SessionContext';
-import { HeaderContainer } from '@/components/layout/Header/HeaderContainer';
-import { MarketingHeader } from '@/components/layout/Header/HeaderContent/MarketingHeader';
-import { RoomHeader } from '@/components/layout/Header/HeaderContent/RoomHeader';
-import { WorkspaceHeader } from '@/components/layout/Header/HeaderContent/WorkspaceHeader';
-import { HEADER_TRANSITION } from '@/constants';
-import { getHeaderVariant, getMarketingVariant } from '@/config/routes';
+import { useSessionState } from "@/context/SessionContext";
+import { HeaderContainer } from "@/components/layout/Header/HeaderContainer";
+import { MarketingHeader } from "@/components/layout/Header/HeaderContent/MarketingHeader";
+import { RoomHeader } from "@/components/layout/Header/HeaderContent/RoomHeader";
+import { WorkspaceHeader } from "@/components/layout/Header/HeaderContent/WorkspaceHeader";
+import { WheelHeader } from "@/components/layout/Header/HeaderContent/WheelHeader";
+import { HEADER_TRANSITION } from "@/constants";
+import { getHeaderVariant, getMarketingVariant } from "@/config/routes";
 
 export const Header: FC = () => {
   const { screen } = useSessionState();
@@ -16,7 +17,7 @@ export const Header: FC = () => {
 
   const renderContent = () => {
     switch (variant) {
-      case 'room':
+      case "room":
         return (
           <motion.div
             key="room"
@@ -30,7 +31,7 @@ export const Header: FC = () => {
           </motion.div>
         );
 
-      case 'workspace':
+      case "workspace":
         return (
           <motion.div
             key="workspace"
@@ -43,6 +44,21 @@ export const Header: FC = () => {
             <WorkspaceHeader />
           </motion.div>
         );
+
+      case "wheel":
+        return (
+          <motion.div
+            key="wheel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={HEADER_TRANSITION}
+            className="contents w-full"
+          >
+            <WheelHeader />
+          </motion.div>
+        );
+
       default:
         return (
           <motion.div
