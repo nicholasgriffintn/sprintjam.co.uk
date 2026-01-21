@@ -15,6 +15,10 @@ export async function handleAddEntry(
     throw new Error('Only the moderator can add entries');
   }
 
+  if (wheelData.spinState?.isSpinning) {
+    throw new Error('Cannot modify entries while spinning');
+  }
+
   const trimmedName = name.trim();
   if (!trimmedName) {
     return;
@@ -49,6 +53,10 @@ export async function handleRemoveEntry(
     throw new Error('Only the moderator can remove entries');
   }
 
+  if (wheelData.spinState?.isSpinning) {
+    throw new Error('Cannot modify entries while spinning');
+  }
+
   wheel.repository.removeEntry(entryId);
 
   const entries = wheel.repository.getEntries();
@@ -71,6 +79,10 @@ export async function handleUpdateEntry(
 
   if (wheelData.moderator !== userName) {
     throw new Error('Only the moderator can update entries');
+  }
+
+  if (wheelData.spinState?.isSpinning) {
+    throw new Error('Cannot modify entries while spinning');
   }
 
   const trimmedName = name.trim();
@@ -102,6 +114,10 @@ export async function handleToggleEntry(
     throw new Error('Only the moderator can toggle entries');
   }
 
+  if (wheelData.spinState?.isSpinning) {
+    throw new Error('Cannot modify entries while spinning');
+  }
+
   wheel.repository.toggleEntry(entryId, enabled);
 
   const entries = wheel.repository.getEntries();
@@ -119,6 +135,10 @@ export async function handleClearEntries(wheel: WheelRoom, userName: string) {
 
   if (wheelData.moderator !== userName) {
     throw new Error('Only the moderator can clear entries');
+  }
+
+  if (wheelData.spinState?.isSpinning) {
+    throw new Error('Cannot modify entries while spinning');
   }
 
   wheel.repository.clearEntries();
@@ -141,6 +161,10 @@ export async function handleBulkAddEntries(
 
   if (wheelData.moderator !== userName) {
     throw new Error('Only the moderator can add entries');
+  }
+
+  if (wheelData.spinState?.isSpinning) {
+    throw new Error('Cannot modify entries while spinning');
   }
 
   const validNames = names.map((n) => n.trim()).filter((n) => n.length > 0);

@@ -168,6 +168,7 @@ export function connectToWheel(
   name: string,
   onMessage: (data: WheelServerMessage) => void,
   onConnectionStatusChange?: (isConnected: boolean) => void,
+  isReconnect = false,
 ): WebSocket {
   if (
     activeSocket &&
@@ -183,7 +184,9 @@ export function connectToWheel(
     activeSocket.close();
   }
 
-  reconnectAttempts = 0;
+  if (!isReconnect) {
+    reconnectAttempts = 0;
+  }
 
   try {
     const socket = new WebSocket(
@@ -321,7 +324,13 @@ function handleReconnect(
     );
 
     setTimeout(() => {
-      connectToWheel(wheelKey, name, onMessage, onConnectionStatusChange);
+      connectToWheel(
+        wheelKey,
+        name,
+        onMessage,
+        onConnectionStatusChange,
+        true,
+      );
     }, delay);
   } else {
     console.error("Max wheel reconnection attempts reached");

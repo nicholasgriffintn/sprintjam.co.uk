@@ -169,6 +169,7 @@ export function WheelCanvas({
         animate={controls}
         style={{ rotate: rotation }}
         onClick={handleClick}
+        data-testid="wheel-canvas"
       >
         <svg viewBox="0 0 100 100" className="w-full h-full">
           {enabledEntries.map((entry, index) => {

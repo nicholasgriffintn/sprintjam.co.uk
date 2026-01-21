@@ -500,7 +500,14 @@ describe('ROUTES registry', () => {
   });
 
   it('has valid route groups', () => {
-    const validGroups = ['marketing', 'workspace', 'room', 'auth', 'flow'];
+    const validGroups = [
+      'marketing',
+      'workspace',
+      'room',
+      'auth',
+      'flow',
+      'wheel',
+    ];
     for (const route of ROUTES) {
       expect(validGroups).toContain(route.group);
     }
