@@ -22,6 +22,7 @@ const baseWheelData: WheelData = {
     startedAt: Date.now(),
     targetIndex: 0,
     duration: 2000,
+    status: "active",
   },
   results: [],
   settings: {

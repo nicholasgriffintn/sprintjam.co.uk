@@ -23,7 +23,6 @@ interface WheelCanvasProps {
   disabled?: boolean;
   onSpin?: () => void;
   playSounds?: boolean;
-  hasResults?: boolean;
 }
 
 function getSegmentAtAngle(rotation: number, numSegments: number): number {
@@ -42,7 +41,6 @@ export function WheelCanvas({
   disabled,
   onSpin,
   playSounds = true,
-  hasResults = false,
 }: WheelCanvasProps) {
   const controls = useAnimation();
   const rotation = useMotionValue(0);

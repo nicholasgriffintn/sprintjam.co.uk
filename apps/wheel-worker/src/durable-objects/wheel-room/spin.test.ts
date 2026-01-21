@@ -27,7 +27,10 @@ const buildWheelData = (overrides: Partial<WheelData> = {}): WheelData => ({
   ...overrides,
 });
 
-const createWheel = (wheelData: WheelData, entriesAfter?: WheelData["entries"]) =>
+const createWheel = (
+  wheelData: WheelData,
+  entriesAfter?: WheelData["entries"],
+) =>
   ({
     getWheelData: vi.fn().mockResolvedValue(wheelData),
     state: {
@@ -104,6 +107,7 @@ describe("wheel spin handlers", () => {
         startedAt: Date.now(),
         targetIndex: 0,
         duration: 2000,
+        status: "active",
       },
     });
     const wheel = createWheel(wheelData);
@@ -138,6 +142,7 @@ describe("wheel spin handlers", () => {
         startedAt: 1,
         targetIndex: 1,
         duration: 2000,
+        status: "active",
       },
       settings: {
         removeWinnerAfterSpin: true,
@@ -175,6 +180,7 @@ describe("wheel spin handlers", () => {
         startedAt: 1,
         targetIndex: 2,
         duration: 2000,
+        status: "active",
       },
     });
     const wheel = createWheel(wheelData);
@@ -194,6 +200,7 @@ describe("wheel reset and settings handlers", () => {
         startedAt: 1,
         targetIndex: 0,
         duration: 2000,
+        status: "active",
       },
     });
     const wheel = createWheel(wheelData);
