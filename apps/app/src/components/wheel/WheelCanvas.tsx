@@ -53,6 +53,8 @@ export function WheelCanvas({
     enabledEntries.length > 0 ? 360 / enabledEntries.length : 360;
 
   useEffect(() => {
+    const segment = getSegmentAtAngle(rotation.get(), enabledEntries.length);
+    setCurrentSegment(segment);
     const unsubscribe = rotation.on("change", (latest) => {
       const segment = getSegmentAtAngle(latest, enabledEntries.length);
       setCurrentSegment(segment);
