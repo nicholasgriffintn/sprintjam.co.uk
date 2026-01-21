@@ -31,6 +31,7 @@ const makeState = () => {
 const env: RoomWorkerEnv = {
   PLANNING_ROOM: {} as DurableObjectNamespace,
   JOIN_RATE_LIMITER: {} as RateLimit,
+  OAUTH_RATE_LIMITER: {} as RateLimit,
   FEEDBACK_RATE_LIMITER: {} as RateLimit,
   TOKEN_ENCRYPTION_SECRET: "test-secret",
   STATS_WORKER: {} as any,
