@@ -78,4 +78,27 @@ describe("wheel-api-service reconnect", () => {
       reason: "disconnect",
     });
   });
+
+  it("emits newModerator events to listeners", () => {
+    const onNewModerator = vi.fn();
+    wheelApiService.addEventListener("newModerator", onNewModerator);
+
+    const socket = wheelApiService.connectToWheel("WHEEL", "user", () => {});
+
+    const mockSocket = socket as unknown as MockWebSocket;
+    if (!mockSocket.onmessage) {
+      throw new Error("Mock socket missing onmessage handler");
+    }
+
+    mockSocket.onmessage({
+      data: JSON.stringify({ type: "newModerator", moderator: "Sam" }),
+    });
+
+    expect(onNewModerator).toHaveBeenCalledWith({
+      type: "newModerator",
+      moderator: "Sam",
+    });
+
+    wheelApiService.removeEventListener("newModerator", onNewModerator);
+  });
 });

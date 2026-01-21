@@ -243,10 +243,10 @@ export async function handleSession(
     );
 
     if (!stillConnected) {
+      wheel.repository.setUserConnection(canonicalUserName, false);
       const latestWheelData = await wheel.getWheelData();
 
       if (latestWheelData) {
-        wheel.repository.setUserConnection(canonicalUserName, false);
         wheel.broadcast({
           type: "userLeft",
           user: canonicalUserName,

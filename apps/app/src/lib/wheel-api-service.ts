@@ -220,6 +220,7 @@ export function connectToWheel(
           case "spinStarted":
           case "spinEnded":
           case "settingsUpdated":
+          case "newModerator":
           case "wheelReset":
           case "pong":
             triggerEventListeners(data.type, data);

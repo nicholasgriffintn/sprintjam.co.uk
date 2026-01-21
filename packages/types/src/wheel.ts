@@ -76,6 +76,7 @@ export type WheelServerMessage =
       userAvatars?: Record<string, string>;
     }
   | { type: "userLeft"; user: string; users: string[] }
+  | { type: "newModerator"; moderator: string }
   | { type: "entriesUpdated"; entries: WheelEntry[] }
   | { type: "spinStarted"; spinState: SpinState }
   | { type: "spinEnded"; result: SpinResult; entries: WheelEntry[] }

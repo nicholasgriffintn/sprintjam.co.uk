@@ -185,6 +185,16 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
+      case 'newModerator':
+        setWheelData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            moderator: message.moderator,
+          };
+        });
+        break;
+
       case 'error':
         setWheelError(message.error);
         break;

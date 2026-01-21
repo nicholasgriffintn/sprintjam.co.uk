@@ -28,9 +28,9 @@ interface WheelCanvasProps {
 function getSegmentAtAngle(rotation: number, numSegments: number): number {
   if (numSegments === 0) return 0;
   const segmentAngle = 360 / numSegments;
-  const adjustedRotation = rotation + 90;
-  const normalizedRotation = ((adjustedRotation % 360) + 360) % 360;
-  const segmentIndex = Math.floor(normalizedRotation / segmentAngle);
+  const angleInWheelCoords = (((-rotation % 360) + 360) % 360) + 90;
+  const normalizedAngle = angleInWheelCoords % 360;
+  const segmentIndex = Math.floor(normalizedAngle / segmentAngle);
   return segmentIndex % numSegments;
 }
 
@@ -53,7 +53,7 @@ export function WheelCanvas({
     enabledEntries.length > 0 ? 360 / enabledEntries.length : 360;
 
   useEffect(() => {
-    const unsubscribe = rotation.on('change', (latest) => {
+    const unsubscribe = rotation.on("change", (latest) => {
       const segment = getSegmentAtAngle(latest, enabledEntries.length);
       setCurrentSegment(segment);
     });
@@ -127,7 +127,12 @@ export function WheelCanvas({
   ]);
 
   const handleClick = useCallback(() => {
-    if (!disabled && !spinState?.isSpinning && enabledEntries.length >= 2 && onSpin) {
+    if (
+      !disabled &&
+      !spinState?.isSpinning &&
+      enabledEntries.length >= 2 &&
+      onSpin
+    ) {
       onSpin();
     }
   }, [disabled, spinState?.isSpinning, enabledEntries.length, onSpin]);
@@ -135,7 +140,7 @@ export function WheelCanvas({
   const arrowColour =
     enabledEntries.length > 0
       ? WHEEL_COLORS[currentSegment % WHEEL_COLORS.length]
-      : '#FDD835';
+      : "#FDD835";
 
   if (enabledEntries.length === 0) {
     return (
@@ -156,11 +161,11 @@ export function WheelCanvas({
         style={{
           width: 0,
           height: 0,
-          borderTop: '20px solid transparent',
-          borderBottom: '20px solid transparent',
+          borderTop: "20px solid transparent",
+          borderBottom: "20px solid transparent",
           borderRight: `30px solid ${arrowColour}`,
-          filter: 'drop-shadow(-2px 0 4px rgba(0,0,0,0.3))',
-          transition: 'border-right-color 0.1s ease-out',
+          filter: "drop-shadow(-2px 0 4px rgba(0,0,0,0.3))",
+          transition: "border-right-color 0.1s ease-out",
         }}
       />
 
@@ -209,11 +214,11 @@ export function WheelCanvas({
                   className="fill-white font-semibold"
                   style={{
                     fontSize: Math.min(6, 60 / enabledEntries.length),
-                    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    textShadow: "0 1px 2px rgba(0,0,0,0.5)",
                   }}
                 >
                   {entry.name.length > 12
-                    ? entry.name.slice(0, 10) + '...'
+                    ? entry.name.slice(0, 10) + "..."
                     : entry.name}
                 </text>
               </g>
@@ -235,7 +240,7 @@ export function WheelCanvas({
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/10">
             <p className="text-lg font-semibold text-white">Click to spin</p>
-            <p className="text-sm text-white/70">or press ctrl+enter</p>
+            <p className="text-sm text-white/70">or press ctrl/cmd+enter</p>
           </div>
         </div>
       )}

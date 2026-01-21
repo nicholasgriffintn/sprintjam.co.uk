@@ -119,7 +119,8 @@ function WheelRoomContent({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "Enter" && isModeratorView) {
+      const isEnter = e.key === "Enter" || e.code === "NumpadEnter";
+      if ((e.ctrlKey || e.metaKey) && isEnter && isModeratorView) {
         e.preventDefault();
         handleSpinClick();
       }
@@ -282,7 +283,7 @@ export default function WheelScreen() {
           joiningLock.current = false;
         });
     }
-  }, [wheelKey, userName, isLoading]);
+  }, [wheelKey, userName]);
 
   if (error) {
     return (
