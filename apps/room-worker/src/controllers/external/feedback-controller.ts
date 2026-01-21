@@ -29,7 +29,10 @@ export async function submitFeedbackController(
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
   if (!env.FEEDBACK_RATE_LIMITER) {
-    return jsonError('This service is temporarily unavailable', 500);
+    console.error(
+      'Rate limiters are not configured but rate limiting is enabled',
+    );
+    return jsonError('Service temporarily unavailable', 503);
   }
 
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';

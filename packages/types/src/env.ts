@@ -30,6 +30,7 @@ export interface DispatchWorkerEnv extends BaseEnv {
 export interface RoomWorkerEnv extends BaseEnv {
   JOIN_RATE_LIMITER: RateLimit;
   FEEDBACK_RATE_LIMITER: RateLimit;
+  OAUTH_RATE_LIMITER: RateLimit;
   PLANNING_ROOM: DurableObjectNamespace;
   TOKEN_ENCRYPTION_SECRET: string;
   JIRA_OAUTH_CLIENT_ID?: string;
@@ -74,4 +75,8 @@ export interface StatsWorkerEnv extends BaseEnv {
 export interface WheelWorkerEnv extends BaseEnv {
   WHEEL_ROOM: DurableObjectNamespace;
   TOKEN_ENCRYPTION_SECRET: string;
+  ENABLE_WHEEL_RATE_LIMIT?: string;
+  WHEEL_CREATE_RATE_LIMITER: RateLimit;
+  WHEEL_JOIN_RATE_LIMITER: RateLimit;
+  WHEEL_IP_RATE_LIMITER: RateLimit;
 }

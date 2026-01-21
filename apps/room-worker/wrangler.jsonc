@@ -9,6 +9,10 @@
   "placement": {
     "mode": "smart",
   },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "ENABLE_JOIN_RATE_LIMIT": "true",
+  },
   "durable_objects": {
     "bindings": [
       {
@@ -53,6 +57,14 @@
         "period": 60,
       },
     },
+    {
+      "name": "OAUTH_RATE_LIMITER",
+      "namespace_id": "1005",
+      "simple": {
+        "limit": 10,
+        "period": 60,
+      },
+    },
   ],
   "observability": {
     "enabled": true,
@@ -67,6 +79,7 @@
     "development": {
       "vars": {
         "ENVIRONMENT": "development",
+        "ENABLE_JOIN_RATE_LIMIT": "false",
       },
       "durable_objects": {
         "bindings": [
@@ -87,6 +100,7 @@
     "staging": {
       "vars": {
         "ENVIRONMENT": "staging",
+        "ENABLE_JOIN_RATE_LIMIT": "true",
       },
       "durable_objects": {
         "bindings": [
@@ -116,6 +130,14 @@
           "namespace_id": "1002",
           "simple": {
             "limit": 1,
+            "period": 60,
+          },
+        },
+        {
+          "name": "OAUTH_RATE_LIMITER",
+          "namespace_id": "1005",
+          "simple": {
+            "limit": 10,
             "period": 60,
           },
         },

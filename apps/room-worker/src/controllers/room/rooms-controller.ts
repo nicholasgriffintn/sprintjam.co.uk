@@ -36,6 +36,13 @@ export async function createRoomController(
     : (request.headers.get("cf-connecting-ip") ?? "unknown");
 
   if (env.ENABLE_JOIN_RATE_LIMIT === "true") {
+    if (!env.JOIN_RATE_LIMITER) {
+      console.error(
+        'Rate limiters are not configured but rate limiting is enabled',
+      );
+      return jsonError('Service temporarily unavailable', 503);
+    }
+
     const { success: rateLimitSuccess } = await env.JOIN_RATE_LIMITER.limit({
       key,
     });

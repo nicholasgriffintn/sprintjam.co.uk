@@ -12,7 +12,10 @@ import {
   verifyState,
   generateID,
   getRoomSessionToken,
-} from '@sprintjam/utils';
+  checkBotProtection,
+} from "@sprintjam/utils";
+
+import { checkOAuthRateLimit } from "../../lib/rate-limit";
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
@@ -52,6 +55,19 @@ export async function initiateGithubOAuthController(
   request: CfRequest,
   env: RoomWorkerEnv,
 ): Promise<CfResponse> {
+  const botCheck = checkBotProtection(
+    request,
+    env.ENABLE_JOIN_RATE_LIMIT === "true",
+  );
+  if (botCheck) {
+    return botCheck;
+  }
+
+  const rateLimitCheck = await checkOAuthRateLimit(request, env);
+  if (rateLimitCheck) {
+    return rateLimitCheck;
+  }
+
   const body = await request.json<{
     roomKey?: string;
     userName?: string;

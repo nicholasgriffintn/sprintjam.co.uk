@@ -309,6 +309,9 @@ importers:
       drizzle-orm:
         specifier: 0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20260107.1)
+      isbot:
+        specifier: ^5.1.33
+        version: 5.1.33
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 4.20260107.1
@@ -2375,6 +2378,10 @@ packages:
 
   is-potential-custom-element-name@1.0.1:
     resolution: {integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
+
+  isbot@5.1.33:
+    resolution: {integrity: sha512-P4Hgb5NqswjkI0J1CM6XKXon/sxKY1SuowE7Qx2hrBhIwICFyXy54mfgB5eMHXsbe/eStzzpbIGNOvGmz+dlKg==}
+    engines: {node: '>=18'}
 
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}
@@ -4790,6 +4797,8 @@ snapshots:
   is-arrayish@0.3.4: {}
 
   is-potential-custom-element-name@1.0.1: {}
+
+  isbot@5.1.33: {}
 
   istanbul-lib-coverage@3.2.2: {}
 

@@ -3,7 +3,7 @@ import type {
   Response as CfResponse,
 } from '@cloudflare/workers-types';
 import type { WheelWorkerEnv } from '@sprintjam/types';
-import { getWheelSessionToken } from '@sprintjam/utils';
+import { getWheelSessionToken, checkBotProtection } from '@sprintjam/utils';
 
 import {
   rootResponse,
@@ -11,6 +11,7 @@ import {
   internalErrorResponse,
   jsonError,
 } from '../lib/response';
+import { createRateLimit, joinRateLimit } from '../lib/rate-limit';
 
 async function handleWebSocket(
   request: CfRequest,
@@ -56,6 +57,20 @@ async function createWheelController(
   request: CfRequest,
   env: WheelWorkerEnv,
 ): Promise<CfResponse> {
+  const botCheck = checkBotProtection(
+    request,
+    env.ENABLE_WHEEL_RATE_LIMIT === 'true',
+  );
+
+  if (botCheck) {
+    return botCheck;
+  }
+
+  const rateLimitCheck = await createRateLimit(request, env);
+  if (rateLimitCheck) {
+    return rateLimitCheck;
+  }
+  
   const body = await request.json<{
     name?: string;
     passcode?: string;
@@ -94,6 +109,20 @@ async function joinWheelController(
   request: CfRequest,
   env: WheelWorkerEnv,
 ): Promise<CfResponse> {
+  const botCheck = checkBotProtection(
+    request,
+    env.ENABLE_WHEEL_RATE_LIMIT === 'true',
+  );
+
+  if (botCheck) {
+    return botCheck;
+  }
+
+  const rateLimitCheck = await joinRateLimit(request, env);
+  if (rateLimitCheck) {
+    return rateLimitCheck;
+  }
+
   const body = await request.json<{
     name?: string;
     wheelKey?: string;
