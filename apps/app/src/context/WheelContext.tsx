@@ -6,15 +6,16 @@ import {
   useEffect,
   useRef,
   type ReactNode,
-} from 'react';
+} from "react";
 import type {
   WheelData,
   WheelSettings,
   WheelServerMessage,
-} from '@sprintjam/types';
+} from "@sprintjam/types";
 import {
   connectToWheel,
   disconnectFromWheel,
+  getCachedWheel,
   addEntry as apiAddEntry,
   removeEntry as apiRemoveEntry,
   updateEntry as apiUpdateEntry,
@@ -24,7 +25,8 @@ import {
   spin as apiSpin,
   resetWheel as apiResetWheel,
   updateWheelSettings as apiUpdateWheelSettings,
-} from '@/lib/wheel-api-service';
+} from "@/lib/wheel-api-service";
+import { wheelsCollection } from "@/lib/data/collections";
 
 interface WheelStateContextValue {
   wheelData: WheelData | null;
@@ -60,7 +62,7 @@ const WheelActionsContext = createContext<WheelActionsContextValue | null>(
 export function useWheelState(): WheelStateContextValue {
   const context = useContext(WheelStateContext);
   if (!context) {
-    throw new Error('useWheelState must be used within a WheelProvider');
+    throw new Error("useWheelState must be used within a WheelProvider");
   }
   return context;
 }
@@ -68,7 +70,7 @@ export function useWheelState(): WheelStateContextValue {
 export function useWheelStatus(): WheelStatusContextValue {
   const context = useContext(WheelStatusContext);
   if (!context) {
-    throw new Error('useWheelStatus must be used within a WheelProvider');
+    throw new Error("useWheelStatus must be used within a WheelProvider");
   }
   return context;
 }
@@ -76,7 +78,7 @@ export function useWheelStatus(): WheelStatusContextValue {
 export function useWheelActions(): WheelActionsContextValue {
   const context = useContext(WheelActionsContext);
   if (!context) {
-    throw new Error('useWheelActions must be used within a WheelProvider');
+    throw new Error("useWheelActions must be used within a WheelProvider");
   }
   return context;
 }
@@ -97,12 +99,13 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
 
   const handleMessage = useCallback((message: WheelServerMessage) => {
     switch (message.type) {
-      case 'initialize':
+      case "initialize":
         setWheelData(message.wheel);
+        wheelsCollection.utils.writeUpsert(message.wheel);
         setIsLoading(false);
         break;
 
-      case 'userJoined':
+      case "userJoined":
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -117,7 +120,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
-      case 'userLeft':
+      case "userLeft":
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -131,7 +134,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
-      case 'entriesUpdated':
+      case "entriesUpdated":
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -141,7 +144,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
-      case 'spinStarted':
+      case "spinStarted":
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -151,7 +154,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
-      case 'spinEnded':
+      case "spinEnded":
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -163,7 +166,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
-      case 'settingsUpdated':
+      case "settingsUpdated":
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -173,7 +176,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
-      case 'wheelReset':
+      case "wheelReset":
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -185,7 +188,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
-      case 'newModerator':
+      case "newModerator":
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -195,7 +198,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         });
         break;
 
-      case 'error':
+      case "error":
         setWheelError(message.error);
         break;
     }
@@ -210,7 +213,13 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
 
   const connectWheel = useCallback(
     (wheelKey: string, userName: string) => {
-      setIsLoading(true);
+      const cachedWheel = getCachedWheel(wheelKey);
+      if (cachedWheel) {
+        setWheelData(cachedWheel);
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
       setWheelError(null);
       connectToWheel(wheelKey, userName, handleMessage, handleConnectionChange);
     },

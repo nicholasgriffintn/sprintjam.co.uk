@@ -295,8 +295,8 @@ export function connectToRoom(
         reason: "network",
       });
 
-      if (isWebSocketOpen(activeSocket)) {
-        activeSocket.close(1011, "Connection error");
+      if (activeSocket && isWebSocketOpen(activeSocket)) {
+        activeSocket.close(1011, 'Connection error');
       }
     };
 

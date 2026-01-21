@@ -14,6 +14,7 @@ import {
   type TeamSession,
 } from "@/lib/workspace-service";
 import type { RoomData, ServerDefaults } from "@/types";
+import type { WheelData } from '@sprintjam/types';
 
 export const SERVER_DEFAULTS_DOCUMENT_KEY = "server-defaults";
 export const WORKSPACE_PROFILE_DOCUMENT_KEY = "workspace-profile";
@@ -94,7 +95,7 @@ const workspaceProfileCollectionConfig = {
 
     try {
       const profile = await workspaceRequest<WorkspaceProfile>(
-        `${API_BASE_URL}/auth/me`
+        `${API_BASE_URL}/auth/me`,
       );
       return [profile];
     } catch (error) {
@@ -120,7 +121,7 @@ const workspaceStatsCollectionConfig = {
   startSync: false,
   queryFn: async () => {
     const profile = workspaceProfileCollection.get(
-      WORKSPACE_PROFILE_DOCUMENT_KEY
+      WORKSPACE_PROFILE_DOCUMENT_KEY,
     );
     if (!profile?.user) {
       return [];
@@ -128,7 +129,7 @@ const workspaceStatsCollectionConfig = {
 
     try {
       const stats = await workspaceRequest<WorkspaceStats>(
-        `${API_BASE_URL}/workspace/stats`
+        `${API_BASE_URL}/workspace/stats`,
       );
       return [stats];
     } catch (error) {
@@ -161,6 +162,19 @@ export const roomsCollection = createCollection<RoomData, string>(
   queryCollectionOptions(roomsCollectionConfig),
 );
 
+const wheelsCollectionConfig = {
+  id: 'wheels',
+  queryKey: ['wheels'],
+  startSync: false,
+  queryFn: async () => [],
+  queryClient,
+  getKey: (wheel) => wheel.key,
+} satisfies QueryCollectionConfig<WheelData>;
+
+export const wheelsCollection = createCollection<WheelData, string>(
+  queryCollectionOptions(wheelsCollectionConfig),
+);
+
 const teamSessionsCollectionConfig = {
   id: "team-sessions",
   queryKey: ["team-sessions"],
@@ -187,6 +201,9 @@ export const ensureWorkspaceStatsCollectionReady = createEnsureCollectionReady(
 
 export const ensureRoomsCollectionReady =
   createEnsureCollectionReady(roomsCollection);
+
+export const ensureWheelsCollectionReady =
+  createEnsureCollectionReady(wheelsCollection);
 
 export const ensureTeamSessionsCollectionReady = createEnsureCollectionReady(
   teamSessionsCollection,

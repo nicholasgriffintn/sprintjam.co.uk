@@ -8,6 +8,10 @@ import { WHEEL_API_BASE_URL, WHEEL_WS_BASE_URL } from "@/constants";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 import { readJsonSafe, handleJsonResponse } from "@/lib/api-utils";
 import {
+  wheelsCollection,
+  ensureWheelsCollectionReady,
+} from './data/collections';
+import {
   createReconnectState,
   resetReconnectAttempts,
   calculateReconnectDelay,
@@ -17,7 +21,7 @@ import {
   sendWebSocketMessage,
   EventManager,
   type ReconnectState,
-} from "@/lib/websocket-utils";
+} from '@/lib/websocket-utils';
 
 let activeSocket: WebSocket | null = null;
 let activeWheelKey: string | null = null;
@@ -42,6 +46,10 @@ export interface JoinWheelResponse {
 
 interface RequestOptions {
   signal?: AbortSignal;
+}
+
+export function getCachedWheel(wheelKey: string): WheelData | null {
+  return wheelsCollection.get(wheelKey) ?? null;
 }
 
 export async function createWheel(
@@ -72,6 +80,9 @@ export async function createWheel(
         "Invalid response from server while creating wheel",
       );
     }
+
+    await ensureWheelsCollectionReady();
+    wheelsCollection.utils.writeUpsert(data.wheel);
 
     return data;
   } catch (error) {
@@ -127,6 +138,9 @@ export async function joinWheel(
         "Invalid response from server while joining wheel",
       );
     }
+
+    await ensureWheelsCollectionReady();
+    wheelsCollection.utils.writeUpsert(data.wheel);
 
     return data;
   } catch (error) {
@@ -261,8 +275,8 @@ export function connectToWheel(
         reason: "disconnect",
       });
 
-      if (isWebSocketOpen(activeSocket)) {
-        activeSocket.close(1011, "Connection error");
+      if (activeSocket && isWebSocketOpen(activeSocket)) {
+        activeSocket.close(1011, 'Connection error');
       }
     };
 
