@@ -6,21 +6,29 @@ import type {
 
 import { WHEEL_API_BASE_URL, WHEEL_WS_BASE_URL } from "@/constants";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
+import { readJsonSafe, handleJsonResponse } from "@/lib/api-utils";
+import {
+  createReconnectState,
+  resetReconnectAttempts,
+  calculateReconnectDelay,
+  shouldReconnect,
+  incrementReconnectAttempts,
+  isWebSocketOpen,
+  sendWebSocketMessage,
+  EventManager,
+  type ReconnectState,
+} from "@/lib/websocket-utils";
 
 let activeSocket: WebSocket | null = null;
 let activeWheelKey: string | null = null;
-let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECT_BASE_DELAY = 1000;
-const MAX_RECONNECT_DELAY = 30000;
+let reconnectState: ReconnectState = createReconnectState();
 
 type WheelEventMessage =
   | WheelServerMessage
   | { type: "disconnected"; error: string; reason: "disconnect" };
 type WheelEventType = WheelEventMessage["type"];
 
-const eventListeners: Record<string, ((data: WheelEventMessage) => void)[]> =
-  {};
+const eventManager = new EventManager<WheelEventMessage>();
 
 export interface CreateWheelResponse {
   wheel: WheelData;
@@ -35,36 +43,6 @@ export interface JoinWheelResponse {
 interface RequestOptions {
   signal?: AbortSignal;
 }
-
-const readJsonSafe = async (
-  response: Response,
-): Promise<Record<string, unknown> | null> => {
-  try {
-    return (await response.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-};
-
-const handleJsonResponse = async <T>(
-  response: Response,
-  fallbackMessage: string,
-): Promise<T> => {
-  if (!response.ok) {
-    const body = await readJsonSafe(response);
-    throw new HttpError({
-      message: (body?.error as string) || fallbackMessage,
-      status: response.status,
-      code: (body?.code as string) || undefined,
-    });
-  }
-
-  try {
-    return (await response.json()) as T;
-  } catch (error) {
-    throw new NetworkError("Invalid response from server", { cause: error });
-  }
-};
 
 export async function createWheel(
   name: string,
@@ -185,7 +163,7 @@ export function connectToWheel(
   }
 
   if (!isReconnect) {
-    reconnectAttempts = 0;
+    resetReconnectAttempts(reconnectState);
   }
 
   try {
@@ -197,7 +175,7 @@ export function connectToWheel(
 
     socket.onopen = () => {
       console.debug("Wheel WebSocket connection established");
-      reconnectAttempts = 0;
+      resetReconnectAttempts(reconnectState);
       onConnectionStatusChange?.(true);
     };
 
@@ -223,12 +201,12 @@ export function connectToWheel(
           case "newModerator":
           case "wheelReset":
           case "pong":
-            triggerEventListeners(data.type, data);
+            eventManager.triggerEventListeners(data.type, data);
             break;
 
           case "error":
             console.error("Wheel server error:", data.error);
-            triggerEventListeners("error", data);
+            eventManager.triggerEventListeners("error", data);
             break;
 
           default:
@@ -251,7 +229,7 @@ export function connectToWheel(
       onConnectionStatusChange?.(false);
 
       if (event.code === 4003) {
-        triggerEventListeners("error", {
+        eventManager.triggerEventListeners("error", {
           type: "error",
           error: "Session expired. Please rejoin the wheel.",
           reason: "auth",
@@ -260,7 +238,7 @@ export function connectToWheel(
       }
 
       if (event.code === 4004) {
-        triggerEventListeners("error", {
+        eventManager.triggerEventListeners("error", {
           type: "error",
           error: "Session superseded. Please refresh the page.",
           reason: "auth",
@@ -277,13 +255,13 @@ export function connectToWheel(
       console.error("Wheel WebSocket error:", error);
 
       onConnectionStatusChange?.(false);
-      triggerEventListeners("error", {
+      eventManager.triggerEventListeners("error", {
         type: "error",
         error: "Connection error occurred",
         reason: "disconnect",
       });
 
-      if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
+      if (isWebSocketOpen(activeSocket)) {
         activeSocket.close(1011, "Connection error");
       }
     };
@@ -293,7 +271,7 @@ export function connectToWheel(
   } catch (error) {
     console.error("Error creating wheel WebSocket:", error);
     onConnectionStatusChange?.(false);
-    triggerEventListeners("error", {
+    eventManager.triggerEventListeners("error", {
       type: "error",
       error:
         error instanceof Error ? error.message : "Failed to connect to server",
@@ -309,33 +287,23 @@ function handleReconnect(
   onMessage: (data: WheelServerMessage) => void,
   onConnectionStatusChange?: (isConnected: boolean) => void,
 ): void {
-  if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-    reconnectAttempts++;
+  if (shouldReconnect(reconnectState)) {
+    incrementReconnectAttempts(reconnectState);
 
-    const jitter = Math.random() * 0.3 + 0.85;
-    const delay = Math.min(
-      RECONNECT_BASE_DELAY * 2 ** reconnectAttempts * jitter,
-      MAX_RECONNECT_DELAY,
-    );
+    const delay = calculateReconnectDelay(reconnectState);
 
     console.debug(
       `Attempting to reconnect in ${Math.round(
         delay,
-      )}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`,
+      )}ms (attempt ${reconnectState.attempts}/${reconnectState.maxAttempts})`,
     );
 
     setTimeout(() => {
-      connectToWheel(
-        wheelKey,
-        name,
-        onMessage,
-        onConnectionStatusChange,
-        true,
-      );
+      connectToWheel(wheelKey, name, onMessage, onConnectionStatusChange, true);
     }, delay);
   } else {
     console.error("Max wheel reconnection attempts reached");
-    triggerEventListeners("disconnected", {
+    eventManager.triggerEventListeners("disconnected", {
       type: "disconnected",
       error: "Connection lost. Please refresh the page to reconnect.",
       reason: "disconnect",
@@ -349,45 +317,25 @@ export function disconnectFromWheel(): void {
     activeSocket = null;
   }
   activeWheelKey = null;
-  reconnectAttempts = 0;
+  resetReconnectAttempts(reconnectState);
 }
 
 export function addEventListener(
   event: WheelEventType,
   callback: (data: WheelEventMessage) => void,
 ): void {
-  if (!eventListeners[event]) {
-    eventListeners[event] = [];
-  }
-  eventListeners[event].push(callback);
+  eventManager.addEventListener(event, callback);
 }
 
 export function removeEventListener(
   event: WheelEventType,
   callback: (data: WheelEventMessage) => void,
 ): void {
-  if (!eventListeners[event]) return;
-
-  eventListeners[event] = eventListeners[event].filter((cb) => cb !== callback);
-}
-
-function triggerEventListeners(
-  event: WheelEventType,
-  data: WheelEventMessage,
-): void {
-  if (!eventListeners[event]) return;
-
-  for (const callback of eventListeners[event]) {
-    try {
-      callback(data);
-    } catch (error) {
-      console.error("Error in wheel event listener:", event, error);
-    }
-  }
+  eventManager.removeEventListener(event, callback);
 }
 
 export function isConnected(): boolean {
-  return activeSocket !== null && activeSocket.readyState === WebSocket.OPEN;
+  return isWebSocketOpen(activeSocket);
 }
 
 export function getConnectionState(): number | null {
@@ -395,119 +343,39 @@ export function getConnectionState(): number | null {
 }
 
 export function addEntry(name: string): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "addEntry",
-      name,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "addEntry", name });
 }
 
 export function removeEntry(entryId: string): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "removeEntry",
-      entryId,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "removeEntry", entryId });
 }
 
 export function updateEntry(entryId: string, name: string): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "updateEntry",
-      entryId,
-      name,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "updateEntry", entryId, name });
 }
 
 export function toggleEntry(entryId: string, enabled: boolean): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "toggleEntry",
-      entryId,
-      enabled,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "toggleEntry", entryId, enabled });
 }
 
 export function clearEntries(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "clearEntries",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "clearEntries" });
 }
 
 export function bulkAddEntries(names: string[]): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "bulkAddEntries",
-      names,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "bulkAddEntries", names });
 }
 
 export function spin(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "spin",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "spin" });
 }
 
 export function resetWheel(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "resetWheel",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "resetWheel" });
 }
 
 export function updateWheelSettings(settings: Partial<WheelSettings>): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to wheel");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "updateSettings",
-      settings,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "updateSettings", settings });
 }
 
 export async function updateWheelPasscode(

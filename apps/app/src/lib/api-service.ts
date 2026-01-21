@@ -18,14 +18,23 @@ import {
   ensureServerDefaultsCollectionReady,
 } from "./data/collections";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
+import { readJsonSafe, handleJsonResponse } from "@/lib/api-utils";
+import {
+  createReconnectState,
+  resetReconnectAttempts,
+  calculateReconnectDelay,
+  shouldReconnect,
+  incrementReconnectAttempts,
+  isWebSocketOpen,
+  sendWebSocketMessage,
+  EventManager,
+  type ReconnectState,
+} from "@/lib/websocket-utils";
 
 let activeSocket: WebSocket | null = null;
 let activeRoomKey: string | null = null;
-let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECT_BASE_DELAY = 1000;
-const MAX_RECONNECT_DELAY = 30000;
-const eventListeners: Record<string, ((data: WebSocketMessage) => void)[]> = {};
+let reconnectState: ReconnectState = createReconnectState();
+const eventManager = new EventManager<WebSocketMessage>();
 
 let voteDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const VOTE_DEBOUNCE_MS = 300;
@@ -33,36 +42,6 @@ const VOTE_DEBOUNCE_MS = 300;
 interface RequestOptions {
   signal?: AbortSignal;
 }
-
-const readJsonSafe = async (
-  response: Response,
-): Promise<Record<string, unknown> | null> => {
-  try {
-    return (await response.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-};
-
-const handleJsonResponse = async <T>(
-  response: Response,
-  fallbackMessage: string,
-): Promise<T> => {
-  if (!response.ok) {
-    const body = await readJsonSafe(response);
-    throw new HttpError({
-      message: (body?.error as string) || fallbackMessage,
-      status: response.status,
-      code: (body?.code as string) || undefined,
-    });
-  }
-
-  try {
-    return (await response.json()) as T;
-  } catch (error) {
-    throw new NetworkError("Invalid response from server", { cause: error });
-  }
-};
 
 export function getCachedDefaultSettings(): ServerDefaults | null {
   return serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
@@ -212,7 +191,7 @@ export function connectToRoom(
     activeSocket.close();
   }
 
-  reconnectAttempts = 0;
+  resetReconnectAttempts(reconnectState);
 
   try {
     const socket = new WebSocket(
@@ -221,7 +200,7 @@ export function connectToRoom(
 
     socket.onopen = () => {
       console.debug("WebSocket connection established");
-      reconnectAttempts = 0;
+      resetReconnectAttempts(reconnectState);
       onConnectionStatusChange?.(true);
     };
 
@@ -261,12 +240,12 @@ export function connectToRoom(
           case "timerPaused":
           case "timerReset":
           case "timerUpdated":
-            triggerEventListeners(data.type, data);
+            eventManager.triggerEventListeners(data.type, data);
             break;
 
           case "error":
             console.error("Server error:", data.error);
-            triggerEventListeners("error", data);
+            eventManager.triggerEventListeners("error", data);
             break;
 
           default:
@@ -282,7 +261,7 @@ export function connectToRoom(
       onConnectionStatusChange?.(false);
 
       if (event.code === 4003) {
-        triggerEventListeners("error", {
+        eventManager.triggerEventListeners("error", {
           type: "error",
           error: "Session expired. Please rejoin the room.",
           closeCode: event.code,
@@ -292,7 +271,7 @@ export function connectToRoom(
       }
 
       if (event.code === 4001) {
-        triggerEventListeners("error", {
+        eventManager.triggerEventListeners("error", {
           type: "error",
           error: "Disconnected due to inactivity. Reconnecting...",
           closeCode: event.code,
@@ -309,14 +288,14 @@ export function connectToRoom(
       console.error("WebSocket error:", error);
 
       onConnectionStatusChange?.(false);
-      triggerEventListeners("error", {
+      eventManager.triggerEventListeners("error", {
         type: "error",
         error: "Connection error occurred",
         closeCode: 1006,
         reason: "network",
       });
 
-      if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
+      if (isWebSocketOpen(activeSocket)) {
         activeSocket.close(1011, "Connection error");
       }
     };
@@ -326,7 +305,7 @@ export function connectToRoom(
   } catch (error) {
     console.error("Error creating WebSocket:", error);
     onConnectionStatusChange?.(false);
-    triggerEventListeners("error", {
+    eventManager.triggerEventListeners("error", {
       type: "error",
       error:
         error instanceof Error ? error.message : "Failed to connect to server",
@@ -342,19 +321,15 @@ function handleReconnect(
   onMessage: (data: WebSocketMessage) => void,
   onConnectionStatusChange?: (isConnected: boolean) => void,
 ): void {
-  if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-    reconnectAttempts++;
+  if (shouldReconnect(reconnectState)) {
+    incrementReconnectAttempts(reconnectState);
 
-    const jitter = Math.random() * 0.3 + 0.85;
-    const delay = Math.min(
-      RECONNECT_BASE_DELAY * 2 ** reconnectAttempts * jitter,
-      MAX_RECONNECT_DELAY,
-    );
+    const delay = calculateReconnectDelay(reconnectState);
 
     console.debug(
       `Attempting to reconnect in ${Math.round(
         delay,
-      )}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`,
+      )}ms (attempt ${reconnectState.attempts}/${reconnectState.maxAttempts})`,
     );
 
     setTimeout(() => {
@@ -362,7 +337,7 @@ function handleReconnect(
     }, delay);
   } else {
     console.error("Max reconnection attempts reached");
-    triggerEventListeners("disconnected", {
+    eventManager.triggerEventListeners("disconnected", {
       type: "disconnected",
       error: "Connection lost. Please refresh the page to reconnect.",
       reason: "disconnect",
@@ -374,7 +349,7 @@ export function submitVote(
   vote: VoteValue | StructuredVote,
   immediate = false,
 ): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+  if (!isWebSocketOpen(activeSocket)) {
     throw new Error("Not connected to room");
   }
 
@@ -383,12 +358,7 @@ export function submitVote(
   }
 
   const sendVote = () => {
-    activeSocket?.send(
-      JSON.stringify({
-        type: "vote",
-        vote,
-      }),
-    );
+    sendWebSocketMessage(activeSocket, { type: "vote", vote });
   };
 
   if (immediate) {
@@ -399,64 +369,23 @@ export function submitVote(
 }
 
 export function toggleShowVotes(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "showVotes",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "showVotes" });
 }
 
 export function toggleSpectatorMode(isSpectator: boolean): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "toggleSpectator",
-      isSpectator,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "toggleSpectator", isSpectator });
 }
 
 export function resetVotes(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "resetVotes",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "resetVotes" });
 }
 
 export function requestStrudelGeneration(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "generateStrudelCode",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "generateStrudelCode" });
 }
 
 export function toggleStrudelPlayback(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "toggleStrudelPlayback",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "toggleStrudelPlayback" });
 }
 
 export function disconnectFromRoom(): void {
@@ -469,45 +398,25 @@ export function disconnectFromRoom(): void {
     voteDebounceTimer = null;
   }
   activeRoomKey = null;
-  reconnectAttempts = 0;
+  resetReconnectAttempts(reconnectState);
 }
 
 export function addEventListener(
   event: WebSocketMessageType,
   callback: (data: WebSocketMessage) => void,
 ): void {
-  if (!eventListeners[event]) {
-    eventListeners[event] = [];
-  }
-  eventListeners[event].push(callback);
+  eventManager.addEventListener(event, callback);
 }
 
 export function removeEventListener(
   event: WebSocketMessageType,
   callback: (data: WebSocketMessage) => void,
 ): void {
-  if (!eventListeners[event]) return;
-
-  eventListeners[event] = eventListeners[event].filter((cb) => cb !== callback);
-}
-
-function triggerEventListeners(
-  event: WebSocketMessageType,
-  data: WebSocketMessage,
-): void {
-  if (!eventListeners[event]) return;
-
-  for (const callback of eventListeners[event]) {
-    try {
-      callback(data);
-    } catch (error) {
-      console.error("Error in event listener:", event, error);
-    }
-  }
+  eventManager.removeEventListener(event, callback);
 }
 
 export function isConnected(): boolean {
-  return activeSocket !== null && activeSocket.readyState === WebSocket.OPEN;
+  return isWebSocketOpen(activeSocket);
 }
 
 export function getConnectionState(): number | null {
@@ -571,120 +480,46 @@ export async function updateRoomSettings(
 }
 
 export function updateSettings(settings: Partial<RoomSettings>): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "updateSettings",
-      settings,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "updateSettings", settings });
 }
 
 export function selectTicket(ticketId: number): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "selectTicket",
-      ticketId,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "selectTicket", ticketId });
 }
 
 export function nextTicket(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "nextTicket",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "nextTicket" });
 }
 
 export function addTicket(ticket: Partial<TicketQueueItem>): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "addTicket",
-      ticket,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "addTicket", ticket });
 }
 
 export function updateTicket(
   ticketId: number,
   updates: Partial<TicketQueueItem>,
 ): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "updateTicket",
-      ticketId,
-      updates,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, {
+    type: "updateTicket",
+    ticketId,
+    updates,
+  });
 }
 
 export function deleteTicket(ticketId: number): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "deleteTicket",
-      ticketId,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "deleteTicket", ticketId });
 }
 
 export function startTimer(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "startTimer",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "startTimer" });
 }
 
 export function pauseTimer(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "pauseTimer",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "pauseTimer" });
 }
 
 export function resetTimer(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "resetTimer",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "resetTimer" });
 }
 
 export function configureTimer(config: {
@@ -692,26 +527,9 @@ export function configureTimer(config: {
   autoResetOnVotesReset?: boolean;
   resetCountdown?: boolean;
 }): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "configureTimer",
-      config,
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "configureTimer", config });
 }
 
 export function completeSession(): void {
-  if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
-    throw new Error("Not connected to room");
-  }
-
-  activeSocket.send(
-    JSON.stringify({
-      type: "completeSession",
-    }),
-  );
+  sendWebSocketMessage(activeSocket, { type: "completeSession" });
 }
