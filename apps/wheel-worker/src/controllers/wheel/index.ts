@@ -17,6 +17,15 @@ const DEFAULT_SETTINGS: WheelSettings = {
   spinDurationMs: 4000,
 };
 
+const DEFAULT_ENTRY_NAMES = [
+  'Ada',
+  'Grace',
+  'Linus',
+  'Margaret',
+  'Alan',
+  'Tim',
+];
+
 export async function handleHttpRequest(
   context: WheelRoomHttpContext,
   request: Request,
@@ -73,9 +82,15 @@ async function handleInitialize(
     ...settings,
   };
 
+  const defaultEntries = DEFAULT_ENTRY_NAMES.map((name) => ({
+    id: generateID(),
+    name,
+    enabled: true,
+  }));
+
   const wheelData: WheelData = {
     key: wheelKey,
-    entries: [],
+    entries: defaultEntries,
     moderator,
     users: [moderator],
     connectedUsers: { [moderator]: false },

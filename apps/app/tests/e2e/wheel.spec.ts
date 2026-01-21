@@ -29,6 +29,11 @@ test.describe('Wheel journey', () => {
     await page.waitForURL('**/wheel/**');
 
     const entriesInput = await waitForWheelReady(page);
+    await expect(entriesInput).toHaveValue(/Ada/);
+    await expect(page.getByText('6 entries on wheel')).toBeVisible({
+      timeout: 15_000,
+    });
+
     await entriesInput.fill('Alpha\nBeta\nGamma');
 
     await expect(page.getByText('3 entries on wheel')).toBeVisible({
