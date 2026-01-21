@@ -134,7 +134,12 @@ export async function handleUpdateSettings(
     ...settings,
   };
 
-  if (newSettings.spinDurationMs < 2000 || newSettings.spinDurationMs > 10000) {
+  if (
+    typeof newSettings.spinDurationMs !== 'number' ||
+    !Number.isFinite(newSettings.spinDurationMs)
+  ) {
+    newSettings.spinDurationMs = wheelData.settings.spinDurationMs;
+  } else {
     newSettings.spinDurationMs = Math.max(
       2000,
       Math.min(10000, newSettings.spinDurationMs),
