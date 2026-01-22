@@ -1,6 +1,11 @@
 import type { WheelRoom } from '../../durable-objects/wheel-room';
-import type { WheelData, WheelSettings } from '@sprintjam/types';
-import { hashPasscode, verifyPasscode, generateID } from '@sprintjam/utils';
+import type { WheelData, WheelSettings, WheelWorkerEnv } from '@sprintjam/types';
+import {
+  hashPasscode,
+  verifyPasscode,
+  generateID,
+  getWheelSessionToken,
+} from '@sprintjam/utils';
 import { jsonResponse, jsonError } from '../../lib/response';
 
 export interface WheelRoomHttpContext {
@@ -8,6 +13,7 @@ export interface WheelRoomHttpContext {
   getWheelData(): Promise<WheelData | undefined>;
   putWheelData(data: WheelData): Promise<void>;
   disconnectUserSessions(userName: string): void;
+  env: WheelWorkerEnv;
 }
 
 const DEFAULT_SETTINGS: WheelSettings = {
@@ -50,6 +56,26 @@ export async function handleHttpRequest(
   }
 
   return null;
+}
+
+function passcodeErrorResponse(message: string, status = 401): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-Error-Kind': 'passcode',
+    },
+  });
+}
+
+function createWheelSessionCookie(
+  token: string,
+  env: WheelWorkerEnv,
+): string {
+  const secure = env.ENVIRONMENT === 'development' ? '' : ' Secure;';
+  return `wheel_session=${token}; HttpOnly;${secure} SameSite=Strict; Path=/; Max-Age=86400`;
 }
 
 async function handleInitialize(
@@ -116,7 +142,7 @@ async function handleInitialize(
     {
       status: 200,
       headers: {
-        'Set-Cookie': `wheel_session=${sessionToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400`,
+        'Set-Cookie': createWheelSessionCookie(sessionToken, context.env),
       },
     },
   );
@@ -145,12 +171,12 @@ async function handleJoin(
 
   if (wheelData.passcodeHash) {
     if (!passcode) {
-      return jsonError('Passcode is required', 401);
+      return passcodeErrorResponse('Passcode is required', 401);
     }
 
     const isValid = await verifyPasscode(passcode, wheelData.passcodeHash);
     if (!isValid) {
-      return jsonError('Invalid passcode', 401);
+      return passcodeErrorResponse('Invalid passcode', 401);
     }
   }
 
@@ -180,7 +206,7 @@ async function handleJoin(
     {
       status: 200,
       headers: {
-        'Set-Cookie': `wheel_session=${sessionToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400`,
+        'Set-Cookie': createWheelSessionCookie(sessionToken, context.env),
       },
     },
   );
@@ -214,7 +240,8 @@ async function handleUpdatePasscode(
     passcode: string | null;
   }>();
 
-  const { userName, passcode } = body;
+  const userName = typeof body?.userName === 'string' ? body.userName.trim() : '';
+  const passcode = body?.passcode ?? null;
 
   if (!userName) {
     return jsonError('User name is required');
@@ -223,6 +250,16 @@ async function handleUpdatePasscode(
   const wheelData = await context.getWheelData();
   if (!wheelData) {
     return jsonError('Wheel not found', 404);
+  }
+
+  const sessionToken = getWheelSessionToken(request);
+  const hasValidToken = context.repository.validateSessionToken(
+    wheelData.moderator,
+    sessionToken,
+  );
+
+  if (!hasValidToken) {
+    return jsonError('Invalid or expired session', 401);
   }
 
   if (wheelData.moderator !== userName) {

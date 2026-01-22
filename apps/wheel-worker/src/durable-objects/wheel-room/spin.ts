@@ -105,12 +105,12 @@ export async function handleResetWheel(wheel: WheelRoom, userName: string) {
   }
 
   wheel.repository.clearResults();
-  wheel.repository.clearEntries();
   wheel.repository.setSpinState(null);
+  const entries = wheel.repository.getEntries();
 
   wheel.broadcast({
     type: 'wheelReset',
-    entries: [],
+    entries,
     results: [],
   });
 }

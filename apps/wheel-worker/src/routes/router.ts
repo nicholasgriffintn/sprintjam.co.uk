@@ -3,7 +3,11 @@ import type {
   Response as CfResponse,
 } from '@cloudflare/workers-types';
 import type { WheelWorkerEnv } from '@sprintjam/types';
-import { getWheelSessionToken, checkBotProtection } from '@sprintjam/utils';
+import {
+  getWheelSessionToken,
+  checkBotProtection,
+  validateRequestBodySize,
+} from '@sprintjam/utils';
 
 import {
   rootResponse,
@@ -70,7 +74,12 @@ async function createWheelController(
   if (rateLimitCheck) {
     return rateLimitCheck;
   }
-  
+
+  const sizeCheck = validateRequestBodySize(request);
+  if (!sizeCheck.ok) {
+    return sizeCheck.response as CfResponse;
+  }
+
   const body = await request.json<{
     name?: string;
     passcode?: string;
@@ -78,9 +87,14 @@ async function createWheelController(
     avatar?: string;
   }>();
 
-  const name = body?.name;
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
   const passcode = body?.passcode;
-  const settings = body?.settings;
+  const settings =
+    body?.settings &&
+    typeof body.settings === 'object' &&
+    !Array.isArray(body.settings)
+      ? body.settings
+      : undefined;
   const avatar = body?.avatar;
 
   if (!name) {
@@ -123,6 +137,11 @@ async function joinWheelController(
     return rateLimitCheck;
   }
 
+  const sizeCheck = validateRequestBodySize(request);
+  if (!sizeCheck.ok) {
+    return sizeCheck.response as CfResponse;
+  }
+
   const body = await request.json<{
     name?: string;
     wheelKey?: string;
@@ -130,8 +149,9 @@ async function joinWheelController(
     avatar?: string;
     authToken?: string;
   }>();
-  const name = body?.name;
-  const wheelKey = body?.wheelKey;
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
+  const wheelKey =
+    typeof body?.wheelKey === 'string' ? body.wheelKey.trim().toUpperCase() : '';
   const passcode = body?.passcode;
   const avatar = body?.avatar;
   const authToken = body?.authToken;
@@ -220,6 +240,11 @@ async function updateWheelPasscodeController(
 
   if (!wheelKey) {
     return jsonError('Wheel key is required');
+  }
+
+  const sizeCheck = validateRequestBodySize(request);
+  if (!sizeCheck.ok) {
+    return sizeCheck.response as CfResponse;
   }
 
   const wheelObject = getWheelStub(env, wheelKey);

@@ -244,10 +244,37 @@ export default function WheelScreen() {
       setIsLoading(true);
       setError(null);
 
-      joinWheel(userName, pathKey)
-        .then(() => {
+      const attemptJoin = async () => {
+        try {
+          await joinWheel(userName, pathKey);
           setWheelKey(pathKey);
-        })
+        } catch (err) {
+          if (err instanceof Error && err.message === 'PASSCODE_REQUIRED') {
+            const passcode = window.prompt(
+              'Enter the passcode to join this wheel',
+            );
+            if (!passcode) {
+              throw new Error('Passcode is required to join this wheel.');
+            }
+            try {
+              await joinWheel(userName, pathKey, passcode.trim());
+              setWheelKey(pathKey);
+              return;
+            } catch (retryErr) {
+              if (
+                retryErr instanceof Error &&
+                retryErr.message === 'PASSCODE_REQUIRED'
+              ) {
+                throw new Error('Invalid passcode. Please try again.');
+              }
+              throw retryErr;
+            }
+          }
+          throw err;
+        }
+      };
+
+      attemptJoin()
         .catch((err) => {
           const message =
             err instanceof Error ? err.message : 'Failed to join wheel';

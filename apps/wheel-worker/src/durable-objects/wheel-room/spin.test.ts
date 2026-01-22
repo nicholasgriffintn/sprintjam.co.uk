@@ -217,11 +217,10 @@ describe("wheel reset and settings handlers", () => {
     await handleResetWheel(wheel, "mod");
 
     expect(wheel.repository.clearResults).toHaveBeenCalled();
-    expect(wheel.repository.clearEntries).toHaveBeenCalled();
     expect(wheel.repository.setSpinState).toHaveBeenCalledWith(null);
     expect(wheel.broadcast).toHaveBeenCalledWith({
       type: "wheelReset",
-      entries: [],
+      entries: wheelData.entries,
       results: [],
     });
   });

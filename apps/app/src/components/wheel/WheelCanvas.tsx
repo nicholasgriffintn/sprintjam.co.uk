@@ -91,8 +91,10 @@ export function WheelCanvas({
       },
     });
 
-    const tickInterval = setInterval(() => {
-      if (playSounds) {
+    let tickInterval: ReturnType<typeof setInterval> | null = null;
+
+    if (playSounds) {
+      tickInterval = setInterval(() => {
         const currentRotation = rotation.get();
         const rotationDiff = Math.abs(
           currentRotation - lastTickRotation.current,
@@ -106,18 +108,22 @@ export function WheelCanvas({
           playTickSound(speed);
           lastTickRotation.current = currentRotation;
         }
-      }
-    }, 50);
+      }, 50);
+    }
 
     const timeout = setTimeout(() => {
-      clearInterval(tickInterval);
+      if (tickInterval) {
+        clearInterval(tickInterval);
+      }
       spinIdRef.current = null;
       onSpinComplete?.();
     }, spinState.duration);
 
     return () => {
       clearTimeout(timeout);
-      clearInterval(tickInterval);
+      if (tickInterval) {
+        clearInterval(tickInterval);
+      }
     };
   }, [
     spinState,
