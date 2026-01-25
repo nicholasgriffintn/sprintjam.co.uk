@@ -18,6 +18,7 @@
     "generate:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
+    "@sentry/cloudflare": "^10.36.0",
     "@sprintjam/db": "workspace:*",
     "@sprintjam/types": "workspace:*",
     "@sprintjam/utils": "workspace:*",

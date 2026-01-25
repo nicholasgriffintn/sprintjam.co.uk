@@ -4,6 +4,7 @@ import type {
   Response as CfResponse,
 } from '@cloudflare/workers-types';
 import type { DispatchWorkerEnv } from '@sprintjam/types';
+import * as Sentry from '@sentry/cloudflare';
 
 function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
   const isStaging = env.ENVIRONMENT === 'staging';
@@ -22,7 +23,7 @@ function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
 
 async function handleRequest(
   request: CfRequest,
-  env: DispatchWorkerEnv
+  env: DispatchWorkerEnv,
 ): Promise<CfResponse> {
   try {
     const url = new URL(request.url);
@@ -67,19 +68,30 @@ async function handleRequest(
 
     return env.ASSETS.fetch(request);
   } catch (error) {
+    Sentry.captureException(error);
     console.error('[main] Internal Server Error', error);
     return new Response(
       JSON.stringify({ error: '[main] handleRequest errored' }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
-      }
+      },
     ) as unknown as CfResponse;
   }
 }
 
-export default {
-  async fetch(request: CfRequest, env: DispatchWorkerEnv): Promise<CfResponse> {
-    return handleRequest(request, env);
-  },
-} satisfies ExportedHandler<DispatchWorkerEnv>;
+export default Sentry.withSentry(
+  (env: DispatchWorkerEnv) => ({
+    dsn: 'https://d2b3ceb688e14058bf82a71ed27951c3@ingest.bitwobbly.com/11',
+    tracesSampleRate: 0.1,
+    enabled: env.ENVIRONMENT === 'production' || env.ENVIRONMENT === 'staging',
+  }),
+  {
+    async fetch(
+      request: CfRequest,
+      env: DispatchWorkerEnv,
+    ): Promise<CfResponse> {
+      return handleRequest(request, env);
+    },
+  } satisfies ExportedHandler<DispatchWorkerEnv>,
+);

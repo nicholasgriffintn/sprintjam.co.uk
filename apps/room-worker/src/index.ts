@@ -3,16 +3,25 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types/env";
-import { WorkerEntrypoint } from "cloudflare:workers";
+import * as Sentry from "@sentry/cloudflare";
 
 import { handleRequest } from "./routes/router";
 import { PlanningRoom } from "./durable-objects/planning-room";
 
-export default class extends WorkerEntrypoint {
-  async fetch(request: CfRequest): Promise<CfResponse> {
-    const env = this.env as RoomWorkerEnv;
-    return handleRequest(request, env);
-  }
-}
+const SENTRY_DSN =
+  "https://d2b3ceb688e14058bf82a71ed27951c3@ingest.bitwobbly.com/11";
+
+export default Sentry.withSentry(
+  (env: RoomWorkerEnv) => ({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 0.1,
+    enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
+  }),
+  {
+    async fetch(request: CfRequest, env: RoomWorkerEnv): Promise<CfResponse> {
+      return handleRequest(request, env);
+    },
+  },
+);
 
 export { PlanningRoom };

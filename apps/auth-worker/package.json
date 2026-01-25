@@ -21,6 +21,7 @@
     "generate:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
+    "@sentry/cloudflare": "^10.36.0",
     "@simplewebauthn/server": "10.0.1",
     "@sprintjam/db": "workspace:*",
     "@sprintjam/services": "workspace:*",

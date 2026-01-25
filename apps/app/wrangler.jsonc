@@ -3,6 +3,7 @@
   "name": "sprintjam",
   "main": "api/index.ts",
   "compatibility_date": "2025-07-15",
+  "compatibility_flags": ["nodejs_compat"],
   "routes": [
     {
       "pattern": "sprintjam.co.uk",

@@ -4,7 +4,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(() => ({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -28,7 +28,7 @@ export default defineConfig(({ command }) => ({
         },
       },
     },
-    sourcemap: command === 'build' ? false : true,
+    sourcemap: true,
   },
   plugins: [
     react(),

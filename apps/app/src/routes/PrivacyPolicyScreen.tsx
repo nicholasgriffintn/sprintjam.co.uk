@@ -13,7 +13,7 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { SITE_NAME } from "@/constants";
 
-const LAST_UPDATED = '19th January 2026';
+const LAST_UPDATED = '25th January 2026';
 
 const highlightCards = [
   {
@@ -72,13 +72,18 @@ const serverStorage = [
 
 const integrationOptions = [
   {
-    name: "Jira, Linear and GitHub (optional)",
+    name: 'Jira, Linear and GitHub (optional)',
     detail: `Moderators can link their external accounts to sync data to and from ${SITE_NAME}, tokens are only held as long as they are needed and are encrypted.`,
   },
   {
-    name: "Strudel music (optional)",
+    name: 'Strudel music (optional)',
     detail:
-      "We send generated Strudel prompt text only (no participant identifiers) to api.polychat.app to generate snippets.",
+      'We send generated Strudel prompt text only (no participant identifiers) to api.polychat.app to generate snippets.',
+  },
+  {
+    name: 'Error monitoring (Sentry)',
+    detail:
+      'We use the Sentry SDK (with our own Bit Wobbly backend) for error tracking to help improve reliability. No personal data is collected — only technical error details like stack traces and browser information.',
   },
 ];
 

@@ -1,28 +1,40 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { WorkerEntrypoint } from "cloudflare:workers";
+import * as Sentry from '@sentry/cloudflare';
 
 import { handleRequest } from "./routes/router";
 import { WorkspaceAuthRepository } from "./repositories/workspace-auth";
 
-export default class extends WorkerEntrypoint {
-  async fetch(request: Request): Promise<Response> {
-    const env = this.env as AuthWorkerEnv;
-    return handleRequest(request, env);
-  }
+const SENTRY_DSN =
+  'https://95460a28df42464d8860431ec35767c7@ingest.bitwobbly.com/12';
 
-  async scheduled(): Promise<void> {
-    const env = this.env as AuthWorkerEnv;
-    const repo = new WorkspaceAuthRepository(env.DB);
+export default Sentry.withSentry(
+  (env: AuthWorkerEnv) => ({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 0.1,
+    enabled: env.ENVIRONMENT === 'production' || env.ENVIRONMENT === 'staging',
+  }),
+  {
+    async fetch(request: Request, env: AuthWorkerEnv): Promise<Response> {
+      return handleRequest(request, env);
+    },
 
-    try {
-      const deletedLinks = await repo.cleanupExpiredMagicLinks();
-      const deletedSessions = await repo.cleanupExpiredSessions();
+    async scheduled(
+      _controller: ScheduledController,
+      env: AuthWorkerEnv,
+    ): Promise<void> {
+      const repo = new WorkspaceAuthRepository(env.DB);
 
-      console.log(
-        `Cleanup completed: ${deletedLinks} expired magic links, ${deletedSessions} expired sessions`,
-      );
-    } catch (error) {
-      console.error("Cleanup job failed:", error);
-    }
-  }
-}
+      try {
+        const deletedLinks = await repo.cleanupExpiredMagicLinks();
+        const deletedSessions = await repo.cleanupExpiredSessions();
+
+        console.log(
+          `Cleanup completed: ${deletedLinks} expired magic links, ${deletedSessions} expired sessions`,
+        );
+      } catch (error) {
+        Sentry.captureException(error);
+        console.error('Cleanup job failed:', error);
+      }
+    },
+  },
+);
