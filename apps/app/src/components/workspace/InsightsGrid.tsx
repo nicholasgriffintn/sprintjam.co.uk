@@ -29,6 +29,9 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
   if (!insights) {
     return (
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800/50">
+        <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+          Collaboration insights
+        </h3>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           No insights available yet
         </p>
