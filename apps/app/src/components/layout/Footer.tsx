@@ -32,21 +32,21 @@ export const Footer = ({
   return (
     <>
       <footer
-        className={`${fullWidth ? "max-w-full" : "max-w-2xl"} ${
-          layout === "wide"
-            ? "lg:grid-cols-[1fr_auto] text-center lg:justify-start lg:text-left"
-            : "grid-cols-1 text-center"
+        className={`${fullWidth ? 'max-w-full' : 'max-w-2xl'} ${
+          layout === 'wide'
+            ? 'lg:grid-cols-[1fr_auto] text-center lg:justify-start lg:text-left'
+            : 'grid-cols-1 text-center'
         } mx-auto mt-8 grid items-center gap-4 text-sm text-slate-700 dark:text-slate-400`}
       >
         <div
           className={`${
-            layout === "wide" ? "lg:justify-start lg:text-left" : ""
+            layout === 'wide' ? 'lg:justify-start lg:text-left' : ''
           } flex flex-wrap items-center justify-center gap-x-4 gap-y-2`}
         >
           {!priorityLinksOnly && (
             <>
               <span>
-                Built by{" "}
+                Built by{' '}
                 <a
                   href="https://nicholasgriffin.dev"
                   target="_blank"
@@ -59,9 +59,18 @@ export const Footer = ({
               <span className="hidden sm:inline">|</span>
             </>
           )}
+          <a
+            href="https://bitwobbly.com/status/sprintjam"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
+          >
+            Status
+          </a>
+          <span className="hidden sm:inline">|</span>
           <button
             type="button"
-            onClick={() => handleNavigate("privacy")}
+            onClick={() => handleNavigate('privacy')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Privacy Policy
@@ -69,7 +78,7 @@ export const Footer = ({
           <span className="hidden sm:inline">|</span>
           <button
             type="button"
-            onClick={() => handleNavigate("terms")}
+            onClick={() => handleNavigate('terms')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Terms
@@ -77,7 +86,7 @@ export const Footer = ({
           <span className="hidden sm:inline">|</span>
           <button
             type="button"
-            onClick={() => handleNavigate("integrations")}
+            onClick={() => handleNavigate('integrations')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Integrations
@@ -85,7 +94,7 @@ export const Footer = ({
           <span className="hidden sm:inline">|</span>
           <button
             type="button"
-            onClick={() => handleNavigate("faq")}
+            onClick={() => handleNavigate('faq')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             FAQ
@@ -93,7 +102,7 @@ export const Footer = ({
           <span className="hidden sm:inline">|</span>
           <button
             type="button"
-            onClick={() => handleNavigate("guides")}
+            onClick={() => handleNavigate('guides')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Guides
@@ -101,7 +110,7 @@ export const Footer = ({
           <span className="hidden sm:inline">|</span>
           <button
             type="button"
-            onClick={() => handleNavigate("changelog")}
+            onClick={() => handleNavigate('changelog')}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Changelog
@@ -110,7 +119,7 @@ export const Footer = ({
 
         <div
           className={`${
-            fullWidth ? " lg:w-auto lg:flex-nowrap" : ""
+            fullWidth ? ' lg:w-auto lg:flex-nowrap' : ''
           } flex w-full flex-wrap items-center justify-center gap-2 mt-4`}
         >
           <Button
