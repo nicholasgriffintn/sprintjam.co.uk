@@ -42,7 +42,7 @@ test.describe("Room onboarding hints", () => {
 test.describe("Room help panel", () => {
   test("updates guidance across voting phases", async ({ browser }) => {
     const setup = await createRoomWithParticipant(browser);
-    const { moderatorRoom, cleanup } = setup;
+    const { moderatorRoom, participantRoom, cleanup } = setup;
     const page = moderatorRoom.getPage();
 
     try {
@@ -57,6 +57,7 @@ test.describe("Room help panel", () => {
       await page.getByRole("button", { name: "Close help panel" }).click();
       await expect(panel).toHaveCount(0);
 
+      await participantRoom.castVote("3");
       await moderatorRoom.revealVotes();
 
       await page.getByRole("button", { name: "Room help" }).click();

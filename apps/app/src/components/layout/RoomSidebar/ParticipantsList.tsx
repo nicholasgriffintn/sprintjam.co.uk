@@ -128,13 +128,21 @@ export const ParticipantsList = memo(function ParticipantsList({
   isCompleted,
 }: ParticipantsListProps) {
   const totalParticipants = roomData?.users.length ?? 0;
+  const votingCompletion = roomData?.votingCompletion;
+
   const votingProgress = useMemo(() => {
     if (totalParticipants === 0) {
       return 0;
     }
 
+    if (votingCompletion) {
+      return Math.round(
+        (votingCompletion.completedCount / votingCompletion.totalCount) * 100,
+      );
+    }
+
     return Math.round((stats.votedUsers / totalParticipants) * 100);
-  }, [stats.votedUsers, totalParticipants]);
+  }, [votingCompletion, stats.votedUsers, totalParticipants]);
 
   const [localCollapsed, setLocalCollapsed] = useState(false);
   const participantsSectionId = useId();
@@ -159,7 +167,7 @@ export const ParticipantsList = memo(function ParticipantsList({
       data-testid="participants-panel"
       className={cn(
         'flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800',
-        className
+        className,
       )}
       padding="none"
       role="region"
@@ -168,7 +176,7 @@ export const ParticipantsList = memo(function ParticipantsList({
       <div
         className={cn(
           'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
-          collapsed && 'border-b-0 py-2'
+          collapsed && 'border-b-0 py-2',
         )}
       >
         <h2
@@ -203,7 +211,7 @@ export const ParticipantsList = memo(function ParticipantsList({
         className={cn(
           'flex-1 space-y-3 overflow-y-auto px-4 py-4',
           collapsed && 'hidden',
-          contentClassName
+          contentClassName,
         )}
       >
         {!isCompleted ? (
@@ -215,7 +223,9 @@ export const ParticipantsList = memo(function ParticipantsList({
               >
                 <span>Voting progress</span>
                 <span id={progressDescriptionId}>
-                  {stats.votedUsers}/{totalParticipants}
+                  {votingCompletion
+                    ? `${votingCompletion.completedCount}/${votingCompletion.totalCount}`
+                    : `${stats.votedUsers}/${totalParticipants}`}
                 </span>
               </div>
               <HorizontalProgress

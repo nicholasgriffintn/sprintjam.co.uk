@@ -278,6 +278,13 @@ export interface TimerState {
 
 export type RoomStatus = "active" | "completed";
 
+export interface VotingCompletion {
+  allVotesComplete: boolean;
+  completedCount: number;
+  totalCount: number;
+  incompleteUsers?: string[];
+}
+
 export interface RoomData {
   key: string;
   users: string[];
@@ -289,6 +296,7 @@ export interface RoomData {
   connectedUsers: Record<string, boolean>;
   createdAt?: string;
   lastActivity?: string;
+  votingCompletion?: VotingCompletion;
   settings: RoomSettings;
   status?: RoomStatus;
   judgeScore: VoteValue | null;
@@ -366,11 +374,14 @@ interface WebSocketPayloads {
     user: string;
     vote?: VoteValue | null;
     structuredVote?: StructuredVote | null;
+    votingCompletion?: VotingCompletion;
   };
   showVotes: {
     showVotes: boolean;
   };
-  resetVotes: Record<string, never>;
+  resetVotes: {
+    votingCompletion?: VotingCompletion;
+  };
   newModerator: {
     moderator: string;
   };
@@ -456,11 +467,11 @@ interface WebSocketEnvelope {
   closeCode?: number;
 }
 
-export type WebSocketMessage = ({
+export type WebSocketMessage = {
   [Type in WebSocketMessageType]: {
     type: Type;
   } & WebSocketPayloads[Type];
-}[WebSocketMessageType]) &
+}[WebSocketMessageType] &
   WebSocketEnvelope;
 
 export interface RoomStats {

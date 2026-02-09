@@ -218,6 +218,13 @@ export interface TimerState {
 
 export type RoomStatus = 'active' | 'completed';
 
+export interface VotingCompletion {
+  allVotesComplete: boolean;
+  completedCount: number;
+  totalCount: number;
+  incompleteUsers?: string[];
+}
+
 export interface PasscodeHashPayload {
   hash: string;
   salt: string;
@@ -235,6 +242,7 @@ export interface RoomData {
   connectedUsers: Record<string, boolean>;
   judgeScore?: string | number | null;
   judgeMetadata?: JudgeMetadata;
+  votingCompletion?: VotingCompletion;
   settings: RoomSettings;
   status?: RoomStatus;
   passcodeHash?: PasscodeHashPayload;

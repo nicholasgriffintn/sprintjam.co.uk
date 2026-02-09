@@ -95,16 +95,18 @@ export function applyRoomUpdate(
         if (updatedStructuredVotes && updatedStructuredVotes[user]) {
           const newStructuredVotes = { ...updatedStructuredVotes };
           delete newStructuredVotes[user];
-          updatedStructuredVotes = Object.keys(newStructuredVotes).length > 0
-            ? newStructuredVotes
-            : undefined;
+          updatedStructuredVotes =
+            Object.keys(newStructuredVotes).length > 0
+              ? newStructuredVotes
+              : undefined;
         }
       }
 
       return {
         ...prev,
         users: users ?? prev.users,
-        spectators: spectators && spectators.length > 0 ? spectators : undefined,
+        spectators:
+          spectators && spectators.length > 0 ? spectators : undefined,
         votes: updatedVotes,
         structuredVotes: updatedStructuredVotes,
       };
@@ -148,7 +150,14 @@ export function applyRoomUpdate(
         }
       }
 
-      if (votes === prev.votes && !structuredChanged) {
+      const votingCompletion =
+        message.votingCompletion ?? prev.votingCompletion;
+
+      if (
+        votes === prev.votes &&
+        !structuredChanged &&
+        votingCompletion === prev.votingCompletion
+      ) {
         return prev;
       }
 
@@ -156,6 +165,7 @@ export function applyRoomUpdate(
         ...prev,
         votes,
         structuredVotes,
+        votingCompletion,
       };
     }
 
@@ -181,6 +191,7 @@ export function applyRoomUpdate(
         showVotes: shouldKeepRevealed,
         judgeScore: null,
         judgeMetadata: undefined,
+        votingCompletion: message.votingCompletion,
       };
     }
 

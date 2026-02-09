@@ -7,6 +7,7 @@ import {
   getAnonymousUserId,
   ensureTimerState,
   calculateTimerSeconds,
+  calculateVotingCompletion,
 } from '@sprintjam/utils';
 
 import type { PlanningRoom } from '.';
@@ -114,11 +115,15 @@ export async function handleVote(
       ? getAnonymousUserId(roomData, userName)
       : userName;
 
+  const votingCompletion = calculateVotingCompletion(roomData);
+  roomData.votingCompletion = votingCompletion;
+
   room.broadcast({
     type: 'vote',
     user: broadcastUser,
     vote: finalVote,
     structuredVote: structuredVotePayload,
+    votingCompletion,
   });
 
   const shouldAutoReveal = (() => {
@@ -262,8 +267,12 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
   resetVotingState(room, roomData);
   const newPhase = determineRoomPhase(roomData);
 
+  const votingCompletion = calculateVotingCompletion(roomData);
+  roomData.votingCompletion = votingCompletion;
+
   room.broadcast({
     type: 'resetVotes',
+    votingCompletion,
   });
 
   const timerState = ensureTimerState(roomData);

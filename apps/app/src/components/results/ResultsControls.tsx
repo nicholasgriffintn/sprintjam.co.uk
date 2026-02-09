@@ -46,6 +46,33 @@ export function ResultsControls({
 
   const showCompleteButton = isWorkspacesEnabled();
 
+  const handleToggleShowVotes = () => {
+    if (
+      !roomData.showVotes &&
+      roomData.votingCompletion &&
+      !roomData.votingCompletion.allVotesComplete
+    ) {
+      const { completedCount, totalCount, incompleteUsers } =
+        roomData.votingCompletion;
+      const incompleteCount = totalCount - completedCount;
+
+      let message = `${incompleteCount} of ${totalCount} users haven't completed all voting criteria.`;
+
+      if (incompleteUsers && incompleteUsers.length > 0) {
+        const userList = incompleteUsers.join(', ');
+        message = `${userList} ${incompleteUsers.length === 1 ? "hasn't" : "haven't"} completed all voting criteria.`;
+      }
+
+      message += '\n\nAre you sure you want to show votes?';
+
+      if (!window.confirm(message)) {
+        return;
+      }
+    }
+
+    onToggleShowVotes();
+  };
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-3 pb-3 text-gray-900 dark:text-white">
       <div className="flex items-center gap-3">
@@ -71,7 +98,7 @@ export function ResultsControls({
               type="button"
               variant="unstyled"
               data-testid="toggle-votes-button"
-              onClick={onToggleShowVotes}
+              onClick={handleToggleShowVotes}
               className={voteToggleClasses}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

@@ -7,6 +7,7 @@ import {
   markUserConnection,
   ensureConnectedUsers,
   findCanonicalUserName,
+  calculateVotingCompletion,
 } from './room-data';
 
 const baseSettings: RoomSettings = {
@@ -203,6 +204,294 @@ describe("room-data helpers", () => {
 
         expect(findCanonicalUserName(room, "alice")).toBe("Alice");
         expect(findCanonicalUserName(room, "bob")).toBeUndefined();
+      });
+    });
+  });
+
+  describe('calculateVotingCompletion', () => {
+    describe('non-structured voting', () => {
+      it('returns all complete when all users have voted', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: { Alice: 5, Bob: 3 },
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result).toEqual({
+          allVotesComplete: true,
+          completedCount: 2,
+          totalCount: 2,
+          incompleteUsers: [],
+        });
+      });
+
+      it('returns incomplete when some users have not voted', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: { Alice: 5 },
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result).toEqual({
+          allVotesComplete: false,
+          completedCount: 1,
+          totalCount: 2,
+          incompleteUsers: ['Bob'],
+        });
+      });
+
+      it('returns incomplete when no users have voted', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: {},
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result).toEqual({
+          allVotesComplete: false,
+          completedCount: 0,
+          totalCount: 2,
+          incompleteUsers: ['Alice', 'Bob'],
+        });
+      });
+    });
+
+    describe('structured voting', () => {
+      it('returns complete when all users have complete structured votes', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: { Alice: 5, Bob: 3 },
+          structuredVotes: {
+            Alice: {
+              criteriaScores: {
+                complexity: 2,
+                confidence: 3,
+                volume: 1,
+                unknowns: 0,
+              },
+              calculatedStoryPoints: 5,
+            },
+            Bob: {
+              criteriaScores: {
+                complexity: 1,
+                confidence: 4,
+                volume: 1,
+                unknowns: 0,
+              },
+              calculatedStoryPoints: 3,
+            },
+          },
+          settings: {
+            ...baseSettings,
+            enableStructuredVoting: true,
+            votingCriteria: [
+              {
+                id: 'complexity',
+                name: 'Complexity',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'confidence',
+                name: 'Confidence',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'volume',
+                name: 'Volume',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'unknowns',
+                name: 'Unknowns',
+                description: '',
+                minScore: 0,
+                maxScore: 2,
+              },
+            ],
+          },
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result.allVotesComplete).toBe(true);
+        expect(result.completedCount).toBe(2);
+        expect(result.totalCount).toBe(2);
+      });
+
+      it('returns incomplete when user has incomplete structured vote', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: { Alice: 5, Bob: 3 },
+          structuredVotes: {
+            Alice: {
+              criteriaScores: {
+                complexity: 2,
+                confidence: 3,
+                volume: 1,
+                unknowns: 0,
+              },
+              calculatedStoryPoints: 5,
+            },
+            Bob: {
+              criteriaScores: { complexity: 1, confidence: 4 },
+              calculatedStoryPoints: 3,
+            },
+          },
+          settings: {
+            ...baseSettings,
+            enableStructuredVoting: true,
+            votingCriteria: [
+              {
+                id: 'complexity',
+                name: 'Complexity',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'confidence',
+                name: 'Confidence',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'volume',
+                name: 'Volume',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'unknowns',
+                name: 'Unknowns',
+                description: '',
+                minScore: 0,
+                maxScore: 2,
+              },
+            ],
+          },
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result.allVotesComplete).toBe(false);
+        expect(result.completedCount).toBe(1);
+        expect(result.incompleteUsers).toEqual(['Bob']);
+      });
+
+      it('treats extra vote options as complete', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: { Alice: '?', Bob: 3 },
+          structuredVotes: {
+            Bob: {
+              criteriaScores: {
+                complexity: 1,
+                confidence: 4,
+                volume: 1,
+                unknowns: 0,
+              },
+              calculatedStoryPoints: 3,
+            },
+          },
+          settings: {
+            ...baseSettings,
+            estimateOptions: [1, 2, 3, 5, 8, '?'],
+            enableStructuredVoting: true,
+            extraVoteOptions: [
+              { id: 'unsure', label: 'Unsure', value: '?', enabled: true },
+            ],
+            votingCriteria: [
+              {
+                id: 'complexity',
+                name: 'Complexity',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'confidence',
+                name: 'Confidence',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'volume',
+                name: 'Volume',
+                description: '',
+                minScore: 0,
+                maxScore: 4,
+              },
+              {
+                id: 'unknowns',
+                name: 'Unknowns',
+                description: '',
+                minScore: 0,
+                maxScore: 2,
+              },
+            ],
+          },
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result.allVotesComplete).toBe(true);
+        expect(result.completedCount).toBe(2);
+      });
+    });
+
+    describe('privacy settings', () => {
+      it('hides incomplete user names when anonymousVotes is enabled', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: { Alice: 5 },
+          settings: {
+            ...baseSettings,
+            anonymousVotes: true,
+          },
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result.incompleteUsers).toBeUndefined();
+        expect(result.completedCount).toBe(1);
+      });
+
+      it('hides incomplete user names when hideParticipantNames is enabled', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: { Alice: 5 },
+          settings: {
+            ...baseSettings,
+            hideParticipantNames: true,
+          },
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result.incompleteUsers).toBeUndefined();
+      });
+
+      it('shows incomplete user names when privacy is disabled', () => {
+        const room = createRoom({
+          users: ['Alice', 'Bob'],
+          votes: { Alice: 5 },
+        });
+
+        const result = calculateVotingCompletion(room);
+
+        expect(result.incompleteUsers).toEqual(['Bob']);
       });
     });
   });

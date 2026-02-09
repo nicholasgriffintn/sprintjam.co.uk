@@ -3,9 +3,13 @@ import type {
   StructuredVote,
   TicketQueueWithVotes,
   VoteValue,
+  VotingCompletion,
+  ExtraVoteOption,
 } from '@sprintjam/types';
 
-import { applySettingsUpdate } from "./room-settings";
+import { isStructuredVoteComplete } from './structured-voting';
+
+import { applySettingsUpdate } from './room-settings';
 
 export function getAnonymousUserId(
   roomData: RoomData,
@@ -13,7 +17,7 @@ export function getAnonymousUserId(
 ): string {
   const index = roomData.users.indexOf(userName);
   if (index === -1) {
-    return "Anonymous";
+    return 'Anonymous';
   }
   return `Anonymous ${index + 1}`;
 }
@@ -187,9 +191,91 @@ export function findCanonicalUserName(
 ): string | undefined {
   const target = candidate.trim().toLowerCase();
 
-  const foundInUsers = roomData.users.find((user) => user.toLowerCase() === target);
+  const foundInUsers = roomData.users.find(
+    (user) => user.toLowerCase() === target,
+  );
   if (foundInUsers) return foundInUsers;
 
-  const foundInSpectators = roomData.spectators?.find((user) => user.toLowerCase() === target);
+  const foundInSpectators = roomData.spectators?.find(
+    (user) => user.toLowerCase() === target,
+  );
   return foundInSpectators ?? undefined;
+}
+
+const normalizeVoteValue = (value: string | number) =>
+  String(value).trim().toLowerCase();
+
+const getEnabledExtraVoteOptions = (
+  options: ExtraVoteOption[] = [],
+): ExtraVoteOption[] => options.filter((option) => option.enabled !== false);
+
+const buildExtraVoteValueSet = (
+  options: ExtraVoteOption[] = [],
+): Set<string> => {
+  const values = new Set<string>();
+  getEnabledExtraVoteOptions(options).forEach((option) => {
+    values.add(normalizeVoteValue(option.value));
+    option.aliases?.forEach((alias) => values.add(normalizeVoteValue(alias)));
+  });
+  return values;
+};
+
+export function calculateVotingCompletion(
+  roomData: RoomData,
+): VotingCompletion {
+  const totalCount = roomData.users.length;
+  const extraVoteValues = buildExtraVoteValueSet(
+    roomData.settings.extraVoteOptions ?? [],
+  );
+
+  const incompleteUsers: string[] = [];
+  let completedCount = 0;
+
+  for (const userName of roomData.users) {
+    const userVote = roomData.votes[userName];
+
+    if (userVote === null || userVote === undefined) {
+      incompleteUsers.push(userName);
+      continue;
+    }
+
+    if (roomData.settings.enableStructuredVoting) {
+      if (extraVoteValues.has(normalizeVoteValue(userVote))) {
+        completedCount++;
+        continue;
+      }
+
+      const structuredVote = roomData.structuredVotes?.[userName];
+      if (!structuredVote) {
+        incompleteUsers.push(userName);
+        continue;
+      }
+
+      const isComplete = isStructuredVoteComplete(
+        structuredVote.criteriaScores,
+        roomData.settings.votingCriteria,
+      );
+
+      if (isComplete) {
+        completedCount++;
+      } else {
+        incompleteUsers.push(userName);
+      }
+    } else {
+      completedCount++;
+    }
+  }
+
+  const allVotesComplete = completedCount === totalCount && totalCount > 0;
+
+  const shouldIncludeUserNames =
+    !roomData.settings.anonymousVotes &&
+    !roomData.settings.hideParticipantNames;
+
+  return {
+    allVotesComplete,
+    completedCount,
+    totalCount,
+    incompleteUsers: shouldIncludeUserNames ? incompleteUsers : undefined,
+  };
 }
