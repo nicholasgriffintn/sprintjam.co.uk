@@ -9,16 +9,16 @@ export async function sendVerificationCodeEmail({
   code,
   resendApiKey,
 }: SendVerificationCodeEmailParams): Promise<void> {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${resendApiKey}`,
     },
     body: JSON.stringify({
-      from: "SprintJam <sprintjam@notifications.nicholasgriffin.dev>",
+      from: 'SprintJam <sprintjam@notifications.nicholasgriffin.co.uk>',
       to: [email],
-      subject: "Your SprintJam verification code",
+      subject: 'Your SprintJam verification code',
       html: `
         <!DOCTYPE html>
         <html>
