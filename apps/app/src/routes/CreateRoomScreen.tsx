@@ -281,6 +281,7 @@ const CreateRoomScreen = () => {
                     }}
                     resetKey={settingsResetKey}
                     hideVotingModeAndEstimates={true}
+                    isCreating={true}
                   />
                 ) : (
                   <div className="rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300">

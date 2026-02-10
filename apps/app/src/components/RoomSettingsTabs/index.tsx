@@ -41,6 +41,7 @@ interface RoomSettingsTabsProps {
   resetKey?: string | number;
   hideVotingModeAndEstimates?: boolean;
   initialTab?: RoomSettingsTabId;
+  isCreating?: boolean;
 }
 
 export function RoomSettingsTabs({
@@ -56,6 +57,7 @@ export function RoomSettingsTabs({
   resetKey = 0,
   hideVotingModeAndEstimates = false,
   initialTab,
+  isCreating = false,
 }: RoomSettingsTabsProps) {
   const structuredOptions = structuredVotingOptions ?? [];
   const presets = useMemo(() => {
@@ -455,6 +457,7 @@ export function RoomSettingsTabs({
         <TicketQueueSettings
           localSettings={localSettings}
           handleChange={handleChange}
+          isCreating={isCreating}
         />
       );
     }
