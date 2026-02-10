@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@sentry/cloudflare": "^10.36.0",
-    "@simplewebauthn/server": "10.0.1",
+    "@simplewebauthn/server": "13.2.2",
     "@sprintjam/db": "workspace:*",
     "@sprintjam/services": "workspace:*",
     "@sprintjam/types": "workspace:*",
