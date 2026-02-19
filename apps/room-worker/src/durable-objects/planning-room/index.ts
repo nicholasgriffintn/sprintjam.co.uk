@@ -15,6 +15,7 @@ import type {
   SessionInfo,
   StructuredVote,
   TicketQueueItem,
+  RoomGameType,
 } from "@sprintjam/types";
 import {
   normalizeRoomData,
@@ -57,6 +58,11 @@ import {
   handleStartTimer as handleStartTimerHandler,
 } from "./timer";
 import { handleCompleteSession as handleCompleteSessionHandler } from "./status";
+import {
+  handleEndGame as handleEndGameHandler,
+  handleStartGame as handleStartGameHandler,
+  handleSubmitGameMove as handleSubmitGameMoveHandler,
+} from './games';
 import { readRoomData } from "./room-helpers";
 
 export class PlanningRoom implements PlanningRoomHttpContext {
@@ -65,6 +71,8 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   sessions: Map<CfWebSocket, SessionInfo>;
   judge: PlanningPokerJudge;
   repository: PlanningRoomRepository;
+  private numberTarget: number = 1;
+  private lastWord: string | null = null;
 
   constructor(state: DurableObjectState, env: RoomWorkerEnv) {
     this.state = state;
@@ -272,6 +280,45 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleCompleteSession(userName: string) {
     return handleCompleteSessionHandler(this, userName);
+  }
+
+  async handleStartGame(userName: string, gameType: RoomGameType) {
+    return handleStartGameHandler(this, userName, gameType);
+  }
+
+  async handleSubmitGameMove(userName: string, value: string) {
+    return handleSubmitGameMoveHandler(this, userName, value);
+  }
+
+  async handleEndGame(userName: string) {
+    return handleEndGameHandler(this, userName);
+  }
+
+  resetGameRuntime(gameType: RoomGameType) {
+    this.lastWord = null;
+    if (gameType === 'guess-the-number') {
+      this.setNumberTarget();
+    }
+  }
+
+  clearGameRuntime() {
+    this.lastWord = null;
+  }
+
+  setNumberTarget() {
+    this.numberTarget = Math.floor(Math.random() * 20) + 1;
+  }
+
+  getNumberTarget() {
+    return this.numberTarget;
+  }
+
+  setLastWord(word: string) {
+    this.lastWord = word;
+  }
+
+  getLastWord() {
+    return this.lastWord;
   }
 
   broadcast(message: BroadcastMessage) {

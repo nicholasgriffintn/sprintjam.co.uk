@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -27,6 +27,8 @@ import { useDisplayQueueSetup } from "@/hooks/useDisplayQueueSetup";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { Footer } from "@/components/layout/Footer";
+import { RoomGamesModal } from "@/components/games/RoomGamesModal";
+import { RoomGamePanel } from "@/components/games/RoomGamePanel";
 import ShareRoomModal from "@/components/modals/ShareRoomModal";
 import SettingsModal from "@/components/modals/SettingsModal";
 import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
@@ -67,6 +69,9 @@ const RoomScreen = () => {
     retryConnection,
     handleLeaveRoom,
     handleCompleteSession,
+    handleStartGame,
+    handleSubmitGameMove,
+    handleEndGame,
   } = useRoomActions();
   const { name } = useSessionState();
   const {
@@ -87,6 +92,8 @@ const RoomScreen = () => {
   const [isCompleteSessionOpen, setIsCompleteSessionOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
   const [summaryNote, setSummaryNote] = useState("");
+  const [isGamesModalOpen, setIsGamesModalOpen] = useState(false);
+  const [gameAnnouncement, setGameAnnouncement] = useState<string | null>(null);
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
@@ -150,6 +157,17 @@ const RoomScreen = () => {
       name: name,
     });
 
+
+  useEffect(() => {
+    if (!roomData.gameSession || roomData.gameSession.status !== 'active') {
+      return;
+    }
+
+    setGameAnnouncement(`${roomData.gameSession.startedBy} started ${roomData.gameSession.type.replace(/-/g, ' ')}. Jump in from the game panel!`);
+    const timeout = setTimeout(() => setGameAnnouncement(null), 6000);
+
+    return () => clearTimeout(timeout);
+  }, [roomData.gameSession?.startedAt]);
   const completedTicketList =
     roomData.ticketQueue?.filter((ticket) => ticket.status === "completed") ??
     [];
@@ -211,7 +229,24 @@ const RoomScreen = () => {
         </div>
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4 order-1 md:order-none">
+          {gameAnnouncement ? (
+            <SurfaceCard padding="sm" variant="subtle" className="border-brand-300/60 bg-brand-50/80 text-sm text-brand-800 dark:border-brand-300/30 dark:bg-brand-400/10 dark:text-brand-100">
+              {gameAnnouncement}
+            </SurfaceCard>
+          ) : null}
+
+          {roomData.gameSession ? (
+            <RoomGamePanel
+              roomData={roomData}
+              userName={name}
+              isModeratorView={isModeratorView}
+              onSubmitMove={handleSubmitGameMove}
+              onEndGame={handleEndGame}
+            />
+          ) : null}
+
           {roomData?.status === "completed" ? (
+
             <>
               <SurfaceCard padding="md" className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -318,7 +353,12 @@ const RoomScreen = () => {
                 )}
               </SurfaceCard>
 
-              <Footer displayRepoLink={false} layout="wide" fullWidth />
+              <Footer
+                      displayRepoLink={false}
+                      layout="wide"
+                      fullWidth
+                      onOpenGames={() => setIsGamesModalOpen(true)}
+                    />
             </>
           ) : (
             <>
@@ -474,7 +514,12 @@ const RoomScreen = () => {
                       </motion.div>
                     </SurfaceCard>
 
-                    <Footer displayRepoLink={false} layout="wide" fullWidth />
+                    <Footer
+                      displayRepoLink={false}
+                      layout="wide"
+                      fullWidth
+                      onOpenGames={() => setIsGamesModalOpen(true)}
+                    />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -508,7 +553,12 @@ const RoomScreen = () => {
                       </motion.div>
                     </SurfaceCard>
 
-                    <Footer displayRepoLink={false} layout="wide" fullWidth />
+                    <Footer
+                      displayRepoLink={false}
+                      layout="wide"
+                      fullWidth
+                      onOpenGames={() => setIsGamesModalOpen(true)}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -543,6 +593,13 @@ const RoomScreen = () => {
           />
         )}
       </AnimatePresence>
+
+      <RoomGamesModal
+        isOpen={isGamesModalOpen}
+        roomData={roomData}
+        onClose={() => setIsGamesModalOpen(false)}
+        onStartGame={handleStartGame}
+      />
 
       <AnimatePresence>
         {isShareModalOpen && (

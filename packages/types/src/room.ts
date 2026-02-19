@@ -216,6 +216,43 @@ export interface TimerState {
   autoResetOnVotesReset?: boolean;
 }
 
+export type RoomGameType = 'guess-the-number' | 'word-chain' | 'emoji-story';
+
+export interface RoomGameDefinition {
+  type: RoomGameType;
+  title: string;
+  description: string;
+  accent: string;
+  objective: string;
+}
+
+export interface RoomGameMove {
+  id: string;
+  user: string;
+  submittedAt: number;
+  value: string;
+  round: number;
+}
+
+export interface RoomGameEvent {
+  id: string;
+  message: string;
+  createdAt: number;
+}
+
+export interface RoomGameSession {
+  type: RoomGameType;
+  startedBy: string;
+  startedAt: number;
+  round: number;
+  status: 'active' | 'completed';
+  participants: string[];
+  leaderboard: Record<string, number>;
+  moves: RoomGameMove[];
+  events: RoomGameEvent[];
+  winner?: string;
+}
+
 export type RoomStatus = 'active' | 'completed';
 
 export interface VotingCompletion {
@@ -254,6 +291,7 @@ export interface RoomData {
   currentTicket?: TicketQueueWithVotes;
   ticketQueue?: TicketQueueWithVotes[];
   timerState?: TimerState;
+  gameSession?: RoomGameSession;
 }
 
 export interface BroadcastMessage {
@@ -296,4 +334,7 @@ export type ClientMessage =
     }
   | { type: "toggleSpectator"; isSpectator: boolean }
   | { type: "completeSession" }
+  | { type: "startGame"; gameType: RoomGameType }
+  | { type: "submitGameMove"; value: string }
+  | { type: "endGame" }
   | { type: "ping" };

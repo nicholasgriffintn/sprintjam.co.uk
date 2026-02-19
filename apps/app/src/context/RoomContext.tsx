@@ -25,6 +25,9 @@ import {
   updateTicket,
   deleteTicket,
   completeSession,
+  startGame,
+  submitGameMove,
+  endGame,
 } from "@/lib/api-service";
 import {
   applyRoomMessageToCollections,
@@ -45,6 +48,7 @@ import type {
   RoomSettings,
   ServerDefaults,
   StructuredVote,
+  RoomGameType,
   TicketQueueItem,
   VoteValue,
   WebSocketMessage,
@@ -99,6 +103,9 @@ interface RoomActionsContextValue {
   ) => Promise<void>;
   handleDeleteTicket: (ticketId: number) => Promise<void>;
   handleCompleteSession: () => void;
+  handleStartGame: (gameType: RoomGameType) => void;
+  handleSubmitGameMove: (value: string) => void;
+  handleEndGame: () => void;
   retryConnection: () => void;
 }
 
@@ -661,6 +668,38 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [assignRoomError, name, roomData]);
 
+  const handleStartGame = useCallback((gameType: RoomGameType) => {
+    if (roomData?.status === 'completed') {
+      return;
+    }
+
+    try {
+      startGame(gameType);
+    } catch (err: unknown) {
+      assignRoomError(err, 'Failed to start game');
+    }
+  }, [assignRoomError, roomData?.status]);
+
+  const handleSubmitGameMove = useCallback((value: string) => {
+    if (roomData?.status === 'completed') {
+      return;
+    }
+
+    try {
+      submitGameMove(value);
+    } catch (err: unknown) {
+      assignRoomError(err, 'Failed to submit game move');
+    }
+  }, [assignRoomError, roomData?.status]);
+
+  const handleEndGame = useCallback(() => {
+    try {
+      endGame();
+    } catch (err: unknown) {
+      assignRoomError(err, 'Failed to end game');
+    }
+  }, [assignRoomError]);
+
   const retryConnection = useCallback(() => {
     setConnectionIssue((current) =>
       current ? { ...current, reconnecting: true } : null,
@@ -730,6 +769,9 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleUpdateTicket,
       handleDeleteTicket,
       handleCompleteSession,
+      handleStartGame,
+      handleSubmitGameMove,
+      handleEndGame,
       retryConnection,
     }),
     [
@@ -737,6 +779,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleAddTicket,
       handleCompleteSession,
       handleCreateRoom,
+      handleEndGame,
       handleDeleteTicket,
       handleJoinRoom,
       handleLeaveRoom,
@@ -746,6 +789,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleSelectTicket,
       handleToggleShowVotes,
       handleToggleSpectatorMode,
+      handleStartGame,
+      handleSubmitGameMove,
       handleUpdateSettings,
       handleUpdateTicket,
       handleVote,

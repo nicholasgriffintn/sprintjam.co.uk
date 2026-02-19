@@ -276,6 +276,35 @@ export interface TimerState {
   autoResetOnVotesReset?: boolean;
 }
 
+export type RoomGameType = 'guess-the-number' | 'word-chain' | 'emoji-story';
+
+export interface RoomGameMove {
+  id: string;
+  user: string;
+  submittedAt: number;
+  value: string;
+  round: number;
+}
+
+export interface RoomGameEvent {
+  id: string;
+  message: string;
+  createdAt: number;
+}
+
+export interface RoomGameSession {
+  type: RoomGameType;
+  startedBy: string;
+  startedAt: number;
+  round: number;
+  status: 'active' | 'completed';
+  participants: string[];
+  leaderboard: Record<string, number>;
+  moves: RoomGameMove[];
+  events: RoomGameEvent[];
+  winner?: string;
+}
+
 export type RoomStatus = "active" | "completed";
 
 export interface VotingCompletion {
@@ -309,6 +338,7 @@ export interface RoomData {
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
   timerState?: TimerState;
+  gameSession?: RoomGameSession;
 }
 
 export type WebSocketErrorReason =
@@ -346,7 +376,10 @@ export type WebSocketMessageType =
   | "timerStarted"
   | "timerPaused"
   | "timerReset"
-  | "timerUpdated";
+  | "timerUpdated"
+  | "gameStarted"
+  | "gameMoveSubmitted"
+  | "gameEnded";
 
 interface WebSocketPayloads {
   initialize: {
@@ -457,6 +490,18 @@ interface WebSocketPayloads {
   };
   timerUpdated: {
     timerState: TimerState;
+  };
+  gameStarted: {
+    gameSession: RoomGameSession;
+    startedBy: string;
+  };
+  gameMoveSubmitted: {
+    gameSession: RoomGameSession;
+    user: string;
+  };
+  gameEnded: {
+    gameSession?: RoomGameSession;
+    endedBy: string;
   };
 }
 
