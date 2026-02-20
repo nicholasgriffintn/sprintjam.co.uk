@@ -7,6 +7,12 @@ const GAME_TITLES: Record<RoomGameType, string> = {
   'word-chain': 'Word Chain',
   'emoji-story': 'Emoji Story',
 };
+const MAX_GAME_ROUNDS = 5;
+const ROUND_MOVE_TARGET = 6;
+const GUESS_ROUND_ATTEMPT_LIMIT = 10;
+const MAX_EMOJI_STORY_MOVE_EMOJIS = 6;
+const EMOJI_TOKEN_PATTERN =
+  /(?:\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*|\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3)/gu;
 
 const createGameEvent = (message: string) => ({
   id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
@@ -35,6 +41,77 @@ const initializeSession = (
 
 const addPoints = (session: RoomGameSession, userName: string, points: number) => {
   session.leaderboard[userName] = (session.leaderboard[userName] ?? 0) + points;
+};
+
+const addEvent = (session: RoomGameSession, message: string) => {
+  session.events = [...session.events.slice(-9), createGameEvent(message)];
+};
+
+const getCurrentRoundMoveCount = (session: RoomGameSession) =>
+  session.moves.filter((gameMove) => gameMove.round === session.round).length;
+
+const isValidEmojiStoryMove = (value: string) => {
+  const compactValue = value.replace(/\s+/g, '');
+  if (!compactValue) {
+    return false;
+  }
+
+  const emojiTokens = compactValue.match(EMOJI_TOKEN_PATTERN) ?? [];
+  if (emojiTokens.length === 0 || emojiTokens.length > MAX_EMOJI_STORY_MOVE_EMOJIS) {
+    return false;
+  }
+
+  return emojiTokens.join('') === compactValue;
+};
+
+const getWinner = (session: RoomGameSession) => {
+  const sortedScores = Object.entries(session.leaderboard).sort((a, b) => b[1] - a[1]);
+  const topScore = sortedScores[0]?.[1];
+
+  if (topScore === undefined) {
+    return undefined;
+  }
+
+  const topScorers = sortedScores.filter(([, score]) => score === topScore).map(([name]) => name);
+  return topScorers.length === 1 ? topScorers[0] : undefined;
+};
+
+const completeGameSession = async (
+  room: PlanningRoom,
+  roomData: RoomData,
+  session: RoomGameSession,
+  endedBy: string,
+  reason: 'manual' | 'round-limit',
+) => {
+  const winner = getWinner(session);
+  session.status = 'completed';
+  session.winner = winner;
+
+  if (reason === 'round-limit') {
+    addEvent(
+      session,
+      winner
+        ? `Game ended after ${MAX_GAME_ROUNDS} rounds. Winner: ${winner}.`
+        : `Game ended after ${MAX_GAME_ROUNDS} rounds in a tie.`,
+    );
+  } else {
+    addEvent(
+      session,
+      winner
+        ? `${endedBy} ended the game. Winner: ${winner}.`
+        : `${endedBy} ended the game in a tie.`,
+    );
+  }
+
+  room.clearGameRuntime();
+  roomData.gameSession = session;
+  await room.putRoomData(roomData);
+
+  room.broadcast({
+    type: 'gameEnded',
+    gameSession: session,
+    endedBy,
+  });
 };
 
 export async function handleStartGame(
@@ -85,6 +162,15 @@ export async function handleSubmitGameMove(
     return;
   }
 
+  if (session.type === 'emoji-story' && !isValidEmojiStoryMove(value)) {
+    return;
+  }
+
+  const latestMove = session.moves[session.moves.length - 1];
+  if (roomData.users.length > 1 && latestMove?.user === userName) {
+    return;
+  }
+
   const move = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
     user: userName,
@@ -100,20 +186,26 @@ export async function handleSubmitGameMove(
     const target = room.getNumberTarget();
 
     if (Number.isFinite(guess) && Number.isInteger(guess) && guess >= 1 && guess <= 20) {
+      let isExactGuess = false;
+
       if (guess === target) {
+        isExactGuess = true;
         addPoints(session, userName, 3);
-        session.events = [
-          ...session.events.slice(-9),
-          createGameEvent(`${userName} nailed it with ${guess}. +3 points.`),
-        ];
+        addEvent(session, `${userName} nailed it with ${guess}. +3 points.`);
         session.round += 1;
         room.setNumberTarget();
       } else if (Math.abs(guess - target) <= 2) {
         addPoints(session, userName, 1);
-        session.events = [
-          ...session.events.slice(-9),
-          createGameEvent(`${userName} was close with ${guess}. +1 point.`),
-        ];
+        addEvent(session, `${userName} was close with ${guess}. +1 point.`);
+      }
+
+      if (!isExactGuess && getCurrentRoundMoveCount(session) >= GUESS_ROUND_ATTEMPT_LIMIT) {
+        session.round += 1;
+        room.setNumberTarget();
+        addEvent(
+          session,
+          `Round ${session.round - 1} closed without an exact hit. New number, round ${session.round}.`,
+        );
       }
     }
   }
@@ -126,32 +218,29 @@ export async function handleSubmitGameMove(
       if (!prior || normalized[0] === prior[prior.length - 1]) {
         room.setLastWord(normalized);
         addPoints(session, userName, 2);
-        session.events = [
-          ...session.events.slice(-9),
-          createGameEvent(`${userName} kept the chain alive with “${value}”. +2 points.`),
-        ];
+        addEvent(session, `${userName} kept the chain alive with “${value}”. +2 points.`);
       } else {
-        session.events = [
-          ...session.events.slice(-9),
-          createGameEvent(`${userName} broke the chain with “${value}”.`),
-        ];
+        addEvent(session, `${userName} broke the chain with “${value}”.`);
       }
+    }
+
+    if (getCurrentRoundMoveCount(session) === ROUND_MOVE_TARGET) {
+      session.round += 1;
     }
   }
 
   if (session.type === 'emoji-story') {
     addPoints(session, userName, 1);
-    session.events = [
-      ...session.events.slice(-9),
-      createGameEvent(`${userName} added “${value}” to the story.`),
-    ];
+    addEvent(session, `${userName} added “${value}” to the story.`);
 
-    const currentRoundMoves = session.moves.filter(
-      (gameMove) => gameMove.round === session.round,
-    ).length;
-    if (currentRoundMoves === 6) {
+    if (getCurrentRoundMoveCount(session) === ROUND_MOVE_TARGET) {
       session.round += 1;
     }
+  }
+
+  if (session.round > MAX_GAME_ROUNDS) {
+    await completeGameSession(room, roomData, session, 'system', 'round-limit');
+    return;
   }
 
   roomData.gameSession = session;
@@ -172,28 +261,5 @@ export async function handleEndGame(room: PlanningRoom, userName: string) {
     return;
   }
 
-  const winner = Object.entries(session.leaderboard)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name]) => name)[0];
-
-  session.status = 'completed';
-  session.winner = winner;
-  session.events = [
-    ...session.events.slice(-9),
-    createGameEvent(
-      winner
-        ? `${userName} ended the game. Winner: ${winner}.`
-        : `${userName} ended the game.`,
-    ),
-  ];
-
-  room.clearGameRuntime();
-  roomData.gameSession = session;
-  await room.putRoomData(roomData);
-
-  room.broadcast({
-    type: 'gameEnded',
-    gameSession: session,
-    endedBy: userName,
-  });
+  await completeGameSession(room, roomData, session, userName, 'manual');
 }

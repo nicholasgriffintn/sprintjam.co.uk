@@ -373,7 +373,7 @@ describe("PlanningRoom critical flows", () => {
     expect(roomData.votes["alice"]).toBeUndefined();
   });
 
-  it("advances emoji-story rounds every 6 moves even after move history cap", async () => {
+  it("auto-ends emoji-story after 5 rounds", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
@@ -390,20 +390,160 @@ describe("PlanningRoom critical flows", () => {
     await room.handleStartGame("alice", "emoji-story");
     expect(roomData.gameSession?.round).toBe(1);
 
+    const emojiSequence = ["😀", "😃", "😄", "😁", "😆", "😅"];
     for (let index = 1; index <= 30; index += 1) {
-      await room.handleSubmitGameMove("alice", `emoji-${index}`);
+      const emoji = emojiSequence[(index - 1) % emojiSequence.length];
+      await room.handleSubmitGameMove("alice", emoji);
     }
+
     expect(roomData.gameSession?.moves).toHaveLength(30);
     expect(roomData.gameSession?.round).toBe(6);
+    expect(roomData.gameSession?.status).toBe("completed");
+    expect(roomData.gameSession?.winner).toBe("alice");
+    expect(room.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "gameEnded", endedBy: "system" }),
+    );
+  });
 
-    await room.handleSubmitGameMove("alice", "emoji-31");
-    await room.handleSubmitGameMove("alice", "emoji-32");
-    expect(roomData.gameSession?.round).toBe(6);
+  it("blocks consecutive moves from the same user when multiplayer", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-multiplayer",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
 
-    for (let index = 33; index <= 36; index += 1) {
-      await room.handleSubmitGameMove("alice", `emoji-${index}`);
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "emoji-story");
+    await room.handleSubmitGameMove("alice", "🎯");
+    await room.handleSubmitGameMove("alice", "🔥");
+
+    expect(roomData.gameSession?.moves).toHaveLength(1);
+    expect(roomData.gameSession?.moves[0]?.value).toBe("🎯");
+
+    await room.handleSubmitGameMove("bob", "🚀");
+    expect(roomData.gameSession?.moves).toHaveLength(2);
+  });
+
+  it("auto-ends guess-the-number after 5 rounds", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-guess",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+    room.getNumberTarget = vi.fn(() => 20);
+    room.setNumberTarget = vi.fn();
+
+    await room.handleStartGame("alice", "guess-the-number");
+
+    for (let index = 1; index <= 50; index += 1) {
+      await room.handleSubmitGameMove("alice", "1");
     }
-    expect(roomData.gameSession?.round).toBe(7);
+
+    expect(roomData.gameSession?.status).toBe("completed");
+    expect(roomData.gameSession?.round).toBe(6);
+    expect(roomData.gameSession?.winner).toBe("alice");
+    expect(room.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "gameEnded", endedBy: "system" }),
+    );
+  });
+
+  it("does not assign a winner when scores are tied", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-tie",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "emoji-story");
+    await room.handleSubmitGameMove("alice", "🎯");
+    await room.handleSubmitGameMove("bob", "🎉");
+    await room.handleEndGame("alice");
+
+    expect(roomData.gameSession?.status).toBe("completed");
+    expect(roomData.gameSession?.winner).toBeUndefined();
+  });
+
+  it("rejects emoji-story moves containing non-emoji text", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-emoji-validate-text",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "emoji-story");
+    await room.handleSubmitGameMove("alice", "hello");
+
+    expect(roomData.gameSession?.moves).toHaveLength(0);
+    expect(roomData.gameSession?.leaderboard.alice).toBe(0);
+  });
+
+  it("rejects emoji-story moves above emoji limit", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-emoji-validate-max",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "emoji-story");
+    await room.handleSubmitGameMove("alice", "😀😃😄😁😆😅😂");
+
+    expect(roomData.gameSession?.moves).toHaveLength(0);
+    expect(roomData.gameSession?.leaderboard.alice).toBe(0);
+  });
+
+  it("accepts emoji-story move at emoji limit", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-emoji-validate-ok",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "emoji-story");
+    await room.handleSubmitGameMove("alice", "😀 😃 😄 😁 😆 😅");
+
+    expect(roomData.gameSession?.moves).toHaveLength(1);
+    expect(roomData.gameSession?.leaderboard.alice).toBe(1);
   });
 
   it("persists structured votes and broadcasts structured payloads", async () => {

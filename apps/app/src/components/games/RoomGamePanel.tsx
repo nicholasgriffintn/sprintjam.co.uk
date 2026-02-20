@@ -106,7 +106,7 @@ export const RoomGamePanel = ({
                 ? 'Enter a number from 1 to 20'
                 : gameSession.type === 'word-chain'
                   ? 'Type a word'
-                  : 'Drop an emoji combo'
+                  : 'Drop 1-6 emojis'
             }
             maxLength={48}
           />

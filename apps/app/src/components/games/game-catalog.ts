@@ -22,6 +22,6 @@ export const ROOM_GAMES: Array<{
     type: 'emoji-story',
     title: 'Emoji Story',
     description: 'Build a collaborative story one emoji burst at a time.',
-    objective: 'Create chaos together and vote for the funniest sequence.',
+    objective: 'Create chaos together and race for the top score.',
   },
 ];
