@@ -600,6 +600,41 @@ describe("PlanningRoom critical flows", () => {
     expect(roomData.gameSession?.leaderboard.bob).toBe(0);
   });
 
+  it("rejects short word-chain moves without advancing the round", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-word-invalid",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "word-chain");
+    await room.handleSubmitGameMove("alice", "apple");
+    await room.handleSubmitGameMove("alice", "eagle");
+    await room.handleSubmitGameMove("alice", "earth");
+    await room.handleSubmitGameMove("alice", "heart");
+    await room.handleSubmitGameMove("alice", "tango");
+
+    expect(roomData.gameSession?.moves).toHaveLength(5);
+    expect(roomData.gameSession?.round).toBe(1);
+    expect(roomData.gameSession?.leaderboard.alice).toBe(10);
+
+    await room.handleSubmitGameMove("alice", "a");
+
+    expect(roomData.gameSession?.moves).toHaveLength(5);
+    expect(roomData.gameSession?.round).toBe(1);
+    expect(roomData.gameSession?.leaderboard.alice).toBe(10);
+    expect(roomData.gameSession?.events.at(-1)?.message).toContain(
+      "invalid word",
+    );
+  });
+
   it("does not assign a winner when scores are tied", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);

@@ -243,8 +243,9 @@ export async function handleSubmitGameMove(
   if (session.type === 'word-chain') {
     const normalized = value.toLowerCase().replace(/[^a-z]/g, '');
     const prior = session.lastWord ?? null;
+    const isValidWord = normalized.length >= 2;
 
-    if (normalized.length >= 2) {
+    if (isValidWord) {
       if (!prior || normalized[0] === prior[prior.length - 1]) {
         session.lastWord = normalized;
         addPoints(session, userName, 2);
@@ -252,9 +253,12 @@ export async function handleSubmitGameMove(
       } else {
         addEvent(session, `${userName} broke the chain with “${value}”.`);
       }
+    } else {
+      session.moves = session.moves.slice(0, -1);
+      addEvent(session, `${userName} entered an invalid word. Use at least two letters.`);
     }
 
-    if (getCurrentRoundMoveCount(session) === ROUND_MOVE_TARGET) {
+    if (isValidWord && getCurrentRoundMoveCount(session) === ROUND_MOVE_TARGET) {
       session.round += 1;
     }
   }
