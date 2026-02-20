@@ -1,3 +1,8 @@
+## V2.8
+
+- Added a new party games feature that allows users to play games with collaborators that are designed to last just a few minutes for a quick break between votes. Starting with three games: Guess the Number, Word Chain and Emoji Story.
+- Fixed an issue where the wheel was not correctly removing items after they were picked.
+
 ## V2.7
 
 - Now tracks all options selected when structured voting is enabled for the completion measurement. Displays a confirm window if the moderator attempts to show votes before all users have completed all criteria.
