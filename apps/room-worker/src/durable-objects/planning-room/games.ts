@@ -1,4 +1,5 @@
 import type { RoomData, RoomGameSession, RoomGameType } from '@sprintjam/types';
+import { sanitizeGameSession } from '@sprintjam/utils';
 
 import type { PlanningRoom } from '.';
 
@@ -79,6 +80,9 @@ const getWinner = (session: RoomGameSession) => {
   return topScorers.length === 1 ? topScorers[0] : undefined;
 };
 
+const getClientGameSession = (session: RoomGameSession): RoomGameSession =>
+  sanitizeGameSession(session) ?? session;
+
 const completeGameSession = async (
   room: PlanningRoom,
   roomData: RoomData,
@@ -111,7 +115,7 @@ const completeGameSession = async (
 
   room.broadcast({
     type: 'gameEnded',
-    gameSession: session,
+    gameSession: getClientGameSession(session),
     endedBy,
   });
 };
@@ -141,7 +145,7 @@ export async function handleStartGame(
 
   room.broadcast({
     type: 'gameStarted',
-    gameSession: session,
+    gameSession: getClientGameSession(session),
     startedBy: userName,
   });
 }
@@ -191,16 +195,29 @@ export async function handleSubmitGameMove(
 
     if (Number.isFinite(guess) && Number.isInteger(guess) && guess >= 1 && guess <= 20) {
       let isExactGuess = false;
+      const alreadyGuessedSameValueThisRound = session.moves.some(
+        (gameMove) =>
+          gameMove.id !== move.id &&
+          gameMove.round === move.round &&
+          gameMove.user === userName &&
+          gameMove.value === value,
+      );
 
-      if (guess === target) {
-        isExactGuess = true;
-        addPoints(session, userName, 3);
-        addEvent(session, `${userName} nailed it with ${guess}. +3 points.`);
-        session.round += 1;
-        session.numberTarget = createNumberTarget();
-      } else if (Math.abs(guess - target) <= 2) {
-        addPoints(session, userName, 1);
-        addEvent(session, `${userName} was close with ${guess}. +1 point.`);
+      if (alreadyGuessedSameValueThisRound) {
+        addEvent(session, `${userName} already guessed ${guess} this round.`);
+      } else {
+        if (guess === target) {
+          isExactGuess = true;
+          addPoints(session, userName, 3);
+          addEvent(session, `${userName} nailed it with ${guess}. +3 points.`);
+          session.round += 1;
+          session.numberTarget = createNumberTarget();
+        } else if (Math.abs(guess - target) <= 2) {
+          addPoints(session, userName, 1);
+          addEvent(session, `${userName} was close with ${guess}. +1 point.`);
+        } else {
+          addEvent(session, `${userName} missed with ${guess}. No points.`);
+        }
       }
 
       if (!isExactGuess && getCurrentRoundMoveCount(session) >= GUESS_ROUND_ATTEMPT_LIMIT) {
@@ -211,6 +228,9 @@ export async function handleSubmitGameMove(
           `Round ${session.round - 1} closed without an exact hit. New number, round ${session.round}.`,
         );
       }
+    } else {
+      session.moves = session.moves.slice(0, -1);
+      addEvent(session, `${userName} entered an invalid guess. Use a whole number from 1 to 20.`);
     }
   }
 
@@ -252,7 +272,7 @@ export async function handleSubmitGameMove(
 
   room.broadcast({
     type: 'gameMoveSubmitted',
-    gameSession: session,
+    gameSession: getClientGameSession(session),
     user: userName,
   });
 }

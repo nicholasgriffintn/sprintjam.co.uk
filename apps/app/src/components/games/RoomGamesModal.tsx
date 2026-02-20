@@ -23,7 +23,7 @@ export const RoomGamesModal = ({
       <div className="space-y-4">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Launch a party game with the same room collaborators. Games are
-          designed to last just a few minutes.
+          designed to last just a few minutes. Multiplayer games are turn-based.
         </p>
 
         <div className="grid gap-3 md:grid-cols-3">

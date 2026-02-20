@@ -458,6 +458,93 @@ describe("PlanningRoom critical flows", () => {
     );
   });
 
+  it("does not expose guess-the-number target in game websocket payloads", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-guess-sanitize",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "guess-the-number");
+
+    const startedPayload = (room.broadcast as ReturnType<typeof vi.fn>).mock.calls.find(
+      ([message]) => message.type === "gameStarted",
+    )?.[0];
+    expect(roomData.gameSession?.numberTarget).toEqual(expect.any(Number));
+    expect(startedPayload?.gameSession?.numberTarget).toBeUndefined();
+
+    roomData.gameSession!.numberTarget = 20;
+    await room.handleSubmitGameMove("alice", "1");
+
+    const movePayload = [...(room.broadcast as ReturnType<typeof vi.fn>).mock.calls]
+      .reverse()
+      .find(([message]) => message.type === "gameMoveSubmitted")?.[0];
+    expect(movePayload?.gameSession?.numberTarget).toBeUndefined();
+  });
+
+  it("adds feedback for invalid and wrong guess-the-number submissions", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-guess-feedback",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "guess-the-number");
+
+    roomData.gameSession!.numberTarget = 20;
+    await room.handleSubmitGameMove("alice", "not-a-number");
+    expect(roomData.gameSession?.moves).toHaveLength(0);
+    expect(roomData.gameSession?.events.at(-1)?.message).toContain(
+      "invalid guess",
+    );
+
+    await room.handleSubmitGameMove("alice", "1");
+    expect(roomData.gameSession?.events.at(-1)?.message).toContain(
+      "missed with 1",
+    );
+  });
+
+  it("does not award repeated points for duplicate close guess in the same round", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-guess-duplicate",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "guess-the-number");
+    roomData.gameSession!.numberTarget = 10;
+
+    await room.handleSubmitGameMove("alice", "9");
+    await room.handleSubmitGameMove("bob", "1");
+    await room.handleSubmitGameMove("alice", "9");
+
+    expect(roomData.gameSession?.leaderboard.alice).toBe(1);
+    expect(roomData.gameSession?.events.at(-1)?.message).toContain(
+      "already guessed 9",
+    );
+  });
+
   it("keeps guess-the-number target across room instance restart", async () => {
     const roomData: RoomData = createInitialRoomData({
       key: "room-guess-restart",

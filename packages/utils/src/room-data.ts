@@ -1,5 +1,6 @@
 import type {
   RoomData,
+  RoomGameSession,
   StructuredVote,
   TicketQueueWithVotes,
   VoteValue,
@@ -114,10 +115,22 @@ export function assignUserAvatar(
 }
 
 export function sanitizeRoomData(roomData: RoomData): RoomData {
-  const { passcodeHash, ...rest } = roomData;
+  const { passcodeHash, gameSession, ...rest } = roomData;
   return {
     ...rest,
+    gameSession: sanitizeGameSession(gameSession),
   };
+}
+
+export function sanitizeGameSession(
+  gameSession?: RoomGameSession,
+): RoomGameSession | undefined {
+  if (!gameSession) {
+    return undefined;
+  }
+
+  const { numberTarget: _numberTarget, ...rest } = gameSession;
+  return rest;
 }
 
 export const remapVotes = (
