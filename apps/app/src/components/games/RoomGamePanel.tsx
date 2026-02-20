@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Trophy } from 'lucide-react';
+import { Minimize2, Trophy } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
@@ -12,6 +12,7 @@ interface RoomGamePanelProps {
   isModeratorView: boolean;
   onSubmitMove: (value: string) => void;
   onEndGame: () => void;
+  onMinimise?: () => void;
 }
 
 export const RoomGamePanel = ({
@@ -20,6 +21,7 @@ export const RoomGamePanel = ({
   isModeratorView,
   onSubmitMove,
   onEndGame,
+  onMinimise,
 }: RoomGamePanelProps) => {
   const [moveValue, setMoveValue] = useState('');
   const gameSession = roomData.gameSession;
@@ -38,7 +40,10 @@ export const RoomGamePanel = ({
   );
 
   return (
-    <SurfaceCard padding="md" className="space-y-4 border-brand-200/70 dark:border-brand-400/40">
+    <SurfaceCard
+      padding="md"
+      className="space-y-4 border-brand-200/70 dark:border-brand-400/40"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600 dark:text-brand-200">
@@ -52,11 +57,30 @@ export const RoomGamePanel = ({
           </p>
         </div>
 
-        {gameSession.status === 'active' && isModeratorView ? (
-          <Button type="button" variant="secondary" onClick={onEndGame}>
-            End game
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {onMinimise ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              icon={<Minimize2 className="h-4 w-4" />}
+              onClick={onMinimise}
+            >
+              Minimise
+            </Button>
+          ) : null}
+
+          {gameSession.status === 'active' ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={onEndGame}
+            >
+              End game
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -65,9 +89,14 @@ export const RoomGamePanel = ({
             Leaderboard
           </p>
           {sortedScores.map(([name, score], index) => (
-            <div key={name} className="flex items-center justify-between text-sm">
+            <div
+              key={name}
+              className="flex items-center justify-between text-sm"
+            >
               <span className="inline-flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                {index === 0 ? <Trophy className="h-3.5 w-3.5 text-amber-500" /> : null}
+                {index === 0 ? (
+                  <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                ) : null}
                 {name}
               </span>
               <span className="font-semibold">{score}</span>
@@ -114,7 +143,9 @@ export const RoomGamePanel = ({
         </form>
       ) : (
         <p className="text-sm font-medium text-emerald-600 dark:text-emerald-300">
-          Game over{gameSession.winner ? ` · Winner: ${gameSession.winner}` : ''}. GG {userName}.
+          Game over
+          {gameSession.winner ? ` · Winner: ${gameSession.winner}` : ''}. GG{' '}
+          {userName}.
         </p>
       )}
     </SurfaceCard>
