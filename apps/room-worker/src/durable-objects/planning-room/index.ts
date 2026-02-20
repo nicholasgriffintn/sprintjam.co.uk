@@ -281,15 +281,21 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   }
 
   async handleStartGame(userName: string, gameType: RoomGameType) {
-    return handleStartGameHandler(this, userName, gameType);
+    return this.state.blockConcurrencyWhile(async () =>
+      handleStartGameHandler(this, userName, gameType),
+    );
   }
 
   async handleSubmitGameMove(userName: string, value: string) {
-    return handleSubmitGameMoveHandler(this, userName, value);
+    return this.state.blockConcurrencyWhile(async () =>
+      handleSubmitGameMoveHandler(this, userName, value),
+    );
   }
 
   async handleEndGame(userName: string) {
-    return handleEndGameHandler(this, userName);
+    return this.state.blockConcurrencyWhile(async () =>
+      handleEndGameHandler(this, userName),
+    );
   }
 
   broadcast(message: BroadcastMessage) {
