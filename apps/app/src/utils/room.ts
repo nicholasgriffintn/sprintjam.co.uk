@@ -310,6 +310,25 @@ export function applyRoomUpdate(
       };
     }
 
+    case "gameStarted":
+    case "gameMoveSubmitted": {
+      if (!message.gameSession) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        gameSession: message.gameSession,
+      };
+    }
+
+    case "gameEnded": {
+      return {
+        ...prev,
+        gameSession: message.gameSession,
+      };
+    }
+
     case "timerStarted":
     case "timerPaused":
     case "timerReset":

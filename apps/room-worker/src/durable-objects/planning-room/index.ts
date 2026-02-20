@@ -15,6 +15,7 @@ import type {
   SessionInfo,
   StructuredVote,
   TicketQueueItem,
+  RoomGameType,
 } from "@sprintjam/types";
 import {
   normalizeRoomData,
@@ -57,6 +58,11 @@ import {
   handleStartTimer as handleStartTimerHandler,
 } from "./timer";
 import { handleCompleteSession as handleCompleteSessionHandler } from "./status";
+import {
+  handleEndGame as handleEndGameHandler,
+  handleStartGame as handleStartGameHandler,
+  handleSubmitGameMove as handleSubmitGameMoveHandler,
+} from './games';
 import { readRoomData } from "./room-helpers";
 
 export class PlanningRoom implements PlanningRoomHttpContext {
@@ -272,6 +278,18 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleCompleteSession(userName: string) {
     return handleCompleteSessionHandler(this, userName);
+  }
+
+  async handleStartGame(userName: string, gameType: RoomGameType) {
+    return handleStartGameHandler(this, userName, gameType);
+  }
+
+  async handleSubmitGameMove(userName: string, value: string) {
+    return handleSubmitGameMoveHandler(this, userName, value);
+  }
+
+  async handleEndGame(userName: string) {
+    return handleEndGameHandler(this, userName);
   }
 
   broadcast(message: BroadcastMessage) {

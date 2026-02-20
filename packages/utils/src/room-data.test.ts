@@ -8,6 +8,7 @@ import {
   ensureConnectedUsers,
   findCanonicalUserName,
   calculateVotingCompletion,
+  sanitizeRoomData,
 } from './room-data';
 
 const baseSettings: RoomSettings = {
@@ -205,6 +206,36 @@ describe("room-data helpers", () => {
         expect(findCanonicalUserName(room, "alice")).toBe("Alice");
         expect(findCanonicalUserName(room, "bob")).toBeUndefined();
       });
+    });
+  });
+
+  describe("sanitizeRoomData", () => {
+    it("removes passcode hash and guess target from exposed room data", () => {
+      const room = createRoom({
+        passcodeHash: {
+          hash: "h",
+          salt: "s",
+          iterations: 1,
+        },
+        gameSession: {
+          type: "guess-the-number",
+          startedBy: "mod",
+          startedAt: Date.now(),
+          round: 1,
+          status: "active",
+          participants: ["mod"],
+          leaderboard: { mod: 0 },
+          moves: [],
+          events: [],
+          numberTarget: 12,
+        },
+      });
+
+      const sanitized = sanitizeRoomData(room);
+
+      expect(sanitized.passcodeHash).toBeUndefined();
+      expect(sanitized.gameSession?.numberTarget).toBeUndefined();
+      expect(room.gameSession?.numberTarget).toBe(12);
     });
   });
 

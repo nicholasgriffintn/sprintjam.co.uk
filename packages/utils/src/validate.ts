@@ -177,6 +177,22 @@ export function validateClientMessage(
       return { error: 'toggleSpectator payload invalid' };
     case 'completeSession':
       return { type: 'completeSession' };
+    case 'startGame':
+      if (
+        data.gameType === 'guess-the-number' ||
+        data.gameType === 'word-chain' ||
+        data.gameType === 'emoji-story'
+      ) {
+        return { type: 'startGame', gameType: data.gameType };
+      }
+      return { error: 'startGame payload invalid' };
+    case 'submitGameMove':
+      if (typeof data.value === 'string' && data.value.trim().length > 0) {
+        return { type: 'submitGameMove', value: data.value.trim().slice(0, 48) };
+      }
+      return { error: 'submitGameMove payload invalid' };
+    case 'endGame':
+      return { type: 'endGame' };
     case 'ping':
       return { type: 'ping' };
     default:

@@ -147,4 +147,28 @@ describe('applyRoomUpdate', () => {
       expect(result?.votingCompletion).toBeUndefined();
     });
   });
+  describe('game messages', () => {
+    it('stores game session when game starts', () => {
+      const room = createBaseRoom();
+      const message: WebSocketMessage = {
+        type: 'gameStarted',
+        startedBy: 'Alice',
+        gameSession: {
+          type: 'emoji-story',
+          startedBy: 'Alice',
+          startedAt: Date.now(),
+          round: 1,
+          status: 'active',
+          participants: ['Alice', 'Bob'],
+          leaderboard: { Alice: 0, Bob: 0 },
+          moves: [],
+          events: [],
+        },
+      };
+
+      const result = applyRoomUpdate(room, message);
+      expect(result?.gameSession?.type).toBe('emoji-story');
+    });
+  });
+
 });

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Github, MessageSquare } from "lucide-react";
+import { Gamepad2, Github, MessageSquare } from "lucide-react";
 
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
@@ -12,6 +12,7 @@ type FooterProps = {
   layout?: "standard" | "wide";
   fullWidth?: boolean;
   priorityLinksOnly?: boolean;
+  onOpenGames?: () => void;
 };
 
 export const Footer = ({
@@ -19,6 +20,7 @@ export const Footer = ({
   layout = "standard",
   fullWidth = true,
   priorityLinksOnly = true,
+  onOpenGames,
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
@@ -122,6 +124,18 @@ export const Footer = ({
             fullWidth ? ' lg:w-auto lg:flex-nowrap' : ''
           } flex w-full flex-wrap items-center justify-center gap-2 mt-4`}
         >
+          {onOpenGames ? (
+            <Button
+              type="button"
+              variant="unstyled"
+              onClick={onOpenGames}
+              className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 shadow-sm transition hover:-translate-y-0.5 dark:border-brand-300/30 dark:bg-brand-400/10 dark:text-brand-100"
+            >
+              <Gamepad2 className="h-3.5 w-3.5" />
+              Party games
+            </Button>
+          ) : null}
+
           <Button
             type="button"
             variant="unstyled"

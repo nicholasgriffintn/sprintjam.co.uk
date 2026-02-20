@@ -185,6 +185,15 @@ export async function handleSession(
         case 'completeSession':
           await room.handleCompleteSession(canonicalUserName);
           break;
+        case 'startGame':
+          await room.handleStartGame(canonicalUserName, validated.gameType);
+          break;
+        case 'submitGameMove':
+          await room.handleSubmitGameMove(canonicalUserName, validated.value);
+          break;
+        case 'endGame':
+          await room.handleEndGame(canonicalUserName);
+          break;
       }
     } catch (err: unknown) {
       console.error('WebSocket message error:', err);
