@@ -86,31 +86,45 @@ export const RoomGamePanel = ({
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Leaderboard
           </p>
-          {sortedScores.map(([name, score], index) => (
-            <div
-              key={name}
-              className="flex items-center justify-between text-sm"
-            >
-              <span className="inline-flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                {index === 0 ? (
-                  <Trophy className="h-3.5 w-3.5 text-amber-500" />
-                ) : null}
-                {name}
-              </span>
-              <span className="font-semibold">{score}</span>
+          {sortedScores.length === 0 ? (
+            <p className="text-sm text-slate-700 dark:text-slate-200">
+              No moves played yet.
+            </p>
+          ) : (
+            <div className="max-h-36 space-y-2 overflow-y-auto pr-1">
+              {sortedScores.map(([name, score], index) => (
+                <div
+                  key={name}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="inline-flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                    {index === 0 ? (
+                      <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                    ) : null}
+                    {name}
+                  </span>
+                  <span className="font-semibold">{score}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
         <div className="space-y-2 rounded-xl border border-slate-200/80 p-3 dark:border-white/10">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Recent activity
           </p>
-          <div className="max-h-36 space-y-2 overflow-y-auto pr-1 text-sm text-slate-700 dark:text-slate-200">
-            {gameSession.events.slice(-5).map((event) => (
-              <p key={event.id}>{event.message}</p>
-            ))}
-          </div>
+          {gameSession.events.length === 0 ? (
+            <p className="text-sm text-slate-700 dark:text-slate-200">
+              No recent activity.
+            </p>
+          ) : (
+            <div className="max-h-36 space-y-2 overflow-y-auto pr-1 text-sm text-slate-700 dark:text-slate-200">
+              {gameSession.events.slice(-5).map((event) => (
+                <p key={event.id}>{event.message}</p>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
