@@ -514,7 +514,7 @@ describe("PlanningRoom critical flows", () => {
 
     await room.handleSubmitGameMove("alice", "1");
     expect(roomData.gameSession?.events.at(-1)?.message).toContain(
-      "missed with 1",
+      "missed with their guess",
     );
   });
 
@@ -541,7 +541,7 @@ describe("PlanningRoom critical flows", () => {
 
     expect(roomData.gameSession?.leaderboard.alice).toBe(1);
     expect(roomData.gameSession?.events.at(-1)?.message).toContain(
-      "already guessed 9",
+      "already guessed that number",
     );
   });
 
