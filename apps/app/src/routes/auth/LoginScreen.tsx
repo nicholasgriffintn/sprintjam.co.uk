@@ -167,7 +167,9 @@ export default function LoginScreen() {
       await handleAuthenticated(result);
     } catch (err) {
       setState("code");
-      setError(err instanceof Error ? err.message : "Invalid verification code");
+      setError(
+        err instanceof Error ? err.message : "Invalid verification code",
+      );
     }
   };
 
@@ -183,7 +185,9 @@ export default function LoginScreen() {
       }
       setState("mfa-totp-setup");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to start TOTP setup");
+      setError(
+        err instanceof Error ? err.message : "Unable to start TOTP setup",
+      );
     } finally {
       setIsMfaBusy(false);
     }
@@ -209,8 +213,13 @@ export default function LoginScreen() {
       }
       const publicKey = buildRegistrationOptions(result.options);
       const credential = await navigator.credentials.create({ publicKey });
-      if (!(credential instanceof PublicKeyCredential)) {
+      if (credential === null) {
         throw new Error("Passkey setup was cancelled");
+      }
+      if (!(credential instanceof PublicKeyCredential)) {
+        throw new Error(
+          "Received unexpected credential type. Please try again.",
+        );
       }
       const payload = toWebAuthnCredential(credential);
       const verified = await verifyMfaSetup(challengeToken, "webauthn", {
@@ -218,7 +227,19 @@ export default function LoginScreen() {
       });
       await handleAuthenticated(verified);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to set up passkey");
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError") {
+          setError("Passkey setup was denied or timed out");
+        } else if (err.name === "AbortError") {
+          setError("Passkey setup was cancelled");
+        } else {
+          setError(`Unable to set up passkey: ${err.message}`);
+        }
+      } else {
+        setError(
+          err instanceof Error ? err.message : "Unable to set up passkey",
+        );
+      }
       setState("mfa-webauthn-setup");
     } finally {
       setIsMfaBusy(false);
@@ -237,8 +258,13 @@ export default function LoginScreen() {
       const result = await startMfaVerify(challengeToken, "webauthn");
       const publicKey = buildAuthenticationOptions(result.options);
       const credential = await navigator.credentials.get({ publicKey });
-      if (!(credential instanceof PublicKeyCredential)) {
+      if (credential === null) {
         throw new Error("Passkey verification was cancelled");
+      }
+      if (!(credential instanceof PublicKeyCredential)) {
+        throw new Error(
+          "Received unexpected credential type. Please try again.",
+        );
       }
       const payload = toWebAuthnCredential(credential);
       const verified = await verifyMfa(challengeToken, "webauthn", {
@@ -246,7 +272,19 @@ export default function LoginScreen() {
       });
       await handleAuthenticated(verified);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to verify passkey");
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError") {
+          setError("Passkey verification was denied or timed out");
+        } else if (err.name === "AbortError") {
+          setError("Passkey verification was cancelled");
+        } else {
+          setError(`Unable to verify passkey: ${err.message}`);
+        }
+      } else {
+        setError(
+          err instanceof Error ? err.message : "Unable to verify passkey",
+        );
+      }
       setState("mfa-webauthn-verify");
     } finally {
       setIsMfaBusy(false);
@@ -265,7 +303,9 @@ export default function LoginScreen() {
           : await verifyMfa(challengeToken, "totp", { code: mfaCode });
       await handleAuthenticated(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid authenticator code");
+      setError(
+        err instanceof Error ? err.message : "Invalid authenticator code",
+      );
     } finally {
       setIsMfaBusy(false);
     }
@@ -354,14 +394,15 @@ export default function LoginScreen() {
                   : "Verify with two-factor authentication"}
               </h1>
               <p className="mt-2 text-slate-600 dark:text-slate-300">
-                Choose a method to {mfaMode === "setup" ? "set up" : "continue"}.
+                Choose a method to {mfaMode === "setup" ? "set up" : "continue"}
+                .
               </p>
             </div>
 
-              <div className="flex flex-col gap-3">
-                {mfaMethods.includes("totp") && (
-                  <Button
-                    type="button"
+            <div className="flex flex-col gap-3">
+              {mfaMethods.includes("totp") && (
+                <Button
+                  type="button"
                   fullWidth
                   size="lg"
                   onClick={
@@ -369,14 +410,14 @@ export default function LoginScreen() {
                       ? handleTotpSetupStart
                       : handleTotpVerifyStart
                   }
-                    disabled={isMfaBusy}
-                  >
-                    Use authenticator app
-                  </Button>
-                )}
-                {mfaMethods.includes("webauthn") && (
-                  <Button
-                    type="button"
+                  disabled={isMfaBusy}
+                >
+                  Use authenticator app
+                </Button>
+              )}
+              {mfaMethods.includes("webauthn") && (
+                <Button
+                  type="button"
                   fullWidth
                   size="lg"
                   variant="secondary"
@@ -392,27 +433,27 @@ export default function LoginScreen() {
                       void handleWebAuthnVerify();
                     }
                   }}
-                    disabled={isMfaBusy}
-                  >
-                    Use passkey
-                  </Button>
-                )}
-                {mfaMode === "verify" && (
-                  <Button
-                    type="button"
-                    fullWidth
-                    size="md"
-                    variant="secondary"
-                    onClick={() => {
-                      setError("");
-                      setState("mfa-recovery-verify");
-                    }}
-                    disabled={isMfaBusy}
-                  >
-                    Use recovery code
-                  </Button>
-                )}
-              </div>
+                  disabled={isMfaBusy}
+                >
+                  Use passkey
+                </Button>
+              )}
+              {mfaMode === "verify" && (
+                <Button
+                  type="button"
+                  fullWidth
+                  size="md"
+                  variant="secondary"
+                  onClick={() => {
+                    setError("");
+                    setState("mfa-recovery-verify");
+                  }}
+                  disabled={isMfaBusy}
+                >
+                  Use recovery code
+                </Button>
+              )}
+            </div>
 
             <ErrorMessage error={error} />
           </div>
@@ -732,7 +773,7 @@ export default function LoginScreen() {
               fullWidth
               required
               autoFocus
-              disabled={state === 'sending'}
+              disabled={state === "sending"}
             />
 
             <div className="flex flex-col gap-4 sm:flex-row">
@@ -742,9 +783,9 @@ export default function LoginScreen() {
                 className="sm:flex-1"
                 fullWidth
                 size="lg"
-                isLoading={state === 'sending'}
+                isLoading={state === "sending"}
               >
-                {state === 'sending' ? 'Sending...' : 'Continue'}
+                {state === "sending" ? "Sending..." : "Continue"}
               </Button>
             </div>
           </motion.form>

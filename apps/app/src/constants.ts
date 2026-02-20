@@ -6,11 +6,15 @@ const DEFAULT_HOST =
 export const ENV_BASE_URL = import.meta.env.VITE_API_URL || DEFAULT_HOST;
 const IS_BASE_URL_LOCALHOST =
   ENV_BASE_URL.includes("localhost") || ENV_BASE_URL.includes("127.0.0.1");
+const CURRENT_PROTOCOL =
+  typeof window !== "undefined" && window.location?.protocol
+    ? window.location.protocol.replace(":", "")
+    : "https";
 const BASE_URL_WITH_PROTOCOL = IS_BASE_URL_LOCALHOST
-  ? `http://${ENV_BASE_URL}`
+  ? `${CURRENT_PROTOCOL}://${ENV_BASE_URL}`
   : `https://${ENV_BASE_URL}`;
 const BASE_WS_WITH_PROTOCOL = IS_BASE_URL_LOCALHOST
-  ? `ws://${ENV_BASE_URL}`
+  ? `${CURRENT_PROTOCOL === "https" ? "wss" : "ws"}://${ENV_BASE_URL}`
   : `wss://${ENV_BASE_URL}`;
 
 export const API_BASE_URL = `${BASE_URL_WITH_PROTOCOL}/api`;
@@ -28,7 +32,6 @@ export const VOLUME_STORAGE_KEY = "sprintjam_strudelPlayerVolume";
 export const USERNAME_STORAGE_KEY = "sprintjam_username";
 export const THEME_STORAGE_KEY = "sprintjam_theme";
 export const RETURN_URL_KEY = "sprintjam_return_url";
-export const WORKSPACES_STORAGE_KEY = "sprintjam_workspaces_enabled";
 export const ROOM_HINTS_DISMISSED_STORAGE_KEY = "sprintjam_roomHintsDismissed";
 export const ROOM_SPREAD_HINT_STORAGE_KEY = "sprintjam_roomSpreadHintSeen";
 export const ROOM_FACILITATION_PROMPT_SEEN_STORAGE_KEY =
