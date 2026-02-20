@@ -2,6 +2,7 @@
 
 - Added a new party games feature that allows users to play games with collaborators that are designed to last just a few minutes for a quick break between votes. Starting with three games: Guess the Number, Word Chain and Emoji Story.
 - Fixed an issue where the wheel was not correctly removing items after they were picked.
+- Fixed the display of a single item so it takes the full space.
 
 ## V2.7
 

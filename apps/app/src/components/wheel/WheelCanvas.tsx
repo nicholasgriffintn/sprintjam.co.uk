@@ -197,6 +197,38 @@ export function WheelCanvas({
       >
         <svg viewBox="0 0 100 100" className="w-full h-full">
           {enabledEntries.map((entry, index) => {
+            const color = WHEEL_COLORS[index % WHEEL_COLORS.length];
+
+            if (enabledEntries.length === 1) {
+              return (
+                <g key={entry.id}>
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="48"
+                    fill={color}
+                    stroke="#1e293b"
+                    strokeWidth="0.5"
+                  />
+                  <text
+                    x="50"
+                    y="25"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="fill-white font-semibold"
+                    style={{
+                      fontSize: 8,
+                      textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    {entry.name.length > 18
+                      ? entry.name.slice(0, 16) + '...'
+                      : entry.name}
+                  </text>
+                </g>
+              );
+            }
+
             const startAngle = index * segmentAngle - 90;
             const endAngle = startAngle + segmentAngle;
             const largeArc = segmentAngle > 180 ? 1 : 0;
@@ -213,8 +245,6 @@ export function WheelCanvas({
             const textX = 50 + 30 * Math.cos(midAngle);
             const textY = 50 + 30 * Math.sin(midAngle);
             const textRotation = (startAngle + endAngle) / 2 + 90;
-
-            const color = WHEEL_COLORS[index % WHEEL_COLORS.length];
 
             return (
               <g key={entry.id}>
