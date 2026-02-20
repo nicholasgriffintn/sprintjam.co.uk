@@ -19,6 +19,7 @@ import type {
   JudgeMetadata,
   PasscodeHashPayload,
   RoomData,
+  RoomGameSession,
   RoomSettings,
   StructuredVote,
   TicketVote,
@@ -187,6 +188,9 @@ export class PlanningRoomRepository {
               : row.timerAutoReset !== 0,
         }
       : undefined;
+    const gameSession = row.gameSession
+      ? safeJsonParse<RoomGameSession>(row.gameSession)
+      : undefined;
 
     const roomData: RoomData = {
       key: row.roomKey,
@@ -215,6 +219,7 @@ export class PlanningRoomRepository {
       currentTicket,
       ticketQueue: ticketQueue.length > 0 ? ticketQueue : undefined,
       timerState,
+      gameSession,
     };
 
     return roomData;
@@ -248,6 +253,7 @@ export class PlanningRoomRepository {
         timerRoundAnchor: roomData.timerState?.roundAnchorSeconds ?? 0,
         timerAutoReset:
           roomData.timerState?.autoResetOnVotesReset === false ? 0 : 1,
+        gameSession: serializeJSON(roomData.gameSession),
       };
 
       tx.insert(roomMeta)

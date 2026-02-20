@@ -5,7 +5,7 @@ import type {
   DurableObjectState,
   WebSocket as CfWebSocket,
 } from "@cloudflare/workers-types";
-import type { RoomWorkerEnv, RoomData } from "@sprintjam/types";
+import type { RoomWorkerEnv, RoomData } from '@sprintjam/types';
 import { generateSessionToken, createInitialRoomData } from "@sprintjam/utils";
 import { MIN_TIMER_DURATION_SECONDS } from "@sprintjam/utils/constants";
 

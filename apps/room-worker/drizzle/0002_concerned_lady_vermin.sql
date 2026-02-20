@@ -1,0 +1,1 @@
+ALTER TABLE `room_meta` ADD `game_session` text;
