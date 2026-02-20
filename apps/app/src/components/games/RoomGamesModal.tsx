@@ -26,6 +26,13 @@ export const RoomGamesModal = ({
           designed to last just a few minutes. Multiplayer games are turn-based.
         </p>
 
+        {activeGame ? (
+          <p className="text-xs font-medium text-amber-600 dark:text-amber-300">
+            A game is already running. End it from the game panel to start
+            another.
+          </p>
+        ) : null}
+
         <div className="grid gap-3 md:grid-cols-3">
           {ROOM_GAMES.map((game) => {
             const Icon = GAME_ICONS[game.type];
@@ -65,13 +72,6 @@ export const RoomGamesModal = ({
             );
           })}
         </div>
-
-        {activeGame ? (
-          <p className="text-xs font-medium text-amber-600 dark:text-amber-300">
-            A game is already running. End it from the game panel to start
-            another.
-          </p>
-        ) : null}
       </div>
     </Modal>
   );
