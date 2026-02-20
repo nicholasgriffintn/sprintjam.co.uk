@@ -204,7 +204,10 @@ export async function handleSubmitGameMove(
       );
 
       if (alreadyGuessedSameValueThisRound) {
-        addEvent(session, `${userName} already guessed ${guess} this round.`);
+        addEvent(
+          session,
+          `${userName} already guessed that number this wrong this round.`,
+        );
       } else {
         if (guess === target) {
           isExactGuess = true;
@@ -214,9 +217,12 @@ export async function handleSubmitGameMove(
           session.numberTarget = createNumberTarget();
         } else if (Math.abs(guess - target) <= 2) {
           addPoints(session, userName, 1);
-          addEvent(session, `${userName} was close with ${guess}. +1 point.`);
+          addEvent(
+            session,
+            `${userName} was close with their guess. +1 point.`,
+          );
         } else {
-          addEvent(session, `${userName} missed with ${guess}. No points.`);
+          addEvent(session, `${userName} missed with their guess. No points.`);
         }
       }
 
