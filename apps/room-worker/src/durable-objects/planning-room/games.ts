@@ -13,6 +13,7 @@ const GUESS_ROUND_ATTEMPT_LIMIT = 10;
 const MAX_EMOJI_STORY_MOVE_EMOJIS = 6;
 const EMOJI_TOKEN_PATTERN =
   /(?:\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*|\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3)/gu;
+const createNumberTarget = () => Math.floor(Math.random() * 20) + 1;
 
 const createGameEvent = (message: string) => ({
   id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
@@ -37,6 +38,8 @@ const initializeSession = (
   }, {}),
   moves: [],
   events: [createGameEvent(`${startedBy} started ${GAME_TITLES[gameType]}.`)],
+  ...(gameType === 'guess-the-number' ? { numberTarget: createNumberTarget() } : {}),
+  ...(gameType === 'word-chain' ? { lastWord: null } : {}),
 });
 
 const addPoints = (session: RoomGameSession, userName: string, points: number) => {
@@ -103,7 +106,6 @@ const completeGameSession = async (
     );
   }
 
-  room.clearGameRuntime();
   roomData.gameSession = session;
   await room.putRoomData(roomData);
 
@@ -133,7 +135,6 @@ export async function handleStartGame(
     return;
   }
 
-  room.resetGameRuntime(gameType);
   const session = initializeSession(roomData, gameType, userName);
   roomData.gameSession = session;
   await room.putRoomData(roomData);
@@ -183,7 +184,10 @@ export async function handleSubmitGameMove(
 
   if (session.type === 'guess-the-number') {
     const guess = Number(value);
-    const target = room.getNumberTarget();
+    if (!session.numberTarget || session.numberTarget < 1 || session.numberTarget > 20) {
+      session.numberTarget = createNumberTarget();
+    }
+    const target = session.numberTarget;
 
     if (Number.isFinite(guess) && Number.isInteger(guess) && guess >= 1 && guess <= 20) {
       let isExactGuess = false;
@@ -193,7 +197,7 @@ export async function handleSubmitGameMove(
         addPoints(session, userName, 3);
         addEvent(session, `${userName} nailed it with ${guess}. +3 points.`);
         session.round += 1;
-        room.setNumberTarget();
+        session.numberTarget = createNumberTarget();
       } else if (Math.abs(guess - target) <= 2) {
         addPoints(session, userName, 1);
         addEvent(session, `${userName} was close with ${guess}. +1 point.`);
@@ -201,7 +205,7 @@ export async function handleSubmitGameMove(
 
       if (!isExactGuess && getCurrentRoundMoveCount(session) >= GUESS_ROUND_ATTEMPT_LIMIT) {
         session.round += 1;
-        room.setNumberTarget();
+        session.numberTarget = createNumberTarget();
         addEvent(
           session,
           `Round ${session.round - 1} closed without an exact hit. New number, round ${session.round}.`,
@@ -212,11 +216,11 @@ export async function handleSubmitGameMove(
 
   if (session.type === 'word-chain') {
     const normalized = value.toLowerCase().replace(/[^a-z]/g, '');
-    const prior = room.getLastWord();
+    const prior = session.lastWord ?? null;
 
     if (normalized.length >= 2) {
       if (!prior || normalized[0] === prior[prior.length - 1]) {
-        room.setLastWord(normalized);
+        session.lastWord = normalized;
         addPoints(session, userName, 2);
         addEvent(session, `${userName} kept the chain alive with “${value}”. +2 points.`);
       } else {

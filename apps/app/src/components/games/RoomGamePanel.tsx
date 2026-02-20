@@ -9,7 +9,6 @@ import type { RoomData } from '@/types';
 interface RoomGamePanelProps {
   roomData: RoomData;
   userName: string;
-  isModeratorView: boolean;
   onSubmitMove: (value: string) => void;
   onEndGame: () => void;
   onMinimise?: () => void;
@@ -18,7 +17,6 @@ interface RoomGamePanelProps {
 export const RoomGamePanel = ({
   roomData,
   userName,
-  isModeratorView,
   onSubmitMove,
   onEndGame,
   onMinimise,

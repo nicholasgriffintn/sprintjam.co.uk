@@ -443,8 +443,6 @@ describe("PlanningRoom critical flows", () => {
     room.broadcast = vi.fn();
     room.getRoomData = vi.fn(async () => roomData);
     room.putRoomData = vi.fn(async () => undefined);
-    room.getNumberTarget = vi.fn(() => 20);
-    room.setNumberTarget = vi.fn();
 
     await room.handleStartGame("alice", "guess-the-number");
 
@@ -458,6 +456,61 @@ describe("PlanningRoom critical flows", () => {
     expect(room.broadcast).toHaveBeenCalledWith(
       expect.objectContaining({ type: "gameEnded", endedBy: "system" }),
     );
+  });
+
+  it("keeps guess-the-number target across room instance restart", async () => {
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-guess-restart",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    const room = new PlanningRoom(makeState(), env);
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "guess-the-number");
+    roomData.gameSession!.numberTarget = 7;
+
+    const restartedRoom = new PlanningRoom(makeState(), env);
+    restartedRoom.broadcast = vi.fn();
+    restartedRoom.getRoomData = vi.fn(async () => roomData);
+    restartedRoom.putRoomData = vi.fn(async () => undefined);
+
+    await restartedRoom.handleSubmitGameMove("alice", "7");
+
+    expect(roomData.gameSession?.leaderboard.alice).toBe(3);
+    expect(roomData.gameSession?.round).toBe(2);
+  });
+
+  it("keeps word-chain anchor across room instance restart", async () => {
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-word-restart",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    const room = new PlanningRoom(makeState(), env);
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "word-chain");
+    await room.handleSubmitGameMove("alice", "apple");
+    expect(roomData.gameSession?.lastWord).toBe("apple");
+
+    const restartedRoom = new PlanningRoom(makeState(), env);
+    restartedRoom.broadcast = vi.fn();
+    restartedRoom.getRoomData = vi.fn(async () => roomData);
+    restartedRoom.putRoomData = vi.fn(async () => undefined);
+
+    await restartedRoom.handleSubmitGameMove("bob", "banana");
+
+    expect(roomData.gameSession?.lastWord).toBe("apple");
+    expect(roomData.gameSession?.leaderboard.bob).toBe(0);
   });
 
   it("does not assign a winner when scores are tied", async () => {

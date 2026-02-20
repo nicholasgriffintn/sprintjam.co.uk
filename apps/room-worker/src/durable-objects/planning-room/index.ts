@@ -71,8 +71,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   sessions: Map<CfWebSocket, SessionInfo>;
   judge: PlanningPokerJudge;
   repository: PlanningRoomRepository;
-  private numberTarget: number = 1;
-  private lastWord: string | null = null;
 
   constructor(state: DurableObjectState, env: RoomWorkerEnv) {
     this.state = state;
@@ -292,33 +290,6 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleEndGame(userName: string) {
     return handleEndGameHandler(this, userName);
-  }
-
-  resetGameRuntime(gameType: RoomGameType) {
-    this.lastWord = null;
-    if (gameType === 'guess-the-number') {
-      this.setNumberTarget();
-    }
-  }
-
-  clearGameRuntime() {
-    this.lastWord = null;
-  }
-
-  setNumberTarget() {
-    this.numberTarget = Math.floor(Math.random() * 20) + 1;
-  }
-
-  getNumberTarget() {
-    return this.numberTarget;
-  }
-
-  setLastWord(word: string) {
-    this.lastWord = word;
-  }
-
-  getLastWord() {
-    return this.lastWord;
   }
 
   broadcast(message: BroadcastMessage) {

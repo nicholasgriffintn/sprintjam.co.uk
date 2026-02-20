@@ -302,6 +302,8 @@ export interface RoomGameSession {
   leaderboard: Record<string, number>;
   moves: RoomGameMove[];
   events: RoomGameEvent[];
+  numberTarget?: number;
+  lastWord?: string | null;
   winner?: string;
 }
 
