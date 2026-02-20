@@ -373,6 +373,39 @@ describe("PlanningRoom critical flows", () => {
     expect(roomData.votes["alice"]).toBeUndefined();
   });
 
+  it("advances emoji-story rounds every 6 moves even after move history cap", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-emoji",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "emoji-story");
+    expect(roomData.gameSession?.round).toBe(1);
+
+    for (let index = 1; index <= 30; index += 1) {
+      await room.handleSubmitGameMove("alice", `emoji-${index}`);
+    }
+    expect(roomData.gameSession?.moves).toHaveLength(30);
+    expect(roomData.gameSession?.round).toBe(6);
+
+    await room.handleSubmitGameMove("alice", "emoji-31");
+    await room.handleSubmitGameMove("alice", "emoji-32");
+    expect(roomData.gameSession?.round).toBe(6);
+
+    for (let index = 33; index <= 36; index += 1) {
+      await room.handleSubmitGameMove("alice", `emoji-${index}`);
+    }
+    expect(roomData.gameSession?.round).toBe(7);
+  });
+
   it("persists structured votes and broadcasts structured payloads", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);

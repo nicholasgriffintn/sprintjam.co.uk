@@ -146,7 +146,10 @@ export async function handleSubmitGameMove(
       createGameEvent(`${userName} added “${value}” to the story.`),
     ];
 
-    if (session.moves.length % 6 === 0) {
+    const currentRoundMoves = session.moves.filter(
+      (gameMove) => gameMove.round === session.round,
+    ).length;
+    if (currentRoundMoves === 6) {
       session.round += 1;
     }
   }
