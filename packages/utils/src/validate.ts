@@ -1,147 +1,156 @@
-import { ClientMessage } from '@sprintjam/types';
+import { ClientMessage, ROOM_GAME_TYPES } from "@sprintjam/types";
 
 function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === "object" && value !== null;
+}
+
+function isRoomGameType(
+  value: unknown,
+): value is (typeof ROOM_GAME_TYPES)[number] {
+  return (
+    typeof value === "string" &&
+    ROOM_GAME_TYPES.includes(value as (typeof ROOM_GAME_TYPES)[number])
+  );
 }
 
 export function validateClientMessage(
   data: unknown,
 ): ClientMessage | { error: string } {
-  if (!isObject(data) || typeof data.type !== 'string') {
-    return { error: 'Invalid message format' };
+  if (!isObject(data) || typeof data.type !== "string") {
+    return { error: "Invalid message format" };
   }
 
   switch (data.type) {
-    case 'vote':
-      if ('vote' in data) {
-        return { type: 'vote', vote: data.vote as string | number };
+    case "vote":
+      if ("vote" in data) {
+        return { type: "vote", vote: data.vote as string | number };
       }
-      return { error: 'Vote payload missing' };
-    case 'showVotes':
-      return { type: 'showVotes' };
-    case 'resetVotes':
-      return { type: 'resetVotes' };
-    case 'updateSettings':
-      if ('settings' in data && isObject(data.settings)) {
-        return { type: 'updateSettings', settings: data.settings };
+      return { error: "Vote payload missing" };
+    case "showVotes":
+      return { type: "showVotes" };
+    case "resetVotes":
+      return { type: "resetVotes" };
+    case "updateSettings":
+      if ("settings" in data && isObject(data.settings)) {
+        return { type: "updateSettings", settings: data.settings };
       }
-      return { error: 'Settings payload missing' };
-    case 'generateStrudelCode':
-      return { type: 'generateStrudelCode' };
-    case 'toggleStrudelPlayback':
-      return { type: 'toggleStrudelPlayback' };
-    case 'selectTicket':
-      if (typeof data.ticketId === 'number') {
-        return { type: 'selectTicket', ticketId: data.ticketId };
+      return { error: "Settings payload missing" };
+    case "generateStrudelCode":
+      return { type: "generateStrudelCode" };
+    case "toggleStrudelPlayback":
+      return { type: "toggleStrudelPlayback" };
+    case "selectTicket":
+      if (typeof data.ticketId === "number") {
+        return { type: "selectTicket", ticketId: data.ticketId };
       }
-      return { error: 'Select ticket payload invalid' };
-    case 'nextTicket':
-      return { type: 'nextTicket' };
-    case 'addTicket':
-      if ('ticket' in data && isObject(data.ticket)) {
+      return { error: "Select ticket payload invalid" };
+    case "nextTicket":
+      return { type: "nextTicket" };
+    case "addTicket":
+      if ("ticket" in data && isObject(data.ticket)) {
         const ticket = data.ticket;
         if (
           ticket.title !== undefined &&
-          typeof ticket.title !== 'string' &&
+          typeof ticket.title !== "string" &&
           ticket.title !== null
         ) {
-          return { error: 'Ticket title must be a string or null' };
+          return { error: "Ticket title must be a string or null" };
         }
         if (
           ticket.description !== undefined &&
-          typeof ticket.description !== 'string' &&
+          typeof ticket.description !== "string" &&
           ticket.description !== null
         ) {
-          return { error: 'Ticket description must be a string or null' };
+          return { error: "Ticket description must be a string or null" };
         }
         if (
           ticket.title &&
-          typeof ticket.title === 'string' &&
+          typeof ticket.title === "string" &&
           ticket.title.length > 500
         ) {
-          return { error: 'Ticket title too long (max 500 chars)' };
+          return { error: "Ticket title too long (max 500 chars)" };
         }
         if (
           ticket.description &&
-          typeof ticket.description === 'string' &&
+          typeof ticket.description === "string" &&
           ticket.description.length > 10000
         ) {
-          return { error: 'Ticket description too long (max 10000 chars)' };
+          return { error: "Ticket description too long (max 10000 chars)" };
         }
         if (
           ticket.externalServiceMetadata !== undefined &&
           ticket.externalServiceMetadata !== null &&
-          typeof ticket.externalServiceMetadata === 'string' &&
+          typeof ticket.externalServiceMetadata === "string" &&
           ticket.externalServiceMetadata.length > 10000
         ) {
-          return { error: 'Ticket metadata too long (max 10000 chars)' };
+          return { error: "Ticket metadata too long (max 10000 chars)" };
         }
-        return { type: 'addTicket', ticket: data.ticket };
+        return { type: "addTicket", ticket: data.ticket };
       }
-      return { error: 'Ticket payload missing' };
-    case 'updateTicket':
+      return { error: "Ticket payload missing" };
+    case "updateTicket":
       if (
-        typeof data.ticketId === 'number' &&
-        'updates' in data &&
+        typeof data.ticketId === "number" &&
+        "updates" in data &&
         isObject(data.updates)
       ) {
         const updates = data.updates;
         if (
           updates.title !== undefined &&
-          typeof updates.title !== 'string' &&
+          typeof updates.title !== "string" &&
           updates.title !== null
         ) {
-          return { error: 'Ticket title must be a string or null' };
+          return { error: "Ticket title must be a string or null" };
         }
         if (
           updates.description !== undefined &&
-          typeof updates.description !== 'string' &&
+          typeof updates.description !== "string" &&
           updates.description !== null
         ) {
-          return { error: 'Ticket description must be a string or null' };
+          return { error: "Ticket description must be a string or null" };
         }
         if (
           updates.title &&
-          typeof updates.title === 'string' &&
+          typeof updates.title === "string" &&
           updates.title.length > 500
         ) {
-          return { error: 'Ticket title too long (max 500 chars)' };
+          return { error: "Ticket title too long (max 500 chars)" };
         }
         if (
           updates.description &&
-          typeof updates.description === 'string' &&
+          typeof updates.description === "string" &&
           updates.description.length > 10000
         ) {
-          return { error: 'Ticket description too long (max 10000 chars)' };
+          return { error: "Ticket description too long (max 10000 chars)" };
         }
         if (
           updates.externalServiceMetadata !== undefined &&
           updates.externalServiceMetadata !== null &&
-          typeof updates.externalServiceMetadata === 'string' &&
+          typeof updates.externalServiceMetadata === "string" &&
           updates.externalServiceMetadata.length > 10000
         ) {
-          return { error: 'Ticket metadata too long (max 10000 chars)' };
+          return { error: "Ticket metadata too long (max 10000 chars)" };
         }
         return {
-          type: 'updateTicket',
+          type: "updateTicket",
           ticketId: data.ticketId,
           updates: data.updates,
         };
       }
-      return { error: 'Ticket update payload invalid' };
-    case 'deleteTicket':
-      if (typeof data.ticketId === 'number') {
-        return { type: 'deleteTicket', ticketId: data.ticketId };
+      return { error: "Ticket update payload invalid" };
+    case "deleteTicket":
+      if (typeof data.ticketId === "number") {
+        return { type: "deleteTicket", ticketId: data.ticketId };
       }
-      return { error: 'Ticket delete payload invalid' };
-    case 'startTimer':
-      return { type: 'startTimer' };
-    case 'pauseTimer':
-      return { type: 'pauseTimer' };
-    case 'resetTimer':
-      return { type: 'resetTimer' };
-    case 'configureTimer':
-      if ('config' in data && isObject(data.config)) {
+      return { error: "Ticket delete payload invalid" };
+    case "startTimer":
+      return { type: "startTimer" };
+    case "pauseTimer":
+      return { type: "pauseTimer" };
+    case "resetTimer":
+      return { type: "resetTimer" };
+    case "configureTimer":
+      if ("config" in data && isObject(data.config)) {
         const configInput = data.config;
         const config: {
           targetDurationSeconds?: number;
@@ -150,52 +159,51 @@ export function validateClientMessage(
         } = {};
 
         if (
-          'targetDurationSeconds' in configInput &&
-          typeof configInput.targetDurationSeconds === 'number'
+          "targetDurationSeconds" in configInput &&
+          typeof configInput.targetDurationSeconds === "number"
         ) {
           config.targetDurationSeconds = configInput.targetDurationSeconds;
         }
         if (
-          'autoResetOnVotesReset' in configInput &&
-          typeof configInput.autoResetOnVotesReset === 'boolean'
+          "autoResetOnVotesReset" in configInput &&
+          typeof configInput.autoResetOnVotesReset === "boolean"
         ) {
           config.autoResetOnVotesReset = configInput.autoResetOnVotesReset;
         }
         if (
-          'resetCountdown' in configInput &&
-          typeof configInput.resetCountdown === 'boolean'
+          "resetCountdown" in configInput &&
+          typeof configInput.resetCountdown === "boolean"
         ) {
           config.resetCountdown = configInput.resetCountdown;
         }
-        return { type: 'configureTimer', config };
+        return { type: "configureTimer", config };
       }
-      return { error: 'Timer config payload missing' };
-    case 'toggleSpectator':
-      if (typeof data.isSpectator === 'boolean') {
-        return { type: 'toggleSpectator', isSpectator: data.isSpectator };
+      return { error: "Timer config payload missing" };
+    case "toggleSpectator":
+      if (typeof data.isSpectator === "boolean") {
+        return { type: "toggleSpectator", isSpectator: data.isSpectator };
       }
-      return { error: 'toggleSpectator payload invalid' };
-    case 'completeSession':
-      return { type: 'completeSession' };
-    case 'startGame':
-      if (
-        data.gameType === 'guess-the-number' ||
-        data.gameType === 'word-chain' ||
-        data.gameType === 'emoji-story'
-      ) {
-        return { type: 'startGame', gameType: data.gameType };
+      return { error: "toggleSpectator payload invalid" };
+    case "completeSession":
+      return { type: "completeSession" };
+    case "startGame":
+      if (isRoomGameType(data.gameType)) {
+        return { type: "startGame", gameType: data.gameType };
       }
-      return { error: 'startGame payload invalid' };
-    case 'submitGameMove':
-      if (typeof data.value === 'string' && data.value.trim().length > 0) {
-        return { type: 'submitGameMove', value: data.value.trim().slice(0, 48) };
+      return { error: "startGame payload invalid" };
+    case "submitGameMove":
+      if (typeof data.value === "string" && data.value.trim().length > 0) {
+        return {
+          type: "submitGameMove",
+          value: data.value.trim().slice(0, 48),
+        };
       }
-      return { error: 'submitGameMove payload invalid' };
-    case 'endGame':
-      return { type: 'endGame' };
-    case 'ping':
-      return { type: 'ping' };
+      return { error: "submitGameMove payload invalid" };
+    case "endGame":
+      return { type: "endGame" };
+    case "ping":
+      return { type: "ping" };
     default:
-      return { error: 'Unknown message type' };
+      return { error: "Unknown message type" };
   }
 }
