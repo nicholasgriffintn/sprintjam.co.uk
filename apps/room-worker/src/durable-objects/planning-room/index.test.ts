@@ -282,33 +282,6 @@ describe("PlanningRoom critical flows", () => {
     );
   });
 
-  it("serializes game mutations through blockConcurrencyWhile", async () => {
-    const blockSpy = vi.fn(async (fn: () => Promise<unknown>) => fn());
-    const state = {
-      ...makeState(),
-      blockConcurrencyWhile: blockSpy,
-    };
-    const room = new PlanningRoom(state as unknown as DurableObjectState, env);
-    const roomData: RoomData = createInitialRoomData({
-      key: "room-games-lock",
-      users: ["alice"],
-      moderator: "alice",
-      connectedUsers: { alice: true },
-    });
-
-    room.broadcast = vi.fn();
-    room.getRoomData = vi.fn(async () => roomData);
-    room.putRoomData = vi.fn(async () => undefined);
-
-    const callsBefore = blockSpy.mock.calls.length;
-
-    await room.handleStartGame("alice", "emoji-story");
-    await room.handleSubmitGameMove("alice", "😀");
-    await room.handleEndGame("alice");
-
-    expect(blockSpy.mock.calls.length).toBe(callsBefore + 3);
-  });
-
   it("clamps and broadcasts timer configuration updates", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-01T00:00:30Z"));
