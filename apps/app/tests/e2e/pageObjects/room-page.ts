@@ -30,7 +30,10 @@ export class RoomPage {
   }
 
   async castVote(option: string | number) {
-    await this.page.getByTestId(`vote-option-${option}`).click();
+    const voteOption = this.page.getByTestId(`vote-option-${option}`);
+    await expect(voteOption).toBeVisible();
+    await expect(voteOption).toBeEnabled({ timeout: 10_000 });
+    await voteOption.click();
   }
 
   async expectVoteOptionVisible(option: string | number) {
