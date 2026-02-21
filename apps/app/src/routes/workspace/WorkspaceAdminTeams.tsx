@@ -15,6 +15,7 @@ import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import type { Team } from "@/lib/workspace-service";
+import { BetaBadge } from '../../components/BetaBadge';
 
 export default function WorkspaceAdminTeams() {
   usePageMeta(META_CONFIGS.workspaceAdminTeams);
@@ -80,7 +81,7 @@ export default function WorkspaceAdminTeams() {
       <div className="space-y-6">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
-            Admin
+            Admin <BetaBadge />
           </h1>
           <p className="text-slate-600 dark:text-slate-300">
             Manage workspace settings and teams

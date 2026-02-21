@@ -11,6 +11,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { BetaBadge } from '../../components/BetaBadge';
 
 export default function WorkspaceSessions() {
   usePageMeta(META_CONFIGS.workspaceSessions);
@@ -52,7 +53,7 @@ export default function WorkspaceSessions() {
       <div className="space-y-6">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
-            Sessions
+            Sessions <BetaBadge />
           </h1>
           <p className="text-slate-600 dark:text-slate-300">
             View and manage team planning sessions
