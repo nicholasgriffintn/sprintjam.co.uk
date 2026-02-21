@@ -1,3 +1,7 @@
+## V2.9
+
+- Added more games to the party games feature, including a new Clueboard game inspired by Codenames but designed to be super fast, a One Word Pitch game where players give one word clues to get their team to guess a secret word and a Category Blitz game where players have to name items in a category starting with a specific letter.
+
 ## V2.8
 
 - Added a new party games feature that allows users to play games with collaborators that are designed to last just a few minutes for a quick break between votes. Starting with three games: Guess the Number, Word Chain and Emoji Story.

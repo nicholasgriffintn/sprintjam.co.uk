@@ -217,9 +217,12 @@ export interface TimerState {
 }
 
 export const ROOM_GAME_TYPES = [
-  "guess-the-number",
-  "word-chain",
-  "emoji-story",
+  'guess-the-number',
+  'word-chain',
+  'emoji-story',
+  'one-word-pitch',
+  'category-blitz',
+  'clueboard',
 ] as const;
 
 export type RoomGameType = (typeof ROOM_GAME_TYPES)[number];
@@ -251,13 +254,27 @@ export interface RoomGameSession {
   startedBy: string;
   startedAt: number;
   round: number;
-  status: "active" | "completed";
+  status: 'active' | 'completed';
   participants: string[];
   leaderboard: Record<string, number>;
   moves: RoomGameMove[];
   events: RoomGameEvent[];
   numberTarget?: number;
   lastWord?: string | null;
+  oneWordPitchPrompt?: string;
+  oneWordPitchPromptHistory?: string[];
+  categoryBlitzCategory?: string;
+  categoryBlitzLetter?: string;
+  categoryBlitzHistory?: string[];
+  codenamesBoard?: string[];
+  codenamesRevealedIndices?: number[];
+  codenamesRoundPhase?: 'clue' | 'guess';
+  codenamesClueGiver?: string | null;
+  codenamesCurrentClue?: string | null;
+  codenamesCurrentClueTarget?: number;
+  codenamesCurrentGuesses?: number;
+  codenamesTargetIndices?: number[];
+  codenamesAssassinIndex?: number;
   winner?: string;
 }
 

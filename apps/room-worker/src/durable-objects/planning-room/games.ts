@@ -29,12 +29,50 @@ const getWinner = (session: RoomGameSession) => {
 const getClientGameSession = (session: RoomGameSession): RoomGameSession =>
   sanitizeGameSession(session) ?? session;
 
+const sendClueboardSecretToCurrentClueGiver = (
+  room: PlanningRoom,
+  session: RoomGameSession,
+) => {
+  if (
+    session.type !== "clueboard" ||
+    session.status !== "active" ||
+    session.codenamesRoundPhase !== "clue"
+  ) {
+    return;
+  }
+
+  const clueGiver = session.codenamesClueGiver;
+  const blockerIndex = session.codenamesAssassinIndex;
+  if (!clueGiver || blockerIndex === undefined) {
+    return;
+  }
+
+  const payload = JSON.stringify({
+    type: "clueboardSecret",
+    round: session.round,
+    blockerIndex,
+  });
+
+  room.sessions.forEach((sessionInfo, socket) => {
+    if (sessionInfo.userName !== clueGiver) {
+      return;
+    }
+
+    try {
+      socket.send(payload);
+    } catch (_error) {
+      room.sessions.delete(socket);
+    }
+  });
+};
+
 const completeGameSession = async (
   room: PlanningRoom,
   roomData: RoomData,
   session: RoomGameSession,
   endedBy: string,
   reason: "manual" | "round-limit",
+  roundLimit = MAX_GAME_ROUNDS,
 ) => {
   const winner = getWinner(session);
   session.status = "completed";
@@ -44,8 +82,8 @@ const completeGameSession = async (
     addEvent(
       session,
       winner
-        ? `Game ended after ${MAX_GAME_ROUNDS} rounds. Winner: ${winner}.`
-        : `Game ended after ${MAX_GAME_ROUNDS} rounds in a tie.`,
+        ? `Game ended after ${roundLimit} rounds. Winner: ${winner}.`
+        : `Game ended after ${roundLimit} rounds in a tie.`,
     );
   } else {
     addEvent(
@@ -86,6 +124,16 @@ export async function handleStartGame(
   }
 
   const gameEngine = GAME_ENGINES[gameType];
+  const cannotStartReason = gameEngine.canStart?.(roomData);
+  if (cannotStartReason) {
+    room.broadcast({
+      type: "error",
+      error: cannotStartReason,
+      reason: "validation",
+    });
+    return;
+  }
+
   const session = initializeGameSession(
     roomData,
     gameType,
@@ -101,6 +149,8 @@ export async function handleStartGame(
     gameSession: getClientGameSession(session),
     startedBy: userName,
   });
+
+  sendClueboardSecretToCurrentClueGiver(room, session);
 }
 
 export async function handleSubmitGameMove(
@@ -126,7 +176,12 @@ export async function handleSubmitGameMove(
   }
 
   const latestMove = session.moves[session.moves.length - 1];
-  if (roomData.users.length > 1 && latestMove?.user === userName) {
+  const shouldBlockConsecutiveMoves = gameEngine.allowConsecutiveMoves !== true;
+  if (
+    shouldBlockConsecutiveMoves &&
+    roomData.users.length > 1 &&
+    latestMove?.user === userName
+  ) {
     return;
   }
 
@@ -135,8 +190,16 @@ export async function handleSubmitGameMove(
 
   gameEngine.applyMove({ session, userName, value, move });
 
-  if (session.round > MAX_GAME_ROUNDS) {
-    await completeGameSession(room, roomData, session, "system", "round-limit");
+  const roundLimit = gameEngine.maxRounds ?? MAX_GAME_ROUNDS;
+  if (session.round > roundLimit) {
+    await completeGameSession(
+      room,
+      roomData,
+      session,
+      "system",
+      "round-limit",
+      roundLimit,
+    );
     return;
   }
 
@@ -148,6 +211,8 @@ export async function handleSubmitGameMove(
     gameSession: getClientGameSession(session),
     user: userName,
   });
+
+  sendClueboardSecretToCurrentClueGiver(room, session);
 }
 
 export async function handleEndGame(room: PlanningRoom, userName: string) {

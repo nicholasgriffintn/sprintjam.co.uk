@@ -169,6 +169,29 @@ describe('applyRoomUpdate', () => {
       const result = applyRoomUpdate(room, message);
       expect(result?.gameSession?.type).toBe('emoji-story');
     });
-  });
 
+    it('stores clueboard blocker secret for the current round', () => {
+      const room = createBaseRoom();
+      room.gameSession = {
+        type: 'clueboard',
+        startedBy: 'Alice',
+        startedAt: Date.now(),
+        round: 2,
+        status: 'active',
+        participants: ['Alice', 'Bob'],
+        leaderboard: { Alice: 0, Bob: 0 },
+        moves: [],
+        events: [],
+      };
+
+      const message: WebSocketMessage = {
+        type: 'clueboardSecret',
+        round: 2,
+        blockerIndex: 5,
+      };
+
+      const result = applyRoomUpdate(room, message);
+      expect(result?.gameSession?.codenamesKnownBlockerIndex).toBe(5);
+    });
+  });
 });

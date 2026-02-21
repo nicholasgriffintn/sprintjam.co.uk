@@ -210,7 +210,7 @@ describe("room-data helpers", () => {
   });
 
   describe("sanitizeRoomData", () => {
-    it("removes passcode hash and guess target from exposed room data", () => {
+    it("removes passcode hash and hidden game state from exposed room data", () => {
       const room = createRoom({
         passcodeHash: {
           hash: "h",
@@ -228,6 +228,8 @@ describe("room-data helpers", () => {
           moves: [],
           events: [],
           numberTarget: 12,
+          codenamesTargetIndices: [1, 2, 3],
+          codenamesAssassinIndex: 7,
         },
       });
 
@@ -235,7 +237,11 @@ describe("room-data helpers", () => {
 
       expect(sanitized.passcodeHash).toBeUndefined();
       expect(sanitized.gameSession?.numberTarget).toBeUndefined();
+      expect(sanitized.gameSession?.codenamesTargetIndices).toBeUndefined();
+      expect(sanitized.gameSession?.codenamesAssassinIndex).toBeUndefined();
       expect(room.gameSession?.numberTarget).toBe(12);
+      expect(room.gameSession?.codenamesTargetIndices).toEqual([1, 2, 3]);
+      expect(room.gameSession?.codenamesAssassinIndex).toBe(7);
     });
   });
 
