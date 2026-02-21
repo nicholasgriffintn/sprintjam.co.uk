@@ -60,35 +60,21 @@ export class WheelRoomRepository {
       return undefined;
     }
 
-    const users = await this.db
-      .select()
-      .from(wheelUsers)
-      .orderBy(wheelUsers.ordinal)
-      .all();
+    const [users, entries, results] = await Promise.all([
+      this.db.select().from(wheelUsers).orderBy(wheelUsers.ordinal).all(),
+      this.db.select().from(wheelEntries).orderBy(wheelEntries.ordinal).all(),
+      this.db
+        .select()
+        .from(wheelResults)
+        .orderBy(wheelResults.timestamp)
+        .all(),
+    ]);
 
-    const entries = await this.db
-      .select()
-      .from(wheelEntries)
-      .orderBy(wheelEntries.ordinal)
-      .all();
-
-    const results = await this.db
-      .select()
-      .from(wheelResults)
-      .orderBy(wheelResults.timestamp)
-      .all();
-
-    const connectedUsers: Record<string, boolean> = {};
-    const userAvatars: Record<string, string> = {};
-    const userList: string[] = [];
-
-    for (const user of users) {
-      userList.push(user.userName);
-      connectedUsers[user.userName] = !!user.isConnected;
-      if (user.avatar) {
-        userAvatars[user.userName] = user.avatar;
-      }
-    }
+    const {
+      users: userList,
+      connectedUsers,
+      userAvatars,
+    } = this.mapUsersToState(users);
 
     const settings = safeJsonParse<WheelSettings>(row.settings);
     if (!settings) {
@@ -101,26 +87,16 @@ export class WheelRoomRepository {
 
     const wheelData: WheelData = {
       key: row.wheelKey,
-      entries: entries.map((e) => ({
-        id: e.entryId,
-        name: e.name,
-        enabled: !!e.enabled,
-      })),
+      entries: this.mapEntryRows(entries),
       moderator: row.moderator,
       users: userList,
       connectedUsers,
       spinState: spinState ?? null,
-      results: results.map((r) => ({
-        id: r.resultId,
-        winner: r.winner,
-        timestamp: r.timestamp,
-        removedAfter: !!r.removedAfter,
-      })),
+      results: this.mapResultRows(results),
       settings,
       status: row.wheelStatus === "completed" ? "completed" : "active",
       passcodeHash: parsePasscodeHash(row.passcode) ?? undefined,
-      userAvatars:
-        Object.keys(userAvatars).length > 0 ? userAvatars : undefined,
+      userAvatars,
     };
 
     return wheelData;
@@ -128,15 +104,7 @@ export class WheelRoomRepository {
 
   async replaceWheelData(wheelData: WheelData): Promise<void> {
     await this.db.transaction((tx) => {
-      const metaValues: InsertWheelMetaItem = {
-        id: WHEEL_ROW_ID,
-        wheelKey: wheelData.key,
-        moderator: wheelData.moderator,
-        wheelStatus: wheelData.status ?? "active",
-        passcode: serializePasscodeHash(wheelData.passcodeHash),
-        settings: JSON.stringify(wheelData.settings),
-        spinState: wheelData.spinState ? JSON.stringify(wheelData.spinState) : null,
-      };
+      const metaValues = this.toMetaRow(wheelData);
 
       tx.insert(wheelMeta)
         .values(metaValues)
@@ -154,62 +122,70 @@ export class WheelRoomRepository {
         .run();
 
       tx.delete(wheelUsers).run();
-      wheelData.users.forEach((user, index) => {
-        const userValues: InsertWheelUsersItem = {
+      const userValues = wheelData.users.map(
+        (user, index): InsertWheelUsersItem => ({
           userName: user,
           avatar: wheelData.userAvatars?.[user] ?? null,
           isConnected: wheelData.connectedUsers?.[user] ? 1 : 0,
           ordinal: index,
-        };
+        }),
+      );
+      if (userValues.length > 0) {
         tx.insert(wheelUsers)
           .values(userValues)
           .run();
-      });
+      }
 
       tx.delete(wheelEntries).run();
-      wheelData.entries.forEach((entry, index) => {
-        const entryValues: InsertWheelEntriesItem = {
+      const entryValues = wheelData.entries.map(
+        (entry, index): InsertWheelEntriesItem => ({
           entryId: entry.id,
           name: entry.name,
           enabled: entry.enabled ? 1 : 0,
           ordinal: index,
-        };
+        }),
+      );
+      if (entryValues.length > 0) {
         tx.insert(wheelEntries)
           .values(entryValues)
           .run();
-      });
+      }
 
       tx.delete(wheelResults).run();
-      wheelData.results.forEach((result) => {
-        const resultValues: InsertWheelResultsItem = {
+      const resultValues = wheelData.results.map(
+        (result): InsertWheelResultsItem => ({
           resultId: result.id,
           winner: result.winner,
           timestamp: result.timestamp,
           removedAfter: result.removedAfter ? 1 : 0,
-        };
+        }),
+      );
+      if (resultValues.length > 0) {
         tx.insert(wheelResults)
           .values(resultValues)
           .run();
-      });
+      }
     });
   }
 
   ensureUser(userName: string): string {
-    const canonicalName = this.findCanonicalUserName(userName) ?? userName;
-    const maxOrdinal = this.getMaxUserOrdinal();
+    const canonicalName = this.findCanonicalUserName(userName);
+    if (canonicalName) {
+      return canonicalName;
+    }
 
     this.db
       .insert(wheelUsers)
       .values({
-        userName: canonicalName,
+        userName,
         avatar: null,
         isConnected: 0,
-        ordinal: maxOrdinal + 1,
+        ordinal: this.getMaxUserOrdinal() + 1,
       } satisfies InsertWheelUsersItem)
       .onConflictDoNothing()
       .run();
 
-    return canonicalName;
+    return userName;
   }
 
   setUserConnection(userName: string, isConnected: boolean) {
@@ -310,11 +286,7 @@ export class WheelRoomRepository {
       .orderBy(wheelEntries.ordinal)
       .all();
 
-    return rows.map((r) => ({
-      id: r.entryId,
-      name: r.name,
-      enabled: !!r.enabled,
-    }));
+    return this.mapEntryRows(rows);
   }
 
   addResult(result: SpinResult): void {
@@ -336,12 +308,7 @@ export class WheelRoomRepository {
       .orderBy(wheelResults.timestamp)
       .all();
 
-    return rows.map((r) => ({
-      id: r.resultId,
-      winner: r.winner,
-      timestamp: r.timestamp,
-      removedAfter: !!r.removedAfter,
-    }));
+    return this.mapResultRows(rows);
   }
 
   clearResults(): void {
@@ -447,5 +414,60 @@ export class WheelRoomRepository {
         sqlOperator`LOWER(${wheelSessionTokens.userName}) = LOWER(${userName})`,
       )
       .get()?.userName;
+  }
+
+  private toMetaRow(wheelData: WheelData): InsertWheelMetaItem {
+    return {
+      id: WHEEL_ROW_ID,
+      wheelKey: wheelData.key,
+      moderator: wheelData.moderator,
+      wheelStatus: wheelData.status ?? "active",
+      passcode: serializePasscodeHash(wheelData.passcodeHash),
+      settings: JSON.stringify(wheelData.settings),
+      spinState: wheelData.spinState ? JSON.stringify(wheelData.spinState) : null,
+    };
+  }
+
+  private mapUsersToState(users: Array<(typeof wheelUsers)["$inferSelect"]>): {
+    users: string[];
+    connectedUsers: Record<string, boolean>;
+    userAvatars?: Record<string, string>;
+  } {
+    const connectedUsers: Record<string, boolean> = {};
+    const userAvatars: Record<string, string> = {};
+
+    for (const user of users) {
+      connectedUsers[user.userName] = !!user.isConnected;
+      if (user.avatar) {
+        userAvatars[user.userName] = user.avatar;
+      }
+    }
+
+    return {
+      users: users.map((user) => user.userName),
+      connectedUsers,
+      userAvatars: Object.keys(userAvatars).length > 0 ? userAvatars : undefined,
+    };
+  }
+
+  private mapEntryRows(
+    rows: Array<(typeof wheelEntries)["$inferSelect"]>,
+  ): WheelEntry[] {
+    return rows.map((row) => ({
+      id: row.entryId,
+      name: row.name,
+      enabled: !!row.enabled,
+    }));
+  }
+
+  private mapResultRows(
+    rows: Array<(typeof wheelResults)["$inferSelect"]>,
+  ): SpinResult[] {
+    return rows.map((row) => ({
+      id: row.resultId,
+      winner: row.winner,
+      timestamp: row.timestamp,
+      removedAfter: !!row.removedAfter,
+    }));
   }
 }

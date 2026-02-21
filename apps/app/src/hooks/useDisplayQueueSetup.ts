@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import type { RoomData } from "@/types";
 
 interface UseDisplayQueueSetupOptions {
   isQueueEnabled: boolean;
-  queueProvider: string;
-  roomData: any;
+  queueProvider: NonNullable<RoomData["settings"]["externalService"]>;
+  roomData: Pick<RoomData, "ticketQueue" | "moderator">;
   name: string;
 }
 

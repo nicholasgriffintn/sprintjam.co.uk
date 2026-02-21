@@ -1,4 +1,7 @@
 import type {
+  ExternalBoardOption as SharedExternalBoardOption,
+  ExternalSprintOption as SharedExternalSprintOption,
+  ExternalTicketMetadata as SharedExternalTicketMetadata,
   ExtraVoteOption,
   JudgeMetadata as SharedJudgeMetadata,
   RoomData as SharedRoomData,
@@ -15,6 +18,11 @@ import type {
   RoomGameSession,
   RoomStatus,
 } from "@sprintjam/types";
+
+type AppExternalService = Extract<
+  NonNullable<SharedRoomSettings["externalService"]>,
+  "jira" | "linear" | "github" | "none"
+>;
 
 export type ErrorKind =
   | "permission"
@@ -49,40 +57,9 @@ export type AvatarId =
   | "crown"
   | string;
 
-export interface TicketMetadata {
-  id?: string;
-  key?: string;
-  identifier?: string;
-  summary?: string;
-  title?: string;
-  name?: string;
-  description?: string;
-  body?: string;
-  status?: string;
-  assignee?: string | null;
-  storyPoints?: number | null;
-  estimate?: number | null;
-  labels?: string[];
-  url?: string;
-  html_url?: string;
-  number?: number;
-  [key: string]: unknown;
-}
-
-export interface ExternalBoardOption {
-  id: string;
-  name: string;
-  key?: string;
-}
-
-export interface ExternalSprintOption {
-  id: string;
-  name: string;
-  number?: number;
-  state?: string;
-  startDate?: string | null;
-  endDate?: string | null;
-}
+export type TicketMetadata = SharedExternalTicketMetadata;
+export type ExternalBoardOption = SharedExternalBoardOption;
+export type ExternalSprintOption = SharedExternalSprintOption;
 
 export interface ExternalTicketSummary {
   id: string;
@@ -113,7 +90,7 @@ export type TicketQueueItem = Omit<
 > & {
   title?: string;
   status: "pending" | "in_progress" | "completed";
-  externalService: "jira" | "linear" | "github" | "none";
+  externalService: AppExternalService;
   externalServiceMetadata?: TicketMetadata;
   votes?: AppTicketVote[];
 };
@@ -123,7 +100,7 @@ export type RoomSettings = Omit<
   "judgeAlgorithm" | "externalService"
 > & {
   judgeAlgorithm: JudgeAlgorithm;
-  externalService?: "jira" | "linear" | "github" | "none";
+  externalService?: AppExternalService;
 };
 
 export interface ServerDefaults {
@@ -162,41 +139,6 @@ export type WebSocketErrorReason =
   | "disconnect"
   | "permission"
   | "network";
-
-export type WebSocketMessageType =
-  | "initialize"
-  | "userJoined"
-  | "userLeft"
-  | "userConnectionStatus"
-  | "spectatorStatusChanged"
-  | "vote"
-  | "showVotes"
-  | "resetVotes"
-  | "newModerator"
-  | "settingsUpdated"
-  | "roomStatusUpdated"
-  | "judgeScoreUpdated"
-  | "error"
-  | "disconnected"
-  | "avatarChanged"
-  | "strudelCodeGenerated"
-  | "generateStrudelCode"
-  | "toggleStrudelPlayback"
-  | "strudelPlaybackToggled"
-  | "nextTicket"
-  | "ticketAdded"
-  | "ticketUpdated"
-  | "ticketDeleted"
-  | "ticketCompleted"
-  | "queueUpdated"
-  | "timerStarted"
-  | "timerPaused"
-  | "timerReset"
-  | "timerUpdated"
-  | "clueboardSecret"
-  | "gameStarted"
-  | "gameMoveSubmitted"
-  | "gameEnded";
 
 interface WebSocketPayloads {
   initialize: {
@@ -327,6 +269,8 @@ interface WebSocketPayloads {
     endedBy: string;
   };
 }
+
+export type WebSocketMessageType = keyof WebSocketPayloads;
 
 interface WebSocketEnvelope {
   error?: string;

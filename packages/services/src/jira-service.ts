@@ -1,10 +1,9 @@
 import type {
+  ExternalTicketMetadata as TicketMetadata,
   JiraFieldDefinition,
   JiraOAuthCredentials,
 } from "@sprintjam/types";
 import { executeWithTokenRefresh as executeWithOAuthTokenRefresh } from "./oauth-refresh";
-
-type TicketMetadata = Record<string, any>;
 
 function parseJiraDescription(description: any): string {
   if (!description) return "";

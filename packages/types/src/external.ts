@@ -5,6 +5,41 @@ import type { OauthCredentialsItem as DbOauthCredentialsItem } from "@sprintjam/
 
 export type OAuthProvider = "jira" | "linear" | "github";
 
+export interface ExternalTicketMetadata {
+  id?: string;
+  key?: string;
+  identifier?: string;
+  summary?: string;
+  title?: string;
+  name?: string;
+  description?: string;
+  body?: string;
+  status?: string;
+  assignee?: string | null;
+  storyPoints?: number | null;
+  estimate?: number | null;
+  labels?: string[];
+  url?: string;
+  html_url?: string;
+  number?: number;
+  [key: string]: unknown;
+}
+
+export interface ExternalBoardOption {
+  id: string;
+  name: string;
+  key?: string;
+}
+
+export interface ExternalSprintOption {
+  id: string;
+  name: string;
+  number?: number;
+  state?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
 export type OauthCredentialsItem = Pick<
   DbOauthCredentialsItem,
   | "id"

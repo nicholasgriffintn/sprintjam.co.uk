@@ -1,7 +1,8 @@
-import type { LinearOAuthCredentials } from "@sprintjam/types";
+import type {
+  ExternalTicketMetadata as TicketMetadata,
+  LinearOAuthCredentials,
+} from "@sprintjam/types";
 import { executeWithTokenRefresh as executeWithOAuthTokenRefresh } from "./oauth-refresh";
-
-type TicketMetadata = Record<string, any>;
 
 type LinearIssue = {
   id: string;
