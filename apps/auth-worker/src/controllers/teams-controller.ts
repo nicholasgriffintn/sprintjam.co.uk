@@ -1,13 +1,18 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
+import { sendWorkspaceInviteEmail } from "@sprintjam/services";
 import { jsonError } from "../lib/response";
 
 import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
+import { EMAIL_REGEX } from "../lib/auth-helpers";
 import {
   jsonResponse,
   unauthorizedResponse,
   forbiddenResponse,
   notFoundResponse,
 } from "../lib/response";
+
+const MAX_WORKSPACE_NAME_LENGTH = 120;
+const MAX_LOGO_URL_LENGTH = 500;
 
 async function getAuthOrError(
   request: Request,
@@ -331,4 +336,152 @@ export async function getWorkspaceStatsController(
   const stats = await repo.getWorkspaceStats(userId);
 
   return jsonResponse(stats);
+}
+
+export async function updateWorkspaceProfileController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const { userId, repo } = auth.result;
+  const user = await repo.getUserById(userId);
+  if (!user) {
+    return notFoundResponse("User not found");
+  }
+
+  const body = await request.json<{ name?: string; logoUrl?: string | null }>();
+  const nextName = body?.name?.trim();
+  const hasNameUpdate = typeof nextName === "string";
+  const hasLogoUpdate =
+    typeof body === "object" &&
+    body !== null &&
+    Object.prototype.hasOwnProperty.call(body, "logoUrl");
+
+  if (!hasNameUpdate && !hasLogoUpdate) {
+    return jsonError("At least one field is required", 400);
+  }
+
+  if (hasNameUpdate) {
+    if (!nextName) {
+      return jsonError("Workspace name is required", 400);
+    }
+    if (nextName.length > MAX_WORKSPACE_NAME_LENGTH) {
+      return jsonError(
+        `Workspace name must be ${MAX_WORKSPACE_NAME_LENGTH} characters or less`,
+        400,
+      );
+    }
+  }
+
+  let normalizedLogoUrl: string | null | undefined;
+  if (hasLogoUpdate) {
+    if (body.logoUrl === null) {
+      normalizedLogoUrl = null;
+    } else {
+      const trimmed = body.logoUrl?.trim() ?? "";
+      if (!trimmed) {
+        normalizedLogoUrl = null;
+      } else {
+        if (trimmed.length > MAX_LOGO_URL_LENGTH) {
+          return jsonError(
+            `Logo URL must be ${MAX_LOGO_URL_LENGTH} characters or less`,
+            400,
+          );
+        }
+
+        let parsed: URL;
+        try {
+          parsed = new URL(trimmed);
+        } catch {
+          return jsonError("Logo URL must be a valid URL", 400);
+        }
+
+        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+          return jsonError("Logo URL must start with http:// or https://", 400);
+        }
+
+        normalizedLogoUrl = parsed.toString();
+      }
+    }
+  }
+
+  await repo.updateOrganisation(user.organisationId, {
+    ...(hasNameUpdate ? { name: nextName } : {}),
+    ...(hasLogoUpdate ? { logoUrl: normalizedLogoUrl ?? null } : {}),
+  });
+
+  const organisation = await repo.getOrganisationById(user.organisationId);
+  return jsonResponse({ organisation });
+}
+
+export async function inviteWorkspaceMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const { userId, repo } = auth.result;
+  const user = await repo.getUserById(userId);
+  if (!user) {
+    return notFoundResponse("User not found");
+  }
+
+  const body = await request.json<{ email?: string }>();
+  const email = body?.email?.toLowerCase().trim();
+
+  if (!email) {
+    return jsonError("Email is required", 400);
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    return jsonError("Invalid email format", 400);
+  }
+
+  if (email === user.email.toLowerCase()) {
+    return jsonError("You are already a workspace member", 409);
+  }
+
+  const existingUser = await repo.getUserByEmail(email);
+  if (existingUser && existingUser.organisationId === user.organisationId) {
+    return jsonError("This user is already in your workspace", 409);
+  }
+
+  const invite = await repo.createOrUpdateWorkspaceInvite(
+    user.organisationId,
+    email,
+    user.id,
+  );
+
+  if (!invite) {
+    return jsonError("Unable to create invite", 500);
+  }
+
+  const organisation = await repo.getOrganisationById(user.organisationId);
+  const workspaceName = organisation?.name ?? "your workspace";
+  const inviterName = user.name?.trim() || user.email;
+  const loginUrl = `${new URL(request.url).origin}/login`;
+
+  try {
+    await sendWorkspaceInviteEmail({
+      email,
+      workspaceName,
+      inviterName,
+      loginUrl,
+      resendApiKey: env.RESEND_API_KEY,
+    });
+  } catch (error) {
+    console.error("Failed to send workspace invite email:", error);
+    return jsonError("Invite created but email could not be sent", 500);
+  }
+
+  return jsonResponse({ invite }, 201);
 }

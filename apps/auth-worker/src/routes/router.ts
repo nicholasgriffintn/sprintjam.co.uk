@@ -22,6 +22,8 @@ import {
   getTeamSessionController,
   completeSessionByRoomKeyController,
   getWorkspaceStatsController,
+  updateWorkspaceProfileController,
+  inviteWorkspaceMemberController,
 } from "../controllers/teams-controller";
 import { jsonError } from "../lib/response";
 
@@ -188,6 +190,18 @@ const ROUTES: RouteDefinition[] = [
     method: "GET",
     pattern: /^workspace\/stats$/,
     handler: (request, env) => getWorkspaceStatsController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "PUT",
+    pattern: /^workspace\/profile$/,
+    handler: (request, env) => updateWorkspaceProfileController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^workspace\/invites$/,
+    handler: (request, env) => inviteWorkspaceMemberController(request, env),
     paramTypes: ["none"],
   },
 ];

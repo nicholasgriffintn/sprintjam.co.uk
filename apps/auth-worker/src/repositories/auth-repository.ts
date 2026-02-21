@@ -7,6 +7,7 @@ import {
   users,
   magicLinks,
   workspaceSessions,
+  workspaceInvites,
   authChallenges,
   mfaCredentials,
   mfaRecoveryCodes,
@@ -228,6 +229,177 @@ export class AuthRepository {
       .from(users)
       .where(eq(users.id, userId))
       .get();
+  }
+
+  async getOrganisationById(organisationId: number) {
+    return await this.db
+      .select({
+        id: organisations.id,
+        domain: organisations.domain,
+        name: organisations.name,
+        logoUrl: organisations.logoUrl,
+        createdAt: organisations.createdAt,
+        updatedAt: organisations.updatedAt,
+      })
+      .from(organisations)
+      .where(eq(organisations.id, organisationId))
+      .get();
+  }
+
+  async updateOrganisation(
+    organisationId: number,
+    updates: { name?: string; logoUrl?: string | null },
+  ): Promise<void> {
+    await this.db
+      .update(organisations)
+      .set({
+        ...updates,
+        updatedAt: Date.now(),
+      })
+      .where(eq(organisations.id, organisationId));
+  }
+
+  async getOrganisationMembers(organisationId: number) {
+    return await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+      })
+      .from(users)
+      .where(eq(users.organisationId, organisationId))
+      .orderBy(users.email);
+  }
+
+  async updateUserOrganisation(
+    userId: number,
+    organisationId: number,
+  ): Promise<void> {
+    await this.db
+      .update(users)
+      .set({
+        organisationId,
+        updatedAt: Date.now(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async createOrUpdateWorkspaceInvite(
+    organisationId: number,
+    email: string,
+    invitedById: number,
+  ) {
+    const now = Date.now();
+    const normalizedEmail = email.toLowerCase();
+
+    await this.db
+      .insert(workspaceInvites)
+      .values({
+        organisationId,
+        email: normalizedEmail,
+        invitedById,
+        acceptedById: null,
+        acceptedAt: null,
+        revokedAt: null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [workspaceInvites.organisationId, workspaceInvites.email],
+        set: {
+          invitedById,
+          acceptedById: null,
+          acceptedAt: null,
+          revokedAt: null,
+          updatedAt: now,
+        },
+      });
+
+    return await this.db
+      .select({
+        id: workspaceInvites.id,
+        organisationId: workspaceInvites.organisationId,
+        email: workspaceInvites.email,
+        invitedById: workspaceInvites.invitedById,
+        acceptedById: workspaceInvites.acceptedById,
+        createdAt: workspaceInvites.createdAt,
+        updatedAt: workspaceInvites.updatedAt,
+        acceptedAt: workspaceInvites.acceptedAt,
+        revokedAt: workspaceInvites.revokedAt,
+      })
+      .from(workspaceInvites)
+      .where(
+        and(
+          eq(workspaceInvites.organisationId, organisationId),
+          eq(workspaceInvites.email, normalizedEmail),
+        ),
+      )
+      .get();
+  }
+
+  async listPendingWorkspaceInvites(organisationId: number) {
+    return await this.db
+      .select({
+        id: workspaceInvites.id,
+        organisationId: workspaceInvites.organisationId,
+        email: workspaceInvites.email,
+        invitedById: workspaceInvites.invitedById,
+        acceptedById: workspaceInvites.acceptedById,
+        createdAt: workspaceInvites.createdAt,
+        updatedAt: workspaceInvites.updatedAt,
+        acceptedAt: workspaceInvites.acceptedAt,
+        revokedAt: workspaceInvites.revokedAt,
+      })
+      .from(workspaceInvites)
+      .where(
+        and(
+          eq(workspaceInvites.organisationId, organisationId),
+          isNull(workspaceInvites.acceptedAt),
+          isNull(workspaceInvites.revokedAt),
+        ),
+      )
+      .orderBy(desc(workspaceInvites.updatedAt));
+  }
+
+  async getPendingWorkspaceInviteByEmail(email: string) {
+    return await this.db
+      .select({
+        id: workspaceInvites.id,
+        organisationId: workspaceInvites.organisationId,
+        email: workspaceInvites.email,
+        invitedById: workspaceInvites.invitedById,
+        acceptedById: workspaceInvites.acceptedById,
+        createdAt: workspaceInvites.createdAt,
+        updatedAt: workspaceInvites.updatedAt,
+        acceptedAt: workspaceInvites.acceptedAt,
+        revokedAt: workspaceInvites.revokedAt,
+      })
+      .from(workspaceInvites)
+      .where(
+        and(
+          eq(workspaceInvites.email, email.toLowerCase()),
+          isNull(workspaceInvites.acceptedAt),
+          isNull(workspaceInvites.revokedAt),
+        ),
+      )
+      .orderBy(desc(workspaceInvites.updatedAt))
+      .get();
+  }
+
+  async markWorkspaceInviteAccepted(
+    inviteId: number,
+    acceptedById: number,
+  ): Promise<void> {
+    await this.db
+      .update(workspaceInvites)
+      .set({
+        acceptedById,
+        acceptedAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      .where(eq(workspaceInvites.id, inviteId));
   }
 
   async logAuditEvent({

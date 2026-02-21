@@ -108,8 +108,20 @@ export async function requestMagicLinkController(
   const { ip, userAgent } = getRequestMeta(request);
 
   let isDomainAllowed = false;
+  let pendingInvite: Awaited<
+    ReturnType<WorkspaceAuthRepository["getPendingWorkspaceInviteByEmail"]>
+  > | null = null;
+  let existingUser: Awaited<
+    ReturnType<WorkspaceAuthRepository["getUserByEmail"]>
+  > | null = null;
   try {
     isDomainAllowed = await repo.isDomainAllowed(domain);
+    if (!isDomainAllowed) {
+      pendingInvite = await repo.getPendingWorkspaceInviteByEmail(email);
+      if (!pendingInvite) {
+        existingUser = await repo.getUserByEmail(email);
+      }
+    }
   } catch (error) {
     console.error("Failed to check domain allowlist:", error);
     await repo.logAuditEvent({
@@ -123,7 +135,7 @@ export async function requestMagicLinkController(
     return jsonError("Service temporarily unavailable", 503);
   }
 
-  if (!isDomainAllowed) {
+  if (!isDomainAllowed && !pendingInvite && !existingUser) {
     await repo.logAuditEvent({
       email,
       event: "magic_link_request",
@@ -183,7 +195,11 @@ export async function requestMagicLinkController(
     email,
     event: "magic_link_request",
     status: "success",
-    reason: "code_sent",
+    reason: pendingInvite
+      ? "code_sent_for_invite"
+      : existingUser
+        ? "code_sent_for_existing_user"
+        : "code_sent",
     ip,
     userAgent,
   });
@@ -261,10 +277,27 @@ export async function verifyCodeController(
   }
 
   const domain = extractDomain(result.email);
+  const pendingInvite = await repo.getPendingWorkspaceInviteByEmail(
+    result.email,
+  );
+  const existingUser = await repo.getUserByEmail(email);
 
-  const organisationId = await repo.getOrCreateOrganisation(domain);
+  let organisationId: number;
+  if (pendingInvite) {
+    organisationId = pendingInvite.organisationId;
+    if (existingUser && existingUser.organisationId !== organisationId) {
+      await repo.updateUserOrganisation(existingUser.id, organisationId);
+    }
+  } else if (existingUser) {
+    organisationId = existingUser.organisationId;
+  } else {
+    organisationId = await repo.getOrCreateOrganisation(domain);
+  }
 
   const userId = await repo.getOrCreateUser(email, organisationId);
+  if (pendingInvite) {
+    await repo.markWorkspaceInviteAccepted(pendingInvite.id, userId);
+  }
   const user = await repo.getUserByEmail(email);
   if (!user?.id) {
     return jsonError("User not found", 404);
@@ -814,6 +847,12 @@ export async function getCurrentUserController(
   }
 
   const teams = await repo.getUserTeams(user.id);
+  const organisation = await repo.getOrganisationById(user.organisationId);
+  if (!organisation) {
+    return jsonError("Organisation not found", 404);
+  }
+  const members = await repo.getOrganisationMembers(user.organisationId);
+  const invites = await repo.listPendingWorkspaceInvites(user.organisationId);
 
   return new Response(
     JSON.stringify({
@@ -823,7 +862,10 @@ export async function getCurrentUserController(
         name: user.name,
         organisationId: user.organisationId,
       },
+      organisation,
       teams,
+      members,
+      invites,
     }),
     {
       headers: { "Content-Type": "application/json" },

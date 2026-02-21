@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sprintjam/types": "workspace:*"
+    "@sprintjam/types": "workspace:*",
+    "@sprintjam/utils": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.9.3",

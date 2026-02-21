@@ -42,6 +42,19 @@ export interface Organisation {
   id: number;
   domain: string;
   name: string;
+  logoUrl: string | null;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface WorkspaceInvite {
+  id: number;
+  organisationId: number;
+  email: string;
+  invitedById: number;
+  acceptedById: number | null;
+  createdAt: number;
+  updatedAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
 }

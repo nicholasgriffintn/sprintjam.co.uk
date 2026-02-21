@@ -44,6 +44,8 @@ describe("requestMagicLinkController", () => {
 
     mockRepo = {
       isDomainAllowed: vi.fn(),
+      getPendingWorkspaceInviteByEmail: vi.fn().mockResolvedValue(null),
+      getUserByEmail: vi.fn().mockResolvedValue(null),
       createMagicLink: vi.fn(),
       logAuditEvent: vi.fn(),
     };
@@ -123,6 +125,8 @@ describe("requestMagicLinkController", () => {
 
   it("should return 403 when domain is not allowed", async () => {
     mockRepo.isDomainAllowed.mockResolvedValue(false);
+    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue(null);
+    mockRepo.getUserByEmail.mockResolvedValue(null);
 
     const request = makeRequest("https://test.com/auth/request", {
       method: "POST",
@@ -239,6 +243,46 @@ describe("requestMagicLinkController", () => {
       expect.any(Number),
     );
   });
+
+  it("should allow invited email even when domain is not allowed", async () => {
+    mockRepo.isDomainAllowed.mockResolvedValue(false);
+    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue({
+      id: 7,
+      organisationId: 3,
+      email: "invitee@otherdomain.com",
+    });
+    mockRepo.createMagicLink.mockResolvedValue(undefined);
+
+    const request = makeRequest("https://test.com/auth/request", {
+      method: "POST",
+      body: JSON.stringify({ email: "invitee@otherdomain.com" }),
+    });
+
+    const response = await requestMagicLinkController(request, mockEnv);
+    expect(response.status).toBe(200);
+    expect(mockRepo.getPendingWorkspaceInviteByEmail).toHaveBeenCalledWith(
+      "invitee@otherdomain.com",
+    );
+  });
+
+  it("should allow existing user when domain is not allowed", async () => {
+    mockRepo.isDomainAllowed.mockResolvedValue(false);
+    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue(null);
+    mockRepo.getUserByEmail.mockResolvedValue({
+      id: 9,
+      email: "existing@external.com",
+      organisationId: 2,
+    });
+    mockRepo.createMagicLink.mockResolvedValue(undefined);
+
+    const request = makeRequest("https://test.com/auth/request", {
+      method: "POST",
+      body: JSON.stringify({ email: "existing@external.com" }),
+    });
+
+    const response = await requestMagicLinkController(request, mockEnv);
+    expect(response.status).toBe(200);
+  });
 });
 
 describe("verifyCodeController", () => {
@@ -254,9 +298,12 @@ describe("verifyCodeController", () => {
 
     mockRepo = {
       validateVerificationCode: vi.fn(),
+      getPendingWorkspaceInviteByEmail: vi.fn().mockResolvedValue(null),
       getOrCreateOrganisation: vi.fn(),
+      updateUserOrganisation: vi.fn(),
       getOrCreateUser: vi.fn(),
       getUserByEmail: vi.fn(),
+      markWorkspaceInviteAccepted: vi.fn(),
       listMfaCredentials: vi.fn(),
       createAuthChallenge: vi.fn(),
       logAuditEvent: vi.fn(),
@@ -331,14 +378,16 @@ describe("verifyCodeController", () => {
       success: true,
       email: "test@example.com",
     });
+    mockRepo.getUserByEmail
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 100,
+        email: "test@example.com",
+        name: "Test User",
+        organisationId: 1,
+      });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
     mockRepo.getOrCreateUser.mockResolvedValue(100);
-    mockRepo.getUserByEmail.mockResolvedValue({
-      id: 100,
-      email: "test@example.com",
-      name: "Test User",
-      organisationId: 1,
-    });
     mockRepo.listMfaCredentials.mockResolvedValue([]);
 
     const request = makeRequest("https://test.com/auth/verify", {
@@ -366,14 +415,16 @@ describe("verifyCodeController", () => {
       success: true,
       email: "newuser@newcompany.com",
     });
+    mockRepo.getUserByEmail
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 200,
+        email: "newuser@newcompany.com",
+        name: null,
+        organisationId: 2,
+      });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(2);
     mockRepo.getOrCreateUser.mockResolvedValue(200);
-    mockRepo.getUserByEmail.mockResolvedValue({
-      id: 200,
-      email: "newuser@newcompany.com",
-      name: null,
-      organisationId: 2,
-    });
     mockRepo.listMfaCredentials.mockResolvedValue([]);
 
     const request = makeRequest("https://test.com/auth/verify", {
@@ -395,19 +446,57 @@ describe("verifyCodeController", () => {
     );
   });
 
+  it("should use workspace invite organisation when invite exists", async () => {
+    mockRepo.validateVerificationCode.mockResolvedValue({
+      success: true,
+      email: "invitee@external.com",
+    });
+    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue({
+      id: 19,
+      organisationId: 42,
+      email: "invitee@external.com",
+    });
+    mockRepo.getUserByEmail
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 501,
+        email: "invitee@external.com",
+        name: null,
+        organisationId: 42,
+      });
+    mockRepo.getOrCreateUser.mockResolvedValue(501);
+    mockRepo.listMfaCredentials.mockResolvedValue([]);
+
+    const request = makeRequest("https://test.com/auth/verify", {
+      method: "POST",
+      body: JSON.stringify({ email: "invitee@external.com", code: "123456" }),
+    });
+
+    await verifyCodeController(request, mockEnv);
+
+    expect(mockRepo.getOrCreateOrganisation).not.toHaveBeenCalled();
+    expect(mockRepo.getOrCreateUser).toHaveBeenCalledWith(
+      "invitee@external.com",
+      42,
+    );
+    expect(mockRepo.markWorkspaceInviteAccepted).toHaveBeenCalledWith(19, 501);
+  });
+
   it("should hash code before validation", async () => {
     mockRepo.validateVerificationCode.mockResolvedValue({
       success: true,
       email: "test@example.com",
     });
+    mockRepo.getUserByEmail
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 100,
+        email: "test@example.com",
+        name: "Test User",
+        organisationId: 1,
+      });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
     mockRepo.getOrCreateUser.mockResolvedValue(100);
-    mockRepo.getUserByEmail.mockResolvedValue({
-      id: 100,
-      email: "test@example.com",
-      name: "Test User",
-      organisationId: 1,
-    });
     mockRepo.listMfaCredentials.mockResolvedValue([]);
 
     const request = makeRequest("https://test.com/auth/verify", {
@@ -434,6 +523,9 @@ describe("getCurrentUserController", () => {
     mockRepo = {
       validateSession: vi.fn(),
       getUserByEmail: vi.fn(),
+      getOrganisationById: vi.fn(),
+      getOrganisationMembers: vi.fn(),
+      listPendingWorkspaceInvites: vi.fn(),
       getUserTeams: vi.fn(),
     };
 
@@ -513,6 +605,16 @@ describe("getCurrentUserController", () => {
       name: "Test User",
       organisationId: 1,
     });
+    mockRepo.getOrganisationById.mockResolvedValue({
+      id: 1,
+      domain: "example.com",
+      name: "Example",
+      logoUrl: null,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    mockRepo.getOrganisationMembers.mockResolvedValue([]);
+    mockRepo.listPendingWorkspaceInvites.mockResolvedValue([]);
     mockRepo.getUserTeams.mockResolvedValue([
       { id: 1, name: "Team Alpha", organisationId: 1, ownerId: 100 },
       { id: 2, name: "Team Beta", organisationId: 1, ownerId: 100 },
@@ -526,6 +628,7 @@ describe("getCurrentUserController", () => {
     const response = await getCurrentUserController(request, mockEnv);
     const data = (await response.json()) as {
       user: { id: number; email: string; name: string; organisationId: number };
+      organisation: { id: number; name: string };
       teams: {
         id: number;
         name: string;
@@ -542,6 +645,7 @@ describe("getCurrentUserController", () => {
       organisationId: 1,
     });
     expect(data.teams).toHaveLength(2);
+    expect(data.organisation.name).toBe("Example");
     expect(data.teams[0].name).toBe("Team Alpha");
   });
 
@@ -556,6 +660,16 @@ describe("getCurrentUserController", () => {
       name: "Test User",
       organisationId: 1,
     });
+    mockRepo.getOrganisationById.mockResolvedValue({
+      id: 1,
+      domain: "example.com",
+      name: "Example",
+      logoUrl: null,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    mockRepo.getOrganisationMembers.mockResolvedValue([]);
+    mockRepo.listPendingWorkspaceInvites.mockResolvedValue([]);
     mockRepo.getUserTeams.mockResolvedValue([]);
 
     const request = makeRequest("https://test.com/auth/me", {
@@ -579,6 +693,16 @@ describe("getCurrentUserController", () => {
       name: "Test User",
       organisationId: 1,
     });
+    mockRepo.getOrganisationById.mockResolvedValue({
+      id: 1,
+      domain: "example.com",
+      name: "Example",
+      logoUrl: null,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    mockRepo.getOrganisationMembers.mockResolvedValue([]);
+    mockRepo.listPendingWorkspaceInvites.mockResolvedValue([]);
     mockRepo.getUserTeams.mockResolvedValue([]);
 
     const request = makeRequest("https://test.com/auth/me", {

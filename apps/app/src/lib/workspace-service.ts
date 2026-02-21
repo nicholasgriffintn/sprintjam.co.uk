@@ -7,6 +7,35 @@ export interface WorkspaceUser {
   organisationId: number;
 }
 
+export interface WorkspaceOrganisation {
+  id: number;
+  domain: string;
+  name: string;
+  logoUrl: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface WorkspaceMember {
+  id: number;
+  email: string;
+  name: string | null;
+  createdAt: number;
+  lastLoginAt: number | null;
+}
+
+export interface WorkspaceInvite {
+  id: number;
+  organisationId: number;
+  email: string;
+  invitedById: number;
+  acceptedById: number | null;
+  createdAt: number;
+  updatedAt: number;
+  acceptedAt: number | null;
+  revokedAt: number | null;
+}
+
 export type MfaMethod = "totp" | "webauthn";
 
 export type VerifyCodeResponse =
@@ -138,7 +167,10 @@ export interface SessionStats {
 
 export interface WorkspaceProfile {
   user: WorkspaceUser;
+  organisation: WorkspaceOrganisation;
   teams: Team[];
+  members: WorkspaceMember[];
+  invites: WorkspaceInvite[];
 }
 
 export async function workspaceRequest<T>(
@@ -244,14 +276,9 @@ export async function verifyMfa(
   });
 }
 
-export async function getCurrentUser(): Promise<{
-  user: WorkspaceUser;
-  teams: Team[];
-} | null> {
+export async function getCurrentUser(): Promise<WorkspaceProfile | null> {
   try {
-    return await workspaceRequest<{ user: WorkspaceUser; teams: Team[] }>(
-      `${API_BASE_URL}/auth/me`,
-    );
+    return await workspaceRequest<WorkspaceProfile>(`${API_BASE_URL}/auth/me`);
   } catch {
     return null;
   }
@@ -351,6 +378,33 @@ export async function getWorkspaceStats(): Promise<WorkspaceStats | null> {
     `${API_BASE_URL}/workspace/stats`,
   );
   return data;
+}
+
+export async function updateWorkspaceProfile(payload: {
+  name?: string;
+  logoUrl?: string | null;
+}): Promise<WorkspaceOrganisation> {
+  const data = await workspaceRequest<{ organisation: WorkspaceOrganisation }>(
+    `${API_BASE_URL}/workspace/profile`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.organisation;
+}
+
+export async function inviteWorkspaceMember(
+  email: string,
+): Promise<WorkspaceInvite> {
+  const data = await workspaceRequest<{ invite: WorkspaceInvite }>(
+    `${API_BASE_URL}/workspace/invites`,
+    {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    },
+  );
+  return data.invite;
 }
 
 export async function getTeamInsights(

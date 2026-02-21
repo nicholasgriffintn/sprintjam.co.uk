@@ -68,6 +68,55 @@ export class WorkspaceAuthRepository {
     return this.auth.getUserById(userId);
   }
 
+  getOrganisationById(organisationId: number) {
+    return this.auth.getOrganisationById(organisationId);
+  }
+
+  updateOrganisation(
+    organisationId: number,
+    updates: { name?: string; logoUrl?: string | null },
+  ): Promise<void> {
+    return this.auth.updateOrganisation(organisationId, updates);
+  }
+
+  getOrganisationMembers(organisationId: number) {
+    return this.auth.getOrganisationMembers(organisationId);
+  }
+
+  updateUserOrganisation(
+    userId: number,
+    organisationId: number,
+  ): Promise<void> {
+    return this.auth.updateUserOrganisation(userId, organisationId);
+  }
+
+  createOrUpdateWorkspaceInvite(
+    organisationId: number,
+    email: string,
+    invitedById: number,
+  ) {
+    return this.auth.createOrUpdateWorkspaceInvite(
+      organisationId,
+      email,
+      invitedById,
+    );
+  }
+
+  listPendingWorkspaceInvites(organisationId: number) {
+    return this.auth.listPendingWorkspaceInvites(organisationId);
+  }
+
+  getPendingWorkspaceInviteByEmail(email: string) {
+    return this.auth.getPendingWorkspaceInviteByEmail(email);
+  }
+
+  markWorkspaceInviteAccepted(
+    inviteId: number,
+    acceptedById: number,
+  ): Promise<void> {
+    return this.auth.markWorkspaceInviteAccepted(inviteId, acceptedById);
+  }
+
   logAuditEvent(params: {
     userId?: number | null;
     email?: string | null;

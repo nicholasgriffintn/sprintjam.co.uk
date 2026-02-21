@@ -11,9 +11,12 @@ import {
   createTeamSessionController,
   completeSessionByRoomKeyController,
   getWorkspaceStatsController,
+  updateWorkspaceProfileController,
+  inviteWorkspaceMemberController,
 } from "./teams-controller";
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 import * as auth from "../lib/auth";
+import * as services from "@sprintjam/services";
 
 const makeRequest = (input: RequestInfo | URL, init?: RequestInit): Request =>
   new Request(input, init);
@@ -26,6 +29,10 @@ vi.mock("../lib/auth", () => ({
   authenticateRequest: vi.fn(),
   isAuthError: (result: { status?: string }) =>
     "status" in result && result.status === "error",
+}));
+
+vi.mock("@sprintjam/services", () => ({
+  sendWorkspaceInviteEmail: vi.fn(),
 }));
 
 describe("listTeamsController", () => {
@@ -792,5 +799,136 @@ describe("getWorkspaceStatsController", () => {
     expect(response.status).toBe(200);
     expect(data.totalTeams).toBe(3);
     expect(data.totalSessions).toBe(15);
+  });
+});
+
+describe("updateWorkspaceProfileController", () => {
+  let mockEnv: AuthWorkerEnv;
+  let mockRepo: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEnv = { DB: {} as any } as AuthWorkerEnv;
+
+    mockRepo = {
+      getUserById: vi.fn(),
+      updateOrganisation: vi.fn(),
+      getOrganisationById: vi.fn(),
+    };
+
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
+  });
+
+  it("updates workspace profile for authenticated user", async () => {
+    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+      userId: 1,
+      email: "owner@example.com",
+      repo: mockRepo,
+    });
+    mockRepo.getUserById.mockResolvedValue({
+      id: 1,
+      email: "owner@example.com",
+      organisationId: 8,
+    });
+    mockRepo.getOrganisationById.mockResolvedValue({
+      id: 8,
+      domain: "example.com",
+      name: "Updated Workspace",
+      logoUrl: "https://cdn.example.com/logo.png",
+    });
+
+    const request = makeRequest("https://test.com/workspace/profile", {
+      method: "PUT",
+      body: JSON.stringify({
+        name: "Updated Workspace",
+        logoUrl: "https://cdn.example.com/logo.png",
+      }),
+      headers: { Authorization: "Bearer valid-token" },
+    });
+
+    const response = await updateWorkspaceProfileController(request, mockEnv);
+    const data = (await response.json()) as { organisation: { name: string } };
+
+    expect(response.status).toBe(200);
+    expect(data.organisation.name).toBe("Updated Workspace");
+    expect(mockRepo.updateOrganisation).toHaveBeenCalledWith(8, {
+      name: "Updated Workspace",
+      logoUrl: "https://cdn.example.com/logo.png",
+    });
+  });
+});
+
+describe("inviteWorkspaceMemberController", () => {
+  let mockEnv: AuthWorkerEnv;
+  let mockRepo: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEnv = {
+      DB: {} as any,
+      RESEND_API_KEY: "test-resend",
+    } as AuthWorkerEnv;
+
+    mockRepo = {
+      getUserById: vi.fn(),
+      getUserByEmail: vi.fn(),
+      createOrUpdateWorkspaceInvite: vi.fn(),
+      getOrganisationById: vi.fn(),
+    };
+
+    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
+      return mockRepo;
+    });
+    vi.mocked(services.sendWorkspaceInviteEmail).mockResolvedValue(undefined);
+  });
+
+  it("creates an invite and sends an invite email", async () => {
+    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+      userId: 1,
+      email: "owner@example.com",
+      repo: mockRepo,
+    });
+    mockRepo.getUserById.mockResolvedValue({
+      id: 1,
+      email: "owner@example.com",
+      name: "Owner",
+      organisationId: 3,
+    });
+    mockRepo.getUserByEmail.mockResolvedValue(null);
+    mockRepo.createOrUpdateWorkspaceInvite.mockResolvedValue({
+      id: 10,
+      organisationId: 3,
+      email: "invitee@external.com",
+      invitedById: 1,
+      acceptedById: null,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      acceptedAt: null,
+      revokedAt: null,
+    });
+    mockRepo.getOrganisationById.mockResolvedValue({
+      id: 3,
+      name: "Acme Workspace",
+    });
+
+    const request = makeRequest("https://test.com/workspace/invites", {
+      method: "POST",
+      body: JSON.stringify({ email: "invitee@external.com" }),
+      headers: { Authorization: "Bearer valid-token" },
+    });
+
+    const response = await inviteWorkspaceMemberController(request, mockEnv);
+    const data = (await response.json()) as { invite: { email: string } };
+
+    expect(response.status).toBe(201);
+    expect(data.invite.email).toBe("invitee@external.com");
+    expect(mockRepo.createOrUpdateWorkspaceInvite).toHaveBeenCalledWith(
+      3,
+      "invitee@external.com",
+      1,
+    );
+    expect(services.sendWorkspaceInviteEmail).toHaveBeenCalled();
   });
 });

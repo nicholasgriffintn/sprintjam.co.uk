@@ -8,6 +8,7 @@ export * from "./mfa-credentials";
 export * from "./mfa-recovery-codes";
 export * from "./login-audit-logs";
 export * from "./workspace-sessions";
+export * from "./workspace-invites";
 export * from "./team-sessions";
 export * from "./round-votes";
 export * from "./vote-records";
