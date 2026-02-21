@@ -7,7 +7,8 @@ import {
   addEvent,
   createGameMove,
   initializeGameSession,
-} from "./game-engines/helpers";
+  sendClueboardSecretToCurrentClueGiver,
+} from './game-engines/helpers';
 import { GAME_ENGINES } from "./game-engines/registry";
 
 const getWinner = (session: RoomGameSession) => {
@@ -28,43 +29,6 @@ const getWinner = (session: RoomGameSession) => {
 
 const getClientGameSession = (session: RoomGameSession): RoomGameSession =>
   sanitizeGameSession(session) ?? session;
-
-const sendClueboardSecretToCurrentClueGiver = (
-  room: PlanningRoom,
-  session: RoomGameSession,
-) => {
-  if (
-    session.type !== "clueboard" ||
-    session.status !== "active" ||
-    session.codenamesRoundPhase !== "clue"
-  ) {
-    return;
-  }
-
-  const clueGiver = session.codenamesClueGiver;
-  const blockerIndex = session.codenamesAssassinIndex;
-  if (!clueGiver || blockerIndex === undefined) {
-    return;
-  }
-
-  const payload = JSON.stringify({
-    type: "clueboardSecret",
-    round: session.round,
-    blockerIndex,
-  });
-
-  room.sessions.forEach((sessionInfo, socket) => {
-    if (sessionInfo.userName !== clueGiver) {
-      return;
-    }
-
-    try {
-      socket.send(payload);
-    } catch (_error) {
-      room.sessions.delete(socket);
-    }
-  });
-};
 
 const completeGameSession = async (
   room: PlanningRoom,

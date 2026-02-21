@@ -7,6 +7,7 @@ import {
   CATEGORY_BLITZ_CATEGORIES,
   CATEGORY_BLITZ_LETTERS,
 } from './words';
+import { PlanningRoom } from '@/index';
 
 export const MAX_GAME_ROUNDS = 5;
 export const ROUND_MOVE_TARGET = 6;
@@ -159,6 +160,43 @@ export const initializeMicroCodenamesRound = (
   session.codenamesClueGiver =
     session.participants[(session.round - 1) % session.participants.length] ??
     null;
+};
+
+export const sendClueboardSecretToCurrentClueGiver = (
+  room: PlanningRoom,
+  session: RoomGameSession,
+) => {
+  if (
+    session.type !== 'clueboard' ||
+    session.status !== 'active' ||
+    session.codenamesRoundPhase !== 'clue'
+  ) {
+    return;
+  }
+
+  const clueGiver = session.codenamesClueGiver;
+  const blockerIndex = session.codenamesAssassinIndex;
+  if (!clueGiver || blockerIndex === undefined) {
+    return;
+  }
+
+  const payload = JSON.stringify({
+    type: 'clueboardSecret',
+    round: session.round,
+    blockerIndex,
+  });
+
+  room.sessions.forEach((sessionInfo, socket) => {
+    if (sessionInfo.userName !== clueGiver) {
+      return;
+    }
+
+    try {
+      socket.send(payload);
+    } catch (_error) {
+      room.sessions.delete(socket);
+    }
+  });
 };
 
 export const isValidEmojiStoryMove = (value: string) => {
