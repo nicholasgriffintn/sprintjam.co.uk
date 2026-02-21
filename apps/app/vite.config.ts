@@ -6,16 +6,10 @@ import path from "path";
 import fs from "fs";
 
 export default defineConfig(() => {
-  const localhostCertPath = path.resolve(__dirname, ".certs/localhost.pem");
-  const localhostKeyPath = path.resolve(__dirname, ".certs/localhost-key.pem");
   const localCertPath = path.resolve(__dirname, ".certs/local.pem");
   const localKeyPath = path.resolve(__dirname, ".certs/local-key.pem");
-
-  const certPath = fs.existsSync(localCertPath)
-    ? localCertPath
-    : localhostCertPath;
-  const keyPath = fs.existsSync(localKeyPath) ? localKeyPath : localhostKeyPath;
-  const useHttps = fs.existsSync(certPath) && fs.existsSync(keyPath);
+  const useHttps =
+    fs.existsSync(localCertPath) && fs.existsSync(localKeyPath);
 
   return {
     resolve: {
@@ -26,8 +20,8 @@ export default defineConfig(() => {
     server: {
       https: useHttps
         ? {
-            cert: fs.readFileSync(certPath),
-            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(localCertPath),
+            key: fs.readFileSync(localKeyPath),
           }
         : undefined,
     },

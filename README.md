@@ -141,6 +141,19 @@ pnpm exec playwright install --with-deps
 pnpm test:e2e
 ```
 
+#### Local HTTPS with a Local Domain
+
+For local HTTPS, SprintJam uses `apps/app/.certs/local.pem` and `apps/app/.certs/local-key.pem`. Create both files together from the same command so they always match.
+
+```bash
+cd apps/app
+mkdir -p .certs
+mkcert -cert-file .certs/local.pem -key-file .certs/local-key.pem sprintjam.localhost
+pnpm run dev -- --host sprintjam.localhost
+```
+
+Then open `https://sprintjam.localhost:5173`.
+
 ## 🤝 Contributing
 
 Contributions are welcome! This project was built quickly and there are definitely areas for improvement.
