@@ -7,15 +7,8 @@ import {
   type ReactNode,
 } from "react";
 
-import {
-  disconnectFromRoom,
-  updateTicket,
-  isConnected,
-} from "@/lib/api-service";
-import {
-  applyRoomMessageToCollections,
-  removeRoomFromCollection,
-} from "@/lib/data/room-store";
+import { disconnectFromRoom, updateTicket } from "@/lib/api-service";
+import { removeRoomFromCollection } from "@/lib/data/room-store";
 import { useRoomData } from "@/lib/data/hooks";
 import { useServerDefaults } from "@/hooks/useServerDefaults";
 import { useAutoReconnect } from "@/hooks/useAutoReconnect";
@@ -23,15 +16,11 @@ import { useAutoEstimateUpdate } from "@/hooks/useAutoEstimateUpdate";
 import { useRoomConnection } from "@/hooks/useRoomConnection";
 import { useRoomDataSync } from "@/hooks/useRoomDataSync";
 import type {
-  ErrorConnectionIssue,
-  ErrorKind,
   RoomSettings,
   StructuredVote,
   TicketQueueItem,
   VoteValue,
-  WebSocketMessage,
 } from "@/types";
-import { getErrorDetails } from "@/lib/errors";
 import {
   useSessionActions,
   useSessionErrors,
@@ -52,6 +41,7 @@ import {
 } from "./room-context-store";
 import { useRoomEntryActions } from "./useRoomEntryActions";
 import { useRoomQueueAndGameActions } from "./useRoomQueueAndGameActions";
+import { useRoomRealtimeState } from "./useRoomRealtimeState";
 import { useRoomVotingActions } from "./useRoomVotingActions";
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
@@ -65,19 +55,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const [userVote, setUserVote] = useState<VoteValue | StructuredVote | null>(
     null,
   );
-  const [isSocketConnected, setIsSocketConnected] = useState<boolean>(() =>
-    isConnected(),
-  );
-  const [isSocketStatusKnown, setIsSocketStatusKnown] = useState<boolean>(() =>
-    isConnected(),
-  );
   const [isModeratorView, setIsModeratorView] = useState<boolean>(false);
-  const [roomError, setRoomError] = useState<string>("");
-  const [roomErrorKind, setRoomErrorKind] = useState<ErrorKind | null>(null);
-  const [connectionIssue, setConnectionIssue] =
-    useState<ErrorConnectionIssue | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [reconnectSignal, setReconnectSignal] = useState<number>(0);
   const [pendingCreateSettings, setPendingCreateSettings] =
     useState<Partial<RoomSettings> | null>(null);
 
@@ -96,36 +75,28 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     activeRoomKeyRef.current = activeRoomKey;
   }, [activeRoomKey]);
 
-  const assignRoomError = useCallback(
-    (
-      error: unknown,
-      fallbackMessage: string,
-      defaultKind: ErrorKind | null = null,
-    ) => {
-      const { message, kind } = getErrorDetails(
-        error,
-        fallbackMessage,
-        defaultKind,
-      );
-      setRoomError(message);
-      setRoomErrorKind(kind ?? defaultKind);
-    },
-    [],
-  );
-
-  const reportRoomError = useCallback(
-    (message: string, kind: ErrorKind | null = null) => {
-      setRoomError(message);
-      setRoomErrorKind(kind);
-    },
-    [],
-  );
-
-  const clearRoomError = useCallback(() => {
-    setRoomError("");
-    setRoomErrorKind(null);
-    setConnectionIssue(null);
-  }, []);
+  const {
+    isSocketConnected,
+    isSocketStatusKnown,
+    roomError,
+    roomErrorKind,
+    connectionIssue,
+    reconnectSignal,
+    setConnectionIssue,
+    setRoomError,
+    setRoomErrorKind,
+    assignRoomError,
+    reportRoomError,
+    clearRoomError,
+    handleRoomMessage,
+    handleConnectionChange,
+    handleConnectionError,
+    retryConnection,
+    resetRealtimeState,
+  } = useRoomRealtimeState({
+    activeRoomKeyRef,
+    setActiveRoomKey,
+  });
 
   const needsAutoReconnect =
     screen === "room" && !!roomKey && !autoReconnectDone;
@@ -180,60 +151,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }, [setScreen]),
   });
 
-  const handleRoomMessage = useCallback(
-    (message: WebSocketMessage) => {
-      if (message.type === "error") {
-        setRoomError(message.error || "Connection error");
-        if (message.reason === "auth") {
-          setRoomErrorKind("auth");
-        } else if (message.reason === "permission") {
-          setRoomErrorKind("permission");
-        } else {
-          setRoomErrorKind(null);
-        }
-        return;
-      }
-      void applyRoomMessageToCollections(message, activeRoomKeyRef.current)
-        .then((updatedRoom) => {
-          if (!activeRoomKeyRef.current && updatedRoom?.key) {
-            setActiveRoomKey(updatedRoom.key);
-          }
-          setRoomError("");
-          setRoomErrorKind(null);
-        })
-        .catch((err) => {
-          console.error("Failed to process room message", err);
-          assignRoomError(err, "Connection update failed");
-        });
-    },
-    [applyRoomMessageToCollections, assignRoomError],
-  );
-
-  const handleConnectionChange = useCallback((connected: boolean) => {
-    setIsSocketConnected(connected);
-    setIsSocketStatusKnown(true);
-    if (connected) {
-      setConnectionIssue(null);
-      setRoomErrorKind(null);
-    }
-  }, []);
-
-  const handleConnectionError = useCallback(
-    (
-      message: string,
-      meta?: { reason?: "auth" | "disconnect"; code?: number },
-    ) => {
-      setRoomError(message);
-      if (meta?.reason === "auth") {
-        setConnectionIssue({ type: "auth", message });
-        setRoomErrorKind("auth");
-      } else if (meta?.reason === "disconnect") {
-        setConnectionIssue({ type: "disconnected", message });
-      }
-    },
-    [],
-  );
-
   useRoomConnection({
     screen,
     name,
@@ -254,13 +171,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     onModeratorViewChange: setIsModeratorView,
   });
 
-  const derivedServerDefaults = useMemo(() => {
-    if (serverDefaults) {
-      return serverDefaults;
-    }
-
-    return null;
-  }, [serverDefaults]);
+  const derivedServerDefaults = serverDefaults ?? null;
 
   const { handleCreateRoom, handleJoinRoom, abortLatestRoomRequest } =
     useRoomEntryActions({
@@ -295,9 +206,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const handleLeaveRoom = useCallback(() => {
     abortLatestRoomRequest();
     disconnectFromRoom();
-    setRoomError("");
-    setRoomErrorKind(null);
-    setConnectionIssue(null);
+    resetRealtimeState();
 
     const key = activeRoomKeyRef.current;
     if (key) {
@@ -307,13 +216,17 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }
     setActiveRoomKey(null);
     setUserVote(null);
-    setIsSocketConnected(false);
-    setIsSocketStatusKnown(false);
     setIsModeratorView(false);
     setPasscode("");
     setRoomKey("");
     goHome();
-  }, [abortLatestRoomRequest, setPasscode, setRoomKey, goHome]);
+  }, [
+    abortLatestRoomRequest,
+    goHome,
+    resetRealtimeState,
+    setPasscode,
+    setRoomKey,
+  ]);
 
   const {
     handleVote,
@@ -349,13 +262,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     setRoomErrorKind,
     assignRoomError,
   });
-
-  const retryConnection = useCallback(() => {
-    setConnectionIssue((current) =>
-      current ? { ...current, reconnecting: true } : null,
-    );
-    setReconnectSignal((value) => value + 1);
-  }, []);
 
   const stateValue = useMemo<RoomStateContextValue>(
     () => ({
