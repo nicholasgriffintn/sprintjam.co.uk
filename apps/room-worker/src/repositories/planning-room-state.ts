@@ -15,7 +15,7 @@ import type {
   StructuredVote,
 } from "@sprintjam/types";
 import {
-  SESSION_TOKEN_TTL_MS,
+  isSessionTokenValid,
   parsePasscodeHash,
   serializeJSON,
   serializePasscodeHash,
@@ -27,23 +27,8 @@ export class PlanningRoomStateStore {
   constructor(private readonly db: DB) {}
 
   ensureUser(userName: string): string {
-    const existing = this.db
-      .select({
-        userName: roomUsers.userName,
-      })
-      .from(roomUsers)
-      .where(sqlOperator`LOWER(${roomUsers.userName}) = LOWER(${userName})`)
-      .get()?.userName;
-
-    const canonicalName = existing ?? userName;
-
-    const maxOrdinal =
-      this.db
-        .select({
-          maxOrdinal: sqlOperator<number>`COALESCE(MAX(${roomUsers.ordinal}), -1)`,
-        })
-        .from(roomUsers)
-        .get()?.maxOrdinal ?? -1;
+    const canonicalName = this.findCanonicalUserName(userName) ?? userName;
+    const maxOrdinal = this.getMaxUserOrdinal();
 
     this.db
       .insert(roomUsers)
@@ -292,36 +277,27 @@ export class PlanningRoomStateStore {
 
   setSessionToken(userName: string, token: string) {
     const canonicalName = this.ensureUser(userName);
-    const existingTokenOwner = this.db
-      .select({ userName: sessionTokens.userName })
-      .from(sessionTokens)
-      .where(
-        sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${canonicalName})`,
-      )
-      .get()?.userName;
-    const tokenOwner = existingTokenOwner ?? canonicalName;
+    const tokenOwner = this.findTokenOwner(canonicalName) ?? canonicalName;
+    const createdAt = Date.now();
 
     this.db
       .insert(sessionTokens)
       .values({
         userName: tokenOwner,
         token,
-        createdAt: Date.now(),
+        createdAt,
       })
       .onConflictDoUpdate({
         target: sessionTokens.userName,
         set: {
           token,
-          createdAt: Date.now(),
+          createdAt,
         },
       })
       .run();
   }
 
   validateSessionToken(userName: string, token: string | null): boolean {
-    if (!token) {
-      return false;
-    }
     const record = this.db
       .select({
         token: sessionTokens.token,
@@ -331,19 +307,40 @@ export class PlanningRoomStateStore {
       .where(sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${userName})`)
       .get();
 
-    if (!record?.token) {
-      return false;
-    }
+    return isSessionTokenValid({
+      storedToken: record?.token,
+      providedToken: token,
+      createdAt: record?.createdAt,
+    });
+  }
 
-    const isExpired =
-      typeof record.createdAt === "number" &&
-      Date.now() - record.createdAt > SESSION_TOKEN_TTL_MS;
+  private findCanonicalUserName(userName: string): string | undefined {
+    return this.db
+      .select({
+        userName: roomUsers.userName,
+      })
+      .from(roomUsers)
+      .where(sqlOperator`LOWER(${roomUsers.userName}) = LOWER(${userName})`)
+      .get()?.userName;
+  }
 
-    if (isExpired) {
-      return false;
-    }
+  private getMaxUserOrdinal(): number {
+    return (
+      this.db
+        .select({
+          maxOrdinal: sqlOperator<number>`COALESCE(MAX(${roomUsers.ordinal}), -1)`,
+        })
+        .from(roomUsers)
+        .get()?.maxOrdinal ?? -1
+    );
+  }
 
-    return record.token === token;
+  private findTokenOwner(userName: string): string | undefined {
+    return this.db
+      .select({ userName: sessionTokens.userName })
+      .from(sessionTokens)
+      .where(sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${userName})`)
+      .get()?.userName;
   }
 
   setStrudelState(options: {

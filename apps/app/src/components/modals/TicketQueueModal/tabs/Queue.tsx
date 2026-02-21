@@ -1,33 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { GripVertical, Link2, Plus, Loader2, Trash2 } from "lucide-react";
+import { Link2, Plus, Loader2 } from "lucide-react";
 
 import type {
-  ExternalBoardOption,
-  ExternalSprintOption,
   ExternalTicketSummary,
   TicketQueueItem,
   TicketMetadata,
 } from "@/types";
-import {
-  fetchJiraBoardIssues,
-  fetchJiraBoards,
-  fetchJiraSprints,
-  fetchJiraTicket,
-} from "@/lib/jira-service";
-import {
-  fetchLinearCycles,
-  fetchLinearIssues,
-  fetchLinearTeams,
-  fetchLinearIssue,
-} from "@/lib/linear-service";
-import {
-  fetchGithubIssue,
-  fetchGithubMilestones,
-  fetchGithubRepoIssues,
-  fetchGithubRepos,
-} from "@/lib/github-service";
 import { handleError } from "@/utils/error";
 import { getJiraMetadata } from "@/utils/jira";
 import { getLinearMetadata } from "@/utils/linear";
@@ -35,6 +15,17 @@ import { getGithubMetadata } from "@/utils/github";
 import { ExternalServiceBadge } from "@/components/ExternalServiceBadge";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import {
+  fetchBoardsByProvider,
+  fetchSprintsByProvider,
+  fetchTicketByProvider,
+  fetchTicketsByProvider,
+  getProviderLabels,
+  toQueueProvider,
+  type QueueProvider,
+} from "./queue-provider";
+import { QueueAddTicketForm } from "./QueueAddTicketForm";
+import { QueuePendingTicketCard } from "./QueuePendingTicketCard";
 
 interface TicketQueueModalQueueTabProps {
   currentTicket?: TicketQueueItem;
@@ -85,48 +76,29 @@ export function TicketQueueModalQueueTab({
   const [isFetchingLink, setIsFetchingLink] = useState(false);
   const [isSavingLink, setIsSavingLink] = useState(false);
 
-  const jiraEnabled = externalService === "jira";
-  const linearEnabled = externalService === "linear";
-  const githubEnabled = externalService === "github";
-  const externalEnabled = externalService !== "none";
+  const activeProvider = toQueueProvider(externalService);
+  const jiraEnabled = activeProvider === "jira";
+  const linearEnabled = activeProvider === "linear";
+  const githubEnabled = activeProvider === "github";
+  const externalEnabled = activeProvider !== null;
   const isAddFormOpen = showAddForm;
   const isProviderImportOpen = showProviderImport;
 
-  const externalLabels = useMemo(() => {
-    if (jiraEnabled) {
-      return { board: "Board", sprint: "Sprint", supportsSprint: true };
-    }
-    if (linearEnabled) {
-      return { board: "Team", sprint: "Cycle", supportsSprint: true };
-    }
-    if (githubEnabled) {
-      return { board: "Repository", sprint: "Milestone", supportsSprint: true };
-    }
-    return { board: "Board", sprint: "Sprint", supportsSprint: false };
-  }, [githubEnabled, jiraEnabled, linearEnabled]);
-
-  const providerName = jiraEnabled
-    ? "Jira"
-    : linearEnabled
-      ? "Linear"
-      : githubEnabled
-        ? "GitHub"
-        : "External";
+  const externalLabels = getProviderLabels(activeProvider);
+  const providerName = externalLabels.name;
 
   const ticketLookup = useMutation({
     mutationKey: ["ticket-lookup", roomKey, userName],
     mutationFn: async (variables: {
-      provider: "jira" | "linear" | "github";
+      provider: QueueProvider;
       key: string;
-    }) => {
-      if (variables.provider === "jira") {
-        return fetchJiraTicket(variables.key, { roomKey, userName });
-      }
-      if (variables.provider === "linear") {
-        return fetchLinearIssue(variables.key, { roomKey, userName });
-      }
-      return fetchGithubIssue(variables.key, { roomKey, userName });
-    },
+    }) =>
+      fetchTicketByProvider(
+        variables.provider,
+        variables.key,
+        roomKey,
+        userName,
+      ),
   });
 
   useEffect(() => {
@@ -161,32 +133,10 @@ export function TicketQueueModalQueueTab({
     queryKey: ["external-boards", externalService, roomKey, userName],
     enabled: externalEnabled && canManageQueue && showProviderImport,
     staleTime: 1000 * 60,
-    queryFn: async (): Promise<ExternalBoardOption[]> => {
-      if (jiraEnabled) {
-        const boards = await fetchJiraBoards(roomKey, userName);
-        return boards.map((board) => ({
-          id: board.id,
-          name: board.name,
-        }));
-      }
-      if (linearEnabled) {
-        const teams = await fetchLinearTeams(roomKey, userName);
-        return teams.map((team) => ({
-          id: team.id,
-          name: team.name,
-          key: team.key,
-        }));
-      }
-      if (githubEnabled) {
-        const repos = await fetchGithubRepos(roomKey, userName);
-        return repos.map((repo) => ({
-          id: repo.fullName,
-          name: repo.fullName,
-          key: repo.name,
-        }));
-      }
-      return [];
-    },
+    queryFn: async () =>
+      activeProvider
+        ? fetchBoardsByProvider(activeProvider, roomKey, userName)
+        : [],
   });
 
   const sprintsQuery = useQuery({
@@ -204,50 +154,15 @@ export function TicketQueueModalQueueTab({
       Boolean(selectedBoardId) &&
       canManageQueue,
     staleTime: 1000 * 60,
-    queryFn: async (): Promise<ExternalSprintOption[]> => {
-      if (jiraEnabled) {
-        const sprints = await fetchJiraSprints(
-          selectedBoardId,
-          roomKey,
-          userName,
-        );
-        return sprints.map((sprint) => ({
-          id: sprint.id,
-          name: sprint.name,
-          state: sprint.state,
-          startDate: sprint.startDate ?? null,
-          endDate: sprint.endDate ?? null,
-        }));
-      }
-      if (linearEnabled) {
-        const cycles = await fetchLinearCycles(
-          selectedBoardId,
-          roomKey,
-          userName,
-        );
-        return cycles.map((cycle) => ({
-          id: cycle.id,
-          name: cycle.name || `Cycle ${cycle.number}`,
-          number: cycle.number,
-          startDate: cycle.startsAt ?? null,
-          endDate: cycle.endsAt ?? null,
-        }));
-      }
-      if (githubEnabled) {
-        const milestones = await fetchGithubMilestones(
-          selectedBoardId,
-          roomKey,
-          userName,
-        );
-        return milestones.map((milestone) => ({
-          id: String(milestone.number),
-          name: milestone.title,
-          number: milestone.number,
-          state: milestone.state,
-        }));
-      }
-      return [];
-    },
+    queryFn: async () =>
+      activeProvider
+        ? fetchSprintsByProvider(
+            activeProvider,
+            selectedBoardId,
+            roomKey,
+            userName,
+          )
+        : [],
   });
   const boardOptions = [
     {
@@ -297,46 +212,19 @@ export function TicketQueueModalQueueTab({
       Boolean(selectedBoardId) &&
       canManageQueue,
     staleTime: 1000 * 20,
-    queryFn: async (): Promise<TicketMetadata[]> => {
-      if (jiraEnabled) {
-        return fetchJiraBoardIssues(
-          selectedBoardId,
-          {
-            sprintId: selectedSprintId,
-            limit: ticketLimit,
-            search: searchQuery || undefined,
-          },
-          roomKey,
-          userName,
-        );
-      }
-      if (linearEnabled) {
-        return fetchLinearIssues(
-          selectedBoardId,
-          {
-            cycleId: selectedSprintId,
-            limit: ticketLimit,
-            search: searchQuery || undefined,
-          },
-          roomKey,
-          userName,
-        );
-      }
-      if (githubEnabled) {
-        return fetchGithubRepoIssues(
-          selectedBoardId,
-          {
-            milestoneNumber: selectedSprint?.number ?? null,
-            milestoneTitle: selectedSprint?.name ?? null,
-            limit: ticketLimit,
-            search: searchQuery || undefined,
-          },
-          roomKey,
-          userName,
-        );
-      }
-      return [];
-    },
+    queryFn: async () =>
+      activeProvider
+        ? fetchTicketsByProvider({
+            provider: activeProvider,
+            selectedBoardId,
+            selectedSprintId,
+            selectedSprint,
+            ticketLimit,
+            searchQuery,
+            roomKey,
+            userName,
+          })
+        : [],
   });
 
   const renderBadge = (ticket?: TicketQueueItem) => {
@@ -368,6 +256,16 @@ export function TicketQueueModalQueueTab({
     return null;
   };
 
+  const clampTicketDescription = (description?: string): string | undefined => {
+    if (!description) {
+      return undefined;
+    }
+
+    return description.length > MAX_TICKET_DESCRIPTION_LENGTH
+      ? description.slice(0, MAX_TICKET_DESCRIPTION_LENGTH)
+      : description;
+  };
+
   const handleAddTicket = () => {
     if (!newTicketTitle.trim()) return;
 
@@ -384,7 +282,7 @@ export function TicketQueueModalQueueTab({
 
   const lookupExternalTicket = async (
     key: string,
-    provider: "jira" | "linear" | "github",
+    provider: QueueProvider,
     setPreview: (ticket: TicketMetadata | null) => void,
     setLoading: (loading: boolean) => void,
   ) => {
@@ -397,16 +295,11 @@ export function TicketQueueModalQueueTab({
       });
       setPreview(ticket);
     } catch (err) {
+      const providerLabels = getProviderLabels(provider);
       handleError(
         err instanceof Error
           ? err.message
-          : `Failed to fetch ${
-              provider === "jira"
-                ? "Jira ticket"
-                : provider === "linear"
-                  ? "Linear issue"
-                  : "GitHub issue"
-            }`,
+          : `Failed to fetch ${providerLabels.lookupNoun}`,
         onError,
       );
       setPreview(null);
@@ -420,11 +313,14 @@ export function TicketQueueModalQueueTab({
     const jiraMeta = getJiraMetadata(ticket);
     const linearMeta = getLinearMetadata(ticket);
     const githubMeta = getGithubMetadata(ticket);
-    const activeMeta = jiraEnabled
-      ? jiraMeta
-      : linearEnabled
-        ? linearMeta
-        : githubMeta;
+    const activeMeta =
+      activeProvider === "jira"
+        ? jiraMeta
+        : activeProvider === "linear"
+          ? linearMeta
+          : activeProvider === "github"
+            ? githubMeta
+            : null;
     setLinkPreview(activeMeta ?? null);
     setLinkLookupKey(
       (activeMeta?.key as string | undefined) ||
@@ -440,16 +336,11 @@ export function TicketQueueModalQueueTab({
     setLinkPreview(null);
   };
 
-  const handleApplyLink = async (provider: "jira" | "linear" | "github") => {
+  const handleApplyLink = async (provider: QueueProvider) => {
+    const providerLabels = getProviderLabels(provider);
     if (!linkingTicketId || !linkPreview) {
       handleError(
-        `Fetch a ${
-          provider === "jira"
-            ? "Jira ticket"
-            : provider === "linear"
-              ? "Linear issue"
-              : "GitHub issue"
-        } before linking.`,
+        `Fetch a ${providerLabels.lookupNoun} before linking.`,
         onError,
       );
       return;
@@ -457,20 +348,16 @@ export function TicketQueueModalQueueTab({
 
     setIsSavingLink(true);
     try {
-      const description =
+      const rawDescription =
         typeof linkPreview.description === "string"
           ? linkPreview.description.trim()
           : undefined;
-      const clampedDescription =
-        description && description.length > MAX_TICKET_DESCRIPTION_LENGTH
-          ? description.slice(0, MAX_TICKET_DESCRIPTION_LENGTH)
-          : description;
       onUpdateTicket(linkingTicketId, {
         ticketId:
           linkPreview.key ||
           (linkPreview as { identifier?: string }).identifier,
         title: linkPreview.summary || (linkPreview as { title?: string }).title,
-        description: clampedDescription || undefined,
+        description: clampTicketDescription(rawDescription),
         externalService: provider,
         externalServiceId: linkPreview.id,
         externalServiceMetadata: linkPreview,
@@ -480,7 +367,7 @@ export function TicketQueueModalQueueTab({
       handleError(
         err instanceof Error
           ? err.message
-          : `Failed to link ${provider === "jira" ? "Jira ticket" : "Linear issue"}`,
+          : `Failed to link ${providerLabels.linkNoun}`,
         onError,
       );
     } finally {
@@ -610,16 +497,12 @@ export function TicketQueueModalQueueTab({
     }
 
     ticketsToImport.forEach((ticket) => {
-      const description =
+      const rawDescription =
         typeof ticket.description === "string" ? ticket.description.trim() : "";
-      const clampedDescription =
-        description.length > MAX_TICKET_DESCRIPTION_LENGTH
-          ? description.slice(0, MAX_TICKET_DESCRIPTION_LENGTH)
-          : description;
       onAddTicket({
         ticketId: ticket.key,
         title: ticket.title,
-        description: clampedDescription || undefined,
+        description: clampTicketDescription(rawDescription),
         status: "pending",
         externalService,
         externalServiceId: ticket.id,
@@ -629,76 +512,6 @@ export function TicketQueueModalQueueTab({
 
     setSelectedTicketIds(new Set());
     resetProviderImport();
-  };
-
-  const renderPreview = (
-    ticket: TicketMetadata | null,
-    provider: "jira" | "linear" | "github",
-  ) => {
-    if (!ticket) return null;
-    const isJira = provider === "jira";
-    const isLinear = provider === "linear";
-    const shellClass = isJira
-      ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20"
-      : isLinear
-        ? "border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-900/20"
-        : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/20";
-    const chipClass = isJira
-      ? "bg-blue-600"
-      : isLinear
-        ? "bg-purple-600"
-        : "bg-slate-600";
-    const statusClass = isJira
-      ? "text-blue-700 dark:text-blue-200"
-      : isLinear
-        ? "text-purple-700 dark:text-purple-200"
-        : "text-slate-700 dark:text-slate-200";
-
-    return (
-      <div className={`mt-3 rounded-lg border p-3 text-xs ${shellClass}`}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span
-              className={`rounded ${chipClass} px-2 py-0.5 font-semibold text-white`}
-            >
-              {ticket.key || (ticket as { identifier?: string }).identifier}
-            </span>
-            <span className="font-semibold text-slate-800 dark:text-white">
-              {ticket.summary || (ticket as { title?: string }).title}
-            </span>
-          </div>
-          <span
-            className={`text-[11px] font-semibold uppercase tracking-wide ${statusClass}`}
-          >
-            {ticket.status || "Unknown"}
-          </span>
-        </div>
-        {ticket.description && (
-          <p className="mt-2 line-clamp-2 break-all text-slate-600 dark:text-slate-300">
-            {ticket.description}
-          </p>
-        )}
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-600 dark:text-slate-300">
-          {ticket.assignee && <span>Assignee: {ticket.assignee}</span>}
-          {isJira ? (
-            <span>
-              Story Points:{" "}
-              {ticket.storyPoints !== null && ticket.storyPoints !== undefined
-                ? ticket.storyPoints
-                : "Not set"}
-            </span>
-          ) : (
-            <span>
-              Estimate:{" "}
-              {(ticket as { estimate?: number }).estimate !== undefined &&
-              (ticket as { estimate?: number }).estimate !== null
-                ? (ticket as { estimate?: number }).estimate
-                : "Not set"}
-            </span>
-          )}
-        </div>
-      </div>
-    );
   };
 
   const hasLoadedTickets = visibleExternalTickets.length > 0;
@@ -741,7 +554,7 @@ export function TicketQueueModalQueueTab({
           </h3>
           {canManageQueue && (
             <div className="flex flex-wrap items-center gap-2">
-              {jiraEnabled && (
+              {activeProvider && (
                 <Button
                   onClick={() => {
                     if (isAddFormOpen) {
@@ -750,46 +563,12 @@ export function TicketQueueModalQueueTab({
                     setShowProviderImport(true);
                   }}
                   disabled={isAddFormOpen || isProviderImportOpen}
-                  data-testid="queue-add-jira-button"
+                  data-testid={externalLabels.importButtonTestId}
                   variant="unstyled"
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                  className={externalLabels.importButtonClassName}
                 >
                   <Link2 className="h-3 w-3" />
-                  Add Jira Ticket
-                </Button>
-              )}
-              {linearEnabled && (
-                <Button
-                  onClick={() => {
-                    if (isAddFormOpen) {
-                      closeAddForm();
-                    }
-                    setShowProviderImport(true);
-                  }}
-                  disabled={isAddFormOpen || isProviderImportOpen}
-                  data-testid="queue-add-linear-button"
-                  variant="unstyled"
-                  className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
-                >
-                  <Link2 className="h-3 w-3" />
-                  Add Linear Issue
-                </Button>
-              )}
-              {githubEnabled && (
-                <Button
-                  onClick={() => {
-                    if (isAddFormOpen) {
-                      closeAddForm();
-                    }
-                    setShowProviderImport(true);
-                  }}
-                  disabled={isAddFormOpen || isProviderImportOpen}
-                  data-testid="queue-add-github-button"
-                  variant="unstyled"
-                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-                >
-                  <Link2 className="h-3 w-3" />
-                  Add GitHub Issue
+                  {externalLabels.importButtonLabel}
                 </Button>
               )}
               <Button
@@ -811,52 +590,15 @@ export function TicketQueueModalQueueTab({
           )}
         </div>
 
-        <AnimatePresence>
-          {showAddForm && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-3 overflow-hidden"
-            >
-              <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-sm shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70">
-                <input
-                  type="text"
-                  placeholder="Ticket title"
-                  value={newTicketTitle}
-                  onChange={(e) => setNewTicketTitle(e.target.value)}
-                  className="mb-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                  onKeyDown={(e) => e.key === "Enter" && handleAddTicket()}
-                />
-                <textarea
-                  placeholder="Description (optional)"
-                  value={newTicketDescription}
-                  onChange={(e) => setNewTicketDescription(e.target.value)}
-                  className="mb-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                  rows={2}
-                />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    onClick={closeAddForm}
-                    variant="unstyled"
-                    className="rounded-lg bg-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-200"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleAddTicket}
-                    disabled={!newTicketTitle.trim()}
-                    data-testid="queue-add-confirm"
-                    variant="unstyled"
-                    className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-                  >
-                    Add
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <QueueAddTicketForm
+          open={showAddForm}
+          ticketTitle={newTicketTitle}
+          ticketDescription={newTicketDescription}
+          onTicketTitleChange={setNewTicketTitle}
+          onTicketDescriptionChange={setNewTicketDescription}
+          onCancel={closeAddForm}
+          onAdd={handleAddTicket}
+        />
 
         <AnimatePresence>
           {externalEnabled && showProviderImport && (
@@ -1095,182 +837,43 @@ export function TicketQueueModalQueueTab({
               No pending tickets
             </p>
           ) : (
-            pendingTickets.map((ticket) => {
-              const jiraMetadata = getJiraMetadata(ticket);
-              const linearMetadata = getLinearMetadata(ticket);
-              const githubMetadata = getGithubMetadata(ticket);
-              const isLinking = linkingTicketId === ticket.id;
-
-              return (
-                <div
-                  key={ticket.id}
-                  className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
-                >
-                  <div className="flex items-start gap-2">
-                    {canManageQueue && (
-                      <GripVertical className="h-4 w-4 text-slate-400" />
-                    )}
-                    <div className="flex-1 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-sm font-semibold">
-                          {ticket.ticketId}
-                        </span>
-                        {renderBadge(ticket)}
-                        {ticket.title && (
-                          <span className="text-sm">{ticket.title}</span>
-                        )}
-                      </div>
-                      {ticket.description && (
-                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 break-all">
-                          {ticket.description}
-                        </p>
-                      )}
-                      {jiraMetadata && (
-                        <p className="text-xs text-blue-700 dark:text-blue-200">
-                          {jiraMetadata.summary}
-                        </p>
-                      )}
-                      {linearMetadata && (
-                        <p className="text-xs text-purple-700 dark:text-purple-200">
-                          {linearMetadata.title || linearMetadata.identifier}
-                        </p>
-                      )}
-                      {githubMetadata && (
-                        <p className="text-xs text-slate-600 dark:text-slate-200">
-                          {githubMetadata.summary || githubMetadata.key}
-                        </p>
-                      )}
-                    </div>
-                    {canManageQueue && (
-                      <div className="flex items-center gap-2">
-                        {onSelectTicket && (
-                          <Button
-                            onClick={() => {
-                              onSelectTicket(ticket.id);
-                            }}
-                            data-testid={`queue-start-voting-${ticket.id}`}
-                            variant="unstyled"
-                            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
-                          >
-                            Start Voting
-                          </Button>
-                        )}
-                        {externalService !== "none" &&
-                          ticket.externalService === "none" && (
-                            <Button
-                              onClick={() =>
-                                isLinking
-                                  ? cancelLinking()
-                                  : startLinkTicket(ticket)
-                              }
-                              data-testid={`queue-link-toggle-${ticket.id}`}
-                              variant="unstyled"
-                              className={`rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
-                                isLinking
-                                  ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
-                                  : "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-900/60"
-                              }`}
-                            >
-                              {isLinking
-                                ? "Close"
-                                : `Link ${
-                                    externalService === "jira"
-                                      ? "Jira"
-                                      : externalService === "linear"
-                                        ? "Linear"
-                                        : "GitHub"
-                                  }`}
-                            </Button>
-                          )}
-                        <Button
-                          onClick={() => onDeleteTicket(ticket.id)}
-                          variant="unstyled"
-                          className="rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 shadow-sm hover:bg-red-100 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-200 dark:hover:bg-red-900/40"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  <AnimatePresence>
-                    {isLinking && externalService !== "none" && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-3 overflow-hidden rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm dark:border-blue-800 dark:bg-blue-900/20"
-                      >
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                          <input
-                            type="text"
-                            value={linkLookupKey}
-                            onChange={(e) => setLinkLookupKey(e.target.value)}
-                            placeholder={
-                              externalService === "jira"
-                                ? "PROJECT-123"
-                                : externalService === "linear"
-                                  ? "TEAM-123"
-                                  : "owner/repo#123"
-                            }
-                            data-testid={`queue-link-${externalService}-input-${ticket.id}`}
-                            className="flex-1 rounded-lg border border-blue-200 px-3 py-2 text-sm dark:border-blue-700 dark:bg-blue-900/30"
-                          />
-                          <Button
-                            onClick={() =>
-                              lookupExternalTicket(
-                                linkLookupKey,
-                                externalService,
-                                setLinkPreview,
-                                setIsFetchingLink,
-                              )
-                            }
-                            disabled={isFetchingLink || !linkLookupKey.trim()}
-                            data-testid={`queue-link-${externalService}-fetch-${ticket.id}`}
-                            variant="unstyled"
-                            className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                          >
-                            {isFetchingLink && (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            )}
-                            Fetch
-                          </Button>
-                        </div>
-                        {renderPreview(
-                          linkPreview,
-                          externalService as "jira" | "linear" | "github",
-                        )}
-                        <div className="mt-2 flex gap-2">
-                          <Button
-                            onClick={() =>
-                              handleApplyLink(
-                                externalService as "jira" | "linear" | "github",
-                              )
-                            }
-                            disabled={!linkPreview || isSavingLink}
-                            data-testid={`queue-link-${externalService}-save-${ticket.id}`}
-                            variant="unstyled"
-                            className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
-                          >
-                            {isSavingLink && (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            )}
-                            Save Link
-                          </Button>
-                          <Button
-                            onClick={cancelLinking}
-                            variant="unstyled"
-                            className="rounded-lg bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })
+            pendingTickets.map((ticket) => (
+              <QueuePendingTicketCard
+                key={ticket.id}
+                ticket={ticket}
+                canManageQueue={canManageQueue}
+                onSelectTicket={onSelectTicket}
+                onDeleteTicket={onDeleteTicket}
+                activeProvider={activeProvider}
+                providerLabels={externalLabels}
+                renderBadge={renderBadge}
+                isLinking={linkingTicketId === ticket.id}
+                linkLookupKey={linkLookupKey}
+                onLinkLookupKeyChange={setLinkLookupKey}
+                isFetchingLink={isFetchingLink}
+                isSavingLink={isSavingLink}
+                linkPreview={linkPreview}
+                onToggleLink={(activeTicket) => {
+                  if (linkingTicketId === activeTicket.id) {
+                    cancelLinking();
+                    return;
+                  }
+                  startLinkTicket(activeTicket);
+                }}
+                onLookupExternalTicket={(provider) => {
+                  void lookupExternalTicket(
+                    linkLookupKey,
+                    provider,
+                    setLinkPreview,
+                    setIsFetchingLink,
+                  );
+                }}
+                onApplyLink={(provider) => {
+                  void handleApplyLink(provider);
+                }}
+                onCancelLinking={cancelLinking}
+              />
+            ))
           )}
         </div>
       </div>

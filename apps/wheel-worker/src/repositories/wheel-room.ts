@@ -28,7 +28,7 @@ import type {
   PasscodeHashPayload,
 } from "@sprintjam/types";
 import {
-  SESSION_TOKEN_TTL_MS,
+  isSessionTokenValid,
   parsePasscodeHash,
   serializePasscodeHash,
   safeJsonParse,
@@ -90,14 +90,8 @@ export class WheelRoomRepository {
       }
     }
 
-    let settings: WheelSettings;
-    try {
-      const settingsData = safeJsonParse<WheelSettings>(row.settings);
-      if (!settingsData) {
-        throw new Error("Failed to parse wheel settings from storage");
-      }
-      settings = settingsData;
-    } catch {
+    const settings = safeJsonParse<WheelSettings>(row.settings);
+    if (!settings) {
       throw new Error("Failed to parse wheel settings from storage");
     }
 
@@ -201,23 +195,8 @@ export class WheelRoomRepository {
   }
 
   ensureUser(userName: string): string {
-    const existing = this.db
-      .select({
-        userName: wheelUsers.userName,
-      })
-      .from(wheelUsers)
-      .where(sqlOperator`LOWER(${wheelUsers.userName}) = LOWER(${userName})`)
-      .get()?.userName;
-
-    const canonicalName = existing ?? userName;
-
-    const maxOrdinal =
-      this.db
-        .select({
-          maxOrdinal: sqlOperator<number>`COALESCE(MAX(${wheelUsers.ordinal}), -1)`,
-        })
-        .from(wheelUsers)
-        .get()?.maxOrdinal ?? -1;
+    const canonicalName = this.findCanonicalUserName(userName) ?? userName;
+    const maxOrdinal = this.getMaxUserOrdinal();
 
     this.db
       .insert(wheelUsers)
@@ -287,13 +266,7 @@ export class WheelRoomRepository {
   }
 
   addEntry(entry: WheelEntry): void {
-    const maxOrdinal =
-      this.db
-        .select({
-          maxOrdinal: sqlOperator<number>`COALESCE(MAX(${wheelEntries.ordinal}), -1)`,
-        })
-        .from(wheelEntries)
-        .get()?.maxOrdinal ?? -1;
+    const maxOrdinal = this.getMaxEntryOrdinal();
 
     this.db
       .insert(wheelEntries)
@@ -395,36 +368,27 @@ export class WheelRoomRepository {
 
   setSessionToken(userName: string, token: string) {
     const canonicalName = this.ensureUser(userName);
-    const existingTokenOwner = this.db
-      .select({ userName: wheelSessionTokens.userName })
-      .from(wheelSessionTokens)
-      .where(
-        sqlOperator`LOWER(${wheelSessionTokens.userName}) = LOWER(${canonicalName})`,
-      )
-      .get()?.userName;
-    const tokenOwner = existingTokenOwner ?? canonicalName;
+    const tokenOwner = this.findTokenOwner(canonicalName) ?? canonicalName;
+    const createdAt = Date.now();
 
     this.db
       .insert(wheelSessionTokens)
       .values({
         userName: tokenOwner,
         token,
-        createdAt: Date.now(),
+        createdAt,
       } satisfies InsertWheelSessionTokensItem)
       .onConflictDoUpdate({
         target: wheelSessionTokens.userName,
         set: {
           token,
-          createdAt: Date.now(),
+          createdAt,
         },
       })
       .run();
   }
 
   validateSessionToken(userName: string, token: string | null): boolean {
-    if (!token) {
-      return false;
-    }
     const record = this.db
       .select({
         token: wheelSessionTokens.token,
@@ -436,18 +400,52 @@ export class WheelRoomRepository {
       )
       .get();
 
-    if (!record?.token) {
-      return false;
-    }
+    return isSessionTokenValid({
+      storedToken: record?.token,
+      providedToken: token,
+      createdAt: record?.createdAt,
+    });
+  }
 
-    const isExpired =
-      typeof record.createdAt === "number" &&
-      Date.now() - record.createdAt > SESSION_TOKEN_TTL_MS;
+  private findCanonicalUserName(userName: string): string | undefined {
+    return this.db
+      .select({
+        userName: wheelUsers.userName,
+      })
+      .from(wheelUsers)
+      .where(sqlOperator`LOWER(${wheelUsers.userName}) = LOWER(${userName})`)
+      .get()?.userName;
+  }
 
-    if (isExpired) {
-      return false;
-    }
+  private getMaxUserOrdinal(): number {
+    return (
+      this.db
+        .select({
+          maxOrdinal: sqlOperator<number>`COALESCE(MAX(${wheelUsers.ordinal}), -1)`,
+        })
+        .from(wheelUsers)
+        .get()?.maxOrdinal ?? -1
+    );
+  }
 
-    return record.token === token;
+  private getMaxEntryOrdinal(): number {
+    return (
+      this.db
+        .select({
+          maxOrdinal: sqlOperator<number>`COALESCE(MAX(${wheelEntries.ordinal}), -1)`,
+        })
+        .from(wheelEntries)
+        .get()?.maxOrdinal ?? -1
+    );
+  }
+
+  private findTokenOwner(userName: string): string | undefined {
+    return this.db
+      .select({ userName: wheelSessionTokens.userName })
+      .from(wheelSessionTokens)
+      .where(
+        sqlOperator`LOWER(${wheelSessionTokens.userName}) = LOWER(${userName})`,
+      )
+      .get()?.userName;
   }
 }

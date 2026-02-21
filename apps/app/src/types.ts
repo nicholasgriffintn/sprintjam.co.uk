@@ -32,11 +32,7 @@ export type ErrorConnectionIssue = {
   reconnecting?: boolean;
 };
 
-export type JudgeAlgorithm =
-  | "smartConsensus"
-  | "conservativeMode"
-  | "optimisticMode"
-  | "simpleAverage";
+export type JudgeAlgorithm = `${SharedRoomSettings["judgeAlgorithm"]}`;
 
 export type AvatarId =
   | "user"
