@@ -193,6 +193,34 @@ describe("validateClientMessage", () => {
     expect(result).toEqual({ type: "completeSession" });
   });
 
+  it("validates startGame payload", () => {
+    const result = validateClientMessage({
+      type: "startGame",
+      gameType: "word-chain",
+    });
+    expect(result).toEqual({ type: "startGame", gameType: "word-chain" });
+  });
+
+  it('validates startGame payload for clueboard', () => {
+    const result = validateClientMessage({
+      type: 'startGame',
+      gameType: 'clueboard',
+    });
+    expect(result).toEqual({ type: 'startGame', gameType: 'clueboard' });
+  });
+
+  it("validates submitGameMove payload", () => {
+    const result = validateClientMessage({
+      type: "submitGameMove",
+      value: "  aurora  ",
+    });
+    expect(result).toEqual({ type: "submitGameMove", value: "aurora" });
+  });
+
+  it("validates endGame", () => {
+    const result = validateClientMessage({ type: "endGame" });
+    expect(result).toEqual({ type: "endGame" });
+  });
   it("returns error for unknown message types", () => {
     const result = validateClientMessage({ type: "unknown-op" });
     expect(result).toEqual({ error: "Unknown message type" });

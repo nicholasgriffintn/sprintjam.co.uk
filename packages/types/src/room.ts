@@ -183,22 +183,22 @@ export interface TicketQueueItem {
   ticketId: string;
   title: string;
   description?: string;
-  status?: 'pending' | 'in_progress' | 'blocked' | 'completed';
+  status?: "pending" | "in_progress" | "blocked" | "completed";
   outcome?: string | null;
   createdAt: number;
   completedAt?: number | null;
   ordinal: number;
   externalService:
-    | 'jira'
-    | 'linear'
-    | 'github'
-    | 'clickup'
-    | 'asana'
-    | 'youtrack'
-    | 'zoho'
-    | 'trello'
-    | 'monday'
-    | 'none';
+    | "jira"
+    | "linear"
+    | "github"
+    | "clickup"
+    | "asana"
+    | "youtrack"
+    | "zoho"
+    | "trello"
+    | "monday"
+    | "none";
   externalServiceId?: string | null;
   externalServiceMetadata?: string | null;
 }
@@ -216,7 +216,85 @@ export interface TimerState {
   autoResetOnVotesReset?: boolean;
 }
 
-export type RoomStatus = 'active' | 'completed';
+export const ROOM_GAME_TYPES = [
+  'guess-the-number',
+  'word-chain',
+  'emoji-story',
+  'one-word-pitch',
+  'category-blitz',
+  'clueboard',
+] as const;
+
+export type RoomGameType = (typeof ROOM_GAME_TYPES)[number];
+
+export interface RoomGameDefinition {
+  type: RoomGameType;
+  title: string;
+  description: string;
+  accent: string;
+  objective: string;
+}
+
+export interface RoomGameMove {
+  id: string;
+  user: string;
+  submittedAt: number;
+  value: string;
+  round: number;
+}
+
+export interface RoomGameEvent {
+  id: string;
+  message: string;
+  createdAt: number;
+}
+
+export interface RoomGameSession {
+  type: RoomGameType;
+  startedBy: string;
+  startedAt: number;
+  round: number;
+  status: 'active' | 'completed';
+  participants: string[];
+  leaderboard: Record<string, number>;
+  moves: RoomGameMove[];
+  events: RoomGameEvent[];
+  numberTarget?: number;
+  lastWord?: string | null;
+  oneWordPitchPrompt?: string;
+  oneWordPitchPromptHistory?: string[];
+  oneWordPitchPhase?: 'submit' | 'vote';
+  oneWordPitchRoundSubmissions?: Record<string, string>;
+  oneWordPitchRoundVotes?: Record<string, string>;
+  oneWordPitchRoundHistory?: Array<{
+    round: number;
+    prompt: string;
+    submissions: Record<string, string>;
+    votes?: Record<string, string>;
+    voteWinners?: string[];
+  }>;
+  categoryBlitzCategory?: string;
+  categoryBlitzLetter?: string;
+  categoryBlitzHistory?: string[];
+  categoryBlitzRoundHistory?: Array<{
+    round: number;
+    category: string;
+    letter: string;
+    submissions: Record<string, string>;
+  }>;
+  codenamesBoard?: string[];
+  codenamesRevealedIndices?: number[];
+  codenamesRoundPhase?: 'clue' | 'guess';
+  codenamesClueGiver?: string | null;
+  codenamesCurrentClue?: string | null;
+  codenamesCurrentClueTarget?: number;
+  codenamesCurrentGuesses?: number;
+  codenamesTargetIndices?: number[];
+  codenamesAssassinIndex?: number;
+  winner?: string;
+}
+
+export type RoomStatus = "active" | "completed";
 
 export interface VotingCompletion {
   allVotesComplete: boolean;
@@ -254,6 +332,7 @@ export interface RoomData {
   currentTicket?: TicketQueueWithVotes;
   ticketQueue?: TicketQueueWithVotes[];
   timerState?: TimerState;
+  gameSession?: RoomGameSession;
 }
 
 export interface BroadcastMessage {
@@ -296,4 +375,7 @@ export type ClientMessage =
     }
   | { type: "toggleSpectator"; isSpectator: boolean }
   | { type: "completeSession" }
+  | { type: "startGame"; gameType: RoomGameType }
+  | { type: "submitGameMove"; value: string }
+  | { type: "endGame" }
   | { type: "ping" };

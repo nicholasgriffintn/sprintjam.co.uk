@@ -15,6 +15,11 @@ interface WheelSidebarProps {
 type TabId = 'entries' | 'results';
 
 const DEBOUNCE_MS = 500;
+const getEnabledEntriesText = (entries: WheelEntry[]) =>
+  entries
+    .filter((e) => e.enabled)
+    .map((e) => e.name)
+    .join('\n');
 
 export function WheelSidebar({
   entries,
@@ -25,13 +30,20 @@ export function WheelSidebar({
   disabled,
 }: WheelSidebarProps) {
   const [activeTab, setActiveTab] = useState<TabId>('entries');
-  const [bulkText, setBulkText] = useState(() =>
-    entries
-      .filter((e) => e.enabled)
-      .map((e) => e.name)
-      .join('\n'),
-  );
+  const [bulkText, setBulkText] = useState(() => getEnabledEntriesText(entries));
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const entriesRef = useRef(entries);
+
+  useEffect(() => {
+    entriesRef.current = entries;
+  }, [entries]);
+
+  useEffect(() => {
+    const nextBulkText = getEnabledEntriesText(entries);
+    setBulkText((currentBulkText) =>
+      nextBulkText === currentBulkText ? currentBulkText : nextBulkText,
+    );
+  }, [entries]);
 
   useEffect(() => {
     if (disabled || !isModeratorView) {
@@ -52,7 +64,9 @@ export function WheelSidebar({
         .map((line) => line.trim())
         .filter((line) => line.length > 0);
 
-      const currentNames = entries.filter((e) => e.enabled).map((e) => e.name);
+      const currentNames = entriesRef.current
+        .filter((e) => e.enabled)
+        .map((e) => e.name);
 
       const namesChanged =
         names.length !== currentNames.length ||
@@ -79,7 +93,6 @@ export function WheelSidebar({
     bulkText,
     disabled,
     isModeratorView,
-    entries,
     onBulkAddEntries,
     onClearEntries,
   ]);

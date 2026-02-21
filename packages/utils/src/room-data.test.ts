@@ -8,6 +8,7 @@ import {
   ensureConnectedUsers,
   findCanonicalUserName,
   calculateVotingCompletion,
+  sanitizeRoomData,
 } from './room-data';
 
 const baseSettings: RoomSettings = {
@@ -205,6 +206,42 @@ describe("room-data helpers", () => {
         expect(findCanonicalUserName(room, "alice")).toBe("Alice");
         expect(findCanonicalUserName(room, "bob")).toBeUndefined();
       });
+    });
+  });
+
+  describe("sanitizeRoomData", () => {
+    it("removes passcode hash and hidden game state from exposed room data", () => {
+      const room = createRoom({
+        passcodeHash: {
+          hash: "h",
+          salt: "s",
+          iterations: 1,
+        },
+        gameSession: {
+          type: "guess-the-number",
+          startedBy: "mod",
+          startedAt: Date.now(),
+          round: 1,
+          status: "active",
+          participants: ["mod"],
+          leaderboard: { mod: 0 },
+          moves: [],
+          events: [],
+          numberTarget: 12,
+          codenamesTargetIndices: [1, 2, 3],
+          codenamesAssassinIndex: 7,
+        },
+      });
+
+      const sanitized = sanitizeRoomData(room);
+
+      expect(sanitized.passcodeHash).toBeUndefined();
+      expect(sanitized.gameSession?.numberTarget).toBeUndefined();
+      expect(sanitized.gameSession?.codenamesTargetIndices).toBeUndefined();
+      expect(sanitized.gameSession?.codenamesAssassinIndex).toBeUndefined();
+      expect(room.gameSession?.numberTarget).toBe(12);
+      expect(room.gameSession?.codenamesTargetIndices).toEqual([1, 2, 3]);
+      expect(room.gameSession?.codenamesAssassinIndex).toBe(7);
     });
   });
 

@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Gamepad2, Maximize2, X } from "lucide-react";
 
 import {
   useRoomActions,
@@ -27,6 +28,8 @@ import { useDisplayQueueSetup } from "@/hooks/useDisplayQueueSetup";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { Footer } from "@/components/layout/Footer";
+import { RoomGamesModal } from "@/components/games/RoomGamesModal";
+import { RoomGamePanel } from "@/components/games/RoomGamePanel";
 import ShareRoomModal from "@/components/modals/ShareRoomModal";
 import SettingsModal from "@/components/modals/SettingsModal";
 import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
@@ -67,6 +70,9 @@ const RoomScreen = () => {
     retryConnection,
     handleLeaveRoom,
     handleCompleteSession,
+    handleStartGame,
+    handleSubmitGameMove,
+    handleEndGame,
   } = useRoomActions();
   const { name } = useSessionState();
   const {
@@ -87,6 +93,9 @@ const RoomScreen = () => {
   const [isCompleteSessionOpen, setIsCompleteSessionOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
   const [summaryNote, setSummaryNote] = useState("");
+  const [isGamesModalOpen, setIsGamesModalOpen] = useState(false);
+  const [gameAnnouncement, setGameAnnouncement] = useState<string | null>(null);
+  const [isGamePanelMinimised, setIsGamePanelMinimised] = useState(false);
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
@@ -150,6 +159,30 @@ const RoomScreen = () => {
       name: name,
     });
 
+  useEffect(() => {
+    if (!roomData.gameSession || roomData.gameSession.status !== 'active') {
+      return;
+    }
+
+    setGameAnnouncement(`${roomData.gameSession.startedBy} started ${roomData.gameSession.type.replace(/-/g, ' ')}. Jump in from the game panel!`);
+    setIsGamePanelMinimised(false);
+    const timeout = setTimeout(() => setGameAnnouncement(null), 6000);
+
+    return () => clearTimeout(timeout);
+  }, [roomData.gameSession?.startedAt]);
+
+  useEffect(() => {
+    if (!roomData.gameSession) {
+      setIsGamePanelMinimised(false);
+    }
+  }, [roomData.gameSession]);
+
+  const gameTitle = roomData.gameSession
+    ? roomData.gameSession.type
+        .split("-")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ")
+    : "";
   const completedTicketList =
     roomData.ticketQueue?.filter((ticket) => ticket.status === "completed") ??
     [];
@@ -204,14 +237,14 @@ const RoomScreen = () => {
             stats={stats}
             setIsQueueModalOpen={setIsQueueModalOpen}
             onOpenQueueSettings={
-              isModeratorView ? () => handleOpenSettings("queue") : undefined
+              isModeratorView ? () => handleOpenSettings('queue') : undefined
             }
-            isCompleted={roomData.status === "completed"}
+            isCompleted={roomData.status === 'completed'}
           />
         </div>
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4 order-1 md:order-none">
-          {roomData?.status === "completed" ? (
+          {roomData?.status === 'completed' ? (
             <>
               <SurfaceCard padding="md" className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -318,7 +351,12 @@ const RoomScreen = () => {
                 )}
               </SurfaceCard>
 
-              <Footer displayRepoLink={false} layout="wide" fullWidth />
+              <Footer
+                displayRepoLink={false}
+                layout="wide"
+                fullWidth
+                onOpenGames={() => setIsGamesModalOpen(true)}
+              />
             </>
           ) : (
             <>
@@ -335,11 +373,11 @@ const RoomScreen = () => {
                   title="Enable facilitation prompts?"
                   body="Prompts will be displayed as the session progresses with tips to run a successful session."
                   primaryAction={{
-                    label: "Enable prompts",
+                    label: 'Enable prompts',
                     onClick: enableFacilitationGuidance,
                   }}
                   secondaryAction={{
-                    label: "Not now",
+                    label: 'Not now',
                     onClick: dismissFacilitationOptIn,
                   }}
                 />
@@ -367,7 +405,7 @@ const RoomScreen = () => {
                   currentUserVote={userVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings("voting")
+                      ? () => handleOpenSettings('voting')
                       : undefined
                   }
                   disabled={isSpectator}
@@ -376,11 +414,11 @@ const RoomScreen = () => {
                 <UserEstimate
                   roomData={roomData}
                   name={name}
-                  userVote={typeof userVote === "object" ? null : userVote}
+                  userVote={typeof userVote === 'object' ? null : userVote}
                   onVote={handleVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings("voting")
+                      ? () => handleOpenSettings('voting')
                       : undefined
                   }
                   disabled={isSpectator}
@@ -395,7 +433,7 @@ const RoomScreen = () => {
                   onToggleShowVotes={handleToggleShowVotes}
                   onResetVotes={handleResetVotes}
                   onNextTicket={() => {
-                    const existingNote = roomData.currentTicket?.outcome ?? "";
+                    const existingNote = roomData.currentTicket?.outcome ?? '';
                     setSummaryNote(existingNote || getSuggestedNote());
                     setIsSummaryOpen(true);
                   }}
@@ -406,7 +444,7 @@ const RoomScreen = () => {
                   }
                   onOpenResultsSettings={
                     isModeratorView
-                      ? () => handleOpenSettings("results")
+                      ? () => handleOpenSettings('results')
                       : undefined
                   }
                   onRevisitLater={async () => {
@@ -418,7 +456,7 @@ const RoomScreen = () => {
                         0,
                       ) + 1;
                     await handleUpdateTicket(roomData.currentTicket.id, {
-                      status: "pending",
+                      status: 'pending',
                       ordinal: maxOrdinal,
                     });
                     handleNextTicket();
@@ -444,10 +482,10 @@ const RoomScreen = () => {
                             spreadSummary.highestVoteValue !== null &&
                             spreadSummary.lowestVoteValue !== null
                               ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
-                              : "Ask the highest and lowest voters to explain their thinking."
+                              : 'Ask the highest and lowest voters to explain their thinking.'
                           }
                           primaryAction={{
-                            label: "Got it",
+                            label: 'Got it',
                             onClick: dismissHints,
                           }}
                         />
@@ -474,7 +512,12 @@ const RoomScreen = () => {
                       </motion.div>
                     </SurfaceCard>
 
-                    <Footer displayRepoLink={false} layout="wide" fullWidth />
+                    <Footer
+                      displayRepoLink={false}
+                      layout="wide"
+                      fullWidth
+                      onOpenGames={() => setIsGamesModalOpen(true)}
+                    />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -508,7 +551,12 @@ const RoomScreen = () => {
                       </motion.div>
                     </SurfaceCard>
 
-                    <Footer displayRepoLink={false} layout="wide" fullWidth />
+                    <Footer
+                      displayRepoLink={false}
+                      layout="wide"
+                      fullWidth
+                      onOpenGames={() => setIsGamesModalOpen(true)}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -516,6 +564,70 @@ const RoomScreen = () => {
           )}
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {gameAnnouncement ? (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="fixed left-4 right-4 top-20 z-40 sm:left-auto sm:max-w-md"
+          >
+            <SurfaceCard
+              padding="sm"
+              variant="subtle"
+              className="border-brand-300/60 bg-brand-50/90 text-sm text-brand-900 shadow-lg dark:border-brand-300/30 dark:bg-brand-400/15 dark:text-brand-100"
+            >
+              <div className="flex items-start gap-3">
+                <p className="flex-1">{gameAnnouncement}</p>
+                <button
+                  type="button"
+                  onClick={() => setGameAnnouncement(null)}
+                  className="rounded-md p-1 text-brand-700 transition hover:bg-brand-100 hover:text-brand-900 dark:text-brand-100 dark:hover:bg-brand-300/20"
+                  aria-label="Close game notification"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </SurfaceCard>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {roomData.gameSession ? (
+        <div className="pointer-events-none fixed bottom-4 left-4 z-30 w-[calc(100vw-2rem)] sm:w-[min(520px,calc(100vw-2rem))]">
+          <div className="pointer-events-auto">
+            {isGamePanelMinimised ? (
+              <button
+                type="button"
+                onClick={() => setIsGamePanelMinimised(false)}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-brand-300/70 bg-white/95 px-4 py-3 text-left text-slate-900 shadow-lg backdrop-blur dark:border-brand-400/30 dark:bg-slate-900/95 dark:text-white"
+                aria-label="Expand party game panel"
+              >
+                <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                  <Gamepad2 className="h-4 w-4 text-brand-600 dark:text-brand-200" />
+                  {gameTitle}
+                </span>
+                <span className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                  {roomData.gameSession.status === 'active'
+                    ? `Round ${roomData.gameSession.round}`
+                    : 'Game over'}
+                  <Maximize2 className="h-4 w-4" />
+                </span>
+              </button>
+            ) : (
+              <RoomGamePanel
+                roomData={roomData}
+                userName={name}
+                onSubmitMove={handleSubmitGameMove}
+                onEndGame={handleEndGame}
+                onMinimise={() => setIsGamePanelMinimised(true)}
+              />
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <AnimatePresence>
         {isHelpPanelOpen && (
@@ -544,6 +656,13 @@ const RoomScreen = () => {
         )}
       </AnimatePresence>
 
+      <RoomGamesModal
+        isOpen={isGamesModalOpen}
+        roomData={roomData}
+        onClose={() => setIsGamesModalOpen(false)}
+        onStartGame={handleStartGame}
+      />
+
       <AnimatePresence>
         {isShareModalOpen && (
           <ShareRoomModal
@@ -559,7 +678,7 @@ const RoomScreen = () => {
         onClose={() => setIsQueueModalOpen(false)}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || "none"}
+        externalService={roomData.settings.externalService || 'none'}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -576,7 +695,7 @@ const RoomScreen = () => {
         isQueueEnabled={isQueueEnabled}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || "none"}
+        externalService={roomData.settings.externalService || 'none'}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -589,10 +708,10 @@ const RoomScreen = () => {
         onError={reportRoomError}
       />
 
-      {isQueueEnabled && queueProvider !== "none" && (
+      {isQueueEnabled && queueProvider !== 'none' && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as "jira" | "linear" | "github"}
+          provider={queueProvider as 'jira' | 'linear' | 'github'}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);
@@ -616,7 +735,7 @@ const RoomScreen = () => {
           try {
             const trimmedNote = summaryNote.trim();
             if (roomData.currentTicket) {
-              const existingNote = roomData.currentTicket.outcome ?? "";
+              const existingNote = roomData.currentTicket.outcome ?? '';
               if (trimmedNote !== existingNote) {
                 await handleUpdateTicket(roomData.currentTicket.id, {
                   outcome: trimmedNote || undefined,

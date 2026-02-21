@@ -147,4 +147,51 @@ describe('applyRoomUpdate', () => {
       expect(result?.votingCompletion).toBeUndefined();
     });
   });
+  describe('game messages', () => {
+    it('stores game session when game starts', () => {
+      const room = createBaseRoom();
+      const message: WebSocketMessage = {
+        type: 'gameStarted',
+        startedBy: 'Alice',
+        gameSession: {
+          type: 'emoji-story',
+          startedBy: 'Alice',
+          startedAt: Date.now(),
+          round: 1,
+          status: 'active',
+          participants: ['Alice', 'Bob'],
+          leaderboard: { Alice: 0, Bob: 0 },
+          moves: [],
+          events: [],
+        },
+      };
+
+      const result = applyRoomUpdate(room, message);
+      expect(result?.gameSession?.type).toBe('emoji-story');
+    });
+
+    it('stores clueboard blocker secret for the current round', () => {
+      const room = createBaseRoom();
+      room.gameSession = {
+        type: 'clueboard',
+        startedBy: 'Alice',
+        startedAt: Date.now(),
+        round: 2,
+        status: 'active',
+        participants: ['Alice', 'Bob'],
+        leaderboard: { Alice: 0, Bob: 0 },
+        moves: [],
+        events: [],
+      };
+
+      const message: WebSocketMessage = {
+        type: 'clueboardSecret',
+        round: 2,
+        blockerIndex: 5,
+      };
+
+      const result = applyRoomUpdate(room, message);
+      expect(result?.gameSession?.codenamesKnownBlockerIndex).toBe(5);
+    });
+  });
 });

@@ -310,6 +310,62 @@ export function applyRoomUpdate(
       };
     }
 
+    case "gameStarted":
+    case "gameMoveSubmitted": {
+      if (!message.gameSession) {
+        return prev;
+      }
+
+      const existingKnownBlockerIndex =
+        prev.gameSession?.type === "clueboard" &&
+        message.gameSession.type === "clueboard" &&
+        prev.gameSession.round === message.gameSession.round
+          ? prev.gameSession.codenamesKnownBlockerIndex
+          : undefined;
+
+      return {
+        ...prev,
+        gameSession:
+          existingKnownBlockerIndex === undefined
+            ? message.gameSession
+            : {
+                ...message.gameSession,
+                codenamesKnownBlockerIndex: existingKnownBlockerIndex,
+              },
+      };
+    }
+
+    case "gameEnded": {
+      return {
+        ...prev,
+        gameSession: message.gameSession,
+      };
+    }
+
+    case "clueboardSecret": {
+      if (
+        !prev.gameSession ||
+        prev.gameSession.type !== "clueboard" ||
+        prev.gameSession.round !== message.round
+      ) {
+        return prev;
+      }
+
+      if (
+        prev.gameSession.codenamesKnownBlockerIndex === message.blockerIndex
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        gameSession: {
+          ...prev.gameSession,
+          codenamesKnownBlockerIndex: message.blockerIndex,
+        },
+      };
+    }
+
     case "timerStarted":
     case "timerPaused":
     case "timerReset":

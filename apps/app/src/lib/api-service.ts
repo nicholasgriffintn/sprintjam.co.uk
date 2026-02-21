@@ -8,6 +8,7 @@ import type {
   WebSocketMessageType,
   AvatarId,
   TicketQueueItem,
+  RoomGameType,
 } from "@/types";
 import { API_BASE_URL, WS_BASE_URL } from "@/constants";
 import {
@@ -240,6 +241,9 @@ export function connectToRoom(
           case "timerPaused":
           case "timerReset":
           case "timerUpdated":
+          case "gameStarted":
+          case "gameMoveSubmitted":
+          case "gameEnded":
             eventManager.triggerEventListeners(data.type, data);
             break;
 
@@ -532,4 +536,16 @@ export function configureTimer(config: {
 
 export function completeSession(): void {
   sendWebSocketMessage(activeSocket, { type: "completeSession" });
+}
+
+export function startGame(gameType: RoomGameType): void {
+  sendWebSocketMessage(activeSocket, { type: "startGame", gameType });
+}
+
+export function submitGameMove(value: string): void {
+  sendWebSocketMessage(activeSocket, { type: "submitGameMove", value });
+}
+
+export function endGame(): void {
+  sendWebSocketMessage(activeSocket, { type: "endGame" });
 }
