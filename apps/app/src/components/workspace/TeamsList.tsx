@@ -36,7 +36,10 @@ export function TeamsList({
 
   return (
     <div className="space-y-5">
-      <form onSubmit={handleCreateTeam} className="space-y-3">
+      <form
+        onSubmit={handleCreateTeam}
+        className="grid gap-3 sm:grid-cols-[7fr_3fr] sm:items-end"
+      >
         <Input
           label="New team"
           placeholder="Product team"
@@ -50,6 +53,7 @@ export function TeamsList({
           icon={<Plus className="h-4 w-4" />}
           isLoading={isMutating}
           disabled={!newTeamName.trim()}
+          className="sm:h-[50px]"
           fullWidth
         >
           Create team
@@ -70,21 +74,26 @@ export function TeamsList({
             tabIndex={0}
             onClick={() => onSelectTeam(team.id)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
+              if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
                 onSelectTeam(team.id);
               }
             }}
             className={cn(
-              "w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
+              'w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900',
               selectedTeamId === team.id &&
-                "border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20",
+                'border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20',
             )}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {team.name}
+                  {selectedTeamId === team.id && (
+                    <Badge variant="primary" size="sm">
+                      Selected
+                    </Badge>
+                  )}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Team ID: {team.id}
@@ -92,9 +101,6 @@ export function TeamsList({
               </div>
               {selectedTeamId === team.id ? (
                 <div className="flex flex-col items-end gap-2">
-                  <Badge variant="primary" size="sm">
-                    Selected
-                  </Badge>
                   <Button
                     type="button"
                     variant="secondary"
