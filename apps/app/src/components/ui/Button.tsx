@@ -43,6 +43,12 @@ const iconOnlySizeStyles: Record<ButtonSize, string> = {
   lg: "p-2.5 rounded-2xl",
 };
 
+const iconOnlyExpandableSizeStyles: Record<ButtonSize, string> = {
+  sm: "px-2.5 py-2 rounded-xl",
+  md: "px-3 py-2.5 rounded-2xl",
+  lg: "px-3.5 py-3 rounded-2xl",
+};
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -110,7 +116,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant === "unstyled"
         ? null
         : iconOnly
-          ? iconOnlySizeStyles[size]
+          ? expandOnHover
+            ? iconOnlyExpandableSizeStyles[size]
+            : iconOnlySizeStyles[size]
           : sizeStyles[size];
 
     return (
