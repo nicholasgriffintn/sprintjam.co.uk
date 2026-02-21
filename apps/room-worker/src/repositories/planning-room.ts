@@ -1,14 +1,13 @@
 import type { DurableObjectStorage } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/durable-sqlite";
 import { migrate } from "drizzle-orm/durable-sqlite/migrator";
-import { eq, sql as sqlOperator } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import * as schema from "@sprintjam/db/durable-objects/schemas";
 import {
   roomMeta,
   roomUsers,
   roomVotes,
-  sessionTokens,
 } from "@sprintjam/db/durable-objects/schemas";
 import type { DB, InsertRoomMetaItem } from "@sprintjam/db";
 import type {
@@ -26,7 +25,6 @@ import {
   parseJudgeScore,
   parseVote,
   safeJsonParse,
-  SESSION_TOKEN_TTL_MS,
   parsePasscodeHash,
   serializePasscodeHash,
   type TokenCipher,
@@ -38,10 +36,12 @@ import {
 
 import migrations from "../../drizzle/migrations";
 import { PlanningRoomOAuthStore } from "./planning-room-oauth";
+import { PlanningRoomStateStore } from "./planning-room-state";
 import { PlanningRoomTicketStore } from "./planning-room-tickets";
 
 export class PlanningRoomRepository {
   private readonly db: DB;
+  private readonly stateStore: PlanningRoomStateStore;
   private readonly oauthStore: PlanningRoomOAuthStore;
   private readonly ticketStore: PlanningRoomTicketStore;
   private readonly anonymousName = "Anonymous";
@@ -51,6 +51,7 @@ export class PlanningRoomRepository {
       throw new Error("Token cipher is required");
     }
     this.db = drizzle(storage, { schema });
+    this.stateStore = new PlanningRoomStateStore(this.db);
     this.oauthStore = new PlanningRoomOAuthStore(this.db, tokenCipher);
     this.ticketStore = new PlanningRoomTicketStore(this.db, this.anonymousName);
   }
@@ -295,347 +296,122 @@ export class PlanningRoomRepository {
   }
 
   ensureUser(userName: string): string {
-    const existing = this.db
-      .select({
-        userName: roomUsers.userName,
-      })
-      .from(roomUsers)
-      .where(sqlOperator`LOWER(${roomUsers.userName}) = LOWER(${userName})`)
-      .get()?.userName;
-
-    const canonicalName = existing ?? userName;
-
-    const maxOrdinal =
-      this.db
-        .select({
-          maxOrdinal: sqlOperator<number>`COALESCE(MAX(${roomUsers.ordinal}), -1)`,
-        })
-        .from(roomUsers)
-        .get()?.maxOrdinal ?? -1;
-
-    this.db
-      .insert(roomUsers)
-      .values({
-        userName: canonicalName,
-        avatar: null,
-        isConnected: 0,
-        isSpectator: 0,
-        ordinal: maxOrdinal + 1,
-      })
-      .onConflictDoNothing()
-      .run();
-
-    return canonicalName;
+    return this.stateStore.ensureUser(userName);
   }
 
   setUserSpectatorMode(userName: string, isSpectator: boolean) {
-    const canonicalName = this.ensureUser(userName);
-    this.db
-      .update(roomUsers)
-      .set({ isSpectator: isSpectator ? 1 : 0 })
-      .where(eq(roomUsers.userName, canonicalName))
-      .run();
+    return this.stateStore.setUserSpectatorMode(userName, isSpectator);
   }
 
   setUserConnection(userName: string, isConnected: boolean) {
-    const canonicalName = this.ensureUser(userName);
-    this.db
-      .update(roomUsers)
-      .set({ isConnected: isConnected ? 1 : 0 })
-      .where(eq(roomUsers.userName, canonicalName))
-      .run();
+    return this.stateStore.setUserConnection(userName, isConnected);
   }
 
   setUserAvatar(userName: string, avatar?: string) {
-    if (!avatar) {
-      return;
-    }
-    const canonicalName = this.ensureUser(userName);
-    this.db
-      .update(roomUsers)
-      .set({ avatar })
-      .where(eq(roomUsers.userName, canonicalName))
-      .run();
+    return this.stateStore.setUserAvatar(userName, avatar);
   }
 
   setModerator(userName: string) {
-    this.db
-      .update(roomMeta)
-      .set({ moderator: userName })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+    return this.stateStore.setModerator(userName);
   }
 
   setShowVotes(showVotes: boolean) {
-    this.db
-      .update(roomMeta)
-      .set({ showVotes: showVotes ? 1 : 0 })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+    return this.stateStore.setShowVotes(showVotes);
   }
 
-  setRoomStatus(status: "active" | "completed") {
-    this.db
-      .update(roomMeta)
-      .set({ roomStatus: status })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+  setRoomStatus(
+    status: Parameters<PlanningRoomStateStore["setRoomStatus"]>[0],
+  ) {
+    return this.stateStore.setRoomStatus(status);
   }
 
-  setRoundHistory(history: SessionRoundHistoryItem[]) {
-    this.db
-      .update(roomMeta)
-      .set({ roundHistory: serializeJSON(history) })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+  setRoundHistory(
+    history: Parameters<PlanningRoomStateStore["setRoundHistory"]>[0],
+  ) {
+    return this.stateStore.setRoundHistory(history);
   }
 
-  setTimerState(running: boolean, seconds: number, lastUpdateTime: number) {
-    this.db
-      .update(roomMeta)
-      .set({
-        timerIsPaused: running ? 1 : 0,
-        timerSeconds: seconds,
-        timerLastUpdated: lastUpdateTime,
-      })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+  setTimerState(
+    running: Parameters<PlanningRoomStateStore["setTimerState"]>[0],
+    seconds: Parameters<PlanningRoomStateStore["setTimerState"]>[1],
+    lastUpdateTime: Parameters<PlanningRoomStateStore["setTimerState"]>[2],
+  ) {
+    return this.stateStore.setTimerState(running, seconds, lastUpdateTime);
   }
 
-  updateTimerConfig(config: {
-    targetDurationSeconds?: number;
-    roundAnchorSeconds?: number;
-    autoResetOnVotesReset?: boolean;
-  }) {
-    const params: Partial<typeof roomMeta.$inferInsert> = {};
-
-    if (config.targetDurationSeconds !== undefined) {
-      params.timerTargetDuration = config.targetDurationSeconds;
-    }
-    if (config.roundAnchorSeconds !== undefined) {
-      params.timerRoundAnchor = config.roundAnchorSeconds;
-    }
-    if (config.autoResetOnVotesReset !== undefined) {
-      params.timerAutoReset = config.autoResetOnVotesReset ? 1 : 0;
-    }
-
-    if (Object.keys(params).length === 0) {
-      return;
-    }
-
-    this.db
-      .update(roomMeta)
-      .set(params)
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+  updateTimerConfig(
+    config: Parameters<PlanningRoomStateStore["updateTimerConfig"]>[0],
+  ) {
+    return this.stateStore.updateTimerConfig(config);
   }
 
   startTimer(currentTime: number) {
-    this.db
-      .update(roomMeta)
-      .set({ timerIsPaused: 0, timerLastUpdated: currentTime })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+    return this.stateStore.startTimer(currentTime);
   }
 
   pauseTimer(currentTime: number) {
-    const row = this.db
-      .select({
-        timerIsPaused: roomMeta.timerIsPaused,
-        timerSeconds: roomMeta.timerSeconds,
-        timerLastUpdated: roomMeta.timerLastUpdated,
-      })
-      .from(roomMeta)
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .get();
-
-    if (row && !row.timerIsPaused) {
-      const elapsedSinceLastUpdate = Math.floor(
-        (currentTime - (row.timerLastUpdated ?? 0)) / 1000,
-      );
-      const existingSeconds = row.timerSeconds ?? 0;
-      const newSeconds = existingSeconds + elapsedSinceLastUpdate;
-      this.db
-        .update(roomMeta)
-        .set({
-          timerIsPaused: 1,
-          timerSeconds: newSeconds,
-          timerLastUpdated: currentTime,
-        })
-        .where(eq(roomMeta.id, ROOM_ROW_ID))
-        .run();
-    }
+    return this.stateStore.pauseTimer(currentTime);
   }
 
   resetTimer() {
-    this.db
-      .update(roomMeta)
-      .set({
-        timerIsPaused: 0,
-        timerSeconds: 0,
-        timerLastUpdated: 0,
-        timerRoundAnchor: 0,
-      })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+    return this.stateStore.resetTimer();
   }
 
   setVote(userName: string, vote: string | number) {
-    const canonicalName = this.ensureUser(userName);
-    this.db
-      .insert(roomVotes)
-      .values({
-        userName: canonicalName,
-        vote: serializeVote(vote),
-        structuredVotePayload: null,
-      })
-      .onConflictDoUpdate({
-        target: roomVotes.userName,
-        set: {
-          vote: serializeVote(vote),
-          structuredVotePayload: null,
-        },
-      })
-      .run();
+    return this.stateStore.setVote(userName, vote);
   }
 
   clearVotes() {
-    this.db.delete(roomVotes).run();
+    return this.stateStore.clearVotes();
   }
 
   deleteUserVote(userName: string) {
-    this.db.delete(roomVotes).where(eq(roomVotes.userName, userName)).run();
+    return this.stateStore.deleteUserVote(userName);
   }
 
   setStructuredVote(userName: string, vote: StructuredVote) {
-    const canonicalName = this.ensureUser(userName);
-    this.db
-      .update(roomVotes)
-      .set({ structuredVotePayload: JSON.stringify(vote) })
-      .where(eq(roomVotes.userName, canonicalName))
-      .run();
+    return this.stateStore.setStructuredVote(userName, vote);
   }
 
   clearStructuredVotes() {
-    this.db.update(roomVotes).set({ structuredVotePayload: null }).run();
+    return this.stateStore.clearStructuredVotes();
   }
 
-  setJudgeState(score: string | number | null, metadata?: JudgeMetadata) {
-    this.db
-      .update(roomMeta)
-      .set({
-        judgeScore:
-          score === null || score === undefined ? null : String(score),
-        judgeMetadata: serializeJSON(metadata),
-      })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+  setJudgeState(
+    score: Parameters<PlanningRoomStateStore["setJudgeState"]>[0],
+    metadata?: Parameters<PlanningRoomStateStore["setJudgeState"]>[1],
+  ) {
+    return this.stateStore.setJudgeState(score, metadata);
   }
 
   setSettings(settings: RoomSettings) {
-    this.db
-      .update(roomMeta)
-      .set({ settings: JSON.stringify(settings) })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+    return this.stateStore.setSettings(settings);
   }
 
   setPasscodeHash(passcodeHash: PasscodeHashPayload | null) {
-    this.db
-      .update(roomMeta)
-      .set({ passcode: serializePasscodeHash(passcodeHash) })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+    return this.stateStore.setPasscodeHash(passcodeHash);
   }
 
-  getPasscodeHash(): PasscodeHashPayload | null {
-    const result = this.db
-      .select({ passcode: roomMeta.passcode })
-      .from(roomMeta)
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .get();
-
-    return parsePasscodeHash(result?.passcode ?? null);
+  getPasscodeHash() {
+    return this.stateStore.getPasscodeHash();
   }
 
   setSessionToken(userName: string, token: string) {
-    const canonicalName = this.ensureUser(userName);
-    const existingTokenOwner = this.db
-      .select({ userName: sessionTokens.userName })
-      .from(sessionTokens)
-      .where(
-        sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${canonicalName})`,
-      )
-      .get()?.userName;
-    const tokenOwner = existingTokenOwner ?? canonicalName;
-
-    this.db
-      .insert(sessionTokens)
-      .values({
-        userName: tokenOwner,
-        token,
-        createdAt: Date.now(),
-      })
-      .onConflictDoUpdate({
-        target: sessionTokens.userName,
-        set: {
-          token,
-          createdAt: Date.now(),
-        },
-      })
-      .run();
+    return this.stateStore.setSessionToken(userName, token);
   }
 
-  validateSessionToken(userName: string, token: string | null): boolean {
-    if (!token) {
-      return false;
-    }
-    const record = this.db
-      .select({
-        token: sessionTokens.token,
-        createdAt: sessionTokens.createdAt,
-      })
-      .from(sessionTokens)
-      .where(sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${userName})`)
-      .get();
-
-    if (!record?.token) {
-      return false;
-    }
-
-    const isExpired =
-      typeof record.createdAt === "number" &&
-      Date.now() - record.createdAt > SESSION_TOKEN_TTL_MS;
-
-    if (isExpired) {
-      return false;
-    }
-
-    return record.token === token;
+  validateSessionToken(userName: string, token: string | null) {
+    return this.stateStore.validateSessionToken(userName, token);
   }
 
-  setStrudelState(options: {
-    code?: string;
-    generationId?: string;
-    phase?: string;
-  }) {
-    this.db
-      .update(roomMeta)
-      .set({
-        currentStrudelCode: options.code ?? null,
-        currentStrudelGenerationId: options.generationId ?? null,
-        strudelPhase: options.phase ?? null,
-      })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+  setStrudelState(
+    options: Parameters<PlanningRoomStateStore["setStrudelState"]>[0],
+  ) {
+    return this.stateStore.setStrudelState(options);
   }
 
   setStrudelPlayback(isPlaying: boolean) {
-    this.db
-      .update(roomMeta)
-      .set({ strudelIsPlaying: isPlaying ? 1 : 0 })
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .run();
+    return this.stateStore.setStrudelPlayback(isPlaying);
   }
 
   getCurrentTicket(
