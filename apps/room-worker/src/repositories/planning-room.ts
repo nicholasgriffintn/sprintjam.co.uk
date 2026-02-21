@@ -1,49 +1,25 @@
 import type { DurableObjectStorage } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/durable-sqlite";
 import { migrate } from "drizzle-orm/durable-sqlite/migrator";
-import { eq } from "drizzle-orm";
 
 import * as schema from "@sprintjam/db/durable-objects/schemas";
-import {
-  roomMeta,
-  roomUsers,
-  roomVotes,
-} from "@sprintjam/db/durable-objects/schemas";
-import type { DB, InsertRoomMetaItem } from "@sprintjam/db";
+import type { DB } from "@sprintjam/db";
 import type {
-  JudgeMetadata,
   PasscodeHashPayload,
-  RoomData,
-  RoomGameSession,
   RoomSettings,
-  SessionRoundHistoryItem,
   StructuredVote,
 } from "@sprintjam/types";
-import {
-  serializeJSON,
-  serializeVote,
-  parseJudgeScore,
-  parseVote,
-  safeJsonParse,
-  parsePasscodeHash,
-  serializePasscodeHash,
-  type TokenCipher,
-} from "@sprintjam/utils";
-import {
-  DEFAULT_TIMER_DURATION_SECONDS,
-  ROOM_ROW_ID,
-} from "@sprintjam/utils/constants";
+import type { TokenCipher } from "@sprintjam/utils";
 
 import migrations from "../../drizzle/migrations";
 import { PlanningRoomOAuthStore } from "./planning-room-oauth";
+import { PlanningRoomRoomDataStore } from "./planning-room-roomdata";
 import { PlanningRoomStateStore } from "./planning-room-state";
 import { PlanningRoomTicketStore } from "./planning-room-tickets";
 
 export class PlanningRoomRepository {
   private readonly db: DB;
-  private readonly stateStore: PlanningRoomStateStore;
-  private readonly oauthStore: PlanningRoomOAuthStore;
-  private readonly ticketStore: PlanningRoomTicketStore;
+  private readonly tokenCipher: TokenCipher;
   private readonly anonymousName = "Anonymous";
 
   constructor(storage: DurableObjectStorage, tokenCipher: TokenCipher) {
@@ -51,248 +27,40 @@ export class PlanningRoomRepository {
       throw new Error("Token cipher is required");
     }
     this.db = drizzle(storage, { schema });
-    this.stateStore = new PlanningRoomStateStore(this.db);
-    this.oauthStore = new PlanningRoomOAuthStore(this.db, tokenCipher);
-    this.ticketStore = new PlanningRoomTicketStore(this.db, this.anonymousName);
+    this.tokenCipher = tokenCipher;
   }
 
   async initializeSchema() {
     await migrate(this.db, migrations);
   }
 
-  async getRoomData(): Promise<RoomData | undefined> {
-    const row = await this.db
-      .select()
-      .from(roomMeta)
-      .where(eq(roomMeta.id, ROOM_ROW_ID))
-      .get();
-
-    if (!row) {
-      return undefined;
-    }
-
-    const users = await this.db
-      .select()
-      .from(roomUsers)
-      .orderBy(roomUsers.ordinal)
-      .all();
-    const votes = await this.db.select().from(roomVotes).all();
-
-    const connectedUsers: Record<string, boolean> = {};
-    const userAvatars: Record<string, string> = {};
-    const userList: string[] = [];
-    const spectatorList: string[] = [];
-
-    for (const user of users) {
-      if (user.isSpectator) {
-        spectatorList.push(user.userName);
-      } else {
-        userList.push(user.userName);
-      }
-      connectedUsers[user.userName] = !!user.isConnected;
-      if (user.avatar) {
-        userAvatars[user.userName] = user.avatar;
-      }
-    }
-
-    const voteMap: Record<string, string | number> = {};
-    for (const entry of votes) {
-      voteMap[entry.userName] = parseVote(entry.vote);
-    }
-
-    const structuredVoteMap: Record<string, StructuredVote> = {};
-    for (const entry of votes) {
-      const payload = entry.structuredVotePayload;
-      if (!payload) {
-        continue;
-      }
-      try {
-        const structuredVoteData = safeJsonParse<StructuredVote>(payload);
-        if (!structuredVoteData) {
-          throw new Error("Failed to parse structured vote from storage");
-        }
-        structuredVoteMap[entry.userName] = structuredVoteData;
-      } catch {
-        // Ignore malformed rows to avoid breaking the room load.
-      }
-    }
-
-    let settings: RoomSettings;
-    try {
-      const settingsData = safeJsonParse<RoomSettings>(row.settings);
-      if (!settingsData) {
-        throw new Error("Failed to parse room settings from storage");
-      }
-      settings = settingsData;
-    } catch {
-      throw new Error("Failed to parse room settings from storage");
-    }
-
-    const anonymizeVotes =
-      settings.anonymousVotes || settings.hideParticipantNames;
-
-    const currentTicket = this.getCurrentTicket({
-      anonymizeVotes,
-      roomKey: row.roomKey,
-    });
-    const ticketQueue = this.getTicketQueue({
-      anonymizeVotes,
-      roomKey: row.roomKey,
-    });
-
-    const timerPausedValue =
-      row.timerIsPaused === null || row.timerIsPaused === undefined
-        ? 1
-        : row.timerIsPaused;
-
-    const hasTimerState =
-      row.timerSeconds !== null ||
-      row.timerLastUpdated !== null ||
-      row.timerTargetDuration !== null ||
-      row.timerRoundAnchor !== null ||
-      row.timerAutoReset !== null;
-
-    const timerState = hasTimerState
-      ? {
-          running:
-            !!row.timerLastUpdated &&
-            row.timerLastUpdated > 0 &&
-            !timerPausedValue,
-          seconds: row.timerSeconds ?? 0,
-          lastUpdateTime: row.timerLastUpdated ?? 0,
-          targetDurationSeconds:
-            row.timerTargetDuration ?? DEFAULT_TIMER_DURATION_SECONDS,
-          roundAnchorSeconds: row.timerRoundAnchor ?? 0,
-          autoResetOnVotesReset:
-            row.timerAutoReset === null || row.timerAutoReset === undefined
-              ? true
-              : row.timerAutoReset !== 0,
-        }
-      : undefined;
-    const gameSession = row.gameSession
-      ? safeJsonParse<RoomGameSession>(row.gameSession)
-      : undefined;
-    const parsedRoundHistory = row.roundHistory
-      ? safeJsonParse<SessionRoundHistoryItem[]>(row.roundHistory)
-      : undefined;
-    const roundHistory = Array.isArray(parsedRoundHistory)
-      ? parsedRoundHistory
-      : undefined;
-
-    const roomData: RoomData = {
-      key: row.roomKey,
-      users: userList,
-      spectators: spectatorList.length > 0 ? spectatorList : undefined,
-      votes: voteMap,
-      structuredVotes: structuredVoteMap,
-      showVotes: !!row.showVotes,
-      moderator: row.moderator,
-      connectedUsers,
-      status: row.roomStatus === "completed" ? "completed" : "active",
-      judgeScore: parseJudgeScore(row.judgeScore),
-      judgeMetadata: row.judgeMetadata
-        ? safeJsonParse<JudgeMetadata>(row.judgeMetadata)
-        : undefined,
-      settings,
-      passcodeHash: parsePasscodeHash(row.passcode) ?? undefined,
-      userAvatars:
-        Object.keys(userAvatars).length > 0 ? userAvatars : undefined,
-      currentStrudelCode: row.currentStrudelCode ?? undefined,
-      currentStrudelGenerationId: row.currentStrudelGenerationId ?? undefined,
-      strudelPhase: row.strudelPhase ?? undefined,
-      strudelIsPlaying: row.strudelIsPlaying
-        ? !!row.strudelIsPlaying
-        : undefined,
-      currentTicket,
-      ticketQueue: ticketQueue.length > 0 ? ticketQueue : undefined,
-      roundHistory: roundHistory?.length ? roundHistory : undefined,
-      timerState,
-      gameSession,
-    };
-
-    return roomData;
+  private get stateStore() {
+    return new PlanningRoomStateStore(this.db);
   }
 
-  async replaceRoomData(roomData: RoomData): Promise<void> {
-    await this.db.transaction((tx) => {
-      const metaValues: InsertRoomMetaItem = {
-        id: ROOM_ROW_ID,
-        roomKey: roomData.key,
-        moderator: roomData.moderator,
-        showVotes: roomData.showVotes ? 1 : 0,
-        roomStatus: roomData.status ?? "active",
-        passcode: serializePasscodeHash(roomData.passcodeHash),
-        judgeScore:
-          roomData.judgeScore === undefined || roomData.judgeScore === null
-            ? null
-            : String(roomData.judgeScore),
-        judgeMetadata: serializeJSON(roomData.judgeMetadata),
-        settings: JSON.stringify(roomData.settings),
-        currentStrudelCode: roomData.currentStrudelCode ?? null,
-        currentStrudelGenerationId: roomData.currentStrudelGenerationId ?? null,
-        strudelPhase: roomData.strudelPhase ?? null,
-        strudelIsPlaying: roomData.strudelIsPlaying ? 1 : 0,
-        roundHistory: serializeJSON(roomData.roundHistory),
-        timerSeconds: roomData.timerState?.seconds ?? null,
-        timerLastUpdated: roomData.timerState?.lastUpdateTime ?? null,
-        timerIsPaused: roomData.timerState?.running ? 1 : 0,
-        timerTargetDuration:
-          roomData.timerState?.targetDurationSeconds ??
-          DEFAULT_TIMER_DURATION_SECONDS,
-        timerRoundAnchor: roomData.timerState?.roundAnchorSeconds ?? 0,
-        timerAutoReset:
-          roomData.timerState?.autoResetOnVotesReset === false ? 0 : 1,
-        gameSession: serializeJSON(roomData.gameSession),
-      };
+  private get ticketStore() {
+    return new PlanningRoomTicketStore(this.db, this.anonymousName);
+  }
 
-      tx.insert(roomMeta)
-        .values(metaValues)
-        .onConflictDoUpdate({
-          target: roomMeta.id,
-          set: metaValues,
-        })
-        .run();
+  private get oauthStore() {
+    return new PlanningRoomOAuthStore(this.db, this.tokenCipher);
+  }
 
-      tx.delete(roomUsers).run();
-      roomData.users.forEach((user, index) => {
-        tx.insert(roomUsers)
-          .values({
-            userName: user,
-            avatar: roomData.userAvatars?.[user] ?? null,
-            isConnected: roomData.connectedUsers?.[user] ? 1 : 0,
-            isSpectator: 0,
-            ordinal: index,
-          })
-          .run();
-      });
-
-      const spectatorStartIndex = roomData.users.length;
-      roomData.spectators?.forEach((user, index) => {
-        tx.insert(roomUsers)
-          .values({
-            userName: user,
-            avatar: roomData.userAvatars?.[user] ?? null,
-            isConnected: roomData.connectedUsers?.[user] ? 1 : 0,
-            isSpectator: 1,
-            ordinal: spectatorStartIndex + index,
-          })
-          .run();
-      });
-
-      tx.delete(roomVotes).run();
-      Object.entries(roomData.votes).forEach(([user, vote]) => {
-        const structuredVote = roomData.structuredVotes?.[user] ?? null;
-        tx.insert(roomVotes)
-          .values({
-            userName: user,
-            vote: serializeVote(vote),
-            structuredVotePayload: structuredVote
-              ? JSON.stringify(structuredVote)
-              : null,
-          })
-          .run();
-      });
+  private createRoomDataStore() {
+    return new PlanningRoomRoomDataStore(this.db, {
+      getCurrentTicket: (options) => this.getCurrentTicket(options),
+      getTicketQueue: (options) => this.getTicketQueue(options),
     });
+  }
+
+  async getRoomData() {
+    return this.createRoomDataStore().getRoomData();
+  }
+
+  async replaceRoomData(
+    roomData: Parameters<PlanningRoomRoomDataStore["replaceRoomData"]>[0],
+  ) {
+    return this.createRoomDataStore().replaceRoomData(roomData);
   }
 
   ensureUser(userName: string): string {
