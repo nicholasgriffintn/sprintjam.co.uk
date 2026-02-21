@@ -1,6 +1,9 @@
-import type { Request as CfRequest } from "@cloudflare/workers-types";
+import type {
+  Request as CfRequest,
+  Response as CfResponse,
+} from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types";
-import { getRoomStub } from "@sprintjam/utils";
+import { escapeHtml, getRoomStub } from "@sprintjam/utils";
 
 export async function validateSession(
   env: RoomWorkerEnv,
@@ -55,4 +58,88 @@ export function isAuthError(
 ): boolean {
   const lowerMessage = message.toLowerCase();
   return indicators.some((indicator) => lowerMessage.includes(indicator));
+}
+
+function oauthHtmlResponse(
+  title: string,
+  message: string,
+  status: number,
+  closeWindow = false,
+): CfResponse {
+  const closeScript = closeWindow ? "<script>window.close();</script>" : "";
+  return new Response(
+    `<html><body><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p>${closeScript}</body></html>`,
+    { status, headers: { "Content-Type": "text/html" } },
+  ) as unknown as CfResponse;
+}
+
+export function oauthHtmlErrorResponse(
+  message: string,
+  status = 400,
+  closeWindow = false,
+): CfResponse {
+  return oauthHtmlResponse("OAuth Error", message, status, closeWindow);
+}
+
+export function oauthHtmlSuccessResponse(
+  message: string,
+  closeWindow = false,
+): CfResponse {
+  return oauthHtmlResponse("Success!", message, 200, closeWindow);
+}
+
+export async function fetchOAuthStatus<T>(
+  roomObject: ReturnType<typeof getRoomStub>,
+  provider: "jira" | "linear" | "github",
+  payload: {
+    roomKey: string;
+    userName: string;
+    sessionToken?: string | null;
+  },
+): Promise<T> {
+  const response = await roomObject.fetch(
+    new Request(`https://internal/${provider}/oauth/status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(payload.sessionToken
+          ? { Cookie: `room_session=${payload.sessionToken}` }
+          : {}),
+      },
+      body: JSON.stringify(payload),
+    }) as unknown as CfRequest,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to get OAuth status");
+  }
+
+  return response.json<T>();
+}
+
+export async function revokeOAuthCredentials(
+  roomObject: ReturnType<typeof getRoomStub>,
+  provider: "jira" | "linear" | "github",
+  payload: {
+    roomKey: string;
+    userName: string;
+    sessionToken?: string | null;
+  },
+): Promise<void> {
+  const response = await roomObject.fetch(
+    new Request(`https://internal/${provider}/oauth/revoke`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...(payload.sessionToken
+          ? { Cookie: `room_session=${payload.sessionToken}` }
+          : {}),
+      },
+      body: JSON.stringify(payload),
+    }) as unknown as CfRequest,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to revoke OAuth credentials");
+  }
 }

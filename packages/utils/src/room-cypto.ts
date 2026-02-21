@@ -145,7 +145,15 @@ export function generateSessionToken(): string {
   return bytesToBase64Url(bytes);
 }
 
-export async function signState(data: any, secret: string): Promise<string> {
+type SignedStatePayload<T> = {
+  data: T;
+  signature: string;
+};
+
+export async function signState<T>(
+  data: T,
+  secret: string,
+): Promise<string> {
   const json = JSON.stringify(data);
   const key = await crypto.subtle.importKey(
     "raw",
@@ -159,9 +167,23 @@ export async function signState(data: any, secret: string): Promise<string> {
   return btoa(JSON.stringify({ data, signature: signatureHex }));
 }
 
-export async function verifyState(state: string, secret: string): Promise<any> {
+export async function verifyState<T>(
+  state: string,
+  secret: string,
+): Promise<T> {
   try {
-    const { data, signature } = JSON.parse(atob(state));
+    const parsed = JSON.parse(atob(state)) as unknown;
+    if (!parsed || typeof parsed !== "object") {
+      throw new Error("Invalid state payload");
+    }
+
+    const candidate = parsed as Partial<SignedStatePayload<T>>;
+    if (!("data" in candidate) || typeof candidate.signature !== "string") {
+      throw new Error("Invalid state payload");
+    }
+
+    const data = candidate.data as T;
+    const signature = candidate.signature;
     const json = JSON.stringify(data);
     const key = await crypto.subtle.importKey(
       "raw",
@@ -182,7 +204,7 @@ export async function verifyState(state: string, secret: string): Promise<any> {
       throw new Error("Invalid state signature");
     }
     return data;
-  } catch (e) {
+  } catch {
     throw new Error("Invalid state");
   }
 }

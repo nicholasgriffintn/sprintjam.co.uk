@@ -25,7 +25,7 @@ import {
   updateWorkspaceProfileController,
   inviteWorkspaceMemberController,
 } from "../controllers/teams-controller";
-import { jsonError } from "../lib/response";
+import { jsonError, jsonResponse, notFoundResponse } from "../lib/response";
 
 type HandlerParam = string | number;
 type HandlerParams = HandlerParam[];
@@ -206,26 +206,6 @@ const ROUTES: RouteDefinition[] = [
   },
 ];
 
-function notFoundResponse(): Response {
-  return new Response(JSON.stringify({ error: "Auth Route Not found" }), {
-    status: 404,
-    headers: { "Content-Type": "application/json" },
-  });
-}
-
-function rootResponse(): Response {
-  return new Response(
-    JSON.stringify({
-      status: "success",
-      message: "Sprintjam Auth Worker is running.",
-    }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    },
-  );
-}
-
 function parseParams(
   match: RegExpMatchArray,
   paramTypes: RouteDefinition["paramTypes"],
@@ -253,7 +233,10 @@ export async function handleRequest(
       : url.pathname.substring(1);
 
     if (path === "" || path === "/") {
-      return rootResponse();
+      return jsonResponse({
+        status: "success",
+        message: "Sprintjam Auth Worker is running.",
+      });
     }
 
     if (request.method === "POST" || request.method === "PUT") {
@@ -273,7 +256,7 @@ export async function handleRequest(
       return route.handler(request, env, params);
     }
 
-    return notFoundResponse();
+    return notFoundResponse("Auth Route Not found");
   } catch (error) {
     console.error("[auth-worker] handleRequest errored:", error);
     return new Response(

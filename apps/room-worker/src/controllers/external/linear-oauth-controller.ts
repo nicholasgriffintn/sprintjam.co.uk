@@ -6,7 +6,6 @@ import type { RoomWorkerEnv } from "@sprintjam/types";
 import {
   jsonError,
   getRoomStub,
-  escapeHtml,
   signState,
   verifyState,
   generateID,
@@ -17,7 +16,13 @@ import { getLinearOrganization, getLinearViewer } from "@sprintjam/services";
 
 import { checkOAuthRateLimit } from "../../lib/rate-limit";
 import { jsonResponse } from "../../lib/response";
-import { validateSession } from "./shared";
+import {
+  fetchOAuthStatus,
+  oauthHtmlErrorResponse,
+  oauthHtmlSuccessResponse,
+  revokeOAuthCredentials,
+  validateSession,
+} from "./shared";
 
 export async function initiateLinearOAuthController(
   request: CfRequest,
@@ -95,19 +100,11 @@ export async function handleLinearOAuthCallbackController(
   const error = url.searchParams.get("error");
 
   if (error) {
-    return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
-        error,
-      )}</p></body></html>`,
-      { status: 400, headers: { "Content-Type": "text/html" } },
-    ) as unknown as CfResponse;
+    return oauthHtmlErrorResponse(error, 400);
   }
 
   if (!code || !state) {
-    return new Response(
-      `<html><body><h1>OAuth Error</h1><p>Missing code or state</p></body></html>`,
-      { status: 400, headers: { "Content-Type": "text/html" } },
-    ) as unknown as CfResponse;
+    return oauthHtmlErrorResponse("Missing code or state", 400);
   }
 
   try {
@@ -118,10 +115,7 @@ export async function handleLinearOAuthCallbackController(
       "https://sprintjam.co.uk/api/linear/oauth/callback";
 
     if (!clientId || !clientSecret) {
-      return new Response(
-        `<html><body><h1>OAuth Error</h1><p>OAuth not configured</p></body></html>`,
-        { status: 500, headers: { "Content-Type": "text/html" } },
-      ) as unknown as CfResponse;
+      return oauthHtmlErrorResponse("OAuth not configured", 500);
     }
 
     const stateData = (await verifyState(state, clientSecret)) as {
@@ -148,10 +142,7 @@ export async function handleLinearOAuthCallbackController(
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error("Token exchange failed:", errorData);
-      return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to exchange code for token</p</body></html>`,
-        { status: 500, headers: { "Content-Type": "text/html" } },
-      ) as unknown as CfResponse;
+      return oauthHtmlErrorResponse("Failed to exchange code for token", 500);
     }
 
     const tokenData = await tokenResponse.json<{
@@ -201,25 +192,16 @@ export async function handleLinearOAuthCallbackController(
     );
 
     if (!saveResponse.ok) {
-      return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to save credentials</p></body></html>`,
-        { status: 500, headers: { "Content-Type": "text/html" } },
-      ) as unknown as CfResponse;
+      return oauthHtmlErrorResponse("Failed to save credentials", 500);
     }
 
-    return new Response(
-      `<html><body><h1>Success!</h1><p>Linear connected successfully. You can close this window.</p></body></html>`,
-      { status: 200, headers: { "Content-Type": "text/html" } },
-    ) as unknown as CfResponse;
+    return oauthHtmlSuccessResponse(
+      "Linear connected successfully. You can close this window.",
+    );
   } catch (error) {
     console.error("OAuth callback error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
-        message,
-      )}</p></body></html>`,
-      { status: 500, headers: { "Content-Type": "text/html" } },
-    ) as unknown as CfResponse;
+    return oauthHtmlErrorResponse(message, 500);
   }
 }
 
@@ -245,28 +227,13 @@ export async function getLinearOAuthStatusController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
-    const response = await roomObject.fetch(
-      new Request("https://internal/linear/oauth/status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
-        },
-        body: JSON.stringify({ roomKey, userName, sessionToken }),
-      }) as unknown as CfRequest,
-    );
-
-    if (!response.ok) {
-      return jsonError("Failed to get OAuth status", 500);
-    }
-
-    const data = await response.json<{
+    const data = await fetchOAuthStatus<{
       connected: boolean;
       linearOrganizationId?: string;
       linearUserEmail?: string;
       expiresAt?: number;
       estimateField?: string | null;
-    }>();
+    }>(roomObject, "linear", { roomKey, userName, sessionToken });
 
     return jsonResponse(data);
   } catch (error) {
@@ -348,20 +315,11 @@ export async function revokeLinearOAuthController(
       }
     }
 
-    const response = await roomObject.fetch(
-      new Request("https://internal/linear/oauth/revoke", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
-        },
-        body: JSON.stringify({ roomKey, userName, sessionToken }),
-      }) as unknown as CfRequest,
-    );
-
-    if (!response.ok) {
-      return jsonError("Failed to revoke OAuth credentials", 500);
-    }
+    await revokeOAuthCredentials(roomObject, "linear", {
+      roomKey,
+      userName,
+      sessionToken,
+    });
 
     return jsonResponse({ success: true });
   } catch (error) {

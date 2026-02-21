@@ -7,7 +7,6 @@ import type { RoomWorkerEnv } from "@sprintjam/types";
 import {
   jsonError,
   getRoomStub,
-  escapeHtml,
   signState,
   verifyState,
   generateID,
@@ -17,7 +16,13 @@ import {
 
 import { checkOAuthRateLimit } from "../../lib/rate-limit";
 import { jsonResponse } from "../../lib/response";
-import { validateSession } from "./shared";
+import {
+  fetchOAuthStatus,
+  oauthHtmlErrorResponse,
+  oauthHtmlSuccessResponse,
+  revokeOAuthCredentials,
+  validateSession,
+} from "./shared";
 
 export async function initiateGithubOAuthController(
   request: CfRequest,
@@ -95,19 +100,11 @@ export async function handleGithubOAuthCallbackController(
   const error = url.searchParams.get("error");
 
   if (error) {
-    return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
-        error,
-      )}</p></body></html>`,
-      { status: 400, headers: { "Content-Type": "text/html" } },
-    ) as unknown as CfResponse;
+    return oauthHtmlErrorResponse(error, 400);
   }
 
   if (!code || !state) {
-    return new Response(
-      `<html><body><h1>OAuth Error</h1><p>Missing code or state</p></body></html>`,
-      { status: 400, headers: { "Content-Type": "text/html" } },
-    ) as unknown as CfResponse;
+    return oauthHtmlErrorResponse("Missing code or state", 400);
   }
 
   try {
@@ -118,10 +115,7 @@ export async function handleGithubOAuthCallbackController(
       "https://sprintjam.co.uk/api/github/oauth/callback";
 
     if (!clientId || !clientSecret) {
-      return new Response(
-        `<html><body><h1>OAuth Error</h1><p>OAuth not configured</p></body></html>`,
-        { status: 500, headers: { "Content-Type": "text/html" } },
-      ) as unknown as CfResponse;
+      return oauthHtmlErrorResponse("OAuth not configured", 500);
     }
 
     const stateData = (await verifyState(state, clientSecret)) as {
@@ -152,10 +146,7 @@ export async function handleGithubOAuthCallbackController(
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error("GitHub token exchange failed:", errorData);
-      return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to exchange code for token</p></body></html>`,
-        { status: 500, headers: { "Content-Type": "text/html" } },
-      ) as unknown as CfResponse;
+      return oauthHtmlErrorResponse("Failed to exchange code for token", 500);
     }
 
     const tokenData = await tokenResponse.json<{
@@ -173,10 +164,7 @@ export async function handleGithubOAuthCallbackController(
     });
 
     if (!userResponse.ok) {
-      return new Response(
-        `<html><body><h1>OAuth Error</h1><p>Failed to fetch GitHub user</p></body></html>`,
-        { status: 500, headers: { "Content-Type": "text/html" } },
-      ) as unknown as CfResponse;
+      return oauthHtmlErrorResponse("Failed to fetch GitHub user", 500);
     }
 
     const userData = await userResponse.json<{
@@ -234,19 +222,14 @@ export async function handleGithubOAuthCallbackController(
       }) as unknown as CfRequest,
     );
 
-    return new Response(
-      `<html><body><h1>Success!</h1><p>GitHub connected successfully. You can close this window.</p><script>window.close();</script></body></html>`,
-      { status: 200, headers: { "Content-Type": "text/html" } },
-    ) as unknown as CfResponse;
+    return oauthHtmlSuccessResponse(
+      "GitHub connected successfully. You can close this window.",
+      true,
+    );
   } catch (error) {
     console.error("GitHub OAuth callback error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      `<html><body><h1>OAuth Error</h1><p>${escapeHtml(
-        message,
-      )}</p><script>window.close();</script></body></html>`,
-      { status: 500, headers: { "Content-Type": "text/html" } },
-    ) as unknown as CfResponse;
+    return oauthHtmlErrorResponse(message, 500, true);
   }
 }
 
@@ -272,29 +255,14 @@ export async function getGithubOAuthStatusController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
-    const response = await roomObject.fetch(
-      new Request("https://internal/github/oauth/status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
-        },
-        body: JSON.stringify({ roomKey, userName, sessionToken }),
-      }) as unknown as CfRequest,
-    );
-
-    if (!response.ok) {
-      return jsonError("Failed to get OAuth status", 500);
-    }
-
-    const data = await response.json<{
+    const data = await fetchOAuthStatus<{
       connected: boolean;
       githubLogin?: string | null;
       githubUserEmail?: string | null;
       defaultOwner?: string | null;
       defaultRepo?: string | null;
       expiresAt?: number;
-    }>();
+    }>(roomObject, "github", { roomKey, userName, sessionToken });
 
     return jsonResponse(data);
   } catch (error) {
@@ -370,20 +338,11 @@ export async function revokeGithubOAuthController(
       return jsonError("Failed to revoke GitHub token with provider.", 502);
     }
 
-    const response = await roomObject.fetch(
-      new Request("https://internal/github/oauth/revoke", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
-        },
-        body: JSON.stringify({ roomKey, userName, sessionToken }),
-      }) as unknown as CfRequest,
-    );
-
-    if (!response.ok) {
-      return jsonError("Failed to revoke OAuth credentials", 500);
-    }
+    await revokeOAuthCredentials(roomObject, "github", {
+      roomKey,
+      userName,
+      sessionToken,
+    });
 
     return jsonResponse({ success: true });
   } catch (error) {
