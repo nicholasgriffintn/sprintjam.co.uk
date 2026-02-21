@@ -743,6 +743,60 @@ describe("mfa setup", () => {
     );
   });
 
+  it("should use Origin header when creating WebAuthn setup metadata", async () => {
+    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
+      id: 3,
+      userId: 10,
+      type: "setup",
+      usedAt: null,
+      expiresAt: Date.now() + 60000,
+      metadata: null,
+    });
+    mockRepo.getUserById.mockResolvedValue({
+      id: 10,
+      email: "user@example.com",
+    });
+    mockRepo.listMfaCredentials.mockResolvedValue([]);
+
+    const request = makeRequest("https://internal.dev/auth/mfa/setup/start", {
+      method: "POST",
+      headers: {
+        Origin: "https://sprintjam.localhost:5173",
+      },
+      body: JSON.stringify({
+        challengeToken: "challenge",
+        method: "webauthn",
+      }),
+    });
+
+    const response = await startMfaSetupController(request, mockEnv);
+    const data = (await response.json()) as {
+      method: string;
+      options: { rp: { id: string } };
+    };
+
+    expect(response.status).toBe(200);
+    expect(data.method).toBe("webauthn");
+    expect(data.options.rp.id).toBe("sprintjam.localhost");
+    expect(mockRepo.updateAuthChallengeMetadata).toHaveBeenCalledWith(
+      3,
+      expect.any(String),
+      "webauthn",
+    );
+
+    const metadataPayload =
+      mockRepo.updateAuthChallengeMetadata.mock.calls[0]?.[1];
+    const metadata = JSON.parse(metadataPayload) as {
+      challenge: string;
+      origin: string;
+      rpId: string;
+    };
+
+    expect(metadata.origin).toBe("https://sprintjam.localhost:5173");
+    expect(metadata.rpId).toBe("sprintjam.localhost");
+    expect(metadata.challenge).toBeTruthy();
+  });
+
   it("should verify TOTP setup and issue a session", async () => {
     const secret = "JBSWY3DPEHPK3PXP";
     const cipher = new utils.TokenCipher("test-secret");

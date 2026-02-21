@@ -37,6 +37,30 @@ import {
   verifyWebAuthnAttestation,
 } from "../lib/webauthn";
 
+function getWebAuthnRequestContext(request: Request): {
+  origin: string;
+  rpId: string;
+} {
+  const requestOrigin = request.headers.get("origin");
+  if (requestOrigin) {
+    try {
+      const originUrl = new URL(requestOrigin);
+      return {
+        origin: originUrl.origin,
+        rpId: originUrl.hostname,
+      };
+    } catch {
+      // Fall through to request URL parsing if Origin is malformed.
+    }
+  }
+
+  const requestUrl = new URL(request.url);
+  return {
+    origin: requestUrl.origin,
+    rpId: requestUrl.hostname,
+  };
+}
+
 export async function requestMagicLinkController(
   request: Request,
   env: AuthWorkerEnv,
@@ -346,8 +370,7 @@ export async function startMfaSetupController(
     );
   }
 
-  const origin = new URL(request.url).origin;
-  const rpId = new URL(request.url).hostname;
+  const { origin, rpId } = getWebAuthnRequestContext(request);
   const options = await createWebAuthnRegistrationOptions({
     rpId,
     rpName: "SprintJam",
@@ -562,8 +585,7 @@ export async function startMfaVerifyController(
     return jsonError("No WebAuthn credentials found", 404);
   }
 
-  const origin = new URL(request.url).origin;
-  const rpId = new URL(request.url).hostname;
+  const { origin, rpId } = getWebAuthnRequestContext(request);
   const allowCredentials = credentials
     .map((cred: { credentialId: string | null }) => cred.credentialId)
     .filter((id): id is string => Boolean(id));
