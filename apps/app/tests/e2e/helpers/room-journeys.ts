@@ -7,12 +7,15 @@ import { RoomPage } from "../pageObjects/room-page";
 import { SettingsModal } from "../pageObjects/settings-modal";
 
 export type ParticipantJoinMode = "inviteLink" | "manual";
+type ContextRouteSetup = (context: BrowserContext) => Promise<void> | void;
 
 export interface RoomSetupOptions {
   participantJoinMode?: ParticipantJoinMode;
   roomPasscode?: string;
   enableStructuredVotingOnCreate?: boolean;
   enableTicketQueue?: boolean;
+  setupModeratorRoutes?: ContextRouteSetup;
+  setupParticipantRoutes?: ContextRouteSetup;
 }
 
 export interface RoomSetupResult {
@@ -35,6 +38,8 @@ export async function createRoomWithParticipant(
     roomPasscode,
     enableStructuredVotingOnCreate,
     enableTicketQueue,
+    setupModeratorRoutes,
+    setupParticipantRoutes,
   } = options;
 
   const moderatorContext = await browser.newContext();
@@ -51,6 +56,14 @@ export async function createRoomWithParticipant(
   const participantName = "Participant QA";
 
   try {
+    if (setupModeratorRoutes) {
+      await setupModeratorRoutes(moderatorContext);
+    }
+
+    if (setupParticipantRoutes) {
+      await setupParticipantRoutes(participantContext);
+    }
+
     const moderatorPage = await moderatorContext.newPage();
     const participantPage = await participantContext.newPage();
 

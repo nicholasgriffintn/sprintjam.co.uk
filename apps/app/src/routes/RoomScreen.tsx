@@ -16,6 +16,7 @@ import { ResultsControls } from "@/components/results/ResultsControls";
 import { VotesHidden } from "@/components/results/VotesHidden";
 import { StructuredVotingPanel } from "@/components/voting/StructuredVotingPanel";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Button } from "@/components/ui/Button";
 import { StrudelMiniPlayer } from "@/components/StrudelPlayer/StrudelMiniPlayer";
 import { FallbackLoading } from "@/components/ui/FallbackLoading";
 import { TicketQueueModal } from "@/components/modals/TicketQueueModal";
@@ -291,6 +292,18 @@ const RoomScreen = () => {
                   Review the notes and votes captured for each{" "}
                   {isQueueEnabled ? "ticket" : "round"}.
                 </p>
+                {showSaveToWorkspace && (
+                  <div className="pt-1">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      data-testid="save-to-workspace-screen-button"
+                      onClick={() => setIsSaveToWorkspaceOpen(true)}
+                    >
+                      Save to workspace
+                    </Button>
+                  </div>
+                )}
               </SurfaceCard>
 
               <SurfaceCard

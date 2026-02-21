@@ -93,6 +93,7 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
             <Button
               type="button"
               variant="secondary"
+              data-testid="save-to-workspace-modal-button"
               onClick={onSaveToWorkspace}
             >
               Save to workspace
