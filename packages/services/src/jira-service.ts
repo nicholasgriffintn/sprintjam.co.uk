@@ -2,6 +2,7 @@ import type {
   JiraFieldDefinition,
   JiraOAuthCredentials,
 } from "@sprintjam/types";
+import { executeWithTokenRefresh as executeWithOAuthTokenRefresh } from "./oauth-refresh";
 
 type TicketMetadata = Record<string, any>;
 
@@ -95,66 +96,14 @@ async function executeWithTokenRefresh<T>(
   clientId: string,
   clientSecret: string,
 ): Promise<T> {
-  let isExpiringSoon = false;
-  if (credentials.expiresAt) {
-    isExpiringSoon = credentials.expiresAt - Date.now() < 5 * 60 * 1000;
-  }
-
-  if (isExpiringSoon && credentials.refreshToken) {
-    try {
-      const refreshed = await refreshOAuthToken(
-        credentials.refreshToken,
-        clientId,
-        clientSecret,
-      );
-
-      const newExpiresAt = Date.now() + refreshed.expiresIn * 1000;
-
-      await onTokenRefresh(
-        refreshed.accessToken,
-        refreshed.refreshToken,
-        newExpiresAt,
-      );
-
-      return await operation(refreshed.accessToken);
-    } catch (error) {
-      console.error("Token refresh failed:", error);
-    }
-  }
-
-  try {
-    return await operation(credentials.accessToken);
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("401") &&
-      credentials.refreshToken
-    ) {
-      try {
-        const refreshed = await refreshOAuthToken(
-          credentials.refreshToken,
-          clientId,
-          clientSecret,
-        );
-
-        const newExpiresAt = Date.now() + refreshed.expiresIn * 1000;
-
-        await onTokenRefresh(
-          refreshed.accessToken,
-          refreshed.refreshToken,
-          newExpiresAt,
-        );
-
-        return await operation(refreshed.accessToken);
-      } catch (refreshError) {
-        console.error("Token refresh retry failed:", refreshError);
-        throw new Error(
-          "OAuth token expired. Please reconnect your Jira account.",
-        );
-      }
-    }
-    throw error;
-  }
+  return executeWithOAuthTokenRefresh({
+    credentials,
+    operation,
+    onTokenRefresh,
+    refreshToken: (refreshToken) =>
+      refreshOAuthToken(refreshToken, clientId, clientSecret),
+    reconnectErrorMessage: "OAuth token expired. Please reconnect your Jira account.",
+  });
 }
 
 export async function fetchJiraTicket(

@@ -61,6 +61,84 @@ function getWebAuthnRequestContext(request: Request): {
   };
 }
 
+type AuthChallengeRecord = NonNullable<
+  Awaited<ReturnType<WorkspaceAuthRepository["getAuthChallengeByTokenHash"]>>
+>;
+
+type AuthUserRecord = {
+  id: number;
+  email: string;
+  name: string | null;
+  organisationId: number;
+};
+
+async function getChallengeAndUserOrError(
+  repo: WorkspaceAuthRepository,
+  challengeToken: string | undefined,
+  type: "setup" | "verify",
+): Promise<
+  | { response: Response }
+  | { challenge: AuthChallengeRecord; user: AuthUserRecord }
+> {
+  const challengeResult = await getChallengeOrError(repo, challengeToken, type);
+  if ("response" in challengeResult) {
+    return { response: challengeResult.response };
+  }
+
+  const challenge = challengeResult.challenge;
+  const user = await repo.getUserById(challenge.userId);
+  if (!user?.id || !user.email) {
+    return { response: jsonError("User not found", 404) };
+  }
+
+  return {
+    challenge,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name ?? null,
+      organisationId: user.organisationId,
+    },
+  };
+}
+
+function parseChallengeMetadata<T>(
+  metadata: string | null | undefined,
+): T | null {
+  if (!metadata) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(metadata) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function createAuthenticatedSessionResponse(
+  repo: WorkspaceAuthRepository,
+  user: AuthUserRecord,
+  recoveryCodes?: string[],
+): Promise<Response> {
+  const sessionToken = await generateToken();
+  const sessionTokenHash = await hashToken(sessionToken);
+  const sessionExpiresAt = Date.now() + SESSION_EXPIRY_MS;
+  await repo.createSession(user.id, sessionTokenHash, sessionExpiresAt);
+
+  return createAuthResponse({
+    sessionToken,
+    expiresAt: sessionExpiresAt,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      organisationId: user.organisationId,
+    },
+    recoveryCodes,
+  });
+}
+
 export async function requestMagicLinkController(
   request: Request,
   env: AuthWorkerEnv,
@@ -359,27 +437,18 @@ export async function startMfaSetupController(
   }
 
   const repo = new WorkspaceAuthRepository(env.DB);
-  const challengeResult = await getChallengeOrError(
+  const challengeAndUser = await getChallengeAndUserOrError(
     repo,
     challengeToken,
     "setup",
   );
-  if ("response" in challengeResult) {
-    return challengeResult.response;
+  if ("response" in challengeAndUser) {
+    return challengeAndUser.response;
   }
-
-  const challenge = challengeResult.challenge;
-  const user = await repo.getUserById(challenge.userId);
-  if (!user?.id || !user.email) {
-    return jsonError("User not found", 404);
-  }
-
-  let setupMetadata: { allowMfaReset?: boolean } | null = null;
-  try {
-    setupMetadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
-  } catch {
-    setupMetadata = null;
-  }
+  const { challenge, user } = challengeAndUser;
+  const setupMetadata = parseChallengeMetadata<{ allowMfaReset?: boolean }>(
+    challenge.metadata,
+  );
 
   const allowMfaReset = setupMetadata?.allowMfaReset === true;
   const existing = await repo.listMfaCredentials(user.id);
@@ -466,19 +535,15 @@ export async function verifyMfaSetupController(
   }
 
   const repo = new WorkspaceAuthRepository(env.DB);
-  const challengeResult = await getChallengeOrError(
+  const challengeAndUser = await getChallengeAndUserOrError(
     repo,
     challengeToken,
     "setup",
   );
-  if ("response" in challengeResult) {
-    return challengeResult.response;
+  if ("response" in challengeAndUser) {
+    return challengeAndUser.response;
   }
-  const challenge = challengeResult.challenge;
-  const user = await repo.getUserById(challenge.userId);
-  if (!user?.id || !user.email) {
-    return jsonError("User not found", 404);
-  }
+  const { challenge, user } = challengeAndUser;
 
   const { ip, userAgent } = getRequestMeta(request);
   let persistVerifiedCredential: (() => Promise<void>) | null = null;
@@ -489,13 +554,10 @@ export async function verifyMfaSetupController(
       return jsonError("Verification code is required", 400);
     }
 
-    let metadata: { secretEncrypted?: string; allowMfaReset?: boolean } | null =
-      null;
-    try {
-      metadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
-    } catch {
-      metadata = null;
-    }
+    const metadata = parseChallengeMetadata<{
+      secretEncrypted?: string;
+      allowMfaReset?: boolean;
+    }>(challenge.metadata);
 
     if (!metadata?.secretEncrypted) {
       return jsonError("TOTP setup has not been started", 400);
@@ -527,17 +589,12 @@ export async function verifyMfaSetupController(
       return jsonError("WebAuthn credential is required", 400);
     }
 
-    let metadata: {
+    const metadata = parseChallengeMetadata<{
       challenge?: string;
       origin?: string;
       rpId?: string;
       allowMfaReset?: boolean;
-    } | null = null;
-    try {
-      metadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
-    } catch {
-      metadata = null;
-    }
+    }>(challenge.metadata);
 
     if (!metadata?.challenge || !metadata.origin || !metadata.rpId) {
       return jsonError("WebAuthn setup has not been started", 400);
@@ -599,22 +656,7 @@ export async function verifyMfaSetupController(
     userAgent,
   });
 
-  const sessionToken = await generateToken();
-  const sessionTokenHash = await hashToken(sessionToken);
-  const sessionExpiresAt = Date.now() + SESSION_EXPIRY_MS;
-  await repo.createSession(user.id, sessionTokenHash, sessionExpiresAt);
-
-  return createAuthResponse({
-    sessionToken,
-    expiresAt: sessionExpiresAt,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name ?? null,
-      organisationId: user.organisationId,
-    },
-    recoveryCodes,
-  });
+  return createAuthenticatedSessionResponse(repo, user, recoveryCodes);
 }
 
 export async function startMfaVerifyController(
@@ -633,19 +675,15 @@ export async function startMfaVerifyController(
   }
 
   const repo = new WorkspaceAuthRepository(env.DB);
-  const challengeResult = await getChallengeOrError(
+  const challengeAndUser = await getChallengeAndUserOrError(
     repo,
     challengeToken,
     "verify",
   );
-  if ("response" in challengeResult) {
-    return challengeResult.response;
+  if ("response" in challengeAndUser) {
+    return challengeAndUser.response;
   }
-  const challenge = challengeResult.challenge;
-  const user = await repo.getUserById(challenge.userId);
-  if (!user?.id || !user.email) {
-    return jsonError("User not found", 404);
-  }
+  const { challenge, user } = challengeAndUser;
 
   const credentials = await repo.listWebAuthnCredentials(user.id);
   if (credentials.length === 0) {
@@ -706,19 +744,15 @@ export async function verifyMfaController(
   }
 
   const repo = new WorkspaceAuthRepository(env.DB);
-  const challengeResult = await getChallengeOrError(
+  const challengeAndUser = await getChallengeAndUserOrError(
     repo,
     challengeToken,
     "verify",
   );
-  if ("response" in challengeResult) {
-    return challengeResult.response;
+  if ("response" in challengeAndUser) {
+    return challengeAndUser.response;
   }
-  const challenge = challengeResult.challenge;
-  const user = await repo.getUserById(challenge.userId);
-  if (!user?.id || !user.email) {
-    return jsonError("User not found", 404);
-  }
+  const { challenge, user } = challengeAndUser;
 
   const { ip, userAgent } = getRequestMeta(request);
 
@@ -807,16 +841,11 @@ export async function verifyMfaController(
       return jsonError("WebAuthn credential is required", 400);
     }
 
-    let metadata: {
+    const metadata = parseChallengeMetadata<{
       challenge?: string;
       origin?: string;
       rpId?: string;
-    } | null = null;
-    try {
-      metadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
-    } catch {
-      metadata = null;
-    }
+    }>(challenge.metadata);
 
     if (!metadata?.challenge || !metadata.origin || !metadata.rpId) {
       return jsonError("WebAuthn verification has not been started", 400);
@@ -874,21 +903,7 @@ export async function verifyMfaController(
     userAgent,
   });
 
-  const sessionToken = await generateToken();
-  const sessionTokenHash = await hashToken(sessionToken);
-  const sessionExpiresAt = Date.now() + SESSION_EXPIRY_MS;
-  await repo.createSession(user.id, sessionTokenHash, sessionExpiresAt);
-
-  return createAuthResponse({
-    sessionToken,
-    expiresAt: sessionExpiresAt,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name ?? null,
-      organisationId: user.organisationId,
-    },
-  });
+  return createAuthenticatedSessionResponse(repo, user);
 }
 
 export async function getCurrentUserController(
