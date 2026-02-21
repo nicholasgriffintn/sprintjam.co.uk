@@ -27,6 +27,8 @@ interface TicketQueueModalCompletedTabProps {
   ) => void;
 }
 
+type SyncProvider = "jira" | "linear" | "github";
+
 export function TicketQueueModalCompletedTab({
   completedTickets,
   roundHistory,
@@ -37,7 +39,7 @@ export function TicketQueueModalCompletedTab({
 }: TicketQueueModalCompletedTabProps) {
   const [syncing, setSyncing] = useState<{
     id: number;
-    provider: "jira" | "linear" | "github";
+    provider: SyncProvider;
   } | null>(null);
   const jiraSyncMutation = useMutation({
     mutationKey: ["jira-sync-ticket", roomKey, userName],
@@ -82,6 +84,34 @@ export function TicketQueueModalCompletedTab({
   const getStoryPointEstimate = (ticket: TicketQueueItem): number | null =>
     calculateStoryPointsFromVotes(ticket.votes);
 
+  const setUpdatedTicketMetadata = (ticketId: number, metadata: unknown) => {
+    onUpdateTicket?.(ticketId, {
+      externalServiceMetadata: metadata as TicketQueueItem["externalServiceMetadata"],
+    });
+  };
+
+  const runSyncMutation = async <TResult,>(
+    options: {
+      ticketId: number;
+      provider: SyncProvider;
+      execute: () => Promise<TResult>;
+      fallbackError: string;
+    },
+  ) => {
+    setSyncing({ id: options.ticketId, provider: options.provider });
+    try {
+      const updated = await options.execute();
+      setUpdatedTicketMetadata(options.ticketId, updated);
+    } catch (err) {
+      handleError(
+        err instanceof Error ? err.message : options.fallbackError,
+        onError,
+      );
+    } finally {
+      setSyncing(null);
+    }
+  };
+
   const handleSyncToJira = async (ticket: TicketQueueItem) => {
     if (ticket.externalService !== "jira") {
       handleError("Sync available only for Jira-linked tickets.", onError);
@@ -94,28 +124,17 @@ export function TicketQueueModalCompletedTab({
       return;
     }
 
-    setSyncing({ id: ticket.id, provider: "jira" });
-    try {
-      const updated = await jiraSyncMutation.mutateAsync({
-        ticketId: ticket.ticketId,
-        storyPoints,
-        note: ticket.outcome ?? undefined,
-      });
-      if (onUpdateTicket) {
-        onUpdateTicket(ticket.id, {
-          externalServiceMetadata: updated,
-        });
-      }
-    } catch (err) {
-      handleError(
-        err instanceof Error
-          ? err.message
-          : "Failed to sync story points to Jira",
-        onError,
-      );
-    } finally {
-      setSyncing(null);
-    }
+    await runSyncMutation({
+      ticketId: ticket.id,
+      provider: "jira",
+      execute: () =>
+        jiraSyncMutation.mutateAsync({
+          ticketId: ticket.ticketId,
+          storyPoints,
+          note: ticket.outcome ?? undefined,
+        }),
+      fallbackError: "Failed to sync story points to Jira",
+    });
   };
 
   const handleSyncToLinear = async (ticket: TicketQueueItem) => {
@@ -137,28 +156,17 @@ export function TicketQueueModalCompletedTab({
         : undefined;
     const issueId = ticket.externalServiceId || metadataId || ticket.ticketId;
 
-    setSyncing({ id: ticket.id, provider: "linear" });
-    try {
-      const updated = await linearSyncMutation.mutateAsync({
-        ticketId: issueId,
-        estimate,
-        note: ticket.outcome ?? undefined,
-      });
-      if (onUpdateTicket) {
-        onUpdateTicket(ticket.id, {
-          externalServiceMetadata: updated,
-        });
-      }
-    } catch (err) {
-      handleError(
-        err instanceof Error
-          ? err.message
-          : "Failed to sync estimate to Linear",
-        onError,
-      );
-    } finally {
-      setSyncing(null);
-    }
+    await runSyncMutation({
+      ticketId: ticket.id,
+      provider: "linear",
+      execute: () =>
+        linearSyncMutation.mutateAsync({
+          ticketId: issueId,
+          estimate,
+          note: ticket.outcome ?? undefined,
+        }),
+      fallbackError: "Failed to sync estimate to Linear",
+    });
   };
 
   const handleSyncToGithub = async (ticket: TicketQueueItem) => {
@@ -173,28 +181,60 @@ export function TicketQueueModalCompletedTab({
       return;
     }
 
-    setSyncing({ id: ticket.id, provider: "github" });
-    try {
-      const updated = await githubSyncMutation.mutateAsync({
-        ticketId: ticket.ticketId,
-        estimate,
-        note: ticket.outcome ?? undefined,
-      });
-      if (onUpdateTicket) {
-        onUpdateTicket(ticket.id, {
-          externalServiceMetadata: updated,
-        });
-      }
-    } catch (err) {
-      handleError(
-        err instanceof Error
-          ? err.message
-          : "Failed to sync estimate to GitHub",
-        onError,
-      );
-    } finally {
-      setSyncing(null);
+    await runSyncMutation({
+      ticketId: ticket.id,
+      provider: "github",
+      execute: () =>
+        githubSyncMutation.mutateAsync({
+          ticketId: ticket.ticketId,
+          estimate,
+          note: ticket.outcome ?? undefined,
+        }),
+      fallbackError: "Failed to sync estimate to GitHub",
+    });
+  };
+
+  const isSyncingProvider = (ticketId: number, provider: SyncProvider) =>
+    syncing?.id === ticketId && syncing.provider === provider;
+
+  const getSyncButtonConfig = (ticket: TicketQueueItem) => {
+    if (ticket.externalService === "jira") {
+      return {
+        provider: "jira" as const,
+        label: "Sync to Jira",
+        className:
+          "rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60",
+        onClick: () => {
+          void handleSyncToJira(ticket);
+        },
+      };
     }
+
+    if (ticket.externalService === "linear") {
+      return {
+        provider: "linear" as const,
+        label: "Sync to Linear",
+        className:
+          "rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-60",
+        onClick: () => {
+          void handleSyncToLinear(ticket);
+        },
+      };
+    }
+
+    if (ticket.externalService === "github") {
+      return {
+        provider: "github" as const,
+        label: "Sync to GitHub",
+        className:
+          "rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60",
+        onClick: () => {
+          void handleSyncToGithub(ticket);
+        },
+      };
+    }
+
+    return null;
   };
 
   const handleDownloadTicket = (ticket: TicketQueueItem) => {
@@ -329,6 +369,7 @@ export function TicketQueueModalCompletedTab({
               </p>
               {completedTickets.map((ticket) => {
                 const storyPoints = getStoryPointEstimate(ticket);
+                const syncButton = getSyncButtonConfig(ticket);
                 return (
                   <div
                     key={ticket.id}
@@ -370,61 +411,19 @@ export function TicketQueueModalCompletedTab({
                           <ArrowDownToLine className="h-3.5 w-3.5" />
                           Export CSV
                         </Button>
-                        {ticket.externalService === "jira" && (
+                        {syncButton && (
                           <Button
-                            onClick={() => handleSyncToJira(ticket)}
-                            disabled={
-                              syncing?.id === ticket.id &&
-                              syncing.provider === "jira"
-                            }
+                            onClick={syncButton.onClick}
+                            disabled={isSyncingProvider(ticket.id, syncButton.provider)}
                             variant="unstyled"
-                            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                            className={syncButton.className}
                           >
-                            {syncing?.id === ticket.id &&
-                            syncing.provider === "jira" ? (
+                            {isSyncingProvider(ticket.id, syncButton.provider) ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
                               <RefreshCw className="h-3.5 w-3.5" />
                             )}
-                            Sync to Jira
-                          </Button>
-                        )}
-                        {ticket.externalService === "linear" && (
-                          <Button
-                            onClick={() => handleSyncToLinear(ticket)}
-                            disabled={
-                              syncing?.id === ticket.id &&
-                              syncing.provider === "linear"
-                            }
-                            variant="unstyled"
-                            className="rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
-                          >
-                            {syncing?.id === ticket.id &&
-                            syncing.provider === "linear" ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <RefreshCw className="h-3.5 w-3.5" />
-                            )}
-                            Sync to Linear
-                          </Button>
-                        )}
-                        {ticket.externalService === "github" && (
-                          <Button
-                            onClick={() => handleSyncToGithub(ticket)}
-                            disabled={
-                              syncing?.id === ticket.id &&
-                              syncing.provider === "github"
-                            }
-                            variant="unstyled"
-                            className="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-                          >
-                            {syncing?.id === ticket.id &&
-                            syncing.provider === "github" ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <RefreshCw className="h-3.5 w-3.5" />
-                            )}
-                            Sync to GitHub
+                            {syncButton.label}
                           </Button>
                         )}
                       </div>
