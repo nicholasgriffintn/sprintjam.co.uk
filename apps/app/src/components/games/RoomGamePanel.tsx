@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Minimize2, Sparkles, Trophy } from 'lucide-react';
+import { Minimize2, Trophy } from 'lucide-react';
 
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
