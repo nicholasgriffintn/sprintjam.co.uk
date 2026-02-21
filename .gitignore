@@ -14,6 +14,9 @@ dist
 .env.production.local
 .dev.vars
 
+# Local certificates
+.certs
+
 # OS files
 .DS_Store
 
