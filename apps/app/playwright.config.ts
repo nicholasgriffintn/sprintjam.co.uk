@@ -1,10 +1,24 @@
 import { defineConfig, devices } from "@playwright/test";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const isCI = !!process.env.CI;
-const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:5173";
+const configDir = path.dirname(fileURLToPath(import.meta.url));
+const localCertPath = path.resolve(configDir, ".certs/local.pem");
+const localKeyPath = path.resolve(configDir, ".certs/local-key.pem");
+const useLocalHttps =
+  fs.existsSync(localCertPath) && fs.existsSync(localKeyPath);
+const localBaseURL = useLocalHttps
+  ? "https://sandbox.localhost:5173"
+  : "http://127.0.0.1:5173";
+const baseURL = process.env.E2E_BASE_URL ?? localBaseURL;
 const shouldStartWebServer = !process.env.E2E_BASE_URL;
 const shouldRunA11y = process.env.PLAYWRIGHT_RUN_A11Y === "1";
 const shouldRunSmoke = process.env.PLAYWRIGHT_RUN_SMOKE === "1";
+const shouldIgnoreHTTPSErrors =
+  process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS === "1" ||
+  (shouldStartWebServer && useLocalHttps);
 const commonTestIgnore = shouldRunA11y ? [] : ["**/a11y/**"];
 
 export default defineConfig({
@@ -22,6 +36,7 @@ export default defineConfig({
   reporter: isCI ? [["github"], ["list"]] : [["list"]],
   use: {
     baseURL,
+    ignoreHTTPSErrors: shouldIgnoreHTTPSErrors,
     testIdAttribute: "data-testid",
     trace: isCI ? "retain-on-failure" : "off",
     screenshot: process.env.CI ? "only-on-failure" : "off",
@@ -47,10 +62,12 @@ export default defineConfig({
   webServer: shouldStartWebServer
     ? {
         command: "npm run dev -- --host 0.0.0.0",
-        url: "http://127.0.0.1:5173",
+        port: 5173,
         reuseExistingServer: !isCI,
         timeout: 120_000,
-        cwd: process.cwd(),
+        cwd: configDir,
+        stdout: "pipe",
+        stderr: "pipe",
       }
     : undefined,
 });
