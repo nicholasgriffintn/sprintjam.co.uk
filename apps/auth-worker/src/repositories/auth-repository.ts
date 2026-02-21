@@ -644,6 +644,15 @@ export class AuthRepository {
     return true;
   }
 
+  async resetMfaConfiguration(userId: number): Promise<void> {
+    await this.db
+      .delete(mfaCredentials)
+      .where(eq(mfaCredentials.userId, userId));
+    await this.db
+      .delete(mfaRecoveryCodes)
+      .where(eq(mfaRecoveryCodes.userId, userId));
+  }
+
   async cleanupExpiredMagicLinks(): Promise<number> {
     const now = Date.now();
     const expiredLinks = await this.db

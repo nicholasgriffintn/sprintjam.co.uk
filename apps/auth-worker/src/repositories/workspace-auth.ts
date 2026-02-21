@@ -197,6 +197,10 @@ export class WorkspaceAuthRepository {
     return this.auth.consumeRecoveryCode(userId, codeHash);
   }
 
+  resetMfaConfiguration(userId: number): Promise<void> {
+    return this.auth.resetMfaConfiguration(userId);
+  }
+
   getUserTeams(userId: number) {
     return this.teams.getUserTeams(userId);
   }

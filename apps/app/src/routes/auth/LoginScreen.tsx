@@ -73,6 +73,7 @@ export default function LoginScreen() {
   const [totpUrl, setTotpUrl] = useState<string | null>(null);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [isMfaBusy, setIsMfaBusy] = useState(false);
+  const [requiresMfaReset, setRequiresMfaReset] = useState(false);
 
   const buildRecoveryCodesText = (codes: string[]) => codes.join("\n");
 
@@ -142,10 +143,16 @@ export default function LoginScreen() {
       setChallengeToken(result.challengeToken);
       setMfaMode(result.mode);
       setMfaMethods(result.methods);
+      setRequiresMfaReset(
+        result.mode === 'setup' && result.reason === 'recovery_reset_required',
+      );
+      setMfaCode('');
+      setRecoveryCode('');
       setState("mfa-choice");
       return;
     }
 
+    setRequiresMfaReset(false);
     await refreshAuth();
     if (result.recoveryCodes && result.recoveryCodes.length > 0) {
       setRecoveryCodes(result.recoveryCodes);
@@ -340,6 +347,7 @@ export default function LoginScreen() {
     setTotpSecret(null);
     setTotpUrl(null);
     setRecoveryCodes([]);
+    setRequiresMfaReset(false);
     setIsMfaBusy(false);
     setError("");
   };
@@ -389,24 +397,35 @@ export default function LoginScreen() {
                 </div>
               </div>
               <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                {mfaMode === "setup"
-                  ? "Set up two-factor authentication"
-                  : "Verify with two-factor authentication"}
+                {mfaMode === 'setup'
+                  ? requiresMfaReset
+                    ? 'Reset two-factor authentication'
+                    : 'Set up two-factor authentication'
+                  : 'Verify with two-factor authentication'}
               </h1>
               <p className="mt-2 text-slate-600 dark:text-slate-300">
-                Choose a method to {mfaMode === "setup" ? "set up" : "continue"}
+                Choose a method to {mfaMode === 'setup' ? 'set up' : 'continue'}
                 .
               </p>
             </div>
 
+            {requiresMfaReset ? (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                Recovery code accepted. For security, set up a new passkey or
+                authenticator app now. Previous MFA credentials will be replaced
+                after verification.
+              </div>
+            ) : null}
+
             <div className="flex flex-col gap-3">
-              {mfaMethods.includes("totp") && (
+              {mfaMethods.includes('totp') && (
                 <Button
                   type="button"
                   fullWidth
                   size="lg"
+                  variant="primary"
                   onClick={
-                    mfaMode === "setup"
+                    mfaMode === 'setup'
                       ? handleTotpSetupStart
                       : handleTotpVerifyStart
                   }
@@ -415,19 +434,19 @@ export default function LoginScreen() {
                   Use authenticator app
                 </Button>
               )}
-              {mfaMethods.includes("webauthn") && (
+              {mfaMethods.includes('webauthn') && (
                 <Button
                   type="button"
                   fullWidth
                   size="lg"
-                  variant="secondary"
+                  variant="primary"
                   onClick={() => {
                     setState(
-                      mfaMode === "setup"
-                        ? "mfa-webauthn-setup"
-                        : "mfa-webauthn-verify",
+                      mfaMode === 'setup'
+                        ? 'mfa-webauthn-setup'
+                        : 'mfa-webauthn-verify',
                     );
-                    if (mfaMode === "setup") {
+                    if (mfaMode === 'setup') {
                       void handleWebAuthnSetup();
                     } else {
                       void handleWebAuthnVerify();
@@ -438,15 +457,15 @@ export default function LoginScreen() {
                   Use passkey
                 </Button>
               )}
-              {mfaMode === "verify" && (
+              {mfaMode === 'verify' && (
                 <Button
                   type="button"
                   fullWidth
                   size="md"
                   variant="secondary"
                   onClick={() => {
-                    setError("");
-                    setState("mfa-recovery-verify");
+                    setError('');
+                    setState('mfa-recovery-verify');
                   }}
                   disabled={isMfaBusy}
                 >

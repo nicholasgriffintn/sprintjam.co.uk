@@ -50,6 +50,7 @@ export type VerifyCodeResponse =
       mode: "setup" | "verify";
       challengeToken: string;
       methods: MfaMethod[];
+      reason?: "recovery_reset_required";
     };
 
 export interface WebAuthnRegistrationOptions {

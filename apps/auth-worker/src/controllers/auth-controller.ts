@@ -374,8 +374,16 @@ export async function startMfaSetupController(
     return jsonError("User not found", 404);
   }
 
+  let setupMetadata: { allowMfaReset?: boolean } | null = null;
+  try {
+    setupMetadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
+  } catch {
+    setupMetadata = null;
+  }
+
+  const allowMfaReset = setupMetadata?.allowMfaReset === true;
   const existing = await repo.listMfaCredentials(user.id);
-  if (existing.length > 0) {
+  if (existing.length > 0 && !allowMfaReset) {
     return jsonError("MFA already configured", 409);
   }
 
@@ -385,7 +393,7 @@ export async function startMfaSetupController(
     const secretEncrypted = await cipher.encrypt(secret);
     await repo.updateAuthChallengeMetadata(
       challenge.id,
-      JSON.stringify({ secretEncrypted }),
+      JSON.stringify({ secretEncrypted, allowMfaReset }),
       "totp",
     );
 
@@ -413,7 +421,12 @@ export async function startMfaSetupController(
 
   await repo.updateAuthChallengeMetadata(
     challenge.id,
-    JSON.stringify({ challenge: options.challenge, origin, rpId }),
+    JSON.stringify({
+      challenge: options.challenge,
+      origin,
+      rpId,
+      allowMfaReset,
+    }),
     "webauthn",
   );
 
@@ -468,13 +481,16 @@ export async function verifyMfaSetupController(
   }
 
   const { ip, userAgent } = getRequestMeta(request);
+  let persistVerifiedCredential: (() => Promise<void>) | null = null;
+  let shouldResetExistingMfa = false;
 
   if (method === "totp") {
     if (!body?.code?.trim()) {
       return jsonError("Verification code is required", 400);
     }
 
-    let metadata: { secretEncrypted?: string } | null = null;
+    let metadata: { secretEncrypted?: string; allowMfaReset?: boolean } | null =
+      null;
     try {
       metadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
     } catch {
@@ -484,6 +500,7 @@ export async function verifyMfaSetupController(
     if (!metadata?.secretEncrypted) {
       return jsonError("TOTP setup has not been started", 400);
     }
+    shouldResetExistingMfa = metadata.allowMfaReset === true;
 
     const cipher = new TokenCipher(env.TOKEN_ENCRYPTION_SECRET);
     const secret = await cipher.decrypt(metadata.secretEncrypted);
@@ -502,7 +519,9 @@ export async function verifyMfaSetupController(
       return jsonError("Invalid authenticator code", 401);
     }
 
-    await repo.createTotpCredential(user.id, metadata.secretEncrypted);
+    const { secretEncrypted } = metadata;
+    persistVerifiedCredential = () =>
+      repo.createTotpCredential(user.id, secretEncrypted);
   } else {
     if (!body?.credential) {
       return jsonError("WebAuthn credential is required", 400);
@@ -512,6 +531,7 @@ export async function verifyMfaSetupController(
       challenge?: string;
       origin?: string;
       rpId?: string;
+      allowMfaReset?: boolean;
     } | null = null;
     try {
       metadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
@@ -522,6 +542,7 @@ export async function verifyMfaSetupController(
     if (!metadata?.challenge || !metadata.origin || !metadata.rpId) {
       return jsonError("WebAuthn setup has not been started", 400);
     }
+    shouldResetExistingMfa = metadata.allowMfaReset === true;
 
     try {
       const attestation = await verifyWebAuthnAttestation({
@@ -531,12 +552,13 @@ export async function verifyMfaSetupController(
         expectedRpId: metadata.rpId,
       });
 
-      await repo.createWebAuthnCredential({
-        userId: user.id,
-        credentialId: attestation.credentialId,
-        publicKey: attestation.publicKey,
-        counter: attestation.counter,
-      });
+      persistVerifiedCredential = () =>
+        repo.createWebAuthnCredential({
+          userId: user.id,
+          credentialId: attestation.credentialId,
+          publicKey: attestation.publicKey,
+          counter: attestation.counter,
+        });
     } catch (error) {
       await repo.logAuditEvent({
         userId: user.id,
@@ -550,6 +572,15 @@ export async function verifyMfaSetupController(
       return jsonError("Unable to verify WebAuthn credential", 401);
     }
   }
+
+  if (!persistVerifiedCredential) {
+    return jsonError("Unable to store MFA credential", 500);
+  }
+
+  if (shouldResetExistingMfa) {
+    await repo.resetMfaConfiguration(user.id);
+  }
+  await persistVerifiedCredential();
 
   const recoveryCodes = generateRecoveryCodes(MFA_RECOVERY_CODES_COUNT);
   const recoveryHashes = await Promise.all(
@@ -735,6 +766,42 @@ export async function verifyMfaController(
       });
       return jsonError("Invalid recovery code", 401);
     }
+
+    const resetChallengeToken = await generateToken();
+    const resetChallengeTokenHash = await hashToken(resetChallengeToken);
+    await repo.createAuthChallenge({
+      userId: user.id,
+      tokenHash: resetChallengeTokenHash,
+      type: "setup",
+      metadata: JSON.stringify({ allowMfaReset: true }),
+      expiresAt: Date.now() + AUTH_CHALLENGE_EXPIRY_MS,
+    });
+    await repo.markAuthChallengeUsed(challenge.id);
+
+    await repo.logAuditEvent({
+      userId: user.id,
+      email: user.email,
+      event: "mfa_verify",
+      status: "success",
+      reason: "recovery_reset_required",
+      ip,
+      userAgent,
+    });
+
+    return new Response(
+      JSON.stringify({
+        status: "mfa_required",
+        mode: "setup",
+        challengeToken: resetChallengeToken,
+        methods: ["totp", "webauthn"],
+        reason: "recovery_reset_required",
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   } else {
     if (!body?.credential) {
       return jsonError("WebAuthn credential is required", 400);

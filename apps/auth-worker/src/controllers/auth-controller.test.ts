@@ -813,6 +813,7 @@ describe("mfa setup", () => {
       updateAuthChallengeMetadata: vi.fn(),
       getUserById: vi.fn(),
       listMfaCredentials: vi.fn(),
+      resetMfaConfiguration: vi.fn(),
       createTotpCredential: vi.fn(),
       storeRecoveryCodes: vi.fn(),
       markAuthChallengeUsed: vi.fn(),
@@ -919,6 +920,38 @@ describe("mfa setup", () => {
     expect(metadata.challenge).toBeTruthy();
   });
 
+  it("should allow setup start when challenge is flagged for MFA reset", async () => {
+    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
+      id: 4,
+      userId: 10,
+      type: "setup",
+      usedAt: null,
+      expiresAt: Date.now() + 60000,
+      metadata: JSON.stringify({ allowMfaReset: true }),
+    });
+    mockRepo.getUserById.mockResolvedValue({
+      id: 10,
+      email: "user@example.com",
+    });
+    mockRepo.listMfaCredentials.mockResolvedValue([{ id: 1, type: "totp" }]);
+
+    const request = makeRequest("https://test.com/auth/mfa/setup/start", {
+      method: "POST",
+      body: JSON.stringify({ challengeToken: "challenge", method: "totp" }),
+    });
+
+    const response = await startMfaSetupController(request, mockEnv);
+    const data = (await response.json()) as { method: string };
+
+    expect(response.status).toBe(200);
+    expect(data.method).toBe("totp");
+    expect(mockRepo.updateAuthChallengeMetadata).toHaveBeenCalledWith(
+      4,
+      expect.stringContaining("\"allowMfaReset\":true"),
+      "totp",
+    );
+  });
+
   it("should verify TOTP setup and issue a session", async () => {
     const secret = "JBSWY3DPEHPK3PXP";
     const cipher = new utils.TokenCipher("test-secret");
@@ -972,6 +1005,47 @@ describe("mfa setup", () => {
     );
     expect(mockRepo.markAuthChallengeUsed).toHaveBeenCalledWith(2);
   });
+
+  it("should clear existing MFA configuration before storing reset setup", async () => {
+    const secret = "JBSWY3DPEHPK3PXP";
+    const cipher = new utils.TokenCipher("test-secret");
+    const secretEncrypted = await cipher.encrypt(secret);
+    const code = await utils.generateTotpCode(secret, Date.now());
+
+    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
+      id: 5,
+      userId: 11,
+      type: "setup",
+      usedAt: null,
+      expiresAt: Date.now() + 60000,
+      metadata: JSON.stringify({ secretEncrypted, allowMfaReset: true }),
+    });
+    mockRepo.getUserById.mockResolvedValue({
+      id: 11,
+      email: "user@example.com",
+      name: null,
+      organisationId: 1,
+    });
+    vi.mocked(utils.hashToken).mockResolvedValue("hashed-session-123");
+
+    const request = makeRequest("https://test.com/auth/mfa/setup/verify", {
+      method: "POST",
+      body: JSON.stringify({
+        challengeToken: "challenge",
+        method: "totp",
+        code,
+      }),
+    });
+
+    const response = await verifyMfaSetupController(request, mockEnv);
+
+    expect(response.status).toBe(200);
+    expect(mockRepo.resetMfaConfiguration).toHaveBeenCalledWith(11);
+    expect(mockRepo.createTotpCredential).toHaveBeenCalledWith(
+      11,
+      secretEncrypted,
+    );
+  });
 });
 
 describe("mfa verify", () => {
@@ -989,6 +1063,7 @@ describe("mfa verify", () => {
       getAuthChallengeByTokenHash: vi.fn(),
       getUserById: vi.fn(),
       consumeRecoveryCode: vi.fn(),
+      createAuthChallenge: vi.fn(),
       markAuthChallengeUsed: vi.fn(),
       logAuditEvent: vi.fn(),
       createSession: vi.fn(),
@@ -1001,7 +1076,7 @@ describe("mfa verify", () => {
     vi.mocked(utils.generateToken).mockResolvedValue("session-token-123");
   });
 
-  it("should verify a recovery code and issue a session", async () => {
+  it("should verify a recovery code and require MFA reset setup", async () => {
     mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
       id: 3,
       userId: 12,
@@ -1028,14 +1103,26 @@ describe("mfa verify", () => {
     });
 
     const response = await verifyMfaController(request, mockEnv);
-    const data = (await response.json()) as { status: string };
+    const data = (await response.json()) as {
+      status: string;
+      mode: string;
+      reason?: string;
+      challengeToken: string;
+    };
 
     expect(response.status).toBe(200);
-    expect(data.status).toBe("authenticated");
-    expect(mockRepo.createSession).toHaveBeenCalledWith(
-      12,
-      "hashed-session-123",
-      expect.any(Number),
-    );
+    expect(data.status).toBe("mfa_required");
+    expect(data.mode).toBe("setup");
+    expect(data.reason).toBe("recovery_reset_required");
+    expect(data.challengeToken).toBe("session-token-123");
+    expect(mockRepo.createAuthChallenge).toHaveBeenCalledWith({
+      userId: 12,
+      tokenHash: "hashed-session-123",
+      type: "setup",
+      metadata: JSON.stringify({ allowMfaReset: true }),
+      expiresAt: expect.any(Number),
+    });
+    expect(mockRepo.markAuthChallengeUsed).toHaveBeenCalledWith(3);
+    expect(mockRepo.createSession).not.toHaveBeenCalled();
   });
 });
