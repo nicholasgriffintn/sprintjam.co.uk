@@ -1,7 +1,9 @@
+import { bytesToBase64Url } from "./base64";
+
 export async function generateToken(): Promise<string> {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
-  return bytesToBase64(bytes);
+  return bytesToBase64Url(bytes);
 }
 
 export function generateVerificationCode(): string {
@@ -23,16 +25,6 @@ export function extractDomain(email: string): string {
     throw new Error("Invalid email format");
   }
   return parts[1];
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  const binString = Array.from(bytes, (byte) =>
-    String.fromCodePoint(byte),
-  ).join("");
-  return btoa(binString)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
 }
 
 function bytesToHex(bytes: Uint8Array): string {

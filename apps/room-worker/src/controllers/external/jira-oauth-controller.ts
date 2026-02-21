@@ -20,14 +20,8 @@ import {
 } from "@sprintjam/services";
 
 import { checkOAuthRateLimit } from "../../lib/rate-limit";
+import { jsonResponse } from "../../lib/response";
 import { validateSession } from "./shared";
-
-function jsonResponse(payload: unknown, status = 200): CfResponse {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  }) as unknown as CfResponse;
-}
 
 export async function initiateJiraOAuthController(
   request: CfRequest,

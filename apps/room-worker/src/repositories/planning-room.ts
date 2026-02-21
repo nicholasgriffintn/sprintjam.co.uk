@@ -46,6 +46,19 @@ import migrations from "../../drizzle/migrations";
 
 type OAuthProvider = "jira" | "linear" | "github";
 
+type OAuthCredentialCore = {
+  id: number;
+  roomKey: string;
+  accessToken: string;
+  refreshToken: string | null;
+  tokenType: string;
+  expiresAt: number;
+  scope: string | null;
+  authorizedBy: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export class PlanningRoomRepository {
   private readonly db: DB;
   private readonly anonymousName = "Anonymous";
@@ -91,6 +104,38 @@ export class PlanningRoomRepository {
       .from(oauthCredentials)
       .where(this.oauthProviderWhere(roomKey, provider))
       .get();
+  }
+
+  private async getOAuthCredentialWithMetadata<
+    TMetadata extends Record<string, unknown>,
+  >(
+    roomKey: string,
+    provider: OAuthProvider,
+  ): Promise<{ core: OAuthCredentialCore; metadata: TMetadata } | null> {
+    const row = this.getOAuthCredentialRecord(roomKey, provider);
+    if (!row) {
+      return null;
+    }
+
+    const metadata = safeJsonParse<TMetadata>(row.metadata ?? "{}");
+    const accessToken = await this.tokenCipher.decrypt(row.accessToken);
+    const refreshToken = await this.decryptToken(row.refreshToken);
+
+    return {
+      core: {
+        id: row.id,
+        roomKey: row.roomKey,
+        accessToken,
+        refreshToken,
+        tokenType: row.tokenType,
+        expiresAt: row.expiresAt,
+        scope: row.scope,
+        authorizedBy: row.authorizedBy,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      },
+      metadata: (metadata ?? {}) as TMetadata,
+    };
   }
 
   private async saveOAuthCredentials(params: {
@@ -1100,39 +1145,26 @@ export class PlanningRoomRepository {
     createdAt: number;
     updatedAt: number;
   } | null> {
-    const row = this.getOAuthCredentialRecord(roomKey, "jira");
-
-    if (!row) return null;
-
-    const metadata = safeJsonParse<{
+    const credential = await this.getOAuthCredentialWithMetadata<{
       jiraDomain?: string;
       jiraCloudId?: string | null;
       jiraUserId?: string | null;
       jiraUserEmail?: string | null;
       storyPointsField?: string | null;
       sprintField?: string | null;
-    }>(row.metadata ?? "{}");
-
-    const accessToken = await this.tokenCipher.decrypt(row.accessToken);
-    const refreshToken = await this.decryptToken(row.refreshToken);
+    }>(roomKey, "jira");
+    if (!credential) {
+      return null;
+    }
 
     return {
-      id: row.id,
-      roomKey: row.roomKey,
-      accessToken,
-      refreshToken,
-      tokenType: row.tokenType,
-      expiresAt: row.expiresAt,
-      scope: row.scope,
-      jiraDomain: metadata?.jiraDomain ?? "",
-      jiraCloudId: metadata?.jiraCloudId ?? null,
-      jiraUserId: metadata?.jiraUserId ?? null,
-      jiraUserEmail: metadata?.jiraUserEmail ?? null,
-      storyPointsField: metadata?.storyPointsField ?? null,
-      sprintField: metadata?.sprintField ?? null,
-      authorizedBy: row.authorizedBy,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      ...credential.core,
+      jiraDomain: credential.metadata.jiraDomain ?? "",
+      jiraCloudId: credential.metadata.jiraCloudId ?? null,
+      jiraUserId: credential.metadata.jiraUserId ?? null,
+      jiraUserEmail: credential.metadata.jiraUserEmail ?? null,
+      storyPointsField: credential.metadata.storyPointsField ?? null,
+      sprintField: credential.metadata.sprintField ?? null,
     };
   }
 
@@ -1207,35 +1239,22 @@ export class PlanningRoomRepository {
     createdAt: number;
     updatedAt: number;
   } | null> {
-    const row = this.getOAuthCredentialRecord(roomKey, "linear");
-
-    if (!row) return null;
-
-    const metadata = safeJsonParse<{
+    const credential = await this.getOAuthCredentialWithMetadata<{
       linearOrganizationId?: string | null;
       linearUserId?: string | null;
       linearUserEmail?: string | null;
       estimateField?: string | null;
-    }>(row.metadata ?? "{}");
-
-    const accessToken = await this.tokenCipher.decrypt(row.accessToken);
-    const refreshToken = await this.decryptToken(row.refreshToken);
+    }>(roomKey, "linear");
+    if (!credential) {
+      return null;
+    }
 
     return {
-      id: row.id,
-      roomKey: row.roomKey,
-      accessToken,
-      refreshToken,
-      tokenType: row.tokenType,
-      expiresAt: row.expiresAt,
-      scope: row.scope,
-      linearOrganizationId: metadata?.linearOrganizationId ?? null,
-      linearUserId: metadata?.linearUserId ?? null,
-      linearUserEmail: metadata?.linearUserEmail ?? null,
-      estimateField: metadata?.estimateField ?? null,
-      authorizedBy: row.authorizedBy,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      ...credential.core,
+      linearOrganizationId: credential.metadata.linearOrganizationId ?? null,
+      linearUserId: credential.metadata.linearUserId ?? null,
+      linearUserEmail: credential.metadata.linearUserEmail ?? null,
+      estimateField: credential.metadata.estimateField ?? null,
     };
   }
 
@@ -1330,37 +1349,22 @@ export class PlanningRoomRepository {
     createdAt: number;
     updatedAt: number;
   } | null> {
-    const row = this.getOAuthCredentialRecord(roomKey, "github");
-
-    if (!row) {
-      return null;
-    }
-
-    const metadata = safeJsonParse<{
+    const credential = await this.getOAuthCredentialWithMetadata<{
       githubLogin?: string | null;
       githubUserEmail?: string | null;
       defaultOwner?: string | null;
       defaultRepo?: string | null;
-    }>(row.metadata ?? "{}");
-
-    const accessToken = await this.tokenCipher.decrypt(row.accessToken);
-    const refreshToken = await this.decryptToken(row.refreshToken);
+    }>(roomKey, "github");
+    if (!credential) {
+      return null;
+    }
 
     return {
-      id: row.id,
-      roomKey: row.roomKey,
-      accessToken,
-      refreshToken,
-      tokenType: row.tokenType,
-      expiresAt: row.expiresAt,
-      scope: row.scope,
-      githubLogin: metadata?.githubLogin ?? null,
-      githubUserEmail: metadata?.githubUserEmail ?? null,
-      defaultOwner: metadata?.defaultOwner ?? null,
-      defaultRepo: metadata?.defaultRepo ?? null,
-      authorizedBy: row.authorizedBy,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      ...credential.core,
+      githubLogin: credential.metadata.githubLogin ?? null,
+      githubUserEmail: credential.metadata.githubUserEmail ?? null,
+      defaultOwner: credential.metadata.defaultOwner ?? null,
+      defaultRepo: credential.metadata.defaultRepo ?? null,
     };
   }
 

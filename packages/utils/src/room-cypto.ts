@@ -1,4 +1,5 @@
 import type { PasscodeHashPayload } from "@sprintjam/types";
+import { bytesToBase64Url } from "./base64";
 
 const encoder = new TextEncoder();
 
@@ -7,13 +8,6 @@ const PASSCODE_SALT_BYTES = 16;
 export const PASSCODE_MIN_LENGTH = 4;
 export const PASSCODE_MAX_LENGTH = 128;
 export const SESSION_TOKEN_TTL_MS = 1000 * 60 * 60 * 6;
-
-function bytesToBase64(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
-}
 
 function bufferToHex(buffer: ArrayBuffer | ArrayBufferView): string {
   const bytes =
@@ -148,7 +142,7 @@ export function parsePasscodeHash(
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
-  return bytesToBase64(bytes);
+  return bytesToBase64Url(bytes);
 }
 
 export async function signState(data: any, secret: string): Promise<string> {
