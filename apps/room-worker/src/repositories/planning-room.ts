@@ -44,6 +44,8 @@ import {
 
 import migrations from "../../drizzle/migrations";
 
+type OAuthProvider = "jira" | "linear" | "github";
+
 export class PlanningRoomRepository {
   private readonly db: DB;
   private readonly anonymousName = "Anonymous";
@@ -74,6 +76,100 @@ export class PlanningRoomRepository {
       return null;
     }
     return this.tokenCipher.decrypt(value);
+  }
+
+  private oauthProviderWhere(roomKey: string, provider: OAuthProvider) {
+    return and(
+      eq(oauthCredentials.roomKey, roomKey),
+      eq(oauthCredentials.provider, provider),
+    );
+  }
+
+  private getOAuthCredentialRecord(roomKey: string, provider: OAuthProvider) {
+    return this.db
+      .select()
+      .from(oauthCredentials)
+      .where(this.oauthProviderWhere(roomKey, provider))
+      .get();
+  }
+
+  private async saveOAuthCredentials(params: {
+    roomKey: string;
+    provider: OAuthProvider;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    authorizedBy: string;
+    metadata: string;
+  }): Promise<void> {
+    const now = Date.now();
+    const encryptedAccessToken = await this.tokenCipher.encrypt(
+      params.accessToken,
+    );
+    const encryptedRefreshToken = await this.encryptToken(params.refreshToken);
+
+    this.db
+      .insert(oauthCredentials)
+      .values({
+        roomKey: params.roomKey,
+        provider: params.provider,
+        accessToken: encryptedAccessToken,
+        refreshToken: encryptedRefreshToken,
+        tokenType: params.tokenType,
+        expiresAt: params.expiresAt,
+        scope: params.scope,
+        authorizedBy: params.authorizedBy,
+        metadata: params.metadata,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [oauthCredentials.roomKey, oauthCredentials.provider],
+        set: {
+          accessToken: encryptedAccessToken,
+          refreshToken: encryptedRefreshToken,
+          tokenType: params.tokenType,
+          expiresAt: params.expiresAt,
+          scope: params.scope,
+          authorizedBy: params.authorizedBy,
+          metadata: params.metadata,
+          updatedAt: now,
+        },
+      })
+      .run();
+  }
+
+  private async updateOAuthTokens(params: {
+    roomKey: string;
+    provider: OAuthProvider;
+    accessToken: string;
+    refreshToken: string | null;
+    expiresAt: number;
+  }): Promise<void> {
+    const encryptedAccessToken = await this.tokenCipher.encrypt(
+      params.accessToken,
+    );
+    const encryptedRefreshToken = await this.encryptToken(params.refreshToken);
+
+    this.db
+      .update(oauthCredentials)
+      .set({
+        accessToken: encryptedAccessToken,
+        refreshToken: encryptedRefreshToken,
+        expiresAt: params.expiresAt,
+        updatedAt: Date.now(),
+      })
+      .where(this.oauthProviderWhere(params.roomKey, params.provider))
+      .run();
+  }
+
+  private deleteOAuthCredentials(roomKey: string, provider: OAuthProvider): void {
+    this.db
+      .delete(oauthCredentials)
+      .where(this.oauthProviderWhere(roomKey, provider))
+      .run();
   }
 
   async initializeSchema() {
@@ -1004,16 +1100,7 @@ export class PlanningRoomRepository {
     createdAt: number;
     updatedAt: number;
   } | null> {
-    const row = this.db
-      .select()
-      .from(oauthCredentials)
-      .where(
-        and(
-          eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, "jira"),
-        ),
-      )
-      .get();
+    const row = this.getOAuthCredentialRecord(roomKey, "jira");
 
     if (!row) return null;
 
@@ -1064,7 +1151,6 @@ export class PlanningRoomRepository {
     sprintField: string | null;
     authorizedBy: string;
   }): Promise<void> {
-    const now = Date.now();
     const metadata = JSON.stringify({
       jiraDomain: credentials.jiraDomain,
       jiraCloudId: credentials.jiraCloudId,
@@ -1073,42 +1159,17 @@ export class PlanningRoomRepository {
       storyPointsField: credentials.storyPointsField,
       sprintField: credentials.sprintField,
     });
-    const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken,
-    );
-    const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken,
-    );
-
-    this.db
-      .insert(oauthCredentials)
-      .values({
-        roomKey: credentials.roomKey,
-        provider: "jira",
-        accessToken: encryptedAccessToken,
-        refreshToken: encryptedRefreshToken,
-        tokenType: credentials.tokenType,
-        expiresAt: credentials.expiresAt,
-        scope: credentials.scope,
-        authorizedBy: credentials.authorizedBy,
-        metadata,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [oauthCredentials.roomKey, oauthCredentials.provider],
-        set: {
-          accessToken: encryptedAccessToken,
-          refreshToken: encryptedRefreshToken,
-          tokenType: credentials.tokenType,
-          expiresAt: credentials.expiresAt,
-          scope: credentials.scope,
-          authorizedBy: credentials.authorizedBy,
-          metadata,
-          updatedAt: now,
-        },
-      })
-      .run();
+    await this.saveOAuthCredentials({
+      roomKey: credentials.roomKey,
+      provider: "jira",
+      accessToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      tokenType: credentials.tokenType,
+      expiresAt: credentials.expiresAt,
+      scope: credentials.scope,
+      authorizedBy: credentials.authorizedBy,
+      metadata,
+    });
   }
 
   async updateJiraOAuthTokens(
@@ -1117,35 +1178,17 @@ export class PlanningRoomRepository {
     refreshToken: string | null,
     expiresAt: number,
   ): Promise<void> {
-    const encryptedAccessToken = await this.tokenCipher.encrypt(accessToken);
-    const encryptedRefreshToken = await this.encryptToken(refreshToken);
-    this.db
-      .update(oauthCredentials)
-      .set({
-        accessToken: encryptedAccessToken,
-        refreshToken: encryptedRefreshToken,
-        expiresAt,
-        updatedAt: Date.now(),
-      })
-      .where(
-        and(
-          eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, "jira"),
-        ),
-      )
-      .run();
+    await this.updateOAuthTokens({
+      roomKey,
+      provider: "jira",
+      accessToken,
+      refreshToken,
+      expiresAt,
+    });
   }
 
   deleteJiraOAuthCredentials(roomKey: string): void {
-    this.db
-      .delete(oauthCredentials)
-      .where(
-        and(
-          eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, "jira"),
-        ),
-      )
-      .run();
+    this.deleteOAuthCredentials(roomKey, "jira");
   }
 
   async getLinearOAuthCredentials(roomKey: string): Promise<{
@@ -1164,16 +1207,7 @@ export class PlanningRoomRepository {
     createdAt: number;
     updatedAt: number;
   } | null> {
-    const row = this.db
-      .select()
-      .from(oauthCredentials)
-      .where(
-        and(
-          eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, "linear"),
-        ),
-      )
-      .get();
+    const row = this.getOAuthCredentialRecord(roomKey, "linear");
 
     if (!row) return null;
 
@@ -1218,49 +1252,23 @@ export class PlanningRoomRepository {
     estimateField: string | null;
     authorizedBy: string;
   }): Promise<void> {
-    const now = Date.now();
     const metadata = JSON.stringify({
       linearOrganizationId: credentials.linearOrganizationId,
       linearUserId: credentials.linearUserId,
       linearUserEmail: credentials.linearUserEmail,
       estimateField: credentials.estimateField,
     });
-    const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken,
-    );
-    const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken,
-    );
-
-    this.db
-      .insert(oauthCredentials)
-      .values({
-        roomKey: credentials.roomKey,
-        provider: "linear",
-        accessToken: encryptedAccessToken,
-        refreshToken: encryptedRefreshToken,
-        tokenType: credentials.tokenType,
-        expiresAt: credentials.expiresAt,
-        scope: credentials.scope,
-        authorizedBy: credentials.authorizedBy,
-        metadata,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [oauthCredentials.roomKey, oauthCredentials.provider],
-        set: {
-          accessToken: encryptedAccessToken,
-          refreshToken: encryptedRefreshToken,
-          tokenType: credentials.tokenType,
-          expiresAt: credentials.expiresAt,
-          scope: credentials.scope,
-          authorizedBy: credentials.authorizedBy,
-          metadata,
-          updatedAt: now,
-        },
-      })
-      .run();
+    await this.saveOAuthCredentials({
+      roomKey: credentials.roomKey,
+      provider: "linear",
+      accessToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      tokenType: credentials.tokenType,
+      expiresAt: credentials.expiresAt,
+      scope: credentials.scope,
+      authorizedBy: credentials.authorizedBy,
+      metadata,
+    });
   }
 
   async updateLinearOAuthTokens(
@@ -1269,35 +1277,17 @@ export class PlanningRoomRepository {
     refreshToken: string | null,
     expiresAt: number,
   ): Promise<void> {
-    const encryptedAccessToken = await this.tokenCipher.encrypt(accessToken);
-    const encryptedRefreshToken = await this.encryptToken(refreshToken);
-    this.db
-      .update(oauthCredentials)
-      .set({
-        accessToken: encryptedAccessToken,
-        refreshToken: encryptedRefreshToken,
-        expiresAt,
-        updatedAt: Date.now(),
-      })
-      .where(
-        and(
-          eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, "linear"),
-        ),
-      )
-      .run();
+    await this.updateOAuthTokens({
+      roomKey,
+      provider: "linear",
+      accessToken,
+      refreshToken,
+      expiresAt,
+    });
   }
 
   deleteLinearOAuthCredentials(roomKey: string): void {
-    this.db
-      .delete(oauthCredentials)
-      .where(
-        and(
-          eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, "linear"),
-        ),
-      )
-      .run();
+    this.deleteOAuthCredentials(roomKey, "linear");
   }
 
   async updateLinearEstimateField(
@@ -1340,16 +1330,7 @@ export class PlanningRoomRepository {
     createdAt: number;
     updatedAt: number;
   } | null> {
-    const row = this.db
-      .select()
-      .from(oauthCredentials)
-      .where(
-        and(
-          eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, "github"),
-        ),
-      )
-      .get();
+    const row = this.getOAuthCredentialRecord(roomKey, "github");
 
     if (!row) {
       return null;
@@ -1396,61 +1377,26 @@ export class PlanningRoomRepository {
     defaultRepo: string | null;
     authorizedBy: string;
   }): Promise<void> {
-    const now = Date.now();
     const metadata = JSON.stringify({
       githubLogin: credentials.githubLogin,
       githubUserEmail: credentials.githubUserEmail,
       defaultOwner: credentials.defaultOwner,
       defaultRepo: credentials.defaultRepo,
     });
-
-    const encryptedAccessToken = await this.tokenCipher.encrypt(
-      credentials.accessToken,
-    );
-    const encryptedRefreshToken = await this.encryptToken(
-      credentials.refreshToken,
-    );
-
-    this.db
-      .insert(oauthCredentials)
-      .values({
-        roomKey: credentials.roomKey,
-        provider: "github",
-        accessToken: encryptedAccessToken,
-        refreshToken: encryptedRefreshToken,
-        tokenType: credentials.tokenType,
-        expiresAt: credentials.expiresAt,
-        scope: credentials.scope,
-        authorizedBy: credentials.authorizedBy,
-        metadata,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [oauthCredentials.roomKey, oauthCredentials.provider],
-        set: {
-          accessToken: encryptedAccessToken,
-          refreshToken: encryptedRefreshToken,
-          tokenType: credentials.tokenType,
-          expiresAt: credentials.expiresAt,
-          scope: credentials.scope,
-          authorizedBy: credentials.authorizedBy,
-          metadata,
-          updatedAt: now,
-        },
-      })
-      .run();
+    await this.saveOAuthCredentials({
+      roomKey: credentials.roomKey,
+      provider: "github",
+      accessToken: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      tokenType: credentials.tokenType,
+      expiresAt: credentials.expiresAt,
+      scope: credentials.scope,
+      authorizedBy: credentials.authorizedBy,
+      metadata,
+    });
   }
 
   deleteGithubOAuthCredentials(roomKey: string): void {
-    this.db
-      .delete(oauthCredentials)
-      .where(
-        and(
-          eq(oauthCredentials.roomKey, roomKey),
-          eq(oauthCredentials.provider, "github"),
-        ),
-      )
-      .run();
+    this.deleteOAuthCredentials(roomKey, "github");
   }
 }

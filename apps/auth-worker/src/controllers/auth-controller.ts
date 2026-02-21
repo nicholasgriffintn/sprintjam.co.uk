@@ -15,20 +15,21 @@ import {
 import { sendVerificationCodeEmail } from "@sprintjam/services";
 
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
-import { jsonError } from "../lib/response";
+import { jsonError, jsonResponse } from "../lib/response";
 import { getSessionTokenFromRequest } from "../lib/session";
 import {
   EMAIL_REGEX,
   MFA_RECOVERY_CODES_COUNT,
   getRequestMeta,
-  createAuthResponse,
-  getChallengeOrError,
+  createAuthenticatedSessionResponse,
+  enforceEmailAndIpRateLimit,
+  getChallengeAndUserOrError,
   encodeUserIdForWebAuthn,
+  parseChallengeMetadata,
 } from "../lib/auth-helpers";
 import {
   AUTH_CHALLENGE_EXPIRY_MS,
   MAGIC_LINK_EXPIRY_MS,
-  SESSION_EXPIRY_MS,
 } from "../constants";
 import {
   createWebAuthnAuthenticationOptions,
@@ -61,84 +62,6 @@ function getWebAuthnRequestContext(request: Request): {
   };
 }
 
-type AuthChallengeRecord = NonNullable<
-  Awaited<ReturnType<WorkspaceAuthRepository["getAuthChallengeByTokenHash"]>>
->;
-
-type AuthUserRecord = {
-  id: number;
-  email: string;
-  name: string | null;
-  organisationId: number;
-};
-
-async function getChallengeAndUserOrError(
-  repo: WorkspaceAuthRepository,
-  challengeToken: string | undefined,
-  type: "setup" | "verify",
-): Promise<
-  | { response: Response }
-  | { challenge: AuthChallengeRecord; user: AuthUserRecord }
-> {
-  const challengeResult = await getChallengeOrError(repo, challengeToken, type);
-  if ("response" in challengeResult) {
-    return { response: challengeResult.response };
-  }
-
-  const challenge = challengeResult.challenge;
-  const user = await repo.getUserById(challenge.userId);
-  if (!user?.id || !user.email) {
-    return { response: jsonError("User not found", 404) };
-  }
-
-  return {
-    challenge,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name ?? null,
-      organisationId: user.organisationId,
-    },
-  };
-}
-
-function parseChallengeMetadata<T>(
-  metadata: string | null | undefined,
-): T | null {
-  if (!metadata) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(metadata) as T;
-  } catch {
-    return null;
-  }
-}
-
-async function createAuthenticatedSessionResponse(
-  repo: WorkspaceAuthRepository,
-  user: AuthUserRecord,
-  recoveryCodes?: string[],
-): Promise<Response> {
-  const sessionToken = await generateToken();
-  const sessionTokenHash = await hashToken(sessionToken);
-  const sessionExpiresAt = Date.now() + SESSION_EXPIRY_MS;
-  await repo.createSession(user.id, sessionTokenHash, sessionExpiresAt);
-
-  return createAuthResponse({
-    sessionToken,
-    expiresAt: sessionExpiresAt,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      organisationId: user.organisationId,
-    },
-    recoveryCodes,
-  });
-}
-
 export async function requestMagicLinkController(
   request: Request,
   env: AuthWorkerEnv,
@@ -154,31 +77,16 @@ export async function requestMagicLinkController(
     return jsonError("Invalid email format", 400);
   }
 
-  if (env.ENABLE_MAGIC_LINK_RATE_LIMIT === "true") {
-    if (!env.MAGIC_LINK_RATE_LIMITER || !env.IP_RATE_LIMITER) {
-      console.error(
-        "Rate limiters are not configured but rate limiting is enabled",
-      );
-      return jsonError("Service temporarily unavailable", 503);
-    }
-
-    const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
-
-    const { success: emailRateLimitSuccess } =
-      await env.MAGIC_LINK_RATE_LIMITER.limit({
-        key: `magic-link:email:${email}`,
-      });
-
-    const { success: ipRateLimitSuccess } = await env.IP_RATE_LIMITER.limit({
-      key: `magic-link:ip:${ip}`,
-    });
-
-    if (!emailRateLimitSuccess || !ipRateLimitSuccess) {
-      return jsonError(
-        "Rate limit exceeded. Please wait before requesting another magic link.",
-        429,
-      );
-    }
+  const rateLimitResponse = await enforceEmailAndIpRateLimit(
+    request,
+    env,
+    email,
+    env.MAGIC_LINK_RATE_LIMITER,
+    "magic-link:email",
+    "Rate limit exceeded. Please wait before requesting another magic link.",
+  );
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const domain = extractDomain(email);
@@ -282,14 +190,7 @@ export async function requestMagicLinkController(
     userAgent,
   });
 
-  return new Response(
-    JSON.stringify({
-      message: "Verification code sent to your email",
-    }),
-    {
-      headers: { "Content-Type": "application/json" },
-    },
-  );
+  return jsonResponse({ message: "Verification code sent to your email" });
 }
 
 export async function verifyCodeController(
@@ -304,31 +205,16 @@ export async function verifyCodeController(
     return jsonError("Email and code are required", 400);
   }
 
-  if (env.ENABLE_MAGIC_LINK_RATE_LIMIT === "true") {
-    if (!env.VERIFICATION_RATE_LIMITER || !env.IP_RATE_LIMITER) {
-      console.error(
-        "Rate limiters are not configured but rate limiting is enabled",
-      );
-      return jsonError("Service temporarily unavailable", 503);
-    }
-
-    const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
-
-    const { success: verifyRateLimitSuccess } =
-      await env.VERIFICATION_RATE_LIMITER.limit({
-        key: `verify:email:${email}`,
-      });
-
-    const { success: ipRateLimitSuccess } = await env.IP_RATE_LIMITER.limit({
-      key: `verify:ip:${ip}`,
-    });
-
-    if (!verifyRateLimitSuccess || !ipRateLimitSuccess) {
-      return jsonError(
-        "Too many verification attempts. Please wait before trying again.",
-        429,
-      );
-    }
+  const verifyRateLimitResponse = await enforceEmailAndIpRateLimit(
+    request,
+    env,
+    email,
+    env.VERIFICATION_RATE_LIMITER,
+    "verify:email",
+    "Too many verification attempts. Please wait before trying again.",
+  );
+  if (verifyRateLimitResponse) {
+    return verifyRateLimitResponse;
   }
 
   const codeHash = await hashToken(code);
@@ -406,19 +292,12 @@ export async function verifyCodeController(
     userAgent,
   });
 
-  return new Response(
-    JSON.stringify({
-      status: "mfa_required",
-      mode: requiresSetup ? "setup" : "verify",
-      challengeToken,
-      methods: requiresSetup ? ["totp", "webauthn"] : methods,
-    }),
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-  );
+  return jsonResponse({
+    status: "mfa_required",
+    mode: requiresSetup ? "setup" : "verify",
+    challengeToken,
+    methods: requiresSetup ? ["totp", "webauthn"] : methods,
+  });
 }
 
 export async function startMfaSetupController(
@@ -466,18 +345,15 @@ export async function startMfaSetupController(
       "totp",
     );
 
-    return new Response(
-      JSON.stringify({
-        method: "totp",
+    return jsonResponse({
+      method: "totp",
+      secret,
+      otpauthUrl: buildTotpUri({
         secret,
-        otpauthUrl: buildTotpUri({
-          secret,
-          account: user.email,
-          issuer: "SprintJam",
-        }),
+        account: user.email,
+        issuer: "SprintJam",
       }),
-      { headers: { "Content-Type": "application/json" } },
-    );
+    });
   }
 
   const { origin, rpId } = getWebAuthnRequestContext(request);
@@ -499,13 +375,10 @@ export async function startMfaSetupController(
     "webauthn",
   );
 
-  return new Response(
-    JSON.stringify({
-      method: "webauthn",
-      options,
-    }),
-    { headers: { "Content-Type": "application/json" } },
-  );
+  return jsonResponse({
+    method: "webauthn",
+    options,
+  });
 }
 
 export async function verifyMfaSetupController(
@@ -706,13 +579,10 @@ export async function startMfaVerifyController(
     "webauthn",
   );
 
-  return new Response(
-    JSON.stringify({
-      method: "webauthn",
-      options,
-    }),
-    { headers: { "Content-Type": "application/json" } },
-  );
+  return jsonResponse({
+    method: "webauthn",
+    options,
+  });
 }
 
 export async function verifyMfaController(
@@ -822,20 +692,13 @@ export async function verifyMfaController(
       userAgent,
     });
 
-    return new Response(
-      JSON.stringify({
-        status: "mfa_required",
-        mode: "setup",
-        challengeToken: resetChallengeToken,
-        methods: ["totp", "webauthn"],
-        reason: "recovery_reset_required",
-      }),
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
+    return jsonResponse({
+      status: "mfa_required",
+      mode: "setup",
+      challengeToken: resetChallengeToken,
+      methods: ["totp", "webauthn"],
+      reason: "recovery_reset_required",
+    });
   } else {
     if (!body?.credential) {
       return jsonError("WebAuthn credential is required", 400);
@@ -936,23 +799,18 @@ export async function getCurrentUserController(
   const members = await repo.getOrganisationMembers(user.organisationId);
   const invites = await repo.listPendingWorkspaceInvites(user.organisationId);
 
-  return new Response(
-    JSON.stringify({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        organisationId: user.organisationId,
-      },
-      organisation,
-      teams,
-      members,
-      invites,
-    }),
-    {
-      headers: { "Content-Type": "application/json" },
+  return jsonResponse({
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      organisationId: user.organisationId,
     },
-  );
+    organisation,
+    teams,
+    members,
+    invites,
+  });
 }
 
 export async function logoutController(
