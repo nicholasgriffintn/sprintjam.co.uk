@@ -40,7 +40,7 @@ function parseGithubIssueIdentifier(
           issueNumber: Number(parts[issueIdx + 1]),
         };
       }
-    } catch (error) {
+    } catch {
       throw new GithubIdentifierError(
         "Unsupported GitHub issue URL. Use https://github.com/owner/repo/issues/123.",
       );
@@ -82,6 +82,22 @@ function parseGithubIssueIdentifier(
       ? "Use owner/repo#123 or #123 for your default repository."
       : "Use owner/repo#123 or a GitHub issue URL.",
   );
+}
+
+function resolveGithubIssueCoordinates(
+  credentials: GithubOAuthCredentials,
+  identifier: string,
+): GithubIssueCoordinates {
+  const coords = parseGithubIssueIdentifier(identifier, {
+    owner: credentials.defaultOwner ?? credentials.githubLogin ?? undefined,
+    repo: credentials.defaultRepo ?? undefined,
+  });
+
+  if (!coords.owner || !coords.repo || Number.isNaN(coords.issueNumber)) {
+    throw new Error("Invalid GitHub issue identifier");
+  }
+
+  return coords;
 }
 
 async function handleGithubError(response: Response): Promise<never> {
@@ -159,14 +175,7 @@ export async function fetchGithubIssue(
   credentials: GithubOAuthCredentials,
   identifier: string,
 ): Promise<GithubIssue> {
-  const coords = parseGithubIssueIdentifier(identifier, {
-    owner: credentials.defaultOwner ?? credentials.githubLogin ?? undefined,
-    repo: credentials.defaultRepo ?? undefined,
-  });
-
-  if (!coords.owner || !coords.repo || Number.isNaN(coords.issueNumber)) {
-    throw new Error("Invalid GitHub issue identifier");
-  }
+  const coords = resolveGithubIssueCoordinates(credentials, identifier);
 
   const issueResponse = await githubRequest(
     credentials.accessToken,
@@ -182,14 +191,7 @@ export async function updateGithubEstimate(
   identifier: string,
   estimate: number,
 ): Promise<GithubIssue> {
-  const coords = parseGithubIssueIdentifier(identifier, {
-    owner: credentials.defaultOwner ?? credentials.githubLogin ?? undefined,
-    repo: credentials.defaultRepo ?? undefined,
-  });
-
-  if (!coords.owner || !coords.repo || Number.isNaN(coords.issueNumber)) {
-    throw new Error("Invalid GitHub issue identifier");
-  }
+  const coords = resolveGithubIssueCoordinates(credentials, identifier);
 
   const commentBody = `SprintJam estimate updated to **${estimate}** story points.`;
   await githubRequest(
@@ -218,14 +220,7 @@ export async function addGithubComment(
     return;
   }
 
-  const coords = parseGithubIssueIdentifier(identifier, {
-    owner: credentials.defaultOwner ?? credentials.githubLogin ?? undefined,
-    repo: credentials.defaultRepo ?? undefined,
-  });
-
-  if (!coords.owner || !coords.repo || Number.isNaN(coords.issueNumber)) {
-    throw new Error("Invalid GitHub issue identifier");
-  }
+  const coords = resolveGithubIssueCoordinates(credentials, identifier);
 
   await githubRequest(
     credentials.accessToken,

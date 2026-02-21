@@ -1,11 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 
-import {
-  updateJiraStoryPoints,
-  convertVoteValueToStoryPoints,
-} from "@/lib/jira-service";
+import { updateJiraStoryPoints } from "@/lib/jira-service";
 import { updateLinearEstimate } from "@/lib/linear-service";
+import { convertVoteValueToEstimate } from "@/utils/external-estimate";
 import type {
   RoomData,
   TicketQueueItem,
@@ -75,7 +73,7 @@ export const useAutoEstimateUpdate = ({
       .map(([user, vote]) => {
         const structured = structuredVotes?.[user];
         const source = structured?.calculatedStoryPoints ?? vote;
-        return source !== null ? convertVoteValueToStoryPoints(source) : null;
+        return source !== null ? convertVoteValueToEstimate(source) : null;
       })
       .filter((value): value is number => value !== null);
 

@@ -1,5 +1,5 @@
 import { TicketQueueItem, TicketVote } from "../types";
-import { convertVoteValueToStoryPoints } from "../lib/jira-service";
+import { convertVoteValueToEstimate } from "@/utils/external-estimate";
 
 export const getVoteSummary = (ticket: TicketQueueItem) => {
   if (!ticket.votes || ticket.votes.length === 0) return "No votes";
@@ -25,7 +25,7 @@ export const calculateStoryPointsFromVotes = (
     .map(
       (vote) => vote.structuredVotePayload?.calculatedStoryPoints ?? vote.vote,
     )
-    .map(convertVoteValueToStoryPoints)
+    .map(convertVoteValueToEstimate)
     .filter((value): value is number => value !== null);
 
   if (numericVotes.length === 0) {

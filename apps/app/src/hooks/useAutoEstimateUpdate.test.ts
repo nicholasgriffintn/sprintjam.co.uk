@@ -25,8 +25,6 @@ vi.mock("@tanstack/react-query", () => ({
 
 vi.mock("@/lib/jira-service", () => ({
   updateJiraStoryPoints: vi.fn(),
-  convertVoteValueToStoryPoints: (val: any) =>
-    typeof val === "number" ? val : Number(val),
 }));
 
 vi.mock("@/lib/linear-service", () => ({

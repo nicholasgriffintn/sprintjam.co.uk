@@ -1,5 +1,5 @@
-import type { VoteValue, TicketMetadata } from "@/types";
-import { API_BASE_URL } from "@/constants";
+import type { TicketMetadata } from "@/types";
+import { providerRequestJson, providerRequestVoid } from "@/lib/provider-api";
 export interface JiraOAuthStatus {
   connected: boolean;
   jiraDomain?: string;
@@ -34,37 +34,25 @@ export async function fetchJiraTicket(
   ticketId: string,
   options?: { roomKey?: string; userName?: string },
 ): Promise<TicketMetadata> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/jira/ticket`, {
+  const data = await providerRequestJson<{ ticket?: TicketMetadata }>(
+    "/jira/ticket",
+    {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: {
         ticketId,
         roomKey: options?.roomKey,
         userName: options?.userName,
-      }),
-      credentials: "include",
-    });
+      },
+      fallbackError: "Failed to fetch Jira ticket",
+      includeStatusInFallback: true,
+    },
+  );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.error || `Failed to fetch Jira ticket: ${response.status}`,
-      );
-    }
-
-    const data = await response.json();
-
-    const ticket: TicketMetadata | undefined = data.ticket;
-
-    if (ticket) {
-      return ticket;
-    }
+  if (!data.ticket) {
     throw new Error("Invalid response format from Jira API");
-  } catch (error) {
-    console.error("Error fetching Jira ticket:", error);
-    throw error;
   }
+
+  return data.ticket;
 }
 
 export async function updateJiraStoryPoints(
@@ -76,61 +64,37 @@ export async function updateJiraStoryPoints(
     note?: string;
   },
 ): Promise<TicketMetadata> {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/jira/ticket/${encodeURIComponent(ticketId)}/storyPoints`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          storyPoints,
-          roomKey: options.roomKey,
-          userName: options.userName,
-          note: options.note,
-        }),
-        credentials: "include",
+  const data = await providerRequestJson<{ ticket: TicketMetadata }>(
+    `/jira/ticket/${encodeURIComponent(ticketId)}/storyPoints`,
+    {
+      method: "PUT",
+      body: {
+        storyPoints,
+        roomKey: options.roomKey,
+        userName: options.userName,
+        note: options.note,
       },
-    );
+      fallbackError: "Failed to update Jira story points",
+      includeStatusInFallback: true,
+    },
+  );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.error ||
-          `Failed to update Jira story points: ${response.status}`,
-      );
-    }
-
-    const data = await response.json();
-    const ticket = data.ticket as TicketMetadata;
-
-    return ticket;
-  } catch (error) {
-    console.error("Error updating Jira story points:", error);
-    throw error;
-  }
+  return data.ticket;
 }
 
 export async function fetchJiraBoards(
   roomKey: string,
   userName: string,
 ): Promise<JiraBoard[]> {
-  const response = await fetch(`${API_BASE_URL}/jira/boards`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roomKey, userName }),
-    credentials: "include",
-  });
+  const data = await providerRequestJson<{ boards?: JiraBoard[] }>(
+    "/jira/boards",
+    {
+      method: "POST",
+      body: { roomKey, userName },
+      fallbackError: "Failed to fetch Jira boards",
+    },
+  );
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      (errorData as { error?: string }).error || "Failed to fetch Jira boards",
-    );
-  }
-
-  const data = (await response.json()) as { boards?: JiraBoard[] };
   return data.boards ?? [];
 }
 
@@ -139,21 +103,15 @@ export async function fetchJiraSprints(
   roomKey: string,
   userName: string,
 ): Promise<JiraSprint[]> {
-  const response = await fetch(`${API_BASE_URL}/jira/sprints`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ boardId, roomKey, userName }),
-    credentials: "include",
-  });
+  const data = await providerRequestJson<{ sprints?: JiraSprint[] }>(
+    "/jira/sprints",
+    {
+      method: "POST",
+      body: { boardId, roomKey, userName },
+      fallbackError: "Failed to fetch Jira sprints",
+    },
+  );
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      (errorData as { error?: string }).error || "Failed to fetch Jira sprints",
-    );
-  }
-
-  const data = (await response.json()) as { sprints?: JiraSprint[] };
   return data.sprints ?? [];
 }
 
@@ -167,65 +125,34 @@ export async function fetchJiraBoardIssues(
   roomKey: string,
   userName: string,
 ): Promise<TicketMetadata[]> {
-  const response = await fetch(`${API_BASE_URL}/jira/issues`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      boardId,
-      roomKey,
-      userName,
-      sprintId: options.sprintId,
-      query: options.search,
-      limit: options.limit,
-    }),
-    credentials: "include",
-  });
+  const data = await providerRequestJson<{ tickets?: TicketMetadata[] }>(
+    "/jira/issues",
+    {
+      method: "POST",
+      body: {
+        boardId,
+        roomKey,
+        userName,
+        sprintId: options.sprintId,
+        query: options.search,
+        limit: options.limit,
+      },
+      fallbackError: "Failed to fetch Jira issues",
+    },
+  );
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      (errorData as { error?: string }).error || "Failed to fetch Jira issues",
-    );
-  }
-
-  const data = (await response.json()) as { tickets?: TicketMetadata[] };
   return data.tickets ?? [];
-}
-
-export function convertVoteValueToStoryPoints(
-  voteValue: VoteValue | null,
-): number | null {
-  const ignoredValues = new Set(["?", "❓", "coffee", "☕", "♾️"]);
-  if (voteValue === null || ignoredValues.has(String(voteValue))) {
-    return null;
-  }
-
-  const numericValue =
-    typeof voteValue === "number" ? voteValue : Number(voteValue);
-
-  if (Number.isNaN(numericValue)) {
-    return null;
-  }
-
-  return numericValue;
 }
 
 export async function getJiraOAuthStatus(
   roomKey: string,
   userName: string,
 ): Promise<JiraOAuthStatus> {
-  const response = await fetch(`${API_BASE_URL}/jira/oauth/status`, {
+  return providerRequestJson<JiraOAuthStatus>("/jira/oauth/status", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roomKey, userName }),
-    credentials: "include",
+    body: { roomKey, userName },
+    fallbackError: "Failed to fetch OAuth status",
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch OAuth status");
-  }
-
-  return (await response.json()) as JiraOAuthStatus;
 }
 
 export async function getJiraFields(
@@ -236,69 +163,40 @@ export async function getJiraFields(
   storyPointsField?: string | null;
   sprintField?: string | null;
 }> {
-  const response = await fetch(`${API_BASE_URL}/jira/oauth/fields`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ roomKey, userName }),
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to fetch Jira fields");
-  }
-
-  return (await response.json()) as {
+  return providerRequestJson<{
     fields: JiraFieldOption[];
     storyPointsField?: string | null;
     sprintField?: string | null;
-  };
+  }>("/jira/oauth/fields", {
+    method: "POST",
+    body: { roomKey, userName },
+    fallbackError: "Failed to fetch Jira fields",
+  });
 }
 
 export async function authorizeJiraOAuth(
   roomKey: string,
   userName: string,
 ): Promise<{ authorizationUrl: string }> {
-  const response = await fetch(`${API_BASE_URL}/jira/oauth/authorize`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  return providerRequestJson<{ authorizationUrl: string }>(
+    "/jira/oauth/authorize",
+    {
+      method: "POST",
+      body: { roomKey, userName },
+      fallbackError: "Failed to initiate OAuth",
     },
-    body: JSON.stringify({
-      roomKey,
-      userName,
-    }),
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to initiate OAuth");
-  }
-
-  return (await response.json()) as { authorizationUrl: string };
+  );
 }
 
 export async function revokeJiraOAuth(
   roomKey: string,
   userName: string,
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/jira/oauth/revoke`, {
+  return providerRequestVoid("/jira/oauth/revoke", {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      roomKey,
-      userName,
-    }),
-    credentials: "include",
+    body: { roomKey, userName },
+    fallbackError: "Failed to disconnect Jira",
   });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to disconnect Jira");
-  }
 }
 
 export async function saveJiraFieldConfiguration(
@@ -306,22 +204,14 @@ export async function saveJiraFieldConfiguration(
   userName: string,
   options: { storyPointsField?: string | null; sprintField?: string | null },
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/jira/oauth/fields`, {
+  return providerRequestVoid("/jira/oauth/fields", {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+    body: {
       roomKey,
       userName,
       storyPointsField: options.storyPointsField,
       sprintField: options.sprintField,
-    }),
-    credentials: "include",
+    },
+    fallbackError: "Failed to save Jira field settings",
   });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to save Jira field settings");
-  }
 }
