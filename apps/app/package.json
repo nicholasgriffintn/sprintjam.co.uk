@@ -34,7 +34,7 @@
     "@tailwindcss/typography": "0.5.19",
     "@tanstack/db": "0.5.11",
     "@tanstack/query-core": "5.90.12",
-    "@tanstack/query-db-collection": "1.0.6",
+    "@tanstack/query-db-collection": "1.0.23",
     "@tanstack/react-query": "5.90.12",
     "@tanstack/react-query-devtools": "5.91.2",
     "canvas-confetti": "1.9.4",
