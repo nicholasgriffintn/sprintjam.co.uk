@@ -70,6 +70,12 @@ describe('isAllowedOrigin', () => {
     expect(isAllowedOrigin('http://localhost', true)).toBe(true);
   });
 
+  it('returns true for localhost subdomains in development mode', () => {
+    expect(isAllowedOrigin('https://sprintjam.localhost:5173', true)).toBe(
+      true,
+    );
+  });
+
   it('returns true for 127.0.0.1 in development mode', () => {
     expect(isAllowedOrigin('http://127.0.0.1:5173', true)).toBe(true);
   });

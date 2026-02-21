@@ -89,6 +89,7 @@ const ALLOWED_ORIGINS = [
 
 const DEV_ORIGIN_PATTERNS = [
   /^https?:\/\/localhost(:\d+)?$/,
+  /^https?:\/\/([a-z0-9-]+\.)*localhost(:\d+)?$/i,
   /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
 ];
 
