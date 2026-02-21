@@ -129,7 +129,12 @@ export function sanitizeGameSession(
     return undefined;
   }
 
-  const { numberTarget: _numberTarget, ...rest } = gameSession;
+  const {
+    numberTarget: _numberTarget,
+    codenamesTargetIndices: _codenamesTargetIndices,
+    codenamesAssassinIndex: _codenamesAssassinIndex,
+    ...rest
+  } = gameSession;
   return rest;
 }
 

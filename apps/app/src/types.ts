@@ -276,7 +276,13 @@ export interface TimerState {
   autoResetOnVotesReset?: boolean;
 }
 
-export type RoomGameType = 'guess-the-number' | 'word-chain' | 'emoji-story';
+export type RoomGameType =
+  | 'guess-the-number'
+  | 'word-chain'
+  | 'emoji-story'
+  | 'one-word-pitch'
+  | 'category-blitz'
+  | 'clueboard';
 
 export interface RoomGameMove {
   id: string;
@@ -304,6 +310,21 @@ export interface RoomGameSession {
   events: RoomGameEvent[];
   numberTarget?: number;
   lastWord?: string | null;
+  oneWordPitchPrompt?: string;
+  oneWordPitchPromptHistory?: string[];
+  categoryBlitzCategory?: string;
+  categoryBlitzLetter?: string;
+  categoryBlitzHistory?: string[];
+  codenamesBoard?: string[];
+  codenamesRevealedIndices?: number[];
+  codenamesRoundPhase?: 'clue' | 'guess';
+  codenamesClueGiver?: string | null;
+  codenamesCurrentClue?: string | null;
+  codenamesCurrentClueTarget?: number;
+  codenamesCurrentGuesses?: number;
+  codenamesTargetIndices?: number[];
+  codenamesAssassinIndex?: number;
+  codenamesKnownBlockerIndex?: number;
   winner?: string;
 }
 
@@ -350,38 +371,39 @@ export type WebSocketErrorReason =
   | "network";
 
 export type WebSocketMessageType =
-  | "initialize"
-  | "userJoined"
-  | "userLeft"
-  | "userConnectionStatus"
-  | "spectatorStatusChanged"
-  | "vote"
-  | "showVotes"
-  | "resetVotes"
-  | "newModerator"
-  | "settingsUpdated"
-  | "roomStatusUpdated"
-  | "judgeScoreUpdated"
-  | "error"
-  | "disconnected"
-  | "avatarChanged"
-  | "strudelCodeGenerated"
-  | "generateStrudelCode"
-  | "toggleStrudelPlayback"
-  | "strudelPlaybackToggled"
-  | "nextTicket"
-  | "ticketAdded"
-  | "ticketUpdated"
-  | "ticketDeleted"
-  | "ticketCompleted"
-  | "queueUpdated"
-  | "timerStarted"
-  | "timerPaused"
-  | "timerReset"
-  | "timerUpdated"
-  | "gameStarted"
-  | "gameMoveSubmitted"
-  | "gameEnded";
+  | 'initialize'
+  | 'userJoined'
+  | 'userLeft'
+  | 'userConnectionStatus'
+  | 'spectatorStatusChanged'
+  | 'vote'
+  | 'showVotes'
+  | 'resetVotes'
+  | 'newModerator'
+  | 'settingsUpdated'
+  | 'roomStatusUpdated'
+  | 'judgeScoreUpdated'
+  | 'error'
+  | 'disconnected'
+  | 'avatarChanged'
+  | 'strudelCodeGenerated'
+  | 'generateStrudelCode'
+  | 'toggleStrudelPlayback'
+  | 'strudelPlaybackToggled'
+  | 'nextTicket'
+  | 'ticketAdded'
+  | 'ticketUpdated'
+  | 'ticketDeleted'
+  | 'ticketCompleted'
+  | 'queueUpdated'
+  | 'timerStarted'
+  | 'timerPaused'
+  | 'timerReset'
+  | 'timerUpdated'
+  | 'clueboardSecret'
+  | 'gameStarted'
+  | 'gameMoveSubmitted'
+  | 'gameEnded';
 
 interface WebSocketPayloads {
   initialize: {
@@ -492,6 +514,10 @@ interface WebSocketPayloads {
   };
   timerUpdated: {
     timerState: TimerState;
+  };
+  clueboardSecret: {
+    round: number;
+    blockerIndex: number;
   };
   gameStarted: {
     gameSession: RoomGameSession;

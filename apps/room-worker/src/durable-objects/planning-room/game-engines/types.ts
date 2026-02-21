@@ -1,4 +1,4 @@
-import type { RoomGameSession } from "@sprintjam/types";
+import type { RoomData, RoomGameSession } from "@sprintjam/types";
 
 export interface GameEngineMoveContext {
   session: RoomGameSession;
@@ -9,7 +9,10 @@ export interface GameEngineMoveContext {
 
 export interface GameEngine {
   title: string;
-  initializeSessionState: () => Partial<RoomGameSession>;
+  maxRounds?: number;
+  allowConsecutiveMoves?: boolean;
+  canStart?: (roomData: RoomData) => string | undefined;
+  initializeSessionState: (roomData: RoomData) => Partial<RoomGameSession>;
   isMoveValueValid?: (value: string) => boolean;
   applyMove: (context: GameEngineMoveContext) => void;
 }

@@ -23,7 +23,8 @@ export const RoomGamesModal = ({
       <div className="space-y-4">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Launch a party game with the same room collaborators. Games are
-          designed to last just a few minutes. Multiplayer games are turn-based.
+          designed to last just a few minutes making them perfect for a quick
+          break between votes.
         </p>
 
         {activeGame ? (
@@ -33,7 +34,7 @@ export const RoomGamesModal = ({
           </p>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3 max-h-[65vh] overflow-y-auto">
           {ROOM_GAMES.map((game) => {
             const Icon = GAME_ICONS[game.type];
 

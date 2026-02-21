@@ -316,9 +316,22 @@ export function applyRoomUpdate(
         return prev;
       }
 
+      const existingKnownBlockerIndex =
+        prev.gameSession?.type === "clueboard" &&
+        message.gameSession.type === "clueboard" &&
+        prev.gameSession.round === message.gameSession.round
+          ? prev.gameSession.codenamesKnownBlockerIndex
+          : undefined;
+
       return {
         ...prev,
-        gameSession: message.gameSession,
+        gameSession:
+          existingKnownBlockerIndex === undefined
+            ? message.gameSession
+            : {
+                ...message.gameSession,
+                codenamesKnownBlockerIndex: existingKnownBlockerIndex,
+              },
       };
     }
 
@@ -326,6 +339,30 @@ export function applyRoomUpdate(
       return {
         ...prev,
         gameSession: message.gameSession,
+      };
+    }
+
+    case "clueboardSecret": {
+      if (
+        !prev.gameSession ||
+        prev.gameSession.type !== "clueboard" ||
+        prev.gameSession.round !== message.round
+      ) {
+        return prev;
+      }
+
+      if (
+        prev.gameSession.codenamesKnownBlockerIndex === message.blockerIndex
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        gameSession: {
+          ...prev.gameSession,
+          codenamesKnownBlockerIndex: message.blockerIndex,
+        },
       };
     }
 

@@ -193,13 +193,20 @@ describe("validateClientMessage", () => {
     expect(result).toEqual({ type: "completeSession" });
   });
 
-
   it("validates startGame payload", () => {
     const result = validateClientMessage({
       type: "startGame",
       gameType: "word-chain",
     });
     expect(result).toEqual({ type: "startGame", gameType: "word-chain" });
+  });
+
+  it('validates startGame payload for clueboard', () => {
+    const result = validateClientMessage({
+      type: 'startGame',
+      gameType: 'clueboard',
+    });
+    expect(result).toEqual({ type: 'startGame', gameType: 'clueboard' });
   });
 
   it("validates submitGameMove payload", () => {

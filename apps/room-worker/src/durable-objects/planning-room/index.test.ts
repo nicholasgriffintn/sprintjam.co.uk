@@ -5,7 +5,7 @@ import type {
   DurableObjectState,
   WebSocket as CfWebSocket,
 } from "@cloudflare/workers-types";
-import type { RoomWorkerEnv, RoomData } from '@sprintjam/types';
+import type { RoomWorkerEnv, RoomData } from "@sprintjam/types";
 import { generateSessionToken, createInitialRoomData } from "@sprintjam/utils";
 import { MIN_TIMER_DURATION_SECONDS } from "@sprintjam/utils/constants";
 
@@ -474,16 +474,18 @@ describe("PlanningRoom critical flows", () => {
 
     await room.handleStartGame("alice", "guess-the-number");
 
-    const startedPayload = (room.broadcast as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([message]) => message.type === "gameStarted",
-    )?.[0];
+    const startedPayload = (
+      room.broadcast as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([message]) => message.type === "gameStarted")?.[0];
     expect(roomData.gameSession?.numberTarget).toEqual(expect.any(Number));
     expect(startedPayload?.gameSession?.numberTarget).toBeUndefined();
 
     roomData.gameSession!.numberTarget = 20;
     await room.handleSubmitGameMove("alice", "1");
 
-    const movePayload = [...(room.broadcast as ReturnType<typeof vi.fn>).mock.calls]
+    const movePayload = [
+      ...(room.broadcast as ReturnType<typeof vi.fn>).mock.calls,
+    ]
       .reverse()
       .find(([message]) => message.type === "gameMoveSubmitted")?.[0];
     expect(movePayload?.gameSession?.numberTarget).toBeUndefined();
@@ -719,6 +721,236 @@ describe("PlanningRoom critical flows", () => {
 
     expect(roomData.gameSession?.moves).toHaveLength(1);
     expect(roomData.gameSession?.leaderboard.alice).toBe(1);
+  });
+
+  it("scores one-word-pitch rounds with uniqueness bonuses", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-one-word",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "one-word-pitch");
+    const promptAfterStart = roomData.gameSession?.oneWordPitchPrompt;
+
+    await room.handleSubmitGameMove("alice", "focus");
+    await room.handleSubmitGameMove("bob", "focus");
+
+    expect(roomData.gameSession?.leaderboard.alice).toBe(1);
+    expect(roomData.gameSession?.leaderboard.bob).toBe(1);
+    expect(roomData.gameSession?.round).toBe(2);
+    expect(roomData.gameSession?.oneWordPitchPrompt).toBeTruthy();
+    expect(roomData.gameSession?.oneWordPitchPrompt).not.toBe(promptAfterStart);
+  });
+
+  it("validates category-blitz submissions against the active letter", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-category-blitz",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "category-blitz");
+    roomData.gameSession!.categoryBlitzLetter = "S";
+
+    await room.handleSubmitGameMove("alice", "banana");
+    expect(roomData.gameSession?.moves).toHaveLength(0);
+    expect(roomData.gameSession?.events.at(-1)?.message).toContain(
+      "invalid answer",
+    );
+
+    await room.handleSubmitGameMove("alice", "sprint");
+    expect(roomData.gameSession?.leaderboard.alice).toBe(3);
+    expect(roomData.gameSession?.round).toBe(2);
+  });
+
+  it("requires at least two players for clueboard", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-codenames-start",
+      users: ["alice"],
+      moderator: "alice",
+      connectedUsers: { alice: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "clueboard");
+
+    expect(roomData.gameSession).toBeUndefined();
+    expect(room.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "error",
+        reason: "validation",
+      }),
+    );
+  });
+
+  it("sends blocker secret only to the current clue giver", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-codenames-secret",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    const aliceSocket = {
+      send: vi.fn(),
+      close: vi.fn(),
+    } as any;
+    const bobSocket = {
+      send: vi.fn(),
+      close: vi.fn(),
+    } as any;
+
+    room.sessions.set(aliceSocket, {
+      webSocket: aliceSocket,
+      roomKey: roomData.key,
+      userName: "alice",
+    });
+    room.sessions.set(bobSocket, {
+      webSocket: bobSocket,
+      roomKey: roomData.key,
+      userName: "bob",
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "clueboard");
+
+    expect(aliceSocket.send).toHaveBeenCalledWith(
+      expect.stringContaining('"type":"clueboardSecret"'),
+    );
+    expect(bobSocket.send).not.toHaveBeenCalledWith(
+      expect.stringContaining('"type":"clueboardSecret"'),
+    );
+  });
+
+  it("sanitizes clueboard hidden state in websocket payloads", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-codenames-sanitize",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "clueboard");
+
+    const startedPayload = (
+      room.broadcast as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([message]) => message.type === "gameStarted")?.[0];
+
+    expect(roomData.gameSession?.codenamesTargetIndices).toEqual(
+      expect.any(Array),
+    );
+    expect(roomData.gameSession?.codenamesAssassinIndex).toEqual(
+      expect.any(Number),
+    );
+    expect(startedPayload?.gameSession?.codenamesTargetIndices).toBeUndefined();
+    expect(startedPayload?.gameSession?.codenamesAssassinIndex).toBeUndefined();
+
+    roomData.gameSession!.codenamesBoard = [
+      "sprint",
+      "ticket",
+      "deploy",
+      "retro",
+      "branch",
+      "review",
+      "queue",
+      "scope",
+      "story",
+      "feature",
+      "kanban",
+      "bug",
+    ];
+    roomData.gameSession!.codenamesTargetIndices = [0, 1, 2, 3];
+    roomData.gameSession!.codenamesAssassinIndex = 11;
+    roomData.gameSession!.codenamesRoundPhase = "clue";
+    roomData.gameSession!.codenamesClueGiver = "alice";
+
+    await room.handleSubmitGameMove("alice", "clue:plan|2|0,1");
+    await room.handleSubmitGameMove("bob", "guess:0");
+
+    const movePayload = [
+      ...(room.broadcast as ReturnType<typeof vi.fn>).mock.calls,
+    ]
+      .reverse()
+      .find(([message]) => message.type === "gameMoveSubmitted")?.[0];
+    expect(roomData.gameSession?.leaderboard.alice).toBe(1);
+    expect(roomData.gameSession?.leaderboard.bob).toBe(2);
+    expect(movePayload?.gameSession?.codenamesTargetIndices).toBeUndefined();
+    expect(movePayload?.gameSession?.codenamesAssassinIndex).toBeUndefined();
+  });
+
+  it("ends clueboard immediately when blocker word is revealed", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-codenames-blocker",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "clueboard");
+
+    roomData.gameSession!.codenamesBoard = [
+      "sprint",
+      "ticket",
+      "deploy",
+      "retro",
+      "branch",
+      "review",
+      "queue",
+      "scope",
+      "story",
+      "feature",
+      "kanban",
+      "bug",
+    ];
+    roomData.gameSession!.codenamesTargetIndices = [0, 1, 2, 3];
+    roomData.gameSession!.codenamesAssassinIndex = 11;
+    roomData.gameSession!.codenamesRoundPhase = "guess";
+    roomData.gameSession!.codenamesClueGiver = "alice";
+
+    await room.handleSubmitGameMove("bob", "guess:11");
+
+    expect(roomData.gameSession?.status).toBe("completed");
+    expect(roomData.gameSession?.winner).toBe("alice");
+    expect(room.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "gameEnded", endedBy: "system" }),
+    );
   });
 
   it("persists structured votes and broadcasts structured payloads", async () => {
