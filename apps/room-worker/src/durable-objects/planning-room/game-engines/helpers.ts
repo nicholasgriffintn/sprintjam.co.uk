@@ -6,7 +6,7 @@ import {
   CLUEBOARD_WORD_BANK,
   CATEGORY_BLITZ_CATEGORIES,
   CATEGORY_BLITZ_LETTERS,
-} from './words';
+} from "./words";
 
 export const MAX_GAME_ROUNDS = 5;
 export const ROUND_MOVE_TARGET = 6;
@@ -111,7 +111,7 @@ export const assignNextCategoryBlitzPrompt = (
     ),
   );
   const selected = pickFreshValue(combinations, history);
-  const [category, letter] = selected.split('|');
+  const [category, letter] = selected.split("|");
 
   session.categoryBlitzCategory = category;
   session.categoryBlitzLetter = letter;
@@ -137,7 +137,7 @@ const sampleUniqueWords = (pool: string[], count: number) => {
 };
 
 export const initializeClueboardRound = (
-  session: Pick<RoomGameSession, 'participants' | 'round'> &
+  session: Pick<RoomGameSession, "participants" | "round"> &
     Partial<RoomGameSession>,
 ) => {
   const board = sampleUniqueWords(CLUEBOARD_WORD_BANK, CLUEBOARD_BOARD_SIZE);
@@ -149,7 +149,7 @@ export const initializeClueboardRound = (
   session.codenamesTargetIndices = [];
   session.codenamesAssassinIndex = assassinIndex;
   session.codenamesRevealedIndices = [];
-  session.codenamesRoundPhase = 'clue';
+  session.codenamesRoundPhase = "clue";
   session.codenamesCurrentClue = null;
   session.codenamesCurrentClueTarget = undefined;
   session.codenamesCurrentGuesses = 0;
@@ -185,7 +185,7 @@ export const initializeGameSession = (
   startedBy,
   startedAt: Date.now(),
   round: 1,
-  status: 'active',
+  status: "active",
   participants: [...roomData.users],
   leaderboard: roomData.users.reduce<Record<string, number>>((scores, user) => {
     scores[user] = 0;

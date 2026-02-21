@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { GithubOAuthCredentials } from '@sprintjam/types';
+import type { GithubOAuthCredentials } from "@sprintjam/types";
 
 import {
   addGithubComment,
   escapeGithubSearchValue,
   fetchGithubRepoIssues,
-} from './github-service';
+} from "./github-service";
 
 const baseCredentials: GithubOAuthCredentials = {
   id: 1,
@@ -37,9 +37,11 @@ describe("fetchGithubRepoIssues search qualifiers", () => {
   });
 
   it("escapes milestone titles inside search queries", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ items: [] }), { status: 200 }),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ items: [] }), { status: 200 }),
+      );
     vi.stubGlobal("fetch", fetchMock);
 
     const milestoneTitle = 'Phase "One" \\ path';

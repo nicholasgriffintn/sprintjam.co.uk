@@ -8,13 +8,13 @@ A wide spread means someone sees hidden complexity, missing scope, or a dependen
 
 Not all spreads are equal. The pattern tells you what is going on:
 
-| Spread | What it means | Action |
-| --- | --- | --- |
-| Tight (3, 3, 5, 3) | Shared understanding | Accept the majority or average |
-| One step (5, 5, 8, 5) | Minor disagreement | Brief discussion, then accept either value |
-| Two steps (3, 5, 8, 5) | Different assumptions | Discuss, clarify, re-vote |
-| Wide (3, 5, 13, 8) | Fundamental misalignment | Deep discussion or split the story |
-| Bimodal (3, 3, 13, 13) | Two interpretations | Clarify scope before proceeding |
+| Spread                 | What it means            | Action                                     |
+| ---------------------- | ------------------------ | ------------------------------------------ |
+| Tight (3, 3, 5, 3)     | Shared understanding     | Accept the majority or average             |
+| One step (5, 5, 8, 5)  | Minor disagreement       | Brief discussion, then accept either value |
+| Two steps (3, 5, 8, 5) | Different assumptions    | Discuss, clarify, re-vote                  |
+| Wide (3, 5, 13, 8)     | Fundamental misalignment | Deep discussion or split the story         |
+| Bimodal (3, 3, 13, 13) | Two interpretations      | Clarify scope before proceeding            |
 
 ## The outlier discussion protocol
 

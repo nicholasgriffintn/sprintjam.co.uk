@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import type { WheelEntry, SpinResult } from '@sprintjam/types';
+import { useState, useCallback, useEffect, useRef } from "react";
+import type { WheelEntry, SpinResult } from "@sprintjam/types";
 
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 interface WheelSidebarProps {
   entries: WheelEntry[];
@@ -12,14 +12,14 @@ interface WheelSidebarProps {
   disabled?: boolean;
 }
 
-type TabId = 'entries' | 'results';
+type TabId = "entries" | "results";
 
 const DEBOUNCE_MS = 500;
 const getEnabledEntriesText = (entries: WheelEntry[]) =>
   entries
     .filter((e) => e.enabled)
     .map((e) => e.name)
-    .join('\n');
+    .join("\n");
 
 export function WheelSidebar({
   entries,
@@ -29,8 +29,10 @@ export function WheelSidebar({
   onClearEntries,
   disabled,
 }: WheelSidebarProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('entries');
-  const [bulkText, setBulkText] = useState(() => getEnabledEntriesText(entries));
+  const [activeTab, setActiveTab] = useState<TabId>("entries");
+  const [bulkText, setBulkText] = useState(() =>
+    getEnabledEntriesText(entries),
+  );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const entriesRef = useRef(entries);
 
@@ -60,7 +62,7 @@ export function WheelSidebar({
 
     debounceRef.current = setTimeout(() => {
       const names = bulkText
-        .split('\n')
+        .split("\n")
         .map((line) => line.trim())
         .filter((line) => line.length > 0);
 
@@ -89,16 +91,10 @@ export function WheelSidebar({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [
-    bulkText,
-    disabled,
-    isModeratorView,
-    onBulkAddEntries,
-    onClearEntries,
-  ]);
+  }, [bulkText, disabled, isModeratorView, onBulkAddEntries, onClearEntries]);
 
   const handleClear = useCallback(() => {
-    setBulkText('');
+    setBulkText("");
     onClearEntries();
   }, [onClearEntries]);
 
@@ -121,22 +117,22 @@ export function WheelSidebar({
         <div className="flex w-full rounded-full bg-slate-100/80 p-1 dark:bg-slate-800/80">
           <button
             type="button"
-            onClick={() => setActiveTab('entries')}
+            onClick={() => setActiveTab("entries")}
             className={`flex-1 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition ${
-              activeTab === 'entries'
-                ? 'rounded-full bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
+              activeTab === "entries"
+                ? "rounded-full bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
             Entries
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('results')}
+            onClick={() => setActiveTab("results")}
             className={`flex-1 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition ${
-              activeTab === 'results'
-                ? 'rounded-full bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
+              activeTab === "results"
+                ? "rounded-full bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
             Results
@@ -145,7 +141,7 @@ export function WheelSidebar({
       </div>
 
       <div className="flex-1 flex flex-col min-h-0 pt-4">
-        {activeTab === 'entries' ? (
+        {activeTab === "entries" ? (
           <div className="flex-1 flex flex-col min-h-0 gap-4">
             {isModeratorView ? (
               <>
@@ -158,7 +154,7 @@ export function WheelSidebar({
                 />
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {enabledCount} entr{enabledCount === 1 ? 'y' : 'ies'} on
+                    {enabledCount} entr{enabledCount === 1 ? "y" : "ies"} on
                     wheel
                   </p>
                   {entries.length > 0 && (
@@ -205,16 +201,16 @@ export function WheelSidebar({
                       key={result.id}
                       className={`rounded-xl px-3 py-2 ${
                         index === 0
-                          ? 'bg-brand-900/40 border border-brand-700/70'
-                          : 'bg-white/80 dark:bg-slate-900/60'
+                          ? "bg-brand-900/40 border border-brand-700/70"
+                          : "bg-white/80 dark:bg-slate-900/60"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <span
                           className={`font-medium ${
                             index === 0
-                              ? 'text-brand-300'
-                              : 'text-slate-700 dark:text-slate-200'
+                              ? "text-brand-300"
+                              : "text-slate-700 dark:text-slate-200"
                           }`}
                         >
                           {result.winner}

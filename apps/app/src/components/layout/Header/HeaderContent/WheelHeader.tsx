@@ -10,7 +10,7 @@ import DarkModeToggle from "../DarkModeToggle";
 import { HEADER_TRANSITION } from "@/constants";
 import { HeaderUserMenu } from "../HeaderUserMenu";
 import { useSessionActions } from "@/context/SessionContext";
-import { BetaBadge } from '@/components/BetaBadge';
+import { BetaBadge } from "@/components/BetaBadge";
 
 export const WheelHeader: FC = () => {
   const wheelHeader = useWheelHeaderOptional();
@@ -73,8 +73,8 @@ export const WheelHeader: FC = () => {
           onClick={() => setIsSettingsModalOpen(true)}
           aria-label="Wheel settings"
           className={cn(
-            'flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-brand-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100',
-            'md:w-auto md:min-w-[3rem] md:gap-2 md:px-4',
+            "flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-brand-700 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100",
+            "md:w-auto md:min-w-[3rem] md:gap-2 md:px-4",
           )}
         >
           <Settings className="h-4 w-4" />

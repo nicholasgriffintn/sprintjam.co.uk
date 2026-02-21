@@ -21,6 +21,7 @@ import type {
   RoomData,
   RoomGameSession,
   RoomSettings,
+  SessionRoundHistoryItem,
   StructuredVote,
   TicketVote,
   VoteValue,
@@ -191,6 +192,12 @@ export class PlanningRoomRepository {
     const gameSession = row.gameSession
       ? safeJsonParse<RoomGameSession>(row.gameSession)
       : undefined;
+    const parsedRoundHistory = row.roundHistory
+      ? safeJsonParse<SessionRoundHistoryItem[]>(row.roundHistory)
+      : undefined;
+    const roundHistory = Array.isArray(parsedRoundHistory)
+      ? parsedRoundHistory
+      : undefined;
 
     const roomData: RoomData = {
       key: row.roomKey,
@@ -218,6 +225,7 @@ export class PlanningRoomRepository {
         : undefined,
       currentTicket,
       ticketQueue: ticketQueue.length > 0 ? ticketQueue : undefined,
+      roundHistory: roundHistory?.length ? roundHistory : undefined,
       timerState,
       gameSession,
     };
@@ -244,6 +252,7 @@ export class PlanningRoomRepository {
         currentStrudelGenerationId: roomData.currentStrudelGenerationId ?? null,
         strudelPhase: roomData.strudelPhase ?? null,
         strudelIsPlaying: roomData.strudelIsPlaying ? 1 : 0,
+        roundHistory: serializeJSON(roomData.roundHistory),
         timerSeconds: roomData.timerState?.seconds ?? null,
         timerLastUpdated: roomData.timerState?.lastUpdateTime ?? null,
         timerIsPaused: roomData.timerState?.running ? 1 : 0,
@@ -390,6 +399,14 @@ export class PlanningRoomRepository {
     this.db
       .update(roomMeta)
       .set({ roomStatus: status })
+      .where(eq(roomMeta.id, ROOM_ROW_ID))
+      .run();
+  }
+
+  setRoundHistory(history: SessionRoundHistoryItem[]) {
+    this.db
+      .update(roomMeta)
+      .set({ roundHistory: serializeJSON(history) })
       .where(eq(roomMeta.id, ROOM_ROW_ID))
       .run();
   }

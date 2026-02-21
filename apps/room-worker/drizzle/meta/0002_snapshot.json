@@ -95,18 +95,12 @@
       "indexes": {
         "idx_oauth_room_provider": {
           "name": "idx_oauth_room_provider",
-          "columns": [
-            "room_key",
-            "provider"
-          ],
+          "columns": ["room_key", "provider"],
           "isUnique": false
         },
         "oauth_credentials_room_key_provider_unique": {
           "name": "oauth_credentials_room_key_provider_unique",
-          "columns": [
-            "room_key",
-            "provider"
-          ],
+          "columns": ["room_key", "provider"],
           "isUnique": true
         }
       },
@@ -325,9 +319,7 @@
       "indexes": {
         "idx_users_connected": {
           "name": "idx_users_connected",
-          "columns": [
-            "is_connected"
-          ],
+          "columns": ["is_connected"],
           "isUnique": false
         }
       },
@@ -491,25 +483,17 @@
       "indexes": {
         "ticket_queue_ticket_id_unique": {
           "name": "ticket_queue_ticket_id_unique",
-          "columns": [
-            "ticket_id"
-          ],
+          "columns": ["ticket_id"],
           "isUnique": true
         },
         "idx_tickets_status_ordinal": {
           "name": "idx_tickets_status_ordinal",
-          "columns": [
-            "status",
-            "ordinal"
-          ],
+          "columns": ["status", "ordinal"],
           "isUnique": false
         },
         "idx_tickets_external": {
           "name": "idx_tickets_external",
-          "columns": [
-            "external_service",
-            "external_service_id"
-          ],
+          "columns": ["external_service", "external_service_id"],
           "isUnique": false
         }
       },
@@ -567,17 +551,12 @@
       "indexes": {
         "idx_ticket_votes_ticket": {
           "name": "idx_ticket_votes_ticket",
-          "columns": [
-            "ticket_queue_id"
-          ],
+          "columns": ["ticket_queue_id"],
           "isUnique": false
         },
         "ticket_votes_ticket_queue_id_user_name_unique": {
           "name": "ticket_votes_ticket_queue_id_user_name_unique",
-          "columns": [
-            "ticket_queue_id",
-            "user_name"
-          ],
+          "columns": ["ticket_queue_id", "user_name"],
           "isUnique": true
         }
       },
@@ -586,12 +565,8 @@
           "name": "ticket_votes_ticket_queue_id_ticket_queue_id_fk",
           "tableFrom": "ticket_votes",
           "tableTo": "ticket_queue",
-          "columnsFrom": [
-            "ticket_queue_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ticket_queue_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

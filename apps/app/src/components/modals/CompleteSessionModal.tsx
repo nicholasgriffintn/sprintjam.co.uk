@@ -1,9 +1,9 @@
-import { FC } from 'react';
+import { FC } from "react";
 
-import type { TicketQueueItem } from '@/types';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { TicketQueueModalContent } from '@/components/modals/TicketQueueModal/Content';
+import type { SessionRoundHistoryItem, TicketQueueItem } from "@/types";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { TicketQueueModalContent } from "@/components/modals/TicketQueueModal/Content";
 
 interface CompleteSessionModalProps {
   isOpen: boolean;
@@ -11,7 +11,8 @@ interface CompleteSessionModalProps {
   isQueueEnabled: boolean;
   currentTicket?: TicketQueueItem;
   queue: TicketQueueItem[];
-  externalService: 'none' | 'jira' | 'linear' | 'github';
+  roundHistory?: SessionRoundHistoryItem[];
+  externalService: "none" | "jira" | "linear" | "github";
   roomKey: string;
   userName: string;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
@@ -22,6 +23,8 @@ interface CompleteSessionModalProps {
   onSaveToWorkspace?: () => void;
   showSaveToWorkspace?: boolean;
   onCompleteSession?: () => void;
+  recordedRoundsCount?: number;
+  currentRoundVoteCount?: number;
   onError?: (message: string) => void;
 }
 
@@ -31,6 +34,7 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
   isQueueEnabled,
   currentTicket,
   queue,
+  roundHistory,
   externalService,
   roomKey,
   userName,
@@ -42,6 +46,8 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
   onSaveToWorkspace,
   showSaveToWorkspace = false,
   onCompleteSession,
+  recordedRoundsCount = 0,
+  currentRoundVoteCount = 0,
   onError,
 }) => {
   const handleComplete = () => {
@@ -56,6 +62,7 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
           <TicketQueueModalContent
             currentTicket={currentTicket}
             queue={queue}
+            roundHistory={roundHistory}
             externalService={externalService}
             roomKey={roomKey}
             userName={userName}
@@ -69,9 +76,14 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
           />
         ) : (
           <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300">
-            Ticket queue is disabled for this room. Saving a session without a
-            queue is coming soon—use the save button to link this room to your
-            workspace for now.
+            <p>
+              This room is using reset-based rounds. Completing the session will
+              lock the room and preserve round tracking in the summary.
+            </p>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              Recorded rounds: {recordedRoundsCount}. Current round votes:{" "}
+              {currentRoundVoteCount}.
+            </p>
           </div>
         )}
 

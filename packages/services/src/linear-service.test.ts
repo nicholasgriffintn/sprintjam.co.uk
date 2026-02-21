@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { LinearOAuthCredentials } from '@sprintjam/types';
+import type { LinearOAuthCredentials } from "@sprintjam/types";
 
 import {
   addLinearComment,
@@ -7,7 +7,7 @@ import {
   getLinearOrganization,
   getLinearViewer,
   updateLinearEstimate,
-} from './linear-service';
+} from "./linear-service";
 
 const baseCredentials: LinearOAuthCredentials = {
   id: 1,

@@ -30,12 +30,12 @@ export async function submitFeedbackController(
 ): Promise<CfResponse> {
   if (!env.FEEDBACK_RATE_LIMITER) {
     console.error(
-      'Rate limiters are not configured but rate limiting is enabled',
+      "Rate limiters are not configured but rate limiting is enabled",
     );
-    return jsonError('Service temporarily unavailable', 503);
+    return jsonError("Service temporarily unavailable", 503);
   }
 
-  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+  const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
 
   const { success: rateLimitSuccess } = await env.FEEDBACK_RATE_LIMITER.limit({
     key: `feedback:ip:${ip}`,
@@ -43,7 +43,7 @@ export async function submitFeedbackController(
 
   if (!rateLimitSuccess) {
     return jsonError(
-      'Rate limit exceeded. Please wait before submitting more feedback.',
+      "Rate limit exceeded. Please wait before submitting more feedback.",
       429,
     );
   }

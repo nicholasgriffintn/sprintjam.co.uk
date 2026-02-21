@@ -192,6 +192,7 @@ export function applyRoomUpdate(
         judgeScore: null,
         judgeMetadata: undefined,
         votingCompletion: message.votingCompletion,
+        roundHistory: message.roundHistory ?? prev.roundHistory,
       };
     }
 
@@ -275,6 +276,7 @@ export function applyRoomUpdate(
         judgeMetadata: undefined,
         currentTicket: message.ticket as TicketQueueItem,
         ticketQueue: message.queue,
+        roundHistory: message.roundHistory ?? prev.roundHistory,
       };
     }
 

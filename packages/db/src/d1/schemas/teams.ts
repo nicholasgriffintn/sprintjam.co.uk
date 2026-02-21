@@ -1,17 +1,17 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { organisations } from './organisations';
-import { users } from './users';
+import { organisations } from "./organisations";
+import { users } from "./users";
 
-export const teams = sqliteTable('teams', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  organisationId: integer('organisation_id')
+export const teams = sqliteTable("teams", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  organisationId: integer("organisation_id")
     .notNull()
     .references(() => organisations.id),
-  name: text('name').notNull(),
-  ownerId: integer('owner_id')
+  name: text("name").notNull(),
+  ownerId: integer("owner_id")
     .notNull()
     .references(() => users.id),
-  createdAt: integer('created_at').notNull(),
-  updatedAt: integer('updated_at').notNull(),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
 });

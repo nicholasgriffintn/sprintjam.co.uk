@@ -53,9 +53,7 @@ export const CardPreview = ({ options, label }: CardPreviewProps) => {
                   </span>
                 ) : null}
                 <span
-                  className={`leading-tight ${
-                    icon ? "text-xs" : "text-lg"
-                  }`}
+                  className={`leading-tight ${icon ? "text-xs" : "text-lg"}`}
                 >
                   {textLabel}
                 </span>

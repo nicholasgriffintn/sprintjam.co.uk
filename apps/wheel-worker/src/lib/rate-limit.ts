@@ -1,22 +1,22 @@
-import type { WheelWorkerEnv } from '@sprintjam/types';
-import { jsonError } from '@sprintjam/utils';
+import type { WheelWorkerEnv } from "@sprintjam/types";
+import { jsonError } from "@sprintjam/utils";
 
 export async function createRateLimit(
   request: Request,
   env: WheelWorkerEnv,
 ): Promise<Response | null> {
-  if (env.ENABLE_WHEEL_RATE_LIMIT !== 'true') {
+  if (env.ENABLE_WHEEL_RATE_LIMIT !== "true") {
     return null;
   }
 
   if (!env.WHEEL_CREATE_RATE_LIMITER || !env.WHEEL_IP_RATE_LIMITER) {
     console.error(
-      'Rate limiters are not configured but rate limiting is enabled',
+      "Rate limiters are not configured but rate limiting is enabled",
     );
-    return jsonError('Service temporarily unavailable', 503);
+    return jsonError("Service temporarily unavailable", 503);
   }
 
-  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+  const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
 
   const { success: createRateLimitSuccess } =
     await env.WHEEL_CREATE_RATE_LIMITER.limit({
@@ -31,7 +31,7 @@ export async function createRateLimit(
 
   if (!createRateLimitSuccess || !ipRateLimitSuccess) {
     return jsonError(
-      'Rate limit exceeded. Please wait before creating another wheel.',
+      "Rate limit exceeded. Please wait before creating another wheel.",
       429,
     );
   }
@@ -43,18 +43,18 @@ export async function joinRateLimit(
   request: Request,
   env: WheelWorkerEnv,
 ): Promise<Response | null> {
-  if (env.ENABLE_WHEEL_RATE_LIMIT !== 'true') {
+  if (env.ENABLE_WHEEL_RATE_LIMIT !== "true") {
     return null;
   }
 
   if (!env.WHEEL_JOIN_RATE_LIMITER || !env.WHEEL_IP_RATE_LIMITER) {
     console.error(
-      'Rate limiters are not configured but rate limiting is enabled',
+      "Rate limiters are not configured but rate limiting is enabled",
     );
-    return jsonError('Service temporarily unavailable', 503);
+    return jsonError("Service temporarily unavailable", 503);
   }
 
-  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+  const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
 
   const { success: joinRateLimitSuccess } =
     await env.WHEEL_JOIN_RATE_LIMITER.limit({
@@ -69,7 +69,7 @@ export async function joinRateLimit(
 
   if (!joinRateLimitSuccess || !ipRateLimitSuccess) {
     return jsonError(
-      'Rate limit exceeded. Please wait before joining another wheel.',
+      "Rate limit exceeded. Please wait before joining another wheel.",
       429,
     );
   }

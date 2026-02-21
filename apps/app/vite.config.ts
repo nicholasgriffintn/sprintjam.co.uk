@@ -8,8 +8,7 @@ import fs from "fs";
 export default defineConfig(() => {
   const localCertPath = path.resolve(__dirname, ".certs/local.pem");
   const localKeyPath = path.resolve(__dirname, ".certs/local-key.pem");
-  const useHttps =
-    fs.existsSync(localCertPath) && fs.existsSync(localKeyPath);
+  const useHttps = fs.existsSync(localCertPath) && fs.existsSync(localKeyPath);
 
   return {
     resolve: {

@@ -1,0 +1,1 @@
+ALTER TABLE `room_meta` ADD `round_history` text;

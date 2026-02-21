@@ -1,6 +1,6 @@
-import { isbot } from 'isbot';
+import { isbot } from "isbot";
 
-import { jsonError } from './http';
+import { jsonError } from "./http";
 
 export function checkBotProtection(
   request: Request,
@@ -10,12 +10,12 @@ export function checkBotProtection(
     return null;
   }
 
-  const clientHeader = request.headers.get('user-agent');
+  const clientHeader = request.headers.get("user-agent");
 
   const isbotUserAgent = isbot(clientHeader);
 
   if (!clientHeader || isbotUserAgent) {
-    return jsonError('Invalid client', 403);
+    return jsonError("Invalid client", 403);
   }
 
   return null;

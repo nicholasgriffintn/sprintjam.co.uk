@@ -1,8 +1,8 @@
-import type { RoomSettings, JudgeAlgorithm } from '@/types';
+import type { RoomSettings, JudgeAlgorithm } from "@/types";
 
 type HandleChange = (
   key: keyof RoomSettings,
-  value: boolean | (string | number)[] | JudgeAlgorithm | number | string
+  value: boolean | (string | number)[] | JudgeAlgorithm | number | string,
 ) => void;
 
 function RevealOptionsSection({
@@ -24,7 +24,7 @@ function RevealOptionsSection({
             id="allowVotingAfterReveal"
             checked={localSettings.allowVotingAfterReveal || false}
             onChange={(e) =>
-              handleChange('allowVotingAfterReveal', e.target.checked)
+              handleChange("allowVotingAfterReveal", e.target.checked)
             }
             data-testid="settings-toggle-allow-voting-after-reveal"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -41,7 +41,7 @@ function RevealOptionsSection({
             type="checkbox"
             id="enableAutoReveal"
             checked={localSettings.enableAutoReveal || false}
-            onChange={(e) => handleChange('enableAutoReveal', e.target.checked)}
+            onChange={(e) => handleChange("enableAutoReveal", e.target.checked)}
             data-testid="settings-toggle-auto-reveal"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
@@ -58,7 +58,7 @@ function RevealOptionsSection({
             id="alwaysRevealVotes"
             checked={localSettings.alwaysRevealVotes || false}
             onChange={(e) =>
-              handleChange('alwaysRevealVotes', e.target.checked)
+              handleChange("alwaysRevealVotes", e.target.checked)
             }
             data-testid="settings-toggle-always-reveal"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -92,7 +92,7 @@ function DisplayOptionsSection({
           type="checkbox"
           id="showTimer"
           checked={localSettings.showTimer}
-          onChange={(e) => handleChange('showTimer', e.target.checked)}
+          onChange={(e) => handleChange("showTimer", e.target.checked)}
           data-testid="settings-toggle-show-timer"
           className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
         />
@@ -108,7 +108,7 @@ function DisplayOptionsSection({
           type="checkbox"
           id="showAverage"
           checked={localSettings.showAverage}
-          onChange={(e) => handleChange('showAverage', e.target.checked)}
+          onChange={(e) => handleChange("showAverage", e.target.checked)}
           className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
         />
         <label
@@ -123,7 +123,7 @@ function DisplayOptionsSection({
           type="checkbox"
           id="showMedian"
           checked={localSettings.showMedian}
-          onChange={(e) => handleChange('showMedian', e.target.checked)}
+          onChange={(e) => handleChange("showMedian", e.target.checked)}
           className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
         />
         <label
@@ -139,7 +139,7 @@ function DisplayOptionsSection({
             type="checkbox"
             id="showTopVotes"
             checked={localSettings.showTopVotes}
-            onChange={(e) => handleChange('showTopVotes', e.target.checked)}
+            onChange={(e) => handleChange("showTopVotes", e.target.checked)}
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
@@ -164,7 +164,7 @@ function DisplayOptionsSection({
               max="10"
               value={localSettings.topVotesCount}
               onChange={(e) =>
-                handleChange('topVotesCount', parseInt(e.target.value) || 1)
+                handleChange("topVotesCount", parseInt(e.target.value) || 1)
               }
               className="w-20 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
             />
@@ -194,7 +194,7 @@ function FacilitationOptionsSection({
             id="enableFacilitationGuidance"
             checked={localSettings.enableFacilitationGuidance || false}
             onChange={(e) =>
-              handleChange('enableFacilitationGuidance', e.target.checked)
+              handleChange("enableFacilitationGuidance", e.target.checked)
             }
             data-testid="settings-toggle-facilitation-guidance"
             className="mt-1 h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"

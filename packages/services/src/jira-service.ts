@@ -1,62 +1,62 @@
 import type {
   JiraFieldDefinition,
   JiraOAuthCredentials,
-} from '@sprintjam/types';
+} from "@sprintjam/types";
 
 type TicketMetadata = Record<string, any>;
 
 function parseJiraDescription(description: any): string {
-  if (!description) return '';
+  if (!description) return "";
 
   try {
-    if (typeof description === 'string') return description;
+    if (typeof description === "string") return description;
     if (description.content && Array.isArray(description.content)) {
       return description.content
         .map((block: any) => {
           if (block.content && Array.isArray(block.content)) {
             return block.content
-              .map((textNode: any) => textNode.text || '')
-              .join('');
+              .map((textNode: any) => textNode.text || "")
+              .join("");
           }
-          return block.text || '';
+          return block.text || "";
         })
-        .join('\n');
+        .join("\n");
     }
   } catch (e) {
-    console.error('Error parsing Jira description:', e);
+    console.error("Error parsing Jira description:", e);
   }
 
-  return '';
+  return "";
 }
 
 function escapeJqlValue(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 function getOAuthHeaders(accessToken: string): Headers {
   return new Headers({
     Authorization: `Bearer ${accessToken}`,
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
+    Accept: "application/json",
+    "Content-Type": "application/json",
   });
 }
 
 async function refreshOAuthToken(
   refreshToken: string,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<{
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
 }> {
-  const response = await fetch('https://auth.atlassian.com/oauth/token', {
-    method: 'POST',
+  const response = await fetch("https://auth.atlassian.com/oauth/token", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      grant_type: 'refresh_token',
+      grant_type: "refresh_token",
       client_id: clientId,
       client_secret: clientSecret,
       refresh_token: refreshToken,
@@ -65,9 +65,9 @@ async function refreshOAuthToken(
 
   if (!response.ok) {
     const errorData = await response.text();
-    console.error('Token refresh failed:', errorData);
+    console.error("Token refresh failed:", errorData);
     throw new Error(
-      'Failed to refresh OAuth token. User needs to re-authenticate.'
+      "Failed to refresh OAuth token. User needs to re-authenticate.",
     );
   }
 
@@ -90,10 +90,10 @@ async function executeWithTokenRefresh<T>(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<T> {
   let isExpiringSoon = false;
   if (credentials.expiresAt) {
@@ -105,7 +105,7 @@ async function executeWithTokenRefresh<T>(
       const refreshed = await refreshOAuthToken(
         credentials.refreshToken,
         clientId,
-        clientSecret
+        clientSecret,
       );
 
       const newExpiresAt = Date.now() + refreshed.expiresIn * 1000;
@@ -113,12 +113,12 @@ async function executeWithTokenRefresh<T>(
       await onTokenRefresh(
         refreshed.accessToken,
         refreshed.refreshToken,
-        newExpiresAt
+        newExpiresAt,
       );
 
       return await operation(refreshed.accessToken);
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      console.error("Token refresh failed:", error);
     }
   }
 
@@ -127,14 +127,14 @@ async function executeWithTokenRefresh<T>(
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message.includes('401') &&
+      error.message.includes("401") &&
       credentials.refreshToken
     ) {
       try {
         const refreshed = await refreshOAuthToken(
           credentials.refreshToken,
           clientId,
-          clientSecret
+          clientSecret,
         );
 
         const newExpiresAt = Date.now() + refreshed.expiresIn * 1000;
@@ -142,14 +142,14 @@ async function executeWithTokenRefresh<T>(
         await onTokenRefresh(
           refreshed.accessToken,
           refreshed.refreshToken,
-          newExpiresAt
+          newExpiresAt,
         );
 
         return await operation(refreshed.accessToken);
       } catch (refreshError) {
-        console.error('Token refresh retry failed:', refreshError);
+        console.error("Token refresh retry failed:", refreshError);
         throw new Error(
-          'OAuth token expired. Please reconnect your Jira account.'
+          "OAuth token expired. Please reconnect your Jira account.",
         );
       }
     }
@@ -163,10 +163,10 @@ export async function fetchJiraTicket(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<TicketMetadata> {
   return executeWithTokenRefresh(
     credentials,
@@ -175,21 +175,21 @@ export async function fetchJiraTicket(
       const response = await fetch(
         `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/api/3/issue/${ticketId}`,
         {
-          method: 'GET',
+          method: "GET",
           headers,
-        }
+        },
       );
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('401: Unauthorized');
+          throw new Error("401: Unauthorized");
         }
         const errorData = (await response.json()) as {
           errorMessages: string[];
         };
         throw new Error(
           errorData.errorMessages?.[0] ||
-            `Failed to fetch Jira ticket: ${response.status}`
+            `Failed to fetch Jira ticket: ${response.status}`,
         );
       }
 
@@ -221,8 +221,8 @@ export async function fetchJiraTicket(
         id: data.id,
         key: data.key,
         summary: data.fields.summary,
-        description: parseJiraDescription(data.fields.description) || '',
-        status: data.fields.status?.name || 'Unknown',
+        description: parseJiraDescription(data.fields.description) || "",
+        status: data.fields.status?.name || "Unknown",
         assignee: data.fields.assignee?.displayName || null,
         storyPoints,
         url: `https://${credentials.jiraDomain}/browse/${data.key}`,
@@ -232,7 +232,7 @@ export async function fetchJiraTicket(
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -241,13 +241,13 @@ export async function fetchJiraFields(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<JiraFieldDefinition[]> {
   if (!credentials.jiraCloudId) {
-    throw new Error('Jira cloud ID missing from credentials.');
+    throw new Error("Jira cloud ID missing from credentials.");
   }
 
   return executeWithTokenRefresh(
@@ -257,14 +257,14 @@ export async function fetchJiraFields(
       const response = await fetch(
         `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/api/3/field`,
         {
-          method: 'GET',
+          method: "GET",
           headers,
-        }
+        },
       );
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('401: Unauthorized');
+          throw new Error("401: Unauthorized");
         }
         throw new Error(`Failed to fetch Jira fields: ${response.status}`);
       }
@@ -273,18 +273,18 @@ export async function fetchJiraFields(
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
 export function findDefaultStoryPointsField(
-  fields: JiraFieldDefinition[]
+  fields: JiraFieldDefinition[],
 ): string | null {
   const normalize = (value: string) => value.trim().toLowerCase();
   const preferredNames = [
-    'story points',
-    'story point estimate',
-    'story points estimate',
+    "story points",
+    "story point estimate",
+    "story points estimate",
   ];
 
   for (const name of preferredNames) {
@@ -293,20 +293,22 @@ export function findDefaultStoryPointsField(
   }
 
   const partialMatch = fields.find((field) =>
-    normalize(field.name).includes('story point')
+    normalize(field.name).includes("story point"),
   );
   if (partialMatch) return partialMatch.id;
 
-  const numericField = fields.find((field) => field.schema?.type === 'number');
+  const numericField = fields.find((field) => field.schema?.type === "number");
   return numericField?.id ?? null;
 }
 
-export function findDefaultSprintField(fields: JiraFieldDefinition[]): string | null {
+export function findDefaultSprintField(
+  fields: JiraFieldDefinition[],
+): string | null {
   const normalize = (value: string) => value.trim().toLowerCase();
   const sprintMatch = fields.find(
     (field) =>
-      normalize(field.name) === 'sprint' ||
-      normalize(field.name).includes('sprint')
+      normalize(field.name) === "sprint" ||
+      normalize(field.name).includes("sprint"),
   );
   return sprintMatch?.id ?? null;
 }
@@ -319,14 +321,14 @@ export async function updateJiraStoryPoints(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<TicketMetadata> {
   if (!credentials.storyPointsField) {
     throw new Error(
-      'Story points field not configured. Please reconnect your Jira account and configure the story points field.'
+      "Story points field not configured. Please reconnect your Jira account and configure the story points field.",
     );
   }
 
@@ -338,26 +340,26 @@ export async function updateJiraStoryPoints(
       const response = await fetch(
         `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/api/3/issue/${ticketId}`,
         {
-          method: 'PUT',
+          method: "PUT",
           headers,
           body: JSON.stringify({
             fields: {
               [credentials.storyPointsField!]: storyPoints,
             },
           }),
-        }
+        },
       );
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('401: Unauthorized');
+          throw new Error("401: Unauthorized");
         }
         const errorData = (await response.json()) as {
           errorMessages: string[];
         };
         throw new Error(
           errorData.errorMessages?.[0] ||
-            `Failed to update Jira story points: ${response.status}`
+            `Failed to update Jira story points: ${response.status}`,
         );
       }
 
@@ -373,12 +375,12 @@ export async function updateJiraStoryPoints(
         ticketId,
         onTokenRefresh,
         clientId,
-        clientSecret
+        clientSecret,
       );
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -389,10 +391,10 @@ export async function addJiraComment(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<void> {
   const trimmed = comment.trim();
   if (!trimmed) {
@@ -406,39 +408,39 @@ export async function addJiraComment(
       const response = await fetch(
         `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/api/3/issue/${ticketId}/comment`,
         {
-          method: 'POST',
+          method: "POST",
           headers,
           body: JSON.stringify({
             body: {
-              type: 'doc',
+              type: "doc",
               version: 1,
               content: [
                 {
-                  type: 'paragraph',
-                  content: [{ type: 'text', text: trimmed }],
+                  type: "paragraph",
+                  content: [{ type: "text", text: trimmed }],
                 },
               ],
             },
           }),
-        }
+        },
       );
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('401: Unauthorized');
+          throw new Error("401: Unauthorized");
         }
         const errorData = (await response.json()) as {
           errorMessages: string[];
         };
         throw new Error(
           errorData.errorMessages?.[0] ||
-            `Failed to add Jira comment: ${response.status}`
+            `Failed to add Jira comment: ${response.status}`,
         );
       }
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -447,10 +449,10 @@ export async function fetchJiraBoards(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<
   Array<{
     id: string;
@@ -459,7 +461,7 @@ export async function fetchJiraBoards(
   }>
 > {
   if (!credentials.jiraCloudId) {
-    throw new Error('Jira cloud ID missing from credentials.');
+    throw new Error("Jira cloud ID missing from credentials.");
   }
 
   return executeWithTokenRefresh(
@@ -474,17 +476,17 @@ export async function fetchJiraBoards(
         const response = await fetch(
           `https://api.atlassian.com/ex/jira/${credentials.jiraCloudId}/rest/agile/1.0/board?startAt=${startAt}&maxResults=50`,
           {
-            method: 'GET',
+            method: "GET",
             headers,
-          }
+          },
         );
 
         if (!response.ok) {
-          await response.text().catch(() => '');
+          await response.text().catch(() => "");
           if (response.status === 401) {
-            throw new Error('Unauthorized. Please reconnect Jira.');
+            throw new Error("Unauthorized. Please reconnect Jira.");
           }
-          throw new Error('Failed to fetch Jira boards.');
+          throw new Error("Failed to fetch Jira boards.");
         }
 
         const data = (await response.json()) as {
@@ -501,7 +503,7 @@ export async function fetchJiraBoards(
             id: String(board.id),
             name: board.name,
             type: board.type,
-          }))
+          })),
         );
 
         const nextStart = data.startAt + data.maxResults;
@@ -514,7 +516,7 @@ export async function fetchJiraBoards(
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -524,10 +526,10 @@ export async function fetchJiraSprints(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<
   Array<{
     id: string;
@@ -538,7 +540,7 @@ export async function fetchJiraSprints(
   }>
 > {
   if (!credentials.jiraCloudId) {
-    throw new Error('Jira cloud ID missing from credentials.');
+    throw new Error("Jira cloud ID missing from credentials.");
   }
 
   return executeWithTokenRefresh(
@@ -560,19 +562,19 @@ export async function fetchJiraSprints(
           `https://api.atlassian.com/ex/jira/${
             credentials.jiraCloudId
           }/rest/agile/1.0/board/${encodeURIComponent(
-            boardId
+            boardId,
           )}/sprint?startAt=${startAt}&maxResults=50&state=active,future,closed`,
           {
-            method: 'GET',
+            method: "GET",
             headers,
-          }
+          },
         );
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Unauthorized. Please reconnect Jira.');
+            throw new Error("Unauthorized. Please reconnect Jira.");
           }
-          throw new Error('Failed to fetch Jira sprints.');
+          throw new Error("Failed to fetch Jira sprints.");
         }
 
         const data = (await response.json()) as {
@@ -597,7 +599,7 @@ export async function fetchJiraSprints(
             state: sprint.state,
             startDate: sprint.startDate ?? null,
             endDate: sprint.endDate ?? null,
-          }))
+          })),
         );
 
         const nextStart = data.startAt + data.maxResults;
@@ -610,7 +612,7 @@ export async function fetchJiraSprints(
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -625,13 +627,13 @@ export async function fetchJiraBoardIssues(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<TicketMetadata[]> {
   if (!credentials.jiraCloudId) {
-    throw new Error('Jira cloud ID missing from credentials.');
+    throw new Error("Jira cloud ID missing from credentials.");
   }
 
   return executeWithTokenRefresh(
@@ -640,7 +642,7 @@ export async function fetchJiraBoardIssues(
       const headers = getOAuthHeaders(accessToken);
       const tickets: TicketMetadata[] = [];
       const sprintId = options.sprintId ?? null;
-      const search = options.search?.trim() ?? '';
+      const search = options.search?.trim() ?? "";
       const limit = options.limit ?? null;
       let startAt = 0;
       let remaining = limit ?? Infinity;
@@ -661,43 +663,43 @@ export async function fetchJiraBoardIssues(
             clauses.push(`text ~ "${escaped}"`);
           }
         }
-        const jql = clauses.length > 0 ? clauses.join(' AND ') : undefined;
+        const jql = clauses.length > 0 ? clauses.join(" AND ") : undefined;
         const params = new URLSearchParams({
           startAt: String(startAt),
           maxResults: String(pageSize),
         });
         if (jql) {
-          params.set('jql', jql);
+          params.set("jql", jql);
         }
-        const fields = ['summary', 'description', 'status', 'assignee'];
+        const fields = ["summary", "description", "status", "assignee"];
         if (credentials.storyPointsField) {
           fields.push(credentials.storyPointsField);
         }
-        params.set('fields', fields.join(','));
+        params.set("fields", fields.join(","));
 
         const response = await fetch(
           `https://api.atlassian.com/ex/jira/${
             credentials.jiraCloudId
           }/rest/agile/1.0/board/${encodeURIComponent(
-            boardId
+            boardId,
           )}/issue?${params.toString()}`,
           {
-            method: 'GET',
+            method: "GET",
             headers,
-          }
+          },
         );
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Unauthorized. Please reconnect Jira.');
+            throw new Error("Unauthorized. Please reconnect Jira.");
           }
           if (response.status === 403) {
-            throw new Error('Jira access denied. Check board permissions.');
+            throw new Error("Jira access denied. Check board permissions.");
           }
           if (response.status === 400) {
-            throw new Error('Jira search failed. Try a different query.');
+            throw new Error("Jira search failed. Try a different query.");
           }
-          throw new Error('Failed to fetch Jira issues.');
+          throw new Error("Failed to fetch Jira issues.");
         }
 
         const data = (await response.json()) as {
@@ -722,15 +724,15 @@ export async function fetchJiraBoardIssues(
           ...issues.map((issue) => ({
             id: issue.id,
             key: issue.key,
-            summary: issue.fields?.summary ?? '',
-            description: parseJiraDescription(issue.fields?.description) || '',
-            status: issue.fields?.status?.name || 'Unknown',
+            summary: issue.fields?.summary ?? "",
+            description: parseJiraDescription(issue.fields?.description) || "",
+            status: issue.fields?.status?.name || "Unknown",
             assignee: issue.fields?.assignee?.displayName || null,
             storyPoints: credentials.storyPointsField
               ? issue.fields?.[credentials.storyPointsField]
               : null,
             url: `https://${credentials.jiraDomain}/browse/${issue.key}`,
-          }))
+          })),
         );
 
         startAt = data.startAt + data.maxResults;
@@ -748,6 +750,6 @@ export async function fetchJiraBoardIssues(
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }

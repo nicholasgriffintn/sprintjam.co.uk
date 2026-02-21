@@ -34,7 +34,7 @@ import {
   removeRoomFromCollection,
   upsertRoom,
 } from "@/lib/data/room-store";
-import { useRoomData } from '@/lib/data/hooks';
+import { useRoomData } from "@/lib/data/hooks";
 import { useServerDefaults } from "@/hooks/useServerDefaults";
 import { useAutoReconnect } from "@/hooks/useAutoReconnect";
 import { useAutoEstimateUpdate } from "@/hooks/useAutoEstimateUpdate";
@@ -52,13 +52,13 @@ import type {
   TicketQueueItem,
   VoteValue,
   WebSocketMessage,
-} from '@/types';
+} from "@/types";
 import { getErrorDetails, isAbortError } from "@/lib/errors";
 import {
   useSessionActions,
   useSessionErrors,
   useSessionState,
-} from '@/context/SessionContext';
+} from "@/context/SessionContext";
 import { formatRoomKey } from "@/utils/validators";
 
 interface RoomStateContextValue {
@@ -219,26 +219,26 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       ({ message, isAuthError, isRoomNotFound, isNameConflict }) => {
         if (isRoomNotFound) {
           goHome();
-          setTimeout(() => setError('Room not found'), 0);
+          setTimeout(() => setError("Room not found"), 0);
           return;
         }
 
         if (isNameConflict) {
           setError(
-            'This name is already in use. Please choose a different name.',
+            "This name is already in use. Please choose a different name.",
           );
           setConnectionIssue({
-            type: 'disconnected',
-            message: 'Please choose a different name to join the room.',
+            type: "disconnected",
+            message: "Please choose a different name to join the room.",
           });
 
-          setScreen('join');
+          setScreen("join");
           return;
         }
 
         setError(message);
         setConnectionIssue({
-          type: isAuthError ? 'auth' : 'disconnected',
+          type: isAuthError ? "auth" : "disconnected",
           message,
         });
       },
@@ -248,7 +248,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     applyServerDefaults,
     onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
     onNeedsJoin: useCallback(() => {
-      setScreen('join');
+      setScreen("join");
     }, [setScreen]),
   });
 
@@ -668,35 +668,41 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [assignRoomError, name, roomData]);
 
-  const handleStartGame = useCallback((gameType: RoomGameType) => {
-    if (roomData?.status === 'completed') {
-      return;
-    }
+  const handleStartGame = useCallback(
+    (gameType: RoomGameType) => {
+      if (roomData?.status === "completed") {
+        return;
+      }
 
-    try {
-      startGame(gameType);
-    } catch (err: unknown) {
-      assignRoomError(err, 'Failed to start game');
-    }
-  }, [assignRoomError, roomData?.status]);
+      try {
+        startGame(gameType);
+      } catch (err: unknown) {
+        assignRoomError(err, "Failed to start game");
+      }
+    },
+    [assignRoomError, roomData?.status],
+  );
 
-  const handleSubmitGameMove = useCallback((value: string) => {
-    if (roomData?.status === 'completed') {
-      return;
-    }
+  const handleSubmitGameMove = useCallback(
+    (value: string) => {
+      if (roomData?.status === "completed") {
+        return;
+      }
 
-    try {
-      submitGameMove(value);
-    } catch (err: unknown) {
-      assignRoomError(err, 'Failed to submit game move');
-    }
-  }, [assignRoomError, roomData?.status]);
+      try {
+        submitGameMove(value);
+      } catch (err: unknown) {
+        assignRoomError(err, "Failed to submit game move");
+      }
+    },
+    [assignRoomError, roomData?.status],
+  );
 
   const handleEndGame = useCallback(() => {
     try {
       endGame();
     } catch (err: unknown) {
-      assignRoomError(err, 'Failed to end game');
+      assignRoomError(err, "Failed to end game");
     }
   }, [assignRoomError]);
 

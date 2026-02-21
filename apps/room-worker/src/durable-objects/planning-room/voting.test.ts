@@ -199,6 +199,7 @@ describe("PlanningRoom voting reveal settings", () => {
         clearStructuredVotes: vi.fn(),
         setShowVotes: vi.fn(),
         setJudgeState: vi.fn(),
+        setRoundHistory: vi.fn(),
         updateTimerConfig: vi.fn(),
       } as unknown as PlanningRoom["repository"];
 
@@ -236,6 +237,7 @@ describe("PlanningRoom voting reveal settings", () => {
         clearVotes: vi.fn(),
         clearStructuredVotes: vi.fn(),
         setJudgeState: vi.fn(),
+        setRoundHistory: vi.fn(),
         updateTimerConfig: vi.fn(),
       } as unknown as PlanningRoom["repository"];
 

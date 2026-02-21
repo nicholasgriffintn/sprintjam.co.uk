@@ -1,21 +1,21 @@
-import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowUpRight, Clock } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { useMemo } from 'react';
+import { motion } from "framer-motion";
+import { ArrowLeft, ArrowUpRight, Clock } from "lucide-react";
+import type { ReactNode } from "react";
+import { useMemo } from "react";
 
-import { Footer } from '@/components/layout/Footer';
-import { PageSection } from '@/components/layout/PageBackground';
-import { SurfaceCard } from '@/components/ui';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { SITE_NAME } from '@/constants';
+import { Footer } from "@/components/layout/Footer";
+import { PageSection } from "@/components/layout/PageBackground";
+import { SurfaceCard } from "@/components/ui";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { SITE_NAME } from "@/constants";
 import {
   generateArticleSchema,
   generateBreadcrumbSchema,
-} from '@/utils/structured-data';
-import type { MetaTagConfig } from '@/utils/meta';
-import { useSessionActions } from '@/context/SessionContext';
-import { navigateTo, type AppScreen } from '@/config/routes';
-import { guides, type GuideInfo } from '@/routes/guides/GuidesScreen';
+} from "@/utils/structured-data";
+import type { MetaTagConfig } from "@/utils/meta";
+import { useSessionActions } from "@/context/SessionContext";
+import { navigateTo, type AppScreen } from "@/config/routes";
+import { guides, type GuideInfo } from "@/routes/guides/GuidesScreen";
 
 interface GuideLayoutProps {
   slug: string;
@@ -26,11 +26,11 @@ interface GuideLayoutProps {
   preview?: ReactNode;
 }
 
-const categoryLabels: Record<GuideInfo['category'], string> = {
-  fundamentals: 'Fundamentals',
-  facilitation: 'Facilitation',
-  techniques: 'Techniques',
-  tools: 'Tools & Integrations',
+const categoryLabels: Record<GuideInfo["category"], string> = {
+  fundamentals: "Fundamentals",
+  facilitation: "Facilitation",
+  techniques: "Techniques",
+  tools: "Tools & Integrations",
 };
 
 export const GuideLayout = ({
@@ -61,11 +61,11 @@ export const GuideLayout = ({
 
   const jsonLd = useMemo(
     () => ({
-      '@context': 'https://schema.org',
-      '@graph': [
+      "@context": "https://schema.org",
+      "@graph": [
         generateBreadcrumbSchema([
-          { name: 'Home', path: '/' },
-          { name: 'Guides', path: '/guides' },
+          { name: "Home", path: "/" },
+          { name: "Guides", path: "/guides" },
           { name: guide.title, path: `/guides/${slug}` },
         ]),
         generateArticleSchema({
@@ -77,7 +77,7 @@ export const GuideLayout = ({
         }),
       ],
     }),
-    [guide, slug, datePublished, dateModified]
+    [guide, slug, datePublished, dateModified],
   );
 
   const metaConfig: MetaTagConfig = useMemo(
@@ -85,10 +85,10 @@ export const GuideLayout = ({
       title: `${guide.title} - ${SITE_NAME}`,
       description: guide.description,
       keywords: `${guide.title.toLowerCase()}, planning poker, agile estimation, scrum, story points, ${guide.category}`,
-      ogImage: '/og-image.png',
+      ogImage: "/og-image.png",
       jsonLd,
     }),
-    [guide, jsonLd]
+    [guide, jsonLd],
   );
 
   usePageMeta(metaConfig);
@@ -104,7 +104,7 @@ export const GuideLayout = ({
         <div className="space-y-6 text-left">
           <button
             type="button"
-            onClick={() => handleNavigate('guides' as AppScreen)}
+            onClick={() => handleNavigate("guides" as AppScreen)}
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-200"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -202,7 +202,7 @@ export const GuideLayout = ({
                         className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
                         onClick={() =>
                           handleNavigate(
-                            `guides${related.slug.charAt(0).toUpperCase() + related.slug.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}` as AppScreen
+                            `guides${related.slug.charAt(0).toUpperCase() + related.slug.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}` as AppScreen,
                           )
                         }
                       >

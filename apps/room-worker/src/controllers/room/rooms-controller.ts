@@ -8,7 +8,7 @@ import {
   generateRoomKey,
   getRoomSessionToken,
   getRoomStub,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 import { jsonError } from "../../lib/response";
 
 export async function createRoomController(
@@ -38,9 +38,9 @@ export async function createRoomController(
   if (env.ENABLE_JOIN_RATE_LIMIT === "true") {
     if (!env.JOIN_RATE_LIMITER) {
       console.error(
-        'Rate limiters are not configured but rate limiting is enabled',
+        "Rate limiters are not configured but rate limiting is enabled",
       );
-      return jsonError('Service temporarily unavailable', 503);
+      return jsonError("Service temporarily unavailable", 503);
     }
 
     const { success: rateLimitSuccess } = await env.JOIN_RATE_LIMITER.limit({

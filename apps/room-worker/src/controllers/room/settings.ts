@@ -2,35 +2,35 @@ import {
   createJsonResponse,
   applySettingsUpdate,
   getRoomSessionToken,
-} from '@sprintjam/utils';
-import type { RoomData } from '@sprintjam/types';
-import type { Request as CfRequest } from '@cloudflare/workers-types';
+} from "@sprintjam/utils";
+import type { RoomData } from "@sprintjam/types";
+import type { Request as CfRequest } from "@cloudflare/workers-types";
 
-import type { CfResponse, PlanningRoomHttpContext } from './types';
+import type { CfResponse, PlanningRoomHttpContext } from "./types";
 
 export async function handleGetSettings(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
   const roomData = await ctx.getRoomData();
 
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   const url = new URL(request.url);
   const sessionToken = getRoomSessionToken(request as unknown as CfRequest);
-  const name = url.searchParams.get('name');
+  const name = url.searchParams.get("name");
 
   if (!name || !sessionToken) {
-    return createJsonResponse({ error: 'Missing name or session token' }, 401);
+    return createJsonResponse({ error: "Missing name or session token" }, 401);
   }
 
   const isMember = roomData.users.includes(name);
   const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
 
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: 'Invalid session' }, 401);
+    return createJsonResponse({ error: "Invalid session" }, 401);
   }
 
   return createJsonResponse({
@@ -41,38 +41,38 @@ export async function handleGetSettings(
 
 export async function handleUpdateSettings(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
   const { name, settings, sessionToken } = (await request.json()) as {
     name: string;
-    settings: RoomData['settings'];
+    settings: RoomData["settings"];
     sessionToken?: string;
   };
 
   const roomData = await ctx.getRoomData();
 
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   if (!sessionToken) {
-    return createJsonResponse({ error: 'Missing session token' }, 401);
+    return createJsonResponse({ error: "Missing session token" }, 401);
   }
 
   const tokenValid = ctx.repository.validateSessionToken(name, sessionToken);
 
   if (!tokenValid) {
-    return createJsonResponse({ error: 'Invalid session' }, 401);
+    return createJsonResponse({ error: "Invalid session" }, 401);
   }
 
   if (roomData.moderator !== name) {
     return createJsonResponse(
-      { error: 'Only the moderator can update settings' },
-      403
+      { error: "Only the moderator can update settings" },
+      403,
     );
   }
 
-  const providedSettings = settings as Partial<RoomData['settings']>;
+  const providedSettings = settings as Partial<RoomData["settings"]>;
   roomData.settings = applySettingsUpdate({
     currentSettings: roomData.settings,
     settingsUpdate: providedSettings,
@@ -81,7 +81,7 @@ export async function handleUpdateSettings(
   ctx.repository.setSettings(roomData.settings);
 
   ctx.broadcast({
-    type: 'settingsUpdated',
+    type: "settingsUpdated",
     settings: roomData.settings,
   });
 

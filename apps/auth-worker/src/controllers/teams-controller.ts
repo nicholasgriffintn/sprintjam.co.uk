@@ -1,13 +1,13 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
 import { jsonError } from "../lib/response";
 
-import { authenticateRequest, isAuthError, type AuthResult } from '../lib/auth';
+import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
 import {
   jsonResponse,
   unauthorizedResponse,
   forbiddenResponse,
   notFoundResponse,
-} from '../lib/response';
+} from "../lib/response";
 
 async function getAuthOrError(
   request: Request,
@@ -16,10 +16,10 @@ async function getAuthOrError(
   const result = await authenticateRequest(request, env.DB);
 
   if (isAuthError(result)) {
-    if (result.code === 'unauthorized') {
+    if (result.code === "unauthorized") {
       return { response: unauthorizedResponse() };
     }
-    return { response: unauthorizedResponse('Session expired') };
+    return { response: unauthorizedResponse("Session expired") };
   }
 
   return { result };
@@ -31,7 +31,7 @@ export async function listTeamsController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -47,7 +47,7 @@ export async function createTeamController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -56,16 +56,16 @@ export async function createTeamController(
   const name = body?.name?.trim();
 
   if (!name) {
-    return jsonError('Team name is required', 400);
+    return jsonError("Team name is required", 400);
   }
 
   if (name.length > 100) {
-    return jsonError('Team name must be 100 characters or less', 400);
+    return jsonError("Team name must be 100 characters or less", 400);
   }
 
   const user = await repo.getUserById(userId);
   if (!user) {
-    return notFoundResponse('User not found');
+    return notFoundResponse("User not found");
   }
 
   const teamId = await repo.createTeam(user.organisationId, name, userId);
@@ -81,7 +81,7 @@ export async function getTeamController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -89,7 +89,7 @@ export async function getTeamController(
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return notFoundResponse('Team not found');
+    return notFoundResponse("Team not found");
   }
 
   const user = await repo.getUserById(userId);
@@ -107,7 +107,7 @@ export async function updateTeamController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -115,22 +115,22 @@ export async function updateTeamController(
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return notFoundResponse('Team not found');
+    return notFoundResponse("Team not found");
   }
 
   if (team.ownerId !== userId) {
-    return forbiddenResponse('Only the team owner can update the team');
+    return forbiddenResponse("Only the team owner can update the team");
   }
 
   const body = await request.json<{ name?: string }>();
   const name = body?.name?.trim();
 
   if (!name) {
-    return jsonError('Team name is required', 400);
+    return jsonError("Team name is required", 400);
   }
 
   if (name.length > 100) {
-    return jsonError('Team name must be 100 characters or less', 400);
+    return jsonError("Team name must be 100 characters or less", 400);
   }
 
   await repo.updateTeam(teamId, { name });
@@ -146,7 +146,7 @@ export async function deleteTeamController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -154,16 +154,16 @@ export async function deleteTeamController(
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return notFoundResponse('Team not found');
+    return notFoundResponse("Team not found");
   }
 
   if (team.ownerId !== userId) {
-    return forbiddenResponse('Only the team owner can delete the team');
+    return forbiddenResponse("Only the team owner can delete the team");
   }
 
   await repo.deleteTeam(teamId);
 
-  return jsonResponse({ message: 'Team deleted successfully' });
+  return jsonResponse({ message: "Team deleted successfully" });
 }
 
 export async function listTeamSessionsController(
@@ -173,7 +173,7 @@ export async function listTeamSessionsController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -181,12 +181,12 @@ export async function listTeamSessionsController(
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return notFoundResponse('Team not found');
+    return notFoundResponse("Team not found");
   }
 
   const isOwner = await repo.isTeamOwner(teamId, userId);
   if (!isOwner) {
-    return forbiddenResponse('Only the team owner can access team sessions');
+    return forbiddenResponse("Only the team owner can access team sessions");
   }
 
   const sessions = await repo.getTeamSessions(teamId);
@@ -201,7 +201,7 @@ export async function createTeamSessionController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -209,12 +209,12 @@ export async function createTeamSessionController(
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return notFoundResponse('Team not found');
+    return notFoundResponse("Team not found");
   }
 
   const isOwner = await repo.isTeamOwner(teamId, userId);
   if (!isOwner) {
-    return forbiddenResponse('Only the team owner can access team sessions');
+    return forbiddenResponse("Only the team owner can access team sessions");
   }
 
   const body = await request.json<{
@@ -227,17 +227,17 @@ export async function createTeamSessionController(
   const roomKey = body?.roomKey?.trim();
 
   if (!name) {
-    return jsonError('Session name is required', 400);
+    return jsonError("Session name is required", 400);
   }
 
   if (!roomKey) {
-    return jsonError('Room key is required', 400);
+    return jsonError("Room key is required", 400);
   }
 
   if (body?.metadata) {
     const metadataString = JSON.stringify(body.metadata);
     if (metadataString.length > 10000) {
-      return jsonError('Metadata is too large (max 10KB)', 400);
+      return jsonError("Metadata is too large (max 10KB)", 400);
     }
   }
 
@@ -262,7 +262,7 @@ export async function getTeamSessionController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -270,18 +270,18 @@ export async function getTeamSessionController(
   const team = await repo.getTeamById(teamId);
 
   if (!team) {
-    return notFoundResponse('Team not found');
+    return notFoundResponse("Team not found");
   }
 
   const isOwner = await repo.isTeamOwner(teamId, userId);
   if (!isOwner) {
-    return forbiddenResponse('Only the team owner can access team sessions');
+    return forbiddenResponse("Only the team owner can access team sessions");
   }
 
   const session = await repo.getTeamSessionById(sessionId);
 
   if (!session || session.teamId !== teamId) {
-    return notFoundResponse('Session not found');
+    return notFoundResponse("Session not found");
   }
 
   return jsonResponse({ session });
@@ -293,7 +293,7 @@ export async function completeSessionByRoomKeyController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 
@@ -302,7 +302,7 @@ export async function completeSessionByRoomKeyController(
   const roomKey = body?.roomKey?.trim();
 
   if (!roomKey) {
-    return jsonError('Room key is required', 400);
+    return jsonError("Room key is required", 400);
   }
 
   const updatedSession = await repo.completeLatestSessionByRoomKey(
@@ -311,7 +311,7 @@ export async function completeSessionByRoomKeyController(
   );
 
   if (!updatedSession) {
-    return notFoundResponse('Session not found');
+    return notFoundResponse("Session not found");
   }
 
   return jsonResponse({ session: updatedSession });
@@ -323,7 +323,7 @@ export async function getWorkspaceStatsController(
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
 
-  if ('response' in auth) {
+  if ("response" in auth) {
     return auth.response;
   }
 

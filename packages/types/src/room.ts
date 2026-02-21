@@ -207,6 +207,25 @@ export type TicketQueueWithVotes = TicketQueueItem & {
   votes?: TicketVote[];
 };
 
+export type RoundTransitionType = "reset" | "next_ticket" | "complete_session";
+
+export interface SessionRoundVote {
+  userName: string;
+  vote: VoteValue;
+  structuredVotePayload?: StructuredVote;
+  votedAt: number;
+}
+
+export interface SessionRoundHistoryItem {
+  id: string;
+  ticketId?: string;
+  ticketTitle?: string;
+  outcome?: string;
+  type: RoundTransitionType;
+  endedAt: number;
+  votes: SessionRoundVote[];
+}
+
 export interface TimerState {
   running: boolean;
   seconds: number;
@@ -217,12 +236,12 @@ export interface TimerState {
 }
 
 export const ROOM_GAME_TYPES = [
-  'guess-the-number',
-  'word-chain',
-  'emoji-story',
-  'one-word-pitch',
-  'category-blitz',
-  'clueboard',
+  "guess-the-number",
+  "word-chain",
+  "emoji-story",
+  "one-word-pitch",
+  "category-blitz",
+  "clueboard",
 ] as const;
 
 export type RoomGameType = (typeof ROOM_GAME_TYPES)[number];
@@ -254,7 +273,7 @@ export interface RoomGameSession {
   startedBy: string;
   startedAt: number;
   round: number;
-  status: 'active' | 'completed';
+  status: "active" | "completed";
   participants: string[];
   leaderboard: Record<string, number>;
   moves: RoomGameMove[];
@@ -263,7 +282,7 @@ export interface RoomGameSession {
   lastWord?: string | null;
   oneWordPitchPrompt?: string;
   oneWordPitchPromptHistory?: string[];
-  oneWordPitchPhase?: 'submit' | 'vote';
+  oneWordPitchPhase?: "submit" | "vote";
   oneWordPitchRoundSubmissions?: Record<string, string>;
   oneWordPitchRoundVotes?: Record<string, string>;
   oneWordPitchRoundHistory?: Array<{
@@ -284,7 +303,7 @@ export interface RoomGameSession {
   }>;
   codenamesBoard?: string[];
   codenamesRevealedIndices?: number[];
-  codenamesRoundPhase?: 'clue' | 'guess';
+  codenamesRoundPhase?: "clue" | "guess";
   codenamesClueGiver?: string | null;
   codenamesCurrentClue?: string | null;
   codenamesCurrentClueTarget?: number;
@@ -331,6 +350,7 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueWithVotes;
   ticketQueue?: TicketQueueWithVotes[];
+  roundHistory?: SessionRoundHistoryItem[];
   timerState?: TimerState;
   gameSession?: RoomGameSession;
 }

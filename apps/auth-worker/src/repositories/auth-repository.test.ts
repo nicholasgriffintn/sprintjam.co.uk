@@ -72,10 +72,12 @@ describe("AuthRepository cleanup", () => {
 
   it("cleans up expired sessions using lt", async () => {
     selectWhere.mockReturnValueOnce({
-      all: vi.fn().mockResolvedValue([
-        { tokenHash: "token-a" },
-        { tokenHash: "token-b" },
-      ]),
+      all: vi
+        .fn()
+        .mockResolvedValue([
+          { tokenHash: "token-a" },
+          { tokenHash: "token-b" },
+        ]),
     });
     const repo = new AuthRepository({} as any);
     const deleted = await repo.cleanupExpiredSessions();

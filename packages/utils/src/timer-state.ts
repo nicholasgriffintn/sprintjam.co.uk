@@ -1,6 +1,6 @@
-import type { RoomData, TimerState } from '@sprintjam/types';
+import type { RoomData, TimerState } from "@sprintjam/types";
 
-import { DEFAULT_TIMER_DURATION_SECONDS } from './config/constants';
+import { DEFAULT_TIMER_DURATION_SECONDS } from "./config/constants";
 
 export function ensureTimerState(roomData: RoomData): TimerState {
   if (!roomData.timerState) {

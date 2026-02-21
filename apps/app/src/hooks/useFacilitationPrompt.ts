@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 
-import type { RoomData } from '@/types';
-import type { VoteSpreadSummary } from '@/utils/room-guidance';
+import type { RoomData } from "@/types";
+import type { VoteSpreadSummary } from "@/utils/room-guidance";
 
 interface FacilitationPrompt {
   title: string;
@@ -45,15 +45,15 @@ export const useFacilitationPrompt = ({
 
     if (isRevoteTriggered) {
       return {
-        title: 'Re-vote in progress',
-        body: 'After discussion, ask if assumptions changed before re-voting.',
+        title: "Re-vote in progress",
+        body: "After discussion, ask if assumptions changed before re-voting.",
       };
     }
 
     if (multipleUnknowns) {
       return {
-        title: 'Unknowns flagged',
-        body: 'Several unknowns surfaced. Consider splitting the story or capturing follow-ups.',
+        title: "Unknowns flagged",
+        body: "Several unknowns surfaced. Consider splitting the story or capturing follow-ups.",
       };
     }
 
@@ -66,34 +66,34 @@ export const useFacilitationPrompt = ({
         const highestLabel =
           canShowNames && spreadSummary.highestVoter
             ? spreadSummary.highestVoter
-            : 'highest voter';
+            : "highest voter";
         const lowestLabel =
           canShowNames && spreadSummary.lowestVoter
             ? spreadSummary.lowestVoter
-            : 'lowest voter';
+            : "lowest voter";
 
         return {
-          title: 'Wide spread detected',
+          title: "Wide spread detected",
           body: `Ask ${highestLabel} and ${lowestLabel} to share their reasoning.`,
         };
       }
 
       return {
-        title: 'Quick consensus',
-        body: 'Lock it in and keep momentum.',
+        title: "Quick consensus",
+        body: "Lock it in and keep momentum.",
       };
     }
 
     if (waitingForVotes) {
       return {
-        title: 'Waiting for votes',
-        body: 'Check the participant list. Is anyone missing?',
+        title: "Waiting for votes",
+        body: "Check the participant list. Is anyone missing?",
       };
     }
 
     return {
-      title: 'Before voting begins',
-      body: 'Read the acceptance criteria aloud before the first vote.',
+      title: "Before voting begins",
+      body: "Read the acceptance criteria aloud before the first vote.",
     };
   }, [
     hasRevealedOnce,

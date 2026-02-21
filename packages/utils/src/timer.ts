@@ -1,8 +1,8 @@
-import type { TimerState } from '@sprintjam/types';
+import type { TimerState } from "@sprintjam/types";
 
 export function calculateTimerSeconds(
   timerState: TimerState | undefined,
-  now: number = Date.now()
+  now: number = Date.now(),
 ): number {
   if (!timerState) {
     return 0;

@@ -37,13 +37,13 @@ Good estimation starts with good stories. Before refinement:
 
 Keep the ceremonies distinct:
 
-| Refinement | Sprint planning |
-| --- | --- |
-| Focus on understanding | Focus on commitment |
-| Estimate new stories | Select from estimated stories |
-| Weeks ahead | This sprint |
-| Deep discussion is fine | Keep it tight |
-| PO presents, team estimates | Team commits, PO confirms |
+| Refinement                  | Sprint planning               |
+| --------------------------- | ----------------------------- |
+| Focus on understanding      | Focus on commitment           |
+| Estimate new stories        | Select from estimated stories |
+| Weeks ahead                 | This sprint                   |
+| Deep discussion is fine     | Keep it tight                 |
+| PO presents, team estimates | Team commits, PO confirms     |
 
 A common pattern is a weekly one-hour refinement and a one-hour planning session at the start of each sprint. Adjust to your cadence.
 

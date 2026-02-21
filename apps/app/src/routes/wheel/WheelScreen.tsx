@@ -18,7 +18,7 @@ import {
 } from "@/context/WheelContext";
 import { useWheelHeader } from "@/context/WheelHeaderContext";
 import { playWinnerSound, primeWheelAudio } from "@/lib/wheel-audio";
-import { createWheel, joinWheel } from '@/lib/wheel-api-service';
+import { createWheel, joinWheel } from "@/lib/wheel-api-service";
 import { USERNAME_STORAGE_KEY } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 
@@ -189,8 +189,12 @@ function WheelRoomContent({
               <div className="relative bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-500 rounded-3xl px-10 py-5 shadow-2xl border-4 border-white/30 animate-pulse">
                 <div className="absolute -top-3 -left-3 text-4xl">🎉</div>
                 <div className="absolute -top-3 -right-3 text-4xl">🎊</div>
-                <p className="text-white text-base font-bold mb-1 uppercase tracking-widest text-center drop-shadow-md">Winner!</p>
-                <p className="text-5xl font-black text-white drop-shadow-2xl text-center">{latestWinner}</p>
+                <p className="text-white text-base font-bold mb-1 uppercase tracking-widest text-center drop-shadow-md">
+                  Winner!
+                </p>
+                <p className="text-5xl font-black text-white drop-shadow-2xl text-center">
+                  {latestWinner}
+                </p>
               </div>
             </div>
           )}
@@ -249,12 +253,12 @@ export default function WheelScreen() {
           await joinWheel(userName, pathKey);
           setWheelKey(pathKey);
         } catch (err) {
-          if (err instanceof Error && err.message === 'PASSCODE_REQUIRED') {
+          if (err instanceof Error && err.message === "PASSCODE_REQUIRED") {
             const passcode = window.prompt(
-              'Enter the passcode to join this wheel',
+              "Enter the passcode to join this wheel",
             );
             if (!passcode) {
-              throw new Error('Passcode is required to join this wheel.');
+              throw new Error("Passcode is required to join this wheel.");
             }
             try {
               await joinWheel(userName, pathKey, passcode.trim());
@@ -263,9 +267,9 @@ export default function WheelScreen() {
             } catch (retryErr) {
               if (
                 retryErr instanceof Error &&
-                retryErr.message === 'PASSCODE_REQUIRED'
+                retryErr.message === "PASSCODE_REQUIRED"
               ) {
-                throw new Error('Invalid passcode. Please try again.');
+                throw new Error("Invalid passcode. Please try again.");
               }
               throw retryErr;
             }
@@ -277,7 +281,7 @@ export default function WheelScreen() {
       attemptJoin()
         .catch((err) => {
           const message =
-            err instanceof Error ? err.message : 'Failed to join wheel';
+            err instanceof Error ? err.message : "Failed to join wheel";
           setError(message);
         })
         .finally(() => {
@@ -297,12 +301,12 @@ export default function WheelScreen() {
       createWheel(userName, undefined, undefined, undefined) // Passcode must be set during creation
         .then((response) => {
           const newKey = response.wheel.key;
-          window.history.replaceState(null, '', `/wheel/${newKey}`);
+          window.history.replaceState(null, "", `/wheel/${newKey}`);
           setWheelKey(newKey);
         })
         .catch((err) => {
           setError(
-            err instanceof Error ? err.message : 'Failed to create wheel',
+            err instanceof Error ? err.message : "Failed to create wheel",
           );
         })
         .finally(() => {
@@ -324,8 +328,8 @@ export default function WheelScreen() {
             <Button
               onClick={() => {
                 setError(null);
-                setWheelKey('');
-                window.history.replaceState(null, '', '/wheel');
+                setWheelKey("");
+                window.history.replaceState(null, "", "/wheel");
               }}
             >
               Create new wheel
@@ -352,8 +356,8 @@ export default function WheelScreen() {
           <Spinner size="lg" />
           <p className="text-sm text-slate-600 dark:text-slate-300">
             {getWheelKeyFromPath()
-              ? 'Joining wheel...'
-              : 'Creating your wheel...'}
+              ? "Joining wheel..."
+              : "Creating your wheel..."}
           </p>
         </SurfaceCard>
       </PageSection>

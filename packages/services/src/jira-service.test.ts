@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   JiraFieldDefinition,
   JiraOAuthCredentials,
-} from '@sprintjam/types';
+} from "@sprintjam/types";
 
 import {
   addJiraComment,
@@ -11,7 +11,7 @@ import {
   findDefaultSprintField,
   findDefaultStoryPointsField,
   updateJiraStoryPoints,
-} from './jira-service';
+} from "./jira-service";
 
 const baseCredentials: JiraOAuthCredentials = {
   id: 1,

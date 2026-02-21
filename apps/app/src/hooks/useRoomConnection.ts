@@ -16,7 +16,7 @@ interface UseRoomConnectionOptions {
   onConnectionChange: (isConnected: boolean) => void;
   onError: (
     error: string,
-    meta?: { reason?: 'auth' | 'disconnect'; code?: number },
+    meta?: { reason?: "auth" | "disconnect"; code?: number },
   ) => void;
   reconnectSignal?: number;
   skip?: boolean;
@@ -36,37 +36,37 @@ export const useRoomConnection = ({
     if (skip) {
       return;
     }
-    if (screen === 'room' && name && activeRoomKey) {
+    if (screen === "room" && name && activeRoomKey) {
       try {
         connectToRoom(activeRoomKey, name, onMessage, onConnectionChange);
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : 'Connection error';
+          error instanceof Error ? error.message : "Connection error";
         onError(errorMessage);
         onConnectionChange(false);
         return;
       }
 
       const errorHandler = (data: WebSocketMessage) => {
-        const message = data.error || data.message || 'Connection error';
+        const message = data.error || data.message || "Connection error";
         const isAuthError =
-          data.reason === 'auth' ||
+          data.reason === "auth" ||
           data.closeCode === 4003 ||
-          message.includes('Invalid session');
+          message.includes("Invalid session");
         const isDisconnect =
-          data.reason === 'disconnect' || data.type === 'disconnected';
+          data.reason === "disconnect" || data.type === "disconnected";
         onError(message, {
           reason: isAuthError
-            ? 'auth'
+            ? "auth"
             : isDisconnect
-              ? 'disconnect'
+              ? "disconnect"
               : undefined,
           code: data.closeCode,
         });
         onConnectionChange(false);
       };
 
-      const eventTypes: WebSocketMessageType[] = ['disconnected', 'error'];
+      const eventTypes: WebSocketMessageType[] = ["disconnected", "error"];
 
       for (const type of eventTypes) {
         addEventListener(type, errorHandler);

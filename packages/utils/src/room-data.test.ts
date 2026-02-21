@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import type { RoomData, RoomSettings } from '@sprintjam/types';
-import { JudgeAlgorithm } from '@sprintjam/types';
+import type { RoomData, RoomSettings } from "@sprintjam/types";
+import { JudgeAlgorithm } from "@sprintjam/types";
 
 import {
   assignUserAvatar,
@@ -9,7 +9,7 @@ import {
   findCanonicalUserName,
   calculateVotingCompletion,
   sanitizeRoomData,
-} from './room-data';
+} from "./room-data";
 
 const baseSettings: RoomSettings = {
   estimateOptions: [1, 2, 3],
@@ -245,11 +245,11 @@ describe("room-data helpers", () => {
     });
   });
 
-  describe('calculateVotingCompletion', () => {
-    describe('non-structured voting', () => {
-      it('returns all complete when all users have voted', () => {
+  describe("calculateVotingCompletion", () => {
+    describe("non-structured voting", () => {
+      it("returns all complete when all users have voted", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
+          users: ["Alice", "Bob"],
           votes: { Alice: 5, Bob: 3 },
         });
 
@@ -263,9 +263,9 @@ describe("room-data helpers", () => {
         });
       });
 
-      it('returns incomplete when some users have not voted', () => {
+      it("returns incomplete when some users have not voted", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
+          users: ["Alice", "Bob"],
           votes: { Alice: 5 },
         });
 
@@ -275,13 +275,13 @@ describe("room-data helpers", () => {
           allVotesComplete: false,
           completedCount: 1,
           totalCount: 2,
-          incompleteUsers: ['Bob'],
+          incompleteUsers: ["Bob"],
         });
       });
 
-      it('returns incomplete when no users have voted', () => {
+      it("returns incomplete when no users have voted", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
+          users: ["Alice", "Bob"],
           votes: {},
         });
 
@@ -291,15 +291,15 @@ describe("room-data helpers", () => {
           allVotesComplete: false,
           completedCount: 0,
           totalCount: 2,
-          incompleteUsers: ['Alice', 'Bob'],
+          incompleteUsers: ["Alice", "Bob"],
         });
       });
     });
 
-    describe('structured voting', () => {
-      it('returns complete when all users have complete structured votes', () => {
+    describe("structured voting", () => {
+      it("returns complete when all users have complete structured votes", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
+          users: ["Alice", "Bob"],
           votes: { Alice: 5, Bob: 3 },
           structuredVotes: {
             Alice: {
@@ -326,30 +326,30 @@ describe("room-data helpers", () => {
             enableStructuredVoting: true,
             votingCriteria: [
               {
-                id: 'complexity',
-                name: 'Complexity',
-                description: '',
+                id: "complexity",
+                name: "Complexity",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'confidence',
-                name: 'Confidence',
-                description: '',
+                id: "confidence",
+                name: "Confidence",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'volume',
-                name: 'Volume',
-                description: '',
+                id: "volume",
+                name: "Volume",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'unknowns',
-                name: 'Unknowns',
-                description: '',
+                id: "unknowns",
+                name: "Unknowns",
+                description: "",
                 minScore: 0,
                 maxScore: 2,
               },
@@ -364,9 +364,9 @@ describe("room-data helpers", () => {
         expect(result.totalCount).toBe(2);
       });
 
-      it('returns incomplete when user has incomplete structured vote', () => {
+      it("returns incomplete when user has incomplete structured vote", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
+          users: ["Alice", "Bob"],
           votes: { Alice: 5, Bob: 3 },
           structuredVotes: {
             Alice: {
@@ -388,30 +388,30 @@ describe("room-data helpers", () => {
             enableStructuredVoting: true,
             votingCriteria: [
               {
-                id: 'complexity',
-                name: 'Complexity',
-                description: '',
+                id: "complexity",
+                name: "Complexity",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'confidence',
-                name: 'Confidence',
-                description: '',
+                id: "confidence",
+                name: "Confidence",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'volume',
-                name: 'Volume',
-                description: '',
+                id: "volume",
+                name: "Volume",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'unknowns',
-                name: 'Unknowns',
-                description: '',
+                id: "unknowns",
+                name: "Unknowns",
+                description: "",
                 minScore: 0,
                 maxScore: 2,
               },
@@ -423,13 +423,13 @@ describe("room-data helpers", () => {
 
         expect(result.allVotesComplete).toBe(false);
         expect(result.completedCount).toBe(1);
-        expect(result.incompleteUsers).toEqual(['Bob']);
+        expect(result.incompleteUsers).toEqual(["Bob"]);
       });
 
-      it('treats extra vote options as complete', () => {
+      it("treats extra vote options as complete", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
-          votes: { Alice: '?', Bob: 3 },
+          users: ["Alice", "Bob"],
+          votes: { Alice: "?", Bob: 3 },
           structuredVotes: {
             Bob: {
               criteriaScores: {
@@ -443,37 +443,37 @@ describe("room-data helpers", () => {
           },
           settings: {
             ...baseSettings,
-            estimateOptions: [1, 2, 3, 5, 8, '?'],
+            estimateOptions: [1, 2, 3, 5, 8, "?"],
             enableStructuredVoting: true,
             extraVoteOptions: [
-              { id: 'unsure', label: 'Unsure', value: '?', enabled: true },
+              { id: "unsure", label: "Unsure", value: "?", enabled: true },
             ],
             votingCriteria: [
               {
-                id: 'complexity',
-                name: 'Complexity',
-                description: '',
+                id: "complexity",
+                name: "Complexity",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'confidence',
-                name: 'Confidence',
-                description: '',
+                id: "confidence",
+                name: "Confidence",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'volume',
-                name: 'Volume',
-                description: '',
+                id: "volume",
+                name: "Volume",
+                description: "",
                 minScore: 0,
                 maxScore: 4,
               },
               {
-                id: 'unknowns',
-                name: 'Unknowns',
-                description: '',
+                id: "unknowns",
+                name: "Unknowns",
+                description: "",
                 minScore: 0,
                 maxScore: 2,
               },
@@ -488,10 +488,10 @@ describe("room-data helpers", () => {
       });
     });
 
-    describe('privacy settings', () => {
-      it('hides incomplete user names when anonymousVotes is enabled', () => {
+    describe("privacy settings", () => {
+      it("hides incomplete user names when anonymousVotes is enabled", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
+          users: ["Alice", "Bob"],
           votes: { Alice: 5 },
           settings: {
             ...baseSettings,
@@ -505,9 +505,9 @@ describe("room-data helpers", () => {
         expect(result.completedCount).toBe(1);
       });
 
-      it('hides incomplete user names when hideParticipantNames is enabled', () => {
+      it("hides incomplete user names when hideParticipantNames is enabled", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
+          users: ["Alice", "Bob"],
           votes: { Alice: 5 },
           settings: {
             ...baseSettings,
@@ -520,15 +520,15 @@ describe("room-data helpers", () => {
         expect(result.incompleteUsers).toBeUndefined();
       });
 
-      it('shows incomplete user names when privacy is disabled', () => {
+      it("shows incomplete user names when privacy is disabled", () => {
         const room = createRoom({
-          users: ['Alice', 'Bob'],
+          users: ["Alice", "Bob"],
           votes: { Alice: 5 },
         });
 
         const result = calculateVotingCompletion(room);
 
-        expect(result.incompleteUsers).toEqual(['Bob']);
+        expect(result.incompleteUsers).toEqual(["Bob"]);
       });
     });
   });

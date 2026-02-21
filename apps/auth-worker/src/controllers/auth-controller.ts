@@ -79,11 +79,11 @@ export async function requestMagicLinkController(
   if (env.ENABLE_MAGIC_LINK_RATE_LIMIT === "true") {
     if (!env.MAGIC_LINK_RATE_LIMITER || !env.IP_RATE_LIMITER) {
       console.error(
-        'Rate limiters are not configured but rate limiting is enabled',
+        "Rate limiters are not configured but rate limiting is enabled",
       );
-      return jsonError('Service temporarily unavailable', 503);
+      return jsonError("Service temporarily unavailable", 503);
     }
-    
+
     const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
 
     const { success: emailRateLimitSuccess } =
@@ -213,9 +213,9 @@ export async function verifyCodeController(
   if (env.ENABLE_MAGIC_LINK_RATE_LIMIT === "true") {
     if (!env.VERIFICATION_RATE_LIMITER || !env.IP_RATE_LIMITER) {
       console.error(
-        'Rate limiters are not configured but rate limiting is enabled',
+        "Rate limiters are not configured but rate limiting is enabled",
       );
-      return jsonError('Service temporarily unavailable', 503);
+      return jsonError("Service temporarily unavailable", 503);
     }
 
     const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
@@ -475,8 +475,11 @@ export async function verifyMfaSetupController(
       return jsonError("WebAuthn credential is required", 400);
     }
 
-    let metadata: { challenge?: string; origin?: string; rpId?: string } | null =
-      null;
+    let metadata: {
+      challenge?: string;
+      origin?: string;
+      rpId?: string;
+    } | null = null;
     try {
       metadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
     } catch {
@@ -704,8 +707,11 @@ export async function verifyMfaController(
       return jsonError("WebAuthn credential is required", 400);
     }
 
-    let metadata: { challenge?: string; origin?: string; rpId?: string } | null =
-      null;
+    let metadata: {
+      challenge?: string;
+      origin?: string;
+      rpId?: string;
+    } | null = null;
     try {
       metadata = challenge.metadata ? JSON.parse(challenge.metadata) : null;
     } catch {
@@ -737,7 +743,10 @@ export async function verifyMfaController(
       });
 
       if (assertion.counter > storedCredential.counter) {
-        await repo.updateWebAuthnCounter(storedCredential.id, assertion.counter);
+        await repo.updateWebAuthnCounter(
+          storedCredential.id,
+          assertion.counter,
+        );
       }
     } catch (error) {
       await repo.logAuditEvent({

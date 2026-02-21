@@ -15,7 +15,7 @@ import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import type { Team } from "@/lib/workspace-service";
-import { BetaBadge } from '../../components/BetaBadge';
+import { BetaBadge } from "../../components/BetaBadge";
 
 export default function WorkspaceAdminTeams() {
   usePageMeta(META_CONFIGS.workspaceAdminTeams);
@@ -39,7 +39,7 @@ export default function WorkspaceAdminTeams() {
   const { goToLogin } = useSessionActions();
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [renameInput, setRenameInput] = useState('');
+  const [renameInput, setRenameInput] = useState("");
 
   const handleCreateTeam = async (name: string) => {
     await createTeam(name);
@@ -61,7 +61,7 @@ export default function WorkspaceAdminTeams() {
   const handleDeleteTeam = async () => {
     if (!editingTeam) return;
     const confirmed = window.confirm(
-      'Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.',
+      "Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.",
     );
     if (!confirmed) return;
     await deleteTeam(editingTeam.id);

@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState, type FC } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { useEffect, useRef, useState, type FC } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 
-import { HeaderLogo } from '../HeaderLogo';
-import type { MarketingHeaderProps } from '../types';
-import { useSessionActions } from '@/context/SessionContext';
-import { HeaderUserMenu } from '../HeaderUserMenu';
-import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/cn';
-import { navigateTo, type AppScreen } from '@/config/routes';
+import { HeaderLogo } from "../HeaderLogo";
+import type { MarketingHeaderProps } from "../types";
+import { useSessionActions } from "@/context/SessionContext";
+import { HeaderUserMenu } from "../HeaderUserMenu";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/cn";
+import { navigateTo, type AppScreen } from "@/config/routes";
 
 export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
   const { goHome, setScreen, startCreateFlow, startJoinFlow } =
@@ -16,13 +16,13 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const logoSize = variant === 'hero' ? 'lg' : 'md';
+  const logoSize = variant === "hero" ? "lg" : "md";
 
   const links: Array<{ label: string; screen: AppScreen }> = [
-    { label: 'Integrations', screen: 'integrations' },
-    { label: 'FAQ', screen: 'faq' },
-    { label: 'Guides', screen: 'guides' },
-    { label: 'Changelog', screen: 'changelog' },
+    { label: "Integrations", screen: "integrations" },
+    { label: "FAQ", screen: "faq" },
+    { label: "Guides", screen: "guides" },
+    { label: "Changelog", screen: "changelog" },
   ];
 
   const handleNavigate = (screen: AppScreen) => {
@@ -41,17 +41,17 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
     };
 
     const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeydown);
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeydown);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeydown);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeydown);
     };
   }, [isMenuOpen]);
 
@@ -77,8 +77,8 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
             aria-label="Open marketing navigation"
             onClick={() => setIsMenuOpen((open) => !open)}
             className={cn(
-              'min-h-9 min-w-9 border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white',
-              variant === 'hero' && 'sm:min-h-10 sm:min-w-10',
+              "min-h-9 min-w-9 border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white",
+              variant === "hero" && "sm:min-h-10 sm:min-w-10",
             )}
             data-testid="marketing-menu-button"
           >
@@ -156,7 +156,7 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
         size={logoSize}
         showText
         onClick={goHome}
-        className={variant === 'hero' ? 'scale-95 sm:scale-100' : ''}
+        className={variant === "hero" ? "scale-95 sm:scale-100" : ""}
         layoutId="marketing-header-logo"
       />
       <div className="flex justify-end">

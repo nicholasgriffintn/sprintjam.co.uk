@@ -1,21 +1,21 @@
-import type { RoomData } from '@sprintjam/types';
+import type { RoomData } from "@sprintjam/types";
 
-export type RoomPhase = 'lobby' | 'voting' | 'discussion';
+export type RoomPhase = "lobby" | "voting" | "discussion";
 
 export function determineRoomPhase(roomData: RoomData): RoomPhase {
   const voteCount = Object.keys(roomData.votes).length;
 
   if (voteCount === 0 && !roomData.showVotes) {
-    return 'lobby';
+    return "lobby";
   }
 
   if (voteCount > 0 && !roomData.showVotes) {
-    return 'voting';
+    return "voting";
   }
 
   if (roomData.showVotes) {
-    return 'discussion';
+    return "discussion";
   }
 
-  return 'lobby';
+  return "lobby";
 }

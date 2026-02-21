@@ -1,13 +1,13 @@
-import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { motion } from "framer-motion";
+import { useMemo } from "react";
 
-import { Footer } from '@/components/layout/Footer';
-import { PageSection } from '@/components/layout/PageBackground';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { SurfaceCard } from '@/components/ui';
-import { SITE_NAME } from '@/constants';
-import { generateFAQSchema } from '@/utils/structured-data';
-import type { MetaTagConfig } from '@/utils/meta';
+import { Footer } from "@/components/layout/Footer";
+import { PageSection } from "@/components/layout/PageBackground";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { SurfaceCard } from "@/components/ui";
+import { SITE_NAME } from "@/constants";
+import { generateFAQSchema } from "@/utils/structured-data";
+import type { MetaTagConfig } from "@/utils/meta";
 import {
   quickStart,
   basicsFaqs,
@@ -18,7 +18,7 @@ import {
   alternativesFaqs,
   allFaqs,
   type FAQItem,
-} from '@/content/faqs';
+} from "@/content/faqs";
 
 const FaqScreen = () => {
   const faqSchema = useMemo(
@@ -37,8 +37,8 @@ const FaqScreen = () => {
       title: `FAQ & Planning Guide - ${SITE_NAME}`,
       description: `Answers to common ${SITE_NAME} questions plus a quick guide to running effective Scrum planning poker sessions.`,
       keywords:
-        'faq, sprintjam help, planning poker guide, scrum estimation, story points, agile estimation, sprint planning',
-      ogImage: '/og-image.png',
+        "faq, sprintjam help, planning poker guide, scrum estimation, story points, agile estimation, sprint planning",
+      ogImage: "/og-image.png",
       jsonLd: faqSchema,
     }),
     [faqSchema],
@@ -210,7 +210,7 @@ const FaqScreen = () => {
                   Ready to start planning?
                 </p>
                 <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                  Put your knowledge into practice with our free {SITE_NAME}{' '}
+                  Put your knowledge into practice with our free {SITE_NAME}{" "}
                   room.
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300">

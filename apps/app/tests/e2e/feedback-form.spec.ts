@@ -34,7 +34,9 @@ test.describe("Feedback form", () => {
 
     await modal.getByRole("button", { name: "Send feedback" }).click();
     await expect(modal.getByText(/Thank you for your feedback/i)).toBeVisible();
-    await expect(modal.getByRole("link", { name: /FEED-123|#123/i })).toBeVisible();
+    await expect(
+      modal.getByRole("link", { name: /FEED-123|#123/i }),
+    ).toBeVisible();
 
     expect(capturedBody).toMatchObject({
       title: "Great app, small nit",

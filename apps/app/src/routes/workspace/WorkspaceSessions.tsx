@@ -11,7 +11,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { BetaBadge } from '../../components/BetaBadge';
+import { BetaBadge } from "../../components/BetaBadge";
 
 export default function WorkspaceSessions() {
   usePageMeta(META_CONFIGS.workspaceSessions);

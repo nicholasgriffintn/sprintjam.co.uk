@@ -1,40 +1,40 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Fetcher } from '@cloudflare/workers-types';
-import { JudgeAlgorithm } from '@sprintjam/types';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Fetcher } from "@cloudflare/workers-types";
+import { JudgeAlgorithm } from "@sprintjam/types";
 
-import { postRoundStats, type RoundStatsPayload } from './stats-client';
+import { postRoundStats, type RoundStatsPayload } from "./stats-client";
 
 const samplePayload: RoundStatsPayload = {
-  roomKey: 'room-123',
-  roundId: 'round-456',
-  ticketId: 'ticket-789',
+  roomKey: "room-123",
+  roundId: "round-456",
+  ticketId: "ticket-789",
   votes: [
     {
-      userName: 'Alex',
-      vote: '5',
+      userName: "Alex",
+      vote: "5",
       structuredVote: { complexity: 3 },
       votedAt: 1700000000000,
     },
   ],
-  judgeScore: '5',
+  judgeScore: "5",
   judgeMetadata: {
-    confidence: 'high',
+    confidence: "high",
     needsDiscussion: false,
-    reasoning: 'Consensus reached.',
+    reasoning: "Consensus reached.",
     algorithm: JudgeAlgorithm.SMART_CONSENSUS,
     numericVoteCount: 4,
     totalVoteCount: 4,
   },
   roundEndedAt: 1700000001000,
-  type: 'reset',
+  type: "reset",
 };
 
 const originalConsoleWarn = console.warn;
 const originalConsoleError = console.error;
 
 beforeEach(() => {
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+  vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -43,8 +43,8 @@ afterEach(() => {
   console.error = originalConsoleError;
 });
 
-describe('postRoundStats', () => {
-  it('skips posting when token is missing', async () => {
+describe("postRoundStats", () => {
+  it("skips posting when token is missing", async () => {
     const fetcher: Fetcher = {
       fetch: vi.fn(),
     } as unknown as Fetcher;
@@ -52,33 +52,33 @@ describe('postRoundStats', () => {
     await postRoundStats(fetcher, undefined, samplePayload);
 
     expect(console.warn).toHaveBeenCalledWith(
-      '[stats-client] No STATS_INGEST_TOKEN configured, skipping',
+      "[stats-client] No STATS_INGEST_TOKEN configured, skipping",
     );
     expect(fetcher.fetch).not.toHaveBeenCalled();
   });
 
-  it('posts stats payload with auth header', async () => {
+  it("posts stats payload with auth header", async () => {
     const fetcher: Fetcher = {
       fetch: vi.fn().mockResolvedValue({ ok: true } as Response),
     } as unknown as Fetcher;
 
-    await postRoundStats(fetcher, 'token-123', samplePayload);
+    await postRoundStats(fetcher, "token-123", samplePayload);
 
     expect(fetcher.fetch).toHaveBeenCalledWith(
-      'https://stats-worker/ingest/round',
+      "https://stats-worker/ingest/round",
       expect.objectContaining({
-        method: 'POST',
+        method: "POST",
         headers: expect.objectContaining({
-          Authorization: 'Bearer token-123',
-          'Content-Type': 'application/json',
+          Authorization: "Bearer token-123",
+          "Content-Type": "application/json",
         }),
         body: JSON.stringify(samplePayload),
       }),
     );
   });
 
-  it('logs a helpful error when response is not ok', async () => {
-    const responseText = 'unauthorized';
+  it("logs a helpful error when response is not ok", async () => {
+    const responseText = "unauthorized";
     const fetcher: Fetcher = {
       fetch: vi.fn().mockResolvedValue({
         ok: false,
@@ -87,22 +87,22 @@ describe('postRoundStats', () => {
       } as unknown as Response),
     } as unknown as Fetcher;
 
-    await postRoundStats(fetcher, 'token-123', samplePayload);
+    await postRoundStats(fetcher, "token-123", samplePayload);
 
     expect(console.error).toHaveBeenCalledWith(
       `[stats-client] Failed to post stats: 401 ${responseText}`,
     );
   });
 
-  it('logs errors thrown by the fetcher', async () => {
+  it("logs errors thrown by the fetcher", async () => {
     const fetcher: Fetcher = {
-      fetch: vi.fn().mockRejectedValue(new Error('network down')),
+      fetch: vi.fn().mockRejectedValue(new Error("network down")),
     } as unknown as Fetcher;
 
-    await postRoundStats(fetcher, 'token-123', samplePayload);
+    await postRoundStats(fetcher, "token-123", samplePayload);
 
     expect(console.error).toHaveBeenCalledWith(
-      '[stats-client] Error posting stats:',
+      "[stats-client] Error posting stats:",
       expect.any(Error),
     );
   });

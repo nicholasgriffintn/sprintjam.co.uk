@@ -16,7 +16,7 @@ vi.mock("@/lib/api-service", () => ({
   removeEventListener: (...args: unknown[]) => mockRemoveEventListener(...args),
 }));
 
-import { useRoomConnection } from '@/hooks/useRoomConnection';
+import { useRoomConnection } from "@/hooks/useRoomConnection";
 
 describe("useRoomConnection", () => {
   const onMessage = vi.fn();
@@ -31,9 +31,9 @@ describe("useRoomConnection", () => {
   it("connects when on room screen with valid params", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: 'room',
-        name: 'alice',
-        activeRoomKey: 'ROOM1',
+        screen: "room",
+        name: "alice",
+        activeRoomKey: "ROOM1",
         onMessage,
         onConnectionChange,
         onError,
@@ -48,12 +48,12 @@ describe("useRoomConnection", () => {
     );
   });
 
-  it('does not connect when skip is true', () => {
+  it("does not connect when skip is true", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: 'room',
-        name: 'alice',
-        activeRoomKey: 'ROOM1',
+        screen: "room",
+        name: "alice",
+        activeRoomKey: "ROOM1",
         onMessage,
         onConnectionChange,
         onError,
@@ -67,9 +67,9 @@ describe("useRoomConnection", () => {
   it("does not connect when screen is not room", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: 'welcome',
-        name: 'alice',
-        activeRoomKey: 'ROOM1',
+        screen: "welcome",
+        name: "alice",
+        activeRoomKey: "ROOM1",
         onMessage,
         onConnectionChange,
         onError,
@@ -82,8 +82,8 @@ describe("useRoomConnection", () => {
   it("does not connect when activeRoomKey is null", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: 'room',
-        name: 'alice',
+        screen: "room",
+        name: "alice",
         activeRoomKey: null,
         onMessage,
         onConnectionChange,
@@ -97,9 +97,9 @@ describe("useRoomConnection", () => {
   it("disconnects on unmount", () => {
     const { unmount } = renderHook(() =>
       useRoomConnection({
-        screen: 'room',
-        name: 'alice',
-        activeRoomKey: 'ROOM1',
+        screen: "room",
+        name: "alice",
+        activeRoomKey: "ROOM1",
         onMessage,
         onConnectionChange,
         onError,
@@ -115,9 +115,9 @@ describe("useRoomConnection", () => {
   it("does not disconnect on unmount when skip was true", () => {
     const { unmount } = renderHook(() =>
       useRoomConnection({
-        screen: 'room',
-        name: 'alice',
-        activeRoomKey: 'ROOM1',
+        screen: "room",
+        name: "alice",
+        activeRoomKey: "ROOM1",
         onMessage,
         onConnectionChange,
         onError,
@@ -133,9 +133,9 @@ describe("useRoomConnection", () => {
   it("registers error event listeners on connect", () => {
     renderHook(() =>
       useRoomConnection({
-        screen: 'room',
-        name: 'alice',
-        activeRoomKey: 'ROOM1',
+        screen: "room",
+        name: "alice",
+        activeRoomKey: "ROOM1",
         onMessage,
         onConnectionChange,
         onError,
@@ -155,9 +155,9 @@ describe("useRoomConnection", () => {
   it("removes event listeners on unmount", () => {
     const { unmount } = renderHook(() =>
       useRoomConnection({
-        screen: 'room',
-        name: 'alice',
-        activeRoomKey: 'ROOM1',
+        screen: "room",
+        name: "alice",
+        activeRoomKey: "ROOM1",
         onMessage,
         onConnectionChange,
         onError,

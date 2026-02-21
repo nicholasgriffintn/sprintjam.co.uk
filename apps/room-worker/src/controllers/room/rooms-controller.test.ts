@@ -3,9 +3,10 @@ import type { Request as CfRequest } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types";
 
 vi.mock("@sprintjam/utils", async () => {
-  const actual = await vi.importActual<typeof import("@sprintjam/utils")>(
-    "@sprintjam/utils",
-  );
+  const actual =
+    await vi.importActual<typeof import("@sprintjam/utils")>(
+      "@sprintjam/utils",
+    );
   return {
     ...actual,
     getRoomStub: vi.fn(),

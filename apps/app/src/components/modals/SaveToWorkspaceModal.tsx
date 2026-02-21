@@ -1,18 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Building2, Check, LogIn } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Building2, Check, LogIn } from "lucide-react";
 
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { Spinner } from '@/components/ui/Spinner';
-import { Alert } from '@/components/ui/Alert';
-import { useWorkspaceAuth } from '@/context/WorkspaceAuthContext';
-import { useSessionActions } from '@/context/SessionContext';
-import { createTeamSession } from '@/lib/workspace-service';
-import { cn } from '@/lib/cn';
-import { BetaBadge } from '@/components/BetaBadge';
-import { setReturnUrl } from '@/config/routes';
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Spinner } from "@/components/ui/Spinner";
+import { Alert } from "@/components/ui/Alert";
+import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
+import { useSessionActions } from "@/context/SessionContext";
+import { createTeamSession } from "@/lib/workspace-service";
+import { cn } from "@/lib/cn";
+import { BetaBadge } from "@/components/BetaBadge";
+import { setReturnUrl } from "@/config/routes";
 
 interface SaveToWorkspaceModalProps {
   isOpen: boolean;
@@ -35,14 +35,14 @@ export function SaveToWorkspaceModal({
   const { goToLogin } = useSessionActions();
 
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
-  const [sessionName, setSessionName] = useState(suggestedName || '');
+  const [sessionName, setSessionName] = useState(suggestedName || "");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setSessionName(suggestedName || '');
+      setSessionName(suggestedName || "");
       setSelectedTeamId(teams.length === 1 ? teams[0].id : null);
       setIsSuccess(false);
       setError(null);
@@ -61,12 +61,12 @@ export function SaveToWorkspaceModal({
       setTimeout(() => {
         onClose();
         setIsSuccess(false);
-        setSessionName('');
+        setSessionName("");
         setSelectedTeamId(null);
       }, 1500);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Failed to save session';
+        err instanceof Error ? err.message : "Failed to save session";
       setError(message);
     } finally {
       setIsSaving(false);
@@ -171,10 +171,10 @@ export function SaveToWorkspaceModal({
                   type="button"
                   onClick={() => setSelectedTeamId(team.id)}
                   className={cn(
-                    'w-full rounded-xl border p-3 text-left transition',
+                    "w-full rounded-xl border p-3 text-left transition",
                     selectedTeamId === team.id
-                      ? 'border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-900/20'
-                      : 'border-white/50 bg-white/70 hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/40 dark:hover:border-brand-800'
+                      ? "border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-900/20"
+                      : "border-white/50 bg-white/70 hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/40 dark:hover:border-brand-800",
                   )}
                 >
                   <div className="flex items-center gap-2">

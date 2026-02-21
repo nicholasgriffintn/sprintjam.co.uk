@@ -1,6 +1,6 @@
-import { createJsonResponse, getRoomSessionToken } from '@sprintjam/utils';
+import { createJsonResponse, getRoomSessionToken } from "@sprintjam/utils";
 
-import type { CfResponse, PlanningRoomHttpContext } from './types';
+import type { CfResponse, PlanningRoomHttpContext } from "./types";
 
 export async function handleLinearSaveCredentials(
   ctx: PlanningRoomHttpContext,
@@ -21,7 +21,7 @@ export async function handleLinearSaveCredentials(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   await ctx.repository.saveLinearOAuthCredentials({
@@ -39,7 +39,7 @@ export async function handleLinearSaveCredentials(
   });
 
   ctx.broadcast({
-    type: 'linearConnected',
+    type: "linearConnected",
     linearOrganizationId: credentials.linearOrganizationId,
   });
 
@@ -57,19 +57,19 @@ export async function handleLinearStatus(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName || !sessionToken) {
     return createJsonResponse(
-      { error: 'Missing room key, user name, or session token' },
+      { error: "Missing room key, user name, or session token" },
       400,
     );
   }
   if (roomData.key !== roomKey) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
   const isMember = roomData.users.includes(userName);
   const tokenValid = ctx.repository.validateSessionToken(
@@ -77,7 +77,7 @@ export async function handleLinearStatus(
     sessionToken,
   );
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: 'Invalid session' }, 401);
+    return createJsonResponse({ error: "Invalid session" }, 401);
   }
 
   const credentials = await ctx.repository.getLinearOAuthCredentials(
@@ -104,7 +104,7 @@ export async function handleLinearCredentials(
 ): Promise<CfResponse> {
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   const credentials = await ctx.repository.getLinearOAuthCredentials(
@@ -112,7 +112,7 @@ export async function handleLinearCredentials(
   );
 
   if (!credentials) {
-    return createJsonResponse({ error: 'Linear not connected' }, 404);
+    return createJsonResponse({ error: "Linear not connected" }, 404);
   }
 
   return createJsonResponse({ credentials });
@@ -130,7 +130,7 @@ export async function handleLinearRefresh(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   await ctx.repository.updateLinearOAuthTokens(
@@ -157,19 +157,19 @@ export async function handleLinearRevoke(
 
   const roomData = await ctx.getRoomData();
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   const sessionToken = getRoomSessionToken(request);
 
   if (!roomKey || !userName || !sessionToken) {
     return createJsonResponse(
-      { error: 'Missing room key, user name, or session token' },
+      { error: "Missing room key, user name, or session token" },
       400,
     );
   }
   if (roomData.key !== roomKey) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
   const isMember = roomData.users.includes(userName);
   const tokenValid = ctx.repository.validateSessionToken(
@@ -177,12 +177,12 @@ export async function handleLinearRevoke(
     sessionToken,
   );
   if (!isMember || !tokenValid) {
-    return createJsonResponse({ error: 'Invalid session' }, 401);
+    return createJsonResponse({ error: "Invalid session" }, 401);
   }
 
   ctx.repository.deleteLinearOAuthCredentials(roomData.key);
 
-  ctx.broadcast({ type: 'linearDisconnected' });
+  ctx.broadcast({ type: "linearDisconnected" });
 
   return createJsonResponse({ success: true });
 }

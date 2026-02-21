@@ -34,9 +34,7 @@ function findMatchingExtra(
     (extra) =>
       extra.value === option ||
       toComparableString(extra.value) === stringValue ||
-      extra.aliases?.some(
-        (alias) => toComparableString(alias) === stringValue,
-      ),
+      extra.aliases?.some((alias) => toComparableString(alias) === stringValue),
   );
 }
 
@@ -77,7 +75,7 @@ export function normalizeExtraVoteOptions(
       ) ?? null;
     const enabled =
       match?.enabled ??
-      (detectedExtras?.has(extra.id) ? true : extra.enabled ?? true);
+      (detectedExtras?.has(extra.id) ? true : (extra.enabled ?? true));
 
     return {
       ...extra,
@@ -95,7 +93,8 @@ function areOptionsEqual(
 ): boolean {
   if (a.length !== b.length) return false;
   return a.every(
-    (value, index) => toComparableString(value) === toComparableString(b[index]),
+    (value, index) =>
+      toComparableString(value) === toComparableString(b[index]),
   );
 }
 
@@ -104,7 +103,9 @@ export function detectPresetId(
   presets: VotingSequenceTemplate[],
   fallbackId: VotingSequenceId,
 ): VotingSequenceId {
-  const match = presets.find((preset) => areOptionsEqual(baseOptions, preset.options));
+  const match = presets.find((preset) =>
+    areOptionsEqual(baseOptions, preset.options),
+  );
   return (match?.id as VotingSequenceId) ?? fallbackId;
 }
 
@@ -114,13 +115,13 @@ export function mergeOptionsWithExtras(
 ): (string | number)[] {
   return [
     ...baseOptions,
-    ...extras.filter((extra) => extra.enabled !== false).map((extra) => extra.value),
+    ...extras
+      .filter((extra) => extra.enabled !== false)
+      .map((extra) => extra.value),
   ];
 }
 
-export function parseEstimateOptionsInput(
-  value: string,
-): (string | number)[] {
+export function parseEstimateOptionsInput(value: string): (string | number)[] {
   return value
     .split(",")
     .map((item) => item.trim())

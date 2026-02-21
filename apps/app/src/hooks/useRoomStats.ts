@@ -1,7 +1,11 @@
 import { useMemo } from "react";
 
 import type { RoomData, RoomStats, VoteValue } from "@/types";
-import { getExtraVoteValueSet, getVisibleEstimateOptions, hasNumericBaseOptions } from "@/utils/votingOptions";
+import {
+  getExtraVoteValueSet,
+  getVisibleEstimateOptions,
+  hasNumericBaseOptions,
+} from "@/utils/votingOptions";
 
 export const useRoomStats = (roomData: RoomData): RoomStats => {
   return useMemo(() => {

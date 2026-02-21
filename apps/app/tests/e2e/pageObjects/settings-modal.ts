@@ -88,7 +88,8 @@ export class SettingsModal {
 
     const role = await element.getAttribute("role");
     if (role === "switch") {
-      const isCurrentlyEnabled = (await element.getAttribute("aria-checked")) === "true";
+      const isCurrentlyEnabled =
+        (await element.getAttribute("aria-checked")) === "true";
       if (isCurrentlyEnabled !== enabled) {
         await element.click();
       }
@@ -125,7 +126,9 @@ export class SettingsModal {
 
   async expectVotingSequenceSelectorVisible(visible: boolean) {
     await this.goToTab("voting");
-    const selector = this.modal().getByTestId("settings-select-voting-sequence");
+    const selector = this.modal().getByTestId(
+      "settings-select-voting-sequence",
+    );
     if (visible) {
       await expect(selector).toBeVisible();
     } else {

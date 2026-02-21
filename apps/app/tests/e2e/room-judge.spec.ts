@@ -19,7 +19,9 @@ test.describe("The Judge", () => {
 
     try {
       await settingsModal.open();
-      const settingsDialog = page.getByRole("dialog", { name: "Room Settings" });
+      const settingsDialog = page.getByRole("dialog", {
+        name: "Room Settings",
+      });
       await settingsDialog
         .getByRole("button", { name: "Results", exact: true })
         .click();

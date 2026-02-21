@@ -5,11 +5,11 @@ import {
   addPoints,
   assignNextOneWordPitchPrompt,
   getCurrentRoundMoveCount,
-} from '../helpers';
+} from "../helpers";
 import type { GameEngine } from "../types";
 
 const ONE_WORD_PATTERN = /^[a-z][a-z0-9-]{0,23}$/i;
-const VOTE_PREFIX = 'vote:';
+const VOTE_PREFIX = "vote:";
 
 const normalizeSingleWord = (value: string) =>
   value
@@ -78,7 +78,7 @@ const finalizeRound = (
     ...(session.oneWordPitchRoundHistory ?? []),
     {
       round: session.round,
-      prompt: session.oneWordPitchPrompt ?? '',
+      prompt: session.oneWordPitchPrompt ?? "",
       submissions,
       votes: options?.votes,
       voteWinners: options?.voteWinners,
@@ -86,20 +86,20 @@ const finalizeRound = (
   ].slice(-6);
 
   session.round += 1;
-  session.oneWordPitchPhase = 'submit';
+  session.oneWordPitchPhase = "submit";
   session.oneWordPitchRoundSubmissions = {};
   session.oneWordPitchRoundVotes = {};
   assignNextOneWordPitchPrompt(session);
 };
 
 export const oneWordPitchEngine: GameEngine = {
-  title: 'One-Word Pitch',
+  title: "One-Word Pitch",
   maxRounds: 3,
   shouldBlockConsecutiveMoves: () => false,
   initializeSessionState: () => {
     const sessionState: Partial<RoomGameSession> = {
       oneWordPitchPromptHistory: [],
-      oneWordPitchPhase: 'submit',
+      oneWordPitchPhase: "submit",
       oneWordPitchRoundSubmissions: {},
       oneWordPitchRoundVotes: {},
       oneWordPitchRoundHistory: [],
@@ -108,9 +108,9 @@ export const oneWordPitchEngine: GameEngine = {
     return sessionState;
   },
   applyMove: ({ session, userName, value, move }) => {
-    const phase = session.oneWordPitchPhase ?? 'submit';
+    const phase = session.oneWordPitchPhase ?? "submit";
 
-    if (phase === 'submit') {
+    if (phase === "submit") {
       const normalized = normalizeSingleWord(value);
       const isValidSubmission = ONE_WORD_PATTERN.test(value.trim());
 
@@ -155,7 +155,7 @@ export const oneWordPitchEngine: GameEngine = {
         return;
       }
 
-      session.oneWordPitchPhase = 'vote';
+      session.oneWordPitchPhase = "vote";
       session.oneWordPitchRoundVotes = {};
       addEvent(
         session,
@@ -224,8 +224,8 @@ export const oneWordPitchEngine: GameEngine = {
     addEvent(
       session,
       voteWinners.length > 0
-        ? `Bonus vote winners: ${voteWinners.join(', ')} (+2 each).`
-        : 'No bonus vote winners this round.',
+        ? `Bonus vote winners: ${voteWinners.join(", ")} (+2 each).`
+        : "No bonus vote winners this round.",
     );
 
     finalizeRound(session, {

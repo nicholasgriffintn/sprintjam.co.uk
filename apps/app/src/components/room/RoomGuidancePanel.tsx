@@ -1,12 +1,12 @@
-import type { FC } from 'react';
-import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import type { FC } from "react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
 
-import type { RoomData } from '@/types';
-import { Button } from '@/components/ui/Button';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { getVisibleEstimateOptions } from '@/utils/votingOptions';
-import { getGuidancePhase, getVoteSpreadSummary } from '@/utils/room-guidance';
+import type { RoomData } from "@/types";
+import { Button } from "@/components/ui/Button";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { getVisibleEstimateOptions } from "@/utils/votingOptions";
+import { getGuidancePhase, getVoteSpreadSummary } from "@/utils/room-guidance";
 
 interface RoomGuidancePanelProps {
   roomData: RoomData;
@@ -17,42 +17,42 @@ interface RoomGuidancePanelProps {
 const guidanceCopy = {
   preVote: {
     moderator: {
-      title: 'Set the story up for success',
-      body: 'Present the story clearly. Read acceptance criteria aloud so everyone estimates the same scope.',
+      title: "Set the story up for success",
+      body: "Present the story clearly. Read acceptance criteria aloud so everyone estimates the same scope.",
     },
     participant: {
-      title: 'Listen for scope and risks',
-      body: 'Focus on acceptance criteria and edge cases before you vote.',
+      title: "Listen for scope and risks",
+      body: "Focus on acceptance criteria and edge cases before you vote.",
     },
   },
   voting: {
     moderator: {
-      title: 'Keep votes independent',
-      body: 'Hold the reveal until everyone has voted. Hidden cards prevent anchoring.',
+      title: "Keep votes independent",
+      body: "Hold the reveal until everyone has voted. Hidden cards prevent anchoring.",
     },
     participant: {
-      title: 'Votes stay hidden',
-      body: 'Cards are hidden until reveal, so you can vote based on your own assessment.',
+      title: "Votes stay hidden",
+      body: "Cards are hidden until reveal, so you can vote based on your own assessment.",
     },
   },
   revealedWideSpread: {
     moderator: {
-      title: 'Facilitate the extremes',
-      body: 'Ask the highest and lowest voters to explain their reasoning. Different assumptions usually explain the gap.',
+      title: "Facilitate the extremes",
+      body: "Ask the highest and lowest voters to explain their reasoning. Different assumptions usually explain the gap.",
     },
     participant: {
-      title: 'Share your assumptions',
+      title: "Share your assumptions",
       body: "If you're far from the group, share what you're seeing. It often reveals missing context.",
     },
   },
   revealedConsensus: {
     moderator: {
-      title: 'Lock it in',
-      body: 'Quick alignment is a signal. Capture the estimate and move on.',
+      title: "Lock it in",
+      body: "Quick alignment is a signal. Capture the estimate and move on.",
     },
     participant: {
-      title: 'Confirm and move on',
-      body: 'When votes converge quickly, confirm the outcome and keep momentum.',
+      title: "Confirm and move on",
+      body: "When votes converge quickly, confirm the outcome and keep momentum.",
     },
   },
 };
@@ -76,46 +76,46 @@ export const RoomGuidancePanel: FC<RoomGuidancePanelProps> = ({
 }) => {
   const summary = getVoteSpreadSummary(roomData);
   const phase = getGuidancePhase(roomData, summary);
-  const role = isModeratorView ? 'moderator' : 'participant';
+  const role = isModeratorView ? "moderator" : "participant";
   const guidance = guidanceCopy[phase][role];
 
   const visibleOptions = getVisibleEstimateOptions(roomData.settings);
-  const hasZero = visibleOptions.some((option) => String(option) === '0');
+  const hasZero = visibleOptions.some((option) => String(option) === "0");
 
   const unsureOption = findExtraOption(roomData, (value, label, aliases) => {
     const normalized = value.toLowerCase();
     return (
-      normalized.includes('?') ||
-      aliases.includes('?') ||
-      label.toLowerCase().includes('unsure')
+      normalized.includes("?") ||
+      aliases.includes("?") ||
+      label.toLowerCase().includes("unsure")
     );
   });
 
   const breakOption = findExtraOption(roomData, (value, label, aliases) => {
     return (
-      value.includes('☕') ||
-      label.toLowerCase().includes('break') ||
-      aliases.includes('break')
+      value.includes("☕") ||
+      label.toLowerCase().includes("break") ||
+      aliases.includes("break")
     );
   });
 
   const cardMeaningItems = [
     hasZero && {
-      label: '0',
-      text: 'Already done, or negligible effort.',
+      label: "0",
+      text: "Already done, or negligible effort.",
     },
     unsureOption && {
       label: unsureOption.value,
-      text: 'Unknowns or missing context. Pause to clarify.',
+      text: "Unknowns or missing context. Pause to clarify.",
     },
     breakOption && {
       label: breakOption.value,
-      text: 'Call a quick break when energy drops.',
+      text: "Call a quick break when energy drops.",
     },
   ].filter(Boolean) as Array<{ label: string; text: string }>;
 
   const isFibonacci =
-    roomData.settings.votingSequenceId?.includes('fibonacci') ?? false;
+    roomData.settings.votingSequenceId?.includes("fibonacci") ?? false;
 
   return (
     <motion.aside
@@ -137,7 +137,7 @@ export const RoomGuidancePanel: FC<RoomGuidancePanelProps> = ({
               Contextual guidance
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Tailored for {isModeratorView ? 'moderators' : 'participants'}.
+              Tailored for {isModeratorView ? "moderators" : "participants"}.
             </p>
           </div>
           <Button

@@ -1,12 +1,12 @@
-import { SITE_NAME } from '../constants';
+import { SITE_NAME } from "../constants";
 
 function escapeHtml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function renderInlineMarkdown(text: string): string {
@@ -35,28 +35,28 @@ function renderInlineMarkdown(text: string): string {
   return escaped;
 }
 
-type ListType = 'ul' | 'ol';
+type ListType = "ul" | "ol";
 
 export function renderMarkdownToHtml(markdown: string): string {
-  const markdownWithSiteName = markdown.replaceAll('{{SITE_NAME}}', SITE_NAME);
+  const markdownWithSiteName = markdown.replaceAll("{{SITE_NAME}}", SITE_NAME);
 
-  const lines = markdownWithSiteName.replace(/\r\n/g, '\n').split('\n');
+  const lines = markdownWithSiteName.replace(/\r\n/g, "\n").split("\n");
 
-  let html = '';
+  let html = "";
   let inCodeBlock = false;
 
   const listStack: Array<{ type: ListType; indent: number }> = [];
 
-  let paragraph = '';
+  let paragraph = "";
 
   const isTableSeparator = (line: string) =>
     /^\s*\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?\s*$/.test(line);
   const parseTableRow = (line: string) =>
     line
       .trim()
-      .replace(/^\|/, '')
-      .replace(/\|$/, '')
-      .split('|')
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
       .map((cell) => cell.trim());
 
   const closeAllLists = () => {
@@ -83,24 +83,24 @@ export function renderMarkdownToHtml(markdown: string): string {
   const flushParagraph = () => {
     if (paragraph.trim()) {
       html += `<p>${renderInlineMarkdown(paragraph.trim())}</p>`;
-      paragraph = '';
+      paragraph = "";
     }
   };
 
   for (let i = 0; i < lines.length; i += 1) {
-    const rawLine = lines[i] ?? '';
+    const rawLine = lines[i] ?? "";
     const line = rawLine.trimEnd();
     const trimmed = line.trim();
 
-    if (line.startsWith('```')) {
+    if (line.startsWith("```")) {
       if (inCodeBlock) {
-        html += '</code></pre>';
+        html += "</code></pre>";
       } else {
         flushParagraph();
         closeAllLists();
         const language = line.slice(3).trim();
         html += `<pre class="overflow-auto rounded-2xl bg-slate-900 text-slate-100 p-4 text-sm shadow-lg shadow-slate-900/30 dark:bg-slate-950/80"><code${
-          language ? ` class="language-${escapeHtml(language)}"` : ''
+          language ? ` class="language-${escapeHtml(language)}"` : ""
         }>`;
       }
       inCodeBlock = !inCodeBlock;
@@ -119,34 +119,34 @@ export function renderMarkdownToHtml(markdown: string): string {
     }
 
     if (
-      line.includes('|') &&
+      line.includes("|") &&
       i + 1 < lines.length &&
-      isTableSeparator(lines[i + 1]?.trim() ?? '')
+      isTableSeparator(lines[i + 1]?.trim() ?? "")
     ) {
       flushParagraph();
       closeAllLists();
       const headerCells = parseTableRow(line);
-      html += '<table><thead><tr>';
+      html += "<table><thead><tr>";
       html += headerCells
         .map((cell) => `<th>${renderInlineMarkdown(cell)}</th>`)
-        .join('');
-      html += '</tr></thead><tbody>';
+        .join("");
+      html += "</tr></thead><tbody>";
       i += 1;
       while (i + 1 < lines.length) {
-        const rowLine = lines[i + 1] ?? '';
+        const rowLine = lines[i + 1] ?? "";
         const rowTrimmed = rowLine.trim();
-        if (!rowTrimmed || !rowLine.includes('|')) {
+        if (!rowTrimmed || !rowLine.includes("|")) {
           break;
         }
         const rowCells = parseTableRow(rowLine);
-        html += '<tr>';
+        html += "<tr>";
         html += rowCells
           .map((cell) => `<td>${renderInlineMarkdown(cell)}</td>`)
-          .join('');
-        html += '</tr>';
+          .join("");
+        html += "</tr>";
         i += 1;
       }
-      html += '</tbody></table>';
+      html += "</tbody></table>";
       continue;
     }
 
@@ -163,11 +163,11 @@ export function renderMarkdownToHtml(markdown: string): string {
     if (/^---+$/.test(line)) {
       flushParagraph();
       closeAllLists();
-      html += '<hr />';
+      html += "<hr />";
       continue;
     }
 
-    if (line.startsWith('> ')) {
+    if (line.startsWith("> ")) {
       flushParagraph();
       closeAllLists();
       html += `<blockquote>${renderInlineMarkdown(line.slice(2))}</blockquote>`;
@@ -184,20 +184,20 @@ export function renderMarkdownToHtml(markdown: string): string {
         !listStack.length ||
         indent > listStack[listStack.length - 1].indent
       ) {
-        listStack.push({ type: 'ol', indent });
-        html += '<ol>';
+        listStack.push({ type: "ol", indent });
+        html += "<ol>";
       } else {
         closeListsUntilIndent(indent);
         const current = listStack[listStack.length - 1];
-        if (!current || current.type !== 'ol' || current.indent !== indent) {
-          if (current && current.type !== 'ol') {
+        if (!current || current.type !== "ol" || current.indent !== indent) {
+          if (current && current.type !== "ol") {
             const closed = listStack.pop();
             if (closed) {
               html += `</${closed.type}>`;
             }
           }
-          listStack.push({ type: 'ol', indent });
-          html += '<ol>';
+          listStack.push({ type: "ol", indent });
+          html += "<ol>";
         }
       }
 
@@ -215,20 +215,20 @@ export function renderMarkdownToHtml(markdown: string): string {
         !listStack.length ||
         indent > listStack[listStack.length - 1].indent
       ) {
-        listStack.push({ type: 'ul', indent });
-        html += '<ul>';
+        listStack.push({ type: "ul", indent });
+        html += "<ul>";
       } else {
         closeListsUntilIndent(indent);
         const current = listStack[listStack.length - 1];
-        if (!current || current.type !== 'ul' || current.indent !== indent) {
-          if (current && current.type !== 'ul') {
+        if (!current || current.type !== "ul" || current.indent !== indent) {
+          if (current && current.type !== "ul") {
             const closed = listStack.pop();
             if (closed) {
               html += `</${closed.type}>`;
             }
           }
-          listStack.push({ type: 'ul', indent });
-          html += '<ul>';
+          listStack.push({ type: "ul", indent });
+          html += "<ul>";
         }
       }
 
@@ -243,7 +243,7 @@ export function renderMarkdownToHtml(markdown: string): string {
   closeAllLists();
 
   if (inCodeBlock) {
-    html += '</code></pre>';
+    html += "</code></pre>";
   }
 
   return html;

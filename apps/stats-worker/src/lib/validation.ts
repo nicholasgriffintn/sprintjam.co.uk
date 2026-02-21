@@ -30,18 +30,18 @@ export interface RoundIngestPayload {
   judgeScore?: string;
   judgeMetadata?: object;
   roundEndedAt: number;
-  type: 'reset' | 'next_ticket';
+  type: "reset" | "next_ticket";
 }
 
 function validateVote(vote: unknown, index: number): ValidationResult {
-  if (!vote || typeof vote !== 'object') {
+  if (!vote || typeof vote !== "object") {
     return { valid: false, error: `votes[${index}] must be an object` };
   }
 
   const v = vote as Record<string, unknown>;
 
   if (
-    typeof v.userName !== 'string' ||
+    typeof v.userName !== "string" ||
     v.userName.length === 0 ||
     v.userName.length > LIMITS.MAX_USERNAME_LENGTH
   ) {
@@ -52,7 +52,7 @@ function validateVote(vote: unknown, index: number): ValidationResult {
   }
 
   if (
-    typeof v.vote !== 'string' ||
+    typeof v.vote !== "string" ||
     v.vote.length === 0 ||
     v.vote.length > LIMITS.MAX_VOTE_LENGTH
   ) {
@@ -62,7 +62,7 @@ function validateVote(vote: unknown, index: number): ValidationResult {
     };
   }
 
-  if (typeof v.votedAt !== 'number' || v.votedAt < 0) {
+  if (typeof v.votedAt !== "number" || v.votedAt < 0) {
     return {
       valid: false,
       error: `votes[${index}].votedAt must be a positive number`,
@@ -83,8 +83,8 @@ function validateVote(vote: unknown, index: number): ValidationResult {
 }
 
 export function validateRoundIngestPayload(body: unknown): ValidationResult {
-  if (!body || typeof body !== 'object') {
-    return { valid: false, error: 'Request body must be an object' };
+  if (!body || typeof body !== "object") {
+    return { valid: false, error: "Request body must be an object" };
   }
 
   const b = body as Record<string, unknown>;
@@ -96,11 +96,11 @@ export function validateRoundIngestPayload(body: unknown): ValidationResult {
     b.roundEndedAt === undefined ||
     !b.type
   ) {
-    return { valid: false, error: 'Missing required fields' };
+    return { valid: false, error: "Missing required fields" };
   }
 
   if (
-    typeof b.roomKey !== 'string' ||
+    typeof b.roomKey !== "string" ||
     b.roomKey.length > LIMITS.MAX_ROOM_KEY_LENGTH
   ) {
     return {
@@ -110,7 +110,7 @@ export function validateRoundIngestPayload(body: unknown): ValidationResult {
   }
 
   if (
-    typeof b.roundId !== 'string' ||
+    typeof b.roundId !== "string" ||
     b.roundId.length > LIMITS.MAX_ROUND_ID_LENGTH
   ) {
     return {
@@ -121,7 +121,7 @@ export function validateRoundIngestPayload(body: unknown): ValidationResult {
 
   if (
     b.ticketId !== undefined &&
-    (typeof b.ticketId !== 'string' ||
+    (typeof b.ticketId !== "string" ||
       b.ticketId.length > LIMITS.MAX_TICKET_ID_LENGTH)
   ) {
     return {
@@ -130,12 +130,12 @@ export function validateRoundIngestPayload(body: unknown): ValidationResult {
     };
   }
 
-  if (typeof b.roundEndedAt !== 'number' || b.roundEndedAt < 0) {
-    return { valid: false, error: 'roundEndedAt must be a positive number' };
+  if (typeof b.roundEndedAt !== "number" || b.roundEndedAt < 0) {
+    return { valid: false, error: "roundEndedAt must be a positive number" };
   }
 
   if (!Array.isArray(b.votes)) {
-    return { valid: false, error: 'votes must be an array' };
+    return { valid: false, error: "votes must be an array" };
   }
 
   if (b.votes.length > LIMITS.MAX_VOTES_PER_ROUND) {
@@ -154,7 +154,7 @@ export function validateRoundIngestPayload(body: unknown): ValidationResult {
 
   if (
     b.judgeScore !== undefined &&
-    (typeof b.judgeScore !== 'string' ||
+    (typeof b.judgeScore !== "string" ||
       b.judgeScore.length > LIMITS.MAX_JUDGE_SCORE_LENGTH)
   ) {
     return {
@@ -174,9 +174,9 @@ export function validateRoundIngestPayload(body: unknown): ValidationResult {
   }
 
   if (
-    typeof b.type !== 'string' ||
+    typeof b.type !== "string" ||
     b.type.length > LIMITS.MAX_TYPE_LENGTH ||
-    (b.type !== 'reset' && b.type !== 'next_ticket')
+    (b.type !== "reset" && b.type !== "next_ticket")
   ) {
     return {
       valid: false,

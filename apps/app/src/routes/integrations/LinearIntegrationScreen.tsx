@@ -11,13 +11,13 @@ import {
   Zap,
 } from "lucide-react";
 
-import { useSessionActions } from '@/context/SessionContext';
+import { useSessionActions } from "@/context/SessionContext";
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { navigateTo, type AppScreen } from '@/config/routes';
+import { navigateTo, type AppScreen } from "@/config/routes";
 import { SITE_NAME } from "@/constants";
 
 const featureCards = [
@@ -145,7 +145,7 @@ const LinearIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                onClick={() => handleNavigate('integrations')}
+                onClick={() => handleNavigate("integrations")}
               >
                 View all integrations
                 <ArrowUpRight className="h-4 w-4" />

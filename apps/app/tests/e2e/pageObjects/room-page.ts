@@ -20,7 +20,9 @@ export class RoomPage {
   }
 
   participantRows(): Locator {
-    return this.page.getByTestId("participants-list").getByTestId("participant-row");
+    return this.page
+      .getByTestId("participants-list")
+      .getByTestId("participant-row");
   }
 
   async waitForParticipants(count: number) {
@@ -40,7 +42,9 @@ export class RoomPage {
   }
 
   async expectStructuredPanelVisible() {
-    await expect(this.page.getByTestId("structured-voting-panel")).toBeVisible();
+    await expect(
+      this.page.getByTestId("structured-voting-panel"),
+    ).toBeVisible();
   }
 
   async expectVotePendingState() {
@@ -279,7 +283,9 @@ export class RoomPage {
   }
 
   spectatorRows(): Locator {
-    return this.page.getByTestId("spectators-list").getByTestId("participant-row");
+    return this.page
+      .getByTestId("spectators-list")
+      .getByTestId("participant-row");
   }
 
   async waitForSpectators(count: number) {

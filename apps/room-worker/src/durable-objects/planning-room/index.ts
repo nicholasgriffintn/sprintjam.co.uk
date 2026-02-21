@@ -5,7 +5,7 @@ declare const WebSocketPair: {
 import type {
   DurableObjectState,
   WebSocket as CfWebSocket,
-} from '@cloudflare/workers-types';
+} from "@cloudflare/workers-types";
 
 import { PlanningPokerJudge } from "@sprintjam/utils";
 import type {
@@ -22,7 +22,7 @@ import {
   TokenCipher,
   getRoomSessionToken,
   isAllowedOrigin,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 import type { Request as CfRequest } from "@cloudflare/workers-types";
 
 import { PlanningRoomRepository } from "../../repositories/planning-room";
@@ -62,7 +62,7 @@ import {
   handleEndGame as handleEndGameHandler,
   handleStartGame as handleStartGameHandler,
   handleSubmitGameMove as handleSubmitGameMoveHandler,
-} from './games';
+} from "./games";
 import { readRoomData } from "./room-helpers";
 
 export class PlanningRoom implements PlanningRoomHttpContext {
@@ -103,7 +103,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   disconnectUserSessions(userName: string) {
     for (const [socket, session] of this.sessions.entries()) {
       if (session.userName.toLowerCase() === userName.trim().toLowerCase()) {
-        socket.close(4004, 'Session superseded');
+        socket.close(4004, "Session superseded");
         this.sessions.delete(socket);
       }
     }
@@ -112,23 +112,23 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
-    const upgradeHeader = request.headers.get('Upgrade');
-    if (upgradeHeader === 'websocket') {
-      const origin = request.headers.get('Origin');
-      const isDevelopment = this.env.ENVIRONMENT === 'development';
+    const upgradeHeader = request.headers.get("Upgrade");
+    if (upgradeHeader === "websocket") {
+      const origin = request.headers.get("Origin");
+      const isDevelopment = this.env.ENVIRONMENT === "development";
 
       if (!isAllowedOrigin(origin, isDevelopment)) {
-        return new Response('Forbidden', {
+        return new Response("Forbidden", {
           status: 403,
         });
       }
 
-      const roomKey = url.searchParams.get('room');
-      const userName = url.searchParams.get('name');
+      const roomKey = url.searchParams.get("room");
+      const userName = url.searchParams.get("name");
       const sessionToken = getRoomSessionToken(request as unknown as CfRequest);
 
       if (!roomKey || !userName || !sessionToken) {
-        return new Response('Missing room key, user name, or session', {
+        return new Response("Missing room key, user name, or session", {
           status: 400,
         });
       }
@@ -149,9 +149,9 @@ export class PlanningRoom implements PlanningRoomHttpContext {
       return httpResponse;
     }
 
-    return new Response(JSON.stringify({ error: 'Room Route Not found' }), {
+    return new Response(JSON.stringify({ error: "Room Route Not found" }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -184,7 +184,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
   async handleUpdateSettings(
     userName: string,
-    settings: Partial<RoomData['settings']>,
+    settings: Partial<RoomData["settings"]>,
   ) {
     return handleUpdateSettingsHandler(this, userName, settings);
   }
@@ -268,7 +268,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
 
     const broadcastRoomData = await this.getRoomData();
     this.broadcast({
-      type: 'spectatorStatusChanged',
+      type: "spectatorStatusChanged",
       user: userName,
       isSpectator,
       users: broadcastRoomData?.users ?? [],

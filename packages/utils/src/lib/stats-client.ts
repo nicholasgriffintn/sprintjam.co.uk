@@ -1,5 +1,5 @@
-import type { Fetcher } from '@cloudflare/workers-types';
-import type { JudgeMetadata } from '@sprintjam/types';
+import type { Fetcher } from "@cloudflare/workers-types";
+import type { JudgeMetadata } from "@sprintjam/types";
 
 export interface RoundStatsPayload {
   roomKey: string;
@@ -14,7 +14,7 @@ export interface RoundStatsPayload {
   judgeScore?: string;
   judgeMetadata?: JudgeMetadata;
   roundEndedAt: number;
-  type: 'reset' | 'next_ticket';
+  type: "reset" | "next_ticket";
 }
 
 export async function postRoundStats(
@@ -23,18 +23,18 @@ export async function postRoundStats(
   data: RoundStatsPayload,
 ): Promise<void> {
   if (!token) {
-    console.warn('[stats-client] No STATS_INGEST_TOKEN configured, skipping');
+    console.warn("[stats-client] No STATS_INGEST_TOKEN configured, skipping");
     return;
   }
 
   try {
     const response = await statsWorker.fetch(
-      'https://stats-worker/ingest/round',
+      "https://stats-worker/ingest/round",
       {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       },
@@ -47,6 +47,6 @@ export async function postRoundStats(
       );
     }
   } catch (error) {
-    console.error('[stats-client] Error posting stats:', error);
+    console.error("[stats-client] Error posting stats:", error);
   }
 }

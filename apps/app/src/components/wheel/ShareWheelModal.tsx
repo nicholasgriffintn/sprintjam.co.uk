@@ -1,14 +1,14 @@
-import { useState, useRef, useMemo, lazy, Suspense } from 'react';
+import { useState, useRef, useMemo, lazy, Suspense } from "react";
 
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { FallbackLoading } from '@/components/ui/FallbackLoading';
-import { updateWheelPasscode } from '@/lib/wheel-api-service';
-import { USERNAME_STORAGE_KEY } from '@/constants';
-import { safeLocalStorage } from '@/utils/storage';
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { FallbackLoading } from "@/components/ui/FallbackLoading";
+import { updateWheelPasscode } from "@/lib/wheel-api-service";
+import { USERNAME_STORAGE_KEY } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
 
 const QRCodeSVG = lazy(() =>
-  import('qrcode.react').then((module) => ({ default: module.QRCodeSVG })),
+  import("qrcode.react").then((module) => ({ default: module.QRCodeSVG })),
 );
 
 interface ShareWheelModalProps {
@@ -26,13 +26,13 @@ export function ShareWheelModal({
 }: ShareWheelModalProps) {
   const [copied, setCopied] = useState(false);
   const [passcodeEnabled, setPasscodeEnabled] = useState(false);
-  const [passcode, setPasscode] = useState('');
+  const [passcode, setPasscode] = useState("");
   const [passcodeCopied, setPasscodeCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const shareableUrl = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return '';
+    if (typeof window === "undefined") {
+      return "";
     }
     return `${window.location.origin}/wheel/${wheelKey}`;
   }, [wheelKey]);
@@ -45,7 +45,7 @@ export function ShareWheelModal({
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (error) {
-        console.error('Failed to copy text: ', error);
+        console.error("Failed to copy text: ", error);
       }
     }
   };
@@ -56,23 +56,23 @@ export function ShareWheelModal({
       setPasscodeCopied(true);
       setTimeout(() => setPasscodeCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy passcode: ', error);
+      console.error("Failed to copy passcode: ", error);
     }
   };
 
   const generatePasscode = async () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
     for (let i = 0; i < 6; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setPasscode(code);
 
     try {
-      const userName = safeLocalStorage.get(USERNAME_STORAGE_KEY) || '';
+      const userName = safeLocalStorage.get(USERNAME_STORAGE_KEY) || "";
       await updateWheelPasscode(wheelKey, userName, code);
     } catch (error) {
-      console.error('Failed to save passcode:', error);
+      console.error("Failed to save passcode:", error);
     }
   };
 
@@ -84,16 +84,16 @@ export function ShareWheelModal({
     }
 
     try {
-      const userName = safeLocalStorage.get(USERNAME_STORAGE_KEY) || '';
+      const userName = safeLocalStorage.get(USERNAME_STORAGE_KEY) || "";
       await updateWheelPasscode(wheelKey, userName, enabled ? passcode : null);
 
       if (!enabled) {
-        setPasscode('');
+        setPasscode("");
       }
     } catch (error) {
-      console.error('Failed to update passcode:', error);
+      console.error("Failed to update passcode:", error);
       setPasscodeEnabled(!enabled);
-      alert('Failed to update passcode. Please try again.');
+      alert("Failed to update passcode. Please try again.");
     }
   };
 
@@ -118,7 +118,7 @@ export function ShareWheelModal({
               className="flex-1 rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-300 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:ring-brand-900 dark:focus:border-brand-400"
             />
             <Button onClick={handleCopy} variant="primary" size="md">
-              {copied ? 'Copied!' : 'Copy'}
+              {copied ? "Copied!" : "Copy"}
             </Button>
           </div>
         </div>
@@ -140,13 +140,13 @@ export function ShareWheelModal({
                 onClick={() => handlePasscodeToggle(!passcodeEnabled)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   passcodeEnabled
-                    ? 'bg-brand-600'
-                    : 'bg-slate-300 dark:bg-slate-600'
+                    ? "bg-brand-600"
+                    : "bg-slate-300 dark:bg-slate-600"
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    passcodeEnabled ? 'translate-x-6' : 'translate-x-1'
+                    passcodeEnabled ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
               </button>
@@ -175,7 +175,7 @@ export function ShareWheelModal({
                     variant="secondary"
                     size="sm"
                   >
-                    {passcodeCopied ? 'Copied!' : 'Copy'}
+                    {passcodeCopied ? "Copied!" : "Copy"}
                   </Button>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -205,7 +205,7 @@ export function ShareWheelModal({
         </div>
 
         <div className="text-sm text-slate-600 dark:text-slate-300 italic">
-          Anyone with this link{passcodeEnabled && ' and passcode'} can join
+          Anyone with this link{passcodeEnabled && " and passcode"} can join
           this wheel room.
         </div>
       </div>

@@ -1,11 +1,11 @@
-import type { VoteOptionMetadata } from '@sprintjam/types';
+import type { VoteOptionMetadata } from "@sprintjam/types";
 
-import { generateColorFromValue, generateColorFromString } from './colors';
-import { SPECIAL_COLORS } from './config/constants';
-import { getTaskSize } from './tasks';
+import { generateColorFromValue, generateColorFromString } from "./colors";
+import { SPECIAL_COLORS } from "./config/constants";
+import { getTaskSize } from "./tasks";
 
 export function generateVoteOptionsMetadata(
-  options: (string | number)[]
+  options: (string | number)[],
 ): VoteOptionMetadata[] {
   const numericValues = options
     .map((value) => Number(value))

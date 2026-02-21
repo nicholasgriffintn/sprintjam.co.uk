@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-import { GuideLayout } from '@/components/guides/GuideLayout';
-import guideMarkdown from '@/content/guides/story-points.md?raw';
-import { renderMarkdownToHtml } from '@/utils/markdown';
+import { GuideLayout } from "@/components/guides/GuideLayout";
+import guideMarkdown from "@/content/guides/story-points.md?raw";
+import { renderMarkdownToHtml } from "@/utils/markdown";
 
 const StoryPointsGuide = () => {
   const renderedGuide = useMemo(() => renderMarkdownToHtml(guideMarkdown), []);

@@ -348,7 +348,9 @@ export class AuthRepository {
         secretEncrypted: mfaCredentials.secretEncrypted,
       })
       .from(mfaCredentials)
-      .where(and(eq(mfaCredentials.userId, userId), eq(mfaCredentials.type, "totp")))
+      .where(
+        and(eq(mfaCredentials.userId, userId), eq(mfaCredentials.type, "totp")),
+      )
       .orderBy(desc(mfaCredentials.createdAt))
       .get();
   }
@@ -362,7 +364,12 @@ export class AuthRepository {
         counter: mfaCredentials.counter,
       })
       .from(mfaCredentials)
-      .where(and(eq(mfaCredentials.userId, userId), eq(mfaCredentials.type, "webauthn")))
+      .where(
+        and(
+          eq(mfaCredentials.userId, userId),
+          eq(mfaCredentials.type, "webauthn"),
+        ),
+      )
       .all();
   }
 

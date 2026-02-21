@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-import { GuideLayout } from '@/components/guides/GuideLayout';
-import { CardPreview } from '@/components/guides/CardPreview';
-import { cardDecks } from '@/content/guides/cardDecks';
-import guideMarkdown from '@/content/guides/fibonacci-scale.md?raw';
-import { renderMarkdownToHtml } from '@/utils/markdown';
+import { GuideLayout } from "@/components/guides/GuideLayout";
+import { CardPreview } from "@/components/guides/CardPreview";
+import { cardDecks } from "@/content/guides/cardDecks";
+import guideMarkdown from "@/content/guides/fibonacci-scale.md?raw";
+import { renderMarkdownToHtml } from "@/utils/markdown";
 
 const FibonacciScaleGuide = () => {
   const renderedGuide = useMemo(() => renderMarkdownToHtml(guideMarkdown), []);

@@ -39,9 +39,7 @@
       "indexes": {
         "allowed_domains_domain_unique": {
           "name": "allowed_domains_domain_unique",
-          "columns": [
-            "domain"
-          ],
+          "columns": ["domain"],
           "isUnique": true
         }
       },
@@ -92,9 +90,7 @@
       "indexes": {
         "organisations_domain_unique": {
           "name": "organisations_domain_unique",
-          "columns": [
-            "domain"
-          ],
+          "columns": ["domain"],
           "isUnique": true
         }
       },
@@ -166,9 +162,7 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -177,12 +171,8 @@
           "name": "users_organisation_id_organisations_id_fk",
           "tableFrom": "users",
           "tableTo": "organisations",
-          "columnsFrom": [
-            "organisation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organisation_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -243,12 +233,8 @@
           "name": "teams_organisation_id_organisations_id_fk",
           "tableFrom": "teams",
           "tableTo": "organisations",
-          "columnsFrom": [
-            "organisation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organisation_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -256,12 +242,8 @@
           "name": "teams_owner_id_users_id_fk",
           "tableFrom": "teams",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -327,17 +309,12 @@
       "indexes": {
         "magic_links_token_hash_unique": {
           "name": "magic_links_token_hash_unique",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "isUnique": true
         },
         "magic_links_email_expires_idx": {
           "name": "magic_links_email_expires_idx",
-          "columns": [
-            "email",
-            "expires_at"
-          ],
+          "columns": ["email", "expires_at"],
           "isUnique": false
         }
       },
@@ -395,25 +372,17 @@
       "indexes": {
         "workspace_sessions_token_hash_unique": {
           "name": "workspace_sessions_token_hash_unique",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "isUnique": true
         },
         "workspace_sessions_user_expires_idx": {
           "name": "workspace_sessions_user_expires_idx",
-          "columns": [
-            "user_id",
-            "expires_at"
-          ],
+          "columns": ["user_id", "expires_at"],
           "isUnique": false
         },
         "workspace_sessions_user_last_used_idx": {
           "name": "workspace_sessions_user_last_used_idx",
-          "columns": [
-            "user_id",
-            "last_used_at"
-          ],
+          "columns": ["user_id", "last_used_at"],
           "isUnique": false
         }
       },
@@ -422,12 +391,8 @@
           "name": "workspace_sessions_user_id_users_id_fk",
           "tableFrom": "workspace_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -502,12 +467,8 @@
           "name": "team_sessions_team_id_teams_id_fk",
           "tableFrom": "team_sessions",
           "tableTo": "teams",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["team_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -515,12 +476,8 @@
           "name": "team_sessions_created_by_id_users_id_fk",
           "tableFrom": "team_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -599,23 +556,17 @@
       "indexes": {
         "round_votes_round_id_unique": {
           "name": "round_votes_round_id_unique",
-          "columns": [
-            "round_id"
-          ],
+          "columns": ["round_id"],
           "isUnique": true
         },
         "idx_round_votes_room": {
           "name": "idx_round_votes_room",
-          "columns": [
-            "room_key"
-          ],
+          "columns": ["room_key"],
           "isUnique": false
         },
         "idx_round_votes_ended": {
           "name": "idx_round_votes_ended",
-          "columns": [
-            "round_ended_at"
-          ],
+          "columns": ["round_ended_at"],
           "isUnique": false
         }
       },
@@ -673,24 +624,17 @@
       "indexes": {
         "idx_vote_records_round": {
           "name": "idx_vote_records_round",
-          "columns": [
-            "round_id"
-          ],
+          "columns": ["round_id"],
           "isUnique": false
         },
         "idx_vote_records_user": {
           "name": "idx_vote_records_user",
-          "columns": [
-            "user_name"
-          ],
+          "columns": ["user_name"],
           "isUnique": false
         },
         "vote_records_round_user": {
           "name": "vote_records_round_user",
-          "columns": [
-            "round_id",
-            "user_name"
-          ],
+          "columns": ["round_id", "user_name"],
           "isUnique": true
         }
       },
@@ -699,12 +643,8 @@
           "name": "vote_records_round_id_round_votes_round_id_fk",
           "tableFrom": "vote_records",
           "tableTo": "round_votes",
-          "columnsFrom": [
-            "round_id"
-          ],
-          "columnsTo": [
-            "round_id"
-          ],
+          "columnsFrom": ["round_id"],
+          "columnsTo": ["round_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -757,16 +697,12 @@
       "indexes": {
         "room_stats_room_key_unique": {
           "name": "room_stats_room_key_unique",
-          "columns": [
-            "room_key"
-          ],
+          "columns": ["room_key"],
           "isUnique": true
         },
         "idx_room_stats_key": {
           "name": "idx_room_stats_key",
-          "columns": [
-            "room_key"
-          ],
+          "columns": ["room_key"],
           "isUnique": false
         }
       },

@@ -5,8 +5,8 @@ import {
   type QueryCollectionConfig,
 } from "@tanstack/query-db-collection";
 
-import { API_BASE_URL } from '@/constants';
-import { isWorkspacesEnabled } from '@/utils/feature-flags';
+import { API_BASE_URL } from "@/constants";
+import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import {
   workspaceRequest,
   type WorkspaceProfile,
@@ -14,7 +14,7 @@ import {
   type TeamSession,
 } from "@/lib/workspace-service";
 import type { RoomData, ServerDefaults } from "@/types";
-import type { WheelData } from '@sprintjam/types';
+import type { WheelData } from "@sprintjam/types";
 
 export const SERVER_DEFAULTS_DOCUMENT_KEY = "server-defaults";
 export const WORKSPACE_PROFILE_DOCUMENT_KEY = "workspace-profile";
@@ -85,8 +85,8 @@ export const serverDefaultsCollection = createCollection<
 >(queryCollectionOptions(serverDefaultsCollectionConfig));
 
 const workspaceProfileCollectionConfig = {
-  id: 'workspace-profile',
-  queryKey: ['workspace-profile'],
+  id: "workspace-profile",
+  queryKey: ["workspace-profile"],
   startSync: false,
   queryFn: async () => {
     if (!isWorkspacesEnabled()) {
@@ -99,7 +99,7 @@ const workspaceProfileCollectionConfig = {
       );
       return [profile];
     } catch (error) {
-      if (error instanceof Error && error.message === 'Unauthorized') {
+      if (error instanceof Error && error.message === "Unauthorized") {
         return [];
       }
       throw error;
@@ -116,8 +116,8 @@ export const workspaceProfileCollection = createCollection<
 >(queryCollectionOptions(workspaceProfileCollectionConfig));
 
 const workspaceStatsCollectionConfig = {
-  id: 'workspace-stats',
-  queryKey: ['workspace-stats'],
+  id: "workspace-stats",
+  queryKey: ["workspace-stats"],
   startSync: false,
   queryFn: async () => {
     const profile = workspaceProfileCollection.get(
@@ -133,7 +133,7 @@ const workspaceStatsCollectionConfig = {
       );
       return [stats];
     } catch (error) {
-      if (error instanceof Error && error.message === 'Unauthorized') {
+      if (error instanceof Error && error.message === "Unauthorized") {
         return [];
       }
       throw error;
@@ -163,8 +163,8 @@ export const roomsCollection = createCollection<RoomData, string>(
 );
 
 const wheelsCollectionConfig = {
-  id: 'wheels',
-  queryKey: ['wheels'],
+  id: "wheels",
+  queryKey: ["wheels"],
   startSync: false,
   queryFn: async () => [],
   queryClient,

@@ -4,10 +4,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { RoomData } from "@/types";
 
 interface VotesHiddenProps {
-  votes: RoomData['votes'];
-  structuredVotes?: RoomData['structuredVotes'];
+  votes: RoomData["votes"];
+  structuredVotes?: RoomData["structuredVotes"];
   isStructuredVotingEnabled?: boolean;
-  users: RoomData['users'];
+  users: RoomData["users"];
   currentUserName: string;
   isAnonymousVoting?: boolean;
 }
@@ -23,7 +23,7 @@ export function VotesHidden({
   const getVoteKeyForUser = (userName: string) => {
     if (isAnonymousVoting) {
       const index = users.indexOf(userName);
-      return index === -1 ? 'Anonymous' : `Anonymous ${index + 1}`;
+      return index === -1 ? "Anonymous" : `Anonymous ${index + 1}`;
     }
     return userName;
   };
@@ -66,15 +66,15 @@ export function VotesHidden({
           <Timer className="w-12 h-12 text-orange-600 dark:text-orange-400" />
         )
       }
-      title={hasUserVote ? 'Votes are hidden' : "You haven't voted yet"}
+      title={hasUserVote ? "Votes are hidden" : "You haven't voted yet"}
       description={
         hasUserVote
           ? `Waiting for the moderator to reveal${
-              voteProgress ? ` — ${voteProgress}` : ''
+              voteProgress ? ` — ${voteProgress}` : ""
             }.`
           : isStructuredVotingEnabled
-          ? 'Score each criterion to submit your vote.'
-          : 'Select a card to cast your vote.'
+            ? "Score each criterion to submit your vote."
+            : "Select a card to cast your vote."
       }
     />
   );

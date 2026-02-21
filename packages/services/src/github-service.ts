@@ -1,9 +1,9 @@
-import type { GithubIssue, GithubOAuthCredentials } from '@sprintjam/types';
+import type { GithubIssue, GithubOAuthCredentials } from "@sprintjam/types";
 
 class GithubIdentifierError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'GithubIdentifierError';
+    this.name = "GithubIdentifierError";
   }
 }
 
@@ -14,25 +14,25 @@ interface GithubIssueCoordinates {
 }
 
 export function escapeGithubSearchValue(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 function parseGithubIssueIdentifier(
   identifier: string,
-  defaults?: { owner?: string | null; repo?: string | null }
+  defaults?: { owner?: string | null; repo?: string | null },
 ): GithubIssueCoordinates {
   const value = identifier.trim();
   if (!value) {
     throw new GithubIdentifierError(
-      'Provide an issue key like owner/repo#123.'
+      "Provide an issue key like owner/repo#123.",
     );
   }
 
-  if (value.startsWith('http')) {
+  if (value.startsWith("http")) {
     try {
       const url = new URL(value);
-      const parts = url.pathname.split('/').filter(Boolean);
-      const issueIdx = parts.findIndex((segment) => segment === 'issues');
+      const parts = url.pathname.split("/").filter(Boolean);
+      const issueIdx = parts.findIndex((segment) => segment === "issues");
       if (issueIdx >= 2 && parts[issueIdx + 1]) {
         return {
           owner: parts[issueIdx - 2],
@@ -42,7 +42,7 @@ function parseGithubIssueIdentifier(
       }
     } catch (error) {
       throw new GithubIdentifierError(
-        'Unsupported GitHub issue URL. Use https://github.com/owner/repo/issues/123.'
+        "Unsupported GitHub issue URL. Use https://github.com/owner/repo/issues/123.",
       );
     }
   }
@@ -79,8 +79,8 @@ function parseGithubIssueIdentifier(
 
   throw new GithubIdentifierError(
     defaultOwner && defaultRepo
-      ? 'Use owner/repo#123 or #123 for your default repository.'
-      : 'Use owner/repo#123 or a GitHub issue URL.'
+      ? "Use owner/repo#123 or #123 for your default repository."
+      : "Use owner/repo#123 or a GitHub issue URL.",
   );
 }
 
@@ -103,27 +103,27 @@ async function handleGithubError(response: Response): Promise<never> {
 
 function mapIssueResponse(
   data: any,
-  repoCoordinates: { owner: string; repo: string }
+  repoCoordinates: { owner: string; repo: string },
 ): GithubIssue {
-  if (!data || typeof data !== 'object') {
-    throw new Error('Unexpected response when reading GitHub issue');
+  if (!data || typeof data !== "object") {
+    throw new Error("Unexpected response when reading GitHub issue");
   }
 
   const labels = Array.isArray(data.labels)
     ? data.labels
         .map((label: { name?: string }) => label?.name)
-        .filter((name: unknown): name is string => typeof name === 'string')
+        .filter((name: unknown): name is string => typeof name === "string")
     : [];
 
   return {
     id: String(
       data.id ??
-        `${repoCoordinates.owner}/${repoCoordinates.repo}#${data.number}`
+        `${repoCoordinates.owner}/${repoCoordinates.repo}#${data.number}`,
     ),
     key: `${repoCoordinates.owner}/${repoCoordinates.repo}#${data.number}`,
     repository: `${repoCoordinates.owner}/${repoCoordinates.repo}`,
     number: Number(data.number ?? 0),
-    title: data.title ?? '',
+    title: data.title ?? "",
     description: data.body ?? undefined,
     status: data.state ?? undefined,
     assignee: data.assignee?.login ?? data.user?.login ?? undefined,
@@ -136,14 +136,14 @@ function mapIssueResponse(
 async function githubRequest(
   accessToken: string,
   path: string,
-  init?: RequestInit
+  init?: RequestInit,
 ) {
   const response = await fetch(`https://api.github.com${path}`, {
     ...init,
     headers: {
-      Accept: 'application/vnd.github+json',
+      Accept: "application/vnd.github+json",
       Authorization: `Bearer ${accessToken}`,
-      'User-Agent': 'SprintJam',
+      "User-Agent": "SprintJam",
       ...(init?.headers ?? {}),
     },
   });
@@ -157,7 +157,7 @@ async function githubRequest(
 
 export async function fetchGithubIssue(
   credentials: GithubOAuthCredentials,
-  identifier: string
+  identifier: string,
 ): Promise<GithubIssue> {
   const coords = parseGithubIssueIdentifier(identifier, {
     owner: credentials.defaultOwner ?? credentials.githubLogin ?? undefined,
@@ -165,12 +165,12 @@ export async function fetchGithubIssue(
   });
 
   if (!coords.owner || !coords.repo || Number.isNaN(coords.issueNumber)) {
-    throw new Error('Invalid GitHub issue identifier');
+    throw new Error("Invalid GitHub issue identifier");
   }
 
   const issueResponse = await githubRequest(
     credentials.accessToken,
-    `/repos/${coords.owner}/${coords.repo}/issues/${coords.issueNumber}`
+    `/repos/${coords.owner}/${coords.repo}/issues/${coords.issueNumber}`,
   );
   const data = await issueResponse.json();
 
@@ -180,7 +180,7 @@ export async function fetchGithubIssue(
 export async function updateGithubEstimate(
   credentials: GithubOAuthCredentials,
   identifier: string,
-  estimate: number
+  estimate: number,
 ): Promise<GithubIssue> {
   const coords = parseGithubIssueIdentifier(identifier, {
     owner: credentials.defaultOwner ?? credentials.githubLogin ?? undefined,
@@ -188,7 +188,7 @@ export async function updateGithubEstimate(
   });
 
   if (!coords.owner || !coords.repo || Number.isNaN(coords.issueNumber)) {
-    throw new Error('Invalid GitHub issue identifier');
+    throw new Error("Invalid GitHub issue identifier");
   }
 
   const commentBody = `SprintJam estimate updated to **${estimate}** story points.`;
@@ -196,22 +196,22 @@ export async function updateGithubEstimate(
     credentials.accessToken,
     `/repos/${coords.owner}/${coords.repo}/issues/${coords.issueNumber}/comments`,
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ body: commentBody }),
-    }
+    },
   );
 
   return fetchGithubIssue(
     credentials,
-    `${coords.owner}/${coords.repo}#${coords.issueNumber}`
+    `${coords.owner}/${coords.repo}#${coords.issueNumber}`,
   );
 }
 
 export async function addGithubComment(
   credentials: GithubOAuthCredentials,
   identifier: string,
-  commentBody: string
+  commentBody: string,
 ): Promise<void> {
   const trimmed = commentBody.trim();
   if (!trimmed) {
@@ -224,17 +224,17 @@ export async function addGithubComment(
   });
 
   if (!coords.owner || !coords.repo || Number.isNaN(coords.issueNumber)) {
-    throw new Error('Invalid GitHub issue identifier');
+    throw new Error("Invalid GitHub issue identifier");
   }
 
   await githubRequest(
     credentials.accessToken,
     `/repos/${coords.owner}/${coords.repo}/issues/${coords.issueNumber}/comments`,
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ body: trimmed }),
-    }
+    },
   );
 }
 
@@ -248,21 +248,21 @@ export async function createGithubIssue(options: {
 }): Promise<GithubIssue> {
   const { accessToken, owner, repo, title, body, labels } = options;
   const uniqueLabels = Array.from(
-    new Set(labels.map((label) => label.trim()).filter(Boolean))
+    new Set(labels.map((label) => label.trim()).filter(Boolean)),
   );
 
   const issueResponse = await githubRequest(
     accessToken,
     `/repos/${owner}/${repo}/issues`,
     {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title,
         body,
         labels: uniqueLabels,
       }),
-    }
+    },
   );
 
   const data = await issueResponse.json();
@@ -270,7 +270,7 @@ export async function createGithubIssue(options: {
 }
 
 export async function fetchGithubRepos(
-  credentials: GithubOAuthCredentials
+  credentials: GithubOAuthCredentials,
 ): Promise<
   Array<{ id: string; name: string; fullName: string; owner: string }>
 > {
@@ -285,7 +285,7 @@ export async function fetchGithubRepos(
   while (true) {
     const response = await githubRequest(
       credentials.accessToken,
-      `/user/repos?per_page=100&page=${page}&sort=updated`
+      `/user/repos?per_page=100&page=${page}&sort=updated`,
     );
     const data = (await response.json()) as Array<{
       id: number;
@@ -298,7 +298,7 @@ export async function fetchGithubRepos(
       id: String(repo.id),
       name: repo.name,
       fullName: repo.full_name,
-      owner: repo.owner?.login ?? repo.full_name.split('/')[0] ?? '',
+      owner: repo.owner?.login ?? repo.full_name.split("/")[0] ?? "",
     }));
 
     repos.push(...pageRepos);
@@ -314,13 +314,13 @@ export async function fetchGithubRepos(
 
 export async function fetchGithubMilestones(
   credentials: GithubOAuthCredentials,
-  repository: string
+  repository: string,
 ): Promise<
   Array<{ id: string; number: number; title: string; state?: string }>
 > {
-  const [owner, repo] = repository.split('/');
+  const [owner, repo] = repository.split("/");
   if (!owner || !repo) {
-    throw new Error('Invalid GitHub repository identifier.');
+    throw new Error("Invalid GitHub repository identifier.");
   }
 
   const milestones: Array<{
@@ -334,7 +334,7 @@ export async function fetchGithubMilestones(
   while (true) {
     const response = await githubRequest(
       credentials.accessToken,
-      `/repos/${owner}/${repo}/milestones?state=all&per_page=100&page=${page}`
+      `/repos/${owner}/${repo}/milestones?state=all&per_page=100&page=${page}`,
     );
     const data = (await response.json()) as Array<{
       id: number;
@@ -349,7 +349,7 @@ export async function fetchGithubMilestones(
         number: milestone.number,
         title: milestone.title,
         state: milestone.state,
-      }))
+      })),
     );
 
     if (data.length < 100) {
@@ -369,23 +369,23 @@ export async function fetchGithubRepoIssues(
     milestoneTitle?: string | null;
     limit?: number | null;
     search?: string | null;
-  }
+  },
 ): Promise<GithubIssue[]> {
-  const [owner, repo] = repository.split('/');
+  const [owner, repo] = repository.split("/");
   if (!owner || !repo) {
-    throw new Error('Invalid GitHub repository identifier.');
+    throw new Error("Invalid GitHub repository identifier.");
   }
 
   const limit = Math.min(options.limit ?? 50, 100);
-  const search = options.search?.trim() ?? '';
-  const milestoneTitle = options.milestoneTitle?.trim() ?? '';
+  const search = options.search?.trim() ?? "";
+  const milestoneTitle = options.milestoneTitle?.trim() ?? "";
   const hasSearch = Boolean(search);
 
   if (hasSearch) {
-    const qualifiers = [`repo:${owner}/${repo}`, 'is:issue'];
+    const qualifiers = [`repo:${owner}/${repo}`, "is:issue"];
     if (milestoneTitle) {
       qualifiers.push(
-        `milestone:\\"${escapeGithubSearchValue(milestoneTitle)}\\"`
+        `milestone:\\"${escapeGithubSearchValue(milestoneTitle)}\\"`,
       );
     }
     if (/^\d+$/.test(search)) {
@@ -393,10 +393,10 @@ export async function fetchGithubRepoIssues(
     } else {
       qualifiers.push(`in:title,body ${search}`);
     }
-    const q = qualifiers.join(' ');
+    const q = qualifiers.join(" ");
     const response = await githubRequest(
       credentials.accessToken,
-      `/search/issues?q=${encodeURIComponent(q)}&per_page=${limit}&page=1`
+      `/search/issues?q=${encodeURIComponent(q)}&per_page=${limit}&page=1`,
     );
     const data = (await response.json()) as {
       items?: Array<Record<string, any>>;
@@ -406,20 +406,20 @@ export async function fetchGithubRepoIssues(
   }
 
   const params = new URLSearchParams({
-    state: 'all',
+    state: "all",
     per_page: String(limit),
-    page: '1',
+    page: "1",
   });
   if (
     options.milestoneNumber !== undefined &&
     options.milestoneNumber !== null
   ) {
-    params.set('milestone', String(options.milestoneNumber));
+    params.set("milestone", String(options.milestoneNumber));
   }
 
   const response = await githubRequest(
     credentials.accessToken,
-    `/repos/${owner}/${repo}/issues?${params.toString()}`
+    `/repos/${owner}/${repo}/issues?${params.toString()}`,
   );
   const data = (await response.json()) as Array<Record<string, any>>;
 

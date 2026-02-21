@@ -6,7 +6,7 @@ export type ErrorKind =
   | "validation"
   | "unknown";
 
-export type ConnectionStatusState = 'connected' | 'connecting' | 'disconnected';
+export type ConnectionStatusState = "connected" | "connecting" | "disconnected";
 
 export type ErrorConnectionIssue = {
   type: string;
@@ -17,23 +17,23 @@ export type ErrorConnectionIssue = {
 export type VoteValue = string | number;
 
 export type JudgeAlgorithm =
-  | 'smartConsensus'
-  | 'conservativeMode'
-  | 'optimisticMode'
-  | 'simpleAverage';
+  | "smartConsensus"
+  | "conservativeMode"
+  | "optimisticMode"
+  | "simpleAverage";
 
-export type TaskSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type TaskSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 export type VotingSequenceId =
-  | 'fibonacci'
-  | 'fibonacci-short'
-  | 'doubling'
-  | 'tshirt'
-  | 'planet-scale'
-  | 'yes-no'
-  | 'simple'
-  | 'hours'
-  | 'custom';
+  | "fibonacci"
+  | "fibonacci-short"
+  | "doubling"
+  | "tshirt"
+  | "planet-scale"
+  | "yes-no"
+  | "simple"
+  | "hours"
+  | "custom";
 
 export interface VotingSequenceTemplate {
   id: VotingSequenceId;
@@ -49,22 +49,22 @@ export interface ExtraVoteOption {
   description?: string;
   enabled?: boolean;
   aliases?: string[];
-  impact?: 'none' | 'high-alert';
+  impact?: "none" | "high-alert";
 }
 
 export type AvatarId =
-  | 'user'
-  | 'robot'
-  | 'bear'
-  | 'bird'
-  | 'knight'
-  | 'alien'
-  | 'ninja'
-  | 'pirate'
-  | 'wizard'
-  | 'ghost'
-  | 'dragon'
-  | 'crown'
+  | "user"
+  | "robot"
+  | "bear"
+  | "bird"
+  | "knight"
+  | "alien"
+  | "ninja"
+  | "pirate"
+  | "wizard"
+  | "ghost"
+  | "dragon"
+  | "crown"
   | string;
 
 export interface TicketVote {
@@ -74,6 +74,25 @@ export interface TicketVote {
   vote: VoteValue;
   structuredVotePayload?: StructuredVote;
   votedAt: number;
+}
+
+export type RoundTransitionType = "reset" | "next_ticket" | "complete_session";
+
+export interface SessionRoundVote {
+  userName: string;
+  vote: VoteValue;
+  structuredVotePayload?: StructuredVote;
+  votedAt: number;
+}
+
+export interface SessionRoundHistoryItem {
+  id: string;
+  ticketId?: string;
+  ticketTitle?: string;
+  outcome?: string;
+  type: RoundTransitionType;
+  endedAt: number;
+  votes: SessionRoundVote[];
 }
 
 export type TicketMetadata = Record<string, any>;
@@ -126,12 +145,12 @@ export interface TicketQueueItem {
   ticketId: string;
   title?: string;
   description?: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: "pending" | "in_progress" | "completed";
   outcome?: string;
   createdAt: number;
   completedAt?: number;
   ordinal: number;
-  externalService: 'jira' | 'linear' | 'github' | 'none';
+  externalService: "jira" | "linear" | "github" | "none";
   externalServiceId?: string;
   externalServiceMetadata?: TicketMetadata;
   votes?: TicketVote[];
@@ -232,7 +251,7 @@ export interface RoomSettings {
   enableJudge: boolean;
   judgeAlgorithm: JudgeAlgorithm;
   hideParticipantNames?: boolean;
-  externalService?: 'jira' | 'linear' | 'github' | 'none';
+  externalService?: "jira" | "linear" | "github" | "none";
   autoSyncEstimates?: boolean;
   enableTicketQueue?: boolean;
   enableStructuredVoting?: boolean;
@@ -258,7 +277,7 @@ export interface ServerDefaults {
 }
 
 export interface JudgeMetadata {
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   needsDiscussion: boolean;
   reasoning: string;
   algorithm: JudgeAlgorithm;
@@ -277,12 +296,12 @@ export interface TimerState {
 }
 
 export type RoomGameType =
-  | 'guess-the-number'
-  | 'word-chain'
-  | 'emoji-story'
-  | 'one-word-pitch'
-  | 'category-blitz'
-  | 'clueboard';
+  | "guess-the-number"
+  | "word-chain"
+  | "emoji-story"
+  | "one-word-pitch"
+  | "category-blitz"
+  | "clueboard";
 
 export interface RoomGameMove {
   id: string;
@@ -303,7 +322,7 @@ export interface RoomGameSession {
   startedBy: string;
   startedAt: number;
   round: number;
-  status: 'active' | 'completed';
+  status: "active" | "completed";
   participants: string[];
   leaderboard: Record<string, number>;
   moves: RoomGameMove[];
@@ -312,7 +331,7 @@ export interface RoomGameSession {
   lastWord?: string | null;
   oneWordPitchPrompt?: string;
   oneWordPitchPromptHistory?: string[];
-  oneWordPitchPhase?: 'submit' | 'vote';
+  oneWordPitchPhase?: "submit" | "vote";
   oneWordPitchRoundSubmissions?: Record<string, string>;
   oneWordPitchRoundVotes?: Record<string, string>;
   oneWordPitchRoundHistory?: Array<{
@@ -333,7 +352,7 @@ export interface RoomGameSession {
   }>;
   codenamesBoard?: string[];
   codenamesRevealedIndices?: number[];
-  codenamesRoundPhase?: 'clue' | 'guess';
+  codenamesRoundPhase?: "clue" | "guess";
   codenamesClueGiver?: string | null;
   codenamesCurrentClue?: string | null;
   codenamesCurrentClueTarget?: number;
@@ -376,6 +395,7 @@ export interface RoomData {
   strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
+  roundHistory?: SessionRoundHistoryItem[];
   timerState?: TimerState;
   gameSession?: RoomGameSession;
 }
@@ -387,39 +407,39 @@ export type WebSocketErrorReason =
   | "network";
 
 export type WebSocketMessageType =
-  | 'initialize'
-  | 'userJoined'
-  | 'userLeft'
-  | 'userConnectionStatus'
-  | 'spectatorStatusChanged'
-  | 'vote'
-  | 'showVotes'
-  | 'resetVotes'
-  | 'newModerator'
-  | 'settingsUpdated'
-  | 'roomStatusUpdated'
-  | 'judgeScoreUpdated'
-  | 'error'
-  | 'disconnected'
-  | 'avatarChanged'
-  | 'strudelCodeGenerated'
-  | 'generateStrudelCode'
-  | 'toggleStrudelPlayback'
-  | 'strudelPlaybackToggled'
-  | 'nextTicket'
-  | 'ticketAdded'
-  | 'ticketUpdated'
-  | 'ticketDeleted'
-  | 'ticketCompleted'
-  | 'queueUpdated'
-  | 'timerStarted'
-  | 'timerPaused'
-  | 'timerReset'
-  | 'timerUpdated'
-  | 'clueboardSecret'
-  | 'gameStarted'
-  | 'gameMoveSubmitted'
-  | 'gameEnded';
+  | "initialize"
+  | "userJoined"
+  | "userLeft"
+  | "userConnectionStatus"
+  | "spectatorStatusChanged"
+  | "vote"
+  | "showVotes"
+  | "resetVotes"
+  | "newModerator"
+  | "settingsUpdated"
+  | "roomStatusUpdated"
+  | "judgeScoreUpdated"
+  | "error"
+  | "disconnected"
+  | "avatarChanged"
+  | "strudelCodeGenerated"
+  | "generateStrudelCode"
+  | "toggleStrudelPlayback"
+  | "strudelPlaybackToggled"
+  | "nextTicket"
+  | "ticketAdded"
+  | "ticketUpdated"
+  | "ticketDeleted"
+  | "ticketCompleted"
+  | "queueUpdated"
+  | "timerStarted"
+  | "timerPaused"
+  | "timerReset"
+  | "timerUpdated"
+  | "clueboardSecret"
+  | "gameStarted"
+  | "gameMoveSubmitted"
+  | "gameEnded";
 
 interface WebSocketPayloads {
   initialize: {
@@ -454,6 +474,7 @@ interface WebSocketPayloads {
   };
   resetVotes: {
     votingCompletion?: VotingCompletion;
+    roundHistory?: SessionRoundHistoryItem[];
   };
   newModerator: {
     moderator: string;
@@ -497,6 +518,7 @@ interface WebSocketPayloads {
   nextTicket: {
     ticket: TicketQueueItem;
     queue?: TicketQueueItem[];
+    roundHistory?: SessionRoundHistoryItem[];
   };
   ticketAdded: {
     ticket: TicketQueueItem;
@@ -581,6 +603,6 @@ export interface CriteriaStats {
   min: number;
   max: number;
   variance: number;
-  consensus: 'high' | 'medium' | 'low';
+  consensus: "high" | "medium" | "low";
   maxScore?: number;
 }

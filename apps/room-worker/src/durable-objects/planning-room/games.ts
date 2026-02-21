@@ -7,7 +7,7 @@ import {
   addEvent,
   createGameMove,
   initializeGameSession,
-} from './game-engines/helpers';
+} from "./game-engines/helpers";
 import { GAME_ENGINES } from "./game-engines/registry";
 
 const getWinner = (session: RoomGameSession) => {
@@ -34,9 +34,9 @@ const sendClueboardSecretToCurrentClueGiver = (
   session: RoomGameSession,
 ) => {
   if (
-    session.type !== 'clueboard' ||
-    session.status !== 'active' ||
-    session.codenamesRoundPhase !== 'clue'
+    session.type !== "clueboard" ||
+    session.status !== "active" ||
+    session.codenamesRoundPhase !== "clue"
   ) {
     return;
   }
@@ -48,7 +48,7 @@ const sendClueboardSecretToCurrentClueGiver = (
   }
 
   const payload = JSON.stringify({
-    type: 'clueboardSecret',
+    type: "clueboardSecret",
     round: session.round,
     blockerIndex,
   });

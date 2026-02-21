@@ -1,7 +1,7 @@
-import type { SelectHTMLAttributes } from 'react';
-import { ChevronDown } from 'lucide-react';
+import type { SelectHTMLAttributes } from "react";
+import { ChevronDown } from "lucide-react";
 
-import { cn } from '@/lib/cn';
+import { cn } from "@/lib/cn";
 
 export type SelectOption = {
   label: string;
@@ -28,7 +28,7 @@ export function Select({
   const selectValueProps =
     value !== undefined
       ? { value }
-      : { defaultValue: defaultValue ?? (placeholder ? '' : undefined) };
+      : { defaultValue: defaultValue ?? (placeholder ? "" : undefined) };
 
   return (
     <div className="relative">
@@ -40,8 +40,8 @@ export function Select({
           onValueChange?.(event.currentTarget.value);
         }}
         className={cn(
-          'h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-          className
+          "h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className,
         )}
       >
         {placeholder && (

@@ -1,5 +1,5 @@
 import type { VoteValue, TicketMetadata } from "@/types";
-import { API_BASE_URL } from '@/constants';
+import { API_BASE_URL } from "@/constants";
 
 export interface LinearOAuthStatus {
   connected: boolean;
@@ -29,14 +29,14 @@ export async function fetchLinearIssue(
 ): Promise<TicketMetadata> {
   try {
     const response = await fetch(`${API_BASE_URL}/linear/issue`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         issueId,
         roomKey: options?.roomKey,
         userName: options?.userName,
       }),
-      credentials: 'include',
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -53,9 +53,9 @@ export async function fetchLinearIssue(
     if (ticket) {
       return ticket;
     }
-    throw new Error('Invalid response format from Linear API');
+    throw new Error("Invalid response format from Linear API");
   } catch (error) {
-    console.error('Error fetching Linear issue:', error);
+    console.error("Error fetching Linear issue:", error);
     throw error;
   }
 }
@@ -73,9 +73,9 @@ export async function updateLinearEstimate(
     const response = await fetch(
       `${API_BASE_URL}/linear/issue/${encodeURIComponent(issueId)}/estimate`,
       {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           estimate,
@@ -83,7 +83,7 @@ export async function updateLinearEstimate(
           userName: options.userName,
           note: options.note,
         }),
-        credentials: 'include',
+        credentials: "include",
       },
     );
 
@@ -100,7 +100,7 @@ export async function updateLinearEstimate(
 
     return ticket;
   } catch (error) {
-    console.error('Error updating Linear estimate:', error);
+    console.error("Error updating Linear estimate:", error);
     throw error;
   }
 }
@@ -110,16 +110,16 @@ export async function fetchLinearTeams(
   userName: string,
 ): Promise<LinearTeam[]> {
   const response = await fetch(`${API_BASE_URL}/linear/teams`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      (errorData as { error?: string }).error || 'Failed to fetch Linear teams',
+      (errorData as { error?: string }).error || "Failed to fetch Linear teams",
     );
   }
 
@@ -133,17 +133,17 @@ export async function fetchLinearCycles(
   userName: string,
 ): Promise<LinearCycle[]> {
   const response = await fetch(`${API_BASE_URL}/linear/cycles`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ teamId, roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
       (errorData as { error?: string }).error ||
-        'Failed to fetch Linear cycles',
+        "Failed to fetch Linear cycles",
     );
   }
 
@@ -162,8 +162,8 @@ export async function fetchLinearIssues(
   userName: string,
 ): Promise<TicketMetadata[]> {
   const response = await fetch(`${API_BASE_URL}/linear/issues`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       teamId,
       roomKey,
@@ -172,14 +172,14 @@ export async function fetchLinearIssues(
       query: options.search,
       limit: options.limit,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
       (errorData as { error?: string }).error ||
-        'Failed to fetch Linear issues',
+        "Failed to fetch Linear issues",
     );
   }
 
@@ -210,14 +210,14 @@ export async function getLinearOAuthStatus(
   userName: string,
 ): Promise<LinearOAuthStatus> {
   const response = await fetch(`${API_BASE_URL}/linear/oauth/status`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch OAuth status');
+    throw new Error("Failed to fetch OAuth status");
   }
 
   return (await response.json()) as LinearOAuthStatus;
@@ -228,20 +228,20 @@ export async function authorizeLinearOAuth(
   userName: string,
 ): Promise<{ authorizationUrl: string }> {
   const response = await fetch(`${API_BASE_URL}/linear/oauth/authorize`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       roomKey,
       userName,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to initiate OAuth');
+    throw new Error(errorData.error || "Failed to initiate OAuth");
   }
 
   return (await response.json()) as { authorizationUrl: string };
@@ -252,19 +252,19 @@ export async function revokeLinearOAuth(
   userName: string,
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/linear/oauth/revoke`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       roomKey,
       userName,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to disconnect Linear');
+    throw new Error(errorData.error || "Failed to disconnect Linear");
   }
 }

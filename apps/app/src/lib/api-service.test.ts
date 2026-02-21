@@ -20,7 +20,7 @@ vi.mock("@/utils/storage", () => {
   };
 });
 
-import * as apiService from '@/lib/api-service';
+import * as apiService from "@/lib/api-service";
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
@@ -73,8 +73,8 @@ describe("api-service", () => {
   it("closes the socket on error to trigger reconnect flow", () => {
     const onConnectionStatusChange = vi.fn();
     apiService.connectToRoom(
-      'ROOM',
-      'user',
+      "ROOM",
+      "user",
       () => {},
       onConnectionStatusChange,
     );
@@ -94,7 +94,7 @@ describe("api-service", () => {
 
   it("cancels a queued vote send when disconnecting", () => {
     vi.useFakeTimers();
-    apiService.connectToRoom('ROOM', 'user', () => {});
+    apiService.connectToRoom("ROOM", "user", () => {});
     const socket = MockWebSocket.instances.length
       ? MockWebSocket.instances[MockWebSocket.instances.length - 1]
       : undefined;
@@ -112,34 +112,34 @@ describe("api-service", () => {
   });
 
   it("returns existing socket when already connected to same room with same token", () => {
-    apiService.connectToRoom('ROOM', 'user', () => {});
+    apiService.connectToRoom("ROOM", "user", () => {});
     expect(MockWebSocket.instances).toHaveLength(1);
 
     const existingSocket = MockWebSocket.instances[0];
 
-    const result = apiService.connectToRoom('ROOM', 'user', () => {});
+    const result = apiService.connectToRoom("ROOM", "user", () => {});
 
     expect(MockWebSocket.instances).toHaveLength(1);
     expect(result).toBe(existingSocket);
   });
 
   it("creates new socket when room key differs", () => {
-    apiService.connectToRoom('ROOM1', 'user', () => {});
+    apiService.connectToRoom("ROOM1", "user", () => {});
     expect(MockWebSocket.instances).toHaveLength(1);
 
-    apiService.connectToRoom('ROOM2', 'user', () => {});
+    apiService.connectToRoom("ROOM2", "user", () => {});
 
     expect(MockWebSocket.instances).toHaveLength(2);
   });
 
   it("creates new socket after disconnect even with same params", () => {
-    apiService.connectToRoom('ROOM', 'user', () => {});
+    apiService.connectToRoom("ROOM", "user", () => {});
     expect(MockWebSocket.instances).toHaveLength(1);
     const firstSocket = MockWebSocket.instances[0];
 
     apiService.disconnectFromRoom();
 
-    apiService.connectToRoom('ROOM', 'user', () => {});
+    apiService.connectToRoom("ROOM", "user", () => {});
     expect(MockWebSocket.instances).toHaveLength(2);
     expect(MockWebSocket.instances[1]).not.toBe(firstSocket);
   });

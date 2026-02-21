@@ -6,7 +6,7 @@ import { useLinearOAuth } from "@/hooks/useLinearOAuth";
 import { useGithubOAuth } from "@/hooks/useGithubOAuth";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { SITE_NAME } from '@/constants';
+import { SITE_NAME } from "@/constants";
 
 type QueueProvider = "jira" | "linear" | "github";
 
@@ -95,7 +95,7 @@ export function QueueProviderSetupModal({
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {comingSoon
-                    ? 'This integration is coming soon—stay tuned.'
+                    ? "This integration is coming soon—stay tuned."
                     : `We’ll ask you to sign in so ${SITE_NAME} can read your tickets and write estimates.`}
                 </p>
               </div>
@@ -138,9 +138,9 @@ export function QueueProviderSetupModal({
                 fullWidth
               >
                 {comingSoon
-                  ? 'Available soon'
+                  ? "Available soon"
                   : connected
-                    ? 'Disconnect'
+                    ? "Disconnect"
                     : `Connect to ${copy.name}`}
               </Button>
             </div>

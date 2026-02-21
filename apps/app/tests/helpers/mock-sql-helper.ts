@@ -2,7 +2,10 @@ export class MockSqlStorage {
   private tables: Map<string, any[]> = new Map();
   private autoIncrements: Map<string, number> = new Map();
 
-  exec<T = any>(query: string, ...params: unknown[]): {
+  exec<T = any>(
+    query: string,
+    ...params: unknown[]
+  ): {
     toArray: () => T[];
     raw: () => { toArray: () => unknown[][] };
     next: () => { value: T | undefined; done: boolean };
@@ -42,7 +45,10 @@ export class MockSqlStorage {
       return cursor();
     }
 
-    if (normalized.startsWith("CREATE INDEX") || normalized.startsWith("CREATE UNIQUE INDEX")) {
+    if (
+      normalized.startsWith("CREATE INDEX") ||
+      normalized.startsWith("CREATE UNIQUE INDEX")
+    ) {
       return cursor();
     }
 
@@ -59,8 +65,9 @@ export class MockSqlStorage {
 
     if (normalized.includes("SELECT") && normalized.includes("TICKET_QUEUE")) {
       const tickets = this.tables.get("ticket_queue") || [];
-      const singleColumn =
-        normalized.match(/^SELECT\s+([A-Z_]+)\s+FROM\s+TICKET_QUEUE/)?.[1]?.toLowerCase();
+      const singleColumn = normalized
+        .match(/^SELECT\s+([A-Z_]+)\s+FROM\s+TICKET_QUEUE/)?.[1]
+        ?.toLowerCase();
       const mapRows = (rows: any[]) => {
         if (!singleColumn) {
           return rows as T[];

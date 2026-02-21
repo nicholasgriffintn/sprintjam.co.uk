@@ -15,11 +15,11 @@ test.describe("Data persistence", () => {
       await moderatorRoom.revealVotes();
 
       await moderatorRoom.getPage().getByTestId("queue-expand").click();
+      await moderatorRoom.getPage().getByTestId("queue-toggle-add").click();
       await moderatorRoom
         .getPage()
-        .getByTestId("queue-toggle-add")
-        .click();
-      await moderatorRoom.getPage().getByPlaceholder("Ticket title").fill("Persisted Ticket");
+        .getByPlaceholder("Ticket title")
+        .fill("Persisted Ticket");
       await moderatorRoom.getPage().getByTestId("queue-add-confirm").click();
       await moderatorRoom.getPage().getByTestId("queue-start-voting-1").click();
       await moderatorRoom.getPage().keyboard.press("Escape");

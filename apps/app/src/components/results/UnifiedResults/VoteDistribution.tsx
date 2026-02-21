@@ -170,8 +170,8 @@ export function VoteDistribution({
               onClick={() => setDistributionView(option.id)}
               className={`rounded-md px-3 py-1 text-xs font-semibold ${
                 distributionView === option.id
-                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                  ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               }`}
               aria-pressed={distributionView === option.id}
               data-testid={`distribution-view-option-${option.id}`}

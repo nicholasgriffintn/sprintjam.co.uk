@@ -1,17 +1,17 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import * as Sentry from '@sentry/cloudflare';
+import * as Sentry from "@sentry/cloudflare";
 
 import { handleRequest } from "./routes/router";
 import { WorkspaceAuthRepository } from "./repositories/workspace-auth";
 
 const SENTRY_DSN =
-  'https://95460a28df42464d8860431ec35767c7@ingest.bitwobbly.com/12';
+  "https://95460a28df42464d8860431ec35767c7@ingest.bitwobbly.com/12";
 
 export default Sentry.withSentry(
   (env: AuthWorkerEnv) => ({
     dsn: SENTRY_DSN,
     tracesSampleRate: 0.1,
-    enabled: env.ENVIRONMENT === 'production' || env.ENVIRONMENT === 'staging',
+    enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
   }),
   {
     async fetch(request: Request, env: AuthWorkerEnv): Promise<Response> {
@@ -33,7 +33,7 @@ export default Sentry.withSentry(
         );
       } catch (error) {
         Sentry.captureException(error);
-        console.error('Cleanup job failed:', error);
+        console.error("Cleanup job failed:", error);
       }
     },
   },

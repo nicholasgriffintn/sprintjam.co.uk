@@ -1,10 +1,10 @@
 import {
   MAX_TIMER_DURATION_SECONDS,
   MIN_TIMER_DURATION_SECONDS,
-} from '@sprintjam/utils/constants';
-import { calculateTimerSeconds, ensureTimerState } from '@sprintjam/utils';
+} from "@sprintjam/utils/constants";
+import { calculateTimerSeconds, ensureTimerState } from "@sprintjam/utils";
 
-import type { PlanningRoom } from '.';
+import type { PlanningRoom } from ".";
 
 export async function handleStartTimer(room: PlanningRoom, userName: string) {
   const roomData = await room.getRoomData();
@@ -28,7 +28,7 @@ export async function handleStartTimer(room: PlanningRoom, userName: string) {
   timerState.lastUpdateTime = currentTime;
 
   room.broadcast({
-    type: 'timerStarted',
+    type: "timerStarted",
     timerState,
   });
 }
@@ -49,7 +49,7 @@ export async function handlePauseTimer(room: PlanningRoom, userName: string) {
   const updatedRoomData = await room.getRoomData();
   if (updatedRoomData?.timerState) {
     room.broadcast({
-      type: 'timerPaused',
+      type: "timerPaused",
       timerState: updatedRoomData.timerState,
     });
   }
@@ -74,7 +74,7 @@ export async function handleResetTimer(room: PlanningRoom, userName: string) {
   timerState.roundAnchorSeconds = 0;
 
   room.broadcast({
-    type: 'timerReset',
+    type: "timerReset",
     timerState,
   });
 }
@@ -86,7 +86,7 @@ export async function handleConfigureTimer(
     targetDurationSeconds?: number;
     autoResetOnVotesReset?: boolean;
     resetCountdown?: boolean;
-  }
+  },
 ) {
   const roomData = await room.getRoomData();
   if (!roomData) {
@@ -105,18 +105,18 @@ export async function handleConfigureTimer(
   } = {};
 
   if (
-    typeof config.targetDurationSeconds === 'number' &&
+    typeof config.targetDurationSeconds === "number" &&
     !Number.isNaN(config.targetDurationSeconds)
   ) {
     const clamped = Math.max(
       MIN_TIMER_DURATION_SECONDS,
-      Math.min(config.targetDurationSeconds, MAX_TIMER_DURATION_SECONDS)
+      Math.min(config.targetDurationSeconds, MAX_TIMER_DURATION_SECONDS),
     );
     timerState.targetDurationSeconds = clamped;
     updates.targetDurationSeconds = clamped;
   }
 
-  if (typeof config.autoResetOnVotesReset === 'boolean') {
+  if (typeof config.autoResetOnVotesReset === "boolean") {
     timerState.autoResetOnVotesReset = config.autoResetOnVotesReset;
     updates.autoResetOnVotesReset = config.autoResetOnVotesReset;
   }
@@ -138,7 +138,7 @@ export async function handleConfigureTimer(
   room.repository.updateTimerConfig(updates);
 
   room.broadcast({
-    type: 'timerUpdated',
+    type: "timerUpdated",
     timerState,
   });
 }

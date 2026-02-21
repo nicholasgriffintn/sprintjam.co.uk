@@ -3,8 +3,8 @@ import { Send } from "lucide-react";
 
 import { submitFeedback } from "@/lib/feedback-service";
 import type { GithubIssue } from "@/types";
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 const LABEL_OPTIONS = [
   {

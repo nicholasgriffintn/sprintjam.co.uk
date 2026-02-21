@@ -5,7 +5,7 @@ declare const WebSocketPair: {
 import type {
   DurableObjectState,
   WebSocket as CfWebSocket,
-} from '@cloudflare/workers-types';
+} from "@cloudflare/workers-types";
 
 import type {
   WheelWorkerEnv,
@@ -13,16 +13,16 @@ import type {
   WheelBroadcastMessage,
   WheelSessionInfo,
   WheelSettings,
-} from '@sprintjam/types';
-import { getWheelSessionToken, isAllowedOrigin } from '@sprintjam/utils';
-import type { Request as CfRequest } from '@cloudflare/workers-types';
+} from "@sprintjam/types";
+import { getWheelSessionToken, isAllowedOrigin } from "@sprintjam/utils";
+import type { Request as CfRequest } from "@cloudflare/workers-types";
 
-import { WheelRoomRepository } from '../../repositories/wheel-room';
+import { WheelRoomRepository } from "../../repositories/wheel-room";
 import {
   handleHttpRequest,
   type WheelRoomHttpContext,
-} from '../../controllers/wheel';
-import { handleSession as handleSessionHandler } from './session';
+} from "../../controllers/wheel";
+import { handleSession as handleSessionHandler } from "./session";
 import {
   handleAddEntry as handleAddEntryHandler,
   handleRemoveEntry as handleRemoveEntryHandler,
@@ -30,13 +30,13 @@ import {
   handleToggleEntry as handleToggleEntryHandler,
   handleClearEntries as handleClearEntriesHandler,
   handleBulkAddEntries as handleBulkAddEntriesHandler,
-} from './entries';
+} from "./entries";
 import {
   handleSpin as handleSpinHandler,
   handleSpinComplete as handleSpinCompleteHandler,
   handleResetWheel as handleResetWheelHandler,
   handleUpdateSettings as handleUpdateSettingsHandler,
-} from './spin';
+} from "./spin";
 
 export class WheelRoom implements WheelRoomHttpContext {
   state: DurableObjectState;
@@ -63,7 +63,7 @@ export class WheelRoom implements WheelRoomHttpContext {
   disconnectUserSessions(userName: string) {
     for (const [socket, session] of this.sessions.entries()) {
       if (session.userName.toLowerCase() === userName.trim().toLowerCase()) {
-        socket.close(4004, 'Session superseded');
+        socket.close(4004, "Session superseded");
         this.sessions.delete(socket);
       }
     }
@@ -72,25 +72,25 @@ export class WheelRoom implements WheelRoomHttpContext {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
-    const upgradeHeader = request.headers.get('Upgrade');
-    if (upgradeHeader === 'websocket') {
-      const origin = request.headers.get('Origin');
-      const isDevelopment = this.env.ENVIRONMENT === 'development';
+    const upgradeHeader = request.headers.get("Upgrade");
+    if (upgradeHeader === "websocket") {
+      const origin = request.headers.get("Origin");
+      const isDevelopment = this.env.ENVIRONMENT === "development";
 
       if (!isAllowedOrigin(origin, isDevelopment)) {
-        return new Response('Forbidden', {
+        return new Response("Forbidden", {
           status: 403,
         });
       }
 
-      const wheelKey = url.searchParams.get('wheel');
-      const userName = url.searchParams.get('name');
+      const wheelKey = url.searchParams.get("wheel");
+      const userName = url.searchParams.get("name");
       const sessionToken = getWheelSessionToken(
         request as unknown as CfRequest,
       );
 
       if (!wheelKey || !userName || !sessionToken) {
-        return new Response('Missing wheel key, user name, or session', {
+        return new Response("Missing wheel key, user name, or session", {
           status: 400,
         });
       }
@@ -111,9 +111,9 @@ export class WheelRoom implements WheelRoomHttpContext {
       return httpResponse;
     }
 
-    return new Response(JSON.stringify({ error: 'Wheel Route Not found' }), {
+    return new Response(JSON.stringify({ error: "Wheel Route Not found" }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 

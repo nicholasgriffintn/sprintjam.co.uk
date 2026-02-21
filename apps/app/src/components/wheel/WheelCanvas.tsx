@@ -55,7 +55,7 @@ export function WheelCanvas({
   useEffect(() => {
     const segment = getSegmentAtAngle(rotation.get(), enabledEntries.length);
     setCurrentSegment(segment);
-    const unsubscribe = rotation.on('change', (latest) => {
+    const unsubscribe = rotation.on("change", (latest) => {
       const segment = getSegmentAtAngle(latest, enabledEntries.length);
       setCurrentSegment(segment);
     });
@@ -148,7 +148,7 @@ export function WheelCanvas({
   const arrowColour =
     enabledEntries.length > 0
       ? WHEEL_COLORS[currentSegment % WHEEL_COLORS.length]
-      : '#FDD835';
+      : "#FDD835";
 
   if (enabledEntries.length === 0) {
     return (
@@ -169,24 +169,24 @@ export function WheelCanvas({
         style={{
           width: 0,
           height: 0,
-          borderTop: '20px solid transparent',
-          borderBottom: '20px solid transparent',
+          borderTop: "20px solid transparent",
+          borderBottom: "20px solid transparent",
           borderRight: `30px solid ${arrowColour}`,
-          filter: 'drop-shadow(-2px 0 4px rgba(0,0,0,0.3))',
-          transition: 'border-right-color 0.1s ease-out',
+          filter: "drop-shadow(-2px 0 4px rgba(0,0,0,0.3))",
+          transition: "border-right-color 0.1s ease-out",
         }}
       />
 
       <motion.div
         className="w-full h-full cursor-pointer"
         animate={
-          spinState?.isSpinning || spinState?.status === 'completed'
+          spinState?.isSpinning || spinState?.status === "completed"
             ? controls
             : {
                 rotate: [0, 360],
                 transition: {
                   duration: 6,
-                  ease: 'linear',
+                  ease: "linear",
                   repeat: Infinity,
                 },
               }
@@ -218,11 +218,11 @@ export function WheelCanvas({
                     className="fill-white font-semibold"
                     style={{
                       fontSize: 8,
-                      textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
                     }}
                   >
                     {entry.name.length > 18
-                      ? entry.name.slice(0, 16) + '...'
+                      ? entry.name.slice(0, 16) + "..."
                       : entry.name}
                   </text>
                 </g>
@@ -263,11 +263,11 @@ export function WheelCanvas({
                   className="fill-white font-semibold"
                   style={{
                     fontSize: Math.min(6, 60 / enabledEntries.length),
-                    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    textShadow: "0 1px 2px rgba(0,0,0,0.5)",
                   }}
                 >
                   {entry.name.length > 12
-                    ? entry.name.slice(0, 10) + '...'
+                    ? entry.name.slice(0, 10) + "..."
                     : entry.name}
                 </text>
               </g>

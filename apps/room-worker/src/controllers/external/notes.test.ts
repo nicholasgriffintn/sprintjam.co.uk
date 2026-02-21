@@ -2,9 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { Request as CfRequest } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types";
 
-import {
-  updateJiraStoryPointsController,
-} from "./jira-controller";
+import { updateJiraStoryPointsController } from "./jira-controller";
 import { updateLinearEstimateController } from "./linear-controller";
 import { updateGithubEstimateController } from "./github-controller";
 
@@ -20,9 +18,10 @@ vi.mock("@sprintjam/services", () => ({
 }));
 
 vi.mock("@sprintjam/utils", async () => {
-  const actual = await vi.importActual<typeof import("@sprintjam/utils")>(
-    "@sprintjam/utils",
-  );
+  const actual =
+    await vi.importActual<typeof import("@sprintjam/utils")>(
+      "@sprintjam/utils",
+    );
   return {
     ...actual,
     getRoomStub: vi.fn(),
@@ -41,10 +40,7 @@ import {
 } from "@sprintjam/services";
 import { getRoomStub } from "@sprintjam/utils";
 
-const makeRequest = (
-  body: Record<string, unknown>,
-  sessionToken = "token",
-) =>
+const makeRequest = (body: Record<string, unknown>, sessionToken = "token") =>
   new Request("https://test.sprintjam.co.uk", {
     method: "PUT",
     headers: {

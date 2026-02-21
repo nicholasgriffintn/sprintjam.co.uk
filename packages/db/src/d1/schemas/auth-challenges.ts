@@ -18,9 +18,6 @@ export const authChallenges = sqliteTable(
     usedAt: integer("used_at"),
   },
   (table) => [
-    index("auth_challenges_user_expires_idx").on(
-      table.userId,
-      table.expiresAt,
-    ),
+    index("auth_challenges_user_expires_idx").on(table.userId, table.expiresAt),
   ],
 );

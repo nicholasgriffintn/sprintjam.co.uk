@@ -351,10 +351,15 @@ describe("planning-room-http permissions and state updates", () => {
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest("/jira/oauth/status", "POST", {
-        roomKey: baseRoom.key,
-        userName: "Alice",
-      }, "valid"),
+      jsonRequest(
+        "/jira/oauth/status",
+        "POST",
+        {
+          roomKey: baseRoom.key,
+          userName: "Alice",
+        },
+        "valid",
+      ),
     )) as Response;
 
     expect(response.status).toBe(200);
@@ -393,10 +398,15 @@ describe("planning-room-http permissions and state updates", () => {
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest("/linear/oauth/revoke", "DELETE", {
-        roomKey: baseRoom.key,
-        userName: "Alice",
-      }, "valid"),
+      jsonRequest(
+        "/linear/oauth/revoke",
+        "DELETE",
+        {
+          roomKey: baseRoom.key,
+          userName: "Alice",
+        },
+        "valid",
+      ),
     )) as Response;
 
     expect(response.status).toBe(200);

@@ -5,7 +5,7 @@ import {
   addEvent,
   addPoints,
   initializeClueboardRound,
-} from '../helpers';
+} from "../helpers";
 import type { GameEngine } from "../types";
 
 const CLUEBOARD_CLUE_PATTERN = /^[a-z][a-z-]{1,18}$/i;
@@ -42,16 +42,16 @@ const parseTargetIndices = (
 
 const parseClueboardClue = (value: string, boardSize: number) => {
   const trimmed = value.trim().toLowerCase();
-  let clueText = '';
-  let targetText = '';
-  let targetIndicesText = '';
+  let clueText = "";
+  let targetText = "";
+  let targetIndicesText = "";
 
-  if (trimmed.startsWith('clue:')) {
-    const withoutPrefix = trimmed.slice('clue:'.length);
-    const [rawClue, rawTarget, rawIndices] = withoutPrefix.split('|');
-    clueText = rawClue?.trim() ?? '';
-    targetText = rawTarget?.trim() ?? '';
-    targetIndicesText = rawIndices?.trim() ?? '';
+  if (trimmed.startsWith("clue:")) {
+    const withoutPrefix = trimmed.slice("clue:".length);
+    const [rawClue, rawTarget, rawIndices] = withoutPrefix.split("|");
+    clueText = rawClue?.trim() ?? "";
+    targetText = rawTarget?.trim() ?? "";
+    targetIndicesText = rawIndices?.trim() ?? "";
   } else {
     const match = /^([a-z-]+)\s+([1-4])$/i.exec(trimmed);
     if (!match) {
@@ -81,12 +81,12 @@ const parseClueboardGuess = (value: string, board: string[]) => {
     return undefined;
   }
 
-  if (trimmed === 'pass') {
-    return 'pass';
+  if (trimmed === "pass") {
+    return "pass";
   }
 
-  if (trimmed.startsWith('guess:')) {
-    const index = Number(trimmed.slice('guess:'.length));
+  if (trimmed.startsWith("guess:")) {
+    const index = Number(trimmed.slice("guess:".length));
     if (Number.isInteger(index) && index >= 0 && index < board.length) {
       return index;
     }
@@ -107,15 +107,15 @@ const advanceRound = (session: RoomGameSession) => {
 };
 
 export const clueboardEngine: GameEngine = {
-  title: 'Clueboard',
+  title: "Clueboard",
   maxRounds: CLUEBOARD_ROUND_LIMIT,
   allowConsecutiveMoves: true,
   canStart: (roomData) =>
     roomData.users.length < 2
-      ? 'Clueboard needs at least 2 players.'
+      ? "Clueboard needs at least 2 players."
       : undefined,
   initializeSessionState: (roomData) => {
-    const sessionState: Pick<RoomGameSession, 'participants' | 'round'> &
+    const sessionState: Pick<RoomGameSession, "participants" | "round"> &
       Partial<RoomGameSession> = {
       participants: [...roomData.users],
       round: 1,
@@ -134,14 +134,14 @@ export const clueboardEngine: GameEngine = {
 
     const board = session.codenamesBoard ?? [];
     const clueGiver = session.codenamesClueGiver;
-    const phase = session.codenamesRoundPhase ?? 'clue';
+    const phase = session.codenamesRoundPhase ?? "clue";
 
-    if (phase === 'clue') {
+    if (phase === "clue") {
       if (!clueGiver || userName !== clueGiver) {
         session.moves = session.moves.slice(0, -1);
         addEvent(
           session,
-          `${userName} cannot set the clue this round. Waiting for ${clueGiver ?? 'the clue giver'}.`,
+          `${userName} cannot set the clue this round. Waiting for ${clueGiver ?? "the clue giver"}.`,
         );
         return;
       }
@@ -185,7 +185,7 @@ export const clueboardEngine: GameEngine = {
       session.codenamesCurrentClueTarget = parsedClue.target;
       session.codenamesTargetIndices = parsedClue.targetIndices;
       session.codenamesCurrentGuesses = 0;
-      session.codenamesRoundPhase = 'guess';
+      session.codenamesRoundPhase = "guess";
       addEvent(
         session,
         `${userName} set clue "${parsedClue.clue}" for ${parsedClue.target}. Guessers, go.`,
@@ -212,7 +212,7 @@ export const clueboardEngine: GameEngine = {
       return;
     }
 
-    if (guess === 'pass') {
+    if (guess === "pass") {
       addEvent(session, `${userName} passed. Moving to next round.`);
       advanceRound(session);
       return;
@@ -262,7 +262,7 @@ export const clueboardEngine: GameEngine = {
         (session.codenamesCurrentGuesses ?? 0) >=
         (session.codenamesCurrentClueTarget ?? 1)
       ) {
-        addEvent(session, 'Guess limit reached. Moving to next round.');
+        addEvent(session, "Guess limit reached. Moving to next round.");
         advanceRound(session);
       }
       return;

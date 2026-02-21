@@ -1,4 +1,4 @@
-import type { RoomSettings } from '@sprintjam/types';
+import type { RoomSettings } from "@sprintjam/types";
 import {
   createInitialRoomData,
   getServerDefaults,
@@ -9,9 +9,9 @@ import {
   hashPasscode,
   createRoomSessionCookie,
   SESSION_TOKEN_TTL_MS,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 
-import type { CfResponse, PlanningRoomHttpContext } from './types';
+import type { CfResponse, PlanningRoomHttpContext } from "./types";
 
 export async function handleInitialize(
   ctx: PlanningRoomHttpContext,
@@ -32,7 +32,7 @@ export async function handleInitialize(
       passcodeHash = await hashPasscode(passcode);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Invalid passcode provided';
+        err instanceof Error ? err.message : "Invalid passcode provided";
       return createJsonResponse({ error: message }, 400);
     }
   }
@@ -40,7 +40,7 @@ export async function handleInitialize(
   const roomData = await ctx.getRoomData();
 
   if (roomData?.key) {
-    return createJsonResponse({ error: 'Room already exists' }, 400);
+    return createJsonResponse({ error: "Room already exists" }, 400);
   }
 
   const newRoomData = createInitialRoomData({
@@ -73,8 +73,8 @@ export async function handleInitialize(
     {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': cookie,
+        "Content-Type": "application/json",
+        "Set-Cookie": cookie,
       },
     },
   ) as unknown as CfResponse;

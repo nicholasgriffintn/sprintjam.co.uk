@@ -11,7 +11,7 @@ import {
   fetchGithubRepos,
   updateGithubEstimate,
 } from "@sprintjam/services";
-import { getRoomStub, getRoomSessionToken } from '@sprintjam/utils';
+import { getRoomStub, getRoomSessionToken } from "@sprintjam/utils";
 import { jsonError, jsonResponse } from "../../lib/response";
 
 async function validateSession(

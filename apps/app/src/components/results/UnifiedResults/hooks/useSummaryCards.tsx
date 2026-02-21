@@ -149,17 +149,26 @@ export function useSummaryCards({
                         <div key={vote} className="flex items-center gap-1">
                           <div
                             className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-xl text-xs font-semibold"
-                            style={{ backgroundColor: background, color: textColor }}
+                            style={{
+                              backgroundColor: background,
+                              color: textColor,
+                            }}
                           >
                             {icon ? (
                               <>
-                                <span aria-hidden="true" className="text-sm leading-none">
+                                <span
+                                  aria-hidden="true"
+                                  className="text-sm leading-none"
+                                >
                                   {icon}
                                 </span>
                                 <span className="sr-only">{label}</span>
                               </>
                             ) : (
-                              <span className="truncate px-1 leading-tight" title={label}>
+                              <span
+                                className="truncate px-1 leading-tight"
+                                title={label}
+                              >
                                 {label}
                               </span>
                             )}

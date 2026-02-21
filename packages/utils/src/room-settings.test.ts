@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { applySettingsUpdate } from "./room-settings";
-import {
-  getDefaultRoomSettings,
-} from "./defaults";
+import { getDefaultRoomSettings } from "./defaults";
 
 describe("room-settings utils", () => {
   it("returns defaults when no current settings or updates are provided", () => {
@@ -23,9 +21,9 @@ describe("room-settings utils", () => {
     });
 
     expect(result.showMedian).toBe(false);
-    expect(result.estimateOptions.slice(0, updatedEstimateOptions.length)).toEqual(
-      updatedEstimateOptions,
-    );
+    expect(
+      result.estimateOptions.slice(0, updatedEstimateOptions.length),
+    ).toEqual(updatedEstimateOptions);
     expect(result.estimateOptions.length).toBeGreaterThan(
       updatedEstimateOptions.length,
     );
@@ -55,6 +53,8 @@ describe("room-settings utils", () => {
     });
 
     expect(result.enableStructuredVoting).toBe(false);
-    expect(result.estimateOptions).toEqual(getDefaultRoomSettings().estimateOptions);
+    expect(result.estimateOptions).toEqual(
+      getDefaultRoomSettings().estimateOptions,
+    );
   });
 });

@@ -1,8 +1,8 @@
-import type { RoomSettings, JudgeAlgorithm } from '@/types';
+import type { RoomSettings, JudgeAlgorithm } from "@/types";
 
 type HandleChange = (
   key: keyof RoomSettings,
-  value: boolean | (string | number)[] | JudgeAlgorithm | number | string
+  value: boolean | (string | number)[] | JudgeAlgorithm | number | string,
 ) => void;
 
 function PermissionsSection({
@@ -24,7 +24,7 @@ function PermissionsSection({
             id="allowOthersToShowEstimates"
             checked={localSettings.allowOthersToShowEstimates}
             onChange={(e) =>
-              handleChange('allowOthersToShowEstimates', e.target.checked)
+              handleChange("allowOthersToShowEstimates", e.target.checked)
             }
             data-testid="settings-toggle-allow-show"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -42,7 +42,7 @@ function PermissionsSection({
             id="allowOthersToDeleteEstimates"
             checked={localSettings.allowOthersToDeleteEstimates}
             onChange={(e) =>
-              handleChange('allowOthersToDeleteEstimates', e.target.checked)
+              handleChange("allowOthersToDeleteEstimates", e.target.checked)
             }
             data-testid="settings-toggle-allow-reset"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -60,7 +60,7 @@ function PermissionsSection({
             id="autoHandoverModerator"
             checked={localSettings.autoHandoverModerator || false}
             onChange={(e) =>
-              handleChange('autoHandoverModerator', e.target.checked)
+              handleChange("autoHandoverModerator", e.target.checked)
             }
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
@@ -95,7 +95,7 @@ function PrivacySection({
             id="hideParticipantNames"
             checked={localSettings.hideParticipantNames || false}
             onChange={(e) =>
-              handleChange('hideParticipantNames', e.target.checked)
+              handleChange("hideParticipantNames", e.target.checked)
             }
             data-testid="settings-toggle-hide-names"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -112,7 +112,7 @@ function PrivacySection({
             type="checkbox"
             id="showUserPresence"
             checked={localSettings.showUserPresence}
-            onChange={(e) => handleChange('showUserPresence', e.target.checked)}
+            onChange={(e) => handleChange("showUserPresence", e.target.checked)}
             data-testid="settings-toggle-show-presence"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
@@ -128,7 +128,7 @@ function PrivacySection({
             type="checkbox"
             id="anonymousVotes"
             checked={localSettings.anonymousVotes}
-            onChange={(e) => handleChange('anonymousVotes', e.target.checked)}
+            onChange={(e) => handleChange("anonymousVotes", e.target.checked)}
             data-testid="settings-toggle-anonymous-votes"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />

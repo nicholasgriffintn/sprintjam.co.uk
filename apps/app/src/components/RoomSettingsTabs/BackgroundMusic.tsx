@@ -1,5 +1,5 @@
-import type { RoomSettings, JudgeAlgorithm } from '@/types';
-import { BetaBadge } from '@/components/BetaBadge';
+import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import { BetaBadge } from "@/components/BetaBadge";
 
 export function BackgroundMusic({
   localSettings,
@@ -8,7 +8,7 @@ export function BackgroundMusic({
   localSettings: RoomSettings;
   handleChange: (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number
+    value: boolean | (string | number)[] | JudgeAlgorithm | number,
   ) => void;
 }) {
   return (
@@ -25,7 +25,7 @@ export function BackgroundMusic({
             id="enableStrudelPlayer"
             checked={localSettings.enableStrudelPlayer || false}
             onChange={(e) =>
-              handleChange('enableStrudelPlayer', e.target.checked)
+              handleChange("enableStrudelPlayer", e.target.checked)
             }
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
@@ -49,7 +49,7 @@ export function BackgroundMusic({
               id="strudelAutoGenerate"
               checked={localSettings.strudelAutoGenerate || false}
               onChange={(e) =>
-                handleChange('strudelAutoGenerate', e.target.checked)
+                handleChange("strudelAutoGenerate", e.target.checked)
               }
               className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
             />

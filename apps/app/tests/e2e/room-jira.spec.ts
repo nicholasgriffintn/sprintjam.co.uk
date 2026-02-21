@@ -179,7 +179,10 @@ test.describe("Jira integration", () => {
       await queueDialog.getByRole("button", { name: "Save Link" }).click();
       await expect(queueDialog).toContainText(secondaryTicketKey);
 
-      await queueDialog.getByRole("button", { name: "Start Voting" }).first().click();
+      await queueDialog
+        .getByRole("button", { name: "Start Voting" })
+        .first()
+        .click();
       await queueDialog.getByLabel("Close modal").click();
 
       await page.getByTestId("next-ticket-button").click();

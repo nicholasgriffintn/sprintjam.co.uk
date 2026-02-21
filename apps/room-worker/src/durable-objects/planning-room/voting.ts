@@ -1,4 +1,4 @@
-import type { ExtraVoteOption, StructuredVote } from '@sprintjam/types';
+import type { ExtraVoteOption, StructuredVote } from "@sprintjam/types";
 import {
   isStructuredVote,
   createStructuredVote,
@@ -8,10 +8,15 @@ import {
   ensureTimerState,
   calculateTimerSeconds,
   calculateVotingCompletion,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 
-import type { PlanningRoom } from '.';
-import { resetVotingState, postRoundToStats } from './room-helpers';
+import type { PlanningRoom } from ".";
+import {
+  appendRoundHistory,
+  postRoundToStats,
+  getRoundHistoryWithPrivacy,
+  resetVotingState,
+} from "./room-helpers";
 
 const normalizeVoteValue = (value: string | number) =>
   String(value).trim().toLowerCase();
@@ -32,11 +37,11 @@ const buildExtraVoteValueSet = (
 };
 
 const buildUnsureValueSet = (options: ExtraVoteOption[] = []): Set<string> => {
-  const values = new Set<string>(['?', '❓'].map(normalizeVoteValue));
+  const values = new Set<string>(["?", "❓"].map(normalizeVoteValue));
   getEnabledExtraVoteOptions(options).forEach((option) => {
     if (
-      option.id === 'unsure' ||
-      option.label.toLowerCase().includes('unsure')
+      option.id === "unsure" ||
+      option.label.toLowerCase().includes("unsure")
     ) {
       values.add(normalizeVoteValue(option.value));
       option.aliases?.forEach((alias) => values.add(normalizeVoteValue(alias)));
@@ -77,7 +82,7 @@ export async function handleVote(
   let structuredVotePayload: StructuredVote | null = null;
   if (isStructuredVote(vote)) {
     const structuredVote = createStructuredVote(vote.criteriaScores);
-    const calculatedPoints = structuredVote.calculatedStoryPoints || '?';
+    const calculatedPoints = structuredVote.calculatedStoryPoints || "?";
     finalVote = calculatedPoints;
     if (!roomData.structuredVotes) {
       roomData.structuredVotes = {};
@@ -95,7 +100,7 @@ export async function handleVote(
   if (!validOptions.includes(String(finalVote))) {
     console.warn(
       `Invalid vote ${finalVote} from ${userName}. Valid options: ${validOptions.join(
-        ', ',
+        ", ",
       )}`,
     );
     return;
@@ -119,7 +124,7 @@ export async function handleVote(
   roomData.votingCompletion = votingCompletion;
 
   room.broadcast({
-    type: 'vote',
+    type: "vote",
     user: broadcastUser,
     vote: finalVote,
     structuredVote: structuredVotePayload,
@@ -169,7 +174,7 @@ export async function handleVote(
     roomData.showVotes = true;
     room.repository.setShowVotes(true);
     room.broadcast({
-      type: 'showVotes',
+      type: "showVotes",
       showVotes: true,
     });
 
@@ -189,7 +194,7 @@ export async function handleVote(
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err),
+        console.error("Background Strudel generation failed:", err),
       );
   }
 }
@@ -221,7 +226,7 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
   room.repository.setShowVotes(roomData.showVotes);
 
   room.broadcast({
-    type: 'showVotes',
+    type: "showVotes",
     showVotes: roomData.showVotes,
   });
 
@@ -238,7 +243,7 @@ export async function handleShowVotes(room: PlanningRoom, userName: string) {
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err),
+        console.error("Background Strudel generation failed:", err),
       );
   }
 }
@@ -258,10 +263,18 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
 
   const previousPhase = determineRoomPhase(roomData);
 
-  if (Object.keys(roomData.votes).length > 0) {
-    postRoundToStats(room, roomData, undefined, 'reset').catch((err) =>
-      console.error('Failed to post round stats:', err),
-    );
+  const currentTicket = roomData.currentTicket;
+  const roundHistoryEntry = appendRoundHistory(room, roomData, {
+    type: "reset",
+    ticket: currentTicket,
+  });
+
+  if (roundHistoryEntry) {
+    postRoundToStats(room, roomData, currentTicket?.ticketId, "reset", {
+      roundId: roundHistoryEntry.id,
+      roundEndedAt: roundHistoryEntry.endedAt,
+      votes: roundHistoryEntry.votes,
+    }).catch((err) => console.error("Failed to post round stats:", err));
   }
 
   resetVotingState(room, roomData);
@@ -271,8 +284,9 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
   roomData.votingCompletion = votingCompletion;
 
   room.broadcast({
-    type: 'resetVotes',
+    type: "resetVotes",
     votingCompletion,
+    roundHistory: getRoundHistoryWithPrivacy(roomData),
   });
 
   const timerState = ensureTimerState(roomData);
@@ -284,7 +298,7 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
       roundAnchorSeconds: currentSeconds,
     });
     room.broadcast({
-      type: 'timerUpdated',
+      type: "timerUpdated",
       timerState,
     });
   }
@@ -298,7 +312,7 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
     room
       .autoGenerateStrudel()
       .catch((err) =>
-        console.error('Background Strudel generation failed:', err),
+        console.error("Background Strudel generation failed:", err),
       );
   }
 }
@@ -314,7 +328,7 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
   const extraVoteValues = buildExtraVoteValueSet(
     roomData.settings.extraVoteOptions ?? [],
   );
-  const nonScoringVotes = new Set<string>(['?', '❓'].map(normalizeVoteValue));
+  const nonScoringVotes = new Set<string>(["?", "❓"].map(normalizeVoteValue));
   extraVoteValues.forEach((value) => nonScoringVotes.add(value));
   const totalVoteCount = allVotes.length;
   const unsureVoteValues = buildUnsureValueSet(
@@ -365,7 +379,7 @@ export async function calculateAndUpdateJudgeScore(room: PlanningRoom) {
   room.repository.setJudgeState(result.score, roomData.judgeMetadata);
 
   room.broadcast({
-    type: 'judgeScoreUpdated',
+    type: "judgeScoreUpdated",
     judgeScore: result.score,
     judgeMetadata: roomData.judgeMetadata,
   });

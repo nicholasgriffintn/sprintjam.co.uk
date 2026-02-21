@@ -15,10 +15,8 @@ import {
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 import * as auth from "../lib/auth";
 
-const makeRequest = (
-  input: RequestInfo | URL,
-  init?: RequestInit,
-): Request => new Request(input, init);
+const makeRequest = (input: RequestInfo | URL, init?: RequestInit): Request =>
+  new Request(input, init);
 
 vi.mock("../repositories/workspace-auth", () => ({
   WorkspaceAuthRepository: vi.fn(),

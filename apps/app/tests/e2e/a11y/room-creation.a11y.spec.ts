@@ -54,9 +54,7 @@ test.describe("Room Creation Flow Accessibility", () => {
     await proceedToAvatar(page);
 
     // Should navigate to avatar selection (join flow)
-    await expect(
-      page.getByRole("heading", { name: /avatar/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /avatar/i })).toBeVisible();
   });
 
   test("custom emoji picker exposes aria-expanded and controls", async ({
@@ -65,9 +63,7 @@ test.describe("Room Creation Flow Accessibility", () => {
     await page.locator("#create-name").fill("Accessibility Test");
     await proceedToAvatar(page);
 
-    await expect(
-      page.getByRole("heading", { name: /avatar/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /avatar/i })).toBeVisible();
 
     const toggle = page.getByTestId("avatar-emoji-toggle");
     await toggle.scrollIntoViewIfNeeded();

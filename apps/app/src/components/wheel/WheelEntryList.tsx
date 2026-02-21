@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react';
-import type { WheelEntry } from '@sprintjam/types';
+import { useState, useCallback } from "react";
+import type { WheelEntry } from "@sprintjam/types";
 
-import { Button } from '@/components/ui/Button';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { Button } from "@/components/ui/Button";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 interface WheelEntryListProps {
   entries: WheelEntry[];
@@ -25,21 +25,21 @@ export function WheelEntryList({
   onClearEntries,
   disabled,
 }: WheelEntryListProps) {
-  const [newEntry, setNewEntry] = useState('');
+  const [newEntry, setNewEntry] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
-  const [bulkText, setBulkText] = useState('');
+  const [bulkText, setBulkText] = useState("");
 
   const handleAddEntry = useCallback(() => {
     const trimmed = newEntry.trim();
     if (trimmed) {
       onAddEntry(trimmed);
-      setNewEntry('');
+      setNewEntry("");
     }
   }, [newEntry, onAddEntry]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleAddEntry();
       }
@@ -49,13 +49,13 @@ export function WheelEntryList({
 
   const handleBulkAdd = useCallback(() => {
     const names = bulkText
-      .split('\n')
+      .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
     if (names.length > 0) {
       onBulkAddEntries(names);
-      setBulkText('');
+      setBulkText("");
       setBulkMode(false);
     }
   }, [bulkText, onBulkAddEntries]);
@@ -107,7 +107,7 @@ export function WheelEntryList({
                   variant="secondary"
                   onClick={() => {
                     setBulkMode(false);
-                    setBulkText('');
+                    setBulkText("");
                   }}
                 >
                   Cancel
@@ -149,8 +149,8 @@ export function WheelEntryList({
         {entries.length === 0 ? (
           <p className="text-sm text-slate-500 text-center py-8">
             {isModeratorView
-              ? 'No entries yet. Add some names above!'
-              : 'Waiting for entries...'}
+              ? "No entries yet. Add some names above!"
+              : "Waiting for entries..."}
           </p>
         ) : (
           entries.map((entry) => (
@@ -158,8 +158,8 @@ export function WheelEntryList({
               key={entry.id}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 entry.enabled
-                  ? 'bg-slate-100 dark:bg-slate-800'
-                  : 'bg-slate-50 dark:bg-slate-900 opacity-50'
+                  ? "bg-slate-100 dark:bg-slate-800"
+                  : "bg-slate-50 dark:bg-slate-900 opacity-50"
               }`}
             >
               {isModeratorView && (
@@ -174,8 +174,8 @@ export function WheelEntryList({
               <span
                 className={`flex-1 text-sm ${
                   entry.enabled
-                    ? 'text-slate-900 dark:text-white'
-                    : 'text-slate-500 line-through'
+                    ? "text-slate-900 dark:text-white"
+                    : "text-slate-500 line-through"
                 }`}
               >
                 {entry.name}

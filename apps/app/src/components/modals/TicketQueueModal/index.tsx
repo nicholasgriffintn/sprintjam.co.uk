@@ -1,6 +1,6 @@
 import { FC } from "react";
 
-import type { TicketQueueItem } from "@/types";
+import type { SessionRoundHistoryItem, TicketQueueItem } from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { TicketQueueModalContent } from "./Content";
 
@@ -9,7 +9,8 @@ interface TicketQueueModalProps {
   onClose: () => void;
   currentTicket?: TicketQueueItem;
   queue: TicketQueueItem[];
-  externalService: 'none' | 'jira' | 'linear' | 'github';
+  roundHistory?: SessionRoundHistoryItem[];
+  externalService: "none" | "jira" | "linear" | "github";
   roomKey: string;
   userName: string;
   onAddTicket: (ticket: Partial<TicketQueueItem>) => void;
@@ -25,6 +26,7 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   onClose,
   currentTicket,
   queue,
+  roundHistory,
   externalService,
   roomKey,
   userName,
@@ -35,12 +37,12 @@ export const TicketQueueModal: FC<TicketQueueModalProps> = ({
   canManageQueue,
   onError,
 }) => {
-
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Ticket Queue" size="lg">
       <TicketQueueModalContent
         currentTicket={currentTicket}
         queue={queue}
+        roundHistory={roundHistory}
         externalService={externalService}
         roomKey={roomKey}
         userName={userName}

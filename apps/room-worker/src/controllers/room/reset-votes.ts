@@ -4,20 +4,20 @@ import {
   applySettingsUpdate,
   calculateTimerSeconds,
   ensureTimerState,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 
-import type { CfResponse, PlanningRoomHttpContext } from './types';
+import type { CfResponse, PlanningRoomHttpContext } from "./types";
 
 export async function handleResetVotes(
   ctx: PlanningRoomHttpContext,
-  request: Request
+  request: Request,
 ): Promise<CfResponse> {
   const { name } = (await request.json()) as { name: string };
 
   const roomData = await ctx.getRoomData();
 
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   if (
@@ -25,8 +25,8 @@ export async function handleResetVotes(
     !roomData.settings.allowOthersToDeleteEstimates
   ) {
     return createJsonResponse(
-      { error: 'Only the moderator can reset votes' },
-      403
+      { error: "Only the moderator can reset votes" },
+      403,
     );
   }
 
@@ -41,7 +41,7 @@ export async function handleResetVotes(
   ctx.repository.setShowVotes(roomData.showVotes);
   ctx.repository.setSettings(roomData.settings);
 
-  ctx.broadcast({ type: 'resetVotes' });
+  ctx.broadcast({ type: "resetVotes" });
 
   const timerState = ensureTimerState(roomData);
   if (timerState.autoResetOnVotesReset) {
@@ -52,7 +52,7 @@ export async function handleResetVotes(
       roundAnchorSeconds: currentSeconds,
     });
     ctx.broadcast({
-      type: 'timerUpdated',
+      type: "timerUpdated",
       timerState,
     });
   }

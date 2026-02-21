@@ -10,7 +10,7 @@ import { readJsonSafe, handleJsonResponse } from "@/lib/api-utils";
 import {
   wheelsCollection,
   ensureWheelsCollectionReady,
-} from './data/collections';
+} from "./data/collections";
 import {
   createReconnectState,
   resetReconnectAttempts,
@@ -21,7 +21,7 @@ import {
   sendWebSocketMessage,
   EventManager,
   type ReconnectState,
-} from '@/lib/websocket-utils';
+} from "@/lib/websocket-utils";
 
 let activeSocket: WebSocket | null = null;
 let activeWheelKey: string | null = null;
@@ -276,7 +276,7 @@ export function connectToWheel(
       });
 
       if (activeSocket && isWebSocketOpen(activeSocket)) {
-        activeSocket.close(1011, 'Connection error');
+        activeSocket.close(1011, "Connection error");
       }
     };
 

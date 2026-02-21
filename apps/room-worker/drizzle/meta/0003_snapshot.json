@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8d3d1f9c-f973-4ce2-8487-4a2b61193c2f",
-  "prevId": "9eb81660-b9be-48b7-b5ac-22d53df201c1",
+  "id": "8bcb2a3a-4f14-4771-9329-53d1dbf412c6",
+  "prevId": "6ac4569a-cb21-40d2-a801-54cec8dee5ac",
   "tables": {
     "oauth_credentials": {
       "name": "oauth_credentials",
@@ -213,6 +213,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "round_history": {
+          "name": "round_history",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "timer_seconds": {
           "name": "timer_seconds",
           "type": "integer",
@@ -260,6 +267,13 @@
           "notNull": false,
           "autoincrement": false,
           "default": 1
+        },
+        "game_session": {
+          "name": "game_session",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},

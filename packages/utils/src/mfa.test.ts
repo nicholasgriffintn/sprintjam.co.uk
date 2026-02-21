@@ -15,7 +15,10 @@ describe("mfa", () => {
     vi.useFakeTimers();
     vi.setSystemTime(timestamp);
     const code = await generateTotpCode(secret, timestamp);
-    const isValid = await verifyTotpCode(secret, code, { window: 0, stepSeconds: 30 });
+    const isValid = await verifyTotpCode(secret, code, {
+      window: 0,
+      stepSeconds: 30,
+    });
     expect(isValid).toBe(true);
     vi.useRealTimers();
   });

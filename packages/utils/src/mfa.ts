@@ -55,7 +55,11 @@ export async function generateTotpCode(
     ["sign"],
   );
   const counterBytes = counterToBytes(counter);
-  const hmac = await crypto.subtle.sign("HMAC", key, toArrayBuffer(counterBytes));
+  const hmac = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    toArrayBuffer(counterBytes),
+  );
   const bytes = new Uint8Array(hmac);
   const offset = bytes[bytes.length - 1] & 0xf;
   const code =

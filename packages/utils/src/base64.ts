@@ -1,6 +1,9 @@
 export function bytesToBase64Url(bytes: Uint8Array): string {
   const binary = String.fromCharCode(...bytes);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 export function base64UrlToBytes(value: string): Uint8Array {

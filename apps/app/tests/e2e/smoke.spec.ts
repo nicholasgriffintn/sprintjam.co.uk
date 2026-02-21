@@ -78,9 +78,7 @@ test.describe("Smoke tests @smoke", () => {
     }
   });
 
-  test("structured voting journey: score and reveal", async ({
-    browser,
-  }) => {
+  test("structured voting journey: score and reveal", async ({ browser }) => {
     const setup = await createRoomWithParticipant(browser, {
       enableStructuredVotingOnCreate: true,
     });

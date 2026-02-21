@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { isWorkspacesEnabled } from '@/utils/feature-flags';
+import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { logout as logoutService } from "@/lib/workspace-service";
 import type { Team, WorkspaceUser } from "@/lib/workspace-service";
 import { useWorkspaceProfile } from "@/lib/data/hooks";

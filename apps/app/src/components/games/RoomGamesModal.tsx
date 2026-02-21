@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { ROOM_GAMES, GAME_ICONS } from '@/components/games/game-catalog';
-import type { RoomData, RoomGameType } from '@/types';
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { ROOM_GAMES, GAME_ICONS } from "@/components/games/game-catalog";
+import type { RoomData, RoomGameType } from "@/types";
 
 interface RoomGamesModalProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ export const RoomGamesModal = ({
   onClose,
   onStartGame,
 }: RoomGamesModalProps) => {
-  const activeGame = roomData.gameSession?.status === 'active';
+  const activeGame = roomData.gameSession?.status === "active";
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Party games" size="lg">

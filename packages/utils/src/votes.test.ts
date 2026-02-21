@@ -30,15 +30,7 @@ describe("Vote Options Metadata", () => {
       const metadata = generateVoteOptionsMetadata(options);
 
       expect(metadata).toHaveLength(7);
-      expect(metadata.map((m) => m.value)).toEqual([
-        1,
-        2,
-        3,
-        5,
-        8,
-        "❓",
-        "☕",
-      ]);
+      expect(metadata.map((m) => m.value)).toEqual([1, 2, 3, 5, 8, "❓", "☕"]);
     });
 
     it("assigns background colors to all options", () => {

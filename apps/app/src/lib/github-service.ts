@@ -1,5 +1,5 @@
 import type { TicketMetadata } from "@/types";
-import { API_BASE_URL } from '@/constants';
+import { API_BASE_URL } from "@/constants";
 
 export interface GithubOAuthStatus {
   connected: boolean;
@@ -29,14 +29,14 @@ export async function fetchGithubIssue(
   options?: { roomKey?: string; userName?: string },
 ): Promise<TicketMetadata> {
   const response = await fetch(`${API_BASE_URL}/github/issue`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       issueId,
       roomKey: options?.roomKey,
       userName: options?.userName,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -49,7 +49,7 @@ export async function fetchGithubIssue(
 
   const data = (await response.json()) as { ticket?: TicketMetadata };
   if (!data.ticket) {
-    throw new Error('Invalid response format from GitHub API');
+    throw new Error("Invalid response format from GitHub API");
   }
   return data.ticket;
 }
@@ -68,15 +68,15 @@ export async function updateGithubEstimate(
   const response = await fetch(
     `${API_BASE_URL}/github/issue/${encodedId}/estimate`,
     {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         estimate,
         roomKey: options.roomKey,
         userName: options.userName,
         note: options.note,
       }),
-      credentials: 'include',
+      credentials: "include",
     },
   );
 
@@ -97,17 +97,17 @@ export async function getGithubOAuthStatus(
   userName: string,
 ): Promise<GithubOAuthStatus> {
   const response = await fetch(`${API_BASE_URL}/github/oauth/status`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
       (data as { error?: string }).error ||
-        'Failed to fetch GitHub OAuth status',
+        "Failed to fetch GitHub OAuth status",
     );
   }
 
@@ -119,19 +119,19 @@ export async function authorizeGithubOAuth(
   userName: string,
 ): Promise<{ authorizationUrl: string }> {
   const response = await fetch(`${API_BASE_URL}/github/oauth/authorize`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       roomKey,
       userName,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || 'Failed to initiate GitHub OAuth',
+      (data as { error?: string }).error || "Failed to initiate GitHub OAuth",
     );
   }
 
@@ -143,19 +143,19 @@ export async function revokeGithubOAuth(
   userName: string,
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/github/oauth/revoke`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       roomKey,
       userName,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || 'Failed to disconnect GitHub OAuth',
+      (data as { error?: string }).error || "Failed to disconnect GitHub OAuth",
     );
   }
 }
@@ -165,16 +165,16 @@ export async function fetchGithubRepos(
   userName: string,
 ): Promise<GithubRepo[]> {
   const response = await fetch(`${API_BASE_URL}/github/repos`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || 'Failed to fetch GitHub repos',
+      (data as { error?: string }).error || "Failed to fetch GitHub repos",
     );
   }
 
@@ -188,16 +188,16 @@ export async function fetchGithubMilestones(
   userName: string,
 ): Promise<GithubMilestone[]> {
   const response = await fetch(`${API_BASE_URL}/github/milestones`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ repo, roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || 'Failed to fetch GitHub milestones',
+      (data as { error?: string }).error || "Failed to fetch GitHub milestones",
     );
   }
 
@@ -219,8 +219,8 @@ export async function fetchGithubRepoIssues(
   userName: string,
 ): Promise<TicketMetadata[]> {
   const response = await fetch(`${API_BASE_URL}/github/issues`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       repo,
       roomKey,
@@ -230,13 +230,13 @@ export async function fetchGithubRepoIssues(
       query: options.search,
       limit: options.limit,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
     throw new Error(
-      (data as { error?: string }).error || 'Failed to fetch GitHub issues',
+      (data as { error?: string }).error || "Failed to fetch GitHub issues",
     );
   }
 

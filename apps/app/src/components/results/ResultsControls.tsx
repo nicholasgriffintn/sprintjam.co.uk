@@ -11,10 +11,10 @@ import {
 
 import type { RoomData } from "@/types";
 import { Button } from "@/components/ui/Button";
-import { isWorkspacesEnabled } from '@/utils/feature-flags';
+import { isWorkspacesEnabled } from "@/utils/feature-flags";
 
 const buttonBase =
-  ' group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md hover:shadow-lg';
+  " group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md hover:shadow-lg";
 
 const MotionButton = motion(Button);
 
@@ -39,7 +39,7 @@ export function ResultsControls({
   onOpenResultsSettings?: () => void;
   onCompleteSession?: () => void;
 }) {
-  const voteToggleLabel = roomData.showVotes ? 'Hide Votes' : 'Show Votes';
+  const voteToggleLabel = roomData.showVotes ? "Hide Votes" : "Show Votes";
   const voteToggleClasses = roomData.showVotes
     ? `${buttonBase} bg-blue-900 text-white shadow-blue-950/40 hover:bg-blue-950 focus-visible:ring-blue-200/80 focus-visible:ring-offset-slate-900/40 dark:bg-blue-500/40 dark:text-blue-200 dark:hover:bg-blue-500/50`
     : `${buttonBase} bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-200 focus-visible:ring-offset-slate-900/30 dark:bg-blue-500/20 dark:text-blue-200 dark:hover:bg-blue-500/30`;
@@ -59,11 +59,11 @@ export function ResultsControls({
       let message = `${incompleteCount} of ${totalCount} users haven't completed all voting criteria.`;
 
       if (incompleteUsers && incompleteUsers.length > 0) {
-        const userList = incompleteUsers.join(', ');
+        const userList = incompleteUsers.join(", ");
         message = `${userList} ${incompleteUsers.length === 1 ? "hasn't" : "haven't"} completed all voting criteria.`;
       }
 
-      message += '\n\nAre you sure you want to show votes?';
+      message += "\n\nAre you sure you want to show votes?";
 
       if (!window.confirm(message)) {
         return;
@@ -103,7 +103,7 @@ export function ResultsControls({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               aria-pressed={roomData.showVotes}
-              aria-label={roomData.showVotes ? 'Hide votes' : 'Show votes'}
+              aria-label={roomData.showVotes ? "Hide votes" : "Show votes"}
             >
               <span className="relative flex items-center gap-2">
                 {roomData.showVotes ? (

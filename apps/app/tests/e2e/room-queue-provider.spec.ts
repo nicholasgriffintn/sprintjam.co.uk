@@ -67,9 +67,7 @@ test.describe("Modal interactions", () => {
         .getByRole("button", { name: "Start Voting" })
         .first()
         .click();
-      await moderatorPage
-        .getByRole("button", { name: "Close modal" })
-        .click();
+      await moderatorPage.getByRole("button", { name: "Close modal" }).click();
 
       await moderatorRoom.openQueueModal();
       await moderatorRoom.expectQueueManageControlsVisible(true);
@@ -190,9 +188,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
       await expect(queueDialog).toBeVisible();
 
       await queueDialog.getByTestId("queue-add-jira-button").click();
-      await queueDialog
-        .getByTestId("queue-import-board")
-        .selectOption("1");
+      await queueDialog.getByTestId("queue-import-board").selectOption("1");
       await queueDialog.getByTestId("queue-import-search").fill(jiraTicketKey);
       await expect(queueDialog).toContainText(jiraTicket.summary);
       await queueDialog.getByText(jiraTicketKey).click();

@@ -22,7 +22,10 @@ export interface ValidationResult {
   error?: string;
 }
 
-const buildResult = (parsed: { success: boolean; error?: string }): ValidationResult =>
+const buildResult = (parsed: {
+  success: boolean;
+  error?: string;
+}): ValidationResult =>
   parsed.success ? { ok: true } : { ok: false, error: parsed.error };
 
 export const validateName = (value: string): ValidationResult => {

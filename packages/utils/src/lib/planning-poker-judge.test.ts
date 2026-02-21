@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { JudgeAlgorithm } from '@sprintjam/types';
+import { JudgeAlgorithm } from "@sprintjam/types";
 
-import { PlanningPokerJudge } from './planning-poker-judge';
+import { PlanningPokerJudge } from "./planning-poker-judge";
 
 describe("PlanningPokerJudge", () => {
   const judge = new PlanningPokerJudge();

@@ -109,7 +109,7 @@ export function UserEstimate({
           );
           const background =
             metadata?.background ||
-            (option === userVote ? '#ebf5ff' : '#ffffff');
+            (option === userVote ? "#ebf5ff" : "#ffffff");
           const textColor = getContrastingTextColor(background);
           const { icon, label } = parseOptionLabel(optionLabel);
 
@@ -125,10 +125,10 @@ export function UserEstimate({
               aria-pressed={userVote === option}
               className={`relative w-14 h-18 md:w-18 md:h-26 px-3 py-3 flex-col gap-1 text-base font-semibold border-2 rounded-lg shadow-sm ${
                 isVotingDisabled
-                  ? 'opacity-50 border-gray-300 dark:border-gray-600'
+                  ? "opacity-50 border-gray-300 dark:border-gray-600"
                   : userVote === option
-                    ? 'border-blue-500 shadow-md'
-                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                    ? "border-blue-500 shadow-md"
+                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
               }`}
               style={{ backgroundColor: background }}
               whileHover={isVotingDisabled ? {} : { scale: 1.05 }}
@@ -136,7 +136,7 @@ export function UserEstimate({
               animate={{
                 scale: userVote === option ? 1.05 : 1,
               }}
-              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               {userVote === option && (
                 <div className="absolute top-1 right-1">
@@ -147,15 +147,15 @@ export function UserEstimate({
               )}
               <div
                 className={`relative w-full h-full flex flex-col items-center justify-center ${
-                  extraVoteValues.has(String(option)) ? 'gap-0.5' : 'gap-1'
+                  extraVoteValues.has(String(option)) ? "gap-0.5" : "gap-1"
                 } text-center leading-tight`}
               >
                 {(icon || extraVoteValues.has(String(option))) && (
                   <span
                     className={`${
                       extraVoteValues.has(String(option))
-                        ? 'text-2xl md:text-3xl'
-                        : 'text-xl md:text-2xl'
+                        ? "text-2xl md:text-3xl"
+                        : "text-xl md:text-2xl"
                     }`}
                     aria-hidden="true"
                   >
@@ -165,7 +165,7 @@ export function UserEstimate({
                 {!extraVoteValues.has(String(option)) && (
                   <span
                     className={`leading-tight ${
-                      icon ? 'text-xs md:text-sm' : 'text-lg md:text-xl'
+                      icon ? "text-xs md:text-sm" : "text-lg md:text-xl"
                     } font-semibold`}
                     style={{ color: textColor }}
                   >

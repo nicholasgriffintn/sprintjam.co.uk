@@ -1,7 +1,7 @@
-import type { DurableObjectStorage } from '@cloudflare/workers-types';
-import { drizzle } from 'drizzle-orm/durable-sqlite';
-import { migrate } from 'drizzle-orm/durable-sqlite/migrator';
-import { eq, sql as sqlOperator } from 'drizzle-orm';
+import type { DurableObjectStorage } from "@cloudflare/workers-types";
+import { drizzle } from "drizzle-orm/durable-sqlite";
+import { migrate } from "drizzle-orm/durable-sqlite/migrator";
+import { eq, sql as sqlOperator } from "drizzle-orm";
 
 import {
   wheelMeta,
@@ -9,7 +9,7 @@ import {
   wheelUsers,
   wheelResults,
   wheelSessionTokens,
-} from '@sprintjam/db/durable-objects/wheel/schemas';
+} from "@sprintjam/db/durable-objects/wheel/schemas";
 import type {
   WheelData,
   WheelEntry,
@@ -17,15 +17,15 @@ import type {
   SpinState,
   SpinResult,
   PasscodeHashPayload,
-} from '@sprintjam/types';
+} from "@sprintjam/types";
 import {
   SESSION_TOKEN_TTL_MS,
   parsePasscodeHash,
   serializePasscodeHash,
   safeJsonParse,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 
-import migrations from '../../drizzle/migrations';
+import migrations from "../../drizzle/migrations";
 
 const WHEEL_ROW_ID = 1;
 
@@ -87,11 +87,11 @@ export class WheelRoomRepository {
     try {
       const settingsData = safeJsonParse<WheelSettings>(row.settings);
       if (!settingsData) {
-        throw new Error('Failed to parse wheel settings from storage');
+        throw new Error("Failed to parse wheel settings from storage");
       }
       settings = settingsData;
     } catch {
-      throw new Error('Failed to parse wheel settings from storage');
+      throw new Error("Failed to parse wheel settings from storage");
     }
 
     const spinState = row.spinState
@@ -116,7 +116,7 @@ export class WheelRoomRepository {
         removedAfter: !!r.removedAfter,
       })),
       settings,
-      status: row.wheelStatus === 'completed' ? 'completed' : 'active',
+      status: row.wheelStatus === "completed" ? "completed" : "active",
       passcodeHash: parsePasscodeHash(row.passcode) ?? undefined,
       userAvatars:
         Object.keys(userAvatars).length > 0 ? userAvatars : undefined,
@@ -132,7 +132,7 @@ export class WheelRoomRepository {
           id: WHEEL_ROW_ID,
           wheelKey: wheelData.key,
           moderator: wheelData.moderator,
-          wheelStatus: wheelData.status ?? 'active',
+          wheelStatus: wheelData.status ?? "active",
           passcode: serializePasscodeHash(wheelData.passcodeHash),
           settings: JSON.stringify(wheelData.settings),
           spinState: wheelData.spinState
@@ -144,7 +144,7 @@ export class WheelRoomRepository {
           set: {
             wheelKey: wheelData.key,
             moderator: wheelData.moderator,
-            wheelStatus: wheelData.status ?? 'active',
+            wheelStatus: wheelData.status ?? "active",
             passcode: serializePasscodeHash(wheelData.passcodeHash),
             settings: JSON.stringify(wheelData.settings),
             spinState: wheelData.spinState
@@ -254,7 +254,7 @@ export class WheelRoomRepository {
       .run();
   }
 
-  setWheelStatus(status: 'active' | 'completed') {
+  setWheelStatus(status: "active" | "completed") {
     this.db
       .update(wheelMeta)
       .set({ wheelStatus: status })
@@ -433,7 +433,7 @@ export class WheelRoomRepository {
     }
 
     const isExpired =
-      typeof record.createdAt === 'number' &&
+      typeof record.createdAt === "number" &&
       Date.now() - record.createdAt > SESSION_TOKEN_TTL_MS;
 
     if (isExpired) {

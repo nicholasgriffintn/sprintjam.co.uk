@@ -1,11 +1,14 @@
-import { createSessionCookie, hashToken, bytesToBase64Url } from "@sprintjam/utils";
+import {
+  createSessionCookie,
+  hashToken,
+  bytesToBase64Url,
+} from "@sprintjam/utils";
 
 import { jsonError } from "./response";
 import { SESSION_EXPIRY_MS } from "../constants";
 import type { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 
-export const EMAIL_REGEX =
-  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+export const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export const MFA_RECOVERY_CODES_COUNT = 8;
 

@@ -8,12 +8,12 @@ import type {
 } from "@/components/layout/Header/types";
 
 export type RouteGroup =
-  | 'marketing'
-  | 'workspace'
-  | 'room'
-  | 'wheel'
-  | 'auth'
-  | 'flow';
+  | "marketing"
+  | "workspace"
+  | "room"
+  | "wheel"
+  | "auth"
+  | "flow";
 
 export interface RouteNavConfig {
   label: string;

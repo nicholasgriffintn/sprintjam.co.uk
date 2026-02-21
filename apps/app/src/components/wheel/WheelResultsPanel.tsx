@@ -1,6 +1,6 @@
-import type { SpinResult } from '@sprintjam/types';
+import type { SpinResult } from "@sprintjam/types";
 
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 interface WheelResultsPanelProps {
   results: SpinResult[];
@@ -24,8 +24,8 @@ export function WheelResultsPanel({ results }: WheelResultsPanelProps) {
             key={result.id}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
               index === 0
-                ? 'bg-brand-100 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800'
-                : 'bg-slate-50 dark:bg-slate-800/50'
+                ? "bg-brand-100 dark:bg-brand-900/30 border border-brand-200 dark:border-brand-800"
+                : "bg-slate-50 dark:bg-slate-800/50"
             }`}
           >
             <span className="text-sm font-medium text-slate-500 w-6">
@@ -34,8 +34,8 @@ export function WheelResultsPanel({ results }: WheelResultsPanelProps) {
             <span
               className={`flex-1 font-medium ${
                 index === 0
-                  ? 'text-brand-700 dark:text-brand-300'
-                  : 'text-slate-700 dark:text-slate-300'
+                  ? "text-brand-700 dark:text-brand-300"
+                  : "text-slate-700 dark:text-slate-300"
               }`}
             >
               {result.winner}

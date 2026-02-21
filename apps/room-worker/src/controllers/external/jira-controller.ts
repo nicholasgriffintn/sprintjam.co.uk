@@ -11,7 +11,7 @@ import {
   fetchJiraTicket,
   updateJiraStoryPoints,
 } from "@sprintjam/services";
-import { getRoomSessionToken, getRoomStub } from '@sprintjam/utils';
+import { getRoomSessionToken, getRoomStub } from "@sprintjam/utils";
 
 import { jsonError, jsonResponse } from "../../lib/response";
 

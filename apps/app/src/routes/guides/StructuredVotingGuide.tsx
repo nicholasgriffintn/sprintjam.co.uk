@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-import { GuideLayout } from '@/components/guides/GuideLayout';
-import guideMarkdown from '@/content/guides/structured-voting.md?raw';
-import { renderMarkdownToHtml } from '@/utils/markdown';
+import { GuideLayout } from "@/components/guides/GuideLayout";
+import guideMarkdown from "@/content/guides/structured-voting.md?raw";
+import { renderMarkdownToHtml } from "@/utils/markdown";
 
 const StructuredVotingGuide = () => {
   const renderedGuide = useMemo(() => renderMarkdownToHtml(guideMarkdown), []);

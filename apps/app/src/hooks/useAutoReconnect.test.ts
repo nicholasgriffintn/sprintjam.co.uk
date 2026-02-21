@@ -21,7 +21,7 @@ vi.mock("@/utils/storage", () => ({
   },
 }));
 
-import { useAutoReconnect } from '@/hooks/useAutoReconnect';
+import { useAutoReconnect } from "@/hooks/useAutoReconnect";
 import { joinRoom } from "@/lib/api-service";
 
 describe("useAutoReconnect", () => {
@@ -39,18 +39,18 @@ describe("useAutoReconnect", () => {
 
   it("calls onReconnectComplete after successful reconnect", async () => {
     (joinRoom as Mock).mockResolvedValue({
-      room: { key: 'ROOM1', moderator: 'alice' },
+      room: { key: "ROOM1", moderator: "alice" },
       defaults: undefined,
-      authToken: 'tok-new',
+      authToken: "tok-new",
     });
 
     renderHook(() =>
       useAutoReconnect({
-        name: 'alice',
-        screen: 'room',
-        roomKey: 'ROOM1',
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
         isLoadingDefaults: false,
-        selectedAvatar: 'user',
+        selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
@@ -63,19 +63,19 @@ describe("useAutoReconnect", () => {
       expect(onReconnectComplete).toHaveBeenCalled();
     });
 
-    expect(onReconnectSuccess).toHaveBeenCalledWith('ROOM1', true);
+    expect(onReconnectSuccess).toHaveBeenCalledWith("ROOM1", true);
   });
 
   it("calls onReconnectComplete after failed reconnect", async () => {
-    (joinRoom as Mock).mockRejectedValue(new Error('Connection failed'));
+    (joinRoom as Mock).mockRejectedValue(new Error("Connection failed"));
 
     renderHook(() =>
       useAutoReconnect({
-        name: 'alice',
-        screen: 'room',
-        roomKey: 'ROOM1',
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
         isLoadingDefaults: false,
-        selectedAvatar: 'user',
+        selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
@@ -108,11 +108,11 @@ describe("useAutoReconnect", () => {
 
     const { unmount } = renderHook(() =>
       useAutoReconnect({
-        name: 'alice',
-        screen: 'room',
-        roomKey: 'ROOM1',
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
         isLoadingDefaults: false,
-        selectedAvatar: 'user',
+        selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
@@ -135,14 +135,14 @@ describe("useAutoReconnect", () => {
     expect(onReconnectComplete).not.toHaveBeenCalled();
   });
 
-  it('does not attempt reconnect when not on room screen', () => {
+  it("does not attempt reconnect when not on room screen", () => {
     renderHook(() =>
       useAutoReconnect({
-        name: 'alice',
-        screen: 'welcome',
-        roomKey: 'ROOM1',
+        name: "alice",
+        screen: "welcome",
+        roomKey: "ROOM1",
         isLoadingDefaults: false,
-        selectedAvatar: 'user',
+        selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
@@ -154,14 +154,14 @@ describe("useAutoReconnect", () => {
     expect(joinRoom).not.toHaveBeenCalled();
   });
 
-  it('does not attempt reconnect when roomKey is empty', () => {
+  it("does not attempt reconnect when roomKey is empty", () => {
     renderHook(() =>
       useAutoReconnect({
-        name: 'alice',
-        screen: 'room',
-        roomKey: '',
+        name: "alice",
+        screen: "room",
+        roomKey: "",
         isLoadingDefaults: false,
-        selectedAvatar: 'user',
+        selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
@@ -178,11 +178,11 @@ describe("useAutoReconnect", () => {
 
     renderHook(() =>
       useAutoReconnect({
-        name: '',
-        screen: 'room',
-        roomKey: 'ROOM1',
+        name: "",
+        screen: "room",
+        roomKey: "ROOM1",
         isLoadingDefaults: false,
-        selectedAvatar: 'user',
+        selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,

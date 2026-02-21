@@ -11,7 +11,7 @@ import {
   fetchLinearIssue,
   updateLinearEstimate,
 } from "@sprintjam/services";
-import { getRoomSessionToken, getRoomStub } from '@sprintjam/utils';
+import { getRoomSessionToken, getRoomStub } from "@sprintjam/utils";
 import { jsonError, jsonResponse } from "../../lib/response";
 
 async function validateSession(
@@ -390,7 +390,7 @@ export async function getLinearIssuesController(
           : null;
 
   const sessionToken = getRoomSessionToken(request);
-  
+
   if (!teamId) {
     return jsonError("Team ID is required");
   }

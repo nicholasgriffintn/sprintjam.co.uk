@@ -1,13 +1,14 @@
 import { FC, useMemo, useState } from "react";
 
-import type { TicketQueueItem } from "@/types";
-import { TicketQueueModalControls } from '@/components/modals/TicketQueueModal/Controls';
-import { TicketQueueModalQueueTab } from '@/components/modals/TicketQueueModal/tabs/Queue';
-import { TicketQueueModalCompletedTab } from '@/components/modals/TicketQueueModal/tabs/Completed';
+import type { SessionRoundHistoryItem, TicketQueueItem } from "@/types";
+import { TicketQueueModalControls } from "@/components/modals/TicketQueueModal/Controls";
+import { TicketQueueModalQueueTab } from "@/components/modals/TicketQueueModal/tabs/Queue";
+import { TicketQueueModalCompletedTab } from "@/components/modals/TicketQueueModal/tabs/Completed";
 
 interface TicketQueueModalContentProps {
   currentTicket?: TicketQueueItem;
   queue: TicketQueueItem[];
+  roundHistory?: SessionRoundHistoryItem[];
   externalService: "none" | "jira" | "linear" | "github";
   roomKey: string;
   userName: string;
@@ -23,6 +24,7 @@ interface TicketQueueModalContentProps {
 export const TicketQueueModalContent: FC<TicketQueueModalContentProps> = ({
   currentTicket,
   queue,
+  roundHistory,
   externalService,
   roomKey,
   userName,
@@ -71,6 +73,7 @@ export const TicketQueueModalContent: FC<TicketQueueModalContentProps> = ({
       ) : (
         <TicketQueueModalCompletedTab
           completedTickets={completedTickets}
+          roundHistory={roundHistory}
           roomKey={roomKey}
           userName={userName}
           onError={onError}

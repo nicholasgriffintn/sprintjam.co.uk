@@ -7,7 +7,7 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { renderMarkdownToHtml } from "@/utils/markdown";
-import { SITE_NAME } from '@/constants';
+import { SITE_NAME } from "@/constants";
 
 const ChangelogScreen = () => {
   usePageMeta(META_CONFIGS.changelog);
@@ -43,7 +43,7 @@ const ChangelogScreen = () => {
               dangerouslySetInnerHTML={{
                 __html:
                   renderedChangelog ||
-                  '<p>The changelog is empty. Add your first entry in src/content/changelog.md.</p>',
+                  "<p>The changelog is empty. Add your first entry in src/content/changelog.md.</p>",
               }}
             />
           </div>

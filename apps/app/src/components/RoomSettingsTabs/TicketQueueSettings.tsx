@@ -1,11 +1,11 @@
-import type { RoomSettings, JudgeAlgorithm } from '@/types';
-import { useJiraOAuth } from '@/hooks/useJiraOAuth';
-import { useLinearOAuth } from '@/hooks/useLinearOAuth';
-import { useGithubOAuth } from '@/hooks/useGithubOAuth';
-import { BetaBadge } from '@/components/BetaBadge';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import { useJiraOAuth } from "@/hooks/useJiraOAuth";
+import { useLinearOAuth } from "@/hooks/useLinearOAuth";
+import { useGithubOAuth } from "@/hooks/useGithubOAuth";
+import { BetaBadge } from "@/components/BetaBadge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 
 export function TicketQueueSettings({
   localSettings,
@@ -56,27 +56,27 @@ export function TicketQueueSettings({
 
   const autoSyncEnabled = localSettings.autoSyncEstimates ?? true;
   const handleAutoSyncToggle = (checked: boolean) => {
-    handleChange('autoSyncEstimates', checked);
+    handleChange("autoSyncEstimates", checked);
   };
   const externalServiceOptions = [
-    { label: 'None', value: 'none' },
-    { label: 'Jira', value: 'jira' },
-    { label: 'Linear', value: 'linear' },
-    { label: 'GitHub', value: 'github' },
+    { label: "None", value: "none" },
+    { label: "Jira", value: "jira" },
+    { label: "Linear", value: "linear" },
+    { label: "GitHub", value: "github" },
   ];
   const jiraFieldOptions = [
-    { label: 'Select a field', value: '' },
+    { label: "Select a field", value: "" },
     ...fields.map((field) => ({
-      label: `${field.name}${field.type ? ` (${field.type})` : ''}`,
+      label: `${field.name}${field.type ? ` (${field.type})` : ""}`,
       value: field.id,
     })),
   ];
   const renderAutoSyncToggle = (
-    provider: 'jira' | 'linear',
+    provider: "jira" | "linear",
     connected: boolean,
   ) => {
     if (!connected) return null;
-    const providerLabel = provider === 'jira' ? 'Jira' : 'Linear';
+    const providerLabel = provider === "jira" ? "Jira" : "Linear";
 
     return (
       <div className="flex items-center pt-3">
@@ -112,7 +112,7 @@ export function TicketQueueSettings({
             id="enableTicketQueue"
             checked={localSettings.enableTicketQueue ?? false}
             onChange={(e) =>
-              handleChange('enableTicketQueue', e.target.checked)
+              handleChange("enableTicketQueue", e.target.checked)
             }
             data-testid="settings-toggle-enable-queue"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -137,7 +137,7 @@ export function TicketQueueSettings({
             id="allowOthersToManageQueue"
             checked={localSettings.allowOthersToManageQueue ?? false}
             onChange={(e) =>
-              handleChange('allowOthersToManageQueue', e.target.checked)
+              handleChange("allowOthersToManageQueue", e.target.checked)
             }
             data-testid="settings-toggle-allow-queue"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -161,12 +161,12 @@ export function TicketQueueSettings({
             value={
               localSettings.capacityPoints === null ||
               localSettings.capacityPoints === undefined
-                ? ''
+                ? ""
                 : String(localSettings.capacityPoints)
             }
             onChange={(event) => {
               const next = event.target.value;
-              handleChange('capacityPoints', next === '' ? null : Number(next));
+              handleChange("capacityPoints", next === "" ? null : Number(next));
             }}
             fullWidth
           />
@@ -190,13 +190,13 @@ export function TicketQueueSettings({
             </label>
             <Select
               id="externalService"
-              value={localSettings.externalService || 'none'}
-              onValueChange={(value) => handleChange('externalService', value)}
+              value={localSettings.externalService || "none"}
+              onValueChange={(value) => handleChange("externalService", value)}
               data-testid="settings-select-external-service"
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
               options={externalServiceOptions}
             />
-            {localSettings.externalService === 'jira' && (
+            {localSettings.externalService === "jira" && (
               <div className="space-y-3">
                 {isCreating ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
@@ -264,7 +264,7 @@ export function TicketQueueSettings({
 
                 {jiraStatus.connected && (
                   <div className="space-y-3">
-                    {renderAutoSyncToggle('jira', !!jiraStatus.connected)}
+                    {renderAutoSyncToggle("jira", !!jiraStatus.connected)}
                     <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
                       <div className="flex items-center justify-between">
                         <div>
@@ -283,10 +283,10 @@ export function TicketQueueSettings({
                           className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 disabled:opacity-50"
                         >
                           {fieldsLoading
-                            ? 'Refreshing…'
+                            ? "Refreshing…"
                             : fieldsLoaded
-                              ? 'Refresh'
-                              : 'Load fields'}
+                              ? "Refresh"
+                              : "Load fields"}
                         </Button>
                       </div>
 
@@ -305,7 +305,7 @@ export function TicketQueueSettings({
                             </label>
                             <Select
                               id="jiraStoryPointsField"
-                              value={jiraStatus.storyPointsField ?? ''}
+                              value={jiraStatus.storyPointsField ?? ""}
                               onValueChange={(value) =>
                                 saveFieldConfiguration({
                                   storyPointsField: value || null,
@@ -326,7 +326,7 @@ export function TicketQueueSettings({
                             </label>
                             <Select
                               id="jiraSprintField"
-                              value={jiraStatus.sprintField ?? ''}
+                              value={jiraStatus.sprintField ?? ""}
                               onValueChange={(value) =>
                                 saveFieldConfiguration({
                                   sprintField: value || null,
@@ -350,7 +350,7 @@ export function TicketQueueSettings({
                 )}
               </div>
             )}
-            {localSettings.externalService === 'linear' && (
+            {localSettings.externalService === "linear" && (
               <div className="space-y-3">
                 {isCreating ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
@@ -417,12 +417,12 @@ export function TicketQueueSettings({
                 )}
 
                 {renderAutoSyncToggle(
-                  'linear',
+                  "linear",
                   linearStatus.connected ?? false,
                 )}
               </div>
             )}
-            {localSettings.externalService === 'github' && (
+            {localSettings.externalService === "github" && (
               <div className="space-y-3">
                 {isCreating ? (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
@@ -447,13 +447,13 @@ export function TicketQueueSettings({
                             {(githubStatus.defaultOwner ||
                               githubStatus.defaultRepo) && (
                               <p className="text-xs text-slate-600 dark:text-slate-400">
-                                Repo:{' '}
+                                Repo:{" "}
                                 {[
                                   githubStatus.defaultOwner,
                                   githubStatus.defaultRepo,
                                 ]
                                   .filter(Boolean)
-                                  .join('/')}
+                                  .join("/")}
                               </p>
                             )}
                             {githubStatus.githubLogin && (

@@ -1,19 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useOAuthProvider } from '@/hooks/useOAuthProvider';
+import { useOAuthProvider } from "@/hooks/useOAuthProvider";
 import {
   authorizeGithubOAuth,
   getGithubOAuthStatus,
   revokeGithubOAuth,
   type GithubOAuthStatus,
-} from '@/lib/github-service';
+} from "@/lib/github-service";
 
 export function useGithubOAuth(enabled = true) {
   const queryClient = useQueryClient();
 
   return useOAuthProvider<GithubOAuthStatus>({
-    provider: 'github',
-    providerLabel: 'GitHub',
+    provider: "github",
+    providerLabel: "GitHub",
     enabled,
     initialStatus: { connected: false },
     getStatus: ({ roomKey, name }) => getGithubOAuthStatus(roomKey, name),

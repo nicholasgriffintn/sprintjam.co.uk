@@ -101,7 +101,7 @@ export function useWorkspaceProfile(enabled = true): WorkspaceProfile | null {
 
   const getSnapshot = () =>
     enabled
-      ? workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY) ?? null
+      ? (workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY) ?? null)
       : null;
 
   return useSyncExternalStore(

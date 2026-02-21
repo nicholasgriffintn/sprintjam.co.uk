@@ -1,24 +1,24 @@
-import type { WheelRoom } from '.';
-import type { SpinState, SpinResult, WheelSettings } from '@sprintjam/types';
-import { generateID } from '@sprintjam/utils';
+import type { WheelRoom } from ".";
+import type { SpinState, SpinResult, WheelSettings } from "@sprintjam/types";
+import { generateID } from "@sprintjam/utils";
 
 export async function handleSpin(wheel: WheelRoom, userName: string) {
   const wheelData = await wheel.getWheelData();
   if (!wheelData) {
-    throw new Error('Wheel data not found');
+    throw new Error("Wheel data not found");
   }
 
   if (wheelData.moderator !== userName) {
-    throw new Error('Only the moderator can spin the wheel');
+    throw new Error("Only the moderator can spin the wheel");
   }
 
   if (wheelData.spinState?.isSpinning) {
-    throw new Error('Wheel is already spinning');
+    throw new Error("Wheel is already spinning");
   }
 
   const enabledEntries = wheelData.entries.filter((e) => e.enabled);
   if (enabledEntries.length < 2) {
-    throw new Error('Need at least 2 entries to spin');
+    throw new Error("Need at least 2 entries to spin");
   }
 
   const maxValue =
@@ -37,13 +37,13 @@ export async function handleSpin(wheel: WheelRoom, userName: string) {
     startedAt: Date.now(),
     targetIndex,
     duration: wheelData.settings.spinDurationMs,
-    status: wheelData.spinState?.status ?? 'active',
+    status: wheelData.spinState?.status ?? "active",
   };
 
   wheel.repository.setSpinState(spinState);
 
   wheel.broadcast({
-    type: 'spinStarted',
+    type: "spinStarted",
     spinState,
   });
 
@@ -84,7 +84,7 @@ export async function handleSpinComplete(wheel: WheelRoom) {
   const entries = wheel.repository.getEntries();
 
   wheel.broadcast({
-    type: 'spinEnded',
+    type: "spinEnded",
     result,
     entries,
   });
@@ -93,15 +93,15 @@ export async function handleSpinComplete(wheel: WheelRoom) {
 export async function handleResetWheel(wheel: WheelRoom, userName: string) {
   const wheelData = await wheel.getWheelData();
   if (!wheelData) {
-    throw new Error('Wheel data not found');
+    throw new Error("Wheel data not found");
   }
 
   if (wheelData.moderator !== userName) {
-    throw new Error('Only the moderator can reset the wheel');
+    throw new Error("Only the moderator can reset the wheel");
   }
 
   if (wheelData.spinState?.isSpinning) {
-    throw new Error('Cannot reset while spinning');
+    throw new Error("Cannot reset while spinning");
   }
 
   wheel.repository.clearResults();
@@ -109,7 +109,7 @@ export async function handleResetWheel(wheel: WheelRoom, userName: string) {
   const entries = wheel.repository.getEntries();
 
   wheel.broadcast({
-    type: 'wheelReset',
+    type: "wheelReset",
     entries,
     results: [],
   });
@@ -122,11 +122,11 @@ export async function handleUpdateSettings(
 ) {
   const wheelData = await wheel.getWheelData();
   if (!wheelData) {
-    throw new Error('Wheel data not found');
+    throw new Error("Wheel data not found");
   }
 
   if (wheelData.moderator !== userName) {
-    throw new Error('Only the moderator can update settings');
+    throw new Error("Only the moderator can update settings");
   }
 
   const newSettings: WheelSettings = {
@@ -135,7 +135,7 @@ export async function handleUpdateSettings(
   };
 
   if (
-    typeof newSettings.spinDurationMs !== 'number' ||
+    typeof newSettings.spinDurationMs !== "number" ||
     !Number.isFinite(newSettings.spinDurationMs)
   ) {
     newSettings.spinDurationMs = wheelData.settings.spinDurationMs;
@@ -149,7 +149,7 @@ export async function handleUpdateSettings(
   wheel.repository.setSettings(newSettings);
 
   wheel.broadcast({
-    type: 'settingsUpdated',
+    type: "settingsUpdated",
     settings: newSettings,
   });
 }

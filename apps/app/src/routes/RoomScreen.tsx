@@ -160,11 +160,13 @@ const RoomScreen = () => {
     });
 
   useEffect(() => {
-    if (!roomData.gameSession || roomData.gameSession.status !== 'active') {
+    if (!roomData.gameSession || roomData.gameSession.status !== "active") {
       return;
     }
 
-    setGameAnnouncement(`${roomData.gameSession.startedBy} started ${roomData.gameSession.type.replace(/-/g, ' ')}. Jump in from the game panel!`);
+    setGameAnnouncement(
+      `${roomData.gameSession.startedBy} started ${roomData.gameSession.type.replace(/-/g, " ")}. Jump in from the game panel!`,
+    );
     setIsGamePanelMinimised(false);
     const timeout = setTimeout(() => setGameAnnouncement(null), 6000);
 
@@ -186,14 +188,46 @@ const RoomScreen = () => {
   const completedTicketList =
     roomData.ticketQueue?.filter((ticket) => ticket.status === "completed") ??
     [];
-  const completedTicketVotes = completedTicketList.reduce(
-    (total, ticket) => total + (ticket.votes?.length ?? 0),
+  const sessionRecapEntries = useMemo(() => {
+    if (roomData.roundHistory && roomData.roundHistory.length > 0) {
+      return roomData.roundHistory.map((entry, index) => ({
+        id: entry.id,
+        ticketId: entry.ticketId ?? `ROUND-${index + 1}`,
+        title: entry.ticketTitle,
+        outcome: entry.outcome,
+        votes: entry.votes,
+      }));
+    }
+
+    return completedTicketList.map((ticket) => ({
+      id: `ticket-${ticket.id}`,
+      ticketId: ticket.ticketId,
+      title: ticket.title,
+      outcome: ticket.outcome,
+      votes: ticket.votes ?? [],
+    }));
+  }, [completedTicketList, roomData.roundHistory]);
+  const sessionRecapVotes = sessionRecapEntries.reduce(
+    (total, entry) => total + entry.votes.length,
     0,
   );
-  const completedTicketVoters = completedTicketList.reduce((voters, ticket) => {
-    ticket.votes?.forEach((vote) => voters.add(vote.userName));
+  const sessionRecapVoters = sessionRecapEntries.reduce((voters, entry) => {
+    entry.votes.forEach((vote) => voters.add(vote.userName));
     return voters;
   }, new Set<string>());
+  const uniqueEstimatedItems = new Set(
+    sessionRecapEntries.map((entry) => entry.ticketId),
+  ).size;
+  const estimatedItemCount = isQueueEnabled
+    ? uniqueEstimatedItems || sessionRecapEntries.length
+    : sessionRecapEntries.length;
+  const estimatedItemLabel = isQueueEnabled
+    ? "Items estimated"
+    : "Rounds completed";
+  const recapTitle = isQueueEnabled ? "Ticket recap" : "Round recap";
+  const emptyRecapMessage = isQueueEnabled
+    ? "No completed tickets or rounds recorded for this session."
+    : "No completed rounds recorded for this session.";
 
   const getSuggestedNote = () => {
     if (spreadSummary.unknownVoteCount > 0) {
@@ -237,14 +271,14 @@ const RoomScreen = () => {
             stats={stats}
             setIsQueueModalOpen={setIsQueueModalOpen}
             onOpenQueueSettings={
-              isModeratorView ? () => handleOpenSettings('queue') : undefined
+              isModeratorView ? () => handleOpenSettings("queue") : undefined
             }
-            isCompleted={roomData.status === 'completed'}
+            isCompleted={roomData.status === "completed"}
           />
         </div>
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4 order-1 md:order-none">
-          {roomData?.status === 'completed' ? (
+          {roomData?.status === "completed" ? (
             <>
               <SurfaceCard padding="md" className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -254,7 +288,8 @@ const RoomScreen = () => {
                   This room is now read-only.
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Review the notes and votes captured for each ticket.
+                  Review the notes and votes captured for each{" "}
+                  {isQueueEnabled ? "ticket" : "round"}.
                 </p>
               </SurfaceCard>
 
@@ -268,15 +303,15 @@ const RoomScreen = () => {
                     Participants
                   </div>
                   <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {roomData.users.length || completedTicketVoters.size}
+                    {roomData.users.length || sessionRecapVoters.size}
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Items estimated
+                    {estimatedItemLabel}
                   </div>
                   <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {completedTicketList.length}
+                    {estimatedItemCount}
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -284,50 +319,50 @@ const RoomScreen = () => {
                     Votes recorded
                   </div>
                   <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {completedTicketVotes}
+                    {sessionRecapVotes}
                   </div>
                 </div>
               </SurfaceCard>
 
               <SurfaceCard padding="md" className="space-y-3 text-sm">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Ticket recap
+                  {recapTitle}
                 </p>
-                {completedTicketList.length === 0 ? (
+                {sessionRecapEntries.length === 0 ? (
                   <p className="text-slate-600 dark:text-slate-300">
-                    No completed tickets recorded for this session.
+                    {emptyRecapMessage}
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {completedTicketList.map((ticket) => (
+                    {sessionRecapEntries.map((entry) => (
                       <div
-                        key={ticket.id}
+                        key={entry.id}
                         className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
-                                {ticket.ticketId}
+                                {entry.ticketId}
                               </span>
-                              {ticket.title && (
+                              {entry.title && (
                                 <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                                  {ticket.title}
+                                  {entry.title}
                                 </span>
                               )}
                             </div>
-                            {ticket.outcome && (
+                            {entry.outcome && (
                               <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                                Note: {ticket.outcome}
+                                Note: {entry.outcome}
                               </p>
                             )}
                           </div>
                         </div>
-                        {ticket.votes && ticket.votes.length > 0 ? (
+                        {entry.votes.length > 0 ? (
                           <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                            {ticket.votes.map((vote) => (
+                            {entry.votes.map((vote, index) => (
                               <span
-                                key={`${ticket.id}-${vote.id}`}
+                                key={`${entry.id}-${vote.userName}-${vote.votedAt}-${index}`}
                                 className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                               >
                                 <span className="uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -342,7 +377,8 @@ const RoomScreen = () => {
                           </div>
                         ) : (
                           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            No votes recorded for this ticket.
+                            No votes recorded for this{" "}
+                            {isQueueEnabled ? "ticket" : "round"}.
                           </p>
                         )}
                       </div>
@@ -373,11 +409,11 @@ const RoomScreen = () => {
                   title="Enable facilitation prompts?"
                   body="Prompts will be displayed as the session progresses with tips to run a successful session."
                   primaryAction={{
-                    label: 'Enable prompts',
+                    label: "Enable prompts",
                     onClick: enableFacilitationGuidance,
                   }}
                   secondaryAction={{
-                    label: 'Not now',
+                    label: "Not now",
                     onClick: dismissFacilitationOptIn,
                   }}
                 />
@@ -405,7 +441,7 @@ const RoomScreen = () => {
                   currentUserVote={userVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('voting')
+                      ? () => handleOpenSettings("voting")
                       : undefined
                   }
                   disabled={isSpectator}
@@ -414,11 +450,11 @@ const RoomScreen = () => {
                 <UserEstimate
                   roomData={roomData}
                   name={name}
-                  userVote={typeof userVote === 'object' ? null : userVote}
+                  userVote={typeof userVote === "object" ? null : userVote}
                   onVote={handleVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('voting')
+                      ? () => handleOpenSettings("voting")
                       : undefined
                   }
                   disabled={isSpectator}
@@ -433,7 +469,7 @@ const RoomScreen = () => {
                   onToggleShowVotes={handleToggleShowVotes}
                   onResetVotes={handleResetVotes}
                   onNextTicket={() => {
-                    const existingNote = roomData.currentTicket?.outcome ?? '';
+                    const existingNote = roomData.currentTicket?.outcome ?? "";
                     setSummaryNote(existingNote || getSuggestedNote());
                     setIsSummaryOpen(true);
                   }}
@@ -444,7 +480,7 @@ const RoomScreen = () => {
                   }
                   onOpenResultsSettings={
                     isModeratorView
-                      ? () => handleOpenSettings('results')
+                      ? () => handleOpenSettings("results")
                       : undefined
                   }
                   onRevisitLater={async () => {
@@ -456,7 +492,7 @@ const RoomScreen = () => {
                         0,
                       ) + 1;
                     await handleUpdateTicket(roomData.currentTicket.id, {
-                      status: 'pending',
+                      status: "pending",
                       ordinal: maxOrdinal,
                     });
                     handleNextTicket();
@@ -482,10 +518,10 @@ const RoomScreen = () => {
                             spreadSummary.highestVoteValue !== null &&
                             spreadSummary.lowestVoteValue !== null
                               ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
-                              : 'Ask the highest and lowest voters to explain their thinking.'
+                              : "Ask the highest and lowest voters to explain their thinking."
                           }
                           primaryAction={{
-                            label: 'Got it',
+                            label: "Got it",
                             onClick: dismissHints,
                           }}
                         />
@@ -610,9 +646,9 @@ const RoomScreen = () => {
                   {gameTitle}
                 </span>
                 <span className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                  {roomData.gameSession.status === 'active'
+                  {roomData.gameSession.status === "active"
                     ? `Round ${roomData.gameSession.round}`
-                    : 'Game over'}
+                    : "Game over"}
                   <Maximize2 className="h-4 w-4" />
                 </span>
               </button>
@@ -678,7 +714,8 @@ const RoomScreen = () => {
         onClose={() => setIsQueueModalOpen(false)}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || 'none'}
+        roundHistory={roomData.roundHistory}
+        externalService={roomData.settings.externalService || "none"}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -695,7 +732,8 @@ const RoomScreen = () => {
         isQueueEnabled={isQueueEnabled}
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
-        externalService={roomData.settings.externalService || 'none'}
+        roundHistory={roomData.roundHistory}
+        externalService={roomData.settings.externalService || "none"}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -705,13 +743,15 @@ const RoomScreen = () => {
         onSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
         showSaveToWorkspace={showSaveToWorkspace}
         onCompleteSession={handleCompleteSession}
+        recordedRoundsCount={roomData.roundHistory?.length ?? 0}
+        currentRoundVoteCount={Object.keys(roomData.votes).length}
         onError={reportRoomError}
       />
 
-      {isQueueEnabled && queueProvider !== 'none' && (
+      {isQueueEnabled && queueProvider !== "none" && (
         <QueueProviderSetupModal
           isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as 'jira' | 'linear' | 'github'}
+          provider={queueProvider as "jira" | "linear" | "github"}
           onClose={() => setIsQueueSetupModalOpen(false)}
           onOpenQueue={() => {
             setIsQueueModalOpen(true);
@@ -735,7 +775,7 @@ const RoomScreen = () => {
           try {
             const trimmedNote = summaryNote.trim();
             if (roomData.currentTicket) {
-              const existingNote = roomData.currentTicket.outcome ?? '';
+              const existingNote = roomData.currentTicket.outcome ?? "";
               if (trimmedNote !== existingNote) {
                 await handleUpdateTicket(roomData.currentTicket.id, {
                   outcome: trimmedNote || undefined,

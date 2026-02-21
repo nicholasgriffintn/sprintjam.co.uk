@@ -1,5 +1,5 @@
-import type { RoomSettings, JudgeAlgorithm } from '@/types';
-import { Button } from '@/components/ui/Button';
+import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import { Button } from "@/components/ui/Button";
 
 export function VotingMode({
   localSettings,
@@ -8,7 +8,7 @@ export function VotingMode({
   localSettings: RoomSettings;
   handleChange: (
     key: keyof RoomSettings,
-    value: boolean | (string | number)[] | JudgeAlgorithm | number
+    value: boolean | (string | number)[] | JudgeAlgorithm | number,
   ) => void;
 }) {
   const isStructured = localSettings.enableStructuredVoting || false;
@@ -33,18 +33,18 @@ export function VotingMode({
             aria-checked={isStructured}
             id="enableStructuredVoting"
             onClick={() =>
-              handleChange('enableStructuredVoting', !isStructured)
+              handleChange("enableStructuredVoting", !isStructured)
             }
             className={`relative inline-flex h-6 w-11 flex-shrink-0 justify-start rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:ring-brand-500 ${
               isStructured
-                ? 'bg-brand-600 dark:bg-brand-500'
-                : 'bg-slate-200 dark:bg-slate-700'
+                ? "bg-brand-600 dark:bg-brand-500"
+                : "bg-slate-200 dark:bg-slate-700"
             }`}
             data-testid="settings-toggle-structured-voting"
           >
             <span
               className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                isStructured ? 'translate-x-5' : 'translate-x-0'
+                isStructured ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </Button>

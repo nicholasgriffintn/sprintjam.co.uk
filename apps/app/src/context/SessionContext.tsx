@@ -11,7 +11,7 @@ import {
 import { useUserPersistence } from "@/hooks/useUserPersistence";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
-import { navigateTo, parsePath, type AppScreen } from '@/config/routes';
+import { navigateTo, parsePath, type AppScreen } from "@/config/routes";
 
 interface SessionStateContextValue {
   screen: AppScreen;

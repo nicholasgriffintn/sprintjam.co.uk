@@ -14,7 +14,7 @@ class MockWebSocket {
   }
 }
 
-const createDeferred = <T,>() => {
+const createDeferred = <T>() => {
   let resolve!: (value: T) => void;
   let reject!: (error: unknown) => void;
   const promise = new Promise<T>((res, rej) => {
@@ -75,7 +75,13 @@ describe("wheel session close", () => {
 
     const socket = new MockWebSocket();
 
-    await handleSession(wheel, socket as unknown as WebSocket, "wheel", "Alice", "token");
+    await handleSession(
+      wheel,
+      socket as unknown as WebSocket,
+      "wheel",
+      "Alice",
+      "token",
+    );
 
     const closeHandler = socket.handlers.get("close");
     if (!closeHandler) {

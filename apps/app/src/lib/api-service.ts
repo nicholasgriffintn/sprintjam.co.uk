@@ -300,7 +300,7 @@ export function connectToRoom(
       });
 
       if (activeSocket && isWebSocketOpen(activeSocket)) {
-        activeSocket.close(1011, 'Connection error');
+        activeSocket.close(1011, "Connection error");
       }
     };
 

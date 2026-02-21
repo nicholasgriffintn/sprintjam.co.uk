@@ -77,8 +77,8 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
     capacityPercent !== null && capacityPercent >= 100
       ? "over"
       : capacityPercent !== null && capacityPercent >= 80
-      ? "near"
-      : "ok";
+        ? "near"
+        : "ok";
   const capacityBadgeClasses =
     capacityStatus === "over"
       ? "bg-red-600 text-white"
@@ -306,8 +306,8 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
               </div>
               {capacityStatus === "over" && (
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  Sprint at {capacityPercent}% capacity. Consider moving the lowest
-                  priority item.
+                  Sprint at {capacityPercent}% capacity. Consider moving the
+                  lowest priority item.
                 </p>
               )}
             </div>

@@ -1,13 +1,13 @@
-import type { WebSocket as CfWebSocket } from '@cloudflare/workers-types';
+import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
 import {
   markUserConnection,
   normalizeRoomData,
   anonymizeRoomData,
   findCanonicalUserName,
   validateClientMessage,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 
-import type { PlanningRoom } from '.';
+import type { PlanningRoom } from ".";
 
 export async function handleSession(
   room: PlanningRoom,
@@ -31,11 +31,11 @@ export async function handleSession(
     webSocket.accept();
     webSocket.send(
       JSON.stringify({
-        type: 'error',
-        error: 'Invalid or expired session. Please rejoin the room.',
+        type: "error",
+        error: "Invalid or expired session. Please rejoin the room.",
       }),
     );
-    webSocket.close(4003, 'Invalid session token');
+    webSocket.close(4003, "Invalid session token");
     return;
   }
 
@@ -52,11 +52,11 @@ export async function handleSession(
   if (!roomData) {
     webSocket.send(
       JSON.stringify({
-        type: 'error',
-        error: 'Unable to load room data',
+        type: "error",
+        error: "Unable to load room data",
       }),
     );
-    webSocket.close(1011, 'Room data unavailable');
+    webSocket.close(1011, "Room data unavailable");
     return;
   }
 
@@ -71,7 +71,7 @@ export async function handleSession(
 
   if (isSpectator) {
     room.broadcast({
-      type: 'spectatorStatusChanged',
+      type: "spectatorStatusChanged",
       user: canonicalUserName,
       isSpectator: true,
       users: freshRoomData?.users ?? [],
@@ -79,7 +79,7 @@ export async function handleSession(
     });
   } else {
     room.broadcast({
-      type: 'userConnectionStatus',
+      type: "userConnectionStatus",
       user: canonicalUserName,
       isConnected: true,
     });
@@ -87,126 +87,126 @@ export async function handleSession(
 
   webSocket.send(
     JSON.stringify({
-      type: 'initialize',
+      type: "initialize",
       roomData: anonymizeRoomData(freshRoomData ?? roomData),
     }),
   );
 
-  webSocket.addEventListener('message', async (msg) => {
+  webSocket.addEventListener("message", async (msg) => {
     try {
       const messageData =
-        typeof msg.data === 'string'
+        typeof msg.data === "string"
           ? msg.data
           : new TextDecoder().decode(msg.data);
       const data = JSON.parse(messageData);
       const validated = validateClientMessage(data);
 
-      if ('error' in validated) {
+      if ("error" in validated) {
         webSocket.send(
           JSON.stringify({
-            type: 'error',
+            type: "error",
             error: validated.error,
           }),
         );
         return;
       }
 
-      if (validated.type === 'ping') {
+      if (validated.type === "ping") {
         return;
       }
 
       const roomData = await room.getRoomData();
       if (
-        roomData?.status === 'completed' &&
-        validated.type !== 'completeSession'
+        roomData?.status === "completed" &&
+        validated.type !== "completeSession"
       ) {
         return;
       }
 
       switch (validated.type) {
-        case 'vote':
+        case "vote":
           await room.handleVote(canonicalUserName, validated.vote);
           break;
-        case 'showVotes':
+        case "showVotes":
           await room.handleShowVotes(canonicalUserName);
           break;
-        case 'resetVotes':
+        case "resetVotes":
           await room.handleResetVotes(canonicalUserName);
           break;
-        case 'updateSettings':
+        case "updateSettings":
           await room.handleUpdateSettings(
             canonicalUserName,
             validated.settings,
           );
           break;
-        case 'generateStrudelCode':
+        case "generateStrudelCode":
           await room.handleGenerateStrudel(canonicalUserName);
           break;
-        case 'toggleStrudelPlayback':
+        case "toggleStrudelPlayback":
           await room.handleToggleStrudelPlayback(canonicalUserName);
           break;
-        case 'selectTicket':
+        case "selectTicket":
           await room.handleSelectTicket(canonicalUserName, validated.ticketId);
           break;
-        case 'nextTicket':
+        case "nextTicket":
           await room.handleNextTicket(canonicalUserName);
           break;
-        case 'addTicket':
+        case "addTicket":
           await room.handleAddTicket(canonicalUserName, validated.ticket);
           break;
-        case 'updateTicket':
+        case "updateTicket":
           await room.handleUpdateTicket(
             canonicalUserName,
             validated.ticketId,
             validated.updates,
           );
           break;
-        case 'deleteTicket':
+        case "deleteTicket":
           await room.handleDeleteTicket(canonicalUserName, validated.ticketId);
           break;
-        case 'startTimer':
+        case "startTimer":
           await room.handleStartTimer(canonicalUserName);
           break;
-        case 'pauseTimer':
+        case "pauseTimer":
           await room.handlePauseTimer(canonicalUserName);
           break;
-        case 'resetTimer':
+        case "resetTimer":
           await room.handleResetTimer(canonicalUserName);
           break;
-        case 'configureTimer':
+        case "configureTimer":
           await room.handleConfigureTimer(canonicalUserName, validated.config);
           break;
-        case 'toggleSpectator':
+        case "toggleSpectator":
           await room.handleToggleSpectator(
             canonicalUserName,
             validated.isSpectator,
           );
           break;
-        case 'completeSession':
+        case "completeSession":
           await room.handleCompleteSession(canonicalUserName);
           break;
-        case 'startGame':
+        case "startGame":
           await room.handleStartGame(canonicalUserName, validated.gameType);
           break;
-        case 'submitGameMove':
+        case "submitGameMove":
           await room.handleSubmitGameMove(canonicalUserName, validated.value);
           break;
-        case 'endGame':
+        case "endGame":
           await room.handleEndGame(canonicalUserName);
           break;
       }
     } catch (err: unknown) {
-      console.error('WebSocket message error:', err);
+      console.error("WebSocket message error:", err);
       webSocket.send(
         JSON.stringify({
-          type: 'error',
-          error: 'An error occurred',
+          type: "error",
+          error: "An error occurred",
         }),
       );
     }
   });
 
-  webSocket.addEventListener('close', async () => {
+  webSocket.addEventListener("close", async () => {
     room.sessions.delete(webSocket);
     const stillConnected = Array.from(room.sessions.values()).some(
       (s) => s.userName === canonicalUserName,
@@ -220,7 +220,7 @@ export async function handleSession(
 
         room.repository.setUserConnection(canonicalUserName, false);
         room.broadcast({
-          type: 'userConnectionStatus',
+          type: "userConnectionStatus",
           user: canonicalUserName,
           isConnected: false,
         });
@@ -238,7 +238,7 @@ export async function handleSession(
             room.repository.setModerator(latestRoomData.moderator);
 
             room.broadcast({
-              type: 'newModerator',
+              type: "newModerator",
               moderator: latestRoomData.moderator,
             });
           }

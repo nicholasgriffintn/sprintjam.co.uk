@@ -1,4 +1,4 @@
-import type { RoomGameSession } from '@sprintjam/types';
+import type { RoomGameSession } from "@sprintjam/types";
 
 import {
   addEvent,
@@ -7,8 +7,8 @@ import {
   getCurrentRoundMoveCount,
   getCurrentRoundMoves,
   getRoundSubmissionCounts,
-} from '../helpers';
-import type { GameEngine } from '../types';
+} from "../helpers";
+import type { GameEngine } from "../types";
 
 const CATEGORY_ANSWER_PATTERN = /^[a-z][a-z0-9 -]{0,30}$/i;
 
@@ -16,8 +16,8 @@ const normalizeCategoryAnswer = (value: string) =>
   value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, '')
-    .replace(/\s+/g, ' ');
+    .replace(/[^a-z0-9 -]/g, "")
+    .replace(/\s+/g, " ");
 
 const playerAlreadyMovedInRound = (
   session: RoomGameSession,
@@ -66,15 +66,15 @@ const storeRoundHistory = (session: RoomGameSession) => {
     ...(session.categoryBlitzRoundHistory ?? []),
     {
       round: session.round,
-      category: session.categoryBlitzCategory ?? '',
-      letter: session.categoryBlitzLetter ?? '',
+      category: session.categoryBlitzCategory ?? "",
+      letter: session.categoryBlitzLetter ?? "",
       submissions,
     },
   ].slice(-6);
 };
 
 export const categoryBlitzEngine: GameEngine = {
-  title: 'Category Blitz',
+  title: "Category Blitz",
   maxRounds: 3,
   shouldBlockConsecutiveMoves: () => false,
   initializeSessionState: () => {
@@ -87,7 +87,7 @@ export const categoryBlitzEngine: GameEngine = {
   },
   applyMove: ({ session, userName, value, move }) => {
     const normalized = normalizeCategoryAnswer(value);
-    const letter = (session.categoryBlitzLetter ?? '').toLowerCase();
+    const letter = (session.categoryBlitzLetter ?? "").toLowerCase();
 
     const isValidSubmission =
       !!normalized &&

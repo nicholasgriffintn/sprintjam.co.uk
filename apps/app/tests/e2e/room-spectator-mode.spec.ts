@@ -7,12 +7,7 @@ test.describe("Spectator mode", () => {
     browser,
   }) => {
     const setup = await createRoomWithParticipant(browser);
-    const {
-      moderatorRoom,
-      participantRoom,
-      cleanup,
-      participantName,
-    } = setup;
+    const { moderatorRoom, participantRoom, cleanup, participantName } = setup;
 
     try {
       // Initially, participant should be in participants list
@@ -26,12 +21,16 @@ test.describe("Spectator mode", () => {
       // Participant should now be in spectators list
       await participantRoom.expectSpectatorListVisible();
       await participantRoom.expectSpectatorVisible(participantName);
-      await participantRoom.expectParticipantNotInParticipantsList(participantName);
+      await participantRoom.expectParticipantNotInParticipantsList(
+        participantName,
+      );
 
       // Moderator should also see participant in spectators list
       await moderatorRoom.expectSpectatorListVisible();
       await moderatorRoom.expectSpectatorVisible(participantName);
-      await moderatorRoom.expectParticipantNotInParticipantsList(participantName);
+      await moderatorRoom.expectParticipantNotInParticipantsList(
+        participantName,
+      );
 
       // Toggle back to participant
       await participantRoom.toggleSpectatorMode();
@@ -49,9 +48,7 @@ test.describe("Spectator mode", () => {
     }
   });
 
-  test("spectator cannot vote and votes are disabled", async ({
-    browser,
-  }) => {
+  test("spectator cannot vote and votes are disabled", async ({ browser }) => {
     const setup = await createRoomWithParticipant(browser);
     const { participantRoom, moderatorRoom, cleanup } = setup;
 
@@ -117,9 +114,7 @@ test.describe("Spectator mode", () => {
     }
   });
 
-  test("spectator is excluded from voting statistics", async ({
-    browser,
-  }) => {
+  test("spectator is excluded from voting statistics", async ({ browser }) => {
     const setup = await createRoomWithParticipant(browser);
     const { participantRoom, moderatorRoom, cleanup, participantName } = setup;
 
@@ -146,38 +141,42 @@ test.describe("Spectator mode", () => {
     }
   });
 
-  test("spectator remains spectator after page reload", async ({
-    browser,
-  }) => {
+  test("spectator remains spectator after page reload", async ({ browser }) => {
     const setup = await createRoomWithParticipant(browser);
     const { participantRoom, moderatorRoom, cleanup, participantName } = setup;
 
     try {
       await participantRoom.toggleSpectatorMode();
       await participantRoom.expectSpectatorVisible(participantName);
-      await participantRoom.expectParticipantNotInParticipantsList(participantName);
+      await participantRoom.expectParticipantNotInParticipantsList(
+        participantName,
+      );
       await moderatorRoom.expectSpectatorVisible(participantName);
-      await moderatorRoom.expectParticipantNotInParticipantsList(participantName);
+      await moderatorRoom.expectParticipantNotInParticipantsList(
+        participantName,
+      );
 
       await participantRoom.reload();
 
       await participantRoom.waitForParticipants(1);
       await participantRoom.expectSpectatorListVisible();
       await participantRoom.expectSpectatorVisible(participantName);
-      await participantRoom.expectParticipantNotInParticipantsList(participantName);
+      await participantRoom.expectParticipantNotInParticipantsList(
+        participantName,
+      );
       await participantRoom.expectVotingDisabled();
 
       await moderatorRoom.expectSpectatorVisible(participantName);
       await moderatorRoom.waitForParticipants(1);
-      await moderatorRoom.expectParticipantNotInParticipantsList(participantName);
+      await moderatorRoom.expectParticipantNotInParticipantsList(
+        participantName,
+      );
     } finally {
       await cleanup();
     }
   });
 
-  test("multiple spectators are displayed correctly", async ({
-    browser,
-  }) => {
+  test("multiple spectators are displayed correctly", async ({ browser }) => {
     const moderatorContext = await browser.newContext();
     const moderatorPage = await moderatorContext.newPage();
 
@@ -233,9 +232,7 @@ test.describe("Spectator mode", () => {
     }
   });
 
-  test("moderator can toggle to spectator mode", async ({
-    browser,
-  }) => {
+  test("moderator can toggle to spectator mode", async ({ browser }) => {
     const setup = await createRoomWithParticipant(browser);
     const {
       moderatorRoom,

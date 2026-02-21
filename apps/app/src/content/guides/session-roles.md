@@ -89,10 +89,10 @@ Rotating roles builds shared ownership and avoids burnout. One simple approach: 
 
 ## Role summary
 
-| Role | Focus | Votes? |
-| --- | --- | --- |
-| Facilitator | Process, time, discussion flow | Optional (last, silently) |
-| Scribe | Capture decisions, assumptions | Yes |
-| Product Owner | Context, scope, acceptance criteria | No |
-| Participants | Estimate, explain, question | Yes |
-| Timekeeper | Track time, call breaks | Yes |
+| Role          | Focus                               | Votes?                    |
+| ------------- | ----------------------------------- | ------------------------- |
+| Facilitator   | Process, time, discussion flow      | Optional (last, silently) |
+| Scribe        | Capture decisions, assumptions      | Yes                       |
+| Product Owner | Context, scope, acceptance criteria | No                        |
+| Participants  | Estimate, explain, question         | Yes                       |
+| Timekeeper    | Track time, call breaks             | Yes                       |

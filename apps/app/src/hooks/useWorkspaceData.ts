@@ -127,7 +127,7 @@ export const useWorkspaceData = () => {
       }
 
       const currentProfile = workspaceProfileCollection.get(
-        WORKSPACE_PROFILE_DOCUMENT_KEY
+        WORKSPACE_PROFILE_DOCUMENT_KEY,
       );
       const hasStats =
         workspaceStatsCollection.get(WORKSPACE_STATS_DOCUMENT_KEY) !==
@@ -150,7 +150,7 @@ export const useWorkspaceData = () => {
           ? err.message
           : "Unable to load workspace data right now";
 
-      if (message === 'Unauthorized') {
+      if (message === "Unauthorized") {
         setError(null);
       } else {
         setError(message);
@@ -352,7 +352,7 @@ export const useWorkspaceData = () => {
     }: CreateSessionPayload): Promise<TeamSession | null> => {
       if (!profile) {
         setActionError(
-          'You need to load the workspace before creating sessions'
+          "You need to load the workspace before creating sessions",
         );
         return null;
       }
@@ -369,14 +369,14 @@ export const useWorkspaceData = () => {
         return session;
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Unable to create session';
+          err instanceof Error ? err.message : "Unable to create session";
         setActionError(message);
         return null;
       } finally {
         setIsMutating(false);
       }
     },
-    [profile]
+    [profile],
   );
 
   const handleLogout = useCallback(async () => {

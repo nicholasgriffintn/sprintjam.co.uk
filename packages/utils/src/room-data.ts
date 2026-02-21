@@ -1,16 +1,17 @@
 import type {
   RoomData,
   RoomGameSession,
+  SessionRoundHistoryItem,
   StructuredVote,
   TicketQueueWithVotes,
   VoteValue,
   VotingCompletion,
   ExtraVoteOption,
-} from '@sprintjam/types';
+} from "@sprintjam/types";
 
-import { isStructuredVoteComplete } from './structured-voting';
+import { isStructuredVoteComplete } from "./structured-voting";
 
-import { applySettingsUpdate } from './room-settings';
+import { applySettingsUpdate } from "./room-settings";
 
 export function getAnonymousUserId(
   roomData: RoomData,
@@ -18,7 +19,7 @@ export function getAnonymousUserId(
 ): string {
   const index = roomData.users.indexOf(userName);
   if (index === -1) {
-    return 'Anonymous';
+    return "Anonymous";
   }
   return `Anonymous ${index + 1}`;
 }
@@ -40,7 +41,7 @@ export function normalizeRoomData(roomData: RoomData): RoomData {
 
 export function ensureRoomStatus(roomData: RoomData) {
   if (!roomData.status) {
-    roomData.status = 'active';
+    roomData.status = "active";
   }
   return roomData.status;
 }
@@ -177,6 +178,23 @@ export const remapTicketVotes = (
   };
 };
 
+export const remapRoundHistory = (
+  idMap: Map<string, string>,
+  roundHistory?: SessionRoundHistoryItem[],
+) => {
+  if (!roundHistory) {
+    return roundHistory;
+  }
+
+  return roundHistory.map((entry) => ({
+    ...entry,
+    votes: entry.votes.map((vote) => ({
+      ...vote,
+      userName: idMap.get(vote.userName) ?? "Anonymous",
+    })),
+  }));
+};
+
 export function anonymizeRoomData(roomData: RoomData): RoomData {
   if (
     !roomData.settings.anonymousVotes &&
@@ -200,6 +218,7 @@ export function anonymizeRoomData(roomData: RoomData): RoomData {
     structuredVotes: remapStructuredVotes(idMap, roomData.structuredVotes),
     currentTicket: remapTicketVotes(idMap, roomData.currentTicket),
     ticketQueue,
+    roundHistory: remapRoundHistory(idMap, roomData.roundHistory),
   });
 }
 

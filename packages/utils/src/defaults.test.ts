@@ -8,13 +8,13 @@ import {
   getDefaultStructuredVotingOptions,
   getVotingTemplates,
   getServerDefaults,
-} from './defaults';
-import { VOTING_OPTIONS, STRUCTURED_VOTING_OPTIONS } from './config/constants';
+} from "./defaults";
+import { VOTING_OPTIONS, STRUCTURED_VOTING_OPTIONS } from "./config/constants";
 import { generateVoteOptionsMetadata } from "./votes";
 import {
   DEFAULT_EXTRA_VOTE_OPTIONS,
   DEFAULT_VOTING_SEQUENCE_ID,
-} from './config/voting';
+} from "./config/voting";
 
 describe("defaults utils", () => {
   describe("default option helpers", () => {
@@ -22,11 +22,11 @@ describe("defaults utils", () => {
       const options = getDefaultEstimateOptions();
       expect(options).toEqual(VOTING_OPTIONS);
       expect(options).not.toBe(VOTING_OPTIONS);
-      DEFAULT_EXTRA_VOTE_OPTIONS.filter((extra) => extra.enabled !== false).forEach(
-        (extra) => {
-          expect(options).toContain(extra.value);
-        },
-      );
+      DEFAULT_EXTRA_VOTE_OPTIONS.filter(
+        (extra) => extra.enabled !== false,
+      ).forEach((extra) => {
+        expect(options).toContain(extra.value);
+      });
     });
 
     it("returns a copy of the structured voting options", () => {
@@ -70,12 +70,10 @@ describe("defaults utils", () => {
       expect(settings.estimateOptions.slice(0, customOptions.length)).toEqual(
         customOptions,
       );
-      expect(
-        settings.estimateOptions.slice(customOptions.length),
-      ).toEqual(
-        DEFAULT_EXTRA_VOTE_OPTIONS.filter((option) => option.enabled !== false).map(
-          (option) => option.value,
-        ),
+      expect(settings.estimateOptions.slice(customOptions.length)).toEqual(
+        DEFAULT_EXTRA_VOTE_OPTIONS.filter(
+          (option) => option.enabled !== false,
+        ).map((option) => option.value),
       );
       expect(settings.voteOptionsMetadata).toEqual(
         generateVoteOptionsMetadata(settings.estimateOptions),

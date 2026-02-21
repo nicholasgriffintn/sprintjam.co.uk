@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { applyRoomUpdate } from './room';
-import type { RoomData, WebSocketMessage, VotingCompletion } from '../types';
+import { describe, it, expect } from "vitest";
+import { applyRoomUpdate } from "./room";
+import type { RoomData, WebSocketMessage, VotingCompletion } from "../types";
 
 const createBaseRoom = (): RoomData => ({
-  key: 'test-room',
-  users: ['Alice', 'Bob'],
+  key: "test-room",
+  users: ["Alice", "Bob"],
   votes: {},
   showVotes: false,
-  moderator: 'Alice',
+  moderator: "Alice",
   connectedUsers: { Alice: true, Bob: true },
   judgeScore: null,
   settings: {
@@ -22,24 +22,24 @@ const createBaseRoom = (): RoomData => ({
     topVotesCount: 3,
     anonymousVotes: false,
     enableJudge: false,
-    judgeAlgorithm: 'smartConsensus' as const,
+    judgeAlgorithm: "smartConsensus" as const,
   },
 });
 
-describe('applyRoomUpdate', () => {
-  describe('vote messages', () => {
-    it('updates votingCompletion when included in vote message', () => {
+describe("applyRoomUpdate", () => {
+  describe("vote messages", () => {
+    it("updates votingCompletion when included in vote message", () => {
       const room = createBaseRoom();
       const votingCompletion: VotingCompletion = {
         allVotesComplete: false,
         completedCount: 1,
         totalCount: 2,
-        incompleteUsers: ['Bob'],
+        incompleteUsers: ["Bob"],
       };
 
       const message: WebSocketMessage = {
-        type: 'vote',
-        user: 'Alice',
+        type: "vote",
+        user: "Alice",
         vote: 5,
         votingCompletion,
       };
@@ -49,20 +49,20 @@ describe('applyRoomUpdate', () => {
       expect(result?.votingCompletion).toEqual(votingCompletion);
     });
 
-    it('preserves existing votingCompletion when not included in message', () => {
+    it("preserves existing votingCompletion when not included in message", () => {
       const existingCompletion: VotingCompletion = {
         allVotesComplete: false,
         completedCount: 0,
         totalCount: 2,
-        incompleteUsers: ['Alice', 'Bob'],
+        incompleteUsers: ["Alice", "Bob"],
       };
 
       const room = createBaseRoom();
       room.votingCompletion = existingCompletion;
 
       const message: WebSocketMessage = {
-        type: 'vote',
-        user: 'Alice',
+        type: "vote",
+        user: "Alice",
         vote: 5,
       };
 
@@ -71,18 +71,18 @@ describe('applyRoomUpdate', () => {
       expect(result?.votingCompletion).toEqual(existingCompletion);
     });
 
-    it('updates votingCompletion with structured vote', () => {
+    it("updates votingCompletion with structured vote", () => {
       const votingCompletion: VotingCompletion = {
         allVotesComplete: false,
         completedCount: 0,
         totalCount: 2,
-        incompleteUsers: ['Alice', 'Bob'],
+        incompleteUsers: ["Alice", "Bob"],
       };
 
       const room = createBaseRoom();
       const message: WebSocketMessage = {
-        type: 'vote',
-        user: 'Alice',
+        type: "vote",
+        user: "Alice",
         vote: 5,
         structuredVote: {
           criteriaScores: { complexity: 2 },
@@ -98,8 +98,8 @@ describe('applyRoomUpdate', () => {
     });
   });
 
-  describe('resetVotes messages', () => {
-    it('updates votingCompletion when resetting votes', () => {
+  describe("resetVotes messages", () => {
+    it("updates votingCompletion when resetting votes", () => {
       const room = createBaseRoom();
       room.votes = { Alice: 5, Bob: 3 };
       room.votingCompletion = {
@@ -113,11 +113,11 @@ describe('applyRoomUpdate', () => {
         allVotesComplete: false,
         completedCount: 0,
         totalCount: 2,
-        incompleteUsers: ['Alice', 'Bob'],
+        incompleteUsers: ["Alice", "Bob"],
       };
 
       const message: WebSocketMessage = {
-        type: 'resetVotes',
+        type: "resetVotes",
         votingCompletion: newCompletion,
       };
 
@@ -127,18 +127,18 @@ describe('applyRoomUpdate', () => {
       expect(result?.votingCompletion).toEqual(newCompletion);
     });
 
-    it('clears votingCompletion when not included in reset message', () => {
+    it("clears votingCompletion when not included in reset message", () => {
       const room = createBaseRoom();
       room.votes = { Alice: 5 };
       room.votingCompletion = {
         allVotesComplete: false,
         completedCount: 1,
         totalCount: 2,
-        incompleteUsers: ['Bob'],
+        incompleteUsers: ["Bob"],
       };
 
       const message: WebSocketMessage = {
-        type: 'resetVotes',
+        type: "resetVotes",
       };
 
       const result = applyRoomUpdate(room, message);
@@ -146,20 +146,87 @@ describe('applyRoomUpdate', () => {
       expect(result?.votes).toEqual({});
       expect(result?.votingCompletion).toBeUndefined();
     });
+
+    it("updates roundHistory when included in reset message", () => {
+      const room = createBaseRoom();
+      room.roundHistory = [
+        {
+          id: "round-old",
+          type: "reset",
+          endedAt: 1,
+          votes: [{ userName: "Alice", vote: 3, votedAt: 1 }],
+        },
+      ];
+
+      const message: WebSocketMessage = {
+        type: "resetVotes",
+        roundHistory: [
+          {
+            id: "round-new",
+            type: "reset",
+            endedAt: 2,
+            votes: [{ userName: "Bob", vote: 5, votedAt: 2 }],
+          },
+        ],
+      };
+
+      const result = applyRoomUpdate(room, message);
+
+      expect(result?.roundHistory).toEqual(message.roundHistory);
+    });
   });
-  describe('game messages', () => {
-    it('stores game session when game starts', () => {
+
+  describe("nextTicket messages", () => {
+    it("updates roundHistory when included in nextTicket message", () => {
+      const room = createBaseRoom();
+      room.roundHistory = [
+        {
+          id: "round-old",
+          type: "reset",
+          endedAt: 1,
+          votes: [{ userName: "Alice", vote: 3, votedAt: 1 }],
+        },
+      ];
+
+      const message: WebSocketMessage = {
+        type: "nextTicket",
+        ticket: {
+          id: 1,
+          ticketId: "ABC-1",
+          status: "in_progress",
+          createdAt: Date.now(),
+          ordinal: 1,
+          externalService: "none",
+        },
+        queue: [],
+        roundHistory: [
+          {
+            id: "round-new",
+            type: "next_ticket",
+            endedAt: 2,
+            votes: [{ userName: "Bob", vote: 5, votedAt: 2 }],
+          },
+        ],
+      };
+
+      const result = applyRoomUpdate(room, message);
+
+      expect(result?.roundHistory).toEqual(message.roundHistory);
+    });
+  });
+  describe("game messages", () => {
+    it("stores game session when game starts", () => {
       const room = createBaseRoom();
       const message: WebSocketMessage = {
-        type: 'gameStarted',
-        startedBy: 'Alice',
+        type: "gameStarted",
+        startedBy: "Alice",
         gameSession: {
-          type: 'emoji-story',
-          startedBy: 'Alice',
+          type: "emoji-story",
+          startedBy: "Alice",
           startedAt: Date.now(),
           round: 1,
-          status: 'active',
-          participants: ['Alice', 'Bob'],
+          status: "active",
+          participants: ["Alice", "Bob"],
           leaderboard: { Alice: 0, Bob: 0 },
           moves: [],
           events: [],
@@ -167,25 +234,25 @@ describe('applyRoomUpdate', () => {
       };
 
       const result = applyRoomUpdate(room, message);
-      expect(result?.gameSession?.type).toBe('emoji-story');
+      expect(result?.gameSession?.type).toBe("emoji-story");
     });
 
-    it('stores clueboard blocker secret for the current round', () => {
+    it("stores clueboard blocker secret for the current round", () => {
       const room = createBaseRoom();
       room.gameSession = {
-        type: 'clueboard',
-        startedBy: 'Alice',
+        type: "clueboard",
+        startedBy: "Alice",
         startedAt: Date.now(),
         round: 2,
-        status: 'active',
-        participants: ['Alice', 'Bob'],
+        status: "active",
+        participants: ["Alice", "Bob"],
         leaderboard: { Alice: 0, Bob: 0 },
         moves: [],
         events: [],
       };
 
       const message: WebSocketMessage = {
-        type: 'clueboardSecret',
+        type: "clueboardSecret",
         round: 2,
         blockerIndex: 5,
       };

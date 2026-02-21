@@ -2,7 +2,7 @@
 
 Planning Poker (also called Scrum Poker) is a team estimation technique. Everyone picks a card at the same time, then you talk about the spread and vote again. The goal is not a perfect number. It is a shared understanding before the sprint starts.
 
-It was first described by James Grenning in 2002 and popularised by Mike Cohn in *Agile Estimating and Planning*. The format mixes expert opinion, comparison, and debate in a repeatable way.
+It was first described by James Grenning in 2002 and popularised by Mike Cohn in _Agile Estimating and Planning_. The format mixes expert opinion, comparison, and debate in a repeatable way.
 
 ## Why simultaneous voting matters
 

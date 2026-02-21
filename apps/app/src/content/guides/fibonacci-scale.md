@@ -17,15 +17,15 @@ Fibonacci keeps the focus on "small, medium, large" rather than fake accuracy.
 
 Most teams use a modified sequence rather than pure Fibonacci:
 
-| Card | Typical meaning |
-| --- | --- |
-| **0** | Trivial or already done. No effort needed. |
-| **1** | Smallest meaningful unit of work. |
-| **2** | Small task, well understood. |
-| **3** | Moderate complexity, few unknowns. |
-| **5** | Medium effort, some complexity. |
-| **8** | Large story, likely needs decomposition. |
-| **13** | Very large, significant unknowns. |
+| Card   | Typical meaning                               |
+| ------ | --------------------------------------------- |
+| **0**  | Trivial or already done. No effort needed.    |
+| **1**  | Smallest meaningful unit of work.             |
+| **2**  | Small task, well understood.                  |
+| **3**  | Moderate complexity, few unknowns.            |
+| **5**  | Medium effort, some complexity.               |
+| **8**  | Large story, likely needs decomposition.      |
+| **13** | Very large, significant unknowns.             |
 | **21** | Epic-sized. Should almost certainly be split. |
 
 Notice there is no "4". That is deliberate. It forces a choice between "small" and "medium" and keeps the scale clean.

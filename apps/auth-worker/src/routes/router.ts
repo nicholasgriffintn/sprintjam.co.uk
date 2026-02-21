@@ -1,5 +1,5 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { validateRequestBodySize } from '@sprintjam/utils';
+import { validateRequestBodySize } from "@sprintjam/utils";
 
 import {
   requestMagicLinkController,
@@ -10,7 +10,7 @@ import {
   verifyMfaController,
   getCurrentUserController,
   logoutController,
-} from '../controllers/auth-controller';
+} from "../controllers/auth-controller";
 import {
   listTeamsController,
   createTeamController,
@@ -52,122 +52,122 @@ function requireNumberParam(
 
 const ROUTES: RouteDefinition[] = [
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/magic-link$/,
     handler: (request, env) => requestMagicLinkController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/verify$/,
     handler: (request, env) => verifyCodeController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/mfa\/setup\/start$/,
     handler: (request, env) => startMfaSetupController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/mfa\/setup\/verify$/,
     handler: (request, env) => verifyMfaSetupController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/mfa\/verify\/start$/,
     handler: (request, env) => startMfaVerifyController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/mfa\/verify$/,
     handler: (request, env) => verifyMfaController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^auth\/me$/,
     handler: (request, env) => getCurrentUserController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/logout$/,
     handler: (request, env) => logoutController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams$/,
     handler: (request, env) => listTeamsController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^teams$/,
     handler: (request, env) => createTeamController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'PUT',
+    method: "PUT",
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return updateTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'DELETE',
+    method: "DELETE",
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return deleteTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)\/sessions$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamSessionsController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^teams\/(\d+)\/sessions$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return createTeamSessionController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
-      const sessionIdResult = requireNumberParam(params[1], 'sessionId');
+      const sessionIdResult = requireNumberParam(params[1], "sessionId");
       if (!sessionIdResult.ok) return sessionIdResult.response;
       return getTeamSessionController(
         request,
@@ -176,19 +176,19 @@ const ROUTES: RouteDefinition[] = [
         sessionIdResult.value,
       );
     },
-    paramTypes: ['number', 'number'],
+    paramTypes: ["number", "number"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^sessions\/complete$/,
     handler: (request, env) => completeSessionByRoomKeyController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^workspace\/stats$/,
     handler: (request, env) => getWorkspaceStatsController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
 ];
 
@@ -242,7 +242,7 @@ export async function handleRequest(
       return rootResponse();
     }
 
-    if (request.method === 'POST' || request.method === 'PUT') {
+    if (request.method === "POST" || request.method === "PUT") {
       const bodySizeCheck = validateRequestBodySize(request);
       if (!bodySizeCheck.ok) {
         return bodySizeCheck.response as unknown as Response;

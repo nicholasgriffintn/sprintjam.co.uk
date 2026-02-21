@@ -20,7 +20,7 @@ export function ErrorBannerConnection({
         )}
         <p className="text-sm font-semibold">
           {connectionIssue?.message ||
-            'Connection lost. Trying to reconnect...'}
+            "Connection lost. Trying to reconnect..."}
         </p>
       </div>
       <div className="flex items-center gap-2 text-xs">

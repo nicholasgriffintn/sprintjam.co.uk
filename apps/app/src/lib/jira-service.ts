@@ -1,5 +1,5 @@
 import type { VoteValue, TicketMetadata } from "@/types";
-import { API_BASE_URL } from '@/constants';
+import { API_BASE_URL } from "@/constants";
 export interface JiraOAuthStatus {
   connected: boolean;
   jiraDomain?: string;
@@ -36,14 +36,14 @@ export async function fetchJiraTicket(
 ): Promise<TicketMetadata> {
   try {
     const response = await fetch(`${API_BASE_URL}/jira/ticket`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ticketId,
         roomKey: options?.roomKey,
         userName: options?.userName,
       }),
-      credentials: 'include',
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -60,9 +60,9 @@ export async function fetchJiraTicket(
     if (ticket) {
       return ticket;
     }
-    throw new Error('Invalid response format from Jira API');
+    throw new Error("Invalid response format from Jira API");
   } catch (error) {
-    console.error('Error fetching Jira ticket:', error);
+    console.error("Error fetching Jira ticket:", error);
     throw error;
   }
 }
@@ -80,9 +80,9 @@ export async function updateJiraStoryPoints(
     const response = await fetch(
       `${API_BASE_URL}/jira/ticket/${encodeURIComponent(ticketId)}/storyPoints`,
       {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           storyPoints,
@@ -90,7 +90,7 @@ export async function updateJiraStoryPoints(
           userName: options.userName,
           note: options.note,
         }),
-        credentials: 'include',
+        credentials: "include",
       },
     );
 
@@ -107,7 +107,7 @@ export async function updateJiraStoryPoints(
 
     return ticket;
   } catch (error) {
-    console.error('Error updating Jira story points:', error);
+    console.error("Error updating Jira story points:", error);
     throw error;
   }
 }
@@ -117,16 +117,16 @@ export async function fetchJiraBoards(
   userName: string,
 ): Promise<JiraBoard[]> {
   const response = await fetch(`${API_BASE_URL}/jira/boards`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      (errorData as { error?: string }).error || 'Failed to fetch Jira boards',
+      (errorData as { error?: string }).error || "Failed to fetch Jira boards",
     );
   }
 
@@ -140,16 +140,16 @@ export async function fetchJiraSprints(
   userName: string,
 ): Promise<JiraSprint[]> {
   const response = await fetch(`${API_BASE_URL}/jira/sprints`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ boardId, roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      (errorData as { error?: string }).error || 'Failed to fetch Jira sprints',
+      (errorData as { error?: string }).error || "Failed to fetch Jira sprints",
     );
   }
 
@@ -168,8 +168,8 @@ export async function fetchJiraBoardIssues(
   userName: string,
 ): Promise<TicketMetadata[]> {
   const response = await fetch(`${API_BASE_URL}/jira/issues`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       boardId,
       roomKey,
@@ -178,13 +178,13 @@ export async function fetchJiraBoardIssues(
       query: options.search,
       limit: options.limit,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      (errorData as { error?: string }).error || 'Failed to fetch Jira issues',
+      (errorData as { error?: string }).error || "Failed to fetch Jira issues",
     );
   }
 
@@ -215,14 +215,14 @@ export async function getJiraOAuthStatus(
   userName: string,
 ): Promise<JiraOAuthStatus> {
   const response = await fetch(`${API_BASE_URL}/jira/oauth/status`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch OAuth status');
+    throw new Error("Failed to fetch OAuth status");
   }
 
   return (await response.json()) as JiraOAuthStatus;
@@ -237,15 +237,15 @@ export async function getJiraFields(
   sprintField?: string | null;
 }> {
   const response = await fetch(`${API_BASE_URL}/jira/oauth/fields`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ roomKey, userName }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to fetch Jira fields');
+    throw new Error(errorData.error || "Failed to fetch Jira fields");
   }
 
   return (await response.json()) as {
@@ -260,20 +260,20 @@ export async function authorizeJiraOAuth(
   userName: string,
 ): Promise<{ authorizationUrl: string }> {
   const response = await fetch(`${API_BASE_URL}/jira/oauth/authorize`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       roomKey,
       userName,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to initiate OAuth');
+    throw new Error(errorData.error || "Failed to initiate OAuth");
   }
 
   return (await response.json()) as { authorizationUrl: string };
@@ -284,20 +284,20 @@ export async function revokeJiraOAuth(
   userName: string,
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/jira/oauth/revoke`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       roomKey,
       userName,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to disconnect Jira');
+    throw new Error(errorData.error || "Failed to disconnect Jira");
   }
 }
 
@@ -307,9 +307,9 @@ export async function saveJiraFieldConfiguration(
   options: { storyPointsField?: string | null; sprintField?: string | null },
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/jira/oauth/fields`, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       roomKey,
@@ -317,11 +317,11 @@ export async function saveJiraFieldConfiguration(
       storyPointsField: options.storyPointsField,
       sprintField: options.sprintField,
     }),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to save Jira field settings');
+    throw new Error(errorData.error || "Failed to save Jira field settings");
   }
 }

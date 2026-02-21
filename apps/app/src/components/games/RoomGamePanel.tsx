@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Minimize2, Trophy } from 'lucide-react';
+import { Minimize2, Trophy } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -43,9 +43,9 @@ export const RoomGamePanel = ({
   );
   const isMultiplayerGame = gameSession.participants.length > 1;
   const isTurnBasedGame =
-    gameSession.type === 'guess-the-number' ||
-    gameSession.type === 'word-chain' ||
-    gameSession.type === 'emoji-story';
+    gameSession.type === "guess-the-number" ||
+    gameSession.type === "word-chain" ||
+    gameSession.type === "emoji-story";
   const latestMove = gameSession.moves[gameSession.moves.length - 1];
   const isWaitingForOtherPlayer =
     gameSession.status === "active" &&
@@ -77,15 +77,15 @@ export const RoomGamePanel = ({
   const clueGiverKnowsBlocker =
     isCurrentCodenamesClueGiver && knownBlockerIndex !== undefined;
   const isOneWordVotePhase =
-    gameSession.type === 'one-word-pitch' &&
-    gameSession.oneWordPitchPhase === 'vote' &&
-    gameSession.status === 'active';
+    gameSession.type === "one-word-pitch" &&
+    gameSession.oneWordPitchPhase === "vote" &&
+    gameSession.status === "active";
   const oneWordCurrentSubmissions =
-    gameSession.type === 'one-word-pitch'
+    gameSession.type === "one-word-pitch"
       ? (gameSession.oneWordPitchRoundSubmissions ?? {})
       : {};
   const oneWordCurrentVotes =
-    gameSession.type === 'one-word-pitch'
+    gameSession.type === "one-word-pitch"
       ? (gameSession.oneWordPitchRoundVotes ?? {})
       : {};
   const oneWordUserHasVoted = Boolean(oneWordCurrentVotes[userName]);
@@ -107,7 +107,7 @@ export const RoomGamePanel = ({
             Party game live
           </p>
           <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {gameMeta?.title ?? 'Room game'}
+            {gameMeta?.title ?? "Room game"}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-300">
             Started by {gameSession.startedBy} · Round {gameSession.round}
@@ -127,7 +127,7 @@ export const RoomGamePanel = ({
             </Button>
           ) : null}
 
-          {gameSession.status === 'active' ? (
+          {gameSession.status === "active" ? (
             <Button
               type="button"
               variant="secondary"
@@ -187,8 +187,8 @@ export const RoomGamePanel = ({
         </div>
       </div>
 
-      {gameSession.status === 'active' &&
-      gameSession.type === 'one-word-pitch' &&
+      {gameSession.status === "active" &&
+      gameSession.type === "one-word-pitch" &&
       gameSession.oneWordPitchPrompt ? (
         <div className="rounded-xl border border-brand-200/80 bg-brand-50/70 p-3 text-sm text-brand-900 dark:border-brand-300/30 dark:bg-brand-900/20 dark:text-brand-100">
           <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
@@ -235,7 +235,7 @@ export const RoomGamePanel = ({
                     disabled={voteDisabled}
                     onClick={() => onSubmitMove(`vote:${player}`)}
                   >
-                    {cannotVoteForSelf ? 'Own word' : 'Vote'}
+                    {cannotVoteForSelf ? "Own word" : "Vote"}
                   </Button>
                 </div>
               );
@@ -244,33 +244,33 @@ export const RoomGamePanel = ({
         </div>
       ) : null}
 
-      {gameSession.status === 'active' &&
-      gameSession.type === 'category-blitz' ? (
+      {gameSession.status === "active" &&
+      gameSession.type === "category-blitz" ? (
         <div className="rounded-xl border border-brand-200/80 bg-brand-50/70 p-3 text-sm text-brand-900 dark:border-brand-300/30 dark:bg-brand-900/20 dark:text-brand-100">
           <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
             Category Blitz
           </p>
           <p className="mt-1 font-medium">
-            {gameSession.categoryBlitzCategory ?? 'Category'} · Letter{' '}
-            {(gameSession.categoryBlitzLetter ?? '?').toUpperCase()}
+            {gameSession.categoryBlitzCategory ?? "Category"} · Letter{" "}
+            {(gameSession.categoryBlitzLetter ?? "?").toUpperCase()}
           </p>
         </div>
       ) : null}
 
-      {gameSession.status === 'active' && gameSession.type === 'clueboard' ? (
+      {gameSession.status === "active" && gameSession.type === "clueboard" ? (
         <div className="space-y-3 rounded-xl border border-brand-200/70 p-3 dark:border-brand-300/30">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-200">
               Clueboard
             </p>
             <p className="text-sm text-slate-700 dark:text-slate-200">
-              Clue giver: {gameSession.codenamesClueGiver ?? 'TBD'} · Phase:{' '}
-              {isCodenamesCluePhase ? 'Clue' : 'Guess'}
+              Clue giver: {gameSession.codenamesClueGiver ?? "TBD"} · Phase:{" "}
+              {isCodenamesCluePhase ? "Clue" : "Guess"}
             </p>
             <p className="text-xs text-slate-600 dark:text-slate-300">
               {isCodenamesCluePhase
-                ? 'Clue giver picks target words on the board, then submits clue + number.'
-                : 'Guessers pick words from the board that match the clue.'}
+                ? "Clue giver picks target words on the board, then submits clue + number."
+                : "Guessers pick words from the board that match the clue."}
             </p>
             {clueGiverKnowsBlocker ? (
               <p className="text-xs font-medium text-rose-700 dark:text-rose-300">
@@ -298,9 +298,9 @@ export const RoomGamePanel = ({
                     : 1;
                 if (codenamesSelectedTargets.length !== clampedCount) return;
                 onSubmitMove(
-                  `clue:${codenamesClue.trim().toLowerCase()}|${clampedCount}|${codenamesSelectedTargets.join(',')}`,
+                  `clue:${codenamesClue.trim().toLowerCase()}|${clampedCount}|${codenamesSelectedTargets.join(",")}`,
                 );
-                setCodenamesClue('');
+                setCodenamesClue("");
                 setCodenamesSelectedTargets([]);
               }}
             >
@@ -344,7 +344,7 @@ export const RoomGamePanel = ({
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => onSubmitMove('pass')}
+                    onClick={() => onSubmitMove("pass")}
                   >
                     Pass
                   </Button>
@@ -352,8 +352,8 @@ export const RoomGamePanel = ({
               ) : (
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   {isCurrentCodenamesClueGiver
-                    ? 'Guessers are resolving your clue.'
-                    : 'Waiting for another guesser to play.'}
+                    ? "Guessers are resolving your clue."
+                    : "Waiting for another guesser to play."}
                 </p>
               )
             ) : canSubmitCodenamesClue ? (
@@ -363,7 +363,7 @@ export const RoomGamePanel = ({
               </p>
             ) : (
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Waiting for {gameSession.codenamesClueGiver ?? 'the clue giver'}{' '}
+                Waiting for {gameSession.codenamesClueGiver ?? "the clue giver"}{" "}
                 to submit a clue.
               </p>
             )}
@@ -410,12 +410,12 @@ export const RoomGamePanel = ({
                     disabled={isDisabled}
                     className={`rounded-lg border px-2 py-2 text-xs font-semibold uppercase tracking-wide transition ${
                       isRevealed
-                        ? 'border-slate-300 bg-slate-100 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400'
+                        ? "border-slate-300 bg-slate-100 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
                         : isKnownBlocker
-                          ? 'border-rose-500 bg-rose-100 text-rose-800 dark:border-rose-300 dark:bg-rose-900/30 dark:text-rose-100'
+                          ? "border-rose-500 bg-rose-100 text-rose-800 dark:border-rose-300 dark:bg-rose-900/30 dark:text-rose-100"
                           : isSelectedTarget
-                            ? 'border-brand-500 bg-brand-100 text-brand-800 dark:border-brand-300 dark:bg-brand-900/30 dark:text-brand-100'
-                            : 'border-slate-300 bg-white text-slate-800 hover:border-brand-400 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-brand-300 dark:hover:text-brand-200'
+                            ? "border-brand-500 bg-brand-100 text-brand-800 dark:border-brand-300 dark:bg-brand-900/30 dark:text-brand-100"
+                            : "border-slate-300 bg-white text-slate-800 hover:border-brand-400 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-brand-300 dark:hover:text-brand-200"
                     }`}
                   >
                     {word}
@@ -427,9 +427,9 @@ export const RoomGamePanel = ({
         </div>
       ) : null}
 
-      {gameSession.status === 'active' ? (
+      {gameSession.status === "active" ? (
         <div className="space-y-2">
-          {gameSession.type !== 'clueboard' && !isOneWordVotePhase ? (
+          {gameSession.type !== "clueboard" && !isOneWordVotePhase ? (
             <form
               className="flex gap-2"
               onSubmit={(event) => {
@@ -437,7 +437,7 @@ export const RoomGamePanel = ({
                 if (isWaitingForOtherPlayer) return;
                 if (!moveValue.trim()) return;
                 onSubmitMove(moveValue);
-                setMoveValue('');
+                setMoveValue("");
               }}
             >
               <input
@@ -447,16 +447,16 @@ export const RoomGamePanel = ({
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-400 focus:outline-none dark:border-white/15 dark:bg-slate-900 dark:text-white"
                 placeholder={
                   isWaitingForOtherPlayer
-                    ? 'Waiting for another player...'
-                    : gameSession.type === 'guess-the-number'
-                      ? 'Enter a number from 1 to 20'
-                      : gameSession.type === 'word-chain'
-                        ? 'Type a word'
-                        : gameSession.type === 'emoji-story'
-                          ? 'Drop 1-6 emojis'
-                          : gameSession.type === 'one-word-pitch'
-                            ? 'Submit one word'
-                            : 'Submit an answer that matches the category'
+                    ? "Waiting for another player..."
+                    : gameSession.type === "guess-the-number"
+                      ? "Enter a number from 1 to 20"
+                      : gameSession.type === "word-chain"
+                        ? "Type a word"
+                        : gameSession.type === "emoji-story"
+                          ? "Drop 1-6 emojis"
+                          : gameSession.type === "one-word-pitch"
+                            ? "Submit one word"
+                            : "Submit an answer that matches the category"
                 }
                 maxLength={48}
               />
@@ -469,10 +469,10 @@ export const RoomGamePanel = ({
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {gameMeta?.rules}
             {isWaitingForOtherPlayer
-              ? ' Wait for another player to move before your next turn.'
+              ? " Wait for another player to move before your next turn."
               : isMultiplayerGame && isTurnBasedGame
-                ? ' Multiplayer is turn-based: you cannot play twice in a row.'
-                : ''}
+                ? " Multiplayer is turn-based: you cannot play twice in a row."
+                : ""}
           </p>
         </div>
       ) : (
@@ -493,14 +493,14 @@ export const RoomGamePanel = ({
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {gameSession.winner
                     ? `${gameSession.winner} wins this round.`
-                    : 'Game complete.'}{' '}
+                    : "Game complete."}{" "}
                   GG, {userName}.
                 </p>
               </div>
             </div>
           </div>
 
-          {gameSession.type === 'one-word-pitch' &&
+          {gameSession.type === "one-word-pitch" &&
           (gameSession.oneWordPitchRoundHistory?.length ?? 0) > 0 ? (
             <div className="space-y-2 rounded-xl border border-slate-200/80 p-3 dark:border-white/10">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -525,7 +525,7 @@ export const RoomGamePanel = ({
                     ))}
                     {round.voteWinners?.length ? (
                       <p className="text-xs text-brand-700 dark:text-brand-200">
-                        Vote bonus: {round.voteWinners.join(', ')}
+                        Vote bonus: {round.voteWinners.join(", ")}
                       </p>
                     ) : null}
                   </div>
@@ -534,7 +534,7 @@ export const RoomGamePanel = ({
             </div>
           ) : null}
 
-          {gameSession.type === 'category-blitz' &&
+          {gameSession.type === "category-blitz" &&
           (gameSession.categoryBlitzRoundHistory?.length ?? 0) > 0 ? (
             <div className="space-y-2 rounded-xl border border-slate-200/80 p-3 dark:border-white/10">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">

@@ -5,9 +5,9 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
-import { SITE_NAME } from '@/constants';
+import { SITE_NAME } from "@/constants";
 
-const LAST_UPDATED = '19th January 2025';
+const LAST_UPDATED = "19th January 2025";
 
 const TermsConditionsScreen = () => {
   usePageMeta(META_CONFIGS.terms);

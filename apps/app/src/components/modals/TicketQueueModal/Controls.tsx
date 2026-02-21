@@ -27,11 +27,11 @@ export function TicketQueueModalControls({
           variant="unstyled"
           data-testid="queue-tab-queue"
           className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-            activeTab === 'queue'
-              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-              : 'text-slate-500 dark:text-slate-300'
+            activeTab === "queue"
+              ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+              : "text-slate-500 dark:text-slate-300"
           }`}
-          onClick={() => setActiveTab('queue')}
+          onClick={() => setActiveTab("queue")}
         >
           Queue
         </Button>
@@ -40,16 +40,16 @@ export function TicketQueueModalControls({
           variant="unstyled"
           data-testid="queue-tab-history"
           className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-            activeTab === 'history'
-              ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white'
-              : 'text-slate-500 dark:text-slate-300'
+            activeTab === "history"
+              ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+              : "text-slate-500 dark:text-slate-300"
           }`}
-          onClick={() => setActiveTab('history')}
+          onClick={() => setActiveTab("history")}
         >
           Past estimations
         </Button>
       </div>
-      {activeTab === 'history' && completedTickets.length > 0 && (
+      {activeTab === "history" && completedTickets.length > 0 && (
         <div className="flex items-center gap-2">
           <Button
             onClick={handleDownloadHistory}

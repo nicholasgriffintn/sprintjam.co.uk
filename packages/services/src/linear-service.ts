@@ -1,4 +1,4 @@
-import type { LinearOAuthCredentials } from '@sprintjam/types';
+import type { LinearOAuthCredentials } from "@sprintjam/types";
 
 type TicketMetadata = Record<string, any>;
 
@@ -30,26 +30,26 @@ type LinearCycle = {
 function getOAuthHeaders(accessToken: string): Headers {
   return new Headers({
     Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   });
 }
 
 async function refreshOAuthToken(
   refreshToken: string,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<{
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
 }> {
-  const response = await fetch('https://api.linear.app/oauth/token', {
-    method: 'POST',
+  const response = await fetch("https://api.linear.app/oauth/token", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
-      grant_type: 'refresh_token',
+      grant_type: "refresh_token",
       client_id: clientId,
       client_secret: clientSecret,
       refresh_token: refreshToken,
@@ -58,9 +58,9 @@ async function refreshOAuthToken(
 
   if (!response.ok) {
     const errorData = await response.text();
-    console.error('Token refresh failed:', errorData);
+    console.error("Token refresh failed:", errorData);
     throw new Error(
-      'Failed to refresh OAuth token. User needs to re-authenticate.'
+      "Failed to refresh OAuth token. User needs to re-authenticate.",
     );
   }
 
@@ -83,10 +83,10 @@ async function executeWithTokenRefresh<T>(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<T> {
   let isExpiringSoon = false;
   if (credentials.expiresAt) {
@@ -98,7 +98,7 @@ async function executeWithTokenRefresh<T>(
       const refreshed = await refreshOAuthToken(
         credentials.refreshToken,
         clientId,
-        clientSecret
+        clientSecret,
       );
 
       const newExpiresAt = Date.now() + refreshed.expiresIn * 1000;
@@ -106,12 +106,12 @@ async function executeWithTokenRefresh<T>(
       await onTokenRefresh(
         refreshed.accessToken,
         refreshed.refreshToken,
-        newExpiresAt
+        newExpiresAt,
       );
 
       return await operation(refreshed.accessToken);
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      console.error("Token refresh failed:", error);
     }
   }
 
@@ -120,14 +120,14 @@ async function executeWithTokenRefresh<T>(
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message.includes('401') &&
+      error.message.includes("401") &&
       credentials.refreshToken
     ) {
       try {
         const refreshed = await refreshOAuthToken(
           credentials.refreshToken,
           clientId,
-          clientSecret
+          clientSecret,
         );
 
         const newExpiresAt = Date.now() + refreshed.expiresIn * 1000;
@@ -135,14 +135,14 @@ async function executeWithTokenRefresh<T>(
         await onTokenRefresh(
           refreshed.accessToken,
           refreshed.refreshToken,
-          newExpiresAt
+          newExpiresAt,
         );
 
         return await operation(refreshed.accessToken);
       } catch (refreshError) {
-        console.error('Token refresh retry failed:', refreshError);
+        console.error("Token refresh retry failed:", refreshError);
         throw new Error(
-          'OAuth token expired. Please reconnect your Linear account.'
+          "OAuth token expired. Please reconnect your Linear account.",
         );
       }
     }
@@ -153,11 +153,11 @@ async function executeWithTokenRefresh<T>(
 async function executeGraphQL<T>(
   accessToken: string,
   query: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
 ): Promise<T> {
   const headers = getOAuthHeaders(accessToken);
-  const response = await fetch('https://api.linear.app/graphql', {
-    method: 'POST',
+  const response = await fetch("https://api.linear.app/graphql", {
+    method: "POST",
     headers,
     body: JSON.stringify({
       query,
@@ -167,11 +167,11 @@ async function executeGraphQL<T>(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error('401: Unauthorized');
+      throw new Error("401: Unauthorized");
     }
     const bodyText = await response.text();
     throw new Error(
-      `Linear API request failed: ${response.status} ${bodyText}`.trim()
+      `Linear API request failed: ${response.status} ${bodyText}`.trim(),
     );
   }
 
@@ -185,7 +185,7 @@ async function executeGraphQL<T>(
   }
 
   if (!data.data) {
-    throw new Error('No data returned from Linear API');
+    throw new Error("No data returned from Linear API");
   }
 
   return data.data;
@@ -196,8 +196,8 @@ function mapIssueToTicket(issue: LinearIssue): TicketMetadata {
     id: issue.id,
     key: issue.identifier,
     summary: issue.title,
-    description: issue.description || '',
-    status: issue.state?.name || 'Unknown',
+    description: issue.description || "",
+    status: issue.state?.name || "Unknown",
     assignee: issue.assignee?.name || null,
     storyPoints: issue.estimate ?? null,
     url: issue.url,
@@ -209,7 +209,7 @@ function parseLinearIssueNumber(value: string): number | null {
   if (!trimmed) return null;
 
   let index = trimmed.length - 1;
-  while (index >= 0 && trimmed[index] >= '0' && trimmed[index] <= '9') {
+  while (index >= 0 && trimmed[index] >= "0" && trimmed[index] <= "9") {
     index -= 1;
   }
 
@@ -223,7 +223,7 @@ function parseLinearIssueNumber(value: string): number | null {
 
 async function fetchIssueById(
   accessToken: string,
-  issueId: string
+  issueId: string,
 ): Promise<LinearIssue | null> {
   const query = `
     query GetIssue($issueId: String!) {
@@ -251,8 +251,8 @@ async function fetchIssueById(
     return data.issue ?? null;
   } catch (error) {
     console.warn(
-      'Linear issue lookup by id failed; will try identifier',
-      error
+      "Linear issue lookup by id failed; will try identifier",
+      error,
     );
     return null;
   }
@@ -260,7 +260,7 @@ async function fetchIssueById(
 
 async function fetchIssueByIdentifier(
   accessToken: string,
-  identifier: string
+  identifier: string,
 ): Promise<LinearIssue | null> {
   const issueNumber = parseLinearIssueNumber(identifier);
   if (issueNumber === null) {
@@ -296,7 +296,7 @@ async function fetchIssueByIdentifier(
 
 async function resolveIssueByIdOrIdentifier(
   accessToken: string,
-  issueRef: string
+  issueRef: string,
 ): Promise<LinearIssue | null> {
   const byId = await fetchIssueById(accessToken, issueRef);
   if (byId) {
@@ -312,10 +312,10 @@ export async function fetchLinearIssue(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<TicketMetadata> {
   return executeWithTokenRefresh(
     credentials,
@@ -324,14 +324,14 @@ export async function fetchLinearIssue(
         (await resolveIssueByIdOrIdentifier(accessToken, issueId)) ?? null;
 
       if (!issue) {
-        throw new Error('Linear issue not found. Verify the issue key or id.');
+        throw new Error("Linear issue not found. Verify the issue key or id.");
       }
 
       return mapIssueToTicket(issue);
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -342,10 +342,10 @@ export async function updateLinearEstimate(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<TicketMetadata> {
   return executeWithTokenRefresh(
     credentials,
@@ -356,7 +356,7 @@ export async function updateLinearEstimate(
         (await resolveIssueByIdOrIdentifier(accessToken, issueId)) ?? null;
 
       if (!issue) {
-        throw new Error('Linear issue not found. Verify the issue key or id.');
+        throw new Error("Linear issue not found. Verify the issue key or id.");
       }
 
       const mutation = `
@@ -395,14 +395,14 @@ export async function updateLinearEstimate(
       });
 
       if (!data.issueUpdate.success) {
-        throw new Error('Failed to update Linear issue estimate');
+        throw new Error("Failed to update Linear issue estimate");
       }
 
       return mapIssueToTicket(data.issueUpdate.issue);
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -413,10 +413,10 @@ export async function addLinearComment(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<void> {
   const trimmed = comment.trim();
   if (!trimmed) {
@@ -430,7 +430,7 @@ export async function addLinearComment(
         (await resolveIssueByIdOrIdentifier(accessToken, issueId)) ?? null;
 
       if (!issue) {
-        throw new Error('Linear issue not found. Verify the issue key or id.');
+        throw new Error("Linear issue not found. Verify the issue key or id.");
       }
 
       const mutation = `
@@ -451,12 +451,12 @@ export async function addLinearComment(
       });
 
       if (!data.commentCreate.success) {
-        throw new Error('Failed to add Linear comment');
+        throw new Error("Failed to add Linear comment");
       }
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -514,10 +514,10 @@ export async function fetchLinearTeams(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<LinearTeam[]> {
   return executeWithTokenRefresh(
     credentials,
@@ -536,14 +536,14 @@ export async function fetchLinearTeams(
 
       const data = await executeGraphQL<{ teams: { nodes: LinearTeam[] } }>(
         accessToken,
-        query
+        query,
       );
 
       return data.teams.nodes ?? [];
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -553,10 +553,10 @@ export async function fetchLinearCycles(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<LinearCycle[]> {
   return executeWithTokenRefresh(
     credentials,
@@ -585,7 +585,7 @@ export async function fetchLinearCycles(
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
 
@@ -600,37 +600,37 @@ export async function fetchLinearIssues(
   onTokenRefresh: (
     accessToken: string,
     refreshToken: string,
-    expiresAt: number
+    expiresAt: number,
   ) => Promise<void>,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<TicketMetadata[]> {
   return executeWithTokenRefresh(
     credentials,
     async (accessToken) => {
       const limit = options.limit ?? 250;
       const hasCycle = Boolean(options.cycleId);
-      const search = options.search?.trim() ?? '';
+      const search = options.search?.trim() ?? "";
       const hasSearch = Boolean(search);
       const issueNumber = parseLinearIssueNumber(search);
       const hasIssueNumber = issueNumber !== null;
       const query = `
         query GetIssues($teamId: ID!, $limit: Int!${
-          hasCycle ? ', $cycleId: ID!' : ''
-        }${hasSearch ? ', $search: String!' : ''}${
-          hasIssueNumber ? ', $issueNumber: Int!' : ''
+          hasCycle ? ", $cycleId: ID!" : ""
+        }${hasSearch ? ", $search: String!" : ""}${
+          hasIssueNumber ? ", $issueNumber: Int!" : ""
         }) {
           issues(
             first: $limit
             filter: {
               team: { id: { eq: $teamId } }
-              ${hasCycle ? 'cycle: { id: { eq: $cycleId } }' : ''}
+              ${hasCycle ? "cycle: { id: { eq: $cycleId } }" : ""}
               ${
                 hasSearch
                   ? `or: [{ title: { containsIgnoreCase: $search } }, { description: { containsIgnoreCase: $search } }${
-                      hasIssueNumber ? ', { number: { eq: $issueNumber } }' : ''
+                      hasIssueNumber ? ", { number: { eq: $issueNumber } }" : ""
                     }]`
-                  : ''
+                  : ""
               }
             }
           ) {
@@ -666,6 +666,6 @@ export async function fetchLinearIssues(
     },
     onTokenRefresh,
     clientId,
-    clientSecret
+    clientSecret,
   );
 }
