@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -10,29 +8,13 @@ import {
 } from "react";
 
 import {
-  createRoom,
-  joinRoom,
   disconnectFromRoom,
-  submitVote,
-  toggleShowVotes,
-  toggleSpectatorMode,
-  resetVotes,
-  updateSettings,
-  isConnected,
-  selectTicket,
-  nextTicket,
-  addTicket,
   updateTicket,
-  deleteTicket,
-  completeSession,
-  startGame,
-  submitGameMove,
-  endGame,
+  isConnected,
 } from "@/lib/api-service";
 import {
   applyRoomMessageToCollections,
   removeRoomFromCollection,
-  upsertRoom,
 } from "@/lib/data/room-store";
 import { useRoomData } from "@/lib/data/hooks";
 import { useServerDefaults } from "@/hooks/useServerDefaults";
@@ -40,84 +22,37 @@ import { useAutoReconnect } from "@/hooks/useAutoReconnect";
 import { useAutoEstimateUpdate } from "@/hooks/useAutoEstimateUpdate";
 import { useRoomConnection } from "@/hooks/useRoomConnection";
 import { useRoomDataSync } from "@/hooks/useRoomDataSync";
-import { completeSessionByRoomKey } from "@/lib/workspace-service";
 import type {
   ErrorConnectionIssue,
   ErrorKind,
-  RoomData,
   RoomSettings,
-  ServerDefaults,
   StructuredVote,
-  RoomGameType,
   TicketQueueItem,
   VoteValue,
   WebSocketMessage,
 } from "@/types";
-import { getErrorDetails, isAbortError } from "@/lib/errors";
+import { getErrorDetails } from "@/lib/errors";
 import {
   useSessionActions,
   useSessionErrors,
   useSessionState,
 } from "@/context/SessionContext";
-import { formatRoomKey } from "@/utils/validators";
-
-interface RoomStateContextValue {
-  serverDefaults: ServerDefaults | null;
-  roomData: RoomData | null;
-  activeRoomKey: string | null;
-  isModeratorView: boolean;
-  userVote: VoteValue | StructuredVote | null;
-  pendingCreateSettings: Partial<RoomSettings> | null;
-}
-
-interface RoomStatusContextValue {
-  isLoadingDefaults: boolean;
-  defaultsError: string | null;
-  isLoading: boolean;
-  isSocketConnected: boolean;
-  isSocketStatusKnown: boolean;
-  connectionIssue: ErrorConnectionIssue | null;
-  roomError: string;
-  roomErrorKind: ErrorKind | null;
-}
-
-interface RoomActionsContextValue {
-  handleRetryDefaults: () => void;
-  clearRoomError: () => void;
-  reportRoomError: (message: string, kind?: ErrorKind | null) => void;
-  setPendingCreateSettings: (settings: Partial<RoomSettings> | null) => void;
-  handleCreateRoom: (settings?: Partial<RoomSettings>) => Promise<void>;
-  handleJoinRoom: () => Promise<void>;
-  handleLeaveRoom: () => void;
-  handleVote: (value: VoteValue | StructuredVote) => void;
-  handleToggleShowVotes: () => void;
-  handleToggleSpectatorMode: (isSpectator: boolean) => void;
-  handleResetVotes: () => void;
-  handleUpdateSettings: (settings: RoomSettings) => void;
-  handleSelectTicket: (ticketId: number) => void;
-  handleNextTicket: () => void;
-  handleAddTicket: (ticket: Partial<TicketQueueItem>) => Promise<void>;
-  handleUpdateTicket: (
-    ticketId: number,
-    updates: Partial<TicketQueueItem>,
-  ) => Promise<void>;
-  handleDeleteTicket: (ticketId: number) => Promise<void>;
-  handleCompleteSession: () => void;
-  handleStartGame: (gameType: RoomGameType) => void;
-  handleSubmitGameMove: (value: string) => void;
-  handleEndGame: () => void;
-  retryConnection: () => void;
-}
-
-const RoomStateContext = createContext<RoomStateContextValue | undefined>(
-  undefined,
-);
-const RoomStatusContext = createContext<RoomStatusContextValue | undefined>(
-  undefined,
-);
-const RoomActionsContext = createContext<RoomActionsContextValue | undefined>(
-  undefined,
-);
+import type {
+  RoomActionsContextValue,
+  RoomStateContextValue,
+  RoomStatusContextValue,
+} from "./room-context.types";
+import {
+  RoomActionsContext,
+  RoomStateContext,
+  RoomStatusContext,
+  useRoomActions,
+  useRoomState,
+  useRoomStatus,
+} from "./room-context-store";
+import { useRoomEntryActions } from "./useRoomEntryActions";
+import { useRoomQueueAndGameActions } from "./useRoomQueueAndGameActions";
+import { useRoomVotingActions } from "./useRoomVotingActions";
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { screen, name, roomKey, passcode, selectedAvatar } = useSessionState();
@@ -156,17 +91,10 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   const roomData = useRoomData(activeRoomKey);
   const activeRoomKeyRef = useRef<string | null>(null);
-  const latestRoomRequestRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     activeRoomKeyRef.current = activeRoomKey;
   }, [activeRoomKey]);
-
-  useEffect(() => {
-    return () => {
-      latestRoomRequestRef.current?.abort();
-    };
-  }, []);
 
   const assignRoomError = useCallback(
     (
@@ -334,14 +262,22 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     return null;
   }, [serverDefaults]);
 
-  const startRoomRequest = useCallback(() => {
-    if (latestRoomRequestRef.current) {
-      latestRoomRequestRef.current.abort();
-    }
-    const controller = new AbortController();
-    latestRoomRequestRef.current = controller;
-    return controller;
-  }, []);
+  const { handleCreateRoom, handleJoinRoom, abortLatestRoomRequest } =
+    useRoomEntryActions({
+      name,
+      roomKey,
+      passcode,
+      selectedAvatar,
+      pendingCreateSettings,
+      applyServerDefaults,
+      clearError,
+      setError,
+      goToRoom,
+      setActiveRoomKey,
+      setIsModeratorView,
+      setPendingCreateSettings,
+      setIsLoading,
+    });
 
   useAutoEstimateUpdate({
     roomData,
@@ -356,202 +292,8 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     onError: reportRoomError,
   });
 
-  const handleCreateRoom = useCallback(
-    async (settings?: Partial<RoomSettings>) => {
-      if (!name || !selectedAvatar) return;
-
-      const resolvedSettings = settings ?? pendingCreateSettings ?? undefined;
-
-      setIsLoading(true);
-      clearError();
-      const controller = startRoomRequest();
-
-      try {
-        const { room: newRoom, defaults } = await createRoom(
-          name,
-          passcode || undefined,
-          resolvedSettings,
-          selectedAvatar,
-          { signal: controller.signal },
-        );
-        applyServerDefaults(defaults);
-        await upsertRoom(newRoom);
-        setActiveRoomKey(newRoom.key);
-        setIsModeratorView(true);
-        goToRoom(newRoom.key);
-        setPendingCreateSettings(null);
-      } catch (err: unknown) {
-        if (isAbortError(err)) {
-          return;
-        }
-        const { message, kind } = getErrorDetails(err, "Failed to create room");
-        setError(message, kind ?? null);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [
-      name,
-      selectedAvatar,
-      passcode,
-      applyServerDefaults,
-      pendingCreateSettings,
-      clearError,
-      startRoomRequest,
-      setError,
-      goToRoom,
-    ],
-  );
-
-  const handleJoinRoom = useCallback(async () => {
-    const trimmedName = name.trim();
-    const normalizedRoomKey = formatRoomKey(roomKey);
-    if (!trimmedName || !normalizedRoomKey || !selectedAvatar) return;
-
-    setIsLoading(true);
-    clearError();
-    const controller = startRoomRequest();
-
-    try {
-      const { room: joinedRoom, defaults } = await joinRoom(
-        trimmedName,
-        normalizedRoomKey,
-        passcode?.trim() || undefined,
-        selectedAvatar,
-        { signal: controller.signal },
-      );
-      applyServerDefaults(defaults);
-      await upsertRoom(joinedRoom);
-      setActiveRoomKey(joinedRoom.key);
-      setIsModeratorView(joinedRoom.moderator === name);
-      goToRoom(joinedRoom.key);
-    } catch (err: unknown) {
-      if (isAbortError(err)) {
-        return;
-      }
-      const { message, kind } = getErrorDetails(err, "Failed to join room");
-      const normalizedKind =
-        /passcode/i.test(message) || kind === "passcode"
-          ? "passcode"
-          : (kind ?? null);
-      setError(message, normalizedKind);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    name,
-    roomKey,
-    passcode,
-    selectedAvatar,
-    applyServerDefaults,
-    clearError,
-    startRoomRequest,
-    setError,
-    goToRoom,
-  ]);
-
-  const handleVote = useCallback(
-    (value: VoteValue | StructuredVote) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-      const previousVote = userVote;
-      setUserVote(value);
-
-      try {
-        submitVote(value, true);
-      } catch (err: unknown) {
-        setUserVote(previousVote);
-        assignRoomError(err, "Failed to submit vote");
-      }
-    },
-    [assignRoomError, roomData, userVote],
-  );
-
-  const handleResetVotes = useCallback(() => {
-    if (!roomData) {
-      return;
-    }
-
-    if (roomData.status === "completed") {
-      return;
-    }
-
-    if (
-      roomData.moderator !== name &&
-      !roomData.settings.allowOthersToDeleteEstimates
-    ) {
-      setRoomError("You don't have permission to reset votes.");
-      setRoomErrorKind("permission");
-      return;
-    }
-
-    try {
-      resetVotes();
-      setUserVote(null);
-    } catch (err: unknown) {
-      assignRoomError(err, "Failed to reset votes");
-    }
-  }, [assignRoomError, roomData, name]);
-
-  const handleToggleSpectatorMode = useCallback((isSpectator: boolean) => {
-    try {
-      toggleSpectatorMode(isSpectator);
-    } catch (err) {
-      console.error("Failed to toggle spectator mode:", err);
-      setRoomError("Failed to toggle spectator mode.");
-      setRoomErrorKind("network");
-    }
-  }, []);
-
-  const handleToggleShowVotes = useCallback(() => {
-    if (!roomData) {
-      return;
-    }
-
-    if (roomData.status === "completed") {
-      return;
-    }
-
-    if (
-      roomData.moderator !== name &&
-      !roomData.settings.allowOthersToShowEstimates
-    ) {
-      setRoomError("You don't have permission to show votes.");
-      setRoomErrorKind("permission");
-      return;
-    }
-
-    try {
-      toggleShowVotes();
-    } catch (err: unknown) {
-      assignRoomError(err, "Failed to toggle vote visibility");
-    }
-  }, [assignRoomError, roomData, name]);
-
-  const handleUpdateSettings = useCallback(
-    (settings: RoomSettings) => {
-      if (!isModeratorView) {
-        setRoomError("Only moderators can update settings.");
-        setRoomErrorKind("permission");
-        return;
-      }
-
-      if (roomData?.status === "completed") {
-        return;
-      }
-
-      try {
-        updateSettings(settings);
-      } catch (err: unknown) {
-        assignRoomError(err, "Failed to update settings");
-      }
-    },
-    [assignRoomError, isModeratorView, roomData],
-  );
-
   const handleLeaveRoom = useCallback(() => {
-    latestRoomRequestRef.current?.abort();
+    abortLatestRoomRequest();
     disconnectFromRoom();
     setRoomError("");
     setRoomErrorKind(null);
@@ -571,140 +313,42 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     setPasscode("");
     setRoomKey("");
     goHome();
-  }, [setPasscode, setRoomKey, goHome]);
+  }, [abortLatestRoomRequest, setPasscode, setRoomKey, goHome]);
 
-  const handleSelectTicket = useCallback(
-    (ticketId: number) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-      try {
-        selectTicket(ticketId);
-      } catch (err: unknown) {
-        assignRoomError(err, "Failed to select ticket");
-      }
-    },
-    [assignRoomError, roomData],
-  );
+  const {
+    handleVote,
+    handleResetVotes,
+    handleToggleSpectatorMode,
+    handleToggleShowVotes,
+    handleUpdateSettings,
+  } = useRoomVotingActions({
+    roomData,
+    userName: name,
+    userVote,
+    isModeratorView,
+    setUserVote,
+    setRoomError,
+    setRoomErrorKind,
+    assignRoomError,
+  });
 
-  const handleNextTicket = useCallback(() => {
-    if (roomData?.status === "completed") {
-      return;
-    }
-    try {
-      nextTicket();
-    } catch (err: unknown) {
-      assignRoomError(err, "Failed to move to next ticket");
-    }
-  }, [assignRoomError, roomData]);
-
-  const handleAddTicket = useCallback(
-    async (ticket: Partial<TicketQueueItem>) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-      try {
-        await addTicket(ticket);
-      } catch (err: unknown) {
-        assignRoomError(err, "Failed to add ticket");
-      }
-    },
-    [assignRoomError, roomData],
-  );
-
-  const handleUpdateTicket = useCallback(
-    async (ticketId: number, updates: Partial<TicketQueueItem>) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-      try {
-        await updateTicket(ticketId, updates);
-      } catch (err: unknown) {
-        assignRoomError(err, "Failed to update ticket");
-      }
-    },
-    [assignRoomError, roomData],
-  );
-
-  const handleDeleteTicket = useCallback(
-    async (ticketId: number) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-      try {
-        await deleteTicket(ticketId);
-      } catch (err: unknown) {
-        assignRoomError(err, "Failed to delete ticket");
-      }
-    },
-    [assignRoomError, roomData],
-  );
-
-  const handleCompleteSession = useCallback(() => {
-    if (!roomData) {
-      return;
-    }
-
-    if (roomData.status === "completed") {
-      return;
-    }
-
-    if (
-      roomData.moderator !== name &&
-      !roomData.settings.allowOthersToManageQueue
-    ) {
-      setRoomError("You don't have permission to complete the session.");
-      setRoomErrorKind("permission");
-      return;
-    }
-
-    try {
-      completeSession();
-      void completeSessionByRoomKey(roomData.key).catch((err: unknown) => {
-        assignRoomError(err, "Failed to update workspace session");
-      });
-    } catch (err: unknown) {
-      assignRoomError(err, "Failed to complete session");
-    }
-  }, [assignRoomError, name, roomData]);
-
-  const handleStartGame = useCallback(
-    (gameType: RoomGameType) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-
-      try {
-        startGame(gameType);
-      } catch (err: unknown) {
-        assignRoomError(err, "Failed to start game");
-      }
-    },
-    [assignRoomError, roomData?.status],
-  );
-
-  const handleSubmitGameMove = useCallback(
-    (value: string) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-
-      try {
-        submitGameMove(value);
-      } catch (err: unknown) {
-        assignRoomError(err, "Failed to submit game move");
-      }
-    },
-    [assignRoomError, roomData?.status],
-  );
-
-  const handleEndGame = useCallback(() => {
-    try {
-      endGame();
-    } catch (err: unknown) {
-      assignRoomError(err, "Failed to end game");
-    }
-  }, [assignRoomError]);
+  const {
+    handleSelectTicket,
+    handleNextTicket,
+    handleAddTicket,
+    handleUpdateTicket,
+    handleDeleteTicket,
+    handleCompleteSession,
+    handleStartGame,
+    handleSubmitGameMove,
+    handleEndGame,
+  } = useRoomQueueAndGameActions({
+    roomData,
+    userName: name,
+    setRoomError,
+    setRoomErrorKind,
+    assignRoomError,
+  });
 
   const retryConnection = useCallback(() => {
     setConnectionIssue((current) =>
@@ -817,26 +461,4 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useRoomState = (): RoomStateContextValue => {
-  const ctx = useContext(RoomStateContext);
-  if (!ctx) {
-    throw new Error("useRoomState must be used within RoomProvider");
-  }
-  return ctx;
-};
-
-export const useRoomStatus = (): RoomStatusContextValue => {
-  const ctx = useContext(RoomStatusContext);
-  if (!ctx) {
-    throw new Error("useRoomStatus must be used within RoomProvider");
-  }
-  return ctx;
-};
-
-export const useRoomActions = (): RoomActionsContextValue => {
-  const ctx = useContext(RoomActionsContext);
-  if (!ctx) {
-    throw new Error("useRoomActions must be used within RoomProvider");
-  }
-  return ctx;
-};
+export { useRoomState, useRoomStatus, useRoomActions };
