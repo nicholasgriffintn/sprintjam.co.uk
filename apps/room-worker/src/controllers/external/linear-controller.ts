@@ -13,32 +13,24 @@ import {
 } from "@sprintjam/services";
 import { getRoomSessionToken, getRoomStub } from "@sprintjam/utils";
 import { jsonError, jsonResponse } from "../../lib/response";
+import {
+  isAuthError,
+  parseOptionalLimit,
+  parseOptionalNote,
+  validateSession,
+} from "./shared";
 
-async function validateSession(
-  env: RoomWorkerEnv,
-  roomKey: string,
-  userName: string,
-  sessionToken?: string | null,
-) {
-  if (!sessionToken) {
-    throw new Error("Missing session token");
+const LINEAR_AUTH_ERROR_HINTS = ["session", "oauth", "reconnect"] as const;
+
+function getLinearOAuthConfig(env: RoomWorkerEnv) {
+  const clientId = env.LINEAR_OAUTH_CLIENT_ID;
+  const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    return null;
   }
 
-  const roomObject = getRoomStub(env, roomKey);
-  const response = await roomObject.fetch(
-    new Request("https://internal/session/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: userName, sessionToken }),
-    }) as unknown as CfRequest,
-  );
-
-  if (!response.ok) {
-    const error = await response.json<{
-      error?: string;
-    }>();
-    throw new Error(error.error || "Invalid session");
-  }
+  return { clientId, clientSecret };
 }
 
 async function getLinearCredentials(env: RoomWorkerEnv, roomKey: string) {
@@ -119,10 +111,8 @@ export async function getLinearIssueController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.LINEAR_OAUTH_CLIENT_ID;
-    const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getLinearOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Linear OAuth not configured", 500);
     }
 
@@ -136,19 +126,18 @@ export async function getLinearIssueController(
       credentials,
       issueId,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     return jsonResponse({ ticket: issue });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch Linear issue";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, LINEAR_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -166,7 +155,7 @@ export async function updateLinearEstimateController(
   const estimate = body?.estimate;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const note = typeof body?.note === "string" ? body.note.trim() : "";
+  const note = parseOptionalNote(body?.note);
 
   const sessionToken = getRoomSessionToken(request);
 
@@ -181,10 +170,8 @@ export async function updateLinearEstimateController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.LINEAR_OAUTH_CLIENT_ID;
-    const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getLinearOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Linear OAuth not configured", 500);
     }
 
@@ -198,8 +185,8 @@ export async function updateLinearEstimateController(
       credentials,
       issueId,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     if (!currentIssue) {
@@ -213,8 +200,8 @@ export async function updateLinearEstimateController(
           issueId,
           `SprintJam decision note: ${note}`,
           onTokenRefresh,
-          clientId,
-          clientSecret,
+          oauthConfig.clientId,
+          oauthConfig.clientSecret,
         );
       }
       return jsonResponse({ ticket: currentIssue });
@@ -225,8 +212,8 @@ export async function updateLinearEstimateController(
       issueId,
       estimate,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     if (note) {
@@ -235,8 +222,8 @@ export async function updateLinearEstimateController(
         issueId,
         `SprintJam decision note: ${note}`,
         onTokenRefresh,
-        clientId,
-        clientSecret,
+        oauthConfig.clientId,
+        oauthConfig.clientSecret,
       );
     }
 
@@ -246,11 +233,10 @@ export async function updateLinearEstimateController(
       error instanceof Error
         ? error.message
         : "Failed to update Linear estimate";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, LINEAR_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -274,10 +260,8 @@ export async function getLinearTeamsController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.LINEAR_OAUTH_CLIENT_ID;
-    const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getLinearOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Linear OAuth not configured", 500);
     }
 
@@ -289,19 +273,18 @@ export async function getLinearTeamsController(
     const teams = await fetchLinearTeams(
       credentials,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     return jsonResponse({ teams });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch Linear teams";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, LINEAR_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -331,10 +314,8 @@ export async function getLinearCyclesController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.LINEAR_OAUTH_CLIENT_ID;
-    const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getLinearOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Linear OAuth not configured", 500);
     }
 
@@ -347,19 +328,18 @@ export async function getLinearCyclesController(
       credentials,
       teamId,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     return jsonResponse({ cycles });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch Linear cycles";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, LINEAR_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -380,14 +360,7 @@ export async function getLinearIssuesController(
   const search = body?.query ?? null;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const limit =
-    body?.limit === undefined || body?.limit === null
-      ? null
-      : typeof body.limit === "number"
-        ? body.limit
-        : typeof body.limit === "string" && !Number.isNaN(Number(body.limit))
-          ? Number(body.limit)
-          : null;
+  const limit = parseOptionalLimit(body?.limit);
 
   const sessionToken = getRoomSessionToken(request);
 
@@ -402,10 +375,8 @@ export async function getLinearIssuesController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.LINEAR_OAUTH_CLIENT_ID;
-    const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getLinearOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Linear OAuth not configured", 500);
     }
 
@@ -419,18 +390,17 @@ export async function getLinearIssuesController(
       teamId,
       { cycleId, limit, search },
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     return jsonResponse({ tickets });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch Linear issues";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, LINEAR_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }

@@ -14,32 +14,19 @@ import {
 import { getRoomSessionToken, getRoomStub } from "@sprintjam/utils";
 
 import { jsonError, jsonResponse } from "../../lib/response";
+import { isAuthError, parseOptionalNote, validateSession } from "./shared";
 
-async function validateSession(
-  env: RoomWorkerEnv,
-  roomKey: string,
-  userName: string,
-  sessionToken?: string | null,
-) {
-  if (!sessionToken) {
-    throw new Error("Missing session token");
+const JIRA_AUTH_ERROR_HINTS = ["session", "oauth", "reconnect"] as const;
+
+function getJiraOAuthConfig(env: RoomWorkerEnv) {
+  const clientId = env.JIRA_OAUTH_CLIENT_ID;
+  const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    return null;
   }
 
-  const roomObject = getRoomStub(env, roomKey);
-  const response = await roomObject.fetch(
-    new Request("https://internal/session/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: userName, sessionToken }),
-    }) as unknown as CfRequest,
-  );
-
-  if (!response.ok) {
-    const error = await response.json<{
-      error?: string;
-    }>();
-    throw new Error(error.error || "Invalid session");
-  }
+  return { clientId, clientSecret };
 }
 
 async function getJiraCredentials(env: RoomWorkerEnv, roomKey: string) {
@@ -126,10 +113,8 @@ export async function getJiraTicketController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.JIRA_OAUTH_CLIENT_ID;
-    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getJiraOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Jira OAuth not configured", 500);
     }
 
@@ -140,19 +125,18 @@ export async function getJiraTicketController(
       credentials,
       ticketId,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     return jsonResponse({ ticket });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch Jira ticket";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, JIRA_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -170,7 +154,7 @@ export async function updateJiraStoryPointsController(
   const storyPoints = body?.storyPoints;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const note = typeof body?.note === "string" ? body.note.trim() : "";
+  const note = parseOptionalNote(body?.note);
 
   const sessionToken = getRoomSessionToken(request);
 
@@ -185,10 +169,8 @@ export async function updateJiraStoryPointsController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.JIRA_OAUTH_CLIENT_ID;
-    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getJiraOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Jira OAuth not configured", 500);
     }
 
@@ -199,8 +181,8 @@ export async function updateJiraStoryPointsController(
       credentials,
       ticketId,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     if (!currentTicket) {
@@ -214,8 +196,8 @@ export async function updateJiraStoryPointsController(
           ticketId,
           `SprintJam decision note: ${note}`,
           onTokenRefresh,
-          clientId,
-          clientSecret,
+          oauthConfig.clientId,
+          oauthConfig.clientSecret,
         );
       }
       return jsonResponse({ ticket: currentTicket });
@@ -227,8 +209,8 @@ export async function updateJiraStoryPointsController(
       storyPoints,
       currentTicket,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     if (note) {
@@ -237,8 +219,8 @@ export async function updateJiraStoryPointsController(
         ticketId,
         `SprintJam decision note: ${note}`,
         onTokenRefresh,
-        clientId,
-        clientSecret,
+        oauthConfig.clientId,
+        oauthConfig.clientSecret,
       );
     }
 
@@ -248,11 +230,10 @@ export async function updateJiraStoryPointsController(
       error instanceof Error
         ? error.message
         : "Failed to update Jira story points";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, JIRA_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -276,10 +257,8 @@ export async function getJiraBoardsController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.JIRA_OAUTH_CLIENT_ID;
-    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getJiraOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Jira OAuth not configured", 500);
     }
 
@@ -288,19 +267,18 @@ export async function getJiraBoardsController(
     const boards = await fetchJiraBoards(
       credentials,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     return jsonResponse({ boards });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch Jira boards";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, JIRA_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -330,10 +308,8 @@ export async function getJiraSprintsController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.JIRA_OAUTH_CLIENT_ID;
-    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getJiraOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Jira OAuth not configured", 500);
     }
 
@@ -343,19 +319,18 @@ export async function getJiraSprintsController(
       credentials,
       boardId,
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     return jsonResponse({ sprints });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch Jira sprints";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, JIRA_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -391,10 +366,8 @@ export async function getJiraIssuesController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.JIRA_OAUTH_CLIENT_ID;
-    const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    const oauthConfig = getJiraOAuthConfig(env);
+    if (!oauthConfig) {
       return jsonError("Jira OAuth not configured", 500);
     }
 
@@ -405,18 +378,17 @@ export async function getJiraIssuesController(
       boardId,
       { sprintId, limit, search },
       onTokenRefresh,
-      clientId,
-      clientSecret,
+      oauthConfig.clientId,
+      oauthConfig.clientSecret,
     );
 
     return jsonResponse({ tickets });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch Jira issues";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("oauth") ||
-      message.toLowerCase().includes("reconnect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, JIRA_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }

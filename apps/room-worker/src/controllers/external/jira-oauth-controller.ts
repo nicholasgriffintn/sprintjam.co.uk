@@ -20,39 +20,13 @@ import {
 } from "@sprintjam/services";
 
 import { checkOAuthRateLimit } from "../../lib/rate-limit";
+import { validateSession } from "./shared";
 
 function jsonResponse(payload: unknown, status = 200): CfResponse {
   return new Response(JSON.stringify(payload), {
     status,
     headers: { "Content-Type": "application/json" },
   }) as unknown as CfResponse;
-}
-
-async function validateSession(
-  env: RoomWorkerEnv,
-  roomKey: string,
-  userName: string,
-  sessionToken?: string | null,
-) {
-  if (!sessionToken) {
-    throw new Error("Missing session token");
-  }
-
-  const roomObject = getRoomStub(env, roomKey);
-  const response = await roomObject.fetch(
-    new Request("https://internal/session/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: userName, sessionToken }),
-    }) as unknown as CfRequest,
-  );
-
-  if (!response.ok) {
-    const error = await response.json<{
-      error?: string;
-    }>();
-    throw new Error(error.error || "Invalid session");
-  }
 }
 
 export async function initiateJiraOAuthController(

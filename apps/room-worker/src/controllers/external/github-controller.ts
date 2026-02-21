@@ -13,32 +13,24 @@ import {
 } from "@sprintjam/services";
 import { getRoomStub, getRoomSessionToken } from "@sprintjam/utils";
 import { jsonError, jsonResponse } from "../../lib/response";
+import {
+  isAuthError,
+  parseOptionalLimit,
+  parseOptionalNote,
+  validateSession,
+} from "./shared";
 
-async function validateSession(
-  env: RoomWorkerEnv,
-  roomKey: string,
-  userName: string,
-  sessionToken?: string | null,
-) {
-  if (!sessionToken) {
-    throw new Error("Missing session token");
+const GITHUB_AUTH_ERROR_HINTS = ["session", "connect"] as const;
+
+function getGithubOAuthConfig(env: RoomWorkerEnv) {
+  const clientId = env.GITHUB_OAUTH_CLIENT_ID;
+  const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    return null;
   }
 
-  const roomObject = getRoomStub(env, roomKey);
-  const response = await roomObject.fetch(
-    new Request("https://internal/session/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: userName, sessionToken }),
-    }) as unknown as CfRequest,
-  );
-
-  if (!response.ok) {
-    const error = await response.json<{
-      error?: string;
-    }>();
-    throw new Error(error.error || "Invalid session");
-  }
+  return { clientId, clientSecret };
 }
 
 async function getGithubCredentials(
@@ -91,10 +83,7 @@ export async function getGithubIssueController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
-    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    if (!getGithubOAuthConfig(env)) {
       return jsonError("GitHub OAuth not configured", 500);
     }
 
@@ -105,10 +94,10 @@ export async function getGithubIssueController(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch GitHub issue";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("connect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, GITHUB_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -126,7 +115,7 @@ export async function updateGithubEstimateController(
   const estimate = body?.estimate;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const note = typeof body?.note === "string" ? body.note.trim() : "";
+  const note = parseOptionalNote(body?.note);
 
   const sessionToken = getRoomSessionToken(request);
 
@@ -141,10 +130,7 @@ export async function updateGithubEstimateController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
-    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    if (!getGithubOAuthConfig(env)) {
       return jsonError("GitHub OAuth not configured", 500);
     }
 
@@ -165,10 +151,10 @@ export async function updateGithubEstimateController(
       error instanceof Error
         ? error.message
         : "Failed to sync estimate to GitHub";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("connect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, GITHUB_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -192,10 +178,7 @@ export async function getGithubReposController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
-    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    if (!getGithubOAuthConfig(env)) {
       return jsonError("GitHub OAuth not configured", 500);
     }
 
@@ -206,10 +189,10 @@ export async function getGithubReposController(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch GitHub repos";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("connect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, GITHUB_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -239,10 +222,7 @@ export async function getGithubMilestonesController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
-    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    if (!getGithubOAuthConfig(env)) {
       return jsonError("GitHub OAuth not configured", 500);
     }
 
@@ -255,10 +235,10 @@ export async function getGithubMilestonesController(
       error instanceof Error
         ? error.message
         : "Failed to fetch GitHub milestones";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("connect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, GITHUB_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
 
@@ -281,14 +261,7 @@ export async function getGithubIssuesController(
   const search = body?.query ?? null;
   const roomKey = body?.roomKey;
   const userName = body?.userName;
-  const limit =
-    body?.limit === undefined || body?.limit === null
-      ? null
-      : typeof body.limit === "number"
-        ? body.limit
-        : typeof body.limit === "string" && !Number.isNaN(Number(body.limit))
-          ? Number(body.limit)
-          : null;
+  const limit = parseOptionalLimit(body?.limit);
 
   const sessionToken = getRoomSessionToken(request);
 
@@ -303,10 +276,7 @@ export async function getGithubIssuesController(
   try {
     await validateSession(env, roomKey, userName, sessionToken);
 
-    const clientId = env.GITHUB_OAUTH_CLIENT_ID;
-    const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
+    if (!getGithubOAuthConfig(env)) {
       return jsonError("GitHub OAuth not configured", 500);
     }
 
@@ -322,9 +292,9 @@ export async function getGithubIssuesController(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch GitHub issues";
-    const isAuth =
-      message.toLowerCase().includes("session") ||
-      message.toLowerCase().includes("connect");
-    return jsonError(message, isAuth ? 401 : 500);
+    return jsonError(
+      message,
+      isAuthError(message, GITHUB_AUTH_ERROR_HINTS) ? 401 : 500,
+    );
   }
 }
