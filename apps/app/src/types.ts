@@ -1,3 +1,21 @@
+import type {
+  ExtraVoteOption,
+  JudgeMetadata as SharedJudgeMetadata,
+  RoomData as SharedRoomData,
+  RoomSettings as SharedRoomSettings,
+  TicketQueueItem as SharedTicketQueueItem,
+  TicketVote as SharedTicketVote,
+  SessionRoundHistoryItem,
+  StructuredVote,
+  TimerState,
+  VoteValue,
+  VotingCompletion,
+  VotingCriterion,
+  VotingSequenceTemplate,
+  RoomGameSession,
+  RoomStatus,
+} from "@sprintjam/types";
+
 export type ErrorKind =
   | "permission"
   | "auth"
@@ -14,43 +32,11 @@ export type ErrorConnectionIssue = {
   reconnecting?: boolean;
 };
 
-export type VoteValue = string | number;
-
 export type JudgeAlgorithm =
   | "smartConsensus"
   | "conservativeMode"
   | "optimisticMode"
   | "simpleAverage";
-
-export type TaskSize = "xs" | "sm" | "md" | "lg" | "xl";
-
-export type VotingSequenceId =
-  | "fibonacci"
-  | "fibonacci-short"
-  | "doubling"
-  | "tshirt"
-  | "planet-scale"
-  | "yes-no"
-  | "simple"
-  | "hours"
-  | "custom";
-
-export interface VotingSequenceTemplate {
-  id: VotingSequenceId;
-  label: string;
-  description?: string;
-  options: (string | number)[];
-}
-
-export interface ExtraVoteOption {
-  id: string;
-  label: string;
-  value: string;
-  description?: string;
-  enabled?: boolean;
-  aliases?: string[];
-  impact?: "none" | "high-alert";
-}
 
 export type AvatarId =
   | "user"
@@ -67,35 +53,25 @@ export type AvatarId =
   | "crown"
   | string;
 
-export interface TicketVote {
-  id: number;
-  ticketQueueId: number;
-  userName: string;
-  vote: VoteValue;
-  structuredVotePayload?: StructuredVote;
-  votedAt: number;
+export interface TicketMetadata {
+  id?: string;
+  key?: string;
+  identifier?: string;
+  summary?: string;
+  title?: string;
+  name?: string;
+  description?: string;
+  body?: string;
+  status?: string;
+  assignee?: string | null;
+  storyPoints?: number | null;
+  estimate?: number | null;
+  labels?: string[];
+  url?: string;
+  html_url?: string;
+  number?: number;
+  [key: string]: unknown;
 }
-
-export type RoundTransitionType = "reset" | "next_ticket" | "complete_session";
-
-export interface SessionRoundVote {
-  userName: string;
-  vote: VoteValue;
-  structuredVotePayload?: StructuredVote;
-  votedAt: number;
-}
-
-export interface SessionRoundHistoryItem {
-  id: string;
-  ticketId?: string;
-  ticketTitle?: string;
-  outcome?: string;
-  type: RoundTransitionType;
-  endedAt: number;
-  votes: SessionRoundVote[];
-}
-
-export type TicketMetadata = Record<string, any>;
 
 export interface ExternalBoardOption {
   id: string;
@@ -126,147 +102,33 @@ export interface ExternalTicketSummary {
   metadata: TicketMetadata;
 }
 
-export interface GithubIssue {
-  id: string;
-  key: string;
-  repository: string;
-  number: number;
-  title: string;
-  description?: string;
-  status?: string;
-  assignee?: string;
-  estimate?: number | null;
-  url?: string;
-  labels?: string[];
-}
+type AppTicketVote = Omit<SharedTicketVote, "structuredVotePayload"> & {
+  structuredVotePayload?: StructuredVote;
+};
 
-export interface TicketQueueItem {
-  id: number;
-  ticketId: string;
+export type TicketQueueItem = Omit<
+  SharedTicketQueueItem,
+  | "roomKey"
+  | "title"
+  | "status"
+  | "externalService"
+  | "externalServiceMetadata"
+  | "votes"
+> & {
   title?: string;
-  description?: string;
   status: "pending" | "in_progress" | "completed";
-  outcome?: string;
-  createdAt: number;
-  completedAt?: number;
-  ordinal: number;
   externalService: "jira" | "linear" | "github" | "none";
-  externalServiceId?: string;
   externalServiceMetadata?: TicketMetadata;
-  votes?: TicketVote[];
-}
+  votes?: AppTicketVote[];
+};
 
-export interface VoteOptionMetadata {
-  value: VoteValue;
-  background: string;
-  taskSize: TaskSize | null;
-}
-
-export interface SummaryCardSetting {
-  id: string;
-  label: string;
-  enabled: boolean;
-}
-
-export interface ConsensusLabelSettings {
-  high?: string;
-  medium?: string;
-  low?: string;
-}
-
-export interface CriteriaBreakdownSettings {
-  enabled: boolean;
-  title: string;
-  consensusLabels?: ConsensusLabelSettings;
-}
-
-export interface ResultsDisplaySettings {
-  summaryCards?: SummaryCardSetting[];
-  showVoteDistribution?: boolean;
-  voteDistributionLabel?: string;
-  criteriaBreakdown?: CriteriaBreakdownSettings;
-}
-
-export interface InfoToggleSettings {
-  enabled: boolean;
-  label: string;
-  title?: string;
-  rangesDescription?: string;
-  rangesLabel?: string;
-  showRangeDetails?: boolean;
-  showContributionDetails?: boolean;
-  showConversionRules?: boolean;
-}
-
-export interface StructuredSummarySettings {
-  storyPointsLabel?: string;
-  weightedScoreLabel?: string;
-  showConversionCount?: boolean;
-}
-
-export interface StructuredVotingDisplaySettings {
-  panelTitle?: string;
-  infoToggle?: InfoToggleSettings;
-  summary?: StructuredSummarySettings;
-}
-
-export interface StructuredVote {
-  criteriaScores: Record<string, number>;
-  calculatedStoryPoints?: VoteValue;
-  percentageScore?: number;
-  appliedConversionRules?: string[];
-  contributions?: {
-    id: string;
-    weightPercent: number;
-    score: number;
-    maxScore: number;
-    contributionPercent: number;
-  }[];
-}
-
-export interface VotingCriterion {
-  id: string;
-  name: string;
-  description: string;
-  minScore: number;
-  maxScore: number;
-}
-
-export interface RoomSettings {
-  estimateOptions: (string | number)[];
-  voteOptionsMetadata?: VoteOptionMetadata[];
-  allowOthersToShowEstimates: boolean;
-  allowOthersToDeleteEstimates: boolean;
-  allowOthersToManageQueue?: boolean;
-  allowVotingAfterReveal?: boolean;
-  capacityPoints?: number | null;
-  showTimer: boolean;
-  showUserPresence: boolean;
-  showAverage: boolean;
-  showMedian: boolean;
-  showTopVotes: boolean;
-  topVotesCount: number;
-  anonymousVotes: boolean;
-  enableFacilitationGuidance?: boolean;
-  enableJudge: boolean;
+export type RoomSettings = Omit<
+  SharedRoomSettings,
+  "judgeAlgorithm" | "externalService"
+> & {
   judgeAlgorithm: JudgeAlgorithm;
-  hideParticipantNames?: boolean;
   externalService?: "jira" | "linear" | "github" | "none";
-  autoSyncEstimates?: boolean;
-  enableTicketQueue?: boolean;
-  enableStructuredVoting?: boolean;
-  votingCriteria?: VotingCriterion[];
-  resultsDisplay?: ResultsDisplaySettings;
-  structuredVotingDisplay?: StructuredVotingDisplaySettings;
-  autoHandoverModerator?: boolean;
-  enableStrudelPlayer?: boolean;
-  strudelAutoGenerate?: boolean;
-  enableAutoReveal?: boolean;
-  alwaysRevealVotes?: boolean;
-  votingSequenceId?: VotingSequenceId;
-  customEstimateOptions?: (string | number)[];
-  extraVoteOptions?: ExtraVoteOption[];
-}
+};
 
 export interface ServerDefaults {
   roomSettings: RoomSettings;
@@ -276,129 +138,28 @@ export interface ServerDefaults {
   extraVoteOptions?: ExtraVoteOption[];
 }
 
-export interface JudgeMetadata {
-  confidence: "high" | "medium" | "low";
-  needsDiscussion: boolean;
-  reasoning: string;
+export type JudgeMetadata = Omit<SharedJudgeMetadata, "algorithm"> & {
   algorithm: JudgeAlgorithm;
-  questionMarkCount?: number;
-  numericVoteCount?: number;
-  totalVoteCount?: number;
-}
+};
 
-export interface TimerState {
-  running: boolean;
-  seconds: number;
-  lastUpdateTime: number;
-  targetDurationSeconds?: number | null;
-  roundAnchorSeconds?: number;
-  autoResetOnVotesReset?: boolean;
-}
-
-export type RoomGameType =
-  | "guess-the-number"
-  | "word-chain"
-  | "emoji-story"
-  | "one-word-pitch"
-  | "category-blitz"
-  | "clueboard";
-
-export interface RoomGameMove {
-  id: string;
-  user: string;
-  submittedAt: number;
-  value: string;
-  round: number;
-}
-
-export interface RoomGameEvent {
-  id: string;
-  message: string;
-  createdAt: number;
-}
-
-export interface RoomGameSession {
-  type: RoomGameType;
-  startedBy: string;
-  startedAt: number;
-  round: number;
-  status: "active" | "completed";
-  participants: string[];
-  leaderboard: Record<string, number>;
-  moves: RoomGameMove[];
-  events: RoomGameEvent[];
-  numberTarget?: number;
-  lastWord?: string | null;
-  oneWordPitchPrompt?: string;
-  oneWordPitchPromptHistory?: string[];
-  oneWordPitchPhase?: "submit" | "vote";
-  oneWordPitchRoundSubmissions?: Record<string, string>;
-  oneWordPitchRoundVotes?: Record<string, string>;
-  oneWordPitchRoundHistory?: Array<{
-    round: number;
-    prompt: string;
-    submissions: Record<string, string>;
-    votes?: Record<string, string>;
-    voteWinners?: string[];
-  }>;
-  categoryBlitzCategory?: string;
-  categoryBlitzLetter?: string;
-  categoryBlitzHistory?: string[];
-  categoryBlitzRoundHistory?: Array<{
-    round: number;
-    category: string;
-    letter: string;
-    submissions: Record<string, string>;
-  }>;
-  codenamesBoard?: string[];
-  codenamesRevealedIndices?: number[];
-  codenamesRoundPhase?: "clue" | "guess";
-  codenamesClueGiver?: string | null;
-  codenamesCurrentClue?: string | null;
-  codenamesCurrentClueTarget?: number;
-  codenamesCurrentGuesses?: number;
-  codenamesTargetIndices?: number[];
-  codenamesAssassinIndex?: number;
-  codenamesKnownBlockerIndex?: number;
-  winner?: string;
-}
-
-export type RoomStatus = "active" | "completed";
-
-export interface VotingCompletion {
-  allVotesComplete: boolean;
-  completedCount: number;
-  totalCount: number;
-  incompleteUsers?: string[];
-}
-
-export interface RoomData {
-  key: string;
-  users: string[];
-  spectators?: string[];
-  votes: Record<string, VoteValue | null>;
-  structuredVotes?: Record<string, StructuredVote>;
-  showVotes: boolean;
-  moderator: string;
-  connectedUsers: Record<string, boolean>;
+export type RoomData = Omit<
+  SharedRoomData,
+  | "settings"
+  | "judgeScore"
+  | "judgeMetadata"
+  | "userAvatars"
+  | "currentTicket"
+  | "ticketQueue"
+> & {
   createdAt?: string;
   lastActivity?: string;
-  votingCompletion?: VotingCompletion;
   settings: RoomSettings;
-  status?: RoomStatus;
   judgeScore: VoteValue | null;
   judgeMetadata?: JudgeMetadata;
   userAvatars?: Record<string, AvatarId>;
-  currentStrudelCode?: string;
-  currentStrudelGenerationId?: string;
-  strudelPhase?: string;
-  strudelIsPlaying?: boolean;
   currentTicket?: TicketQueueItem;
   ticketQueue?: TicketQueueItem[];
-  roundHistory?: SessionRoundHistoryItem[];
-  timerState?: TimerState;
-  gameSession?: RoomGameSession;
-}
+};
 
 export type WebSocketErrorReason =
   | "auth"

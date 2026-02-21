@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import type { VoteValue } from "@sprintjam/types";
 
-import type { RoomData, VoteValue } from "@/types";
+import type { RoomData } from "@/types";
 
 const ANIMATION_DURATION_MS = 2000;
 

@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
+import type { CriteriaBreakdownSettings } from "@sprintjam/types";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import type { CriteriaStats, CriteriaBreakdownSettings } from "@/types";
+import type { CriteriaStats } from "@/types";
 
 export function CriteriaBreakdownStat({
   stat,

@@ -1,15 +1,13 @@
 import type {
+  AvatarId,
   RoomData,
-  VoteValue,
   RoomSettings,
-  StructuredVote,
   ServerDefaults,
+  TicketQueueItem,
   WebSocketMessage,
   WebSocketMessageType,
-  AvatarId,
-  TicketQueueItem,
-  RoomGameType,
 } from "@/types";
+import type { RoomGameType, StructuredVote, VoteValue } from "@sprintjam/types";
 import { API_BASE_URL, WS_BASE_URL } from "@/constants";
 import {
   SERVER_DEFAULTS_DOCUMENT_KEY,

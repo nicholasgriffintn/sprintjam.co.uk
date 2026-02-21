@@ -14,7 +14,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import type { Team } from "@/lib/workspace-service";
+import type { Team } from "@sprintjam/types";
 import { BetaBadge } from "../../components/BetaBadge";
 
 export default function WorkspaceAdminTeams() {

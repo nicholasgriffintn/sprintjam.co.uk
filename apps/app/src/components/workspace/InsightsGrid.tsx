@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import type { WorkspaceInsights } from "@/lib/workspace-service";
+import type { WorkspaceInsights } from "@sprintjam/types";
 
 interface InsightsGridProps {
   insights: WorkspaceInsights | null;

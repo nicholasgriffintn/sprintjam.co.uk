@@ -1,11 +1,11 @@
-import type {
-  ExtraVoteOption,
-  RoomSettings,
-  VotingSequenceId,
-  VotingSequenceTemplate,
-} from "@/types";
+import type { RoomSettings } from "@/types";
 import { ChevronDown } from "lucide-react";
 import { Select } from "@/components/ui/Select";
+import type {
+  ExtraVoteOption,
+  VotingSequenceId,
+  VotingSequenceTemplate,
+} from "@sprintjam/types";
 
 export function EstimateOptions({
   localSettings,

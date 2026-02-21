@@ -2,7 +2,11 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
-import type { RoomWorkerEnv, JiraFieldDefinition } from "@sprintjam/types";
+import type {
+  JiraFieldDefinition,
+  JiraOAuthStatus,
+  RoomWorkerEnv,
+} from "@sprintjam/types";
 import {
   jsonError,
   getRoomStub,
@@ -303,14 +307,11 @@ export async function getJiraOAuthStatusController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
-    const data = await fetchOAuthStatus<{
-      connected: boolean;
-      jiraDomain?: string;
-      jiraUserEmail?: string;
-      expiresAt?: number;
-      storyPointsField?: string | null;
-      sprintField?: string | null;
-    }>(roomObject, "jira", { roomKey, userName, sessionToken });
+    const data = await fetchOAuthStatus<JiraOAuthStatus>(roomObject, "jira", {
+      roomKey,
+      userName,
+      sessionToken,
+    });
 
     return jsonResponse(data);
   } catch (error) {

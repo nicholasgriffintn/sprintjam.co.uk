@@ -1,34 +1,12 @@
+import type {
+  JiraBoard,
+  JiraFieldOption,
+  JiraOAuthStatus,
+  JiraSprint,
+} from "@sprintjam/types";
+
 import type { TicketMetadata } from "@/types";
 import { providerRequestJson, providerRequestVoid } from "@/lib/provider-api";
-export interface JiraOAuthStatus {
-  connected: boolean;
-  jiraDomain?: string;
-  jiraUserEmail?: string;
-  expiresAt?: number;
-  storyPointsField?: string | null;
-  sprintField?: string | null;
-}
-
-export interface JiraFieldOption {
-  id: string;
-  name: string;
-  type?: string | null;
-  custom?: boolean;
-}
-
-export interface JiraBoard {
-  id: string;
-  name: string;
-  type?: string;
-}
-
-export interface JiraSprint {
-  id: string;
-  name: string;
-  state?: string;
-  startDate?: string | null;
-  endDate?: string | null;
-}
 
 export async function fetchJiraTicket(
   ticketId: string,

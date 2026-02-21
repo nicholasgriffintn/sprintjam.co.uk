@@ -1,28 +1,11 @@
+import type {
+  GithubMilestone,
+  GithubOAuthStatus,
+  GithubRepo,
+} from "@sprintjam/types";
+
 import type { TicketMetadata } from "@/types";
 import { providerRequestJson, providerRequestVoid } from "@/lib/provider-api";
-
-export interface GithubOAuthStatus {
-  connected: boolean;
-  githubLogin?: string | null;
-  githubUserEmail?: string | null;
-  defaultOwner?: string | null;
-  defaultRepo?: string | null;
-  expiresAt?: number;
-}
-
-export interface GithubRepo {
-  id: string;
-  name: string;
-  fullName: string;
-  owner: string;
-}
-
-export interface GithubMilestone {
-  id: string;
-  number: number;
-  title: string;
-  state?: string;
-}
 
 export async function fetchGithubIssue(
   issueId: string,

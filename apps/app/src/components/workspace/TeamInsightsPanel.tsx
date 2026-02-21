@@ -11,7 +11,8 @@ import {
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Spinner } from "@/components/ui/Spinner";
-import { getTeamInsights, type TeamInsights } from "@/lib/workspace-service";
+import type { TeamInsights } from "@sprintjam/types";
+import { getTeamInsights } from "@/lib/workspace-service";
 
 interface TeamInsightsPanelProps {
   teamId: number;

@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-
 import type {
   ResultsDisplaySettings,
-  RoomData,
   SummaryCardSetting,
-} from "@/types";
+} from "@sprintjam/types";
+
+import type { RoomData } from "@/types";
 
 const judgeSuppressedCards = new Set([
   "participation",

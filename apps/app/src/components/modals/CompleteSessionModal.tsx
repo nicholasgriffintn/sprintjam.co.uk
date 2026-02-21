@@ -1,6 +1,7 @@
 import { FC } from "react";
+import type { SessionRoundHistoryItem } from "@sprintjam/types";
 
-import type { SessionRoundHistoryItem, TicketQueueItem } from "@/types";
+import type { TicketQueueItem } from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { TicketQueueModalContent } from "@/components/modals/TicketQueueModal/Content";

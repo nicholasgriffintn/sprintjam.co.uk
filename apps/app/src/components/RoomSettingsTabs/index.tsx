@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import type {
-  RoomSettings,
-  JudgeAlgorithm,
   VotingSequenceId,
   VotingSequenceTemplate,
   ExtraVoteOption,
-} from "@/types";
+} from "@sprintjam/types";
+
+import type { RoomSettings, JudgeAlgorithm } from "@/types";
 import { VotingMode } from "@/components/RoomSettingsTabs/VotingMode";
 import { EstimateOptions } from "@/components/RoomSettingsTabs/EstimateOptions";
 import { TheJudge } from "@/components/RoomSettingsTabs/TheJudge";

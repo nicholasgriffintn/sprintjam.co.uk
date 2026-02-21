@@ -1,5 +1,5 @@
 import { Select, type SelectOption } from "@/components/ui/Select";
-import type { Team } from "@/lib/workspace-service";
+import type { Team } from "@sprintjam/types";
 
 interface TeamSelectorProps {
   teams: Team[];

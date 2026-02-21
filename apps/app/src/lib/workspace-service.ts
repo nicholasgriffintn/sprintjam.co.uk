@@ -1,40 +1,16 @@
 import { API_BASE_URL } from "@/constants";
-
-export interface WorkspaceUser {
-  id: number;
-  email: string;
-  name: string | null;
-  organisationId: number;
-}
-
-export interface WorkspaceOrganisation {
-  id: number;
-  domain: string;
-  name: string;
-  logoUrl: string | null;
-  createdAt: number;
-  updatedAt: number;
-}
-
-export interface WorkspaceMember {
-  id: number;
-  email: string;
-  name: string | null;
-  createdAt: number;
-  lastLoginAt: number | null;
-}
-
-export interface WorkspaceInvite {
-  id: number;
-  organisationId: number;
-  email: string;
-  invitedById: number;
-  acceptedById: number | null;
-  createdAt: number;
-  updatedAt: number;
-  acceptedAt: number | null;
-  revokedAt: number | null;
-}
+import type {
+  SessionStats,
+  Team,
+  TeamInsights,
+  TeamSession,
+  WorkspaceInsights,
+  WorkspaceInvite,
+  WorkspaceOrganisation,
+  WorkspaceProfile,
+  WorkspaceStats,
+  WorkspaceUser,
+} from "@sprintjam/types";
 
 export type MfaMethod = "totp" | "webauthn";
 
@@ -86,92 +62,6 @@ export interface WebAuthnCredential {
     signature?: string;
     userHandle?: string;
   };
-}
-
-export interface Team {
-  id: number;
-  name: string;
-  organisationId: number;
-  ownerId: number;
-  createdAt: number;
-  updatedAt?: number;
-}
-
-export interface TeamSession {
-  id: number;
-  teamId: number;
-  roomKey: string;
-  name: string;
-  createdById: number;
-  createdAt: number;
-  updatedAt: number | null;
-  completedAt: number | null;
-  metadata: string | null;
-}
-
-export interface SessionTimelineData {
-  period: string;
-  yearMonth: string;
-  count: number;
-}
-
-export interface WorkspaceStats {
-  totalTeams: number;
-  totalSessions: number;
-  activeSessions: number;
-  completedSessions: number;
-  sessionTimeline: SessionTimelineData[];
-}
-
-export interface TeamInsights {
-  sessionsAnalyzed: number;
-  totalTickets: number;
-  totalRounds: number;
-  participationRate: number;
-  firstRoundConsensusRate: number;
-  discussionRate: number;
-  estimationVelocity: number | null;
-  questionMarkRate: number;
-}
-
-export interface WorkspaceInsights {
-  totalVotes: number;
-  totalRounds: number;
-  totalTickets: number;
-  participationRate: number;
-  firstRoundConsensusRate: number;
-  discussionRate: number;
-  estimationVelocity: number | null;
-  questionMarkRate: number;
-  teamCount: number;
-  sessionsAnalyzed: number;
-  topContributors: Array<{
-    userName: string;
-    totalVotes: number;
-    participationRate: number;
-    consensusAlignment: number;
-  }>;
-}
-
-export interface SessionStats {
-  roomKey: string;
-  totalRounds: number;
-  totalVotes: number;
-  uniqueParticipants: number;
-  participationRate: number;
-  consensusRate: number;
-  firstRoundConsensusRate: number;
-  discussionRate: number;
-  estimationVelocity: number | null;
-  durationMinutes: number | null;
-}
-
-export interface WorkspaceProfile {
-  user: WorkspaceUser;
-  organisation: WorkspaceOrganisation;
-  teams: Team[];
-  members: WorkspaceMember[];
-  invites: WorkspaceInvite[];
 }
 
 export async function workspaceRequest<T>(

@@ -1,9 +1,5 @@
-import type {
-  RoomData,
-  VoteValue,
-  RoomSettings,
-  ServerDefaults,
-} from "../types";
+import type { VoteValue } from "@sprintjam/types";
+import type { RoomData, RoomSettings, ServerDefaults } from "../types";
 
 const cloneRoomSettings = (settings: RoomSettings): RoomSettings => ({
   ...settings,

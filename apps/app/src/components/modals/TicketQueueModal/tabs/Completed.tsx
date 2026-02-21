@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowDownToLine, Loader2, RefreshCw } from "lucide-react";
+import type { SessionRoundHistoryItem } from "@sprintjam/types";
 
-import type { SessionRoundHistoryItem, TicketQueueItem } from "@/types";
+import type { TicketQueueItem } from "@/types";
 import { handleError } from "@/utils/error";
 import { updateJiraStoryPoints } from "@/lib/jira-service";
 import { updateLinearEstimate } from "@/lib/linear-service";
@@ -275,7 +276,9 @@ export function TicketQueueModalCompletedTab({
                       </span>
                     </div>
                     {entry.ticketTitle && (
-                      <p className="text-sm font-semibold">{entry.ticketTitle}</p>
+                      <p className="text-sm font-semibold">
+                        {entry.ticketTitle}
+                      </p>
                     )}
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       Recorded {formatDate(entry.endedAt)}
@@ -302,8 +305,8 @@ export function TicketQueueModalCompletedTab({
                               {vote.userName}
                             </span>
                             <span className="font-mono text-sm text-slate-900 dark:text-white">
-                              {vote.structuredVotePayload?.calculatedStoryPoints ??
-                                vote.vote}
+                              {vote.structuredVotePayload
+                                ?.calculatedStoryPoints ?? vote.vote}
                             </span>
                           </span>
                         ))}
@@ -343,7 +346,9 @@ export function TicketQueueModalCompletedTab({
                           </span>
                         </div>
                         {ticket.title && (
-                          <p className="text-sm font-semibold">{ticket.title}</p>
+                          <p className="text-sm font-semibold">
+                            {ticket.title}
+                          </p>
                         )}
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           {ticket.completedAt
@@ -461,8 +466,8 @@ export function TicketQueueModalCompletedTab({
                                 {vote.userName}
                               </span>
                               <span className="font-mono text-sm text-slate-900 dark:text-white">
-                                {vote.structuredVotePayload?.calculatedStoryPoints ??
-                                  vote.vote}
+                                {vote.structuredVotePayload
+                                  ?.calculatedStoryPoints ?? vote.vote}
                               </span>
                             </span>
                           ))}

@@ -1,9 +1,10 @@
+import type { LinearOAuthStatus } from "@sprintjam/types";
+
 import { useOAuthProvider } from "@/hooks/useOAuthProvider";
 import {
   authorizeLinearOAuth,
   getLinearOAuthStatus,
   revokeLinearOAuth,
-  type LinearOAuthStatus,
 } from "@/lib/linear-service";
 
 export function useLinearOAuth(enabled = true) {

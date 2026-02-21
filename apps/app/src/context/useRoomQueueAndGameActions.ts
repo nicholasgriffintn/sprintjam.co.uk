@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import type { RoomGameType } from "@sprintjam/types";
 
 import {
   selectTicket,
@@ -12,12 +13,7 @@ import {
   endGame,
 } from "@/lib/api-service";
 import { completeSessionByRoomKey } from "@/lib/workspace-service";
-import type {
-  ErrorKind,
-  RoomData,
-  RoomGameType,
-  TicketQueueItem,
-} from "@/types";
+import type { ErrorKind, RoomData, TicketQueueItem } from "@/types";
 
 interface UseRoomQueueAndGameActionsOptions {
   roomData: RoomData | null;

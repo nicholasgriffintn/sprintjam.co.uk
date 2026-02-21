@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/cn";
-import type { Team } from "@/lib/workspace-service";
+import type { Team } from "@sprintjam/types";
 
 interface TeamsListProps {
   teams: Team[];
@@ -74,15 +74,15 @@ export function TeamsList({
             tabIndex={0}
             onClick={() => onSelectTeam(team.id)}
             onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
+              if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
                 onSelectTeam(team.id);
               }
             }}
             className={cn(
-              'w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900',
+              "w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
               selectedTeamId === team.id &&
-                'border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20',
+                "border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20",
             )}
           >
             <div className="flex items-start justify-between gap-3">

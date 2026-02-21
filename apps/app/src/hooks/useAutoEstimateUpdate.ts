@@ -1,15 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
+import type { VoteValue, StructuredVote } from "@sprintjam/types";
 
 import { updateJiraStoryPoints } from "@/lib/jira-service";
 import { updateLinearEstimate } from "@/lib/linear-service";
 import { convertVoteValueToEstimate } from "@/utils/external-estimate";
-import type {
-  RoomData,
-  TicketQueueItem,
-  VoteValue,
-  StructuredVote,
-} from "@/types";
+import type { RoomData, TicketQueueItem } from "@/types";
 
 interface UseAutoEstimateUpdateOptions {
   roomData: RoomData | null;

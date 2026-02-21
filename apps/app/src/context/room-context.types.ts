@@ -2,13 +2,11 @@ import type {
   ErrorConnectionIssue,
   ErrorKind,
   RoomData,
-  RoomGameType,
   RoomSettings,
   ServerDefaults,
-  StructuredVote,
   TicketQueueItem,
-  VoteValue,
 } from "@/types";
+import type { RoomGameType, StructuredVote, VoteValue } from "@sprintjam/types";
 
 export interface RoomStateContextValue {
   serverDefaults: ServerDefaults | null;

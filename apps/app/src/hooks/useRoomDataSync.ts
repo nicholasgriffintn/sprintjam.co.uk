@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import type { VoteValue, StructuredVote } from "@sprintjam/types";
 
-import type { RoomData, VoteValue, StructuredVote } from "@/types";
+import type { RoomData } from "@/types";
 import { getVoteKeyForUser } from "@/utils/room";
 
 interface UseRoomDataSyncOptions {

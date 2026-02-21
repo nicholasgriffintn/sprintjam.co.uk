@@ -3,7 +3,7 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 
-import type { RoomWorkerEnv } from "@sprintjam/types";
+import type { GithubOAuthStatus, RoomWorkerEnv } from "@sprintjam/types";
 import {
   jsonError,
   getRoomStub,
@@ -255,14 +255,15 @@ export async function getGithubOAuthStatusController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
-    const data = await fetchOAuthStatus<{
-      connected: boolean;
-      githubLogin?: string | null;
-      githubUserEmail?: string | null;
-      defaultOwner?: string | null;
-      defaultRepo?: string | null;
-      expiresAt?: number;
-    }>(roomObject, "github", { roomKey, userName, sessionToken });
+    const data = await fetchOAuthStatus<GithubOAuthStatus>(
+      roomObject,
+      "github",
+      {
+        roomKey,
+        userName,
+        sessionToken,
+      },
+    );
 
     return jsonResponse(data);
   } catch (error) {

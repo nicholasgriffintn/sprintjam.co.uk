@@ -7,14 +7,14 @@ import {
 
 import { API_BASE_URL } from "@/constants";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
-import {
-  workspaceRequest,
-  type WorkspaceProfile,
-  type WorkspaceStats,
-  type TeamSession,
-} from "@/lib/workspace-service";
+import { workspaceRequest } from "@/lib/workspace-service";
 import type { RoomData, ServerDefaults } from "@/types";
-import type { WheelData } from "@sprintjam/types";
+import type {
+  TeamSession,
+  WheelData,
+  WorkspaceProfile,
+  WorkspaceStats,
+} from "@sprintjam/types";
 
 export const SERVER_DEFAULTS_DOCUMENT_KEY = "server-defaults";
 export const WORKSPACE_PROFILE_DOCUMENT_KEY = "workspace-profile";

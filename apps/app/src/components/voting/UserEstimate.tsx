@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import type { VoteValue } from "@sprintjam/types";
 
-import type { RoomData, VoteValue } from "@/types";
+import type { RoomData } from "@/types";
 import { getUsersVoteTaskSize } from "@/utils/tasks";
 import { TimerChip } from "./TimerChip";
 import { useRoomState } from "@/context/RoomContext";

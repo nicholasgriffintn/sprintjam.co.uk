@@ -1,7 +1,8 @@
 import { FC, useMemo } from "react";
 import { CheckCircle2, Users } from "lucide-react";
+import type { VoteValue } from "@sprintjam/types";
 
-import type { TicketQueueItem, VoteValue } from "@/types";
+import type { TicketQueueItem } from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 

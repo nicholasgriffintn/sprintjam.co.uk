@@ -1,6 +1,7 @@
 import { useMemo } from "react";
+import type { VoteValue } from "@sprintjam/types";
 
-import type { RoomData, RoomStats, VoteValue } from "@/types";
+import type { RoomData, RoomStats } from "@/types";
 import {
   getExtraVoteValueSet,
   getVisibleEstimateOptions,

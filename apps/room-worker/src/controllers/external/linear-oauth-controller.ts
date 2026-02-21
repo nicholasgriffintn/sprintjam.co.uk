@@ -2,7 +2,7 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
-import type { RoomWorkerEnv } from "@sprintjam/types";
+import type { LinearOAuthStatus, RoomWorkerEnv } from "@sprintjam/types";
 import {
   jsonError,
   getRoomStub,
@@ -227,13 +227,15 @@ export async function getLinearOAuthStatusController(
     await validateSession(env, roomKey, userName, sessionToken);
 
     const roomObject = getRoomStub(env, roomKey);
-    const data = await fetchOAuthStatus<{
-      connected: boolean;
-      linearOrganizationId?: string;
-      linearUserEmail?: string;
-      expiresAt?: number;
-      estimateField?: string | null;
-    }>(roomObject, "linear", { roomKey, userName, sessionToken });
+    const data = await fetchOAuthStatus<LinearOAuthStatus>(
+      roomObject,
+      "linear",
+      {
+        roomKey,
+        userName,
+        sessionToken,
+      },
+    );
 
     return jsonResponse(data);
   } catch (error) {

@@ -2,13 +2,10 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
-import type { StatsWorkerEnv } from "@sprintjam/types";
+import type { RoundIngestPayload, StatsWorkerEnv } from "@sprintjam/types";
 
-import { StatsRepository, type RoundIngestData } from "../repositories/stats";
-import {
-  validateRoundIngestPayload,
-  type RoundIngestPayload,
-} from "../lib/validation";
+import { StatsRepository } from "../repositories/stats";
+import { validateRoundIngestPayload } from "../lib/validation";
 import { successResponse, errorResponse } from "../lib/response";
 
 function validateToken(request: CfRequest, env: StatsWorkerEnv): boolean {
@@ -36,18 +33,7 @@ export async function ingestRoundController(
   const payload = body as RoundIngestPayload;
   const repo = new StatsRepository(env.DB);
 
-  const data: RoundIngestData = {
-    roomKey: payload.roomKey,
-    roundId: payload.roundId,
-    ticketId: payload.ticketId,
-    votes: payload.votes,
-    judgeScore: payload.judgeScore,
-    judgeMetadata: payload.judgeMetadata,
-    roundEndedAt: payload.roundEndedAt,
-    type: payload.type,
-  };
-
-  await repo.ingestRound(data);
+  await repo.ingestRound(payload);
 
   return successResponse({ status: "ingested" });
 }

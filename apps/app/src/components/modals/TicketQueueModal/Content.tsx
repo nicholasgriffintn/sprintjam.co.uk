@@ -1,6 +1,7 @@
 import { FC, useMemo, useState } from "react";
+import type { SessionRoundHistoryItem } from "@sprintjam/types";
 
-import type { SessionRoundHistoryItem, TicketQueueItem } from "@/types";
+import type { TicketQueueItem } from "@/types";
 import { TicketQueueModalControls } from "@/components/modals/TicketQueueModal/Controls";
 import { TicketQueueModalQueueTab } from "@/components/modals/TicketQueueModal/tabs/Queue";
 import { TicketQueueModalCompletedTab } from "@/components/modals/TicketQueueModal/tabs/Completed";

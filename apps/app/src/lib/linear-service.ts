@@ -1,27 +1,11 @@
+import type {
+  LinearCycle,
+  LinearOAuthStatus,
+  LinearTeam,
+} from "@sprintjam/types";
+
 import type { TicketMetadata } from "@/types";
 import { providerRequestJson, providerRequestVoid } from "@/lib/provider-api";
-
-export interface LinearOAuthStatus {
-  connected: boolean;
-  linearOrganizationId?: string;
-  linearUserEmail?: string;
-  expiresAt?: number;
-  estimateField?: string | null;
-}
-
-export interface LinearTeam {
-  id: string;
-  name: string;
-  key: string;
-}
-
-export interface LinearCycle {
-  id: string;
-  number: number;
-  name?: string;
-  startsAt?: string | null;
-  endsAt?: string | null;
-}
 
 export async function fetchLinearIssue(
   issueId: string,

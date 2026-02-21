@@ -1,4 +1,5 @@
-import { TicketQueueItem, TicketVote } from "../types";
+import type { TicketVote } from "@sprintjam/types";
+import type { TicketQueueItem } from "../types";
 import { convertVoteValueToEstimate } from "@/utils/external-estimate";
 
 export const getVoteSummary = (ticket: TicketQueueItem) => {

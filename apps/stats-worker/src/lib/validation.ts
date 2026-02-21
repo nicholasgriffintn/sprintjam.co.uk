@@ -1,3 +1,5 @@
+import type { RoundIngestPayload } from "@sprintjam/types";
+
 export const LIMITS = {
   MAX_VOTES_PER_ROUND: 100,
   MAX_USERNAME_LENGTH: 100,
@@ -14,24 +16,6 @@ export const LIMITS = {
 export type ValidationResult =
   | { valid: true }
   | { valid: false; error: string };
-
-export interface VotePayload {
-  userName: string;
-  vote: string;
-  structuredVote?: object;
-  votedAt: number;
-}
-
-export interface RoundIngestPayload {
-  roomKey: string;
-  roundId: string;
-  ticketId?: string;
-  votes: VotePayload[];
-  judgeScore?: string;
-  judgeMetadata?: object;
-  roundEndedAt: number;
-  type: "reset" | "next_ticket";
-}
 
 function validateVote(vote: unknown, index: number): ValidationResult {
   if (!vote || typeof vote !== "object") {
@@ -87,7 +71,7 @@ export function validateRoundIngestPayload(body: unknown): ValidationResult {
     return { valid: false, error: "Request body must be an object" };
   }
 
-  const b = body as Record<string, unknown>;
+  const b = body as Partial<RoundIngestPayload> & Record<string, unknown>;
 
   if (
     !b.roomKey ||

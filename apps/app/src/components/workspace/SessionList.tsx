@@ -4,7 +4,7 @@ import { SessionCard } from "./SessionCard";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useSessionStats } from "@/hooks/useSessionStats";
-import type { TeamSession } from "@/lib/workspace-service";
+import type { TeamSession } from "@sprintjam/types";
 
 interface SessionListProps {
   sessions: TeamSession[];

@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ROOM_GAMES, GAME_ICONS } from "@/components/games/game-catalog";
-import type { RoomData, RoomGameType } from "@/types";
+import type { RoomData } from "@/types";
+import type { RoomGameType } from "@sprintjam/types";
 
 interface RoomGamesModalProps {
   isOpen: boolean;

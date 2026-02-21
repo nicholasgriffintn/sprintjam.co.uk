@@ -1,26 +1,35 @@
 /**
  * Workspace authentication and team management types
  */
+import type {
+  organisations,
+  teamSessions,
+  teams,
+  users,
+  workspaceInvites,
+} from "@sprintjam/db";
+import type { RoundTransitionType } from "./room";
 
-export interface Team {
-  id: number;
-  name: string;
-  organisationId: number;
-  ownerId: number;
-  createdAt: number;
-  updatedAt?: number;
-}
+export type Team = typeof teams.$inferSelect;
+export type TeamSession = typeof teamSessions.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type Organisation = typeof organisations.$inferSelect;
+export type WorkspaceInvite = typeof workspaceInvites.$inferSelect;
 
-export interface TeamSession {
-  id: number;
-  teamId: number;
-  roomKey: string;
-  name: string;
-  createdById: number;
-  createdAt: number;
-  updatedAt: number | null;
-  completedAt: number | null;
-  metadata: string | null;
+export type WorkspaceUser = Pick<
+  User,
+  "id" | "email" | "name" | "organisationId"
+>;
+export type WorkspaceOrganisation = Organisation;
+export type WorkspaceMember = Pick<
+  User,
+  "id" | "email" | "name" | "createdAt" | "lastLoginAt"
+>;
+
+export interface SessionTimelineData {
+  period: string;
+  yearMonth: string;
+  count: number;
 }
 
 export interface WorkspaceStats {
@@ -28,33 +37,76 @@ export interface WorkspaceStats {
   totalSessions: number;
   activeSessions: number;
   completedSessions: number;
+  sessionTimeline: SessionTimelineData[];
 }
 
-export interface User {
-  id: number;
-  email: string;
-  emailDomain: string;
-  organisationId: number;
-  name: string | null;
+export interface WorkspaceProfile {
+  user: WorkspaceUser;
+  organisation: WorkspaceOrganisation;
+  teams: Team[];
+  members: WorkspaceMember[];
+  invites: WorkspaceInvite[];
 }
 
-export interface Organisation {
-  id: number;
-  domain: string;
-  name: string;
-  logoUrl: string | null;
-  createdAt: number;
-  updatedAt: number;
+export interface TeamInsights {
+  sessionsAnalyzed: number;
+  totalTickets: number;
+  totalRounds: number;
+  participationRate: number;
+  firstRoundConsensusRate: number;
+  discussionRate: number;
+  estimationVelocity: number | null;
+  questionMarkRate: number;
 }
 
-export interface WorkspaceInvite {
-  id: number;
-  organisationId: number;
-  email: string;
-  invitedById: number;
-  acceptedById: number | null;
-  createdAt: number;
-  updatedAt: number;
-  acceptedAt: number | null;
-  revokedAt: number | null;
+export interface WorkspaceInsightsContributor {
+  userName: string;
+  totalVotes: number;
+  participationRate: number;
+  consensusAlignment: number;
+}
+
+export interface WorkspaceInsights {
+  totalVotes: number;
+  totalRounds: number;
+  totalTickets: number;
+  participationRate: number;
+  firstRoundConsensusRate: number;
+  discussionRate: number;
+  estimationVelocity: number | null;
+  questionMarkRate: number;
+  teamCount: number;
+  sessionsAnalyzed: number;
+  topContributors: WorkspaceInsightsContributor[];
+}
+
+export interface SessionStats {
+  roomKey: string;
+  totalRounds: number;
+  totalVotes: number;
+  uniqueParticipants: number;
+  participationRate: number;
+  consensusRate: number;
+  firstRoundConsensusRate: number;
+  discussionRate: number;
+  estimationVelocity: number | null;
+  durationMinutes: number | null;
+}
+
+export interface RoundIngestVote {
+  userName: string;
+  vote: string;
+  structuredVote?: object;
+  votedAt: number;
+}
+
+export interface RoundIngestPayload {
+  roomKey: string;
+  roundId: string;
+  ticketId?: string;
+  votes: RoundIngestVote[];
+  judgeScore?: string;
+  judgeMetadata?: object;
+  roundEndedAt: number;
+  type: Extract<RoundTransitionType, "reset" | "next_ticket">;
 }

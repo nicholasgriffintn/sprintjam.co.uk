@@ -310,6 +310,7 @@ export interface RoomGameSession {
   codenamesCurrentGuesses?: number;
   codenamesTargetIndices?: number[];
   codenamesAssassinIndex?: number;
+  codenamesKnownBlockerIndex?: number;
   winner?: string;
 }
 

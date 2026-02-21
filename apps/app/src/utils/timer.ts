@@ -1,4 +1,5 @@
-import type { TimerState } from "@/types";
+import type { TimerState } from "@sprintjam/types";
+
 import { DEFAULT_TIMER_DURATION_SECONDS } from "@/constants";
 
 export function calculateCurrentSeconds(

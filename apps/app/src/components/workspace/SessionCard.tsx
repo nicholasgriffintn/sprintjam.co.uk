@@ -12,7 +12,7 @@ import {
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import type { TeamSession, SessionStats } from "@/lib/workspace-service";
+import type { SessionStats, TeamSession } from "@sprintjam/types";
 
 interface SessionCardProps {
   session: TeamSession;

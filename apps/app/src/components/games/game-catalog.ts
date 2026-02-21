@@ -1,7 +1,6 @@
 import type { ComponentType } from "react";
 import { Binary, Gamepad2, Link2, Smile, Sparkles, Target } from "lucide-react";
-
-import type { RoomGameType } from "@/types";
+import type { RoomGameType } from "@sprintjam/types";
 
 export const ROOM_GAMES: Array<{
   type: RoomGameType;

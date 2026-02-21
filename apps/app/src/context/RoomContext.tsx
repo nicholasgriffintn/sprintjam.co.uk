@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { StructuredVote, VoteValue } from "@sprintjam/types";
 
 import { disconnectFromRoom, updateTicket } from "@/lib/api-service";
 import { removeRoomFromCollection } from "@/lib/data/room-store";
@@ -15,12 +16,7 @@ import { useAutoReconnect } from "@/hooks/useAutoReconnect";
 import { useAutoEstimateUpdate } from "@/hooks/useAutoEstimateUpdate";
 import { useRoomConnection } from "@/hooks/useRoomConnection";
 import { useRoomDataSync } from "@/hooks/useRoomDataSync";
-import type {
-  RoomSettings,
-  StructuredVote,
-  TicketQueueItem,
-  VoteValue,
-} from "@/types";
+import type { RoomSettings, TicketQueueItem } from "@/types";
 import {
   useSessionActions,
   useSessionErrors,

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
+import type { VotingCompletion } from "@sprintjam/types";
 import { applyRoomUpdate } from "./room";
-import type { RoomData, WebSocketMessage, VotingCompletion } from "../types";
+import type { RoomData, WebSocketMessage } from "../types";
 
 const createBaseRoom = (): RoomData => ({
   key: "test-room",

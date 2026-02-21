@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { motion } from "framer-motion";
 import { Settings, Sparkles } from "lucide-react";
+import type { VotingSequenceId } from "@sprintjam/types";
 
-import type { RoomSettings, VotingSequenceId } from "@/types";
+import type { RoomSettings } from "@/types";
 import {
   useSessionActions,
   useSessionErrors,

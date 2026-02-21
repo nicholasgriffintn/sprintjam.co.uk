@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays } from "lucide-react";
+import type { SessionTimelineData } from "@sprintjam/types";
 
 import { Button } from "@/components/ui/Button";
-import type { SessionTimelineData } from "@/lib/workspace-service";
 
 interface SessionsChartProps {
   data: SessionTimelineData[];

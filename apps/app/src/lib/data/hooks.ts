@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import type {
+  TeamSession,
+  WorkspaceProfile,
+  WorkspaceStats,
+} from "@sprintjam/types";
 
 import type { RoomData, ServerDefaults } from "@/types";
 import {
@@ -11,11 +16,6 @@ import {
   workspaceProfileCollection,
   workspaceStatsCollection,
 } from "./collections";
-import type {
-  TeamSession,
-  WorkspaceProfile,
-  WorkspaceStats,
-} from "@/lib/workspace-service";
 
 const noopSubscribe = () => () => {};
 
@@ -146,7 +146,6 @@ export function useTeamSessions(teamId: number | null): TeamSession[] {
       if (
         prevItem.id !== nextItem.id ||
         prevItem.teamId !== nextItem.teamId ||
-        prevItem.updatedAt !== nextItem.updatedAt ||
         prevItem.completedAt !== nextItem.completedAt ||
         prevItem.createdAt !== nextItem.createdAt
       ) {

@@ -1,5 +1,6 @@
-import type { ExtraVoteOption, RoomData, VoteValue } from "@/types";
+import type { RoomData } from "@/types";
 import { getExtraVoteValueSet } from "@/utils/votingOptions";
+import type { ExtraVoteOption, VoteValue } from "@sprintjam/types";
 
 export type GuidancePhase =
   | "preVote"

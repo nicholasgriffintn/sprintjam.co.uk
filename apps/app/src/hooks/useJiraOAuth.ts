@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { JiraFieldOption, JiraOAuthStatus } from "@sprintjam/types";
 
 import { useOAuthProvider } from "@/hooks/useOAuthProvider";
 import { useRoomState } from "@/context/RoomContext";
@@ -10,8 +11,6 @@ import {
   getJiraOAuthStatus,
   revokeJiraOAuth,
   saveJiraFieldConfiguration,
-  type JiraFieldOption,
-  type JiraOAuthStatus,
 } from "@/lib/jira-service";
 
 export function useJiraOAuth(enabled = true) {

@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import type { StructuredVote, VoteValue } from "@sprintjam/types";
 
 import {
   resetVotes,
@@ -7,13 +8,7 @@ import {
   toggleSpectatorMode,
   updateSettings,
 } from "@/lib/api-service";
-import type {
-  ErrorKind,
-  RoomData,
-  RoomSettings,
-  StructuredVote,
-  VoteValue,
-} from "@/types";
+import type { ErrorKind, RoomData, RoomSettings } from "@/types";
 
 interface UseRoomVotingActionsOptions {
   roomData: RoomData | null;

@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/durable-sqlite";
 import { migrate } from "drizzle-orm/durable-sqlite/migrator";
 import { eq, sql as sqlOperator } from "drizzle-orm";
 
+import * as wheelSchema from "@sprintjam/db/durable-objects/wheel/schemas";
 import {
   wheelMeta,
   wheelEntries,
@@ -10,6 +11,14 @@ import {
   wheelResults,
   wheelSessionTokens,
 } from "@sprintjam/db/durable-objects/wheel/schemas";
+import type {
+  InsertWheelEntriesItem,
+  InsertWheelMetaItem,
+  InsertWheelResultsItem,
+  InsertWheelSessionTokensItem,
+  InsertWheelUsersItem,
+  WheelDB,
+} from "@sprintjam/db";
 import type {
   WheelData,
   WheelEntry,
@@ -29,13 +38,11 @@ import migrations from "../../drizzle/migrations";
 
 const WHEEL_ROW_ID = 1;
 
-type DB = ReturnType<typeof drizzle>;
-
 export class WheelRoomRepository {
-  private readonly db: DB;
+  private readonly db: WheelDB;
 
   constructor(storage: DurableObjectStorage) {
-    this.db = drizzle(storage);
+    this.db = drizzle(storage, { schema: wheelSchema });
   }
 
   async initializeSchema() {
@@ -127,66 +134,67 @@ export class WheelRoomRepository {
 
   async replaceWheelData(wheelData: WheelData): Promise<void> {
     await this.db.transaction((tx) => {
+      const metaValues: InsertWheelMetaItem = {
+        id: WHEEL_ROW_ID,
+        wheelKey: wheelData.key,
+        moderator: wheelData.moderator,
+        wheelStatus: wheelData.status ?? "active",
+        passcode: serializePasscodeHash(wheelData.passcodeHash),
+        settings: JSON.stringify(wheelData.settings),
+        spinState: wheelData.spinState ? JSON.stringify(wheelData.spinState) : null,
+      };
+
       tx.insert(wheelMeta)
-        .values({
-          id: WHEEL_ROW_ID,
-          wheelKey: wheelData.key,
-          moderator: wheelData.moderator,
-          wheelStatus: wheelData.status ?? "active",
-          passcode: serializePasscodeHash(wheelData.passcodeHash),
-          settings: JSON.stringify(wheelData.settings),
-          spinState: wheelData.spinState
-            ? JSON.stringify(wheelData.spinState)
-            : null,
-        })
+        .values(metaValues)
         .onConflictDoUpdate({
           target: wheelMeta.id,
           set: {
-            wheelKey: wheelData.key,
-            moderator: wheelData.moderator,
-            wheelStatus: wheelData.status ?? "active",
-            passcode: serializePasscodeHash(wheelData.passcodeHash),
-            settings: JSON.stringify(wheelData.settings),
-            spinState: wheelData.spinState
-              ? JSON.stringify(wheelData.spinState)
-              : null,
+            wheelKey: metaValues.wheelKey,
+            moderator: metaValues.moderator,
+            wheelStatus: metaValues.wheelStatus,
+            passcode: metaValues.passcode,
+            settings: metaValues.settings,
+            spinState: metaValues.spinState,
           },
         })
         .run();
 
       tx.delete(wheelUsers).run();
       wheelData.users.forEach((user, index) => {
+        const userValues: InsertWheelUsersItem = {
+          userName: user,
+          avatar: wheelData.userAvatars?.[user] ?? null,
+          isConnected: wheelData.connectedUsers?.[user] ? 1 : 0,
+          ordinal: index,
+        };
         tx.insert(wheelUsers)
-          .values({
-            userName: user,
-            avatar: wheelData.userAvatars?.[user] ?? null,
-            isConnected: wheelData.connectedUsers?.[user] ? 1 : 0,
-            ordinal: index,
-          })
+          .values(userValues)
           .run();
       });
 
       tx.delete(wheelEntries).run();
       wheelData.entries.forEach((entry, index) => {
+        const entryValues: InsertWheelEntriesItem = {
+          entryId: entry.id,
+          name: entry.name,
+          enabled: entry.enabled ? 1 : 0,
+          ordinal: index,
+        };
         tx.insert(wheelEntries)
-          .values({
-            entryId: entry.id,
-            name: entry.name,
-            enabled: entry.enabled ? 1 : 0,
-            ordinal: index,
-          })
+          .values(entryValues)
           .run();
       });
 
       tx.delete(wheelResults).run();
       wheelData.results.forEach((result) => {
+        const resultValues: InsertWheelResultsItem = {
+          resultId: result.id,
+          winner: result.winner,
+          timestamp: result.timestamp,
+          removedAfter: result.removedAfter ? 1 : 0,
+        };
         tx.insert(wheelResults)
-          .values({
-            resultId: result.id,
-            winner: result.winner,
-            timestamp: result.timestamp,
-            removedAfter: result.removedAfter ? 1 : 0,
-          })
+          .values(resultValues)
           .run();
       });
     });
@@ -218,7 +226,7 @@ export class WheelRoomRepository {
         avatar: null,
         isConnected: 0,
         ordinal: maxOrdinal + 1,
-      })
+      } satisfies InsertWheelUsersItem)
       .onConflictDoNothing()
       .run();
 
@@ -294,7 +302,7 @@ export class WheelRoomRepository {
         name: entry.name,
         enabled: entry.enabled ? 1 : 0,
         ordinal: maxOrdinal + 1,
-      })
+      } satisfies InsertWheelEntriesItem)
       .run();
   }
 
@@ -344,7 +352,7 @@ export class WheelRoomRepository {
         winner: result.winner,
         timestamp: result.timestamp,
         removedAfter: result.removedAfter ? 1 : 0,
-      })
+      } satisfies InsertWheelResultsItem)
       .run();
   }
 
@@ -402,7 +410,7 @@ export class WheelRoomRepository {
         userName: tokenOwner,
         token,
         createdAt: Date.now(),
-      })
+      } satisfies InsertWheelSessionTokensItem)
       .onConflictDoUpdate({
         target: wheelSessionTokens.userName,
         set: {

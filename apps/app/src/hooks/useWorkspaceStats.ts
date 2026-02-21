@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import type {
-  WorkspaceStats,
-  WorkspaceInsights,
   SessionTimelineData,
-} from "@/lib/workspace-service";
+  WorkspaceInsights,
+  WorkspaceStats,
+} from "@sprintjam/types";
 import { getWorkspaceInsights } from "@/lib/workspace-service";
 
 interface WorkspaceStatsReturn {

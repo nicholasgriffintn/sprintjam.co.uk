@@ -1,6 +1,7 @@
 import { useMemo } from "react";
+import type { VotingCriterion } from "@sprintjam/types";
 
-import type { CriteriaStats, RoomData, VotingCriterion } from "@/types";
+import type { CriteriaStats, RoomData } from "@/types";
 
 export function useCriteriaStats(
   roomData: RoomData,

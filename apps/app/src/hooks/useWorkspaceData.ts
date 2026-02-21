@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { Team, TeamSession, WorkspaceProfile } from "@sprintjam/types";
 
 import {
   WORKSPACE_PROFILE_DOCUMENT_KEY,
@@ -20,9 +21,6 @@ import {
   createTeamSession,
   deleteTeam,
   updateTeam,
-  type Team,
-  type TeamSession,
-  type WorkspaceProfile,
   listTeamSessions,
   logout as workspaceLogout,
 } from "@/lib/workspace-service";

@@ -1,7 +1,8 @@
 import { useMemo, type JSX } from "react";
 import { motion } from "framer-motion";
+import type { SummaryCardSetting } from "@sprintjam/types";
 
-import type { RoomData, RoomStats, SummaryCardSetting } from "@/types";
+import type { RoomData, RoomStats } from "@/types";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import type { ConsensusSummaryResult } from "@/components/results/UnifiedResults/utils";
 import { getContrastingTextColor } from "@/utils/colors";

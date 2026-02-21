@@ -1,11 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
+import type { GithubOAuthStatus } from "@sprintjam/types";
 
 import { useOAuthProvider } from "@/hooks/useOAuthProvider";
 import {
   authorizeGithubOAuth,
   getGithubOAuthStatus,
   revokeGithubOAuth,
-  type GithubOAuthStatus,
 } from "@/lib/github-service";
 
 export function useGithubOAuth(enabled = true) {

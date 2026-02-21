@@ -2,7 +2,7 @@ import type {
   ExtraVoteOption,
   VotingSequenceId,
   VotingSequenceTemplate,
-} from "@/types";
+} from "@sprintjam/types";
 
 const toComparableString = (value: string | number) => String(value).trim();
 

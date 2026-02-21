@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import type { SessionStats, TeamSession } from "@/lib/workspace-service";
 import { getBatchSessionStats } from "@/lib/workspace-service";
+import type { SessionStats, TeamSession } from "@sprintjam/types";
 
 interface UseSessionStatsReturn {
   statsMap: Record<string, SessionStats>;

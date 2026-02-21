@@ -1,4 +1,4 @@
-import type { VoteValue } from "@/types";
+import type { VoteValue } from "@sprintjam/types";
 
 const IGNORED_ESTIMATE_VALUES = new Set(["?", "❓", "coffee", "☕", "♾️"]);
 

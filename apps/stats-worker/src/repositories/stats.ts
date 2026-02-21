@@ -8,6 +8,12 @@ import {
   roomStats,
   teamSessions,
 } from "@sprintjam/db/d1/schemas";
+import type {
+  RoundIngestPayload,
+  SessionStats,
+  TeamInsights,
+  WorkspaceInsights,
+} from "@sprintjam/types";
 
 import {
   buildVoteCounts,
@@ -55,22 +61,6 @@ interface InsightsResult {
   questionMarkRate: number;
 }
 
-export interface RoundIngestData {
-  roomKey: string;
-  roundId: string;
-  ticketId?: string;
-  votes: {
-    userName: string;
-    vote: string;
-    structuredVote?: object;
-    votedAt: number;
-  }[];
-  judgeScore?: string;
-  judgeMetadata?: object;
-  roundEndedAt: number;
-  type: "reset" | "next_ticket";
-}
-
 export interface RoomStatsResult {
   roomKey: string;
   totalRounds: number;
@@ -95,49 +85,6 @@ export interface TeamStatsResult {
   memberStats: UserRoomStatsResult[];
 }
 
-export interface TeamInsightsResult {
-  sessionsAnalyzed: number;
-  totalTickets: number;
-  totalRounds: number;
-  participationRate: number;
-  firstRoundConsensusRate: number;
-  discussionRate: number;
-  estimationVelocity: number | null;
-  questionMarkRate: number;
-}
-
-export interface WorkspaceInsightsResult {
-  totalVotes: number;
-  totalRounds: number;
-  totalTickets: number;
-  participationRate: number;
-  firstRoundConsensusRate: number;
-  discussionRate: number;
-  estimationVelocity: number | null;
-  questionMarkRate: number;
-  teamCount: number;
-  sessionsAnalyzed: number;
-  topContributors: Array<{
-    userName: string;
-    totalVotes: number;
-    participationRate: number;
-    consensusAlignment: number;
-  }>;
-}
-
-export interface SessionStatsResult {
-  roomKey: string;
-  totalRounds: number;
-  totalVotes: number;
-  uniqueParticipants: number;
-  participationRate: number;
-  consensusRate: number;
-  firstRoundConsensusRate: number;
-  discussionRate: number;
-  estimationVelocity: number | null;
-  durationMinutes: number | null;
-}
-
 export interface PaginationOptions {
   limit: number;
   offset: number;
@@ -150,7 +97,7 @@ export class StatsRepository {
     this.db = drizzle(d1);
   }
 
-  async ingestRound(data: RoundIngestData): Promise<void> {
+  async ingestRound(data: RoundIngestPayload): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
 
     const inserted = await this.db
@@ -449,7 +396,7 @@ export class StatsRepository {
   async getTeamInsights(
     teamId: number,
     options?: { limit?: number },
-  ): Promise<TeamInsightsResult | null> {
+  ): Promise<TeamInsights | null> {
     const limit = Math.min(options?.limit ?? 6, 100);
     const sessions = await this.db
       .select({
@@ -485,7 +432,7 @@ export class StatsRepository {
   async getWorkspaceInsights(
     teamIds: number[],
     options?: { sessionsLimit?: number; contributorsLimit?: number },
-  ): Promise<WorkspaceInsightsResult | null> {
+  ): Promise<WorkspaceInsights | null> {
     const sessionsLimit = Math.min(options?.sessionsLimit ?? 20, 100);
     const contributorsLimit = Math.min(options?.contributorsLimit ?? 10, 100);
 
@@ -532,7 +479,7 @@ export class StatsRepository {
     };
   }
 
-  async getSessionStats(roomKey: string): Promise<SessionStatsResult | null> {
+  async getSessionStats(roomKey: string): Promise<SessionStats | null> {
     const [rounds, votes] = await Promise.all([
       this.db
         .select()
@@ -558,7 +505,7 @@ export class StatsRepository {
 
   async getBatchSessionStats(
     roomKeys: string[],
-  ): Promise<Map<string, SessionStatsResult>> {
+  ): Promise<Map<string, SessionStats>> {
     if (roomKeys.length === 0) return new Map();
 
     const [rounds, votes] = await Promise.all([
@@ -595,7 +542,7 @@ export class StatsRepository {
       votesByRoom.set(vote.roomKey, existing);
     }
 
-    const results = new Map<string, SessionStatsResult>();
+    const results = new Map<string, SessionStats>();
     for (const roomKey of roomKeys) {
       const roomRounds = roundsByRoom.get(roomKey) ?? [];
       const roomVotes = votesByRoom.get(roomKey) ?? [];
@@ -684,7 +631,7 @@ export class StatsRepository {
     votes: InsightsQueryData["votes"],
     totalRounds: number,
     limit: number,
-  ): WorkspaceInsightsResult["topContributors"] {
+  ): WorkspaceInsights["topContributors"] {
     const roundConsensus = findConsensusVotes(buildVoteCounts(votes));
 
     const contributorData = new Map<
@@ -728,7 +675,7 @@ export class StatsRepository {
       roundEndedAt: number;
     }>,
     votes: Array<{ roundId: string; userName: string; vote: string }>,
-  ): SessionStatsResult {
+  ): SessionStats {
     const roundsPerTicket = new Map<string, number>();
     let minTime = Number.POSITIVE_INFINITY;
     let maxTime = 0;

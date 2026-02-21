@@ -1,13 +1,12 @@
 import { motion } from "framer-motion";
 import { useState, useEffect, useId } from "react";
 import { Check, AlertTriangle } from "lucide-react";
-
 import type {
-  VotingCriterion,
   StructuredVote,
   StructuredVotingDisplaySettings,
   VoteValue,
-} from "@/types";
+  VotingCriterion,
+} from "@sprintjam/types";
 import { TimerChip } from "./TimerChip";
 import { useRoomState } from "@/context/RoomContext";
 import { Button } from "@/components/ui/Button";

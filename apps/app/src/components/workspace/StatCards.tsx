@@ -9,10 +9,7 @@ import {
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import type {
-  WorkspaceStats,
-  WorkspaceInsights,
-} from "@/lib/workspace-service";
+import type { WorkspaceInsights, WorkspaceStats } from "@sprintjam/types";
 
 interface StatCardsProps {
   stats: WorkspaceStats | null;

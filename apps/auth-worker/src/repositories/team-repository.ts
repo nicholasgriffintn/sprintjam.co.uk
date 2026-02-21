@@ -21,6 +21,7 @@ export class TeamRepository {
         organisationId: teams.organisationId,
         ownerId: teams.ownerId,
         createdAt: teams.createdAt,
+        updatedAt: teams.updatedAt,
       })
       .from(teams)
       .where(eq(teams.ownerId, userId));

@@ -1,17 +1,18 @@
 import {
   createContext,
-  useContext,
-  useState,
-  useEffect,
   useCallback,
+  useContext,
+  useEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
+import type { Team, WorkspaceUser } from "@sprintjam/types";
 
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { logout as logoutService } from "@/lib/workspace-service";
-import type { Team, WorkspaceUser } from "@/lib/workspace-service";
+
 import { useWorkspaceProfile } from "@/lib/data/hooks";
 import {
   WORKSPACE_PROFILE_DOCUMENT_KEY,

@@ -1,8 +1,8 @@
 import { type FormEvent, useMemo, useState } from "react";
 import { Send } from "lucide-react";
+import type { GithubIssue } from "@sprintjam/types";
 
 import { submitFeedback } from "@/lib/feedback-service";
-import type { GithubIssue } from "@/types";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 

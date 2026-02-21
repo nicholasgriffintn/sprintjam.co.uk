@@ -1,46 +1,65 @@
 import { and, eq } from "drizzle-orm";
 
 import { oauthCredentials } from "@sprintjam/db/durable-objects/schemas";
-import type { DB } from "@sprintjam/db";
+import type {
+  DB,
+  OauthCredentialsItem as DbOauthCredentialsItem,
+} from "@sprintjam/db";
+import type {
+  GithubOAuthCredentials,
+  JiraOAuthCredentials,
+  LinearOAuthCredentials,
+  OAuthProvider,
+} from "@sprintjam/types";
 import { safeJsonParse, type TokenCipher } from "@sprintjam/utils";
 
-type OAuthProvider = "jira" | "linear" | "github";
+type OAuthCredentialCore = Omit<
+  DbOauthCredentialsItem,
+  "provider" | "metadata"
+>;
 
-type OAuthCredentialCore = {
-  id: number;
-  roomKey: string;
-  accessToken: string;
-  refreshToken: string | null;
-  tokenType: string;
+type SaveOAuthCredentialInput<TCredential> = Omit<
+  TCredential,
+  "id" | "createdAt" | "updatedAt" | "expiresAt"
+> & {
   expiresAt: number;
-  scope: string | null;
-  authorizedBy: string;
-  createdAt: number;
-  updatedAt: number;
 };
 
-type JiraCredentialMetadata = {
-  jiraDomain?: string;
-  jiraCloudId?: string | null;
-  jiraUserId?: string | null;
-  jiraUserEmail?: string | null;
-  storyPointsField?: string | null;
-  sprintField?: string | null;
-};
+type SaveJiraOAuthCredentialsInput =
+  SaveOAuthCredentialInput<JiraOAuthCredentials>;
+type SaveLinearOAuthCredentialsInput =
+  SaveOAuthCredentialInput<LinearOAuthCredentials>;
+type SaveGithubOAuthCredentialsInput =
+  SaveOAuthCredentialInput<GithubOAuthCredentials>;
 
-type LinearCredentialMetadata = {
-  linearOrganizationId?: string | null;
-  linearUserId?: string | null;
-  linearUserEmail?: string | null;
-  estimateField?: string | null;
-};
+type JiraCredentialMetadata = Partial<
+  Pick<
+    JiraOAuthCredentials,
+    | "jiraDomain"
+    | "jiraCloudId"
+    | "jiraUserId"
+    | "jiraUserEmail"
+    | "storyPointsField"
+    | "sprintField"
+  >
+>;
 
-type GithubCredentialMetadata = {
-  githubLogin?: string | null;
-  githubUserEmail?: string | null;
-  defaultOwner?: string | null;
-  defaultRepo?: string | null;
-};
+type LinearCredentialMetadata = Partial<
+  Pick<
+    LinearOAuthCredentials,
+    | "linearOrganizationId"
+    | "linearUserId"
+    | "linearUserEmail"
+    | "estimateField"
+  >
+>;
+
+type GithubCredentialMetadata = Partial<
+  Pick<
+    GithubOAuthCredentials,
+    "githubLogin" | "githubUserEmail" | "defaultOwner" | "defaultRepo"
+  >
+>;
 
 export class PlanningRoomOAuthStore {
   constructor(
@@ -199,24 +218,9 @@ export class PlanningRoomOAuthStore {
       .run();
   }
 
-  async getJiraOAuthCredentials(roomKey: string): Promise<{
-    id: number;
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    jiraDomain: string;
-    jiraCloudId: string | null;
-    jiraUserId: string | null;
-    jiraUserEmail: string | null;
-    storyPointsField: string | null;
-    sprintField: string | null;
-    authorizedBy: string;
-    createdAt: number;
-    updatedAt: number;
-  } | null> {
+  async getJiraOAuthCredentials(
+    roomKey: string,
+  ): Promise<JiraOAuthCredentials | null> {
     const credential =
       await this.getOAuthCredentialWithMetadata<JiraCredentialMetadata>(
         roomKey,
@@ -237,21 +241,9 @@ export class PlanningRoomOAuthStore {
     };
   }
 
-  async saveJiraOAuthCredentials(credentials: {
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    jiraDomain: string;
-    jiraCloudId: string | null;
-    jiraUserId: string | null;
-    jiraUserEmail: string | null;
-    storyPointsField: string | null;
-    sprintField: string | null;
-    authorizedBy: string;
-  }): Promise<void> {
+  async saveJiraOAuthCredentials(
+    credentials: SaveJiraOAuthCredentialsInput,
+  ): Promise<void> {
     const metadata = JSON.stringify({
       jiraDomain: credentials.jiraDomain,
       jiraCloudId: credentials.jiraCloudId,
@@ -292,22 +284,9 @@ export class PlanningRoomOAuthStore {
     this.deleteOAuthCredentials(roomKey, "jira");
   }
 
-  async getLinearOAuthCredentials(roomKey: string): Promise<{
-    id: number;
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    linearOrganizationId: string | null;
-    linearUserId: string | null;
-    linearUserEmail: string | null;
-    estimateField: string | null;
-    authorizedBy: string;
-    createdAt: number;
-    updatedAt: number;
-  } | null> {
+  async getLinearOAuthCredentials(
+    roomKey: string,
+  ): Promise<LinearOAuthCredentials | null> {
     const credential =
       await this.getOAuthCredentialWithMetadata<LinearCredentialMetadata>(
         roomKey,
@@ -326,19 +305,9 @@ export class PlanningRoomOAuthStore {
     };
   }
 
-  async saveLinearOAuthCredentials(credentials: {
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    linearOrganizationId: string | null;
-    linearUserId: string | null;
-    linearUserEmail: string | null;
-    estimateField: string | null;
-    authorizedBy: string;
-  }): Promise<void> {
+  async saveLinearOAuthCredentials(
+    credentials: SaveLinearOAuthCredentialsInput,
+  ): Promise<void> {
     const metadata = JSON.stringify({
       linearOrganizationId: credentials.linearOrganizationId,
       linearUserId: credentials.linearUserId,
@@ -401,22 +370,9 @@ export class PlanningRoomOAuthStore {
     });
   }
 
-  async getGithubOAuthCredentials(roomKey: string): Promise<{
-    id: number;
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    githubLogin: string | null;
-    githubUserEmail: string | null;
-    defaultOwner: string | null;
-    defaultRepo: string | null;
-    authorizedBy: string;
-    createdAt: number;
-    updatedAt: number;
-  } | null> {
+  async getGithubOAuthCredentials(
+    roomKey: string,
+  ): Promise<GithubOAuthCredentials | null> {
     const credential =
       await this.getOAuthCredentialWithMetadata<GithubCredentialMetadata>(
         roomKey,
@@ -435,19 +391,9 @@ export class PlanningRoomOAuthStore {
     };
   }
 
-  async saveGithubOAuthCredentials(credentials: {
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    githubLogin: string | null;
-    githubUserEmail: string | null;
-    defaultOwner: string | null;
-    defaultRepo: string | null;
-    authorizedBy: string;
-  }): Promise<void> {
+  async saveGithubOAuthCredentials(
+    credentials: SaveGithubOAuthCredentialsInput,
+  ): Promise<void> {
     const metadata = JSON.stringify({
       githubLogin: credentials.githubLogin,
       githubUserEmail: credentials.githubUserEmail,

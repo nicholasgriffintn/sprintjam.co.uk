@@ -1,19 +1,23 @@
 /**
  * External service integration types (Jira, Linear, GitHub)
  */
+import type { OauthCredentialsItem as DbOauthCredentialsItem } from "@sprintjam/db";
 
-export interface OauthCredentialsItem {
-  id: number;
-  roomKey: string;
-  accessToken: string;
-  refreshToken: string | null;
-  tokenType: string;
-  expiresAt: number | null;
-  scope: string | null;
-  authorizedBy: string;
-  createdAt: number;
-  updatedAt: number;
-}
+export type OAuthProvider = "jira" | "linear" | "github";
+
+export type OauthCredentialsItem = Pick<
+  DbOauthCredentialsItem,
+  | "id"
+  | "roomKey"
+  | "accessToken"
+  | "refreshToken"
+  | "tokenType"
+  | "expiresAt"
+  | "scope"
+  | "authorizedBy"
+  | "createdAt"
+  | "updatedAt"
+>;
 
 type BaseOAuthCredentials = Pick<
   OauthCredentialsItem,
@@ -95,4 +99,78 @@ export interface GithubIssue {
   estimate?: number | null;
   url?: string;
   labels?: string[];
+}
+
+export interface OAuthStatusBase {
+  connected: boolean;
+  expiresAt?: number;
+}
+
+export interface JiraOAuthStatus extends OAuthStatusBase {
+  jiraDomain?: string;
+  jiraUserEmail?: string;
+  storyPointsField?: string | null;
+  sprintField?: string | null;
+}
+
+export interface LinearOAuthStatus extends OAuthStatusBase {
+  linearOrganizationId?: string;
+  linearUserEmail?: string;
+  estimateField?: string | null;
+}
+
+export interface GithubOAuthStatus extends OAuthStatusBase {
+  githubLogin?: string | null;
+  githubUserEmail?: string | null;
+  defaultOwner?: string | null;
+  defaultRepo?: string | null;
+}
+
+export interface JiraFieldOption {
+  id: string;
+  name: string;
+  type?: string | null;
+  custom?: boolean;
+}
+
+export interface JiraBoard {
+  id: string;
+  name: string;
+  type?: string;
+}
+
+export interface JiraSprint {
+  id: string;
+  name: string;
+  state?: string;
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+export interface LinearTeam {
+  id: string;
+  name: string;
+  key: string;
+}
+
+export interface LinearCycle {
+  id: string;
+  number: number;
+  name?: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+}
+
+export interface GithubRepo {
+  id: string;
+  name: string;
+  fullName: string;
+  owner: string;
+}
+
+export interface GithubMilestone {
+  id: string;
+  number: number;
+  title: string;
+  state?: string;
 }

@@ -1,11 +1,11 @@
 import { useEffect, useState, type FC } from "react";
-
 import type {
-  RoomSettings,
   VotingSequenceId,
   VotingSequenceTemplate,
   ExtraVoteOption,
-} from "@/types";
+} from "@sprintjam/types";
+
+import type { RoomSettings } from "@/types";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import {

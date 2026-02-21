@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/constants";
-import type { GithubIssue } from "@/types";
+import type { GithubIssue } from "@sprintjam/types";
 
 export interface FeedbackPayload {
   title: string;
