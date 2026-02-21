@@ -11,6 +11,11 @@ export interface GameEngine {
   title: string;
   maxRounds?: number;
   allowConsecutiveMoves?: boolean;
+  shouldBlockConsecutiveMoves?: (context: {
+    session: RoomGameSession;
+    userName: string;
+    value: string;
+  }) => boolean;
   canStart?: (roomData: RoomData) => string | undefined;
   initializeSessionState: (roomData: RoomData) => Partial<RoomGameSession>;
   isMoveValueValid?: (value: string) => boolean;

@@ -1,14 +1,14 @@
 import type { RoomGameSession } from "@sprintjam/types";
 
 import {
-  MICRO_CODENAMES_ROUND_LIMIT,
+  CLUEBOARD_ROUND_LIMIT,
   addEvent,
   addPoints,
-  initializeMicroCodenamesRound,
-} from "../helpers";
+  initializeClueboardRound,
+} from '../helpers';
 import type { GameEngine } from "../types";
 
-const MICRO_CODENAMES_CLUE_PATTERN = /^[a-z][a-z-]{1,18}$/i;
+const CLUEBOARD_CLUE_PATTERN = /^[a-z][a-z-]{1,18}$/i;
 
 const playerAlreadyMovedInRound = (
   session: RoomGameSession,
@@ -40,18 +40,18 @@ const parseTargetIndices = (
   return Array.from(new Set(parsed));
 };
 
-const parseMicroCodenamesClue = (value: string, boardSize: number) => {
+const parseClueboardClue = (value: string, boardSize: number) => {
   const trimmed = value.trim().toLowerCase();
-  let clueText = "";
-  let targetText = "";
-  let targetIndicesText = "";
+  let clueText = '';
+  let targetText = '';
+  let targetIndicesText = '';
 
-  if (trimmed.startsWith("clue:")) {
-    const withoutPrefix = trimmed.slice("clue:".length);
-    const [rawClue, rawTarget, rawIndices] = withoutPrefix.split("|");
-    clueText = rawClue?.trim() ?? "";
-    targetText = rawTarget?.trim() ?? "";
-    targetIndicesText = rawIndices?.trim() ?? "";
+  if (trimmed.startsWith('clue:')) {
+    const withoutPrefix = trimmed.slice('clue:'.length);
+    const [rawClue, rawTarget, rawIndices] = withoutPrefix.split('|');
+    clueText = rawClue?.trim() ?? '';
+    targetText = rawTarget?.trim() ?? '';
+    targetIndicesText = rawIndices?.trim() ?? '';
   } else {
     const match = /^([a-z-]+)\s+([1-4])$/i.exec(trimmed);
     if (!match) {
@@ -63,7 +63,7 @@ const parseMicroCodenamesClue = (value: string, boardSize: number) => {
 
   const target = Number(targetText);
   if (
-    !MICRO_CODENAMES_CLUE_PATTERN.test(clueText) ||
+    !CLUEBOARD_CLUE_PATTERN.test(clueText) ||
     !Number.isInteger(target) ||
     target < 1 ||
     target > 4
@@ -75,18 +75,18 @@ const parseMicroCodenamesClue = (value: string, boardSize: number) => {
   return { clue: clueText, target, targetIndices };
 };
 
-const parseMicroCodenamesGuess = (value: string, board: string[]) => {
+const parseClueboardGuess = (value: string, board: string[]) => {
   const trimmed = value.trim().toLowerCase();
   if (!trimmed) {
     return undefined;
   }
 
-  if (trimmed === "pass") {
-    return "pass";
+  if (trimmed === 'pass') {
+    return 'pass';
   }
 
-  if (trimmed.startsWith("guess:")) {
-    const index = Number(trimmed.slice("guess:".length));
+  if (trimmed.startsWith('guess:')) {
+    const index = Number(trimmed.slice('guess:'.length));
     if (Number.isInteger(index) && index >= 0 && index < board.length) {
       return index;
     }
@@ -101,26 +101,26 @@ const parseMicroCodenamesGuess = (value: string, board: string[]) => {
 
 const advanceRound = (session: RoomGameSession) => {
   session.round += 1;
-  if (session.round <= MICRO_CODENAMES_ROUND_LIMIT) {
-    initializeMicroCodenamesRound(session);
+  if (session.round <= CLUEBOARD_ROUND_LIMIT) {
+    initializeClueboardRound(session);
   }
 };
 
-export const microCodenamesEngine: GameEngine = {
-  title: "Clueboard",
-  maxRounds: MICRO_CODENAMES_ROUND_LIMIT,
+export const clueboardEngine: GameEngine = {
+  title: 'Clueboard',
+  maxRounds: CLUEBOARD_ROUND_LIMIT,
   allowConsecutiveMoves: true,
   canStart: (roomData) =>
     roomData.users.length < 2
-      ? "Clueboard needs at least 2 players."
+      ? 'Clueboard needs at least 2 players.'
       : undefined,
   initializeSessionState: (roomData) => {
-    const sessionState: Pick<RoomGameSession, "participants" | "round"> &
+    const sessionState: Pick<RoomGameSession, 'participants' | 'round'> &
       Partial<RoomGameSession> = {
       participants: [...roomData.users],
       round: 1,
     };
-    initializeMicroCodenamesRound(sessionState);
+    initializeClueboardRound(sessionState);
     return sessionState;
   },
   applyMove: ({ session, userName, value, move }) => {
@@ -129,19 +129,19 @@ export const microCodenamesEngine: GameEngine = {
       !session.codenamesTargetIndices ||
       session.codenamesAssassinIndex === undefined
     ) {
-      initializeMicroCodenamesRound(session);
+      initializeClueboardRound(session);
     }
 
     const board = session.codenamesBoard ?? [];
     const clueGiver = session.codenamesClueGiver;
-    const phase = session.codenamesRoundPhase ?? "clue";
+    const phase = session.codenamesRoundPhase ?? 'clue';
 
-    if (phase === "clue") {
+    if (phase === 'clue') {
       if (!clueGiver || userName !== clueGiver) {
         session.moves = session.moves.slice(0, -1);
         addEvent(
           session,
-          `${userName} cannot set the clue this round. Waiting for ${clueGiver ?? "the clue giver"}.`,
+          `${userName} cannot set the clue this round. Waiting for ${clueGiver ?? 'the clue giver'}.`,
         );
         return;
       }
@@ -155,7 +155,7 @@ export const microCodenamesEngine: GameEngine = {
         return;
       }
 
-      const parsedClue = parseMicroCodenamesClue(value, board.length);
+      const parsedClue = parseClueboardClue(value, board.length);
       if (!parsedClue) {
         session.moves = session.moves.slice(0, -1);
         addEvent(
@@ -185,7 +185,7 @@ export const microCodenamesEngine: GameEngine = {
       session.codenamesCurrentClueTarget = parsedClue.target;
       session.codenamesTargetIndices = parsedClue.targetIndices;
       session.codenamesCurrentGuesses = 0;
-      session.codenamesRoundPhase = "guess";
+      session.codenamesRoundPhase = 'guess';
       addEvent(
         session,
         `${userName} set clue "${parsedClue.clue}" for ${parsedClue.target}. Guessers, go.`,
@@ -202,7 +202,7 @@ export const microCodenamesEngine: GameEngine = {
       return;
     }
 
-    const guess = parseMicroCodenamesGuess(value, board);
+    const guess = parseClueboardGuess(value, board);
     if (guess === undefined) {
       session.moves = session.moves.slice(0, -1);
       addEvent(
@@ -212,7 +212,7 @@ export const microCodenamesEngine: GameEngine = {
       return;
     }
 
-    if (guess === "pass") {
+    if (guess === 'pass') {
       addEvent(session, `${userName} passed. Moving to next round.`);
       advanceRound(session);
       return;
@@ -233,7 +233,7 @@ export const microCodenamesEngine: GameEngine = {
         session,
         `${userName} hit the blocker word "${board[guess]}". Game over.`,
       );
-      session.round = MICRO_CODENAMES_ROUND_LIMIT + 1;
+      session.round = CLUEBOARD_ROUND_LIMIT + 1;
       return;
     }
 
@@ -262,7 +262,7 @@ export const microCodenamesEngine: GameEngine = {
         (session.codenamesCurrentGuesses ?? 0) >=
         (session.codenamesCurrentClueTarget ?? 1)
       ) {
-        addEvent(session, "Guess limit reached. Moving to next round.");
+        addEvent(session, 'Guess limit reached. Moving to next round.');
         advanceRound(session);
       }
       return;

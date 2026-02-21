@@ -16,7 +16,8 @@ export const ROOM_GAMES: Array<{
     description:
       'Each round has a sprint-themed prompt. Submit one word and score big for originality.',
     objective: 'Land unique one-word takes before the round closes.',
-    rules: 'One word only. Unique answer +3, duplicate answer +1.',
+    rules:
+      'One word only. Unique answer +3, duplicate answer +1, then the room votes for +2 bonus.',
   },
   {
     type: 'category-blitz',

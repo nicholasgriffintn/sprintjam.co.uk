@@ -312,9 +312,25 @@ export interface RoomGameSession {
   lastWord?: string | null;
   oneWordPitchPrompt?: string;
   oneWordPitchPromptHistory?: string[];
+  oneWordPitchPhase?: 'submit' | 'vote';
+  oneWordPitchRoundSubmissions?: Record<string, string>;
+  oneWordPitchRoundVotes?: Record<string, string>;
+  oneWordPitchRoundHistory?: Array<{
+    round: number;
+    prompt: string;
+    submissions: Record<string, string>;
+    votes?: Record<string, string>;
+    voteWinners?: string[];
+  }>;
   categoryBlitzCategory?: string;
   categoryBlitzLetter?: string;
   categoryBlitzHistory?: string[];
+  categoryBlitzRoundHistory?: Array<{
+    round: number;
+    category: string;
+    letter: string;
+    submissions: Record<string, string>;
+  }>;
   codenamesBoard?: string[];
   codenamesRevealedIndices?: number[];
   codenamesRoundPhase?: 'clue' | 'guess';

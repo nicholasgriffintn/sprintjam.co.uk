@@ -54,12 +54,33 @@ const scoreUniquenessRound = (
   });
 };
 
+const storeRoundHistory = (session: RoomGameSession) => {
+  const submissions = getCurrentRoundMoves(session).reduce<
+    Record<string, string>
+  >((acc, move) => {
+    acc[move.user] = normalizeCategoryAnswer(move.value);
+    return acc;
+  }, {});
+
+  session.categoryBlitzRoundHistory = [
+    ...(session.categoryBlitzRoundHistory ?? []),
+    {
+      round: session.round,
+      category: session.categoryBlitzCategory ?? '',
+      letter: session.categoryBlitzLetter ?? '',
+      submissions,
+    },
+  ].slice(-6);
+};
+
 export const categoryBlitzEngine: GameEngine = {
   title: 'Category Blitz',
   maxRounds: 3,
+  shouldBlockConsecutiveMoves: () => false,
   initializeSessionState: () => {
     const sessionState: Partial<RoomGameSession> = {
       categoryBlitzHistory: [],
+      categoryBlitzRoundHistory: [],
     };
     assignNextCategoryBlitzPrompt(sessionState);
     return sessionState;
@@ -92,10 +113,11 @@ export const categoryBlitzEngine: GameEngine = {
       return;
     }
 
-    addEvent(session, `${userName} locked in "${normalized}".`);
+    addEvent(session, `${userName} locked in a guess.`);
 
     if (getCurrentRoundMoveCount(session) >= session.participants.length) {
       scoreUniquenessRound(session, 3, 1);
+      storeRoundHistory(session);
       addEvent(
         session,
         `Round ${session.round} scored. Unique answers earned +3, duplicates +1.`,

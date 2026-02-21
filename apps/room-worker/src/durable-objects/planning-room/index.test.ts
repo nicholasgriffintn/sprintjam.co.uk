@@ -723,7 +723,7 @@ describe("PlanningRoom critical flows", () => {
     expect(roomData.gameSession?.leaderboard.alice).toBe(1);
   });
 
-  it("scores one-word-pitch rounds with uniqueness bonuses", async () => {
+  it("scores one-word-pitch rounds with uniqueness bonuses and vote bonus", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);
     const roomData: RoomData = createInitialRoomData({
@@ -743,11 +743,47 @@ describe("PlanningRoom critical flows", () => {
     await room.handleSubmitGameMove("alice", "focus");
     await room.handleSubmitGameMove("bob", "focus");
 
+    expect(roomData.gameSession?.oneWordPitchPhase).toBe("vote");
     expect(roomData.gameSession?.leaderboard.alice).toBe(1);
     expect(roomData.gameSession?.leaderboard.bob).toBe(1);
+    expect(roomData.gameSession?.round).toBe(1);
+
+    await room.handleSubmitGameMove("alice", "vote:bob");
+    await room.handleSubmitGameMove("bob", "vote:alice");
+
+    expect(roomData.gameSession?.leaderboard.alice).toBe(3);
+    expect(roomData.gameSession?.leaderboard.bob).toBe(3);
     expect(roomData.gameSession?.round).toBe(2);
+    expect(roomData.gameSession?.oneWordPitchPhase).toBe("submit");
+    expect(roomData.gameSession?.oneWordPitchRoundHistory).toHaveLength(1);
     expect(roomData.gameSession?.oneWordPitchPrompt).toBeTruthy();
     expect(roomData.gameSession?.oneWordPitchPrompt).not.toBe(promptAfterStart);
+  });
+
+  it("allows immediate vote after submit phase without waiting turn order", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-one-word-vote-order",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "one-word-pitch");
+    await room.handleSubmitGameMove("alice", "focus");
+    await room.handleSubmitGameMove("bob", "scope");
+
+    expect(roomData.gameSession?.oneWordPitchPhase).toBe("vote");
+
+    await room.handleSubmitGameMove("bob", "vote:alice");
+    expect(roomData.gameSession?.oneWordPitchRoundVotes).toEqual({
+      bob: "alice",
+    });
   });
 
   it("validates category-blitz submissions against the active letter", async () => {
@@ -776,6 +812,39 @@ describe("PlanningRoom critical flows", () => {
     await room.handleSubmitGameMove("alice", "sprint");
     expect(roomData.gameSession?.leaderboard.alice).toBe(3);
     expect(roomData.gameSession?.round).toBe(2);
+  });
+
+  it("allows category-blitz next-round submissions without turn-order blocking", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-category-blitz-order",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "category-blitz");
+    roomData.gameSession!.categoryBlitzLetter = "S";
+
+    await room.handleSubmitGameMove("alice", "sprint");
+    await room.handleSubmitGameMove("bob", "scope");
+    expect(roomData.gameSession?.round).toBe(2);
+
+    roomData.gameSession!.categoryBlitzLetter = "B";
+    await room.handleSubmitGameMove("bob", "bug");
+
+    expect(roomData.gameSession?.moves.at(-1)).toEqual(
+      expect.objectContaining({
+        user: "bob",
+        round: 2,
+        value: "bug",
+      }),
+    );
   });
 
   it("requires at least two players for clueboard", async () => {

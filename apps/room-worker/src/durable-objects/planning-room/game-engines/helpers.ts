@@ -3,17 +3,16 @@ import type { RoomData, RoomGameSession, RoomGameType } from "@sprintjam/types";
 import type { GameEngine } from "./types";
 import {
   ONE_WORD_PITCH_PROMPTS,
-  MICRO_CODENAMES_WORD_BANK,
+  CLUEBOARD_WORD_BANK,
   CATEGORY_BLITZ_CATEGORIES,
   CATEGORY_BLITZ_LETTERS,
 } from './words';
-import { PlanningRoom } from '@/index';
 
 export const MAX_GAME_ROUNDS = 5;
 export const ROUND_MOVE_TARGET = 6;
 export const GUESS_ROUND_ATTEMPT_LIMIT = 10;
-export const MICRO_CODENAMES_ROUND_LIMIT = 3;
-const MICRO_CODENAMES_BOARD_SIZE = 12;
+export const CLUEBOARD_ROUND_LIMIT = 3;
+const CLUEBOARD_BOARD_SIZE = 12;
 const MAX_EMOJI_STORY_MOVE_EMOJIS = 6;
 const EMOJI_TOKEN_PATTERN =
   /(?:\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*|\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3)/gu;
@@ -137,14 +136,11 @@ const sampleUniqueWords = (pool: string[], count: number) => {
   return selectedIndices.map((index) => pool[index]);
 };
 
-export const initializeMicroCodenamesRound = (
+export const initializeClueboardRound = (
   session: Pick<RoomGameSession, 'participants' | 'round'> &
     Partial<RoomGameSession>,
 ) => {
-  const board = sampleUniqueWords(
-    MICRO_CODENAMES_WORD_BANK,
-    MICRO_CODENAMES_BOARD_SIZE,
-  );
+  const board = sampleUniqueWords(CLUEBOARD_WORD_BANK, CLUEBOARD_BOARD_SIZE);
   const assassinIndex = pickRandom(
     Array.from({ length: board.length }, (_, index) => index),
   );
@@ -160,43 +156,6 @@ export const initializeMicroCodenamesRound = (
   session.codenamesClueGiver =
     session.participants[(session.round - 1) % session.participants.length] ??
     null;
-};
-
-export const sendClueboardSecretToCurrentClueGiver = (
-  room: PlanningRoom,
-  session: RoomGameSession,
-) => {
-  if (
-    session.type !== 'clueboard' ||
-    session.status !== 'active' ||
-    session.codenamesRoundPhase !== 'clue'
-  ) {
-    return;
-  }
-
-  const clueGiver = session.codenamesClueGiver;
-  const blockerIndex = session.codenamesAssassinIndex;
-  if (!clueGiver || blockerIndex === undefined) {
-    return;
-  }
-
-  const payload = JSON.stringify({
-    type: 'clueboardSecret',
-    round: session.round,
-    blockerIndex,
-  });
-
-  room.sessions.forEach((sessionInfo, socket) => {
-    if (sessionInfo.userName !== clueGiver) {
-      return;
-    }
-
-    try {
-      socket.send(payload);
-    } catch (_error) {
-      room.sessions.delete(socket);
-    }
-  });
 };
 
 export const isValidEmojiStoryMove = (value: string) => {

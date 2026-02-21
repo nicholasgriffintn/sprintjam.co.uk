@@ -37,7 +37,7 @@ export const CATEGORY_BLITZ_LETTERS = [
   'T',
 ];
 
-export const MICRO_CODENAMES_WORD_BANK = [
+export const CLUEBOARD_WORD_BANK = [
   'backlog',
   'burnup',
   'burndown',
