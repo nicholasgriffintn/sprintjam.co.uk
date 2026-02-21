@@ -1,7 +1,7 @@
 import type { DurableObjectStorage } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/durable-sqlite";
 import { migrate } from "drizzle-orm/durable-sqlite/migrator";
-import { eq, and, desc, like, sql as sqlOperator, inArray } from "drizzle-orm";
+import { eq, desc, like, sql as sqlOperator, inArray } from "drizzle-orm";
 
 import * as schema from "@sprintjam/db/durable-objects/schemas";
 import {
@@ -11,7 +11,6 @@ import {
   sessionTokens,
   ticketQueue,
   ticketVotes,
-  oauthCredentials,
 } from "@sprintjam/db/durable-objects/schemas";
 import type { DB, InsertRoomMetaItem, TicketCreateInput } from "@sprintjam/db";
 import type {
@@ -35,7 +34,7 @@ import {
   SESSION_TOKEN_TTL_MS,
   parsePasscodeHash,
   serializePasscodeHash,
-  TokenCipher,
+  type TokenCipher,
 } from "@sprintjam/utils";
 import {
   DEFAULT_TIMER_DURATION_SECONDS,
@@ -43,178 +42,19 @@ import {
 } from "@sprintjam/utils/constants";
 
 import migrations from "../../drizzle/migrations";
-
-type OAuthProvider = "jira" | "linear" | "github";
-
-type OAuthCredentialCore = {
-  id: number;
-  roomKey: string;
-  accessToken: string;
-  refreshToken: string | null;
-  tokenType: string;
-  expiresAt: number;
-  scope: string | null;
-  authorizedBy: string;
-  createdAt: number;
-  updatedAt: number;
-};
+import { PlanningRoomOAuthStore } from "./planning-room-oauth";
 
 export class PlanningRoomRepository {
   private readonly db: DB;
+  private readonly oauthStore: PlanningRoomOAuthStore;
   private readonly anonymousName = "Anonymous";
 
-  constructor(
-    storage: DurableObjectStorage,
-    private readonly tokenCipher: TokenCipher,
-  ) {
+  constructor(storage: DurableObjectStorage, tokenCipher: TokenCipher) {
     if (!tokenCipher) {
       throw new Error("Token cipher is required");
     }
     this.db = drizzle(storage, { schema });
-  }
-
-  private async encryptToken(
-    value: string | null | undefined,
-  ): Promise<string | null> {
-    if (value === null || value === undefined) {
-      return null;
-    }
-    return this.tokenCipher.encrypt(value);
-  }
-
-  private async decryptToken(
-    value: string | null | undefined,
-  ): Promise<string | null> {
-    if (value === null || value === undefined) {
-      return null;
-    }
-    return this.tokenCipher.decrypt(value);
-  }
-
-  private oauthProviderWhere(roomKey: string, provider: OAuthProvider) {
-    return and(
-      eq(oauthCredentials.roomKey, roomKey),
-      eq(oauthCredentials.provider, provider),
-    );
-  }
-
-  private getOAuthCredentialRecord(roomKey: string, provider: OAuthProvider) {
-    return this.db
-      .select()
-      .from(oauthCredentials)
-      .where(this.oauthProviderWhere(roomKey, provider))
-      .get();
-  }
-
-  private async getOAuthCredentialWithMetadata<
-    TMetadata extends Record<string, unknown>,
-  >(
-    roomKey: string,
-    provider: OAuthProvider,
-  ): Promise<{ core: OAuthCredentialCore; metadata: TMetadata } | null> {
-    const row = this.getOAuthCredentialRecord(roomKey, provider);
-    if (!row) {
-      return null;
-    }
-
-    const metadata = safeJsonParse<TMetadata>(row.metadata ?? "{}");
-    const accessToken = await this.tokenCipher.decrypt(row.accessToken);
-    const refreshToken = await this.decryptToken(row.refreshToken);
-
-    return {
-      core: {
-        id: row.id,
-        roomKey: row.roomKey,
-        accessToken,
-        refreshToken,
-        tokenType: row.tokenType,
-        expiresAt: row.expiresAt,
-        scope: row.scope,
-        authorizedBy: row.authorizedBy,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-      },
-      metadata: (metadata ?? {}) as TMetadata,
-    };
-  }
-
-  private async saveOAuthCredentials(params: {
-    roomKey: string;
-    provider: OAuthProvider;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    authorizedBy: string;
-    metadata: string;
-  }): Promise<void> {
-    const now = Date.now();
-    const encryptedAccessToken = await this.tokenCipher.encrypt(
-      params.accessToken,
-    );
-    const encryptedRefreshToken = await this.encryptToken(params.refreshToken);
-
-    this.db
-      .insert(oauthCredentials)
-      .values({
-        roomKey: params.roomKey,
-        provider: params.provider,
-        accessToken: encryptedAccessToken,
-        refreshToken: encryptedRefreshToken,
-        tokenType: params.tokenType,
-        expiresAt: params.expiresAt,
-        scope: params.scope,
-        authorizedBy: params.authorizedBy,
-        metadata: params.metadata,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [oauthCredentials.roomKey, oauthCredentials.provider],
-        set: {
-          accessToken: encryptedAccessToken,
-          refreshToken: encryptedRefreshToken,
-          tokenType: params.tokenType,
-          expiresAt: params.expiresAt,
-          scope: params.scope,
-          authorizedBy: params.authorizedBy,
-          metadata: params.metadata,
-          updatedAt: now,
-        },
-      })
-      .run();
-  }
-
-  private async updateOAuthTokens(params: {
-    roomKey: string;
-    provider: OAuthProvider;
-    accessToken: string;
-    refreshToken: string | null;
-    expiresAt: number;
-  }): Promise<void> {
-    const encryptedAccessToken = await this.tokenCipher.encrypt(
-      params.accessToken,
-    );
-    const encryptedRefreshToken = await this.encryptToken(params.refreshToken);
-
-    this.db
-      .update(oauthCredentials)
-      .set({
-        accessToken: encryptedAccessToken,
-        refreshToken: encryptedRefreshToken,
-        expiresAt: params.expiresAt,
-        updatedAt: Date.now(),
-      })
-      .where(this.oauthProviderWhere(params.roomKey, params.provider))
-      .run();
-  }
-
-  private deleteOAuthCredentials(roomKey: string, provider: OAuthProvider): void {
-    this.db
-      .delete(oauthCredentials)
-      .where(this.oauthProviderWhere(roomKey, provider))
-      .run();
+    this.oauthStore = new PlanningRoomOAuthStore(this.db, tokenCipher);
   }
 
   async initializeSchema() {
@@ -800,6 +640,47 @@ export class PlanningRoomRepository {
       .run();
   }
 
+  private mapTicketVoteRow(
+    row: typeof ticketVotes.$inferSelect,
+    anonymizeVotes?: boolean,
+  ): TicketVote {
+    const structuredVotePayload = row.structuredVotePayload
+      ? safeJsonParse<StructuredVote>(row.structuredVotePayload)
+      : undefined;
+
+    return {
+      id: row.id,
+      ticketQueueId: row.ticketQueueId,
+      userName: anonymizeVotes ? this.anonymousName : row.userName,
+      vote: parseVote(row.vote),
+      structuredVotePayload,
+      votedAt: row.votedAt,
+    };
+  }
+
+  private mapTicketQueueRow(
+    row: typeof ticketQueue.$inferSelect,
+    votes: TicketVote[],
+    options?: { roomKey?: string },
+  ): TicketQueueWithVotes {
+    return {
+      id: row.id,
+      roomKey: options?.roomKey ?? "",
+      ticketId: row.ticketId,
+      title: row.title ?? "",
+      description: row.description ?? undefined,
+      status: row.status,
+      outcome: row.outcome ?? undefined,
+      createdAt: row.createdAt,
+      completedAt: row.completedAt ?? undefined,
+      ordinal: row.ordinal,
+      externalService: row.externalService ?? "none",
+      externalServiceId: row.externalServiceId ?? undefined,
+      externalServiceMetadata: row.externalServiceMetadata ?? undefined,
+      votes,
+    };
+  }
+
   getCurrentTicket(options?: {
     anonymizeVotes?: boolean;
     roomKey?: string;
@@ -832,23 +713,7 @@ export class PlanningRoomRepository {
     }
 
     const votes = this.getTicketVotes(row.id, options?.anonymizeVotes);
-
-    return {
-      id: row.id,
-      roomKey: options?.roomKey ?? "",
-      ticketId: row.ticketId,
-      title: row.title ?? "",
-      description: row.description ?? undefined,
-      status: row.status,
-      outcome: row.outcome ?? undefined,
-      createdAt: row.createdAt,
-      completedAt: row.completedAt ?? undefined,
-      ordinal: row.ordinal,
-      externalService: row.externalService ?? "none",
-      externalServiceId: row.externalServiceId ?? undefined,
-      externalServiceMetadata: row.externalServiceMetadata ?? undefined,
-      votes,
-    };
+    return this.mapTicketQueueRow(row, votes, options);
   }
 
   getTicketQueue(options?: {
@@ -882,39 +747,11 @@ export class PlanningRoomRepository {
 
     return rows.map((row) => {
       const ticketVoteRows = votesByTicket.get(row.id) ?? [];
-      const votes = ticketVoteRows.map((voteRow) => {
-        const structuredVotePayload = voteRow.structuredVotePayload
-          ? safeJsonParse<StructuredVote>(voteRow.structuredVotePayload)
-          : undefined;
+      const votes = ticketVoteRows.map((voteRow) =>
+        this.mapTicketVoteRow(voteRow, options?.anonymizeVotes),
+      );
 
-        return {
-          id: voteRow.id,
-          ticketQueueId: voteRow.ticketQueueId,
-          userName: options?.anonymizeVotes
-            ? this.anonymousName
-            : voteRow.userName,
-          vote: parseVote(voteRow.vote),
-          structuredVotePayload,
-          votedAt: voteRow.votedAt,
-        };
-      });
-
-      return {
-        id: row.id,
-        roomKey: options?.roomKey ?? "",
-        ticketId: row.ticketId,
-        title: row.title ?? "",
-        description: row.description ?? undefined,
-        status: row.status,
-        outcome: row.outcome ?? undefined,
-        createdAt: row.createdAt,
-        completedAt: row.completedAt ?? undefined,
-        ordinal: row.ordinal,
-        externalService: row.externalService ?? "none",
-        externalServiceId: row.externalServiceId ?? undefined,
-        externalServiceMetadata: row.externalServiceMetadata ?? undefined,
-        votes,
-      };
+      return this.mapTicketQueueRow(row, votes, options);
     });
   }
 
@@ -929,20 +766,7 @@ export class PlanningRoomRepository {
       .orderBy(ticketVotes.votedAt)
       .all();
 
-    return rows.map((row) => {
-      const structuredVotePayload = row.structuredVotePayload
-        ? safeJsonParse<StructuredVote>(row.structuredVotePayload)
-        : undefined;
-
-      return {
-        id: row.id,
-        ticketQueueId: row.ticketQueueId,
-        userName: anonymizeVotes ? this.anonymousName : row.userName,
-        vote: parseVote(row.vote),
-        structuredVotePayload,
-        votedAt: row.votedAt,
-      };
-    });
+    return rows.map((row) => this.mapTicketVoteRow(row, anonymizeVotes));
   }
 
   createTicket(ticket: TicketCreateInput): TicketQueueWithVotes {
@@ -1127,81 +951,16 @@ export class PlanningRoomRepository {
     });
   }
 
-  async getJiraOAuthCredentials(roomKey: string): Promise<{
-    id: number;
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    jiraDomain: string;
-    jiraCloudId: string | null;
-    jiraUserId: string | null;
-    jiraUserEmail: string | null;
-    storyPointsField: string | null;
-    sprintField: string | null;
-    authorizedBy: string;
-    createdAt: number;
-    updatedAt: number;
-  } | null> {
-    const credential = await this.getOAuthCredentialWithMetadata<{
-      jiraDomain?: string;
-      jiraCloudId?: string | null;
-      jiraUserId?: string | null;
-      jiraUserEmail?: string | null;
-      storyPointsField?: string | null;
-      sprintField?: string | null;
-    }>(roomKey, "jira");
-    if (!credential) {
-      return null;
-    }
-
-    return {
-      ...credential.core,
-      jiraDomain: credential.metadata.jiraDomain ?? "",
-      jiraCloudId: credential.metadata.jiraCloudId ?? null,
-      jiraUserId: credential.metadata.jiraUserId ?? null,
-      jiraUserEmail: credential.metadata.jiraUserEmail ?? null,
-      storyPointsField: credential.metadata.storyPointsField ?? null,
-      sprintField: credential.metadata.sprintField ?? null,
-    };
+  async getJiraOAuthCredentials(roomKey: string) {
+    return this.oauthStore.getJiraOAuthCredentials(roomKey);
   }
 
-  async saveJiraOAuthCredentials(credentials: {
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    jiraDomain: string;
-    jiraCloudId: string | null;
-    jiraUserId: string | null;
-    jiraUserEmail: string | null;
-    storyPointsField: string | null;
-    sprintField: string | null;
-    authorizedBy: string;
-  }): Promise<void> {
-    const metadata = JSON.stringify({
-      jiraDomain: credentials.jiraDomain,
-      jiraCloudId: credentials.jiraCloudId,
-      jiraUserId: credentials.jiraUserId,
-      jiraUserEmail: credentials.jiraUserEmail,
-      storyPointsField: credentials.storyPointsField,
-      sprintField: credentials.sprintField,
-    });
-    await this.saveOAuthCredentials({
-      roomKey: credentials.roomKey,
-      provider: "jira",
-      accessToken: credentials.accessToken,
-      refreshToken: credentials.refreshToken,
-      tokenType: credentials.tokenType,
-      expiresAt: credentials.expiresAt,
-      scope: credentials.scope,
-      authorizedBy: credentials.authorizedBy,
-      metadata,
-    });
+  async saveJiraOAuthCredentials(
+    credentials: Parameters<
+      PlanningRoomOAuthStore["saveJiraOAuthCredentials"]
+    >[0],
+  ) {
+    return this.oauthStore.saveJiraOAuthCredentials(credentials);
   }
 
   async updateJiraOAuthTokens(
@@ -1209,85 +968,29 @@ export class PlanningRoomRepository {
     accessToken: string,
     refreshToken: string | null,
     expiresAt: number,
-  ): Promise<void> {
-    await this.updateOAuthTokens({
+  ) {
+    return this.oauthStore.updateJiraOAuthTokens(
       roomKey,
-      provider: "jira",
       accessToken,
       refreshToken,
       expiresAt,
-    });
+    );
   }
 
   deleteJiraOAuthCredentials(roomKey: string): void {
-    this.deleteOAuthCredentials(roomKey, "jira");
+    this.oauthStore.deleteJiraOAuthCredentials(roomKey);
   }
 
-  async getLinearOAuthCredentials(roomKey: string): Promise<{
-    id: number;
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    linearOrganizationId: string | null;
-    linearUserId: string | null;
-    linearUserEmail: string | null;
-    estimateField: string | null;
-    authorizedBy: string;
-    createdAt: number;
-    updatedAt: number;
-  } | null> {
-    const credential = await this.getOAuthCredentialWithMetadata<{
-      linearOrganizationId?: string | null;
-      linearUserId?: string | null;
-      linearUserEmail?: string | null;
-      estimateField?: string | null;
-    }>(roomKey, "linear");
-    if (!credential) {
-      return null;
-    }
-
-    return {
-      ...credential.core,
-      linearOrganizationId: credential.metadata.linearOrganizationId ?? null,
-      linearUserId: credential.metadata.linearUserId ?? null,
-      linearUserEmail: credential.metadata.linearUserEmail ?? null,
-      estimateField: credential.metadata.estimateField ?? null,
-    };
+  async getLinearOAuthCredentials(roomKey: string) {
+    return this.oauthStore.getLinearOAuthCredentials(roomKey);
   }
 
-  async saveLinearOAuthCredentials(credentials: {
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    linearOrganizationId: string | null;
-    linearUserId: string | null;
-    linearUserEmail: string | null;
-    estimateField: string | null;
-    authorizedBy: string;
-  }): Promise<void> {
-    const metadata = JSON.stringify({
-      linearOrganizationId: credentials.linearOrganizationId,
-      linearUserId: credentials.linearUserId,
-      linearUserEmail: credentials.linearUserEmail,
-      estimateField: credentials.estimateField,
-    });
-    await this.saveOAuthCredentials({
-      roomKey: credentials.roomKey,
-      provider: "linear",
-      accessToken: credentials.accessToken,
-      refreshToken: credentials.refreshToken,
-      tokenType: credentials.tokenType,
-      expiresAt: credentials.expiresAt,
-      scope: credentials.scope,
-      authorizedBy: credentials.authorizedBy,
-      metadata,
-    });
+  async saveLinearOAuthCredentials(
+    credentials: Parameters<
+      PlanningRoomOAuthStore["saveLinearOAuthCredentials"]
+    >[0],
+  ) {
+    return this.oauthStore.saveLinearOAuthCredentials(credentials);
   }
 
   async updateLinearOAuthTokens(
@@ -1295,112 +998,39 @@ export class PlanningRoomRepository {
     accessToken: string,
     refreshToken: string | null,
     expiresAt: number,
-  ): Promise<void> {
-    await this.updateOAuthTokens({
+  ) {
+    return this.oauthStore.updateLinearOAuthTokens(
       roomKey,
-      provider: "linear",
       accessToken,
       refreshToken,
       expiresAt,
-    });
+    );
   }
 
   deleteLinearOAuthCredentials(roomKey: string): void {
-    this.deleteOAuthCredentials(roomKey, "linear");
+    this.oauthStore.deleteLinearOAuthCredentials(roomKey);
   }
 
   async updateLinearEstimateField(
     roomKey: string,
     estimateField: string | null,
-  ): Promise<void> {
-    const existing = await this.getLinearOAuthCredentials(roomKey);
-    if (!existing) {
-      return;
-    }
-
-    await this.saveLinearOAuthCredentials({
-      roomKey: existing.roomKey,
-      accessToken: existing.accessToken,
-      refreshToken: existing.refreshToken,
-      tokenType: existing.tokenType,
-      expiresAt: existing.expiresAt,
-      scope: existing.scope,
-      linearOrganizationId: existing.linearOrganizationId,
-      linearUserId: existing.linearUserId,
-      linearUserEmail: existing.linearUserEmail,
-      estimateField,
-      authorizedBy: existing.authorizedBy,
-    });
+  ) {
+    return this.oauthStore.updateLinearEstimateField(roomKey, estimateField);
   }
 
-  async getGithubOAuthCredentials(roomKey: string): Promise<{
-    id: number;
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    githubLogin: string | null;
-    githubUserEmail: string | null;
-    defaultOwner: string | null;
-    defaultRepo: string | null;
-    authorizedBy: string;
-    createdAt: number;
-    updatedAt: number;
-  } | null> {
-    const credential = await this.getOAuthCredentialWithMetadata<{
-      githubLogin?: string | null;
-      githubUserEmail?: string | null;
-      defaultOwner?: string | null;
-      defaultRepo?: string | null;
-    }>(roomKey, "github");
-    if (!credential) {
-      return null;
-    }
-
-    return {
-      ...credential.core,
-      githubLogin: credential.metadata.githubLogin ?? null,
-      githubUserEmail: credential.metadata.githubUserEmail ?? null,
-      defaultOwner: credential.metadata.defaultOwner ?? null,
-      defaultRepo: credential.metadata.defaultRepo ?? null,
-    };
+  async getGithubOAuthCredentials(roomKey: string) {
+    return this.oauthStore.getGithubOAuthCredentials(roomKey);
   }
 
-  async saveGithubOAuthCredentials(credentials: {
-    roomKey: string;
-    accessToken: string;
-    refreshToken: string | null;
-    tokenType: string;
-    expiresAt: number;
-    scope: string | null;
-    githubLogin: string | null;
-    githubUserEmail: string | null;
-    defaultOwner: string | null;
-    defaultRepo: string | null;
-    authorizedBy: string;
-  }): Promise<void> {
-    const metadata = JSON.stringify({
-      githubLogin: credentials.githubLogin,
-      githubUserEmail: credentials.githubUserEmail,
-      defaultOwner: credentials.defaultOwner,
-      defaultRepo: credentials.defaultRepo,
-    });
-    await this.saveOAuthCredentials({
-      roomKey: credentials.roomKey,
-      provider: "github",
-      accessToken: credentials.accessToken,
-      refreshToken: credentials.refreshToken,
-      tokenType: credentials.tokenType,
-      expiresAt: credentials.expiresAt,
-      scope: credentials.scope,
-      authorizedBy: credentials.authorizedBy,
-      metadata,
-    });
+  async saveGithubOAuthCredentials(
+    credentials: Parameters<
+      PlanningRoomOAuthStore["saveGithubOAuthCredentials"]
+    >[0],
+  ) {
+    return this.oauthStore.saveGithubOAuthCredentials(credentials);
   }
 
   deleteGithubOAuthCredentials(roomKey: string): void {
-    this.deleteOAuthCredentials(roomKey, "github");
+    this.oauthStore.deleteGithubOAuthCredentials(roomKey);
   }
 }
