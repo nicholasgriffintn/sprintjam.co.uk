@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Minimize2, Trophy } from "lucide-react";
+import { Minimize2, Sparkles, Trophy } from 'lucide-react';
 
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -477,11 +477,28 @@ export const RoomGamePanel = ({
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-emerald-600 dark:text-emerald-300">
-            Game over
-            {gameSession.winner ? ` · Winner: ${gameSession.winner}` : ''}. GG{' '}
-            {userName}.
-          </p>
+          <div className="relative overflow-hidden rounded-2xl border border-brand-200/80 bg-gradient-to-r from-brand-50 via-white to-black-50/60 px-4 py-3 shadow-sm dark:border-brand-300/30 dark:from-brand-900/30 dark:via-slate-900/70 dark:to-black-900/20">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-brand-300/30 blur-2xl dark:bg-brand-300/20" />
+              <div className="absolute -left-6 bottom-0 h-16 w-16 rounded-full bg-black-300/40 blur-xl dark:bg-black-300/20" />
+            </div>
+            <div className="relative flex flex-wrap items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-brand-200/80 bg-white/85 text-brand-700 shadow-sm dark:border-brand-300/30 dark:bg-brand-900/50 dark:text-brand-100">
+                <Trophy className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-700/80 dark:text-brand-200/80">
+                  Final score
+                </p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {gameSession.winner
+                    ? `${gameSession.winner} wins this round.`
+                    : 'Game complete.'}{' '}
+                  GG, {userName}.
+                </p>
+              </div>
+            </div>
+          </div>
 
           {gameSession.type === 'one-word-pitch' &&
           (gameSession.oneWordPitchRoundHistory?.length ?? 0) > 0 ? (
