@@ -42,7 +42,8 @@
  * - volume=4 → minimum 8pt (extensive work required)
  */
 
-import type { VotingCriterion, StructuredVote } from "@sprintjam/types";
+import type { VotingCriterion, StructuredVote } from '@sprintjam/types';
+import { getDefaultVotingCriteria } from '@sprintjam/utils';
 
 function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
   weightedScore: number;
@@ -97,28 +98,28 @@ function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
 
   const contributions = [
     {
-      id: "complexity",
+      id: 'complexity',
       weightPercent: complexityWeight * 100,
       score: complexity,
       maxScore: maxComplexityScore,
       contributionPercent: complexityContribution,
     },
     {
-      id: "confidence",
+      id: 'confidence',
       weightPercent: confidenceWeight * 100,
       score: confidenceInput,
       maxScore: maxConfidenceScore,
       contributionPercent: confidenceContribution,
     },
     {
-      id: "volume",
+      id: 'volume',
       weightPercent: volumeWeight * 100,
       score: volume,
       maxScore: maxVolumeScore,
       contributionPercent: volumeContribution,
     },
     {
-      id: "unknowns",
+      id: 'unknowns',
       weightPercent: unknownsWeight * 100,
       score: unknowns,
       maxScore: maxUnknownsScore,
@@ -135,15 +136,15 @@ function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
 
   if (unknowns === 2) {
     finalScore = Math.max(finalScore, minUnknowns2Score);
-    appliedConversionRules.push("Unknowns=2 → minimum 8pt");
+    appliedConversionRules.push('Unknowns=2 → minimum 8pt');
   } else if (unknowns === 1) {
     finalScore = Math.max(finalScore, minUnknowns1Score);
-    appliedConversionRules.push("Unknowns=1 → minimum 3pt");
+    appliedConversionRules.push('Unknowns=1 → minimum 3pt');
   }
 
   if (volume === 4) {
     finalScore = Math.max(finalScore, minVolume4Score);
-    appliedConversionRules.push("Volume=4 → minimum 8pt");
+    appliedConversionRules.push('Volume=4 → minimum 8pt');
   }
 
   return { weightedScore, finalScore, appliedConversionRules, contributions };
@@ -186,43 +187,8 @@ export function createStructuredVote(
   };
 }
 
-export function getDefaultVotingCriteria(): VotingCriterion[] {
-  return [
-    {
-      id: "complexity",
-      name: "Complexity",
-      description:
-        "Level of logic and coordination (0: same app, 2: cross repo, 4: cross team)",
-      minScore: 0,
-      maxScore: 4,
-    },
-    {
-      id: "confidence",
-      name: "Individual Confidence",
-      description:
-        "Your confidence in this area (0: no confidence, 4: very confident)",
-      minScore: 0,
-      maxScore: 4,
-    },
-    {
-      id: "volume",
-      name: "Volume",
-      description: "Amount of work required (0: minimal, 4: extensive)",
-      minScore: 0,
-      maxScore: 4,
-    },
-    {
-      id: "unknowns",
-      name: "Unknowns",
-      description: "Implementation unknowns (0: none, 1: some, 2: too many)",
-      minScore: 0,
-      maxScore: 2,
-    },
-  ];
-}
-
 export function isStructuredVote(vote: unknown): vote is StructuredVote {
-  return typeof vote === "object" && vote !== null && "criteriaScores" in vote;
+  return typeof vote === 'object' && vote !== null && 'criteriaScores' in vote;
 }
 
 export function isStructuredVoteComplete(
@@ -231,6 +197,6 @@ export function isStructuredVoteComplete(
 ): boolean {
   return votingCriteria.every((criterion) => {
     const score = criteriaScores[criterion.id];
-    return typeof score === "number";
+    return typeof score === 'number';
   });
 }

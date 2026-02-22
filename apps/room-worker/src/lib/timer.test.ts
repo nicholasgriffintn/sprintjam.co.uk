@@ -1,16 +1,49 @@
-import { describe, it, expect } from "vitest";
-import { type RoomData, JudgeAlgorithm } from "@sprintjam/types";
+import { describe, expect, it } from 'vitest';
+import { type RoomData, JudgeAlgorithm } from '@sprintjam/types';
+import { DEFAULT_TIMER_DURATION_SECONDS } from '@sprintjam/utils/constants';
 
-import { ensureTimerState } from "./timer-state";
-import { DEFAULT_TIMER_DURATION_SECONDS } from "./config/constants";
+import { ensureTimerState } from './timer';
+
+import { calculateTimerSeconds } from './timer';
+
+describe('timer utils', () => {
+  it('returns zero when no timer state exists', () => {
+    expect(calculateTimerSeconds(undefined, 1_000)).toBe(0);
+  });
+
+  it('returns stored seconds when the timer is paused', () => {
+    expect(
+      calculateTimerSeconds(
+        { running: false, seconds: 42, lastUpdateTime: 0 },
+        5_000,
+      ),
+    ).toBe(42);
+  });
+
+  it('adds elapsed seconds when the timer is running', () => {
+    const result = calculateTimerSeconds(
+      { running: true, seconds: 10, lastUpdateTime: 2_000 },
+      5_400,
+    );
+    expect(result).toBe(13); // 3.4s elapsed, floored to 3
+  });
+
+  it('handles missing seconds in a running state', () => {
+    const result = calculateTimerSeconds(
+      { running: true, seconds: undefined as any, lastUpdateTime: 1_000 },
+      2_500,
+    );
+    expect(result).toBe(1);
+  });
+});
 
 const baseRoom = (): RoomData => ({
-  key: "room",
+  key: 'room',
   users: [],
   votes: {},
   connectedUsers: {},
   showVotes: false,
-  moderator: "mod",
+  moderator: 'mod',
   settings: {
     estimateOptions: [1, 2, 3],
     judgeAlgorithm: JudgeAlgorithm.SMART_CONSENSUS,
@@ -27,8 +60,8 @@ const baseRoom = (): RoomData => ({
   },
 });
 
-describe("ensureTimerState", () => {
-  it("initializes timer state with defaults when missing", () => {
+describe('ensureTimerState', () => {
+  it('initializes timer state with defaults when missing', () => {
     const room = baseRoom();
 
     const timerState = ensureTimerState(room);
@@ -44,7 +77,7 @@ describe("ensureTimerState", () => {
     expect(room.timerState).toBe(timerState);
   });
 
-  it("fills in missing timer fields but preserves existing values", () => {
+  it('fills in missing timer fields but preserves existing values', () => {
     const room = baseRoom();
     room.timerState = {
       running: true,

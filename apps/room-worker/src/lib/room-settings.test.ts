@@ -1,15 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
+import { getDefaultRoomSettings } from '@sprintjam/utils';
 
-import { applySettingsUpdate } from "./room-settings";
-import { getDefaultRoomSettings } from "./defaults";
+import { applySettingsUpdate } from './room-settings';
 
-describe("room-settings utils", () => {
-  it("returns defaults when no current settings or updates are provided", () => {
+describe('room-settings utils', () => {
+  it('returns defaults when no current settings or updates are provided', () => {
     const result = applySettingsUpdate({});
     expect(result).toEqual(getDefaultRoomSettings());
   });
 
-  it("applies partial updates and regenerates vote metadata when options change", () => {
+  it('applies partial updates and regenerates vote metadata when options change', () => {
     const currentSettings = getDefaultRoomSettings();
     const updatedEstimateOptions = [1, 2, 4];
     const result = applySettingsUpdate({
@@ -29,7 +29,7 @@ describe("room-settings utils", () => {
     );
   });
 
-  it("switches to structured voting defaults when enabled", () => {
+  it('switches to structured voting defaults when enabled', () => {
     const result = applySettingsUpdate({
       currentSettings: getDefaultRoomSettings(),
       settingsUpdate: { enableStructuredVoting: true },
@@ -41,7 +41,7 @@ describe("room-settings utils", () => {
     expect(result.votingCriteria).toBeDefined();
   });
 
-  it("restores standard options when disabling structured voting without overrides", () => {
+  it('restores standard options when disabling structured voting without overrides', () => {
     const currentSettings = {
       ...getDefaultRoomSettings(),
       enableStructuredVoting: true,

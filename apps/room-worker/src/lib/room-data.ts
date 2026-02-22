@@ -7,11 +7,10 @@ import type {
   VoteValue,
   VotingCompletion,
   ExtraVoteOption,
-} from "@sprintjam/types";
+} from '@sprintjam/types';
 
-import { isStructuredVoteComplete } from "./structured-voting";
-
-import { applySettingsUpdate } from "./room-settings";
+import { isStructuredVoteComplete } from './structured-voting';
+import { applySettingsUpdate } from './room-settings';
 
 export function getAnonymousUserId(
   roomData: RoomData,
@@ -19,7 +18,7 @@ export function getAnonymousUserId(
 ): string {
   const index = roomData.users.indexOf(userName);
   if (index === -1) {
-    return "Anonymous";
+    return 'Anonymous';
   }
   return `Anonymous ${index + 1}`;
 }
@@ -41,7 +40,7 @@ export function normalizeRoomData(roomData: RoomData): RoomData {
 
 export function ensureRoomStatus(roomData: RoomData) {
   if (!roomData.status) {
-    roomData.status = "active";
+    roomData.status = 'active';
   }
   return roomData.status;
 }
@@ -145,7 +144,7 @@ export const remapVotes = (
 ) => {
   const mapped: Record<string, VoteValue | null> = {};
   Object.entries(votes).forEach(([user, vote]) => {
-    const anon = idMap.get(user) ?? "Anonymous";
+    const anon = idMap.get(user) ?? 'Anonymous';
     mapped[anon] = vote;
   });
   return mapped;
@@ -158,7 +157,7 @@ export const remapStructuredVotes = (
   if (!structured) return undefined;
   const mapped: Record<string, StructuredVote> = {};
   Object.entries(structured).forEach(([user, payload]) => {
-    const anon = idMap.get(user) ?? "Anonymous";
+    const anon = idMap.get(user) ?? 'Anonymous';
     mapped[anon] = payload;
   });
   return mapped;
@@ -173,7 +172,7 @@ export const remapTicketVotes = (
     ...ticket,
     votes: ticket.votes.map((vote) => ({
       ...vote,
-      userName: idMap.get(vote.userName) ?? "Anonymous",
+      userName: idMap.get(vote.userName) ?? 'Anonymous',
     })),
   };
 };
@@ -190,7 +189,7 @@ export const remapRoundHistory = (
     ...entry,
     votes: entry.votes.map((vote) => ({
       ...vote,
-      userName: idMap.get(vote.userName) ?? "Anonymous",
+      userName: idMap.get(vote.userName) ?? 'Anonymous',
     })),
   }));
 };

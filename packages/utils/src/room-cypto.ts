@@ -1,4 +1,5 @@
 import type { PasscodeHashPayload } from "@sprintjam/types";
+
 import { bytesToBase64Url } from "./base64";
 
 const encoder = new TextEncoder();
@@ -207,14 +208,4 @@ export async function verifyState<T>(
   } catch {
     throw new Error("Invalid state");
   }
-}
-
-export function escapeHtml(str: string): string {
-  if (!str) return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }

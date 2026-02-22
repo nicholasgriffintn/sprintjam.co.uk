@@ -1,15 +1,8 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import {
-  TokenCipher,
-  buildTotpUri,
-  generateRecoveryCodes,
-  generateTotpSecret,
-  hashRecoveryCode,
-  verifyTotpCode,
-} from "@sprintjam/utils";
+import { TokenCipher } from '@sprintjam/utils';
 
-import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
-import { jsonError, jsonResponse } from "../../lib/response";
+import { WorkspaceAuthRepository } from '../../repositories/workspace-auth';
+import { jsonError, jsonResponse } from '../../lib/response';
 import {
   MFA_RECOVERY_CODES_COUNT,
   createAuthenticatedSessionResponse,
@@ -17,12 +10,19 @@ import {
   getChallengeAndUserOrError,
   getRequestMeta,
   parseChallengeMetadata,
-} from "../../lib/auth-helpers";
+} from '../../lib/auth-helpers';
 import {
   createWebAuthnRegistrationOptions,
   verifyWebAuthnAttestation,
-} from "../../lib/webauthn";
-import { getWebAuthnRequestContext } from "./webauthn-context";
+} from '../../lib/webauthn';
+import { getWebAuthnRequestContext } from './webauthn-context';
+import {
+  buildTotpUri,
+  generateRecoveryCodes,
+  generateTotpSecret,
+  hashRecoveryCode,
+  verifyTotpCode,
+} from '../../lib/mfa';
 
 export async function startMfaSetupController(
   request: Request,

@@ -1,8 +1,9 @@
+import { base32Decode, base32Encode } from '@sprintjam/utils';
+
 const encoder = new TextEncoder();
-import { base32Decode, base32Encode } from "./base32";
 
 export function normalizeRecoveryCode(code: string): string {
-  return code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  return code.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 }
 
 export function generateRecoveryCodes(count = 8): string[] {
@@ -11,7 +12,7 @@ export function generateRecoveryCodes(count = 8): string[] {
     const bytes = new Uint8Array(10);
     crypto.getRandomValues(bytes);
     const base32 = base32Encode(bytes).slice(0, 16);
-    const formatted = base32.match(/.{1,4}/g)?.join("-") ?? base32;
+    const formatted = base32.match(/.{1,4}/g)?.join('-') ?? base32;
     codes.push(formatted);
   }
   return codes;
@@ -48,15 +49,15 @@ export async function generateTotpCode(
   const counter = Math.floor(timestamp / 1000 / stepSeconds);
   const keyData = base32Decode(secret);
   const key = await crypto.subtle.importKey(
-    "raw",
+    'raw',
     toArrayBuffer(keyData),
-    { name: "HMAC", hash: "SHA-1" },
+    { name: 'HMAC', hash: 'SHA-1' },
     false,
-    ["sign"],
+    ['sign'],
   );
   const counterBytes = counterToBytes(counter);
   const hmac = await crypto.subtle.sign(
-    "HMAC",
+    'HMAC',
     key,
     toArrayBuffer(counterBytes),
   );
@@ -67,7 +68,7 @@ export async function generateTotpCode(
     ((bytes[offset + 1] & 0xff) << 16) |
     ((bytes[offset + 2] & 0xff) << 8) |
     (bytes[offset + 3] & 0xff);
-  const otp = (code % 10 ** digits).toString().padStart(digits, "0");
+  const otp = (code % 10 ** digits).toString().padStart(digits, '0');
   return otp;
 }
 
@@ -122,8 +123,8 @@ export function buildTotpUri({
 export async function hashRecoveryCode(code: string): Promise<string> {
   const normalized = normalizeRecoveryCode(code);
   const data = encoder.encode(normalized);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(hashBuffer))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
 }

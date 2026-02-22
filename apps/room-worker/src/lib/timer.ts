@@ -1,6 +1,22 @@
-import type { RoomData, TimerState } from "@sprintjam/types";
+import type { RoomData, TimerState } from '@sprintjam/types';
+import { DEFAULT_TIMER_DURATION_SECONDS } from '@sprintjam/utils/constants';
 
-import { DEFAULT_TIMER_DURATION_SECONDS } from "./config/constants";
+export function calculateTimerSeconds(
+  timerState: TimerState | undefined,
+  now: number = Date.now(),
+): number {
+  if (!timerState) {
+    return 0;
+  }
+
+  if (!timerState.running) {
+    return timerState.seconds ?? 0;
+  }
+
+  const elapsedMs = now - timerState.lastUpdateTime;
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
+  return (timerState.seconds ?? 0) + elapsedSeconds;
+}
 
 export function ensureTimerState(roomData: RoomData): TimerState {
   if (!roomData.timerState) {

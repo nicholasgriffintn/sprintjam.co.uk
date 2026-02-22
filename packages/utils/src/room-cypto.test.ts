@@ -7,9 +7,9 @@ import {
   signState,
   verifyPasscode,
   verifyState,
-  escapeHtml,
   generateSessionToken,
-} from "./room-cypto";
+} from './room-cypto';
+import { escapeHtml } from './escape';
 
 describe("Security Utils", () => {
   const secret = "test-secret";

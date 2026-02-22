@@ -2,7 +2,8 @@ import {
   MAX_TIMER_DURATION_SECONDS,
   MIN_TIMER_DURATION_SECONDS,
 } from "@sprintjam/utils/constants";
-import { calculateTimerSeconds, ensureTimerState } from "@sprintjam/utils";
+
+import { calculateTimerSeconds, ensureTimerState } from '../../lib/timer';
 
 import type { PlanningRoom } from ".";
 

@@ -1,6 +1,5 @@
-import type { JudgeAlgorithm, JudgeResult } from "@sprintjam/types";
-
-import { findClosestOption } from "../judge";
+import type { JudgeAlgorithm, JudgeResult } from '@sprintjam/types';
+import { findClosestOption } from '@sprintjam/utils';
 
 export class PlanningPokerJudge {
   calculateJudgeScore(
@@ -22,25 +21,25 @@ export class PlanningPokerJudge {
 
       if (actualQuestionMarks > 0) {
         contextParts.push(
-          `${actualQuestionMarks} "?" vote${actualQuestionMarks > 1 ? "s" : ""}`,
+          `${actualQuestionMarks} "?" vote${actualQuestionMarks > 1 ? 's' : ''}`,
         );
       }
       if (extraOptionCount > 0) {
         contextParts.push(
-          `${extraOptionCount} extra option vote${extraOptionCount > 1 ? "s" : ""}`,
+          `${extraOptionCount} extra option vote${extraOptionCount > 1 ? 's' : ''}`,
         );
       }
 
       const reasoning =
         actualTotalVotes > 0
           ? `No numeric votes to analyze${
-              contextParts.length ? ` (${contextParts.join(", ")})` : ""
+              contextParts.length ? ` (${contextParts.join(', ')})` : ''
             }`
-          : "No votes to analyze";
+          : 'No votes to analyze';
 
       return {
         score: null,
-        confidence: "low",
+        confidence: 'low',
         needsDiscussion: actualQuestionMarks > 0,
         reasoning,
       };
@@ -49,11 +48,11 @@ export class PlanningPokerJudge {
     if (numericVotes.length === 1) {
       const reasoning =
         actualQuestionMarks > 0
-          ? `Only one numeric vote (${actualQuestionMarks} "?" vote${actualQuestionMarks > 1 ? "s" : ""})`
-          : "No consensus possible";
+          ? `Only one numeric vote (${actualQuestionMarks} "?" vote${actualQuestionMarks > 1 ? 's' : ''})`
+          : 'No consensus possible';
       return {
         score: numericVotes[0],
-        confidence: "low",
+        confidence: 'low',
         needsDiscussion: actualQuestionMarks > 0,
         reasoning,
       };
@@ -70,7 +69,7 @@ export class PlanningPokerJudge {
     };
 
     switch (algorithm) {
-      case "smartConsensus":
+      case 'smartConsensus':
         return this.smartConsensus(
           sortedVotes,
           distribution,
@@ -79,13 +78,13 @@ export class PlanningPokerJudge {
           context,
         );
 
-      case "conservativeMode":
+      case 'conservativeMode':
         return this.conservativeMode(sortedVotes, stats, validOptions, context);
 
-      case "optimisticMode":
+      case 'optimisticMode':
         return this.optimisticMode(sortedVotes, stats, validOptions, context);
 
-      case "simpleAverage":
+      case 'simpleAverage':
         return this.simpleAverage(stats, validOptions, context);
 
       default:
@@ -147,11 +146,11 @@ export class PlanningPokerJudge {
     if (modes.length === 1 && maxCount / totalVotes >= 0.6) {
       const confidence =
         questionMarks > 0 && questionMarks / actualTotal > 0.2
-          ? "medium"
-          : "high";
+          ? 'medium'
+          : 'high';
       const reasoning =
         questionMarks > 0
-          ? `Strong consensus: ${maxCount}/${totalVotes} voted for ${modes[0]} (${questionMarks} "?" vote${questionMarks > 1 ? "s" : ""})`
+          ? `Strong consensus: ${maxCount}/${totalVotes} voted for ${modes[0]} (${questionMarks} "?" vote${questionMarks > 1 ? 's' : ''})`
           : `Strong consensus: ${maxCount}/${totalVotes} voted for ${modes[0]}`;
 
       return {
@@ -180,7 +179,7 @@ export class PlanningPokerJudge {
 
       return {
         score: closestValid,
-        confidence: "medium",
+        confidence: 'medium',
         needsDiscussion: false,
         reasoning: `Adjacent consensus: ${bestGroup.totalVotes}/${totalVotes} votes clustered around ${closestValid}`,
       };
@@ -189,7 +188,7 @@ export class PlanningPokerJudge {
     if (stats.range > this.getMaxReasonableRange(validOptions)) {
       return {
         score: Math.round(stats.median),
-        confidence: "low",
+        confidence: 'low',
         needsDiscussion: true,
         reasoning: `Wide spread (${stats.min}-${stats.max}) suggests different understanding of requirements`,
       };
@@ -198,7 +197,7 @@ export class PlanningPokerJudge {
     const closestValid = findClosestOption(stats.median, validOptions);
     return {
       score: closestValid,
-      confidence: "medium",
+      confidence: 'medium',
       needsDiscussion: stats.range > stats.median * 0.5,
       reasoning: `Moderate spread - using median (${closestValid})`,
     };
@@ -222,25 +221,25 @@ export class PlanningPokerJudge {
     const questionMarks = context?.questionMarkCount ?? 0;
     const baseConfidence =
       stats.range <= stats.median * 0.3
-        ? "high"
+        ? 'high'
         : stats.range <= stats.median * 0.8
-          ? "medium"
-          : "low";
+          ? 'medium'
+          : 'low';
 
     const confidence =
-      questionMarks > 0 && baseConfidence === "high"
-        ? "medium"
+      questionMarks > 0 && baseConfidence === 'high'
+        ? 'medium'
         : baseConfidence;
 
     const reasoning =
       questionMarks > 0
-        ? `Conservative estimate using 75th percentile (${closestValid}) to account for potential complexity (${questionMarks} "?" vote${questionMarks > 1 ? "s" : ""})`
+        ? `Conservative estimate using 75th percentile (${closestValid}) to account for potential complexity (${questionMarks} "?" vote${questionMarks > 1 ? 's' : ''})`
         : `Conservative estimate using 75th percentile (${closestValid}) to account for potential complexity`;
 
     return {
       score: closestValid,
       confidence,
-      needsDiscussion: confidence === "low" || questionMarks > 0,
+      needsDiscussion: confidence === 'low' || questionMarks > 0,
       reasoning,
     };
   }
@@ -263,25 +262,25 @@ export class PlanningPokerJudge {
     const questionMarks = context?.questionMarkCount ?? 0;
     const baseConfidence =
       stats.range <= stats.median * 0.3
-        ? "high"
+        ? 'high'
         : stats.range <= stats.median * 0.8
-          ? "medium"
-          : "low";
+          ? 'medium'
+          : 'low';
 
     const confidence =
-      questionMarks > 0 && baseConfidence === "high"
-        ? "medium"
+      questionMarks > 0 && baseConfidence === 'high'
+        ? 'medium'
         : baseConfidence;
 
     const reasoning =
       questionMarks > 0
-        ? `Optimistic estimate using 25th percentile (${closestValid}) assuming team efficiency (${questionMarks} "?" vote${questionMarks > 1 ? "s" : ""})`
+        ? `Optimistic estimate using 25th percentile (${closestValid}) assuming team efficiency (${questionMarks} "?" vote${questionMarks > 1 ? 's' : ''})`
         : `Optimistic estimate using 25th percentile (${closestValid}) assuming team efficiency`;
 
     return {
       score: closestValid,
       confidence,
-      needsDiscussion: confidence === "low" || questionMarks > 0,
+      needsDiscussion: confidence === 'low' || questionMarks > 0,
       reasoning,
     };
   }
@@ -300,25 +299,25 @@ export class PlanningPokerJudge {
     const questionMarks = context?.questionMarkCount ?? 0;
     const baseConfidence =
       stats.range <= stats.mean * 0.2
-        ? "high"
+        ? 'high'
         : stats.range <= stats.mean * 0.6
-          ? "medium"
-          : "low";
+          ? 'medium'
+          : 'low';
 
     const confidence =
-      questionMarks > 0 && baseConfidence === "high"
-        ? "medium"
+      questionMarks > 0 && baseConfidence === 'high'
+        ? 'medium'
         : baseConfidence;
 
     const reasoning =
       questionMarks > 0
-        ? `Simple average (${closestValid}) of all votes (${questionMarks} "?" vote${questionMarks > 1 ? "s" : ""})`
+        ? `Simple average (${closestValid}) of all votes (${questionMarks} "?" vote${questionMarks > 1 ? 's' : ''})`
         : `Simple average (${closestValid}) of all votes`;
 
     return {
       score: closestValid,
       confidence,
-      needsDiscussion: confidence === "low" || questionMarks > 0,
+      needsDiscussion: confidence === 'low' || questionMarks > 0,
       reasoning,
     };
   }

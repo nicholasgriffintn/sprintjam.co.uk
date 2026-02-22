@@ -1,12 +1,9 @@
-import {
-  createJsonResponse,
-  applySettingsUpdate,
-  getRoomSessionToken,
-} from "@sprintjam/utils";
+import { createJsonResponse, getRoomSessionToken } from '@sprintjam/utils';
 import type { RoomData } from "@sprintjam/types";
 import type { Request as CfRequest } from "@cloudflare/workers-types";
 
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
+import { applySettingsUpdate } from '../../lib/room-settings';
 
 export async function handleGetSettings(
   ctx: PlanningRoomHttpContext,

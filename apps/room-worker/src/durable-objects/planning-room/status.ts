@@ -1,11 +1,11 @@
-import { anonymizeRoomData } from "@sprintjam/utils";
+import { anonymizeRoomData } from '../../lib/room-data';
 
-import type { PlanningRoom } from ".";
+import type { PlanningRoom } from '.';
 import {
   appendRoundHistory,
   logVotesForTicket,
   postRoundToStats,
-} from "./room-helpers";
+} from './room-helpers';
 
 export async function handleCompleteSession(
   room: PlanningRoom,
@@ -23,13 +23,13 @@ export async function handleCompleteSession(
     return;
   }
 
-  if (roomData.status === "completed") {
+  if (roomData.status === 'completed') {
     return;
   }
 
   const currentTicket = roomData.currentTicket;
   const roundHistoryEntry = appendRoundHistory(room, roomData, {
-    type: "complete_session",
+    type: 'complete_session',
     ticket: currentTicket,
   });
 
@@ -38,36 +38,36 @@ export async function handleCompleteSession(
       room,
       roomData,
       currentTicket?.ticketId,
-      currentTicket ? "next_ticket" : "reset",
+      currentTicket ? 'next_ticket' : 'reset',
       {
         roundId: roundHistoryEntry.id,
         roundEndedAt: roundHistoryEntry.endedAt,
         votes: roundHistoryEntry.votes,
       },
-    ).catch((err) => console.error("Failed to post round stats:", err));
+    ).catch((err) => console.error('Failed to post round stats:', err));
   }
 
   if (currentTicket && roundHistoryEntry) {
     logVotesForTicket(room, currentTicket, roomData);
 
-    if (currentTicket.status === "in_progress") {
+    if (currentTicket.status === 'in_progress') {
       room.repository.updateTicket(currentTicket.id, {
-        status: "completed",
+        status: 'completed',
         completedAt: roundHistoryEntry.endedAt,
       });
       room.repository.setCurrentTicket(null);
     }
   }
 
-  room.repository.setRoomStatus("completed");
+  room.repository.setRoomStatus('completed');
   const updatedRoomData = await room.getRoomData();
 
   if (updatedRoomData) {
     room.broadcast({
-      type: "initialize",
+      type: 'initialize',
       roomData: anonymizeRoomData(updatedRoomData),
     });
   }
 
-  room.broadcast({ type: "roomStatusUpdated", status: "completed" });
+  room.broadcast({ type: 'roomStatusUpdated', status: 'completed' });
 }

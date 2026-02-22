@@ -1,13 +1,13 @@
 import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
+import { validateClientMessage } from '@sprintjam/utils';
+
+import type { PlanningRoom } from ".";
 import {
   markUserConnection,
   normalizeRoomData,
   anonymizeRoomData,
   findCanonicalUserName,
-  validateClientMessage,
-} from "@sprintjam/utils";
-
-import type { PlanningRoom } from ".";
+} from '../../lib/room-data';
 
 export async function handleSession(
   room: PlanningRoom,

@@ -2,16 +2,15 @@ import type { RoomSettings } from "@sprintjam/types";
 import {
   createInitialRoomData,
   getServerDefaults,
-  assignUserAvatar,
-  sanitizeRoomData,
   createJsonResponse,
   generateSessionToken,
   hashPasscode,
   createRoomSessionCookie,
   SESSION_TOKEN_TTL_MS,
-} from "@sprintjam/utils";
+} from '@sprintjam/utils';
 
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
+import { assignUserAvatar, sanitizeRoomData } from '../../lib/room-data';
 
 export async function handleInitialize(
   ctx: PlanningRoomHttpContext,

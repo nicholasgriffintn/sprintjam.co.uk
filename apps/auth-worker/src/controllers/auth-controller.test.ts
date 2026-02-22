@@ -13,6 +13,7 @@ import {
   logoutController,
 } from "./auth-controller";
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
+import { generateTotpCode } from '../lib/mfa';
 
 const makeRequest = (input: RequestInfo | URL, init?: RequestInit): Request =>
   new Request(input, init);
@@ -956,7 +957,7 @@ describe("mfa setup", () => {
     const secret = "JBSWY3DPEHPK3PXP";
     const cipher = new utils.TokenCipher("test-secret");
     const secretEncrypted = await cipher.encrypt(secret);
-    const code = await utils.generateTotpCode(secret, Date.now());
+    const code = await generateTotpCode(secret, Date.now());
 
     mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
       id: 2,
@@ -1010,7 +1011,7 @@ describe("mfa setup", () => {
     const secret = "JBSWY3DPEHPK3PXP";
     const cipher = new utils.TokenCipher("test-secret");
     const secretEncrypted = await cipher.encrypt(secret);
-    const code = await utils.generateTotpCode(secret, Date.now());
+    const code = await generateTotpCode(secret, Date.now());
 
     mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
       id: 5,

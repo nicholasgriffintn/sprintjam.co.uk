@@ -4,7 +4,7 @@ import type {
   RoomData,
   RoomSettings,
   VotingSequenceTemplate,
-} from "@sprintjam/types";
+} from '@sprintjam/types';
 import { JudgeAlgorithm } from "@sprintjam/types";
 
 import { STRUCTURED_VOTING_OPTIONS } from "./config/constants";
@@ -13,8 +13,7 @@ import {
   DEFAULT_VOTING_SEQUENCE_ID,
   VOTING_SEQUENCE_TEMPLATES,
 } from "./config/voting";
-import { generateVoteOptionsMetadata } from "./votes";
-import { getDefaultVotingCriteria } from "./structured-voting";
+import { generateVoteOptionsMetadata, getDefaultVotingCriteria } from './votes';
 
 const DEFAULT_RESULTS_DISPLAY = {
   showVoteDistribution: true,

@@ -1,14 +1,14 @@
-import type { RoomData, RoomGameSession, RoomGameType } from "@sprintjam/types";
-import { sanitizeGameSession } from "@sprintjam/utils";
+import type { RoomData, RoomGameSession, RoomGameType } from '@sprintjam/types';
 
-import type { PlanningRoom } from ".";
+import type { PlanningRoom } from '.';
 import {
   MAX_GAME_ROUNDS,
   addEvent,
   createGameMove,
   initializeGameSession,
-} from "./game-engines/helpers";
-import { GAME_ENGINES } from "./game-engines/registry";
+} from './game-engines/helpers';
+import { GAME_ENGINES } from './game-engines/registry';
+import { sanitizeGameSession } from '../../lib/room-data';
 
 const getWinner = (session: RoomGameSession) => {
   const sortedScores = Object.entries(session.leaderboard).sort(
@@ -34,9 +34,9 @@ const sendClueboardSecretToCurrentClueGiver = (
   session: RoomGameSession,
 ) => {
   if (
-    session.type !== "clueboard" ||
-    session.status !== "active" ||
-    session.codenamesRoundPhase !== "clue"
+    session.type !== 'clueboard' ||
+    session.status !== 'active' ||
+    session.codenamesRoundPhase !== 'clue'
   ) {
     return;
   }
@@ -48,7 +48,7 @@ const sendClueboardSecretToCurrentClueGiver = (
   }
 
   const payload = JSON.stringify({
-    type: "clueboardSecret",
+    type: 'clueboardSecret',
     round: session.round,
     blockerIndex,
   });
@@ -71,14 +71,14 @@ const completeGameSession = async (
   roomData: RoomData,
   session: RoomGameSession,
   endedBy: string,
-  reason: "manual" | "round-limit",
+  reason: 'manual' | 'round-limit',
   roundLimit = MAX_GAME_ROUNDS,
 ) => {
   const winner = getWinner(session);
-  session.status = "completed";
+  session.status = 'completed';
   session.winner = winner;
 
-  if (reason === "round-limit") {
+  if (reason === 'round-limit') {
     addEvent(
       session,
       winner
@@ -98,7 +98,7 @@ const completeGameSession = async (
   await room.putRoomData(roomData);
 
   room.broadcast({
-    type: "gameEnded",
+    type: 'gameEnded',
     gameSession: getClientGameSession(session),
     endedBy,
   });
@@ -114,11 +114,11 @@ export async function handleStartGame(
     return;
   }
 
-  if (roomData.gameSession?.status === "active") {
+  if (roomData.gameSession?.status === 'active') {
     room.broadcast({
-      type: "error",
-      error: "A game is already running. End it before starting another one.",
-      reason: "permission",
+      type: 'error',
+      error: 'A game is already running. End it before starting another one.',
+      reason: 'permission',
     });
     return;
   }
@@ -127,9 +127,9 @@ export async function handleStartGame(
   const cannotStartReason = gameEngine.canStart?.(roomData);
   if (cannotStartReason) {
     room.broadcast({
-      type: "error",
+      type: 'error',
       error: cannotStartReason,
-      reason: "validation",
+      reason: 'validation',
     });
     return;
   }
@@ -145,7 +145,7 @@ export async function handleStartGame(
   await room.putRoomData(roomData);
 
   room.broadcast({
-    type: "gameStarted",
+    type: 'gameStarted',
     gameSession: getClientGameSession(session),
     startedBy: userName,
   });
@@ -161,7 +161,7 @@ export async function handleSubmitGameMove(
   const roomData = await room.getRoomData();
   const session = roomData?.gameSession;
 
-  if (!roomData || !session || session.status !== "active") {
+  if (!roomData || !session || session.status !== 'active') {
     return;
   }
 
@@ -201,8 +201,8 @@ export async function handleSubmitGameMove(
       room,
       roomData,
       session,
-      "system",
-      "round-limit",
+      'system',
+      'round-limit',
       roundLimit,
     );
     return;
@@ -212,7 +212,7 @@ export async function handleSubmitGameMove(
   await room.putRoomData(roomData);
 
   room.broadcast({
-    type: "gameMoveSubmitted",
+    type: 'gameMoveSubmitted',
     gameSession: getClientGameSession(session),
     user: userName,
   });
@@ -224,9 +224,9 @@ export async function handleEndGame(room: PlanningRoom, userName: string) {
   const roomData = await room.getRoomData();
   const session = roomData?.gameSession;
 
-  if (!roomData || !session || session.status !== "active") {
+  if (!roomData || !session || session.status !== 'active') {
     return;
   }
 
-  await completeGameSession(room, roomData, session, userName, "manual");
+  await completeGameSession(room, roomData, session, userName, 'manual');
 }

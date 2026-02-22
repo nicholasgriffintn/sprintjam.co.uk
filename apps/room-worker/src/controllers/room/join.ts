@@ -1,20 +1,22 @@
 import {
   getServerDefaults,
-  assignUserAvatar,
-  findCanonicalUserName,
-  markUserConnection,
-  normalizeRoomData,
-  sanitizeRoomData,
   createJsonResponse,
   generateSessionToken,
   verifyPasscode,
   createRoomSessionCookie,
   getRoomSessionToken,
   SESSION_TOKEN_TTL_MS,
-} from "@sprintjam/utils";
+} from '@sprintjam/utils';
 import type { Request as CfRequest } from "@cloudflare/workers-types";
 
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
+import {
+  assignUserAvatar,
+  findCanonicalUserName,
+  markUserConnection,
+  normalizeRoomData,
+  sanitizeRoomData,
+} from '../../lib/room-data';
 
 export async function handleJoin(
   ctx: PlanningRoomHttpContext,

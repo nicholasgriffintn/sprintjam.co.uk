@@ -1,10 +1,7 @@
-import {
-  createJsonResponse,
-  findCanonicalUserName,
-  sanitizeRoomData,
-} from "@sprintjam/utils";
+import { createJsonResponse } from '@sprintjam/utils';
 
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
+import { findCanonicalUserName, sanitizeRoomData } from '../../lib/room-data';
 
 export async function handleVote(
   ctx: PlanningRoomHttpContext,

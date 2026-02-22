@@ -1,12 +1,12 @@
 import type { RoomData } from "@sprintjam/types";
 import {
-  determineRoomPhase,
-  selectPresetForPhase,
   generateStrudelCode,
   type StrudelGenerateRequest,
-} from "@sprintjam/utils";
+} from '@sprintjam/utils';
 
 import type { PlanningRoom } from ".";
+import { determineRoomPhase } from '../../lib/room-phase';
+import { selectPresetForPhase } from '../../lib/strudel';
 
 export async function handleGenerateStrudel(
   room: PlanningRoom,
