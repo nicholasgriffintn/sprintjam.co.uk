@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { SELECTED_TEAM_STORAGE_KEY } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
 import type { ChangeEvent } from "react";
 import { motion } from "framer-motion";
 import { Settings, Sparkles } from "lucide-react";
@@ -11,7 +13,7 @@ import {
   useSessionState,
 } from "@/context/SessionContext";
 import { useRoomActions, useRoomState } from "@/context/RoomContext";
-import { useWorkspaceData } from '@/hooks/useWorkspaceData';
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
@@ -76,13 +78,26 @@ const CreateRoomScreen = () => {
   const { selectedWorkspaceTeamId } = useSessionState();
   const { setSelectedWorkspaceTeamId } = useSessionActions();
 
+  const teamPreloadDone = useRef(false);
+  useEffect(() => {
+    if (teamPreloadDone.current || teams.length === 0) return;
+    teamPreloadDone.current = true;
+    const stored = safeLocalStorage.get(SELECTED_TEAM_STORAGE_KEY);
+    if (!stored) return;
+    const teamId = parseInt(stored, 10);
+    if (!isNaN(teamId) && teams.some((t) => t.id === teamId)) {
+      setSelectedWorkspaceTeamId(teamId);
+    }
+  }, [teams, setSelectedWorkspaceTeamId]);
+
   const handleTeamChange = (teamIdStr: string) => {
     const teamId = parseInt(teamIdStr, 10);
     if (!isNaN(teamId)) {
       setSelectedWorkspaceTeamId(teamId);
-      // TODO: Apply team defaults
+      safeLocalStorage.set(SELECTED_TEAM_STORAGE_KEY, teamIdStr);
     } else {
       setSelectedWorkspaceTeamId(null);
+      safeLocalStorage.remove(SELECTED_TEAM_STORAGE_KEY);
     }
   };
 
@@ -182,10 +197,10 @@ const CreateRoomScreen = () => {
                 </label>
                 <Select
                   id="team-select"
-                  value={selectedWorkspaceTeamId?.toString() ?? 'none'}
+                  value={selectedWorkspaceTeamId?.toString() ?? "none"}
                   onValueChange={handleTeamChange}
                   options={[
-                    { label: 'Personal Room (No Team)', value: 'none' },
+                    { label: "Personal Room (No Team)", value: "none" },
                     ...teams.map((t) => ({
                       label: t.name,
                       value: t.id.toString(),
@@ -216,25 +231,25 @@ const CreateRoomScreen = () => {
                     type="button"
                     variant="unstyled"
                     role="switch"
-                    aria-checked={votingMode === 'structured'}
+                    aria-checked={votingMode === "structured"}
                     id="voting-mode"
                     onClick={() =>
                       setVotingMode(
-                        votingMode === 'structured' ? 'standard' : 'structured',
+                        votingMode === "structured" ? "standard" : "structured",
                       )
                     }
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 justify-start rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:ring-brand-500 ${
-                      votingMode === 'structured'
-                        ? 'bg-brand-600 dark:bg-brand-500'
-                        : 'bg-slate-200 dark:bg-slate-700'
+                      votingMode === "structured"
+                        ? "bg-brand-600 dark:bg-brand-500"
+                        : "bg-slate-200 dark:bg-slate-700"
                     }`}
                     data-testid="create-voting-mode"
                   >
                     <span
                       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        votingMode === 'structured'
-                          ? 'translate-x-5'
-                          : 'translate-x-0'
+                        votingMode === "structured"
+                          ? "translate-x-5"
+                          : "translate-x-0"
                       }`}
                     />
                   </Button>
@@ -254,20 +269,20 @@ const CreateRoomScreen = () => {
                   onValueChange={(value) =>
                     setSelectedSequenceId(value as VotingSequenceId)
                   }
-                  disabled={votingMode === 'structured'}
+                  disabled={votingMode === "structured"}
                   data-testid="create-estimate-sequence"
                   options={votingPresetOptions}
                 />
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {votingMode === 'structured'
-                    ? '(Always uses the default option for structured voting)'
+                  {votingMode === "structured"
+                    ? "(Always uses the default option for structured voting)"
                     : (() => {
                         const preset = votingPresets?.find(
                           (p) => p.id === selectedSequenceId,
                         );
                         return preset?.options
-                          ? `Cards: ${preset.options.join(', ')}`
-                          : 'Choose your estimation scale';
+                          ? `Cards: ${preset.options.join(", ")}`
+                          : "Choose your estimation scale";
                       })()}
                 </p>
               </div>
