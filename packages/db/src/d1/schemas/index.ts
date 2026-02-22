@@ -10,6 +10,8 @@ export * from "./login-audit-logs";
 export * from "./workspace-sessions";
 export * from "./workspace-invites";
 export * from "./team-sessions";
+export * from "./team-settings";
+export * from "./team-integrations";
 export * from "./round-votes";
 export * from "./vote-records";
 export * from "./room-stats";

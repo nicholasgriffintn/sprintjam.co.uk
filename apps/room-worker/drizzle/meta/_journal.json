@@ -29,6 +29,13 @@
       "when": 1771647747352,
       "tag": "0003_stale_moonstone",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1771779144299,
+      "tag": "0004_mixed_dragon_lord",
+      "breakpoints": true
     }
   ]
 }

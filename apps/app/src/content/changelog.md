@@ -1,12 +1,6 @@
-## V3.0 (In development)
+## V3.0-v3.1
 
-- Enabled sign in to workspaces, this is currently in beta but allows users from approved domains to track and store their sessions with the rest of their team(s) in a shared workspace. Many of the features are still in development and there are a few more things that I'd like to add over the next few releases:
-  - Add workspace selection and defaults to the room creation flow. When creating a room, users should be able to select their workspace/team and have the inputs pre-filled with any saved settings from that team. This will make it easier to keep things consistent across sessions and teams.
-    - (When used, the room should be automatically saved to the selected team in their workspace).
-  - Add the ability for users who do not already have an approved domain to request access to the workspaces feature.
-  - When the create room feature is used from the workspaces dashboard, it should automatically store that room in the selected team and pre-fill the settings with any saved settings from that team.
-  - Add team integrations settings to workspaces. This would allow users to connect to providers like Jira, Linear and GitHub Issues from their workspace and have those integrations available when they create rooms for that team, without having to connect them separately for each room.
-  - Provide charts on how the team has been estimating over time and insights into their sessions based on the stats recording service that was added in V2.3. (This should also be available from the room when signed in).
+- Enabled sign in to workspaces, this is currently in beta but allows users from approved domains to track and store their sessions with the rest of their team(s) in a shared workspace. You will also be able to configure default settings and integrations for specific teams that will be pre loaded for any of the rooms that are saved to that team.
 
 ## V2.9
 

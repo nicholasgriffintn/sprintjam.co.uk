@@ -7,22 +7,23 @@ import {
   hashPasscode,
   createRoomSessionCookie,
   SESSION_TOKEN_TTL_MS,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
-import { assignUserAvatar, sanitizeRoomData } from '../../lib/room-data';
+import { assignUserAvatar, sanitizeRoomData } from "../../lib/room-data";
 
 export async function handleInitialize(
   ctx: PlanningRoomHttpContext,
   request: Request,
 ): Promise<CfResponse> {
-  const { roomKey, moderator, passcode, settings, avatar } =
+  const { roomKey, moderator, passcode, settings, avatar, teamId } =
     (await request.json()) as {
       roomKey: string;
       moderator: string;
       passcode?: string;
       settings?: Partial<RoomSettings>;
       avatar?: string;
+      teamId?: number;
     };
 
   let passcodeHash;
@@ -49,6 +50,7 @@ export async function handleInitialize(
     connectedUsers: { [moderator]: true },
     passcodeHash,
     settings,
+    teamId,
   });
 
   assignUserAvatar(newRoomData, moderator, avatar);

@@ -1,8 +1,11 @@
 import { API_BASE_URL } from "@/constants";
 import type {
+  OAuthProvider,
+  RoomSettings,
   SessionStats,
   Team,
   TeamInsights,
+  TeamIntegrationStatus,
   TeamSession,
   WorkspaceInsights,
   WorkspaceInvite,
@@ -347,4 +350,67 @@ export async function getBatchSessionStats(
 export async function isAuthenticated(): Promise<boolean> {
   const user = await getCurrentUser();
   return !!user;
+}
+
+export async function getTeamSettings(
+  teamId: number,
+): Promise<RoomSettings | null> {
+  const data = await workspaceRequest<{ settings: RoomSettings | null }>(
+    `${API_BASE_URL}/teams/${teamId}/settings`,
+  );
+  return data.settings;
+}
+
+export async function saveTeamSettings(
+  teamId: number,
+  settings: RoomSettings,
+): Promise<RoomSettings> {
+  const data = await workspaceRequest<{ settings: RoomSettings }>(
+    `${API_BASE_URL}/teams/${teamId}/settings`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ settings }),
+    },
+  );
+  return data.settings;
+}
+
+export async function listTeamIntegrations(
+  teamId: number,
+): Promise<TeamIntegrationStatus[]> {
+  const data = await workspaceRequest<{
+    integrations: TeamIntegrationStatus[];
+  }>(`${API_BASE_URL}/teams/${teamId}/integrations`);
+  return data.integrations;
+}
+
+export async function getTeamIntegrationStatus(
+  teamId: number,
+  provider: OAuthProvider,
+): Promise<TeamIntegrationStatus> {
+  const data = await workspaceRequest<{ status: TeamIntegrationStatus }>(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/status`,
+  );
+  return data.status;
+}
+
+export async function initiateTeamOAuth(
+  teamId: number,
+  provider: OAuthProvider,
+): Promise<string> {
+  const data = await workspaceRequest<{ authorizationUrl: string }>(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/authorize`,
+    { method: "POST", body: JSON.stringify({}) },
+  );
+  return data.authorizationUrl;
+}
+
+export async function revokeTeamIntegration(
+  teamId: number,
+  provider: OAuthProvider,
+): Promise<void> {
+  await workspaceRequest(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}`,
+    { method: "DELETE" },
+  );
 }

@@ -12,6 +12,7 @@ import WorkspaceDashboard from "@/routes/workspace/WorkspaceDashboard";
 import WorkspaceSessions from "@/routes/workspace/WorkspaceSessions";
 import WorkspaceAdminOverview from "@/routes/workspace/WorkspaceAdminOverview";
 import WorkspaceAdminTeams from "@/routes/workspace/WorkspaceAdminTeams";
+import WorkspaceTeamSettings from "@/routes/workspace/WorkspaceTeamSettings";
 import CreateRoomScreen from "@/routes/CreateRoomScreen";
 import JoinRoomScreen from "@/routes/JoinRoomScreen";
 import WheelScreen from "@/routes/wheel/WheelScreen";
@@ -487,6 +488,7 @@ export const ROUTES = [
       activeForScreens: [
         "workspaceAdmin",
         "workspaceAdminTeams",
+        "workspaceAdminTeamSettings",
         "workspaceAdminSettings",
       ],
     },
@@ -509,6 +511,21 @@ export const ROUTES = [
       label: "Teams",
       icon: Users,
       order: 3,
+    },
+  },
+  {
+    screen: "workspaceAdminTeamSettings",
+    path: "/workspace/admin/teams/settings",
+    group: "workspace",
+    component: WorkspaceTeamSettings,
+    parent: "workspaceAdminTeams",
+    meta: {
+      title: `Team Settings - ${SITE_NAME}`,
+      description:
+        "Configure default room settings and integrations for your team.",
+      keywords:
+        "team settings, default settings, team integrations, jira, linear, github",
+      ogImage: "/og-image.png",
     },
   },
 

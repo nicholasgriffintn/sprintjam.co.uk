@@ -39,6 +39,10 @@
       "binding": "STATS_WORKER",
       "service": "sprintjam-stats-worker",
     },
+    {
+      "binding": "AUTH_WORKER",
+      "service": "sprintjam-auth-worker",
+    },
   ],
   "ratelimits": [
     {
@@ -94,6 +98,10 @@
           "binding": "STATS_WORKER",
           "service": "sprintjam-stats-worker-development",
         },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-development",
+        },
       ],
       "ratelimits": [],
     },
@@ -114,6 +122,10 @@
         {
           "binding": "STATS_WORKER",
           "service": "sprintjam-stats-worker-staging",
+        },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-staging",
         },
       ],
       "ratelimits": [

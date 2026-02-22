@@ -15,7 +15,7 @@ import { navigateTo, parsePath, type AppScreen } from "@/config/routes";
 
 interface SessionStateContextValue {
   screen: AppScreen;
-  joinFlowMode: 'join' | 'create';
+  joinFlowMode: "join" | "create";
   name: string;
   roomKey: string;
   passcode: string;
@@ -25,7 +25,7 @@ interface SessionStateContextValue {
 
 interface SessionActionsContextValue {
   setScreen: (screen: AppScreen) => void;
-  setJoinFlowMode: (mode: 'join' | 'create') => void;
+  setJoinFlowMode: (mode: "join" | "create") => void;
   setName: (name: string) => void;
   setRoomKey: (key: string) => void;
   setPasscode: (passcode: string) => void;
@@ -37,6 +37,7 @@ interface SessionActionsContextValue {
   goToWorkspaceSessions: () => void;
   goToWorkspaceAdmin: () => void;
   goToWorkspaceAdminTeams: () => void;
+  goToWorkspaceAdminTeamSettings: () => void;
   goToRoom: (roomKey: string) => void;
   startCreateFlow: (teamId?: number) => void;
   startJoinFlow: () => void;
@@ -149,6 +150,14 @@ export const SessionProvider = ({
     clearError();
   }, [clearError]);
 
+  const goToWorkspaceAdminTeamSettings = useCallback(() => {
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("workspaceAdminTeamSettings");
+    navigateTo("workspaceAdminTeamSettings");
+    clearError();
+  }, [clearError]);
+
   const goToRoom = useCallback(
     (key: string) => {
       setRoomKey(key);
@@ -161,11 +170,11 @@ export const SessionProvider = ({
 
   const startCreateFlow = useCallback(
     (teamId?: number) => {
-      setPasscode('');
-      setJoinFlowMode('create');
-      setScreen('create');
+      setPasscode("");
+      setJoinFlowMode("create");
+      setScreen("create");
       setSelectedWorkspaceTeamId(teamId ?? null);
-      navigateTo('create');
+      navigateTo("create");
       clearError();
     },
     [clearError],
@@ -241,6 +250,7 @@ export const SessionProvider = ({
       goToWorkspaceSessions,
       goToWorkspaceAdmin,
       goToWorkspaceAdminTeams,
+      goToWorkspaceAdminTeamSettings,
       goToRoom,
       startCreateFlow,
       startJoinFlow,
@@ -252,6 +262,7 @@ export const SessionProvider = ({
       goToWorkspaceSessions,
       goToWorkspaceAdmin,
       goToWorkspaceAdminTeams,
+      goToWorkspaceAdminTeamSettings,
       goToRoom,
       startCreateFlow,
       startJoinFlow,

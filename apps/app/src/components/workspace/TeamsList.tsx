@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, ChevronRight } from "lucide-react";
+import { Plus, Pencil, ChevronRight, Settings } from "lucide-react";
 
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +15,7 @@ interface TeamsListProps {
   onCreateTeam: (name: string) => Promise<void>;
   onSelectTeam: (teamId: number) => void;
   onEditTeam: (team: Team) => void;
+  onTeamSettings?: (team: Team) => void;
 }
 
 export function TeamsList({
@@ -24,6 +25,7 @@ export function TeamsList({
   onCreateTeam,
   onSelectTeam,
   onEditTeam,
+  onTeamSettings,
 }: TeamsListProps) {
   const [newTeamName, setNewTeamName] = useState("");
 
@@ -100,7 +102,7 @@ export function TeamsList({
                 </p>
               </div>
               {selectedTeamId === team.id ? (
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-end gap-2 sm:flex-row">
                   <Button
                     type="button"
                     variant="secondary"
@@ -113,6 +115,20 @@ export function TeamsList({
                   >
                     Edit team
                   </Button>
+                  {onTeamSettings && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      icon={<Settings className="h-4 w-4" />}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onTeamSettings(team);
+                      }}
+                      size="sm"
+                    >
+                      Settings
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />

@@ -354,6 +354,7 @@ export interface RoomData {
   roundHistory?: SessionRoundHistoryItem[];
   timerState?: TimerState;
   gameSession?: RoomGameSession;
+  teamId?: number;
 }
 
 export interface BroadcastMessage {

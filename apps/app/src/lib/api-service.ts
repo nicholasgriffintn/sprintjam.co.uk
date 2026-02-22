@@ -71,7 +71,7 @@ export async function createRoom(
   passcode?: string,
   settings?: Partial<RoomSettings>,
   avatar?: AvatarId,
-  options?: RequestOptions,
+  options?: RequestOptions & { teamId?: number },
 ): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
@@ -79,7 +79,13 @@ export async function createRoom(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, passcode, settings, avatar }),
+      body: JSON.stringify({
+        name,
+        passcode,
+        settings,
+        avatar,
+        teamId: options?.teamId,
+      }),
       signal: options?.signal,
       credentials: "include",
     });

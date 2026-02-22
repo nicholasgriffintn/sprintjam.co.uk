@@ -86,7 +86,10 @@ export function useRoomEntryActions({
           passcode || undefined,
           resolvedSettings,
           selectedAvatar,
-          { signal: controller.signal },
+          {
+            signal: controller.signal,
+            teamId: selectedWorkspaceTeamId ?? undefined,
+          },
         );
         applyServerDefaults(defaults);
         await upsertRoom(newRoom);

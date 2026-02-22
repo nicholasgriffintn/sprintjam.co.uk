@@ -193,6 +193,7 @@ export class PlanningRoomRoomDataStore {
       roundHistory: roundHistory?.length ? roundHistory : undefined,
       timerState,
       gameSession,
+      teamId: row.teamId ?? undefined,
     };
 
     return roomData;
@@ -228,6 +229,7 @@ export class PlanningRoomRoomDataStore {
         timerAutoReset:
           roomData.timerState?.autoResetOnVotesReset === false ? 0 : 1,
         gameSession: serializeJSON(roomData.gameSession),
+        teamId: roomData.teamId ?? null,
       };
 
       tx.insert(roomMeta)

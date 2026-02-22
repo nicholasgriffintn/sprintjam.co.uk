@@ -11,10 +11,11 @@ import {
   fetchJiraTicket,
   updateJiraStoryPoints,
 } from "@sprintjam/services";
-import { getRoomSessionToken, getRoomStub } from "@sprintjam/utils";
+import { getRoomSessionToken } from "@sprintjam/utils";
 
 import { jsonError, jsonResponse } from "../../lib/response";
 import { isAuthError, parseOptionalNote, validateSession } from "./shared";
+import { resolveJiraCredentials } from "./credential-resolver";
 
 const JIRA_AUTH_ERROR_HINTS = ["session", "oauth", "reconnect"] as const;
 
@@ -30,61 +31,13 @@ function getJiraOAuthConfig(env: RoomWorkerEnv) {
 }
 
 async function getJiraCredentials(env: RoomWorkerEnv, roomKey: string) {
-  const roomObject = getRoomStub(env, roomKey);
-  const credentialsResponse = await roomObject.fetch(
-    new Request("https://internal/jira/oauth/credentials", {
-      method: "GET",
-    }) as unknown as CfRequest,
-  );
-
-  if (!credentialsResponse.ok) {
+  const resolved = await resolveJiraCredentials(env, roomKey);
+  if (!resolved) {
     throw new Error(
       "Jira not connected. Please connect your Jira account in settings.",
     );
   }
-
-  const { credentials } = await credentialsResponse.json<{
-    credentials: {
-      id: number;
-      roomKey: string;
-      accessToken: string;
-      refreshToken: string | null;
-      tokenType: string;
-      expiresAt: number;
-      scope: string | null;
-      jiraDomain: string;
-      jiraCloudId: string | null;
-      jiraUserId: string | null;
-      jiraUserEmail: string | null;
-      storyPointsField: string | null;
-      sprintField: string | null;
-      authorizedBy: string;
-      createdAt: number;
-      updatedAt: number;
-    };
-  }>();
-
-  return { credentials, roomObject };
-}
-
-function createTokenRefreshHandler(roomObject: ReturnType<typeof getRoomStub>) {
-  return async (
-    accessToken: string,
-    refreshToken: string,
-    expiresAt: number,
-  ) => {
-    const response = await roomObject.fetch(
-      new Request("https://internal/jira/oauth/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-      }) as unknown as CfRequest,
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to persist Jira token refresh.");
-    }
-  };
+  return resolved;
 }
 
 export async function getJiraTicketController(
@@ -118,8 +71,10 @@ export async function getJiraTicketController(
       return jsonError("Jira OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getJiraCredentials(env, roomKey);
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
+    const { credentials, onTokenRefresh } = await getJiraCredentials(
+      env,
+      roomKey,
+    );
 
     const ticket = await fetchJiraTicket(
       credentials,
@@ -174,8 +129,10 @@ export async function updateJiraStoryPointsController(
       return jsonError("Jira OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getJiraCredentials(env, roomKey);
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
+    const { credentials, onTokenRefresh } = await getJiraCredentials(
+      env,
+      roomKey,
+    );
 
     const currentTicket = await fetchJiraTicket(
       credentials,
@@ -262,8 +219,10 @@ export async function getJiraBoardsController(
       return jsonError("Jira OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getJiraCredentials(env, roomKey);
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
+    const { credentials, onTokenRefresh } = await getJiraCredentials(
+      env,
+      roomKey,
+    );
     const boards = await fetchJiraBoards(
       credentials,
       onTokenRefresh,
@@ -313,8 +272,10 @@ export async function getJiraSprintsController(
       return jsonError("Jira OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getJiraCredentials(env, roomKey);
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
+    const { credentials, onTokenRefresh } = await getJiraCredentials(
+      env,
+      roomKey,
+    );
     const sprints = await fetchJiraSprints(
       credentials,
       boardId,
@@ -371,8 +332,10 @@ export async function getJiraIssuesController(
       return jsonError("Jira OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getJiraCredentials(env, roomKey);
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
+    const { credentials, onTokenRefresh } = await getJiraCredentials(
+      env,
+      roomKey,
+    );
     const tickets = await fetchJiraBoardIssues(
       credentials,
       boardId,

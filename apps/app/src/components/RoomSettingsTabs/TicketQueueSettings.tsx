@@ -2,6 +2,9 @@ import type { RoomSettings, JudgeAlgorithm } from "@/types";
 import { useJiraOAuth } from "@/hooks/useJiraOAuth";
 import { useLinearOAuth } from "@/hooks/useLinearOAuth";
 import { useGithubOAuth } from "@/hooks/useGithubOAuth";
+import { useTeamOAuth } from "@/hooks/useTeamOAuth";
+import { useRoomState } from "@/context/RoomContext";
+import { useSessionState } from "@/context/SessionContext";
 import { BetaBadge } from "@/components/BetaBadge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -25,6 +28,11 @@ export function TicketQueueSettings({
   ) => void;
   isCreating?: boolean;
 }) {
+  const { roomData } = useRoomState();
+  const { selectedWorkspaceTeamId } = useSessionState();
+  const teamId = isCreating
+    ? selectedWorkspaceTeamId
+    : (roomData?.teamId ?? null);
   const {
     status: jiraStatus,
     loading: jiraLoading,
@@ -53,6 +61,19 @@ export function TicketQueueSettings({
     connect: githubConnect,
     disconnect: githubDisconnect,
   } = useGithubOAuth();
+
+  const { status: teamJiraStatus, loading: teamJiraLoading } = useTeamOAuth(
+    teamId,
+    "jira",
+  );
+  const { status: teamLinearStatus, loading: teamLinearLoading } = useTeamOAuth(
+    teamId,
+    "linear",
+  );
+  const { status: teamGithubStatus, loading: teamGithubLoading } = useTeamOAuth(
+    teamId,
+    "github",
+  );
 
   const autoSyncEnabled = localSettings.autoSyncEstimates ?? true;
   const handleAutoSyncToggle = (checked: boolean) => {
@@ -203,6 +224,15 @@ export function TicketQueueSettings({
                     <p className="text-sm text-slate-600 dark:text-slate-400">
                       Jira integration will be available to configure in room
                       settings after creation.
+                    </p>
+                  </div>
+                ) : teamJiraStatus.connected ? (
+                  <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3 dark:border-brand-800/50 dark:bg-brand-900/20">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      ✓ Using team Jira integration
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      Managed in workspace team settings.
                     </p>
                   </div>
                 ) : (
@@ -359,6 +389,15 @@ export function TicketQueueSettings({
                       settings after creation.
                     </p>
                   </div>
+                ) : teamLinearStatus.connected ? (
+                  <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3 dark:border-brand-800/50 dark:bg-brand-900/20">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      ✓ Using team Linear integration
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      Managed in workspace team settings.
+                    </p>
+                  </div>
                 ) : (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
                     {linearLoading ? (
@@ -429,6 +468,15 @@ export function TicketQueueSettings({
                     <p className="text-sm text-slate-600 dark:text-slate-400">
                       GitHub integration will be available to configure in room
                       settings after creation.
+                    </p>
+                  </div>
+                ) : teamGithubStatus.connected ? (
+                  <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3 dark:border-brand-800/50 dark:bg-brand-900/20">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      ✓ Using team GitHub integration
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      Managed in workspace team settings.
                     </p>
                   </div>
                 ) : (

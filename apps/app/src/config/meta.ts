@@ -57,6 +57,14 @@ export const META_CONFIGS: Record<string, MetaTagConfig> = {
       "team management, create teams, workspace teams, team administration",
     ogImage: "/og-image.png",
   },
+  workspaceAdminTeamSettings: {
+    title: `Team Settings - ${SITE_NAME}`,
+    description:
+      "Configure default room settings and integrations for your team.",
+    keywords:
+      "team settings, default settings, team integrations, jira, linear, github",
+    ogImage: "/og-image.png",
+  },
   create: {
     title: `Create Room - ${SITE_NAME}`,
     description:

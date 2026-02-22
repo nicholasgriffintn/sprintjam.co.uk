@@ -265,6 +265,17 @@ export class WorkspaceAuthRepository {
     return this.teams.getWorkspaceStats(userId);
   }
 
+  getTeamSettings(teamId: number) {
+    return this.teams.getTeamSettings(teamId);
+  }
+
+  saveTeamSettings(
+    teamId: number,
+    settings: import("@sprintjam/types").RoomSettings,
+  ): Promise<void> {
+    return this.teams.saveTeamSettings(teamId, settings);
+  }
+
   cleanupExpiredMagicLinks(): Promise<number> {
     return this.auth.cleanupExpiredMagicLinks();
   }

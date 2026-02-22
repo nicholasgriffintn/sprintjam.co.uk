@@ -147,6 +147,14 @@ export async function handleHttpRequest(
       return handleGithubRevoke(ctx, request);
     }
 
+    if (url.pathname === '/room/team-id' && request.method === 'GET') {
+      const roomData = await ctx.getRoomData();
+      return new Response(
+        JSON.stringify({ teamId: roomData?.teamId ?? null }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ) as unknown as CfResponse;
+    }
+
     return null;
   } catch (error) {
     console.error("Error in handleHttpRequest:", error);

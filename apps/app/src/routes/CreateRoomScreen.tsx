@@ -14,6 +14,7 @@ import {
 } from "@/context/SessionContext";
 import { useRoomActions, useRoomState } from "@/context/RoomContext";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
+import { getTeamSettings } from "@/lib/workspace-service";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
@@ -63,20 +64,45 @@ const CreateRoomScreen = () => {
       value: preset.id,
     })) ?? [];
 
-  useEffect(() => {
-    if (defaults) {
-      setAdvancedSettings(defaults);
-      advancedSettingsRef.current = defaults;
-      setSettingsResetKey((key) => key + 1);
-      setVotingMode(
-        defaults.enableStructuredVoting ? "structured" : "standard",
-      );
-      setSelectedSequenceId(defaults.votingSequenceId ?? "fibonacci-short");
-    }
-  }, [defaults]);
-
   const { selectedWorkspaceTeamId } = useSessionState();
   const { setSelectedWorkspaceTeamId } = useSessionActions();
+
+  const applySettings = (settings: RoomSettings) => {
+    setAdvancedSettings(settings);
+    advancedSettingsRef.current = settings;
+    setSettingsResetKey((key) => key + 1);
+    setVotingMode(settings.enableStructuredVoting ? "structured" : "standard");
+    setSelectedSequenceId(settings.votingSequenceId ?? "fibonacci-short");
+  };
+
+  // Apply server defaults initially (only when no team is selected)
+  useEffect(() => {
+    if (defaults && !selectedWorkspaceTeamId) {
+      applySettings(defaults);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaults]);
+
+  // Preload team settings when the selected team changes
+  useEffect(() => {
+    if (!defaults) return;
+
+    if (!selectedWorkspaceTeamId) {
+      applySettings(defaults);
+      return;
+    }
+
+    getTeamSettings(selectedWorkspaceTeamId)
+      .then((teamSettings) => {
+        applySettings(
+          teamSettings ? { ...defaults, ...teamSettings } : defaults,
+        );
+      })
+      .catch(() => {
+        // Fall back to server defaults if fetch fails
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWorkspaceTeamId]);
 
   const teamPreloadDone = useRef(false);
   useEffect(() => {

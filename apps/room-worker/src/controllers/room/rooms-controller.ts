@@ -20,12 +20,14 @@ export async function createRoomController(
     passcode?: string;
     settings?: Partial<RoomSettings>;
     avatar?: string;
+    teamId?: number;
   }>();
 
   const name = body?.name;
   const passcode = body?.passcode;
   const settings = body?.settings;
   const avatar = body?.avatar;
+  const teamId = body?.teamId;
 
   if (!name) {
     return jsonError("Name is required");
@@ -65,6 +67,7 @@ export async function createRoomController(
         passcode,
         settings,
         avatar,
+        teamId,
       }),
     }) as unknown as CfRequest,
   );

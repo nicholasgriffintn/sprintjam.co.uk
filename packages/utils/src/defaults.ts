@@ -4,7 +4,7 @@ import type {
   RoomData,
   RoomSettings,
   VotingSequenceTemplate,
-} from '@sprintjam/types';
+} from "@sprintjam/types";
 import { JudgeAlgorithm } from "@sprintjam/types";
 
 import { STRUCTURED_VOTING_OPTIONS } from "./config/constants";
@@ -13,7 +13,7 @@ import {
   DEFAULT_VOTING_SEQUENCE_ID,
   VOTING_SEQUENCE_TEMPLATES,
 } from "./config/voting";
-import { generateVoteOptionsMetadata, getDefaultVotingCriteria } from './votes';
+import { generateVoteOptionsMetadata, getDefaultVotingCriteria } from "./votes";
 
 const DEFAULT_RESULTS_DISPLAY = {
   showVoteDistribution: true,
@@ -333,6 +333,7 @@ interface InitialRoomOptions {
   connectedUsers?: Record<string, boolean>;
   passcodeHash?: PasscodeHashPayload;
   settings?: Partial<RoomSettings>;
+  teamId?: number;
 }
 
 export function createInitialRoomData(options: InitialRoomOptions): RoomData {
@@ -343,6 +344,7 @@ export function createInitialRoomData(options: InitialRoomOptions): RoomData {
     connectedUsers = {},
     passcodeHash,
     settings,
+    teamId,
   } = options;
 
   const settingsWithDefaults = getDefaultRoomSettings(settings);
@@ -359,6 +361,7 @@ export function createInitialRoomData(options: InitialRoomOptions): RoomData {
     settings: settingsWithDefaults,
     status: "active",
     passcodeHash,
+    teamId,
   };
 }
 

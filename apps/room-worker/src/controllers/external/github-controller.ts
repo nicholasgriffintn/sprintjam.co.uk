@@ -11,7 +11,7 @@ import {
   fetchGithubRepos,
   updateGithubEstimate,
 } from "@sprintjam/services";
-import { getRoomStub, getRoomSessionToken } from "@sprintjam/utils";
+import { getRoomSessionToken } from "@sprintjam/utils";
 import { jsonError, jsonResponse } from "../../lib/response";
 import {
   isAuthError,
@@ -19,6 +19,7 @@ import {
   parseOptionalNote,
   validateSession,
 } from "./shared";
+import { resolveGithubCredentials } from "./credential-resolver";
 
 const GITHUB_AUTH_ERROR_HINTS = ["session", "connect"] as const;
 
@@ -37,24 +38,13 @@ async function getGithubCredentials(
   env: RoomWorkerEnv,
   roomKey: string,
 ): Promise<GithubOAuthCredentials> {
-  const roomObject = getRoomStub(env, roomKey);
-  const credentialsResponse = await roomObject.fetch(
-    new Request("https://internal/github/oauth/credentials", {
-      method: "GET",
-    }) as unknown as CfRequest,
-  );
-
-  if (!credentialsResponse.ok) {
+  const resolved = await resolveGithubCredentials(env, roomKey);
+  if (!resolved) {
     throw new Error(
       "GitHub not connected. Please connect your GitHub account in settings.",
     );
   }
-
-  const { credentials } = await credentialsResponse.json<{
-    credentials: GithubOAuthCredentials;
-  }>();
-
-  return credentials;
+  return resolved.credentials;
 }
 
 export async function getGithubIssueController(

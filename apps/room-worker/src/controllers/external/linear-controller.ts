@@ -11,7 +11,7 @@ import {
   fetchLinearIssue,
   updateLinearEstimate,
 } from "@sprintjam/services";
-import { getRoomSessionToken, getRoomStub } from "@sprintjam/utils";
+import { getRoomSessionToken } from "@sprintjam/utils";
 import { jsonError, jsonResponse } from "../../lib/response";
 import {
   isAuthError,
@@ -19,6 +19,7 @@ import {
   parseOptionalNote,
   validateSession,
 } from "./shared";
+import { resolveLinearCredentials } from "./credential-resolver";
 
 const LINEAR_AUTH_ERROR_HINTS = ["session", "oauth", "reconnect"] as const;
 
@@ -34,55 +35,13 @@ function getLinearOAuthConfig(env: RoomWorkerEnv) {
 }
 
 async function getLinearCredentials(env: RoomWorkerEnv, roomKey: string) {
-  const roomObject = getRoomStub(env, roomKey);
-  const credentialsResponse = await roomObject.fetch(
-    new Request("https://internal/linear/oauth/credentials", {
-      method: "GET",
-    }) as unknown as CfRequest,
-  );
-
-  if (!credentialsResponse.ok) {
+  const resolved = await resolveLinearCredentials(env, roomKey);
+  if (!resolved) {
     throw new Error(
       "Linear not connected. Please connect your Linear account in settings.",
     );
   }
-
-  const { credentials } = await credentialsResponse.json<{
-    credentials: {
-      id: number;
-      roomKey: string;
-      accessToken: string;
-      refreshToken: string | null;
-      tokenType: string;
-      expiresAt: number;
-      scope: string | null;
-      linearOrganizationId: string | null;
-      linearUserId: string | null;
-      linearUserEmail: string | null;
-      estimateField: string | null;
-      authorizedBy: string;
-      createdAt: number;
-      updatedAt: number;
-    };
-  }>();
-
-  return { credentials, roomObject };
-}
-
-function createTokenRefreshHandler(roomObject: ReturnType<typeof getRoomStub>) {
-  return async (
-    accessToken: string,
-    refreshToken: string,
-    expiresAt: number,
-  ): Promise<void> => {
-    await roomObject.fetch(
-      new Request("https://internal/linear/oauth/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-      }) as unknown as CfRequest,
-    );
-  };
+  return resolved;
 }
 
 export async function getLinearIssueController(
@@ -116,11 +75,10 @@ export async function getLinearIssueController(
       return jsonError("Linear OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getLinearCredentials(
+    const { credentials, onTokenRefresh } = await getLinearCredentials(
       env,
       roomKey,
     );
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
 
     const issue = await fetchLinearIssue(
       credentials,
@@ -175,11 +133,10 @@ export async function updateLinearEstimateController(
       return jsonError("Linear OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getLinearCredentials(
+    const { credentials, onTokenRefresh } = await getLinearCredentials(
       env,
       roomKey,
     );
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
 
     const currentIssue = await fetchLinearIssue(
       credentials,
@@ -265,11 +222,10 @@ export async function getLinearTeamsController(
       return jsonError("Linear OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getLinearCredentials(
+    const { credentials, onTokenRefresh } = await getLinearCredentials(
       env,
       roomKey,
     );
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
     const teams = await fetchLinearTeams(
       credentials,
       onTokenRefresh,
@@ -319,11 +275,10 @@ export async function getLinearCyclesController(
       return jsonError("Linear OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getLinearCredentials(
+    const { credentials, onTokenRefresh } = await getLinearCredentials(
       env,
       roomKey,
     );
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
     const cycles = await fetchLinearCycles(
       credentials,
       teamId,
@@ -380,11 +335,10 @@ export async function getLinearIssuesController(
       return jsonError("Linear OAuth not configured", 500);
     }
 
-    const { credentials, roomObject } = await getLinearCredentials(
+    const { credentials, onTokenRefresh } = await getLinearCredentials(
       env,
       roomKey,
     );
-    const onTokenRefresh = createTokenRefreshHandler(roomObject);
     const tickets = await fetchLinearIssues(
       credentials,
       teamId,
