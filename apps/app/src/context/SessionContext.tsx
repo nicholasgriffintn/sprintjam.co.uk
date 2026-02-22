@@ -15,20 +15,22 @@ import { navigateTo, parsePath, type AppScreen } from "@/config/routes";
 
 interface SessionStateContextValue {
   screen: AppScreen;
-  joinFlowMode: "join" | "create";
+  joinFlowMode: 'join' | 'create';
   name: string;
   roomKey: string;
   passcode: string;
   selectedAvatar: AvatarId | null;
+  selectedWorkspaceTeamId: number | null;
 }
 
 interface SessionActionsContextValue {
   setScreen: (screen: AppScreen) => void;
-  setJoinFlowMode: (mode: "join" | "create") => void;
+  setJoinFlowMode: (mode: 'join' | 'create') => void;
   setName: (name: string) => void;
   setRoomKey: (key: string) => void;
   setPasscode: (passcode: string) => void;
   setSelectedAvatar: (avatar: AvatarId | null) => void;
+  setSelectedWorkspaceTeamId: (teamId: number | null) => void;
   goHome: () => void;
   goToLogin: () => void;
   goToWorkspace: () => void;
@@ -36,7 +38,7 @@ interface SessionActionsContextValue {
   goToWorkspaceAdmin: () => void;
   goToWorkspaceAdminTeams: () => void;
   goToRoom: (roomKey: string) => void;
-  startCreateFlow: () => void;
+  startCreateFlow: (teamId?: number) => void;
   startJoinFlow: () => void;
 }
 
@@ -79,6 +81,9 @@ export const SessionProvider = ({
   const [roomKey, setRoomKey] = useState(initialPath.roomKey ?? "");
   const [passcode, setPasscode] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(null);
+  const [selectedWorkspaceTeamId, setSelectedWorkspaceTeamId] = useState<
+    number | null
+  >(null);
   const [error, setErrorState] = useState("");
   const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
 
@@ -99,6 +104,7 @@ export const SessionProvider = ({
     setPasscode("");
     setJoinFlowMode("join");
     setScreen("welcome");
+    setSelectedWorkspaceTeamId(null);
     navigateTo("welcome");
     clearError();
   }, [clearError]);
@@ -153,13 +159,17 @@ export const SessionProvider = ({
     [clearError],
   );
 
-  const startCreateFlow = useCallback(() => {
-    setPasscode("");
-    setJoinFlowMode("create");
-    setScreen("create");
-    navigateTo("create");
-    clearError();
-  }, [clearError]);
+  const startCreateFlow = useCallback(
+    (teamId?: number) => {
+      setPasscode('');
+      setJoinFlowMode('create');
+      setScreen('create');
+      setSelectedWorkspaceTeamId(teamId ?? null);
+      navigateTo('create');
+      clearError();
+    },
+    [clearError],
+  );
 
   const startJoinFlow = useCallback(() => {
     setPasscode("");
@@ -203,8 +213,17 @@ export const SessionProvider = ({
       roomKey,
       passcode,
       selectedAvatar,
+      selectedWorkspaceTeamId,
     }),
-    [screen, joinFlowMode, name, roomKey, passcode, selectedAvatar],
+    [
+      screen,
+      joinFlowMode,
+      name,
+      roomKey,
+      passcode,
+      selectedAvatar,
+      selectedWorkspaceTeamId,
+    ],
   );
 
   const actionsValue = useMemo<SessionActionsContextValue>(
@@ -215,6 +234,7 @@ export const SessionProvider = ({
       setRoomKey,
       setPasscode,
       setSelectedAvatar,
+      setSelectedWorkspaceTeamId,
       goHome,
       goToLogin,
       goToWorkspace,

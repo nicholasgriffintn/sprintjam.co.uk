@@ -40,7 +40,7 @@ export function Select({
           onValueChange?.(event.currentTarget.value);
         }}
         className={cn(
-          "h-10 w-full appearance-none rounded-md border border-slate-300/70 bg-white/85 px-3 pr-8 text-sm text-slate-800 shadow-sm transition-colors focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/20 dark:bg-slate-950/35 dark:text-slate-200 dark:focus:border-brand-400 dark:focus:ring-brand-900 dark:disabled:bg-slate-800 dark:disabled:text-slate-500",
+          "w-full appearance-none rounded-2xl border border-white/50 bg-white/80 px-4 py-3 pr-10 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900 dark:disabled:bg-slate-800 dark:disabled:text-slate-500",
           className,
         )}
       >

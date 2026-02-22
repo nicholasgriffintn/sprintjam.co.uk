@@ -10,12 +10,12 @@ import type {
   RoomSettings,
   ServerDefaults,
 } from "@/types";
-
 interface UseRoomEntryActionsOptions {
   name: string;
   roomKey: string;
   passcode: string;
   selectedAvatar: AvatarId | null;
+  selectedWorkspaceTeamId?: number | null;
   pendingCreateSettings: Partial<RoomSettings> | null;
   applyServerDefaults: (defaults?: ServerDefaults) => void;
   clearError: () => void;
@@ -25,6 +25,11 @@ interface UseRoomEntryActionsOptions {
   setIsModeratorView: (isModerator: boolean) => void;
   setPendingCreateSettings: (settings: Partial<RoomSettings> | null) => void;
   setIsLoading: (isLoading: boolean) => void;
+  createSession: (payload: {
+    teamId: number;
+    name: string;
+    roomKey: string;
+  }) => Promise<unknown>;
 }
 
 export function useRoomEntryActions({
@@ -32,6 +37,7 @@ export function useRoomEntryActions({
   roomKey,
   passcode,
   selectedAvatar,
+  selectedWorkspaceTeamId,
   pendingCreateSettings,
   applyServerDefaults,
   clearError,
@@ -41,6 +47,7 @@ export function useRoomEntryActions({
   setIsModeratorView,
   setPendingCreateSettings,
   setIsLoading,
+  createSession,
 }: UseRoomEntryActionsOptions) {
   const latestRoomRequestRef = useRef<AbortController | null>(null);
 
@@ -83,6 +90,19 @@ export function useRoomEntryActions({
         );
         applyServerDefaults(defaults);
         await upsertRoom(newRoom);
+
+        if (selectedWorkspaceTeamId) {
+          try {
+            await createSession({
+              teamId: selectedWorkspaceTeamId,
+              name: `${name}'s Session`,
+              roomKey: newRoom.key,
+            });
+          } catch (e) {
+            console.error("Failed to link room to team", e);
+          }
+        }
+
         setActiveRoomKey(newRoom.key);
         setIsModeratorView(true);
         goToRoom(newRoom.key);
@@ -100,12 +120,14 @@ export function useRoomEntryActions({
     [
       name,
       selectedAvatar,
+      selectedWorkspaceTeamId,
       pendingCreateSettings,
       setIsLoading,
       clearError,
       startRoomRequest,
       passcode,
       applyServerDefaults,
+      createSession,
       setActiveRoomKey,
       setIsModeratorView,
       goToRoom,

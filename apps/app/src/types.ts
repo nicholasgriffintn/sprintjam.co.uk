@@ -109,6 +109,7 @@ export interface ServerDefaults {
   structuredVotingOptions: (string | number)[];
   votingSequences?: VotingSequenceTemplate[];
   extraVoteOptions?: ExtraVoteOption[];
+  enableWorkspaceRequests?: boolean;
 }
 
 export type JudgeMetadata = Omit<SharedJudgeMetadata, "algorithm"> & {

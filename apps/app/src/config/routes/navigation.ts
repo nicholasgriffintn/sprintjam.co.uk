@@ -50,15 +50,16 @@ export function parsePath(path: string): ParsedPath {
   for (const route of getDynamicRoutes()) {
     const match = normalizedPath.match(route.pathPattern!);
     if (match) {
-      if (route.screen === "room") {
+      if (route.screen === 'room') {
         const roomKey = match[1];
 
         if (!roomKey) {
-          return { screen: "404" };
+          return { screen: '404' };
         }
 
-        return { screen: "room", roomKey: roomKey.toUpperCase() };
+        return { screen: 'room', roomKey: roomKey.toUpperCase() };
       }
+
       return { screen: route.screen };
     }
   }
@@ -66,7 +67,10 @@ export function parsePath(path: string): ParsedPath {
   return { screen: "404" };
 }
 
-export type RouteParams = { roomKey?: string; wheelKey?: string };
+export type RouteParams = {
+  roomKey?: string;
+  wheelKey?: string;
+};
 
 function normaliseParams(
   params?: RouteParams | string,

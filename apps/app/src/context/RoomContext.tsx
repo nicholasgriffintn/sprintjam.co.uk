@@ -36,15 +36,24 @@ import {
   useRoomStatus,
 } from "./room-context-store";
 import { useRoomEntryActions } from "./useRoomEntryActions";
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useRoomQueueAndGameActions } from "./useRoomQueueAndGameActions";
 import { useRoomRealtimeState } from "./useRoomRealtimeState";
 import { useRoomVotingActions } from "./useRoomVotingActions";
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
-  const { screen, name, roomKey, passcode, selectedAvatar } = useSessionState();
+  const {
+    screen,
+    name,
+    roomKey,
+    passcode,
+    selectedAvatar,
+    selectedWorkspaceTeamId,
+  } = useSessionState();
   const { setScreen, setRoomKey, setPasscode, goHome, goToRoom } =
     useSessionActions();
   const { setError, clearError } = useSessionErrors();
+  const { createSession } = useWorkspaceData();
 
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
   const [autoReconnectDone, setAutoReconnectDone] = useState(false);
@@ -175,6 +184,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       roomKey,
       passcode,
       selectedAvatar,
+      selectedWorkspaceTeamId,
       pendingCreateSettings,
       applyServerDefaults,
       clearError,
@@ -184,6 +194,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       setIsModeratorView,
       setPendingCreateSettings,
       setIsLoading,
+      createSession,
     });
 
   useAutoEstimateUpdate({

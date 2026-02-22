@@ -11,6 +11,12 @@ interface SessionsChartProps {
 
 type TimeRange = "month" | "quarter" | "all";
 
+function formatVelocity(v: number | null | undefined): string {
+  if (v === null || v === undefined) return "—";
+  if (v >= 10) return `${Math.round(v)}/hr`;
+  return `${v.toFixed(1)}/hr`;
+}
+
 export function SessionsChart({ data }: SessionsChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
 
@@ -30,6 +36,11 @@ export function SessionsChart({ data }: SessionsChartProps) {
 
   const maxCount = Math.max(...filteredData.map((d) => d.count), 1);
   const totalSessions = filteredData.reduce((sum, d) => sum + d.count, 0);
+  const totalVotes = filteredData.reduce(
+    (sum, d) => sum + (d.totalVotes ?? 0),
+    0,
+  );
+  const hasEstimationData = filteredData.some((d) => d.avgConsensusRate != null);
 
   const timeRangeOptions = [
     { id: "month" as const, label: "This month" },
@@ -64,7 +75,8 @@ export function SessionsChart({ data }: SessionsChartProps) {
             Sessions over time
           </h3>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            {totalSessions} sessions in selected period
+            {totalSessions} sessions
+            {totalVotes > 0 && ` · ${totalVotes.toLocaleString()} votes`}
           </p>
         </div>
         <div
@@ -78,11 +90,10 @@ export function SessionsChart({ data }: SessionsChartProps) {
               type="button"
               variant="unstyled"
               onClick={() => setTimeRange(option.id)}
-              className={`rounded-md px-3 py-1 text-xs font-semibold ${
-                timeRange === option.id
+              className={`rounded-md px-3 py-1 text-xs font-semibold ${timeRange === option.id
                   ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              }`}
+                }`}
             >
               {option.label}
             </Button>
@@ -100,9 +111,21 @@ export function SessionsChart({ data }: SessionsChartProps) {
                 <span className="font-medium text-slate-700 dark:text-slate-200">
                   {item.period}
                 </span>
-                <span className="text-slate-600 dark:text-slate-300">
-                  {item.count} {item.count === 1 ? "session" : "sessions"}
-                </span>
+                <div className="flex items-center gap-3">
+                  {hasEstimationData && item.avgConsensusRate != null && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                      {Math.round(item.avgConsensusRate)}% consensus
+                    </span>
+                  )}
+                  {hasEstimationData && item.avgVelocity != null && (
+                    <span className="text-xs text-violet-600 dark:text-violet-400">
+                      {formatVelocity(item.avgVelocity)}
+                    </span>
+                  )}
+                  <span className="text-slate-600 dark:text-slate-300">
+                    {item.count} {item.count === 1 ? "session" : "sessions"}
+                  </span>
+                </div>
               </div>
               <div className="h-8 w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                 <motion.div
@@ -113,11 +136,10 @@ export function SessionsChart({ data }: SessionsChartProps) {
                     delay: 0.1 * index,
                     ease: "easeOut",
                   }}
-                  className={`h-full rounded-lg ${
-                    item.count > 0
+                  className={`h-full rounded-lg ${item.count > 0
                       ? "bg-gradient-to-r from-brand-500 to-brand-600"
                       : "bg-slate-200 dark:bg-slate-700"
-                  }`}
+                    }`}
                 />
               </div>
             </div>

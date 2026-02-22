@@ -1,4 +1,5 @@
-import { Building2, Target } from "lucide-react";
+import { Building2, Target, Plus } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { TeamSelector } from "@/components/workspace/TeamSelector";
@@ -29,7 +30,7 @@ export default function WorkspaceSessions() {
     refreshWorkspace,
   } = useWorkspaceData();
 
-  const { goToLogin, goToRoom } = useSessionActions();
+  const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
 
   const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
 
@@ -92,10 +93,19 @@ export default function WorkspaceSessions() {
                       Team sessions
                     </p>
                   </div>
-                  <Badge variant="success" size="sm" className="font-semibold">
-                    <Target className="mr-1.5 h-3.5 w-3.5" />
-                    {sessions.length}
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="success" size="sm" className="font-semibold">
+                      <Target className="mr-1.5 h-3.5 w-3.5" />
+                      {sessions.length}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      onClick={() => startCreateFlow(selectedTeam.id)}
+                      icon={<Plus className="h-4 w-4" />}
+                    >
+                      New Session
+                    </Button>
+                  </div>
                 </div>
                 <SessionList
                   sessions={sessions}

@@ -11,6 +11,7 @@ import {
   useSessionState,
 } from "@/context/SessionContext";
 import { useRoomActions, useRoomState } from "@/context/RoomContext";
+import { useWorkspaceData } from '@/hooks/useWorkspaceData';
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
@@ -34,6 +35,9 @@ const CreateRoomScreen = () => {
     setJoinFlowMode,
   } = useSessionActions();
   const { clearError } = useSessionErrors();
+
+  const { teams, isAuthenticated } = useWorkspaceData();
+
   const { serverDefaults } = useRoomState();
   const { setPendingCreateSettings } = useRoomActions();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -68,6 +72,19 @@ const CreateRoomScreen = () => {
       setSelectedSequenceId(defaults.votingSequenceId ?? "fibonacci-short");
     }
   }, [defaults]);
+
+  const { selectedWorkspaceTeamId } = useSessionState();
+  const { setSelectedWorkspaceTeamId } = useSessionActions();
+
+  const handleTeamChange = (teamIdStr: string) => {
+    const teamId = parseInt(teamIdStr, 10);
+    if (!isNaN(teamId)) {
+      setSelectedWorkspaceTeamId(teamId);
+      // TODO: Apply team defaults
+    } else {
+      setSelectedWorkspaceTeamId(null);
+    }
+  };
 
   const canStart = validateName(name).ok;
   const advancedReady = Boolean(advancedSettings && defaults);
@@ -155,6 +172,32 @@ const CreateRoomScreen = () => {
               fullWidth
             />
 
+            {isAuthenticated && teams.length > 0 && (
+              <div>
+                <label
+                  htmlFor="team-select"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  Workspace Team
+                </label>
+                <Select
+                  id="team-select"
+                  value={selectedWorkspaceTeamId?.toString() ?? 'none'}
+                  onValueChange={handleTeamChange}
+                  options={[
+                    { label: 'Personal Room (No Team)', value: 'none' },
+                    ...teams.map((t) => ({
+                      label: t.name,
+                      value: t.id.toString(),
+                    })),
+                  ]}
+                />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Select a team to track sessions in your workspace.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-4 rounded-2xl border border-slate-200/60 bg-white/50 p-4 dark:border-white/10 dark:bg-slate-900/40">
               <div>
                 <div className="flex items-center justify-between">
@@ -173,25 +216,25 @@ const CreateRoomScreen = () => {
                     type="button"
                     variant="unstyled"
                     role="switch"
-                    aria-checked={votingMode === "structured"}
+                    aria-checked={votingMode === 'structured'}
                     id="voting-mode"
                     onClick={() =>
                       setVotingMode(
-                        votingMode === "structured" ? "standard" : "structured",
+                        votingMode === 'structured' ? 'standard' : 'structured',
                       )
                     }
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 justify-start rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:ring-brand-500 ${
-                      votingMode === "structured"
-                        ? "bg-brand-600 dark:bg-brand-500"
-                        : "bg-slate-200 dark:bg-slate-700"
+                      votingMode === 'structured'
+                        ? 'bg-brand-600 dark:bg-brand-500'
+                        : 'bg-slate-200 dark:bg-slate-700'
                     }`}
                     data-testid="create-voting-mode"
                   >
                     <span
                       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        votingMode === "structured"
-                          ? "translate-x-5"
-                          : "translate-x-0"
+                        votingMode === 'structured'
+                          ? 'translate-x-5'
+                          : 'translate-x-0'
                       }`}
                     />
                   </Button>
@@ -211,21 +254,20 @@ const CreateRoomScreen = () => {
                   onValueChange={(value) =>
                     setSelectedSequenceId(value as VotingSequenceId)
                   }
-                  disabled={votingMode === "structured"}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800 dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
+                  disabled={votingMode === 'structured'}
                   data-testid="create-estimate-sequence"
                   options={votingPresetOptions}
                 />
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {votingMode === "structured"
-                    ? "(Always uses the default option for structured voting)"
+                  {votingMode === 'structured'
+                    ? '(Always uses the default option for structured voting)'
                     : (() => {
                         const preset = votingPresets?.find(
                           (p) => p.id === selectedSequenceId,
                         );
                         return preset?.options
-                          ? `Cards: ${preset.options.join(", ")}`
-                          : "Choose your estimation scale";
+                          ? `Cards: ${preset.options.join(', ')}`
+                          : 'Choose your estimation scale';
                       })()}
                 </p>
               </div>

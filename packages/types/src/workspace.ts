@@ -30,6 +30,9 @@ export interface SessionTimelineData {
   period: string;
   yearMonth: string;
   count: number;
+  avgConsensusRate?: number;
+  avgVelocity?: number | null;
+  totalVotes?: number;
 }
 
 export interface WorkspaceStats {
