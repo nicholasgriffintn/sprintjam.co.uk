@@ -136,31 +136,37 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
         ].join(" ")}
       >
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                 {label}
               </span>
               <span
-                className="font-mono text-sm font-semibold"
+                className="block min-w-0 truncate font-mono text-sm font-semibold"
                 data-testid={`queue-ticket-id-${label.toLowerCase()}`}
+                title={ticket.ticketId}
               >
                 {ticket.ticketId}
               </span>
             </div>
             {!isPendingRow && ticket.title && (
-              <div className="text-slate-800 dark:text-slate-100">
+              <div
+                className="mt-1 line-clamp-2 break-words text-slate-800 dark:text-slate-100"
+                title={ticket.title}
+              >
                 {ticket.title}
               </div>
             )}
             {!isPendingRow && ticket.description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 break-all">
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 break-words">
                 {ticket.description}
               </p>
             )}
             {!isPendingRow && meta && ticket.externalService !== "none" && (
-              <div className="mt-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
-                {ticket.externalService}
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
+                <span className="max-w-full break-words">
+                  {ticket.externalService}
+                </span>
                 {link && (
                   <a
                     href={link}
@@ -346,21 +352,26 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                       key={ticket.id}
                       variant="unstyled"
                       onClick={() => onSelectTicket(ticket.id)}
-                      className="w-full rounded-lg border border-slate-200 bg-white p-3 text-left text-sm shadow-sm transition hover:border-green-500 hover:bg-green-50 focus-visible:ring-green-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-green-500 dark:hover:bg-green-900/20"
+                      className="w-full min-h-[88px] rounded-xl border border-slate-200 bg-white px-3 py-3 text-left text-sm shadow-sm transition-colors hover:border-emerald-400 hover:bg-emerald-50/50 focus-visible:border-emerald-500 focus-visible:ring-emerald-300 focus-visible:ring-offset-0 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-500 dark:hover:bg-emerald-900/20"
                       data-testid={`queue-select-ticket-${ticket.id}`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <span className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1 space-y-1.5">
+                          <span
+                            className="block truncate font-mono text-sm font-semibold text-slate-900 dark:text-white"
+                            title={ticket.ticketId}
+                          >
                             {ticket.ticketId}
                           </span>
-                          {ticket.title && (
-                            <p className="mt-1 text-xs text-slate-700 dark:text-slate-200 truncate">
-                              {ticket.title}
-                            </p>
-                          )}
+                          <div className="min-h-5">
+                            {ticket.title && (
+                              <p className="line-clamp-2 break-words text-xs leading-5 text-slate-700 dark:text-slate-200">
+                                {ticket.title}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <ChevronDown className="h-4 w-4 -rotate-90 text-green-600 dark:text-green-400 flex-shrink-0" />
+                        <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-emerald-600 dark:text-emerald-400" />
                       </div>
                     </Button>
                   ))}

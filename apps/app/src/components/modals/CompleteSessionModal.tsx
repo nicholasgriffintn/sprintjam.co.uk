@@ -55,6 +55,9 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
     onCompleteSession?.();
     onClose();
   };
+  const resetRoundHistory = roundHistory?.filter(
+    (entry) => entry.type === "reset",
+  );
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Complete session" size="lg">
@@ -63,7 +66,7 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
           <TicketQueueModalContent
             currentTicket={currentTicket}
             queue={queue}
-            roundHistory={roundHistory}
+            roundHistory={resetRoundHistory}
             externalService={externalService}
             roomKey={roomKey}
             userName={userName}
