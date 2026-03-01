@@ -295,15 +295,28 @@ export class AuthRepository {
     userId: number,
     organisationId: number,
   ): Promise<boolean> {
-    const owner = await this.db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.organisationId, organisationId))
-      .orderBy(users.createdAt)
-      .limit(1)
+    const org = await this.db
+      .select({ ownerId: organisations.ownerId })
+      .from(organisations)
+      .where(eq(organisations.id, organisationId))
       .get();
 
-    return owner?.id === userId;
+    return org?.ownerId === userId;
+  }
+
+  async setOrganisationOwnerIfNull(
+    organisationId: number,
+    userId: number,
+  ): Promise<void> {
+    await this.db
+      .update(organisations)
+      .set({ ownerId: userId, updatedAt: Date.now() })
+      .where(
+        and(
+          eq(organisations.id, organisationId),
+          isNull(organisations.ownerId),
+        ),
+      );
   }
 
   async updateUserOrganisation(

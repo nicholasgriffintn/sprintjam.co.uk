@@ -97,6 +97,13 @@ export class WorkspaceAuthRepository {
     return this.auth.isOrganisationOwner(userId, organisationId);
   }
 
+  setOrganisationOwnerIfNull(
+    organisationId: number,
+    userId: number,
+  ): Promise<void> {
+    return this.auth.setOrganisationOwnerIfNull(organisationId, userId);
+  }
+
   updateUserOrganisation(
     userId: number,
     organisationId: number,

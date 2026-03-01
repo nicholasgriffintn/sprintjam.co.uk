@@ -5,6 +5,7 @@ export const organisations = sqliteTable("organisations", {
   domain: text("domain").notNull().unique(),
   name: text("name").notNull(),
   logoUrl: text("logo_url"),
+  ownerId: integer("owner_id"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

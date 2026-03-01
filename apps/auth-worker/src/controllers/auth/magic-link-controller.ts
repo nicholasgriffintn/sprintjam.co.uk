@@ -90,7 +90,8 @@ export async function requestMagicLinkController(
     return jsonResponse(
       {
         error: "domain_not_allowed",
-        message: "Your email domain is not authorized for workspace access. Please contact your administrator."
+        message:
+          "Your email domain is not authorized for workspace access. Please contact your administrator.",
       },
       403,
     );
@@ -219,6 +220,7 @@ export async function verifyCodeController(
   }
 
   const userId = await repo.getOrCreateUser(email, organisationId);
+  await repo.setOrganisationOwnerIfNull(organisationId, userId);
   if (pendingInvite) {
     await repo.markWorkspaceInviteAccepted(pendingInvite.id, userId);
   }

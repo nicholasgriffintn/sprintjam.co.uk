@@ -71,6 +71,13 @@
       "when": 1772401373266,
       "tag": "0009_spotty_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1772401929775,
+      "tag": "0010_oval_triathlon",
+      "breakpoints": true
     }
   ]
 }

@@ -304,6 +304,7 @@ describe("verifyCodeController", () => {
       getOrCreateOrganisation: vi.fn(),
       updateUserOrganisation: vi.fn(),
       getOrCreateUser: vi.fn(),
+      setOrganisationOwnerIfNull: vi.fn(),
       getUserByEmail: vi.fn(),
       markWorkspaceInviteAccepted: vi.fn(),
       listMfaCredentials: vi.fn(),
@@ -442,6 +443,60 @@ describe("verifyCodeController", () => {
     expect(mockRepo.createAuthChallenge).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 200 }),
     );
+  });
+
+  it("should set organisation owner on sign in", async () => {
+    mockRepo.validateVerificationCode.mockResolvedValue({
+      success: true,
+      email: "owner@example.com",
+    });
+    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 100,
+      email: "owner@example.com",
+      name: null,
+      organisationId: 1,
+    });
+    mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
+    mockRepo.getOrCreateUser.mockResolvedValue(100);
+    mockRepo.listMfaCredentials.mockResolvedValue([]);
+
+    const request = makeRequest("https://test.com/auth/verify", {
+      method: "POST",
+      body: JSON.stringify({ email: "owner@example.com", code: "123456" }),
+    });
+
+    await verifyCodeController(request, mockEnv);
+
+    expect(mockRepo.setOrganisationOwnerIfNull).toHaveBeenCalledWith(1, 100);
+  });
+
+  it("should set organisation owner when signing in via invite", async () => {
+    mockRepo.validateVerificationCode.mockResolvedValue({
+      success: true,
+      email: "invitee@external.com",
+    });
+    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue({
+      id: 19,
+      organisationId: 42,
+      email: "invitee@external.com",
+    });
+    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 501,
+      email: "invitee@external.com",
+      name: null,
+      organisationId: 42,
+    });
+    mockRepo.getOrCreateUser.mockResolvedValue(501);
+    mockRepo.listMfaCredentials.mockResolvedValue([]);
+
+    const request = makeRequest("https://test.com/auth/verify", {
+      method: "POST",
+      body: JSON.stringify({ email: "invitee@external.com", code: "123456" }),
+    });
+
+    await verifyCodeController(request, mockEnv);
+
+    expect(mockRepo.setOrganisationOwnerIfNull).toHaveBeenCalledWith(42, 501);
   });
 
   it("should use workspace invite organisation when invite exists", async () => {
@@ -636,6 +691,7 @@ describe("getCurrentUserController", () => {
       id: 100,
       email: "test@example.com",
       name: "Test User",
+      avatar: null,
       organisationId: 1,
     });
     expect(data.teams).toHaveLength(2);
