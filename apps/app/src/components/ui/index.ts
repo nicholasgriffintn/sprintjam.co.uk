@@ -9,6 +9,7 @@ export { EmptyState } from "./EmptyState";
 export { Input } from "./Input";
 export type { InputProps } from "./Input";
 export { Modal } from "./Modal";
+export { Popover } from "./Popover";
 export { Progress } from "./Progress";
 export { ScrollArea } from "./ScrollArea";
 export { Separator } from "./Separator";

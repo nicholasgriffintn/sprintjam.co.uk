@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { Minimize2, Trophy } from 'lucide-react';
+import { HelpCircle, Minimize2, Trophy } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
+import { Popover } from '@/components/ui/Popover';
 import { ScrollArea } from '@/components/ui';
 import { SurfaceCard } from '@/components/ui/SurfaceCard';
 import { ROOM_GAMES } from '@/components/games/game-catalog';
@@ -61,6 +62,33 @@ export const RoomGamePanel = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {gameMeta ? (
+            <Popover
+              trigger={
+                <button
+                  type="button"
+                  aria-label="How to play"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+              }
+              title={`How to play: ${gameMeta.title}`}
+            >
+              <p className="mb-1 text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-slate-700 dark:text-slate-200">
+                  Objective:{' '}
+                </span>
+                {gameMeta.objective}
+              </p>
+              <p className="text-slate-600 dark:text-slate-300">
+                <span className="font-medium text-slate-700 dark:text-slate-200">
+                  Rules:{' '}
+                </span>
+                {gameMeta.rules}
+              </p>
+            </Popover>
+          ) : null}
           {onMinimise ? (
             <Button
               type="button"
