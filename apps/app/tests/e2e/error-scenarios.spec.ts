@@ -46,9 +46,11 @@ test.describe("Error scenarios", () => {
     );
 
     await reconnectPage.goto(`/room/${roomKey}`);
-    await expect(
-      reconnectPage.getByText(/Session expired.*rejoin the room/i),
-    ).toBeVisible();
+    const reconnectToast = reconnectPage.getByRole("alertdialog");
+    await expect(reconnectToast).toBeVisible();
+    await expect(reconnectToast).toContainText(
+      /Session expired.*rejoin the room/i,
+    );
 
     await reconnectContext.close();
   });

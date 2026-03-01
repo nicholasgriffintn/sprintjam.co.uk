@@ -108,18 +108,18 @@ export default function WorkspaceTeamSettings() {
       onLogin={goToLogin}
     >
       <div className="space-y-6">
+        <button
+          type="button"
+          onClick={() => goToWorkspaceAdminTeams()}
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-200"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to teams
+        </button>
         <div className="flex items-center gap-4">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => goToWorkspaceAdminTeams()}
-          >
-            Teams
-          </Button>
           <div>
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
-              {selectedTeam?.name ?? "Team"} Settings
+              {selectedTeam?.name ?? 'Team'} Settings
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
               Default settings and integrations for this team
@@ -209,11 +209,11 @@ export default function WorkspaceTeamSettings() {
                   metadata={
                     jiraOAuth.status.connected
                       ? [
-                          metaStr(jiraOAuth.status.metadata, "jiraDomain"),
-                          metaStr(jiraOAuth.status.metadata, "jiraUserEmail"),
+                          metaStr(jiraOAuth.status.metadata, 'jiraDomain'),
+                          metaStr(jiraOAuth.status.metadata, 'jiraUserEmail'),
                         ]
                           .filter(Boolean)
-                          .join(" · ") || undefined
+                          .join(' · ') || undefined
                       : undefined
                   }
                 />
@@ -231,17 +231,17 @@ export default function WorkspaceTeamSettings() {
                       ? [
                           metaStr(
                             linearOAuth.status.metadata,
-                            "linearOrganizationId",
+                            'linearOrganizationId',
                           )
-                            ? `Org: ${metaStr(linearOAuth.status.metadata, "linearOrganizationId")}`
+                            ? `Org: ${metaStr(linearOAuth.status.metadata, 'linearOrganizationId')}`
                             : undefined,
                           metaStr(
                             linearOAuth.status.metadata,
-                            "linearUserEmail",
+                            'linearUserEmail',
                           ),
                         ]
                           .filter(Boolean)
-                          .join(" · ") || undefined
+                          .join(' · ') || undefined
                       : undefined
                   }
                 />
@@ -257,17 +257,17 @@ export default function WorkspaceTeamSettings() {
                   metadata={
                     githubOAuth.status.connected
                       ? [
-                          metaStr(githubOAuth.status.metadata, "githubLogin"),
+                          metaStr(githubOAuth.status.metadata, 'githubLogin'),
                           metaStr(
                             githubOAuth.status.metadata,
-                            "defaultOwner",
+                            'defaultOwner',
                           ) &&
-                          metaStr(githubOAuth.status.metadata, "defaultRepo")
-                            ? `${metaStr(githubOAuth.status.metadata, "defaultOwner")}/${metaStr(githubOAuth.status.metadata, "defaultRepo")}`
+                          metaStr(githubOAuth.status.metadata, 'defaultRepo')
+                            ? `${metaStr(githubOAuth.status.metadata, 'defaultOwner')}/${metaStr(githubOAuth.status.metadata, 'defaultRepo')}`
                             : undefined,
                         ]
                           .filter(Boolean)
-                          .join(" · ") || undefined
+                          .join(' · ') || undefined
                       : undefined
                   }
                 />
