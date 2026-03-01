@@ -146,7 +146,6 @@ const RoomScreen = () => {
   });
 
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? true;
-  const queueProvider = roomData.settings.externalService || "none";
   const canManageQueue =
     isModeratorView || roomData.settings.allowOthersToManageQueue === true;
   const showSaveToWorkspace = isWorkspacesEnabled();

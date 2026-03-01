@@ -45,9 +45,13 @@ describe("useServerDefaults", () => {
   });
 
   it("keeps applied defaults when collection snapshot temporarily becomes null", () => {
-    const initialDefaults = getServerDefaults();
-    const appliedDefaults = {
-      ...getServerDefaults(),
+    const defaultsFromUtils = getServerDefaults();
+    const initialDefaults: ServerDefaults = {
+      ...defaultsFromUtils,
+      votingCriteria: defaultsFromUtils.votingCriteria ?? [],
+    };
+    const appliedDefaults: ServerDefaults = {
+      ...initialDefaults,
       roomSettings: {
         ...initialDefaults.roomSettings,
         alwaysRevealVotes: !initialDefaults.roomSettings.alwaysRevealVotes,
