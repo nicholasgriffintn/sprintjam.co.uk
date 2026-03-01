@@ -4,6 +4,7 @@ import {
   verifyState,
   generateID,
   escapeHtml,
+  hashToken,
 } from '@sprintjam/utils';
 import {
   findDefaultStoryPointsField,
@@ -19,8 +20,17 @@ import {
   forbiddenResponse,
   notFoundResponse,
 } from '../lib/response';
+import { AUTH_CHALLENGE_EXPIRY_MS } from '../constants';
 import { TeamIntegrationRepository } from '../repositories/team-integration-repository';
 import { TeamRepository } from '../repositories/team-repository';
+import { WorkspaceAuthRepository } from '../repositories/workspace-auth';
+
+type TeamOAuthState = {
+  teamId: number;
+  userId: number;
+  authorizedBy: string;
+  nonce: string;
+};
 
 function getIntegrationRepo(env: AuthWorkerEnv): TeamIntegrationRepository {
   return new TeamIntegrationRepository(env.DB, env.TOKEN_ENCRYPTION_SECRET);
@@ -82,6 +92,50 @@ function oauthHtmlError(message: string, status = 400): Response {
 
 function oauthHtmlSuccess(message: string): Response {
   return oauthHtmlResponse('Success!', message, 200, true);
+}
+
+async function createSignedTeamOAuthState(
+  repo: AuthResult['repo'],
+  userId: number,
+  teamId: number,
+  authorizedBy: string,
+  signingSecret: string,
+): Promise<string> {
+  const nonce = generateID();
+  const nonceHash = await hashToken(nonce);
+  await repo.createAuthChallenge({
+    userId,
+    tokenHash: nonceHash,
+    type: 'oauth',
+    expiresAt: Date.now() + AUTH_CHALLENGE_EXPIRY_MS,
+  });
+
+  return signState(
+    { teamId, userId, authorizedBy, nonce } satisfies TeamOAuthState,
+    signingSecret,
+  );
+}
+
+async function consumeOAuthNonce(
+  env: AuthWorkerEnv,
+  stateData: TeamOAuthState,
+): Promise<boolean> {
+  const authRepo = new WorkspaceAuthRepository(env.DB);
+  const nonceHash = await hashToken(stateData.nonce);
+  const challenge = await authRepo.getAuthChallengeByTokenHash(nonceHash);
+
+  if (
+    !challenge ||
+    challenge.userId !== stateData.userId ||
+    challenge.type !== 'oauth' ||
+    challenge.usedAt ||
+    challenge.expiresAt < Date.now()
+  ) {
+    return false;
+  }
+
+  await authRepo.markAuthChallengeUsed(challenge.id);
+  return true;
 }
 
 export async function listTeamIntegrationsController(
@@ -158,8 +212,6 @@ export async function initiateTeamOAuthController(
   if (!user) return notFoundResponse('User not found');
 
   try {
-    const nonce = generateID();
-
     if (provider === 'jira') {
       const clientId = env.JIRA_OAUTH_CLIENT_ID;
       const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
@@ -174,8 +226,11 @@ export async function initiateTeamOAuthController(
         );
       }
 
-      const state = await signState(
-        { teamId, userId, authorizedBy: user.email, nonce },
+      const state = await createSignedTeamOAuthState(
+        repo,
+        userId,
+        teamId,
+        user.email,
         clientSecret,
       );
 
@@ -208,8 +263,11 @@ export async function initiateTeamOAuthController(
         );
       }
 
-      const state = await signState(
-        { teamId, userId, authorizedBy: user.email, nonce },
+      const state = await createSignedTeamOAuthState(
+        repo,
+        userId,
+        teamId,
+        user.email,
         clientSecret,
       );
 
@@ -237,8 +295,11 @@ export async function initiateTeamOAuthController(
         );
       }
 
-      const state = await signState(
-        { teamId, userId, authorizedBy: user.email, nonce },
+      const state = await createSignedTeamOAuthState(
+        repo,
+        userId,
+        teamId,
+        user.email,
         clientSecret,
       );
 
@@ -279,12 +340,7 @@ export async function handleJiraTeamOAuthCallbackController(
     return oauthHtmlError('OAuth not configured', 500);
 
   try {
-    const stateData = (await verifyState(state, clientSecret)) as {
-      teamId: number;
-      userId: number;
-      authorizedBy: string;
-      nonce: string;
-    };
+    const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
     const { teamId, userId, authorizedBy } = stateData;
 
     const stillOwner = await verifyTeamOwnership(env, teamId, userId);
@@ -293,6 +349,10 @@ export async function handleJiraTeamOAuthCallbackController(
         'Team ownership has changed. Please try again.',
         403,
       );
+    }
+    const nonceConsumed = await consumeOAuthNonce(env, stateData);
+    if (!nonceConsumed) {
+      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
     }
 
     const tokenResponse = await fetch(
@@ -429,6 +489,9 @@ export async function handleJiraTeamOAuthCallbackController(
       'Jira connected successfully. You can close this window.',
     );
   } catch (error) {
+    if (error instanceof Error && error.message === 'Invalid state') {
+      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+    }
     console.error('Jira team OAuth callback error:', error);
     return oauthHtmlError(
       'An error occurred during Jira authorization. Please try again.',
@@ -458,12 +521,7 @@ export async function handleLinearTeamOAuthCallbackController(
     return oauthHtmlError('OAuth not configured', 500);
 
   try {
-    const stateData = (await verifyState(state, clientSecret)) as {
-      teamId: number;
-      userId: number;
-      authorizedBy: string;
-      nonce: string;
-    };
+    const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
     const { teamId, userId, authorizedBy } = stateData;
 
     const stillOwner = await verifyTeamOwnership(env, teamId, userId);
@@ -472,6 +530,10 @@ export async function handleLinearTeamOAuthCallbackController(
         'Team ownership has changed. Please try again.',
         403,
       );
+    }
+    const nonceConsumed = await consumeOAuthNonce(env, stateData);
+    if (!nonceConsumed) {
+      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
     }
 
     const params = new URLSearchParams({
@@ -538,6 +600,9 @@ export async function handleLinearTeamOAuthCallbackController(
       'Linear connected successfully. You can close this window.',
     );
   } catch (error) {
+    if (error instanceof Error && error.message === 'Invalid state') {
+      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+    }
     console.error('Linear team OAuth callback error:', error);
     return oauthHtmlError(
       'An error occurred during Linear authorization. Please try again.',
@@ -567,12 +632,7 @@ export async function handleGithubTeamOAuthCallbackController(
     return oauthHtmlError('OAuth not configured', 500);
 
   try {
-    const stateData = (await verifyState(state, clientSecret)) as {
-      teamId: number;
-      userId: number;
-      authorizedBy: string;
-      nonce: string;
-    };
+    const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
     const { teamId, userId, authorizedBy } = stateData;
 
     const stillOwner = await verifyTeamOwnership(env, teamId, userId);
@@ -581,6 +641,10 @@ export async function handleGithubTeamOAuthCallbackController(
         'Team ownership has changed. Please try again.',
         403,
       );
+    }
+    const nonceConsumed = await consumeOAuthNonce(env, stateData);
+    if (!nonceConsumed) {
+      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
     }
 
     const tokenResponse = await fetch(
@@ -657,6 +721,9 @@ export async function handleGithubTeamOAuthCallbackController(
       'GitHub connected successfully. You can close this window.',
     );
   } catch (error) {
+    if (error instanceof Error && error.message === 'Invalid state') {
+      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+    }
     console.error('GitHub team OAuth callback error:', error);
     return oauthHtmlError(
       'An error occurred during GitHub authorization. Please try again.',

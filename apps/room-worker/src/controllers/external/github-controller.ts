@@ -118,7 +118,9 @@ export async function updateGithubEstimateController(
   }
 
   try {
-    await validateSession(env, roomKey, userName, sessionToken);
+    await validateSession(env, roomKey, userName, sessionToken, {
+      requireQueueManagement: true,
+    });
 
     if (!getGithubOAuthConfig(env)) {
       return jsonError("GitHub OAuth not configured", 500);

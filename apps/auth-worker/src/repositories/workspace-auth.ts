@@ -83,6 +83,10 @@ export class WorkspaceAuthRepository {
     return this.auth.getOrganisationMembers(organisationId);
   }
 
+  isOrganisationOwner(userId: number, organisationId: number) {
+    return this.auth.isOrganisationOwner(userId, organisationId);
+  }
+
   updateUserOrganisation(
     userId: number,
     organisationId: number,
@@ -132,7 +136,7 @@ export class WorkspaceAuthRepository {
   createAuthChallenge(params: {
     userId: number;
     tokenHash: string;
-    type: "setup" | "verify";
+    type: "setup" | "verify" | "oauth";
     method?: string | null;
     metadata?: string | null;
     expiresAt: number;

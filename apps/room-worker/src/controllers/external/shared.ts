@@ -10,6 +10,9 @@ export async function validateSession(
   roomKey: string,
   userName: string,
   sessionToken?: string | null,
+  options?: {
+    requireQueueManagement?: boolean;
+  },
 ): Promise<void> {
   if (!sessionToken) {
     throw new Error("Missing session token");
@@ -20,7 +23,11 @@ export async function validateSession(
     new Request("https://internal/session/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: userName, sessionToken }),
+      body: JSON.stringify({
+        name: userName,
+        sessionToken,
+        requireQueueManagement: options?.requireQueueManagement === true,
+      }),
     }) as unknown as CfRequest,
   );
 

@@ -273,6 +273,21 @@ export class AuthRepository {
       .orderBy(users.email);
   }
 
+  async isOrganisationOwner(
+    userId: number,
+    organisationId: number,
+  ): Promise<boolean> {
+    const owner = await this.db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.organisationId, organisationId))
+      .orderBy(users.createdAt)
+      .limit(1)
+      .get();
+
+    return owner?.id === userId;
+  }
+
   async updateUserOrganisation(
     userId: number,
     organisationId: number,
@@ -441,7 +456,7 @@ export class AuthRepository {
   }: {
     userId: number;
     tokenHash: string;
-    type: "setup" | "verify";
+    type: "setup" | "verify" | "oauth";
     method?: string | null;
     metadata?: string | null;
     expiresAt: number;

@@ -30,6 +30,14 @@ async function getAuthOrError(
   return { result };
 }
 
+async function isWorkspaceAdmin(
+  repo: AuthResult["repo"],
+  userId: number,
+  organisationId: number,
+): Promise<boolean> {
+  return repo.isOrganisationOwner(userId, organisationId);
+}
+
 export async function listTeamsController(
   request: Request,
   env: AuthWorkerEnv,
@@ -353,6 +361,16 @@ export async function updateWorkspaceProfileController(
   if (!user) {
     return notFoundResponse("User not found");
   }
+  const canManageWorkspace = await isWorkspaceAdmin(
+    repo,
+    userId,
+    user.organisationId,
+  );
+  if (!canManageWorkspace) {
+    return forbiddenResponse(
+      "Only workspace admins can update workspace profile",
+    );
+  }
 
   const body = await request.json<{ name?: string; logoUrl?: string | null }>();
   const nextName = body?.name?.trim();
@@ -433,6 +451,16 @@ export async function inviteWorkspaceMemberController(
   const user = await repo.getUserById(userId);
   if (!user) {
     return notFoundResponse("User not found");
+  }
+  const canManageWorkspace = await isWorkspaceAdmin(
+    repo,
+    userId,
+    user.organisationId,
+  );
+  if (!canManageWorkspace) {
+    return forbiddenResponse(
+      "Only workspace admins can invite members",
+    );
   }
 
   const body = await request.json<{ email?: string }>();

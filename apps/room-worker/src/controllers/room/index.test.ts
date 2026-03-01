@@ -307,6 +307,43 @@ describe("planning-room-http permissions and state updates", () => {
     expect(payload.success).toBe(true);
   });
 
+  it("blocks queue-management validation for members without permission", async () => {
+    const tokens = new Map<string, string>([["bob", "right"]]);
+    const { ctx } = makeContext({ roomData: baseRoom, tokens });
+
+    const response = (await handleHttpRequest(
+      ctx,
+      jsonRequest("/session/validate", "POST", {
+        name: "Bob",
+        sessionToken: "right",
+        requireQueueManagement: true,
+      }),
+    )) as Response;
+
+    expect(response.status).toBe(403);
+    const payload = (await response.json()) as any;
+    expect(payload.error).toBe("Insufficient permissions to manage queue");
+  });
+
+  it("allows queue-management validation when queue sharing is enabled", async () => {
+    baseRoom.settings.allowOthersToManageQueue = true;
+    const tokens = new Map<string, string>([["bob", "right"]]);
+    const { ctx } = makeContext({ roomData: baseRoom, tokens });
+
+    const response = (await handleHttpRequest(
+      ctx,
+      jsonRequest("/session/validate", "POST", {
+        name: "Bob",
+        sessionToken: "right",
+        requireQueueManagement: true,
+      }),
+    )) as Response;
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as any;
+    expect(payload.success).toBe(true);
+  });
+
   it("returns team-id for room", async () => {
     const { ctx } = makeContext({ roomData: baseRoom });
 

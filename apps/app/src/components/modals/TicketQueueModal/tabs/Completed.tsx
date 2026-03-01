@@ -20,6 +20,7 @@ interface TicketQueueModalCompletedTabProps {
   roundHistory?: SessionRoundHistoryItem[];
   roomKey: string;
   userName: string;
+  canManageQueue: boolean;
   onError?: (message: string) => void;
   onUpdateTicket?: (
     ticketId: number,
@@ -34,6 +35,7 @@ export function TicketQueueModalCompletedTab({
   roundHistory,
   roomKey,
   userName,
+  canManageQueue,
   onError,
   onUpdateTicket,
 }: TicketQueueModalCompletedTabProps) {
@@ -113,6 +115,14 @@ export function TicketQueueModalCompletedTab({
   };
 
   const handleSyncToJira = async (ticket: TicketQueueItem) => {
+    if (!canManageQueue) {
+      handleError(
+        "You do not have permission to sync provider estimates for this room.",
+        onError,
+      );
+      return;
+    }
+
     if (ticket.externalService !== "jira") {
       handleError("Sync available only for Jira-linked tickets.", onError);
       return;
@@ -138,6 +148,14 @@ export function TicketQueueModalCompletedTab({
   };
 
   const handleSyncToLinear = async (ticket: TicketQueueItem) => {
+    if (!canManageQueue) {
+      handleError(
+        "You do not have permission to sync provider estimates for this room.",
+        onError,
+      );
+      return;
+    }
+
     if (ticket.externalService !== "linear") {
       handleError("Sync available only for Linear-linked tickets.", onError);
       return;
@@ -170,6 +188,14 @@ export function TicketQueueModalCompletedTab({
   };
 
   const handleSyncToGithub = async (ticket: TicketQueueItem) => {
+    if (!canManageQueue) {
+      handleError(
+        "You do not have permission to sync provider estimates for this room.",
+        onError,
+      );
+      return;
+    }
+
     if (ticket.externalService !== "github") {
       handleError("Sync available only for GitHub-linked tickets.", onError);
       return;
@@ -198,6 +224,10 @@ export function TicketQueueModalCompletedTab({
     syncing?.id === ticketId && syncing.provider === provider;
 
   const getSyncButtonConfig = (ticket: TicketQueueItem) => {
+    if (!canManageQueue) {
+      return null;
+    }
+
     if (ticket.externalService === "jira") {
       return {
         provider: "jira" as const,

@@ -7,9 +7,10 @@ export async function handleSessionValidation(
   ctx: PlanningRoomHttpContext,
   request: Request,
 ): Promise<CfResponse> {
-  const { name, sessionToken } = (await request.json()) as {
+  const { name, sessionToken, requireQueueManagement } = (await request.json()) as {
     name?: string;
     sessionToken?: string;
+    requireQueueManagement?: boolean;
   };
 
   if (!name || !sessionToken) {
@@ -38,6 +39,19 @@ export async function handleSessionValidation(
 
   if (!isMember || !tokenValid) {
     return createJsonResponse({ error: 'Invalid session' }, 401);
+  }
+
+  if (requireQueueManagement === true) {
+    const canManageQueue =
+      roomData.moderator === canonicalName ||
+      roomData.settings.allowOthersToManageQueue === true;
+
+    if (!canManageQueue) {
+      return createJsonResponse(
+        { error: 'Insufficient permissions to manage queue' },
+        403,
+      );
+    }
   }
 
   return createJsonResponse({ success: true });

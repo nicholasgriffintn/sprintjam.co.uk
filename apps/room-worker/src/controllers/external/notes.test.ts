@@ -50,10 +50,22 @@ const makeRequest = (body: Record<string, unknown>, sessionToken = "token") =>
     body: JSON.stringify(body),
   }) as unknown as CfRequest;
 
-const makeRoomStub = () => ({
+const makeRoomStub = (options?: { allowQueueManagement?: boolean }) => ({
   fetch: vi.fn(async (request: Request) => {
     const url = new URL(request.url);
     if (url.pathname === "/session/validate") {
+      const body = (await request.json()) as {
+        requireQueueManagement?: boolean;
+      };
+      if (
+        body.requireQueueManagement === true &&
+        options?.allowQueueManagement === false
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Insufficient permissions to manage queue" }),
+          { status: 403 },
+        );
+      }
       return new Response(null, { status: 200 });
     }
     if (url.pathname === "/room/team-id") {
@@ -200,5 +212,105 @@ describe("external controllers note handling", () => {
       "octo/repo#12",
       "SprintJam decision note: Split suggested",
     );
+  });
+
+  it("rejects Jira sync when user cannot manage queue", async () => {
+    const credentials = {
+      jiraCloudId: "cloud",
+      storyPointsField: "customfield_100",
+      accessToken: "token",
+      refreshToken: "refresh",
+    };
+    vi.mocked(getRoomStub).mockReturnValue(
+      makeRoomStub({ allowQueueManagement: false }) as any,
+    );
+
+    const env = {
+      JIRA_OAUTH_CLIENT_ID: "id",
+      JIRA_OAUTH_CLIENT_SECRET: "secret",
+      AUTH_WORKER: makeAuthWorker(credentials),
+    } as unknown as RoomWorkerEnv;
+
+    const response = (await updateJiraStoryPointsController(
+      "ISS-1",
+      makeRequest({
+        storyPoints: 5,
+        roomKey: "room-1",
+        userName: "alice",
+        note: "No access",
+      }),
+      env,
+    )) as Response;
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("Insufficient permissions to manage queue");
+    expect(updateJiraStoryPoints).not.toHaveBeenCalled();
+  });
+
+  it("rejects Linear sync when user cannot manage queue", async () => {
+    const credentials = {
+      accessToken: "token",
+      refreshToken: "refresh",
+    };
+    vi.mocked(getRoomStub).mockReturnValue(
+      makeRoomStub({ allowQueueManagement: false }) as any,
+    );
+
+    const env = {
+      LINEAR_OAUTH_CLIENT_ID: "id",
+      LINEAR_OAUTH_CLIENT_SECRET: "secret",
+      AUTH_WORKER: makeAuthWorker(credentials),
+    } as unknown as RoomWorkerEnv;
+
+    const response = (await updateLinearEstimateController(
+      "LIN-1",
+      makeRequest({
+        estimate: 5,
+        roomKey: "room-1",
+        userName: "alice",
+        note: "No access",
+      }),
+      env,
+    )) as Response;
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("Insufficient permissions to manage queue");
+    expect(updateLinearEstimate).not.toHaveBeenCalled();
+  });
+
+  it("rejects GitHub sync when user cannot manage queue", async () => {
+    const credentials = {
+      accessToken: "token",
+      githubLogin: "octocat",
+      defaultOwner: "octo",
+      defaultRepo: "repo",
+    };
+    vi.mocked(getRoomStub).mockReturnValue(
+      makeRoomStub({ allowQueueManagement: false }) as any,
+    );
+
+    const env = {
+      GITHUB_OAUTH_CLIENT_ID: "id",
+      GITHUB_OAUTH_CLIENT_SECRET: "secret",
+      AUTH_WORKER: makeAuthWorker(credentials),
+    } as unknown as RoomWorkerEnv;
+
+    const response = (await updateGithubEstimateController(
+      "octo/repo#12",
+      makeRequest({
+        estimate: 8,
+        roomKey: "room-1",
+        userName: "alice",
+        note: "No access",
+      }),
+      env,
+    )) as Response;
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("Insufficient permissions to manage queue");
+    expect(updateGithubEstimate).not.toHaveBeenCalled();
   });
 });

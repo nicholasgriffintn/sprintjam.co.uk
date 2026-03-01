@@ -812,6 +812,7 @@ describe("updateWorkspaceProfileController", () => {
 
     mockRepo = {
       getUserById: vi.fn(),
+      isOrganisationOwner: vi.fn(),
       updateOrganisation: vi.fn(),
       getOrganisationById: vi.fn(),
     };
@@ -832,6 +833,7 @@ describe("updateWorkspaceProfileController", () => {
       email: "owner@example.com",
       organisationId: 8,
     });
+    mockRepo.isOrganisationOwner.mockResolvedValue(true);
     mockRepo.getOrganisationById.mockResolvedValue({
       id: 8,
       domain: "example.com",
@@ -858,6 +860,33 @@ describe("updateWorkspaceProfileController", () => {
       logoUrl: "https://cdn.example.com/logo.png",
     });
   });
+
+  it("returns 403 when non-admin user attempts to update workspace profile", async () => {
+    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+      userId: 4,
+      email: "member@example.com",
+      repo: mockRepo,
+    });
+    mockRepo.getUserById.mockResolvedValue({
+      id: 4,
+      email: "member@example.com",
+      organisationId: 8,
+    });
+    mockRepo.isOrganisationOwner.mockResolvedValue(false);
+
+    const request = makeRequest("https://test.com/workspace/profile", {
+      method: "PUT",
+      body: JSON.stringify({ name: "Updated Workspace" }),
+      headers: { Authorization: "Bearer valid-token" },
+    });
+
+    const response = await updateWorkspaceProfileController(request, mockEnv);
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe("Only workspace admins can update workspace profile");
+    expect(mockRepo.updateOrganisation).not.toHaveBeenCalled();
+  });
 });
 
 describe("inviteWorkspaceMemberController", () => {
@@ -873,6 +902,7 @@ describe("inviteWorkspaceMemberController", () => {
 
     mockRepo = {
       getUserById: vi.fn(),
+      isOrganisationOwner: vi.fn(),
       getUserByEmail: vi.fn(),
       createOrUpdateWorkspaceInvite: vi.fn(),
       getOrganisationById: vi.fn(),
@@ -896,6 +926,7 @@ describe("inviteWorkspaceMemberController", () => {
       name: "Owner",
       organisationId: 3,
     });
+    mockRepo.isOrganisationOwner.mockResolvedValue(true);
     mockRepo.getUserByEmail.mockResolvedValue(null);
     mockRepo.createOrUpdateWorkspaceInvite.mockResolvedValue({
       id: 10,
@@ -930,5 +961,34 @@ describe("inviteWorkspaceMemberController", () => {
       1,
     );
     expect(services.sendWorkspaceInviteEmail).toHaveBeenCalled();
+  });
+
+  it("returns 403 when non-admin user attempts to invite a member", async () => {
+    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+      userId: 2,
+      email: "member@example.com",
+      repo: mockRepo,
+    });
+    mockRepo.getUserById.mockResolvedValue({
+      id: 2,
+      email: "member@example.com",
+      name: "Member",
+      organisationId: 3,
+    });
+    mockRepo.isOrganisationOwner.mockResolvedValue(false);
+
+    const request = makeRequest("https://test.com/workspace/invites", {
+      method: "POST",
+      body: JSON.stringify({ email: "invitee@external.com" }),
+      headers: { Authorization: "Bearer valid-token" },
+    });
+
+    const response = await inviteWorkspaceMemberController(request, mockEnv);
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe("Only workspace admins can invite members");
+    expect(mockRepo.createOrUpdateWorkspaceInvite).not.toHaveBeenCalled();
+    expect(services.sendWorkspaceInviteEmail).not.toHaveBeenCalled();
   });
 });

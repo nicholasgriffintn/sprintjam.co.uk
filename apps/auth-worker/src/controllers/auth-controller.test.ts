@@ -860,7 +860,7 @@ describe("mfa setup", () => {
     );
   });
 
-  it("should use Origin header when creating WebAuthn setup metadata", async () => {
+  it("should use request URL when creating WebAuthn setup metadata", async () => {
     mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
       id: 3,
       userId: 10,
@@ -894,7 +894,7 @@ describe("mfa setup", () => {
 
     expect(response.status).toBe(200);
     expect(data.method).toBe("webauthn");
-    expect(data.options.rp.id).toBe("sprintjam.localhost");
+    expect(data.options.rp.id).toBe("internal.dev");
     expect(mockRepo.updateAuthChallengeMetadata).toHaveBeenCalledWith(
       3,
       expect.any(String),
@@ -909,8 +909,8 @@ describe("mfa setup", () => {
       rpId: string;
     };
 
-    expect(metadata.origin).toBe("https://sprintjam.localhost:5173");
-    expect(metadata.rpId).toBe("sprintjam.localhost");
+    expect(metadata.origin).toBe("https://internal.dev");
+    expect(metadata.rpId).toBe("internal.dev");
     expect(metadata.challenge).toBeTruthy();
   });
 

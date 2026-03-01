@@ -77,6 +77,7 @@ export const TicketQueueModalContent: FC<TicketQueueModalContentProps> = ({
           roundHistory={roundHistory}
           roomKey={roomKey}
           userName={userName}
+          canManageQueue={canManageQueue}
           onError={onError}
           onUpdateTicket={onUpdateTicket}
         />
