@@ -273,6 +273,8 @@ interface WebSocketPayloads {
 
 export type WebSocketMessageType = keyof WebSocketPayloads;
 
+export type { RoomGameSession };
+
 interface WebSocketEnvelope {
   error?: string;
   message?: string;
