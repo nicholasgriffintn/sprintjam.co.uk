@@ -76,8 +76,6 @@ export const useServerDefaults = () => {
   useEffect(() => {
     if (serverDefaultsFromCollection) {
       setServerDefaults(cloneServerDefaults(serverDefaultsFromCollection));
-    } else {
-      setServerDefaults(null);
     }
   }, [serverDefaultsFromCollection]);
 
