@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 
 import type { RoomData, RoomStats } from "@/types";
 import { getAvatarInfo } from "@/utils/avatars";
+import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
@@ -48,6 +49,8 @@ const ParticipantItem = memo(
     anonymousVotes,
     hideParticipantNames,
   }: ParticipantItemProps) => {
+    const avatarInfo = userAvatar ? getAvatarInfo(userAvatar) : null;
+
     return (
       <motion.li
         data-testid="participant-row"
@@ -63,25 +66,20 @@ const ParticipantItem = memo(
       >
         <div className="flex items-center space-x-3">
           {userAvatar && (
-            <div
+            <Avatar
               className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
                 isConnected
                   ? "border-emerald-300 dark:border-emerald-600"
                   : "border-slate-200 dark:border-slate-600"
               }`}
-            >
-              {(() => {
-                const avatarInfo = getAvatarInfo(userAvatar);
-
-                if (avatarInfo) {
-                  return (
-                    <avatarInfo.Icon size={20} className={avatarInfo.color} />
-                  );
-                }
-
-                return <span className="text-lg">{userAvatar}</span>;
-              })()}
-            </div>
+              fallback={
+                avatarInfo ? (
+                  <avatarInfo.Icon size={20} className={avatarInfo.color} />
+                ) : (
+                  <span className="text-lg">{userAvatar}</span>
+                )
+              }
+            />
           )}
           <span
             className={`flex items-center gap-2 text-sm ${

@@ -1,5 +1,6 @@
 export { Accordion } from "./Accordion";
 export { Alert } from "./Alert";
+export { Avatar } from "./Avatar";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { Badge } from "./Badge";
 export { Button } from "./Button";
