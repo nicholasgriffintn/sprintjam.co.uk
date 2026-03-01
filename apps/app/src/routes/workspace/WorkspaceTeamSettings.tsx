@@ -168,6 +168,7 @@ export default function WorkspaceTeamSettings() {
                       }}
                       resetKey={settingsResetKey}
                       isCreating={true}
+                      teamId={selectedTeamId}
                     />
 
                     {saveSuccess && (

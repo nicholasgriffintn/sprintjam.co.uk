@@ -20,12 +20,10 @@ import { Button } from "@/components/ui/Button";
 import { StrudelMiniPlayer } from "@/components/StrudelPlayer/StrudelMiniPlayer";
 import { FallbackLoading } from "@/components/ui/FallbackLoading";
 import { TicketQueueModal } from "@/components/modals/TicketQueueModal";
-import { PrePointingSummaryModal } from "@/components/modals/PrePointingSummaryModal";
-import { QueueProviderSetupModal } from "@/components/modals/QueueProviderSetupModal";
+import { PrePointingSummaryModal } from '@/components/modals/PrePointingSummaryModal';
 import { RoomErrorBanners } from "@/components/errors/RoomErrorBanners";
 import { RoomSidebar } from "@/components/layout/RoomSidebar";
-import { getVoteKeyForUser } from "@/utils/room";
-import { useDisplayQueueSetup } from "@/hooks/useDisplayQueueSetup";
+import { getVoteKeyForUser } from '@/utils/room';
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { Footer } from "@/components/layout/Footer";
@@ -153,14 +151,6 @@ const RoomScreen = () => {
     isModeratorView || roomData.settings.allowOthersToManageQueue === true;
   const showSaveToWorkspace = isWorkspacesEnabled();
 
-  const { isQueueSetupModalOpen, setIsQueueSetupModalOpen } =
-    useDisplayQueueSetup({
-      isQueueEnabled: isQueueEnabled,
-      queueProvider: queueProvider,
-      roomData: roomData,
-      name: name,
-    });
-
   useEffect(() => {
     if (!roomData.gameSession || roomData.gameSession.status !== "active") {
       return;
@@ -183,10 +173,10 @@ const RoomScreen = () => {
 
   const gameTitle = roomData.gameSession
     ? roomData.gameSession.type
-      .split("-")
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ")
-    : "";
+        .split('-')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+    : '';
   const completedTicketList =
     roomData.ticketQueue?.filter((ticket) => ticket.status === "completed") ??
     [];
@@ -273,14 +263,14 @@ const RoomScreen = () => {
             stats={stats}
             setIsQueueModalOpen={setIsQueueModalOpen}
             onOpenQueueSettings={
-              isModeratorView ? () => handleOpenSettings("queue") : undefined
+              isModeratorView ? () => handleOpenSettings('queue') : undefined
             }
-            isCompleted={roomData.status === "completed"}
+            isCompleted={roomData.status === 'completed'}
           />
         </div>
 
         <div className="flex flex-col gap-4 py-3 md:min-h-0 md:py-5 px-4 order-1 md:order-none">
-          {roomData?.status === "completed" ? (
+          {roomData?.status === 'completed' ? (
             <>
               <SurfaceCard padding="md" className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -290,8 +280,8 @@ const RoomScreen = () => {
                   This room is now read-only.
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Review the notes and votes captured for each{" "}
-                  {isQueueEnabled ? "ticket" : "round"}.
+                  Review the notes and votes captured for each{' '}
+                  {isQueueEnabled ? 'ticket' : 'round'}.
                 </p>
                 {showSaveToWorkspace && (
                   <div className="pt-1">
@@ -393,8 +383,8 @@ const RoomScreen = () => {
                           </div>
                         ) : (
                           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                            No votes recorded for this{" "}
-                            {isQueueEnabled ? "ticket" : "round"}.
+                            No votes recorded for this{' '}
+                            {isQueueEnabled ? 'ticket' : 'round'}.
                           </p>
                         )}
                       </div>
@@ -425,11 +415,11 @@ const RoomScreen = () => {
                   title="Enable facilitation prompts?"
                   body="Prompts will be displayed as the session progresses with tips to run a successful session."
                   primaryAction={{
-                    label: "Enable prompts",
+                    label: 'Enable prompts',
                     onClick: enableFacilitationGuidance,
                   }}
                   secondaryAction={{
-                    label: "Not now",
+                    label: 'Not now',
                     onClick: dismissFacilitationOptIn,
                   }}
                 />
@@ -444,12 +434,12 @@ const RoomScreen = () => {
               )}
 
               {roomData.settings.enableStructuredVoting &&
-                roomData.settings.votingCriteria ? (
+              roomData.settings.votingCriteria ? (
                 <StructuredVotingPanel
                   criteria={roomData.settings.votingCriteria}
                   currentVote={
                     roomData.structuredVotes?.[
-                    getVoteKeyForUser(roomData, name)
+                      getVoteKeyForUser(roomData, name)
                     ] || null
                   }
                   onVote={handleVote}
@@ -457,7 +447,7 @@ const RoomScreen = () => {
                   currentUserVote={userVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings("voting")
+                      ? () => handleOpenSettings('voting')
                       : undefined
                   }
                   disabled={isSpectator}
@@ -466,11 +456,11 @@ const RoomScreen = () => {
                 <UserEstimate
                   roomData={roomData}
                   name={name}
-                  userVote={typeof userVote === "object" ? null : userVote}
+                  userVote={typeof userVote === 'object' ? null : userVote}
                   onVote={handleVote}
                   onOpenVotingSettings={
                     isModeratorView
-                      ? () => handleOpenSettings("voting")
+                      ? () => handleOpenSettings('voting')
                       : undefined
                   }
                   disabled={isSpectator}
@@ -485,7 +475,7 @@ const RoomScreen = () => {
                   onToggleShowVotes={handleToggleShowVotes}
                   onResetVotes={handleResetVotes}
                   onNextTicket={() => {
-                    const existingNote = roomData.currentTicket?.outcome ?? "";
+                    const existingNote = roomData.currentTicket?.outcome ?? '';
                     setSummaryNote(existingNote || getSuggestedNote());
                     setIsSummaryOpen(true);
                   }}
@@ -496,7 +486,7 @@ const RoomScreen = () => {
                   }
                   onOpenResultsSettings={
                     isModeratorView
-                      ? () => handleOpenSettings("results")
+                      ? () => handleOpenSettings('results')
                       : undefined
                   }
                   onRevisitLater={async () => {
@@ -508,7 +498,7 @@ const RoomScreen = () => {
                         0,
                       ) + 1;
                     await handleUpdateTicket(roomData.currentTicket.id, {
-                      status: "pending",
+                      status: 'pending',
                       ordinal: maxOrdinal,
                     });
                     handleNextTicket();
@@ -532,12 +522,12 @@ const RoomScreen = () => {
                           title="Wide spread after reveal"
                           body={
                             spreadSummary.highestVoteValue !== null &&
-                              spreadSummary.lowestVoteValue !== null
+                            spreadSummary.lowestVoteValue !== null
                               ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
-                              : "Ask the highest and lowest voters to explain their thinking."
+                              : 'Ask the highest and lowest voters to explain their thinking.'
                           }
                           primaryAction={{
-                            label: "Got it",
+                            label: 'Got it',
                             onClick: dismissHints,
                           }}
                         />
@@ -662,9 +652,9 @@ const RoomScreen = () => {
                   {gameTitle}
                 </span>
                 <span className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                  {roomData.gameSession.status === "active"
+                  {roomData.gameSession.status === 'active'
                     ? `Round ${roomData.gameSession.round}`
-                    : "Game over"}
+                    : 'Game over'}
                   <Maximize2 className="h-4 w-4" />
                 </span>
               </button>
@@ -731,7 +721,7 @@ const RoomScreen = () => {
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
         roundHistory={roomData.roundHistory}
-        externalService={roomData.settings.externalService || "none"}
+        externalService={roomData.settings.externalService || 'none'}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -749,7 +739,7 @@ const RoomScreen = () => {
         currentTicket={roomData.currentTicket}
         queue={roomData.ticketQueue || []}
         roundHistory={roomData.roundHistory}
-        externalService={roomData.settings.externalService || "none"}
+        externalService={roomData.settings.externalService || 'none'}
         roomKey={roomData.key}
         userName={name}
         onAddTicket={handleAddTicket}
@@ -763,18 +753,6 @@ const RoomScreen = () => {
         currentRoundVoteCount={Object.keys(roomData.votes).length}
         onError={reportRoomError}
       />
-
-      {isQueueEnabled && queueProvider !== "none" && (
-        <QueueProviderSetupModal
-          isOpen={isQueueSetupModalOpen}
-          provider={queueProvider as "jira" | "linear" | "github"}
-          onClose={() => setIsQueueSetupModalOpen(false)}
-          onOpenQueue={() => {
-            setIsQueueModalOpen(true);
-            setIsQueueSetupModalOpen(false);
-          }}
-        />
-      )}
 
       <PrePointingSummaryModal
         isOpen={isSummaryOpen}
@@ -791,7 +769,7 @@ const RoomScreen = () => {
           try {
             const trimmedNote = summaryNote.trim();
             if (roomData.currentTicket) {
-              const existingNote = roomData.currentTicket.outcome ?? "";
+              const existingNote = roomData.currentTicket.outcome ?? '';
               if (trimmedNote !== existingNote) {
                 await handleUpdateTicket(roomData.currentTicket.id, {
                   outcome: trimmedNote || undefined,

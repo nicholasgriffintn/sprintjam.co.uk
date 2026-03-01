@@ -108,13 +108,23 @@ const CreateRoomScreen = () => {
   useEffect(() => {
     if (teamPreloadDone.current || teams.length === 0) return;
     teamPreloadDone.current = true;
+
+    if (selectedWorkspaceTeamId !== null) return;
+
     const stored = safeLocalStorage.get(SELECTED_TEAM_STORAGE_KEY);
-    if (!stored) return;
-    const teamId = parseInt(stored, 10);
-    if (!isNaN(teamId) && teams.some((t) => t.id === teamId)) {
-      setSelectedWorkspaceTeamId(teamId);
+    if (stored) {
+      const teamId = parseInt(stored, 10);
+      if (!isNaN(teamId) && teams.some((t) => t.id === teamId)) {
+        setSelectedWorkspaceTeamId(teamId);
+        return;
+      }
     }
-  }, [teams, setSelectedWorkspaceTeamId]);
+
+    const firstTeam = teams[0];
+    if (firstTeam) {
+      setSelectedWorkspaceTeamId(firstTeam.id);
+    }
+  }, [teams, selectedWorkspaceTeamId, setSelectedWorkspaceTeamId]);
 
   const handleTeamChange = (teamIdStr: string) => {
     const teamId = parseInt(teamIdStr, 10);
@@ -148,7 +158,8 @@ const CreateRoomScreen = () => {
     const estimateOptions = preset?.options ?? defaults.estimateOptions;
 
     return {
-      enableStructuredVoting: votingMode === "structured",
+      ...(advancedSettings ?? {}),
+      enableStructuredVoting: votingMode === 'structured',
       votingSequenceId: selectedSequenceId,
       estimateOptions,
     };

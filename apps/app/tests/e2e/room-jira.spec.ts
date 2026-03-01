@@ -86,7 +86,6 @@ test.describe("Jira integration", () => {
     browser,
   }) => {
     const setup = await createRoomWithParticipant(browser, {
-      workspaceTeamId: WORKSPACE_TEAM_ID,
       setupModeratorRoutes: setupWorkspaceRoutes,
     });
     const { moderatorRoom, participantRoom, cleanup, moderatorContext } = setup;
@@ -202,18 +201,10 @@ test.describe("Jira integration", () => {
       await settingsModal.open();
       await settingsModal.toggle("settings-toggle-enable-queue", true);
       await settingsModal.selectExternalService("jira");
-      await settingsModal.toggle("settings-toggle-auto-sync", true);
       await settingsModal.save();
 
       const page = moderatorRoom.getPage();
-      // The queue setup modal appears automatically when a provider is selected and queue is empty
-      const setupModal = page.getByRole("dialog", {
-        name: "Connect your queue",
-      });
-      await expect(setupModal).toBeVisible();
-      await setupModal
-        .getByRole("button", { name: "Open queue setup" })
-        .click();
+      await page.getByTestId("queue-expand").click();
 
       const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await expect(queueDialog).toBeVisible();

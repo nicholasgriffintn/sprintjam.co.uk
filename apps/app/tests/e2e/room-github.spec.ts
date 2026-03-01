@@ -86,7 +86,6 @@ test.describe("GitHub integration", () => {
     browser,
   }) => {
     const setup = await createRoomWithParticipant(browser, {
-      workspaceTeamId: WORKSPACE_TEAM_ID,
       setupModeratorRoutes: setupWorkspaceRoutes,
     });
     const { moderatorRoom, participantRoom, cleanup, moderatorContext } = setup;
@@ -172,13 +171,7 @@ test.describe("GitHub integration", () => {
       await settingsModal.save();
 
       const page = moderatorRoom.getPage();
-      const setupModal = page.getByRole("dialog", {
-        name: "Connect your queue",
-      });
-      await expect(setupModal).toBeVisible();
-      await setupModal
-        .getByRole("button", { name: "Open queue setup" })
-        .click();
+      await page.getByTestId("queue-expand").click();
 
       const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await expect(queueDialog).toBeVisible();

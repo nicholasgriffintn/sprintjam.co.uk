@@ -40,7 +40,7 @@ test.describe("Wheel journey", () => {
       timeout: 15_000,
     });
 
-    await page.getByTestId("wheel-canvas").click();
+    await page.keyboard.press("ControlOrMeta+Enter");
 
     await page.getByRole("button", { name: "Results" }).click();
     await expect(page.getByText("1 total")).toBeVisible({ timeout: 15_000 });

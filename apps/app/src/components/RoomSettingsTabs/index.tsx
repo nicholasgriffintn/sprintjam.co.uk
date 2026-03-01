@@ -41,6 +41,7 @@ interface RoomSettingsTabsProps {
   hideVotingModeAndEstimates?: boolean;
   initialTab?: RoomSettingsTabId;
   isCreating?: boolean;
+  teamId?: number | null;
 }
 
 export function RoomSettingsTabs({
@@ -57,6 +58,7 @@ export function RoomSettingsTabs({
   hideVotingModeAndEstimates = false,
   initialTab,
   isCreating = false,
+  teamId,
 }: RoomSettingsTabsProps) {
   const structuredOptions = structuredVotingOptions ?? [];
   const presets = useMemo(() => {
@@ -457,6 +459,7 @@ export function RoomSettingsTabs({
           localSettings={localSettings}
           handleChange={handleChange}
           isCreating={isCreating}
+          teamId={teamId}
         />
       );
     }

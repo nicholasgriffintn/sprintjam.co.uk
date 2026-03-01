@@ -77,6 +77,8 @@ export async function createRoomWithParticipant(
     await createRoom.fillBasics(moderatorName, roomPasscode);
     if (workspaceTeamId) {
       await createRoom.selectWorkspaceTeam(workspaceTeamId);
+    } else {
+      await createRoom.selectPersonalRoomIfAvailable();
     }
 
     if (enableStructuredVotingOnCreate) {

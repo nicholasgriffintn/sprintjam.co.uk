@@ -109,7 +109,7 @@ async function createRoomWithProvider(
 
   const createRoom = new CreateRoomPage(page);
   await createRoom.fillBasics("Queue Creator");
-  await createRoom.selectWorkspaceTeam(WORKSPACE_TEAM_ID);
+  await createRoom.selectPersonalRoomIfAvailable();
   await createRoom.startInstantRoom();
 
   const joinRoom = new JoinRoomPage(page);
@@ -169,8 +169,8 @@ test.describe("Modal interactions", () => {
   });
 });
 
-test.describe("Ticket queue provider setup on room creation", () => {
-  test("Jira provider prompts setup modal and allows queueing", async ({
+test.describe("Ticket queue provider import on room creation", () => {
+  test("Jira provider allows importing tickets via queue", async ({
     browser,
   }) => {
     const jiraTicketKey = "JIRA-101";
@@ -178,7 +178,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
       key: jiraTicketKey,
       url: `https://jira.test.sprintjam.co.uk/browse/${jiraTicketKey}`,
       summary: "Backlog item",
-      description: "Jira ticket pulled via setup modal",
+      description: "Jira ticket pulled via queue import",
       status: "To Do",
       assignee: "QA Bot",
       storyPoints: null,
@@ -222,18 +222,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
     );
 
     try {
-      const providerModal = page.getByRole("dialog", {
-        name: "Connect your queue",
-      });
-      await expect(providerModal).toBeVisible();
-      await expect(providerModal).toContainText("Configure Jira");
-      await expect(providerModal).toContainText("Jira is connected");
-
-      const openQueueButton = providerModal.getByRole("button", {
-        name: "Open queue setup",
-      });
-      await expect(openQueueButton).toBeEnabled();
-      await openQueueButton.click();
+      await page.getByTestId("queue-expand").click();
 
       const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await expect(queueDialog).toBeVisible();
@@ -253,7 +242,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
     }
   });
 
-  test("Linear provider prompts setup modal and allows queueing", async ({
+  test("Linear provider allows importing issues via queue", async ({
     browser,
   }) => {
     const linearIssueKey = "LIN-202";
@@ -262,7 +251,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
       identifier: linearIssueKey,
       url: `https://linear.test.sprintjam.co.uk/issue/${linearIssueKey}`,
       summary: "Linear issue to sync",
-      description: "Verify provider setup modal opens and queues issues",
+      description: "Verify provider import opens and queues issues",
       status: "Todo",
       assignee: "QA Bot",
       estimate: null,
@@ -306,18 +295,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
     );
 
     try {
-      const providerModal = page.getByRole("dialog", {
-        name: "Connect your queue",
-      });
-      await expect(providerModal).toBeVisible();
-      await expect(providerModal).toContainText("Configure Linear");
-      await expect(providerModal).toContainText("Linear is connected");
-
-      const openQueueButton = providerModal.getByRole("button", {
-        name: "Open queue setup",
-      });
-      await expect(openQueueButton).toBeEnabled();
-      await openQueueButton.click();
+      await page.getByTestId("queue-expand").click();
 
       const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await expect(queueDialog).toBeVisible();

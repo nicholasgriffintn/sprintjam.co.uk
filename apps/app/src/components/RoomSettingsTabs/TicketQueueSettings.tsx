@@ -11,6 +11,7 @@ export function TicketQueueSettings({
   localSettings,
   handleChange,
   isCreating = false,
+  teamId: teamIdProp,
 }: {
   localSettings: RoomSettings;
   handleChange: (
@@ -24,12 +25,16 @@ export function TicketQueueSettings({
       | null,
   ) => void;
   isCreating?: boolean;
+  teamId?: number | null;
 }) {
   const { roomData } = useRoomState();
   const { selectedWorkspaceTeamId } = useSessionState();
-  const teamId = isCreating
-    ? selectedWorkspaceTeamId
-    : (roomData?.teamId ?? null);
+  const teamId =
+    teamIdProp !== undefined
+      ? teamIdProp
+      : isCreating
+        ? selectedWorkspaceTeamId
+        : (roomData?.teamId ?? null);
 
   const { status: teamJiraStatus, loading: jiraLoading } = useTeamOAuth(
     teamId,

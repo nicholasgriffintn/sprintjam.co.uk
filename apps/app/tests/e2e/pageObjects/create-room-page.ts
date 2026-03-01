@@ -16,6 +16,20 @@ export class CreateRoomPage {
     await teamSelect.selectOption(teamId.toString());
   }
 
+  async selectPersonalRoomIfAvailable() {
+    const teamSelect = this.page.locator("#team-select");
+    await teamSelect.waitFor({ state: "attached", timeout: 1_000 }).catch(() => {
+      // No team selector means auth teams are unavailable for this flow.
+    });
+
+    if ((await teamSelect.count()) === 0) {
+      return;
+    }
+
+    await expect(teamSelect).toBeVisible();
+    await teamSelect.selectOption("none");
+  }
+
   async startInstantRoom() {
     const instantButton = this.page.getByTestId("create-room-submit");
     await expect(instantButton).toBeEnabled();
