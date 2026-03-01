@@ -8,9 +8,10 @@ import "./index.css";
 import App from "./App.tsx";
 import { queryClient } from "./lib/data/collections";
 import { ThemeProvider } from "./lib/theme-context";
+import { SENTRY_DSN } from './constants';
 
 Sentry.init({
-  dsn: "https://ae2cfc4ec7ef4879be068f2fc80e54c0@ingest.bitwobbly.com/10",
+  dsn: SENTRY_DSN,
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),

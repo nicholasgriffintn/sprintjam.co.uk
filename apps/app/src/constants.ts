@@ -24,6 +24,10 @@ export const WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws`;
 export const WHEEL_API_BASE_URL = API_BASE_URL;
 export const WHEEL_WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws/wheel`;
 
+export const SENTRY_DSN =
+  import.meta.env.VITE_SENTRY_DSN ||
+  'https://ae2cfc4ec7ef4879be068f2fc80e54c0@ingest.bitwobbly.com/10';
+
 export const SITE_NAME = "SprintJam";
 
 export const WORKSPACE_TOKEN_STORAGE_KEY = "sprintjam_workspaceToken";
