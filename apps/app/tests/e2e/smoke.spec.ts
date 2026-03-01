@@ -171,7 +171,9 @@ test.describe("Smoke tests @smoke", () => {
       await expect(
         completeDialog.getByTestId("queue-history-tab-panel"),
       ).toHaveCount(0);
-      await completeDialog.getByRole("button", { name: "Complete session" }).click();
+      await completeDialog
+        .getByRole("button", { name: "Complete session" })
+        .click();
 
       await expect(page.getByText("Session summary")).toBeVisible();
       await expect(page.getByText("Rounds completed")).toBeVisible();
@@ -184,7 +186,7 @@ test.describe("Smoke tests @smoke", () => {
     }
   });
 
-  test("completion journey (ticket queue): tracks completed tickets and rounds", async ({
+  test("completion journey (ticket queue): shows completed tickets and no round history without resets", async ({
     browser,
   }) => {
     test.slow();
@@ -204,7 +206,10 @@ test.describe("Smoke tests @smoke", () => {
       const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await addTicketFromQueueDialog(queueDialog, ticketOneTitle);
       await addTicketFromQueueDialog(queueDialog, ticketTwoTitle);
-      await queueDialog.getByRole("button", { name: "Start Voting" }).first().click();
+      await queueDialog
+        .getByRole("button", { name: "Start Voting" })
+        .first()
+        .click();
       await page.keyboard.press("Escape");
 
       await moderatorRoom.castVote("5");
@@ -217,15 +222,23 @@ test.describe("Smoke tests @smoke", () => {
       await moderatorRoom.revealVotes();
 
       const completeDialog = await openCompleteSessionDialog(page);
-      await expect(completeDialog.getByTestId("queue-history-tab-panel")).toBeVisible();
-      await expect(completeDialog).toContainText("Round history");
+      await expect(
+        completeDialog.getByTestId("queue-history-tab-panel"),
+      ).toBeVisible();
+      await expect(completeDialog).not.toContainText("Round history");
+      await expect(completeDialog).not.toContainText("Reset round");
+      await expect(completeDialog).not.toContainText("Next ticket");
       await expect(completeDialog).toContainText("Completed tickets");
       await expect(completeDialog).toContainText(ticketOneTitle);
-      await completeDialog.getByRole("button", { name: "Complete session" }).click();
+      await completeDialog
+        .getByRole("button", { name: "Complete session" })
+        .click();
 
       await expect(page.getByText("Session summary")).toBeVisible();
       await expect(
-        page.getByText("No completed tickets or rounds recorded for this session."),
+        page.getByText(
+          "No completed tickets or rounds recorded for this session.",
+        ),
       ).toHaveCount(0);
       await expect(page.getByText(ticketOneTitle).first()).toBeVisible();
       await expect(page.getByText(ticketTwoTitle).first()).toBeVisible();
@@ -234,7 +247,7 @@ test.describe("Smoke tests @smoke", () => {
     }
   });
 
-  test("completion journey (mixed reset + queue): tracks both reset and ticket transitions", async ({
+  test("completion journey (mixed reset + queue): shows reset-only round history and completed tickets", async ({
     browser,
   }) => {
     test.slow();
@@ -254,7 +267,10 @@ test.describe("Smoke tests @smoke", () => {
       const queueDialog = page.getByRole("dialog", { name: "Ticket Queue" });
       await addTicketFromQueueDialog(queueDialog, ticketOneTitle);
       await addTicketFromQueueDialog(queueDialog, ticketTwoTitle);
-      await queueDialog.getByRole("button", { name: "Start Voting" }).first().click();
+      await queueDialog
+        .getByRole("button", { name: "Start Voting" })
+        .first()
+        .click();
       await page.keyboard.press("Escape");
 
       await moderatorRoom.castVote("5");
@@ -272,15 +288,23 @@ test.describe("Smoke tests @smoke", () => {
       await moderatorRoom.revealVotes();
 
       const completeDialog = await openCompleteSessionDialog(page);
-      await expect(completeDialog.getByTestId("queue-history-tab-panel")).toBeVisible();
+      await expect(
+        completeDialog.getByTestId("queue-history-tab-panel"),
+      ).toBeVisible();
+      await expect(completeDialog).toContainText("Round history");
       await expect(completeDialog).toContainText("Reset round");
-      await expect(completeDialog).toContainText("Next ticket");
+      await expect(completeDialog).not.toContainText("Next ticket");
+      await expect(completeDialog).toContainText("Completed tickets");
       await expect(completeDialog).toContainText(ticketOneTitle);
-      await completeDialog.getByRole("button", { name: "Complete session" }).click();
+      await completeDialog
+        .getByRole("button", { name: "Complete session" })
+        .click();
 
       await expect(page.getByText("Session summary")).toBeVisible();
       await expect(
-        page.getByText("No completed tickets or rounds recorded for this session."),
+        page.getByText(
+          "No completed tickets or rounds recorded for this session.",
+        ),
       ).toHaveCount(0);
       await expect(page.getByText(ticketOneTitle).first()).toBeVisible();
       await expect(page.getByText(ticketTwoTitle).first()).toBeVisible();
