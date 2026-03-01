@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { OAuthProvider, TeamIntegrationStatus } from "@sprintjam/types";
 
@@ -33,6 +34,16 @@ export function useTeamOAuth(
 ): TeamOAuthResult {
   const queryClient = useQueryClient();
   const queryKey = ["team-oauth", teamId, provider] as const;
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current !== null) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const statusQuery = useQuery<TeamIntegrationStatus>({
     queryKey,
@@ -53,9 +64,10 @@ export function useTeamOAuth(
 
       const MAX_POLL_MS = 5 * 60 * 1000;
       const start = Date.now();
-      const pollTimer = setInterval(() => {
+      pollTimerRef.current = setInterval(() => {
         if (authWindow.closed || Date.now() - start > MAX_POLL_MS) {
-          clearInterval(pollTimer);
+          clearInterval(pollTimerRef.current!);
+          pollTimerRef.current = null;
           setTimeout(() => void statusQuery.refetch(), 1000);
         }
       }, 500);

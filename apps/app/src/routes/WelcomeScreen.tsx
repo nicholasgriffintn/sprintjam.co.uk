@@ -10,7 +10,6 @@ import {
   BarChart3,
   Play,
   GitBranch,
-  Building2,
   ArrowUpRight,
 } from 'lucide-react';
 
