@@ -9,12 +9,12 @@ import {
   findCanonicalUserName,
 } from '../../lib/room-data';
 
-const COMPLETED_ROOM_ALLOWED_MESSAGE_TYPES = new Set([
-  "completeSession",
-  "startGame",
-  "submitGameMove",
-  "endGame",
-] as const);
+const COMPLETED_ROOM_ALLOWED_MESSAGE_TYPES: Set<string> = new Set([
+  'completeSession',
+  'startGame',
+  'submitGameMove',
+  'endGame',
+]);
 
 export async function handleSession(
   room: PlanningRoom,

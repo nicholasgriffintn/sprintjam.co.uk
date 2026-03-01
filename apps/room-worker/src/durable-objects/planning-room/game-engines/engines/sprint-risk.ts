@@ -171,14 +171,6 @@ export const sprintRiskEngine: GameEngine = {
         return;
       }
 
-      if (hasScoringDice(newDice) && newDice.every((d) => d !== null)) {
-        const allScore = scoreDice(newDice as number[]) > 0;
-        if (allScore && newDice.length === DICE_COUNT) {
-          addEvent(session, `Hot dice! ${userName} can re-roll all 6.`);
-          session.sprintRiskKeptIndices = [];
-        }
-      }
-
       session.sprintRiskPhase = 'rolled';
     } else if (value.startsWith('keep:')) {
       if (session.sprintRiskPhase !== 'rolled') {
@@ -215,16 +207,25 @@ export const sprintRiskEngine: GameEngine = {
       }
 
       const gained = scoreDice(keptDiceValues);
-      session.sprintRiskKeptIndices = [
+      const updatedKeptIndices = [
         ...(session.sprintRiskKeptIndices ?? []),
         ...newKeepIndices,
       ];
+      session.sprintRiskKeptIndices = updatedKeptIndices;
       session.sprintRiskTurnScore = (session.sprintRiskTurnScore ?? 0) + gained;
       session.sprintRiskPhase = 'kept';
       addEvent(
         session,
         `${userName} kept ${keptDiceValues.join(', ')} (+${gained} pts, turn total: ${session.sprintRiskTurnScore}).`,
       );
+
+      const hotDice = updatedKeptIndices.length === DICE_COUNT;
+      if (hotDice) {
+        addEvent(session, `Hot dice! ${userName} can re-roll all 6.`);
+        session.sprintRiskKeptIndices = [];
+        session.sprintRiskDice = Array(DICE_COUNT).fill(null);
+        session.sprintRiskPhase = 'waiting';
+      }
     } else if (value === 'bank') {
       if (session.sprintRiskPhase !== 'kept') {
         session.moves = session.moves.filter(
