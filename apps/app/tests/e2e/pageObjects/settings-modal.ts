@@ -16,10 +16,13 @@ export class SettingsModal {
           : tab === "queue"
             ? "Ticket queue"
             : "Atmosphere";
-    const tabButton = this.modal().getByRole("button", { name: tabLabel });
+    const tabButton = this.modal().getByRole("tab", {
+      name: tabLabel,
+      exact: true,
+    });
     if (await tabButton.isVisible()) {
-      const pressed = await tabButton.getAttribute("aria-pressed");
-      if (pressed !== "true") {
+      const selected = await tabButton.getAttribute("aria-selected");
+      if (selected !== "true") {
         await tabButton.click();
       }
     }

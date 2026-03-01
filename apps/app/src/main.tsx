@@ -8,7 +8,8 @@ import "./index.css";
 import App from "./App.tsx";
 import { queryClient } from "./lib/data/collections";
 import { ThemeProvider } from "./lib/theme-context";
-import { SENTRY_DSN } from './constants';
+import { SENTRY_DSN } from "./constants";
+import { AppToastProvider } from "./components/ui";
 
 Sentry.init({
   dsn: SENTRY_DSN,
@@ -27,7 +28,9 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
       <ThemeProvider>
-        <App />
+        <AppToastProvider>
+          <App />
+        </AppToastProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

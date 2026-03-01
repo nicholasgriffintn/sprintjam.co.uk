@@ -2,6 +2,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { ScrollArea } from "@/components/ui";
 import { Select } from "@/components/ui/Select";
 import type { QueueProviderImportState } from "./useQueueProviderImport";
 
@@ -62,8 +64,8 @@ export function QueueProviderImportPanel({
                   Import from {providerName}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Select a {externalLabels.board.toLowerCase()} to load
-                  tickets, then choose which ones to add to the queue.
+                  Select a {externalLabels.board.toLowerCase()} to load tickets,
+                  then choose which ones to add to the queue.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -185,7 +187,11 @@ export function QueueProviderImportPanel({
                       </Button>
                     </div>
 
-                    <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+                    <ScrollArea
+                      className="mt-3 max-h-64"
+                      contentClassName="space-y-2 pr-3"
+                      aria-label={`${providerName} tickets`}
+                    >
                       {ticketsLoading ? (
                         <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500">
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -209,11 +215,12 @@ export function QueueProviderImportPanel({
                                   : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-slate-600"
                               } `}
                             >
-                              <input
-                                type="checkbox"
+                              <Checkbox
                                 checked={isSelected}
-                                onChange={() => toggleTicketSelection(ticket.id)}
-                                className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                onCheckedChange={() =>
+                                  toggleTicketSelection(ticket.id)
+                                }
+                                className="mt-1"
                               />
                               <div className="flex-1 space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
@@ -240,7 +247,8 @@ export function QueueProviderImportPanel({
                                   )}
                                   {activeProvider === "github" ? (
                                     <span>
-                                      Points label: {estimated ? "Set" : "Not set"}
+                                      Points label:{" "}
+                                      {estimated ? "Set" : "Not set"}
                                     </span>
                                   ) : (
                                     <span>
@@ -257,7 +265,7 @@ export function QueueProviderImportPanel({
                           );
                         })
                       )}
-                    </div>
+                    </ScrollArea>
 
                     <div className="mt-3 flex justify-end">
                       <Button

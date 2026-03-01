@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import type { TeamIntegrationStatus } from "@sprintjam/types";
@@ -14,6 +15,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { useRoomState } from "@/context/RoomContext";
 import { useTeamOAuth } from "@/hooks/useTeamOAuth";
+import { toast } from "@/components/ui";
 import { getTeamSettings, saveTeamSettings } from "@/lib/workspace-service";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
@@ -64,12 +66,10 @@ export default function WorkspaceTeamSettings() {
       saveTeamSettings(selectedTeamId!, settings),
     onSuccess: (saved) => {
       queryClient.setQueryData(settingsQueryKey, saved);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      toast.success("Default settings saved");
     },
   });
 
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const settingsRef = useRef<RoomSettings | null>(null);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
 
@@ -108,18 +108,18 @@ export default function WorkspaceTeamSettings() {
       onLogin={goToLogin}
     >
       <div className="space-y-6">
+        <button
+          type="button"
+          onClick={() => goToWorkspaceAdminTeams()}
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-200"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to teams
+        </button>
         <div className="flex items-center gap-4">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => goToWorkspaceAdminTeams()}
-          >
-            Teams
-          </Button>
           <div>
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
-              {selectedTeam?.name ?? "Team"} Settings
+              {selectedTeam?.name ?? 'Team'} Settings
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
               Default settings and integrations for this team
@@ -171,12 +171,6 @@ export default function WorkspaceTeamSettings() {
                       teamId={selectedTeamId}
                     />
 
-                    {saveSuccess && (
-                      <Alert variant="success">
-                        Default settings saved successfully.
-                      </Alert>
-                    )}
-
                     {saveSettingsMutation.error instanceof Error && (
                       <Alert variant="warning">
                         {saveSettingsMutation.error.message}
@@ -215,11 +209,11 @@ export default function WorkspaceTeamSettings() {
                   metadata={
                     jiraOAuth.status.connected
                       ? [
-                          metaStr(jiraOAuth.status.metadata, "jiraDomain"),
-                          metaStr(jiraOAuth.status.metadata, "jiraUserEmail"),
+                          metaStr(jiraOAuth.status.metadata, 'jiraDomain'),
+                          metaStr(jiraOAuth.status.metadata, 'jiraUserEmail'),
                         ]
                           .filter(Boolean)
-                          .join(" · ") || undefined
+                          .join(' · ') || undefined
                       : undefined
                   }
                 />
@@ -237,17 +231,17 @@ export default function WorkspaceTeamSettings() {
                       ? [
                           metaStr(
                             linearOAuth.status.metadata,
-                            "linearOrganizationId",
+                            'linearOrganizationId',
                           )
-                            ? `Org: ${metaStr(linearOAuth.status.metadata, "linearOrganizationId")}`
+                            ? `Org: ${metaStr(linearOAuth.status.metadata, 'linearOrganizationId')}`
                             : undefined,
                           metaStr(
                             linearOAuth.status.metadata,
-                            "linearUserEmail",
+                            'linearUserEmail',
                           ),
                         ]
                           .filter(Boolean)
-                          .join(" · ") || undefined
+                          .join(' · ') || undefined
                       : undefined
                   }
                 />
@@ -263,17 +257,17 @@ export default function WorkspaceTeamSettings() {
                   metadata={
                     githubOAuth.status.connected
                       ? [
-                          metaStr(githubOAuth.status.metadata, "githubLogin"),
+                          metaStr(githubOAuth.status.metadata, 'githubLogin'),
                           metaStr(
                             githubOAuth.status.metadata,
-                            "defaultOwner",
+                            'defaultOwner',
                           ) &&
-                          metaStr(githubOAuth.status.metadata, "defaultRepo")
-                            ? `${metaStr(githubOAuth.status.metadata, "defaultOwner")}/${metaStr(githubOAuth.status.metadata, "defaultRepo")}`
+                          metaStr(githubOAuth.status.metadata, 'defaultRepo')
+                            ? `${metaStr(githubOAuth.status.metadata, 'defaultOwner')}/${metaStr(githubOAuth.status.metadata, 'defaultRepo')}`
                             : undefined,
                         ]
                           .filter(Boolean)
-                          .join(" · ") || undefined
+                          .join(' · ') || undefined
                       : undefined
                   }
                 />
@@ -305,60 +299,70 @@ function IntegrationRow({
   onDisconnect: () => Promise<void>;
   metadata?: string;
 }) {
+  const [isDisconnectConfirmOpen, setIsDisconnectConfirmOpen] = useState(false);
+
   const handleDisconnect = () => {
-    const confirmed = window.confirm(
-      `Disconnect ${label}? This will remove the integration for all rooms in this team.`,
-    );
-    if (confirmed) void onDisconnect();
+    setIsDisconnectConfirmOpen(true);
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-slate-900 dark:text-white">
-            {status.connected ? `✓ Connected to ${label}` : label}
-          </p>
-          {status.connected && metadata ? (
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              {metadata}
+    <>
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              {status.connected ? `✓ Connected to ${label}` : label}
             </p>
-          ) : (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {description}
-            </p>
-          )}
-          {status.connected && status.authorizedBy && (
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              Authorized by {status.authorizedBy}
-            </p>
-          )}
+            {status.connected && metadata ? (
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                {metadata}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {description}
+              </p>
+            )}
+            {status.connected && status.authorizedBy && (
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Authorized by {status.authorizedBy}
+              </p>
+            )}
+          </div>
+          <div className="flex-shrink-0">
+            {loading ? (
+              <Spinner />
+            ) : status.connected ? (
+              <Button
+                onClick={handleDisconnect}
+                variant="unstyled"
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                Disconnect
+              </Button>
+            ) : (
+              <Button
+                onClick={onConnect}
+                variant="unstyled"
+                className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+              >
+                Connect
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex-shrink-0">
-          {loading ? (
-            <Spinner />
-          ) : status.connected ? (
-            <Button
-              onClick={handleDisconnect}
-              variant="unstyled"
-              className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              Disconnect
-            </Button>
-          ) : (
-            <Button
-              onClick={onConnect}
-              variant="unstyled"
-              className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-            >
-              Connect
-            </Button>
-          )}
-        </div>
+        {error && (
+          <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
+        )}
       </div>
-      {error && (
-        <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
-      )}
-    </div>
+      <ConfirmDialog
+        open={isDisconnectConfirmOpen}
+        onOpenChange={setIsDisconnectConfirmOpen}
+        title={`Disconnect ${label}?`}
+        description="This will remove the integration for all rooms in this team."
+        confirmLabel="Disconnect"
+        variant="destructive"
+        onConfirm={() => void onDisconnect()}
+      />
+    </>
   );
 }

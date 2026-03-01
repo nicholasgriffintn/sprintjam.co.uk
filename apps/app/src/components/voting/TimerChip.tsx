@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Clock, Hourglass, ChevronDown } from "lucide-react";
 
 import { useRoomState } from "@/context/RoomContext";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
 import {
   addEventListener,
@@ -327,11 +328,9 @@ export function TimerChip() {
               </div>
 
               <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={autoResetEnabled}
-                  onChange={handleToggleAutoReset}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  onCheckedChange={handleToggleAutoReset}
                 />
                 Auto reset countdown on vote reset
               </label>

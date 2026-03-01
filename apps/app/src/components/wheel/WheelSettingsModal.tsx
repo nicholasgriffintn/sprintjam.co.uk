@@ -3,6 +3,7 @@ import type { WheelSettings } from "@sprintjam/types";
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 
 interface WheelSettingsModalProps {
   isOpen: boolean;
@@ -44,17 +45,15 @@ export function WheelSettingsModal({
       <div className="space-y-6">
         <div className="space-y-4">
           <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={draftSettings.removeWinnerAfterSpin}
-              onChange={(e) =>
+              onCheckedChange={(checked) =>
                 setDraftSettings({
                   ...draftSettings,
-                  removeWinnerAfterSpin: e.target.checked,
+                  removeWinnerAfterSpin: checked,
                 })
               }
               disabled={disabled}
-              className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
               Remove winner after spin
@@ -62,17 +61,15 @@ export function WheelSettingsModal({
           </label>
 
           <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={draftSettings.showConfetti}
-              onChange={(e) =>
+              onCheckedChange={(checked) =>
                 setDraftSettings({
                   ...draftSettings,
-                  showConfetti: e.target.checked,
+                  showConfetti: checked,
                 })
               }
               disabled={disabled}
-              className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
               Show confetti on winner
@@ -80,17 +77,15 @@ export function WheelSettingsModal({
           </label>
 
           <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={draftSettings.playSounds}
-              onChange={(e) =>
+              onCheckedChange={(checked) =>
                 setDraftSettings({
                   ...draftSettings,
-                  playSounds: e.target.checked,
+                  playSounds: checked,
                 })
               }
               disabled={disabled}
-              className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
             <span className="text-sm text-slate-700 dark:text-slate-300">
               Play sounds

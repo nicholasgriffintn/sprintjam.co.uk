@@ -6,6 +6,7 @@ import { Smile, User } from "lucide-react";
 import type { AvatarId } from "@/types";
 import { AVATAR_MAP } from "@/utils/avatars";
 import { QUICK_EMOJIS } from "@/constants";
+import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
@@ -45,23 +46,25 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 flex items-center justify-center border-4 border-blue-500 dark:border-indigo-400"
           >
-            {(() => {
-              const selectedAvatarInfo = AVATARS.find(
-                (a) => a.id === selectedAvatar,
-              );
-              if (selectedAvatarInfo) {
-                const IconComponent = selectedAvatarInfo.Icon;
-                return (
-                  <IconComponent
-                    size={48}
-                    className={selectedAvatarInfo.color}
-                  />
+            <Avatar
+              className="h-24 w-24 border-4 border-blue-500 bg-gradient-to-br from-blue-100 to-indigo-100 dark:border-indigo-400 dark:from-blue-900 dark:to-indigo-900"
+              fallback={(() => {
+                const selectedAvatarInfo = AVATARS.find(
+                  (a) => a.id === selectedAvatar,
                 );
-              }
-              return <span className="text-5xl">{selectedAvatar}</span>;
-            })()}
+                if (selectedAvatarInfo) {
+                  const IconComponent = selectedAvatarInfo.Icon;
+                  return (
+                    <IconComponent
+                      size={48}
+                      className={selectedAvatarInfo.color}
+                    />
+                  );
+                }
+                return <span className="text-5xl">{selectedAvatar}</span>;
+              })()}
+            />
           </motion.div>
         </div>
       )}
@@ -84,10 +87,13 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
               }`}
               title={avatar.label}
             >
-              {(() => {
-                const IconComponent = avatar.Icon;
-                return <IconComponent size={32} className={avatar.color} />;
-              })()}
+              <Avatar
+                className="h-full w-full"
+                fallback={(() => {
+                  const IconComponent = avatar.Icon;
+                  return <IconComponent size={32} className={avatar.color} />;
+                })()}
+              />
             </Button>
           ))}
         </div>

@@ -105,12 +105,15 @@ export function useRoomRealtimeState({
       message: string,
       meta?: { reason?: "auth" | "disconnect"; code?: number },
     ) => {
-      setRoomError(message);
       if (meta?.reason === "auth") {
         setConnectionIssue({ type: "auth", message });
         setRoomErrorKind("auth");
       } else if (meta?.reason === "disconnect") {
         setConnectionIssue({ type: "disconnected", message });
+        setRoomErrorKind(null);
+      } else {
+        setConnectionIssue({ type: "disconnected", message });
+        setRoomErrorKind(null);
       }
     },
     [],

@@ -18,6 +18,7 @@ import { getTeamSettings } from "@/lib/workspace-service";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
+import { Switch } from "@/components/ui/Switch";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Footer } from "@/components/layout/Footer";
@@ -159,7 +160,7 @@ const CreateRoomScreen = () => {
 
     return {
       ...(advancedSettings ?? {}),
-      enableStructuredVoting: votingMode === 'structured',
+      enableStructuredVoting: votingMode === "structured",
       votingSequenceId: selectedSequenceId,
       estimateOptions,
     };
@@ -264,32 +265,14 @@ const CreateRoomScreen = () => {
                       Multi-criteria voting with automatic story points
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="unstyled"
-                    role="switch"
-                    aria-checked={votingMode === "structured"}
+                  <Switch
                     id="voting-mode"
-                    onClick={() =>
-                      setVotingMode(
-                        votingMode === "structured" ? "standard" : "structured",
-                      )
+                    checked={votingMode === "structured"}
+                    onCheckedChange={(checked) =>
+                      setVotingMode(checked ? "structured" : "standard")
                     }
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 justify-start rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:ring-brand-500 ${
-                      votingMode === "structured"
-                        ? "bg-brand-600 dark:bg-brand-500"
-                        : "bg-slate-200 dark:bg-slate-700"
-                    }`}
                     data-testid="create-voting-mode"
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        votingMode === "structured"
-                          ? "translate-x-5"
-                          : "translate-x-0"
-                      }`}
-                    />
-                  </Button>
+                  />
                 </div>
               </div>
 

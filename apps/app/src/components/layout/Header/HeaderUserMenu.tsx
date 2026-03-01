@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { KeyRound, LayoutGrid, Loader2, LogOut, UserRound } from "lucide-react";
 
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { cn } from "@/lib/cn";
@@ -92,6 +93,12 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
     setIsMenuOpen(false);
   };
 
+  const avatarFallback = isLoading ? (
+    <Loader2 className="h-5 w-5 animate-spin" />
+  ) : (
+    avatarLabel || <UserRound className="h-5 w-5" />
+  );
+
   if (!showNavigation) {
     return null;
   }
@@ -121,7 +128,7 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
       <button
         type="button"
         className={cn(
-          "flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-gradient-to-br from-brand-500 to-indigo-500 text-sm font-semibold uppercase text-white shadow-md transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 dark:border-white/10 dark:from-brand-600 dark:to-indigo-600",
+          "h-9 w-9 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200",
           isMenuOpen &&
             "ring-2 ring-brand-200 ring-offset-2 ring-offset-transparent",
         )}
@@ -129,11 +136,10 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
         aria-expanded={isMenuOpen}
         onClick={() => setIsMenuOpen((open) => !open)}
       >
-        {isLoading ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          avatarLabel || <UserRound className="h-5 w-5" />
-        )}
+        <Avatar
+          className="h-full w-full border border-white/40 bg-gradient-to-br from-brand-500 to-indigo-500 text-sm font-semibold uppercase text-white shadow-md dark:border-white/10 dark:from-brand-600 dark:to-indigo-600"
+          fallback={avatarFallback}
+        />
       </button>
 
       <AnimatePresence>

@@ -1,5 +1,6 @@
 import type { RoomSettings } from "@/types";
 import { ChevronDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Select } from "@/components/ui/Select";
 import type {
   ExtraVoteOption,
@@ -137,14 +138,13 @@ export function EstimateOptions({
                   key={option.id}
                   className="flex items-start gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm text-slate-800 shadow-sm ring-1 ring-white/60 transition hover:bg-white/80 dark:bg-slate-800/60 dark:text-slate-100 dark:ring-white/10"
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={option.enabled !== false}
-                    onChange={(e) =>
-                      onToggleExtraVote(option.id, e.target.checked)
+                    onCheckedChange={(checked) =>
+                      onToggleExtraVote(option.id, checked)
                     }
                     data-testid={`extra-option-${option.id}`}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    className="mt-1"
                   />
                   <div className="leading-tight">
                     <span className="font-semibold">

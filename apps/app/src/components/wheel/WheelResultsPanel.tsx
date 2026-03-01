@@ -1,5 +1,6 @@
 import type { SpinResult } from "@sprintjam/types";
 
+import { ScrollArea } from "@/components/ui";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 interface WheelResultsPanelProps {
@@ -18,7 +19,11 @@ export function WheelResultsPanel({ results }: WheelResultsPanelProps) {
       <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-3">
         Results
       </h3>
-      <div className="space-y-2 max-h-48 overflow-y-auto">
+      <ScrollArea
+        className="max-h-48"
+        contentClassName="space-y-2 pr-3"
+        aria-label="Wheel result history"
+      >
         {reversedResults.map((result, index) => (
           <div
             key={result.id}
@@ -45,7 +50,7 @@ export function WheelResultsPanel({ results }: WheelResultsPanelProps) {
             </span>
           </div>
         ))}
-      </div>
+      </ScrollArea>
     </SurfaceCard>
   );
 }

@@ -14,6 +14,7 @@ import { downloadCsv } from "@/utils/csv";
 import { buildCsv } from "@/components/modals/TicketQueueModal/utils/csv";
 import { ExternalServiceBadge } from "@/components/ExternalServiceBadge";
 import { Button } from "@/components/ui/Button";
+import { ScrollArea } from "@/components/ui";
 
 interface TicketQueueModalCompletedTabProps {
   completedTickets: TicketQueueItem[];
@@ -315,9 +316,11 @@ export function TicketQueueModalCompletedTab({
   };
 
   return (
-    <div
-      className="max-h-[70vh] space-y-3 overflow-y-auto pr-1"
+    <ScrollArea
+      className="max-h-[70vh]"
+      contentClassName="space-y-3 pr-3"
       data-testid="queue-history-tab-panel"
+      aria-label="Completed tickets and round history"
     >
       {!hasTicketHistory && !hasRoundHistory ? (
         <p className="py-6 text-center text-sm text-slate-500">
@@ -514,6 +517,6 @@ export function TicketQueueModalCompletedTab({
           )}
         </>
       )}
-    </div>
+    </ScrollArea>
   );
 }

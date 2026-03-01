@@ -1,8 +1,9 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { useId } from "react";
+import { Input as BaseInput } from "@base-ui/react/input";
 import { CheckCircle } from "lucide-react";
 
-import { cn } from "../../lib/cn";
+import { cn } from "@/lib/cn";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: ReactNode;
@@ -52,7 +53,7 @@ export const Input = ({
             {icon}
           </div>
         )}
-        <input
+        <BaseInput
           id={inputId}
           disabled={disabled}
           aria-describedby={helperId}

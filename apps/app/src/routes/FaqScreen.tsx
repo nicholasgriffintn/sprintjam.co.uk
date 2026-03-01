@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { SurfaceCard } from "@/components/ui";
+import { Accordion, SurfaceCard } from "@/components/ui";
 import { SITE_NAME } from "@/constants";
 import { generateFAQSchema } from "@/utils/structured-data";
 import type { MetaTagConfig } from "@/utils/meta";
@@ -17,7 +17,6 @@ import {
   facilitationFaqs,
   alternativesFaqs,
   allFaqs,
-  type FAQItem,
 } from "@/content/faqs";
 
 const FaqScreen = () => {
@@ -45,23 +44,6 @@ const FaqScreen = () => {
   );
 
   usePageMeta(metaConfig);
-
-  const renderFaqCard = ({ question, answer }: FAQItem) => (
-    <details
-      key={question}
-      className="group rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md open:border-brand-200 open:bg-white dark:border-white/10 dark:bg-white/5 dark:open:border-brand-300/40 [&_summary::-webkit-details-marker]:hidden"
-    >
-      <summary className="flex cursor-pointer items-center justify-between gap-3 text-left text-base font-semibold text-slate-900 transition group-open:text-brand-700 dark:text-white dark:group-open:text-brand-200">
-        <span>{question}</span>
-        <span className="text-sm text-brand-600 transition group-open:rotate-180">
-          v
-        </span>
-      </summary>
-      <div className="mt-3 space-y-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200 text-left">
-        {answer}
-      </div>
-    </details>
-  );
 
   return (
     <PageSection maxWidth="xl">
@@ -113,7 +95,7 @@ const FaqScreen = () => {
                 Foundations
               </h2>
             </div>
-            <div className="grid gap-4">{basicsFaqs.map(renderFaqCard)}</div>
+            <Accordion items={basicsFaqs} />
           </section>
 
           <section className="space-y-4">
@@ -125,7 +107,7 @@ const FaqScreen = () => {
                 Product questions
               </h2>
             </div>
-            <div className="grid gap-4">{sprintjamFaqs.map(renderFaqCard)}</div>
+            <Accordion items={sprintjamFaqs} />
           </section>
 
           <section className="space-y-4">
@@ -137,7 +119,7 @@ const FaqScreen = () => {
                 Estimation practices
               </h2>
             </div>
-            <div className="grid gap-4">{scrumFaqs.map(renderFaqCard)}</div>
+            <Accordion items={scrumFaqs} />
           </section>
 
           <section className="space-y-4">
@@ -149,7 +131,7 @@ const FaqScreen = () => {
                 Making the numbers useful
               </h2>
             </div>
-            <div className="grid gap-4">{cardsFaqs.map(renderFaqCard)}</div>
+            <Accordion items={cardsFaqs} />
           </section>
 
           <section className="space-y-4">
@@ -161,9 +143,7 @@ const FaqScreen = () => {
                 Keep sessions focused
               </h2>
             </div>
-            <div className="grid gap-4">
-              {facilitationFaqs.map(renderFaqCard)}
-            </div>
+            <Accordion items={facilitationFaqs} />
           </section>
 
           <section className="space-y-4">
@@ -175,9 +155,7 @@ const FaqScreen = () => {
                 When to try something else
               </h2>
             </div>
-            <div className="grid gap-4">
-              {alternativesFaqs.map(renderFaqCard)}
-            </div>
+            <Accordion items={alternativesFaqs} />
           </section>
 
           <SurfaceCard variant="subtle" className="text-left">

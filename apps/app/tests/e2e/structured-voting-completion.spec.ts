@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 import {
   createRoomWithParticipant,
@@ -6,6 +6,19 @@ import {
 } from "./helpers/room-journeys";
 import { StructuredVotingPanel } from "./pageObjects/structured-voting-panel";
 import { SettingsModal } from "./pageObjects/settings-modal";
+
+const showVotesDialogTitle = "Show votes?";
+
+function showVotesDialog(page: Page) {
+  return page.getByRole("alertdialog", { name: showVotesDialogTitle });
+}
+
+async function expectShowVotesWarning(page: Page, expectedText: string) {
+  const dialog = showVotesDialog(page);
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText(expectedText);
+  return dialog;
+}
 
 test.describe("Structured voting completion warnings", () => {
   const roomOptions: RoomSetupOptions = {
@@ -38,26 +51,22 @@ test.describe("Structured voting completion warnings", () => {
       await participantPanel.selectScore("complexity", 2);
       await participantPanel.selectScore("confidence", 2);
 
-      // Set up dialog handler to intercept the confirmation dialog
-      let dialogMessage = "";
-      let dialogAccepted = false;
-      moderatorRoom.getPage().on("dialog", async (dialog) => {
-        dialogMessage = dialog.message();
-        dialogAccepted = false;
-        await dialog.dismiss();
-      });
-
       // Attempt to reveal votes
       await moderatorRoom.revealVotes();
 
-      // Verify the warning dialog appeared with correct message
-      expect(dialogMessage).toContain("completed all voting criteria");
-      expect(dialogMessage).toContain("Are you sure you want to show votes?");
-      expect(dialogAccepted).toBe(false);
+      const dialog = await expectShowVotesWarning(
+        moderatorRoom.getPage(),
+        "completed all voting criteria",
+      );
+      const dialogText = (await dialog.textContent()) ?? "";
+
       // Should show either participant name or count
-      const hasName = dialogMessage.includes(participantName);
-      const hasCount = dialogMessage.includes("1 of 2 users");
+      const hasName = dialogText.includes(participantName);
+      const hasCount = dialogText.includes("1 of 2 users");
       expect(hasName || hasCount).toBe(true);
+
+      await dialog.getByRole("button", { name: "Cancel" }).click();
+      await expect(dialog).toBeHidden();
 
       // Verify votes were NOT revealed (because dialog was dismissed)
       await moderatorRoom.expectVotePendingState();
@@ -85,19 +94,13 @@ test.describe("Structured voting completion warnings", () => {
       await moderatorPanel.selectScore("complexity", 2);
       await participantPanel.selectScore("complexity", 1);
 
-      let dialogMessage = "";
-      moderatorRoom.getPage().on("dialog", async (dialog) => {
-        dialogMessage = dialog.message();
-        await dialog.dismiss();
-      });
-
       await moderatorRoom.revealVotes();
 
-      // Verify the warning shows count
-      expect(dialogMessage).toContain(
+      const dialog = await expectShowVotesWarning(
+        moderatorRoom.getPage(),
         "2 of 2 users haven't completed all voting criteria",
       );
-      expect(dialogMessage).toContain("Are you sure you want to show votes?");
+      await dialog.getByRole("button", { name: "Cancel" }).click();
     } finally {
       await cleanup();
     }
@@ -137,16 +140,10 @@ test.describe("Structured voting completion warnings", () => {
       await participantPanel.selectScore("unknowns", 0);
       await participantPanel.expectStoryPoints(3);
 
-      let dialogShown = false;
-      moderatorRoom.getPage().on("dialog", async (dialog) => {
-        dialogShown = true;
-        await dialog.accept();
-      });
-
       // Reveal votes should work without warning
       await moderatorRoom.revealVotes();
 
-      expect(dialogShown).toBe(false);
+      await expect(showVotesDialog(moderatorRoom.getPage())).toBeHidden();
       await moderatorRoom.expectVoteVisible(moderatorName, "5");
       await moderatorRoom.expectVoteVisible(participantName, "3");
     } finally {
@@ -184,16 +181,10 @@ test.describe("Structured voting completion warnings", () => {
       await participantPanel.selectScore("unknowns", 0);
       await participantPanel.expectStoryPoints(3);
 
-      let dialogShown = false;
-      moderatorRoom.getPage().on("dialog", async (dialog) => {
-        dialogShown = true;
-        await dialog.accept();
-      });
-
       // Should not show warning since extra option counts as complete
       await moderatorRoom.revealVotes();
 
-      expect(dialogShown).toBe(false);
+      await expect(showVotesDialog(moderatorRoom.getPage())).toBeHidden();
       await moderatorRoom.expectVoteVisible(moderatorName, "❓");
       await moderatorRoom.expectVoteVisible(participantName, "3");
     } finally {
@@ -231,20 +222,17 @@ test.describe("Structured voting completion warnings", () => {
       // Participant only partially completes
       await participantPanel.selectScore("complexity", 2);
 
-      let dialogMessage = "";
-      moderatorRoom.getPage().on("dialog", async (dialog) => {
-        dialogMessage = dialog.message();
-        await dialog.dismiss();
-      });
-
       await moderatorRoom.revealVotes();
 
-      // Verify warning does NOT include participant name
-      expect(dialogMessage).not.toContain(participantName);
-      expect(dialogMessage).toContain(
+      const dialog = await expectShowVotesWarning(
+        moderatorRoom.getPage(),
         "1 of 2 users haven't completed all voting criteria",
       );
-      expect(dialogMessage).toContain("Are you sure you want to show votes?");
+      const dialogText = (await dialog.textContent()) ?? "";
+
+      // Verify warning does NOT include participant name
+      expect(dialogText).not.toContain(participantName);
+      await dialog.getByRole("button", { name: "Cancel" }).click();
     } finally {
       await cleanup();
     }
@@ -280,19 +268,17 @@ test.describe("Structured voting completion warnings", () => {
       // Participant only partially completes
       await participantPanel.selectScore("complexity", 2);
 
-      let dialogMessage = "";
-      moderatorRoom.getPage().on("dialog", async (dialog) => {
-        dialogMessage = dialog.message();
-        await dialog.dismiss();
-      });
-
       await moderatorRoom.revealVotes();
 
-      // Verify warning does NOT include participant name
-      expect(dialogMessage).not.toContain(participantName);
-      expect(dialogMessage).toContain(
+      const dialog = await expectShowVotesWarning(
+        moderatorRoom.getPage(),
         "1 of 2 users haven't completed all voting criteria",
       );
+      const dialogText = (await dialog.textContent()) ?? "";
+
+      // Verify warning does NOT include participant name
+      expect(dialogText).not.toContain(participantName);
+      await dialog.getByRole("button", { name: "Cancel" }).click();
     } finally {
       await cleanup();
     }
@@ -323,15 +309,12 @@ test.describe("Structured voting completion warnings", () => {
       // Participant only partially completes
       await participantPanel.selectScore("complexity", 2);
 
-      // Accept the warning dialog
-      moderatorRoom.getPage().on("dialog", async (dialog) => {
-        expect(dialog.message()).toContain(
-          "Are you sure you want to show votes?",
-        );
-        await dialog.accept();
-      });
-
       await moderatorRoom.revealVotes();
+      const dialog = await expectShowVotesWarning(
+        moderatorRoom.getPage(),
+        "completed all voting criteria",
+      );
+      await dialog.getByRole("button", { name: "Show votes" }).click();
 
       // Votes should now be visible
       await moderatorRoom.expectVoteVisible(moderatorName, "5");

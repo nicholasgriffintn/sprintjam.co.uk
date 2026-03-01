@@ -1,5 +1,6 @@
 import type { RoomSettings, JudgeAlgorithm } from "@/types";
 import { BetaBadge } from "@/components/BetaBadge";
+import { Checkbox } from "@/components/ui/Checkbox";
 
 export function BackgroundMusic({
   localSettings,
@@ -20,14 +21,12 @@ export function BackgroundMusic({
       </div>
       <div className="space-y-2">
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="enableStrudelPlayer"
             checked={localSettings.enableStrudelPlayer || false}
-            onChange={(e) =>
-              handleChange("enableStrudelPlayer", e.target.checked)
+            onCheckedChange={(checked) =>
+              handleChange("enableStrudelPlayer", checked)
             }
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="enableStrudelPlayer"
@@ -44,14 +43,12 @@ export function BackgroundMusic({
       {localSettings.enableStrudelPlayer && (
         <div className="ml-6 space-y-2">
           <div className="flex items-center">
-            <input
-              type="checkbox"
+            <Checkbox
               id="strudelAutoGenerate"
               checked={localSettings.strudelAutoGenerate || false}
-              onChange={(e) =>
-                handleChange("strudelAutoGenerate", e.target.checked)
+              onCheckedChange={(checked) =>
+                handleChange("strudelAutoGenerate", checked)
               }
-              className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
             />
             <label
               htmlFor="strudelAutoGenerate"

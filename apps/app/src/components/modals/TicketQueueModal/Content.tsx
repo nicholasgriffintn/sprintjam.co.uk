@@ -1,10 +1,13 @@
 import { FC, useMemo, useState } from "react";
 import type { SessionRoundHistoryItem } from "@sprintjam/types";
+import { ArrowDownToLine } from "lucide-react";
 
 import type { TicketQueueItem } from "@/types";
-import { TicketQueueModalControls } from "@/components/modals/TicketQueueModal/Controls";
+import { Button, Tabs } from "@/components/ui";
 import { TicketQueueModalQueueTab } from "@/components/modals/TicketQueueModal/tabs/Queue";
 import { TicketQueueModalCompletedTab } from "@/components/modals/TicketQueueModal/tabs/Completed";
+import { buildCsv } from "@/components/modals/TicketQueueModal/utils/csv";
+import { downloadCsv } from "@/utils/csv";
 
 interface TicketQueueModalContentProps {
   currentTicket?: TicketQueueItem;
@@ -48,15 +51,44 @@ export const TicketQueueModalContent: FC<TicketQueueModalContentProps> = ({
     [queue],
   );
 
-  return (
-    <div className="space-y-6">
-      <TicketQueueModalControls
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        completedTickets={completedTickets}
-      />
+  const handleDownloadHistory = () => {
+    const csv = buildCsv(completedTickets);
+    downloadCsv("sprintjam-past-estimations.csv", csv);
+  };
 
-      {activeTab === "queue" ? (
+  return (
+    <Tabs.Root
+      value={activeTab}
+      onValueChange={(value) => {
+        if (value === "queue" || value === "history") {
+          setActiveTab(value);
+        }
+      }}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Tabs.List>
+          <Tabs.Tab value="queue" data-testid="queue-tab-queue">
+            Queue
+          </Tabs.Tab>
+          <Tabs.Tab value="history" data-testid="queue-tab-history">
+            Past estimations
+          </Tabs.Tab>
+        </Tabs.List>
+        {activeTab === "history" && completedTickets.length > 0 ? (
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleDownloadHistory}
+              variant="unstyled"
+              className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-slate-200 dark:text-slate-900"
+            >
+              <ArrowDownToLine className="h-3.5 w-3.5" />
+              Download CSV
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      <Tabs.Panel value="queue">
         <TicketQueueModalQueueTab
           currentTicket={currentTicket}
           externalService={externalService}
@@ -71,7 +103,8 @@ export const TicketQueueModalContent: FC<TicketQueueModalContentProps> = ({
           queue={queue}
           onError={onError}
         />
-      ) : (
+      </Tabs.Panel>
+      <Tabs.Panel value="history">
         <TicketQueueModalCompletedTab
           completedTickets={completedTickets}
           roundHistory={roundHistory}
@@ -81,7 +114,7 @@ export const TicketQueueModalContent: FC<TicketQueueModalContentProps> = ({
           onError={onError}
           onUpdateTicket={onUpdateTicket}
         />
-      )}
-    </div>
+      </Tabs.Panel>
+    </Tabs.Root>
   );
 };

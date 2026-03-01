@@ -13,7 +13,7 @@ import { PermissionsOptions } from "@/components/RoomSettingsTabs/PermissionsOpt
 import { ResultsOptions } from "@/components/RoomSettingsTabs/ResultsOptions";
 import { BackgroundMusic } from "@/components/RoomSettingsTabs/BackgroundMusic";
 import { TicketQueueSettings } from "@/components/RoomSettingsTabs/TicketQueueSettings";
-import { Button } from "@/components/ui/Button";
+import { Tabs } from "@/components/ui";
 import {
   cloneExtraVoteOptions,
   cloneVotingPresets,
@@ -385,126 +385,111 @@ export function RoomSettingsTabs({
     );
   };
 
-  const tabs: { id: TabId; label: string; description: string }[] = [
+  const tabs: { id: TabId; label: string }[] = [
     {
       id: "voting",
       label: "Voting",
-      description: hideVotingModeAndEstimates
-        ? "Permissions"
-        : "Mode & permissions",
     },
-    {
-      id: "results",
-      label: "Results",
-      description: "Settings",
-    },
-    { id: "queue", label: "Ticket queue", description: "Integrations" },
-    { id: "atmosphere", label: "Atmosphere", description: "Music" },
+    { id: "results", label: "Results" },
+    { id: "queue", label: "Ticket queue" },
+    { id: "atmosphere", label: "Atmosphere" },
   ];
 
-  const renderTabContent = () => {
-    if (activeTab === "voting") {
-      return (
-        <div className="space-y-6">
-          {!hideVotingModeAndEstimates && (
-            <>
-              <VotingMode
-                localSettings={localSettings}
-                handleChange={handleChange}
-              />
-              <EstimateOptions
-                localSettings={localSettings}
-                defaultSettings={defaultSettings}
-                structuredVotingOptions={structuredOptions}
-                estimateOptionsInput={estimateOptionsInput}
-                handleEstimateOptionsChange={handleEstimateOptionsChange}
-                votingPresets={presets}
-                selectedSequenceId={selectedSequenceId}
-                onSelectSequence={handleSelectSequence}
-                extraVoteOptions={extraOptions}
-                onToggleExtraVote={handleToggleExtraOption}
-                defaultSequenceId={
-                  defaultSequenceId ??
-                  initialSettings.votingSequenceId ??
-                  (presets[0]?.id as VotingSequenceId) ??
-                  "custom"
-                }
-                hideSelection={localSettings.enableStructuredVoting === true}
-              />
-            </>
-          )}
-          <PermissionsOptions
-            localSettings={localSettings}
-            handleChange={handleChange}
-          />
-        </div>
-      );
-    }
-
-    if (activeTab === "results") {
-      return (
-        <div className="space-y-6">
-          <TheJudge localSettings={localSettings} handleChange={handleChange} />
-          <ResultsOptions
-            localSettings={localSettings}
-            handleChange={handleChange}
-          />
-        </div>
-      );
-    }
-
-    if (activeTab === "queue") {
-      return (
-        <TicketQueueSettings
-          localSettings={localSettings}
-          handleChange={handleChange}
-          isCreating={isCreating}
-          teamId={teamId}
-        />
-      );
-    }
-
-    return (
-      <BackgroundMusic
-        localSettings={localSettings}
-        handleChange={handleChange}
-      />
-    );
-  };
-
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="flex overflow-x-auto border-b border-slate-200/60 dark:border-white/10">
+    <Tabs.Root
+      value={activeTab}
+      onValueChange={(value) => {
+        if (
+          value === "voting" ||
+          value === "results" ||
+          value === "queue" ||
+          value === "atmosphere"
+        ) {
+          setActiveTab(value);
+        }
+      }}
+      className={className}
+    >
+      <Tabs.List fullWidth className="w-full">
         {tabs.map((tab) => {
-          const isActiveTab = tab.id === activeTab;
           return (
-            <Button
+            <Tabs.Tab
               key={tab.id}
-              type="button"
-              variant="unstyled"
-              onClick={() => setActiveTab(tab.id)}
-              className={`group relative flex-none px-4 pb-3 pt-1 text-left ${
-                isActiveTab
-                  ? "text-slate-900 dark:text-white"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              }`}
+              value={tab.id}
+              className="flex-1"
             >
-              <span
-                className={`text-sm ${isActiveTab ? "font-semibold" : "font-medium"}`}
-              >
-                {tab.label}
-              </span>
-              {isActiveTab && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-500 to-brand-600 dark:from-brand-400 dark:to-brand-500" />
-              )}
-            </Button>
+              {tab.label}
+            </Tabs.Tab>
           );
         })}
-      </div>
+      </Tabs.List>
 
       <div className="rounded-2xl border border-slate-200/60 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-slate-900/60">
-        {renderTabContent()}
+        <Tabs.Panel value="voting">
+          <div className="space-y-6">
+            {!hideVotingModeAndEstimates && (
+              <>
+                <VotingMode
+                  localSettings={localSettings}
+                  handleChange={handleChange}
+                />
+                <EstimateOptions
+                  localSettings={localSettings}
+                  defaultSettings={defaultSettings}
+                  structuredVotingOptions={structuredOptions}
+                  estimateOptionsInput={estimateOptionsInput}
+                  handleEstimateOptionsChange={handleEstimateOptionsChange}
+                  votingPresets={presets}
+                  selectedSequenceId={selectedSequenceId}
+                  onSelectSequence={handleSelectSequence}
+                  extraVoteOptions={extraOptions}
+                  onToggleExtraVote={handleToggleExtraOption}
+                  defaultSequenceId={
+                    defaultSequenceId ??
+                    initialSettings.votingSequenceId ??
+                    (presets[0]?.id as VotingSequenceId) ??
+                    "custom"
+                  }
+                  hideSelection={localSettings.enableStructuredVoting === true}
+                />
+              </>
+            )}
+            <PermissionsOptions
+              localSettings={localSettings}
+              handleChange={handleChange}
+            />
+          </div>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="results">
+          <div className="space-y-6">
+            <TheJudge
+              localSettings={localSettings}
+              handleChange={handleChange}
+            />
+            <ResultsOptions
+              localSettings={localSettings}
+              handleChange={handleChange}
+            />
+          </div>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="queue">
+          <TicketQueueSettings
+            localSettings={localSettings}
+            handleChange={handleChange}
+            isCreating={isCreating}
+            teamId={teamId}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="atmosphere">
+          <BackgroundMusic
+            localSettings={localSettings}
+            handleChange={handleChange}
+          />
+        </Tabs.Panel>
       </div>
-    </div>
+    </Tabs.Root>
   );
 }
