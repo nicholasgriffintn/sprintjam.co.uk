@@ -35,17 +35,6 @@ const makeContext = (options: {
     clearStructuredVotes: vi.fn(),
     setSettings: vi.fn(),
     updateTimerConfig: vi.fn(),
-    saveJiraOAuthCredentials: vi.fn().mockResolvedValue(undefined),
-    getJiraOAuthCredentials: vi.fn().mockResolvedValue(null),
-    updateJiraOAuthTokens: vi.fn().mockResolvedValue(undefined),
-    deleteJiraOAuthCredentials: vi.fn(),
-    saveLinearOAuthCredentials: vi.fn().mockResolvedValue(undefined),
-    getLinearOAuthCredentials: vi.fn().mockResolvedValue(null),
-    updateLinearOAuthTokens: vi.fn().mockResolvedValue(undefined),
-    deleteLinearOAuthCredentials: vi.fn(),
-    saveGithubOAuthCredentials: vi.fn().mockResolvedValue(undefined),
-    getGithubOAuthCredentials: vi.fn().mockResolvedValue(null),
-    deleteGithubOAuthCredentials: vi.fn(),
   };
 
   const ctx: PlanningRoomHttpContext = {
@@ -256,17 +245,6 @@ describe("planning-room-http permissions and state updates", () => {
       clearStructuredVotes: vi.fn(),
       setSettings: vi.fn(),
       updateTimerConfig: vi.fn(),
-      saveJiraOAuthCredentials: vi.fn().mockResolvedValue(undefined),
-      getJiraOAuthCredentials: vi.fn().mockResolvedValue(null),
-      updateJiraOAuthTokens: vi.fn().mockResolvedValue(undefined),
-      deleteJiraOAuthCredentials: vi.fn(),
-      saveLinearOAuthCredentials: vi.fn().mockResolvedValue(undefined),
-      getLinearOAuthCredentials: vi.fn().mockResolvedValue(null),
-      updateLinearOAuthTokens: vi.fn().mockResolvedValue(undefined),
-      deleteLinearOAuthCredentials: vi.fn(),
-      saveGithubOAuthCredentials: vi.fn().mockResolvedValue(undefined),
-      getGithubOAuthCredentials: vi.fn().mockResolvedValue(null),
-      deleteGithubOAuthCredentials: vi.fn(),
     };
 
     const ctx: PlanningRoomHttpContext = {
@@ -329,92 +307,16 @@ describe("planning-room-http permissions and state updates", () => {
     expect(payload.success).toBe(true);
   });
 
-  it("returns Jira OAuth status when session is valid", async () => {
-    const tokens = new Map<string, string>([["alice", "valid"]]);
-    const { ctx } = makeContext({ roomData: baseRoom, tokens });
-
-    ctx.repository.getJiraOAuthCredentials = vi.fn().mockResolvedValue({
-      roomKey: baseRoom.key,
-      accessToken: "token",
-      refreshToken: null,
-      tokenType: "Bearer",
-      expiresAt: 123,
-      scope: "read:jira",
-      jiraDomain: "example.atlassian.net",
-      jiraCloudId: "cloud",
-      jiraUserId: "user",
-      jiraUserEmail: "alice@test.sprintjam.co.uk",
-      storyPointsField: "customfield_100",
-      sprintField: null,
-      authorizedBy: "alice",
-    });
+  it("returns team-id for room", async () => {
+    const { ctx } = makeContext({ roomData: baseRoom });
 
     const response = (await handleHttpRequest(
       ctx,
-      jsonRequest(
-        "/jira/oauth/status",
-        "POST",
-        {
-          roomKey: baseRoom.key,
-          userName: "Alice",
-        },
-        "valid",
-      ),
+      new Request("https://dummy/room/team-id", { method: "GET" }),
     )) as Response;
 
     expect(response.status).toBe(200);
     const payload = (await response.json()) as any;
-    expect(payload.connected).toBe(true);
-    expect(payload.jiraDomain).toBe("example.atlassian.net");
-  });
-
-  it("rejects Jira OAuth status requests without params", async () => {
-    const { ctx } = makeContext({ roomData: baseRoom });
-
-    const response = (await handleHttpRequest(
-      ctx,
-      jsonRequest("/jira/oauth/status", "POST"),
-    )) as Response;
-
-    expect(response.status).toBe(400);
-  });
-
-  it("rejects Linear OAuth revoke without session info", async () => {
-    const { ctx } = makeContext({ roomData: baseRoom });
-
-    const response = (await handleHttpRequest(
-      ctx,
-      jsonRequest("/linear/oauth/revoke", "DELETE", {}),
-    )) as Response;
-
-    expect(response.status).toBe(400);
-    expect(ctx.repository.deleteLinearOAuthCredentials).not.toHaveBeenCalled();
-  });
-
-  it("allows Linear OAuth revoke with valid session and broadcasts", async () => {
-    const tokens = new Map<string, string>([["alice", "valid"]]);
-    const { ctx } = makeContext({ roomData: baseRoom, tokens });
-    ctx.broadcast = vi.fn();
-
-    const response = (await handleHttpRequest(
-      ctx,
-      jsonRequest(
-        "/linear/oauth/revoke",
-        "DELETE",
-        {
-          roomKey: baseRoom.key,
-          userName: "Alice",
-        },
-        "valid",
-      ),
-    )) as Response;
-
-    expect(response.status).toBe(200);
-    expect(ctx.repository.deleteLinearOAuthCredentials).toHaveBeenCalledWith(
-      baseRoom.key,
-    );
-    expect(ctx.broadcast).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "linearDisconnected" }),
-    );
+    expect(payload.teamId).toBeNull();
   });
 });

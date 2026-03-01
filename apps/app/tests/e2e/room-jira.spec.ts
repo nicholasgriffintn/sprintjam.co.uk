@@ -1,26 +1,100 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type BrowserContext } from "@playwright/test";
 
 import { createRoomWithParticipant } from "./helpers/room-journeys";
 import { SettingsModal } from "./pageObjects/settings-modal";
+
+const WORKSPACE_TEAM_ID = 88;
+
+async function setupWorkspaceRoutes(context: BrowserContext) {
+  await context.route("**/api/auth/me", (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        user: {
+          id: 42,
+          email: "qa@sprintjam.co.uk",
+          name: "Workspace QA",
+          organisationId: 7,
+        },
+        teams: [
+          {
+            id: WORKSPACE_TEAM_ID,
+            name: "QA Team",
+            organisationId: 7,
+            ownerId: 42,
+            createdAt: Date.now(),
+          },
+        ],
+      }),
+    });
+  });
+
+  await context.route("**/api/teams/88/settings", (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ settings: null }),
+    });
+  });
+
+  await context.route("**/api/teams/88/sessions", async (route) => {
+    if (route.request().method() === "GET") {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ sessions: [] }),
+      });
+      return;
+    }
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: {
+          id: 1,
+          teamId: WORKSPACE_TEAM_ID,
+          roomKey: "test-room",
+          name: "Test session",
+          createdById: 42,
+          createdAt: Date.now(),
+          updatedAt: null,
+          completedAt: null,
+          metadata: null,
+        },
+      }),
+    });
+  });
+
+  await context.route("**/api/teams/88/integrations/*/status", (route) => {
+    const provider = route.request().url().split("/").at(-2) ?? "jira";
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: {
+          provider,
+          connected: true,
+        },
+      }),
+    });
+  });
+}
 
 test.describe("Jira integration", () => {
   test("moderator can add and link Jira tickets through the queue", async ({
     browser,
   }) => {
-    const setup = await createRoomWithParticipant(browser);
+    const setup = await createRoomWithParticipant(browser, {
+      workspaceTeamId: WORKSPACE_TEAM_ID,
+      setupModeratorRoutes: setupWorkspaceRoutes,
+    });
     const { moderatorRoom, participantRoom, cleanup, moderatorContext } = setup;
 
     const settingsModal = new SettingsModal(moderatorRoom.getPage());
 
     const ticketKey = "TEST-123";
     const secondaryTicketKey = "TEST-456";
-    const jiraOAuthStatus = {
-      connected: true,
-      jiraDomain: "jira.test.sprintjam.co.uk",
-      jiraUserEmail: "qa@test.sprintjam.co.uk",
-      storyPointsField: "customfield_10016",
-      sprintField: "customfield_10017",
-    };
     const jiraFields = [
       { id: "customfield_10016", name: "Story Points", type: "number" },
       { id: "customfield_10017", name: "Sprint", type: "string" },
@@ -55,14 +129,6 @@ test.describe("Jira integration", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ ticket }),
-      });
-    });
-
-    await moderatorContext.route("**/api/jira/oauth/status", (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(jiraOAuthStatus),
       });
     });
 
@@ -112,8 +178,8 @@ test.describe("Jira integration", () => {
         contentType: "application/json",
         body: JSON.stringify({
           fields: jiraFields,
-          storyPointsField: jiraOAuthStatus.storyPointsField,
-          sprintField: jiraOAuthStatus.sprintField,
+          storyPointsField: jiraFields[0]?.id,
+          sprintField: jiraFields[1]?.id,
         }),
       });
     });
@@ -136,7 +202,6 @@ test.describe("Jira integration", () => {
       await settingsModal.open();
       await settingsModal.toggle("settings-toggle-enable-queue", true);
       await settingsModal.selectExternalService("jira");
-      await settingsModal.waitForJiraConnection();
       await settingsModal.toggle("settings-toggle-auto-sync", true);
       await settingsModal.save();
 

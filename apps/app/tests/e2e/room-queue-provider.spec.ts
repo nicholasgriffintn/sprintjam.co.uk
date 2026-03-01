@@ -13,6 +13,85 @@ import { RoomPage } from "./pageObjects/room-page";
 import { SettingsModal } from "./pageObjects/settings-modal";
 import { createRoomWithParticipant } from "./helpers/room-journeys";
 
+const WORKSPACE_TEAM_ID = 88;
+
+async function setupWorkspaceRoutes(context: BrowserContext) {
+  await context.route("**/api/auth/me", (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        user: {
+          id: 42,
+          email: "qa@sprintjam.co.uk",
+          name: "Workspace QA",
+          organisationId: 7,
+        },
+        teams: [
+          {
+            id: WORKSPACE_TEAM_ID,
+            name: "QA Team",
+            organisationId: 7,
+            ownerId: 42,
+            createdAt: Date.now(),
+          },
+        ],
+      }),
+    });
+  });
+
+  await context.route("**/api/teams/88/settings", (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ settings: null }),
+    });
+  });
+
+  await context.route("**/api/teams/88/sessions", async (route) => {
+    if (route.request().method() === "GET") {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ sessions: [] }),
+      });
+      return;
+    }
+
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: {
+          id: 1,
+          teamId: WORKSPACE_TEAM_ID,
+          roomKey: "test-room",
+          name: "Test session",
+          createdById: 42,
+          createdAt: Date.now(),
+          updatedAt: null,
+          completedAt: null,
+          metadata: null,
+        },
+      }),
+    });
+  });
+
+  await context.route("**/api/teams/88/integrations/*/status", (route) => {
+    const provider = route.request().url().split("/").at(-2) ?? "jira";
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: {
+          provider,
+          connected: true,
+        },
+      }),
+    });
+  });
+}
+
 async function createRoomWithProvider(
   browser: Browser,
   provider: "jira" | "linear" | "github",
@@ -21,9 +100,8 @@ async function createRoomWithProvider(
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  if (setupRoutes) {
-    await setupRoutes(context);
-  }
+  await setupWorkspaceRoutes(context);
+  if (setupRoutes) await setupRoutes(context);
 
   const welcome = new WelcomePage(page);
   await welcome.gotoHome();
@@ -31,6 +109,7 @@ async function createRoomWithProvider(
 
   const createRoom = new CreateRoomPage(page);
   await createRoom.fillBasics("Queue Creator");
+  await createRoom.selectWorkspaceTeam(WORKSPACE_TEAM_ID);
   await createRoom.startInstantRoom();
 
   const joinRoom = new JoinRoomPage(page);
@@ -109,35 +188,6 @@ test.describe("Ticket queue provider setup on room creation", () => {
       browser,
       "jira",
       async (ctx) => {
-        await ctx.route("**/api/jira/oauth/status", (route) => {
-          route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
-              connected: true,
-              jiraDomain: "jira.test.sprintjam.co.uk",
-              jiraUserEmail: "qa@test.sprintjam.co.uk",
-            }),
-          });
-        });
-
-        await ctx.route("**/api/jira/oauth/fields", (route) => {
-          route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
-              fields: [
-                {
-                  id: "customfield_10016",
-                  name: "Story Points",
-                  type: "number",
-                },
-              ],
-              storyPointsField: "customfield_10016",
-            }),
-          });
-        });
-
         await ctx.route("**/api/jira/boards", (route) => {
           route.fulfill({
             status: 200,
@@ -177,6 +227,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
       });
       await expect(providerModal).toBeVisible();
       await expect(providerModal).toContainText("Configure Jira");
+      await expect(providerModal).toContainText("Jira is connected");
 
       const openQueueButton = providerModal.getByRole("button", {
         name: "Open queue setup",
@@ -221,19 +272,6 @@ test.describe("Ticket queue provider setup on room creation", () => {
       browser,
       "linear",
       async (ctx) => {
-        await ctx.route("**/api/linear/oauth/status", (route) => {
-          route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
-              connected: true,
-              linearOrganizationId: "eng",
-              linearUserEmail: "qa@test.sprintjam.co.uk",
-              estimateField: "storyPoints",
-            }),
-          });
-        });
-
         await ctx.route("**/api/linear/teams", (route) => {
           route.fulfill({
             status: 200,
@@ -273,6 +311,7 @@ test.describe("Ticket queue provider setup on room creation", () => {
       });
       await expect(providerModal).toBeVisible();
       await expect(providerModal).toContainText("Configure Linear");
+      await expect(providerModal).toContainText("Linear is connected");
 
       const openQueueButton = providerModal.getByRole("button", {
         name: "Open queue setup",

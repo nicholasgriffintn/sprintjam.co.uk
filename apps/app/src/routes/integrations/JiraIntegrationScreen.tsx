@@ -38,17 +38,17 @@ const featureCards = [
     icon: Table2,
   },
   {
-    title: "Secure OAuth",
+    title: "Workspace-managed OAuth",
     description:
-      "Room-scoped OAuth keeps access limited to what the moderator connects.",
+      "Team admins connect Jira once in workspace settings; every room under that team inherits the connection.",
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: "Connect Jira",
-    detail: `Use OAuth 2.0 to authorize ${SITE_NAME} for this room.`,
+    title: "Connect Jira in workspace",
+    detail: `Sign in and connect Jira via OAuth 2.0 in your workspace team settings.`,
   },
   {
     title: "Pick issues",
@@ -75,9 +75,9 @@ const securityHighlights = [
     icon: Lock,
   },
   {
-    title: "Encrypted, room-scoped storage",
+    title: "Encrypted, team-scoped storage",
     detail:
-      "Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a single room, and cleared on revoke.",
+      "Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a workspace team, and cleared on revoke.",
     icon: Database,
   },
   {

@@ -6,27 +6,6 @@ import { handleVote } from "./vote";
 import { handleToggleShowVotes } from "./show-votes";
 import { handleResetVotes } from "./reset-votes";
 import { handleGetSettings, handleUpdateSettings } from "./settings";
-import {
-  handleJiraSaveCredentials,
-  handleJiraStatus,
-  handleJiraCredentials,
-  handleJiraRefresh,
-  handleJiraUpdateFields,
-  handleJiraRevoke,
-} from "./jira";
-import {
-  handleLinearSaveCredentials,
-  handleLinearStatus,
-  handleLinearCredentials,
-  handleLinearRefresh,
-  handleLinearRevoke,
-} from "./linear";
-import {
-  handleGithubSaveCredentials,
-  handleGithubStatus,
-  handleGithubCredentials,
-  handleGithubRevoke,
-} from "./github";
 
 export type {
   PlanningRoomHttpContext,
@@ -72,86 +51,11 @@ export async function handleHttpRequest(
       return handleUpdateSettings(ctx, request);
     }
 
-    if (url.pathname === "/jira/oauth/save" && request.method === "POST") {
-      return handleJiraSaveCredentials(ctx, request);
-    }
-
-    if (url.pathname === "/jira/oauth/status" && request.method === "POST") {
-      return handleJiraStatus(ctx, request);
-    }
-
-    if (
-      url.pathname === "/jira/oauth/credentials" &&
-      request.method === "GET"
-    ) {
-      return handleJiraCredentials(ctx);
-    }
-
-    if (url.pathname === "/jira/oauth/refresh" && request.method === "POST") {
-      return handleJiraRefresh(ctx, request);
-    }
-
-    if (url.pathname === "/jira/oauth/fields" && request.method === "PUT") {
-      return handleJiraUpdateFields(ctx, request);
-    }
-
-    if (url.pathname === "/jira/oauth/revoke" && request.method === "DELETE") {
-      return handleJiraRevoke(ctx, request);
-    }
-
-    if (url.pathname === "/linear/oauth/save" && request.method === "POST") {
-      return handleLinearSaveCredentials(ctx, request);
-    }
-
-    if (url.pathname === "/linear/oauth/status" && request.method === "POST") {
-      return handleLinearStatus(ctx, request);
-    }
-
-    if (
-      url.pathname === "/linear/oauth/credentials" &&
-      request.method === "GET"
-    ) {
-      return handleLinearCredentials(ctx);
-    }
-
-    if (url.pathname === "/linear/oauth/refresh" && request.method === "POST") {
-      return handleLinearRefresh(ctx, request);
-    }
-
-    if (
-      url.pathname === "/linear/oauth/revoke" &&
-      request.method === "DELETE"
-    ) {
-      return handleLinearRevoke(ctx, request);
-    }
-
-    if (url.pathname === "/github/oauth/save" && request.method === "POST") {
-      return handleGithubSaveCredentials(ctx, request);
-    }
-
-    if (url.pathname === "/github/oauth/status" && request.method === "POST") {
-      return handleGithubStatus(ctx, request);
-    }
-
-    if (
-      url.pathname === "/github/oauth/credentials" &&
-      request.method === "GET"
-    ) {
-      return handleGithubCredentials(ctx);
-    }
-
-    if (
-      url.pathname === "/github/oauth/revoke" &&
-      request.method === "DELETE"
-    ) {
-      return handleGithubRevoke(ctx, request);
-    }
-
-    if (url.pathname === '/room/team-id' && request.method === 'GET') {
+    if (url.pathname === "/room/team-id" && request.method === "GET") {
       const roomData = await ctx.getRoomData();
       return new Response(
         JSON.stringify({ teamId: roomData?.teamId ?? null }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
+        { status: 200, headers: { "Content-Type": "application/json" } },
       ) as unknown as CfResponse;
     }
 

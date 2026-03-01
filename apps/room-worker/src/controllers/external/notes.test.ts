@@ -50,16 +50,28 @@ const makeRequest = (body: Record<string, unknown>, sessionToken = "token") =>
     body: JSON.stringify(body),
   }) as unknown as CfRequest;
 
-const makeRoomStub = (credentials: Record<string, unknown>) => ({
+const makeRoomStub = () => ({
   fetch: vi.fn(async (request: Request) => {
     const url = new URL(request.url);
     if (url.pathname === "/session/validate") {
       return new Response(null, { status: 200 });
     }
-    if (url.pathname.includes("/oauth/credentials")) {
+    if (url.pathname === "/room/team-id") {
+      return new Response(JSON.stringify({ teamId: 1 }), { status: 200 });
+    }
+    return new Response(JSON.stringify({ error: "not found" }), {
+      status: 404,
+    });
+  }),
+});
+
+const makeAuthWorker = (credentials: Record<string, unknown>) => ({
+  fetch: vi.fn(async (request: Request) => {
+    const url = new URL(request.url);
+    if (url.pathname === "/api/internal/team-credentials") {
       return new Response(JSON.stringify({ credentials }), { status: 200 });
     }
-    if (url.pathname.includes("/oauth/refresh")) {
+    if (url.pathname === "/api/internal/team-credentials/refresh") {
       return new Response(null, { status: 200 });
     }
     return new Response(JSON.stringify({ error: "not found" }), {
@@ -80,7 +92,7 @@ describe("external controllers note handling", () => {
       accessToken: "token",
       refreshToken: "refresh",
     };
-    vi.mocked(getRoomStub).mockReturnValue(makeRoomStub(credentials) as any);
+    vi.mocked(getRoomStub).mockReturnValue(makeRoomStub() as any);
     vi.mocked(fetchJiraTicket).mockResolvedValue({
       id: "1",
       key: "ISS-1",
@@ -90,6 +102,7 @@ describe("external controllers note handling", () => {
     const env = {
       JIRA_OAUTH_CLIENT_ID: "id",
       JIRA_OAUTH_CLIENT_SECRET: "secret",
+      AUTH_WORKER: makeAuthWorker(credentials),
     } as unknown as RoomWorkerEnv;
 
     const response = (await updateJiraStoryPointsController(
@@ -120,7 +133,7 @@ describe("external controllers note handling", () => {
       accessToken: "token",
       refreshToken: "refresh",
     };
-    vi.mocked(getRoomStub).mockReturnValue(makeRoomStub(credentials) as any);
+    vi.mocked(getRoomStub).mockReturnValue(makeRoomStub() as any);
     vi.mocked(fetchLinearIssue).mockResolvedValue({
       storyPoints: 5,
     } as any);
@@ -128,6 +141,7 @@ describe("external controllers note handling", () => {
     const env = {
       LINEAR_OAUTH_CLIENT_ID: "id",
       LINEAR_OAUTH_CLIENT_SECRET: "secret",
+      AUTH_WORKER: makeAuthWorker(credentials),
     } as unknown as RoomWorkerEnv;
 
     const response = (await updateLinearEstimateController(
@@ -160,12 +174,13 @@ describe("external controllers note handling", () => {
       defaultOwner: "octo",
       defaultRepo: "repo",
     };
-    vi.mocked(getRoomStub).mockReturnValue(makeRoomStub(credentials) as any);
+    vi.mocked(getRoomStub).mockReturnValue(makeRoomStub() as any);
     vi.mocked(updateGithubEstimate).mockResolvedValue({} as any);
 
     const env = {
       GITHUB_OAUTH_CLIENT_ID: "id",
       GITHUB_OAUTH_CLIENT_SECRET: "secret",
+      AUTH_WORKER: makeAuthWorker(credentials),
     } as unknown as RoomWorkerEnv;
 
     const response = (await updateGithubEstimateController(

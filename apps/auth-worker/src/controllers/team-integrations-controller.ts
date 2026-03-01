@@ -39,9 +39,16 @@ async function getAuthOrError(
 
 function verifyInternalSecret(request: Request, env: AuthWorkerEnv): boolean {
   const secret = env.INTERNAL_API_SECRET;
-  if (!secret) return true;
+  if (!secret) return false;
   const header = request.headers.get('Authorization');
-  return header === `Bearer ${secret}`;
+  if (!header) return false;
+  const expected = `Bearer ${secret}`;
+  if (header.length !== expected.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < header.length; i++) {
+    mismatch |= header.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 
 async function verifyTeamOwnership(
@@ -58,9 +65,13 @@ function oauthHtmlResponse(
   title: string,
   message: string,
   status: number,
+  autoClose = false,
 ): Response {
+  const closeScript = autoClose
+    ? '<script>setTimeout(function(){window.close()},1500)</script>'
+    : '';
   return new Response(
-    `<html><body><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p></body></html>`,
+    `<html><body><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p>${closeScript}</body></html>`,
     { status, headers: { 'Content-Type': 'text/html' } },
   );
 }
@@ -70,7 +81,7 @@ function oauthHtmlError(message: string, status = 400): Response {
 }
 
 function oauthHtmlSuccess(message: string): Response {
-  return oauthHtmlResponse('Success!', message, 200);
+  return oauthHtmlResponse('Success!', message, 200, true);
 }
 
 export async function listTeamIntegrationsController(
@@ -711,16 +722,10 @@ export async function getTeamCredentialsInternalController(
   }
 
   if (!credentials) {
-    return new Response(JSON.stringify({ error: 'Not connected' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonError('Not connected', 404);
   }
 
-  return new Response(JSON.stringify({ credentials }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonResponse({ credentials }, { 'Cache-Control': 'no-store' });
 }
 
 export async function refreshTeamCredentialsInternalController(
@@ -766,8 +771,5 @@ export async function refreshTeamCredentialsInternalController(
     expiresAt,
   );
 
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonResponse({ success: true });
 }

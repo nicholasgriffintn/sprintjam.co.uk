@@ -4,10 +4,18 @@ const SECURITY_HEADERS = {
   "X-Frame-Options": "DENY",
 };
 
-export function jsonResponse(body: unknown, status = 200): Response {
+export function jsonResponse(
+  body: unknown,
+  statusOrHeaders?: number | Record<string, string>,
+): Response {
+  const status = typeof statusOrHeaders === "number" ? statusOrHeaders : 200;
+  const extraHeaders =
+    typeof statusOrHeaders === "object" ? statusOrHeaders : undefined;
   return new Response(JSON.stringify(body), {
     status,
-    headers: SECURITY_HEADERS,
+    headers: extraHeaders
+      ? { ...SECURITY_HEADERS, ...extraHeaders }
+      : SECURITY_HEADERS,
   });
 }
 

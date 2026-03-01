@@ -39,17 +39,17 @@ const featureCards = [
     icon: GitPullRequest,
   },
   {
-    title: "Secure by design",
+    title: "Workspace-managed OAuth",
     description:
-      "Per-room OAuth with encrypted tokens; no persistent access beyond the session.",
+      "Team admins connect GitHub once in workspace settings; every room under that team inherits the connection.",
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: "Connect GitHub",
-    detail: `Authorize ${SITE_NAME} for your room with OAuth to fetch issues securely.`,
+    title: "Connect GitHub in workspace",
+    detail: `Sign in and authorize GitHub in your workspace team settings.`,
   },
   {
     title: "Pick issues",
@@ -76,9 +76,9 @@ const securityHighlights = [
     icon: ShieldCheck,
   },
   {
-    title: "Encrypted, room-scoped storage",
+    title: "Encrypted, team-scoped storage",
     detail:
-      "Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them room-bound.",
+      "Tokens never sit in the browser—AES-GCM encryption with a worker secret keeps them bound to the workspace team.",
     icon: Database,
   },
   {
@@ -249,11 +249,12 @@ const GithubIntegrationScreen = () => {
               Security for GitHub
             </p>
             <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
-              Room-scoped OAuth with encrypted storage
+              Workspace-scoped OAuth with encrypted storage
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               Signed OAuth state, session validation, least-privilege scopes,
-              and encrypted tokens keep your repos safe while you estimate.
+              and encrypted team-level tokens keep your repos safe while you
+              estimate. Manage connections from workspace settings.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
