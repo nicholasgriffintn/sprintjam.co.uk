@@ -52,6 +52,7 @@ const JoinRoomScreen = () => {
       setSelectedAvatar("user");
     }
   }, [currentStep, selectedAvatar, setSelectedAvatar]);
+
   const isPasscodeError = errorKind === "passcode";
   const isPermissionError = errorKind === "permission";
   const isAuthError = errorKind === "auth";

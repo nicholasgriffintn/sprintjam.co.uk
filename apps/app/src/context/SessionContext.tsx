@@ -8,7 +8,11 @@ import {
   type ReactNode,
 } from "react";
 
-import { useUserPersistence } from "@/hooks/useUserPersistence";
+import {
+  getStoredUserAvatar,
+  getStoredUserName,
+  useUserPersistence,
+} from "@/hooks/useUserPersistence";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
 import { navigateTo, parsePath, type AppScreen } from "@/config/routes";
@@ -78,10 +82,12 @@ export const SessionProvider = ({
   const [joinFlowMode, setJoinFlowMode] = useState<"join" | "create">(
     initialPath.screen === "create" ? "create" : "join",
   );
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => getStoredUserName());
   const [roomKey, setRoomKey] = useState(initialPath.roomKey ?? "");
   const [passcode, setPasscode] = useState("");
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarId | null>(() =>
+    getStoredUserAvatar(),
+  );
   const [selectedWorkspaceTeamId, setSelectedWorkspaceTeamId] = useState<
     number | null
   >(null);
@@ -211,7 +217,7 @@ export const SessionProvider = ({
 
   useUserPersistence({
     name,
-    onNameLoaded: setName,
+    avatar: selectedAvatar,
   });
 
   const stateValue = useMemo<SessionStateContextValue>(

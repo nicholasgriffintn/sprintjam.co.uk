@@ -34,6 +34,7 @@ export const WORKSPACE_TOKEN_STORAGE_KEY = "sprintjam_workspaceToken";
 export const MUTE_STORAGE_KEY = "sprintjam_strudelPlayerMuted";
 export const VOLUME_STORAGE_KEY = "sprintjam_strudelPlayerVolume";
 export const USERNAME_STORAGE_KEY = "sprintjam_username";
+export const AVATAR_STORAGE_KEY = "sprintjam_avatar";
 export const THEME_STORAGE_KEY = "sprintjam_theme";
 export const RETURN_URL_KEY = "sprintjam_return_url";
 export const ROOM_HINTS_DISMISSED_STORAGE_KEY = "sprintjam_roomHintsDismissed";

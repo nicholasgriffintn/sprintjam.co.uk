@@ -35,7 +35,7 @@ test.describe("Data persistence", () => {
     }
   });
 
-  test("stores room session cookie and username in localStorage", async ({
+  test("stores room session cookie, username, and avatar in localStorage", async ({
     browser,
   }) => {
     const setup = await createRoomWithParticipant(browser);
@@ -44,6 +44,7 @@ test.describe("Data persistence", () => {
     try {
       const storage = await moderatorRoom.getPage().evaluate(() => ({
         username: window.localStorage.getItem("sprintjam_username"),
+        avatar: window.localStorage.getItem("sprintjam_avatar"),
         pathname: window.location.pathname,
       }));
       const cookies = await moderatorContext.cookies();
@@ -53,6 +54,7 @@ test.describe("Data persistence", () => {
 
       expect(sessionCookie?.value).toBeTruthy();
       expect(storage.username).toBeTruthy();
+      expect(storage.avatar).toBe("robot");
       expect(storage.pathname).toBe(`/room/${roomKey}`);
     } finally {
       await cleanup();
@@ -65,6 +67,40 @@ test.describe("Data persistence", () => {
     const setup = await createRoomWithParticipant(browser);
     const { moderatorRoom, cleanup, roomKey, moderatorName, moderatorContext } =
       setup;
+    const moderatorAvatar = "robot";
+
+    const cookies = await moderatorContext.cookies();
+    const sessionCookie = cookies.find(
+      (cookie) => cookie.name === "room_session",
+    );
+    expect(sessionCookie?.value).toBeTruthy();
+
+    await cleanup();
+
+    const reconnectContext = await browser.newContext();
+    if (sessionCookie) {
+      await reconnectContext.addCookies([sessionCookie]);
+    }
+    await reconnectContext.addInitScript(
+      ({ savedName, savedAvatar }) => {
+        window.localStorage.setItem("sprintjam_username", savedName);
+        window.localStorage.setItem("sprintjam_avatar", savedAvatar);
+      },
+      { savedName: moderatorName, savedAvatar: moderatorAvatar },
+    );
+
+    const reconnectPage = await reconnectContext.newPage();
+    await reconnectPage.goto(`/room/${roomKey}`);
+    await expect(reconnectPage.getByTestId("participants-panel")).toBeVisible();
+
+    await reconnectContext.close();
+  });
+
+  test("prompts for an avatar before auto-joining when only the name is stored", async ({
+    browser,
+  }) => {
+    const setup = await createRoomWithParticipant(browser);
+    const { cleanup, roomKey, moderatorName, moderatorContext } = setup;
 
     const cookies = await moderatorContext.cookies();
     const sessionCookie = cookies.find(
@@ -81,13 +117,22 @@ test.describe("Data persistence", () => {
     await reconnectContext.addInitScript(
       ({ savedName }) => {
         window.localStorage.setItem("sprintjam_username", savedName);
+        window.localStorage.removeItem("sprintjam_avatar");
       },
       { savedName: moderatorName },
     );
 
     const reconnectPage = await reconnectContext.newPage();
     await reconnectPage.goto(`/room/${roomKey}`);
-    await expect(reconnectPage.getByTestId("participants-panel")).toBeVisible();
+
+    await expect(
+      reconnectPage.getByRole("heading", { name: "Join Room" }),
+    ).toBeVisible();
+    await expect(reconnectPage.locator("#join-name")).toHaveValue(moderatorName);
+    await expect(reconnectPage.locator("#join-room-key")).toHaveValue(roomKey);
+    await expect(
+      reconnectPage.getByTestId("participants-panel"),
+    ).not.toBeVisible();
 
     await reconnectContext.close();
   });

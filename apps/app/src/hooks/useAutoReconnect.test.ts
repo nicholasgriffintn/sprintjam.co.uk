@@ -196,4 +196,28 @@ describe("useAutoReconnect", () => {
     expect(onReconnectComplete).toHaveBeenCalled();
     expect(joinRoom).not.toHaveBeenCalled();
   });
+
+  it("calls onNeedsJoin when avatar is missing", () => {
+    const onNeedsJoin = vi.fn();
+
+    renderHook(() =>
+      useAutoReconnect({
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
+        isLoadingDefaults: false,
+        selectedAvatar: null,
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onReconnectComplete,
+        onNeedsJoin,
+      }),
+    );
+
+    expect(onNeedsJoin).toHaveBeenCalled();
+    expect(onReconnectComplete).toHaveBeenCalled();
+    expect(joinRoom).not.toHaveBeenCalled();
+  });
 });

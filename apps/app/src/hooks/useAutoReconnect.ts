@@ -50,7 +50,7 @@ export const useAutoReconnect = ({
       return;
     }
 
-    if (!name) {
+    if (!name || !selectedAvatar) {
       didAttemptRestore.current = true;
       onNeedsJoin?.();
       onReconnectComplete?.();
@@ -62,8 +62,7 @@ export const useAutoReconnect = ({
     let cancelled = false;
 
     onLoadingChange(true);
-    const avatarToUse = selectedAvatar || "user";
-    joinRoom(name, roomKey, undefined, avatarToUse)
+    joinRoom(name, roomKey, undefined, selectedAvatar)
       .then(async ({ room: joinedRoom, defaults }) => {
         if (cancelled) {
           return;

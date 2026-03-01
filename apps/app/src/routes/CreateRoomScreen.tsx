@@ -33,7 +33,6 @@ const CreateRoomScreen = () => {
   const {
     setName,
     setPasscode,
-    setSelectedAvatar,
     setRoomKey,
     setScreen,
     setJoinFlowMode,
@@ -147,7 +146,6 @@ const CreateRoomScreen = () => {
     clearError();
     setPendingCreateSettings(settings ?? null);
     setJoinFlowMode("create");
-    setSelectedAvatar(null);
     setRoomKey("");
     setScreen("join");
   };
