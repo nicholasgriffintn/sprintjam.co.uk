@@ -53,7 +53,7 @@ export function QueueProviderImportPanel({
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          className="mb-3 overflow-hidden"
+          className="mb-3"
         >
           <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 text-sm shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -99,6 +99,9 @@ export function QueueProviderImportPanel({
                       onValueChange={setSelectedBoardId}
                       disabled={boardsLoading}
                       data-testid="queue-import-board"
+                      searchable
+                      searchPlaceholder={`Search ${externalLabels.board.toLowerCase()}...`}
+                      searchMinOptions={8}
                       className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                       options={boardOptions}
                     />
@@ -112,6 +115,9 @@ export function QueueProviderImportPanel({
                         onValueChange={setSelectedSprintId}
                         disabled={!selectedBoardId}
                         data-testid="queue-import-sprint"
+                        searchable
+                        searchPlaceholder={`Search ${externalLabels.sprint.toLowerCase()}...`}
+                        searchMinOptions={8}
                         className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                         options={sprintOptions}
                       />
