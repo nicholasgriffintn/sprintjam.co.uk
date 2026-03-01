@@ -40,6 +40,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useRoomQueueAndGameActions } from "./useRoomQueueAndGameActions";
 import { useRoomRealtimeState } from "./useRoomRealtimeState";
 import { useRoomVotingActions } from "./useRoomVotingActions";
+import { sanitiseAvatarValue } from "@/utils/avatars";
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const {
@@ -53,7 +54,17 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { setScreen, setRoomKey, setPasscode, goHome, goToRoom } =
     useSessionActions();
   const { setError, clearError } = useSessionErrors();
-  const { createSession } = useWorkspaceData();
+  const { createSession, isAuthenticated, user: workspaceUser } =
+    useWorkspaceData();
+
+  const effectiveName = isAuthenticated
+    ? (workspaceUser?.name?.trim() || name)
+    : name;
+  const effectiveAvatar = isAuthenticated
+    ? (sanitiseAvatarValue(workspaceUser?.avatar) ||
+        sanitiseAvatarValue(selectedAvatar) ||
+        "user")
+    : selectedAvatar;
 
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
   const [autoReconnectDone, setAutoReconnectDone] = useState(false);
@@ -107,11 +118,11 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     screen === "room" && !!roomKey && !autoReconnectDone;
 
   useAutoReconnect({
-    name,
+    name: effectiveName,
     screen,
     roomKey,
     isLoadingDefaults,
-    selectedAvatar,
+    selectedAvatar: effectiveAvatar,
     onReconnectSuccess: useCallback(
       (roomKeyValue: string, isModerator: boolean) => {
         setActiveRoomKey(roomKeyValue);
@@ -158,7 +169,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   useRoomConnection({
     screen,
-    name,
+    name: effectiveName,
     activeRoomKey,
     onMessage: handleRoomMessage,
     onConnectionChange: handleConnectionChange,
@@ -169,7 +180,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   useRoomDataSync({
     roomData,
-    name,
+    name: effectiveName,
     userVote,
     isModeratorView,
     onVoteChange: setUserVote,
@@ -180,10 +191,10 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   const { handleCreateRoom, handleJoinRoom, abortLatestRoomRequest } =
     useRoomEntryActions({
-      name,
+      name: effectiveName,
       roomKey,
       passcode,
-      selectedAvatar,
+      selectedAvatar: effectiveAvatar,
       selectedWorkspaceTeamId,
       pendingCreateSettings,
       applyServerDefaults,
@@ -199,7 +210,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   useAutoEstimateUpdate({
     roomData,
-    userName: name,
+    userName: effectiveName,
     onTicketUpdate: (ticketId: number, updates: Partial<TicketQueueItem>) => {
       try {
         updateTicket(ticketId, updates);
@@ -243,7 +254,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     handleUpdateSettings,
   } = useRoomVotingActions({
     roomData,
-    userName: name,
+    userName: effectiveName,
     userVote,
     isModeratorView,
     setUserVote,
@@ -264,7 +275,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     handleEndGame,
   } = useRoomQueueAndGameActions({
     roomData,
-    userName: name,
+    userName: effectiveName,
     setRoomError,
     setRoomErrorKind,
     assignRoomError,

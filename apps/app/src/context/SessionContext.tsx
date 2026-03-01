@@ -38,6 +38,7 @@ interface SessionActionsContextValue {
   goHome: () => void;
   goToLogin: () => void;
   goToWorkspace: () => void;
+  goToWorkspaceProfile: () => void;
   goToWorkspaceSessions: () => void;
   goToWorkspaceAdmin: () => void;
   goToWorkspaceAdminTeams: () => void;
@@ -129,6 +130,14 @@ export const SessionProvider = ({
     setJoinFlowMode("join");
     setScreen("workspace");
     navigateTo("workspace");
+    clearError();
+  }, [clearError]);
+
+  const goToWorkspaceProfile = useCallback(() => {
+    setPasscode("");
+    setJoinFlowMode("join");
+    setScreen("workspaceProfile");
+    navigateTo("workspaceProfile");
     clearError();
   }, [clearError]);
 
@@ -253,6 +262,7 @@ export const SessionProvider = ({
       goHome,
       goToLogin,
       goToWorkspace,
+      goToWorkspaceProfile,
       goToWorkspaceSessions,
       goToWorkspaceAdmin,
       goToWorkspaceAdminTeams,
@@ -265,6 +275,7 @@ export const SessionProvider = ({
       goHome,
       goToLogin,
       goToWorkspace,
+      goToWorkspaceProfile,
       goToWorkspaceSessions,
       goToWorkspaceAdmin,
       goToWorkspaceAdminTeams,

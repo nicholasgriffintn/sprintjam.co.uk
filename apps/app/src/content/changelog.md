@@ -1,3 +1,9 @@
+## V3.4
+
+- Your selected avatar should now persist across sessions so you won't have to select it each time you join a room.
+- Also added a new user profile system for signed in workspace users. This allows them to set a display name and avatar that will be used across all rooms they join while signed in.
+- Also fixed an issue where the owner of the workspace was not being correctly assigned when the workspace was created.
+
 ## V3.3
 
 - Added three new games to the party games feature:

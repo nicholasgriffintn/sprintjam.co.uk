@@ -9,6 +9,7 @@ import {
   useSessionState,
 } from "@/context/SessionContext";
 import { useRoomActions, useRoomStatus } from "@/context/RoomContext";
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import AvatarSelector from "@/components/AvatarSelector";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -18,6 +19,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
+import { sanitiseAvatarValue } from "@/utils/avatars";
 import {
   formatRoomKey,
   validateName,
@@ -40,11 +42,22 @@ const JoinRoomScreen = () => {
   const { error, errorKind, clearError } = useSessionErrors();
   const { handleJoinRoom, handleCreateRoom } = useRoomActions();
   const { isLoading } = useRoomStatus();
+  const { isAuthenticated, user } = useWorkspaceData();
+  const workspaceName = user?.name?.trim() ?? "";
+  const workspaceAvatar = sanitiseAvatarValue(user?.avatar);
+  const hasWorkspaceName = validateName(workspaceName).ok;
+  const hasWorkspaceAvatar = Boolean(workspaceAvatar);
+  const shouldHideNameInput = isAuthenticated && hasWorkspaceName;
+  const shouldSkipAvatarStep = isAuthenticated && hasWorkspaceAvatar;
+  const effectiveName = hasWorkspaceName ? workspaceName : name;
+  const hasEffectiveName = validateName(effectiveName).ok;
   const [currentStep, setCurrentStep] = useState<"details" | "avatar">(
-    joinFlowMode === "create" ? "avatar" : "details",
+    joinFlowMode === "create" && hasEffectiveName && !shouldSkipAvatarStep
+      ? "avatar"
+      : "details",
   );
   const isCreateFlow = joinFlowMode === "create";
-  const isNameValid = validateName(name).ok;
+  const isNameValid = hasEffectiveName;
   const isRoomKeyValid = validateRoomKey(roomKey).ok;
 
   useEffect(() => {
@@ -59,8 +72,12 @@ const JoinRoomScreen = () => {
   const shouldShowAlert = !!error;
 
   useEffect(() => {
-    setCurrentStep(joinFlowMode === "create" ? "avatar" : "details");
-  }, [joinFlowMode]);
+    setCurrentStep(
+      joinFlowMode === "create" && hasEffectiveName && !shouldSkipAvatarStep
+        ? "avatar"
+        : "details",
+    );
+  }, [hasEffectiveName, joinFlowMode, shouldSkipAvatarStep]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,6 +86,17 @@ const JoinRoomScreen = () => {
       isNameValid &&
       (isCreateFlow || isRoomKeyValid)
     ) {
+      if (shouldSkipAvatarStep) {
+        clearError();
+        if (isCreateFlow) {
+          void handleCreateRoom();
+          setJoinFlowMode("join");
+        } else {
+          void handleJoinRoom();
+        }
+        return;
+      }
+
       setCurrentStep("avatar");
     } else if (currentStep === "avatar" && selectedAvatar) {
       clearError();
@@ -105,18 +133,34 @@ const JoinRoomScreen = () => {
   };
 
   const getButtonText = () => {
-    if (currentStep === "details") return "Continue";
+    if (currentStep === "details") {
+      if (shouldSkipAvatarStep) {
+        return isCreateFlow ? "Create & join" : "Join";
+      }
+      return "Continue";
+    }
     return isCreateFlow ? "Create & join" : "Join";
   };
 
   const getStepTitle = () => {
     if (currentStep === "details")
-      return isCreateFlow ? "Details confirmed" : "Join Room";
+      return shouldSkipAvatarStep
+        ? isCreateFlow
+          ? "Create Room"
+          : "Join Room"
+        : isCreateFlow
+          ? "Details confirmed"
+          : "Join Room";
     return isCreateFlow ? "Pick your avatar" : "Select Your Avatar";
   };
 
   const getStepDescription = () => {
     if (currentStep === "details") {
+      if (shouldSkipAvatarStep) {
+        return isCreateFlow
+          ? "Your workspace profile will be used automatically when the room is created."
+          : "Join with your workspace profile and room passcode if needed.";
+      }
       return isCreateFlow
         ? "We prefilled the basics from your create flow. Adjust your name or passcode if needed."
         : "Enter the room details to join your team";
@@ -137,7 +181,8 @@ const JoinRoomScreen = () => {
         <div className="space-y-3 text-left">
           <div>
             <p className="text-sm uppercase tracking-[0.35em] text-brand-500">
-              Step {currentStep === "details" ? 1 : 2}/2
+              Step {currentStep === "details" ? 1 : 2}/
+              {shouldSkipAvatarStep ? 1 : 2}
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
               {getStepTitle()}
@@ -171,26 +216,28 @@ const JoinRoomScreen = () => {
 
             {currentStep === "details" && (
               <div className="space-y-6">
-                <Input
-                  id="join-name"
-                  label={
-                    <span className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Your name
-                    </span>
-                  }
-                  type="text"
-                  value={name}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setName(e.target.value)
-                  }
-                  placeholder="Team member name"
-                  required
-                  fullWidth
-                  icon={<User className="h-4 w-4" />}
-                  showValidation
-                  isValid={isNameValid}
-                />
+                {!shouldHideNameInput && (
+                  <Input
+                    id="join-name"
+                    label={
+                      <span className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Your name
+                      </span>
+                    }
+                    type="text"
+                    value={name}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setName(e.target.value)
+                    }
+                    placeholder="Team member name"
+                    required
+                    fullWidth
+                    icon={<User className="h-4 w-4" />}
+                    showValidation
+                    isValid={isNameValid}
+                  />
+                )}
 
                 {!isCreateFlow && (
                   <Input

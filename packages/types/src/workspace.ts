@@ -35,7 +35,7 @@ export interface TeamIntegrationStatus {
 
 export type WorkspaceUser = Pick<
   User,
-  "id" | "email" | "name" | "organisationId"
+  "id" | "email" | "name" | "organisationId" | "avatar"
 >;
 export type WorkspaceOrganisation = Organisation;
 export type WorkspaceMember = Pick<

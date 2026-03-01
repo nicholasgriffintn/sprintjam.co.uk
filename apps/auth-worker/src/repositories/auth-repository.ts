@@ -211,6 +211,7 @@ export class AuthRepository {
         emailDomain: users.emailDomain,
         organisationId: users.organisationId,
         name: users.name,
+        avatar: users.avatar,
       })
       .from(users)
       .where(eq(users.email, email.toLowerCase()))
@@ -225,10 +226,27 @@ export class AuthRepository {
         emailDomain: users.emailDomain,
         organisationId: users.organisationId,
         name: users.name,
+        avatar: users.avatar,
       })
       .from(users)
       .where(eq(users.id, userId))
       .get();
+  }
+
+  async updateUserProfile(
+    userId: number,
+    updates: {
+      name?: string | null;
+      avatar?: string | null;
+    },
+  ): Promise<void> {
+    await this.db
+      .update(users)
+      .set({
+        ...updates,
+        updatedAt: Date.now(),
+      })
+      .where(eq(users.id, userId));
   }
 
   async getOrganisationById(organisationId: number) {

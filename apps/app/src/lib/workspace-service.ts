@@ -178,6 +178,21 @@ export async function getCurrentUser(): Promise<WorkspaceProfile | null> {
   }
 }
 
+export async function updateCurrentUserProfile(payload: {
+  name: string;
+  avatar: string | null;
+}): Promise<WorkspaceUser> {
+  const data = await workspaceRequest<{ user: WorkspaceUser }>(
+    `${API_BASE_URL}/auth/me`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return data.user;
+}
+
 export async function logout(): Promise<void> {
   await workspaceRequest(`${API_BASE_URL}/auth/logout`, { method: "POST" });
 }

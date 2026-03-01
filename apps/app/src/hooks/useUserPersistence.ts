@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { safeLocalStorage } from "@/utils/storage";
 import { AVATAR_STORAGE_KEY, USERNAME_STORAGE_KEY } from "@/constants";
 import type { AvatarId } from "@/types";
+import { sanitiseAvatarValue } from "@/utils/avatars";
 
 interface UseUserPersistenceOptions {
   name: string;
@@ -14,13 +15,7 @@ export const getStoredUserName = () =>
 
 export const getStoredUserAvatar = (): AvatarId | null => {
   const avatar = safeLocalStorage.get(AVATAR_STORAGE_KEY);
-
-  if (!avatar) {
-    return null;
-  }
-
-  const trimmedAvatar = avatar.trim();
-  return trimmedAvatar ? trimmedAvatar : null;
+  return (sanitiseAvatarValue(avatar) as AvatarId | null) ?? null;
 };
 
 export const useUserPersistence = ({

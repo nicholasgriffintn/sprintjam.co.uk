@@ -13,6 +13,19 @@ const mockSetJoinFlowMode = vi.fn();
 const mockSetSelectedAvatar = vi.fn();
 const mockClearError = vi.fn();
 const mockSetPendingCreateSettings = vi.fn();
+const mockHandleCreateRoom = vi.fn();
+const mockGoToWorkspaceProfile = vi.fn();
+const workspaceDataMock = {
+  teams: [] as Array<{ id: number; name: string }>,
+  isAuthenticated: false,
+  user: null as
+    | {
+        name: string;
+        email: string;
+        avatar: string;
+      }
+    | null,
+};
 const mockServerDefaults = {
   roomSettings: {
     enableStructuredVoting: false,
@@ -44,6 +57,7 @@ vi.mock("@/context/SessionContext", () => ({
     setScreen: mockSetScreen,
     setJoinFlowMode: mockSetJoinFlowMode,
     setSelectedWorkspaceTeamId: vi.fn(),
+    goToWorkspaceProfile: mockGoToWorkspaceProfile,
   }),
   useSessionErrors: () => ({
     clearError: mockClearError,
@@ -53,17 +67,18 @@ vi.mock("@/context/SessionContext", () => ({
 vi.mock("@/context/RoomContext", () => ({
   useRoomActions: () => ({
     setPendingCreateSettings: mockSetPendingCreateSettings,
+    handleCreateRoom: mockHandleCreateRoom,
   }),
   useRoomState: () => ({
     serverDefaults: mockServerDefaults,
   }),
+  useRoomStatus: () => ({
+    isLoading: false,
+  }),
 }));
 
 vi.mock("@/hooks/useWorkspaceData", () => ({
-  useWorkspaceData: () => ({
-    teams: [],
-    isAuthenticated: false,
-  }),
+  useWorkspaceData: () => workspaceDataMock,
 }));
 
 vi.mock("@/hooks/usePageMeta", () => ({
@@ -88,9 +103,8 @@ vi.mock("@/components/ui/Button", () => ({
     onClick,
     disabled,
     type = "button",
-    fullWidth: _fullWidth,
     ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  }: any) => (
     <button type={type} onClick={onClick} disabled={disabled} {...props}>
       {children}
     </button>
@@ -156,6 +170,9 @@ import CreateRoomScreen from "@/routes/CreateRoomScreen";
 describe("CreateRoomScreen", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    workspaceDataMock.teams = [];
+    workspaceDataMock.isAuthenticated = false;
+    workspaceDataMock.user = null;
   });
 
   it("does not clear a previously selected avatar when starting the create flow", () => {
@@ -169,5 +186,24 @@ describe("CreateRoomScreen", () => {
     expect(mockSetRoomKey).toHaveBeenCalledWith("");
     expect(mockSetScreen).toHaveBeenCalledWith("join");
     expect(mockSetSelectedAvatar).not.toHaveBeenCalled();
+  });
+
+  it("creates the room directly for signed-in users", async () => {
+    workspaceDataMock.isAuthenticated = true;
+    workspaceDataMock.user = {
+      name: "Alex",
+      email: "alex@example.com",
+      avatar: "https://example.com/alex.png",
+    };
+
+    render(<CreateRoomScreen />);
+
+    fireEvent.click(screen.getByTestId("create-room-submit"));
+
+    expect(mockClearError).toHaveBeenCalled();
+    expect(mockHandleCreateRoom).toHaveBeenCalled();
+    expect(mockSetPendingCreateSettings).not.toHaveBeenCalled();
+    expect(mockSetJoinFlowMode).not.toHaveBeenCalled();
+    expect(mockSetScreen).not.toHaveBeenCalled();
   });
 });

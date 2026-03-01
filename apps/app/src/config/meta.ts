@@ -33,6 +33,14 @@ export const META_CONFIGS: Record<string, MetaTagConfig> = {
       "workspace, estimation rooms, planning poker, team collaboration, scrum poker, agile estimation",
     ogImage: "/og-image.png",
   },
+  workspaceProfile: {
+    title: `Profile - ${SITE_NAME}`,
+    description:
+      "Set your display name, choose an avatar, and add an optional image override for rooms and workspace features.",
+    keywords:
+      "profile, avatar, display name, workspace profile, planning poker",
+    ogImage: "/og-image.png",
+  },
   workspaceSessions: {
     title: `Sessions - ${SITE_NAME}`,
     description:

@@ -12,7 +12,11 @@ import {
   useSessionErrors,
   useSessionState,
 } from "@/context/SessionContext";
-import { useRoomActions, useRoomState } from "@/context/RoomContext";
+import {
+  useRoomActions,
+  useRoomState,
+  useRoomStatus,
+} from "@/context/RoomContext";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { getTeamSettings } from "@/lib/workspace-service";
 import { PageSection } from "@/components/layout/PageBackground";
@@ -25,6 +29,7 @@ import { Footer } from "@/components/layout/Footer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { RoomSettingsTabs } from "@/components/RoomSettingsTabs";
+import { sanitiseAvatarValue } from "@/utils/avatars";
 import { validateName } from "@/utils/validators";
 
 const CreateRoomScreen = () => {
@@ -39,10 +44,11 @@ const CreateRoomScreen = () => {
   } = useSessionActions();
   const { clearError } = useSessionErrors();
 
-  const { teams, isAuthenticated } = useWorkspaceData();
+  const { teams, isAuthenticated, user } = useWorkspaceData();
 
   const { serverDefaults } = useRoomState();
-  const { setPendingCreateSettings } = useRoomActions();
+  const { setPendingCreateSettings, handleCreateRoom } = useRoomActions();
+  const { isLoading } = useRoomStatus();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const defaults = serverDefaults?.roomSettings;
   const structuredOptions = serverDefaults?.structuredVotingOptions ?? [];
@@ -66,6 +72,13 @@ const CreateRoomScreen = () => {
 
   const { selectedWorkspaceTeamId } = useSessionState();
   const { setSelectedWorkspaceTeamId } = useSessionActions();
+  const workspaceName = user?.name?.trim() ?? "";
+  const workspaceAvatar = sanitiseAvatarValue(user?.avatar);
+  const hasWorkspaceName = validateName(workspaceName).ok;
+  const hasWorkspaceAvatar = Boolean(workspaceAvatar);
+  const effectiveName = hasWorkspaceName ? workspaceName : name;
+  const canBypassIdentityStep =
+    isAuthenticated && hasWorkspaceAvatar && validateName(effectiveName).ok;
 
   const applySettings = (settings: RoomSettings) => {
     setAdvancedSettings(settings);
@@ -137,13 +150,19 @@ const CreateRoomScreen = () => {
     }
   };
 
-  const canStart = validateName(name).ok;
+  const canStart = validateName(effectiveName).ok;
   const advancedReady = Boolean(advancedSettings && defaults);
 
   const handleStartFlow = (settings?: Partial<RoomSettings> | null) => {
     if (!canStart) return;
 
     clearError();
+
+    if (canBypassIdentityStep) {
+      void handleCreateRoom(settings ?? undefined);
+      return;
+    }
+
     setPendingCreateSettings(settings ?? null);
     setJoinFlowMode("create");
     setRoomKey("");
@@ -189,20 +208,22 @@ const CreateRoomScreen = () => {
 
         <SurfaceCard>
           <div className="space-y-6">
-            <Input
-              id="create-name"
-              label="Your name"
-              type="text"
-              value={name}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setName(e.target.value)
-              }
-              placeholder="Moderator name"
-              required
-              fullWidth
-              showValidation
-              isValid={validateName(name).ok}
-            />
+            {(!isAuthenticated || !hasWorkspaceName) && (
+              <Input
+                id="create-name"
+                label="Your name"
+                type="text"
+                value={name}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setName(e.target.value)
+                }
+                placeholder="Moderator name"
+                required
+                fullWidth
+                showValidation
+                isValid={validateName(name).ok}
+              />
+            )}
 
             <Input
               id="create-passcode"
@@ -323,7 +344,7 @@ const CreateRoomScreen = () => {
                   <Button
                     type="button"
                     onClick={() => handleStartFlow(buildQuickSettings())}
-                    disabled={!canStart}
+                    disabled={!canStart || isLoading}
                     className="sm:flex-1"
                     icon={<Sparkles className="h-4 w-4" />}
                     data-testid="create-room-submit"
@@ -379,12 +400,12 @@ const CreateRoomScreen = () => {
                   <Button
                     type="button"
                     onClick={() => handleStartFlow(advancedSettingsRef.current)}
-                    disabled={!canStart || !advancedReady}
+                    disabled={!canStart || !advancedReady || isLoading}
                     className="sm:flex-1"
                     data-testid="create-advanced-continue"
                     fullWidth
                   >
-                    Continue with settings
+                    {isAuthenticated ? "Create room" : "Continue with settings"}
                   </Button>
                 </div>
               </div>
@@ -393,8 +414,9 @@ const CreateRoomScreen = () => {
         </SurfaceCard>
 
         <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-          After creation you’ll step straight to choosing your avatar and join
-          as moderator.
+          {canBypassIdentityStep
+            ? "Your signed-in profile is used automatically."
+            : "After creation you’ll step straight to choosing your avatar and join as moderator."}
         </p>
       </motion.div>
       <Footer displayRepoLink={false} />

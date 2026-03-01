@@ -101,6 +101,32 @@ export const getAvatarInfo = (avatarId: AvatarId): AvatarInfo | null => {
   return AVATAR_MAP[avatarId] || null;
 };
 
+export const sanitiseAvatarValue = (
+  avatarValue: string | null | undefined,
+): string | null => {
+  const trimmed = avatarValue?.trim() ?? "";
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (
+    trimmed === "avatar" ||
+    trimmed === "avatar_url" ||
+    trimmed === "avatar_image_url" ||
+    trimmed === "[object Object]"
+  ) {
+    return null;
+  }
+
+  return trimmed;
+};
+
+export const isAvatarUrl = (
+  avatarValue: string | null | undefined,
+): avatarValue is string =>
+  /^https?:\/\//i.test(sanitiseAvatarValue(avatarValue) ?? "");
+
 export const isEmojiAvatar = (avatarId: AvatarId): boolean => {
   return !AVATAR_MAP[avatarId];
 };

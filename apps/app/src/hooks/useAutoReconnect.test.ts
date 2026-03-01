@@ -220,4 +220,35 @@ describe("useAutoReconnect", () => {
     expect(onReconnectComplete).toHaveBeenCalled();
     expect(joinRoom).not.toHaveBeenCalled();
   });
+
+  it("passes a URL avatar through reconnect", async () => {
+    (joinRoom as Mock).mockResolvedValue({
+      room: { key: "ROOM1", moderator: "alice" },
+      defaults: undefined,
+    });
+
+    renderHook(() =>
+      useAutoReconnect({
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
+        isLoadingDefaults: false,
+        selectedAvatar: "https://example.com/alice.png",
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onReconnectComplete,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(joinRoom).toHaveBeenCalledWith(
+        "alice",
+        "ROOM1",
+        undefined,
+        "https://example.com/alice.png",
+      );
+    });
+  });
 });

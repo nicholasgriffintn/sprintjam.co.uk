@@ -3,7 +3,7 @@ import { Users, ChevronDown, ChevronUp, Crown, User } from "lucide-react";
 import { motion } from "framer-motion";
 
 import type { RoomData, RoomStats } from "@/types";
-import { getAvatarInfo } from "@/utils/avatars";
+import { getAvatarInfo, isAvatarUrl } from "@/utils/avatars";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -73,11 +73,15 @@ const ParticipantItem = memo(
                   ? "border-emerald-300 dark:border-emerald-600"
                   : "border-slate-200 dark:border-slate-600"
               }`}
+              src={isAvatarUrl(userAvatar) ? userAvatar : undefined}
+              alt={user}
               fallback={
-                avatarInfo ? (
+                avatarInfo && !isAvatarUrl(userAvatar) ? (
                   <avatarInfo.Icon size={20} className={avatarInfo.color} />
-                ) : (
+                ) : !isAvatarUrl(userAvatar) ? (
                   <span className="text-lg">{userAvatar}</span>
+                ) : (
+                  <User className="h-4 w-4 text-slate-500 dark:text-slate-300" />
                 )
               }
             />

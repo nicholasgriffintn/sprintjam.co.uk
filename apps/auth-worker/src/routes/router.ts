@@ -9,6 +9,7 @@ import {
   startMfaVerifyController,
   verifyMfaController,
   getCurrentUserController,
+  updateCurrentUserProfileController,
   logoutController,
 } from "../controllers/auth-controller";
 import {
@@ -108,6 +109,12 @@ const ROUTES: RouteDefinition[] = [
     method: "GET",
     pattern: /^auth\/me$/,
     handler: (request, env) => getCurrentUserController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "PUT",
+    pattern: /^auth\/me$/,
+    handler: (request, env) => updateCurrentUserProfileController(request, env),
     paramTypes: ["none"],
   },
   {

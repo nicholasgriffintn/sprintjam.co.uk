@@ -68,6 +68,16 @@ export class WorkspaceAuthRepository {
     return this.auth.getUserById(userId);
   }
 
+  updateUserProfile(
+    userId: number,
+    updates: {
+      name?: string | null;
+      avatar?: string | null;
+    },
+  ): Promise<void> {
+    return this.auth.updateUserProfile(userId, updates);
+  }
+
   getOrganisationById(organisationId: number) {
     return this.auth.getOrganisationById(organisationId);
   }

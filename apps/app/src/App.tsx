@@ -22,6 +22,7 @@ import { RoomHeaderProvider } from "@/context/RoomHeaderContext";
 import { WheelHeaderProvider } from "@/context/WheelHeaderContext";
 import { ErrorBannerServerDefaults } from "@/components/errors/ErrorBannerServerDefaults";
 import { PageBackground } from "@/components/layout/PageBackground";
+import { useWorkspaceIdentitySync } from '@/hooks/useWorkspaceIdentitySync';
 import {
   ROUTES,
   getBackgroundVariant,
@@ -34,6 +35,8 @@ const preloadRoomScreen = () => {
 };
 
 const AppContent = () => {
+  useWorkspaceIdentitySync();
+
   const { screen } = useSessionState();
   const { error, clearError } = useSessionErrors();
   const { serverDefaults, roomData } = useRoomState();
@@ -103,7 +106,7 @@ const AppContent = () => {
         />
       )}
 
-      {error && screen !== "room" && (
+      {error && screen !== 'room' && (
         <ErrorBanner message={error} onClose={clearError} />
       )}
 

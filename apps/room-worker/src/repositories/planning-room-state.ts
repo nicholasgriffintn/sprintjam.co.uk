@@ -64,13 +64,10 @@ export class PlanningRoomStateStore {
   }
 
   setUserAvatar(userName: string, avatar?: string) {
-    if (!avatar) {
-      return;
-    }
     const canonicalName = this.ensureUser(userName);
     this.db
       .update(roomUsers)
-      .set({ avatar })
+      .set({ avatar: avatar ?? null })
       .where(eq(roomUsers.userName, canonicalName))
       .run();
   }

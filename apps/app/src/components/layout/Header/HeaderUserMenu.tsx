@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { KeyRound, LayoutGrid, Loader2, LogOut, UserRound } from "lucide-react";
+import {
+  KeyRound,
+  LayoutGrid,
+  Loader2,
+  LogOut,
+  UserRound,
+} from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { useSessionActions } from "@/context/SessionContext";
 import type { MarketingVariant } from "@/components/layout/Header/types";
+import { isAvatarUrl } from "@/utils/avatars";
 
 const getInitials = (nameOrEmail: string | null | undefined) => {
   if (!nameOrEmail) return null;
@@ -32,7 +39,8 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { user, isAuthenticated, isLoading, logout } = useWorkspaceAuth();
-  const { goHome, goToWorkspace, goToLogin } = useSessionActions();
+  const { goHome, goToWorkspace, goToWorkspaceProfile, goToLogin } =
+    useSessionActions();
 
   const showNavigation = isWorkspacesEnabled();
   const isHero = variant === "hero";
@@ -93,6 +101,11 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
     setIsMenuOpen(false);
   };
 
+  const handleProfile = () => {
+    goToWorkspaceProfile();
+    setIsMenuOpen(false);
+  };
+
   const avatarFallback = isLoading ? (
     <Loader2 className="h-5 w-5 animate-spin" />
   ) : (
@@ -138,6 +151,8 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
       >
         <Avatar
           className="h-full w-full border border-white/40 bg-gradient-to-br from-brand-500 to-indigo-500 text-sm font-semibold uppercase text-white shadow-md dark:border-white/10 dark:from-brand-600 dark:to-indigo-600"
+          src={isAvatarUrl(user.avatar) ? user.avatar : undefined}
+          alt={displayName}
           fallback={avatarFallback}
         />
       </button>
@@ -161,6 +176,14 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
             </div>
 
             <div className="p-1.5">
+              <button
+                type="button"
+                onClick={handleProfile}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/5"
+              >
+                <UserRound className="h-4 w-4 text-brand-600 dark:text-brand-200" />
+                Profile settings
+              </button>
               <button
                 type="button"
                 onClick={handleWorkspace}

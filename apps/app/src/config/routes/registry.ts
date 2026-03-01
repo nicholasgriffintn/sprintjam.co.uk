@@ -9,6 +9,7 @@ const RoomScreen = lazy(() => import("@/routes/RoomScreen"));
 import WelcomeScreen from "@/routes/WelcomeScreen";
 import LoginScreen from "@/routes/auth/LoginScreen";
 import WorkspaceDashboard from "@/routes/workspace/WorkspaceDashboard";
+import WorkspaceProfile from "@/routes/workspace/WorkspaceProfile";
 import WorkspaceSessions from "@/routes/workspace/WorkspaceSessions";
 import WorkspaceAdminOverview from "@/routes/workspace/WorkspaceAdminOverview";
 import WorkspaceAdminTeams from "@/routes/workspace/WorkspaceAdminTeams";
@@ -447,6 +448,20 @@ export const ROUTES = [
       label: "Dashboard",
       icon: LayoutDashboard,
       order: 1,
+    },
+  },
+  {
+    screen: "workspaceProfile",
+    path: "/workspace/profile",
+    group: "workspace",
+    component: WorkspaceProfile,
+    meta: {
+      title: `Profile - ${SITE_NAME}`,
+      description:
+        "Set your display name, avatar, and optional image override for SprintJam rooms.",
+      keywords:
+        "workspace profile, avatar settings, display name, planning poker",
+      ogImage: "/og-image.png",
     },
   },
   {
