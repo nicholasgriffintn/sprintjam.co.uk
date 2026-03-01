@@ -1,0 +1,1 @@
+ALTER TABLE `room_meta` ADD `team_id` integer;

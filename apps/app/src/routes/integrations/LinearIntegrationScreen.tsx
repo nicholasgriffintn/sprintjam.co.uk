@@ -39,17 +39,17 @@ const featureCards = [
     icon: SlidersHorizontal,
   },
   {
-    title: "Scoped OAuth",
+    title: "Workspace-managed OAuth",
     description:
-      "Moderators connect only for the current room; tokens are encrypted and short-lived.",
+      "Team admins connect Linear once in workspace settings; every room under that team inherits the connection.",
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: "Connect Linear",
-    detail: `Authorize ${SITE_NAME} for this room with a quick OAuth flow.`,
+    title: "Connect Linear in workspace",
+    detail: `Sign in and authorize Linear in your workspace team settings.`,
   },
   {
     title: "Choose issues",
@@ -76,9 +76,9 @@ const securityHighlights = [
     icon: ShieldCheck,
   },
   {
-    title: "Encrypted, room-scoped storage",
+    title: "Encrypted, team-scoped storage",
     detail:
-      "Tokens never live in the browser; they are AES-GCM encrypted with a worker secret and bound to a single room.",
+      "Tokens never live in the browser; they are AES-GCM encrypted with a worker secret and bound to the workspace team.",
     icon: Database,
   },
   {
@@ -138,7 +138,7 @@ const LinearIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-                onClick={startCreateFlow}
+                onClick={() => startCreateFlow()}
               >
                 Create a room
               </button>
@@ -267,12 +267,13 @@ const LinearIntegrationScreen = () => {
               Security for Linear
             </p>
             <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
-              Room-scoped OAuth with encrypted storage
+              Workspace-scoped OAuth with encrypted storage
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               We follow the same secure patterns as our Jira flow: signed OAuth
               state, session validation, least-privilege scopes, and encrypted
-              room-side tokens that can be revoked at any time.
+              team-level tokens that can be revoked at any time from workspace
+              settings.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -322,7 +323,7 @@ const LinearIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-                onClick={startCreateFlow}
+                onClick={() => startCreateFlow()}
               >
                 Start a room
               </button>

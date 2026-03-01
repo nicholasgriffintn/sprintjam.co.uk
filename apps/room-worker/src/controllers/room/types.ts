@@ -20,17 +20,6 @@ export type PlanningRoomRepositoryShape = Pick<
   | "clearStructuredVotes"
   | "setSettings"
   | "updateTimerConfig"
-  | "saveJiraOAuthCredentials"
-  | "getJiraOAuthCredentials"
-  | "updateJiraOAuthTokens"
-  | "deleteJiraOAuthCredentials"
-  | "saveLinearOAuthCredentials"
-  | "getLinearOAuthCredentials"
-  | "updateLinearOAuthTokens"
-  | "deleteLinearOAuthCredentials"
-  | "saveGithubOAuthCredentials"
-  | "getGithubOAuthCredentials"
-  | "deleteGithubOAuthCredentials"
 >;
 
 export interface PlanningRoomHttpContext {

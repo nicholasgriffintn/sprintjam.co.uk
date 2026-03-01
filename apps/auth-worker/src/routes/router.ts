@@ -25,6 +25,21 @@ import {
   updateWorkspaceProfileController,
   inviteWorkspaceMemberController,
 } from "../controllers/teams-controller";
+import {
+  getTeamSettingsController,
+  saveTeamSettingsController,
+} from "../controllers/team-settings-controller";
+import {
+  listTeamIntegrationsController,
+  getTeamIntegrationStatusController,
+  initiateTeamOAuthController,
+  handleJiraTeamOAuthCallbackController,
+  handleLinearTeamOAuthCallbackController,
+  handleGithubTeamOAuthCallbackController,
+  revokeTeamIntegrationController,
+  getTeamCredentialsInternalController,
+  refreshTeamCredentialsInternalController,
+} from "../controllers/team-integrations-controller";
 import { jsonError, jsonResponse, notFoundResponse } from "../lib/response";
 
 type HandlerParam = string | number;
@@ -202,6 +217,140 @@ const ROUTES: RouteDefinition[] = [
     method: "POST",
     pattern: /^workspace\/invites$/,
     handler: (request, env) => inviteWorkspaceMemberController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/(\d+)\/settings$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return getTeamSettingsController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "PUT",
+    pattern: /^teams\/(\d+)\/settings$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return saveTeamSettingsController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/(\d+)\/integrations$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamIntegrationsController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/authorize$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return initiateTeamOAuthController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/status$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return getTeamIntegrationStatusController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return revokeTeamIntegrationController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/integrations\/jira\/callback$/,
+    handler: async (request, env) => {
+      if (env.IP_RATE_LIMITER) {
+        const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+        const { success } = await env.IP_RATE_LIMITER.limit({
+          key: `oauth-callback:${ip}`,
+        });
+        if (!success) return jsonError("Rate limit exceeded", 429);
+      }
+      return handleJiraTeamOAuthCallbackController(new URL(request.url), env);
+    },
+    paramTypes: ["none"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/integrations\/linear\/callback$/,
+    handler: async (request, env) => {
+      if (env.IP_RATE_LIMITER) {
+        const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+        const { success } = await env.IP_RATE_LIMITER.limit({
+          key: `oauth-callback:${ip}`,
+        });
+        if (!success) return jsonError("Rate limit exceeded", 429);
+      }
+      return handleLinearTeamOAuthCallbackController(new URL(request.url), env);
+    },
+    paramTypes: ["none"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/integrations\/github\/callback$/,
+    handler: async (request, env) => {
+      if (env.IP_RATE_LIMITER) {
+        const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+        const { success } = await env.IP_RATE_LIMITER.limit({
+          key: `oauth-callback:${ip}`,
+        });
+        if (!success) return jsonError("Rate limit exceeded", 429);
+      }
+      return handleGithubTeamOAuthCallbackController(new URL(request.url), env);
+    },
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^internal\/team-credentials$/,
+    handler: (request, env) =>
+      getTeamCredentialsInternalController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^internal\/team-credentials\/refresh$/,
+    handler: (request, env) =>
+      refreshTeamCredentialsInternalController(request, env),
     paramTypes: ["none"],
   },
 ];

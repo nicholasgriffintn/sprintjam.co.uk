@@ -14,7 +14,7 @@ import {
   verifyMfaSetup,
   type MfaMethod,
   type VerifyCodeResponse,
-} from "@/lib/workspace-service";
+} from '@/lib/workspace-service';
 import {
   buildAuthenticationOptions,
   buildRegistrationOptions,
@@ -38,19 +38,19 @@ const QRCodeSVG = lazy(() =>
 );
 
 type LoginState =
-  | "input"
-  | "sending"
-  | "code"
-  | "verifying"
-  | "mfa-choice"
-  | "mfa-totp-setup"
-  | "mfa-totp-verify"
-  | "mfa-webauthn-setup"
-  | "mfa-webauthn-verify"
-  | "mfa-recovery-verify"
-  | "mfa-recovery-codes"
-  | "success"
-  | "error";
+  | 'input'
+  | 'sending'
+  | 'code'
+  | 'verifying'
+  | 'mfa-choice'
+  | 'mfa-totp-setup'
+  | 'mfa-totp-verify'
+  | 'mfa-webauthn-setup'
+  | 'mfa-webauthn-verify'
+  | 'mfa-recovery-verify'
+  | 'mfa-recovery-codes'
+  | 'success'
+  | 'error';
 
 type MfaFlowMode = "setup" | "verify";
 
@@ -110,17 +110,24 @@ export default function LoginScreen() {
     event.preventDefault();
     if (!email.trim()) return;
 
-    setState("sending");
-    setError("");
+    setState('sending');
+    setError('');
 
     try {
       await requestMagicLink(email.trim().toLowerCase());
-      setState("code");
+      setState('code');
     } catch (err) {
-      setState("error");
-      setError(
-        err instanceof Error ? err.message : "Failed to send verification code",
-      );
+      const message =
+        err instanceof Error ? err.message : 'Failed to send verification code';
+      if (message === 'domain_not_allowed') {
+        setState('error');
+        setError(
+          'Your email domain is not authorized for workspace access. Please contact your administrator.',
+        );
+      } else {
+        setState('error');
+        setError(message);
+      }
     }
   };
 
@@ -672,9 +679,9 @@ export default function LoginScreen() {
             isSetup
               ? undefined
               : () => {
-                  setError("");
-                  setState("mfa-recovery-verify");
-                }
+                setError('');
+                setState('mfa-recovery-verify');
+              }
           }
         />
       </AuthPage>

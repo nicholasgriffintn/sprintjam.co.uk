@@ -28,4 +28,5 @@ export const roomMeta = sqliteTable("room_meta", {
   timerRoundAnchor: integer("timer_round_anchor").default(0),
   timerAutoReset: integer("timer_auto_reset").default(1),
   gameSession: text("game_session"),
+  teamId: integer("team_id"),
 });

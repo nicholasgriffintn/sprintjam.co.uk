@@ -11,18 +11,13 @@ import {
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Spinner } from "@/components/ui/Spinner";
+import { formatVelocity } from "@/lib/formatters";
 import type { TeamInsights } from "@sprintjam/types";
 import { getTeamInsights } from "@/lib/workspace-service";
 
 interface TeamInsightsPanelProps {
   teamId: number;
   teamName: string;
-}
-
-function formatVelocity(velocity: number | null): string {
-  if (velocity === null) return "—";
-  if (velocity >= 10) return `${Math.round(velocity)}/hr`;
-  return `${velocity.toFixed(1)}/hr`;
 }
 
 function formatPercentage(value: number): string {

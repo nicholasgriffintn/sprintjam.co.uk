@@ -74,7 +74,7 @@ export const WorkspaceHeader: FC = () => {
         <Button
           type="button"
           variant="unstyled"
-          onClick={startCreateFlow}
+          onClick={() => startCreateFlow()}
           aria-label="Create room"
           className={cn(
             "flex h-9 w-9 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:border-brand-300/60 dark:hover:text-brand-100",

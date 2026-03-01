@@ -36,6 +36,7 @@ export const ROOM_HINTS_DISMISSED_STORAGE_KEY = "sprintjam_roomHintsDismissed";
 export const ROOM_SPREAD_HINT_STORAGE_KEY = "sprintjam_roomSpreadHintSeen";
 export const ROOM_FACILITATION_PROMPT_SEEN_STORAGE_KEY =
   "sprintjam_roomFacilitationPromptSeen";
+export const SELECTED_TEAM_STORAGE_KEY = "sprintjam_selectedTeamId";
 
 export const QUICK_EMOJIS = [
   "😀",

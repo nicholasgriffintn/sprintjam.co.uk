@@ -43,9 +43,9 @@ const providers = [
 
 const highlights = [
   {
-    title: "Per-room OAuth",
+    title: "Workspace-managed OAuth",
     description:
-      "Moderators connect providers only for the room they host; tokens stay scoped.",
+      "Team admins connect providers once in workspace settings; every room under that team inherits the connection.",
     icon: ShieldCheck,
   },
   {
@@ -57,7 +57,7 @@ const highlights = [
   {
     title: "Team-ready defaults",
     description:
-      "Structured voting, passcodes, and The Judge help keep distributed sessions on track.",
+      "Configure default settings, integrations, and voting options per team so every session starts right.",
     icon: Sparkles,
   },
   {
@@ -68,7 +68,7 @@ const highlights = [
   {
     title: "Quick start",
     description:
-      "Spin up a room, pick a provider, and invite the team with one shareable link.",
+      "Create a workspace, connect a provider, and invite the team with one shareable link.",
     icon: LayoutTemplate,
   },
 ];
@@ -99,8 +99,9 @@ const IntegrationsScreen = () => {
               Bring your backlog into every {SITE_NAME} session
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300">
-              Connect Jira, Linear, or GitHub per room. Keep estimates in sync,
-              avoid duplicate work, and stay privacy-first.
+              Connect Jira, Linear, or GitHub through your workspace. Keep
+              estimates in sync, avoid duplicate work, and stay privacy-first.
+              Integrations are managed per team in your workspace settings.
             </p>
           </div>
 
@@ -163,18 +164,19 @@ const IntegrationsScreen = () => {
               Start with a provider
             </p>
             <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
-              Create a room and link the tools your team uses
+              Set up a workspace and connect your team&apos;s tools
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              Moderate the session, reveal together, and keep your source of
-              truth updated automatically.
+              Sign in to create a workspace, configure integrations in team
+              settings, then every room inherits the connection. Moderate the
+              session, reveal together, and keep your source of truth updated.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-              onClick={startCreateFlow}
+              onClick={() => startCreateFlow()}
             >
               Create a room
             </button>

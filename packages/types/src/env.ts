@@ -45,7 +45,9 @@ export interface RoomWorkerEnv extends BaseEnv {
   FEEDBACK_GITHUB_TOKEN?: string;
   POLYCHAT_API_TOKEN?: string;
   STATS_WORKER: Fetcher;
+  AUTH_WORKER: Fetcher;
   STATS_INGEST_TOKEN?: string;
+  INTERNAL_API_SECRET?: string;
 }
 
 /**
@@ -55,10 +57,20 @@ export interface AuthWorkerEnv extends BaseEnv {
   DB: D1Database;
   RESEND_API_KEY: string;
   TOKEN_ENCRYPTION_SECRET: string;
+  INTERNAL_API_SECRET?: string;
   ENABLE_MAGIC_LINK_RATE_LIMIT?: string;
   MAGIC_LINK_RATE_LIMITER: RateLimit;
   VERIFICATION_RATE_LIMITER: RateLimit;
   IP_RATE_LIMITER: RateLimit;
+  JIRA_OAUTH_CLIENT_ID?: string;
+  JIRA_OAUTH_CLIENT_SECRET?: string;
+  JIRA_OAUTH_REDIRECT_URI?: string;
+  LINEAR_OAUTH_CLIENT_ID?: string;
+  LINEAR_OAUTH_CLIENT_SECRET?: string;
+  LINEAR_OAUTH_REDIRECT_URI?: string;
+  GITHUB_OAUTH_CLIENT_ID?: string;
+  GITHUB_OAUTH_CLIENT_SECRET?: string;
+  GITHUB_OAUTH_REDIRECT_URI?: string;
 }
 
 /**

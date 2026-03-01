@@ -151,11 +151,11 @@ type SignedStatePayload<T> = {
   signature: string;
 };
 
-export async function signState<T>(
-  data: T,
-  secret: string,
-): Promise<string> {
-  const json = JSON.stringify(data);
+const DEFAULT_STATE_MAX_AGE_MS = 10 * 60 * 1000;
+
+export async function signState<T>(data: T, secret: string): Promise<string> {
+  const envelope = { data, issuedAt: Date.now() };
+  const json = JSON.stringify(envelope);
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(secret),
@@ -165,12 +165,13 @@ export async function signState<T>(
   );
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(json));
   const signatureHex = bufferToHex(signature);
-  return btoa(JSON.stringify({ data, signature: signatureHex }));
+  return btoa(JSON.stringify({ ...envelope, signature: signatureHex }));
 }
 
 export async function verifyState<T>(
   state: string,
   secret: string,
+  maxAgeMs: number = DEFAULT_STATE_MAX_AGE_MS,
 ): Promise<T> {
   try {
     const parsed = JSON.parse(atob(state)) as unknown;
@@ -178,14 +179,25 @@ export async function verifyState<T>(
       throw new Error("Invalid state payload");
     }
 
-    const candidate = parsed as Partial<SignedStatePayload<T>>;
+    const candidate = parsed as Partial<
+      SignedStatePayload<T> & { issuedAt?: number }
+    >;
     if (!("data" in candidate) || typeof candidate.signature !== "string") {
       throw new Error("Invalid state payload");
     }
 
-    const data = candidate.data as T;
-    const signature = candidate.signature;
-    const json = JSON.stringify(data);
+    if (
+      typeof candidate.issuedAt === "number" &&
+      Date.now() - candidate.issuedAt > maxAgeMs
+    ) {
+      throw new Error("State expired");
+    }
+
+    const { signature, ...envelope } = candidate as SignedStatePayload<T> & {
+      issuedAt?: number;
+      signature: string;
+    };
+    const json = JSON.stringify(envelope);
     const key = await crypto.subtle.importKey(
       "raw",
       encoder.encode(secret),
@@ -204,7 +216,7 @@ export async function verifyState<T>(
     if (!constantTimeEqual(sigBytes, computedSignatureBytes)) {
       throw new Error("Invalid state signature");
     }
-    return data;
+    return envelope.data as T;
   } catch {
     throw new Error("Invalid state");
   }

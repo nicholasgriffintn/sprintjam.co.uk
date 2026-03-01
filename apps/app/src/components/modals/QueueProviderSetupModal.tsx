@@ -1,12 +1,10 @@
 import { useMemo } from "react";
 import { AlertCircle, CheckCircle2, Plug2 } from "lucide-react";
 
-import { useJiraOAuth } from "@/hooks/useJiraOAuth";
-import { useLinearOAuth } from "@/hooks/useLinearOAuth";
-import { useGithubOAuth } from "@/hooks/useGithubOAuth";
+import { useTeamOAuth } from "@/hooks/useTeamOAuth";
+import { useRoomState } from "@/context/RoomContext";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { SITE_NAME } from "@/constants";
 
 type QueueProvider = "jira" | "linear" | "github";
 
@@ -23,13 +21,10 @@ export function QueueProviderSetupModal({
   onClose,
   onOpenQueue,
 }: QueueProviderSetupModalProps) {
-  const jira = useJiraOAuth(provider === "jira");
-  const linear = useLinearOAuth(provider === "linear");
-  const github = useGithubOAuth(provider === "github");
-
-  const authState =
-    provider === "jira" ? jira : provider === "linear" ? linear : github;
-  const connected = authState.status.connected;
+  const { roomData } = useRoomState();
+  const teamId = roomData?.teamId ?? null;
+  const authState = useTeamOAuth(teamId, provider);
+  const connected = authState.status.connected ?? false;
   const loading = authState.loading;
   const error = authState.error;
 
@@ -63,6 +58,22 @@ export function QueueProviderSetupModal({
     [provider],
   );
   const comingSoon = copy.comingSoon;
+  const hasWorkspaceTeam = teamId !== null;
+  const canOpenQueue = !hasWorkspaceTeam || connected;
+
+  const statusDescription = comingSoon
+    ? "This integration is coming soon—stay tuned."
+    : !hasWorkspaceTeam
+      ? `This room is not linked to a workspace team. Connect ${copy.name} in workspace settings and create a room from that team to import tickets.`
+      : connected
+        ? `${copy.name} is connected for this workspace team.`
+        : `${copy.name} is not connected for this workspace team. Connect it in workspace settings before importing tickets.`;
+
+  const statusLabel = connected
+    ? "Connected"
+    : !hasWorkspaceTeam
+      ? "Workspace required"
+      : "Not connected";
 
   return (
     <Modal
@@ -94,16 +105,14 @@ export function QueueProviderSetupModal({
                   Connection status
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {comingSoon
-                    ? "This integration is coming soon—stay tuned."
-                    : `We’ll ask you to sign in so ${SITE_NAME} can read your tickets and write estimates.`}
+                  {statusDescription}
                 </p>
               </div>
               <div className="flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 shadow-sm dark:bg-slate-800/80 dark:text-slate-200">
                 {connected ? (
                   <>
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    Connected
+                    {statusLabel}
                   </>
                 ) : comingSoon ? (
                   <>
@@ -113,7 +122,7 @@ export function QueueProviderSetupModal({
                 ) : (
                   <>
                     <AlertCircle className="h-4 w-4 text-amber-500" />
-                    Disconnected
+                    {statusLabel}
                   </>
                 )}
               </div>
@@ -124,26 +133,6 @@ export function QueueProviderSetupModal({
                 {error}
               </p>
             )}
-
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Button
-                onClick={
-                  comingSoon
-                    ? undefined
-                    : connected
-                      ? authState.disconnect
-                      : authState.connect
-                }
-                disabled={loading || comingSoon}
-                fullWidth
-              >
-                {comingSoon
-                  ? "Available soon"
-                  : connected
-                    ? "Disconnect"
-                    : `Connect to ${copy.name}`}
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -152,8 +141,8 @@ export function QueueProviderSetupModal({
             Set up your queue
           </p>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Once connected, add the tickets you want to point. We’ll start with
-            an empty queue so you can choose what matters.
+            Add the tickets you want to point. We’ll start with an empty queue
+            so you can choose what matters.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <Button
@@ -161,13 +150,18 @@ export function QueueProviderSetupModal({
                 onOpenQueue();
                 onClose();
               }}
-              disabled={!connected || comingSoon}
+              disabled={loading || comingSoon || !canOpenQueue}
               fullWidth
               variant="primary"
             >
               Open queue setup
             </Button>
           </div>
+          {!canOpenQueue && (
+            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+              Connect {copy.name} in workspace team settings to import tickets.
+            </p>
+          )}
         </div>
       </div>
     </Modal>

@@ -87,8 +87,11 @@ export async function requestMagicLinkController(
       ip,
       userAgent,
     });
-    return jsonError(
-      "Your email domain is not authorized for workspace access. Please contact your administrator.",
+    return jsonResponse(
+      {
+        error: "domain_not_allowed",
+        message: "Your email domain is not authorized for workspace access. Please contact your administrator."
+      },
       403,
     );
   }

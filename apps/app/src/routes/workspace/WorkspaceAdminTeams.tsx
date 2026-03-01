@@ -36,7 +36,7 @@ export default function WorkspaceAdminTeams() {
     deleteTeam,
   } = useWorkspaceData();
 
-  const { goToLogin } = useSessionActions();
+  const { goToLogin, goToWorkspaceAdminTeamSettings } = useSessionActions();
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [renameInput, setRenameInput] = useState("");
@@ -49,6 +49,11 @@ export default function WorkspaceAdminTeams() {
     setEditingTeam(team);
     setRenameInput(team.name);
     setIsTeamModalOpen(true);
+  };
+
+  const handleTeamSettings = (team: Team) => {
+    setSelectedTeamId(team.id);
+    goToWorkspaceAdminTeamSettings();
   };
 
   const handleSaveTeamName = async () => {
@@ -109,6 +114,7 @@ export default function WorkspaceAdminTeams() {
               onCreateTeam={handleCreateTeam}
               onSelectTeam={setSelectedTeamId}
               onEditTeam={handleEditTeam}
+              onTeamSettings={handleTeamSettings}
             />
           </SurfaceCard>
         </div>

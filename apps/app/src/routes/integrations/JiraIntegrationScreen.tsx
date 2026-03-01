@@ -38,17 +38,17 @@ const featureCards = [
     icon: Table2,
   },
   {
-    title: "Secure OAuth",
+    title: "Workspace-managed OAuth",
     description:
-      "Room-scoped OAuth keeps access limited to what the moderator connects.",
+      "Team admins connect Jira once in workspace settings; every room under that team inherits the connection.",
     icon: Lock,
   },
 ];
 
 const steps = [
   {
-    title: "Connect Jira",
-    detail: `Use OAuth 2.0 to authorize ${SITE_NAME} for this room.`,
+    title: "Connect Jira in workspace",
+    detail: `Sign in and connect Jira via OAuth 2.0 in your workspace team settings.`,
   },
   {
     title: "Pick issues",
@@ -75,9 +75,9 @@ const securityHighlights = [
     icon: Lock,
   },
   {
-    title: "Encrypted, room-scoped storage",
+    title: "Encrypted, team-scoped storage",
     detail:
-      "Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a single room, and cleared on revoke.",
+      "Tokens never live in the browser: they are AES-GCM encrypted with a worker secret, scoped to a workspace team, and cleared on revoke.",
     icon: Database,
   },
   {
@@ -137,7 +137,7 @@ const JiraIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-                onClick={startCreateFlow}
+                onClick={() => startCreateFlow()}
               >
                 Create a room
               </button>
@@ -306,7 +306,7 @@ const JiraIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-                onClick={startCreateFlow}
+                onClick={() => startCreateFlow()}
               >
                 Start a room
               </button>

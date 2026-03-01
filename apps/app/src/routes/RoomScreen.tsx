@@ -38,6 +38,7 @@ import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { RoomGuidancePanel } from "@/components/room/RoomGuidancePanel";
+import { RoomStatsPanel } from "@/components/room/RoomStatsPanel";
 import { RoomCalloutCard } from "@/components/room/RoomCalloutCard";
 import { getVoteSpreadSummary } from "@/utils/room-guidance";
 import { useRoomOnboardingHints } from "@/hooks/useRoomOnboardingHints";
@@ -182,9 +183,9 @@ const RoomScreen = () => {
 
   const gameTitle = roomData.gameSession
     ? roomData.gameSession.type
-        .split("-")
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ")
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ")
     : "";
   const completedTicketList =
     roomData.ticketQueue?.filter((ticket) => ticket.status === "completed") ??
@@ -337,6 +338,8 @@ const RoomScreen = () => {
                 </div>
               </SurfaceCard>
 
+              <RoomStatsPanel roomKey={roomData.key} />
+
               <SurfaceCard padding="md" className="space-y-3 text-sm">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                   {recapTitle}
@@ -441,12 +444,12 @@ const RoomScreen = () => {
               )}
 
               {roomData.settings.enableStructuredVoting &&
-              roomData.settings.votingCriteria ? (
+                roomData.settings.votingCriteria ? (
                 <StructuredVotingPanel
                   criteria={roomData.settings.votingCriteria}
                   currentVote={
                     roomData.structuredVotes?.[
-                      getVoteKeyForUser(roomData, name)
+                    getVoteKeyForUser(roomData, name)
                     ] || null
                   }
                   onVote={handleVote}
@@ -529,7 +532,7 @@ const RoomScreen = () => {
                           title="Wide spread after reveal"
                           body={
                             spreadSummary.highestVoteValue !== null &&
-                            spreadSummary.lowestVoteValue !== null
+                              spreadSummary.lowestVoteValue !== null
                               ? `Ask the ${spreadSummary.highestVoteValue} and ${spreadSummary.lowestVoteValue} voters to explain their thinking.`
                               : "Ask the highest and lowest voters to explain their thinking."
                           }

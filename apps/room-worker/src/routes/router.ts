@@ -26,14 +26,6 @@ import {
   updateJiraStoryPointsController,
 } from "../controllers/external/jira-controller";
 import {
-  initiateJiraOAuthController,
-  handleJiraOAuthCallbackController,
-  getJiraOAuthStatusController,
-  getJiraFieldsController,
-  updateJiraFieldsController,
-  revokeJiraOAuthController,
-} from "../controllers/external/jira-oauth-controller";
-import {
   getLinearIssueController,
   getLinearTeamsController,
   getLinearCyclesController,
@@ -41,24 +33,12 @@ import {
   updateLinearEstimateController,
 } from "../controllers/external/linear-controller";
 import {
-  initiateLinearOAuthController,
-  handleLinearOAuthCallbackController,
-  getLinearOAuthStatusController,
-  revokeLinearOAuthController,
-} from "../controllers/external/linear-oauth-controller";
-import {
   getGithubIssueController,
   getGithubReposController,
   getGithubMilestonesController,
   getGithubIssuesController,
   updateGithubEstimateController,
 } from "../controllers/external/github-controller";
-import {
-  initiateGithubOAuthController,
-  handleGithubOAuthCallbackController,
-  getGithubOAuthStatusController,
-  revokeGithubOAuthController,
-} from "../controllers/external/github-oauth-controller";
 import { submitFeedbackController } from "../controllers/external/feedback-controller";
 
 async function handleWebSocket(
@@ -87,7 +67,6 @@ async function handleApiRoutes(
   env: RoomWorkerEnv,
   path: string,
 ): Promise<CfResponse> {
-  const url = new URL(request.url);
   const method = request.method;
 
   if (path === "defaults" && method === "GET") {
@@ -137,30 +116,6 @@ async function handleApiRoutes(
     }
   }
 
-  if (path === "jira/oauth/authorize" && method === "POST") {
-    return initiateJiraOAuthController(request, env);
-  }
-
-  if (path === "jira/oauth/callback" && method === "GET") {
-    return handleJiraOAuthCallbackController(url, env);
-  }
-
-  if (path === "jira/oauth/status" && method === "POST") {
-    return getJiraOAuthStatusController(request, env);
-  }
-
-  if (path === "jira/oauth/fields" && method === "POST") {
-    return getJiraFieldsController(request, env);
-  }
-
-  if (path === "jira/oauth/fields" && method === "PUT") {
-    return updateJiraFieldsController(request, env);
-  }
-
-  if (path === "jira/oauth/revoke" && method === "DELETE") {
-    return revokeJiraOAuthController(request, env);
-  }
-
   if (path === "linear/issue" && method === "POST") {
     return getLinearIssueController(request, env);
   }
@@ -188,22 +143,6 @@ async function handleApiRoutes(
     }
   }
 
-  if (path === "linear/oauth/authorize" && method === "POST") {
-    return initiateLinearOAuthController(request, env);
-  }
-
-  if (path === "linear/oauth/callback" && method === "GET") {
-    return handleLinearOAuthCallbackController(url, env);
-  }
-
-  if (path === "linear/oauth/status" && method === "POST") {
-    return getLinearOAuthStatusController(request, env);
-  }
-
-  if (path === "linear/oauth/revoke" && method === "DELETE") {
-    return revokeLinearOAuthController(request, env);
-  }
-
   if (path === "github/issue" && method === "POST") {
     return getGithubIssueController(request, env);
   }
@@ -229,22 +168,6 @@ async function handleApiRoutes(
     if (issueId) {
       return updateGithubEstimateController(issueId, request, env);
     }
-  }
-
-  if (path === "github/oauth/authorize" && method === "POST") {
-    return initiateGithubOAuthController(request, env);
-  }
-
-  if (path === "github/oauth/callback" && method === "GET") {
-    return handleGithubOAuthCallbackController(url, env);
-  }
-
-  if (path === "github/oauth/status" && method === "POST") {
-    return getGithubOAuthStatusController(request, env);
-  }
-
-  if (path === "github/oauth/revoke" && method === "DELETE") {
-    return revokeGithubOAuthController(request, env);
   }
 
   if (path === "feedback" && method === "POST") {

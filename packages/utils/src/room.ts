@@ -11,6 +11,9 @@ export function generateRoomKey() {
 }
 
 export function getRoomId(roomKey: string) {
+  if (!roomKey) {
+    throw new Error('Room key is required to get room ID');
+  }
   return `room-${roomKey.toLowerCase()}`;
 }
 

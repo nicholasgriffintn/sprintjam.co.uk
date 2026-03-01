@@ -20,15 +20,37 @@ export async function createRoomController(
     passcode?: string;
     settings?: Partial<RoomSettings>;
     avatar?: string;
+    teamId?: number;
   }>();
 
   const name = body?.name;
   const passcode = body?.passcode;
   const settings = body?.settings;
   const avatar = body?.avatar;
+  const rawTeamId = body?.teamId;
 
   if (!name) {
     return jsonError("Name is required");
+  }
+
+  const teamId =
+    typeof rawTeamId === "number" &&
+    Number.isInteger(rawTeamId) &&
+    rawTeamId > 0
+      ? rawTeamId
+      : undefined;
+
+  if (teamId !== undefined && env.AUTH_WORKER) {
+    const cookie = request.headers.get("Cookie") ?? "";
+    const authResponse = await env.AUTH_WORKER.fetch(
+      new Request(`https://auth-worker/api/teams/${teamId}`, {
+        method: "GET",
+        headers: { Cookie: cookie },
+      }) as unknown as CfRequest,
+    );
+    if (!authResponse.ok) {
+      return jsonError("You do not have access to the specified team", 403);
+    }
   }
 
   const key = name
@@ -65,6 +87,7 @@ export async function createRoomController(
         passcode,
         settings,
         avatar,
+        teamId,
       }),
     }) as unknown as CfRequest,
   );

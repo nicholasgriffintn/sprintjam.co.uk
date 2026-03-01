@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   Users,
   Plus,
@@ -11,38 +11,38 @@ import {
   Play,
   GitBranch,
   ArrowUpRight,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { useSessionActions } from "@/context/SessionContext";
-import { PageSection } from "@/components/layout/PageBackground";
-import { Button } from "@/components/ui/Button";
-import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { Footer } from "@/components/layout/Footer";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
-import { navigateTo, type AppScreen } from "@/config/routes";
-import { SITE_NAME } from "@/constants";
+import { useSessionActions } from '@/context/SessionContext';
+import { PageSection } from '@/components/layout/PageBackground';
+import { Button } from '@/components/ui/Button';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { Footer } from '@/components/layout/Footer';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { META_CONFIGS } from '@/config/meta';
+import { navigateTo, type AppScreen } from '@/config/routes';
+import { SITE_NAME } from '@/constants';
 
 const features = [
   {
     icon: <Zap className="w-5 h-5" />,
-    title: "Real-time Voting",
-    description: "Live story point voting with presence and instant reveals",
+    title: 'Real-time Voting',
+    description: 'Live story point voting with presence and instant reveals',
   },
   {
     icon: <BarChart3 className="w-5 h-5" />,
-    title: "Smart Consensus",
-    description: "Calculates median, spread, and outliers to guide agreement",
+    title: 'Smart Consensus',
+    description: 'Calculates median, spread, and outliers to guide agreement',
   },
   {
     icon: <Shield className="w-5 h-5" />,
-    title: "Privacy First",
-    description: "Room-scoped storage, no ads, no tracking, open source",
+    title: 'Privacy First',
+    description: 'Room-scoped storage, no ads, no tracking, open source',
   },
   {
     icon: <Timer className="w-5 h-5" />,
-    title: "Voting Options",
-    description: "Classic planning poker plus structured scoring options",
+    title: 'Voting Options',
+    description: 'Classic planning poker plus structured scoring options',
   },
 ];
 
@@ -83,7 +83,7 @@ const WelcomeScreen = () => {
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
           <Button
             data-testid="create-room-button"
-            onClick={startCreateFlow}
+            onClick={() => startCreateFlow()}
             icon={<Plus className="h-4 w-4" />}
             size="lg"
             className="w-full sm:w-auto"
@@ -105,7 +105,7 @@ const WelcomeScreen = () => {
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.97 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
           viewport={{ once: true, amount: 0.4 }}
           className="relative mx-auto max-w-2xl px-4 sm:px-6"
         >
@@ -140,9 +140,9 @@ const WelcomeScreen = () => {
                     className="block h-[220px] w-full origin-bottom transform-gpu rounded-[1.25rem] border border-white/10 object-cover object-top transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01]"
                     style={{
                       maskImage:
-                        "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
+                        'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
                       WebkitMaskImage:
-                        "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
+                        'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
                     }}
                     loading="lazy"
                   />
@@ -150,8 +150,8 @@ const WelcomeScreen = () => {
                     className="pointer-events-none absolute inset-0 rounded-[1.25rem]"
                     style={{
                       background:
-                        "radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)",
-                      mixBlendMode: "multiply",
+                        'radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)',
+                      mixBlendMode: 'multiply',
                     }}
                   />
                   <div className="pointer-events-none absolute inset-0 rounded-[1.25rem] bg-gradient-to-b from-white/12 via-white/5 to-transparent opacity-30 mix-blend-screen" />
@@ -207,21 +207,22 @@ const WelcomeScreen = () => {
                     <GitBranch className="h-5 w-5" />
                   </div>
                   <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    Connect Jira, Linear, and GitHub to your rooms
+                    Connect Jira, Linear, and GitHub through your workspace
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    Import issues, estimate together, and sync story points back
-                    with room-scoped OAuth so your backlog stays in lockstep.
+                    Set up integrations once in your workspace team settings and
+                    every room created under that team inherits the connection
+                    automatically.
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
                     Pull titles, labels, and status into {SITE_NAME} while
-                    keeping access scoped to the room so moderators stay in
+                    keeping access managed at the team level so admins stay in
                     control.
                   </p>
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                    onClick={() => handleNavigate("integrations")}
+                    onClick={() => handleNavigate('integrations')}
                   >
                     Explore integrations
                     <ArrowUpRight className="h-4 w-4" />

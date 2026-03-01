@@ -1,25 +1,100 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type BrowserContext } from "@playwright/test";
 
 import { createRoomWithParticipant } from "./helpers/room-journeys";
 import { SettingsModal } from "./pageObjects/settings-modal";
+
+const WORKSPACE_TEAM_ID = 88;
+
+async function setupWorkspaceRoutes(context: BrowserContext) {
+  await context.route("**/api/auth/me", (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        user: {
+          id: 42,
+          email: "qa@sprintjam.co.uk",
+          name: "Workspace QA",
+          organisationId: 7,
+        },
+        teams: [
+          {
+            id: WORKSPACE_TEAM_ID,
+            name: "QA Team",
+            organisationId: 7,
+            ownerId: 42,
+            createdAt: Date.now(),
+          },
+        ],
+      }),
+    });
+  });
+
+  await context.route("**/api/teams/88/settings", (route) => {
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ settings: null }),
+    });
+  });
+
+  await context.route("**/api/teams/88/sessions", async (route) => {
+    if (route.request().method() === "GET") {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ sessions: [] }),
+      });
+      return;
+    }
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: {
+          id: 1,
+          teamId: WORKSPACE_TEAM_ID,
+          roomKey: "test-room",
+          name: "Test session",
+          createdById: 42,
+          createdAt: Date.now(),
+          updatedAt: null,
+          completedAt: null,
+          metadata: null,
+        },
+      }),
+    });
+  });
+
+  await context.route("**/api/teams/88/integrations/*/status", (route) => {
+    const provider = route.request().url().split("/").at(-2) ?? "linear";
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: {
+          provider,
+          connected: true,
+        },
+      }),
+    });
+  });
+}
 
 test.describe("Linear integration", () => {
   test("moderator can add and link Linear issues through the queue", async ({
     browser,
   }) => {
-    const setup = await createRoomWithParticipant(browser);
+    const setup = await createRoomWithParticipant(browser, {
+      workspaceTeamId: WORKSPACE_TEAM_ID,
+      setupModeratorRoutes: setupWorkspaceRoutes,
+    });
     const { moderatorRoom, participantRoom, cleanup, moderatorContext } = setup;
 
     const settingsModal = new SettingsModal(moderatorRoom.getPage());
 
     const issueKey = "LIN-123";
     const secondaryIssueKey = "LIN-456";
-    const linearOAuthStatus = {
-      connected: true,
-      linearOrganizationId: "eng",
-      linearUserEmail: "qa@test.sprintjam.co.uk",
-      estimateField: "storyPoints",
-    };
     const initialIssue = {
       key: issueKey,
       identifier: issueKey,
@@ -50,14 +125,6 @@ test.describe("Linear integration", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({ ticket }),
-      });
-    });
-
-    await moderatorContext.route("**/api/linear/oauth/status", (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(linearOAuthStatus),
       });
     });
 
@@ -96,7 +163,6 @@ test.describe("Linear integration", () => {
       await settingsModal.open();
       await settingsModal.toggle("settings-toggle-enable-queue", true);
       await settingsModal.selectExternalService("linear");
-      await settingsModal.waitForLinearConnection();
       await settingsModal.save();
 
       const page = moderatorRoom.getPage();

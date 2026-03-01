@@ -546,11 +546,12 @@ describe("ROUTES registry", () => {
 
   it("has nav config for workspace routes with nav property", () => {
     const workspaceNavRoutes = ROUTES.filter(
-      (r) => r.group === "workspace" && r.nav !== undefined,
+      (r) => r.group === "workspace" && "nav" in r && r.nav !== undefined,
     );
     for (const route of workspaceNavRoutes) {
-      // @ts-ignore - test
-      const nav = route.nav;
+      const nav = (
+        route as unknown as { nav?: { label: string; order: number } }
+      ).nav;
       if (nav) {
         expect(nav).toHaveProperty("label");
         expect(nav).toHaveProperty("order");

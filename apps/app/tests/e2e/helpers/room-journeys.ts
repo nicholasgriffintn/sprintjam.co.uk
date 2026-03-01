@@ -14,6 +14,7 @@ export interface RoomSetupOptions {
   roomPasscode?: string;
   enableStructuredVotingOnCreate?: boolean;
   enableTicketQueue?: boolean;
+  workspaceTeamId?: number;
   setupModeratorRoutes?: ContextRouteSetup;
   setupParticipantRoutes?: ContextRouteSetup;
 }
@@ -38,6 +39,7 @@ export async function createRoomWithParticipant(
     roomPasscode,
     enableStructuredVotingOnCreate,
     enableTicketQueue,
+    workspaceTeamId,
     setupModeratorRoutes,
     setupParticipantRoutes,
   } = options;
@@ -73,6 +75,9 @@ export async function createRoomWithParticipant(
 
     const createRoom = new CreateRoomPage(moderatorPage);
     await createRoom.fillBasics(moderatorName, roomPasscode);
+    if (workspaceTeamId) {
+      await createRoom.selectWorkspaceTeam(workspaceTeamId);
+    }
 
     if (enableStructuredVotingOnCreate) {
       await createRoom.enableStructuredVoting();

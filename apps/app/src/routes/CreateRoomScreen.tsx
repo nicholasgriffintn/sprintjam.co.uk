@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { SELECTED_TEAM_STORAGE_KEY } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
 import type { ChangeEvent } from "react";
 import { motion } from "framer-motion";
 import { Settings, Sparkles } from "lucide-react";
@@ -11,6 +13,8 @@ import {
   useSessionState,
 } from "@/context/SessionContext";
 import { useRoomActions, useRoomState } from "@/context/RoomContext";
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
+import { getTeamSettings } from "@/lib/workspace-service";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
@@ -34,6 +38,9 @@ const CreateRoomScreen = () => {
     setJoinFlowMode,
   } = useSessionActions();
   const { clearError } = useSessionErrors();
+
+  const { teams, isAuthenticated } = useWorkspaceData();
+
   const { serverDefaults } = useRoomState();
   const { setPendingCreateSettings } = useRoomActions();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -57,17 +64,68 @@ const CreateRoomScreen = () => {
       value: preset.id,
     })) ?? [];
 
+  const { selectedWorkspaceTeamId } = useSessionState();
+  const { setSelectedWorkspaceTeamId } = useSessionActions();
+
+  const applySettings = (settings: RoomSettings) => {
+    setAdvancedSettings(settings);
+    advancedSettingsRef.current = settings;
+    setSettingsResetKey((key) => key + 1);
+    setVotingMode(settings.enableStructuredVoting ? "structured" : "standard");
+    setSelectedSequenceId(settings.votingSequenceId ?? "fibonacci-short");
+  };
+
+  // Apply server defaults initially (only when no team is selected)
   useEffect(() => {
-    if (defaults) {
-      setAdvancedSettings(defaults);
-      advancedSettingsRef.current = defaults;
-      setSettingsResetKey((key) => key + 1);
-      setVotingMode(
-        defaults.enableStructuredVoting ? "structured" : "standard",
-      );
-      setSelectedSequenceId(defaults.votingSequenceId ?? "fibonacci-short");
+    if (defaults && !selectedWorkspaceTeamId) {
+      applySettings(defaults);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaults]);
+
+  // Preload team settings when the selected team changes
+  useEffect(() => {
+    if (!defaults) return;
+
+    if (!selectedWorkspaceTeamId) {
+      applySettings(defaults);
+      return;
+    }
+
+    getTeamSettings(selectedWorkspaceTeamId)
+      .then((teamSettings) => {
+        applySettings(
+          teamSettings ? { ...defaults, ...teamSettings } : defaults,
+        );
+      })
+      .catch(() => {
+        // Fall back to server defaults if fetch fails
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedWorkspaceTeamId]);
+
+  const teamPreloadDone = useRef(false);
+  useEffect(() => {
+    if (teamPreloadDone.current || teams.length === 0) return;
+    teamPreloadDone.current = true;
+    const stored = safeLocalStorage.get(SELECTED_TEAM_STORAGE_KEY);
+    if (!stored) return;
+    const teamId = parseInt(stored, 10);
+    if (!isNaN(teamId) && teams.some((t) => t.id === teamId)) {
+      setSelectedWorkspaceTeamId(teamId);
+    }
+  }, [teams, setSelectedWorkspaceTeamId]);
+
+  const handleTeamChange = (teamIdStr: string) => {
+    const teamId = parseInt(teamIdStr, 10);
+    if (!isNaN(teamId)) {
+      setSelectedWorkspaceTeamId(teamId);
+      safeLocalStorage.set(SELECTED_TEAM_STORAGE_KEY, teamIdStr);
+    } else {
+      setSelectedWorkspaceTeamId(null);
+      safeLocalStorage.remove(SELECTED_TEAM_STORAGE_KEY);
+    }
+  };
 
   const canStart = validateName(name).ok;
   const advancedReady = Boolean(advancedSettings && defaults);
@@ -155,6 +213,32 @@ const CreateRoomScreen = () => {
               fullWidth
             />
 
+            {isAuthenticated && teams.length > 0 && (
+              <div>
+                <label
+                  htmlFor="team-select"
+                  className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  Workspace Team
+                </label>
+                <Select
+                  id="team-select"
+                  value={selectedWorkspaceTeamId?.toString() ?? "none"}
+                  onValueChange={handleTeamChange}
+                  options={[
+                    { label: "Personal Room (No Team)", value: "none" },
+                    ...teams.map((t) => ({
+                      label: t.name,
+                      value: t.id.toString(),
+                    })),
+                  ]}
+                />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Select a team to track sessions in your workspace.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-4 rounded-2xl border border-slate-200/60 bg-white/50 p-4 dark:border-white/10 dark:bg-slate-900/40">
               <div>
                 <div className="flex items-center justify-between">
@@ -212,7 +296,6 @@ const CreateRoomScreen = () => {
                     setSelectedSequenceId(value as VotingSequenceId)
                   }
                   disabled={votingMode === "structured"}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200/60 bg-white/90 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/70 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-800 dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
                   data-testid="create-estimate-sequence"
                   options={votingPresetOptions}
                 />

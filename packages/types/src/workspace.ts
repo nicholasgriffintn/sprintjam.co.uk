@@ -3,18 +3,35 @@
  */
 import type {
   organisations,
+  teamIntegrations,
   teamSessions,
+  teamSettings,
   teams,
   users,
   workspaceInvites,
 } from "@sprintjam/db";
-import type { RoundTransitionType } from "./room";
+import type { RoomSettings, RoundTransitionType } from "./room";
+import type { OAuthProvider } from "./external";
 
 export type Team = typeof teams.$inferSelect;
 export type TeamSession = typeof teamSessions.$inferSelect;
+export type TeamSettingsRow = typeof teamSettings.$inferSelect;
+export type TeamIntegrationRow = typeof teamIntegrations.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Organisation = typeof organisations.$inferSelect;
 export type WorkspaceInvite = typeof workspaceInvites.$inferSelect;
+
+export interface TeamWithSettings extends Team {
+  settings?: RoomSettings;
+}
+
+export interface TeamIntegrationStatus {
+  provider: OAuthProvider;
+  connected: boolean;
+  authorizedBy?: string;
+  expiresAt?: number;
+  metadata?: Record<string, unknown>;
+}
 
 export type WorkspaceUser = Pick<
   User,
@@ -30,6 +47,9 @@ export interface SessionTimelineData {
   period: string;
   yearMonth: string;
   count: number;
+  avgConsensusRate?: number;
+  avgVelocity?: number | null;
+  totalVotes?: number;
 }
 
 export interface WorkspaceStats {

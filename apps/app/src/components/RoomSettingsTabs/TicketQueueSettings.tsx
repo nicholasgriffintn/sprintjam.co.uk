@@ -1,11 +1,11 @@
-import type { RoomSettings, JudgeAlgorithm } from "@/types";
-import { useJiraOAuth } from "@/hooks/useJiraOAuth";
-import { useLinearOAuth } from "@/hooks/useLinearOAuth";
-import { useGithubOAuth } from "@/hooks/useGithubOAuth";
-import { BetaBadge } from "@/components/BetaBadge";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import type { RoomSettings, JudgeAlgorithm } from '@/types';
+import { useTeamOAuth } from '@/hooks/useTeamOAuth';
+import { useRoomState } from '@/context/RoomContext';
+import { useSessionState } from '@/context/SessionContext';
+import { BetaBadge } from '@/components/BetaBadge';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { TeamIntegrationBanner } from './TeamIntegrationBanner';
 
 export function TicketQueueSettings({
   localSettings,
@@ -25,58 +25,42 @@ export function TicketQueueSettings({
   ) => void;
   isCreating?: boolean;
 }) {
-  const {
-    status: jiraStatus,
-    loading: jiraLoading,
-    error: jiraError,
-    connect: jiraConnect,
-    disconnect: jiraDisconnect,
-    fields,
-    fieldsLoading,
-    fieldsLoaded,
-    fetchFields,
-    saveFieldConfiguration,
-    savingFields,
-  } = useJiraOAuth();
+  const { roomData } = useRoomState();
+  const { selectedWorkspaceTeamId } = useSessionState();
+  const teamId = isCreating
+    ? selectedWorkspaceTeamId
+    : (roomData?.teamId ?? null);
 
-  const {
-    status: linearStatus,
-    loading: linearLoading,
-    error: linearError,
-    connect: linearConnect,
-    disconnect: linearDisconnect,
-  } = useLinearOAuth();
-  const {
-    status: githubStatus,
-    loading: githubLoading,
-    error: githubError,
-    connect: githubConnect,
-    disconnect: githubDisconnect,
-  } = useGithubOAuth();
+  const { status: teamJiraStatus, loading: jiraLoading } = useTeamOAuth(
+    teamId,
+    'jira',
+  );
+  const { status: teamLinearStatus, loading: linearLoading } = useTeamOAuth(
+    teamId,
+    'linear',
+  );
+  const { status: teamGithubStatus, loading: githubLoading } = useTeamOAuth(
+    teamId,
+    'github',
+  );
 
   const autoSyncEnabled = localSettings.autoSyncEstimates ?? true;
   const handleAutoSyncToggle = (checked: boolean) => {
-    handleChange("autoSyncEstimates", checked);
+    handleChange('autoSyncEstimates', checked);
   };
   const externalServiceOptions = [
-    { label: "None", value: "none" },
-    { label: "Jira", value: "jira" },
-    { label: "Linear", value: "linear" },
-    { label: "GitHub", value: "github" },
+    { label: 'None', value: 'none' },
+    { label: 'Jira', value: 'jira' },
+    { label: 'Linear', value: 'linear' },
+    { label: 'GitHub', value: 'github' },
   ];
-  const jiraFieldOptions = [
-    { label: "Select a field", value: "" },
-    ...fields.map((field) => ({
-      label: `${field.name}${field.type ? ` (${field.type})` : ""}`,
-      value: field.id,
-    })),
-  ];
+
   const renderAutoSyncToggle = (
-    provider: "jira" | "linear",
+    provider: 'jira' | 'linear',
     connected: boolean,
   ) => {
     if (!connected) return null;
-    const providerLabel = provider === "jira" ? "Jira" : "Linear";
+    const providerLabel = provider === 'jira' ? 'Jira' : 'Linear';
 
     return (
       <div className="flex items-center pt-3">
@@ -112,7 +96,7 @@ export function TicketQueueSettings({
             id="enableTicketQueue"
             checked={localSettings.enableTicketQueue ?? false}
             onChange={(e) =>
-              handleChange("enableTicketQueue", e.target.checked)
+              handleChange('enableTicketQueue', e.target.checked)
             }
             data-testid="settings-toggle-enable-queue"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -137,7 +121,7 @@ export function TicketQueueSettings({
             id="allowOthersToManageQueue"
             checked={localSettings.allowOthersToManageQueue ?? false}
             onChange={(e) =>
-              handleChange("allowOthersToManageQueue", e.target.checked)
+              handleChange('allowOthersToManageQueue', e.target.checked)
             }
             data-testid="settings-toggle-allow-queue"
             className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
@@ -161,12 +145,12 @@ export function TicketQueueSettings({
             value={
               localSettings.capacityPoints === null ||
               localSettings.capacityPoints === undefined
-                ? ""
+                ? ''
                 : String(localSettings.capacityPoints)
             }
             onChange={(event) => {
               const next = event.target.value;
-              handleChange("capacityPoints", next === "" ? null : Number(next));
+              handleChange('capacityPoints', next === '' ? null : Number(next));
             }}
             fullWidth
           />
@@ -190,310 +174,55 @@ export function TicketQueueSettings({
             </label>
             <Select
               id="externalService"
-              value={localSettings.externalService || "none"}
-              onValueChange={(value) => handleChange("externalService", value)}
+              value={localSettings.externalService || 'none'}
+              onValueChange={(value) => handleChange('externalService', value)}
               data-testid="settings-select-external-service"
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
               options={externalServiceOptions}
             />
-            {localSettings.externalService === "jira" && (
-              <div className="space-y-3">
-                {isCreating ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      Jira integration will be available to configure in room
-                      settings after creation.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                    {jiraLoading ? (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Loading connection status...
-                      </p>
-                    ) : jiraStatus.connected ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                              ✓ Connected to Jira
-                            </p>
-                            {jiraStatus.jiraDomain && (
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
-                                {jiraStatus.jiraDomain}
-                              </p>
-                            )}
-                            {jiraStatus.jiraUserEmail && (
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
-                                {jiraStatus.jiraUserEmail}
-                              </p>
-                            )}
-                          </div>
-                          <Button
-                            onClick={jiraDisconnect}
-                            disabled={jiraLoading}
-                            variant="unstyled"
-                            className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                          >
-                            Disconnect
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Connect your Jira account to fetch and update tickets
-                        </p>
-                        <Button
-                          onClick={jiraConnect}
-                          disabled={jiraLoading}
-                          variant="unstyled"
-                          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-                        >
-                          Connect to Jira
-                        </Button>
-                      </div>
-                    )}
-                    {jiraError && (
-                      <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                        {jiraError}
-                      </p>
-                    )}
-                  </div>
-                )}
 
-                {jiraStatus.connected && (
-                  <div className="space-y-3">
-                    {renderAutoSyncToggle("jira", !!jiraStatus.connected)}
-                    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">
-                            Field configuration
-                          </p>
-                          <p className="text-xs text-slate-600 dark:text-slate-400">
-                            Choose which Jira fields to use for story points and
-                            sprint.
-                          </p>
-                        </div>
-                        <Button
-                          onClick={fetchFields}
-                          disabled={fieldsLoading}
-                          variant="unstyled"
-                          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 disabled:opacity-50"
-                        >
-                          {fieldsLoading
-                            ? "Refreshing…"
-                            : fieldsLoaded
-                              ? "Refresh"
-                              : "Load fields"}
-                        </Button>
-                      </div>
-
-                      {fieldsLoading ? (
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Loading fields from Jira…
-                        </p>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="space-y-1">
-                            <label
-                              htmlFor="jiraStoryPointsField"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              Story points field
-                            </label>
-                            <Select
-                              id="jiraStoryPointsField"
-                              value={jiraStatus.storyPointsField ?? ""}
-                              onValueChange={(value) =>
-                                saveFieldConfiguration({
-                                  storyPointsField: value || null,
-                                })
-                              }
-                              disabled={savingFields || fields.length === 0}
-                              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                              options={jiraFieldOptions}
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label
-                              htmlFor="jiraSprintField"
-                              className="text-sm text-slate-700 dark:text-slate-300"
-                            >
-                              Sprint field
-                            </label>
-                            <Select
-                              id="jiraSprintField"
-                              value={jiraStatus.sprintField ?? ""}
-                              onValueChange={(value) =>
-                                saveFieldConfiguration({
-                                  sprintField: value || null,
-                                })
-                              }
-                              disabled={savingFields || fields.length === 0}
-                              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                              options={jiraFieldOptions}
-                            />
-                          </div>
-
-                          {!jiraStatus.storyPointsField && (
-                            <p className="text-xs text-amber-700 dark:text-amber-400">
-                              Story points field is required for auto-updates.
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+            {!teamId && localSettings.externalService !== 'none' && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-800/50 dark:bg-amber-900/20">
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  Integrations require a workspace team. Select a team when
+                  creating the room, or sign in to configure one in workspace
+                  settings.
+                </p>
               </div>
             )}
-            {localSettings.externalService === "linear" && (
-              <div className="space-y-3">
-                {isCreating ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      Linear integration will be available to configure in room
-                      settings after creation.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                    {linearLoading ? (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Loading connection status...
-                      </p>
-                    ) : linearStatus.connected ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                              ✓ Connected to Linear
-                            </p>
-                            {linearStatus.linearOrganizationId && (
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
-                                Org: {linearStatus.linearOrganizationId}
-                              </p>
-                            )}
-                            {linearStatus.linearUserEmail && (
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
-                                {linearStatus.linearUserEmail}
-                              </p>
-                            )}
-                          </div>
-                          <Button
-                            onClick={linearDisconnect}
-                            disabled={linearLoading}
-                            variant="unstyled"
-                            className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                          >
-                            Disconnect
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Connect your Linear account to sync estimates.
-                        </p>
-                        <Button
-                          onClick={linearConnect}
-                          disabled={linearLoading}
-                          variant="unstyled"
-                          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-                        >
-                          Connect to Linear
-                        </Button>
-                      </div>
-                    )}
-                    {linearError && (
-                      <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                        {linearError}
-                      </p>
-                    )}
-                  </div>
-                )}
 
+            {localSettings.externalService === 'jira' && teamId && (
+              <div className="space-y-3">
+                <TeamIntegrationBanner
+                  label="Jira"
+                  connected={teamJiraStatus.connected ?? false}
+                  loading={jiraLoading}
+                />
+                {renderAutoSyncToggle('jira', !!teamJiraStatus.connected)}
+              </div>
+            )}
+
+            {localSettings.externalService === 'linear' && teamId && (
+              <div className="space-y-3">
+                <TeamIntegrationBanner
+                  label="Linear"
+                  connected={teamLinearStatus.connected ?? false}
+                  loading={linearLoading}
+                />
                 {renderAutoSyncToggle(
-                  "linear",
-                  linearStatus.connected ?? false,
+                  'linear',
+                  teamLinearStatus.connected ?? false,
                 )}
               </div>
             )}
-            {localSettings.externalService === "github" && (
+
+            {localSettings.externalService === 'github' && teamId && (
               <div className="space-y-3">
-                {isCreating ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      GitHub integration will be available to configure in room
-                      settings after creation.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
-                    {githubLoading ? (
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Loading connection status...
-                      </p>
-                    ) : githubStatus.connected ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
-                              ✓ Connected to GitHub
-                            </p>
-                            {(githubStatus.defaultOwner ||
-                              githubStatus.defaultRepo) && (
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
-                                Repo:{" "}
-                                {[
-                                  githubStatus.defaultOwner,
-                                  githubStatus.defaultRepo,
-                                ]
-                                  .filter(Boolean)
-                                  .join("/")}
-                              </p>
-                            )}
-                            {githubStatus.githubLogin && (
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
-                                {githubStatus.githubLogin}
-                              </p>
-                            )}
-                          </div>
-                          <Button
-                            onClick={githubDisconnect}
-                            disabled={githubLoading}
-                            variant="unstyled"
-                            className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                          >
-                            Disconnect
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Connect your GitHub account to sync estimates.
-                        </p>
-                        <Button
-                          onClick={githubConnect}
-                          disabled={githubLoading}
-                          variant="unstyled"
-                          className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-                        >
-                          Connect to GitHub
-                        </Button>
-                      </div>
-                    )}
-                    {githubError && (
-                      <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                        {githubError}
-                      </p>
-                    )}
-                  </div>
-                )}
+                <TeamIntegrationBanner
+                  label="GitHub"
+                  connected={teamGithubStatus.connected ?? false}
+                  loading={githubLoading}
+                />
               </div>
             )}
           </div>

@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/d1";
 import { eq, inArray, sql, desc } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
-import { teams, teamSessions, users } from "@sprintjam/db";
+import { teams, teamSessions, teamSettings, users } from '@sprintjam/db';
 import * as schema from "@sprintjam/db/d1/schemas";
+import type { RoomSettings } from '@sprintjam/types';
 
 const MAX_SESSIONS_FOR_STATS = 5000;
 
@@ -75,6 +76,44 @@ export class TeamRepository {
     await this.db.delete(teamSessions).where(eq(teamSessions.teamId, teamId));
 
     await this.db.delete(teams).where(eq(teams.id, teamId));
+  }
+
+  async getTeamSettings(teamId: number): Promise<RoomSettings | null> {
+    const row = await this.db
+      .select({ settings: teamSettings.settings })
+      .from(teamSettings)
+      .where(eq(teamSettings.teamId, teamId))
+      .get();
+
+    if (!row) return null;
+
+    try {
+      return JSON.parse(row.settings) as RoomSettings;
+    } catch {
+      return null;
+    }
+  }
+
+  async saveTeamSettings(
+    teamId: number,
+    settings: RoomSettings,
+  ): Promise<void> {
+    const now = Date.now();
+    await this.db
+      .insert(teamSettings)
+      .values({
+        teamId,
+        settings: JSON.stringify(settings),
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: teamSettings.teamId,
+        set: {
+          settings: JSON.stringify(settings),
+          updatedAt: now,
+        },
+      });
   }
 
   async isTeamOwner(teamId: number, userId: number): Promise<boolean> {
@@ -247,14 +286,14 @@ export class TeamRepository {
       const date = new Date(now);
       date.setDate(1);
       date.setMonth(date.getMonth() - i);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       monthCounts.set(key, 0);
     }
 
     for (const session of sessions) {
       if (session.createdAt >= sixMonthsAgo) {
         const date = new Date(session.createdAt);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         if (monthCounts.has(key)) {
           monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
         }
@@ -262,13 +301,13 @@ export class TeamRepository {
     }
 
     return Array.from(monthCounts.entries()).map(([period, count]) => {
-      const [year, month] = period.split("-");
+      const [year, month] = period.split('-');
       const date = new Date(
         Number.parseInt(year, 10),
         Number.parseInt(month, 10) - 1,
       );
       return {
-        period: date.toLocaleString("default", { month: "short" }),
+        period: date.toLocaleString('default', { month: 'short' }),
         yearMonth: period,
         count,
       };
