@@ -1,4 +1,10 @@
-import { useMemo, type ChangeEvent, type SelectHTMLAttributes } from "react";
+import {
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+  type SelectHTMLAttributes,
+} from "react";
 import { Combobox } from "@base-ui/react/combobox";
 import { Check, ChevronDown } from "lucide-react";
 
@@ -40,6 +46,7 @@ export function Select({
 }: SelectProps) {
   const showSearchableSelect =
     searchable && !props.multiple && options.length >= searchMinOptions;
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const handleNativeChange = (event: ChangeEvent<HTMLSelectElement>) => {
     onChange?.(event);
@@ -61,6 +68,12 @@ export function Select({
     }
     return options.find((o) => o.value === defaultValue) ?? null;
   }, [options, defaultValue]);
+
+  const handleSearchInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Tab") {
+      setSearchOpen(false);
+    }
+  };
 
   if (!showSearchableSelect) {
     const nativeValueProps =
@@ -109,8 +122,13 @@ export function Select({
       <Combobox.Root
         items={options.filter((o) => o.value !== "")}
         {...comboboxValueProps}
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
         onValueChange={(item) => {
-          if (item) onValueChange?.(item.value);
+          if (item) {
+            onValueChange?.(item.value);
+          }
+          setSearchOpen(false);
         }}
         itemToStringLabel={(item) => item?.label ?? ""}
         isItemEqualToValue={(a, b) => (a?.value ?? "") === (b?.value ?? "")}
@@ -121,6 +139,7 @@ export function Select({
           data-testid={dataTestId}
           placeholder={searchPlaceholder}
           className={cn(SELECT_BASE_CLASSNAME, className)}
+          onKeyDown={handleSearchInputKeyDown}
         />
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
         <Combobox.Portal>
@@ -131,6 +150,7 @@ export function Select({
                   if (!item) return null;
                   return (
                     <Combobox.Item
+                      key={item.value}
                       value={item}
                       disabled={item.disabled}
                       className={cn(
