@@ -119,6 +119,8 @@ export async function saveTeamSettingsController(
     return jsonError("Invalid request body", 400);
   }
 
-  await repo.saveTeamSettings(teamId, settings as RoomSettings);
-  return jsonResponse({ settings });
+  const existing = await repo.getTeamSettings(teamId);
+  const merged = { ...(existing ?? {}), ...settings } as RoomSettings;
+  await repo.saveTeamSettings(teamId, merged);
+  return jsonResponse({ settings: merged });
 }
