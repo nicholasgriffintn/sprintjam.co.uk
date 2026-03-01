@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import type { TeamIntegrationStatus } from "@sprintjam/types";
@@ -305,60 +306,70 @@ function IntegrationRow({
   onDisconnect: () => Promise<void>;
   metadata?: string;
 }) {
+  const [isDisconnectConfirmOpen, setIsDisconnectConfirmOpen] = useState(false);
+
   const handleDisconnect = () => {
-    const confirmed = window.confirm(
-      `Disconnect ${label}? This will remove the integration for all rooms in this team.`,
-    );
-    if (confirmed) void onDisconnect();
+    setIsDisconnectConfirmOpen(true);
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-slate-900 dark:text-white">
-            {status.connected ? `✓ Connected to ${label}` : label}
-          </p>
-          {status.connected && metadata ? (
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              {metadata}
+    <>
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              {status.connected ? `✓ Connected to ${label}` : label}
             </p>
-          ) : (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {description}
-            </p>
-          )}
-          {status.connected && status.authorizedBy && (
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              Authorized by {status.authorizedBy}
-            </p>
-          )}
+            {status.connected && metadata ? (
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                {metadata}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {description}
+              </p>
+            )}
+            {status.connected && status.authorizedBy && (
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Authorized by {status.authorizedBy}
+              </p>
+            )}
+          </div>
+          <div className="flex-shrink-0">
+            {loading ? (
+              <Spinner />
+            ) : status.connected ? (
+              <Button
+                onClick={handleDisconnect}
+                variant="unstyled"
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                Disconnect
+              </Button>
+            ) : (
+              <Button
+                onClick={onConnect}
+                variant="unstyled"
+                className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+              >
+                Connect
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex-shrink-0">
-          {loading ? (
-            <Spinner />
-          ) : status.connected ? (
-            <Button
-              onClick={handleDisconnect}
-              variant="unstyled"
-              className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              Disconnect
-            </Button>
-          ) : (
-            <Button
-              onClick={onConnect}
-              variant="unstyled"
-              className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-            >
-              Connect
-            </Button>
-          )}
-        </div>
+        {error && (
+          <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
+        )}
       </div>
-      {error && (
-        <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
-      )}
-    </div>
+      <ConfirmDialog
+        open={isDisconnectConfirmOpen}
+        onOpenChange={setIsDisconnectConfirmOpen}
+        title={`Disconnect ${label}?`}
+        description="This will remove the integration for all rooms in this team."
+        confirmLabel="Disconnect"
+        variant="destructive"
+        onConfirm={() => void onDisconnect()}
+      />
+    </>
   );
 }

@@ -1,4 +1,5 @@
 export { Alert } from "./Alert";
+export { ConfirmDialog } from "./ConfirmDialog";
 export { Badge } from "./Badge";
 export { Button } from "./Button";
 export type { ButtonProps } from "./Button";

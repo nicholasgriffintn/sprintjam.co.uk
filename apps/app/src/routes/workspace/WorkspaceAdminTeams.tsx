@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
@@ -38,6 +39,7 @@ export default function WorkspaceAdminTeams() {
 
   const { goToLogin, goToWorkspaceAdminTeamSettings } = useSessionActions();
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [renameInput, setRenameInput] = useState("");
 
@@ -63,12 +65,13 @@ export default function WorkspaceAdminTeams() {
     setEditingTeam(null);
   };
 
-  const handleDeleteTeam = async () => {
+  const handleDeleteTeam = () => {
     if (!editingTeam) return;
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this team? This will not remove any existing rooms but will remove linked sessions.",
-    );
-    if (!confirmed) return;
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteTeamConfirmed = async () => {
+    if (!editingTeam) return;
     await deleteTeam(editingTeam.id);
     setIsTeamModalOpen(false);
     setEditingTeam(null);
@@ -170,6 +173,15 @@ export default function WorkspaceAdminTeams() {
           </p>
         )}
       </Modal>
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        title="Delete team?"
+        description="This will not remove any existing rooms but will remove linked sessions."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => void handleDeleteTeamConfirmed()}
+      />
     </WorkspaceLayout>
   );
 }
