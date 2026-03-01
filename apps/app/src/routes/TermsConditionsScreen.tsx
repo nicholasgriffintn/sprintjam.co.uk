@@ -7,7 +7,7 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { SITE_NAME } from "@/constants";
 
-const LAST_UPDATED = "19th January 2025";
+const LAST_UPDATED = "1st March 2026";
 
 const TermsConditionsScreen = () => {
   usePageMeta(META_CONFIGS.terms);
@@ -56,6 +56,11 @@ const TermsConditionsScreen = () => {
                 information remains accurate and up to date.
               </p>
               <p>
+                Workspace access may require email verification and multi-factor
+                authentication. You must keep your login email, authenticators,
+                recovery codes, and any connected devices secure.
+              </p>
+              <p>
                 You must be at least 18 years old to use {SITE_NAME} without
                 parental consent. By using our services, you represent that you
                 are above the minimum age required by the laws of your country.
@@ -63,6 +68,38 @@ const TermsConditionsScreen = () => {
               <p>
                 You will notify us immediately if you become aware of any
                 security breaches or unauthorised access to your account.
+              </p>
+
+              <h3>Workspace Administration</h3>
+              <p>
+                If you create or administer a workspace, you are responsible
+                for the teams, sessions, invitations, settings, and connected
+                services configured for that workspace.
+              </p>
+              <p>
+                You must only invite people you are authorised to invite and
+                only connect third-party accounts or integrations that you are
+                authorised to use on behalf of your team or organisation.
+              </p>
+
+              <h3>Third-Party Integrations</h3>
+              <p>
+                {SITE_NAME} can connect to third-party providers such as Jira,
+                Linear, and GitHub. When you enable an integration, you instruct
+                us to exchange data with that provider as needed to support the
+                feature you selected.
+              </p>
+              <p>
+                This may include reading issue, project, board, sprint,
+                repository, milestone, profile, or account information and
+                writing updates such as estimates or comments back to the
+                provider.
+              </p>
+              <p>
+                Your use of those integrations is also subject to the terms,
+                permissions, and privacy policies of the relevant third-party
+                provider. We are not responsible for third-party services or for
+                data retained by them after a sync or write-back completes.
               </p>
 
               <h3>Prohibited Use</h3>
@@ -92,6 +129,15 @@ const TermsConditionsScreen = () => {
                 <li>
                   Uploading or transmitting viruses, malware, or other malicious
                   code
+                </li>
+                <li>
+                  Connecting integrations, importing data, or writing updates to
+                  third-party systems without authority to do so
+                </li>
+                <li>
+                  Using the service to collect, expose, or process personal or
+                  confidential data in a way that breaches law, contract, or
+                  workplace policy
                 </li>
               </ul>
 
@@ -128,6 +174,11 @@ const TermsConditionsScreen = () => {
                 We make no warranties, expressed or implied, regarding the
                 reliability, accuracy, or availability of the service.
               </p>
+              <p>
+                We do not guarantee that third-party integrations will remain
+                available, accurate, or compatible with changes made by external
+                providers.
+              </p>
 
               <h3>Open Source</h3>
               <p>
@@ -152,6 +203,11 @@ const TermsConditionsScreen = () => {
                 Upon termination, your rights to use our Service will
                 immediately cease, and you must discontinue all use of the
                 Service.
+              </p>
+              <p>
+                Termination or disconnection of an integration does not remove
+                information that has already been sent to or stored by a
+                third-party provider.
               </p>
 
               <h3>Changes to Terms</h3>

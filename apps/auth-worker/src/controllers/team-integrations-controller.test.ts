@@ -83,11 +83,36 @@ describe("team integrations OAuth security", () => {
       expect.objectContaining({
         userId: 12,
         type: "oauth",
+        metadata: JSON.stringify({
+          teamId: 7,
+          authorizedBy: "owner@example.com",
+        }),
       }),
     );
 
     const body = (await response.json()) as { authorizationUrl: string };
-    expect(body.authorizationUrl).toContain("state=");
+    const authorizationUrl = new URL(body.authorizationUrl);
+    expect(authorizationUrl.searchParams.get("state")).toBeTruthy();
+
+    const encodedState = authorizationUrl.searchParams.get("state");
+    const signedState = JSON.parse(
+      atob(encodedState as string),
+    ) as {
+      data: {
+        teamId: number;
+        userId: number;
+        nonce: string;
+      };
+    };
+
+    expect(signedState.data).toEqual(
+      expect.objectContaining({
+        teamId: 7,
+        userId: 12,
+        nonce: expect.any(String),
+      }),
+    );
+    expect(JSON.stringify(signedState.data)).not.toContain("owner@example.com");
   });
 
   it("rejects callback when nonce challenge is missing", async () => {
@@ -95,7 +120,6 @@ describe("team integrations OAuth security", () => {
       {
         teamId: 7,
         userId: 12,
-        authorizedBy: "owner@example.com",
         nonce: "nonce-value",
       },
       "github-secret",

@@ -13,19 +13,19 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { SITE_NAME } from "@/constants";
 
-const LAST_UPDATED = "25th January 2026";
+const LAST_UPDATED = "1st March 2026";
 
 const highlightCards = [
   {
     title: "Minimal data footprint",
     description:
-      "Only the information required to synchronise your room is persisted. No tracking pixels.",
+      "We keep workspace, room, and integration data to run the service without ads or tracking pixels.",
     icon: ShieldCheck,
   },
   {
     title: "Transparency first",
     description:
-      "Every storage location is documented on this page. Only essential cookies for authentication.",
+      "This page covers workspace sign-in, invitations, security data, and optional provider connections.",
     icon: Database,
   },
   {
@@ -39,7 +39,7 @@ const browserStorage = [
   {
     label: "Essential authentication cookies",
     detail:
-      "Auth tokens are stored in secure, httpOnly cookies to protect them. These cookies are never shared with third parties.",
+      "Workspace session tokens are stored in secure, httpOnly, SameSite=Strict cookies to keep you signed in.",
   },
   {
     label: "Local preferences",
@@ -59,21 +59,36 @@ const serverStorage = [
       "Room key, moderators, encrypted passcodes, participant metadata, votes, ticket queue, connection diagnostics and similar details about your room.",
   },
   {
+    label: "Workspace accounts and security records",
+    detail:
+      "Workspace email address, email domain, workspace membership, invites, session records, MFA credentials, recovery code hashes, authentication challenges, and login audit data such as IP address and user agent.",
+  },
+  {
+    label: "Workspace teams, sessions and insights",
+    detail:
+      "Workspace name, optional logo URL, teams, saved room settings, linked room sessions, session metadata, round history, participant names, vote records, structured vote payloads, and aggregate insights used in workspace dashboards.",
+  },
+  {
     label: "Optional Strudel music data",
     detail:
       "When music is enabled we store the generated Strudel code alongside the room.",
   },
   {
-    label: "No third parties by default",
+    label: "Limited third-party processors",
     detail:
-      "Traffic remains inside our Cloudflare zone unless you explicitly configure an integration.",
+      "We keep third-party sharing narrow and describe the main processors and integrations on this page.",
   },
 ];
 
 const integrationOptions = [
   {
     name: "Jira, Linear and GitHub (optional)",
-    detail: `Moderators can link their external accounts to sync data to and from ${SITE_NAME}, tokens are only held as long as they are needed and are encrypted.`,
+    detail: `Workspace team owners can connect Jira, Linear, or GitHub. We store encrypted access tokens and provider metadata such as account identifiers, email address, site, organisation, repository, and selected field mappings so we can read tickets and, when you choose, write estimates or comments back to that provider.`,
+  },
+  {
+    name: "Workspace sign-in email delivery (Resend)",
+    detail:
+      "We use Resend to deliver verification codes and workspace invitation emails. That means the recipient email address, message content, and normal email delivery metadata are processed by our email provider.",
   },
   {
     name: "Strudel music (optional)",
@@ -105,8 +120,8 @@ const PrivacyPolicyScreen = () => {
                 Privacy policy
               </h1>
               <p className="text-lg text-slate-600 dark:text-slate-300">
-                By using {SITE_NAME}, you agree to these terms. We keep things
-                simple and focused on providing a great estimation tool.
+                This page explains what workspace, room, and integration data
+                we process to run {SITE_NAME}.
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-200 mt-6">
                 <CalendarCheck className="h-4 w-4" aria-hidden="true" />
@@ -185,8 +200,8 @@ const PrivacyPolicyScreen = () => {
                   External integrations
                 </h2>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                  Nothing leaves our Cloudflare zone outside of these
-                  integrations.
+                  These are the main ways workspace or room data may be sent to
+                  external providers.
                 </p>
               </div>
               <ul className="divide-y divide-slate-200/70 text-sm dark:divide-white/10">
@@ -237,6 +252,33 @@ const PrivacyPolicyScreen = () => {
                   policies.
                 </li>
               </ul>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+              Workspace sign-in and retention
+            </h2>
+            <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+              <p>
+                Workspace access uses email verification plus multi-factor
+                authentication. Verification codes, auth challenges, and session
+                records are short-lived security data. Session cookies are
+                essential to keep you signed in.
+              </p>
+              <p>
+                We keep workspace records such as organisations, members,
+                invites, teams, saved settings, integrations, and session
+                history while they are needed to operate the workspace. Some
+                security records and logs may remain for fraud prevention,
+                debugging, and account protection.
+              </p>
+              <p>
+                If you connect Jira, Linear, or GitHub, those providers receive
+                the requests needed for OAuth sign-in and later sync operations.
+                Data written back to a third-party provider is then governed by
+                that provider&apos;s own retention and privacy practices.
+              </p>
             </div>
           </section>
 
