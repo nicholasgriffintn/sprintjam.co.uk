@@ -6,7 +6,7 @@ import type { RoomData, RoomStats } from "@/types";
 import { getAvatarInfo } from "@/utils/avatars";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { HorizontalProgress } from "@/components/ui/HorizontalProgress";
+import { Progress } from "@/components/ui/Progress";
 import { cn } from "@/lib/cn";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
@@ -228,13 +228,8 @@ export const ParticipantsList = memo(function ParticipantsList({
                     : `${stats.votedUsers}/${totalParticipants}`}
                 </span>
               </div>
-              <HorizontalProgress
-                completed={votingProgress}
-                total={100}
-                role="progressbar"
-                aria-valuenow={votingProgress}
-                aria-valuemin={0}
-                aria-valuemax={100}
+              <Progress
+                value={votingProgress}
                 aria-labelledby={progressLabelId}
                 aria-describedby={progressDescriptionId}
                 aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}

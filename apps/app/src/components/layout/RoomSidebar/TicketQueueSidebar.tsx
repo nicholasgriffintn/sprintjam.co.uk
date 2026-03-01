@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
 import type { RoomData, TicketQueueItem } from "@/types";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { HorizontalProgress } from "@/components/ui/HorizontalProgress";
+import { Progress } from "@/components/ui/Progress";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { BetaBadge } from "@/components/BetaBadge";
@@ -270,13 +270,8 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
               {labelText}
             </span>
           </div>
-          <HorizontalProgress
-            total={100}
-            completed={progressPercent}
-            role="progressbar"
-            aria-valuenow={progressPercent}
-            aria-valuemin={0}
-            aria-valuemax={100}
+          <Progress
+            value={progressPercent}
             aria-labelledby={progressLabelId}
             aria-describedby={progressDescriptionId}
             aria-valuetext={`${remainingTickets} tickets remain out of ${totalTickets}`}
