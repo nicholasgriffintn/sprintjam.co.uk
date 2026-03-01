@@ -1,3 +1,12 @@
+## V3.3
+
+- Added three new games to the party games feature:
+  - Sprint Word - Guess the hidden 5-letter sprint word in 6 tries. Everyone plays at once. Similar to Wordle.
+  - Team Threads - 16 sprint and tech words hide 4 secret groups. Find them all together. Similar to Connections.
+  - Sprint Risk - Roll dice, press your luck, and bank before you farkle. 3 turns each. Similar to Farkle but made a bit faster.
+- Added a help popover to the game panel so participants can see the rules.
+- Expanded the words list for the games.
+
 ## V3.2
 
 - Moved a number of components to use base ui instead of custom code that improves the UX and accessibility of the app. This should also make it easier to maintain and add new features in the future.
