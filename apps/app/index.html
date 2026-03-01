@@ -71,6 +71,11 @@
 
       body {
         background: transparent;
+        position: relative;
+      }
+
+      .root {
+        isolation: isolate;
       }
     </style>
     <script>
@@ -99,7 +104,7 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root" class="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

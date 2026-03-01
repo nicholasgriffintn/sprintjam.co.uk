@@ -16,10 +16,10 @@ const options: SelectOption[] = [
 ];
 
 describe("Select", () => {
-  it("does not render search input when option count is below search threshold", () => {
+  it("renders a native select when option count is below search threshold", () => {
     render(<Select data-testid="queue-board" options={options} searchable />);
-
-    expect(screen.queryByTestId("queue-board-search")).toBeNull();
+    const el = screen.getByTestId("queue-board");
+    expect(el.tagName.toLowerCase()).toBe("select");
   });
 
   it("closes after selecting an option", () => {
@@ -39,7 +39,7 @@ describe("Select", () => {
     fireEvent.click(screen.getByRole("option", { name: "Beta Board" }));
 
     expect(onValueChange).toHaveBeenCalledWith("beta");
-    expect(screen.queryByTestId("queue-board-search")).toBeNull();
+    expect(screen.queryByRole("listbox")).toBeNull();
   });
 
   it("closes when clicking outside", () => {
@@ -58,11 +58,11 @@ describe("Select", () => {
     );
 
     fireEvent.click(screen.getByTestId("queue-board"));
-    expect(screen.getByTestId("queue-board-search")).toBeTruthy();
+    expect(screen.getByRole("listbox")).toBeTruthy();
 
     fireEvent.pointerDown(screen.getByTestId("outside"));
 
-    expect(screen.queryByTestId("queue-board-search")).toBeNull();
+    expect(screen.queryByRole("listbox")).toBeNull();
   });
 
   it("closes when escape is pressed", () => {
@@ -76,14 +76,12 @@ describe("Select", () => {
     );
 
     fireEvent.click(screen.getByTestId("queue-board"));
-    fireEvent.keyDown(screen.getByTestId("queue-board-search"), {
-      key: "Escape",
-    });
+    fireEvent.keyDown(screen.getByTestId("queue-board"), { key: "Escape" });
 
-    expect(screen.queryByTestId("queue-board-search")).toBeNull();
+    expect(screen.queryByRole("listbox")).toBeNull();
   });
 
-  it("closes when Tab is pressed in search", () => {
+  it("closes when Tab is pressed", () => {
     render(
       <Select
         data-testid="queue-board"
@@ -94,11 +92,11 @@ describe("Select", () => {
     );
 
     fireEvent.click(screen.getByTestId("queue-board"));
-    expect(screen.getByTestId("queue-board-search")).toBeTruthy();
+    expect(screen.getByRole("listbox")).toBeTruthy();
 
-    fireEvent.keyDown(screen.getByTestId("queue-board-search"), { key: "Tab" });
+    fireEvent.keyDown(screen.getByTestId("queue-board"), { key: "Tab" });
 
-    expect(screen.queryByTestId("queue-board-search")).toBeNull();
+    expect(screen.queryByRole("listbox")).toBeNull();
   });
 
   it("supports keyboard selection", () => {
@@ -114,32 +112,14 @@ describe("Select", () => {
       />,
     );
 
-    const trigger = screen.getByTestId("queue-board");
-    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    const input = screen.getByTestId("queue-board");
+    fireEvent.keyDown(input, { key: "ArrowDown" });
 
-    const search = screen.getByTestId("queue-board-search");
-    fireEvent.keyDown(search, { key: "ArrowDown" });
-    fireEvent.keyDown(search, { key: "Enter" });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "Enter" });
 
     expect(onValueChange).toHaveBeenCalled();
-    expect(screen.queryByTestId("queue-board-search")).toBeNull();
-  });
-
-  it("does not auto-highlight first option when placeholder is shown with no selection", () => {
-    render(
-      <Select
-        data-testid="queue-board"
-        options={options}
-        searchable
-        searchMinOptions={0}
-        placeholder="Select a board"
-      />,
-    );
-
-    fireEvent.click(screen.getByTestId("queue-board"));
-
-    const search = screen.getByTestId("queue-board-search");
-    expect(search.getAttribute("aria-activedescendant")).toBeNull();
+    expect(screen.queryByRole("listbox")).toBeNull();
   });
 
   it("marks the currently selected option with aria-selected", () => {

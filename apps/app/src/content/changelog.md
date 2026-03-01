@@ -1,3 +1,7 @@
+## V3.2
+
+- Moved a number of components to use base ui instead of custom code that improves the UX and accessibility of the app. This should also make it easier to maintain and add new features in the future.
+
 ## V3.0-v3.1
 
 - Enabled sign in to workspaces, this is currently in beta but allows users from approved domains to track and store their sessions with the rest of their team(s) in a shared workspace. You will also be able to configure default settings and integrations for specific teams that will be pre loaded for any of the rooms that are saved to that team.

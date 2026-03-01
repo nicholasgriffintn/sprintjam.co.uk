@@ -1,13 +1,5 @@
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type KeyboardEvent,
-  type SelectHTMLAttributes,
-} from "react";
+import { useMemo, type ChangeEvent, type SelectHTMLAttributes } from "react";
+import { Combobox } from "@base-ui/react/combobox";
 import { Check, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/cn";
@@ -31,12 +23,6 @@ type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
 const SELECT_BASE_CLASSNAME =
   "w-full appearance-none rounded-2xl border border-white/50 bg-white/80 px-4 py-3 pr-10 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900 dark:disabled:bg-slate-800 dark:disabled:text-slate-500";
 
-const getSelectableIndices = (items: SelectOption[]) =>
-  items
-    .map((item, index) => ({ item, index }))
-    .filter(({ item }) => !item.disabled)
-    .map(({ index }) => index);
-
 export function Select({
   options,
   className,
@@ -52,303 +38,42 @@ export function Select({
   defaultValue,
   ...props
 }: SelectProps) {
-  const instanceId = useId().replace(/:/g, "");
-  const listboxId = `${dataTestId ?? instanceId}-listbox`;
-
-  const isControlled = value !== undefined;
-  const fallbackDefaultValue =
-    typeof defaultValue === "string" ? defaultValue : "";
-  const [internalValue, setInternalValue] = useState(fallbackDefaultValue);
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeOptionIndex, setActiveOptionIndex] = useState(-1);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const hiddenSelectRef = useRef<HTMLSelectElement>(null);
-  const listboxRef = useRef<HTMLDivElement>(null);
-
   const showSearchableSelect =
     searchable && !props.multiple && options.length >= searchMinOptions;
 
-  const selectedValue = String(isControlled ? (value ?? "") : internalValue);
-
-  useEffect(() => {
-    if (isControlled) return;
-    setInternalValue(fallbackDefaultValue);
-  }, [fallbackDefaultValue, isControlled]);
-
-  useEffect(() => {
-    if (!showSearchableSelect || !isOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSearchQuery("");
-        setActiveOptionIndex(-1);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown, true);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown, true);
-    };
-  }, [isOpen, showSearchableSelect]);
-
-  useEffect(() => {
-    if (!isOpen || !showSearchableSelect) return;
-    searchInputRef.current?.focus();
-  }, [isOpen, showSearchableSelect]);
-
-  const filteredOptions = useMemo(() => {
-    if (!showSearchableSelect) return options;
-
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-    if (!normalizedQuery) return options;
-
-    return options.filter(
-      (option) =>
-        option.label.toLowerCase().includes(normalizedQuery) ||
-        option.value.toLowerCase().includes(normalizedQuery),
-    );
-  }, [options, searchQuery, showSearchableSelect]);
-
-  const selectedOption = useMemo(
-    () => options.find((option) => option.value === selectedValue),
-    [options, selectedValue],
-  );
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const selectedIndex = filteredOptions.findIndex(
-      (option) => option.value === selectedValue && !option.disabled,
-    );
-
-    const firstSelectableIndex = filteredOptions.findIndex(
-      (option) => !option.disabled,
-    );
-
-    setActiveOptionIndex((current) => {
-      if (
-        current >= 0 &&
-        current < filteredOptions.length &&
-        !filteredOptions[current]?.disabled
-      ) {
-        return current;
-      }
-
-      if (selectedIndex !== -1) {
-        return selectedIndex;
-      }
-
-      // Don't auto-highlight first option when placeholder is shown and nothing is selected
-      if (placeholder && !selectedValue) {
-        return -1;
-      }
-
-      return firstSelectableIndex;
-    });
-  }, [filteredOptions, isOpen, selectedValue, placeholder]);
-
-  // Scroll the active option into view when keyboard navigating
-  useEffect(() => {
-    if (activeOptionIndex < 0 || !listboxRef.current) return;
-    const activeEl = listboxRef.current.querySelector<HTMLElement>(
-      `[id="${listboxId}-option-${activeOptionIndex}"]`,
-    );
-    activeEl?.scrollIntoView({ block: "nearest" });
-  }, [activeOptionIndex, listboxId]);
-
-  const closeSearchMenu = () => {
-    setIsOpen(false);
-    setSearchQuery("");
-    setActiveOptionIndex(-1);
-  };
-
-  const openSearchMenu = () => {
-    if (props.disabled) return;
-    setSearchQuery("");
-    setIsOpen(true);
-  };
-
-  const moveActiveOption = (direction: 1 | -1) => {
-    const selectableIndices = getSelectableIndices(filteredOptions);
-
-    if (selectableIndices.length === 0) {
-      setActiveOptionIndex(-1);
-      return;
-    }
-
-    setActiveOptionIndex((current) => {
-      const currentPosition = selectableIndices.indexOf(current);
-      if (currentPosition === -1) {
-        return direction === 1
-          ? selectableIndices[0]
-          : selectableIndices[selectableIndices.length - 1];
-      }
-
-      const nextPosition =
-        (currentPosition + direction + selectableIndices.length) %
-        selectableIndices.length;
-
-      return selectableIndices[nextPosition];
-    });
-  };
-
   const handleNativeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    if (!isControlled) {
-      setInternalValue(event.currentTarget.value);
-    }
     onChange?.(event);
     onValueChange?.(event.currentTarget.value);
   };
 
-  const notifyValueChange = (nextValue: string) => {
-    if (!isControlled) {
-      setInternalValue(nextValue);
+  // Resolved value for the Combobox path (controlled or uncontrolled).
+  // Empty string is treated as no selection (matches native select placeholder behaviour).
+  const selectedOption = useMemo(() => {
+    if (value === undefined) return undefined;
+    const strVal = String(value);
+    if (strVal === "") return null;
+    return options.find((o) => o.value === strVal) ?? null;
+  }, [options, value]);
+
+  const defaultOption = useMemo(() => {
+    if (defaultValue === undefined || typeof defaultValue !== "string") {
+      return null;
     }
-
-    if (hiddenSelectRef.current) {
-      hiddenSelectRef.current.value = nextValue;
-      hiddenSelectRef.current.dispatchEvent(
-        new Event("change", { bubbles: true }),
-      );
-      return;
-    }
-
-    onValueChange?.(nextValue);
-  };
-
-  const selectOption = (option: SelectOption) => {
-    if (option.disabled) return;
-    notifyValueChange(option.value);
-    closeSearchMenu();
-    triggerRef.current?.focus();
-  };
-
-  const selectActiveOption = () => {
-    if (activeOptionIndex < 0 || activeOptionIndex >= filteredOptions.length) {
-      return;
-    }
-
-    const option = filteredOptions[activeOptionIndex];
-    if (!option || option.disabled) return;
-
-    selectOption(option);
-  };
-
-  const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (props.disabled) return;
-
-    if (event.key === "Tab") {
-      if (isOpen) closeSearchMenu();
-      return;
-    }
-
-    if (event.key === "Escape") {
-      if (isOpen) {
-        event.preventDefault();
-        closeSearchMenu();
-      }
-      return;
-    }
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      if (!isOpen) {
-        openSearchMenu();
-        return;
-      }
-      moveActiveOption(1);
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      if (!isOpen) {
-        openSearchMenu();
-        return;
-      }
-      moveActiveOption(-1);
-      return;
-    }
-
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      if (!isOpen) {
-        openSearchMenu();
-      } else {
-        selectActiveOption();
-      }
-    }
-  };
-
-  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Tab") {
-      // Close menu but don't prevent default so Tab moves focus naturally
-      closeSearchMenu();
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeSearchMenu();
-      triggerRef.current?.focus();
-      return;
-    }
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      moveActiveOption(1);
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      moveActiveOption(-1);
-      return;
-    }
-
-    if (event.key === "Home") {
-      event.preventDefault();
-      const selectableIndices = getSelectableIndices(filteredOptions);
-      setActiveOptionIndex(
-        selectableIndices.length > 0 ? selectableIndices[0] : -1,
-      );
-      return;
-    }
-
-    if (event.key === "End") {
-      event.preventDefault();
-      const selectableIndices = getSelectableIndices(filteredOptions);
-      setActiveOptionIndex(
-        selectableIndices.length > 0
-          ? selectableIndices[selectableIndices.length - 1]
-          : -1,
-      );
-      return;
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      selectActiveOption();
-    }
-  };
-
-  const nativeSelectValueProps = isControlled
-    ? { value }
-    : { defaultValue: defaultValue ?? (placeholder ? "" : undefined) };
+    return options.find((o) => o.value === defaultValue) ?? null;
+  }, [options, defaultValue]);
 
   if (!showSearchableSelect) {
+    const nativeValueProps =
+      value !== undefined
+        ? { value }
+        : { defaultValue: defaultValue ?? (placeholder ? "" : undefined) };
+
     return (
       <div className="relative">
         <select
           {...props}
           id={id}
-          {...nativeSelectValueProps}
+          {...nativeValueProps}
           data-testid={dataTestId}
           onChange={handleNativeChange}
           className={cn(SELECT_BASE_CLASSNAME, className)}
@@ -373,141 +98,63 @@ export function Select({
     );
   }
 
-  const triggerLabel =
-    selectedOption?.label ?? placeholder ?? "Select an option";
-  const activeOptionId =
-    activeOptionIndex >= 0
-      ? `${listboxId}-option-${activeOptionIndex}`
-      : undefined;
+  // Combobox path for searchable selects
+  const comboboxValueProps =
+    selectedOption !== undefined
+      ? { value: selectedOption }
+      : { defaultValue: defaultOption };
 
   return (
-    <div ref={containerRef} className="relative">
-      <button
-        ref={triggerRef}
-        id={id}
-        type="button"
-        role="combobox"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-controls={listboxId}
-        disabled={props.disabled}
-        data-testid={dataTestId}
-        onClick={() => {
-          if (isOpen) {
-            closeSearchMenu();
-          } else {
-            openSearchMenu();
-          }
+    <div className="relative">
+      <Combobox.Root
+        items={options.filter((o) => o.value !== "")}
+        {...comboboxValueProps}
+        onValueChange={(item) => {
+          if (item) onValueChange?.(item.value);
         }}
-        onKeyDown={handleTriggerKeyDown}
-        className={cn(
-          SELECT_BASE_CLASSNAME,
-          "relative text-left",
-          !selectedOption && "text-slate-500 dark:text-slate-400",
-          className,
-        )}
+        itemToStringLabel={(item) => item?.label ?? ""}
+        isItemEqualToValue={(a, b) => (a?.value ?? "") === (b?.value ?? "")}
+        disabled={props.disabled}
       >
-        <span className="block truncate pr-4">{triggerLabel}</span>
-        <ChevronDown
-          className={cn(
-            "pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 transition-transform duration-200 dark:text-slate-400",
-            isOpen && "rotate-180",
-          )}
+        <Combobox.Input
+          id={id}
+          data-testid={dataTestId}
+          placeholder={searchPlaceholder}
+          className={cn(SELECT_BASE_CLASSNAME, className)}
         />
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-40 mt-2 w-full rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.currentTarget.value)}
-            onKeyDown={handleSearchKeyDown}
-            placeholder={searchPlaceholder}
-            aria-label="Search options"
-            aria-autocomplete="list"
-            aria-controls={listboxId}
-            aria-activedescendant={activeOptionId}
-            data-testid={dataTestId ? `${dataTestId}-search` : undefined}
-            className="mb-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:border-slate-700 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
-          />
-
-          <div
-            ref={listboxRef}
-            id={listboxId}
-            role="listbox"
-            aria-label="Options"
-            className="max-h-56 space-y-1 overflow-y-auto"
-          >
-            {filteredOptions.length === 0 ? (
-              <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+        <Combobox.Portal>
+          <Combobox.Positioner sideOffset={4} className="z-[200]">
+            <Combobox.Popup className="w-(--anchor-width) rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              <Combobox.List className="max-h-56 space-y-1 overflow-y-auto">
+                {(item: SelectOption | undefined) => {
+                  if (!item) return null;
+                  return (
+                    <Combobox.Item
+                      value={item}
+                      disabled={item.disabled}
+                      className={cn(
+                        "flex w-full cursor-default items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 transition dark:text-slate-200",
+                        "data-highlighted:bg-slate-100 dark:data-highlighted:bg-slate-800",
+                        "data-selected:bg-brand-50 data-selected:text-brand-700 dark:data-selected:bg-brand-900/30 dark:data-selected:text-brand-200",
+                        item.disabled && "cursor-not-allowed opacity-60",
+                      )}
+                    >
+                      <span className="flex-1 truncate">{item.label}</span>
+                      <Combobox.ItemIndicator className="ml-auto">
+                        <Check className="h-4 w-4 shrink-0" />
+                      </Combobox.ItemIndicator>
+                    </Combobox.Item>
+                  );
+                }}
+              </Combobox.List>
+              <Combobox.Empty className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
                 No matching options
-              </p>
-            ) : (
-              filteredOptions.map((option, index) => {
-                const isSelected = option.value === selectedValue;
-                const isActive = index === activeOptionIndex;
-
-                return (
-                  <div
-                    key={option.value}
-                    id={`${listboxId}-option-${index}`}
-                    role="option"
-                    aria-selected={isSelected}
-                    aria-disabled={option.disabled}
-                    onMouseEnter={() =>
-                      !option.disabled && setActiveOptionIndex(index)
-                    }
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => selectOption(option)}
-                    className={cn(
-                      "flex w-full cursor-default items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 transition dark:text-slate-200",
-                      !option.disabled &&
-                        "hover:bg-slate-100 dark:hover:bg-slate-800",
-                      option.disabled && "cursor-not-allowed opacity-60",
-                      isSelected &&
-                        "bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-200",
-                      isActive &&
-                        !option.disabled &&
-                        "ring-2 ring-brand-200 dark:ring-brand-700",
-                    )}
-                  >
-                    <span className="flex-1 truncate">{option.label}</span>
-                    {isSelected && <Check className="h-4 w-4 shrink-0" />}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
-
-      <select
-        ref={hiddenSelectRef}
-        {...props}
-        id={id ? `${id}-native` : undefined}
-        value={selectedValue}
-        onChange={handleNativeChange}
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden="true"
-      >
-        {placeholder && (
-          <option value="" disabled hidden>
-            {placeholder}
-          </option>
-        )}
-        {options.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-            disabled={option.disabled}
-          >
-            {option.label}
-          </option>
-        ))}
-      </select>
+              </Combobox.Empty>
+            </Combobox.Popup>
+          </Combobox.Positioner>
+        </Combobox.Portal>
+      </Combobox.Root>
     </div>
   );
 }
