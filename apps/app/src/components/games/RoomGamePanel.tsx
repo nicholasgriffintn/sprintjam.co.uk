@@ -64,15 +64,8 @@ export const RoomGamePanel = ({
         <div className="flex items-center gap-2">
           {gameMeta ? (
             <Popover
-              trigger={
-                <button
-                  type="button"
-                  aria-label="How to play"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                </button>
-              }
+              trigger={<HelpCircle className="h-4 w-4" />}
+              triggerAriaLabel="How to play"
               title={`How to play: ${gameMeta.title}`}
             >
               <p className="mb-1 text-slate-600 dark:text-slate-300">

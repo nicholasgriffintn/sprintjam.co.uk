@@ -5,6 +5,8 @@ import { cn } from "@/lib/cn";
 
 interface PopoverProps {
   trigger: ReactNode;
+  triggerClassName?: string;
+  triggerAriaLabel?: string;
   title?: string;
   children: ReactNode;
   className?: string;
@@ -13,13 +15,23 @@ interface PopoverProps {
 
 export const Popover = ({
   trigger,
+  triggerClassName,
+  triggerAriaLabel,
   title,
   children,
   className,
   sideOffset = 8,
 }: PopoverProps) => (
   <BasePopover.Root>
-    <BasePopover.Trigger asChild>{trigger}</BasePopover.Trigger>
+    <BasePopover.Trigger
+      aria-label={triggerAriaLabel}
+      className={cn(
+        "flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300",
+        triggerClassName,
+      )}
+    >
+      {trigger}
+    </BasePopover.Trigger>
     <BasePopover.Portal>
       <BasePopover.Positioner sideOffset={sideOffset}>
         <BasePopover.Popup
@@ -29,13 +41,11 @@ export const Popover = ({
           )}
         >
           {title ? (
-            <BasePopover.Title className="mb-1 font-semibold text-slate-900 dark:text-white">
+            <BasePopover.Title className="mb-2 font-semibold text-slate-900 dark:text-white">
               {title}
             </BasePopover.Title>
           ) : null}
-          <BasePopover.Description asChild>
-            <div>{children}</div>
-          </BasePopover.Description>
+          {children}
         </BasePopover.Popup>
       </BasePopover.Positioner>
     </BasePopover.Portal>
