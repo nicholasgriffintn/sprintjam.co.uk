@@ -4,6 +4,7 @@ import { Gamepad2, Github, MessageSquare } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import { Button } from "@/components/ui/Button";
+import { Separator } from "@/components/ui/Separator";
 import { navigateTo, type AppScreen } from "@/config/routes";
 import { useSessionActions } from "@/context/SessionContext";
 
@@ -34,21 +35,21 @@ export const Footer = ({
   return (
     <>
       <footer
-        className={`${fullWidth ? 'max-w-full' : 'max-w-2xl'} ${
-          layout === 'wide'
-            ? 'lg:grid-cols-[1fr_auto] text-center lg:justify-start lg:text-left'
-            : 'grid-cols-1 text-center'
+        className={`${fullWidth ? "max-w-full" : "max-w-2xl"} ${
+          layout === "wide"
+            ? "lg:grid-cols-[1fr_auto] text-center lg:justify-start lg:text-left"
+            : "grid-cols-1 text-center"
         } mx-auto mt-8 grid items-center gap-4 text-sm text-slate-700 dark:text-slate-400`}
       >
         <div
           className={`${
-            layout === 'wide' ? 'lg:justify-start lg:text-left' : ''
+            layout === "wide" ? "lg:justify-start lg:text-left" : ""
           } flex flex-wrap items-center justify-center gap-x-4 gap-y-2`}
         >
           {!priorityLinksOnly && (
             <>
               <span>
-                Built by{' '}
+                Built by{" "}
                 <a
                   href="https://nicholasgriffin.dev"
                   target="_blank"
@@ -58,7 +59,10 @@ export const Footer = ({
                   Nicholas Griffin
                 </a>
               </span>
-              <span className="hidden sm:inline">|</span>
+              <Separator
+                orientation="vertical"
+                className="hidden sm:block h-4"
+              />
             </>
           )}
           <a
@@ -69,50 +73,50 @@ export const Footer = ({
           >
             Status
           </a>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
-            onClick={() => handleNavigate('privacy')}
+            onClick={() => handleNavigate("privacy")}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Privacy Policy
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
-            onClick={() => handleNavigate('terms')}
+            onClick={() => handleNavigate("terms")}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Terms
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
-            onClick={() => handleNavigate('integrations')}
+            onClick={() => handleNavigate("integrations")}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Integrations
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
-            onClick={() => handleNavigate('faq')}
+            onClick={() => handleNavigate("faq")}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             FAQ
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
-            onClick={() => handleNavigate('guides')}
+            onClick={() => handleNavigate("guides")}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Guides
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
-            onClick={() => handleNavigate('changelog')}
+            onClick={() => handleNavigate("changelog")}
             className="underline underline-offset-2 hover:text-slate-900 dark:hover:text-white"
           >
             Changelog
@@ -121,7 +125,7 @@ export const Footer = ({
 
         <div
           className={`${
-            fullWidth ? ' lg:w-auto lg:flex-nowrap' : ''
+            fullWidth ? " lg:w-auto lg:flex-nowrap" : ""
           } flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2`}
         >
           {onOpenGames ? (

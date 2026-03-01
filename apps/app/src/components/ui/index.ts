@@ -7,5 +7,6 @@ export { Input } from "./Input";
 export type { InputProps } from "./Input";
 export { Modal } from "./Modal";
 export { Progress } from "./Progress";
+export { Separator } from "./Separator";
 export { Spinner } from "./Spinner";
 export { SurfaceCard } from "./SurfaceCard";
