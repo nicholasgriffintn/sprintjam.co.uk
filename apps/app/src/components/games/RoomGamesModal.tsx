@@ -35,7 +35,7 @@ export const RoomGamesModal = ({
           </p>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-3 max-h-[65vh] overflow-y-auto">
+        <div className="grid gap-3 md:grid-cols-3">
           {ROOM_GAMES.map((game) => {
             const Icon = GAME_ICONS[game.type];
 

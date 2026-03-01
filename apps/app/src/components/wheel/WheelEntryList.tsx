@@ -3,6 +3,7 @@ import type { WheelEntry } from "@sprintjam/types";
 
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { ScrollArea } from "@/components/ui";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 interface WheelEntryListProps {
@@ -146,9 +147,9 @@ export function WheelEntryList({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
+      <ScrollArea className="min-h-0 flex-1" contentClassName="space-y-1 pr-3">
         {entries.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-8">
+          <p className="py-8 text-center text-sm text-slate-500">
             {isModeratorView
               ? "No entries yet. Add some names above!"
               : "Waiting for entries..."}
@@ -157,10 +158,10 @@ export function WheelEntryList({
           entries.map((entry) => (
             <div
               key={entry.id}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
                 entry.enabled
                   ? "bg-slate-100 dark:bg-slate-800"
-                  : "bg-slate-50 dark:bg-slate-900 opacity-50"
+                  : "bg-slate-50 opacity-50 dark:bg-slate-900"
               }`}
             >
               {isModeratorView && (
@@ -185,11 +186,11 @@ export function WheelEntryList({
                 <button
                   onClick={() => onRemoveEntry(entry.id)}
                   disabled={disabled}
-                  className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                  className="p-1 text-slate-400 transition-colors hover:text-red-500"
                   title="Remove entry"
                 >
                   <svg
-                    className="w-4 h-4"
+                    className="h-4 w-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -206,7 +207,7 @@ export function WheelEntryList({
             </div>
           ))
         )}
-      </div>
+      </ScrollArea>
     </SurfaceCard>
   );
 }

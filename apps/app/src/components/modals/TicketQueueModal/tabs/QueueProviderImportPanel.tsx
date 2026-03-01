@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { ScrollArea } from "@/components/ui";
 import { Select } from "@/components/ui/Select";
 import type { QueueProviderImportState } from "./useQueueProviderImport";
 
@@ -186,7 +187,11 @@ export function QueueProviderImportPanel({
                       </Button>
                     </div>
 
-                    <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+                    <ScrollArea
+                      className="mt-3 max-h-64"
+                      contentClassName="space-y-2 pr-3"
+                      aria-label={`${providerName} tickets`}
+                    >
                       {ticketsLoading ? (
                         <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-500">
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -260,7 +265,7 @@ export function QueueProviderImportPanel({
                           );
                         })
                       )}
-                    </div>
+                    </ScrollArea>
 
                     <div className="mt-3 flex justify-end">
                       <Button

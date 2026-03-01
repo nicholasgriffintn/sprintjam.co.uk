@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { WheelEntry, SpinResult } from "@sprintjam/types";
 
+import { ScrollArea } from "@/components/ui";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 interface WheelSidebarProps {
@@ -170,9 +171,13 @@ export function WheelSidebar({
                 </div>
               </>
             ) : (
-              <div className="flex-1 overflow-y-auto rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+              <ScrollArea
+                className="flex-1 rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                contentClassName="pr-3"
+                aria-label="Wheel entries"
+              >
                 {entries.length === 0 ? (
-                  <p className="text-sm text-slate-500 text-center py-8">
+                  <p className="py-8 text-center text-sm text-slate-500">
                     Waiting for entries...
                   </p>
                 ) : (
@@ -181,17 +186,21 @@ export function WheelSidebar({
                       .filter((e) => e.enabled)
                       .map((entry) => (
                         <li key={entry.id}>{entry.name}</li>
-                      ))}
+                    ))}
                   </ul>
                 )}
-              </div>
+              </ScrollArea>
             )}
           </div>
         ) : (
           <div className="flex flex-col min-h-0 gap-4">
-            <div className="min-h-[220px] max-h-[min(45vh,360px)] overflow-y-auto rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/5">
+            <ScrollArea
+              className="min-h-[220px] max-h-[min(45vh,360px)] rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/5"
+              contentClassName="pr-3"
+              aria-label="Wheel results"
+            >
               {results.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-8">
+                <p className="py-8 text-center text-sm text-slate-500">
                   No results yet. Spin the wheel!
                 </p>
               ) : (
@@ -223,7 +232,7 @@ export function WheelSidebar({
                   ))}
                 </ul>
               )}
-            </div>
+            </ScrollArea>
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Latest spin at the top</span>
               <span>{results.length} total</span>

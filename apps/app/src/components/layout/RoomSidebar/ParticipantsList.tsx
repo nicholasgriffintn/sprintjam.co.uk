@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Progress } from "@/components/ui/Progress";
+import { ScrollArea } from '@/components/ui';
 import { cn } from "@/lib/cn";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
@@ -164,7 +165,7 @@ export const ParticipantsList = memo(function ParticipantsList({
     <SurfaceCard
       data-testid="participants-panel"
       className={cn(
-        "flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800",
+        'flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800',
         className,
       )}
       padding="none"
@@ -173,8 +174,8 @@ export const ParticipantsList = memo(function ParticipantsList({
     >
       <div
         className={cn(
-          "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
-          collapsed && "border-b-0 py-2",
+          'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
+          collapsed && 'border-b-0 py-2',
         )}
       >
         <h2
@@ -195,7 +196,7 @@ export const ParticipantsList = memo(function ParticipantsList({
           className="inline-flex items-center rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
           onClick={handleToggle}
           aria-label={
-            collapsed ? "Expand participants" : "Collapse participants"
+            collapsed ? 'Expand participants' : 'Collapse participants'
           }
           aria-expanded={!collapsed}
           aria-controls={contentId}
@@ -204,94 +205,99 @@ export const ParticipantsList = memo(function ParticipantsList({
           {collapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
         </Button>
       </div>
-      <div
+      <ScrollArea
         id={contentId}
+        aria-label="Participants and spectators"
         className={cn(
-          "flex-1 space-y-3 overflow-y-auto px-4 py-4",
-          collapsed && "hidden",
+          'flex-1 px-4 py-4',
+          collapsed && 'hidden',
           contentClassName,
         )}
       >
-        {!isCompleted ? (
-          <div className="space-y-3">
-            <div>
-              <div
-                id={progressLabelId}
-                className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
-              >
-                <span>Voting progress</span>
-                <span id={progressDescriptionId}>
-                  {votingCompletion
-                    ? `${votingCompletion.completedCount}/${votingCompletion.totalCount}`
-                    : `${stats.votedUsers}/${totalParticipants}`}
-                </span>
-              </div>
-              <Progress
-                value={votingProgress}
-                aria-labelledby={progressLabelId}
-                aria-describedby={progressDescriptionId}
-                aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
-                data-testid="voting-progress-bar"
-              />
-            </div>
-            {onToggleSpectatorMode && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => onToggleSpectatorMode(!isCurrentUserSpectator)}
-                data-testid="toggle-spectator-button"
-              >
-                {isCurrentUserSpectator
-                  ? "Join as Participant"
-                  : "Watch as Spectator"}
-              </Button>
-            )}
-          </div>
-        ) : null}
-        <ul className="space-y-2 pr-1" data-testid="participants-list">
-          {roomData?.users.map((user: string, index: number) => (
-            <ParticipantItem
-              key={user}
-              user={user}
-              index={index}
-              currentUser={name}
-              moderator={roomData.moderator}
-              userAvatar={roomData.userAvatars?.[user]}
-              isConnected={roomData.connectedUsers?.[user] ?? false}
-              vote={roomData.votes[user] ?? undefined}
-              showVotes={roomData.showVotes}
-              anonymousVotes={roomData.settings.anonymousVotes}
-              hideParticipantNames={roomData.settings.hideParticipantNames}
-            />
-          ))}
-        </ul>
-        {roomData?.spectators && roomData.spectators.length > 0 && (
-          <div className="space-y-2">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Spectators
-            </div>
-            <ul className="space-y-2 pr-1" data-testid="spectators-list">
-              {roomData.spectators.map((user: string, index: number) => (
-                <ParticipantItem
-                  key={user}
-                  user={user}
-                  index={index + (roomData.users.length || 0)}
-                  currentUser={name}
-                  moderator={roomData.moderator}
-                  userAvatar={roomData.userAvatars?.[user]}
-                  isConnected={roomData.connectedUsers?.[user] ?? false}
-                  vote={undefined}
-                  showVotes={roomData.showVotes}
-                  anonymousVotes={roomData.settings.anonymousVotes}
-                  hideParticipantNames={roomData.settings.hideParticipantNames}
+        <div className="space-y-3">
+          {!isCompleted ? (
+            <div className="space-y-3">
+              <div>
+                <div
+                  id={progressLabelId}
+                  className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
+                >
+                  <span>Voting progress</span>
+                  <span id={progressDescriptionId}>
+                    {votingCompletion
+                      ? `${votingCompletion.completedCount}/${votingCompletion.totalCount}`
+                      : `${stats.votedUsers}/${totalParticipants}`}
+                  </span>
+                </div>
+                <Progress
+                  value={votingProgress}
+                  aria-labelledby={progressLabelId}
+                  aria-describedby={progressDescriptionId}
+                  aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
+                  data-testid="voting-progress-bar"
                 />
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+              </div>
+              {onToggleSpectatorMode && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="w-full text-xs"
+                  onClick={() => onToggleSpectatorMode(!isCurrentUserSpectator)}
+                  data-testid="toggle-spectator-button"
+                >
+                  {isCurrentUserSpectator
+                    ? 'Join as Participant'
+                    : 'Watch as Spectator'}
+                </Button>
+              )}
+            </div>
+          ) : null}
+          <ul className="space-y-2" data-testid="participants-list">
+            {roomData?.users.map((user: string, index: number) => (
+              <ParticipantItem
+                key={user}
+                user={user}
+                index={index}
+                currentUser={name}
+                moderator={roomData.moderator}
+                userAvatar={roomData.userAvatars?.[user]}
+                isConnected={roomData.connectedUsers?.[user] ?? false}
+                vote={roomData.votes[user] ?? undefined}
+                showVotes={roomData.showVotes}
+                anonymousVotes={roomData.settings.anonymousVotes}
+                hideParticipantNames={roomData.settings.hideParticipantNames}
+              />
+            ))}
+          </ul>
+          {roomData?.spectators && roomData.spectators.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Spectators
+              </div>
+              <ul className="space-y-2" data-testid="spectators-list">
+                {roomData.spectators.map((user: string, index: number) => (
+                  <ParticipantItem
+                    key={user}
+                    user={user}
+                    index={index + (roomData.users.length || 0)}
+                    currentUser={name}
+                    moderator={roomData.moderator}
+                    userAvatar={roomData.userAvatars?.[user]}
+                    isConnected={roomData.connectedUsers?.[user] ?? false}
+                    vote={undefined}
+                    showVotes={roomData.showVotes}
+                    anonymousVotes={roomData.settings.anonymousVotes}
+                    hideParticipantNames={
+                      roomData.settings.hideParticipantNames
+                    }
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
     </SurfaceCard>
   );
 });

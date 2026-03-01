@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Minimize2, Trophy } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { ScrollArea } from "@/components/ui";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { ROOM_GAMES } from "@/components/games/game-catalog";
 import type { RoomData } from "@/types";
@@ -150,7 +151,11 @@ export const RoomGamePanel = ({
               No moves played yet.
             </p>
           ) : (
-            <div className="max-h-36 space-y-2 overflow-y-auto pr-1">
+            <ScrollArea
+              className="max-h-36"
+              contentClassName="space-y-2 pr-3"
+              aria-label="Game leaderboard"
+            >
               {sortedScores.map(([name, score], index) => (
                 <div
                   key={name}
@@ -165,7 +170,7 @@ export const RoomGamePanel = ({
                   <span className="font-semibold">{score}</span>
                 </div>
               ))}
-            </div>
+            </ScrollArea>
           )}
         </div>
 
@@ -178,11 +183,15 @@ export const RoomGamePanel = ({
               No recent activity.
             </p>
           ) : (
-            <div className="max-h-36 space-y-2 overflow-y-auto pr-1 text-sm text-slate-700 dark:text-slate-200">
+            <ScrollArea
+              className="max-h-36 text-sm text-slate-700 dark:text-slate-200"
+              contentClassName="space-y-2 pr-3"
+              aria-label="Recent game activity"
+            >
               {gameSession.events.slice(-5).map((event) => (
                 <p key={event.id}>{event.message}</p>
               ))}
-            </div>
+            </ScrollArea>
           )}
         </div>
       </div>
@@ -506,7 +515,11 @@ export const RoomGamePanel = ({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Round Summary
               </p>
-              <div className="space-y-2 text-sm max-h-60 overflow-y-auto pr-1">
+              <ScrollArea
+                className="max-h-60 text-sm"
+                contentClassName="space-y-2 pr-3"
+                aria-label="One-word pitch round history"
+              >
                 {gameSession.oneWordPitchRoundHistory?.map((round) => (
                   <div
                     key={round.round}
@@ -530,7 +543,7 @@ export const RoomGamePanel = ({
                     ) : null}
                   </div>
                 ))}
-              </div>
+              </ScrollArea>
             </div>
           ) : null}
 
@@ -540,7 +553,11 @@ export const RoomGamePanel = ({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Round Summary
               </p>
-              <div className="space-y-2 text-sm max-h-60 overflow-y-auto pr-1">
+              <ScrollArea
+                className="max-h-60 text-sm"
+                contentClassName="space-y-2 pr-3"
+                aria-label="Category blitz round history"
+              >
                 {gameSession.categoryBlitzRoundHistory?.map((round) => (
                   <div
                     key={round.round}
@@ -561,7 +578,7 @@ export const RoomGamePanel = ({
                     )}
                   </div>
                 ))}
-              </div>
+              </ScrollArea>
             </div>
           ) : null}
         </div>
