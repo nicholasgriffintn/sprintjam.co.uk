@@ -242,6 +242,9 @@ export const ROOM_GAME_TYPES = [
   "one-word-pitch",
   "category-blitz",
   "clueboard",
+  "sprint-word",
+  "team-threads",
+  "sprint-risk",
 ] as const;
 
 export type RoomGameType = (typeof ROOM_GAME_TYPES)[number];
@@ -311,6 +314,34 @@ export interface RoomGameSession {
   codenamesTargetIndices?: number[];
   codenamesAssassinIndex?: number;
   codenamesKnownBlockerIndex?: number;
+  sprintWordWord?: string;
+  sprintWordPlayerGuesses?: Record<
+    string,
+    Array<{ word: string; result: ("correct" | "present" | "absent")[] }>
+  >;
+  sprintWordPlayerDone?: Record<string, boolean>;
+  sprintWordHistory?: string[];
+  teamThreadsWords?: string[];
+  teamThreadsGroups?: Array<{
+    category: string;
+    words: string[];
+    difficulty: 1 | 2 | 3 | 4;
+  }>;
+  teamThreadsFoundGroups?: Array<{
+    category: string;
+    words: string[];
+    difficulty: number;
+    foundBy: string;
+  }>;
+  teamThreadsLives?: number;
+  teamThreadsUsedPuzzles?: number[];
+  sprintRiskTurnOrder?: string[];
+  sprintRiskTurnIndex?: number;
+  sprintRiskDice?: (number | null)[];
+  sprintRiskTurnScore?: number;
+  sprintRiskKeptIndices?: number[];
+  sprintRiskPhase?: "waiting" | "rolled" | "kept";
+  sprintRiskTurnCount?: Record<string, number>;
   winner?: string;
 }
 

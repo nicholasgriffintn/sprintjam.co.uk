@@ -131,10 +131,6 @@ export function useRoomQueueAndGameActions({
 
   const handleStartGame = useCallback(
     (gameType: RoomGameType) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-
       try {
         startGame(gameType);
       } catch (err: unknown) {
@@ -146,10 +142,6 @@ export function useRoomQueueAndGameActions({
 
   const handleSubmitGameMove = useCallback(
     (value: string) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-
       try {
         submitGameMove(value);
       } catch (err: unknown) {

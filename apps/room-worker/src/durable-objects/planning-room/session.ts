@@ -9,6 +9,13 @@ import {
   findCanonicalUserName,
 } from '../../lib/room-data';
 
+const COMPLETED_ROOM_ALLOWED_MESSAGE_TYPES: Set<string> = new Set([
+  'completeSession',
+  'startGame',
+  'submitGameMove',
+  'endGame',
+]);
+
 export async function handleSession(
   room: PlanningRoom,
   webSocket: CfWebSocket,
@@ -118,7 +125,7 @@ export async function handleSession(
       const roomData = await room.getRoomData();
       if (
         roomData?.status === "completed" &&
-        validated.type !== "completeSession"
+        !COMPLETED_ROOM_ALLOWED_MESSAGE_TYPES.has(validated.type)
       ) {
         return;
       }

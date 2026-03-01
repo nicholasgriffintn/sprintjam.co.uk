@@ -133,6 +133,8 @@ export function sanitizeGameSession(
     numberTarget: _numberTarget,
     codenamesTargetIndices: _codenamesTargetIndices,
     codenamesAssassinIndex: _codenamesAssassinIndex,
+    sprintWordWord: _sprintWordWord,
+    teamThreadsGroups: _teamThreadsGroups,
     ...rest
   } = gameSession;
   return rest;
