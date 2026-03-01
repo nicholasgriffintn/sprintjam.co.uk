@@ -40,6 +40,19 @@ export async function createRoomController(
       ? rawTeamId
       : undefined;
 
+  if (teamId !== undefined && env.AUTH_WORKER) {
+    const cookie = request.headers.get("Cookie") ?? "";
+    const authResponse = await env.AUTH_WORKER.fetch(
+      new Request(`https://auth-worker/api/teams/${teamId}`, {
+        method: "GET",
+        headers: { Cookie: cookie },
+      }) as unknown as CfRequest,
+    );
+    if (!authResponse.ok) {
+      return jsonError("You do not have access to the specified team", 403);
+    }
+  }
+
   const key = name
     ? `${name}-${request.headers.get("cf-connecting-ip") ?? "unknown"}`
     : (request.headers.get("cf-connecting-ip") ?? "unknown");
