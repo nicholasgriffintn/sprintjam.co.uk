@@ -100,6 +100,10 @@ export const sprintRiskEngine: GameEngine = {
   title: 'Sprint Risk',
   allowConsecutiveMoves: true,
   shouldBlockConsecutiveMoves: () => false,
+  canStart: (roomData) =>
+    roomData.users.length < 2
+      ? 'Sprint Risk needs at least 2 players.'
+      : undefined,
   initializeSessionState: (roomData) => ({
     sprintRiskTurnOrder: [...roomData.users],
     sprintRiskTurnIndex: 0,
