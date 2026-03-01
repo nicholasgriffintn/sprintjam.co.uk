@@ -1,4 +1,5 @@
 import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Select } from "@/components/ui/Select";
 
 export function TheJudge({
@@ -25,12 +26,10 @@ export function TheJudge({
       </h3>
       <div className="space-y-3">
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="enableJudge"
             checked={localSettings.enableJudge}
-            onChange={(e) => handleChange("enableJudge", e.target.checked)}
-            className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-white/50 dark:border-white/10 rounded"
+            onCheckedChange={(checked) => handleChange("enableJudge", checked)}
           />
           <label
             htmlFor="enableJudge"

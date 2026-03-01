@@ -1,4 +1,5 @@
 import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import { Checkbox } from "@/components/ui/Checkbox";
 
 type HandleChange = (
   key: keyof RoomSettings,
@@ -19,15 +20,13 @@ function PermissionsSection({
       </h3>
       <div className="space-y-2">
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="allowOthersToShowEstimates"
             checked={localSettings.allowOthersToShowEstimates}
-            onChange={(e) =>
-              handleChange("allowOthersToShowEstimates", e.target.checked)
+            onCheckedChange={(checked) =>
+              handleChange("allowOthersToShowEstimates", checked)
             }
             data-testid="settings-toggle-allow-show"
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="allowOthersToShowEstimates"
@@ -37,15 +36,13 @@ function PermissionsSection({
           </label>
         </div>
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="allowOthersToDeleteEstimates"
             checked={localSettings.allowOthersToDeleteEstimates}
-            onChange={(e) =>
-              handleChange("allowOthersToDeleteEstimates", e.target.checked)
+            onCheckedChange={(checked) =>
+              handleChange("allowOthersToDeleteEstimates", checked)
             }
             data-testid="settings-toggle-allow-reset"
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="allowOthersToDeleteEstimates"
@@ -55,14 +52,12 @@ function PermissionsSection({
           </label>
         </div>
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="autoHandoverModerator"
             checked={localSettings.autoHandoverModerator || false}
-            onChange={(e) =>
-              handleChange("autoHandoverModerator", e.target.checked)
+            onCheckedChange={(checked) =>
+              handleChange("autoHandoverModerator", checked)
             }
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="autoHandoverModerator"
@@ -90,15 +85,13 @@ function PrivacySection({
       </h3>
       <div className="space-y-2">
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="hideParticipantNames"
             checked={localSettings.hideParticipantNames || false}
-            onChange={(e) =>
-              handleChange("hideParticipantNames", e.target.checked)
+            onCheckedChange={(checked) =>
+              handleChange("hideParticipantNames", checked)
             }
             data-testid="settings-toggle-hide-names"
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="hideParticipantNames"
@@ -108,13 +101,13 @@ function PrivacySection({
           </label>
         </div>
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="showUserPresence"
             checked={localSettings.showUserPresence}
-            onChange={(e) => handleChange("showUserPresence", e.target.checked)}
+            onCheckedChange={(checked) =>
+              handleChange("showUserPresence", checked)
+            }
             data-testid="settings-toggle-show-presence"
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="showUserPresence"
@@ -124,13 +117,13 @@ function PrivacySection({
           </label>
         </div>
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="anonymousVotes"
             checked={localSettings.anonymousVotes}
-            onChange={(e) => handleChange("anonymousVotes", e.target.checked)}
+            onCheckedChange={(checked) =>
+              handleChange("anonymousVotes", checked)
+            }
             data-testid="settings-toggle-anonymous-votes"
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="anonymousVotes"

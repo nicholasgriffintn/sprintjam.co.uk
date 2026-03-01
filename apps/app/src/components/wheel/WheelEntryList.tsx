@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import type { WheelEntry } from "@sprintjam/types";
 
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 interface WheelEntryListProps {
@@ -163,12 +164,12 @@ export function WheelEntryList({
               }`}
             >
               {isModeratorView && (
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={entry.enabled}
-                  onChange={(e) => onToggleEntry(entry.id, e.target.checked)}
+                  onCheckedChange={(checked) =>
+                    onToggleEntry(entry.id, checked)
+                  }
                   disabled={disabled}
-                  className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                 />
               )}
               <span

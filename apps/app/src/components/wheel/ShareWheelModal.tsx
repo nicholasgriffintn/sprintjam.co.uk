@@ -3,6 +3,7 @@ import { useState, useRef, useMemo, lazy, Suspense } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { FallbackLoading } from "@/components/ui/FallbackLoading";
+import { Switch } from "@/components/ui/Switch";
 import { updateWheelPasscode } from "@/lib/wheel-api-service";
 import { USERNAME_STORAGE_KEY } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
@@ -132,24 +133,11 @@ export function ShareWheelModal({
               >
                 Require passcode to join
               </label>
-              <button
+              <Switch
                 id="passcode-toggle"
-                type="button"
-                role="switch"
-                aria-checked={passcodeEnabled}
-                onClick={() => handlePasscodeToggle(!passcodeEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  passcodeEnabled
-                    ? "bg-brand-600"
-                    : "bg-slate-300 dark:bg-slate-600"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    passcodeEnabled ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
+                checked={passcodeEnabled}
+                onCheckedChange={handlePasscodeToggle}
+              />
             </div>
 
             {passcodeEnabled && (

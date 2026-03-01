@@ -1,11 +1,12 @@
-import type { RoomSettings, JudgeAlgorithm } from '@/types';
-import { useTeamOAuth } from '@/hooks/useTeamOAuth';
-import { useRoomState } from '@/context/RoomContext';
-import { useSessionState } from '@/context/SessionContext';
-import { BetaBadge } from '@/components/BetaBadge';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { TeamIntegrationBanner } from './TeamIntegrationBanner';
+import type { RoomSettings, JudgeAlgorithm } from "@/types";
+import { useTeamOAuth } from "@/hooks/useTeamOAuth";
+import { useRoomState } from "@/context/RoomContext";
+import { useSessionState } from "@/context/SessionContext";
+import { BetaBadge } from "@/components/BetaBadge";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { TeamIntegrationBanner } from "./TeamIntegrationBanner";
 
 export function TicketQueueSettings({
   localSettings,
@@ -38,44 +39,42 @@ export function TicketQueueSettings({
 
   const { status: teamJiraStatus, loading: jiraLoading } = useTeamOAuth(
     teamId,
-    'jira',
+    "jira",
   );
   const { status: teamLinearStatus, loading: linearLoading } = useTeamOAuth(
     teamId,
-    'linear',
+    "linear",
   );
   const { status: teamGithubStatus, loading: githubLoading } = useTeamOAuth(
     teamId,
-    'github',
+    "github",
   );
 
   const autoSyncEnabled = localSettings.autoSyncEstimates ?? true;
   const handleAutoSyncToggle = (checked: boolean) => {
-    handleChange('autoSyncEstimates', checked);
+    handleChange("autoSyncEstimates", checked);
   };
   const externalServiceOptions = [
-    { label: 'None', value: 'none' },
-    { label: 'Jira', value: 'jira' },
-    { label: 'Linear', value: 'linear' },
-    { label: 'GitHub', value: 'github' },
+    { label: "None", value: "none" },
+    { label: "Jira", value: "jira" },
+    { label: "Linear", value: "linear" },
+    { label: "GitHub", value: "github" },
   ];
 
   const renderAutoSyncToggle = (
-    provider: 'jira' | 'linear',
+    provider: "jira" | "linear",
     connected: boolean,
   ) => {
     if (!connected) return null;
-    const providerLabel = provider === 'jira' ? 'Jira' : 'Linear';
+    const providerLabel = provider === "jira" ? "Jira" : "Linear";
 
     return (
       <div className="flex items-center pt-3">
-        <input
-          type="checkbox"
+        <Checkbox
           id="autoSyncEstimates"
           checked={autoSyncEnabled}
-          onChange={(e) => handleAutoSyncToggle(e.target.checked)}
+          onCheckedChange={handleAutoSyncToggle}
           data-testid="settings-toggle-auto-sync"
-          className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
         />
         <label
           htmlFor="autoSyncEstimates"
@@ -96,15 +95,13 @@ export function TicketQueueSettings({
       </div>
       <div className="space-y-2">
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="enableTicketQueue"
             checked={localSettings.enableTicketQueue ?? false}
-            onChange={(e) =>
-              handleChange('enableTicketQueue', e.target.checked)
+            onCheckedChange={(checked) =>
+              handleChange("enableTicketQueue", checked)
             }
             data-testid="settings-toggle-enable-queue"
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="enableTicketQueue"
@@ -121,15 +118,13 @@ export function TicketQueueSettings({
 
       {localSettings.enableTicketQueue && (
         <div className="flex items-center">
-          <input
-            type="checkbox"
+          <Checkbox
             id="allowOthersToManageQueue"
             checked={localSettings.allowOthersToManageQueue ?? false}
-            onChange={(e) =>
-              handleChange('allowOthersToManageQueue', e.target.checked)
+            onCheckedChange={(checked) =>
+              handleChange("allowOthersToManageQueue", checked)
             }
             data-testid="settings-toggle-allow-queue"
-            className="h-4 w-4 rounded border-white/50 text-brand-600 focus:ring-brand-500 dark:border-white/10"
           />
           <label
             htmlFor="allowOthersToManageQueue"
@@ -150,12 +145,12 @@ export function TicketQueueSettings({
             value={
               localSettings.capacityPoints === null ||
               localSettings.capacityPoints === undefined
-                ? ''
+                ? ""
                 : String(localSettings.capacityPoints)
             }
             onChange={(event) => {
               const next = event.target.value;
-              handleChange('capacityPoints', next === '' ? null : Number(next));
+              handleChange("capacityPoints", next === "" ? null : Number(next));
             }}
             fullWidth
           />
@@ -179,14 +174,14 @@ export function TicketQueueSettings({
             </label>
             <Select
               id="externalService"
-              value={localSettings.externalService || 'none'}
-              onValueChange={(value) => handleChange('externalService', value)}
+              value={localSettings.externalService || "none"}
+              onValueChange={(value) => handleChange("externalService", value)}
               data-testid="settings-select-external-service"
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
               options={externalServiceOptions}
             />
 
-            {!teamId && localSettings.externalService !== 'none' && (
+            {!teamId && localSettings.externalService !== "none" && (
               <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-800/50 dark:bg-amber-900/20">
                 <p className="text-sm text-amber-700 dark:text-amber-300">
                   Integrations require a workspace team. Select a team when
@@ -196,18 +191,18 @@ export function TicketQueueSettings({
               </div>
             )}
 
-            {localSettings.externalService === 'jira' && teamId && (
+            {localSettings.externalService === "jira" && teamId && (
               <div className="space-y-3">
                 <TeamIntegrationBanner
                   label="Jira"
                   connected={teamJiraStatus.connected ?? false}
                   loading={jiraLoading}
                 />
-                {renderAutoSyncToggle('jira', !!teamJiraStatus.connected)}
+                {renderAutoSyncToggle("jira", !!teamJiraStatus.connected)}
               </div>
             )}
 
-            {localSettings.externalService === 'linear' && teamId && (
+            {localSettings.externalService === "linear" && teamId && (
               <div className="space-y-3">
                 <TeamIntegrationBanner
                   label="Linear"
@@ -215,13 +210,13 @@ export function TicketQueueSettings({
                   loading={linearLoading}
                 />
                 {renderAutoSyncToggle(
-                  'linear',
+                  "linear",
                   teamLinearStatus.connected ?? false,
                 )}
               </div>
             )}
 
-            {localSettings.externalService === 'github' && teamId && (
+            {localSettings.externalService === "github" && teamId && (
               <div className="space-y-3">
                 <TeamIntegrationBanner
                   label="GitHub"
