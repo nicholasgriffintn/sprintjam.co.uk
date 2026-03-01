@@ -47,6 +47,7 @@ export interface RoomWorkerEnv extends BaseEnv {
   STATS_WORKER: Fetcher;
   AUTH_WORKER: Fetcher;
   STATS_INGEST_TOKEN?: string;
+  INTERNAL_API_SECRET?: string;
 }
 
 /**
@@ -56,6 +57,7 @@ export interface AuthWorkerEnv extends BaseEnv {
   DB: D1Database;
   RESEND_API_KEY: string;
   TOKEN_ENCRYPTION_SECRET: string;
+  INTERNAL_API_SECRET?: string;
   ENABLE_MAGIC_LINK_RATE_LIMIT?: string;
   MAGIC_LINK_RATE_LIMITER: RateLimit;
   VERIFICATION_RATE_LIMITER: RateLimit;

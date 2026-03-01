@@ -19,6 +19,52 @@ async function getAuthOrError(
   return { result };
 }
 
+const ALLOWED_SETTINGS_KEYS = new Set<string>([
+  "estimateOptions",
+  "voteOptionsMetadata",
+  "allowOthersToShowEstimates",
+  "allowOthersToDeleteEstimates",
+  "allowOthersToManageQueue",
+  "allowVotingAfterReveal",
+  "enableAutoReveal",
+  "alwaysRevealVotes",
+  "capacityPoints",
+  "showTimer",
+  "showUserPresence",
+  "showAverage",
+  "showMedian",
+  "showTopVotes",
+  "topVotesCount",
+  "anonymousVotes",
+  "enableFacilitationGuidance",
+  "enableJudge",
+  "judgeAlgorithm",
+  "hideParticipantNames",
+  "externalService",
+  "autoSyncEstimates",
+  "enableTicketQueue",
+  "enableStructuredVoting",
+  "votingCriteria",
+  "resultsDisplay",
+  "structuredVotingDisplay",
+  "autoHandoverModerator",
+  "enableStrudelPlayer",
+  "strudelAutoGenerate",
+  "votingSequenceId",
+  "customEstimateOptions",
+  "extraVoteOptions",
+]);
+
+function sanitizeSettings(raw: Record<string, unknown>): Partial<RoomSettings> {
+  const sanitized: Record<string, unknown> = {};
+  for (const key of Object.keys(raw)) {
+    if (ALLOWED_SETTINGS_KEYS.has(key)) {
+      sanitized[key] = raw[key];
+    }
+  }
+  return sanitized as Partial<RoomSettings>;
+}
+
 export async function getTeamSettingsController(
   request: Request,
   env: AuthWorkerEnv,
@@ -58,17 +104,21 @@ export async function saveTeamSettingsController(
     return forbiddenResponse("Only the team owner can update team settings");
   }
 
-  let settings: RoomSettings;
+  let settings: Partial<RoomSettings>;
   try {
-    const body = await request.json<{ settings?: RoomSettings }>();
-    if (!body?.settings || typeof body.settings !== "object") {
+    const body = await request.json<{ settings?: Record<string, unknown> }>();
+    if (
+      !body?.settings ||
+      typeof body.settings !== "object" ||
+      Array.isArray(body.settings)
+    ) {
       return jsonError("settings object is required", 400);
     }
-    settings = body.settings;
+    settings = sanitizeSettings(body.settings);
   } catch {
     return jsonError("Invalid request body", 400);
   }
 
-  await repo.saveTeamSettings(teamId, settings);
+  await repo.saveTeamSettings(teamId, settings as RoomSettings);
   return jsonResponse({ settings });
 }

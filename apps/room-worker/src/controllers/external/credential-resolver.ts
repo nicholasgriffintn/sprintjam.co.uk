@@ -1,24 +1,24 @@
-import type { Request as CfRequest } from '@cloudflare/workers-types';
+import type { Request as CfRequest } from "@cloudflare/workers-types";
 import type {
   GithubOAuthCredentials,
   JiraOAuthCredentials,
   LinearOAuthCredentials,
   RoomWorkerEnv,
-} from '@sprintjam/types';
-import { getRoomStub } from '@sprintjam/utils';
+} from "@sprintjam/types";
+import { getRoomStub } from "@sprintjam/utils";
 import {
   fetchTeamJiraCredentials,
   fetchTeamLinearCredentials,
   fetchTeamGithubCredentials,
   refreshTeamCredentials,
-} from '../../lib/team-credentials';
+} from "../../lib/team-credentials";
 
 async function getRoomTeamId(
   roomObject: ReturnType<typeof getRoomStub>,
 ): Promise<number | null> {
   const response = await roomObject.fetch(
-    new Request('https://internal/room/team-id', {
-      method: 'GET',
+    new Request("https://internal/room/team-id", {
+      method: "GET",
     }) as unknown as CfRequest,
   );
 
@@ -28,7 +28,7 @@ async function getRoomTeamId(
   return data.teamId ?? null;
 }
 
-export type CredentialSource = 'room' | 'team';
+export type CredentialSource = "room" | "team";
 
 export type ResolvedJiraCredentials = {
   credentials: JiraOAuthCredentials;
@@ -62,8 +62,8 @@ export async function resolveJiraCredentials(
   const roomObject = getRoomStub(env, roomKey);
 
   const credentialsResponse = await roomObject.fetch(
-    new Request('https://internal/jira/oauth/credentials', {
-      method: 'GET',
+    new Request("https://internal/jira/oauth/credentials", {
+      method: "GET",
     }) as unknown as CfRequest,
   );
 
@@ -74,15 +74,18 @@ export async function resolveJiraCredentials(
 
     return {
       credentials,
-      source: 'room',
+      source: "room",
       onTokenRefresh: async (accessToken, refreshToken, expiresAt) => {
-        await roomObject.fetch(
-          new Request('https://internal/jira/oauth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await roomObject.fetch(
+          new Request("https://internal/jira/oauth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
           }) as unknown as CfRequest,
         );
+        if (!response.ok) {
+          throw new Error("Failed to persist Jira token refresh.");
+        }
       },
     };
   }
@@ -95,20 +98,22 @@ export async function resolveJiraCredentials(
   const teamCredentials = await fetchTeamJiraCredentials(
     env.AUTH_WORKER,
     teamId,
+    env.INTERNAL_API_SECRET,
   );
   if (!teamCredentials) return null;
 
   return {
     credentials: teamCredentials,
-    source: 'team',
+    source: "team",
     onTokenRefresh: async (accessToken, refreshToken, expiresAt) => {
       await refreshTeamCredentials(
         env.AUTH_WORKER,
         teamId,
-        'jira',
+        "jira",
         accessToken,
         refreshToken,
         expiresAt,
+        env.INTERNAL_API_SECRET,
       );
     },
   };
@@ -121,8 +126,8 @@ export async function resolveLinearCredentials(
   const roomObject = getRoomStub(env, roomKey);
 
   const credentialsResponse = await roomObject.fetch(
-    new Request('https://internal/linear/oauth/credentials', {
-      method: 'GET',
+    new Request("https://internal/linear/oauth/credentials", {
+      method: "GET",
     }) as unknown as CfRequest,
   );
 
@@ -133,15 +138,18 @@ export async function resolveLinearCredentials(
 
     return {
       credentials,
-      source: 'room',
+      source: "room",
       onTokenRefresh: async (accessToken, refreshToken, expiresAt) => {
-        await roomObject.fetch(
-          new Request('https://internal/linear/oauth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await roomObject.fetch(
+          new Request("https://internal/linear/oauth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
           }) as unknown as CfRequest,
         );
+        if (!response.ok) {
+          throw new Error("Failed to persist Linear token refresh.");
+        }
       },
     };
   }
@@ -154,20 +162,22 @@ export async function resolveLinearCredentials(
   const teamCredentials = await fetchTeamLinearCredentials(
     env.AUTH_WORKER,
     teamId,
+    env.INTERNAL_API_SECRET,
   );
   if (!teamCredentials) return null;
 
   return {
     credentials: teamCredentials,
-    source: 'team',
+    source: "team",
     onTokenRefresh: async (accessToken, refreshToken, expiresAt) => {
       await refreshTeamCredentials(
         env.AUTH_WORKER,
         teamId,
-        'linear',
+        "linear",
         accessToken,
         refreshToken,
         expiresAt,
+        env.INTERNAL_API_SECRET,
       );
     },
   };
@@ -180,8 +190,8 @@ export async function resolveGithubCredentials(
   const roomObject = getRoomStub(env, roomKey);
 
   const credentialsResponse = await roomObject.fetch(
-    new Request('https://internal/github/oauth/credentials', {
-      method: 'GET',
+    new Request("https://internal/github/oauth/credentials", {
+      method: "GET",
     }) as unknown as CfRequest,
   );
 
@@ -190,7 +200,7 @@ export async function resolveGithubCredentials(
       credentials: GithubOAuthCredentials;
     }>();
 
-    return { credentials, source: 'room' };
+    return { credentials, source: "room" };
   }
 
   if (!env.AUTH_WORKER) return null;
@@ -201,8 +211,9 @@ export async function resolveGithubCredentials(
   const teamCredentials = await fetchTeamGithubCredentials(
     env.AUTH_WORKER,
     teamId,
+    env.INTERNAL_API_SECRET,
   );
   if (!teamCredentials) return null;
 
-  return { credentials: teamCredentials, source: 'team' };
+  return { credentials: teamCredentials, source: "team" };
 }

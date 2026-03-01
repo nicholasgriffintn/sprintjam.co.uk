@@ -44,10 +44,17 @@ export function useTeamOAuth(
   const connectMutation = useMutation({
     mutationKey: ["team-oauth-connect", teamId, provider],
     mutationFn: async () => {
-      const authUrl = await initiateTeamOAuth(teamId!, provider);
+      if (teamId === null) return;
+      const authUrl = await initiateTeamOAuth(teamId, provider);
       const authWindow = openAuthWindow(authUrl, provider);
+      if (!authWindow) {
+        throw new Error("Popup blocked. Please allow popups and try again.");
+      }
+
+      const MAX_POLL_MS = 5 * 60 * 1000;
+      const start = Date.now();
       const pollTimer = setInterval(() => {
-        if (authWindow?.closed) {
+        if (authWindow.closed || Date.now() - start > MAX_POLL_MS) {
           clearInterval(pollTimer);
           setTimeout(() => void statusQuery.refetch(), 1000);
         }
@@ -57,7 +64,10 @@ export function useTeamOAuth(
 
   const disconnectMutation = useMutation({
     mutationKey: ["team-oauth-disconnect", teamId, provider],
-    mutationFn: () => revokeTeamIntegration(teamId!, provider),
+    mutationFn: () => {
+      if (teamId === null) return Promise.reject(new Error("No team selected"));
+      return revokeTeamIntegration(teamId, provider);
+    },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
   });
 

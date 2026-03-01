@@ -83,7 +83,7 @@ const WelcomeScreen = () => {
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
           <Button
             data-testid="create-room-button"
-            onClick={startCreateFlow}
+            onClick={() => startCreateFlow()}
             icon={<Plus className="h-4 w-4" />}
             size="lg"
             className="w-full sm:w-auto"

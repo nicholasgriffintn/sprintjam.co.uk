@@ -20,6 +20,7 @@ import {
   notFoundResponse,
 } from '../lib/response';
 import { TeamIntegrationRepository } from '../repositories/team-integration-repository';
+import { TeamRepository } from '../repositories/team-repository';
 
 function getIntegrationRepo(env: AuthWorkerEnv): TeamIntegrationRepository {
   return new TeamIntegrationRepository(env.DB, env.TOKEN_ENCRYPTION_SECRET);
@@ -34,6 +35,23 @@ async function getAuthOrError(
     return { response: unauthorizedResponse() };
   }
   return { result };
+}
+
+function verifyInternalSecret(request: Request, env: AuthWorkerEnv): boolean {
+  const secret = env.INTERNAL_API_SECRET;
+  if (!secret) return true;
+  const header = request.headers.get('Authorization');
+  return header === `Bearer ${secret}`;
+}
+
+async function verifyTeamOwnership(
+  env: AuthWorkerEnv,
+  teamId: number,
+  userId: number,
+): Promise<boolean> {
+  const teamRepo = new TeamRepository(env.DB);
+  const team = await teamRepo.getTeamById(teamId);
+  return !!team && team.ownerId === userId;
 }
 
 function oauthHtmlResponse(
@@ -55,7 +73,6 @@ function oauthHtmlSuccess(message: string): Response {
   return oauthHtmlResponse('Success!', message, 200);
 }
 
-// GET /api/teams/:id/integrations
 export async function listTeamIntegrationsController(
   request: Request,
   env: AuthWorkerEnv,
@@ -79,7 +96,6 @@ export async function listTeamIntegrationsController(
   return jsonResponse({ integrations: statuses });
 }
 
-// GET /api/teams/:id/integrations/:provider/status
 export async function getTeamIntegrationStatusController(
   request: Request,
   env: AuthWorkerEnv,
@@ -109,7 +125,6 @@ export async function getTeamIntegrationStatusController(
   return jsonResponse({ status });
 }
 
-// POST /api/teams/:id/integrations/:provider/authorize
 export async function initiateTeamOAuthController(
   request: Request,
   env: AuthWorkerEnv,
@@ -227,13 +242,11 @@ export async function initiateTeamOAuthController(
 
     return jsonError('Unknown provider', 400);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to initiate OAuth';
-    return jsonError(message, 500);
+    console.error('Failed to initiate OAuth:', error);
+    return jsonError('Failed to initiate OAuth', 500);
   }
 }
 
-// GET /api/teams/integrations/jira/callback
 export async function handleJiraTeamOAuthCallbackController(
   url: URL,
   env: AuthWorkerEnv,
@@ -261,7 +274,15 @@ export async function handleJiraTeamOAuthCallbackController(
       authorizedBy: string;
       nonce: string;
     };
-    const { teamId, authorizedBy } = stateData;
+    const { teamId, userId, authorizedBy } = stateData;
+
+    const stillOwner = await verifyTeamOwnership(env, teamId, userId);
+    if (!stillOwner) {
+      return oauthHtmlError(
+        'Team ownership has changed. Please try again.',
+        403,
+      );
+    }
 
     const tokenResponse = await fetch(
       'https://auth.atlassian.com/oauth/token',
@@ -279,7 +300,7 @@ export async function handleJiraTeamOAuthCallbackController(
     );
 
     if (!tokenResponse.ok) {
-      console.error('Jira token exchange failed:', await tokenResponse.text());
+      console.error('Jira token exchange failed:', tokenResponse.status);
       return oauthHtmlError('Failed to exchange code for token', 500);
     }
 
@@ -398,12 +419,13 @@ export async function handleJiraTeamOAuthCallbackController(
     );
   } catch (error) {
     console.error('Jira team OAuth callback error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return oauthHtmlError(message, 500);
+    return oauthHtmlError(
+      'An error occurred during Jira authorization. Please try again.',
+      500,
+    );
   }
 }
 
-// GET /api/teams/integrations/linear/callback
 export async function handleLinearTeamOAuthCallbackController(
   url: URL,
   env: AuthWorkerEnv,
@@ -431,7 +453,15 @@ export async function handleLinearTeamOAuthCallbackController(
       authorizedBy: string;
       nonce: string;
     };
-    const { teamId, authorizedBy } = stateData;
+    const { teamId, userId, authorizedBy } = stateData;
+
+    const stillOwner = await verifyTeamOwnership(env, teamId, userId);
+    if (!stillOwner) {
+      return oauthHtmlError(
+        'Team ownership has changed. Please try again.',
+        403,
+      );
+    }
 
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
@@ -448,10 +478,7 @@ export async function handleLinearTeamOAuthCallbackController(
     });
 
     if (!tokenResponse.ok) {
-      console.error(
-        'Linear token exchange failed:',
-        await tokenResponse.text(),
-      );
+      console.error('Linear token exchange failed:', tokenResponse.status);
       return oauthHtmlError('Failed to exchange code for token', 500);
     }
 
@@ -462,7 +489,8 @@ export async function handleLinearTeamOAuthCallbackController(
       scope?: string;
     }>();
 
-    const expiresAt = Date.now() + (tokenData.expires_in ?? 315360000) * 1000;
+    const expiresAt =
+      Date.now() + (tokenData.expires_in ?? 90 * 24 * 60 * 60) * 1000;
 
     let linearOrganizationId: string | null = null;
     let linearUserId: string | null = null;
@@ -500,12 +528,13 @@ export async function handleLinearTeamOAuthCallbackController(
     );
   } catch (error) {
     console.error('Linear team OAuth callback error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return oauthHtmlError(message, 500);
+    return oauthHtmlError(
+      'An error occurred during Linear authorization. Please try again.',
+      500,
+    );
   }
 }
 
-// GET /api/teams/integrations/github/callback
 export async function handleGithubTeamOAuthCallbackController(
   url: URL,
   env: AuthWorkerEnv,
@@ -533,7 +562,15 @@ export async function handleGithubTeamOAuthCallbackController(
       authorizedBy: string;
       nonce: string;
     };
-    const { teamId, authorizedBy } = stateData;
+    const { teamId, userId, authorizedBy } = stateData;
+
+    const stillOwner = await verifyTeamOwnership(env, teamId, userId);
+    if (!stillOwner) {
+      return oauthHtmlError(
+        'Team ownership has changed. Please try again.',
+        403,
+      );
+    }
 
     const tokenResponse = await fetch(
       'https://github.com/login/oauth/access_token',
@@ -553,10 +590,7 @@ export async function handleGithubTeamOAuthCallbackController(
     );
 
     if (!tokenResponse.ok) {
-      console.error(
-        'GitHub token exchange failed:',
-        await tokenResponse.text(),
-      );
+      console.error('GitHub token exchange failed:', tokenResponse.status);
       return oauthHtmlError('Failed to exchange code for token', 500);
     }
 
@@ -599,7 +633,7 @@ export async function handleGithubTeamOAuthCallbackController(
       accessToken: tokenData.access_token,
       refreshToken: null,
       tokenType: tokenData.token_type,
-      expiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000,
+      expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
       scope: tokenData.scope ?? null,
       authorizedBy,
       githubLogin,
@@ -613,12 +647,13 @@ export async function handleGithubTeamOAuthCallbackController(
     );
   } catch (error) {
     console.error('GitHub team OAuth callback error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return oauthHtmlError(message, 500);
+    return oauthHtmlError(
+      'An error occurred during GitHub authorization. Please try again.',
+      500,
+    );
   }
 }
 
-// DELETE /api/teams/:id/integrations/:provider
 export async function revokeTeamIntegrationController(
   request: Request,
   env: AuthWorkerEnv,
@@ -646,6 +681,10 @@ export async function getTeamCredentialsInternalController(
   request: Request,
   env: AuthWorkerEnv,
 ): Promise<Response> {
+  if (!verifyInternalSecret(request, env)) {
+    return jsonError('Unauthorized', 401);
+  }
+
   let body: { teamId?: number; provider?: OAuthProvider };
   try {
     body = await request.json();
@@ -688,6 +727,10 @@ export async function refreshTeamCredentialsInternalController(
   request: Request,
   env: AuthWorkerEnv,
 ): Promise<Response> {
+  if (!verifyInternalSecret(request, env)) {
+    return jsonError('Unauthorized', 401);
+  }
+
   let body: {
     teamId?: number;
     provider?: OAuthProvider;

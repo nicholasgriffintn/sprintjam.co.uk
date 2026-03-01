@@ -35,6 +35,7 @@ const env: RoomWorkerEnv = {
   FEEDBACK_RATE_LIMITER: {} as RateLimit,
   TOKEN_ENCRYPTION_SECRET: "test-secret",
   STATS_WORKER: {} as any,
+  AUTH_WORKER: {} as any,
 };
 
 describe("PlanningRoom voting reveal settings", () => {

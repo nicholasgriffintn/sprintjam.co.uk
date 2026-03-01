@@ -1,7 +1,7 @@
 import { API_BASE_URL } from "@/constants";
+import type { RoomSettings } from "@/types";
 import type {
   OAuthProvider,
-  RoomSettings,
   SessionStats,
   Team,
   TeamInsights,

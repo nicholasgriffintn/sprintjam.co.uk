@@ -4,18 +4,13 @@ import { CalendarDays } from "lucide-react";
 import type { SessionTimelineData } from "@sprintjam/types";
 
 import { Button } from "@/components/ui/Button";
+import { formatVelocity } from "@/lib/formatters";
 
 interface SessionsChartProps {
   data: SessionTimelineData[];
 }
 
 type TimeRange = "month" | "quarter" | "all";
-
-function formatVelocity(v: number | null | undefined): string {
-  if (v === null || v === undefined) return "—";
-  if (v >= 10) return `${Math.round(v)}/hr`;
-  return `${v.toFixed(1)}/hr`;
-}
 
 export function SessionsChart({ data }: SessionsChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
@@ -40,7 +35,9 @@ export function SessionsChart({ data }: SessionsChartProps) {
     (sum, d) => sum + (d.totalVotes ?? 0),
     0,
   );
-  const hasEstimationData = filteredData.some((d) => d.avgConsensusRate != null);
+  const hasEstimationData = filteredData.some(
+    (d) => d.avgConsensusRate != null,
+  );
 
   const timeRangeOptions = [
     { id: "month" as const, label: "This month" },
@@ -90,10 +87,11 @@ export function SessionsChart({ data }: SessionsChartProps) {
               type="button"
               variant="unstyled"
               onClick={() => setTimeRange(option.id)}
-              className={`rounded-md px-3 py-1 text-xs font-semibold ${timeRange === option.id
+              className={`rounded-md px-3 py-1 text-xs font-semibold ${
+                timeRange === option.id
                   ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                }`}
+              }`}
             >
               {option.label}
             </Button>
@@ -136,10 +134,11 @@ export function SessionsChart({ data }: SessionsChartProps) {
                     delay: 0.1 * index,
                     ease: "easeOut",
                   }}
-                  className={`h-full rounded-lg ${item.count > 0
+                  className={`h-full rounded-lg ${
+                    item.count > 0
                       ? "bg-gradient-to-r from-brand-500 to-brand-600"
                       : "bg-slate-200 dark:bg-slate-700"
-                    }`}
+                  }`}
                 />
               </div>
             </div>

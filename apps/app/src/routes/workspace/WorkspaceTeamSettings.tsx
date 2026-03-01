@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import type { TeamIntegrationStatus } from "@sprintjam/types";
@@ -18,6 +18,14 @@ import { getTeamSettings, saveTeamSettings } from "@/lib/workspace-service";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import type { RoomSettings } from "@/types";
+
+function metaStr(
+  metadata: Record<string, unknown> | undefined,
+  key: string,
+): string | undefined {
+  const val = metadata?.[key];
+  return typeof val === "string" && val ? val : undefined;
+}
 
 export default function WorkspaceTeamSettings() {
   usePageMeta(META_CONFIGS.workspaceAdminTeamSettings);
@@ -65,11 +73,11 @@ export default function WorkspaceTeamSettings() {
   const settingsRef = useRef<RoomSettings | null>(null);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
 
-  const effectiveSettings: RoomSettings | null = (() => {
+  const effectiveSettings: RoomSettings | null = useMemo(() => {
     if (settingsQuery.data && defaults)
       return { ...defaults, ...settingsQuery.data };
     return defaults ?? null;
-  })();
+  }, [settingsQuery.data, defaults]);
 
   useEffect(() => {
     if (effectiveSettings) {
@@ -206,10 +214,8 @@ export default function WorkspaceTeamSettings() {
                   metadata={
                     jiraOAuth.status.connected
                       ? [
-                          (jiraOAuth.status.metadata?.jiraDomain as string) ||
-                            undefined,
-                          (jiraOAuth.status.metadata
-                            ?.jiraUserEmail as string) || undefined,
+                          metaStr(jiraOAuth.status.metadata, "jiraDomain"),
+                          metaStr(jiraOAuth.status.metadata, "jiraUserEmail"),
                         ]
                           .filter(Boolean)
                           .join(" · ") || undefined
@@ -228,12 +234,16 @@ export default function WorkspaceTeamSettings() {
                   metadata={
                     linearOAuth.status.connected
                       ? [
-                          (linearOAuth.status.metadata
-                            ?.linearOrganizationId as string)
-                            ? `Org: ${linearOAuth.status.metadata?.linearOrganizationId as string}`
+                          metaStr(
+                            linearOAuth.status.metadata,
+                            "linearOrganizationId",
+                          )
+                            ? `Org: ${metaStr(linearOAuth.status.metadata, "linearOrganizationId")}`
                             : undefined,
-                          (linearOAuth.status.metadata
-                            ?.linearUserEmail as string) || undefined,
+                          metaStr(
+                            linearOAuth.status.metadata,
+                            "linearUserEmail",
+                          ),
                         ]
                           .filter(Boolean)
                           .join(" · ") || undefined
@@ -252,11 +262,13 @@ export default function WorkspaceTeamSettings() {
                   metadata={
                     githubOAuth.status.connected
                       ? [
-                          (githubOAuth.status.metadata
-                            ?.githubLogin as string) || undefined,
-                          githubOAuth.status.metadata?.defaultOwner &&
-                          githubOAuth.status.metadata?.defaultRepo
-                            ? `${githubOAuth.status.metadata.defaultOwner as string}/${githubOAuth.status.metadata.defaultRepo as string}`
+                          metaStr(githubOAuth.status.metadata, "githubLogin"),
+                          metaStr(
+                            githubOAuth.status.metadata,
+                            "defaultOwner",
+                          ) &&
+                          metaStr(githubOAuth.status.metadata, "defaultRepo")
+                            ? `${metaStr(githubOAuth.status.metadata, "defaultOwner")}/${metaStr(githubOAuth.status.metadata, "defaultRepo")}`
                             : undefined,
                         ]
                           .filter(Boolean)
@@ -292,6 +304,13 @@ function IntegrationRow({
   onDisconnect: () => Promise<void>;
   metadata?: string;
 }) {
+  const handleDisconnect = () => {
+    const confirmed = window.confirm(
+      `Disconnect ${label}? This will remove the integration for all rooms in this team.`,
+    );
+    if (confirmed) void onDisconnect();
+  };
+
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
       <div className="flex items-start justify-between gap-3">
@@ -319,7 +338,7 @@ function IntegrationRow({
             <Spinner />
           ) : status.connected ? (
             <Button
-              onClick={onDisconnect}
+              onClick={handleDisconnect}
               variant="unstyled"
               className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
             >

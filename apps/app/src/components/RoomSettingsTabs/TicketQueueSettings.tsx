@@ -62,18 +62,9 @@ export function TicketQueueSettings({
     disconnect: githubDisconnect,
   } = useGithubOAuth();
 
-  const { status: teamJiraStatus, loading: teamJiraLoading } = useTeamOAuth(
-    teamId,
-    "jira",
-  );
-  const { status: teamLinearStatus, loading: teamLinearLoading } = useTeamOAuth(
-    teamId,
-    "linear",
-  );
-  const { status: teamGithubStatus, loading: teamGithubLoading } = useTeamOAuth(
-    teamId,
-    "github",
-  );
+  const { status: teamJiraStatus } = useTeamOAuth(teamId, "jira");
+  const { status: teamLinearStatus } = useTeamOAuth(teamId, "linear");
+  const { status: teamGithubStatus } = useTeamOAuth(teamId, "github");
 
   const autoSyncEnabled = localSettings.autoSyncEstimates ?? true;
   const handleAutoSyncToggle = (checked: boolean) => {

@@ -66,6 +66,7 @@ describe("PlanningRoom WebSocket auth", () => {
       FEEDBACK_RATE_LIMITER: {} as RateLimit,
       TOKEN_ENCRYPTION_SECRET: "test-secret",
       STATS_WORKER: {} as any,
+      AUTH_WORKER: {} as any,
     };
   });
 
@@ -219,6 +220,7 @@ describe("PlanningRoom critical flows", () => {
       FEEDBACK_RATE_LIMITER: {} as RateLimit,
       TOKEN_ENCRYPTION_SECRET: "test-secret",
       STATS_WORKER: {} as any,
+      AUTH_WORKER: {} as any,
     };
     vi.useRealTimers();
   });

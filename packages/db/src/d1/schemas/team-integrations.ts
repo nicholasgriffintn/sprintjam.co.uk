@@ -1,10 +1,4 @@
-import {
-  index,
-  integer,
-  sqliteTable,
-  text,
-  unique,
-} from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 import { teams } from "./teams";
 
@@ -30,9 +24,5 @@ export const teamIntegrations = sqliteTable(
   },
   (table) => ({
     teamProviderUnique: unique().on(table.teamId, table.provider),
-    teamProviderIdx: index("idx_team_integrations_team_provider").on(
-      table.teamId,
-      table.provider,
-    ),
   }),
 );

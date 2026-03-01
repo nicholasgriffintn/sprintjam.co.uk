@@ -13,7 +13,7 @@ import {
   logoutController,
 } from "./auth-controller";
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
-import { generateTotpCode } from '../lib/mfa';
+import { generateTotpCode } from "../lib/mfa";
 
 const makeRequest = (input: RequestInfo | URL, init?: RequestInit): Request =>
   new Request(input, init);
@@ -135,10 +135,11 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
+    const data = (await response.json()) as { error: string; message: string };
 
     expect(response.status).toBe(403);
-    expect(data.error).toContain("not authorized for workspace access");
+    expect(data.error).toBe("domain_not_allowed");
+    expect(data.message).toContain("not authorized for workspace access");
     expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         event: "magic_link_request",
@@ -379,14 +380,12 @@ describe("verifyCodeController", () => {
       success: true,
       email: "test@example.com",
     });
-    mockRepo.getUserByEmail
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 100,
-        email: "test@example.com",
-        name: "Test User",
-        organisationId: 1,
-      });
+    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 100,
+      email: "test@example.com",
+      name: "Test User",
+      organisationId: 1,
+    });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
     mockRepo.getOrCreateUser.mockResolvedValue(100);
     mockRepo.listMfaCredentials.mockResolvedValue([]);
@@ -416,14 +415,12 @@ describe("verifyCodeController", () => {
       success: true,
       email: "newuser@newcompany.com",
     });
-    mockRepo.getUserByEmail
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 200,
-        email: "newuser@newcompany.com",
-        name: null,
-        organisationId: 2,
-      });
+    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 200,
+      email: "newuser@newcompany.com",
+      name: null,
+      organisationId: 2,
+    });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(2);
     mockRepo.getOrCreateUser.mockResolvedValue(200);
     mockRepo.listMfaCredentials.mockResolvedValue([]);
@@ -457,14 +454,12 @@ describe("verifyCodeController", () => {
       organisationId: 42,
       email: "invitee@external.com",
     });
-    mockRepo.getUserByEmail
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 501,
-        email: "invitee@external.com",
-        name: null,
-        organisationId: 42,
-      });
+    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 501,
+      email: "invitee@external.com",
+      name: null,
+      organisationId: 42,
+    });
     mockRepo.getOrCreateUser.mockResolvedValue(501);
     mockRepo.listMfaCredentials.mockResolvedValue([]);
 
@@ -488,14 +483,12 @@ describe("verifyCodeController", () => {
       success: true,
       email: "test@example.com",
     });
-    mockRepo.getUserByEmail
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 100,
-        email: "test@example.com",
-        name: "Test User",
-        organisationId: 1,
-      });
+    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 100,
+      email: "test@example.com",
+      name: "Test User",
+      organisationId: 1,
+    });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
     mockRepo.getOrCreateUser.mockResolvedValue(100);
     mockRepo.listMfaCredentials.mockResolvedValue([]);
@@ -948,7 +941,7 @@ describe("mfa setup", () => {
     expect(data.method).toBe("totp");
     expect(mockRepo.updateAuthChallengeMetadata).toHaveBeenCalledWith(
       4,
-      expect.stringContaining("\"allowMfaReset\":true"),
+      expect.stringContaining('"allowMfaReset":true'),
       "totp",
     );
   });

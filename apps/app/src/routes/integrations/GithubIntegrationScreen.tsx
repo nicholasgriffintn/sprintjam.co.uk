@@ -138,7 +138,7 @@ const GithubIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-                onClick={startCreateFlow}
+                onClick={() => startCreateFlow()}
               >
                 Create a room
               </button>
@@ -303,7 +303,7 @@ const GithubIntegrationScreen = () => {
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-                onClick={startCreateFlow}
+                onClick={() => startCreateFlow()}
               >
                 Start a room
               </button>

@@ -27,11 +27,18 @@ export async function createRoomController(
   const passcode = body?.passcode;
   const settings = body?.settings;
   const avatar = body?.avatar;
-  const teamId = body?.teamId;
+  const rawTeamId = body?.teamId;
 
   if (!name) {
     return jsonError("Name is required");
   }
+
+  const teamId =
+    typeof rawTeamId === "number" &&
+    Number.isInteger(rawTeamId) &&
+    rawTeamId > 0
+      ? rawTeamId
+      : undefined;
 
   const key = name
     ? `${name}-${request.headers.get("cf-connecting-ip") ?? "unknown"}`

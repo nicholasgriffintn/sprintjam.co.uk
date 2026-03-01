@@ -9,16 +9,11 @@ import {
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { formatVelocity } from "@/lib/formatters";
 import type { WorkspaceInsights } from "@sprintjam/types";
 
 interface InsightsGridProps {
   insights: WorkspaceInsights | null;
-}
-
-function formatVelocity(velocity: number | null): string {
-  if (velocity === null) return "—";
-  if (velocity >= 10) return `${Math.round(velocity)}/hr`;
-  return `${velocity.toFixed(1)}/hr`;
 }
 
 function formatPercentage(value: number): string {

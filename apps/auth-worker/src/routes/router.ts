@@ -28,7 +28,7 @@ import {
 import {
   getTeamSettingsController,
   saveTeamSettingsController,
-} from '../controllers/team-settings-controller';
+} from "../controllers/team-settings-controller";
 import {
   listTeamIntegrationsController,
   getTeamIntegrationStatusController,
@@ -39,7 +39,7 @@ import {
   revokeTeamIntegrationController,
   getTeamCredentialsInternalController,
   refreshTeamCredentialsInternalController,
-} from '../controllers/team-integrations-controller';
+} from "../controllers/team-integrations-controller";
 import { jsonError, jsonResponse, notFoundResponse } from "../lib/response";
 
 type HandlerParam = string | number;
@@ -69,122 +69,122 @@ function requireNumberParam(
 
 const ROUTES: RouteDefinition[] = [
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/magic-link$/,
     handler: (request, env) => requestMagicLinkController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/verify$/,
     handler: (request, env) => verifyCodeController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/mfa\/setup\/start$/,
     handler: (request, env) => startMfaSetupController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/mfa\/setup\/verify$/,
     handler: (request, env) => verifyMfaSetupController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/mfa\/verify\/start$/,
     handler: (request, env) => startMfaVerifyController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/mfa\/verify$/,
     handler: (request, env) => verifyMfaController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^auth\/me$/,
     handler: (request, env) => getCurrentUserController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^auth\/logout$/,
     handler: (request, env) => logoutController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams$/,
     handler: (request, env) => listTeamsController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^teams$/,
     handler: (request, env) => createTeamController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'PUT',
+    method: "PUT",
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return updateTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'DELETE',
+    method: "DELETE",
     pattern: /^teams\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return deleteTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)\/sessions$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamSessionsController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^teams\/(\d+)\/sessions$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return createTeamSessionController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
-      const sessionIdResult = requireNumberParam(params[1], 'sessionId');
+      const sessionIdResult = requireNumberParam(params[1], "sessionId");
       if (!sessionIdResult.ok) return sessionIdResult.response;
       return getTeamSessionController(
         request,
@@ -193,141 +193,165 @@ const ROUTES: RouteDefinition[] = [
         sessionIdResult.value,
       );
     },
-    paramTypes: ['number', 'number'],
+    paramTypes: ["number", "number"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^sessions\/complete$/,
     handler: (request, env) => completeSessionByRoomKeyController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^workspace\/stats$/,
     handler: (request, env) => getWorkspaceStatsController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'PUT',
+    method: "PUT",
     pattern: /^workspace\/profile$/,
     handler: (request, env) => updateWorkspaceProfileController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^workspace\/invites$/,
     handler: (request, env) => inviteWorkspaceMemberController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)\/settings$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamSettingsController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'PUT',
+    method: "PUT",
     pattern: /^teams\/(\d+)\/settings$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return saveTeamSettingsController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)\/integrations$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamIntegrationsController(request, env, teamIdResult.value);
     },
-    paramTypes: ['number'],
+    paramTypes: ["number"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/authorize$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return initiateTeamOAuthController(
         request,
         env,
         teamIdResult.value,
-        params[1] as 'jira' | 'linear' | 'github',
+        params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ['number', 'string'],
+    paramTypes: ["number", "string"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/status$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamIntegrationStatusController(
         request,
         env,
         teamIdResult.value,
-        params[1] as 'jira' | 'linear' | 'github',
+        params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ['number', 'string'],
+    paramTypes: ["number", "string"],
   },
   {
-    method: 'DELETE',
+    method: "DELETE",
     pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)$/,
     handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], 'teamId');
+      const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return revokeTeamIntegrationController(
         request,
         env,
         teamIdResult.value,
-        params[1] as 'jira' | 'linear' | 'github',
+        params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ['number', 'string'],
+    paramTypes: ["number", "string"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/integrations\/jira\/callback$/,
-    handler: (request, env) =>
-      handleJiraTeamOAuthCallbackController(new URL(request.url), env),
-    paramTypes: ['none'],
+    handler: async (request, env) => {
+      if (env.IP_RATE_LIMITER) {
+        const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+        const { success } = await env.IP_RATE_LIMITER.limit({
+          key: `oauth-callback:${ip}`,
+        });
+        if (!success) return jsonError("Rate limit exceeded", 429);
+      }
+      return handleJiraTeamOAuthCallbackController(new URL(request.url), env);
+    },
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/integrations\/linear\/callback$/,
-    handler: (request, env) =>
-      handleLinearTeamOAuthCallbackController(new URL(request.url), env),
-    paramTypes: ['none'],
+    handler: async (request, env) => {
+      if (env.IP_RATE_LIMITER) {
+        const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+        const { success } = await env.IP_RATE_LIMITER.limit({
+          key: `oauth-callback:${ip}`,
+        });
+        if (!success) return jsonError("Rate limit exceeded", 429);
+      }
+      return handleLinearTeamOAuthCallbackController(new URL(request.url), env);
+    },
+    paramTypes: ["none"],
   },
   {
-    method: 'GET',
+    method: "GET",
     pattern: /^teams\/integrations\/github\/callback$/,
-    handler: (request, env) =>
-      handleGithubTeamOAuthCallbackController(new URL(request.url), env),
-    paramTypes: ['none'],
+    handler: async (request, env) => {
+      if (env.IP_RATE_LIMITER) {
+        const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+        const { success } = await env.IP_RATE_LIMITER.limit({
+          key: `oauth-callback:${ip}`,
+        });
+        if (!success) return jsonError("Rate limit exceeded", 429);
+      }
+      return handleGithubTeamOAuthCallbackController(new URL(request.url), env);
+    },
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^internal\/team-credentials$/,
     handler: (request, env) =>
       getTeamCredentialsInternalController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
   {
-    method: 'POST',
+    method: "POST",
     pattern: /^internal\/team-credentials\/refresh$/,
     handler: (request, env) =>
       refreshTeamCredentialsInternalController(request, env),
-    paramTypes: ['none'],
+    paramTypes: ["none"],
   },
 ];
 
