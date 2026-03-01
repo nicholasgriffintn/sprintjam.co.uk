@@ -1,22 +1,23 @@
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
-import { Building2, Clock3, MailPlus, Users } from 'lucide-react';
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { Building2, Clock3, MailPlus, Users } from "lucide-react";
 
-import { WorkspaceLayout } from '@/components/workspace/WorkspaceLayout';
-import { AdminSidebar } from '@/components/workspace/AdminSidebar';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { Alert } from '@/components/ui/Alert';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { useWorkspaceData } from '@/hooks/useWorkspaceData';
-import { useSessionActions } from '@/context/SessionContext';
-import { META_CONFIGS } from '@/config/meta';
-import { usePageMeta } from '@/hooks/usePageMeta';
+import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
+import { AdminSidebar } from "@/components/workspace/AdminSidebar";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Alert } from "@/components/ui/Alert";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
+import { useSessionActions } from "@/context/SessionContext";
+import { META_CONFIGS } from "@/config/meta";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import {
   inviteWorkspaceMember,
   updateWorkspaceProfile,
-} from '@/lib/workspace-service';
-import { BetaBadge } from '../../components/BetaBadge';
+} from "@/lib/workspace-service";
+import { toast } from "@/components/ui";
+import { BetaBadge } from "../../components/BetaBadge";
 
 export default function WorkspaceAdminOverview() {
   usePageMeta(META_CONFIGS.workspaceAdmin);
@@ -32,13 +33,12 @@ export default function WorkspaceAdminOverview() {
   } = useWorkspaceData();
 
   const { goToLogin } = useSessionActions();
-  const [workspaceName, setWorkspaceName] = useState('');
-  const [workspaceLogoUrl, setWorkspaceLogoUrl] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [workspaceLogoUrl, setWorkspaceLogoUrl] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [isSendingInvite, setIsSendingInvite] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const organisation = profile?.organisation ?? null;
   const members = profile?.members ?? [];
@@ -50,7 +50,7 @@ export default function WorkspaceAdminOverview() {
     }
 
     setWorkspaceName(organisation.name);
-    setWorkspaceLogoUrl(organisation.logoUrl ?? '');
+    setWorkspaceLogoUrl(organisation.logoUrl ?? "");
   }, [organisation?.id, organisation?.logoUrl, organisation?.name]);
 
   const isSettingsDirty = useMemo(() => {
@@ -60,19 +60,18 @@ export default function WorkspaceAdminOverview() {
 
     return (
       workspaceName.trim() !== organisation.name ||
-      (workspaceLogoUrl.trim() || '') !== (organisation.logoUrl ?? '')
+      (workspaceLogoUrl.trim() || "") !== (organisation.logoUrl ?? "")
     );
   }, [organisation, workspaceLogoUrl, workspaceName]);
 
   const handleSaveWorkspace = async () => {
     if (!workspaceName.trim()) {
-      setLocalError('Workspace name is required');
+      setLocalError("Workspace name is required");
       return;
     }
 
     setIsSavingWorkspace(true);
     setLocalError(null);
-    setSuccessMessage(null);
 
     try {
       await updateWorkspaceProfile({
@@ -80,10 +79,10 @@ export default function WorkspaceAdminOverview() {
         logoUrl: workspaceLogoUrl.trim() || null,
       });
       await refreshWorkspace(true);
-      setSuccessMessage('Workspace settings updated');
+      toast.success("Workspace settings updated");
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Unable to update workspace';
+        err instanceof Error ? err.message : "Unable to update workspace";
       setLocalError(message);
     } finally {
       setIsSavingWorkspace(false);
@@ -95,22 +94,21 @@ export default function WorkspaceAdminOverview() {
     const normalizedEmail = inviteEmail.toLowerCase().trim();
 
     if (!normalizedEmail) {
-      setLocalError('Invite email is required');
+      setLocalError("Invite email is required");
       return;
     }
 
     setIsSendingInvite(true);
     setLocalError(null);
-    setSuccessMessage(null);
 
     try {
       await inviteWorkspaceMember(normalizedEmail);
       await refreshWorkspace(true);
-      setInviteEmail('');
-      setSuccessMessage(`Invite sent to ${normalizedEmail}`);
+      setInviteEmail("");
+      toast.success(`Invite sent to ${normalizedEmail}`);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Unable to send invite';
+        err instanceof Error ? err.message : "Unable to send invite";
       setLocalError(message);
     } finally {
       setIsSendingInvite(false);
@@ -138,7 +136,6 @@ export default function WorkspaceAdminOverview() {
 
         {actionError && <Alert variant="warning">{actionError}</Alert>}
         {localError && <Alert variant="error">{localError}</Alert>}
-        {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
         <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
           <AdminSidebar activeScreen="workspaceAdmin" />

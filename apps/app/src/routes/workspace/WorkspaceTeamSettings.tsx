@@ -15,6 +15,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { useRoomState } from "@/context/RoomContext";
 import { useTeamOAuth } from "@/hooks/useTeamOAuth";
+import { toast } from "@/components/ui";
 import { getTeamSettings, saveTeamSettings } from "@/lib/workspace-service";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
@@ -65,12 +66,10 @@ export default function WorkspaceTeamSettings() {
       saveTeamSettings(selectedTeamId!, settings),
     onSuccess: (saved) => {
       queryClient.setQueryData(settingsQueryKey, saved);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      toast.success("Default settings saved");
     },
   });
 
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const settingsRef = useRef<RoomSettings | null>(null);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
 
@@ -171,12 +170,6 @@ export default function WorkspaceTeamSettings() {
                       isCreating={true}
                       teamId={selectedTeamId}
                     />
-
-                    {saveSuccess && (
-                      <Alert variant="success">
-                        Default settings saved successfully.
-                      </Alert>
-                    )}
 
                     {saveSettingsMutation.error instanceof Error && (
                       <Alert variant="warning">

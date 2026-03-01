@@ -1,8 +1,10 @@
-import { type FC, useState, useRef, useMemo, lazy, Suspense } from "react";
+import { type FC, useRef, useMemo, lazy, Suspense } from "react";
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { FallbackLoading } from "@/components/ui/FallbackLoading";
+import { toast } from "@/components/ui";
+import { copyText } from "@/lib/clipboard";
 
 const QRCodeSVG = lazy(() =>
   import("qrcode.react").then((module) => ({ default: module.QRCodeSVG })),
@@ -19,7 +21,6 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
   onClose,
   roomKey,
 }) => {
-  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const shareableUrl = useMemo(() => {
@@ -33,11 +34,11 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
     if (inputRef.current) {
       inputRef.current.select();
       try {
-        await navigator.clipboard.writeText(shareableUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        await copyText(shareableUrl);
+        toast.success("Room link copied");
       } catch (error) {
         console.error("Failed to copy text: ", error);
+        toast.error("Couldn't copy room link");
       }
     }
   };
@@ -63,7 +64,7 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
               className="flex-1 rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-300 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:ring-brand-900 dark:focus:border-brand-400"
             />
             <Button onClick={handleCopy} variant="primary" size="md">
-              {copied ? "Copied!" : "Copy"}
+              Copy
             </Button>
           </div>
         </div>

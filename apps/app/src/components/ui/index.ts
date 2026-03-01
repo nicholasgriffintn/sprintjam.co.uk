@@ -15,6 +15,7 @@ export { Separator } from "./Separator";
 export { Spinner } from "./Spinner";
 export { SurfaceCard } from "./SurfaceCard";
 export { Tabs } from "./Tabs";
+export { AppToastProvider, toast, useToast } from "./Toast";
 export type {
   TabsIndicatorProps,
   TabsListProps,

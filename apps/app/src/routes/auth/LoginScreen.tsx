@@ -14,7 +14,7 @@ import {
   verifyMfaSetup,
   type MfaMethod,
   type VerifyCodeResponse,
-} from '@/lib/workspace-service';
+} from "@/lib/workspace-service";
 import {
   buildAuthenticationOptions,
   buildRegistrationOptions,
@@ -32,25 +32,27 @@ import { ErrorMessage } from "@/routes/auth/components/ErrorMessage";
 import { PasskeyCard } from "@/routes/auth/components/PasskeyCard";
 import { TotpForm } from "@/routes/auth/components/TotpForm";
 import { RecoveryCodesCard } from "@/routes/auth/components/RecoveryCodesCard";
+import { toast } from "@/components/ui";
+import { copyText } from "@/lib/clipboard";
 
 const QRCodeSVG = lazy(() =>
   import("qrcode.react").then((module) => ({ default: module.QRCodeSVG })),
 );
 
 type LoginState =
-  | 'input'
-  | 'sending'
-  | 'code'
-  | 'verifying'
-  | 'mfa-choice'
-  | 'mfa-totp-setup'
-  | 'mfa-totp-verify'
-  | 'mfa-webauthn-setup'
-  | 'mfa-webauthn-verify'
-  | 'mfa-recovery-verify'
-  | 'mfa-recovery-codes'
-  | 'success'
-  | 'error';
+  | "input"
+  | "sending"
+  | "code"
+  | "verifying"
+  | "mfa-choice"
+  | "mfa-totp-setup"
+  | "mfa-totp-verify"
+  | "mfa-webauthn-setup"
+  | "mfa-webauthn-verify"
+  | "mfa-recovery-verify"
+  | "mfa-recovery-codes"
+  | "success"
+  | "error";
 
 type MfaFlowMode = "setup" | "verify";
 
@@ -80,17 +82,13 @@ export default function LoginScreen() {
   const handleCopyRecoveryCodes = async () => {
     const text = buildRecoveryCodesText(recoveryCodes);
     if (!text) return;
+
     try {
-      await navigator.clipboard.writeText(text);
+      await copyText(text);
+      toast.success("Recovery codes copied");
     } catch (err) {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
+      console.error("Failed to copy recovery codes:", err);
+      toast.error("Couldn't copy recovery codes");
     }
   };
 
@@ -110,22 +108,22 @@ export default function LoginScreen() {
     event.preventDefault();
     if (!email.trim()) return;
 
-    setState('sending');
-    setError('');
+    setState("sending");
+    setError("");
 
     try {
       await requestMagicLink(email.trim().toLowerCase());
-      setState('code');
+      setState("code");
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Failed to send verification code';
-      if (message === 'domain_not_allowed') {
-        setState('error');
+        err instanceof Error ? err.message : "Failed to send verification code";
+      if (message === "domain_not_allowed") {
+        setState("error");
         setError(
-          'Your email domain is not authorized for workspace access. Please contact your administrator.',
+          "Your email domain is not authorized for workspace access. Please contact your administrator.",
         );
       } else {
-        setState('error');
+        setState("error");
         setError(message);
       }
     }
@@ -151,10 +149,10 @@ export default function LoginScreen() {
       setMfaMode(result.mode);
       setMfaMethods(result.methods);
       setRequiresMfaReset(
-        result.mode === 'setup' && result.reason === 'recovery_reset_required',
+        result.mode === "setup" && result.reason === "recovery_reset_required",
       );
-      setMfaCode('');
-      setRecoveryCode('');
+      setMfaCode("");
+      setRecoveryCode("");
       setState("mfa-choice");
       return;
     }
@@ -404,14 +402,14 @@ export default function LoginScreen() {
                 </div>
               </div>
               <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                {mfaMode === 'setup'
+                {mfaMode === "setup"
                   ? requiresMfaReset
-                    ? 'Reset two-factor authentication'
-                    : 'Set up two-factor authentication'
-                  : 'Verify with two-factor authentication'}
+                    ? "Reset two-factor authentication"
+                    : "Set up two-factor authentication"
+                  : "Verify with two-factor authentication"}
               </h1>
               <p className="mt-2 text-slate-600 dark:text-slate-300">
-                Choose a method to {mfaMode === 'setup' ? 'set up' : 'continue'}
+                Choose a method to {mfaMode === "setup" ? "set up" : "continue"}
                 .
               </p>
             </div>
@@ -425,14 +423,14 @@ export default function LoginScreen() {
             ) : null}
 
             <div className="flex flex-col gap-3">
-              {mfaMethods.includes('totp') && (
+              {mfaMethods.includes("totp") && (
                 <Button
                   type="button"
                   fullWidth
                   size="lg"
                   variant="primary"
                   onClick={
-                    mfaMode === 'setup'
+                    mfaMode === "setup"
                       ? handleTotpSetupStart
                       : handleTotpVerifyStart
                   }
@@ -441,7 +439,7 @@ export default function LoginScreen() {
                   Use authenticator app
                 </Button>
               )}
-              {mfaMethods.includes('webauthn') && (
+              {mfaMethods.includes("webauthn") && (
                 <Button
                   type="button"
                   fullWidth
@@ -449,11 +447,11 @@ export default function LoginScreen() {
                   variant="primary"
                   onClick={() => {
                     setState(
-                      mfaMode === 'setup'
-                        ? 'mfa-webauthn-setup'
-                        : 'mfa-webauthn-verify',
+                      mfaMode === "setup"
+                        ? "mfa-webauthn-setup"
+                        : "mfa-webauthn-verify",
                     );
-                    if (mfaMode === 'setup') {
+                    if (mfaMode === "setup") {
                       void handleWebAuthnSetup();
                     } else {
                       void handleWebAuthnVerify();
@@ -464,15 +462,15 @@ export default function LoginScreen() {
                   Use passkey
                 </Button>
               )}
-              {mfaMode === 'verify' && (
+              {mfaMode === "verify" && (
                 <Button
                   type="button"
                   fullWidth
                   size="md"
                   variant="secondary"
                   onClick={() => {
-                    setError('');
-                    setState('mfa-recovery-verify');
+                    setError("");
+                    setState("mfa-recovery-verify");
                   }}
                   disabled={isMfaBusy}
                 >
@@ -679,9 +677,9 @@ export default function LoginScreen() {
             isSetup
               ? undefined
               : () => {
-                setError('');
-                setState('mfa-recovery-verify');
-              }
+                  setError("");
+                  setState("mfa-recovery-verify");
+                }
           }
         />
       </AuthPage>

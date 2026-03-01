@@ -4,6 +4,8 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { FallbackLoading } from "@/components/ui/FallbackLoading";
 import { Switch } from "@/components/ui/Switch";
+import { toast } from "@/components/ui";
+import { copyText } from "@/lib/clipboard";
 import { updateWheelPasscode } from "@/lib/wheel-api-service";
 import { USERNAME_STORAGE_KEY } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
@@ -25,10 +27,8 @@ export function ShareWheelModal({
   wheelKey,
   isModeratorView = false,
 }: ShareWheelModalProps) {
-  const [copied, setCopied] = useState(false);
   const [passcodeEnabled, setPasscodeEnabled] = useState(false);
   const [passcode, setPasscode] = useState("");
-  const [passcodeCopied, setPasscodeCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const shareableUrl = useMemo(() => {
@@ -42,22 +42,22 @@ export function ShareWheelModal({
     if (inputRef.current) {
       inputRef.current.select();
       try {
-        await navigator.clipboard.writeText(shareableUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        await copyText(shareableUrl);
+        toast.success("Wheel link copied");
       } catch (error) {
         console.error("Failed to copy text: ", error);
+        toast.error("Couldn't copy wheel link");
       }
     }
   };
 
   const handleCopyPasscode = async () => {
     try {
-      await navigator.clipboard.writeText(passcode);
-      setPasscodeCopied(true);
-      setTimeout(() => setPasscodeCopied(false), 2000);
+      await copyText(passcode);
+      toast.success("Passcode copied");
     } catch (error) {
       console.error("Failed to copy passcode: ", error);
+      toast.error("Couldn't copy passcode");
     }
   };
 
@@ -74,6 +74,7 @@ export function ShareWheelModal({
       await updateWheelPasscode(wheelKey, userName, code);
     } catch (error) {
       console.error("Failed to save passcode:", error);
+      toast.error("Couldn't save passcode");
     }
   };
 
@@ -94,7 +95,7 @@ export function ShareWheelModal({
     } catch (error) {
       console.error("Failed to update passcode:", error);
       setPasscodeEnabled(!enabled);
-      alert("Failed to update passcode. Please try again.");
+      toast.error("Couldn't update passcode");
     }
   };
 
@@ -119,7 +120,7 @@ export function ShareWheelModal({
               className="flex-1 rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-300 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:ring-brand-900 dark:focus:border-brand-400"
             />
             <Button onClick={handleCopy} variant="primary" size="md">
-              {copied ? "Copied!" : "Copy"}
+              Copy
             </Button>
           </div>
         </div>
@@ -162,8 +163,9 @@ export function ShareWheelModal({
                     onClick={handleCopyPasscode}
                     variant="secondary"
                     size="sm"
+                    disabled={!passcode}
                   >
-                    {passcodeCopied ? "Copied!" : "Copy"}
+                    Copy
                   </Button>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">

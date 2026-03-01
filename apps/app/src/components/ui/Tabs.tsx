@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 
 import { cn } from "@/lib/cn";
+import { composeClassName } from "@/lib/compose-class-name";
 
 type TabsRootProps = ComponentProps<typeof BaseTabs.Root>;
 
@@ -13,17 +14,6 @@ interface TabsListProps extends ComponentProps<typeof BaseTabs.List> {
 type TabsTabProps = ComponentProps<typeof BaseTabs.Tab>;
 type TabsIndicatorProps = ComponentProps<typeof BaseTabs.Indicator>;
 type TabsPanelProps = ComponentProps<typeof BaseTabs.Panel>;
-
-function composeClassName<State>(
-  baseClassName: string,
-  className?: string | ((state: State) => string | undefined),
-) {
-  if (typeof className === "function") {
-    return (state: State) => cn(baseClassName, className(state));
-  }
-
-  return cn(baseClassName, className);
-}
 
 function Root({ className, ...props }: TabsRootProps) {
   return (

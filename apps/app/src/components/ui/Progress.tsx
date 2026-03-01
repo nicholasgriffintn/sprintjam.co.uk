@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { Progress as BaseProgress } from "@base-ui/react/progress";
 
-import { cn } from "@/lib/cn";
+import { composeClassName } from "@/lib/compose-class-name";
 
 type ProgressProps = ComponentPropsWithoutRef<typeof BaseProgress.Root>;
 
@@ -9,7 +9,7 @@ export function Progress({ value = null, className, ...props }: ProgressProps) {
   return (
     <BaseProgress.Root
       value={value}
-      className={cn("w-full", className)}
+      className={composeClassName("w-full", className)}
       {...props}
     >
       <BaseProgress.Track className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800/80">
