@@ -1,65 +1,51 @@
-# 🎯 SprintJam
+# SprintJam - Fast, real-time planning poker for distributed teams
 
-**Collaborative Planning Poker for Agile Teams - Without the Ads**
-
-SprintJam is a modern, privacy-focused planning poker application designed for agile teams who want to run effective story pointing sessions without dealing with ads, trackers, or subscription fees.
+SprintJam makes it easy to estimate stories in minutes with live voting, smart consensus insights, and a distraction-free room that keeps everyone focused. No sign-ups required, just share a link to start.
 
 [![Website](https://img.shields.io/badge/sprintjam.co.uk-blue?style=for-the-badge)](https://sprintjam.co.uk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
 
 > **Note**: This is somewhat of a passion project built in my spare time. While I strive to maintain and improve it, please be aware that it is provided "as is". A large amount of development has also been contributed with AI assistance. All contributions and feedback are welcome!
 
-## ✨ Features
+## Features
 
-### 🎲 **Flexible Voting Systems**
+### Live Estimations
 
-- **Classic Planning Poker**: Traditional Fibonacci sequence (1, 2, 3, 5, 8, 13, 21, ?)
-- **Structured Voting**: Multi-criteria estimation with weighted scoring across:
-  - Complexity (35% weight)
-  - Confidence (25% weight)
-  - Volume (25% weight)
-  - Unknowns (15% weight)
+- Classic planning poker with Fibonacci, short Fibonacci, doubling, T-shirt sizes, hours, yes/no, simple, planet, or custom scales
+- Structured voting with weighted scoring across complexity, confidence, volume, and unknowns
+- Extra vote cards such as unknown, coffee break, and cannot complete
 
-### 🤖 **Smart Resolution Algorithms (The Judge)**
+### Automated Consensus Insights
 
-- **Smart Consensus**: Intelligent analysis of voting patterns
-- **Automatic Scoring**: Final story point recommendations
-- **Consensus Detection**: Identifies when team alignment is reached
+- The Judge analyses vote spread, suggests a consensus score, and flags when discussion is still needed
+- Moderator controls for hidden voting, auto-reveal, locked votes, spectator mode, and passcode-protected rooms
+- Shared timers, contextual room guidance, summary cards, and vote distribution views
 
-### 🔗 **External Provider Integrations**
+### Third party integrations
 
-- OAuth 2.0 per-room connections to Jira, Linear, or GitHub
-- Fetch ticket details and keep estimates in sync
-- Provider-specific fields (Jira story points/sprint; Linear estimate field; GitHub comments)
-- Automatic token refresh per moderator
+- Jira, Linear, and GitHub integrations with workspace-managed team connections and room-level flows
+- Import tickets, browse boards, sprints, cycles, repos, and milestones, then estimate without leaving SprintJam
+- Sync estimates back to the source system and save rooms against workspace teams for later
 
-### 🎛️ **Customizable Experience**
+### Managed Workspaces and Teams
 
-- **Room Settings**: Configure voting options, display preferences, and permissions
-- **Anonymous Voting**: Optional anonymous mode for unbiased estimation
-- **Timer Support**: Optional session timing
-- **Results Display**: Customizable summary cards and vote distribution charts
+- Magic-link sign-in for approved workspace domains
+- MFA with TOTP or passkeys, plus recovery codes
+- Team defaults, shared integrations, saved sessions, and workspace-level planning insights
 
-### 🚀 **Real-time Collaboration**
+### Real-Time Collaboration Tools
 
-- WebSocket-powered live updates
-- Multi-user rooms with moderator controls
-- Participant presence indicators
-- Share rooms via QR codes or links
+- WebSocket-powered rooms with live presence, moderator controls, and shareable links or QR codes
+- A built-in spin-the-wheel tool for quick decisions during planning sessions
+- Quick break games including Guess the Number, Word Chain, Emoji Story, One-Word Pitch, Category Blitz, Clueboard, Sprint Word, Team Threads, and Sprint Risk
 
-### 🔒 **Privacy-First Design**
+### Privacy-First Design
 
 - No ads or tracking
-- Optional room passcodes
 - Self-hostable on Cloudflare
 - Open source and transparent
 
-## 🛠️ Technology Stack
-
-- **Frontend**: React, TypeScript, Tailwind CSS, Framer Motion, Vite, TanStack
-- **Backend**: Cloudflare Workers, Durable Objects
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Using the Hosted Version
 
@@ -74,8 +60,7 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    cd sprintjam.co.uk
    ```
 
-   You should end up with a pnpm monorepo that con contains the following apps:
-
+   You should end up with a pnpm monorepo that contains the following apps:
    - `apps/app` - dispatch worker and static assets
    - `apps/room-worker` - planning poker APIs, WebSockets, and the `PlanningRoom` Durable Object
    - `apps/auth-worker` - workspace auth, teams, and team-level integrations backed by D1
@@ -141,7 +126,7 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
 
    ```env
    # apps/wheel-worker/.dev.vars
-   
+
    TOKEN_ENCRYPTION_SECRET=replace-me
    ```
 
@@ -185,7 +170,7 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
 
    For staging, use `pnpm run db:migrate:staging` and `pnpm run deploy:staging`.
 
-## 🔧 Development
+## Development
 
 ### Local Development
 
@@ -221,7 +206,7 @@ pnpm run dev -- --host sprintjam.localhost
 
 If those certificate files exist, Vite automatically serves HTTPS. Then open `https://sprintjam.localhost:5173`.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! This project was built quickly and there are definitely areas for improvement.
 
