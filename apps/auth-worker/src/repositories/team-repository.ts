@@ -1,5 +1,15 @@
 import { drizzle } from "drizzle-orm/d1";
-import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  or,
+  sql,
+} from 'drizzle-orm';
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   teamMemberships,
@@ -11,7 +21,7 @@ import {
 import * as schema from "@sprintjam/db/d1/schemas";
 import type { RoomSettings } from "@sprintjam/types";
 
-const MAX_SESSIONS_FOR_STATS = 5000;
+const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 
 const teamSelection = {
   id: teams.id,
@@ -136,6 +146,9 @@ export class TeamRepository {
 
   async deleteTeam(teamId: number): Promise<void> {
     await this.db.delete(teamSessions).where(eq(teamSessions.teamId, teamId));
+    await this.db
+      .delete(teamMemberships)
+      .where(eq(teamMemberships.teamId, teamId));
     await this.db.delete(teams).where(eq(teams.id, teamId));
   }
 
@@ -225,13 +238,16 @@ export class TeamRepository {
     await this.db
       .update(teamMemberships)
       .set({
-        status: "active",
+        status: 'active',
         approvedById,
         approvedAt: Date.now(),
         updatedAt: Date.now(),
       })
       .where(
-        and(eq(teamMemberships.teamId, teamId), eq(teamMemberships.userId, userId)),
+        and(
+          eq(teamMemberships.teamId, teamId),
+          eq(teamMemberships.userId, userId),
+        ),
       );
   }
 
@@ -262,12 +278,17 @@ export class TeamRepository {
     await this.db
       .delete(teamMemberships)
       .where(
-        and(eq(teamMemberships.teamId, teamId), eq(teamMemberships.userId, userId)),
+        and(
+          eq(teamMemberships.teamId, teamId),
+          eq(teamMemberships.userId, userId),
+        ),
       );
   }
 
   async removeUserFromTeams(userId: number): Promise<void> {
-    await this.db.delete(teamMemberships).where(eq(teamMemberships.userId, userId));
+    await this.db
+      .delete(teamMemberships)
+      .where(eq(teamMemberships.userId, userId));
   }
 
   async isTeamAdmin(teamId: number, userId: number): Promise<boolean> {
@@ -420,7 +441,7 @@ export class TeamRepository {
         and(
           eq(teamMemberships.teamId, teams.id),
           eq(teamMemberships.userId, userId),
-          eq(teamMemberships.status, "active"),
+          eq(teamMemberships.status, 'active'),
         ),
       )
       .where(
@@ -431,10 +452,10 @@ export class TeamRepository {
             ? sql`1 = 1`
             : or(
                 eq(teamSessions.createdById, userId),
-                eq(teams.accessPolicy, "open"),
+                eq(teams.accessPolicy, 'open'),
                 eq(teamMemberships.userId, userId),
               ),
-          sql`${teamSessions.completedAt} IS NULL`,
+          isNull(teamSessions.completedAt),
         ),
       )
       .orderBy(desc(teamSessions.createdAt))
@@ -472,27 +493,37 @@ export class TeamRepository {
 
     const teamIds = userTeams.map((team) => team.id);
 
-    const sessions = await this.db
+    const [sessionCounts] = await this.db
       .select({
-        id: teamSessions.id,
+        total: count(),
+        active: sql<number>`sum(case when ${teamSessions.completedAt} is null then 1 else 0 end)`,
+      })
+      .from(teamSessions)
+      .where(inArray(teamSessions.teamId, teamIds));
+
+    const totalSessions = sessionCounts?.total ?? 0;
+    const activeSessions = Number(sessionCounts?.active ?? 0);
+    const completedSessions = totalSessions - activeSessions;
+
+    const timelineSessions = await this.db
+      .select({
         createdAt: teamSessions.createdAt,
         completedAt: teamSessions.completedAt,
       })
       .from(teamSessions)
-      .where(inArray(teamSessions.teamId, teamIds))
-      .orderBy(desc(teamSessions.createdAt))
-      .limit(MAX_SESSIONS_FOR_STATS);
-
-    const totalSessions = sessions.length;
-    const activeSessions = sessions.filter((session) => !session.completedAt).length;
-    const completedSessions = sessions.filter((session) => !!session.completedAt).length;
+      .where(
+        and(
+          inArray(teamSessions.teamId, teamIds),
+          gte(teamSessions.createdAt, Date.now() - SIX_MONTHS_MS),
+        ),
+      );
 
     return {
       totalTeams: userTeams.length,
       totalSessions,
       activeSessions,
       completedSessions,
-      sessionTimeline: this.buildSessionTimeline(sessions),
+      sessionTimeline: this.buildSessionTimeline(timelineSessions),
     };
   }
 

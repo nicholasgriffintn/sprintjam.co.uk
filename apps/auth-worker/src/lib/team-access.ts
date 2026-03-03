@@ -1,8 +1,9 @@
 import type {
   MembershipStatus,
+  Team,
   TeamRole,
   WorkspaceTeam,
-} from "@sprintjam/types";
+} from '@sprintjam/types';
 
 type TeamLike = {
   id: number;
@@ -10,15 +11,15 @@ type TeamLike = {
   accessPolicy: "open" | "restricted";
 };
 
-type WorkspaceTeamSource = Omit<
-  WorkspaceTeam,
-  "currentUserRole" | "currentUserStatus" | "canAccess" | "canManage"
->;
+type WorkspaceTeamSource = Team;
 
-type TeamMembershipLike = {
-  role: TeamRole;
-  status: MembershipStatus;
-} | null | undefined;
+type TeamMembershipLike =
+  | {
+      role: TeamRole;
+      status: MembershipStatus;
+    }
+  | null
+  | undefined;
 
 export function isActiveTeamMember(
   team: TeamLike,
@@ -49,7 +50,7 @@ export function canManageTeam(
 ): boolean {
   return (
     isWorkspaceAdmin ||
-    membership?.role === "admin" ||
+    (membership?.role === 'admin' && membership?.status === 'active') ||
     team.ownerId === userId
   );
 }

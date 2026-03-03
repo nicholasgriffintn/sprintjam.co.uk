@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import { and, desc, eq, inArray, isNull, lt } from "drizzle-orm";
+import { and, desc, eq, isNull, lt } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   allowedDomains,
@@ -17,6 +17,7 @@ import {
 } from "@sprintjam/db";
 import * as schema from "@sprintjam/db/d1/schemas";
 import { extractDomain } from "@sprintjam/utils";
+import { SESSION_LAST_USED_UPDATE_THRESHOLD_MS } from "../constants";
 
 export class AuthRepository {
   private db: ReturnType<typeof drizzle>;
@@ -170,9 +171,7 @@ export class AuthRepository {
     });
   }
 
-  async validateSession(
-    tokenHash: string,
-  ): Promise<{
+  async validateSession(tokenHash: string): Promise<{
     userId: number;
     email: string;
     organisationId: number;
@@ -182,6 +181,7 @@ export class AuthRepository {
       .select({
         userId: workspaceSessions.userId,
         expiresAt: workspaceSessions.expiresAt,
+        lastUsedAt: workspaceSessions.lastUsedAt,
         email: users.email,
         organisationId: users.organisationId,
         workspaceRole: workspaceMemberships.role,
@@ -199,14 +199,17 @@ export class AuthRepository {
       .where(eq(workspaceSessions.tokenHash, tokenHash))
       .get();
 
-    if (!session || session.expiresAt < Date.now()) {
+    const now = Date.now();
+    if (!session || session.expiresAt < now) {
       return null;
     }
 
-    await this.db
-      .update(workspaceSessions)
-      .set({ lastUsedAt: Date.now() })
-      .where(eq(workspaceSessions.tokenHash, tokenHash));
+    if (now - session.lastUsedAt > SESSION_LAST_USED_UPDATE_THRESHOLD_MS) {
+      await this.db
+        .update(workspaceSessions)
+        .set({ lastUsedAt: now })
+        .where(eq(workspaceSessions.tokenHash, tokenHash));
+    }
 
     return {
       userId: session.userId,
@@ -223,7 +226,9 @@ export class AuthRepository {
   }
 
   async invalidateSessionsForUser(userId: number): Promise<void> {
-    await this.db.delete(workspaceSessions).where(eq(workspaceSessions.userId, userId));
+    await this.db
+      .delete(workspaceSessions)
+      .where(eq(workspaceSessions.userId, userId));
   }
 
   async getUserByEmail(email: string) {
@@ -306,7 +311,17 @@ export class AuthRepository {
       .where(eq(organisations.id, organisationId));
   }
 
-  async getOrganisationMembers(organisationId: number) {
+  async getOrganisationMembers(
+    organisationId: number,
+    statusFilter?: "active" | "pending",
+  ) {
+    const condition = statusFilter
+      ? and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.status, statusFilter),
+        )
+      : eq(workspaceMemberships.organisationId, organisationId);
+
     return await this.db
       .select({
         id: users.id,
@@ -321,7 +336,7 @@ export class AuthRepository {
       })
       .from(workspaceMemberships)
       .innerJoin(users, eq(users.id, workspaceMemberships.userId))
-      .where(eq(workspaceMemberships.organisationId, organisationId))
+      .where(condition)
       .orderBy(users.email);
   }
 
@@ -377,8 +392,7 @@ export class AuthRepository {
     approvedById?: number | null;
   }): Promise<void> {
     const now = Date.now();
-    const approvedAt =
-      params.status === "active" ? now : null;
+    const approvedAt = params.status === "active" ? now : null;
 
     await this.db
       .insert(workspaceMemberships)
@@ -902,40 +916,18 @@ export class AuthRepository {
   }
 
   async cleanupExpiredMagicLinks(): Promise<number> {
-    const now = Date.now();
-    const expiredLinks = await this.db
-      .select({ id: magicLinks.id })
-      .from(magicLinks)
-      .where(lt(magicLinks.expiresAt, now))
-      .all();
-
-    if (expiredLinks.length === 0) {
-      return 0;
-    }
-
-    const ids = expiredLinks.map((link) => link.id);
-    await this.db.delete(magicLinks).where(inArray(magicLinks.id, ids));
-
-    return expiredLinks.length;
+    const deleted = await this.db
+      .delete(magicLinks)
+      .where(lt(magicLinks.expiresAt, Date.now()))
+      .returning({ id: magicLinks.id });
+    return deleted.length;
   }
 
   async cleanupExpiredSessions(): Promise<number> {
-    const now = Date.now();
-    const expiredSessions = await this.db
-      .select({ tokenHash: workspaceSessions.tokenHash })
-      .from(workspaceSessions)
-      .where(lt(workspaceSessions.expiresAt, now))
-      .all();
-
-    if (expiredSessions.length === 0) {
-      return 0;
-    }
-
-    const tokenHashes = expiredSessions.map((s) => s.tokenHash);
-    await this.db
+    const deleted = await this.db
       .delete(workspaceSessions)
-      .where(inArray(workspaceSessions.tokenHash, tokenHashes));
-
-    return expiredSessions.length;
+      .where(lt(workspaceSessions.expiresAt, Date.now()))
+      .returning({ userId: workspaceSessions.userId });
+    return deleted.length;
   }
 }

@@ -50,9 +50,7 @@ export class WorkspaceAuthRepository {
     return this.auth.createSession(userId, tokenHash, expiresAt);
   }
 
-  validateSession(
-    tokenHash: string,
-  ): Promise<{
+  validateSession(tokenHash: string): Promise<{
     userId: number;
     email: string;
     organisationId: number;
@@ -102,8 +100,11 @@ export class WorkspaceAuthRepository {
     return this.auth.updateOrganisation(organisationId, updates);
   }
 
-  getOrganisationMembers(organisationId: number) {
-    return this.auth.getOrganisationMembers(organisationId);
+  getOrganisationMembers(
+    organisationId: number,
+    statusFilter?: "active" | "pending",
+  ) {
+    return this.auth.getOrganisationMembers(organisationId, statusFilter);
   }
 
   getOrganisationMembership(userId: number, organisationId: number) {
@@ -141,7 +142,11 @@ export class WorkspaceAuthRepository {
     organisationId: number,
     role: "admin" | "member",
   ): Promise<boolean> {
-    return this.auth.updateWorkspaceMembershipRole(userId, organisationId, role);
+    return this.auth.updateWorkspaceMembershipRole(
+      userId,
+      organisationId,
+      role,
+    );
   }
 
   removeWorkspaceMembership(
@@ -413,7 +418,11 @@ export class WorkspaceAuthRepository {
     userId: number,
     isWorkspaceAdmin: boolean,
   ) {
-    return this.teams.getWorkspaceStats(organisationId, userId, isWorkspaceAdmin);
+    return this.teams.getWorkspaceStats(
+      organisationId,
+      userId,
+      isWorkspaceAdmin,
+    );
   }
 
   getTeamSettings(teamId: number) {

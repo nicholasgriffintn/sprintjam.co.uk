@@ -10,6 +10,7 @@ import {
   addTeamMemberController,
   requestTeamAccessController,
   approveTeamMemberController,
+  approveWorkspaceMemberController,
   moveTeamMemberController,
   updateTeamMemberController,
   removeTeamMemberController,
@@ -104,6 +105,7 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
   getTeamMembership: vi.fn().mockResolvedValue(null),
   upsertTeamMembership: vi.fn(),
   approveTeamMembership: vi.fn(),
+  approveWorkspaceMembership: vi.fn(),
   updateTeamMembershipRole: vi.fn(),
   removeTeamMembership: vi.fn(),
   listTeamMembers: vi.fn().mockResolvedValue([]),
@@ -489,6 +491,93 @@ describe("teams-controller", () => {
     expect(response.status).toBe(200);
     expect(data.member.status).toBe("active");
     expect(repo.approveTeamMembership).toHaveBeenCalledWith(10, 2, 1);
+  });
+
+  it("rejects approving a team member who is already active", async () => {
+    const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce({ role: "admin", status: "active" })
+        .mockResolvedValueOnce({ role: "member", status: "active" }),
+    });
+    authenticateAs(repo);
+
+    const response = await approveTeamMemberController(
+      makeRequest("https://test.com/teams/10/members/2/approve", {
+        method: "POST",
+      }),
+      env,
+      10,
+      2,
+    );
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("Member is not pending approval");
+    expect(repo.approveTeamMembership).not.toHaveBeenCalled();
+  });
+
+  it("approves a pending workspace member", async () => {
+    const repo = createRepo({
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValueOnce(makeMembership({ role: "admin", userId: 1 }))
+        .mockResolvedValueOnce(
+          makeMembership({ role: "member", userId: 2, status: "pending" }),
+        ),
+      getOrganisationMembers: vi.fn().mockResolvedValue([
+        {
+          id: 2,
+          email: "member@example.com",
+          name: "Member User",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "member",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+      ]),
+    });
+    authenticateAs(repo);
+
+    const response = await approveWorkspaceMemberController(
+      makeRequest("https://test.com/workspace/members/2/approve", {
+        method: "POST",
+      }),
+      env,
+      2,
+    );
+    const data = (await response.json()) as { member: { status: string } };
+
+    expect(response.status).toBe(200);
+    expect(data.member.status).toBe("active");
+    expect(repo.approveWorkspaceMembership).toHaveBeenCalledWith(1, 2, 1);
+  });
+
+  it("rejects approving a workspace member who is already active", async () => {
+    const repo = createRepo({
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValueOnce(makeMembership({ role: "admin", userId: 1 }))
+        .mockResolvedValueOnce(
+          makeMembership({ role: "member", userId: 2, status: "active" }),
+        ),
+    });
+    authenticateAs(repo);
+
+    const response = await approveWorkspaceMemberController(
+      makeRequest("https://test.com/workspace/members/2/approve", {
+        method: "POST",
+      }),
+      env,
+      2,
+    );
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("Member is not pending approval");
+    expect(repo.approveWorkspaceMembership).not.toHaveBeenCalled();
   });
 
   it("promotes a team member to admin", async () => {

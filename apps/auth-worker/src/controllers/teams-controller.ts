@@ -24,6 +24,8 @@ import {
 const MAX_WORKSPACE_NAME_LENGTH = 120;
 const MAX_LOGO_URL_LENGTH = 500;
 const MAX_TEAM_NAME_LENGTH = 100;
+const MAX_SESSION_NAME_LENGTH = 200;
+const MAX_ROOM_KEY_LENGTH = 100;
 
 type WorkspaceViewer = {
   user: NonNullable<Awaited<ReturnType<AuthResult["repo"]["getUserById"]>>>;
@@ -169,10 +171,8 @@ async function ensureNotLastWorkspaceAdmin(
   organisationId: number,
   userId: number,
 ): Promise<Response | null> {
-  const members = await repo.getOrganisationMembers(organisationId);
-  const activeAdmins = members.filter(
-    (member) => member.status === "active" && member.role === "admin",
-  );
+  const members = await repo.getOrganisationMembers(organisationId, "active");
+  const activeAdmins = members.filter((member) => member.role === "admin");
 
   if (activeAdmins.length === 1 && activeAdmins[0]?.id === userId) {
     return jsonError("At least one workspace admin is required", 409);
@@ -580,6 +580,10 @@ export async function approveTeamMemberController(
     return notFoundResponse("Team member not found");
   }
 
+  if (membership.status !== "pending") {
+    return jsonError("Member is not pending approval", 409);
+  }
+
   await auth.result.repo.approveTeamMembership(
     teamId,
     memberUserId,
@@ -844,7 +848,9 @@ export async function moveTeamMemberController(
   }
 
   const members = await auth.result.repo.listTeamMembers(targetTeamId);
-  const movedMember = members.find((teamMember) => teamMember.id === memberUserId);
+  const movedMember = members.find(
+    (teamMember) => teamMember.id === memberUserId,
+  );
 
   return jsonResponse({ member: movedMember, message: "Team member moved" });
 }
@@ -905,8 +911,22 @@ export async function createTeamSessionController(
     return jsonError("Session name is required", 400);
   }
 
+  if (name.length > MAX_SESSION_NAME_LENGTH) {
+    return jsonError(
+      `Session name must be ${MAX_SESSION_NAME_LENGTH} characters or less`,
+      400,
+    );
+  }
+
   if (!roomKey) {
     return jsonError("Room key is required", 400);
+  }
+
+  if (roomKey.length > MAX_ROOM_KEY_LENGTH) {
+    return jsonError(
+      `Room key must be ${MAX_ROOM_KEY_LENGTH} characters or less`,
+      400,
+    );
   }
 
   if (body?.metadata) {
@@ -1036,12 +1056,9 @@ export async function getWorkspaceProfileController(
     return notFoundResponse("Organisation not found");
   }
 
-  const members = (
-    await auth.result.repo.getOrganisationMembers(
-      workspace.viewer.user.organisationId,
-    )
-  ).filter(
-    (member) => member.status === "active" || workspace.viewer.isWorkspaceAdmin,
+  const members = await auth.result.repo.getOrganisationMembers(
+    workspace.viewer.user.organisationId,
+    workspace.viewer.isWorkspaceAdmin ? undefined : "active",
   );
   const invites = workspace.viewer.isWorkspaceAdmin
     ? await auth.result.repo.listPendingWorkspaceInvites(
@@ -1178,6 +1195,10 @@ export async function approveWorkspaceMemberController(
   );
   if (!membership) {
     return notFoundResponse("Workspace member not found");
+  }
+
+  if (membership.status !== "pending") {
+    return jsonError("Member is not pending approval", 409);
   }
 
   await auth.result.repo.approveWorkspaceMembership(
