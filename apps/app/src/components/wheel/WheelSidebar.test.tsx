@@ -61,4 +61,38 @@ describe("WheelSidebar", () => {
 
     expect((textarea as HTMLTextAreaElement).value).toBe("Alice\nBob");
   });
+
+  it("keeps the textarea focused through unrelated result updates", () => {
+    const { rerender } = render(
+      <WheelSidebar
+        {...baseProps}
+        entries={[{ id: "entry-1", name: "Alice", enabled: true }]}
+      />,
+    );
+
+    const textarea = screen.getByPlaceholderText("Enter names, one per line...");
+
+    fireEvent.focus(textarea);
+    fireEvent.change(textarea, { target: { value: "Alice\nBob" } });
+
+    rerender(
+      <WheelSidebar
+        {...baseProps}
+        entries={[{ id: "entry-1", name: "Alice", enabled: true }]}
+        results={[
+          {
+            id: "result-1",
+            winner: "Alice",
+            timestamp: Date.now(),
+            removedAfter: false,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText("Enter names, one per line...")).toBe(
+      textarea,
+    );
+    expect((textarea as HTMLTextAreaElement).value).toBe("Alice\nBob");
+  });
 });
