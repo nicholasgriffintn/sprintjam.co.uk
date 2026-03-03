@@ -136,10 +136,15 @@ describe("requestMagicLinkController", () => {
     });
 
     const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as { error: string; message: string };
+    const data = (await response.json()) as {
+      code: string;
+      error: string;
+      message: string;
+    };
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe("domain_not_allowed");
+    expect(data.code).toBe("domain_not_allowed");
+    expect(data.error).toContain("not authorized for workspace access");
     expect(data.message).toContain("not authorized for workspace access");
     expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({

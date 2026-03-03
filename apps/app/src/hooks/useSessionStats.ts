@@ -1,4 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+import {
+  batchSessionStatsQueryKey,
+  normaliseSessionRoomKeys,
+  SESSION_STATS_STALE_TIME_MS,
+  sessionStatsQueryKey,
+} from "@/lib/workspace-query";
 import { getBatchSessionStats } from "@/lib/workspace-service";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
 
@@ -12,42 +20,34 @@ interface UseSessionStatsReturn {
 export function useSessionStats(
   sessions: TeamSession[],
 ): UseSessionStatsReturn {
-  const [statsMap, setStatsMap] = useState<Record<string, SessionStats>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
+  const roomKeys = useMemo(
+    () => normaliseSessionRoomKeys(sessions.map((session) => session.roomKey)),
+    [sessions],
+  );
 
-  const fetchStats = useCallback(async () => {
-    if (sessions.length === 0) {
-      setStatsMap({});
-      return;
-    }
-
-    const roomKeys = sessions.map((s) => s.roomKey);
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const statsQuery = useQuery<Record<string, SessionStats>>({
+    queryKey: batchSessionStatsQueryKey(roomKeys),
+    enabled: roomKeys.length > 0,
+    staleTime: SESSION_STATS_STALE_TIME_MS,
+    queryFn: async () => {
       const data = await getBatchSessionStats(roomKeys);
-      setStatsMap(data);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch session stats"),
-      );
-      setStatsMap({});
-    } finally {
-      setIsLoading(false);
-    }
-  }, [sessions]);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+      for (const roomKey of roomKeys) {
+        queryClient.setQueryData(
+          sessionStatsQueryKey(roomKey),
+          data[roomKey] ?? null,
+        );
+      }
+      return data;
+    },
+  });
 
   return {
-    statsMap,
-    isLoading,
-    error,
-    refetch: fetchStats,
+    statsMap: roomKeys.length === 0 ? {} : (statsQuery.data ?? {}),
+    isLoading: roomKeys.length > 0 && statsQuery.isFetching,
+    error: statsQuery.error instanceof Error ? statsQuery.error : null,
+    refetch: async () => {
+      await statsQuery.refetch();
+    },
   };
 }

@@ -6,6 +6,10 @@ import { Spinner } from "@/components/ui/Spinner";
 import { getSessionStats } from "@/lib/workspace-service";
 import { formatVelocity } from "@/lib/formatters";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
+import {
+  SESSION_STATS_STALE_TIME_MS,
+  sessionStatsQueryKey,
+} from "@/lib/workspace-query";
 import type { SessionStats } from "@sprintjam/types";
 
 interface RoomStatsPanelProps {
@@ -16,9 +20,9 @@ export function RoomStatsPanel({ roomKey }: RoomStatsPanelProps) {
   const { isAuthenticated } = useWorkspaceData();
 
   const { data: stats, isLoading } = useQuery<SessionStats | null>({
-    queryKey: ["session-stats", roomKey],
+    queryKey: sessionStatsQueryKey(roomKey),
     enabled: isAuthenticated,
-    staleTime: 60_000,
+    staleTime: SESSION_STATS_STALE_TIME_MS,
     queryFn: () => getSessionStats(roomKey),
   });
 

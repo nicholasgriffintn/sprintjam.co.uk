@@ -115,17 +115,10 @@ export default function LoginScreen() {
       await requestMagicLink(email.trim().toLowerCase());
       setState("code");
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to send verification code";
-      if (message === "domain_not_allowed") {
-        setState("error");
-        setError(
-          "Your email domain is not authorized for workspace access. Please contact your administrator.",
-        );
-      } else {
-        setState("error");
-        setError(message);
-      }
+      setState("error");
+      setError(
+        err instanceof Error ? err.message : "Failed to send verification code",
+      );
     }
   };
 

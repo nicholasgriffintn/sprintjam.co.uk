@@ -15,7 +15,7 @@ export async function getCurrentUserController(
 ): Promise<Response> {
   const token = getSessionTokenFromRequest(request);
   if (!token) {
-    return jsonError("Unauthorized", 401);
+    return jsonError("Unauthorized", 401, "unauthorized");
   }
 
   const tokenHash = await hashToken(token);
@@ -23,12 +23,12 @@ export async function getCurrentUserController(
 
   const session = await repo.validateSession(tokenHash);
   if (!session) {
-    return jsonError("Invalid or expired session", 401);
+    return jsonError("Invalid or expired session", 401, "invalid_session");
   }
 
   const user = await repo.getUserByEmail(session.email);
   if (!user?.id) {
-    return jsonError("User not found", 404);
+    return jsonError("User not found", 404, "user_not_found");
   }
 
   const membership = await repo.getOrganisationMembership(
@@ -36,7 +36,11 @@ export async function getCurrentUserController(
     user.organisationId,
   );
   if (!membership || membership.status !== "active") {
-    return jsonError("Workspace access is not active", 403);
+    return jsonError(
+      "Workspace access is not active",
+      403,
+      "workspace_access_inactive",
+    );
   }
 
   const isWorkspaceAdmin = await repo.isOrganisationAdmin(
@@ -78,7 +82,7 @@ export async function updateCurrentUserProfileController(
 ): Promise<Response> {
   const token = getSessionTokenFromRequest(request);
   if (!token) {
-    return jsonError("Unauthorized", 401);
+    return jsonError("Unauthorized", 401, "unauthorized");
   }
 
   const tokenHash = await hashToken(token);
@@ -86,12 +90,12 @@ export async function updateCurrentUserProfileController(
 
   const session = await repo.validateSession(tokenHash);
   if (!session) {
-    return jsonError("Invalid or expired session", 401);
+    return jsonError("Invalid or expired session", 401, "invalid_session");
   }
 
   const user = await repo.getUserByEmail(session.email);
   if (!user?.id) {
-    return jsonError("User not found", 404);
+    return jsonError("User not found", 404, "user_not_found");
   }
 
   const body = await request.json<{
@@ -103,19 +107,28 @@ export async function updateCurrentUserProfileController(
   const hasAvatarUpdate = Object.prototype.hasOwnProperty.call(body, "avatar");
 
   if (!hasNameUpdate && !hasAvatarUpdate) {
-    return jsonError("At least one field is required", 400);
+    return jsonError(
+      "At least one field is required",
+      400,
+      "profile_field_required",
+    );
   }
 
   let normalizedName: string | null | undefined;
   if (hasNameUpdate) {
     const nextName = body.name?.trim() ?? "";
     if (!nextName) {
-      return jsonError("Profile name is required", 400);
+      return jsonError(
+        "Profile name is required",
+        400,
+        "profile_name_required",
+      );
     }
     if (nextName.length > MAX_PROFILE_NAME_LENGTH) {
       return jsonError(
         `Profile name must be ${MAX_PROFILE_NAME_LENGTH} characters or less`,
         400,
+        "profile_name_too_long",
       );
     }
     normalizedName = nextName;
@@ -131,6 +144,7 @@ export async function updateCurrentUserProfileController(
         return jsonError(
           `Avatar must be ${MAX_PROFILE_AVATAR_LENGTH} characters or less`,
           400,
+          "profile_avatar_too_long",
         );
       }
       normalizedAvatar = nextAvatar;
@@ -144,7 +158,7 @@ export async function updateCurrentUserProfileController(
 
   const updatedUser = await repo.getUserById(user.id);
   if (!updatedUser) {
-    return jsonError("User not found", 404);
+    return jsonError("User not found", 404, "user_not_found");
   }
 
   return jsonResponse({
@@ -164,7 +178,7 @@ export async function logoutController(
 ): Promise<Response> {
   const token = getSessionTokenFromRequest(request);
   if (!token) {
-    return jsonError("Unauthorized", 401);
+    return jsonError("Unauthorized", 401, "unauthorized");
   }
 
   const tokenHash = await hashToken(token);

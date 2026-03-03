@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Target,
   MessageSquare,
@@ -12,6 +12,10 @@ import {
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Spinner } from "@/components/ui/Spinner";
 import { formatVelocity } from "@/lib/formatters";
+import {
+  TEAM_INSIGHTS_STALE_TIME_MS,
+  teamInsightsQueryKey,
+} from "@/lib/workspace-query";
 import type { TeamInsights } from "@sprintjam/types";
 import { getTeamInsights } from "@/lib/workspace-service";
 
@@ -63,31 +67,15 @@ export function TeamInsightsPanel({
   teamId,
   teamName,
 }: TeamInsightsPanelProps) {
-  const [insights, setInsights] = useState<TeamInsights | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    async function fetchInsights() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = await getTeamInsights(teamId);
-        setInsights(data);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Failed to fetch team insights"),
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchInsights();
-  }, [teamId]);
+  const {
+    data: insights,
+    isPending: isLoading,
+    error,
+  } = useQuery<TeamInsights | null>({
+    queryKey: teamInsightsQueryKey(teamId),
+    queryFn: () => getTeamInsights(teamId),
+    staleTime: TEAM_INSIGHTS_STALE_TIME_MS,
+  });
 
   if (isLoading) {
     return (

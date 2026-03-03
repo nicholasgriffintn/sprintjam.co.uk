@@ -1,4 +1,10 @@
 import { API_BASE_URL } from "@/constants";
+import { readJsonSafe } from "@/lib/api-utils";
+import { HttpError } from "@/lib/errors";
+import {
+  getWorkspaceErrorCode,
+  getWorkspaceErrorMessage,
+} from "@/lib/workspace-errors";
 import type { RoomSettings } from "@/types";
 import type {
   OAuthProvider,
@@ -87,19 +93,16 @@ export async function workspaceRequest<T>(
     credentials: "include",
   });
 
-  let parsed: unknown = null;
-  try {
-    parsed = await response.json();
-  } catch {
-    parsed = null;
-  }
+  const parsed = await readJsonSafe(response);
 
   if (!response.ok) {
-    const errorMessage =
-      (parsed as { error?: string })?.error ||
-      response.statusText ||
-      `Request failed: ${response.status}`;
-    throw new Error(errorMessage);
+    const fallbackMessage =
+      response.statusText || `Request failed: ${response.status}`;
+    throw new HttpError({
+      message: getWorkspaceErrorMessage(parsed, fallbackMessage),
+      status: response.status,
+      code: getWorkspaceErrorCode(parsed),
+    });
   }
 
   return parsed as T;

@@ -23,6 +23,7 @@ import {
   listTeamSessions,
   updateTeam,
 } from "@/lib/workspace-service";
+import { isUnauthorizedWorkspaceError } from "@/lib/workspace-errors";
 import { safeLocalStorage } from "@/utils/storage";
 
 const WORKSPACE_DETAILS_QUERY_KEY = ["workspace-details"] as const;
@@ -51,14 +52,6 @@ function teamSessionsQueryKey(teamId: number) {
 
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
-}
-
-function isUnauthorizedWorkspaceError(error: unknown) {
-  return (
-    error instanceof Error &&
-    (error.message === "Unauthorized" ||
-      error.message === "Invalid or expired session")
-  );
 }
 
 function getStoredSelectedTeamId(teams: WorkspaceTeam[]): number | null {

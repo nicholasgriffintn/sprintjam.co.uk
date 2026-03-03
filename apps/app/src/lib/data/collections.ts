@@ -6,6 +6,7 @@ import {
 } from "@tanstack/query-db-collection";
 
 import { API_BASE_URL } from "@/constants";
+import { isUnauthorizedWorkspaceError } from "@/lib/workspace-errors";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { workspaceRequest } from "@/lib/workspace-service";
 import type { RoomData, ServerDefaults } from "@/types";
@@ -51,14 +52,6 @@ function createEnsureCollectionReady(
 
     await readyPromise;
   };
-}
-
-function isUnauthorizedWorkspaceError(error: unknown) {
-  return (
-    error instanceof Error &&
-    (error.message === "Unauthorized" ||
-      error.message === "Invalid or expired session")
-  );
 }
 
 const serverDefaultsCollectionConfig = {

@@ -60,7 +60,9 @@ async function getAuthOrError(
       return { response: unauthorizedResponse() };
     }
 
-    return { response: unauthorizedResponse("Session expired") };
+    return {
+      response: unauthorizedResponse("Session expired", "session_expired"),
+    };
   }
 
   return { result };
