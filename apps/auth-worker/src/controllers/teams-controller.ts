@@ -43,6 +43,10 @@ type TeamViewer = WorkspaceViewer & {
   canAccess: boolean;
 };
 
+type TeamMembershipRecord = NonNullable<
+  Awaited<ReturnType<AuthResult["repo"]["getTeamMembership"]>>
+>;
+
 async function getAuthOrError(
   request: Request,
   env: AuthWorkerEnv,
@@ -192,6 +196,37 @@ async function ensureNotLastTeamAdmin(
   }
 
   return null;
+}
+
+function ensureNotTeamOwnerMembershipRemoval(
+  team: TeamViewer["team"],
+  memberUserId: number,
+): Response | null {
+  if (team.ownerId === memberUserId) {
+    return jsonError("Team owner membership cannot be removed", 409);
+  }
+
+  return null;
+}
+
+async function restoreTeamMembership(
+  repo: AuthResult["repo"],
+  teamId: number,
+  userId: number,
+  membership: TeamMembershipRecord | null,
+): Promise<void> {
+  if (!membership) {
+    await repo.removeTeamMembership(teamId, userId);
+    return;
+  }
+
+  await repo.upsertTeamMembership({
+    teamId,
+    userId,
+    role: membership.role,
+    status: membership.status,
+    approvedById: membership.approvedById ?? null,
+  });
 }
 
 export async function listTeamsController(
@@ -636,6 +671,14 @@ export async function removeTeamMemberController(
     return notFoundResponse("Team member not found");
   }
 
+  const ownerRemovalResponse = ensureNotTeamOwnerMembershipRemoval(
+    teamViewer.viewer.team,
+    memberUserId,
+  );
+  if (ownerRemovalResponse) {
+    return ownerRemovalResponse;
+  }
+
   if (membership.role === "admin") {
     const lastAdminResponse = await ensureNotLastTeamAdmin(
       auth.result.repo,
@@ -649,6 +692,161 @@ export async function removeTeamMemberController(
 
   await auth.result.repo.removeTeamMembership(teamId, memberUserId);
   return jsonResponse({ message: "Team member removed" });
+}
+
+export async function moveTeamMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  sourceTeamId: number,
+  memberUserId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const body = await request.json<{
+    targetTeamId?: number;
+    role?: "admin" | "member";
+  }>();
+  const targetTeamId = body?.targetTeamId;
+
+  if (!targetTeamId || !Number.isInteger(targetTeamId) || targetTeamId <= 0) {
+    return jsonError("Valid targetTeamId is required", 400);
+  }
+
+  if (targetTeamId === sourceTeamId) {
+    return jsonError("Source and target teams must be different", 400);
+  }
+
+  const [sourceTeam, targetTeam] = await Promise.all([
+    auth.result.repo.getTeamById(sourceTeamId),
+    auth.result.repo.getTeamById(targetTeamId),
+  ]);
+
+  if (!sourceTeam) {
+    return notFoundResponse("Source team not found");
+  }
+
+  if (!targetTeam) {
+    return notFoundResponse("Target team not found");
+  }
+
+  if (
+    sourceTeam.organisationId !== workspace.viewer.user.organisationId ||
+    targetTeam.organisationId !== workspace.viewer.user.organisationId
+  ) {
+    return forbiddenResponse();
+  }
+
+  const [sourceViewerMembership, targetViewerMembership] = await Promise.all([
+    auth.result.repo.getTeamMembership(sourceTeamId, auth.result.userId),
+    auth.result.repo.getTeamMembership(targetTeamId, auth.result.userId),
+  ]);
+
+  const canManageSource = canManageTeam(
+    sourceTeam,
+    sourceViewerMembership,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+  const canManageTarget = canManageTeam(
+    targetTeam,
+    targetViewerMembership,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+
+  if (!canManageSource || !canManageTarget) {
+    return forbiddenResponse(
+      "Only team admins can move team members between teams",
+    );
+  }
+
+  const sourceMembership = await auth.result.repo.getTeamMembership(
+    sourceTeamId,
+    memberUserId,
+  );
+  if (!sourceMembership || sourceMembership.status !== "active") {
+    return notFoundResponse("Active team member not found");
+  }
+
+  const ownerRemovalResponse = ensureNotTeamOwnerMembershipRemoval(
+    sourceTeam,
+    memberUserId,
+  );
+  if (ownerRemovalResponse) {
+    return ownerRemovalResponse;
+  }
+
+  if (sourceMembership.role === "admin") {
+    const lastAdminResponse = await ensureNotLastTeamAdmin(
+      auth.result.repo,
+      sourceTeamId,
+      memberUserId,
+    );
+    if (lastAdminResponse) {
+      return lastAdminResponse;
+    }
+  }
+
+  const member = await auth.result.repo.getUserById(memberUserId);
+  if (
+    !member ||
+    member.organisationId !== workspace.viewer.user.organisationId
+  ) {
+    return notFoundResponse("Workspace member not found");
+  }
+
+  const workspaceMembership = await auth.result.repo.getOrganisationMembership(
+    memberUserId,
+    member.organisationId,
+  );
+  if (!workspaceMembership || workspaceMembership.status !== "active") {
+    return jsonError("User must be an active workspace member", 409);
+  }
+
+  const role = parseRole(body?.role) ?? sourceMembership.role;
+  const targetMembership = await auth.result.repo.getTeamMembership(
+    targetTeamId,
+    memberUserId,
+  );
+
+  await auth.result.repo.upsertTeamMembership({
+    teamId: targetTeamId,
+    userId: memberUserId,
+    role,
+    status: "active",
+    approvedById: auth.result.userId,
+  });
+
+  try {
+    await auth.result.repo.removeTeamMembership(sourceTeamId, memberUserId);
+  } catch (error) {
+    try {
+      await restoreTeamMembership(
+        auth.result.repo,
+        targetTeamId,
+        memberUserId,
+        targetMembership ?? null,
+      );
+    } catch (rollbackError) {
+      console.error("Failed to rollback moved team member", rollbackError);
+    }
+
+    console.error("Failed to move team member", error);
+    return jsonError("Unable to move team member", 500);
+  }
+
+  const members = await auth.result.repo.listTeamMembers(targetTeamId);
+  const movedMember = members.find((teamMember) => teamMember.id === memberUserId);
+
+  return jsonResponse({ member: movedMember, message: "Team member moved" });
 }
 
 export async function listTeamSessionsController(

@@ -442,6 +442,23 @@ export async function removeTeamMember(
   });
 }
 
+export async function moveTeamMember(
+  sourceTeamId: number,
+  userId: number,
+  targetTeamId: number,
+  role: "admin" | "member",
+): Promise<TeamMember | null> {
+  const data = await workspaceRequest<{
+    member?: TeamMember | null;
+    message: string;
+  }>(`${API_BASE_URL}/teams/${sourceTeamId}/members/${userId}/move`, {
+    method: "POST",
+    body: JSON.stringify({ targetTeamId, role }),
+  });
+
+  return data.member ?? null;
+}
+
 export async function getTeamInsights(
   teamId: number,
   limit = 6,

@@ -24,6 +24,7 @@ import {
   approveTeamMember,
   getTeamSettings,
   listTeamMembers,
+  moveTeamMember,
   removeTeamMember,
   saveTeamSettings,
   updateTeamMemberRole,
@@ -142,10 +143,13 @@ export default function WorkspaceTeamSettings() {
       targetTeamId: number;
       userId: number;
       role: "admin" | "member";
-    }) => {
-      await addTeamMember(payload.targetTeamId, payload.userId, payload.role);
-      await removeTeamMember(selectedTeamId!, payload.userId);
-    },
+    }) =>
+      moveTeamMember(
+        selectedTeamId!,
+        payload.userId,
+        payload.targetTeamId,
+        payload.role,
+      ),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: teamMembersQueryKey }),

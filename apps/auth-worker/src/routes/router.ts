@@ -22,6 +22,7 @@ import {
   addTeamMemberController,
   requestTeamAccessController,
   approveTeamMemberController,
+  moveTeamMemberController,
   updateTeamMemberController,
   removeTeamMemberController,
   listTeamSessionsController,
@@ -214,6 +215,23 @@ const ROUTES: RouteDefinition[] = [
       const userIdResult = requireNumberParam(params[1], "userId");
       if (!userIdResult.ok) return userIdResult.response;
       return approveTeamMemberController(
+        request,
+        env,
+        teamIdResult.value,
+        userIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/members\/(\d+)\/move$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const userIdResult = requireNumberParam(params[1], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return moveTeamMemberController(
         request,
         env,
         teamIdResult.value,

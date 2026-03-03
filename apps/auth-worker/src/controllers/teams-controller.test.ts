@@ -10,6 +10,7 @@ import {
   addTeamMemberController,
   requestTeamAccessController,
   approveTeamMemberController,
+  moveTeamMemberController,
   updateTeamMemberController,
   removeTeamMemberController,
   listTeamSessionsController,
@@ -530,6 +531,7 @@ describe("teams-controller", () => {
 
   it("prevents removing the last active team admin", async () => {
     const repo = createRepo({
+      getTeamById: vi.fn().mockResolvedValue(makeTeam({ id: 10, ownerId: 9 })),
       getTeamMembership: vi
         .fn()
         .mockResolvedValueOnce({ role: "admin", status: "active" })
@@ -567,6 +569,7 @@ describe("teams-controller", () => {
 
   it("allows a workspace admin to remove a team member when another admin remains", async () => {
     const repo = createRepo({
+      getTeamById: vi.fn().mockResolvedValue(makeTeam({ id: 10, ownerId: 9 })),
       getTeamMembership: vi
         .fn()
         .mockResolvedValueOnce(null)
@@ -611,6 +614,156 @@ describe("teams-controller", () => {
     expect(response.status).toBe(200);
     expect(data.message).toBe("Team member removed");
     expect(repo.removeTeamMembership).toHaveBeenCalledWith(10, 2);
+  });
+
+  it("prevents removing the team owner's membership row", async () => {
+    const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ role: "admin", status: "active" }),
+      getTeamById: vi.fn().mockResolvedValue(makeTeam({ id: 10, ownerId: 2 })),
+    });
+    authenticateAs(repo);
+
+    const response = await removeTeamMemberController(
+      makeRequest("https://test.com/teams/10/members/2", {
+        method: "DELETE",
+      }),
+      env,
+      10,
+      2,
+    );
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("Team owner membership cannot be removed");
+    expect(repo.removeTeamMembership).not.toHaveBeenCalled();
+  });
+
+  it("moves a team member server-side without separate client calls", async () => {
+    const repo = createRepo({
+      getTeamById: vi
+        .fn()
+        .mockResolvedValueOnce(makeTeam({ id: 10, ownerId: 9 }))
+        .mockResolvedValueOnce(makeTeam({ id: 20, ownerId: 8 })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ role: "member", status: "active" })
+        .mockResolvedValueOnce(null),
+      listTeamMembers: vi.fn().mockResolvedValue([
+        {
+          id: 2,
+          email: "member@example.com",
+          name: "Member User",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "member",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+      ]),
+    });
+    authenticateAs(repo);
+
+    const response = await moveTeamMemberController(
+      makeRequest("https://test.com/teams/10/members/2/move", {
+        method: "POST",
+        body: JSON.stringify({ targetTeamId: 20, role: "member" }),
+      }),
+      env,
+      10,
+      2,
+    );
+    const data = (await response.json()) as {
+      member: { id: number };
+      message: string;
+    };
+
+    expect(response.status).toBe(200);
+    expect(data.message).toBe("Team member moved");
+    expect(repo.upsertTeamMembership).toHaveBeenCalledWith({
+      teamId: 20,
+      userId: 2,
+      role: "member",
+      status: "active",
+      approvedById: 1,
+    });
+    expect(repo.removeTeamMembership).toHaveBeenCalledWith(10, 2);
+  });
+
+  it("rolls back the target membership if a team move cannot remove the source member", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const repo = createRepo({
+      getTeamById: vi
+        .fn()
+        .mockResolvedValueOnce(makeTeam({ id: 10, ownerId: 9 }))
+        .mockResolvedValueOnce(makeTeam({ id: 20, ownerId: 8 })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ role: "admin", status: "active" })
+        .mockResolvedValueOnce(null),
+      listTeamMembers: vi.fn().mockResolvedValue([
+        {
+          id: 2,
+          email: "member@example.com",
+          name: "Member User",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "admin",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+        {
+          id: 3,
+          email: "other-admin@example.com",
+          name: "Other Admin",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "admin",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+      ]),
+      removeTeamMembership: vi
+        .fn()
+        .mockRejectedValueOnce(new Error("delete failed"))
+        .mockResolvedValueOnce(undefined),
+    });
+    authenticateAs(repo);
+
+    const response = await moveTeamMemberController(
+      makeRequest("https://test.com/teams/10/members/2/move", {
+        method: "POST",
+        body: JSON.stringify({ targetTeamId: 20, role: "admin" }),
+      }),
+      env,
+      10,
+      2,
+    );
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("Unable to move team member");
+    expect(repo.upsertTeamMembership).toHaveBeenNthCalledWith(1, {
+      teamId: 20,
+      userId: 2,
+      role: "admin",
+      status: "active",
+      approvedById: 1,
+    });
+    expect(repo.removeTeamMembership).toHaveBeenNthCalledWith(1, 10, 2);
+    expect(repo.removeTeamMembership).toHaveBeenNthCalledWith(2, 20, 2);
+    consoleErrorSpy.mockRestore();
   });
 
   it("lists team sessions for an authorised team member", async () => {
