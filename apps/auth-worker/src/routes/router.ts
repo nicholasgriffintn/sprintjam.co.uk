@@ -28,6 +28,8 @@ import {
   listTeamSessionsController,
   createTeamSessionController,
   getTeamSessionController,
+  getTeamSessionByRoomKeyController,
+  updateTeamSessionController,
   completeSessionByRoomKeyController,
   getWorkspaceProfileController,
   getWorkspaceStatsController,
@@ -310,6 +312,29 @@ const ROUTES: RouteDefinition[] = [
       );
     },
     paramTypes: ["number", "number"],
+  },
+  {
+    method: "PUT",
+    pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const sessionIdResult = requireNumberParam(params[1], "sessionId");
+      if (!sessionIdResult.ok) return sessionIdResult.response;
+      return updateTeamSessionController(
+        request,
+        env,
+        teamIdResult.value,
+        sessionIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "GET",
+    pattern: /^sessions\/by-room$/,
+    handler: (request, env) => getTeamSessionByRoomKeyController(request, env),
+    paramTypes: ["none"],
   },
   {
     method: "POST",

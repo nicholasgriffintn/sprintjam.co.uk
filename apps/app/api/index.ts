@@ -44,7 +44,8 @@ async function handleRequest(
         path === "teams" ||
         path.startsWith("teams/") ||
         path.startsWith("workspace/") ||
-        path === "sessions/complete"
+        path === "sessions/complete" ||
+        path === "sessions/by-room"
       ) {
         return await env.AUTH_WORKER.fetch(request);
       }

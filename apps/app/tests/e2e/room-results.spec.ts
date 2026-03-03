@@ -5,6 +5,19 @@ import { createRoomWithParticipant } from "./helpers/room-journeys";
 function createWorkspaceRouteMock() {
   const createdSessionNames: string[] = [];
   const createdSessionRoomKeys: string[] = [];
+  let linkedSession:
+    | {
+        id: number;
+        teamId: number;
+        roomKey: string;
+        name: string;
+        createdById: number;
+        createdAt: number;
+        updatedAt: number | null;
+        completedAt: number | null;
+        metadata: null;
+      }
+    | null = null;
 
   const setupRoutes = async (context: BrowserContext) => {
     await context.route("**/api/auth/me", (route) => {
@@ -31,6 +44,27 @@ function createWorkspaceRouteMock() {
       });
     });
 
+    await context.route("**/api/sessions/by-room?*", async (route) => {
+      const roomKey = new URL(route.request().url()).searchParams.get("roomKey");
+      if (!linkedSession || linkedSession.roomKey !== roomKey) {
+        await route.fulfill({
+          status: 404,
+          contentType: "application/json",
+          body: JSON.stringify({
+            code: "not_found",
+            message: "Session not found",
+          }),
+        });
+        return;
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ session: linkedSession }),
+      });
+    });
+
     await context.route("**/api/teams/*/sessions", async (route) => {
       if (route.request().method() !== "POST") {
         await route.fallback();
@@ -43,24 +77,59 @@ function createWorkspaceRouteMock() {
       };
       const nextName = payload.name?.trim() ?? "";
       const nextRoomKey = payload.roomKey?.trim() ?? "";
+      linkedSession = {
+        id: createdSessionNames.length + 1,
+        teamId: 88,
+        roomKey: nextRoomKey,
+        name: nextName,
+        createdById: 42,
+        createdAt: Date.now(),
+        updatedAt: null,
+        completedAt: null,
+        metadata: null,
+      };
       createdSessionNames.push(nextName);
       createdSessionRoomKeys.push(nextRoomKey);
 
       route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          session: linkedSession,
+        }),
+      });
+    });
+
+    await context.route("**/api/teams/*/sessions/*", async (route) => {
+      if (route.request().method() !== "PUT") {
+        await route.fallback();
+        return;
+      }
+
+      const payload = (await route.request().postDataJSON()) as { name?: string };
+      if (!linkedSession) {
+        await route.fulfill({
+          status: 404,
+          contentType: "application/json",
+          body: JSON.stringify({
+            code: "not_found",
+            message: "Session not found",
+          }),
+        });
+        return;
+      }
+
+      linkedSession = {
+        ...linkedSession,
+        name: payload.name?.trim() ?? linkedSession.name,
+        updatedAt: Date.now(),
+      };
+
+      await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          session: {
-            id: createdSessionNames.length,
-            teamId: 88,
-            roomKey: nextRoomKey,
-            name: nextName,
-            createdById: 42,
-            createdAt: Date.now(),
-            updatedAt: null,
-            completedAt: null,
-            metadata: null,
-          },
+          session: linkedSession,
         }),
       });
     });
@@ -69,22 +138,26 @@ function createWorkspaceRouteMock() {
       const payload = (await route.request().postDataJSON()) as {
         roomKey?: string;
       };
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          session: {
-            id: 999,
-            teamId: 88,
-            roomKey: payload.roomKey ?? "unknown",
-            name: "Completed from room",
-            createdById: 42,
-            createdAt: Date.now(),
+      linkedSession = linkedSession
+        ? {
+            ...linkedSession,
+            roomKey: payload.roomKey ?? linkedSession.roomKey,
             updatedAt: Date.now(),
             completedAt: Date.now(),
-            metadata: null,
-          },
-        }),
+          }
+        : null;
+
+      route.fulfill({
+        status: linkedSession ? 200 : 404,
+        contentType: "application/json",
+        body: JSON.stringify(
+          linkedSession
+            ? { session: linkedSession }
+            : {
+                code: "not_found",
+                message: "Session not found",
+              },
+        ),
       });
     });
   };
@@ -120,7 +193,7 @@ test.describe("Results", () => {
     }
   });
 
-  test("saves room to workspace from complete modal and completed summary", async ({
+  test("saves a room once and lets the linked session be renamed", async ({
     browser,
   }) => {
     const workspaceMock = createWorkspaceRouteMock();
@@ -151,33 +224,38 @@ test.describe("Results", () => {
       await expect
         .poll(() => createdSessionNames.length, { timeout: 5_000 })
         .toBe(1);
-      const successMessage = page.getByText("Saved to workspace");
-      await expect(successMessage).toBeVisible();
-      await expect(successMessage).toBeHidden({ timeout: 5_000 });
+      await expect(saveModal).toBeHidden({ timeout: 5_000 });
+
+      await expect(
+        completeDialog.getByTestId("save-to-workspace-modal-button"),
+      ).toHaveCount(0);
+      await expect(
+        completeDialog.getByRole("button", { name: "Rename workspace session" }),
+      ).toBeVisible();
 
       await completeDialog.getByRole("button", { name: "Complete session" }).click();
+      await expect(completeDialog).toBeHidden();
       await expect(page.getByText("Session summary")).toBeVisible();
+      await expect(page.getByTestId("save-to-workspace-screen-button")).toHaveCount(0);
 
-      await page.getByTestId("save-to-workspace-screen-button").click();
+      await page
+        .getByText("Session summary")
+        .locator("..")
+        .getByRole("button", { name: "Rename workspace session" })
+        .click();
       const summarySaveModal = page.getByRole("dialog", {
-        name: "Save to Workspace",
+        name: "Edit Workspace Session",
       });
       await expect(summarySaveModal).toBeVisible();
-      await summarySaveModal
-        .getByLabel("Session name")
-        .fill("Results save from complete screen");
-      await summarySaveModal
-        .getByRole("button", { name: "Save to Workspace" })
-        .click();
+      await summarySaveModal.getByLabel("Session name").fill("Renamed after save");
+      await summarySaveModal.getByRole("button", { name: "Update session" }).click();
 
       await expect
         .poll(() => createdSessionNames.length, { timeout: 5_000 })
-        .toBe(2);
-      expect(createdSessionNames).toEqual([
-        "Results save from complete modal",
-        "Results save from complete screen",
-      ]);
-      expect(createdSessionRoomKeys).toEqual([roomKey, roomKey]);
+        .toBe(1);
+      await expect(page.getByText("Renamed after save")).toBeVisible();
+      expect(createdSessionNames).toEqual(["Results save from complete modal"]);
+      expect(createdSessionRoomKeys).toEqual([roomKey]);
     } finally {
       await cleanup();
     }

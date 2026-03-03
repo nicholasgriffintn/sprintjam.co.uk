@@ -403,8 +403,33 @@ export class WorkspaceAuthRepository {
     return this.teams.getTeamSessions(teamId);
   }
 
+  getOrganisationTeamSessionByRoomKey(roomKey: string, organisationId: number) {
+    return this.teams.getOrganisationTeamSessionByRoomKey(
+      roomKey,
+      organisationId,
+    );
+  }
+
+  getAccessibleTeamSessionByRoomKey(
+    roomKey: string,
+    organisationId: number,
+    userId: number,
+    isWorkspaceAdmin: boolean,
+  ) {
+    return this.teams.getAccessibleTeamSessionByRoomKey(
+      roomKey,
+      organisationId,
+      userId,
+      isWorkspaceAdmin,
+    );
+  }
+
   getTeamSessionById(sessionId: number) {
     return this.teams.getTeamSessionById(sessionId);
+  }
+
+  updateTeamSessionName(sessionId: number, name: string): Promise<void> {
+    return this.teams.updateTeamSessionName(sessionId, name);
   }
 
   completeTeamSession(sessionId: number): Promise<void> {

@@ -16,6 +16,8 @@ import {
   removeTeamMemberController,
   listTeamSessionsController,
   createTeamSessionController,
+  getTeamSessionByRoomKeyController,
+  updateTeamSessionController,
   completeSessionByRoomKeyController,
   getWorkspaceProfileController,
   getWorkspaceStatsController,
@@ -118,12 +120,15 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
   deleteTeam: vi.fn(),
   getTeamSessions: vi.fn().mockResolvedValue([]),
   createTeamSession: vi.fn().mockResolvedValue(21),
+  getOrganisationTeamSessionByRoomKey: vi.fn().mockResolvedValue(null),
+  getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue(null),
   getTeamSessionById: vi.fn().mockResolvedValue({
     id: 21,
     teamId: 10,
     roomKey: "ROOM-1",
     name: "Sprint Planning",
   }),
+  updateTeamSessionName: vi.fn(),
   completeLatestSessionByRoomKey: vi.fn().mockResolvedValue({
     id: 21,
     teamId: 10,
@@ -944,6 +949,122 @@ describe("teams-controller", () => {
       1,
       { source: "manual" },
     );
+  });
+
+  it("rejects duplicate room links within the workspace", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "open" })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
+      getOrganisationTeamSessionByRoomKey: vi.fn().mockResolvedValue({
+        id: 99,
+        teamId: 11,
+        roomKey: "ROOM-1",
+        name: "Existing session",
+      }),
+    });
+    authenticateAs(repo);
+
+    const response = await createTeamSessionController(
+      makeRequest("https://test.com/teams/10/sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Sprint Planning",
+          roomKey: "ROOM-1",
+        }),
+      }),
+      env,
+      10,
+    );
+    const data = (await response.json()) as { code: string; message: string };
+
+    expect(response.status).toBe(409);
+    expect(data.code).toBe("session_already_linked");
+    expect(data.message).toBe("This room is already saved to your workspace");
+    expect(repo.createTeamSession).not.toHaveBeenCalled();
+  });
+
+  it("returns a linked session by room key for accessible users", async () => {
+    const repo = createRepo({
+      getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue({
+        id: 21,
+        teamId: 10,
+        roomKey: "ROOM-1",
+        name: "Sprint Planning",
+      }),
+    });
+    authenticateAs(repo);
+
+    const response = await getTeamSessionByRoomKeyController(
+      makeRequest("https://test.com/sessions/by-room?roomKey=ROOM-1"),
+      env,
+    );
+    const data = (await response.json()) as {
+      session: { id: number; roomKey: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(data.session).toEqual(
+      expect.objectContaining({ id: 21, roomKey: "ROOM-1" }),
+    );
+    expect(repo.getAccessibleTeamSessionByRoomKey).toHaveBeenCalledWith(
+      "ROOM-1",
+      1,
+      1,
+      true,
+    );
+  });
+
+  it("updates a linked session name", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "open" })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
+      getTeamSessionById: vi
+        .fn()
+        .mockResolvedValueOnce({
+          id: 21,
+          teamId: 10,
+          roomKey: "ROOM-1",
+          name: "Before",
+        })
+        .mockResolvedValueOnce({
+          id: 21,
+          teamId: 10,
+          roomKey: "ROOM-1",
+          name: "After",
+        }),
+    });
+    authenticateAs(repo);
+
+    const response = await updateTeamSessionController(
+      makeRequest("https://test.com/teams/10/sessions/21", {
+        method: "PUT",
+        body: JSON.stringify({ name: "After" }),
+      }),
+      env,
+      10,
+      21,
+    );
+    const data = (await response.json()) as { session: { name: string } };
+
+    expect(response.status).toBe(200);
+    expect(data.session.name).toBe("After");
+    expect(repo.updateTeamSessionName).toHaveBeenCalledWith(21, "After");
   });
 
   it("completes the latest room session with workspace scope", async () => {

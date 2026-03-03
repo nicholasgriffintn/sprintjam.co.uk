@@ -15,6 +15,10 @@ import {
   workspaceProfileCollection,
 } from "@/lib/data/collections";
 import {
+  teamSessionsQueryKey,
+  WORKSPACE_STATS_QUERY_KEY,
+} from "@/lib/workspace-query";
+import {
   createTeam,
   createTeamSession,
   deleteTeam,
@@ -27,7 +31,6 @@ import { isUnauthorizedWorkspaceError } from "@/lib/workspace-errors";
 import { safeLocalStorage } from "@/utils/storage";
 
 const WORKSPACE_DETAILS_QUERY_KEY = ["workspace-details"] as const;
-const WORKSPACE_STATS_QUERY_KEY = ["workspace-stats"] as const;
 
 interface CreateSessionPayload {
   teamId: number;
@@ -44,10 +47,6 @@ interface UseWorkspaceDataOptions {
   includeProfile?: boolean;
   includeStats?: boolean;
   includeSessions?: boolean;
-}
-
-function teamSessionsQueryKey(teamId: number) {
-  return ["team-sessions", teamId] as const;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {

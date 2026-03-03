@@ -10,6 +10,7 @@ const WORKSPACE_ERROR_MESSAGES: Record<string, string> = {
     "Too many failed attempts. Please request a new code.",
   workspace_membership_pending_approval:
     "Your workspace membership is pending approval",
+  session_already_linked: "This room is already saved to your workspace",
 };
 
 function readString(

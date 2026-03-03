@@ -87,10 +87,28 @@ export async function createRoomWithParticipant(
 
     await createRoom.startInstantRoom();
 
-    const joinAfterCreate = new JoinRoomPage(moderatorPage);
-    await joinAfterCreate.selectAvatarOnlyAndJoin("avatar-option-robot");
-
     const moderatorRoom = new RoomPage(moderatorPage);
+    const joinAfterCreate = new JoinRoomPage(moderatorPage);
+    const joinAvatarOption = moderatorPage
+      .getByTestId("avatar-option-robot")
+      .first();
+
+    const nextStep = await Promise.race([
+      moderatorPage
+        .getByTestId("participants-panel")
+        .waitFor({ state: "visible", timeout: 10_000 })
+        .then(() => "room" as const)
+        .catch(() => null),
+      joinAvatarOption
+        .waitFor({ state: "visible", timeout: 10_000 })
+        .then(() => "avatar" as const)
+        .catch(() => null),
+    ]);
+
+    if (nextStep === "avatar") {
+      await joinAfterCreate.selectAvatarOnlyAndJoin("avatar-option-robot");
+    }
+
     await moderatorRoom.waitForLoaded();
     const roomKey = await moderatorRoom.getRoomKey();
 

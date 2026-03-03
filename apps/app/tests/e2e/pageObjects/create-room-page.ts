@@ -4,7 +4,11 @@ export class CreateRoomPage {
   constructor(private readonly page: Page) {}
 
   async fillBasics(name: string, passcode?: string) {
-    await this.page.locator("#create-name").fill(name);
+    const nameInput = this.page.locator("#create-name");
+    if ((await nameInput.count()) > 0 && (await nameInput.isVisible())) {
+      await nameInput.fill(name);
+    }
+
     if (typeof passcode === "string") {
       await this.page.locator("#create-passcode").fill(passcode);
     }

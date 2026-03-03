@@ -2,7 +2,9 @@
  * @vitest-environment jsdom
  */
 import { act, renderHook } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createElement, type ReactNode } from "react";
 
 import type { RoomData } from "@/types";
 
@@ -32,7 +34,14 @@ vi.mock("@/lib/workspace-service", () => ({
   completeSessionByRoomKey: vi.fn(),
 }));
 
+vi.mock("@/context/WorkspaceAuthContext", () => ({
+  useWorkspaceAuth: () => ({
+    isAuthenticated: true,
+  }),
+}));
+
 import { useRoomQueueAndGameActions } from "@/context/useRoomQueueAndGameActions";
+import { completeSessionByRoomKey } from "@/lib/workspace-service";
 
 const createRoomData = (status: RoomData["status"] = "active"): RoomData => ({
   key: "ROOM1",
@@ -63,20 +72,37 @@ describe("useRoomQueueAndGameActions", () => {
   const setRoomError = vi.fn();
   const setRoomErrorKind = vi.fn();
   const assignRoomError = vi.fn();
+  const createWrapper = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    return ({ children }: { children: ReactNode }) => (
+      createElement(QueryClientProvider, { client: queryClient }, children)
+    );
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("allows party games to start and accept moves on completed rooms", () => {
-    const { result } = renderHook(() =>
-      useRoomQueueAndGameActions({
-        roomData: createRoomData("completed"),
-        userName: "alice",
-        setRoomError,
-        setRoomErrorKind,
-        assignRoomError,
-      }),
+    const { result } = renderHook(
+      () =>
+        useRoomQueueAndGameActions({
+          roomData: createRoomData("completed"),
+          userName: "alice",
+          setRoomError,
+          setRoomErrorKind,
+          assignRoomError,
+        }),
+      {
+        wrapper: createWrapper(),
+      },
     );
 
     act(() => {
@@ -89,14 +115,18 @@ describe("useRoomQueueAndGameActions", () => {
   });
 
   it("keeps queue management blocked on completed rooms", () => {
-    const { result } = renderHook(() =>
-      useRoomQueueAndGameActions({
-        roomData: createRoomData("completed"),
-        userName: "alice",
-        setRoomError,
-        setRoomErrorKind,
-        assignRoomError,
-      }),
+    const { result } = renderHook(
+      () =>
+        useRoomQueueAndGameActions({
+          roomData: createRoomData("completed"),
+          userName: "alice",
+          setRoomError,
+          setRoomErrorKind,
+          assignRoomError,
+        }),
+      {
+        wrapper: createWrapper(),
+      },
     );
 
     act(() => {
@@ -106,5 +136,43 @@ describe("useRoomQueueAndGameActions", () => {
 
     expect(mockSelectTicket).not.toHaveBeenCalled();
     expect(mockNextTicket).not.toHaveBeenCalled();
+  });
+
+  it("completes a linked workspace session after room completion", async () => {
+    vi.mocked(completeSessionByRoomKey).mockResolvedValue({
+      id: 21,
+      teamId: 10,
+      roomKey: "ROOM1",
+      name: "Sprint Planning",
+      createdById: 1,
+      createdAt: Date.now(),
+      completedAt: Date.now(),
+      metadata: null,
+    });
+
+    const { result } = renderHook(
+      () =>
+        useRoomQueueAndGameActions({
+          roomData: createRoomData(),
+          userName: "alice",
+          setRoomError,
+          setRoomErrorKind,
+          assignRoomError,
+        }),
+      {
+        wrapper: createWrapper(),
+      },
+    );
+
+    act(() => {
+      result.current.handleCompleteSession();
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(mockCompleteSession).toHaveBeenCalled();
+    expect(completeSessionByRoomKey).toHaveBeenCalledWith("ROOM1");
   });
 });

@@ -452,12 +452,74 @@ export class TeamRepository {
       .orderBy(schema.teamSessions.createdAt);
   }
 
+  async getOrganisationTeamSessionByRoomKey(
+    roomKey: string,
+    organisationId: number,
+  ) {
+    return await this.db
+      .select(teamSessionSelection)
+      .from(teamSessions)
+      .innerJoin(teams, eq(teamSessions.teamId, teams.id))
+      .where(
+        and(
+          eq(teamSessions.roomKey, roomKey),
+          eq(teams.organisationId, organisationId),
+        ),
+      )
+      .orderBy(desc(teamSessions.createdAt))
+      .limit(1)
+      .get();
+  }
+
+  async getAccessibleTeamSessionByRoomKey(
+    roomKey: string,
+    organisationId: number,
+    userId: number,
+    isWorkspaceAdmin: boolean,
+  ) {
+    return await this.db
+      .select(teamSessionSelection)
+      .from(teamSessions)
+      .innerJoin(teams, eq(teamSessions.teamId, teams.id))
+      .leftJoin(
+        teamMemberships,
+        and(
+          eq(teamMemberships.teamId, teams.id),
+          eq(teamMemberships.userId, userId),
+          eq(teamMemberships.status, "active"),
+        ),
+      )
+      .where(
+        and(
+          eq(teamSessions.roomKey, roomKey),
+          eq(teams.organisationId, organisationId),
+          isWorkspaceAdmin
+            ? sql`1 = 1`
+            : or(
+                eq(teamSessions.createdById, userId),
+                eq(teams.accessPolicy, "open"),
+                eq(teamMemberships.userId, userId),
+              ),
+        ),
+      )
+      .orderBy(desc(teamSessions.createdAt))
+      .limit(1)
+      .get();
+  }
+
   async getTeamSessionById(sessionId: number) {
     return await this.db
       .select(teamSessionSelection)
       .from(teamSessions)
       .where(eq(teamSessions.id, sessionId))
       .get();
+  }
+
+  async updateTeamSessionName(sessionId: number, name: string): Promise<void> {
+    await this.db
+      .update(teamSessions)
+      .set({ name })
+      .where(eq(teamSessions.id, sessionId));
   }
 
   async completeTeamSession(sessionId: number): Promise<void> {
@@ -473,8 +535,20 @@ export class TeamRepository {
     userId: number,
     isWorkspaceAdmin: boolean,
   ) {
-    const session = await this.db
-      .select(teamSessionSelection)
+    const session = await this.getAccessibleTeamSessionByRoomKey(
+      roomKey,
+      organisationId,
+      userId,
+      isWorkspaceAdmin,
+    );
+
+    if (!session || session.completedAt) {
+      return null;
+    }
+
+    const completedAt = Date.now();
+    const activeSessions = await this.db
+      .select({ id: teamSessions.id })
       .from(teamSessions)
       .innerJoin(teams, eq(teamSessions.teamId, teams.id))
       .leftJoin(
@@ -498,16 +572,17 @@ export class TeamRepository {
               ),
           isNull(teamSessions.completedAt),
         ),
-      )
-      .orderBy(desc(teamSessions.createdAt))
-      .limit(1)
-      .get();
+      );
 
-    if (!session) {
+    if (activeSessions.length === 0) {
       return null;
     }
 
-    await this.completeTeamSession(session.id);
+    await this.db
+      .update(teamSessions)
+      .set({ completedAt })
+      .where(inArray(teamSessions.id, activeSessions.map((item) => item.id)));
+
     return await this.getTeamSessionById(session.id);
   }
 

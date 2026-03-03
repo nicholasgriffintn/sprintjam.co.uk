@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Gamepad2, Maximize2, X } from "lucide-react";
 
@@ -9,6 +10,7 @@ import {
 } from "@/context/RoomContext";
 import { useSessionState } from "@/context/SessionContext";
 import { useRoomHeader } from "@/context/RoomHeaderContext";
+import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { useRoomStats } from "@/hooks/useRoomStats";
 import { useConsensusCelebration } from "@/hooks/useConsensusCelebration";
 import { UserEstimate } from "@/components/voting/UserEstimate";
@@ -35,6 +37,8 @@ import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
 import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
+import { linkedRoomSessionQueryKey } from "@/lib/workspace-query";
+import { getTeamSessionByRoomKey } from "@/lib/workspace-service";
 import { RoomGuidancePanel } from "@/components/room/RoomGuidancePanel";
 import { RoomStatsPanel } from "@/components/room/RoomStatsPanel";
 import { RoomCalloutCard } from "@/components/room/RoomCalloutCard";
@@ -75,6 +79,7 @@ const RoomScreen = () => {
     handleEndGame,
   } = useRoomActions();
   const { name } = useSessionState();
+  const { isAuthenticated, teams } = useWorkspaceAuth();
   const {
     isShareModalOpen,
     setIsShareModalOpen,
@@ -96,6 +101,17 @@ const RoomScreen = () => {
   const [isGamesModalOpen, setIsGamesModalOpen] = useState(false);
   const [gameAnnouncement, setGameAnnouncement] = useState<string | null>(null);
   const [isGamePanelMinimised, setIsGamePanelMinimised] = useState(false);
+  const workspacesEnabled = isWorkspacesEnabled();
+  const linkedWorkspaceSessionQuery = useQuery({
+    queryKey: linkedRoomSessionQueryKey(roomData?.key ?? "unknown"),
+    enabled: workspacesEnabled && isAuthenticated && Boolean(roomData?.key),
+    queryFn: () => getTeamSessionByRoomKey(roomData!.key),
+    staleTime: 1000 * 30,
+  });
+  const linkedWorkspaceSession = linkedWorkspaceSessionQuery.data ?? null;
+  const linkedWorkspaceTeamName =
+    teams.find((team) => team.id === linkedWorkspaceSession?.teamId)?.name ??
+    null;
 
   const connectionStatus: ConnectionStatusState = isSocketStatusKnown
     ? isSocketConnected
@@ -148,7 +164,10 @@ const RoomScreen = () => {
   const isQueueEnabled = roomData.settings.enableTicketQueue ?? true;
   const canManageQueue =
     isModeratorView || roomData.settings.allowOthersToManageQueue === true;
-  const showSaveToWorkspace = isWorkspacesEnabled();
+  const showSaveToWorkspace =
+    workspacesEnabled &&
+    (!isAuthenticated ||
+      (!linkedWorkspaceSessionQuery.isLoading && linkedWorkspaceSession === null));
 
   useEffect(() => {
     if (!roomData.gameSession || roomData.gameSession.status !== "active") {
@@ -282,7 +301,28 @@ const RoomScreen = () => {
                   Review the notes and votes captured for each{' '}
                   {isQueueEnabled ? 'ticket' : 'round'}.
                 </p>
-                {showSaveToWorkspace && (
+                {linkedWorkspaceSession ? (
+                  <div className="space-y-3 pt-1">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
+                      <p className="font-medium">
+                        Saved to workspace
+                        {linkedWorkspaceTeamName ? ` in ${linkedWorkspaceTeamName}` : ""}.
+                      </p>
+                      <p className="mt-1 text-emerald-800/90 dark:text-emerald-200/90">
+                        {linkedWorkspaceSession.name}
+                      </p>
+                    </div>
+                    <div className="pt-1">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setIsSaveToWorkspaceOpen(true)}
+                      >
+                        Rename workspace session
+                      </Button>
+                    </div>
+                  </div>
+                ) : showSaveToWorkspace ? (
                   <div className="pt-1">
                     <Button
                       type="button"
@@ -293,7 +333,7 @@ const RoomScreen = () => {
                       Save to workspace
                     </Button>
                   </div>
-                )}
+                ) : null}
               </SurfaceCard>
 
               <SurfaceCard
@@ -747,6 +787,8 @@ const RoomScreen = () => {
         canManageQueue={false}
         onSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
         showSaveToWorkspace={showSaveToWorkspace}
+        linkedWorkspaceSession={linkedWorkspaceSession}
+        linkedWorkspaceTeamName={linkedWorkspaceTeamName}
         onCompleteSession={handleCompleteSession}
         recordedRoundsCount={roomData.roundHistory?.length ?? 0}
         currentRoundVoteCount={Object.keys(roomData.votes).length}
@@ -788,6 +830,7 @@ const RoomScreen = () => {
         onClose={() => setIsSaveToWorkspaceOpen(false)}
         roomKey={roomData.key}
         suggestedName={roomData.currentTicket?.title}
+        linkedSession={linkedWorkspaceSession}
       />
     </div>
   );

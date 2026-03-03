@@ -31,17 +31,19 @@ test.describe("Error scenarios", () => {
     });
 
     await reconnectPage.addInitScript(
-      ({ savedRoomKey, savedAuthToken, savedName }) => {
+      ({ savedRoomKey, savedAuthToken, savedName, savedAvatar }) => {
         window.localStorage.setItem("sprintjam_roomKey", savedRoomKey);
         if (savedAuthToken) {
           window.localStorage.setItem("sprintjam_authToken", savedAuthToken);
         }
         window.localStorage.setItem("sprintjam_username", savedName);
+        window.localStorage.setItem("sprintjam_avatar", savedAvatar);
       },
       {
         savedRoomKey: roomKey,
         savedAuthToken: authToken,
         savedName: moderatorName,
+        savedAvatar: "robot",
       },
     );
 
@@ -121,6 +123,7 @@ test.describe("Error scenarios", () => {
   }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("sprintjam_username", "Test User");
+      window.localStorage.setItem("sprintjam_avatar", "robot");
     });
 
     await page.goto("/room/XXXXXX");

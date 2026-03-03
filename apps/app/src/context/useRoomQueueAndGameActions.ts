@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { RoomGameType } from "@sprintjam/types";
 
 import {
@@ -12,7 +13,16 @@ import {
   submitGameMove,
   endGame,
 } from "@/lib/api-service";
-import { completeSessionByRoomKey } from "@/lib/workspace-service";
+import {
+  completeSessionByRoomKey,
+} from "@/lib/workspace-service";
+import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
+import {
+  linkedRoomSessionQueryKey,
+  teamSessionsQueryKey,
+  WORKSPACE_STATS_QUERY_KEY,
+} from "@/lib/workspace-query";
+import { HttpError } from "@/lib/errors";
 import type { ErrorKind, RoomData, TicketQueueItem } from "@/types";
 
 interface UseRoomQueueAndGameActionsOptions {
@@ -34,6 +44,9 @@ export function useRoomQueueAndGameActions({
   setRoomErrorKind,
   assignRoomError,
 }: UseRoomQueueAndGameActionsOptions) {
+  const queryClient = useQueryClient();
+  const { isAuthenticated } = useWorkspaceAuth();
+
   const handleSelectTicket = useCallback(
     (ticketId: number) => {
       if (roomData?.status === "completed") {
@@ -121,13 +134,43 @@ export function useRoomQueueAndGameActions({
 
     try {
       completeSession();
-      void completeSessionByRoomKey(roomData.key).catch((err: unknown) => {
-        assignRoomError(err, "Failed to update workspace session");
-      });
+      if (!isAuthenticated) {
+        return;
+      }
+
+      void completeSessionByRoomKey(roomData.key)
+        .then(async (updatedSession) => {
+          queryClient.setQueryData(
+            linkedRoomSessionQueryKey(roomData.key),
+            updatedSession,
+          );
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: teamSessionsQueryKey(updatedSession.teamId),
+            }),
+            queryClient.invalidateQueries({
+              queryKey: WORKSPACE_STATS_QUERY_KEY,
+            }),
+          ]);
+        })
+        .catch((err: unknown) => {
+          if (err instanceof HttpError && err.status === 404) {
+            return;
+          }
+          assignRoomError(err, "Failed to update workspace session");
+        });
     } catch (err: unknown) {
       assignRoomError(err, "Failed to complete session");
     }
-  }, [assignRoomError, roomData, setRoomError, setRoomErrorKind, userName]);
+  }, [
+    assignRoomError,
+    isAuthenticated,
+    queryClient,
+    roomData,
+    setRoomError,
+    setRoomErrorKind,
+    userName,
+  ]);
 
   const handleStartGame = useCallback(
     (gameType: RoomGameType) => {

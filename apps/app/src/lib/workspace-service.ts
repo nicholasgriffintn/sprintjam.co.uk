@@ -284,12 +284,43 @@ export async function createTeamSession(
   return data.session;
 }
 
+export async function getTeamSessionByRoomKey(
+  roomKey: string,
+): Promise<TeamSession | null> {
+  try {
+    const data = await workspaceRequest<{ session: TeamSession }>(
+      `${API_BASE_URL}/sessions/by-room?roomKey=${encodeURIComponent(roomKey)}`,
+    );
+    return data.session;
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function getTeamSession(
   teamId: number,
   sessionId: number,
 ): Promise<TeamSession> {
   const data = await workspaceRequest<{ session: TeamSession }>(
     `${API_BASE_URL}/teams/${teamId}/sessions/${sessionId}`,
+  );
+  return data.session;
+}
+
+export async function updateTeamSession(
+  teamId: number,
+  sessionId: number,
+  payload: { name: string },
+): Promise<TeamSession> {
+  const data = await workspaceRequest<{ session: TeamSession }>(
+    `${API_BASE_URL}/teams/${teamId}/sessions/${sessionId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
   );
   return data.session;
 }

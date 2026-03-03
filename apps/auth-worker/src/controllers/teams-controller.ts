@@ -955,6 +955,18 @@ export async function createTeamSessionController(
     }
   }
 
+  const existingSession = await auth.result.repo.getOrganisationTeamSessionByRoomKey(
+    roomKey,
+    teamViewer.viewer.user.organisationId,
+  );
+  if (existingSession) {
+    return jsonError(
+      "This room is already saved to your workspace",
+      409,
+      "session_already_linked",
+    );
+  }
+
   const sessionId = await auth.result.repo.createTeamSession(
     teamId,
     roomKey,
@@ -965,6 +977,38 @@ export async function createTeamSessionController(
   const session = await auth.result.repo.getTeamSessionById(sessionId);
 
   return jsonResponse({ session }, 201);
+}
+
+export async function getTeamSessionByRoomKeyController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const roomKey = new URL(request.url).searchParams.get("roomKey")?.trim();
+  if (!roomKey) {
+    return jsonError("Room key is required", 400);
+  }
+
+  const session = await auth.result.repo.getAccessibleTeamSessionByRoomKey(
+    roomKey,
+    workspace.viewer.user.organisationId,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+  if (!session) {
+    return notFoundResponse("Session not found");
+  }
+
+  return jsonResponse({ session });
 }
 
 export async function getTeamSessionController(
@@ -993,6 +1037,50 @@ export async function getTeamSessionController(
   }
 
   return jsonResponse({ session });
+}
+
+export async function updateTeamSessionController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  sessionId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  if (!teamViewer.viewer.canAccess) {
+    return forbiddenResponse("You do not have access to team sessions");
+  }
+
+  const session = await auth.result.repo.getTeamSessionById(sessionId);
+  if (!session || session.teamId !== teamId) {
+    return notFoundResponse("Session not found");
+  }
+
+  const body = await request.json<{ name?: string }>();
+  const name = body?.name?.trim();
+  if (!name) {
+    return jsonError("Session name is required", 400);
+  }
+
+  if (name.length > MAX_SESSION_NAME_LENGTH) {
+    return jsonError(
+      `Session name must be ${MAX_SESSION_NAME_LENGTH} characters or less`,
+      400,
+    );
+  }
+
+  await auth.result.repo.updateTeamSessionName(sessionId, name);
+  const updatedSession = await auth.result.repo.getTeamSessionById(sessionId);
+
+  return jsonResponse({ session: updatedSession });
 }
 
 export async function completeSessionByRoomKeyController(
