@@ -53,6 +53,7 @@ export function SaveToWorkspaceModal({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isEditMode = Boolean(linkedSession);
+  const activeLinkedSession = linkedSession;
   const linkedTeamName =
     teams.find((team) => team.id === linkedSession?.teamId)?.name ?? null;
 
@@ -75,7 +76,7 @@ export function SaveToWorkspaceModal({
 
     try {
       const session = isEditMode
-        ? await updateTeamSession(linkedSession.teamId, linkedSession.id, {
+        ? await updateTeamSession(activeLinkedSession!.teamId, activeLinkedSession!.id, {
             name: sessionName.trim(),
           })
         : await createTeamSession(selectedTeamId, sessionName.trim(), roomKey);
@@ -190,7 +191,7 @@ export function SaveToWorkspaceModal({
               Already linked to workspace
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              {linkedTeamName ? `Team: ${linkedTeamName}` : `Team ID: ${linkedSession.teamId}`}
+              {linkedTeamName ? `Team: ${linkedTeamName}` : `Team ID: ${activeLinkedSession!.teamId}`}
             </p>
           </SurfaceCard>
         ) : (
