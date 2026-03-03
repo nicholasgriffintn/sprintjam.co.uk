@@ -311,6 +311,30 @@ export class AuthRepository {
       .where(eq(organisations.id, organisationId));
   }
 
+  async getOrganisationMemberById(organisationId: number, userId: number) {
+    return await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        avatar: users.avatar,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+        role: workspaceMemberships.role,
+        status: workspaceMemberships.status,
+        approvedAt: workspaceMemberships.approvedAt,
+      })
+      .from(workspaceMemberships)
+      .innerJoin(users, eq(users.id, workspaceMemberships.userId))
+      .where(
+        and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.userId, userId),
+        ),
+      )
+      .get();
+  }
+
   async getOrganisationMembers(
     organisationId: number,
     statusFilter?: "active" | "pending",

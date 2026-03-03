@@ -100,9 +100,12 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
   getOrganisationMembership: vi
     .fn()
     .mockResolvedValue(makeMembership({ role: "admin", userId: 1 })),
+  getOrganisationMemberById: vi.fn().mockResolvedValue(null),
   isOrganisationAdmin: vi.fn().mockResolvedValue(true),
   getOrganisationTeams: vi.fn().mockResolvedValue([]),
   getTeamMembership: vi.fn().mockResolvedValue(null),
+  getTeamMemberById: vi.fn().mockResolvedValue(null),
+  getTeamMembershipsForUser: vi.fn().mockResolvedValue([]),
   upsertTeamMembership: vi.fn(),
   approveTeamMembership: vi.fn(),
   approveWorkspaceMembership: vi.fn(),
@@ -180,9 +183,9 @@ describe("teams-controller", () => {
       getOrganisationTeams: vi
         .fn()
         .mockResolvedValue([makeTeam({ id: 10, accessPolicy: "restricted" })]),
-      getTeamMembership: vi
+      getTeamMembershipsForUser: vi
         .fn()
-        .mockResolvedValue({ role: "member", status: "active" }),
+        .mockResolvedValue([{ teamId: 10, role: "member", status: "active" }]),
     });
     authenticateAs(repo);
 
@@ -359,19 +362,17 @@ describe("teams-controller", () => {
         .mockResolvedValueOnce(
           makeUser({ id: 2, email: "member@example.com" }),
         ),
-      listTeamMembers: vi.fn().mockResolvedValue([
-        {
-          id: 2,
-          email: "member@example.com",
-          name: "Member User",
-          avatar: null,
-          createdAt: Date.now(),
-          lastLoginAt: null,
-          role: "member",
-          status: "active",
-          approvedAt: Date.now(),
-        },
-      ]),
+      getTeamMemberById: vi.fn().mockResolvedValue({
+        id: 2,
+        email: "member@example.com",
+        name: "Member User",
+        avatar: null,
+        createdAt: Date.now(),
+        lastLoginAt: null,
+        role: "member",
+        status: "active",
+        approvedAt: Date.now(),
+      }),
     });
     authenticateAs(repo);
 
@@ -462,19 +463,17 @@ describe("teams-controller", () => {
         .fn()
         .mockResolvedValueOnce({ role: "admin", status: "active" })
         .mockResolvedValueOnce({ role: "member", status: "pending" }),
-      listTeamMembers: vi.fn().mockResolvedValue([
-        {
-          id: 2,
-          email: "member@example.com",
-          name: "Member User",
-          avatar: null,
-          createdAt: Date.now(),
-          lastLoginAt: null,
-          role: "member",
-          status: "active",
-          approvedAt: Date.now(),
-        },
-      ]),
+      getTeamMemberById: vi.fn().mockResolvedValue({
+        id: 2,
+        email: "member@example.com",
+        name: "Member User",
+        avatar: null,
+        createdAt: Date.now(),
+        lastLoginAt: null,
+        role: "member",
+        status: "active",
+        approvedAt: Date.now(),
+      }),
     });
     authenticateAs(repo);
 
@@ -525,19 +524,17 @@ describe("teams-controller", () => {
         .mockResolvedValueOnce(
           makeMembership({ role: "member", userId: 2, status: "pending" }),
         ),
-      getOrganisationMembers: vi.fn().mockResolvedValue([
-        {
-          id: 2,
-          email: "member@example.com",
-          name: "Member User",
-          avatar: null,
-          createdAt: Date.now(),
-          lastLoginAt: null,
-          role: "member",
-          status: "active",
-          approvedAt: Date.now(),
-        },
-      ]),
+      getOrganisationMemberById: vi.fn().mockResolvedValue({
+        id: 2,
+        email: "member@example.com",
+        name: "Member User",
+        avatar: null,
+        createdAt: Date.now(),
+        lastLoginAt: null,
+        role: "member",
+        status: "active",
+        approvedAt: Date.now(),
+      }),
     });
     authenticateAs(repo);
 
@@ -586,19 +583,17 @@ describe("teams-controller", () => {
         .fn()
         .mockResolvedValueOnce({ role: "admin", status: "active" })
         .mockResolvedValueOnce({ role: "member", status: "active" }),
-      listTeamMembers: vi.fn().mockResolvedValue([
-        {
-          id: 2,
-          email: "member@example.com",
-          name: "Member User",
-          avatar: null,
-          createdAt: Date.now(),
-          lastLoginAt: null,
-          role: "admin",
-          status: "active",
-          approvedAt: Date.now(),
-        },
-      ]),
+      getTeamMemberById: vi.fn().mockResolvedValue({
+        id: 2,
+        email: "member@example.com",
+        name: "Member User",
+        avatar: null,
+        createdAt: Date.now(),
+        lastLoginAt: null,
+        role: "admin",
+        status: "active",
+        approvedAt: Date.now(),
+      }),
     });
     authenticateAs(repo);
 
@@ -742,19 +737,17 @@ describe("teams-controller", () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ role: "member", status: "active" })
         .mockResolvedValueOnce(null),
-      listTeamMembers: vi.fn().mockResolvedValue([
-        {
-          id: 2,
-          email: "member@example.com",
-          name: "Member User",
-          avatar: null,
-          createdAt: Date.now(),
-          lastLoginAt: null,
-          role: "member",
-          status: "active",
-          approvedAt: Date.now(),
-        },
-      ]),
+      getTeamMemberById: vi.fn().mockResolvedValue({
+        id: 2,
+        email: "member@example.com",
+        name: "Member User",
+        avatar: null,
+        createdAt: Date.now(),
+        lastLoginAt: null,
+        role: "member",
+        status: "active",
+        approvedAt: Date.now(),
+      }),
     });
     authenticateAs(repo);
 

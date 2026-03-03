@@ -9,7 +9,7 @@ import {
   isNull,
   or,
   sql,
-} from 'drizzle-orm';
+} from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   teamMemberships,
@@ -175,6 +175,47 @@ export class TeamRepository {
       .get();
   }
 
+  async getTeamMemberById(teamId: number, userId: number) {
+    return await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        avatar: users.avatar,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+        role: teamMemberships.role,
+        status: teamMemberships.status,
+        approvedAt: teamMemberships.approvedAt,
+      })
+      .from(teamMemberships)
+      .innerJoin(users, eq(users.id, teamMemberships.userId))
+      .where(
+        and(
+          eq(teamMemberships.teamId, teamId),
+          eq(teamMemberships.userId, userId),
+        ),
+      )
+      .get();
+  }
+
+  async getTeamMembershipsForUser(userId: number, teamIds: number[]) {
+    if (teamIds.length === 0) return [];
+    return await this.db
+      .select({
+        teamId: teamMemberships.teamId,
+        role: teamMemberships.role,
+        status: teamMemberships.status,
+      })
+      .from(teamMemberships)
+      .where(
+        and(
+          eq(teamMemberships.userId, userId),
+          inArray(teamMemberships.teamId, teamIds),
+        ),
+      );
+  }
+
   async listTeamMembers(teamId: number) {
     return await this.db
       .select({
@@ -238,7 +279,7 @@ export class TeamRepository {
     await this.db
       .update(teamMemberships)
       .set({
-        status: 'active',
+        status: "active",
         approvedById,
         approvedAt: Date.now(),
         updatedAt: Date.now(),
@@ -441,7 +482,7 @@ export class TeamRepository {
         and(
           eq(teamMemberships.teamId, teams.id),
           eq(teamMemberships.userId, userId),
-          eq(teamMemberships.status, 'active'),
+          eq(teamMemberships.status, "active"),
         ),
       )
       .where(
@@ -452,7 +493,7 @@ export class TeamRepository {
             ? sql`1 = 1`
             : or(
                 eq(teamSessions.createdById, userId),
-                eq(teams.accessPolicy, 'open'),
+                eq(teams.accessPolicy, "open"),
                 eq(teamMemberships.userId, userId),
               ),
           isNull(teamSessions.completedAt),

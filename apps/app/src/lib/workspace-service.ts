@@ -185,7 +185,7 @@ export async function getCurrentUser(): Promise<WorkspaceAuthProfile | null> {
   }
 }
 
-export async function getWorkspaceProfile(): Promise<WorkspaceProfile | null> {
+export async function getWorkspaceProfile(): Promise<WorkspaceProfile> {
   return workspaceRequest<WorkspaceProfile>(
     `${API_BASE_URL}/workspace/profile`,
   );

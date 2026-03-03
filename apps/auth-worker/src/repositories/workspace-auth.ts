@@ -100,6 +100,10 @@ export class WorkspaceAuthRepository {
     return this.auth.updateOrganisation(organisationId, updates);
   }
 
+  getOrganisationMemberById(organisationId: number, userId: number) {
+    return this.auth.getOrganisationMemberById(organisationId, userId);
+  }
+
   getOrganisationMembers(
     organisationId: number,
     statusFilter?: "active" | "pending",
@@ -323,6 +327,14 @@ export class WorkspaceAuthRepository {
 
   getTeamMembership(teamId: number, userId: number) {
     return this.teams.getTeamMembership(teamId, userId);
+  }
+
+  getTeamMemberById(teamId: number, userId: number) {
+    return this.teams.getTeamMemberById(teamId, userId);
+  }
+
+  getTeamMembershipsForUser(userId: number, teamIds: number[]) {
+    return this.teams.getTeamMembershipsForUser(userId, teamIds);
   }
 
   listTeamMembers(teamId: number) {

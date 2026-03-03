@@ -158,6 +158,28 @@ async function buildTeamResponse(
   );
 }
 
+async function buildTeamResponsesBatch(
+  repo: AuthResult["repo"],
+  viewer: WorkspaceViewer,
+  teams: Awaited<ReturnType<AuthResult["repo"]["getOrganisationTeams"]>>,
+): Promise<WorkspaceTeam[]> {
+  const teamIds = teams.map((t) => t.id);
+  const memberships = await repo.getTeamMembershipsForUser(
+    viewer.user.id,
+    teamIds,
+  );
+  const membershipMap = new Map(memberships.map((m) => [m.teamId, m]));
+
+  return teams.map((team) =>
+    buildWorkspaceTeam(
+      team,
+      membershipMap.get(team.id) ?? null,
+      viewer.user.id,
+      viewer.isWorkspaceAdmin,
+    ),
+  );
+}
+
 function parseAccessPolicy(value: unknown): TeamAccessPolicy | null {
   return value === "open" || value === "restricted" ? value : null;
 }
@@ -247,9 +269,7 @@ export async function listTeamsController(
   const teams = await repo.getOrganisationTeams(
     workspace.viewer.user.organisationId,
   );
-  const hydrated = await Promise.all(
-    teams.map((team) => buildTeamResponse(repo, workspace.viewer, team)),
-  );
+  const hydrated = await buildTeamResponsesBatch(repo, workspace.viewer, teams);
 
   return jsonResponse({ teams: hydrated });
 }
@@ -488,8 +508,7 @@ export async function addTeamMemberController(
     approvedById: auth.result.userId,
   });
 
-  const members = await auth.result.repo.listTeamMembers(teamId);
-  const created = members.find((teamMember) => teamMember.id === userId);
+  const created = await auth.result.repo.getTeamMemberById(teamId, userId);
   return jsonResponse({ member: created }, 201);
 }
 
@@ -590,8 +609,7 @@ export async function approveTeamMemberController(
     auth.result.userId,
   );
 
-  const members = await auth.result.repo.listTeamMembers(teamId);
-  const member = members.find((teamMember) => teamMember.id === memberUserId);
+  const member = await auth.result.repo.getTeamMemberById(teamId, memberUserId);
   return jsonResponse({ member });
 }
 
@@ -642,8 +660,7 @@ export async function updateTeamMemberController(
 
   await auth.result.repo.updateTeamMembershipRole(teamId, memberUserId, role);
 
-  const members = await auth.result.repo.listTeamMembers(teamId);
-  const member = members.find((teamMember) => teamMember.id === memberUserId);
+  const member = await auth.result.repo.getTeamMemberById(teamId, memberUserId);
   return jsonResponse({ member });
 }
 
@@ -847,9 +864,9 @@ export async function moveTeamMemberController(
     return jsonError("Unable to move team member", 500);
   }
 
-  const members = await auth.result.repo.listTeamMembers(targetTeamId);
-  const movedMember = members.find(
-    (teamMember) => teamMember.id === memberUserId,
+  const movedMember = await auth.result.repo.getTeamMemberById(
+    targetTeamId,
+    memberUserId,
   );
 
   return jsonResponse({ member: movedMember, message: "Team member moved" });
@@ -1207,11 +1224,9 @@ export async function approveWorkspaceMemberController(
     auth.result.userId,
   );
 
-  const members = await auth.result.repo.getOrganisationMembers(
+  const member = await auth.result.repo.getOrganisationMemberById(
     workspace.viewer.user.organisationId,
-  );
-  const member = members.find(
-    (workspaceMember) => workspaceMember.id === memberUserId,
+    memberUserId,
   );
   return jsonResponse({ member });
 }
@@ -1266,11 +1281,9 @@ export async function updateWorkspaceMemberController(
     role,
   );
 
-  const members = await auth.result.repo.getOrganisationMembers(
+  const member = await auth.result.repo.getOrganisationMemberById(
     workspace.viewer.user.organisationId,
-  );
-  const member = members.find(
-    (workspaceMember) => workspaceMember.id === memberUserId,
+    memberUserId,
   );
   return jsonResponse({ member });
 }
