@@ -44,22 +44,17 @@ export async function getCurrentUserController(
     user.organisationId,
   );
   const teams = await repo.getOrganisationTeams(user.organisationId);
-  const organisation = await repo.getOrganisationById(user.organisationId);
-  if (!organisation) {
-    return jsonError("Organisation not found", 404);
-  }
   const hydratedTeams = await Promise.all(
     teams.map(async (team) => {
       const teamMembership = await repo.getTeamMembership(team.id, user.id);
-      return buildWorkspaceTeam(team, teamMembership, user.id, isWorkspaceAdmin);
+      return buildWorkspaceTeam(
+        team,
+        teamMembership,
+        user.id,
+        isWorkspaceAdmin,
+      );
     }),
   );
-  const members = (await repo.getOrganisationMembers(user.organisationId)).filter(
-    (member) => member.status === "active" || isWorkspaceAdmin,
-  );
-  const invites = isWorkspaceAdmin
-    ? await repo.listPendingWorkspaceInvites(user.organisationId)
-    : [];
 
   return jsonResponse({
     user: {
@@ -69,11 +64,11 @@ export async function getCurrentUserController(
       organisationId: user.organisationId,
       avatar: user.avatar ?? null,
     },
-    membership,
-    organisation,
+    membership: {
+      role: membership.role,
+      status: membership.status,
+    },
     teams: hydratedTeams,
-    members,
-    invites,
   });
 }
 

@@ -12,7 +12,7 @@ import type { RoomData, ServerDefaults } from "@/types";
 import type {
   TeamSession,
   WheelData,
-  WorkspaceProfile,
+  WorkspaceAuthProfile,
   WorkspaceStats,
 } from "@sprintjam/types";
 
@@ -51,6 +51,14 @@ function createEnsureCollectionReady(
 
     await readyPromise;
   };
+}
+
+function isUnauthorizedWorkspaceError(error: unknown) {
+  return (
+    error instanceof Error &&
+    (error.message === "Unauthorized" ||
+      error.message === "Invalid or expired session")
+  );
 }
 
 const serverDefaultsCollectionConfig = {
@@ -94,12 +102,12 @@ const workspaceProfileCollectionConfig = {
     }
 
     try {
-      const profile = await workspaceRequest<WorkspaceProfile>(
+      const profile = await workspaceRequest<WorkspaceAuthProfile>(
         `${API_BASE_URL}/auth/me`,
       );
       return [profile];
     } catch (error) {
-      if (error instanceof Error && error.message === "Unauthorized") {
+      if (isUnauthorizedWorkspaceError(error)) {
         return [];
       }
       throw error;
@@ -108,10 +116,10 @@ const workspaceProfileCollectionConfig = {
   getKey: () => WORKSPACE_PROFILE_DOCUMENT_KEY,
   queryClient,
   staleTime: 1000 * 60 * 5,
-} satisfies QueryCollectionConfig<WorkspaceProfile>;
+} satisfies QueryCollectionConfig<WorkspaceAuthProfile>;
 
 export const workspaceProfileCollection = createCollection<
-  WorkspaceProfile,
+  WorkspaceAuthProfile,
   string
 >(queryCollectionOptions(workspaceProfileCollectionConfig));
 
@@ -133,7 +141,7 @@ const workspaceStatsCollectionConfig = {
       );
       return [stats];
     } catch (error) {
-      if (error instanceof Error && error.message === "Unauthorized") {
+      if (isUnauthorizedWorkspaceError(error)) {
         return [];
       }
       throw error;

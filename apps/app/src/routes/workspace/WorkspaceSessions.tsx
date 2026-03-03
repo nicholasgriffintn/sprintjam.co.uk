@@ -32,7 +32,7 @@ export default function WorkspaceSessions() {
     isLoadingSessions,
     error,
     refreshWorkspace,
-  } = useWorkspaceData();
+  } = useWorkspaceData({ includeSessions: true });
 
   const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
@@ -130,7 +130,11 @@ export default function WorkspaceSessions() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="success" size="sm" className="font-semibold">
+                    <Badge
+                      variant="success"
+                      size="sm"
+                      className="font-semibold"
+                    >
                       <Target className="mr-1.5 h-3.5 w-3.5" />
                       {sessions.length}
                     </Badge>

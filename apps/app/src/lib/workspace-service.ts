@@ -8,6 +8,7 @@ import type {
   TeamInsights,
   TeamIntegrationStatus,
   TeamSession,
+  WorkspaceAuthProfile,
   WorkspaceMember,
   WorkspaceInsights,
   WorkspaceInvite,
@@ -174,12 +175,20 @@ export async function verifyMfa(
   });
 }
 
-export async function getCurrentUser(): Promise<WorkspaceProfile | null> {
+export async function getCurrentUser(): Promise<WorkspaceAuthProfile | null> {
   try {
-    return await workspaceRequest<WorkspaceProfile>(`${API_BASE_URL}/auth/me`);
+    return await workspaceRequest<WorkspaceAuthProfile>(
+      `${API_BASE_URL}/auth/me`,
+    );
   } catch {
     return null;
   }
+}
+
+export async function getWorkspaceProfile(): Promise<WorkspaceProfile | null> {
+  return workspaceRequest<WorkspaceProfile>(
+    `${API_BASE_URL}/workspace/profile`,
+  );
 }
 
 export async function updateCurrentUserProfile(payload: {

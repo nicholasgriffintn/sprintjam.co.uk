@@ -1,11 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import {
-  Building2,
-  Clock3,
-  MailPlus,
-  Shield,
-  UserMinus,
-} from "lucide-react";
+import { Building2, Clock3, MailPlus, Shield, UserMinus } from "lucide-react";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { AdminSidebar } from "@/components/workspace/AdminSidebar";
@@ -42,7 +36,7 @@ export default function WorkspaceAdminOverview() {
     error,
     actionError,
     refreshWorkspace,
-  } = useWorkspaceData();
+  } = useWorkspaceData({ includeProfile: true });
 
   const { goToLogin } = useSessionActions();
   const [workspaceName, setWorkspaceName] = useState("");
@@ -97,12 +91,7 @@ export default function WorkspaceAdminOverview() {
       (workspaceLogoUrl.trim() || "") !== (organisation.logoUrl ?? "") ||
       requireMemberApproval !== organisation.requireMemberApproval
     );
-  }, [
-    organisation,
-    requireMemberApproval,
-    workspaceLogoUrl,
-    workspaceName,
-  ]);
+  }, [organisation, requireMemberApproval, workspaceLogoUrl, workspaceName]);
 
   const handleSaveWorkspace = async () => {
     if (!workspaceName.trim()) {
@@ -415,7 +404,9 @@ export default function WorkspaceAdminOverview() {
                               size="sm"
                               variant="secondary"
                               isLoading={isUpdatingMemberId === member.id}
-                              onClick={() => void handleRoleChange(member, "member")}
+                              onClick={() =>
+                                void handleRoleChange(member, "member")
+                              }
                             >
                               Make member
                             </Button>
@@ -424,7 +415,9 @@ export default function WorkspaceAdminOverview() {
                               size="sm"
                               variant="secondary"
                               isLoading={isUpdatingMemberId === member.id}
-                              onClick={() => void handleRoleChange(member, "admin")}
+                              onClick={() =>
+                                void handleRoleChange(member, "admin")
+                              }
                             >
                               Make admin
                             </Button>

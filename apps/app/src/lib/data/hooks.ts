@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import type {
   TeamSession,
-  WorkspaceProfile,
+  WorkspaceAuthProfile,
   WorkspaceStats,
 } from "@sprintjam/types";
 
@@ -81,7 +81,9 @@ export function useRoomData(roomKey: string | null): RoomData | null {
   );
 }
 
-export function useWorkspaceProfile(enabled = true): WorkspaceProfile | null {
+export function useWorkspaceProfile(
+  enabled = true,
+): WorkspaceAuthProfile | null {
   const subscribe = useMemo(
     () =>
       createCollectionSubscriber((onChange) => {

@@ -619,14 +619,12 @@ describe("verifyCodeController", () => {
       success: true,
       email: "pending@example.com",
     });
-    mockRepo.getUserByEmail
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 300,
-        email: "pending@example.com",
-        name: null,
-        organisationId: 9,
-      });
+    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 300,
+      email: "pending@example.com",
+      name: null,
+      organisationId: 9,
+    });
     mockRepo.getOrCreateOrganisation.mockResolvedValue(9);
     mockRepo.getOrCreateUser.mockResolvedValue(300);
     mockRepo.getOrganisationById.mockResolvedValue({
@@ -761,16 +759,6 @@ describe("getCurrentUserController", () => {
       name: "Test User",
       organisationId: 1,
     });
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 1,
-      domain: "example.com",
-      name: "Example",
-      logoUrl: null,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    mockRepo.getOrganisationMembers.mockResolvedValue([]);
-    mockRepo.listPendingWorkspaceInvites.mockResolvedValue([]);
     mockRepo.getOrganisationTeams.mockResolvedValue([
       {
         id: 1,
@@ -799,7 +787,7 @@ describe("getCurrentUserController", () => {
     const response = await getCurrentUserController(request, mockEnv);
     const data = (await response.json()) as {
       user: { id: number; email: string; name: string; organisationId: number };
-      organisation: { id: number; name: string };
+      membership: { role: string; status: string };
       teams: Array<{
         id: number;
         name: string;
@@ -818,8 +806,14 @@ describe("getCurrentUserController", () => {
       avatar: null,
       organisationId: 1,
     });
+    expect(data.membership).toEqual({
+      role: "member",
+      status: "active",
+    });
     expect(data.teams).toHaveLength(2);
-    expect(data.organisation.name).toBe("Example");
+    expect(data).not.toHaveProperty("organisation");
+    expect(data).not.toHaveProperty("members");
+    expect(data).not.toHaveProperty("invites");
     expect(data.teams[0]).toEqual(
       expect.objectContaining({
         name: "Team Alpha",
@@ -847,16 +841,6 @@ describe("getCurrentUserController", () => {
       name: "Test User",
       organisationId: 1,
     });
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 1,
-      domain: "example.com",
-      name: "Example",
-      logoUrl: null,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    mockRepo.getOrganisationMembers.mockResolvedValue([]);
-    mockRepo.listPendingWorkspaceInvites.mockResolvedValue([]);
     mockRepo.getOrganisationTeams.mockResolvedValue([]);
 
     const request = makeRequest("https://test.com/auth/me", {
@@ -880,16 +864,6 @@ describe("getCurrentUserController", () => {
       name: "Test User",
       organisationId: 1,
     });
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 1,
-      domain: "example.com",
-      name: "Example",
-      logoUrl: null,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    mockRepo.getOrganisationMembers.mockResolvedValue([]);
-    mockRepo.listPendingWorkspaceInvites.mockResolvedValue([]);
     mockRepo.getOrganisationTeams.mockResolvedValue([]);
 
     const request = makeRequest("https://test.com/auth/me", {

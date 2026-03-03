@@ -45,6 +45,10 @@ export type WorkspaceUser = Pick<
   User,
   "id" | "email" | "name" | "organisationId" | "avatar"
 >;
+export type WorkspaceMembershipSummary = Pick<
+  WorkspaceMembershipRow,
+  "role" | "status"
+>;
 export type WorkspaceOrganisation = Organisation;
 export type WorkspaceMember = Pick<
   User,
@@ -88,11 +92,15 @@ export interface WorkspaceStats {
   sessionTimeline: SessionTimelineData[];
 }
 
-export interface WorkspaceProfile {
+export interface WorkspaceAuthProfile {
   user: WorkspaceUser;
+  membership: WorkspaceMembershipSummary;
+  teams: WorkspaceTeam[];
+}
+
+export interface WorkspaceProfile {
   membership: WorkspaceMembershipRow;
   organisation: WorkspaceOrganisation;
-  teams: WorkspaceTeam[];
   members: WorkspaceMember[];
   invites: WorkspaceInvite[];
 }

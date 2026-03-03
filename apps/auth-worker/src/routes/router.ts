@@ -28,6 +28,7 @@ import {
   createTeamSessionController,
   getTeamSessionController,
   completeSessionByRoomKeyController,
+  getWorkspaceProfileController,
   getWorkspaceStatsController,
   updateWorkspaceProfileController,
   approveWorkspaceMemberController,
@@ -296,6 +297,12 @@ const ROUTES: RouteDefinition[] = [
     method: "POST",
     pattern: /^sessions\/complete$/,
     handler: (request, env) => completeSessionByRoomKeyController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "GET",
+    pattern: /^workspace\/profile$/,
+    handler: (request, env) => getWorkspaceProfileController(request, env),
     paramTypes: ["none"],
   },
   {

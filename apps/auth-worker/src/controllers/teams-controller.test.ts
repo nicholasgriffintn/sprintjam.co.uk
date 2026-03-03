@@ -15,6 +15,7 @@ import {
   listTeamSessionsController,
   createTeamSessionController,
   completeSessionByRoomKeyController,
+  getWorkspaceProfileController,
   getWorkspaceStatsController,
   updateWorkspaceProfileController,
   inviteWorkspaceMemberController,
@@ -223,7 +224,9 @@ describe("teams-controller", () => {
 
   it("creates a team with the default open access policy", async () => {
     const repo = createRepo({
-      getTeamById: vi.fn().mockResolvedValue(makeTeam({ id: 10, name: "New Team" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, name: "New Team" })),
     });
     authenticateAs(repo);
 
@@ -350,7 +353,9 @@ describe("teams-controller", () => {
       getUserById: vi
         .fn()
         .mockResolvedValueOnce(makeUser())
-        .mockResolvedValueOnce(makeUser({ id: 2, email: "member@example.com" })),
+        .mockResolvedValueOnce(
+          makeUser({ id: 2, email: "member@example.com" }),
+        ),
       listTeamMembers: vi.fn().mockResolvedValue([
         {
           id: 2,
@@ -740,6 +745,49 @@ describe("teams-controller", () => {
     expect(response.status).toBe(200);
     expect(data.totalTeams).toBe(3);
     expect(repo.getWorkspaceStats).toHaveBeenCalledWith(1, 1, true);
+  });
+
+  it("returns workspace profile data without overloading auth bootstrap", async () => {
+    const repo = createRepo({
+      getOrganisationMembers: vi.fn().mockResolvedValue([
+        {
+          id: 1,
+          email: "admin@example.com",
+          name: "Admin User",
+          avatar: null,
+          createdAt: 1700000000000,
+          lastLoginAt: 1700000001000,
+          role: "admin",
+          status: "active",
+          approvedAt: 1700000000000,
+        },
+      ]),
+      listPendingWorkspaceInvites: vi
+        .fn()
+        .mockResolvedValue([makeInvite({ email: "pending@example.com" })]),
+    });
+    authenticateAs(repo);
+
+    const response = await getWorkspaceProfileController(
+      makeRequest("https://test.com/workspace/profile"),
+      env,
+    );
+    const data = (await response.json()) as {
+      membership: { role: string };
+      organisation: { name: string };
+      members: Array<{ email: string }>;
+      invites: Array<{ email: string }>;
+    };
+
+    expect(response.status).toBe(200);
+    expect(data.membership.role).toBe("admin");
+    expect(data.organisation.name).toBe("Example");
+    expect(data.members).toEqual([
+      expect.objectContaining({ email: "admin@example.com" }),
+    ]);
+    expect(data.invites).toEqual([
+      expect.objectContaining({ email: "pending@example.com" }),
+    ]);
   });
 
   it("only allows workspace admins to update workspace settings", async () => {

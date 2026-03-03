@@ -52,7 +52,7 @@ export default function WorkspaceTeamSettings() {
     isLoading,
     error,
     refreshWorkspace,
-  } = useWorkspaceData();
+  } = useWorkspaceData({ includeProfile: true });
 
   const { goToLogin, goToWorkspaceAdminTeams } = useSessionActions();
   const { serverDefaults } = useRoomState();
@@ -203,7 +203,8 @@ export default function WorkspaceTeamSettings() {
   const movableTeams = useMemo(
     () =>
       teams.filter(
-        (team) => team.id !== selectedTeamId && (isWorkspaceAdmin || team.canManage),
+        (team) =>
+          team.id !== selectedTeamId && (isWorkspaceAdmin || team.canManage),
       ),
     [isWorkspaceAdmin, selectedTeamId, teams],
   );
@@ -378,12 +379,13 @@ export default function WorkspaceTeamSettings() {
                                   ? "Admin"
                                   : "Member"}
                             </Badge>
-                            {member.role === "admin" && member.status === "active" && (
-                              <Badge variant="success" size="sm">
-                                <Shield className="mr-1 h-3.5 w-3.5" />
-                                Can manage
-                              </Badge>
-                            )}
+                            {member.role === "admin" &&
+                              member.status === "active" && (
+                                <Badge variant="success" size="sm">
+                                  <Shield className="mr-1 h-3.5 w-3.5" />
+                                  Can manage
+                                </Badge>
+                              )}
                           </div>
                         </div>
 
@@ -397,7 +399,9 @@ export default function WorkspaceTeamSettings() {
                                   approveMemberMutation.variables === member.id
                                 }
                                 onClick={() =>
-                                  void approveMemberMutation.mutateAsync(member.id)
+                                  void approveMemberMutation.mutateAsync(
+                                    member.id,
+                                  )
                                 }
                               >
                                 Approve
@@ -596,7 +600,10 @@ export default function WorkspaceTeamSettings() {
                     githubOAuth.status.connected
                       ? [
                           metaStr(githubOAuth.status.metadata, "githubLogin"),
-                          metaStr(githubOAuth.status.metadata, "defaultOwner") &&
+                          metaStr(
+                            githubOAuth.status.metadata,
+                            "defaultOwner",
+                          ) &&
                           metaStr(githubOAuth.status.metadata, "defaultRepo")
                             ? `${metaStr(githubOAuth.status.metadata, "defaultOwner")}/${metaStr(githubOAuth.status.metadata, "defaultRepo")}`
                             : undefined,

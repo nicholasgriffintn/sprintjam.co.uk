@@ -418,7 +418,10 @@ export async function addTeamMemberController(
     return forbiddenResponse("Only team admins can manage team members");
   }
 
-  const body = await request.json<{ userId?: number; role?: "admin" | "member" }>();
+  const body = await request.json<{
+    userId?: number;
+    role?: "admin" | "member";
+  }>();
   const userId = body?.userId;
   const role = parseRole(body?.role) ?? "member";
 
@@ -427,7 +430,10 @@ export async function addTeamMemberController(
   }
 
   const member = await auth.result.repo.getUserById(userId);
-  if (!member || member.organisationId !== teamViewer.viewer.user.organisationId) {
+  if (
+    !member ||
+    member.organisationId !== teamViewer.viewer.user.organisationId
+  ) {
     return notFoundResponse("Workspace member not found");
   }
 
@@ -531,7 +537,10 @@ export async function approveTeamMemberController(
     return forbiddenResponse("Only team admins can manage team members");
   }
 
-  const membership = await auth.result.repo.getTeamMembership(teamId, memberUserId);
+  const membership = await auth.result.repo.getTeamMembership(
+    teamId,
+    memberUserId,
+  );
   if (!membership) {
     return notFoundResponse("Team member not found");
   }
@@ -573,7 +582,10 @@ export async function updateTeamMemberController(
     return jsonError("Valid role is required", 400);
   }
 
-  const membership = await auth.result.repo.getTeamMembership(teamId, memberUserId);
+  const membership = await auth.result.repo.getTeamMembership(
+    teamId,
+    memberUserId,
+  );
   if (!membership || membership.status !== "active") {
     return notFoundResponse("Active team member not found");
   }
@@ -616,7 +628,10 @@ export async function removeTeamMemberController(
     return forbiddenResponse("Only team admins can manage team members");
   }
 
-  const membership = await auth.result.repo.getTeamMembership(teamId, memberUserId);
+  const membership = await auth.result.repo.getTeamMembership(
+    teamId,
+    memberUserId,
+  );
   if (!membership) {
     return notFoundResponse("Team member not found");
   }
@@ -675,7 +690,9 @@ export async function createTeamSessionController(
   }
 
   if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse("You must be a team member to create sessions in this team");
+    return forbiddenResponse(
+      "You must be a team member to create sessions in this team",
+    );
   }
 
   const body = await request.json<{
@@ -800,6 +817,48 @@ export async function getWorkspaceStatsController(
   return jsonResponse(stats);
 }
 
+export async function getWorkspaceProfileController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const organisation = await auth.result.repo.getOrganisationById(
+    workspace.viewer.user.organisationId,
+  );
+  if (!organisation) {
+    return notFoundResponse("Organisation not found");
+  }
+
+  const members = (
+    await auth.result.repo.getOrganisationMembers(
+      workspace.viewer.user.organisationId,
+    )
+  ).filter(
+    (member) => member.status === "active" || workspace.viewer.isWorkspaceAdmin,
+  );
+  const invites = workspace.viewer.isWorkspaceAdmin
+    ? await auth.result.repo.listPendingWorkspaceInvites(
+        workspace.viewer.user.organisationId,
+      )
+    : [];
+
+  return jsonResponse({
+    membership: workspace.viewer.membership,
+    organisation,
+    members,
+    invites,
+  });
+}
+
 export async function updateWorkspaceProfileController(
   request: Request,
   env: AuthWorkerEnv,
@@ -815,7 +874,9 @@ export async function updateWorkspaceProfileController(
   }
 
   if (!workspace.viewer.isWorkspaceAdmin) {
-    return forbiddenResponse("Only workspace admins can update workspace profile");
+    return forbiddenResponse(
+      "Only workspace admins can update workspace profile",
+    );
   }
 
   const body = await request.json<{
@@ -877,13 +938,16 @@ export async function updateWorkspaceProfileController(
     }
   }
 
-  await auth.result.repo.updateOrganisation(workspace.viewer.user.organisationId, {
-    ...(hasNameUpdate ? { name: nextName } : {}),
-    ...(hasLogoUpdate ? { logoUrl: normalizedLogoUrl ?? null } : {}),
-    ...(hasApprovalUpdate
-      ? { requireMemberApproval: body.requireMemberApproval }
-      : {}),
-  });
+  await auth.result.repo.updateOrganisation(
+    workspace.viewer.user.organisationId,
+    {
+      ...(hasNameUpdate ? { name: nextName } : {}),
+      ...(hasLogoUpdate ? { logoUrl: normalizedLogoUrl ?? null } : {}),
+      ...(hasApprovalUpdate
+        ? { requireMemberApproval: body.requireMemberApproval }
+        : {}),
+    },
+  );
 
   const organisation = await auth.result.repo.getOrganisationById(
     workspace.viewer.user.organisationId,
@@ -927,7 +991,9 @@ export async function approveWorkspaceMemberController(
   const members = await auth.result.repo.getOrganisationMembers(
     workspace.viewer.user.organisationId,
   );
-  const member = members.find((workspaceMember) => workspaceMember.id === memberUserId);
+  const member = members.find(
+    (workspaceMember) => workspaceMember.id === memberUserId,
+  );
   return jsonResponse({ member });
 }
 
@@ -984,7 +1050,9 @@ export async function updateWorkspaceMemberController(
   const members = await auth.result.repo.getOrganisationMembers(
     workspace.viewer.user.organisationId,
   );
-  const member = members.find((workspaceMember) => workspaceMember.id === memberUserId);
+  const member = members.find(
+    (workspaceMember) => workspaceMember.id === memberUserId,
+  );
   return jsonResponse({ member });
 }
 
@@ -1069,7 +1137,10 @@ export async function inviteWorkspaceMemberController(
   }
 
   const existingUser = await auth.result.repo.getUserByEmail(email);
-  if (existingUser && existingUser.organisationId === workspace.viewer.user.organisationId) {
+  if (
+    existingUser &&
+    existingUser.organisationId === workspace.viewer.user.organisationId
+  ) {
     const membership = await auth.result.repo.getOrganisationMembership(
       existingUser.id,
       existingUser.organisationId,
@@ -1097,7 +1168,8 @@ export async function inviteWorkspaceMemberController(
     workspace.viewer.user.organisationId,
   );
   const workspaceName = organisation?.name ?? "your workspace";
-  const inviterName = workspace.viewer.user.name?.trim() || workspace.viewer.user.email;
+  const inviterName =
+    workspace.viewer.user.name?.trim() || workspace.viewer.user.email;
   const loginUrl = `${new URL(request.url).origin}/login`;
 
   try {
