@@ -21,6 +21,11 @@ const getEnabledEntriesText = (entries: WheelEntry[]) =>
     .filter((e) => e.enabled)
     .map((e) => e.name)
     .join("\n");
+const parseBulkNames = (value: string) =>
+  value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 
 export function WheelSidebar({
   entries,
@@ -35,16 +40,35 @@ export function WheelSidebar({
     getEnabledEntriesText(entries),
   );
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const entriesRef = useRef(entries);
+  const bulkAddRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bulkTextRef = useRef(bulkText);
+  const entriesTextRef = useRef(getEnabledEntriesText(entries));
+  const pendingBulkTextRef = useRef<string | null>(null);
+  const isTextareaFocusedRef = useRef(false);
 
   useEffect(() => {
-    entriesRef.current = entries;
-  }, [entries]);
+    bulkTextRef.current = bulkText;
+  }, [bulkText]);
 
   useEffect(() => {
-    const nextBulkText = getEnabledEntriesText(entries);
+    const nextEntriesText = getEnabledEntriesText(entries);
+    entriesTextRef.current = nextEntriesText;
+
+    if (pendingBulkTextRef.current === nextEntriesText) {
+      pendingBulkTextRef.current = null;
+      return;
+    }
+
+    const shouldPreserveLocalDraft =
+      pendingBulkTextRef.current !== null ||
+      (isTextareaFocusedRef.current && bulkTextRef.current !== nextEntriesText);
+
+    if (shouldPreserveLocalDraft) {
+      return;
+    }
+
     setBulkText((currentBulkText) =>
-      nextBulkText === currentBulkText ? currentBulkText : nextBulkText,
+      nextEntriesText === currentBulkText ? currentBulkText : nextEntriesText,
     );
   }, [entries]);
 
@@ -54,6 +78,10 @@ export function WheelSidebar({
         clearTimeout(debounceRef.current);
         debounceRef.current = null;
       }
+      if (bulkAddRef.current) {
+        clearTimeout(bulkAddRef.current);
+        bulkAddRef.current = null;
+      }
       return;
     }
 
@@ -62,24 +90,18 @@ export function WheelSidebar({
     }
 
     debounceRef.current = setTimeout(() => {
-      const names = bulkText
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
+      const names = parseBulkNames(bulkText);
+      const nextBulkText = names.join("\n");
+      const comparisonText =
+        pendingBulkTextRef.current ?? entriesTextRef.current;
 
-      const currentNames = entriesRef.current
-        .filter((e) => e.enabled)
-        .map((e) => e.name);
-
-      const namesChanged =
-        names.length !== currentNames.length ||
-        names.some((name, i) => name !== currentNames[i]);
-
-      if (namesChanged) {
+      if (nextBulkText !== comparisonText) {
+        pendingBulkTextRef.current = nextBulkText;
         onClearEntries();
         if (names.length > 0) {
-          setTimeout(() => {
+          bulkAddRef.current = setTimeout(() => {
             onBulkAddEntries(names);
+            bulkAddRef.current = null;
           }, 50);
         }
       }
@@ -90,6 +112,11 @@ export function WheelSidebar({
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      if (bulkAddRef.current) {
+        clearTimeout(bulkAddRef.current);
+        bulkAddRef.current = null;
       }
     };
   }, [bulkText, disabled, isModeratorView, onBulkAddEntries, onClearEntries]);
@@ -149,6 +176,23 @@ export function WheelSidebar({
                 <textarea
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
+                  onFocus={() => {
+                    isTextareaFocusedRef.current = true;
+                  }}
+                  onBlur={() => {
+                    isTextareaFocusedRef.current = false;
+
+                    const nextEntriesText = entriesTextRef.current;
+                    if (pendingBulkTextRef.current !== null) {
+                      return;
+                    }
+
+                    setBulkText((currentBulkText) =>
+                      currentBulkText === nextEntriesText
+                        ? currentBulkText
+                        : nextEntriesText,
+                    );
+                  }}
                   placeholder="Enter names, one per line..."
                   className="flex-1 w-full rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-white/10 dark:bg-slate-900/60 dark:text-white placeholder-slate-400 resize-none min-h-[220px]"
                   disabled={disabled}
