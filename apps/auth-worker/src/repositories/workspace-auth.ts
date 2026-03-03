@@ -52,12 +52,21 @@ export class WorkspaceAuthRepository {
 
   validateSession(
     tokenHash: string,
-  ): Promise<{ userId: number; email: string } | null> {
+  ): Promise<{
+    userId: number;
+    email: string;
+    organisationId: number;
+    workspaceRole: "admin" | "member";
+  } | null> {
     return this.auth.validateSession(tokenHash);
   }
 
   invalidateSession(tokenHash: string): Promise<void> {
     return this.auth.invalidateSession(tokenHash);
+  }
+
+  invalidateSessionsForUser(userId: number): Promise<void> {
+    return this.auth.invalidateSessionsForUser(userId);
   }
 
   getUserByEmail(email: string) {
@@ -84,7 +93,11 @@ export class WorkspaceAuthRepository {
 
   updateOrganisation(
     organisationId: number,
-    updates: { name?: string; logoUrl?: string | null },
+    updates: {
+      name?: string;
+      logoUrl?: string | null;
+      requireMemberApproval?: boolean;
+    },
   ): Promise<void> {
     return this.auth.updateOrganisation(organisationId, updates);
   }
@@ -93,8 +106,53 @@ export class WorkspaceAuthRepository {
     return this.auth.getOrganisationMembers(organisationId);
   }
 
-  isOrganisationOwner(userId: number, organisationId: number) {
-    return this.auth.isOrganisationOwner(userId, organisationId);
+  getOrganisationMembership(userId: number, organisationId: number) {
+    return this.auth.getOrganisationMembership(userId, organisationId);
+  }
+
+  getActiveOrganisationMembershipByEmail(email: string) {
+    return this.auth.getActiveOrganisationMembershipByEmail(email);
+  }
+
+  upsertWorkspaceMembership(params: {
+    organisationId: number;
+    userId: number;
+    role: "admin" | "member";
+    status: "pending" | "active";
+    approvedById?: number | null;
+  }): Promise<void> {
+    return this.auth.upsertWorkspaceMembership(params);
+  }
+
+  approveWorkspaceMembership(
+    organisationId: number,
+    userId: number,
+    approvedById: number,
+  ): Promise<void> {
+    return this.auth.approveWorkspaceMembership(
+      organisationId,
+      userId,
+      approvedById,
+    );
+  }
+
+  updateWorkspaceMembershipRole(
+    userId: number,
+    organisationId: number,
+    role: "admin" | "member",
+  ): Promise<boolean> {
+    return this.auth.updateWorkspaceMembershipRole(userId, organisationId, role);
+  }
+
+  removeWorkspaceMembership(
+    organisationId: number,
+    userId: number,
+  ): Promise<void> {
+    return this.auth.removeWorkspaceMembership(organisationId, userId);
+  }
+
+  isOrganisationAdmin(userId: number, organisationId: number) {
+    return this.auth.isOrganisationAdmin(userId, organisationId);
   }
 
   setOrganisationOwnerIfNull(
@@ -222,23 +280,35 @@ export class WorkspaceAuthRepository {
     return this.auth.resetMfaConfiguration(userId);
   }
 
-  getUserTeams(userId: number) {
-    return this.teams.getUserTeams(userId);
+  getOrganisationTeams(organisationId: number) {
+    return this.teams.getOrganisationTeams(organisationId);
+  }
+
+  getUserTeams(
+    userId: number,
+    organisationId: number,
+    isWorkspaceAdmin: boolean,
+  ) {
+    return this.teams.getUserTeams(userId, organisationId, isWorkspaceAdmin);
   }
 
   createTeam(
     organisationId: number,
     name: string,
     ownerId: number,
+    accessPolicy?: "open" | "restricted",
   ): Promise<number> {
-    return this.teams.createTeam(organisationId, name, ownerId);
+    return this.teams.createTeam(organisationId, name, ownerId, accessPolicy);
   }
 
   getTeamById(teamId: number) {
     return this.teams.getTeamById(teamId);
   }
 
-  updateTeam(teamId: number, updates: { name?: string }): Promise<void> {
+  updateTeam(
+    teamId: number,
+    updates: { name?: string; accessPolicy?: "open" | "restricted" },
+  ): Promise<void> {
     return this.teams.updateTeam(teamId, updates);
   }
 
@@ -246,8 +316,54 @@ export class WorkspaceAuthRepository {
     return this.teams.deleteTeam(teamId);
   }
 
-  isTeamOwner(teamId: number, userId: number): Promise<boolean> {
-    return this.teams.isTeamOwner(teamId, userId);
+  getTeamMembership(teamId: number, userId: number) {
+    return this.teams.getTeamMembership(teamId, userId);
+  }
+
+  listTeamMembers(teamId: number) {
+    return this.teams.listTeamMembers(teamId);
+  }
+
+  upsertTeamMembership(params: {
+    teamId: number;
+    userId: number;
+    role: "admin" | "member";
+    status: "pending" | "active";
+    approvedById?: number | null;
+  }): Promise<void> {
+    return this.teams.upsertTeamMembership(params);
+  }
+
+  approveTeamMembership(
+    teamId: number,
+    userId: number,
+    approvedById: number,
+  ): Promise<void> {
+    return this.teams.approveTeamMembership(teamId, userId, approvedById);
+  }
+
+  updateTeamMembershipRole(
+    teamId: number,
+    userId: number,
+    role: "admin" | "member",
+  ): Promise<boolean> {
+    return this.teams.updateTeamMembershipRole(teamId, userId, role);
+  }
+
+  removeTeamMembership(teamId: number, userId: number): Promise<void> {
+    return this.teams.removeTeamMembership(teamId, userId);
+  }
+
+  removeUserFromTeams(userId: number): Promise<void> {
+    return this.teams.removeUserFromTeams(userId);
+  }
+
+  isTeamAdmin(teamId: number, userId: number): Promise<boolean> {
+    return this.teams.isTeamAdmin(teamId, userId);
+  }
+
+  isTeamMember(teamId: number, userId: number): Promise<boolean> {
+    return this.teams.isTeamMember(teamId, userId);
   }
 
   createTeamSession(
@@ -278,12 +394,26 @@ export class WorkspaceAuthRepository {
     return this.teams.completeTeamSession(sessionId);
   }
 
-  completeLatestSessionByRoomKey(roomKey: string, userId: number) {
-    return this.teams.completeLatestSessionByRoomKey(roomKey, userId);
+  completeLatestSessionByRoomKey(
+    roomKey: string,
+    organisationId: number,
+    userId: number,
+    isWorkspaceAdmin: boolean,
+  ) {
+    return this.teams.completeLatestSessionByRoomKey(
+      roomKey,
+      organisationId,
+      userId,
+      isWorkspaceAdmin,
+    );
   }
 
-  getWorkspaceStats(userId: number) {
-    return this.teams.getWorkspaceStats(userId);
+  getWorkspaceStats(
+    organisationId: number,
+    userId: number,
+    isWorkspaceAdmin: boolean,
+  ) {
+    return this.teams.getWorkspaceStats(organisationId, userId, isWorkspaceAdmin);
   }
 
   getTeamSettings(teamId: number) {

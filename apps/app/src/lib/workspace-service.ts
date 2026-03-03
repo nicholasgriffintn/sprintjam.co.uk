@@ -3,15 +3,20 @@ import type { RoomSettings } from "@/types";
 import type {
   OAuthProvider,
   SessionStats,
-  Team,
+  TeamAccessPolicy,
+  TeamMember,
   TeamInsights,
   TeamIntegrationStatus,
   TeamSession,
+  WorkspaceAuthProfile,
+  WorkspaceMember,
   WorkspaceInsights,
   WorkspaceInvite,
   WorkspaceOrganisation,
   WorkspaceProfile,
   WorkspaceStats,
+  WorkspaceTeam,
+  WorkspaceRole,
   WorkspaceUser,
 } from "@sprintjam/types";
 
@@ -170,12 +175,20 @@ export async function verifyMfa(
   });
 }
 
-export async function getCurrentUser(): Promise<WorkspaceProfile | null> {
+export async function getCurrentUser(): Promise<WorkspaceAuthProfile | null> {
   try {
-    return await workspaceRequest<WorkspaceProfile>(`${API_BASE_URL}/auth/me`);
+    return await workspaceRequest<WorkspaceAuthProfile>(
+      `${API_BASE_URL}/auth/me`,
+    );
   } catch {
     return null;
   }
+}
+
+export async function getWorkspaceProfile(): Promise<WorkspaceProfile | null> {
+  return workspaceRequest<WorkspaceProfile>(
+    `${API_BASE_URL}/workspace/profile`,
+  );
 }
 
 export async function updateCurrentUserProfile(payload: {
@@ -197,34 +210,43 @@ export async function logout(): Promise<void> {
   await workspaceRequest(`${API_BASE_URL}/auth/logout`, { method: "POST" });
 }
 
-export async function listTeams(): Promise<Team[]> {
-  const data = await workspaceRequest<{ teams: Team[] }>(
+export async function listTeams(): Promise<WorkspaceTeam[]> {
+  const data = await workspaceRequest<{ teams: WorkspaceTeam[] }>(
     `${API_BASE_URL}/teams`,
   );
   return data.teams;
 }
 
-export async function createTeam(name: string): Promise<Team> {
-  const data = await workspaceRequest<{ team: Team }>(`${API_BASE_URL}/teams`, {
-    method: "POST",
-    body: JSON.stringify({ name }),
-  });
+export async function createTeam(
+  name: string,
+  accessPolicy: TeamAccessPolicy = "open",
+): Promise<WorkspaceTeam> {
+  const data = await workspaceRequest<{ team: WorkspaceTeam }>(
+    `${API_BASE_URL}/teams`,
+    {
+      method: "POST",
+      body: JSON.stringify({ name, accessPolicy }),
+    },
+  );
   return data.team;
 }
 
-export async function getTeam(teamId: number): Promise<Team> {
-  const data = await workspaceRequest<{ team: Team }>(
+export async function getTeam(teamId: number): Promise<WorkspaceTeam> {
+  const data = await workspaceRequest<{ team: WorkspaceTeam }>(
     `${API_BASE_URL}/teams/${teamId}`,
   );
   return data.team;
 }
 
-export async function updateTeam(teamId: number, name: string): Promise<Team> {
-  const data = await workspaceRequest<{ team: Team }>(
+export async function updateTeam(
+  teamId: number,
+  payload: { name?: string; accessPolicy?: TeamAccessPolicy },
+): Promise<WorkspaceTeam> {
+  const data = await workspaceRequest<{ team: WorkspaceTeam }>(
     `${API_BASE_URL}/teams/${teamId}`,
     {
       method: "PUT",
-      body: JSON.stringify({ name }),
+      body: JSON.stringify(payload),
     },
   );
   return data.team;
@@ -292,6 +314,7 @@ export async function getWorkspaceStats(): Promise<WorkspaceStats | null> {
 export async function updateWorkspaceProfile(payload: {
   name?: string;
   logoUrl?: string | null;
+  requireMemberApproval?: boolean;
 }): Promise<WorkspaceOrganisation> {
   const data = await workspaceRequest<{ organisation: WorkspaceOrganisation }>(
     `${API_BASE_URL}/workspace/profile`,
@@ -314,6 +337,126 @@ export async function inviteWorkspaceMember(
     },
   );
   return data.invite;
+}
+
+export async function approveWorkspaceMember(
+  userId: number,
+): Promise<WorkspaceMember> {
+  const data = await workspaceRequest<{ member: WorkspaceMember }>(
+    `${API_BASE_URL}/workspace/members/${userId}/approve`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+  return data.member;
+}
+
+export async function updateWorkspaceMemberRole(
+  userId: number,
+  role: WorkspaceRole,
+): Promise<WorkspaceMember> {
+  const data = await workspaceRequest<{ member: WorkspaceMember }>(
+    `${API_BASE_URL}/workspace/members/${userId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    },
+  );
+  return data.member;
+}
+
+export async function removeWorkspaceMember(userId: number): Promise<void> {
+  await workspaceRequest(`${API_BASE_URL}/workspace/members/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function listTeamMembers(teamId: number): Promise<TeamMember[]> {
+  const data = await workspaceRequest<{ members: TeamMember[] }>(
+    `${API_BASE_URL}/teams/${teamId}/members`,
+  );
+  return data.members;
+}
+
+export async function addTeamMember(
+  teamId: number,
+  userId: number,
+  role: "admin" | "member" = "member",
+): Promise<TeamMember> {
+  const data = await workspaceRequest<{ member: TeamMember }>(
+    `${API_BASE_URL}/teams/${teamId}/members`,
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, role }),
+    },
+  );
+  return data.member;
+}
+
+export async function requestTeamAccess(teamId: number): Promise<void> {
+  await workspaceRequest<{ member: unknown }>(
+    `${API_BASE_URL}/teams/${teamId}/request-access`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+}
+
+export async function approveTeamMember(
+  teamId: number,
+  userId: number,
+): Promise<TeamMember> {
+  const data = await workspaceRequest<{ member: TeamMember }>(
+    `${API_BASE_URL}/teams/${teamId}/members/${userId}/approve`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+  return data.member;
+}
+
+export async function updateTeamMemberRole(
+  teamId: number,
+  userId: number,
+  role: "admin" | "member",
+): Promise<TeamMember> {
+  const data = await workspaceRequest<{ member: TeamMember }>(
+    `${API_BASE_URL}/teams/${teamId}/members/${userId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    },
+  );
+  return data.member;
+}
+
+export async function removeTeamMember(
+  teamId: number,
+  userId: number,
+): Promise<void> {
+  await workspaceRequest(`${API_BASE_URL}/teams/${teamId}/members/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function moveTeamMember(
+  sourceTeamId: number,
+  userId: number,
+  targetTeamId: number,
+  role: "admin" | "member",
+): Promise<TeamMember | null> {
+  const data = await workspaceRequest<{
+    member?: TeamMember | null;
+    message: string;
+  }>(`${API_BASE_URL}/teams/${sourceTeamId}/members/${userId}/move`, {
+    method: "POST",
+    body: JSON.stringify({ targetTeamId, role }),
+  });
+
+  return data.member ?? null;
 }
 
 export async function getTeamInsights(

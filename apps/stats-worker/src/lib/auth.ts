@@ -4,18 +4,39 @@ import type {
 } from "@cloudflare/workers-types";
 import { getSessionTokenFromRequest, hashToken } from "@sprintjam/utils";
 import { drizzle } from "drizzle-orm/d1";
-import { eq, and, gt, inArray } from "drizzle-orm";
-import { workspaceSessions, users, teams, teamSessions } from "@sprintjam/db";
+import { eq, and, gt, inArray, or } from "drizzle-orm";
+import {
+  workspaceSessions,
+  workspaceMemberships,
+  users,
+  teams,
+  teamMemberships,
+  teamSessions,
+} from "@sprintjam/db";
 
 export interface AuthResult {
   userId: number;
   email: string;
   organisationId: number;
+  workspaceRole?: "admin" | "member";
 }
 
 export interface AuthError {
   status: "error";
   code: "unauthorized" | "expired";
+}
+
+function hasTeamAccess(
+  accessPolicy: "open" | "restricted",
+  membershipUserId: number | null,
+  userId: number,
+  isWorkspaceAdmin: boolean,
+): boolean {
+  return (
+    isWorkspaceAdmin ||
+    accessPolicy === "open" ||
+    membershipUserId === userId
+  );
 }
 
 export function isAuthError(
@@ -42,9 +63,18 @@ export async function authenticateRequest(
       userId: workspaceSessions.userId,
       email: users.email,
       organisationId: users.organisationId,
+      workspaceRole: workspaceMemberships.role,
     })
     .from(workspaceSessions)
     .innerJoin(users, eq(workspaceSessions.userId, users.id))
+    .innerJoin(
+      workspaceMemberships,
+      and(
+        eq(workspaceMemberships.userId, users.id),
+        eq(workspaceMemberships.organisationId, users.organisationId),
+        eq(workspaceMemberships.status, "active"),
+      ),
+    )
     .where(
       and(
         eq(workspaceSessions.tokenHash, tokenHash),
@@ -61,49 +91,73 @@ export async function authenticateRequest(
     userId: result.userId,
     email: result.email,
     organisationId: result.organisationId,
+    workspaceRole: result.workspaceRole,
   };
 }
 
 export async function isUserInTeam(
   db: D1Database,
   userId: number,
+  organisationId: number,
+  isWorkspaceAdmin: boolean,
   teamId: number,
 ): Promise<boolean> {
   const drizzleDb = drizzle(db);
-
-  const user = await drizzleDb
-    .select({ organisationId: users.organisationId })
-    .from(users)
-    .where(eq(users.id, userId))
-    .get();
-
-  if (!user) return false;
-
   const team = await drizzleDb
-    .select({ organisationId: teams.organisationId })
+    .select({
+      organisationId: teams.organisationId,
+      accessPolicy: teams.accessPolicy,
+      membershipUserId: teamMemberships.userId,
+    })
     .from(teams)
+    .leftJoin(
+      teamMemberships,
+      and(
+        eq(teamMemberships.teamId, teams.id),
+        eq(teamMemberships.userId, userId),
+        eq(teamMemberships.status, "active"),
+      ),
+    )
     .where(eq(teams.id, teamId))
     .get();
 
-  if (!team) return false;
+  if (!team || team.organisationId !== organisationId) {
+    return false;
+  }
 
-  return user.organisationId === team.organisationId;
+  return hasTeamAccess(
+    team.accessPolicy,
+    team.membershipUserId ?? null,
+    userId,
+    isWorkspaceAdmin,
+  );
 }
 
 export async function canUserAccessRoom(
   db: D1Database,
+  userId: number,
   organisationId: number,
+  isWorkspaceAdmin: boolean,
   roomKey: string,
 ): Promise<boolean> {
   const drizzleDb = drizzle(db);
 
   const session = await drizzleDb
     .select({
-      teamId: teamSessions.teamId,
       organisationId: teams.organisationId,
+      accessPolicy: teams.accessPolicy,
+      membershipUserId: teamMemberships.userId,
     })
     .from(teamSessions)
     .innerJoin(teams, eq(teamSessions.teamId, teams.id))
+    .leftJoin(
+      teamMemberships,
+      and(
+        eq(teamMemberships.teamId, teams.id),
+        eq(teamMemberships.userId, userId),
+        eq(teamMemberships.status, "active"),
+      ),
+    )
     .where(eq(teamSessions.roomKey, roomKey))
     .get();
 
@@ -111,12 +165,23 @@ export async function canUserAccessRoom(
     return false;
   }
 
-  return session.organisationId === organisationId;
+  if (session.organisationId !== organisationId) {
+    return false;
+  }
+
+  return hasTeamAccess(
+    session.accessPolicy,
+    session.membershipUserId ?? null,
+    userId,
+    isWorkspaceAdmin,
+  );
 }
 
 export async function filterAccessibleRoomKeys(
   db: D1Database,
+  userId: number,
   organisationId: number,
+  isWorkspaceAdmin: boolean,
   roomKeys: string[],
 ): Promise<string[]> {
   if (roomKeys.length === 0) return [];
@@ -129,10 +194,24 @@ export async function filterAccessibleRoomKeys(
     })
     .from(teamSessions)
     .innerJoin(teams, eq(teamSessions.teamId, teams.id))
+    .leftJoin(
+      teamMemberships,
+      and(
+        eq(teamMemberships.teamId, teams.id),
+        eq(teamMemberships.userId, userId),
+        eq(teamMemberships.status, "active"),
+      ),
+    )
     .where(
       and(
         inArray(teamSessions.roomKey, roomKeys),
         eq(teams.organisationId, organisationId),
+        isWorkspaceAdmin
+          ? and(eq(teams.organisationId, organisationId))
+          : or(
+              eq(teams.accessPolicy, "open"),
+              eq(teamMemberships.userId, userId),
+            ),
       ),
     )
     .all();
@@ -143,14 +222,38 @@ export async function filterAccessibleRoomKeys(
 export async function getUserTeamIds(
   db: D1Database,
   userId: number,
+  organisationId: number,
+  isWorkspaceAdmin: boolean,
 ): Promise<number[]> {
   const drizzleDb = drizzle(db);
 
-  const userTeams = await drizzleDb
-    .select({ id: teams.id })
-    .from(teams)
-    .where(eq(teams.ownerId, userId))
-    .all();
+  const userTeams = isWorkspaceAdmin
+    ? await drizzleDb
+        .select({ id: teams.id })
+        .from(teams)
+        .where(eq(teams.organisationId, organisationId))
+        .all()
+    : await drizzleDb
+        .select({ id: teams.id })
+        .from(teams)
+        .leftJoin(
+          teamMemberships,
+          and(
+            eq(teamMemberships.teamId, teams.id),
+            eq(teamMemberships.userId, userId),
+            eq(teamMemberships.status, "active"),
+          ),
+        )
+        .where(
+          and(
+            eq(teams.organisationId, organisationId),
+            or(
+              eq(teams.accessPolicy, "open"),
+              eq(teamMemberships.userId, userId),
+            ),
+          ),
+        )
+        .all();
 
   return userTeams.map((t) => t.id);
 }

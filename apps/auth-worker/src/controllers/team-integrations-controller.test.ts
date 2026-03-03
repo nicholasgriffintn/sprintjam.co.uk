@@ -9,8 +9,10 @@ import {
 
 const mockAuthenticateRequest = vi.fn();
 const mockTeamGetById = vi.fn();
+const mockTeamIsAdmin = vi.fn();
 const mockWorkspaceGetChallenge = vi.fn();
 const mockWorkspaceMarkChallengeUsed = vi.fn();
+const mockWorkspaceIsOrganisationAdmin = vi.fn();
 
 vi.mock("../lib/auth", () => ({
   authenticateRequest: (...args: unknown[]) => mockAuthenticateRequest(...args),
@@ -22,6 +24,10 @@ vi.mock("../repositories/team-repository", () => ({
   TeamRepository: class {
     getTeamById(...args: unknown[]) {
       return mockTeamGetById(...args);
+    }
+
+    isTeamAdmin(...args: unknown[]) {
+      return mockTeamIsAdmin(...args);
     }
   },
 }));
@@ -35,6 +41,10 @@ vi.mock("../repositories/workspace-auth", () => ({
     markAuthChallengeUsed(...args: unknown[]) {
       return mockWorkspaceMarkChallengeUsed(...args);
     }
+
+    isOrganisationAdmin(...args: unknown[]) {
+      return mockWorkspaceIsOrganisationAdmin(...args);
+    }
   },
 }));
 
@@ -45,11 +55,20 @@ describe("team integrations OAuth security", () => {
 
   it("stores a one-time OAuth nonce challenge when initiating team OAuth", async () => {
     const repo = {
-      getTeamById: vi.fn().mockResolvedValue({ id: 7, ownerId: 12 }),
+      getTeamById: vi.fn().mockResolvedValue({
+        id: 7,
+        ownerId: 12,
+        organisationId: 5,
+        accessPolicy: "restricted",
+      }),
       getUserById: vi.fn().mockResolvedValue({
         id: 12,
         email: "owner@example.com",
+        organisationId: 5,
       }),
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getTeamMembership: vi.fn().mockResolvedValue({ role: "admin", status: "active" }),
+      isTeamAdmin: vi.fn().mockResolvedValue(true),
       createAuthChallenge: vi.fn().mockResolvedValue(1),
     };
     mockAuthenticateRequest.mockResolvedValue({
@@ -127,7 +146,7 @@ describe("team integrations OAuth security", () => {
     const url = new URL(
       `https://test/api/teams/integrations/github/callback?code=abc&state=${encodeURIComponent(state)}`,
     );
-    mockTeamGetById.mockResolvedValue({ id: 7, ownerId: 12 });
+    mockTeamIsAdmin.mockResolvedValue(true);
     mockWorkspaceGetChallenge.mockResolvedValue(null);
 
     const fetchSpy = vi
@@ -147,6 +166,49 @@ describe("team integrations OAuth security", () => {
     const html = await response.text();
     expect(html).toContain("Invalid OAuth state");
     expect(mockWorkspaceGetChallenge).toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+
+  it("accepts workspace admin access during callback revalidation", async () => {
+    const state = await signState(
+      {
+        teamId: 7,
+        userId: 12,
+        nonce: "workspace-admin-nonce",
+      },
+      "github-secret",
+    );
+    const url = new URL(
+      `https://test/api/teams/integrations/github/callback?code=abc&state=${encodeURIComponent(state)}`,
+    );
+    mockTeamIsAdmin.mockResolvedValue(false);
+    mockTeamGetById.mockResolvedValue({
+      id: 7,
+      organisationId: 5,
+      ownerId: 99,
+    });
+    mockWorkspaceIsOrganisationAdmin.mockResolvedValue(true);
+    mockWorkspaceGetChallenge.mockResolvedValue(null);
+
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValue(new Error("fetch should not be called"));
+
+    const env = {
+      DB: {} as any,
+      GITHUB_OAUTH_CLIENT_ID: "github-id",
+      GITHUB_OAUTH_CLIENT_SECRET: "github-secret",
+      TOKEN_ENCRYPTION_SECRET: "token-secret",
+    } as AuthWorkerEnv;
+
+    const response = await handleGithubTeamOAuthCallbackController(url, env);
+
+    expect(response.status).toBe(400);
+    expect(mockWorkspaceIsOrganisationAdmin).toHaveBeenCalledWith(12, 5);
+    const html = await response.text();
+    expect(html).toContain("Invalid OAuth state");
     expect(fetchSpy).not.toHaveBeenCalled();
 
     fetchSpy.mockRestore();

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type {
   SessionTimelineData,
   WorkspaceInsights,
@@ -17,43 +17,27 @@ interface WorkspaceStatsReturn {
 export function useWorkspaceStats(
   stats: WorkspaceStats | null,
 ): WorkspaceStatsReturn {
-  const [insights, setInsights] = useState<WorkspaceInsights | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchInsights = useCallback(async () => {
-    if (!stats || stats.totalTeams === 0) {
-      setInsights(null);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await getWorkspaceInsights();
-      setInsights(data);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch insights"),
-      );
-      setInsights(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [stats]);
-
-  useEffect(() => {
-    fetchInsights();
-  }, [fetchInsights]);
+  const insightsQuery = useQuery({
+    queryKey: [
+      "workspace-insights",
+      stats?.totalTeams ?? 0,
+      stats?.totalSessions ?? 0,
+      stats?.completedSessions ?? 0,
+    ],
+    enabled: Boolean(stats && stats.totalTeams > 0),
+    queryFn: () => getWorkspaceInsights(),
+    staleTime: 1000 * 60 * 5,
+  });
 
   const sessionsOverTime = stats?.sessionTimeline ?? [];
 
   return {
     sessionsOverTime,
-    insights,
-    isLoading: !stats || isLoading,
-    error,
-    refetch: fetchInsights,
+    insights: insightsQuery.data ?? null,
+    isLoading: !stats || insightsQuery.isLoading,
+    error: insightsQuery.error instanceof Error ? insightsQuery.error : null,
+    refetch: async () => {
+      await insightsQuery.refetch();
+    },
   };
 }

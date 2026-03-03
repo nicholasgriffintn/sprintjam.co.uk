@@ -12,6 +12,11 @@ export const teams = sqliteTable("teams", {
   ownerId: integer("owner_id")
     .notNull()
     .references(() => users.id),
+  accessPolicy: text("access_policy", {
+    enum: ["open", "restricted"],
+  })
+    .notNull()
+    .default("open"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

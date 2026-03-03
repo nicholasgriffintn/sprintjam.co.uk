@@ -1,8 +1,8 @@
 import { Select, type SelectOption } from "@/components/ui/Select";
-import type { Team } from "@sprintjam/types";
+import type { WorkspaceTeam } from "@sprintjam/types";
 
 interface TeamSelectorProps {
-  teams: Team[];
+  teams: WorkspaceTeam[];
   selectedTeamId: number | null;
   onSelectTeam: (teamId: number) => void;
 }
@@ -13,7 +13,11 @@ export function TeamSelector({
   onSelectTeam,
 }: TeamSelectorProps) {
   const options: SelectOption[] = teams.map((team) => ({
-    label: team.name,
+    label: team.canAccess
+      ? team.name
+      : team.currentUserStatus === "pending"
+        ? `${team.name} (Access pending)`
+        : `${team.name} (Restricted)`,
     value: String(team.id),
   }));
 

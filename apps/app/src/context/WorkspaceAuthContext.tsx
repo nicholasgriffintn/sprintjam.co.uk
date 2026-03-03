@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Team, WorkspaceUser } from "@sprintjam/types";
+import type { WorkspaceTeam, WorkspaceUser } from "@sprintjam/types";
 
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { logout as logoutService } from "@/lib/workspace-service";
@@ -22,7 +22,7 @@ import {
 
 interface WorkspaceAuthContextValue {
   user: WorkspaceUser | null;
-  teams: Team[];
+  teams: WorkspaceTeam[];
   isLoading: boolean;
   isAuthenticated: boolean;
   refreshAuth: () => Promise<void>;

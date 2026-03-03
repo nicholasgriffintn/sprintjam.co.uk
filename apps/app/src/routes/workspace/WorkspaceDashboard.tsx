@@ -19,17 +19,25 @@ export default function WorkspaceDashboard() {
   const {
     user,
     teams,
-    sessions,
     stats,
     isAuthenticated,
     isLoading,
     error,
     refreshWorkspace,
-  } = useWorkspaceData();
+  } = useWorkspaceData({ includeStats: true });
 
   const { goToLogin } = useSessionActions();
 
-  const { sessionsOverTime, insights } = useWorkspaceStats(stats);
+  const {
+    sessionsOverTime,
+    insights,
+    refetch: refetchInsights,
+  } = useWorkspaceStats(stats);
+
+  const handleRefresh = async () => {
+    await refreshWorkspace(true);
+    await refetchInsights();
+  };
 
   return (
     <WorkspaceLayout
@@ -37,7 +45,7 @@ export default function WorkspaceDashboard() {
       isAuthenticated={isAuthenticated}
       user={user}
       error={error}
-      onRefresh={() => refreshWorkspace(true)}
+      onRefresh={() => void handleRefresh()}
       onLogin={goToLogin}
     >
       <div className="space-y-6">
@@ -53,7 +61,7 @@ export default function WorkspaceDashboard() {
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => refreshWorkspace(true)}
+            onClick={() => void handleRefresh()}
             isLoading={isLoading}
             icon={<RefreshCcw className="h-4 w-4" />}
           >
@@ -65,7 +73,7 @@ export default function WorkspaceDashboard() {
           stats={stats}
           insights={insights}
           teamCount={teams.length}
-          sessionCount={sessions.length}
+          sessionCount={stats?.totalSessions ?? 0}
         />
 
         <div className="grid gap-6 lg:grid-cols-2">

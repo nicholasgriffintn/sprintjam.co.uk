@@ -24,6 +24,7 @@ import { AUTH_CHALLENGE_EXPIRY_MS } from '../constants';
 import { TeamIntegrationRepository } from '../repositories/team-integration-repository';
 import { TeamRepository } from '../repositories/team-repository';
 import { WorkspaceAuthRepository } from '../repositories/workspace-auth';
+import { canAccessTeam, canManageTeam } from '../lib/team-access';
 
 type TeamOAuthState = {
   teamId: number;
@@ -65,14 +66,69 @@ function verifyInternalSecret(request: Request, env: AuthWorkerEnv): boolean {
   return mismatch === 0;
 }
 
-async function verifyTeamOwnership(
+async function verifyTeamAdminAccess(
   env: AuthWorkerEnv,
   teamId: number,
   userId: number,
 ): Promise<boolean> {
   const teamRepo = new TeamRepository(env.DB);
+  if (await teamRepo.isTeamAdmin(teamId, userId)) {
+    return true;
+  }
+
   const team = await teamRepo.getTeamById(teamId);
-  return !!team && team.ownerId === userId;
+  if (!team) {
+    return false;
+  }
+
+  const authRepo = new WorkspaceAuthRepository(env.DB);
+  return authRepo.isOrganisationAdmin(userId, team.organisationId);
+}
+
+async function canUserAccessTeam(
+  repo: AuthResult['repo'],
+  userId: number,
+  teamId: number,
+): Promise<boolean> {
+  const team = await repo.getTeamById(teamId);
+  if (!team) {
+    return false;
+  }
+
+  const user = await repo.getUserById(userId);
+  if (!user || user.organisationId !== team.organisationId) {
+    return false;
+  }
+
+  const isWorkspaceAdmin = await repo.isOrganisationAdmin(
+    userId,
+    user.organisationId,
+  );
+  const membership = await repo.getTeamMembership(teamId, userId);
+  return canAccessTeam(team, membership, userId, isWorkspaceAdmin);
+}
+
+async function canUserManageTeam(
+  repo: AuthResult['repo'],
+  userId: number,
+  teamId: number,
+): Promise<boolean> {
+  const team = await repo.getTeamById(teamId);
+  if (!team) {
+    return false;
+  }
+
+  const user = await repo.getUserById(userId);
+  if (!user || user.organisationId !== team.organisationId) {
+    return false;
+  }
+
+  const isWorkspaceAdmin = await repo.isOrganisationAdmin(
+    userId,
+    user.organisationId,
+  );
+  const membership = await repo.getTeamMembership(teamId, userId);
+  return canManageTeam(team, membership, userId, isWorkspaceAdmin);
 }
 
 function oauthHtmlResponse(
@@ -176,12 +232,7 @@ export async function listTeamIntegrationsController(
   if ('response' in auth) return auth.response;
 
   const { userId, repo } = auth.result;
-  const team = await repo.getTeamById(teamId);
-
-  if (!team) return notFoundResponse('Team not found');
-
-  const user = await repo.getUserById(userId);
-  if (!user || user.organisationId !== team.organisationId) {
+  if (!(await canUserAccessTeam(repo, userId, teamId))) {
     return forbiddenResponse();
   }
 
@@ -200,12 +251,7 @@ export async function getTeamIntegrationStatusController(
   if ('response' in auth) return auth.response;
 
   const { userId, repo } = auth.result;
-  const team = await repo.getTeamById(teamId);
-
-  if (!team) return notFoundResponse('Team not found');
-
-  const user = await repo.getUserById(userId);
-  if (!user || user.organisationId !== team.organisationId) {
+  if (!(await canUserAccessTeam(repo, userId, teamId))) {
     return forbiddenResponse();
   }
 
@@ -233,8 +279,8 @@ export async function initiateTeamOAuthController(
 
   if (!team) return notFoundResponse('Team not found');
 
-  if (team.ownerId !== userId) {
-    return forbiddenResponse('Only the team owner can configure integrations');
+  if (!(await canUserManageTeam(repo, userId, teamId))) {
+    return forbiddenResponse('Only team admins can configure integrations');
   }
 
   const user = await repo.getUserById(userId);
@@ -372,10 +418,10 @@ export async function handleJiraTeamOAuthCallbackController(
     const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
     const { teamId, userId } = stateData;
 
-    const stillOwner = await verifyTeamOwnership(env, teamId, userId);
-    if (!stillOwner) {
+    const stillAdmin = await verifyTeamAdminAccess(env, teamId, userId);
+    if (!stillAdmin) {
       return oauthHtmlError(
-        'Team ownership has changed. Please try again.',
+        'Team access has changed. Please try again.',
         403,
       );
     }
@@ -554,10 +600,10 @@ export async function handleLinearTeamOAuthCallbackController(
     const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
     const { teamId, userId } = stateData;
 
-    const stillOwner = await verifyTeamOwnership(env, teamId, userId);
-    if (!stillOwner) {
+    const stillAdmin = await verifyTeamAdminAccess(env, teamId, userId);
+    if (!stillAdmin) {
       return oauthHtmlError(
-        'Team ownership has changed. Please try again.',
+        'Team access has changed. Please try again.',
         403,
       );
     }
@@ -666,10 +712,10 @@ export async function handleGithubTeamOAuthCallbackController(
     const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
     const { teamId, userId } = stateData;
 
-    const stillOwner = await verifyTeamOwnership(env, teamId, userId);
-    if (!stillOwner) {
+    const stillAdmin = await verifyTeamAdminAccess(env, teamId, userId);
+    if (!stillAdmin) {
       return oauthHtmlError(
-        'Team ownership has changed. Please try again.',
+        'Team access has changed. Please try again.',
         403,
       );
     }
@@ -778,8 +824,8 @@ export async function revokeTeamIntegrationController(
 
   if (!team) return notFoundResponse('Team not found');
 
-  if (team.ownerId !== userId) {
-    return forbiddenResponse('Only the team owner can revoke integrations');
+  if (!(await canUserManageTeam(repo, userId, teamId))) {
+    return forbiddenResponse('Only team admins can revoke integrations');
   }
 
   const integrationRepo = getIntegrationRepo(env);
