@@ -5,17 +5,21 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/cn";
-import type { Team } from "@sprintjam/types";
+import type { TeamAccessPolicy, WorkspaceTeam } from "@sprintjam/types";
 
 interface TeamsListProps {
-  teams: Team[];
+  teams: WorkspaceTeam[];
   selectedTeamId: number | null;
   isMutating: boolean;
-  onCreateTeam: (name: string) => Promise<void>;
+  onCreateTeam: (payload: {
+    name: string;
+    accessPolicy: TeamAccessPolicy;
+  }) => Promise<void>;
   onSelectTeam: (teamId: number) => void;
-  onEditTeam: (team: Team) => void;
-  onTeamSettings?: (team: Team) => void;
+  onEditTeam: (team: WorkspaceTeam) => void;
+  onTeamSettings?: (team: WorkspaceTeam) => void;
 }
 
 export function TeamsList({
@@ -28,12 +32,17 @@ export function TeamsList({
   onTeamSettings,
 }: TeamsListProps) {
   const [newTeamName, setNewTeamName] = useState("");
+  const [accessPolicy, setAccessPolicy] = useState<TeamAccessPolicy>("open");
 
   const handleCreateTeam = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newTeamName.trim()) return;
-    await onCreateTeam(newTeamName.trim());
+    await onCreateTeam({
+      name: newTeamName.trim(),
+      accessPolicy,
+    });
     setNewTeamName("");
+    setAccessPolicy("open");
   };
 
   return (
@@ -50,16 +59,28 @@ export function TeamsList({
           required
           fullWidth
         />
-        <Button
-          type="submit"
-          icon={<Plus className="h-4 w-4" />}
-          isLoading={isMutating}
-          disabled={!newTeamName.trim()}
-          className="sm:h-[50px]"
-          fullWidth
-        >
-          Create team
-        </Button>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Select
+            options={[
+              { label: "Open to workspace", value: "open" },
+              { label: "Restricted members", value: "restricted" },
+            ]}
+            value={accessPolicy}
+            onValueChange={(value) =>
+              setAccessPolicy(value as TeamAccessPolicy)
+            }
+          />
+          <Button
+            type="submit"
+            icon={<Plus className="h-4 w-4" />}
+            isLoading={isMutating}
+            disabled={!newTeamName.trim()}
+            className="sm:h-[50px]"
+            fullWidth
+          >
+            Create team
+          </Button>
+        </div>
       </form>
 
       <div className="space-y-2">
@@ -97,36 +118,62 @@ export function TeamsList({
                     </Badge>
                   )}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Team ID: {team.id}
-                </p>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  <Badge
+                    variant={
+                      team.accessPolicy === "restricted" ? "warning" : "info"
+                    }
+                    size="sm"
+                  >
+                    {team.accessPolicy === "restricted"
+                      ? "Restricted"
+                      : "Open"}
+                  </Badge>
+                  {team.canManage && (
+                    <Badge variant="success" size="sm">
+                      Team admin
+                    </Badge>
+                  )}
+                </div>
               </div>
               {selectedTeamId === team.id ? (
                 <div className="flex flex-col items-end gap-2 sm:flex-row">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    icon={<Pencil className="h-4 w-4" />}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onEditTeam(team);
-                    }}
-                    size="sm"
-                  >
-                    Edit team
-                  </Button>
-                  {onTeamSettings && (
+                  {team.canManage ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        icon={<Pencil className="h-4 w-4" />}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEditTeam(team);
+                        }}
+                        size="sm"
+                      >
+                        Edit team
+                      </Button>
+                      {onTeamSettings && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          icon={<Settings className="h-4 w-4" />}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onTeamSettings(team);
+                          }}
+                          size="sm"
+                        >
+                          Settings
+                        </Button>
+                      )}
+                    </>
+                  ) : (
                     <Button
-                      type="button"
                       variant="secondary"
-                      icon={<Settings className="h-4 w-4" />}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onTeamSettings(team);
-                      }}
                       size="sm"
+                      disabled
                     >
-                      Settings
+                      Read only
                     </Button>
                   )}
                 </div>

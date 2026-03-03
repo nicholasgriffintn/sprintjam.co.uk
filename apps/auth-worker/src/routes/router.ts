@@ -18,12 +18,21 @@ import {
   getTeamController,
   updateTeamController,
   deleteTeamController,
+  listTeamMembersController,
+  addTeamMemberController,
+  requestTeamAccessController,
+  approveTeamMemberController,
+  updateTeamMemberController,
+  removeTeamMemberController,
   listTeamSessionsController,
   createTeamSessionController,
   getTeamSessionController,
   completeSessionByRoomKeyController,
   getWorkspaceStatsController,
   updateWorkspaceProfileController,
+  approveWorkspaceMemberController,
+  updateWorkspaceMemberController,
+  removeWorkspaceMemberController,
   inviteWorkspaceMemberController,
 } from "../controllers/teams-controller";
 import {
@@ -167,6 +176,87 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "GET",
+    pattern: /^teams\/(\d+)\/members$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamMembersController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/members$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return addTeamMemberController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/request-access$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return requestTeamAccessController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/members\/(\d+)\/approve$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const userIdResult = requireNumberParam(params[1], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return approveTeamMemberController(
+        request,
+        env,
+        teamIdResult.value,
+        userIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "PUT",
+    pattern: /^teams\/(\d+)\/members\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const userIdResult = requireNumberParam(params[1], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return updateTeamMemberController(
+        request,
+        env,
+        teamIdResult.value,
+        userIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^teams\/(\d+)\/members\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const userIdResult = requireNumberParam(params[1], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return removeTeamMemberController(
+        request,
+        env,
+        teamIdResult.value,
+        userIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "GET",
     pattern: /^teams\/(\d+)\/sessions$/,
     handler: (request, env, params) => {
       const teamIdResult = requireNumberParam(params[0], "teamId");
@@ -225,6 +315,36 @@ const ROUTES: RouteDefinition[] = [
     pattern: /^workspace\/invites$/,
     handler: (request, env) => inviteWorkspaceMemberController(request, env),
     paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^workspace\/members\/(\d+)\/approve$/,
+    handler: (request, env, params) => {
+      const userIdResult = requireNumberParam(params[0], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return approveWorkspaceMemberController(request, env, userIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "PUT",
+    pattern: /^workspace\/members\/(\d+)$/,
+    handler: (request, env, params) => {
+      const userIdResult = requireNumberParam(params[0], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return updateWorkspaceMemberController(request, env, userIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^workspace\/members\/(\d+)$/,
+    handler: (request, env, params) => {
+      const userIdResult = requireNumberParam(params[0], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return removeWorkspaceMemberController(request, env, userIdResult.value);
+    },
+    paramTypes: ["number"],
   },
   {
     method: "GET",

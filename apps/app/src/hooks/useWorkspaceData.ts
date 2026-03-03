@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Team, TeamSession, WorkspaceProfile } from "@sprintjam/types";
+import type {
+  TeamAccessPolicy,
+  TeamSession,
+  WorkspaceProfile,
+  WorkspaceTeam,
+} from "@sprintjam/types";
 
 import {
   WORKSPACE_PROFILE_DOCUMENT_KEY,
@@ -29,6 +34,11 @@ interface CreateSessionPayload {
   teamId: number;
   name: string;
   roomKey: string;
+}
+
+interface CreateTeamPayload {
+  name: string;
+  accessPolicy?: TeamAccessPolicy;
 }
 
 const ensureCollectionsReady = async () => {
@@ -95,9 +105,11 @@ export const useWorkspaceData = () => {
 
     const hasSelection = Boolean(selectedTeamId);
     const teamsAvailable = profile.teams.length > 0;
+    const firstAccessibleTeam =
+      profile.teams.find((team) => team.canAccess) ?? profile.teams[0] ?? null;
 
     if (!hasSelection && teamsAvailable) {
-      const nextId = profile.teams[0]?.id ?? null;
+      const nextId = firstAccessibleTeam?.id ?? null;
       if (nextId !== selectedTeamId) {
         setSelectedTeamId(nextId);
       }
@@ -108,7 +120,7 @@ export const useWorkspaceData = () => {
       selectedTeamId &&
       !profile.teams.some((team) => team.id === selectedTeamId)
     ) {
-      const nextId = profile.teams[0]?.id ?? null;
+      const nextId = firstAccessibleTeam?.id ?? null;
       if (nextId !== selectedTeamId) {
         setSelectedTeamId(nextId);
       }
@@ -178,6 +190,12 @@ export const useWorkspaceData = () => {
       return;
     }
 
+    const team = profile?.teams.find((currentTeam) => currentTeam.id === teamId);
+    if (team && !team.canAccess) {
+      setActionError(null);
+      return;
+    }
+
     if (
       !isLoadingSessionsRef.current &&
       lastSessionsTeamRef.current === teamId
@@ -207,7 +225,7 @@ export const useWorkspaceData = () => {
       setIsLoadingSessions(false);
       isLoadingSessionsRef.current = false;
     }
-  }, []);
+  }, [profile?.teams]);
 
   useEffect(() => {
     if (selectedTeamId) {
@@ -219,7 +237,10 @@ export const useWorkspaceData = () => {
   }, [refreshSessions, selectedTeamId]);
 
   const handleCreateTeam = useCallback(
-    async (name: string): Promise<Team | null> => {
+    async ({
+      name,
+      accessPolicy = "open",
+    }: CreateTeamPayload): Promise<WorkspaceTeam | null> => {
       if (!profile) {
         setActionError("Load workspace before creating teams");
         return null;
@@ -229,7 +250,7 @@ export const useWorkspaceData = () => {
       setActionError(null);
       try {
         await ensureWorkspaceProfileCollectionReady();
-        const team = await createTeam(name);
+        const team = await createTeam(name, accessPolicy);
 
         updateProfileCollection((currentProfile) => {
           if (!currentProfile) return null;
@@ -257,7 +278,10 @@ export const useWorkspaceData = () => {
   );
 
   const handleUpdateTeam = useCallback(
-    async (teamId: number, name: string): Promise<Team | null> => {
+    async (
+      teamId: number,
+      payload: { name?: string; accessPolicy?: TeamAccessPolicy },
+    ): Promise<WorkspaceTeam | null> => {
       if (!profile) {
         setActionError("Load workspace before updating teams");
         return null;
@@ -267,7 +291,7 @@ export const useWorkspaceData = () => {
       setActionError(null);
       try {
         await ensureWorkspaceProfileCollectionReady();
-        const updated = await updateTeam(teamId, name);
+        const updated = await updateTeam(teamId, payload);
 
         updateProfileCollection((currentProfile) => {
           if (!currentProfile) return null;

@@ -78,6 +78,13 @@
       "when": 1772401929775,
       "tag": "0010_oval_triathlon",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1772406059139,
+      "tag": "0011_happy_vulture",
+      "breakpoints": true
     }
   ]
 }

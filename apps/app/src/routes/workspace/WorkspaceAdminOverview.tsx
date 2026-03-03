@@ -1,5 +1,11 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { Building2, Clock3, MailPlus, Users } from "lucide-react";
+import {
+  Building2,
+  Clock3,
+  MailPlus,
+  Shield,
+  UserMinus,
+} from "lucide-react";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { AdminSidebar } from "@/components/workspace/AdminSidebar";
@@ -8,15 +14,21 @@ import { Alert } from "@/components/ui/Alert";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Switch } from "@/components/ui/Switch";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import {
+  approveWorkspaceMember,
   inviteWorkspaceMember,
+  removeWorkspaceMember,
+  updateWorkspaceMemberRole,
   updateWorkspaceProfile,
 } from "@/lib/workspace-service";
 import { toast } from "@/components/ui";
+import type { WorkspaceMember } from "@sprintjam/types";
 import { BetaBadge } from "../../components/BetaBadge";
 
 export default function WorkspaceAdminOverview() {
@@ -35,14 +47,30 @@ export default function WorkspaceAdminOverview() {
   const { goToLogin } = useSessionActions();
   const [workspaceName, setWorkspaceName] = useState("");
   const [workspaceLogoUrl, setWorkspaceLogoUrl] = useState("");
+  const [requireMemberApproval, setRequireMemberApproval] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [isUpdatingMemberId, setIsUpdatingMemberId] = useState<number | null>(
+    null,
+  );
+  const [pendingRemovalMember, setPendingRemovalMember] =
+    useState<WorkspaceMember | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const organisation = profile?.organisation ?? null;
   const members = profile?.members ?? [];
   const invites = profile?.invites ?? [];
+  const isWorkspaceAdmin = profile?.membership.role === "admin";
+
+  const pendingMembers = useMemo(
+    () => members.filter((member) => member.status === "pending"),
+    [members],
+  );
+  const activeMembers = useMemo(
+    () => members.filter((member) => member.status === "active"),
+    [members],
+  );
 
   useEffect(() => {
     if (!organisation) {
@@ -51,7 +79,13 @@ export default function WorkspaceAdminOverview() {
 
     setWorkspaceName(organisation.name);
     setWorkspaceLogoUrl(organisation.logoUrl ?? "");
-  }, [organisation?.id, organisation?.logoUrl, organisation?.name]);
+    setRequireMemberApproval(organisation.requireMemberApproval);
+  }, [
+    organisation?.id,
+    organisation?.logoUrl,
+    organisation?.name,
+    organisation?.requireMemberApproval,
+  ]);
 
   const isSettingsDirty = useMemo(() => {
     if (!organisation) {
@@ -60,9 +94,15 @@ export default function WorkspaceAdminOverview() {
 
     return (
       workspaceName.trim() !== organisation.name ||
-      (workspaceLogoUrl.trim() || "") !== (organisation.logoUrl ?? "")
+      (workspaceLogoUrl.trim() || "") !== (organisation.logoUrl ?? "") ||
+      requireMemberApproval !== organisation.requireMemberApproval
     );
-  }, [organisation, workspaceLogoUrl, workspaceName]);
+  }, [
+    organisation,
+    requireMemberApproval,
+    workspaceLogoUrl,
+    workspaceName,
+  ]);
 
   const handleSaveWorkspace = async () => {
     if (!workspaceName.trim()) {
@@ -77,6 +117,7 @@ export default function WorkspaceAdminOverview() {
       await updateWorkspaceProfile({
         name: workspaceName.trim(),
         logoUrl: workspaceLogoUrl.trim() || null,
+        requireMemberApproval,
       });
       await refreshWorkspace(true);
       toast.success("Workspace settings updated");
@@ -115,6 +156,69 @@ export default function WorkspaceAdminOverview() {
     }
   };
 
+  const handleApproveMember = async (member: WorkspaceMember) => {
+    setIsUpdatingMemberId(member.id);
+    setLocalError(null);
+
+    try {
+      await approveWorkspaceMember(member.id);
+      await refreshWorkspace(true);
+      toast.success(`${member.email} approved`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unable to approve member";
+      setLocalError(message);
+    } finally {
+      setIsUpdatingMemberId(null);
+    }
+  };
+
+  const handleRoleChange = async (
+    member: WorkspaceMember,
+    role: "admin" | "member",
+  ) => {
+    setIsUpdatingMemberId(member.id);
+    setLocalError(null);
+
+    try {
+      await updateWorkspaceMemberRole(member.id, role);
+      await refreshWorkspace(true);
+      toast.success(
+        role === "admin"
+          ? `${member.email} is now a workspace admin`
+          : `${member.email} is now a workspace member`,
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unable to update role";
+      setLocalError(message);
+    } finally {
+      setIsUpdatingMemberId(null);
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!pendingRemovalMember) {
+      return;
+    }
+
+    setIsUpdatingMemberId(pendingRemovalMember.id);
+    setLocalError(null);
+
+    try {
+      await removeWorkspaceMember(pendingRemovalMember.id);
+      await refreshWorkspace(true);
+      toast.success(`${pendingRemovalMember.email} removed`);
+      setPendingRemovalMember(null);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unable to remove member";
+      setLocalError(message);
+    } finally {
+      setIsUpdatingMemberId(null);
+    }
+  };
+
   return (
     <WorkspaceLayout
       isLoading={isLoading}
@@ -130,12 +234,17 @@ export default function WorkspaceAdminOverview() {
             Admin <BetaBadge />
           </h1>
           <p className="text-slate-600 dark:text-slate-300">
-            Manage workspace settings and teams
+            Manage workspace access, approvals, and roles
           </p>
         </div>
 
         {actionError && <Alert variant="warning">{actionError}</Alert>}
         {localError && <Alert variant="error">{localError}</Alert>}
+        {!isLoading && profile && !isWorkspaceAdmin && (
+          <Alert variant="warning">
+            Only workspace admins can manage workspace access.
+          </Alert>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
           <AdminSidebar activeScreen="workspaceAdmin" />
@@ -148,7 +257,7 @@ export default function WorkspaceAdminOverview() {
                     Workspace profile
                   </h2>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    Update the workspace name and logo shown to members.
+                    Update the workspace identity and how new members join.
                   </p>
                 </div>
                 {organisation && (
@@ -179,6 +288,24 @@ export default function WorkspaceAdminOverview() {
                     helperText="Optional. Use a public HTTPS image URL."
                     fullWidth
                   />
+
+                  <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                          Require manual member approval
+                        </p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                          New users from the allowed domain stay pending until a
+                          workspace admin approves them.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={requireMemberApproval}
+                        onCheckedChange={setRequireMemberApproval}
+                      />
+                    </div>
+                  </div>
 
                   <div className="flex justify-end">
                     <Button
@@ -216,7 +343,7 @@ export default function WorkspaceAdminOverview() {
                   Invite members
                 </h2>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                  Invite teammates by email. Invites bypass domain matching.
+                  Invites bypass domain matching and join approval.
                 </p>
               </div>
 
@@ -243,66 +370,170 @@ export default function WorkspaceAdminOverview() {
                   Send invite
                 </Button>
               </form>
+            </SurfaceCard>
 
+            <SurfaceCard className="space-y-5">
               <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50">
+                <section className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50">
                   <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                    <Users className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-                    Members ({members.length})
+                    <Shield className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                    Workspace members ({activeMembers.length})
                   </p>
-                  <div className="space-y-2">
-                    {members.length === 0 && (
+                  <div className="space-y-3">
+                    {activeMembers.length === 0 && (
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        No members yet.
+                        No active members.
                       </p>
                     )}
-                    {members.map((member) => (
+                    {activeMembers.map((member) => (
                       <div
                         key={member.id}
-                        className="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm dark:border-white/10 dark:bg-slate-900/60"
+                        className="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 dark:border-white/10 dark:bg-slate-900/60"
                       >
-                        <p className="font-medium text-slate-900 dark:text-white">
-                          {member.name?.trim() || member.email}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {member.email}
-                        </p>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              {member.name?.trim() || member.email}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {member.email}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              member.role === "admin" ? "primary" : "default"
+                            }
+                            size="sm"
+                          >
+                            {member.role === "admin" ? "Admin" : "Member"}
+                          </Badge>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {member.role === "admin" ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              isLoading={isUpdatingMemberId === member.id}
+                              onClick={() => void handleRoleChange(member, "member")}
+                            >
+                              Make member
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              isLoading={isUpdatingMemberId === member.id}
+                              onClick={() => void handleRoleChange(member, "admin")}
+                            >
+                              Make admin
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            icon={<UserMinus className="h-4 w-4" />}
+                            isLoading={isUpdatingMemberId === member.id}
+                            onClick={() => setPendingRemovalMember(member)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
+                </section>
 
-                <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50">
+                <section className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50">
                   <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                     <Clock3 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    Pending invites ({invites.length})
+                    Pending access ({pendingMembers.length + invites.length})
                   </p>
-                  <div className="space-y-2">
-                    {invites.length === 0 && (
+                  <div className="space-y-3">
+                    {pendingMembers.length === 0 && invites.length === 0 && (
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        No pending invites.
+                        No pending approvals or invites.
                       </p>
                     )}
+
+                    {pendingMembers.map((member) => (
+                      <div
+                        key={member.id}
+                        className="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 dark:border-white/10 dark:bg-slate-900/60"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-slate-900 dark:text-white">
+                              {member.name?.trim() || member.email}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {member.email}
+                            </p>
+                          </div>
+                          <Badge variant="warning" size="sm">
+                            Pending approval
+                          </Badge>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            isLoading={isUpdatingMemberId === member.id}
+                            onClick={() => void handleApproveMember(member)}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            isLoading={isUpdatingMemberId === member.id}
+                            onClick={() => setPendingRemovalMember(member)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
                     {invites.map((invite) => (
                       <div
                         key={invite.id}
-                        className="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-2 text-sm dark:border-white/10 dark:bg-slate-900/60"
+                        className="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 dark:border-white/10 dark:bg-slate-900/60"
                       >
                         <p className="font-medium text-slate-900 dark:text-white">
                           {invite.email}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Sent {new Date(invite.updatedAt).toLocaleDateString()}
+                          Invite sent{" "}
+                          {new Date(invite.updatedAt).toLocaleDateString()}
                         </p>
                       </div>
                     ))}
                   </div>
-                </div>
+                </section>
               </div>
             </SurfaceCard>
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={pendingRemovalMember !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingRemovalMember(null);
+          }
+        }}
+        title="Remove member?"
+        description={
+          pendingRemovalMember
+            ? `This removes ${pendingRemovalMember.email} from the workspace and all teams.`
+            : undefined
+        }
+        confirmLabel="Remove"
+        variant="destructive"
+        onConfirm={() => void handleRemoveMember()}
+      />
     </WorkspaceLayout>
   );
 }

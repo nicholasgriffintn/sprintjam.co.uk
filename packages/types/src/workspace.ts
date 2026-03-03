@@ -3,23 +3,31 @@
  */
 import type {
   organisations,
+  teamMemberships,
   teamIntegrations,
   teamSessions,
   teamSettings,
   teams,
   users,
   workspaceInvites,
+  workspaceMemberships,
 } from "@sprintjam/db";
 import type { RoomSettings, RoundTransitionType } from "./room";
 import type { OAuthProvider } from "./external";
 
 export type Team = typeof teams.$inferSelect;
+export type TeamMembershipRow = typeof teamMemberships.$inferSelect;
 export type TeamSession = typeof teamSessions.$inferSelect;
 export type TeamSettingsRow = typeof teamSettings.$inferSelect;
 export type TeamIntegrationRow = typeof teamIntegrations.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Organisation = typeof organisations.$inferSelect;
 export type WorkspaceInvite = typeof workspaceInvites.$inferSelect;
+export type WorkspaceMembershipRow = typeof workspaceMemberships.$inferSelect;
+export type WorkspaceRole = WorkspaceMembershipRow["role"];
+export type MembershipStatus = WorkspaceMembershipRow["status"];
+export type TeamRole = TeamMembershipRow["role"];
+export type TeamAccessPolicy = Team["accessPolicy"];
 
 export interface TeamWithSettings extends Team {
   settings?: RoomSettings;
@@ -40,8 +48,28 @@ export type WorkspaceUser = Pick<
 export type WorkspaceOrganisation = Organisation;
 export type WorkspaceMember = Pick<
   User,
-  "id" | "email" | "name" | "createdAt" | "lastLoginAt"
->;
+  "id" | "email" | "name" | "avatar" | "createdAt" | "lastLoginAt"
+> & {
+  role: WorkspaceRole;
+  status: MembershipStatus;
+  approvedAt: number | null;
+};
+
+export type TeamMember = Pick<
+  User,
+  "id" | "email" | "name" | "avatar" | "createdAt" | "lastLoginAt"
+> & {
+  role: TeamRole;
+  status: MembershipStatus;
+  approvedAt: number | null;
+};
+
+export type WorkspaceTeam = Team & {
+  currentUserRole: TeamRole | null;
+  currentUserStatus: MembershipStatus | null;
+  canAccess: boolean;
+  canManage: boolean;
+};
 
 export interface SessionTimelineData {
   period: string;
@@ -62,8 +90,9 @@ export interface WorkspaceStats {
 
 export interface WorkspaceProfile {
   user: WorkspaceUser;
+  membership: WorkspaceMembershipRow;
   organisation: WorkspaceOrganisation;
-  teams: Team[];
+  teams: WorkspaceTeam[];
   members: WorkspaceMember[];
   invites: WorkspaceInvite[];
 }

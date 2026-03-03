@@ -1,11 +1,38 @@
 import { drizzle } from "drizzle-orm/d1";
-import { eq, inArray, sql, desc } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
-import { teams, teamSessions, teamSettings, users } from '@sprintjam/db';
+import {
+  teamMemberships,
+  teamSessions,
+  teamSettings,
+  teams,
+  users,
+} from "@sprintjam/db";
 import * as schema from "@sprintjam/db/d1/schemas";
-import type { RoomSettings } from '@sprintjam/types';
+import type { RoomSettings } from "@sprintjam/types";
 
 const MAX_SESSIONS_FOR_STATS = 5000;
+
+const teamSelection = {
+  id: teams.id,
+  name: teams.name,
+  organisationId: teams.organisationId,
+  ownerId: teams.ownerId,
+  accessPolicy: teams.accessPolicy,
+  createdAt: teams.createdAt,
+  updatedAt: teams.updatedAt,
+};
+
+const teamSessionSelection = {
+  id: teamSessions.id,
+  teamId: teamSessions.teamId,
+  roomKey: teamSessions.roomKey,
+  name: teamSessions.name,
+  createdById: teamSessions.createdById,
+  createdAt: teamSessions.createdAt,
+  completedAt: teamSessions.completedAt,
+  metadata: teamSessions.metadata,
+};
 
 export class TeamRepository {
   private db: ReturnType<typeof drizzle>;
@@ -14,55 +41,90 @@ export class TeamRepository {
     this.db = drizzle(d1, { schema });
   }
 
-  async getUserTeams(userId: number) {
+  async getOrganisationTeams(organisationId: number) {
     return await this.db
-      .select({
-        id: teams.id,
-        name: teams.name,
-        organisationId: teams.organisationId,
-        ownerId: teams.ownerId,
-        createdAt: teams.createdAt,
-        updatedAt: teams.updatedAt,
-      })
+      .select(teamSelection)
       .from(teams)
-      .where(eq(teams.ownerId, userId));
+      .where(eq(teams.organisationId, organisationId))
+      .orderBy(teams.name);
+  }
+
+  async getUserTeams(
+    userId: number,
+    organisationId: number,
+    isWorkspaceAdmin: boolean,
+  ) {
+    if (isWorkspaceAdmin) {
+      return this.getOrganisationTeams(organisationId);
+    }
+
+    return await this.db
+      .select(teamSelection)
+      .from(teams)
+      .leftJoin(
+        teamMemberships,
+        and(
+          eq(teamMemberships.teamId, teams.id),
+          eq(teamMemberships.userId, userId),
+          eq(teamMemberships.status, "active"),
+        ),
+      )
+      .where(
+        and(
+          eq(teams.organisationId, organisationId),
+          or(
+            eq(teams.accessPolicy, "open"),
+            eq(teamMemberships.userId, userId),
+          ),
+        ),
+      )
+      .orderBy(teams.name);
   }
 
   async createTeam(
     organisationId: number,
     name: string,
     ownerId: number,
+    accessPolicy: "open" | "restricted" = "open",
   ): Promise<number> {
+    const now = Date.now();
     const result = await this.db
       .insert(teams)
       .values({
         organisationId,
         name,
         ownerId,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        accessPolicy,
+        createdAt: now,
+        updatedAt: now,
       })
       .returning({ id: teams.id });
 
-    return result[0].id;
+    const teamId = result[0].id;
+
+    await this.upsertTeamMembership({
+      teamId,
+      userId: ownerId,
+      role: "admin",
+      status: "active",
+      approvedById: ownerId,
+    });
+
+    return teamId;
   }
 
   async getTeamById(teamId: number) {
     return await this.db
-      .select({
-        id: teams.id,
-        name: teams.name,
-        organisationId: teams.organisationId,
-        ownerId: teams.ownerId,
-        createdAt: teams.createdAt,
-        updatedAt: teams.updatedAt,
-      })
+      .select(teamSelection)
       .from(teams)
       .where(eq(teams.id, teamId))
       .get();
   }
 
-  async updateTeam(teamId: number, updates: { name?: string }): Promise<void> {
+  async updateTeam(
+    teamId: number,
+    updates: { name?: string; accessPolicy?: "open" | "restricted" },
+  ): Promise<void> {
     await this.db
       .update(teams)
       .set({
@@ -74,8 +136,190 @@ export class TeamRepository {
 
   async deleteTeam(teamId: number): Promise<void> {
     await this.db.delete(teamSessions).where(eq(teamSessions.teamId, teamId));
-
     await this.db.delete(teams).where(eq(teams.id, teamId));
+  }
+
+  async getTeamMembership(teamId: number, userId: number) {
+    return await this.db
+      .select({
+        id: teamMemberships.id,
+        teamId: teamMemberships.teamId,
+        userId: teamMemberships.userId,
+        role: teamMemberships.role,
+        status: teamMemberships.status,
+        approvedById: teamMemberships.approvedById,
+        approvedAt: teamMemberships.approvedAt,
+        createdAt: teamMemberships.createdAt,
+        updatedAt: teamMemberships.updatedAt,
+      })
+      .from(teamMemberships)
+      .where(
+        and(
+          eq(teamMemberships.teamId, teamId),
+          eq(teamMemberships.userId, userId),
+        ),
+      )
+      .get();
+  }
+
+  async listTeamMembers(teamId: number) {
+    return await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        avatar: users.avatar,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+        role: teamMemberships.role,
+        status: teamMemberships.status,
+        approvedAt: teamMemberships.approvedAt,
+      })
+      .from(teamMemberships)
+      .innerJoin(users, eq(users.id, teamMemberships.userId))
+      .where(eq(teamMemberships.teamId, teamId))
+      .orderBy(users.email);
+  }
+
+  async upsertTeamMembership(params: {
+    teamId: number;
+    userId: number;
+    role: "admin" | "member";
+    status: "pending" | "active";
+    approvedById?: number | null;
+  }): Promise<void> {
+    const now = Date.now();
+    const approvedAt = params.status === "active" ? now : null;
+
+    await this.db
+      .insert(teamMemberships)
+      .values({
+        teamId: params.teamId,
+        userId: params.userId,
+        role: params.role,
+        status: params.status,
+        approvedById:
+          params.status === "active" ? (params.approvedById ?? null) : null,
+        approvedAt,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [teamMemberships.teamId, teamMemberships.userId],
+        set: {
+          role: params.role,
+          status: params.status,
+          approvedById:
+            params.status === "active" ? (params.approvedById ?? null) : null,
+          approvedAt,
+          updatedAt: now,
+        },
+      });
+  }
+
+  async approveTeamMembership(
+    teamId: number,
+    userId: number,
+    approvedById: number,
+  ): Promise<void> {
+    await this.db
+      .update(teamMemberships)
+      .set({
+        status: "active",
+        approvedById,
+        approvedAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      .where(
+        and(eq(teamMemberships.teamId, teamId), eq(teamMemberships.userId, userId)),
+      );
+  }
+
+  async updateTeamMembershipRole(
+    teamId: number,
+    userId: number,
+    role: "admin" | "member",
+  ): Promise<boolean> {
+    const result = await this.db
+      .update(teamMemberships)
+      .set({
+        role,
+        updatedAt: Date.now(),
+      })
+      .where(
+        and(
+          eq(teamMemberships.teamId, teamId),
+          eq(teamMemberships.userId, userId),
+          eq(teamMemberships.status, "active"),
+        ),
+      )
+      .returning({ id: teamMemberships.id });
+
+    return result.length > 0;
+  }
+
+  async removeTeamMembership(teamId: number, userId: number): Promise<void> {
+    await this.db
+      .delete(teamMemberships)
+      .where(
+        and(eq(teamMemberships.teamId, teamId), eq(teamMemberships.userId, userId)),
+      );
+  }
+
+  async removeUserFromTeams(userId: number): Promise<void> {
+    await this.db.delete(teamMemberships).where(eq(teamMemberships.userId, userId));
+  }
+
+  async isTeamAdmin(teamId: number, userId: number): Promise<boolean> {
+    const membership = await this.db
+      .select({ role: teamMemberships.role })
+      .from(teamMemberships)
+      .where(
+        and(
+          eq(teamMemberships.teamId, teamId),
+          eq(teamMemberships.userId, userId),
+          eq(teamMemberships.status, "active"),
+        ),
+      )
+      .get();
+
+    if (membership?.role === "admin") {
+      return true;
+    }
+
+    const team = await this.db
+      .select({ ownerId: teams.ownerId })
+      .from(teams)
+      .where(eq(teams.id, teamId))
+      .get();
+
+    return team?.ownerId === userId;
+  }
+
+  async isTeamMember(teamId: number, userId: number): Promise<boolean> {
+    const membership = await this.db
+      .select({ id: teamMemberships.id })
+      .from(teamMemberships)
+      .where(
+        and(
+          eq(teamMemberships.teamId, teamId),
+          eq(teamMemberships.userId, userId),
+          eq(teamMemberships.status, "active"),
+        ),
+      )
+      .get();
+
+    if (membership?.id) {
+      return true;
+    }
+
+    const team = await this.db
+      .select({ ownerId: teams.ownerId })
+      .from(teams)
+      .where(eq(teams.id, teamId))
+      .get();
+
+    return team?.ownerId === userId;
   }
 
   async getTeamSettings(teamId: number): Promise<RoomSettings | null> {
@@ -116,15 +360,6 @@ export class TeamRepository {
       });
   }
 
-  async isTeamOwner(teamId: number, userId: number): Promise<boolean> {
-    const team = await this.db
-      .select({ ownerId: teams.ownerId })
-      .from(teams)
-      .where(eq(teams.id, teamId))
-      .get();
-    return team?.ownerId === userId;
-  }
-
   async createTeamSession(
     teamId: number,
     roomKey: string,
@@ -149,16 +384,7 @@ export class TeamRepository {
 
   async getTeamSessions(teamId: number) {
     return await this.db
-      .select({
-        id: teamSessions.id,
-        teamId: teamSessions.teamId,
-        roomKey: teamSessions.roomKey,
-        name: teamSessions.name,
-        createdById: teamSessions.createdById,
-        createdAt: teamSessions.createdAt,
-        completedAt: teamSessions.completedAt,
-        metadata: teamSessions.metadata,
-      })
+      .select(teamSessionSelection)
       .from(teamSessions)
       .where(eq(teamSessions.teamId, teamId))
       .orderBy(schema.teamSessions.createdAt);
@@ -166,16 +392,7 @@ export class TeamRepository {
 
   async getTeamSessionById(sessionId: number) {
     return await this.db
-      .select({
-        id: teamSessions.id,
-        teamId: teamSessions.teamId,
-        roomKey: teamSessions.roomKey,
-        name: teamSessions.name,
-        createdById: teamSessions.createdById,
-        createdAt: teamSessions.createdAt,
-        completedAt: teamSessions.completedAt,
-        metadata: teamSessions.metadata,
-      })
+      .select(teamSessionSelection)
       .from(teamSessions)
       .where(eq(teamSessions.id, sessionId))
       .get();
@@ -188,38 +405,37 @@ export class TeamRepository {
       .where(eq(teamSessions.id, sessionId));
   }
 
-  async completeLatestSessionByRoomKey(roomKey: string, userId: number) {
-    const user = await this.db
-      .select({
-        id: users.id,
-        email: users.email,
-        emailDomain: users.emailDomain,
-        organisationId: users.organisationId,
-        name: users.name,
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .get();
-
-    if (!user) {
-      return null;
-    }
-
+  async completeLatestSessionByRoomKey(
+    roomKey: string,
+    organisationId: number,
+    userId: number,
+    isWorkspaceAdmin: boolean,
+  ) {
     const session = await this.db
-      .select({
-        id: teamSessions.id,
-        teamId: teamSessions.teamId,
-        roomKey: teamSessions.roomKey,
-        name: teamSessions.name,
-        createdById: teamSessions.createdById,
-        createdAt: teamSessions.createdAt,
-        completedAt: teamSessions.completedAt,
-        metadata: teamSessions.metadata,
-      })
+      .select(teamSessionSelection)
       .from(teamSessions)
       .innerJoin(teams, eq(teamSessions.teamId, teams.id))
+      .leftJoin(
+        teamMemberships,
+        and(
+          eq(teamMemberships.teamId, teams.id),
+          eq(teamMemberships.userId, userId),
+          eq(teamMemberships.status, "active"),
+        ),
+      )
       .where(
-        sql`${teamSessions.roomKey} = ${roomKey} AND ${teams.organisationId} = ${user.organisationId} AND ${teams.ownerId} = ${userId} AND ${teamSessions.completedAt} IS NULL`,
+        and(
+          eq(teamSessions.roomKey, roomKey),
+          eq(teams.organisationId, organisationId),
+          isWorkspaceAdmin
+            ? sql`1 = 1`
+            : or(
+                eq(teamSessions.createdById, userId),
+                eq(teams.accessPolicy, "open"),
+                eq(teamMemberships.userId, userId),
+              ),
+          sql`${teamSessions.completedAt} IS NULL`,
+        ),
       )
       .orderBy(desc(teamSessions.createdAt))
       .limit(1)
@@ -233,8 +449,16 @@ export class TeamRepository {
     return await this.getTeamSessionById(session.id);
   }
 
-  async getWorkspaceStats(userId: number) {
-    const userTeams = await this.getUserTeams(userId);
+  async getWorkspaceStats(
+    organisationId: number,
+    userId: number,
+    isWorkspaceAdmin: boolean,
+  ) {
+    const userTeams = await this.getUserTeams(
+      userId,
+      organisationId,
+      isWorkspaceAdmin,
+    );
 
     if (userTeams.length === 0) {
       return {
@@ -246,7 +470,7 @@ export class TeamRepository {
       };
     }
 
-    const teamIds = userTeams.map((t) => t.id);
+    const teamIds = userTeams.map((team) => team.id);
 
     const sessions = await this.db
       .select({
@@ -260,17 +484,15 @@ export class TeamRepository {
       .limit(MAX_SESSIONS_FOR_STATS);
 
     const totalSessions = sessions.length;
-    const activeSessions = sessions.filter((s) => !s.completedAt).length;
-    const completedSessions = sessions.filter((s) => !!s.completedAt).length;
-
-    const sessionTimeline = this.buildSessionTimeline(sessions);
+    const activeSessions = sessions.filter((session) => !session.completedAt).length;
+    const completedSessions = sessions.filter((session) => !!session.completedAt).length;
 
     return {
       totalTeams: userTeams.length,
       totalSessions,
       activeSessions,
       completedSessions,
-      sessionTimeline,
+      sessionTimeline: this.buildSessionTimeline(sessions),
     };
   }
 
@@ -282,32 +504,35 @@ export class TeamRepository {
 
     const monthCounts = new Map<string, number>();
 
-    for (let i = 5; i >= 0; i--) {
+    for (let index = 5; index >= 0; index--) {
       const date = new Date(now);
       date.setDate(1);
-      date.setMonth(date.getMonth() - i);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      date.setMonth(date.getMonth() - index);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       monthCounts.set(key, 0);
     }
 
     for (const session of sessions) {
-      if (session.createdAt >= sixMonthsAgo) {
-        const date = new Date(session.createdAt);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        if (monthCounts.has(key)) {
-          monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
-        }
+      if (session.createdAt < sixMonthsAgo) {
+        continue;
+      }
+
+      const date = new Date(session.createdAt);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      if (monthCounts.has(key)) {
+        monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
       }
     }
 
     return Array.from(monthCounts.entries()).map(([period, count]) => {
-      const [year, month] = period.split('-');
+      const [year, month] = period.split("-");
       const date = new Date(
         Number.parseInt(year, 10),
         Number.parseInt(month, 10) - 1,
       );
+
       return {
-        period: date.toLocaleString('default', { month: 'short' }),
+        period: date.toLocaleString("default", { month: "short" }),
         yearMonth: period,
         count,
       };

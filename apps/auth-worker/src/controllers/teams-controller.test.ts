@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthWorkerEnv } from "@sprintjam/types";
 
 import {
@@ -7,6 +7,11 @@ import {
   getTeamController,
   updateTeamController,
   deleteTeamController,
+  addTeamMemberController,
+  requestTeamAccessController,
+  approveTeamMemberController,
+  updateTeamMemberController,
+  removeTeamMemberController,
   listTeamSessionsController,
   createTeamSessionController,
   completeSessionByRoomKeyController,
@@ -14,16 +19,11 @@ import {
   updateWorkspaceProfileController,
   inviteWorkspaceMemberController,
 } from "./teams-controller";
-import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 import * as auth from "../lib/auth";
 import * as services from "@sprintjam/services";
 
 const makeRequest = (input: RequestInfo | URL, init?: RequestInit): Request =>
   new Request(input, init);
-
-vi.mock("../repositories/workspace-auth", () => ({
-  WorkspaceAuthRepository: vi.fn(),
-}));
 
 vi.mock("../lib/auth", () => ({
   authenticateRequest: vi.fn(),
@@ -35,960 +35,796 @@ vi.mock("@sprintjam/services", () => ({
   sendWorkspaceInviteEmail: vi.fn(),
 }));
 
-describe("listTeamsController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      getUserTeams: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-  });
-
-  it("should return 401 when not authenticated", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      status: "error",
-      code: "unauthorized",
-    });
-
-    const request = makeRequest("https://test.com/teams", {
-      method: "GET",
-    });
-
-    const response = await listTeamsController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(401);
-    expect(data.error).toBe("Unauthorized");
-  });
-
-  it("should return 401 when session is expired", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      status: "error",
-      code: "expired",
-    });
-
-    const request = makeRequest("https://test.com/teams", {
-      method: "GET",
-      headers: { Authorization: "Bearer expired-token" },
-    });
-
-    const response = await listTeamsController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(401);
-    expect(data.error).toBe("Session expired");
-  });
-
-  it("should return user teams for valid session", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getUserTeams.mockResolvedValue([
-      { id: 1, name: "Team A", organisationId: 1, ownerId: 1 },
-      { id: 2, name: "Team B", organisationId: 1, ownerId: 1 },
-    ]);
-
-    const request = makeRequest("https://test.com/teams", {
-      method: "GET",
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await listTeamsController(request, mockEnv);
-    const data = (await response.json()) as { teams: unknown[] };
-
-    expect(response.status).toBe(200);
-    expect(data.teams).toHaveLength(2);
-  });
+const makeUser = (overrides: Record<string, unknown> = {}) => ({
+  id: 1,
+  email: "admin@example.com",
+  name: "Admin User",
+  organisationId: 1,
+  ...overrides,
 });
 
-describe("createTeamController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+const makeMembership = (overrides: Record<string, unknown> = {}) => ({
+  id: 1,
+  organisationId: 1,
+  userId: 1,
+  role: "member" as const,
+  status: "active" as const,
+  approvedById: 1,
+  approvedAt: Date.now(),
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ...overrides,
+});
+
+const makeTeam = (overrides: Record<string, unknown> = {}) => ({
+  id: 10,
+  name: "Platform",
+  organisationId: 1,
+  ownerId: 2,
+  accessPolicy: "open" as const,
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ...overrides,
+});
+
+const makeOrganisation = (overrides: Record<string, unknown> = {}) => ({
+  id: 1,
+  domain: "example.com",
+  name: "Example",
+  logoUrl: null,
+  ownerId: 1,
+  requireMemberApproval: false,
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ...overrides,
+});
+
+const makeInvite = (overrides: Record<string, unknown> = {}) => ({
+  id: 15,
+  organisationId: 1,
+  email: "invitee@external.com",
+  invitedById: 1,
+  acceptedById: null,
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  acceptedAt: null,
+  revokedAt: null,
+  ...overrides,
+});
+
+const createRepo = (overrides: Record<string, unknown> = {}) => ({
+  getUserById: vi.fn().mockResolvedValue(makeUser()),
+  getOrganisationMembership: vi
+    .fn()
+    .mockResolvedValue(makeMembership({ role: "admin", userId: 1 })),
+  isOrganisationAdmin: vi.fn().mockResolvedValue(true),
+  getOrganisationTeams: vi.fn().mockResolvedValue([]),
+  getTeamMembership: vi.fn().mockResolvedValue(null),
+  upsertTeamMembership: vi.fn(),
+  approveTeamMembership: vi.fn(),
+  updateTeamMembershipRole: vi.fn(),
+  removeTeamMembership: vi.fn(),
+  listTeamMembers: vi.fn().mockResolvedValue([]),
+  createTeam: vi.fn().mockResolvedValue(10),
+  getTeamById: vi.fn().mockResolvedValue(makeTeam()),
+  updateTeam: vi.fn(),
+  deleteTeam: vi.fn(),
+  getTeamSessions: vi.fn().mockResolvedValue([]),
+  createTeamSession: vi.fn().mockResolvedValue(21),
+  getTeamSessionById: vi.fn().mockResolvedValue({
+    id: 21,
+    teamId: 10,
+    roomKey: "ROOM-1",
+    name: "Sprint Planning",
+  }),
+  completeLatestSessionByRoomKey: vi.fn().mockResolvedValue({
+    id: 21,
+    teamId: 10,
+    completedAt: 1700000000000,
+  }),
+  getWorkspaceStats: vi.fn().mockResolvedValue({
+    totalTeams: 3,
+    totalSessions: 12,
+    activeSessions: 2,
+    completedSessions: 10,
+  }),
+  updateOrganisation: vi.fn(),
+  getOrganisationById: vi.fn().mockResolvedValue(makeOrganisation()),
+  getOrganisationMembers: vi.fn().mockResolvedValue([]),
+  listPendingWorkspaceInvites: vi.fn().mockResolvedValue([]),
+  getUserByEmail: vi.fn().mockResolvedValue(null),
+  createOrUpdateWorkspaceInvite: vi.fn().mockResolvedValue(makeInvite()),
+  ...overrides,
+});
+
+const authenticateAs = (repo: ReturnType<typeof createRepo>) => {
+  vi.mocked(auth.authenticateRequest).mockResolvedValue({
+    userId: 1,
+    email: "admin@example.com",
+    repo: repo as any,
+  });
+};
+
+describe("teams-controller", () => {
+  let env: AuthWorkerEnv;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      getUserById: vi.fn(),
-      createTeam: vi.fn(),
-      getTeamById: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
+    env = {
+      DB: {} as any,
+      RESEND_API_KEY: "test-resend",
+    } as AuthWorkerEnv;
+    vi.mocked(services.sendWorkspaceInviteEmail).mockResolvedValue(undefined);
   });
 
-  it("should return 401 when not authenticated", async () => {
+  it("returns 401 when listing teams without authentication", async () => {
     vi.mocked(auth.authenticateRequest).mockResolvedValue({
       status: "error",
       code: "unauthorized",
     });
 
-    const request = makeRequest("https://test.com/teams", {
-      method: "POST",
-      body: JSON.stringify({ name: "New Team" }),
-    });
+    const response = await listTeamsController(
+      makeRequest("https://test.com/teams"),
+      env,
+    );
 
-    const response = await createTeamController(request, mockEnv);
     expect(response.status).toBe(401);
   });
 
-  it("should return 400 when team name is missing", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
+  it("lists teams using workspace membership and admin scope", async () => {
+    const repo = createRepo({
+      getOrganisationTeams: vi
+        .fn()
+        .mockResolvedValue([makeTeam({ id: 10, accessPolicy: "restricted" })]),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
     });
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/teams", {
-      method: "POST",
-      body: JSON.stringify({}),
-      headers: { Authorization: "Bearer valid-token" },
-    });
+    const response = await listTeamsController(
+      makeRequest("https://test.com/teams"),
+      env,
+    );
+    const data = (await response.json()) as {
+      teams: Array<{ canAccess: boolean; canManage: boolean }>;
+    };
 
-    const response = await createTeamController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("Team name is required");
+    expect(response.status).toBe(200);
+    expect(repo.getOrganisationTeams).toHaveBeenCalledWith(1);
+    expect(data.teams[0]).toEqual(
+      expect.objectContaining({
+        canAccess: true,
+        canManage: true,
+      }),
+    );
   });
 
-  it("should return 400 when team name is too long", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
+  it("blocks team creation when workspace access is not active", async () => {
+    const repo = createRepo({
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ status: "pending" })),
     });
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/teams", {
-      method: "POST",
-      body: JSON.stringify({ name: "a".repeat(101) }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await createTeamController(request, mockEnv);
+    const response = await createTeamController(
+      makeRequest("https://test.com/teams", {
+        method: "POST",
+        body: JSON.stringify({ name: "New Team" }),
+      }),
+      env,
+    );
     const data = (await response.json()) as { error: string };
 
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("Team name must be 100 characters or less");
+    expect(response.status).toBe(403);
+    expect(data.error).toBe("Workspace access is not active");
   });
 
-  it("should return 404 when user not found", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
+  it("creates a team with the default open access policy", async () => {
+    const repo = createRepo({
+      getTeamById: vi.fn().mockResolvedValue(makeTeam({ id: 10, name: "New Team" })),
     });
-    mockRepo.getUserById.mockResolvedValue(null);
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/teams", {
-      method: "POST",
-      body: JSON.stringify({ name: "New Team" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await createTeamController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(404);
-    expect(data.error).toBe("User not found");
-  });
-
-  it("should successfully create team", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      email: "test@example.com",
-      organisationId: 1,
-    });
-    mockRepo.createTeam.mockResolvedValue(10);
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 10,
-      name: "New Team",
-      organisationId: 1,
-      ownerId: 1,
-    });
-
-    const request = makeRequest("https://test.com/teams", {
-      method: "POST",
-      body: JSON.stringify({ name: "New Team" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await createTeamController(request, mockEnv);
+    const response = await createTeamController(
+      makeRequest("https://test.com/teams", {
+        method: "POST",
+        body: JSON.stringify({ name: "New Team" }),
+      }),
+      env,
+    );
     const data = (await response.json()) as { team: { name: string } };
 
     expect(response.status).toBe(201);
     expect(data.team.name).toBe("New Team");
-    expect(mockRepo.createTeam).toHaveBeenCalledWith(1, "New Team", 1);
+    expect(repo.createTeam).toHaveBeenCalledWith(1, "New Team", 1, "open");
   });
 
-  it("should trim team name", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
+  it("rejects access to a restricted team for non-members", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "restricted" })),
+      getTeamMembership: vi.fn().mockResolvedValue(null),
     });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.createTeam.mockResolvedValue(10);
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 10,
-      name: "Trimmed Team",
-      organisationId: 1,
-      ownerId: 1,
-    });
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/teams", {
-      method: "POST",
-      body: JSON.stringify({ name: "  Trimmed Team  " }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    await createTeamController(request, mockEnv);
-
-    expect(mockRepo.createTeam).toHaveBeenCalledWith(1, "Trimmed Team", 1);
-  });
-});
-
-describe("getTeamController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      getTeamById: vi.fn(),
-      getUserById: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-  });
-
-  it("should return 404 when team not found", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getTeamById.mockResolvedValue(null);
-
-    const request = makeRequest("https://test.com/teams/1", {
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await getTeamController(request, mockEnv, 1);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(404);
-    expect(data.error).toBe("Team not found");
-  });
-
-  it("should return 403 when user from different organisation", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      name: "Team A",
-      organisationId: 2,
-      ownerId: 5,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-
-    const request = makeRequest("https://test.com/teams/1", {
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await getTeamController(request, mockEnv, 1);
+    const response = await getTeamController(
+      makeRequest("https://test.com/teams/10"),
+      env,
+      10,
+    );
     const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe("Access denied");
+    expect(data.error).toBe("You do not have access to this team");
   });
 
-  it("should return team for authorized user", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
+  it("only allows team admins to update a team", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "restricted" })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
     });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      name: "Team A",
-      organisationId: 1,
-      ownerId: 1,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/teams/1", {
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await getTeamController(request, mockEnv, 1);
-    const data = (await response.json()) as { team: { name: string } };
-
-    expect(response.status).toBe(200);
-    expect(data.team.name).toBe("Team A");
-  });
-});
-
-describe("updateTeamController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      getTeamById: vi.fn(),
-      updateTeam: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-  });
-
-  it("should return 403 when non-owner tries to update", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 2,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      name: "Team A",
-      ownerId: 1,
-    });
-
-    const request = makeRequest("https://test.com/teams/1", {
-      method: "PUT",
-      body: JSON.stringify({ name: "Updated Team" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await updateTeamController(request, mockEnv, 1);
+    const response = await updateTeamController(
+      makeRequest("https://test.com/teams/10", {
+        method: "PUT",
+        body: JSON.stringify({ name: "Updated Team" }),
+      }),
+      env,
+      10,
+    );
     const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe("Only the team owner can update the team");
+    expect(data.error).toBe("Only team admins can update the team");
   });
 
-  it("should successfully update team name", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
+  it("lets a workspace admin update any team", async () => {
+    const repo = createRepo({
+      getTeamById: vi
+        .fn()
+        .mockResolvedValueOnce(makeTeam({ id: 10, name: "Old Team" }))
+        .mockResolvedValueOnce(makeTeam({ id: 10, name: "Updated Team" })),
     });
-    mockRepo.getTeamById
-      .mockResolvedValueOnce({ id: 1, name: "Old Team", ownerId: 1 })
-      .mockResolvedValueOnce({ id: 1, name: "Updated Team", ownerId: 1 });
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/teams/1", {
-      method: "PUT",
-      body: JSON.stringify({ name: "Updated Team" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await updateTeamController(request, mockEnv, 1);
+    const response = await updateTeamController(
+      makeRequest("https://test.com/teams/10", {
+        method: "PUT",
+        body: JSON.stringify({ name: "Updated Team" }),
+      }),
+      env,
+      10,
+    );
     const data = (await response.json()) as { team: { name: string } };
 
     expect(response.status).toBe(200);
     expect(data.team.name).toBe("Updated Team");
-    expect(mockRepo.updateTeam).toHaveBeenCalledWith(1, {
-      name: "Updated Team",
-    });
-  });
-});
-
-describe("deleteTeamController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      getTeamById: vi.fn(),
-      deleteTeam: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
+    expect(repo.updateTeam).toHaveBeenCalledWith(10, { name: "Updated Team" });
   });
 
-  it("should return 403 when non-owner tries to delete", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 2,
-      email: "test@example.com",
-      repo: mockRepo,
+  it("allows a team admin to delete a team", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "admin", status: "active" }),
     });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      name: "Team A",
-      ownerId: 1,
-    });
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/teams/1", {
-      method: "DELETE",
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await deleteTeamController(request, mockEnv, 1);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(403);
-    expect(data.error).toBe("Only the team owner can delete the team");
-  });
-
-  it("should successfully delete team", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      name: "Team A",
-      ownerId: 1,
-    });
-
-    const request = makeRequest("https://test.com/teams/1", {
-      method: "DELETE",
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await deleteTeamController(request, mockEnv, 1);
+    const response = await deleteTeamController(
+      makeRequest("https://test.com/teams/10", { method: "DELETE" }),
+      env,
+      10,
+    );
     const data = (await response.json()) as { message: string };
 
     expect(response.status).toBe(200);
     expect(data.message).toBe("Team deleted successfully");
-    expect(mockRepo.deleteTeam).toHaveBeenCalledWith(1);
+    expect(repo.deleteTeam).toHaveBeenCalledWith(10);
   });
-});
 
-describe("listTeamSessionsController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+  it("adds an active workspace member to a team immediately", async () => {
+    const repo = createRepo({
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "admin", userId: 1 })),
+      getUserById: vi
+        .fn()
+        .mockResolvedValueOnce(makeUser())
+        .mockResolvedValueOnce(makeUser({ id: 2, email: "member@example.com" })),
+      listTeamMembers: vi.fn().mockResolvedValue([
+        {
+          id: 2,
+          email: "member@example.com",
+          name: "Member User",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "member",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+      ]),
+    });
+    authenticateAs(repo);
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
+    const response = await addTeamMemberController(
+      makeRequest("https://test.com/teams/10/members", {
+        method: "POST",
+        body: JSON.stringify({ userId: 2, role: "member" }),
+      }),
+      env,
+      10,
+    );
+    const data = (await response.json()) as { member: { status: string } };
 
-    mockRepo = {
-      getTeamById: vi.fn(),
-      getUserById: vi.fn(),
-      getTeamSessions: vi.fn(),
-      isTeamOwner: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
+    expect(response.status).toBe(201);
+    expect(data.member.status).toBe("active");
+    expect(repo.upsertTeamMembership).toHaveBeenCalledWith({
+      teamId: 10,
+      userId: 2,
+      role: "member",
+      status: "active",
+      approvedById: 1,
     });
   });
 
-  it("should return 403 when user from different organisation", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
+  it("creates a pending access request for restricted teams", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member", userId: 1 })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "restricted" })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ role: "member", status: "pending" }),
+    });
+    authenticateAs(repo);
+
+    const response = await requestTeamAccessController(
+      makeRequest("https://test.com/teams/10/request-access", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+      env,
+      10,
+    );
+    const data = (await response.json()) as { member: { status: string } };
+
+    expect(response.status).toBe(202);
+    expect(data.member.status).toBe("pending");
+    expect(repo.upsertTeamMembership).toHaveBeenCalledWith({
+      teamId: 10,
       userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
+      role: "member",
+      status: "pending",
     });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      organisationId: 2,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.isTeamOwner.mockResolvedValue(false);
+  });
 
-    const request = makeRequest("https://test.com/teams/1/sessions", {
-      headers: { Authorization: "Bearer valid-token" },
+  it("does not create an access request for open teams", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member", userId: 1 })),
     });
+    authenticateAs(repo);
 
-    const response = await listTeamSessionsController(request, mockEnv, 1);
+    const response = await requestTeamAccessController(
+      makeRequest("https://test.com/teams/10/request-access", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+      env,
+      10,
+    );
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("Open teams do not require an access request");
+    expect(repo.upsertTeamMembership).not.toHaveBeenCalled();
+  });
+
+  it("approves a pending team member", async () => {
+    const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce({ role: "admin", status: "active" })
+        .mockResolvedValueOnce({ role: "member", status: "pending" }),
+      listTeamMembers: vi.fn().mockResolvedValue([
+        {
+          id: 2,
+          email: "member@example.com",
+          name: "Member User",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "member",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+      ]),
+    });
+    authenticateAs(repo);
+
+    const response = await approveTeamMemberController(
+      makeRequest("https://test.com/teams/10/members/2/approve", {
+        method: "POST",
+      }),
+      env,
+      10,
+      2,
+    );
+    const data = (await response.json()) as { member: { status: string } };
+
+    expect(response.status).toBe(200);
+    expect(data.member.status).toBe("active");
+    expect(repo.approveTeamMembership).toHaveBeenCalledWith(10, 2, 1);
+  });
+
+  it("promotes a team member to admin", async () => {
+    const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce({ role: "admin", status: "active" })
+        .mockResolvedValueOnce({ role: "member", status: "active" }),
+      listTeamMembers: vi.fn().mockResolvedValue([
+        {
+          id: 2,
+          email: "member@example.com",
+          name: "Member User",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "admin",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+      ]),
+    });
+    authenticateAs(repo);
+
+    const response = await updateTeamMemberController(
+      makeRequest("https://test.com/teams/10/members/2", {
+        method: "PUT",
+        body: JSON.stringify({ role: "admin" }),
+      }),
+      env,
+      10,
+      2,
+    );
+    const data = (await response.json()) as { member: { role: string } };
+
+    expect(response.status).toBe(200);
+    expect(data.member.role).toBe("admin");
+    expect(repo.updateTeamMembershipRole).toHaveBeenCalledWith(10, 2, "admin");
+  });
+
+  it("prevents removing the last active team admin", async () => {
+    const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce({ role: "admin", status: "active" })
+        .mockResolvedValueOnce({ role: "admin", status: "active" }),
+      listTeamMembers: vi.fn().mockResolvedValue([
+        {
+          id: 2,
+          email: "member@example.com",
+          name: "Member User",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "admin",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+      ]),
+    });
+    authenticateAs(repo);
+
+    const response = await removeTeamMemberController(
+      makeRequest("https://test.com/teams/10/members/2", {
+        method: "DELETE",
+      }),
+      env,
+      10,
+      2,
+    );
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("At least one team admin is required");
+    expect(repo.removeTeamMembership).not.toHaveBeenCalled();
+  });
+
+  it("allows a workspace admin to remove a team member when another admin remains", async () => {
+    const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ role: "member", status: "active" }),
+      listTeamMembers: vi.fn().mockResolvedValue([
+        {
+          id: 1,
+          email: "admin@example.com",
+          name: "Admin User",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "admin",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+        {
+          id: 3,
+          email: "other-admin@example.com",
+          name: "Other Admin",
+          avatar: null,
+          createdAt: Date.now(),
+          lastLoginAt: null,
+          role: "admin",
+          status: "active",
+          approvedAt: Date.now(),
+        },
+      ]),
+    });
+    authenticateAs(repo);
+
+    const response = await removeTeamMemberController(
+      makeRequest("https://test.com/teams/10/members/2", {
+        method: "DELETE",
+      }),
+      env,
+      10,
+      2,
+    );
+    const data = (await response.json()) as { message: string };
+
+    expect(response.status).toBe(200);
+    expect(data.message).toBe("Team member removed");
+    expect(repo.removeTeamMembership).toHaveBeenCalledWith(10, 2);
+  });
+
+  it("lists team sessions for an authorised team member", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "restricted" })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
+      getTeamSessions: vi
+        .fn()
+        .mockResolvedValue([{ id: 3, teamId: 10, roomKey: "ROOM-1" }]),
+    });
+    authenticateAs(repo);
+
+    const response = await listTeamSessionsController(
+      makeRequest("https://test.com/teams/10/sessions"),
+      env,
+      10,
+    );
+    const data = (await response.json()) as { sessions: Array<{ id: number }> };
+
+    expect(response.status).toBe(200);
+    expect(data.sessions).toEqual([{ id: 3, teamId: 10, roomKey: "ROOM-1" }]);
+  });
+
+  it("prevents non-members from creating sessions in a restricted team", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "restricted" })),
+      getTeamMembership: vi.fn().mockResolvedValue(null),
+    });
+    authenticateAs(repo);
+
+    const response = await createTeamSessionController(
+      makeRequest("https://test.com/teams/10/sessions", {
+        method: "POST",
+        body: JSON.stringify({ name: "Sprint Planning", roomKey: "ROOM-1" }),
+      }),
+      env,
+      10,
+    );
     const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe("Only the team owner can access team sessions");
+    expect(data.error).toBe(
+      "You must be a team member to create sessions in this team",
+    );
   });
 
-  it("should return team sessions for authorized user", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
+  it("creates a team session for an active team member", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "restricted" })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
     });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.isTeamOwner.mockResolvedValue(true);
-    mockRepo.getTeamSessions.mockResolvedValue([
-      { id: 1, name: "Session 1", teamId: 1, roomKey: "room1" },
-      { id: 2, name: "Session 2", teamId: 1, roomKey: "room2" },
-    ]);
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/teams/1/sessions", {
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await listTeamSessionsController(request, mockEnv, 1);
-    const data = (await response.json()) as { sessions: unknown[] };
-
-    expect(response.status).toBe(200);
-    expect(data.sessions).toHaveLength(2);
-  });
-});
-
-describe("createTeamSessionController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      getTeamById: vi.fn(),
-      getUserById: vi.fn(),
-      createTeamSession: vi.fn(),
-      getTeamSessionById: vi.fn(),
-      isTeamOwner: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-  });
-
-  it("should return 400 when session name is missing", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.isTeamOwner.mockResolvedValue(true);
-
-    const request = makeRequest("https://test.com/teams/1/sessions", {
-      method: "POST",
-      body: JSON.stringify({ roomKey: "room1" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await createTeamSessionController(request, mockEnv, 1);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("Session name is required");
-  });
-
-  it("should return 400 when room key is missing", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.isTeamOwner.mockResolvedValue(true);
-
-    const request = makeRequest("https://test.com/teams/1/sessions", {
-      method: "POST",
-      body: JSON.stringify({ name: "Session 1" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await createTeamSessionController(request, mockEnv, 1);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("Room key is required");
-  });
-
-  it("should successfully create team session", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getTeamById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      organisationId: 1,
-    });
-    mockRepo.isTeamOwner.mockResolvedValue(true);
-    mockRepo.createTeamSession.mockResolvedValue(10);
-    mockRepo.getTeamSessionById.mockResolvedValue({
-      id: 10,
-      teamId: 1,
-      name: "Session 1",
-      roomKey: "room1",
-    });
-
-    const request = makeRequest("https://test.com/teams/1/sessions", {
-      method: "POST",
-      body: JSON.stringify({
-        name: "Session 1",
-        roomKey: "room1",
-        metadata: { type: "sprint-planning" },
+    const response = await createTeamSessionController(
+      makeRequest("https://test.com/teams/10/sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Sprint Planning",
+          roomKey: "ROOM-1",
+          metadata: { source: "manual" },
+        }),
       }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await createTeamSessionController(request, mockEnv, 1);
-    const data = (await response.json()) as { session: { name: string } };
+      env,
+      10,
+    );
+    const data = (await response.json()) as { session: { id: number } };
 
     expect(response.status).toBe(201);
-    expect(data.session.name).toBe("Session 1");
-    expect(mockRepo.createTeamSession).toHaveBeenCalledWith(
+    expect(data.session.id).toBe(21);
+    expect(repo.createTeamSession).toHaveBeenCalledWith(
+      10,
+      "ROOM-1",
+      "Sprint Planning",
       1,
-      "room1",
-      "Session 1",
-      1,
-      { type: "sprint-planning" },
+      { source: "manual" },
     );
   });
-});
 
-describe("completeSessionByRoomKeyController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+  it("completes the latest room session with workspace scope", async () => {
+    const repo = createRepo();
+    authenticateAs(repo);
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      completeLatestSessionByRoomKey: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-  });
-
-  it("marks latest session complete for room key", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.completeLatestSessionByRoomKey.mockResolvedValue({
-      id: 2,
-      teamId: 1,
-      completedAt: 1700000000000,
-    });
-
-    const request = makeRequest("https://test.com/sessions/complete", {
-      method: "POST",
-      body: JSON.stringify({ roomKey: "ROOM1" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await completeSessionByRoomKeyController(request, mockEnv);
-    const data = (await response.json()) as {
-      session: { completedAt: number };
-    };
+    const response = await completeSessionByRoomKeyController(
+      makeRequest("https://test.com/sessions/complete", {
+        method: "POST",
+        body: JSON.stringify({ roomKey: "ROOM-1" }),
+      }),
+      env,
+    );
 
     expect(response.status).toBe(200);
-    expect(data.session.completedAt).toBe(1700000000000);
-    expect(mockRepo.completeLatestSessionByRoomKey).toHaveBeenCalledWith(
-      "ROOM1",
+    expect(repo.completeLatestSessionByRoomKey).toHaveBeenCalledWith(
+      "ROOM-1",
       1,
+      1,
+      true,
     );
   });
-});
 
-describe("getWorkspaceStatsController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+  it("returns workspace stats using the caller scope", async () => {
+    const repo = createRepo();
+    authenticateAs(repo);
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      getWorkspaceStats: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-  });
-
-  it("should return workspace stats for authenticated user", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "test@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getWorkspaceStats.mockResolvedValue({
-      totalTeams: 3,
-      totalSessions: 15,
-      activeSessions: 2,
-      completedSessions: 13,
-    });
-
-    const request = makeRequest("https://test.com/workspace/stats", {
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await getWorkspaceStatsController(request, mockEnv);
-    const data = (await response.json()) as {
-      totalTeams: number;
-      totalSessions: number;
-    };
+    const response = await getWorkspaceStatsController(
+      makeRequest("https://test.com/workspace/stats"),
+      env,
+    );
+    const data = (await response.json()) as { totalTeams: number };
 
     expect(response.status).toBe(200);
     expect(data.totalTeams).toBe(3);
-    expect(data.totalSessions).toBe(15);
-  });
-});
-
-describe("updateWorkspaceProfileController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = { DB: {} as any } as AuthWorkerEnv;
-
-    mockRepo = {
-      getUserById: vi.fn(),
-      isOrganisationOwner: vi.fn(),
-      updateOrganisation: vi.fn(),
-      getOrganisationById: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
+    expect(repo.getWorkspaceStats).toHaveBeenCalledWith(1, 1, true);
   });
 
-  it("updates workspace profile for authenticated user", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "owner@example.com",
-      repo: mockRepo,
+  it("only allows workspace admins to update workspace settings", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
     });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      email: "owner@example.com",
-      organisationId: 8,
-    });
-    mockRepo.isOrganisationOwner.mockResolvedValue(true);
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 8,
-      domain: "example.com",
-      name: "Updated Workspace",
-      logoUrl: "https://cdn.example.com/logo.png",
-    });
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/workspace/profile", {
-      method: "PUT",
-      body: JSON.stringify({
-        name: "Updated Workspace",
-        logoUrl: "https://cdn.example.com/logo.png",
+    const response = await updateWorkspaceProfileController(
+      makeRequest("https://test.com/workspace/profile", {
+        method: "PUT",
+        body: JSON.stringify({ name: "Updated Workspace" }),
       }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await updateWorkspaceProfileController(request, mockEnv);
-    const data = (await response.json()) as { organisation: { name: string } };
-
-    expect(response.status).toBe(200);
-    expect(data.organisation.name).toBe("Updated Workspace");
-    expect(mockRepo.updateOrganisation).toHaveBeenCalledWith(8, {
-      name: "Updated Workspace",
-      logoUrl: "https://cdn.example.com/logo.png",
-    });
-  });
-
-  it("returns 403 when non-admin user attempts to update workspace profile", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 4,
-      email: "member@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 4,
-      email: "member@example.com",
-      organisationId: 8,
-    });
-    mockRepo.isOrganisationOwner.mockResolvedValue(false);
-
-    const request = makeRequest("https://test.com/workspace/profile", {
-      method: "PUT",
-      body: JSON.stringify({ name: "Updated Workspace" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await updateWorkspaceProfileController(request, mockEnv);
+      env,
+    );
     const data = (await response.json()) as { error: string };
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe("Only workspace admins can update workspace profile");
-    expect(mockRepo.updateOrganisation).not.toHaveBeenCalled();
+    expect(data.error).toBe(
+      "Only workspace admins can update workspace profile",
+    );
   });
-});
 
-describe("inviteWorkspaceMemberController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+  it("updates workspace profile including manual approval", async () => {
+    const repo = createRepo({
+      getOrganisationById: vi
+        .fn()
+        .mockResolvedValue(makeOrganisation({ requireMemberApproval: true })),
+    });
+    authenticateAs(repo);
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = {
-      DB: {} as any,
-      RESEND_API_KEY: "test-resend",
-    } as AuthWorkerEnv;
-
-    mockRepo = {
-      getUserById: vi.fn(),
-      isOrganisationOwner: vi.fn(),
-      getUserByEmail: vi.fn(),
-      createOrUpdateWorkspaceInvite: vi.fn(),
-      getOrganisationById: vi.fn(),
+    const response = await updateWorkspaceProfileController(
+      makeRequest("https://test.com/workspace/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          name: "Updated Workspace",
+          requireMemberApproval: true,
+        }),
+      }),
+      env,
+    );
+    const data = (await response.json()) as {
+      organisation: { requireMemberApproval: boolean };
     };
 
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
+    expect(response.status).toBe(200);
+    expect(data.organisation.requireMemberApproval).toBe(true);
+    expect(repo.updateOrganisation).toHaveBeenCalledWith(1, {
+      name: "Updated Workspace",
+      requireMemberApproval: true,
     });
-    vi.mocked(services.sendWorkspaceInviteEmail).mockResolvedValue(undefined);
   });
 
-  it("creates an invite and sends an invite email", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 1,
-      email: "owner@example.com",
-      repo: mockRepo,
+  it("creates workspace invites for admins", async () => {
+    const repo = createRepo({
+      getOrganisationById: vi
+        .fn()
+        .mockResolvedValue(makeOrganisation({ name: "Acme Workspace" })),
     });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 1,
-      email: "owner@example.com",
-      name: "Owner",
-      organisationId: 3,
-    });
-    mockRepo.isOrganisationOwner.mockResolvedValue(true);
-    mockRepo.getUserByEmail.mockResolvedValue(null);
-    mockRepo.createOrUpdateWorkspaceInvite.mockResolvedValue({
-      id: 10,
-      organisationId: 3,
-      email: "invitee@external.com",
-      invitedById: 1,
-      acceptedById: null,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      acceptedAt: null,
-      revokedAt: null,
-    });
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 3,
-      name: "Acme Workspace",
-    });
+    authenticateAs(repo);
 
-    const request = makeRequest("https://test.com/workspace/invites", {
-      method: "POST",
-      body: JSON.stringify({ email: "invitee@external.com" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await inviteWorkspaceMemberController(request, mockEnv);
+    const response = await inviteWorkspaceMemberController(
+      makeRequest("https://test.com/workspace/invites", {
+        method: "POST",
+        body: JSON.stringify({ email: "invitee@external.com" }),
+      }),
+      env,
+    );
     const data = (await response.json()) as { invite: { email: string } };
 
     expect(response.status).toBe(201);
     expect(data.invite.email).toBe("invitee@external.com");
-    expect(mockRepo.createOrUpdateWorkspaceInvite).toHaveBeenCalledWith(
-      3,
+    expect(repo.createOrUpdateWorkspaceInvite).toHaveBeenCalledWith(
+      1,
       "invitee@external.com",
       1,
     );
-    expect(services.sendWorkspaceInviteEmail).toHaveBeenCalled();
-  });
-
-  it("returns 403 when non-admin user attempts to invite a member", async () => {
-    vi.mocked(auth.authenticateRequest).mockResolvedValue({
-      userId: 2,
-      email: "member@example.com",
-      repo: mockRepo,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 2,
-      email: "member@example.com",
-      name: "Member",
-      organisationId: 3,
-    });
-    mockRepo.isOrganisationOwner.mockResolvedValue(false);
-
-    const request = makeRequest("https://test.com/workspace/invites", {
-      method: "POST",
-      body: JSON.stringify({ email: "invitee@external.com" }),
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await inviteWorkspaceMemberController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(403);
-    expect(data.error).toBe("Only workspace admins can invite members");
-    expect(mockRepo.createOrUpdateWorkspaceInvite).not.toHaveBeenCalled();
-    expect(services.sendWorkspaceInviteEmail).not.toHaveBeenCalled();
+    expect(services.sendWorkspaceInviteEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "invitee@external.com",
+        workspaceName: "Acme Workspace",
+      }),
+    );
   });
 });

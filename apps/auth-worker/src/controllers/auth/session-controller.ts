@@ -4,6 +4,7 @@ import { clearSessionCookie, hashToken } from "@sprintjam/utils";
 import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
 import { jsonError, jsonResponse } from "../../lib/response";
 import { getSessionTokenFromRequest } from "../../lib/session";
+import { buildWorkspaceTeam } from "../../lib/team-access";
 
 const MAX_PROFILE_NAME_LENGTH = 64;
 const MAX_PROFILE_AVATAR_LENGTH = 500;
@@ -30,13 +31,35 @@ export async function getCurrentUserController(
     return jsonError("User not found", 404);
   }
 
-  const teams = await repo.getUserTeams(user.id);
+  const membership = await repo.getOrganisationMembership(
+    user.id,
+    user.organisationId,
+  );
+  if (!membership || membership.status !== "active") {
+    return jsonError("Workspace access is not active", 403);
+  }
+
+  const isWorkspaceAdmin = await repo.isOrganisationAdmin(
+    user.id,
+    user.organisationId,
+  );
+  const teams = await repo.getOrganisationTeams(user.organisationId);
   const organisation = await repo.getOrganisationById(user.organisationId);
   if (!organisation) {
     return jsonError("Organisation not found", 404);
   }
-  const members = await repo.getOrganisationMembers(user.organisationId);
-  const invites = await repo.listPendingWorkspaceInvites(user.organisationId);
+  const hydratedTeams = await Promise.all(
+    teams.map(async (team) => {
+      const teamMembership = await repo.getTeamMembership(team.id, user.id);
+      return buildWorkspaceTeam(team, teamMembership, user.id, isWorkspaceAdmin);
+    }),
+  );
+  const members = (await repo.getOrganisationMembers(user.organisationId)).filter(
+    (member) => member.status === "active" || isWorkspaceAdmin,
+  );
+  const invites = isWorkspaceAdmin
+    ? await repo.listPendingWorkspaceInvites(user.organisationId)
+    : [];
 
   return jsonResponse({
     user: {
@@ -46,8 +69,9 @@ export async function getCurrentUserController(
       organisationId: user.organisationId,
       avatar: user.avatar ?? null,
     },
+    membership,
     organisation,
-    teams,
+    teams: hydratedTeams,
     members,
     invites,
   });

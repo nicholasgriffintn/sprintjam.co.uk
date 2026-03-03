@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Select } from "@/components/ui/Select";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import type { Team } from "@sprintjam/types";
+import type { TeamAccessPolicy, WorkspaceTeam } from "@sprintjam/types";
 import { BetaBadge } from "../../components/BetaBadge";
 
 export default function WorkspaceAdminTeams() {
@@ -40,27 +41,35 @@ export default function WorkspaceAdminTeams() {
   const { goToLogin, goToWorkspaceAdminTeamSettings } = useSessionActions();
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [editingTeam, setEditingTeam] = useState<WorkspaceTeam | null>(null);
   const [renameInput, setRenameInput] = useState("");
+  const [accessPolicy, setAccessPolicy] = useState<TeamAccessPolicy>("open");
 
-  const handleCreateTeam = async (name: string) => {
-    await createTeam(name);
+  const handleCreateTeam = async (payload: {
+    name: string;
+    accessPolicy: TeamAccessPolicy;
+  }) => {
+    await createTeam(payload);
   };
 
-  const handleEditTeam = (team: Team) => {
+  const handleEditTeam = (team: WorkspaceTeam) => {
     setEditingTeam(team);
     setRenameInput(team.name);
+    setAccessPolicy(team.accessPolicy);
     setIsTeamModalOpen(true);
   };
 
-  const handleTeamSettings = (team: Team) => {
+  const handleTeamSettings = (team: WorkspaceTeam) => {
     setSelectedTeamId(team.id);
     goToWorkspaceAdminTeamSettings();
   };
 
-  const handleSaveTeamName = async () => {
+  const handleSaveTeam = async () => {
     if (!editingTeam || !renameInput.trim()) return;
-    await updateTeam(editingTeam.id, renameInput.trim());
+    await updateTeam(editingTeam.id, {
+      name: renameInput.trim(),
+      accessPolicy,
+    });
     setIsTeamModalOpen(false);
     setEditingTeam(null);
   };
@@ -150,13 +159,28 @@ export default function WorkspaceAdminTeams() {
               onChange={(event) => setRenameInput(event.target.value)}
               fullWidth
             />
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Team access
+              </p>
+              <Select
+                options={[
+                  { label: "Open to workspace", value: "open" },
+                  { label: "Restricted members", value: "restricted" },
+                ]}
+                value={accessPolicy}
+                onValueChange={(value) =>
+                  setAccessPolicy(value as TeamAccessPolicy)
+                }
+              />
+            </div>
             <div className="flex flex-col gap-2">
               <Button
-                onClick={handleSaveTeamName}
+                onClick={handleSaveTeam}
                 isLoading={isMutating}
                 disabled={!renameInput.trim()}
               >
-                Save name
+                Save team
               </Button>
               <Button
                 variant="danger"

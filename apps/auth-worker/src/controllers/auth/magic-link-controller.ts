@@ -54,15 +54,18 @@ export async function requestMagicLinkController(
   let pendingInvite: Awaited<
     ReturnType<WorkspaceAuthRepository["getPendingWorkspaceInviteByEmail"]>
   > | null = null;
-  let existingUser: Awaited<
-    ReturnType<WorkspaceAuthRepository["getUserByEmail"]>
-  > | null = null;
+  let activeMembership:
+    | Awaited<
+        ReturnType<WorkspaceAuthRepository["getActiveOrganisationMembershipByEmail"]>
+      >
+    | null = null;
   try {
     isDomainAllowed = await repo.isDomainAllowed(domain);
     if (!isDomainAllowed) {
       pendingInvite = await repo.getPendingWorkspaceInviteByEmail(email);
       if (!pendingInvite) {
-        existingUser = await repo.getUserByEmail(email);
+        activeMembership =
+          await repo.getActiveOrganisationMembershipByEmail(email);
       }
     }
   } catch (error) {
@@ -78,7 +81,7 @@ export async function requestMagicLinkController(
     return jsonError("Service temporarily unavailable", 503);
   }
 
-  if (!isDomainAllowed && !pendingInvite && !existingUser) {
+  if (!isDomainAllowed && !pendingInvite && !activeMembership) {
     await repo.logAuditEvent({
       email,
       event: "magic_link_request",
@@ -144,8 +147,8 @@ export async function requestMagicLinkController(
     status: "success",
     reason: pendingInvite
       ? "code_sent_for_invite"
-      : existingUser
-        ? "code_sent_for_existing_user"
+      : activeMembership
+        ? "code_sent_for_existing_member"
         : "code_sent",
     ip,
     userAgent,
@@ -206,6 +209,9 @@ export async function verifyCodeController(
     result.email,
   );
   const existingUser = await repo.getUserByEmail(email);
+  const activeMembership =
+    await repo.getActiveOrganisationMembershipByEmail(result.email);
+  const isDomainAllowed = await repo.isDomainAllowed(domain);
 
   let organisationId: number;
   if (pendingInvite) {
@@ -213,17 +219,76 @@ export async function verifyCodeController(
     if (existingUser && existingUser.organisationId !== organisationId) {
       await repo.updateUserOrganisation(existingUser.id, organisationId);
     }
-  } else if (existingUser) {
-    organisationId = existingUser.organisationId;
-  } else {
+  } else if (activeMembership) {
+    organisationId = activeMembership.organisationId;
+  } else if (isDomainAllowed) {
     organisationId = await repo.getOrCreateOrganisation(domain);
+  } else {
+    await repo.logAuditEvent({
+      email,
+      event: "magic_link_verify",
+      status: "failure",
+      reason: "membership_not_allowed",
+      ip,
+      userAgent,
+    });
+    return jsonError("Your workspace access is not allowed", 403);
   }
 
   const userId = await repo.getOrCreateUser(email, organisationId);
   await repo.setOrganisationOwnerIfNull(organisationId, userId);
-  if (pendingInvite) {
-    await repo.markWorkspaceInviteAccepted(pendingInvite.id, userId);
+  const organisation = await repo.getOrganisationById(organisationId);
+  if (!organisation) {
+    return jsonError("Organisation not found", 404);
   }
+
+  const role = organisation.ownerId === userId ? "admin" : "member";
+  const existingMembership = await repo.getOrganisationMembership(
+    userId,
+    organisationId,
+  );
+
+  if (pendingInvite) {
+    await repo.upsertWorkspaceMembership({
+      organisationId,
+      userId,
+      role,
+      status: "active",
+      approvedById: pendingInvite.invitedById,
+    });
+    await repo.markWorkspaceInviteAccepted(pendingInvite.id, userId);
+  } else if (
+    !existingMembership ||
+    existingMembership.status !== "active"
+  ) {
+    if (organisation.requireMemberApproval && organisation.ownerId !== userId) {
+      await repo.upsertWorkspaceMembership({
+        organisationId,
+        userId,
+        role,
+        status: "pending",
+      });
+      await repo.logAuditEvent({
+        userId,
+        email,
+        event: "magic_link_verify",
+        status: "failure",
+        reason: "membership_pending_approval",
+        ip,
+        userAgent,
+      });
+      return jsonError("Your workspace membership is pending approval", 403);
+    }
+
+    await repo.upsertWorkspaceMembership({
+      organisationId,
+      userId,
+      role,
+      status: "active",
+      approvedById: organisation.ownerId === userId ? userId : null,
+    });
+  }
+
   const user = await repo.getUserByEmail(email);
   if (!user?.id) {
     return jsonError("User not found", 404);

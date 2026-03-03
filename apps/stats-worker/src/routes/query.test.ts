@@ -497,11 +497,13 @@ describe("getBatchRoomStatsController", () => {
     expect(data.room1.totalRounds).toBe(5);
     expect(data.room2.totalRounds).toBe(3);
     expect(mockRepo.getBatchRoomStats).toHaveBeenCalledWith(["room1", "room2"]);
-    expect(auth.filterAccessibleRoomKeys).toHaveBeenCalledWith(mockEnv.DB, 1, [
-      "room1",
-      "room2",
-      "room3",
-    ]);
+    expect(auth.filterAccessibleRoomKeys).toHaveBeenCalledWith(
+      mockEnv.DB,
+      1,
+      1,
+      false,
+      ["room1", "room2", "room3"],
+    );
   });
 
   it("should return empty stats when user has no access to any rooms", async () => {

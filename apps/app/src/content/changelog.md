@@ -1,3 +1,11 @@
+## V3.5
+
+- Added restricted teams so that users must be explicitly added or approved by a team admin before they can access that team or create sessions in it.
+- Added a workspace setting to require manual approval for new workspace members before they can join.
+- Expanded workspace admin controls so that workspace admins can manage all teams, add and move users between teams, and remove users from teams or the workspace entirely.
+- Added support for promoting additional workspace admins and team admins instead of relying on a single owner/admin.
+- Improved the workspace sessions experience for restricted teams by showing pending access states and allowing users to request team access directly.
+
 ## V3.4
 
 - Your selected avatar should now persist across sessions so you won't have to select it each time you join a room.
