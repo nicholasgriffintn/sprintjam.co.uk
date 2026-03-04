@@ -39,6 +39,10 @@ async function handleRequest(
         return await env.WHEEL_WORKER.fetch(request);
       }
 
+      if (path.startsWith("standups")) {
+        return await env.STANDUP_WORKER.fetch(request);
+      }
+
       if (
         path.startsWith("auth/") ||
         path === "teams" ||
@@ -65,6 +69,10 @@ async function handleRequest(
       const proxyUrl = new URL(request.url);
       proxyUrl.pathname = "/ws";
       return await env.WHEEL_WORKER.fetch(request);
+    }
+
+    if (url.pathname === "/ws/standup") {
+      return await env.STANDUP_WORKER.fetch(request);
     }
 
     return env.ASSETS.fetch(request);

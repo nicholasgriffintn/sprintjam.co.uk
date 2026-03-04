@@ -13,7 +13,7 @@ export default defineConfig(() => {
   return {
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src'),
+        "@": path.resolve(__dirname, "./src"),
       },
     },
     server: {
@@ -28,17 +28,17 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'strudel-vendor': ['@strudel/web'],
-            'tanstack-vendor': [
-              '@tanstack/react-query',
-              '@tanstack/db',
-              '@tanstack/query-core',
-              '@tanstack/query-db-collection',
+            "react-vendor": ["react", "react-dom"],
+            "strudel-vendor": ["@strudel/web"],
+            "tanstack-vendor": [
+              "@tanstack/react-query",
+              "@tanstack/db",
+              "@tanstack/query-core",
+              "@tanstack/query-db-collection",
             ],
-            'ui-vendor': ['@base-ui/react', 'qrcode.react', 'canvas-confetti'],
-            'framer-vendor': ['framer-motion'],
-            'icons-vendor': ['lucide-react'],
+            "ui-vendor": ["@base-ui/react", "qrcode.react", "canvas-confetti"],
+            "framer-vendor": ["framer-motion"],
+            "icons-vendor": ["lucide-react"],
           },
         },
       },
@@ -50,20 +50,23 @@ export default defineConfig(() => {
       cloudflare({
         auxiliaryWorkers: [
           {
-            configPath: '../room-worker/wrangler.jsonc',
+            configPath: "../room-worker/wrangler.jsonc",
           },
           {
-            configPath: '../wheel-worker/wrangler.jsonc',
+            configPath: "../wheel-worker/wrangler.jsonc",
           },
           {
-            configPath: '../auth-worker/wrangler.jsonc',
+            configPath: "../auth-worker/wrangler.jsonc",
           },
           {
-            configPath: '../stats-worker/wrangler.jsonc',
+            configPath: "../stats-worker/wrangler.jsonc",
+          },
+          {
+            configPath: "../standup-worker/wrangler.jsonc",
           },
         ],
         persistState: {
-          path: '../../.data',
+          path: "../../.data",
         },
       }),
     ],
