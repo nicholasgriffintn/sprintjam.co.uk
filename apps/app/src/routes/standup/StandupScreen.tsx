@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import {
-  CheckCircle2,
   KeyRound,
   Lock,
   Radio,
   Sunrise,
-  Users,
 } from "lucide-react";
 
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
@@ -43,7 +41,10 @@ import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { Tabs } from "@/components/ui/Tabs";
-import { Avatar } from "@/components/ui/Avatar";
+import { StandupResponseForm } from "@/components/standup/StandupResponseForm";
+import { StandupFacilitatorView } from "@/components/standup/StandupFacilitatorView";
+import { StandupPresentationView } from "@/components/standup/StandupPresentationView";
+import { StandupSidebar } from "@/components/standup/StandupSidebar";
 
 type StandupMode = "create" | "join";
 
@@ -65,14 +66,6 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-const getInitials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-
 function StandupRoomContent({
   standupKey,
   userName,
@@ -82,7 +75,17 @@ function StandupRoomContent({
 }) {
   const { standupData, isModeratorView } = useStandupState();
   const { isSocketConnected, standupError, isLoading } = useStandupStatus();
-  const { connectStandup, disconnectStandup, handlePing } = useStandupActions();
+  const {
+    connectStandup,
+    disconnectStandup,
+    handleSubmitResponse,
+    handleLockResponses,
+    handleUnlockResponses,
+    handleStartPresentation,
+    handleEndPresentation,
+    handleFocusUser,
+    handlePing,
+  } = useStandupActions();
   const {
     setStandupKey,
     setStandupStatus,
@@ -162,10 +165,11 @@ function StandupRoomContent({
     );
   }
 
-  const submittedUsers = new Set(standupData.respondedUsers);
   const yourResponse = standupData.responses.find(
     (response) => response.userName === userName,
   );
+  const isPresentationMode =
+    isModeratorView && standupData.status === "presenting";
 
   return (
     <PageSection maxWidth="xl" className="space-y-6">
@@ -173,7 +177,7 @@ function StandupRoomContent({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]"
+        className="space-y-6"
       >
         <SurfaceCard className="overflow-hidden p-0">
           <div className="border-b border-black/5 bg-gradient-to-br from-amber-100/90 via-white to-brand-50 px-6 py-6 dark:border-white/10 dark:from-amber-500/10 dark:via-slate-950 dark:to-brand-500/10">
@@ -191,165 +195,164 @@ function StandupRoomContent({
               </Badge>
             </div>
 
-            <div className="mt-4 space-y-3">
-              <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                Morning check-in for {standupData.users.length} people
-              </h1>
-              <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-                Responses stay private between each participant and the
-                facilitator. Everyone else only sees who has checked in.
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-black/5 bg-white/80 p-4 dark:border-white/10 dark:bg-slate-950/60">
-                <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Facilitator
-                </div>
-                <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-                  {standupData.moderator}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-black/5 bg-white/80 p-4 dark:border-white/10 dark:bg-slate-950/60">
-                <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Submitted
-                </div>
-                <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-                  {standupData.respondedUsers.length}/{standupData.users.length}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-black/5 bg-white/80 p-4 dark:border-white/10 dark:bg-slate-950/60">
-                <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Your role
-                </div>
-                <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
-                  {isModeratorView ? "Facilitator" : "Participant"}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4 px-6 py-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  Team pulse
-                </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Live presence and submission status for everyone in the room.
+            <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.8fr)] lg:items-end">
+              <div className="space-y-3">
+                <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                  Morning check-in for {standupData.users.length} people
+                </h1>
+                <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+                  Responses stay private between each participant and the
+                  facilitator. Everyone else only sees who has checked in.
                 </p>
               </div>
-              <Button variant="secondary" size="sm" onClick={handlePing}>
-                Ping room
-              </Button>
-            </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              {standupData.users.map((participant) => {
-                const isConnected = standupData.connectedUsers[participant];
-                const avatar = standupData.userAvatars?.[participant];
-                const hasSubmitted = submittedUsers.has(participant);
-
-                return (
-                  <div
-                    key={participant}
-                    className="flex items-center justify-between gap-4 rounded-2xl border border-black/5 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-white/5"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <Avatar
-                        src={avatar}
-                        alt={participant}
-                        className="h-10 w-10 border border-black/5 bg-amber-100 text-sm font-semibold text-amber-900 dark:border-white/10 dark:bg-amber-500/20 dark:text-amber-100"
-                        fallback={getInitials(participant)}
-                        fallbackClassName="bg-transparent"
-                      />
-                      <div className="min-w-0">
-                        <div className="truncate font-medium text-slate-900 dark:text-white">
-                          {participant}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {participant === standupData.moderator
-                            ? "Facilitator"
-                            : isConnected
-                              ? "In the room"
-                              : "Offline"}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Badge variant={isConnected ? "success" : "default"} size="sm">
-                        {isConnected ? "Online" : "Away"}
-                      </Badge>
-                      <Badge variant={hasSubmitted ? "primary" : "default"} size="sm">
-                        {hasSubmitted ? "Ready" : "Waiting"}
-                      </Badge>
-                    </div>
+              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                <div className="rounded-2xl border border-black/5 bg-white/80 p-4 dark:border-white/10 dark:bg-slate-950/60">
+                  <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Facilitator
                   </div>
-                );
-              })}
+                  <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
+                    {standupData.moderator}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-black/5 bg-white/80 p-4 dark:border-white/10 dark:bg-slate-950/60">
+                  <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Submitted
+                  </div>
+                  <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
+                    {standupData.respondedUsers.length}/{standupData.users.length}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-black/5 bg-white/80 p-4 dark:border-white/10 dark:bg-slate-950/60">
+                  <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Your role
+                  </div>
+                  <div className="mt-2 text-xl font-semibold text-slate-900 dark:text-white">
+                    {isModeratorView ? "Facilitator" : "Participant"}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </SurfaceCard>
 
-        <div className="space-y-6">
-          <SurfaceCard className="space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                Your session
-              </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                You are connected to the live standup room. Submission state and
-                participant presence update here in real time.
-              </p>
-            </div>
+        {standupError ? <Alert variant="warning">{standupError}</Alert> : null}
 
-            <div className="rounded-2xl border border-dashed border-black/10 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-950/50">
-              {yourResponse ? (
-                <div className="space-y-2 text-left">
-                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-300">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Update saved
-                  </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
-                    Your response is stored and visible to the facilitator.
-                  </p>
-                </div>
+        {isPresentationMode ? (
+          <StandupPresentationView
+            standupData={standupData}
+            onFocusUser={handleFocusUser}
+            onEndPresentation={handleEndPresentation}
+          />
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]">
+            <div className="space-y-6">
+              {isModeratorView ? (
+                <StandupFacilitatorView
+                  standupData={standupData}
+                  isSocketConnected={isSocketConnected}
+                  onLockResponses={handleLockResponses}
+                  onUnlockResponses={handleUnlockResponses}
+                  onStartPresentation={handleStartPresentation}
+                  onFocusUser={handleFocusUser}
+                />
               ) : (
-                <div className="space-y-2 text-left">
-                  <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                    <Users className="h-4 w-4" />
-                    No update saved yet
+                <SurfaceCard className="space-y-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                        Live room status
+                      </h2>
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        Your update stays private. The team can only see who has
+                        submitted, not what they wrote.
+                      </p>
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={handlePing}>
+                      Ping room
+                    </Button>
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">
-                    Your facilitator can already see live join and submission
-                    status as the room fills up.
-                  </p>
-                </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                      <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Submission progress
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
+                        {standupData.respondedUsers.length}/{standupData.users.length}
+                      </div>
+                      <div className="mt-3 h-2 rounded-full bg-slate-200/80 dark:bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-amber-500 via-brand-500 to-sky-500"
+                          style={{
+                            width: standupData.users.length
+                              ? `${(standupData.respondedUsers.length / standupData.users.length) * 100}%`
+                              : "0%",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                      <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Your state
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                        {yourResponse ? "Saved" : "Waiting"}
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        {yourResponse
+                          ? "The facilitator has your latest update."
+                          : "Join status is already visible while you prepare your response."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-[1.75rem] border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                      <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Room privacy
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">
+                        The socket sends you your own response plus the shared
+                        list of who has submitted. Other response content never
+                        reaches participant clients.
+                      </p>
+                    </div>
+                    <div className="rounded-[1.75rem] border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                      <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                        Room status
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-200">
+                        {standupData.status === "locked"
+                          ? "Responses are locked. You can still follow presence and submit progress from the roster."
+                          : standupData.status === "presenting"
+                            ? "The facilitator is presenting responses now. You can still watch room status update live."
+                            : "The room is open for live updates and the facilitator can move into presentation whenever they are ready."}
+                      </p>
+                    </div>
+                  </div>
+                </SurfaceCard>
               )}
             </div>
-          </SurfaceCard>
 
-          <SurfaceCard className="space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                Privacy model
-              </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Non-facilitators receive only their own response content plus the
-                shared list of who has submitted.
-              </p>
+            <div className="space-y-6">
+              <StandupResponseForm
+                response={yourResponse}
+                status={standupData.status}
+                teamId={standupData.teamId}
+                isModeratorView={isModeratorView}
+                isSocketConnected={isSocketConnected}
+                onSubmit={handleSubmitResponse}
+              />
+
+              <StandupSidebar
+                standupData={standupData}
+                currentUserName={userName}
+              />
             </div>
-            <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-              <div className="rounded-2xl border border-black/5 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
-                Facilitator view: all responses, blockers, and live moderator state.
-              </div>
-              <div className="rounded-2xl border border-black/5 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
-                Participant view: your own response and the team submission list.
-              </div>
-            </div>
-          </SurfaceCard>
-        </div>
+          </div>
+        )}
       </motion.div>
     </PageSection>
   );
