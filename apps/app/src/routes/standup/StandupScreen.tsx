@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import {
+  Building2,
   KeyRound,
   Lock,
   Radio,
@@ -33,12 +34,14 @@ import {
   joinStandup,
   type StandupSessionResponse,
 } from "@/lib/standup-api-service";
+import { createTeamSession } from "@/lib/workspace-service";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
+import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import { Tabs } from "@/components/ui/Tabs";
 import { StandupResponseForm } from "@/components/standup/StandupResponseForm";
@@ -69,9 +72,11 @@ const getStatusBadgeVariant = (status: string) => {
 function StandupRoomContent({
   standupKey,
   userName,
+  notice,
 }: {
   standupKey: string;
   userName: string;
+  notice?: string | null;
 }) {
   const { standupData, isModeratorView } = useStandupState();
   const { isSocketConnected, standupError, isLoading } = useStandupStatus();
@@ -236,6 +241,7 @@ function StandupRoomContent({
           </div>
         </SurfaceCard>
 
+        {notice ? <Alert variant="warning">{notice}</Alert> : null}
         {standupError ? <Alert variant="warning">{standupError}</Alert> : null}
 
         {isPresentationMode ? (
@@ -359,7 +365,13 @@ function StandupRoomContent({
 }
 
 export default function StandupScreen() {
-  const { user } = useWorkspaceData();
+  const {
+    user,
+    teams,
+    selectedTeamId,
+    setSelectedTeamId,
+    isAuthenticated,
+  } = useWorkspaceData();
   const storedAvatar = useMemo(() => getStoredUserAvatar(), []);
   const workspaceName = user?.name?.trim() ?? "";
   const workspaceAvatar = sanitiseAvatarValue(user?.avatar);
@@ -374,6 +386,7 @@ export default function StandupScreen() {
   const [activeStandupKey, setActiveStandupKey] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
 
   useUserPersistence({
     name: userName,
@@ -407,17 +420,26 @@ export default function StandupScreen() {
   const isFormValid =
     nameValidation.ok && keyValidation.ok && passcodeValidation.ok;
   const avatarValue = workspaceAvatar ?? storedAvatar ?? undefined;
+  const teamIdForCreate = selectedTeam?.canAccess ? selectedTeam.id : undefined;
+
+  const getStandupSessionName = () =>
+    `Standup ${new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date())}`;
 
   const handleSuccess = (
     nextMode: StandupMode,
     response: StandupSessionResponse,
+    nextError: string | null = null,
   ) => {
     const nextKey = response.standup.key;
     setMode(nextMode);
     setStandupKeyInput(nextKey);
     setActiveStandupKey(nextKey);
     setPasscode("");
-    setError(null);
+    setError(nextError);
     navigateTo("standup", { standupKey: nextKey });
   };
 
@@ -432,12 +454,31 @@ export default function StandupScreen() {
 
     try {
       if (mode === "create") {
+        let workspaceWarning: string | null = null;
         const response = await createStandup(
           userName.trim(),
           passcode.trim() || undefined,
           avatarValue,
+          teamIdForCreate,
         );
-        handleSuccess("join", response);
+
+        if (teamIdForCreate) {
+          try {
+            await createTeamSession(
+              teamIdForCreate,
+              getStandupSessionName(),
+              response.standup.key,
+              { type: "standup" },
+            );
+          } catch (workspaceError) {
+            workspaceWarning =
+              workspaceError instanceof Error
+                ? `${workspaceError.message} The standup room is live, but it was not linked into workspace history.`
+                : "The standup room is live, but it was not linked into workspace history.";
+          }
+        }
+
+        handleSuccess("join", response, workspaceWarning);
         return;
       }
 
@@ -472,6 +513,7 @@ export default function StandupScreen() {
         <StandupRoomContent
           standupKey={activeStandupKey}
           userName={userName.trim()}
+          notice={error}
         />
       </StandupProvider>
     );
@@ -521,11 +563,11 @@ export default function StandupScreen() {
             </SurfaceCard>
             <SurfaceCard className="space-y-2">
               <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                Ready for presentation
+                Workspace-aware
               </div>
               <div className="text-sm text-slate-700 dark:text-slate-200">
-                Room state already tracks live status, connected users, and
-                submission progress.
+                Team standups can link provider tickets and appear in workspace
+                history.
               </div>
             </SurfaceCard>
           </div>
@@ -588,6 +630,53 @@ export default function StandupScreen() {
                     passcodeValidation.ok ? undefined : passcodeValidation.error
                   }
                 />
+
+                {isAuthenticated && teams.length > 0 ? (
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="standup-team-select"
+                      className="text-sm font-semibold text-slate-700 dark:text-slate-200"
+                    >
+                      Workspace team
+                    </label>
+                    <Select
+                      id="standup-team-select"
+                      value={selectedTeamId ? String(selectedTeamId) : "none"}
+                      onValueChange={(value) => {
+                        if (value === "none") {
+                          setSelectedTeamId(null);
+                          return;
+                        }
+
+                        const parsed = Number.parseInt(value, 10);
+                        if (!Number.isNaN(parsed)) {
+                          setSelectedTeamId(parsed);
+                        }
+                      }}
+                      options={[
+                        { label: "Personal standup (no team)", value: "none" },
+                        ...teams.map((team) => ({
+                          label: team.canAccess
+                            ? team.name
+                            : team.currentUserStatus === "pending"
+                              ? `${team.name} (Access pending)`
+                              : `${team.name} (Restricted)`,
+                          value: String(team.id),
+                        })),
+                      ]}
+                    />
+                    <div className="flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <Building2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        {selectedTeam
+                          ? selectedTeam.canAccess
+                            ? "Workspace mode saves this standup to team history and unlocks ticket linking."
+                            : "You need team access before saving standups into this workspace team."
+                          : "Leave this as personal if you only need a standalone standup room."}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
 
                 <Button type="submit" fullWidth isLoading={isSubmitting}>
                   Create standup

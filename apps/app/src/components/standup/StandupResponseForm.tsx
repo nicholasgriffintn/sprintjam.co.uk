@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type {
+  LinkedTicket,
   StandupData,
   StandupResponse,
   StandupResponsePayload,
@@ -18,6 +19,7 @@ import {
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { StandupTicketLinker } from "@/components/standup/StandupTicketLinker";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { cn } from "@/lib/cn";
 
@@ -36,6 +38,7 @@ interface DraftState {
   hasBlocker: boolean;
   blockerDescription: string;
   healthCheck: number;
+  linkedTickets: LinkedTicket[];
 }
 
 const HEALTH_OPTIONS = [
@@ -53,6 +56,7 @@ function getDraftState(response?: StandupResponse): DraftState {
     hasBlocker: response?.hasBlocker ?? false,
     blockerDescription: response?.blockerDescription ?? "",
     healthCheck: response?.healthCheck ?? 3,
+    linkedTickets: response?.linkedTickets ?? [],
   };
 }
 
@@ -109,7 +113,8 @@ export function StandupResponseForm({
         ? draft.blockerDescription.trim()
         : undefined,
       healthCheck: draft.healthCheck,
-      linkedTickets: response?.linkedTickets,
+      linkedTickets:
+        draft.linkedTickets.length > 0 ? draft.linkedTickets : undefined,
     });
 
     setIsEditing(false);
@@ -220,14 +225,14 @@ export function StandupResponseForm({
             </p>
           </div>
 
-          {response?.linkedTickets?.length ? (
+          {draft.linkedTickets.length ? (
             <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
                 <LinkIcon className="h-3.5 w-3.5" />
                 Linked tickets
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {response.linkedTickets.map((ticket) => (
+                {draft.linkedTickets.map((ticket) => (
                   <div
                     key={ticket.id}
                     className="rounded-full border border-black/5 bg-white/70 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200"
@@ -387,17 +392,17 @@ export function StandupResponseForm({
           </section>
 
           {teamId ? (
-            <div className="rounded-[1.75rem] border border-dashed border-brand-300/60 bg-brand-50/60 p-4 dark:border-brand-400/30 dark:bg-brand-950/20">
-              <div className="flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-brand-200">
-                <LinkIcon className="h-4 w-4" />
-                Workspace ticket linking
-              </div>
-              <p className="mt-2 text-sm text-brand-700/90 dark:text-brand-100/90">
-                This standup is linked to a team workspace. Ticket search lands
-                in phase 6, so response storage is ready but the picker is not
-                wired into the form yet.
-              </p>
-            </div>
+            <StandupTicketLinker
+              teamId={teamId}
+              linkedTickets={draft.linkedTickets}
+              onChange={(linkedTickets) =>
+                setDraft((current) => ({
+                  ...current,
+                  linkedTickets,
+                }))
+              }
+              disabled={!isSocketConnected || isLocked}
+            />
           ) : null}
 
           <Button

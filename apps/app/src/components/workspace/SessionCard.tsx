@@ -3,6 +3,7 @@ import {
   CalendarClock,
   CheckCircle2,
   ArrowUpRight,
+  MessageSquareQuote,
   Users,
   Vote,
   Clock,
@@ -12,12 +13,13 @@ import {
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { getTeamSessionType } from "@/lib/team-session-metadata";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
 
 interface SessionCardProps {
   session: TeamSession;
   stats?: SessionStats | null;
-  onOpenRoom: (key: string) => void;
+  onOpenSession: (session: TeamSession) => void;
 }
 
 const formatDate = (timestamp: number | null) => {
@@ -60,9 +62,15 @@ function StatBadge({
   );
 }
 
-export function SessionCard({ session, stats, onOpenRoom }: SessionCardProps) {
+export function SessionCard({
+  session,
+  stats,
+  onOpenSession,
+}: SessionCardProps) {
   const isComplete = Boolean(session.completedAt);
   const duration = formatDuration(stats?.durationMinutes ?? null);
+  const sessionType = getTeamSessionType(session);
+  const isStandup = sessionType === "standup";
 
   return (
     <SurfaceCard variant="subtle" padding="sm" className="flex flex-col gap-3">
@@ -72,14 +80,26 @@ export function SessionCard({ session, stats, onOpenRoom }: SessionCardProps) {
             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
               {session.name}
             </p>
+            <Badge variant={isStandup ? "info" : "warning"} size="sm">
+              {isStandup ? (
+                <MessageSquareQuote className="mr-1.5 h-3 w-3" />
+              ) : (
+                <Target className="mr-1.5 h-3 w-3" />
+              )}
+              {isStandup ? "Standup" : "Planning"}
+            </Badge>
             <Badge variant={isComplete ? "default" : "success"} size="sm">
               {isComplete ? "Completed" : "Active"}
             </Badge>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1">
-              <Target className="h-3.5 w-3.5" />
-              Room {session.roomKey}
+              {isStandup ? (
+                <MessageSquareQuote className="h-3.5 w-3.5" />
+              ) : (
+                <Target className="h-3.5 w-3.5" />
+              )}
+              {isStandup ? "Standup" : "Room"} {session.roomKey}
             </span>
             <span className="flex items-center gap-1">
               <CalendarClock className="h-3.5 w-3.5" />
@@ -98,14 +118,14 @@ export function SessionCard({ session, stats, onOpenRoom }: SessionCardProps) {
             size="sm"
             variant="secondary"
             icon={<ArrowUpRight className="h-3.5 w-3.5" />}
-            onClick={() => onOpenRoom(session.roomKey)}
+            onClick={() => onOpenSession(session)}
           >
-            Open room
+            {isStandup ? "Open standup" : "Open room"}
           </Button>
         </div>
       </div>
 
-      {stats && (
+      {!isStandup && stats && (
         <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
           <StatBadge
             icon={<Users className="h-3 w-3 text-slate-500" />}

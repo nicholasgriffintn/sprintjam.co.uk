@@ -7,6 +7,7 @@ import {
   SESSION_STATS_STALE_TIME_MS,
   sessionStatsQueryKey,
 } from "@/lib/workspace-query";
+import { getTeamSessionType } from "@/lib/team-session-metadata";
 import { getBatchSessionStats } from "@/lib/workspace-service";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
 
@@ -22,7 +23,12 @@ export function useSessionStats(
 ): UseSessionStatsReturn {
   const queryClient = useQueryClient();
   const roomKeys = useMemo(
-    () => normaliseSessionRoomKeys(sessions.map((session) => session.roomKey)),
+    () =>
+      normaliseSessionRoomKeys(
+        sessions
+          .filter((session) => getTeamSessionType(session) === "planning")
+          .map((session) => session.roomKey),
+      ),
     [sessions],
   );
 

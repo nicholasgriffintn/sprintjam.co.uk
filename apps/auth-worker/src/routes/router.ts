@@ -46,6 +46,9 @@ import {
 import {
   listTeamIntegrationsController,
   getTeamIntegrationStatusController,
+  listTeamIntegrationBoardsController,
+  listTeamIntegrationSprintsController,
+  searchTeamIntegrationTicketsController,
   initiateTeamOAuthController,
   handleJiraTeamOAuthCallbackController,
   handleLinearTeamOAuthCallbackController,
@@ -448,6 +451,51 @@ const ROUTES: RouteDefinition[] = [
       const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamIntegrationStatusController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/boards$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamIntegrationBoardsController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/sprints$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamIntegrationSprintsController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/tickets$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return searchTeamIntegrationTicketsController(
         request,
         env,
         teamIdResult.value,
