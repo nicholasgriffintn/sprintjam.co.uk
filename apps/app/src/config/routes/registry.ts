@@ -6,6 +6,15 @@ import { SITE_NAME } from "@/constants";
 
 const RoomScreen = lazy(() => import("@/routes/RoomScreen"));
 const StandupScreen = lazy(() => import("@/routes/standup/StandupScreen"));
+const StandupCreateScreen = lazy(
+  () => import("@/routes/standup/StandupCreateScreen"),
+);
+const StandupJoinScreen = lazy(
+  () => import("@/routes/standup/StandupJoinScreen"),
+);
+const StandupRoomScreen = lazy(
+  () => import("@/routes/standup/StandupRoomScreen"),
+);
 
 import WelcomeScreen from "@/routes/WelcomeScreen";
 import LoginScreen from "@/routes/auth/LoginScreen";
@@ -434,9 +443,7 @@ export const ROUTES = [
   },
   {
     screen: "standup",
-    path: (params) =>
-      params.standupKey ? `/standup/${params.standupKey}` : "/standup",
-    pathPattern: /^\/standup(?:\/([A-Z0-9]+))?$/i,
+    path: "/standup",
     group: "standup",
     component: StandupScreen,
     meta: {
@@ -445,6 +452,56 @@ export const ROUTES = [
         "Run a clean daily standup with live responses, facilitator controls, and a room built for focused async prep and call-time presentation.",
       keywords:
         "daily standup, standup facilitator, scrum standup, team updates, blockers, agile ceremonies",
+      ogImage: "/og-image.png",
+    },
+  },
+  {
+    screen: "standupCreate",
+    path: "/standup/create",
+    group: "standup",
+    component: StandupCreateScreen,
+    meta: {
+      title: `Create Standup - ${SITE_NAME}`,
+      description:
+        "Create a fresh standup room for your team and start collecting daily updates in real time.",
+      keywords:
+        "create standup, standup room, daily updates, agile standup, facilitator",
+      ogImage: "/og-image.png",
+    },
+  },
+  {
+    screen: "standupJoin",
+    path: (params) =>
+      params.standupKey
+        ? `/standup/join/${params.standupKey}`
+        : "/standup/join",
+    pathPattern: /^\/standup\/join(?:\/([A-Z0-9]+))?$/i,
+    group: "standup",
+    component: StandupJoinScreen,
+    meta: {
+      title: `Join Standup - ${SITE_NAME}`,
+      description:
+        "Join an existing standup room, submit your update, and stay aligned with the team.",
+      keywords:
+        "join standup, standup key, daily updates, team standup, agile ceremony",
+      ogImage: "/og-image.png",
+    },
+  },
+  {
+    screen: "standupRoom",
+    path: (params) =>
+      params.standupKey
+        ? `/standup/room/${params.standupKey}`
+        : "/standup/room",
+    pathPattern: /^\/standup\/room\/([A-Z0-9]+)$/i,
+    group: "standup",
+    component: StandupRoomScreen,
+    meta: {
+      title: `Standup Room - ${SITE_NAME}`,
+      description:
+        "Facilitate your live standup with private responses, presentation controls, and blocker visibility.",
+      keywords:
+        "standup room, facilitator controls, blockers, daily standup, scrum ceremony",
       ogImage: "/og-image.png",
     },
   },

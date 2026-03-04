@@ -71,9 +71,15 @@ describe("navigation", () => {
       expect(result.roomKey).toBe("ABC123");
     });
 
-    it("parses standup route with standup key", () => {
-      const result = parsePath("/standup/ABC123");
-      expect(result.screen).toBe("standup");
+    it("parses standup join route with standup key", () => {
+      const result = parsePath("/standup/join/ABC123");
+      expect(result.screen).toBe("standupJoin");
+      expect(result.standupKey).toBe("ABC123");
+    });
+
+    it("parses standup room route with standup key", () => {
+      const result = parsePath("/standup/room/ABC123");
+      expect(result.screen).toBe("standupRoom");
       expect(result.standupKey).toBe("ABC123");
     });
 
@@ -155,9 +161,15 @@ describe("navigation", () => {
       );
     });
 
-    it("generates standup path with standup key", () => {
-      expect(getPathFromScreen("standup", { standupKey: "ABC123" })).toBe(
-        "/standup/ABC123",
+    it("generates standup join path with standup key", () => {
+      expect(getPathFromScreen("standupJoin", { standupKey: "ABC123" })).toBe(
+        "/standup/join/ABC123",
+      );
+    });
+
+    it("generates standup room path with standup key", () => {
+      expect(getPathFromScreen("standupRoom", { standupKey: "ABC123" })).toBe(
+        "/standup/room/ABC123",
       );
     });
 
@@ -219,12 +231,12 @@ describe("navigation", () => {
       );
     });
 
-    it("navigates to standup with standup key", () => {
-      navigateTo("standup", { standupKey: "ABC123" });
+    it("navigates to standup join with standup key", () => {
+      navigateTo("standupJoin", { standupKey: "ABC123" });
       expect(pushStateSpy).toHaveBeenCalledWith(
-        { screen: "standup", standupKey: "ABC123" },
+        { screen: "standupJoin", standupKey: "ABC123" },
         "",
-        "/standup/ABC123",
+        "/standup/join/ABC123",
       );
     });
 
@@ -274,7 +286,8 @@ describe("navigation", () => {
     it("returns screen from path", () => {
       expect(getScreenFromPath("/create")).toBe("create");
       expect(getScreenFromPath("/room/ABC123")).toBe("room");
-      expect(getScreenFromPath("/standup/ABC123")).toBe("standup");
+      expect(getScreenFromPath("/standup/join/ABC123")).toBe("standupJoin");
+      expect(getScreenFromPath("/standup/room/ABC123")).toBe("standupRoom");
     });
 
     it("returns 404 for unknown paths", () => {
@@ -502,6 +515,9 @@ describe("derived", () => {
     it("returns all screens in standup group", () => {
       const screens = getScreensInGroup("standup");
       expect(screens).toContain("standup");
+      expect(screens).toContain("standupCreate");
+      expect(screens).toContain("standupJoin");
+      expect(screens).toContain("standupRoom");
     });
 
     it("excludes screens from other groups", () => {

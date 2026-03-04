@@ -47,7 +47,7 @@ export const StandupHeader: FC = () => {
 
     try {
       await navigator.clipboard.writeText(
-        `${window.location.origin}/standup/${standupKey}`,
+        `${window.location.origin}/standup/join/${standupKey}`,
       );
       setIsCopied(true);
     } catch (error) {

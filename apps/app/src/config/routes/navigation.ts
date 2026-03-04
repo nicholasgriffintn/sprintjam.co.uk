@@ -61,14 +61,17 @@ export function parsePath(path: string): ParsedPath {
         return { screen: "room", roomKey: roomKey.toUpperCase() };
       }
 
-      if (route.screen === "standup") {
+      if (route.screen === "standupJoin" || route.screen === "standupRoom") {
         const standupKey = match[1];
 
         if (!standupKey) {
-          return { screen: "standup" };
+          if (route.screen === "standupJoin") {
+            return { screen: "standupJoin" };
+          }
+          return { screen: "404" };
         }
 
-        return { screen: "standup", standupKey: standupKey.toUpperCase() };
+        return { screen: route.screen, standupKey: standupKey.toUpperCase() };
       }
 
       return { screen: route.screen };

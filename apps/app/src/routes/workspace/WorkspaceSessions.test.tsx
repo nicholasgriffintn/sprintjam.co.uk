@@ -11,6 +11,7 @@ const refreshWorkspace = vi.fn();
 const goToLogin = vi.fn();
 const goToRoom = vi.fn();
 const startCreateFlow = vi.fn();
+const setScreen = vi.fn();
 const requestTeamAccess = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
@@ -108,6 +109,7 @@ vi.mock("@/context/SessionContext", () => ({
     goToLogin,
     goToRoom,
     startCreateFlow,
+    setScreen,
   }),
 }));
 

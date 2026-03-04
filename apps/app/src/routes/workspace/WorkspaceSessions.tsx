@@ -39,7 +39,8 @@ export default function WorkspaceSessions() {
     refreshWorkspace,
   } = useWorkspaceData({ includeSessions: true });
 
-  const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
+  const { goToLogin, goToRoom, startCreateFlow, setScreen } =
+    useSessionActions();
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
 
@@ -73,7 +74,8 @@ export default function WorkspaceSessions() {
     }
 
     if (getTeamSessionType(session) === "standup") {
-      navigateTo("standup", { standupKey: targetKey });
+      setScreen("standupJoin");
+      navigateTo("standupJoin", { standupKey: targetKey });
       return;
     }
 
@@ -183,7 +185,10 @@ export default function WorkspaceSessions() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => navigateTo("standup")}
+                        onClick={() => {
+                          setScreen("standupCreate");
+                          navigateTo("standupCreate");
+                        }}
                         icon={<MessageSquareQuote className="h-4 w-4" />}
                         disabled={!selectedTeam.canAccess}
                       >
