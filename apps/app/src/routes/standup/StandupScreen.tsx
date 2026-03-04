@@ -241,7 +241,7 @@ function StandupRoomContent({
   }
 
   const yourResponse = standupData.responses.find(
-    (response) => response.userName === userName,
+    (response) => response.userName.toLowerCase() === userName.toLowerCase(),
   );
   const isPresentationMode =
     isModeratorView && standupData.status === "presenting";

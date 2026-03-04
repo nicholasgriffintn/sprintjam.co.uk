@@ -6,6 +6,8 @@ import {
   generateID,
   serializePasscodeHash,
   parsePasscodeHash,
+  PASSCODE_MIN_LENGTH,
+  PASSCODE_MAX_LENGTH,
 } from "@sprintjam/utils";
 import { jsonError } from "../../lib/response";
 
@@ -42,6 +44,39 @@ function createStandupSessionCookie(
   return `standup_session=${token}; HttpOnly;${secure} SameSite=Strict; Path=/; Max-Age=86400`;
 }
 
+function normalisePasscode(value?: string): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function validatePasscode(passcode: string): string | null {
+  if (passcode.length < PASSCODE_MIN_LENGTH) {
+    return `Passcode cannot be less than ${PASSCODE_MIN_LENGTH} characters`;
+  }
+
+  if (passcode.length > PASSCODE_MAX_LENGTH) {
+    return `Passcode must be ${PASSCODE_MAX_LENGTH} characters or less`;
+  }
+
+  return null;
+}
+
+function passcodeErrorResponse(message: string): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    status: 401,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "X-Error-Kind": "passcode",
+    },
+  });
+}
+
 async function handleInitialize(
   context: StandupRoomHttpContext,
   request: Request,
@@ -65,7 +100,17 @@ async function handleInitialize(
     return jsonError("Standup already exists", 409);
   }
 
-  const passcodeHash = passcode ? await hashPasscode(passcode) : undefined;
+  const normalisedPasscode = normalisePasscode(passcode);
+  if (normalisedPasscode) {
+    const validationError = validatePasscode(normalisedPasscode);
+    if (validationError) {
+      return jsonError(validationError);
+    }
+  }
+
+  const passcodeHash = normalisedPasscode
+    ? await hashPasscode(normalisedPasscode)
+    : undefined;
 
   await context.repository.createStandup(
     standupKey,
@@ -121,29 +166,19 @@ async function handleJoin(
   const storedPasscode = context.repository.getPasscode();
   const parsedPasscode = parsePasscodeHash(storedPasscode);
   if (parsedPasscode) {
-    if (!passcode) {
-      return new Response(JSON.stringify({ error: "Passcode is required" }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Content-Type-Options": "nosniff",
-          "X-Frame-Options": "DENY",
-          "X-Error-Kind": "passcode",
-        },
-      });
+    const normalisedPasscode = normalisePasscode(passcode);
+    if (!normalisedPasscode) {
+      return passcodeErrorResponse("Passcode is required");
     }
 
-    const isValid = await verifyPasscode(passcode, parsedPasscode);
+    const validationError = validatePasscode(normalisedPasscode);
+    if (validationError) {
+      return passcodeErrorResponse(validationError);
+    }
+
+    const isValid = await verifyPasscode(normalisedPasscode, parsedPasscode);
     if (!isValid) {
-      return new Response(JSON.stringify({ error: "Invalid passcode" }), {
-        status: 401,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Content-Type-Options": "nosniff",
-          "X-Frame-Options": "DENY",
-          "X-Error-Kind": "passcode",
-        },
-      });
+      return passcodeErrorResponse("Invalid passcode");
     }
   }
 

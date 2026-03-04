@@ -103,6 +103,30 @@ describe("standup http controller", () => {
 
       expect(response?.status).toBe(400);
     });
+
+    it("returns 400 for passcodes that are too short", async () => {
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/initialize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            standupKey: "ABC123",
+            moderator: "mod",
+            passcode: "abc",
+          }),
+        }),
+      );
+
+      expect(response?.status).toBe(400);
+      const body = (await response?.json()) as { error: string };
+      expect(body.error).toContain("Passcode cannot be less than");
+      expect(context.repository.createStandup).not.toHaveBeenCalled();
+    });
   });
 
   describe("join", () => {
@@ -149,6 +173,31 @@ describe("standup http controller", () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: "Alice", passcode: "WRONG" }),
+        }),
+      );
+
+      expect(response?.status).toBe(401);
+      expect(response?.headers.get("X-Error-Kind")).toBe("passcode");
+    });
+
+    it("rejects malformed passcodes", async () => {
+      const passcodeHash = await hashPasscode("SECRET");
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(buildStandupData()),
+        repository: {
+          ...buildContext().repository,
+          getPasscode: vi
+            .fn()
+            .mockReturnValue(serializePasscodeHash(passcodeHash)),
+        } as any,
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Alice", passcode: "abc" }),
         }),
       );
 

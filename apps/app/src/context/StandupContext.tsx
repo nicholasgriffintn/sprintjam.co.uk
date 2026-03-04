@@ -267,7 +267,10 @@ export function StandupProvider({
 
   const stateValue: StandupStateContextValue = {
     standupData,
-    isModeratorView: standupData?.moderator === userNameRef.current,
+    isModeratorView:
+      !!standupData?.moderator &&
+      standupData.moderator.toLowerCase() ===
+        userNameRef.current.toLowerCase(),
   };
 
   const statusValue: StandupStatusContextValue = {
