@@ -142,14 +142,6 @@ export class StandupRoomRepository {
       .run();
   }
 
-  setModerator(userName: string) {
-    this.db
-      .update(standupMeta)
-      .set({ moderator: userName })
-      .where(eq(standupMeta.id, STANDUP_ROW_ID))
-      .run();
-  }
-
   setStatus(status: StandupData["status"]) {
     this.db
       .update(standupMeta)

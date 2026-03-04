@@ -78,4 +78,36 @@ describe("StandupResponseForm", () => {
       linkedTickets: undefined,
     });
   });
+
+  it("treats completed standups as read-only history", () => {
+    const onSubmit = vi.fn();
+    const response: StandupResponse = {
+      userName: "Alice",
+      yesterday: "Shipped the worker",
+      today: "Wire the room screen",
+      hasBlocker: false,
+      healthCheck: 3,
+      submittedAt: Date.now() - 1_000,
+      updatedAt: Date.now(),
+    };
+
+    render(
+      <StandupResponseForm
+        response={response}
+        status="completed"
+        isModeratorView
+        isSocketConnected
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(
+      screen.getByText("This standup is complete. Responses are now read-only history."),
+    ).toBeTruthy();
+    expect(
+      (
+        screen.getByRole("button", { name: "Edit update" }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  });
 });

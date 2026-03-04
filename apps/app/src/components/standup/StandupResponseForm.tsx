@@ -90,12 +90,14 @@ export function StandupResponseForm({
     }
   }, [isEditing, response]);
 
+  const isCompleted = status === "completed";
   const isLocked = status === "locked" && !isModeratorView;
+  const isReadOnly = isCompleted || isLocked;
   const formInvalid =
     draft.yesterday.trim().length === 0 ||
     draft.today.trim().length === 0 ||
     (draft.hasBlocker && draft.blockerDescription.trim().length === 0);
-  const isSubmitDisabled = !isSocketConnected || isLocked || formInvalid;
+  const isSubmitDisabled = !isSocketConnected || isReadOnly || formInvalid;
   const showReadOnly = !!response && !isEditing;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -149,6 +151,12 @@ export function StandupResponseForm({
           a call and concrete enough to unblock quickly.
         </p>
       </div>
+
+      {isCompleted ? (
+        <Alert variant="info">
+          This standup is complete. Responses are now read-only history.
+        </Alert>
+      ) : null}
 
       {isLocked ? (
         <Alert variant="warning">
@@ -250,7 +258,7 @@ export function StandupResponseForm({
           <Button
             variant="secondary"
             onClick={() => setIsEditing(true)}
-            disabled={isLocked || !isSocketConnected}
+            disabled={isReadOnly || !isSocketConnected}
             icon={<Pencil className="h-4 w-4" />}
             fullWidth
           >
@@ -278,7 +286,7 @@ export function StandupResponseForm({
               rows={4}
               placeholder="Wrap up what moved forward yesterday."
               className="w-full rounded-[1.75rem] border border-white/50 bg-white/80 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
-              disabled={!isSocketConnected || isLocked}
+              disabled={!isSocketConnected || isReadOnly}
             />
           </section>
 
@@ -301,7 +309,7 @@ export function StandupResponseForm({
               rows={4}
               placeholder="Name the next meaningful slice of work."
               className="w-full rounded-[1.75rem] border border-white/50 bg-white/80 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
-              disabled={!isSocketConnected || isLocked}
+              disabled={!isSocketConnected || isReadOnly}
             />
           </section>
 
@@ -330,7 +338,7 @@ export function StandupResponseForm({
                         ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-brand-950/30 dark:text-brand-100"
                         : "border-black/5 bg-white/70 text-slate-600 hover:border-brand-200 hover:text-slate-900 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:text-white",
                     )}
-                    disabled={!isSocketConnected || isLocked}
+                    disabled={!isSocketConnected || isReadOnly}
                   >
                     <div className="text-lg font-semibold">{option.label}</div>
                     <div className="mt-1 text-[11px] leading-4">{option.copy}</div>
@@ -363,7 +371,7 @@ export function StandupResponseForm({
                     ? "bg-rose-500 text-white"
                     : "bg-slate-200/80 text-slate-700 dark:bg-white/10 dark:text-slate-200",
                 )}
-                disabled={!isSocketConnected || isLocked}
+                disabled={!isSocketConnected || isReadOnly}
               >
                 {draft.hasBlocker ? "Blocker flagged" : "No blocker"}
               </button>
@@ -382,7 +390,7 @@ export function StandupResponseForm({
                 rows={3}
                 placeholder="Describe the dependency, risk, or decision you need."
                 className="w-full rounded-[1.5rem] border border-rose-200/80 bg-white/90 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-rose-300 focus:ring-2 focus:ring-rose-200 dark:border-rose-400/20 dark:bg-slate-950/60 dark:text-white"
-                disabled={!isSocketConnected || isLocked}
+                disabled={!isSocketConnected || isReadOnly}
               />
             ) : (
               <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -401,7 +409,7 @@ export function StandupResponseForm({
                   linkedTickets,
                 }))
               }
-              disabled={!isSocketConnected || isLocked}
+              disabled={!isSocketConnected || isReadOnly}
             />
           ) : null}
 

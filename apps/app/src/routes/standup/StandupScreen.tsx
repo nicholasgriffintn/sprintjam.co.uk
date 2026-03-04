@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Building2,
@@ -34,7 +35,16 @@ import {
   joinStandup,
   type StandupSessionResponse,
 } from "@/lib/standup-api-service";
-import { createTeamSession } from "@/lib/workspace-service";
+import {
+  completeSessionByRoomKey,
+  createTeamSession,
+} from "@/lib/workspace-service";
+import {
+  linkedRoomSessionQueryKey,
+  teamSessionsQueryKey,
+  WORKSPACE_STATS_QUERY_KEY,
+} from "@/lib/workspace-query";
+import { HttpError } from "@/lib/errors";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
@@ -72,12 +82,15 @@ const getStatusBadgeVariant = (status: string) => {
 function StandupRoomContent({
   standupKey,
   userName,
+  isAuthenticated,
   notice,
 }: {
   standupKey: string;
   userName: string;
+  isAuthenticated: boolean;
   notice?: string | null;
 }) {
+  const queryClient = useQueryClient();
   const { standupData, isModeratorView } = useStandupState();
   const { isSocketConnected, standupError, isLoading } = useStandupStatus();
   const {
@@ -88,6 +101,7 @@ function StandupRoomContent({
     handleUnlockResponses,
     handleStartPresentation,
     handleEndPresentation,
+    handleCompleteStandup,
     handleFocusUser,
     handlePing,
   } = useStandupActions();
@@ -97,6 +111,8 @@ function StandupRoomContent({
     setRespondedCount,
     setParticipantCount,
   } = useStandupHeader();
+  const [completionNotice, setCompletionNotice] = useState<string | null>(null);
+  const [isCompletingStandup, setIsCompletingStandup] = useState(false);
 
   useEffect(() => {
     setStandupKey(standupKey);
@@ -135,6 +151,60 @@ function StandupRoomContent({
     setStandupStatus,
     standupData,
   ]);
+
+  const completeWorkspaceHistory = async () => {
+    if (!standupData?.teamId || !isAuthenticated) {
+      return;
+    }
+
+    try {
+      const updatedSession = await completeSessionByRoomKey(standupKey);
+      queryClient.setQueryData(
+        linkedRoomSessionQueryKey(standupKey),
+        updatedSession,
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: teamSessionsQueryKey(updatedSession.teamId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: WORKSPACE_STATS_QUERY_KEY,
+        }),
+      ]);
+      setCompletionNotice(null);
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 404) {
+        return;
+      }
+
+      setCompletionNotice(
+        error instanceof Error
+          ? `${error.message} The standup is complete, but workspace history was not updated.`
+          : "The standup is complete, but workspace history was not updated.",
+      );
+    }
+  };
+
+  const onCompleteStandup = async () => {
+    if (
+      !standupData ||
+      standupData.status === "completed" ||
+      !isModeratorView ||
+      !isSocketConnected
+    ) {
+      return;
+    }
+
+    setIsCompletingStandup(true);
+    setCompletionNotice(null);
+
+    try {
+      handleCompleteStandup();
+      await completeWorkspaceHistory();
+    } finally {
+      setIsCompletingStandup(false);
+    }
+  };
 
   if (standupError && !standupData) {
     return (
@@ -242,6 +312,9 @@ function StandupRoomContent({
         </SurfaceCard>
 
         {notice ? <Alert variant="warning">{notice}</Alert> : null}
+        {completionNotice ? (
+          <Alert variant="warning">{completionNotice}</Alert>
+        ) : null}
         {standupError ? <Alert variant="warning">{standupError}</Alert> : null}
 
         {isPresentationMode ? (
@@ -249,6 +322,8 @@ function StandupRoomContent({
             standupData={standupData}
             onFocusUser={handleFocusUser}
             onEndPresentation={handleEndPresentation}
+            onCompleteStandup={onCompleteStandup}
+            isCompletingStandup={isCompletingStandup}
           />
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]">
@@ -260,7 +335,9 @@ function StandupRoomContent({
                   onLockResponses={handleLockResponses}
                   onUnlockResponses={handleUnlockResponses}
                   onStartPresentation={handleStartPresentation}
+                  onCompleteStandup={onCompleteStandup}
                   onFocusUser={handleFocusUser}
+                  isCompletingStandup={isCompletingStandup}
                 />
               ) : (
                 <SurfaceCard className="space-y-5">
@@ -513,6 +590,7 @@ export default function StandupScreen() {
         <StandupRoomContent
           standupKey={activeStandupKey}
           userName={userName.trim()}
+          isAuthenticated={isAuthenticated}
           notice={error}
         />
       </StandupProvider>

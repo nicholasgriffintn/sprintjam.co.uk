@@ -13,6 +13,7 @@ import type {
 } from "@sprintjam/types";
 
 import {
+  completeStandup,
   connectToStandup,
   disconnectFromStandup,
   endStandupPresentation,
@@ -44,6 +45,7 @@ interface StandupActionsContextValue {
   handleUnlockResponses: () => void;
   handleStartPresentation: () => void;
   handleEndPresentation: () => void;
+  handleCompleteStandup: () => void;
   handleFocusUser: (userName: string) => void;
   handlePing: () => void;
 }
@@ -211,15 +213,15 @@ export function StandupProvider({
         );
         break;
 
-      case "userFocused":
+      case "standupCompleted":
         setStandupData((prev) =>
-          prev ? { ...prev, focusedUser: message.userName } : prev,
+          prev ? { ...prev, status: "completed", focusedUser: undefined } : prev,
         );
         break;
 
-      case "newModerator":
+      case "userFocused":
         setStandupData((prev) =>
-          prev ? { ...prev, moderator: message.moderator } : prev,
+          prev ? { ...prev, focusedUser: message.userName } : prev,
         );
         break;
 
@@ -282,6 +284,7 @@ export function StandupProvider({
     handleUnlockResponses: unlockStandupResponses,
     handleStartPresentation: startStandupPresentation,
     handleEndPresentation: endStandupPresentation,
+    handleCompleteStandup: completeStandup,
     handleFocusUser: focusStandupUser,
     handlePing: pingStandup,
   };

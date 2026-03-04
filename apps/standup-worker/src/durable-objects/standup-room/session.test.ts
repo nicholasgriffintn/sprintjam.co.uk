@@ -184,7 +184,6 @@ describe("standup session", () => {
       repository: {
         validateSessionToken: vi.fn().mockReturnValue(true),
         setUserConnection,
-        setModerator: vi.fn(),
       },
       getStandupData,
       broadcast: vi.fn(),
@@ -215,6 +214,62 @@ describe("standup session", () => {
 
     deferred.resolve(baseStandupData);
     await closePromise;
+  });
+
+  it("does not reassign the moderator when they disconnect", async () => {
+    const data: StandupData = {
+      ...baseStandupData,
+      users: ["Alice", "Bob"],
+      connectedUsers: { Alice: true, Bob: true },
+    };
+
+    const broadcastSpy = vi.fn();
+
+    const repository = {
+      validateSessionToken: vi.fn().mockReturnValue(true),
+      setUserConnection: vi.fn(),
+    };
+
+    const standup = {
+      sessions: new Map(),
+      repository,
+      getStandupData: vi
+        .fn()
+        .mockResolvedValueOnce(data)
+        .mockResolvedValueOnce(data)
+        .mockResolvedValueOnce(data)
+        .mockResolvedValueOnce({
+          ...data,
+          connectedUsers: { Alice: false, Bob: true },
+        }),
+      broadcast: broadcastSpy,
+      sendToModerator: vi.fn(),
+      sendToUser: vi.fn(),
+      focusedUser: undefined,
+    } as unknown as StandupRoom;
+
+    const socket = new MockWebSocket();
+
+    await handleSession(
+      standup,
+      socket as unknown as WebSocket,
+      "standup",
+      "Alice",
+      "valid-token",
+    );
+
+    const closeHandler = socket.handlers.get("close");
+    if (!closeHandler) {
+      throw new Error("Missing close handler");
+    }
+
+    await closeHandler();
+
+    expect(
+      broadcastSpy.mock.calls.some(
+        (call: Record<string, unknown>[]) => call[0].type === "newModerator",
+      ),
+    ).toBe(false);
   });
 
   it("responds to ping with pong", async () => {
@@ -401,6 +456,55 @@ describe("standup session", () => {
     expect(setStatusSpy).toHaveBeenCalledWith("active");
   });
 
+  it("allows facilitator to complete the standup", async () => {
+    const broadcastSpy = vi.fn();
+    const setStatusSpy = vi.fn();
+
+    const standup = {
+      sessions: new Map(),
+      repository: {
+        validateSessionToken: vi.fn().mockReturnValue(true),
+        setUserConnection: vi.fn(),
+        setStatus: setStatusSpy,
+      },
+      getStandupData: vi.fn().mockResolvedValue(baseStandupData),
+      broadcast: broadcastSpy,
+      sendToModerator: vi.fn(),
+      sendToUser: vi.fn(),
+      focusedUser: "Alice",
+    } as unknown as StandupRoom;
+
+    const socket = new MockWebSocket();
+
+    await handleSession(
+      standup,
+      socket as unknown as WebSocket,
+      "standup",
+      "Alice",
+      "valid-token",
+    );
+
+    const messageHandler = socket.handlers.get("message");
+    if (!messageHandler) {
+      throw new Error("Missing message handler");
+    }
+
+    broadcastSpy.mockClear();
+
+    await messageHandler({
+      data: JSON.stringify({ type: "completeStandup" }),
+    });
+
+    expect(setStatusSpy).toHaveBeenCalledWith("completed");
+    expect(standup.focusedUser).toBeUndefined();
+    expect(
+      broadcastSpy.mock.calls.some(
+        (call: Record<string, unknown>[]) =>
+          call[0].type === "standupCompleted",
+      ),
+    ).toBe(true);
+  });
+
   it("handles submitResponse and enforces visibility", async () => {
     const broadcastSpy = vi.fn();
     const sendToModeratorSpy = vi.fn();
@@ -493,5 +597,67 @@ describe("standup session", () => {
         response: expect.objectContaining({ userName: "Bob" }),
       }),
     );
+  });
+
+  it("rejects malformed submitResponse payloads", async () => {
+    const standup = {
+      sessions: new Map(),
+      repository: {
+        validateSessionToken: vi.fn().mockReturnValue(true),
+        setUserConnection: vi.fn(),
+        submitResponse: vi.fn(),
+        getRespondedUsers: vi.fn(),
+        getResponse: vi.fn(),
+      },
+      getStandupData: vi.fn().mockResolvedValue(baseStandupData),
+      broadcast: vi.fn(),
+      sendToModerator: vi.fn(),
+      sendToUser: vi.fn(),
+      focusedUser: undefined,
+    } as unknown as StandupRoom;
+
+    const socket = new MockWebSocket();
+
+    await handleSession(
+      standup,
+      socket as unknown as WebSocket,
+      "standup",
+      "Alice",
+      "valid-token",
+    );
+
+    const messageHandler = socket.handlers.get("message");
+    if (!messageHandler) {
+      throw new Error("Missing message handler");
+    }
+
+    await messageHandler({
+      data: JSON.stringify({
+        type: "submitResponse",
+        yesterday: "Did work",
+        today: "Will do more",
+        hasBlocker: false,
+        healthCheck: 9,
+        linkedTickets: [
+          {
+            id: "1",
+            key: "PROJ-1",
+            title: "Ticket",
+            provider: "not-real",
+          },
+        ],
+      }),
+    });
+
+    expect(standup.repository.submitResponse).not.toHaveBeenCalled();
+    expect(
+      socket.send.mock.calls.some((call: string[]) => {
+        const parsed = JSON.parse(call[0]);
+        return (
+          parsed.type === "error" &&
+          parsed.error === "Invalid submitResponse message"
+        );
+      }),
+    ).toBe(true);
   });
 });

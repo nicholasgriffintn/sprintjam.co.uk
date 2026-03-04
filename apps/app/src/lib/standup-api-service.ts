@@ -54,8 +54,8 @@ export type StandupServerMessage =
   | { type: "responsesUnlocked" }
   | { type: "presentationStarted" }
   | { type: "presentationEnded" }
+  | { type: "standupCompleted" }
   | { type: "userFocused"; userName: string }
-  | { type: "newModerator"; moderator: string }
   | { type: "pong" }
   | { type: "error"; error: string; reason?: SocketErrorReason }
   | { type: "disconnected"; error: string; reason: "disconnect" };
@@ -330,6 +330,10 @@ export function startStandupPresentation(): void {
 
 export function endStandupPresentation(): void {
   sendWebSocketMessage(activeSocket, { type: "endPresentation" });
+}
+
+export function completeStandup(): void {
+  sendWebSocketMessage(activeSocket, { type: "completeStandup" });
 }
 
 export function focusStandupUser(userName: string): void {

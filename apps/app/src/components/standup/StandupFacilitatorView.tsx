@@ -1,6 +1,7 @@
 import { type StandupData } from "@sprintjam/types";
 import {
   AlertTriangle,
+  CheckCircle2,
   Lock,
   LockOpen,
   Play,
@@ -18,7 +19,9 @@ interface StandupFacilitatorViewProps {
   onLockResponses: () => void;
   onUnlockResponses: () => void;
   onStartPresentation: () => void;
+  onCompleteStandup: () => void;
   onFocusUser: (userName: string) => void;
+  isCompletingStandup?: boolean;
 }
 
 const HEALTH_SCALE = [1, 2, 3, 4, 5] as const;
@@ -29,7 +32,9 @@ export function StandupFacilitatorView({
   onLockResponses,
   onUnlockResponses,
   onStartPresentation,
+  onCompleteStandup,
   onFocusUser,
+  isCompletingStandup = false,
 }: StandupFacilitatorViewProps) {
   const responseOrder = new Map(
     standupData.users.map((user, index) => [user, index]),
@@ -57,6 +62,7 @@ export function StandupFacilitatorView({
     count: orderedResponses.filter((response) => response.healthCheck === value)
       .length,
   }));
+  const isCompleted = standupData.status === "completed";
 
   return (
     <div className="space-y-6">
@@ -91,7 +97,7 @@ export function StandupFacilitatorView({
             <Button
               variant="secondary"
               size="sm"
-              disabled={!isSocketConnected}
+              disabled={!isSocketConnected || isCompleted}
               onClick={
                 standupData.status === "locked"
                   ? onUnlockResponses
@@ -109,14 +115,33 @@ export function StandupFacilitatorView({
             </Button>
             <Button
               size="sm"
-              disabled={!isSocketConnected || orderedResponses.length === 0}
+              disabled={
+                !isSocketConnected || orderedResponses.length === 0 || isCompleted
+              }
               onClick={onStartPresentation}
               icon={<Play className="h-4 w-4" />}
             >
               Start presentation
             </Button>
+            <Button
+              size="sm"
+              variant={isCompleted ? "secondary" : "primary"}
+              disabled={!isSocketConnected || isCompleted}
+              isLoading={isCompletingStandup}
+              onClick={onCompleteStandup}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+            >
+              Complete standup
+            </Button>
           </div>
         </div>
+
+        {isCompleted ? (
+          <div className="rounded-[1.5rem] border border-emerald-200/70 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-950/20 dark:text-emerald-100">
+            This standup is complete. The responses below remain available as
+            read-only history.
+          </div>
+        ) : null}
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 text-sm text-slate-600 dark:text-slate-300">

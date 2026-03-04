@@ -1,6 +1,13 @@
 import { useEffect, useMemo } from "react";
 import type { StandupData } from "@sprintjam/types";
-import { ChevronLeft, ChevronRight, Crosshair, Play, X } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Crosshair,
+  Play,
+  X,
+} from "lucide-react";
 
 import { StandupUserCard } from "@/components/standup/StandupUserCard";
 import { Badge } from "@/components/ui/Badge";
@@ -11,12 +18,16 @@ interface StandupPresentationViewProps {
   standupData: StandupData;
   onFocusUser: (userName: string) => void;
   onEndPresentation: () => void;
+  onCompleteStandup: () => void;
+  isCompletingStandup?: boolean;
 }
 
 export function StandupPresentationView({
   standupData,
   onFocusUser,
   onEndPresentation,
+  onCompleteStandup,
+  isCompletingStandup = false,
 }: StandupPresentationViewProps) {
   const orderedResponses = useMemo(
     () => {
@@ -133,7 +144,15 @@ export function StandupPresentationView({
               onClick={onEndPresentation}
               icon={<X className="h-4 w-4" />}
             >
-              End presentation
+              Back to overview
+            </Button>
+            <Button
+              size="sm"
+              onClick={onCompleteStandup}
+              isLoading={isCompletingStandup}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+            >
+              Complete standup
             </Button>
           </div>
         </div>

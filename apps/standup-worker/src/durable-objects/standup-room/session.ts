@@ -28,14 +28,125 @@ interface FocusUserMessage extends StandupClientMessage {
   userName: string;
 }
 
+interface CompleteStandupMessage extends StandupClientMessage {
+  type: "completeStandup";
+}
+
 type ValidatedMessage =
   | SubmitResponseMessage
   | FocusUserMessage
+  | CompleteStandupMessage
   | { type: "lockResponses" }
   | { type: "unlockResponses" }
   | { type: "startPresentation" }
   | { type: "endPresentation" }
   | { type: "ping" };
+
+const LIMITS = {
+  responseText: 2000,
+  blockerText: 1000,
+  linkedTickets: 8,
+  ticketId: 128,
+  ticketKey: 64,
+  ticketTitle: 240,
+  ticketUrl: 2048,
+} as const;
+
+const ALLOWED_TICKET_PROVIDERS = new Set(["jira", "linear", "github"]);
+
+function normaliseNonEmptyString(
+  value: unknown,
+  maxLength: number,
+): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > maxLength) {
+    return undefined;
+  }
+
+  return trimmed;
+}
+
+function normaliseOptionalString(
+  value: unknown,
+  maxLength: number,
+): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  return trimmed.length <= maxLength ? trimmed : undefined;
+}
+
+function normaliseTicketUrl(value: unknown): string | undefined {
+  const trimmed = normaliseOptionalString(value, LIMITS.ticketUrl);
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function normaliseLinkedTickets(
+  value: unknown,
+): SubmitResponseMessage["linkedTickets"] | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value) || value.length > LIMITS.linkedTickets) {
+    return undefined;
+  }
+
+  const tickets: NonNullable<SubmitResponseMessage["linkedTickets"]> = [];
+
+  for (const entry of value) {
+    if (typeof entry !== "object" || entry === null) {
+      return undefined;
+    }
+
+    const ticket = entry as Record<string, unknown>;
+    const id = normaliseNonEmptyString(ticket.id, LIMITS.ticketId);
+    const key = normaliseNonEmptyString(ticket.key, LIMITS.ticketKey);
+    const title = normaliseNonEmptyString(ticket.title, LIMITS.ticketTitle);
+    const provider =
+      typeof ticket.provider === "string" &&
+      ALLOWED_TICKET_PROVIDERS.has(ticket.provider)
+        ? (ticket.provider as "jira" | "linear" | "github")
+        : undefined;
+
+    if (!id || !key || !title || !provider) {
+      return undefined;
+    }
+
+    const url = normaliseTicketUrl(ticket.url);
+
+    tickets.push({
+      id,
+      key,
+      title,
+      provider,
+      ...(url ? { url } : {}),
+    });
+  }
+
+  return tickets;
+}
 
 function validateClientMessage(
   data: unknown,
@@ -52,36 +163,62 @@ function validateClientMessage(
 
   switch (msg.type) {
     case "submitResponse": {
+      const yesterday = normaliseNonEmptyString(
+        msg.yesterday,
+        LIMITS.responseText,
+      );
+      const today = normaliseNonEmptyString(msg.today, LIMITS.responseText);
+      const blockerDescription = normaliseOptionalString(
+        msg.blockerDescription,
+        LIMITS.blockerText,
+      );
+      const linkedTickets = normaliseLinkedTickets(msg.linkedTickets);
+      const healthCheck =
+        typeof msg.healthCheck === "number" &&
+        Number.isInteger(msg.healthCheck) &&
+        msg.healthCheck >= 1 &&
+        msg.healthCheck <= 5
+          ? msg.healthCheck
+          : undefined;
+
       if (
-        typeof msg.yesterday !== "string" ||
-        typeof msg.today !== "string" ||
+        !yesterday ||
+        !today ||
         typeof msg.hasBlocker !== "boolean" ||
-        typeof msg.healthCheck !== "number"
+        healthCheck === undefined ||
+        (msg.linkedTickets !== undefined && linkedTickets === undefined) ||
+        (msg.hasBlocker && !blockerDescription)
       ) {
         return { error: "Invalid submitResponse message" };
       }
+
       const result: SubmitResponseMessage = {
         type: "submitResponse",
-        yesterday: msg.yesterday,
-        today: msg.today,
+        yesterday,
+        today,
         hasBlocker: msg.hasBlocker,
-        healthCheck: msg.healthCheck,
+        healthCheck,
       };
-      if (typeof msg.blockerDescription === "string") {
-        result.blockerDescription = msg.blockerDescription;
+
+      if (msg.hasBlocker && blockerDescription) {
+        result.blockerDescription = blockerDescription;
       }
-      if (Array.isArray(msg.linkedTickets)) {
-        result.linkedTickets =
-          msg.linkedTickets as SubmitResponseMessage["linkedTickets"];
+
+      if (linkedTickets) {
+        result.linkedTickets = linkedTickets;
       }
+
       return result;
     }
 
     case "focusUser":
-      if (typeof msg.userName !== "string") {
+      if (!normaliseNonEmptyString(msg.userName, 64)) {
         return { error: "Invalid focusUser message" };
       }
-      return { type: "focusUser", userName: msg.userName };
+      return {
+        type: "focusUser",
+        userName: normaliseNonEmptyString(msg.userName, 64)!,
+      };
 
     case "lockResponses":
       return { type: "lockResponses" };
@@ -94,6 +231,9 @@ function validateClientMessage(
 
     case "endPresentation":
       return { type: "endPresentation" };
+
+    case "completeStandup":
+      return { type: "completeStandup" };
 
     case "ping":
       return { type: "ping" };
@@ -252,6 +392,7 @@ export async function handleSession(
 
         case "endPresentation":
           if (canonicalUserName === currentStandup.moderator) {
+            standup.focusedUser = undefined;
             standup.repository.setStatus("active");
             standup.broadcast({ type: "presentationEnded" });
           }
@@ -259,11 +400,34 @@ export async function handleSession(
 
         case "focusUser":
           if (canonicalUserName === currentStandup.moderator) {
-            standup.focusedUser = validated.userName;
+            const focusedUser = findCanonicalUserName(
+              currentStandup.users,
+              validated.userName,
+            );
+
+            if (!focusedUser) {
+              webSocket.send(
+                JSON.stringify({
+                  type: "error",
+                  error: "User not found",
+                }),
+              );
+              return;
+            }
+
+            standup.focusedUser = focusedUser;
             standup.broadcast({
               type: "userFocused",
-              userName: validated.userName,
+              userName: focusedUser,
             });
+          }
+          break;
+
+        case "completeStandup":
+          if (canonicalUserName === currentStandup.moderator) {
+            standup.focusedUser = undefined;
+            standup.repository.setStatus("completed");
+            standup.broadcast({ type: "standupCompleted" });
           }
           break;
       }
@@ -297,25 +461,6 @@ export async function handleSession(
             return u === canonicalUserName ? false : conn;
           }),
         });
-
-        // Reassign moderator if the facilitator disconnects
-        if (canonicalUserName === latestData.moderator) {
-          const connectedUsers = latestData.users
-            .filter(
-              (user) =>
-                latestData.connectedUsers[user] && user !== canonicalUserName,
-            )
-            .sort((a, b) => a.localeCompare(b));
-
-          if (connectedUsers.length > 0) {
-            standup.repository.setModerator(connectedUsers[0]);
-
-            standup.broadcast({
-              type: "newModerator",
-              moderator: connectedUsers[0],
-            });
-          }
-        }
       }
     }
   });

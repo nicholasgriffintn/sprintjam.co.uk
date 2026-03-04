@@ -48,6 +48,7 @@ describe("StandupPresentationView", () => {
         standupData={baseStandupData}
         onFocusUser={onFocusUser}
         onEndPresentation={vi.fn()}
+        onCompleteStandup={vi.fn()}
       />,
     );
 
@@ -64,6 +65,7 @@ describe("StandupPresentationView", () => {
         standupData={{ ...baseStandupData, focusedUser: "Alice" }}
         onFocusUser={onFocusUser}
         onEndPresentation={vi.fn()}
+        onCompleteStandup={vi.fn()}
       />,
     );
 
