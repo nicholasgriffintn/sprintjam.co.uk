@@ -27,6 +27,7 @@ const GROUP_BACKGROUNDS: Record<RouteGroup, PageBackgroundVariant> = {
   auth: "compact",
   flow: "compact",
   wheel: "compact",
+  standup: "compact",
 };
 
 const GROUP_HEADERS: Record<RouteGroup, HeaderVariant> = {
@@ -36,6 +37,7 @@ const GROUP_HEADERS: Record<RouteGroup, HeaderVariant> = {
   auth: "marketing",
   flow: "marketing",
   wheel: "wheel",
+  standup: "standup",
 };
 
 export function getRouteConfig(screen: AppScreen): RouteEntry | undefined {

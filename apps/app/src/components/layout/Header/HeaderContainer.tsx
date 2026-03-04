@@ -36,7 +36,10 @@ export const HeaderContainer: FC<HeaderContainerProps> = ({
       className={cn(
         "sticky top-0",
         GLASSMORPHISM_STYLES,
-        variant === "room" || variant === "workspace" || variant === "wheel"
+        variant === "room" ||
+          variant === "workspace" ||
+          variant === "wheel" ||
+          variant === "standup"
           ? "px-4 py-3 shadow-sm"
           : "",
         className,

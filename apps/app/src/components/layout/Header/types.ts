@@ -1,4 +1,9 @@
-export type HeaderVariant = "marketing" | "room" | "workspace" | "wheel";
+export type HeaderVariant =
+  | "marketing"
+  | "room"
+  | "workspace"
+  | "wheel"
+  | "standup";
 export type MarketingVariant = "hero" | "compact";
 export type LogoSize = "xs" | "sm" | "md" | "lg";
 

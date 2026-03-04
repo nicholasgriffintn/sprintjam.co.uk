@@ -5,6 +5,7 @@ import type { RouteConfig } from "./types";
 import { SITE_NAME } from "@/constants";
 
 const RoomScreen = lazy(() => import("@/routes/RoomScreen"));
+const StandupScreen = lazy(() => import("@/routes/standup/StandupScreen"));
 
 import WelcomeScreen from "@/routes/WelcomeScreen";
 import LoginScreen from "@/routes/auth/LoginScreen";
@@ -428,6 +429,22 @@ export const ROUTES = [
         "Spin the wheel to randomly select team members. Perfect for standups, code reviews, or any team activity.",
       keywords:
         "wheel spinner, random picker, team selection, name picker, standup picker",
+      ogImage: "/og-image.png",
+    },
+  },
+  {
+    screen: "standup",
+    path: (params) =>
+      params.standupKey ? `/standup/${params.standupKey}` : "/standup",
+    pathPattern: /^\/standup(?:\/([A-Z0-9]+))?$/i,
+    group: "standup",
+    component: StandupScreen,
+    meta: {
+      title: `Standup Facilitator - ${SITE_NAME}`,
+      description:
+        "Run a clean daily standup with live responses, facilitator controls, and a room built for focused async prep and call-time presentation.",
+      keywords:
+        "daily standup, standup facilitator, scrum standup, team updates, blockers, agile ceremonies",
       ogImage: "/og-image.png",
     },
   },

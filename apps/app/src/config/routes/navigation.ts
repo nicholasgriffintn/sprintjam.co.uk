@@ -5,6 +5,7 @@ import { RETURN_URL_KEY } from "@/constants";
 export interface ParsedPath {
   screen: AppScreen;
   roomKey?: string;
+  standupKey?: string;
 }
 
 type RouteEntry = RouteConfig<AppScreen>;
@@ -50,14 +51,24 @@ export function parsePath(path: string): ParsedPath {
   for (const route of getDynamicRoutes()) {
     const match = normalizedPath.match(route.pathPattern!);
     if (match) {
-      if (route.screen === 'room') {
+      if (route.screen === "room") {
         const roomKey = match[1];
 
         if (!roomKey) {
-          return { screen: '404' };
+          return { screen: "404" };
         }
 
-        return { screen: 'room', roomKey: roomKey.toUpperCase() };
+        return { screen: "room", roomKey: roomKey.toUpperCase() };
+      }
+
+      if (route.screen === "standup") {
+        const standupKey = match[1];
+
+        if (!standupKey) {
+          return { screen: "standup" };
+        }
+
+        return { screen: "standup", standupKey: standupKey.toUpperCase() };
       }
 
       return { screen: route.screen };
@@ -70,6 +81,7 @@ export function parsePath(path: string): ParsedPath {
 export type RouteParams = {
   roomKey?: string;
   wheelKey?: string;
+  standupKey?: string;
 };
 
 function normaliseParams(
@@ -96,6 +108,7 @@ export function getPathFromScreen(
     return route.path({
       roomKey: resolvedParams?.roomKey,
       wheelKey: resolvedParams?.wheelKey,
+      standupKey: resolvedParams?.standupKey,
     });
   }
   return route.path;

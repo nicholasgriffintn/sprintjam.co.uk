@@ -71,6 +71,16 @@ describe("navigation", () => {
       expect(result.roomKey).toBe("ABC123");
     });
 
+    it("parses standup route with standup key", () => {
+      const result = parsePath("/standup/ABC123");
+      expect(result.screen).toBe("standup");
+      expect(result.standupKey).toBe("ABC123");
+    });
+
+    it("parses standup route without a key", () => {
+      expect(parsePath("/standup")).toEqual({ screen: "standup" });
+    });
+
     it("normalizes lowercase room keys to uppercase", () => {
       const result = parsePath("/room/abc123");
       expect(result.screen).toBe("room");
@@ -145,6 +155,12 @@ describe("navigation", () => {
       );
     });
 
+    it("generates standup path with standup key", () => {
+      expect(getPathFromScreen("standup", { standupKey: "ABC123" })).toBe(
+        "/standup/ABC123",
+      );
+    });
+
     it("generates room path without room key", () => {
       expect(getPathFromScreen("room")).toBe("/room");
     });
@@ -203,6 +219,15 @@ describe("navigation", () => {
       );
     });
 
+    it("navigates to standup with standup key", () => {
+      navigateTo("standup", { standupKey: "ABC123" });
+      expect(pushStateSpy).toHaveBeenCalledWith(
+        { screen: "standup", standupKey: "ABC123" },
+        "",
+        "/standup/ABC123",
+      );
+    });
+
     it("scrolls to top on navigation", () => {
       navigateTo("create");
       expect(scrollToSpy).toHaveBeenCalledWith({
@@ -249,6 +274,7 @@ describe("navigation", () => {
     it("returns screen from path", () => {
       expect(getScreenFromPath("/create")).toBe("create");
       expect(getScreenFromPath("/room/ABC123")).toBe("room");
+      expect(getScreenFromPath("/standup/ABC123")).toBe("standup");
     });
 
     it("returns 404 for unknown paths", () => {
@@ -285,6 +311,7 @@ describe("derived", () => {
       expect(getBackgroundVariant("welcome")).toBe("compact");
       expect(getBackgroundVariant("workspace")).toBe("plain");
       expect(getBackgroundVariant("room")).toBe("room");
+      expect(getBackgroundVariant("standup")).toBe("compact");
       expect(getBackgroundVariant("login")).toBe("compact");
       expect(getBackgroundVariant("create")).toBe("compact");
     });
@@ -303,6 +330,7 @@ describe("derived", () => {
       expect(getHeaderVariant("welcome")).toBe("marketing");
       expect(getHeaderVariant("workspace")).toBe("workspace");
       expect(getHeaderVariant("room")).toBe("room");
+      expect(getHeaderVariant("standup")).toBe("standup");
       expect(getHeaderVariant("login")).toBe("marketing");
       expect(getHeaderVariant("create")).toBe("marketing");
     });
@@ -471,6 +499,11 @@ describe("derived", () => {
       expect(screens).toContain("room");
     });
 
+    it("returns all screens in standup group", () => {
+      const screens = getScreensInGroup("standup");
+      expect(screens).toContain("standup");
+    });
+
     it("excludes screens from other groups", () => {
       const marketingScreens = getScreensInGroup("marketing");
       const workspaceScreens = getScreensInGroup("workspace");
@@ -507,6 +540,7 @@ describe("ROUTES registry", () => {
       "auth",
       "flow",
       "wheel",
+      "standup",
     ];
     for (const route of ROUTES) {
       expect(validGroups).toContain(route.group);

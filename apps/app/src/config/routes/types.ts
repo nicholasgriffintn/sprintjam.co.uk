@@ -12,6 +12,7 @@ export type RouteGroup =
   | "workspace"
   | "room"
   | "wheel"
+  | "standup"
   | "auth"
   | "flow";
 
@@ -30,7 +31,13 @@ export interface RouteLayoutConfig {
 
 export interface RouteConfig<TScreen extends string = string> {
   screen: TScreen;
-  path: string | ((params: { roomKey?: string; wheelKey?: string }) => string);
+  path:
+    | string
+    | ((params: {
+        roomKey?: string;
+        wheelKey?: string;
+        standupKey?: string;
+      }) => string);
   group: RouteGroup;
   component: FC | LazyExoticComponent<ComponentType<unknown>>;
   meta: MetaTagConfig;
