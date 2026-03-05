@@ -5,15 +5,17 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { WorkspaceTeam } from "@sprintjam/types";
+import type { TeamSession, WorkspaceTeam } from "@sprintjam/types";
 
 const refreshWorkspace = vi.fn();
 const goToLogin = vi.fn();
 const goToRoom = vi.fn();
 const startCreateFlow = vi.fn();
+const setScreen = vi.fn();
 const requestTeamAccess = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
+const navigateTo = vi.fn();
 
 const restrictedTeam: WorkspaceTeam = {
   id: 10,
@@ -29,7 +31,31 @@ const restrictedTeam: WorkspaceTeam = {
   canManage: false,
 };
 
-const workspaceDataMock = {
+const accessibleTeam: WorkspaceTeam = {
+  ...restrictedTeam,
+  canAccess: true,
+  currentUserRole: "member",
+  currentUserStatus: "active",
+};
+
+const workspaceDataMock: {
+  user: {
+    id: number;
+    email: string;
+    name: string;
+    organisationId: number;
+    avatar: string | null;
+  };
+  teams: WorkspaceTeam[];
+  sessions: TeamSession[];
+  selectedTeamId: number | null;
+  setSelectedTeamId: ReturnType<typeof vi.fn>;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  isLoadingSessions: boolean;
+  error: string | null;
+  refreshWorkspace: typeof refreshWorkspace;
+} = {
   user: {
     id: 1,
     email: "member@example.com",
@@ -48,6 +74,28 @@ const workspaceDataMock = {
   refreshWorkspace,
 };
 
+const planningSession: TeamSession = {
+  id: 1,
+  teamId: 10,
+  roomKey: "ROOM42",
+  name: "Sprint 12 Planning",
+  createdById: 1,
+  createdAt: Date.now(),
+  completedAt: null,
+  metadata: null,
+};
+
+const standupSession: TeamSession = {
+  id: 2,
+  teamId: 10,
+  roomKey: "STAND9",
+  name: "Daily Standup",
+  createdById: 1,
+  createdAt: Date.now(),
+  completedAt: null,
+  metadata: JSON.stringify({ type: "standup" }),
+};
+
 vi.mock("@/hooks/usePageMeta", () => ({
   usePageMeta: vi.fn(),
 }));
@@ -61,11 +109,16 @@ vi.mock("@/context/SessionContext", () => ({
     goToLogin,
     goToRoom,
     startCreateFlow,
+    setScreen,
   }),
 }));
 
 vi.mock("@/lib/workspace-service", () => ({
   requestTeamAccess: (...args: unknown[]) => requestTeamAccess(...args),
+}));
+
+vi.mock("@/config/routes", () => ({
+  navigateTo: (...args: unknown[]) => navigateTo(...args),
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -84,7 +137,9 @@ vi.mock("@/components/workspace/TeamSelector", () => ({
 }));
 
 vi.mock("@/components/workspace/SessionList", () => ({
-  SessionList: () => <div>Session list</div>,
+  SessionList: ({ sessions }: { sessions: TeamSession[] }) => (
+    <div>Session list {sessions.map((session) => session.name).join(", ")}</div>
+  ),
 }));
 
 vi.mock("@/components/workspace/TeamInsightsPanel", () => ({
@@ -178,5 +233,21 @@ describe("WorkspaceSessions", () => {
     expect(
       screen.queryByRole("button", { name: "Request access" }),
     ).toBeNull();
+  });
+
+  it("filters standups separately from planning sessions", () => {
+    workspaceDataMock.teams = [accessibleTeam];
+    workspaceDataMock.sessions = [planningSession, standupSession];
+    workspaceDataMock.selectedTeamId = accessibleTeam.id;
+
+    render(<WorkspaceSessions />);
+
+    expect(
+      screen.getByText("Session list Sprint 12 Planning, Daily Standup"),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Standups \(1\)/ }));
+
+    expect(screen.getByText("Session list Daily Standup")).toBeTruthy();
   });
 });

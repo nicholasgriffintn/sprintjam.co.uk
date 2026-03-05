@@ -1,0 +1,34 @@
+{
+  "name": "@sprintjam/standup-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:generate": "drizzle-kit generate",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:prod": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -b --noEmit",
+    "generate:types": "wrangler types --include-runtime=false"
+  },
+  "dependencies": {
+    "@sentry/cloudflare": "^10.36.0",
+    "@sprintjam/db": "workspace:*",
+    "@sprintjam/types": "workspace:*",
+    "@sprintjam/utils": "workspace:*",
+    "drizzle-orm": "0.45.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260115.0",
+    "drizzle-kit": "0.31.8",
+    "typescript": "5.9.3",
+    "vitest": "4.0.16",
+    "wrangler": "4.64.0"
+  }
+}

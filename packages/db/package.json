@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./durable-objects/schemas": "./src/durable-objects/planning/schemas/index.ts",
     "./durable-objects/wheel/schemas": "./src/durable-objects/wheel/schemas/index.ts",
+    "./durable-objects/standup/schemas": "./src/durable-objects/standup/schemas/index.ts",
     "./d1/schemas": "./src/d1/schemas/index.ts"
   },
   "scripts": {

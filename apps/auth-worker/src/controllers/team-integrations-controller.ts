@@ -7,6 +7,15 @@ import {
   hashToken,
 } from '@sprintjam/utils';
 import {
+  fetchGithubMilestones,
+  fetchGithubRepoIssues,
+  fetchGithubRepos,
+  fetchJiraBoardIssues,
+  fetchJiraBoards,
+  fetchJiraSprints,
+  fetchLinearCycles,
+  fetchLinearIssues,
+  fetchLinearTeams,
   findDefaultStoryPointsField,
   findDefaultSprintField,
   getLinearOrganization,
@@ -263,6 +272,408 @@ export async function getTeamIntegrationStatusController(
   };
 
   return jsonResponse({ status });
+}
+
+function getJiraOAuthConfig(env: AuthWorkerEnv) {
+  if (!env.JIRA_OAUTH_CLIENT_ID || !env.JIRA_OAUTH_CLIENT_SECRET) {
+    return null;
+  }
+
+  return {
+    clientId: env.JIRA_OAUTH_CLIENT_ID,
+    clientSecret: env.JIRA_OAUTH_CLIENT_SECRET,
+  };
+}
+
+function getLinearOAuthConfig(env: AuthWorkerEnv) {
+  if (!env.LINEAR_OAUTH_CLIENT_ID || !env.LINEAR_OAUTH_CLIENT_SECRET) {
+    return null;
+  }
+
+  return {
+    clientId: env.LINEAR_OAUTH_CLIENT_ID,
+    clientSecret: env.LINEAR_OAUTH_CLIENT_SECRET,
+  };
+}
+
+async function requireTeamAccess(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+): Promise<
+  | { integrationRepo: TeamIntegrationRepository; repo: AuthResult['repo'] }
+  | { response: Response }
+> {
+  const auth = await getAuthOrError(request, env);
+  if ('response' in auth) {
+    return { response: auth.response };
+  }
+
+  const { userId, repo } = auth.result;
+  if (!(await canUserAccessTeam(repo, userId, teamId))) {
+    return { response: forbiddenResponse() };
+  }
+
+  return {
+    integrationRepo: getIntegrationRepo(env),
+    repo,
+  };
+}
+
+function isSupportedProvider(
+  provider: OAuthProvider,
+): provider is 'jira' | 'linear' | 'github' {
+  return provider === 'jira' || provider === 'linear' || provider === 'github';
+}
+
+function parseOptionalLimit(limit: unknown): number | null {
+  if (limit === undefined || limit === null || limit === '') {
+    return null;
+  }
+
+  const parsed = Number(limit);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return Math.min(Math.floor(parsed), 100);
+}
+
+async function getTeamJiraCredentials(
+  env: AuthWorkerEnv,
+  integrationRepo: TeamIntegrationRepository,
+  teamId: number,
+) {
+  const credentials = await integrationRepo.getJiraCredentials(teamId);
+  if (!credentials) {
+    throw new Error('Jira is not connected for this team.');
+  }
+
+  const oauthConfig = getJiraOAuthConfig(env);
+  if (!oauthConfig) {
+    throw new Error('Jira OAuth is not configured.');
+  }
+
+  return {
+    credentials,
+    oauthConfig,
+    onTokenRefresh: async (
+      accessToken: string,
+      refreshToken: string,
+      expiresAt: number,
+    ) => {
+      await integrationRepo.updateTokens(
+        teamId,
+        'jira',
+        accessToken,
+        refreshToken,
+        expiresAt,
+      );
+    },
+  };
+}
+
+async function getTeamLinearCredentials(
+  env: AuthWorkerEnv,
+  integrationRepo: TeamIntegrationRepository,
+  teamId: number,
+) {
+  const credentials = await integrationRepo.getLinearCredentials(teamId);
+  if (!credentials) {
+    throw new Error('Linear is not connected for this team.');
+  }
+
+  const oauthConfig = getLinearOAuthConfig(env);
+  if (!oauthConfig) {
+    throw new Error('Linear OAuth is not configured.');
+  }
+
+  return {
+    credentials,
+    oauthConfig,
+    onTokenRefresh: async (
+      accessToken: string,
+      refreshToken: string | null,
+      expiresAt: number,
+    ) => {
+      await integrationRepo.updateTokens(
+        teamId,
+        'linear',
+        accessToken,
+        refreshToken,
+        expiresAt,
+      );
+    },
+  };
+}
+
+async function getTeamGithubCredentials(
+  integrationRepo: TeamIntegrationRepository,
+  teamId: number,
+) {
+  const credentials = await integrationRepo.getGithubCredentials(teamId);
+  if (!credentials) {
+    throw new Error('GitHub is not connected for this team.');
+  }
+
+  return credentials;
+}
+
+export async function listTeamIntegrationBoardsController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  provider: OAuthProvider,
+): Promise<Response> {
+  if (!isSupportedProvider(provider)) {
+    return jsonError('Unknown provider', 400);
+  }
+
+  const access = await requireTeamAccess(request, env, teamId);
+  if ('response' in access) {
+    return access.response;
+  }
+
+  try {
+    if (provider === 'jira') {
+      const { credentials, oauthConfig, onTokenRefresh } =
+        await getTeamJiraCredentials(env, access.integrationRepo, teamId);
+      const boards = await fetchJiraBoards(
+        credentials,
+        onTokenRefresh,
+        oauthConfig.clientId,
+        oauthConfig.clientSecret,
+      );
+      return jsonResponse({
+        boards: boards.map((board) => ({
+          id: board.id,
+          name: board.name,
+        })),
+      });
+    }
+
+    if (provider === 'linear') {
+      const { credentials, oauthConfig, onTokenRefresh } =
+        await getTeamLinearCredentials(env, access.integrationRepo, teamId);
+      const teams = await fetchLinearTeams(
+        credentials,
+        onTokenRefresh,
+        oauthConfig.clientId,
+        oauthConfig.clientSecret,
+      );
+      return jsonResponse({
+        boards: teams.map((team) => ({
+          id: team.id,
+          name: team.name,
+          key: team.key,
+        })),
+      });
+    }
+
+    const credentials = await getTeamGithubCredentials(
+      access.integrationRepo,
+      teamId,
+    );
+    const repos = await fetchGithubRepos(credentials);
+    return jsonResponse({
+      boards: repos.map((repo) => ({
+        id: repo.fullName,
+        name: repo.fullName,
+        key: repo.name,
+      })),
+    });
+  } catch (error) {
+    return jsonError(
+      error instanceof Error
+        ? error.message
+        : 'Failed to fetch integration boards',
+      400,
+    );
+  }
+}
+
+export async function listTeamIntegrationSprintsController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  provider: OAuthProvider,
+): Promise<Response> {
+  if (!isSupportedProvider(provider)) {
+    return jsonError('Unknown provider', 400);
+  }
+
+  const access = await requireTeamAccess(request, env, teamId);
+  if ('response' in access) {
+    return access.response;
+  }
+
+  let body: { boardId?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError('Invalid request body', 400);
+  }
+
+  const boardId = body.boardId?.trim();
+  if (!boardId) {
+    return jsonError('boardId is required', 400);
+  }
+
+  try {
+    if (provider === 'jira') {
+      const { credentials, oauthConfig, onTokenRefresh } =
+        await getTeamJiraCredentials(env, access.integrationRepo, teamId);
+      const sprints = await fetchJiraSprints(
+        credentials,
+        boardId,
+        onTokenRefresh,
+        oauthConfig.clientId,
+        oauthConfig.clientSecret,
+      );
+      return jsonResponse({ sprints });
+    }
+
+    if (provider === 'linear') {
+      const { credentials, oauthConfig, onTokenRefresh } =
+        await getTeamLinearCredentials(env, access.integrationRepo, teamId);
+      const cycles = await fetchLinearCycles(
+        credentials,
+        boardId,
+        onTokenRefresh,
+        oauthConfig.clientId,
+        oauthConfig.clientSecret,
+      );
+      return jsonResponse({
+        sprints: cycles.map((cycle) => ({
+          id: cycle.id,
+          name: cycle.name || `Cycle ${cycle.number}`,
+          number: cycle.number,
+          startDate: cycle.startsAt ?? null,
+          endDate: cycle.endsAt ?? null,
+        })),
+      });
+    }
+
+    const credentials = await getTeamGithubCredentials(
+      access.integrationRepo,
+      teamId,
+    );
+    const milestones = await fetchGithubMilestones(credentials, boardId);
+    return jsonResponse({
+      sprints: milestones.map((milestone) => ({
+        id: String(milestone.number),
+        name: milestone.title,
+        number: milestone.number,
+        state: milestone.state,
+      })),
+    });
+  } catch (error) {
+    return jsonError(
+      error instanceof Error
+        ? error.message
+        : 'Failed to fetch integration sprints',
+      400,
+    );
+  }
+}
+
+export async function searchTeamIntegrationTicketsController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  provider: OAuthProvider,
+): Promise<Response> {
+  if (!isSupportedProvider(provider)) {
+    return jsonError('Unknown provider', 400);
+  }
+
+  const access = await requireTeamAccess(request, env, teamId);
+  if ('response' in access) {
+    return access.response;
+  }
+
+  let body: {
+    boardId?: string;
+    sprintId?: string;
+    sprintName?: string;
+    sprintNumber?: number;
+    query?: string;
+    limit?: unknown;
+  };
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError('Invalid request body', 400);
+  }
+
+  const boardId = body.boardId?.trim();
+  if (!boardId) {
+    return jsonError('boardId is required', 400);
+  }
+
+  const sprintId = body.sprintId?.trim() || null;
+  const sprintName = body.sprintName?.trim() || null;
+  const sprintNumber =
+    typeof body.sprintNumber === 'number' ? body.sprintNumber : null;
+  const query = body.query?.trim() || null;
+  const limit = parseOptionalLimit(body.limit);
+
+  try {
+    if (provider === 'jira') {
+      const { credentials, oauthConfig, onTokenRefresh } =
+        await getTeamJiraCredentials(env, access.integrationRepo, teamId);
+      const tickets = await fetchJiraBoardIssues(
+        credentials,
+        boardId,
+        {
+          sprintId,
+          limit,
+          search: query,
+        },
+        onTokenRefresh,
+        oauthConfig.clientId,
+        oauthConfig.clientSecret,
+      );
+      return jsonResponse({ tickets });
+    }
+
+    if (provider === 'linear') {
+      const { credentials, oauthConfig, onTokenRefresh } =
+        await getTeamLinearCredentials(env, access.integrationRepo, teamId);
+      const tickets = await fetchLinearIssues(
+        credentials,
+        boardId,
+        {
+          cycleId: sprintId,
+          limit,
+          search: query,
+        },
+        onTokenRefresh,
+        oauthConfig.clientId,
+        oauthConfig.clientSecret,
+      );
+      return jsonResponse({ tickets });
+    }
+
+    const credentials = await getTeamGithubCredentials(
+      access.integrationRepo,
+      teamId,
+    );
+    const tickets = await fetchGithubRepoIssues(credentials, boardId, {
+      milestoneNumber: sprintNumber,
+      milestoneTitle: sprintName,
+      limit,
+      search: query,
+    });
+    return jsonResponse({ tickets });
+  } catch (error) {
+    return jsonError(
+      error instanceof Error
+        ? error.message
+        : 'Failed to search integration tickets',
+      400,
+    );
+  }
 }
 
 export async function initiateTeamOAuthController(

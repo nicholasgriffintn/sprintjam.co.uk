@@ -7,6 +7,7 @@ import { MarketingHeader } from "@/components/layout/Header/HeaderContent/Market
 import { RoomHeader } from "@/components/layout/Header/HeaderContent/RoomHeader";
 import { WorkspaceHeader } from "@/components/layout/Header/HeaderContent/WorkspaceHeader";
 import { WheelHeader } from "@/components/layout/Header/HeaderContent/WheelHeader";
+import { StandupHeader } from "@/components/layout/Header/StandupHeader";
 import { HEADER_TRANSITION } from "@/constants";
 import { getHeaderVariant, getMarketingVariant } from "@/config/routes";
 
@@ -56,6 +57,20 @@ export const Header: FC = () => {
             className="contents w-full"
           >
             <WheelHeader />
+          </motion.div>
+        );
+
+      case "standup":
+        return (
+          <motion.div
+            key="standup"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={HEADER_TRANSITION}
+            className="contents w-full"
+          >
+            <StandupHeader />
           </motion.div>
         );
 

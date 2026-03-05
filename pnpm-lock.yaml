@@ -213,6 +213,40 @@ importers:
         specifier: 4.64.0
         version: 4.64.0(@cloudflare/workers-types@4.20260115.0)
 
+  apps/standup-worker:
+    dependencies:
+      '@sentry/cloudflare':
+        specifier: ^10.36.0
+        version: 10.36.0(@cloudflare/workers-types@4.20260115.0)
+      '@sprintjam/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@sprintjam/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@sprintjam/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      drizzle-orm:
+        specifier: 0.45.1
+        version: 0.45.1(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.0)
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: 4.20260115.0
+        version: 4.20260115.0
+      drizzle-kit:
+        specifier: 0.31.8
+        version: 0.31.8
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)
+      wrangler:
+        specifier: 4.64.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260115.0)
+
   apps/stats-worker:
     dependencies:
       '@sentry/cloudflare':

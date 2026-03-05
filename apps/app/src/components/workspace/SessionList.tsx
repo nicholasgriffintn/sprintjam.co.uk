@@ -9,13 +9,17 @@ import type { TeamSession } from "@sprintjam/types";
 interface SessionListProps {
   sessions: TeamSession[];
   isLoading: boolean;
-  onOpenRoom: (key: string) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  onOpenSession: (session: TeamSession) => void;
 }
 
 export function SessionList({
   sessions,
   isLoading,
-  onOpenRoom,
+  emptyTitle = "No sessions linked",
+  emptyDescription = "Use the save flow from a room or standup to link it to this team.",
+  onOpenSession,
 }: SessionListProps) {
   const { statsMap, isLoading: isLoadingStats } = useSessionStats(sessions);
 
@@ -32,8 +36,8 @@ export function SessionList({
     return (
       <EmptyState
         icon={<CalendarClock className="h-8 w-8" />}
-        title="No sessions linked"
-        description="Use the 'Save' button in a room to link it to this team."
+        title={emptyTitle}
+        description={emptyDescription}
       />
     );
   }
@@ -51,7 +55,7 @@ export function SessionList({
           key={`${session.teamId}-${session.id}`}
           session={session}
           stats={statsMap[session.roomKey] ?? null}
-          onOpenRoom={onOpenRoom}
+          onOpenSession={onOpenSession}
         />
       ))}
     </div>

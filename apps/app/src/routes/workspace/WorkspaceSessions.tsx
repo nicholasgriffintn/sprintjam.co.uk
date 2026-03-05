@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Building2, Target, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Building2, MessageSquareQuote, Plus, Target } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { Tabs } from "@/components/ui/Tabs";
 import { toast } from "@/components/ui";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
@@ -13,10 +14,14 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
+import { navigateTo } from "@/config/routes";
 import { META_CONFIGS } from "@/config/meta";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { getTeamSessionType, type TeamSessionType } from "@/lib/team-session-metadata";
 import { requestTeamAccess } from "@/lib/workspace-service";
 import { BetaBadge } from "../../components/BetaBadge";
+
+type SessionFilter = "all" | TeamSessionType;
 
 export default function WorkspaceSessions() {
   usePageMeta(META_CONFIGS.workspaceSessions);
@@ -34,16 +39,46 @@ export default function WorkspaceSessions() {
     refreshWorkspace,
   } = useWorkspaceData({ includeSessions: true });
 
-  const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
+  const { goToLogin, goToRoom, startCreateFlow, setScreen } =
+    useSessionActions();
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
 
   const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
+  const filteredSessions = useMemo(
+    () =>
+      sessions.filter((session) =>
+        sessionFilter === "all"
+          ? true
+          : getTeamSessionType(session) === sessionFilter,
+      ),
+    [sessionFilter, sessions],
+  );
+  const planningCount = useMemo(
+    () =>
+      sessions.filter((session) => getTeamSessionType(session) === "planning")
+        .length,
+    [sessions],
+  );
+  const standupCount = useMemo(
+    () =>
+      sessions.filter((session) => getTeamSessionType(session) === "standup")
+        .length,
+    [sessions],
+  );
 
-  const handleOpenRoom = (roomKey: string) => {
-    const targetKey = roomKey.trim();
+  const handleOpenSession = (session: (typeof sessions)[number]) => {
+    const targetKey = session.roomKey.trim();
     if (!targetKey) {
       return;
     }
+
+    if (getTeamSessionType(session) === "standup") {
+      setScreen("standupJoin");
+      navigateTo("standupJoin", { standupKey: targetKey });
+      return;
+    }
+
     goToRoom(targetKey);
   };
 
@@ -81,7 +116,7 @@ export default function WorkspaceSessions() {
             Sessions <BetaBadge />
           </h1>
           <p className="text-slate-600 dark:text-slate-300">
-            View and manage team planning sessions
+            View and manage planning sessions and standups
           </p>
         </div>
 
@@ -136,16 +171,30 @@ export default function WorkspaceSessions() {
                       className="font-semibold"
                     >
                       <Target className="mr-1.5 h-3.5 w-3.5" />
-                      {sessions.length}
+                      {filteredSessions.length}
                     </Badge>
-                    <Button
-                      size="sm"
-                      onClick={() => startCreateFlow(selectedTeam.id)}
-                      icon={<Plus className="h-4 w-4" />}
-                      disabled={!selectedTeam.canAccess}
-                    >
-                      New Session
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => startCreateFlow(selectedTeam.id)}
+                        icon={<Plus className="h-4 w-4" />}
+                        disabled={!selectedTeam.canAccess}
+                      >
+                        New planning session
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setScreen("standupCreate");
+                          navigateTo("standupCreate");
+                        }}
+                        icon={<MessageSquareQuote className="h-4 w-4" />}
+                        disabled={!selectedTeam.canAccess}
+                      >
+                        New standup
+                      </Button>
+                    </div>
                     {!selectedTeam.canAccess &&
                       selectedTeam.currentUserStatus !== "pending" && (
                         <Button
@@ -160,11 +209,44 @@ export default function WorkspaceSessions() {
                   </div>
                 </div>
                 {selectedTeam.canAccess ? (
-                  <SessionList
-                    sessions={sessions}
-                    isLoading={isLoadingSessions}
-                    onOpenRoom={handleOpenRoom}
-                  />
+                  <Tabs.Root
+                    value={sessionFilter}
+                    onValueChange={(value) =>
+                      setSessionFilter(value as SessionFilter)
+                    }
+                  >
+                    <Tabs.List fullWidth>
+                      <Tabs.Tab value="all">All ({sessions.length})</Tabs.Tab>
+                      <Tabs.Tab value="planning">
+                        Planning ({planningCount})
+                      </Tabs.Tab>
+                      <Tabs.Tab value="standup">
+                        Standups ({standupCount})
+                      </Tabs.Tab>
+                    </Tabs.List>
+
+                    <Tabs.Panel value={sessionFilter}>
+                      <SessionList
+                        sessions={filteredSessions}
+                        isLoading={isLoadingSessions}
+                        emptyTitle={
+                          sessionFilter === "standup"
+                            ? "No standups linked"
+                            : sessionFilter === "planning"
+                              ? "No planning sessions linked"
+                              : "No sessions linked"
+                        }
+                        emptyDescription={
+                          sessionFilter === "standup"
+                            ? "Create a team standup to keep daily check-ins alongside your planning history."
+                            : sessionFilter === "planning"
+                              ? "Use the save flow in a planning room to link it to this team."
+                              : "Create a planning session or standup to start building team history."
+                        }
+                        onOpenSession={handleOpenSession}
+                      />
+                    </Tabs.Panel>
+                  </Tabs.Root>
                 ) : (
                   <EmptyState
                     icon={<Building2 className="h-8 w-8" />}

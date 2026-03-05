@@ -22,6 +22,7 @@ export interface DispatchWorkerEnv extends BaseEnv {
   AUTH_WORKER: Fetcher;
   STATS_WORKER: Fetcher;
   WHEEL_WORKER: Fetcher;
+  STANDUP_WORKER: Fetcher;
 }
 
 /**
@@ -91,4 +92,16 @@ export interface WheelWorkerEnv extends BaseEnv {
   WHEEL_CREATE_RATE_LIMITER: RateLimit;
   WHEEL_JOIN_RATE_LIMITER: RateLimit;
   WHEEL_IP_RATE_LIMITER: RateLimit;
+}
+
+/**
+ * Environment for the standup worker
+ */
+export interface StandupWorkerEnv extends BaseEnv {
+  STANDUP_ROOM: DurableObjectNamespace;
+  TOKEN_ENCRYPTION_SECRET: string;
+  ENABLE_STANDUP_RATE_LIMIT?: string;
+  STANDUP_CREATE_RATE_LIMITER: RateLimit;
+  STANDUP_JOIN_RATE_LIMITER: RateLimit;
+  STANDUP_IP_RATE_LIMITER: RateLimit;
 }

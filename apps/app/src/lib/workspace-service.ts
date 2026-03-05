@@ -7,6 +7,9 @@ import {
 } from "@/lib/workspace-errors";
 import type { RoomSettings } from "@/types";
 import type {
+  ExternalBoardOption,
+  ExternalSprintOption,
+  ExternalTicketMetadata,
   OAuthProvider,
   SessionStats,
   TeamAccessPolicy,
@@ -584,6 +587,57 @@ export async function getTeamIntegrationStatus(
     `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/status`,
   );
   return data.status;
+}
+
+export async function listTeamIntegrationBoards(
+  teamId: number,
+  provider: OAuthProvider,
+): Promise<ExternalBoardOption[]> {
+  const data = await workspaceRequest<{ boards: ExternalBoardOption[] }>(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/boards`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+  return data.boards;
+}
+
+export async function listTeamIntegrationSprints(
+  teamId: number,
+  provider: OAuthProvider,
+  boardId: string,
+): Promise<ExternalSprintOption[]> {
+  const data = await workspaceRequest<{ sprints: ExternalSprintOption[] }>(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/sprints`,
+    {
+      method: "POST",
+      body: JSON.stringify({ boardId }),
+    },
+  );
+  return data.sprints;
+}
+
+export async function searchTeamIntegrationTickets(
+  teamId: number,
+  provider: OAuthProvider,
+  payload: {
+    boardId: string;
+    sprintId?: string;
+    sprintName?: string;
+    sprintNumber?: number;
+    query?: string;
+    limit?: number;
+  },
+): Promise<ExternalTicketMetadata[]> {
+  const data = await workspaceRequest<{ tickets: ExternalTicketMetadata[] }>(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/tickets`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.tickets;
 }
 
 export async function initiateTeamOAuth(
