@@ -333,15 +333,17 @@ export function StandupResponseForm({
                       }))
                     }
                     className={cn(
-                      "rounded-[1.5rem] border px-3 py-3 text-left transition",
+                      'rounded-[1.5rem] border px-3 py-3 text-left transition',
                       isSelected
-                        ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-brand-950/30 dark:text-brand-100"
-                        : "border-black/5 bg-white/70 text-slate-600 hover:border-brand-200 hover:text-slate-900 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:text-white",
+                        ? 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground'
+                        : 'border-black/5 bg-white/70 text-slate-600 hover:border-brand-200 hover:text-slate-900 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:text-white',
                     )}
                     disabled={!isSocketConnected || isReadOnly}
                   >
                     <div className="text-lg font-semibold">{option.label}</div>
-                    <div className="mt-1 text-[11px] leading-4">{option.copy}</div>
+                    <div className="mt-1 text-[11px] leading-4">
+                      {option.copy}
+                    </div>
                   </button>
                 );
               })}

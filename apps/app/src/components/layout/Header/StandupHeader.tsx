@@ -72,32 +72,44 @@ export const StandupHeader: FC = () => {
         />
 
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <Badge variant="warning" className="hidden sm:inline-flex">
-            <Sunrise className="mr-1 h-3.5 w-3.5" />
-            Daily standup
-          </Badge>
-
-          {standupKey ? (
-            <div className="flex items-center gap-2 rounded-2xl border border-black/5 bg-black/5 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white">
-              <span className="font-mono text-xs tracking-[0.3em] sm:text-sm">
-                {standupKey}
-              </span>
-              {standupStatus ? (
-                <Badge variant={STATUS_BADGE_VARIANTS[standupStatus]} size="sm">
-                  {toStatusLabel(standupStatus)}
-                </Badge>
-              ) : null}
-              {participantCount > 0 ? (
-                <span className="hidden items-center gap-1 text-xs text-slate-500 sm:inline-flex dark:text-slate-300">
-                  <Users className="h-3.5 w-3.5" />
-                  {respondedCount}/{participantCount}
+          {standupKey && (
+            <>
+              <div className="flex items-center gap-2 rounded-2xl border border-black/5 bg-black/5 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                <span className="font-mono text-xs tracking-[0.3em] sm:text-sm">
+                  {standupKey}
                 </span>
-              ) : null}
-            </div>
-          ) : (
-            <div className="hidden text-sm text-slate-500 sm:block dark:text-slate-300">
-              Create or join a standup room
-            </div>
+                {standupStatus ? (
+                  <Badge
+                    variant={STATUS_BADGE_VARIANTS[standupStatus]}
+                    size="sm"
+                  >
+                    {toStatusLabel(standupStatus)}
+                  </Badge>
+                ) : null}
+                {participantCount > 0 ? (
+                  <span className="hidden items-center gap-1 text-xs text-slate-500 sm:inline-flex dark:text-slate-300">
+                    <Users className="h-3.5 w-3.5" />
+                    {respondedCount}/{participantCount}
+                  </span>
+                ) : null}
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleCopy}
+                icon={
+                  isCopied ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )
+                }
+                className="hidden sm:inline-flex"
+              >
+                {isCopied ? 'Copied' : 'Copy link'}
+              </Button>
+            </>
           )}
         </div>
       </motion.div>
@@ -108,18 +120,6 @@ export const StandupHeader: FC = () => {
         animate={{ opacity: 1 }}
         transition={HEADER_TRANSITION}
       >
-        {standupKey ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={handleCopy}
-            icon={isCopied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            className="hidden sm:inline-flex"
-          >
-            {isCopied ? "Copied" : "Copy link"}
-          </Button>
-        ) : null}
         <DarkModeToggle />
         <HeaderUserMenu />
       </motion.div>
