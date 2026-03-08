@@ -10,6 +10,7 @@ import { HeaderLogo } from "./HeaderLogo";
 import DarkModeToggle from "./DarkModeToggle";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 import { HEADER_TRANSITION } from "@/constants";
+import { BetaBadge } from '../../BetaBadge';
 
 const STATUS_BADGE_VARIANTS = {
   active: "success",
@@ -70,6 +71,8 @@ export const StandupHeader: FC = () => {
           className="flex-shrink-0 [&_span]:hidden [&_span]:sm:inline"
           layoutId="app-header-logo"
         />
+
+        <BetaBadge />
 
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           {standupKey && (
