@@ -1,6 +1,6 @@
 import { useEffect, useState, type FC } from "react";
 import { motion } from "framer-motion";
-import { Copy, CheckCircle2, Users, Sunrise } from "lucide-react";
+import { Copy, CheckCircle2, Users } from "lucide-react";
 
 import { useStandupHeaderOptional } from "@/context/StandupHeaderContext";
 import { useSessionActions } from "@/context/SessionContext";

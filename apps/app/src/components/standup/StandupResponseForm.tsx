@@ -6,15 +6,12 @@ import type {
   StandupResponsePayload,
 } from "@sprintjam/types";
 import {
-  AlertTriangle,
   CheckCircle2,
   HeartPulse,
   Link as LinkIcon,
   Lock,
   Pencil,
   Save,
-  History,
-  Calendar,
 } from 'lucide-react';
 
 import { Alert } from "@/components/ui/Alert";

@@ -25,10 +25,13 @@ describe("StandupResponseForm", () => {
       target: { value: "Build the standup UI" },
     });
     fireEvent.click(screen.getByRole("button", { name: /4 strong/i }));
-    fireEvent.click(screen.getByRole("button", { name: /no blocker/i }));
-    fireEvent.change(screen.getByPlaceholderText(/describe the dependency/i), {
+    fireEvent.click(screen.getByRole("button", { name: /i have blockers/i }));
+    fireEvent.change(
+      screen.getByPlaceholderText(/what is blocked and what help do you need\?/i),
+      {
       target: { value: "Waiting on product copy" },
-    });
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Save update" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
