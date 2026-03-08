@@ -20,6 +20,7 @@ import {
 import { WorkspaceAuthProvider } from "@/context/WorkspaceAuthContext";
 import { RoomHeaderProvider } from "@/context/RoomHeaderContext";
 import { WheelHeaderProvider } from "@/context/WheelHeaderContext";
+import { StandupHeaderProvider } from "@/context/StandupHeaderContext";
 import { ErrorBannerServerDefaults } from "@/components/errors/ErrorBannerServerDefaults";
 import { PageBackground } from "@/components/layout/PageBackground";
 import { useWorkspaceIdentitySync } from '@/hooks/useWorkspaceIdentitySync';
@@ -135,7 +136,9 @@ const App = () => {
           <RoomProvider>
             <RoomHeaderProvider>
               <WheelHeaderProvider>
-                <AppContent />
+                <StandupHeaderProvider>
+                  <AppContent />
+                </StandupHeaderProvider>
               </WheelHeaderProvider>
             </RoomHeaderProvider>
           </RoomProvider>

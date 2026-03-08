@@ -2,7 +2,6 @@ import { useId, useMemo, useState, memo } from "react";
 import { Users, ChevronDown, ChevronUp, Crown, User } from "lucide-react";
 import { motion } from "framer-motion";
 
-import type { RoomData, RoomStats } from "@/types";
 import { getAvatarInfo, isAvatarUrl } from "@/utils/avatars";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -12,16 +11,40 @@ import { ScrollArea } from '@/components/ui';
 import { cn } from "@/lib/cn";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
+export interface ParticipantsListData {
+  users: string[];
+  moderator: string;
+  connectedUsers: Record<string, boolean>;
+  votes?: Record<string, string | number | null | undefined>;
+  showVotes: boolean;
+  settings: {
+    anonymousVotes: boolean;
+    hideParticipantNames?: boolean;
+  };
+  userAvatars?: Record<string, string>;
+  spectators?: string[];
+  votingCompletion?: {
+    completedCount: number;
+    totalCount: number;
+  };
+}
+
+export interface ParticipantsListStats {
+  votedUsers: number;
+}
+
 export type ParticipantsListProps = {
-  roomData: RoomData | null;
-  stats: RoomStats;
+  roomData: ParticipantsListData | null;
+  stats: ParticipantsListStats;
   name: string;
   className?: string;
   contentClassName?: string;
   isCompleted?: boolean;
+  hideProgress?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   onToggleSpectatorMode?: (isSpectator: boolean) => void;
+  progressLabel?: string;
 };
 
 type ParticipantItemProps = {
@@ -66,29 +89,27 @@ const ParticipantItem = memo(
         whileHover={{ scale: 1.01 }}
       >
         <div className="flex items-center space-x-3">
-          {userAvatar && (
-            <Avatar
-              className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
-                isConnected
-                  ? "border-emerald-300 dark:border-emerald-600"
-                  : "border-slate-200 dark:border-slate-600"
-              }`}
-              src={isAvatarUrl(userAvatar) ? userAvatar : undefined}
-              alt={user}
-              fallback={
-                avatarInfo && !isAvatarUrl(userAvatar) ? (
-                  <avatarInfo.Icon size={20} className={avatarInfo.color} />
-                ) : !isAvatarUrl(userAvatar) ? (
-                  <span className="text-lg">{userAvatar}</span>
-                ) : (
-                  <User className="h-4 w-4 text-slate-500 dark:text-slate-300" />
-                )
-              }
-            />
-          )}
+          <Avatar
+            className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
+              isConnected
+                ? 'border-emerald-300 dark:border-emerald-600'
+                : 'border-slate-200 dark:border-slate-600'
+            }`}
+            src={isAvatarUrl(userAvatar) ? userAvatar : undefined}
+            alt={user}
+            fallback={
+              avatarInfo && !isAvatarUrl(userAvatar) ? (
+                <avatarInfo.Icon size={20} className={avatarInfo.color} />
+              ) : userAvatar && !isAvatarUrl(userAvatar) ? (
+                <span className="text-lg">{userAvatar}</span>
+              ) : (
+                <User className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+              )
+            }
+          />
           <span
             className={`flex items-center gap-2 text-sm ${
-              user === currentUser ? "font-semibold" : ""
+              user === currentUser ? 'font-semibold' : ''
             }`}
           >
             {!hideParticipantNames && (
@@ -106,10 +127,10 @@ const ParticipantItem = memo(
         </div>
         {vote !== undefined && vote !== null && (
           <Badge
-            variant={showVotes ? "success" : "default"}
+            variant={showVotes ? 'success' : 'default'}
             className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
           >
-            {anonymousVotes && showVotes ? "✓" : showVotes ? vote : "✓"}
+            {anonymousVotes && showVotes ? '✓' : showVotes ? vote : '✓'}
           </Badge>
         )}
       </motion.li>
@@ -129,9 +150,13 @@ export const ParticipantsList = memo(function ParticipantsList({
   onToggleCollapse,
   onToggleSpectatorMode,
   isCompleted,
+  hideProgress = false,
+  progressLabel = 'Voting progress',
 }: ParticipantsListProps) {
   const totalParticipants = roomData?.users.length ?? 0;
   const votingCompletion = roomData?.votingCompletion;
+  const completedCount = votingCompletion?.completedCount ?? stats.votedUsers;
+  const progressTotal = votingCompletion?.totalCount ?? totalParticipants;
 
   const votingProgress = useMemo(() => {
     if (totalParticipants === 0) {
@@ -219,25 +244,23 @@ export const ParticipantsList = memo(function ParticipantsList({
         )}
       >
         <div className="space-y-3">
-          {!isCompleted ? (
+          {!isCompleted && !hideProgress ? (
             <div className="space-y-3">
               <div>
                 <div
                   id={progressLabelId}
                   className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
                 >
-                  <span>Voting progress</span>
+                  <span>{progressLabel}</span>
                   <span id={progressDescriptionId}>
-                    {votingCompletion
-                      ? `${votingCompletion.completedCount}/${votingCompletion.totalCount}`
-                      : `${stats.votedUsers}/${totalParticipants}`}
+                    {`${completedCount}/${progressTotal}`}
                   </span>
                 </div>
                 <Progress
                   value={votingProgress}
                   aria-labelledby={progressLabelId}
                   aria-describedby={progressDescriptionId}
-                  aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
+                  aria-valuetext={`${completedCount} of ${progressTotal} participants complete`}
                   data-testid="voting-progress-bar"
                 />
               </div>
@@ -267,7 +290,7 @@ export const ParticipantsList = memo(function ParticipantsList({
                 moderator={roomData.moderator}
                 userAvatar={roomData.userAvatars?.[user]}
                 isConnected={roomData.connectedUsers?.[user] ?? false}
-                vote={roomData.votes[user] ?? undefined}
+                vote={roomData.votes?.[user] ?? undefined}
                 showVotes={roomData.showVotes}
                 anonymousVotes={roomData.settings.anonymousVotes}
                 hideParticipantNames={roomData.settings.hideParticipantNames}

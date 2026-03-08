@@ -1,0 +1,129 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sprintjam-standup-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-07-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "placement": {
+    "mode": "smart"
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "ENABLE_STANDUP_RATE_LIMIT": "true"
+  },
+  "ratelimits": [
+    {
+      "name": "STANDUP_CREATE_RATE_LIMITER",
+      "namespace_id": "3001",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    },
+    {
+      "name": "STANDUP_JOIN_RATE_LIMITER",
+      "namespace_id": "3002",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
+      "name": "STANDUP_IP_RATE_LIMITER",
+      "namespace_id": "3003",
+      "simple": {
+        "limit": 30,
+        "period": 60
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "STANDUP_ROOM",
+        "class_name": "StandupRoom"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "type": "Text",
+      "globs": ["**/*.sql"],
+      "fallthrough": true
+    }
+  ],
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["StandupRoom"]
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false
+    }
+  },
+  "env": {
+    "development": {
+      "vars": {
+        "ENVIRONMENT": "development",
+        "ENABLE_STANDUP_RATE_LIMIT": "false"
+      },
+      "ratelimits": [],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "STANDUP_ROOM",
+            "class_name": "StandupRoom"
+          }
+        ]
+      }
+    },
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "ENABLE_STANDUP_RATE_LIMIT": "true"
+      },
+      "ratelimits": [
+        {
+          "name": "STANDUP_CREATE_RATE_LIMITER",
+          "namespace_id": "3001",
+          "simple": {
+            "limit": 5,
+            "period": 60
+          }
+        },
+        {
+          "name": "STANDUP_JOIN_RATE_LIMITER",
+          "namespace_id": "3002",
+          "simple": {
+            "limit": 10,
+            "period": 60
+          }
+        },
+        {
+          "name": "STANDUP_IP_RATE_LIMITER",
+          "namespace_id": "3003",
+          "simple": {
+            "limit": 30,
+            "period": 60
+          }
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "STANDUP_ROOM",
+            "class_name": "StandupRoom"
+          }
+        ]
+      }
+    }
+  }
+}

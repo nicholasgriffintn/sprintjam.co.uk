@@ -85,6 +85,10 @@ export function getWheelSessionToken(request: Request): string | null {
   return getCookieValue(request, "wheel_session");
 }
 
+export function getStandupSessionToken(request: Request): string | null {
+  return getCookieValue(request, "standup_session");
+}
+
 const ALLOWED_ORIGINS = [
   "https://sprintjam.co.uk",
   "https://staging.sprintjam.co.uk",

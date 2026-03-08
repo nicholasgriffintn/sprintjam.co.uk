@@ -23,6 +23,8 @@ export const WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws`;
 
 export const WHEEL_API_BASE_URL = API_BASE_URL;
 export const WHEEL_WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws/wheel`;
+export const STANDUP_API_BASE_URL = API_BASE_URL;
+export const STANDUP_WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws/standup`;
 
 export const SENTRY_DSN =
   import.meta.env.VITE_SENTRY_DSN ||
@@ -93,6 +95,7 @@ export const Z_INDEX = {
     room: 20,
     workspace: 50,
     wheel: 20,
+    standup: 20,
   },
   modal: 50,
   loading: 60,
