@@ -8,14 +8,12 @@ interface StandupSidebarProps {
   standupData: StandupData;
   currentUserName: string;
   isSocketConnected: boolean;
-  onPing: () => void;
 }
 
 export function StandupSidebar({
   standupData,
   currentUserName,
   isSocketConnected,
-  onPing,
 }: StandupSidebarProps) {
   const [isStatusCollapsed, setIsStatusCollapsed] = useState(false);
   const [isParticipantsCollapsed, setIsParticipantsCollapsed] = useState(false);
@@ -27,7 +25,6 @@ export function StandupSidebar({
           standupData={standupData}
           currentUserName={currentUserName}
           isSocketConnected={isSocketConnected}
-          onPing={onPing}
           isCollapsed={isStatusCollapsed}
           onToggleCollapse={() => setIsStatusCollapsed((prev) => !prev)}
         />

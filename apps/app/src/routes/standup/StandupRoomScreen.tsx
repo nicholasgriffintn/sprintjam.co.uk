@@ -77,7 +77,6 @@ function StandupRoomContent({
     handleEndPresentation,
     handleCompleteStandup,
     handleFocusUser,
-    handlePing,
   } = useStandupActions();
   const {
     setStandupKey,
@@ -241,7 +240,6 @@ function StandupRoomContent({
               standupData={standupData}
               currentUserName={userName}
               isSocketConnected={isSocketConnected}
-              onPing={handlePing}
             />
           </div>
         </div>

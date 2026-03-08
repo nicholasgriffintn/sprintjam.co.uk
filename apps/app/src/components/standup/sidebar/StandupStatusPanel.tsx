@@ -13,7 +13,6 @@ interface StandupStatusPanelProps {
   standupData: StandupData;
   currentUserName: string;
   isSocketConnected: boolean;
-  onPing: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -22,7 +21,6 @@ export function StandupStatusPanel({
   standupData,
   currentUserName,
   isSocketConnected,
-  onPing,
   isCollapsed,
   onToggleCollapse,
 }: StandupStatusPanelProps) {
@@ -135,10 +133,6 @@ export function StandupStatusPanel({
               </div>
             </div>
           </div>
-
-          <Button type="button" variant="secondary" size="sm" onClick={onPing}>
-            Ping room
-          </Button>
         </div>
       </ScrollArea>
     </SurfaceCard>
