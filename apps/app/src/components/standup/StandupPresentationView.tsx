@@ -1,13 +1,6 @@
 import { useEffect, useMemo } from "react";
 import type { StandupData } from "@sprintjam/types";
-import {
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Crosshair,
-  Play,
-  X,
-} from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Play, X } from 'lucide-react';
 
 import { StandupUserCard } from "@/components/standup/StandupUserCard";
 import { Badge } from "@/components/ui/Badge";
@@ -97,27 +90,11 @@ export function StandupPresentationView({
       <SurfaceCard className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="warning">
-                <Play className="mr-1 h-3 w-3" />
-                Presentation mode
-              </Badge>
-              <Badge variant="primary">
-                {activeIndex + 1}/{orderedResponses.length}
-              </Badge>
-              {standupData.focusedUser ? (
-                <Badge variant="info">
-                  <Crosshair className="mr-1 h-3 w-3" />
-                  {standupData.focusedUser}
-                </Badge>
-              ) : null}
-            </div>
             <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Walk the team through one update at a time
             </h2>
             <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-              Use next and previous to drive the call manually. Each card stays
-              large enough to share on screen without zooming in.
+              Use next and previous to drive the call manually.
             </p>
           </div>
 
@@ -125,14 +102,14 @@ export function StandupPresentationView({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => moveFocus("previous")}
+              onClick={() => moveFocus('previous')}
               icon={<ChevronLeft className="h-4 w-4" />}
             >
               Previous
             </Button>
             <Button
               size="sm"
-              onClick={() => moveFocus("next")}
+              onClick={() => moveFocus('next')}
               icon={<ChevronRight className="h-4 w-4" />}
               iconPosition="right"
             >
@@ -155,26 +132,6 @@ export function StandupPresentationView({
               Complete standup
             </Button>
           </div>
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {orderedResponses.map((response, index) => (
-            <button
-              key={response.userName}
-              type="button"
-              onClick={() => onFocusUser(response.userName)}
-              className={`rounded-[1.5rem] border px-4 py-3 text-left transition ${
-                index === activeIndex
-                  ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-brand-950/20 dark:text-brand-100"
-                  : "border-black/5 bg-white/70 text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
-              }`}
-            >
-              <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                {index === activeIndex ? "Live now" : `Up next ${index + 1}`}
-              </div>
-              <div className="mt-2 font-semibold">{response.userName}</div>
-            </button>
-          ))}
         </div>
       </SurfaceCard>
 
