@@ -49,13 +49,10 @@ export function StandupFacilitatorView({
     (user) => !standupData.respondedUsers.includes(user),
   );
   const averageHealth = orderedResponses.length
-    ? orderedResponses.reduce((sum, response) => sum + response.healthCheck, 0) /
-      orderedResponses.length
-    : 0;
-  const progressPercent = standupData.users.length
-    ? Math.round(
-        (standupData.respondedUsers.length / standupData.users.length) * 100,
-      )
+    ? orderedResponses.reduce(
+        (sum, response) => sum + response.healthCheck,
+        0,
+      ) / orderedResponses.length
     : 0;
   const distribution = HEALTH_SCALE.map((value) => ({
     value,
@@ -67,30 +64,23 @@ export function StandupFacilitatorView({
   return (
     <div className="space-y-6">
       <SurfaceCard className="space-y-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+              Results
+            </h2>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="warning">
-                <Users className="mr-1 h-3 w-3" />
-                Facilitator view
-              </Badge>
               <Badge variant="primary">
-                {standupData.respondedUsers.length}/{standupData.users.length} submitted
+                {standupData.respondedUsers.length}/{standupData.users.length}{' '}
+                submitted
               </Badge>
               {blockers.length ? (
                 <Badge variant="error">
                   <AlertTriangle className="mr-1 h-3 w-3" />
-                  {blockers.length} blocker{blockers.length === 1 ? "" : "s"}
+                  {blockers.length} blocker{blockers.length === 1 ? '' : 's'}
                 </Badge>
               ) : null}
             </div>
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-              Run the room from one screen
-            </h2>
-            <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-              Track submissions, spot blocked work, and pre-select the next
-              person before you move into presentation mode.
-            </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -99,24 +89,28 @@ export function StandupFacilitatorView({
               size="sm"
               disabled={!isSocketConnected || isCompleted}
               onClick={
-                standupData.status === "locked"
+                standupData.status === 'locked'
                   ? onUnlockResponses
                   : onLockResponses
               }
               icon={
-                standupData.status === "locked" ? (
+                standupData.status === 'locked' ? (
                   <LockOpen className="h-4 w-4" />
                 ) : (
                   <Lock className="h-4 w-4" />
                 )
               }
             >
-              {standupData.status === "locked" ? "Unlock responses" : "Lock responses"}
+              {standupData.status === 'locked'
+                ? 'Unlock responses'
+                : 'Lock responses'}
             </Button>
             <Button
               size="sm"
               disabled={
-                !isSocketConnected || orderedResponses.length === 0 || isCompleted
+                !isSocketConnected ||
+                orderedResponses.length === 0 ||
+                isCompleted
               }
               onClick={onStartPresentation}
               icon={<Play className="h-4 w-4" />}
@@ -125,7 +119,7 @@ export function StandupFacilitatorView({
             </Button>
             <Button
               size="sm"
-              variant={isCompleted ? "secondary" : "primary"}
+              variant={isCompleted ? 'secondary' : 'primary'}
               disabled={!isSocketConnected || isCompleted}
               isLoading={isCompletingStandup}
               onClick={onCompleteStandup}
@@ -143,32 +137,20 @@ export function StandupFacilitatorView({
           </div>
         ) : null}
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3 text-sm text-slate-600 dark:text-slate-300">
-            <span>{progressPercent}% complete</span>
-            <span>
-              {standupData.respondedUsers.length}/{standupData.users.length} updates
-            </span>
-          </div>
-          <div className="h-3 rounded-full bg-slate-200/80 dark:bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-500 via-brand-500 to-sky-500 transition-[width]"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-        </div>
-
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
             <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
               Average health
             </div>
             <div className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
-              {orderedResponses.length ? averageHealth.toFixed(1) : "--"}
+              {orderedResponses.length ? averageHealth.toFixed(1) : '--'}
             </div>
             <div className="mt-3 space-y-2">
               {distribution.map((item) => (
-                <div key={item.value} className="flex items-center gap-3 text-sm">
+                <div
+                  key={item.value}
+                  className="flex items-center gap-3 text-sm"
+                >
                   <span className="w-3 text-slate-500 dark:text-slate-400">
                     {item.value}
                   </span>
@@ -178,7 +160,7 @@ export function StandupFacilitatorView({
                       style={{
                         width: orderedResponses.length
                           ? `${(item.count / orderedResponses.length) * 100}%`
-                          : "0%",
+                          : '0%',
                       }}
                     />
                   </div>
@@ -203,7 +185,7 @@ export function StandupFacilitatorView({
                   >
                     <span className="font-semibold">{response.userName}</span>
                     <span className="ml-2">
-                      {response.blockerDescription || "Needs follow-up"}
+                      {response.blockerDescription || 'Needs follow-up'}
                     </span>
                   </div>
                 ))}
@@ -258,8 +240,7 @@ export function StandupFacilitatorView({
             No responses yet
           </h3>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            As people submit, their cards will appear here with blockers and
-            health signals ready for the call.
+            Submitted updates will appear here.
           </p>
         </SurfaceCard>
       )}

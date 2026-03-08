@@ -128,7 +128,7 @@ export function StandupResponseForm({
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="warning">
             <ClipboardList className="mr-1 h-3 w-3" />
-            Your update
+            Response
           </Badge>
           {response ? (
             <Badge variant="success">
@@ -144,12 +144,8 @@ export function StandupResponseForm({
           ) : null}
         </div>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Yesterday, today, blockers
+          Your response
         </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          Write the standup version of your day. Keep it short enough to read on
-          a call and concrete enough to unblock quickly.
-        </p>
       </div>
 
       {isCompleted ? (
@@ -284,7 +280,7 @@ export function StandupResponseForm({
                 }))
               }
               rows={4}
-              placeholder="Wrap up what moved forward yesterday."
+              placeholder="What moved forward yesterday?"
               className="w-full rounded-[1.75rem] border border-white/50 bg-white/80 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
               disabled={!isSocketConnected || isReadOnly}
             />
@@ -307,7 +303,7 @@ export function StandupResponseForm({
                 }))
               }
               rows={4}
-              placeholder="Name the next meaningful slice of work."
+              placeholder="What are you doing today?"
               className="w-full rounded-[1.75rem] border border-white/50 bg-white/80 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
               disabled={!isSocketConnected || isReadOnly}
             />
@@ -390,13 +386,13 @@ export function StandupResponseForm({
                   }))
                 }
                 rows={3}
-                placeholder="Describe the dependency, risk, or decision you need."
+                placeholder="What is blocked and what help do you need?"
                 className="w-full rounded-[1.5rem] border border-rose-200/80 bg-white/90 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-rose-300 focus:ring-2 focus:ring-rose-200 dark:border-rose-400/20 dark:bg-slate-950/60 dark:text-white"
                 disabled={!isSocketConnected || isReadOnly}
               />
             ) : (
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Leave this off unless you need attention from the group.
+                Leave this off unless you need help from the team.
               </p>
             )}
           </section>
