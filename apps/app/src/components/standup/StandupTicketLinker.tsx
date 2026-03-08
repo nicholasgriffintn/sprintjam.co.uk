@@ -257,16 +257,6 @@ export function StandupTicketLinker({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="info">
-          <LinkIcon className="mr-1 h-3 w-3" />
-          Workspace ticket linking
-        </Badge>
-        {linkedTickets.length ? (
-          <Badge variant="success">{linkedTickets.length} linked</Badge>
-        ) : null}
-      </div>
-
       <div className="space-y-2">
         <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
           Link relevant tickets
@@ -275,6 +265,11 @@ export function StandupTicketLinker({
           Pull tickets from your team integrations so the facilitator can jump
           from the update straight into the work item.
         </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {linkedTickets.length ? (
+            <Badge variant="success">{linkedTickets.length} linked</Badge>
+          ) : null}
+        </div>
       </div>
 
       {integrationsQuery.isLoading ? (
@@ -316,10 +311,10 @@ export function StandupTicketLinker({
                   disabled={disabled}
                   data-active={provider === activeProvider}
                   className={cn(
-                    "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition",
-                    "border-black/5 bg-white/80 text-slate-600 hover:border-brand-200 hover:text-slate-900 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200 dark:hover:text-white",
+                    'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition',
+                    'border-black/5 bg-white/80 text-slate-600 hover:border-brand-200 hover:text-slate-900 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200 dark:hover:text-white',
                     providerConfig.tabClassName,
-                    disabled && "cursor-not-allowed opacity-60",
+                    disabled && 'cursor-not-allowed opacity-60',
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -339,10 +334,10 @@ export function StandupTicketLinker({
                   label: boardsQuery.isLoading
                     ? `Loading ${config.boardLabel.toLowerCase()}s...`
                     : `Select ${config.boardLabel}`,
-                  value: "",
+                  value: '',
                 },
                 ...boards.map((board) => ({
-                  label: `${board.name}${board.key ? ` (${board.key})` : ""}`,
+                  label: `${board.name}${board.key ? ` (${board.key})` : ''}`,
                   value: board.id,
                 })),
               ]}
@@ -359,10 +354,10 @@ export function StandupTicketLinker({
               options={[
                 {
                   label: `Select ${config.sprintLabel} (optional)`,
-                  value: "",
+                  value: '',
                 },
                 ...sprints.map((sprint) => ({
-                  label: `${sprint.name}${sprint.state ? ` (${sprint.state})` : ""}`,
+                  label: `${sprint.name}${sprint.state ? ` (${sprint.state})` : ''}`,
                   value: sprint.id,
                 })),
               ]}
@@ -398,7 +393,7 @@ export function StandupTicketLinker({
                 </div>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   {selectedBoardId
-                    ? "Search within the selected source and link the items that matter for today."
+                    ? 'Search within the selected source and link the items that matter for today.'
                     : `Choose a ${config.boardLabel.toLowerCase()} to load results.`}
                 </p>
               </div>
@@ -455,11 +450,11 @@ export function StandupTicketLinker({
                         ) : null}
                         <Button
                           size="sm"
-                          variant={linked ? "secondary" : "primary"}
+                          variant={linked ? 'secondary' : 'primary'}
                           onClick={() => addTicket(ticket)}
                           disabled={disabled || linked}
                         >
-                          {linked ? "Linked" : "Link"}
+                          {linked ? 'Linked' : 'Link'}
                         </Button>
                       </div>
                     </div>

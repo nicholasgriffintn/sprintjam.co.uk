@@ -8,13 +8,14 @@ import type {
 import {
   AlertTriangle,
   CheckCircle2,
-  ClipboardList,
   HeartPulse,
   Link as LinkIcon,
   Lock,
   Pencil,
   Save,
-} from "lucide-react";
+  History,
+  Calendar,
+} from 'lucide-react';
 
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
@@ -35,7 +36,7 @@ interface StandupResponseFormProps {
 interface DraftState {
   yesterday: string;
   today: string;
-  hasBlocker: boolean;
+  hasBlocker: boolean | null;
   blockerDescription: string;
   healthCheck: number;
   linkedTickets: LinkedTicket[];
@@ -51,10 +52,10 @@ const HEALTH_OPTIONS = [
 
 function getDraftState(response?: StandupResponse): DraftState {
   return {
-    yesterday: response?.yesterday ?? "",
-    today: response?.today ?? "",
-    hasBlocker: response?.hasBlocker ?? false,
-    blockerDescription: response?.blockerDescription ?? "",
+    yesterday: response?.yesterday ?? '',
+    today: response?.today ?? '',
+    hasBlocker: response?.hasBlocker ?? null,
+    blockerDescription: response?.blockerDescription ?? '',
     healthCheck: response?.healthCheck ?? 3,
     linkedTickets: response?.linkedTickets ?? [],
   };
@@ -93,10 +94,12 @@ export function StandupResponseForm({
   const isCompleted = status === "completed";
   const isLocked = status === "locked" && !isModeratorView;
   const isReadOnly = isCompleted || isLocked;
+  const blockerAnswer = draft.blockerDescription.trim();
   const formInvalid =
     draft.yesterday.trim().length === 0 ||
     draft.today.trim().length === 0 ||
-    (draft.hasBlocker && draft.blockerDescription.trim().length === 0);
+    draft.hasBlocker === null ||
+    (draft.hasBlocker && blockerAnswer.length === 0);
   const isSubmitDisabled = !isSocketConnected || isReadOnly || formInvalid;
   const showReadOnly = !!response && !isEditing;
 
@@ -106,14 +109,15 @@ export function StandupResponseForm({
     if (isSubmitDisabled) {
       return;
     }
+    if (draft.hasBlocker === null) {
+      return;
+    }
 
     onSubmit({
       yesterday: draft.yesterday.trim(),
       today: draft.today.trim(),
       hasBlocker: draft.hasBlocker,
-      blockerDescription: draft.hasBlocker
-        ? draft.blockerDescription.trim()
-        : undefined,
+      blockerDescription: draft.hasBlocker ? blockerAnswer : undefined,
       healthCheck: draft.healthCheck,
       linkedTickets:
         draft.linkedTickets.length > 0 ? draft.linkedTickets : undefined,
@@ -125,11 +129,10 @@ export function StandupResponseForm({
   return (
     <SurfaceCard className="space-y-5">
       <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          Your response
+        </h2>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="warning">
-            <ClipboardList className="mr-1 h-3 w-3" />
-            Response
-          </Badge>
           {response ? (
             <Badge variant="success">
               <CheckCircle2 className="mr-1 h-3 w-3" />
@@ -143,9 +146,6 @@ export function StandupResponseForm({
             </Badge>
           ) : null}
         </div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-          Your response
-        </h2>
       </div>
 
       {isCompleted ? (
@@ -193,39 +193,40 @@ export function StandupResponseForm({
             </div>
             <p className="mt-2 text-sm text-slate-700 dark:text-slate-200">
               {
-                HEALTH_OPTIONS.find((option) => option.value === draft.healthCheck)
-                  ?.copy
+                HEALTH_OPTIONS.find(
+                  (option) => option.value === draft.healthCheck,
+                )?.copy
               }
             </p>
           </div>
 
           <div
             className={cn(
-              "rounded-[1.75rem] border p-4",
+              'rounded-[1.75rem] border p-4',
               draft.hasBlocker
-                ? "border-rose-200/80 bg-rose-50/90 dark:border-rose-400/20 dark:bg-rose-950/20"
-                : "border-black/5 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]",
+                ? 'border-rose-200/80 bg-rose-50/90 dark:border-rose-400/20 dark:bg-rose-950/20'
+                : 'border-black/5 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]',
             )}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
                 Blockers
               </div>
-              <Badge variant={draft.hasBlocker ? "error" : "success"}>
-                {draft.hasBlocker ? "Needs help" : "Clear path"}
+              <Badge variant={draft.hasBlocker ? 'error' : 'success'}>
+                {draft.hasBlocker ? 'Needs help' : 'Clear path'}
               </Badge>
             </div>
             <p
               className={cn(
-                "mt-2 whitespace-pre-wrap text-sm leading-6",
+                'mt-2 whitespace-pre-wrap text-sm leading-6',
                 draft.hasBlocker
-                  ? "text-rose-800 dark:text-rose-100"
-                  : "text-slate-700 dark:text-slate-200",
+                  ? 'text-rose-800 dark:text-rose-100'
+                  : 'text-slate-700 dark:text-slate-200',
               )}
             >
               {draft.hasBlocker
                 ? draft.blockerDescription
-                : "No blockers flagged."}
+                : 'No blockers shared.'}
             </p>
           </div>
 
@@ -266,7 +267,7 @@ export function StandupResponseForm({
           <section className="space-y-2">
             <label
               htmlFor="standup-yesterday"
-              className="text-sm font-semibold text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
             >
               Yesterday
             </label>
@@ -289,7 +290,7 @@ export function StandupResponseForm({
           <section className="space-y-2">
             <label
               htmlFor="standup-today"
-              className="text-sm font-semibold text-slate-700 dark:text-slate-200"
+              className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
             >
               Today
             </label>
@@ -309,9 +310,74 @@ export function StandupResponseForm({
             />
           </section>
 
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Blockers
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft((current) => ({
+                    ...current,
+                    hasBlocker: false,
+                    blockerDescription: '',
+                  }))
+                }
+                className={cn(
+                  'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
+                  !draft.hasBlocker
+                    ? 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200',
+                )}
+                disabled={!isSocketConnected || isReadOnly}
+              >
+                No blockers
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft((current) => ({
+                    ...current,
+                    hasBlocker: true,
+                  }))
+                }
+                className={cn(
+                  'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
+                  draft.hasBlocker
+                    ? 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200',
+                )}
+                disabled={!isSocketConnected || isReadOnly}
+              >
+                I have blockers
+              </button>
+            </div>
+            {draft.hasBlocker === null ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Select one option.
+              </p>
+            ) : null}
+            {draft.hasBlocker ? (
+              <textarea
+                id="standup-blocker"
+                value={draft.blockerDescription}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    blockerDescription: event.target.value,
+                  }))
+                }
+                rows={3}
+                placeholder="What is blocked and what help do you need?"
+                className="w-full rounded-[1.5rem] border border-rose-200/80 bg-white/90 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-rose-300 focus:ring-2 focus:ring-rose-200 dark:border-rose-400/20 dark:bg-slate-950/60 dark:text-white"
+                disabled={!isSocketConnected || isReadOnly}
+              />
+            ) : null}
+          </section>
+
           <section className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              <HeartPulse className="h-4 w-4" />
               Health check
             </div>
             <div className="grid grid-cols-5 gap-2">
@@ -346,57 +412,6 @@ export function StandupResponseForm({
             </div>
           </section>
 
-          <section className="space-y-3 rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                <AlertTriangle className="h-4 w-4" />
-                Blockers
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  setDraft((current) => ({
-                    ...current,
-                    hasBlocker: !current.hasBlocker,
-                    blockerDescription: current.hasBlocker
-                      ? ""
-                      : current.blockerDescription,
-                  }))
-                }
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs font-semibold transition",
-                  draft.hasBlocker
-                    ? "bg-rose-500 text-white"
-                    : "bg-slate-200/80 text-slate-700 dark:bg-white/10 dark:text-slate-200",
-                )}
-                disabled={!isSocketConnected || isReadOnly}
-              >
-                {draft.hasBlocker ? "Blocker flagged" : "No blocker"}
-              </button>
-            </div>
-
-            {draft.hasBlocker ? (
-              <textarea
-                id="standup-blocker"
-                value={draft.blockerDescription}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    blockerDescription: event.target.value,
-                  }))
-                }
-                rows={3}
-                placeholder="What is blocked and what help do you need?"
-                className="w-full rounded-[1.5rem] border border-rose-200/80 bg-white/90 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-rose-300 focus:ring-2 focus:ring-rose-200 dark:border-rose-400/20 dark:bg-slate-950/60 dark:text-white"
-                disabled={!isSocketConnected || isReadOnly}
-              />
-            ) : (
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Leave this off unless you need help from the team.
-              </p>
-            )}
-          </section>
-
           {teamId ? (
             <StandupTicketLinker
               teamId={teamId}
@@ -417,7 +432,7 @@ export function StandupResponseForm({
             disabled={isSubmitDisabled}
             icon={<Save className="h-4 w-4" />}
           >
-            {response ? "Save changes" : "Save update"}
+            {response ? 'Save changes' : 'Save update'}
           </Button>
         </form>
       )}
