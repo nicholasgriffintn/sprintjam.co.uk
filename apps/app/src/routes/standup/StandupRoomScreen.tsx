@@ -240,6 +240,8 @@ function StandupRoomContent({
             <StandupSidebar
               standupData={standupData}
               currentUserName={userName}
+              isSocketConnected={isSocketConnected}
+              onPing={handlePing}
             />
           </div>
         </div>
@@ -312,58 +314,6 @@ function StandupRoomContent({
           {standupError ? (
             <Alert variant="warning">{standupError}</Alert>
           ) : null}
-
-          <SurfaceCard className="space-y-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                  Live room status
-                </h2>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                  Your update stays private. The team can only see who has
-                  submitted, not what they wrote.
-                </p>
-              </div>
-              <Button variant="secondary" size="sm" onClick={handlePing}>
-                Ping room
-              </Button>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Submission progress
-                </div>
-                <div className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
-                  {standupData.respondedUsers.length}/{standupData.users.length}
-                </div>
-                <div className="mt-3 h-2 rounded-full bg-slate-200/80 dark:bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-amber-500 via-brand-500 to-sky-500"
-                    style={{
-                      width: standupData.users.length
-                        ? `${(standupData.respondedUsers.length / standupData.users.length) * 100}%`
-                        : '0%',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Your state
-                </div>
-                <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-                  {yourResponse ? 'Saved' : 'Waiting'}
-                </div>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                  {yourResponse
-                    ? 'The facilitator has your latest update.'
-                    : 'Join status is already visible while you prepare your response.'}
-                </p>
-              </div>
-            </div>
-          </SurfaceCard>
 
           {isPresentationMode ? (
             <StandupPresentationView

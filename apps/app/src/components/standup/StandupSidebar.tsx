@@ -1,58 +1,52 @@
-import { useMemo } from "react";
-import type { StandupData } from "@sprintjam/types";
+import { useState } from 'react';
+import type { StandupData } from '@sprintjam/types';
 
-import {
-  ParticipantsList,
-  type ParticipantsListData,
-} from "@/components/layout/RoomSidebar/ParticipantsList";
+import { StandupParticipantsPanel } from '@/components/standup/sidebar/StandupParticipantsPanel';
+import { StandupStatusPanel } from '@/components/standup/sidebar/StandupStatusPanel';
 
 interface StandupSidebarProps {
   standupData: StandupData;
   currentUserName: string;
+  isSocketConnected: boolean;
+  onPing: () => void;
 }
 
 export function StandupSidebar({
   standupData,
   currentUserName,
+  isSocketConnected,
+  onPing,
 }: StandupSidebarProps) {
-  const listData = useMemo<ParticipantsListData>(() => {
-    const respondedUsers = new Set(standupData.respondedUsers);
-    const votes = standupData.users.reduce<Record<string, string | undefined>>(
-      (acc, user) => {
-        acc[user] = respondedUsers.has(user) ? "submitted" : undefined;
-        return acc;
-      },
-      {},
-    );
-
-    return {
-      users: standupData.users,
-      moderator: standupData.moderator,
-      connectedUsers: standupData.connectedUsers,
-      votes,
-      // Show a neutral checkmark to indicate who submitted without exposing content.
-      showVotes: true,
-      settings: {
-        anonymousVotes: true,
-        hideParticipantNames: false,
-      },
-      userAvatars: standupData.userAvatars,
-      spectators: [],
-      votingCompletion: {
-        completedCount: standupData.respondedUsers.length,
-        totalCount: standupData.users.length,
-      },
-    };
-  }, [standupData]);
+  const [isStatusCollapsed, setIsStatusCollapsed] = useState(false);
+  const [isParticipantsCollapsed, setIsParticipantsCollapsed] = useState(false);
 
   return (
-    <ParticipantsList
-      roomData={listData}
-      stats={{ votedUsers: standupData.respondedUsers.length }}
-      name={currentUserName}
-      isCompleted={standupData.status === "completed"}
-      progressLabel="Submission progress"
-      className="h-full"
-    />
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex min-w-0 flex-col">
+        <StandupStatusPanel
+          standupData={standupData}
+          currentUserName={currentUserName}
+          isSocketConnected={isSocketConnected}
+          onPing={onPing}
+          isCollapsed={isStatusCollapsed}
+          onToggleCollapse={() => setIsStatusCollapsed((prev) => !prev)}
+        />
+      </div>
+
+      <div
+        className={`flex min-w-0 flex-col md:min-h-0 ${
+          isParticipantsCollapsed
+            ? 'md:min-h-[54px]'
+            : 'flex-1 md:min-h-[220px]'
+        }`}
+      >
+        <StandupParticipantsPanel
+          standupData={standupData}
+          currentUserName={currentUserName}
+          isCollapsed={isParticipantsCollapsed}
+          onToggleCollapse={() => setIsParticipantsCollapsed((prev) => !prev)}
+        />
+      </div>
+    </div>
   );
 }

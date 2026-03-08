@@ -40,6 +40,7 @@ export type ParticipantsListProps = {
   className?: string;
   contentClassName?: string;
   isCompleted?: boolean;
+  hideProgress?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   onToggleSpectatorMode?: (isSpectator: boolean) => void;
@@ -149,6 +150,7 @@ export const ParticipantsList = memo(function ParticipantsList({
   onToggleCollapse,
   onToggleSpectatorMode,
   isCompleted,
+  hideProgress = false,
   progressLabel = 'Voting progress',
 }: ParticipantsListProps) {
   const totalParticipants = roomData?.users.length ?? 0;
@@ -242,7 +244,7 @@ export const ParticipantsList = memo(function ParticipantsList({
         )}
       >
         <div className="space-y-3">
-          {!isCompleted ? (
+          {!isCompleted && !hideProgress ? (
             <div className="space-y-3">
               <div>
                 <div
