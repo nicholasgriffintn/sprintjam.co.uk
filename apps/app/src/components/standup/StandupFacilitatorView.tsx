@@ -5,7 +5,6 @@ import {
   Lock,
   LockOpen,
   Play,
-  Users,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -222,17 +221,25 @@ export function StandupFacilitatorView({
       </SurfaceCard>
 
       {orderedResponses.length ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          {orderedResponses.map((response) => (
-            <StandupUserCard
-              key={response.userName}
-              response={response}
-              avatar={standupData.userAvatars?.[response.userName]}
-              isFocused={standupData.focusedUser === response.userName}
-              canFocus
-              onFocus={onFocusUser}
-            />
-          ))}
+        <div className="space-y-3">
+          {!isCompleted ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Use <span className="font-semibold">Set first</span> to pick who
+              starts when presentation begins.
+            </p>
+          ) : null}
+          <div className="grid gap-4 xl:grid-cols-2">
+            {orderedResponses.map((response) => (
+              <StandupUserCard
+                key={response.userName}
+                response={response}
+                avatar={standupData.userAvatars?.[response.userName]}
+                isFocused={standupData.focusedUser === response.userName}
+                canFocus={!isCompleted}
+                onFocus={onFocusUser}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <SurfaceCard className="py-10 text-center">
