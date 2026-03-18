@@ -1,6 +1,13 @@
 import { useEffect, useMemo } from "react";
 import type { StandupData } from "@sprintjam/types";
-import { CheckCircle2, ChevronLeft, ChevronRight, Play, X } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Play,
+  X,
+} from 'lucide-react';
 
 import { StandupUserCard } from "@/components/standup/StandupUserCard";
 import { Badge } from "@/components/ui/Badge";
@@ -33,6 +40,11 @@ export function StandupPresentationView({
         (userOrder.get(right.userName) ?? Number.MAX_SAFE_INTEGER),
     );
   }, [standupData.responses, standupData.users]);
+  const averageHealth = orderedResponses.length
+    ? orderedResponses.reduce((sum, r) => sum + r.healthCheck, 0) /
+      orderedResponses.length
+    : null;
+
   const focusedIndex = orderedResponses.findIndex(
     (response) => response.userName === standupData.focusedUser,
   );
@@ -90,24 +102,41 @@ export function StandupPresentationView({
             <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Walk the team through one update at a time
             </h2>
-            <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-              {activeIndex + 1} of {orderedResponses.length} —{" "}
-              {activeResponse.userName}
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge variant="default" className="gap-1">
+                {activeIndex + 1} of {orderedResponses.length} —{' '}
+                {activeResponse.userName}
+              </Badge>
+              {averageHealth !== null ? (
+                <Badge
+                  variant={
+                    averageHealth >= 4
+                      ? 'success'
+                      : averageHealth >= 2
+                        ? 'warning'
+                        : 'error'
+                  }
+                  className="gap-1"
+                >
+                  <Heart className="h-3 w-3" />
+                  Avg. health {averageHealth.toFixed(1)}/5
+                </Badge>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => moveFocus("previous")}
+              onClick={() => moveFocus('previous')}
               icon={<ChevronLeft className="h-4 w-4" />}
             >
               Previous
             </Button>
             <Button
               size="sm"
-              onClick={() => moveFocus("next")}
+              onClick={() => moveFocus('next')}
               icon={<ChevronRight className="h-4 w-4" />}
               iconPosition="right"
             >
