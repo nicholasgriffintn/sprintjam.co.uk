@@ -410,8 +410,9 @@ export class StandupRoomRepository {
       hasBlocker: !!row.hasBlocker,
       blockerDescription: row.blockerDescription ?? undefined,
       healthCheck: row.healthCheck,
-      linkedTickets:
-        safeJsonParse<LinkedTicket[]>(row.linkedTickets ?? "") ?? undefined,
+      linkedTickets: row.linkedTickets
+        ? (safeJsonParse<LinkedTicket[]>(row.linkedTickets) ?? undefined)
+        : undefined,
       kudos: row.kudos ?? undefined,
       icebreakerAnswer: row.icebreakerAnswer ?? undefined,
       submittedAt: row.submittedAt,
