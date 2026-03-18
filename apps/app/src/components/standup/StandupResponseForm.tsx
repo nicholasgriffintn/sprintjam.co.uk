@@ -14,14 +14,13 @@ import {
   Pencil,
   Save,
   Sparkles,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { getIcebreakerQuestion } from '@/lib/icebreaker-questions';
+import { getIcebreakerQuestion } from "@/lib/icebreaker-questions";
 
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { StandupTicketLinker } from "@/components/standup/StandupTicketLinker";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Textarea } from "@/components/ui/Textarea";
 import { cn } from "@/lib/cn";
@@ -56,14 +55,14 @@ const HEALTH_OPTIONS = [
 
 function getDraftState(response?: StandupResponse): DraftState {
   return {
-    yesterday: response?.yesterday ?? '',
-    today: response?.today ?? '',
+    yesterday: response?.yesterday ?? "",
+    today: response?.today ?? "",
     hasBlocker: response?.hasBlocker ?? null,
-    blockerDescription: response?.blockerDescription ?? '',
+    blockerDescription: response?.blockerDescription ?? "",
     healthCheck: response?.healthCheck ?? 3,
     linkedTickets: response?.linkedTickets ?? [],
-    kudos: response?.kudos ?? '',
-    icebreakerAnswer: response?.icebreakerAnswer ?? '',
+    kudos: response?.kudos ?? "",
+    icebreakerAnswer: response?.icebreakerAnswer ?? "",
   };
 }
 
@@ -77,7 +76,6 @@ function formatTime(timestamp: number) {
 export function StandupResponseForm({
   response,
   status,
-  teamId,
   isModeratorView,
   isSocketConnected,
   onSubmit,
@@ -213,31 +211,31 @@ export function StandupResponseForm({
 
           <div
             className={cn(
-              'rounded-[1.75rem] border p-4',
+              "rounded-[1.75rem] border p-4",
               draft.hasBlocker
-                ? 'border-rose-200/80 bg-rose-50/90 dark:border-rose-400/20 dark:bg-rose-950/20'
-                : 'border-black/5 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]',
+                ? "border-rose-200/80 bg-rose-50/90 dark:border-rose-400/20 dark:bg-rose-950/20"
+                : "border-black/5 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]",
             )}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
                 Blockers
               </div>
-              <Badge variant={draft.hasBlocker ? 'error' : 'success'}>
-                {draft.hasBlocker ? 'Needs help' : 'Clear path'}
+              <Badge variant={draft.hasBlocker ? "error" : "success"}>
+                {draft.hasBlocker ? "Needs help" : "Clear path"}
               </Badge>
             </div>
             <p
               className={cn(
-                'mt-2 whitespace-pre-wrap text-sm leading-6',
+                "mt-2 whitespace-pre-wrap text-sm leading-6",
                 draft.hasBlocker
-                  ? 'text-rose-800 dark:text-rose-100'
-                  : 'text-slate-700 dark:text-slate-200',
+                  ? "text-rose-800 dark:text-rose-100"
+                  : "text-slate-700 dark:text-slate-200",
               )}
             >
               {draft.hasBlocker
                 ? draft.blockerDescription
-                : 'No blockers shared.'}
+                : "No blockers shared."}
             </p>
           </div>
 
@@ -346,14 +344,14 @@ export function StandupResponseForm({
                   setDraft((current) => ({
                     ...current,
                     hasBlocker: false,
-                    blockerDescription: '',
+                    blockerDescription: "",
                   }))
                 }
                 className={cn(
-                  'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
+                  "rounded-xl border px-4 py-2.5 text-sm font-medium transition",
                   draft.hasBlocker === false
-                    ? 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200',
+                    ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200",
                 )}
                 disabled={!isSocketConnected || isReadOnly}
               >
@@ -368,10 +366,10 @@ export function StandupResponseForm({
                   }))
                 }
                 className={cn(
-                  'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
+                  "rounded-xl border px-4 py-2.5 text-sm font-medium transition",
                   draft.hasBlocker
-                    ? 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200',
+                    ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200",
                 )}
                 disabled={!isSocketConnected || isReadOnly}
               >
@@ -473,10 +471,10 @@ export function StandupResponseForm({
                       }))
                     }
                     className={cn(
-                      'rounded-xl px-3 py-3 text-center transition',
+                      "rounded-xl px-3 py-3 text-center transition",
                       isSelected
-                        ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-800 dark:text-white'
-                        : 'border border-slate-200/60 text-slate-500 hover:text-slate-700 dark:border-white/10 dark:text-slate-400 dark:hover:text-slate-200',
+                        ? "bg-white shadow-sm text-slate-900 dark:bg-slate-800 dark:text-white"
+                        : "border border-slate-200/60 text-slate-500 hover:text-slate-700 dark:border-white/10 dark:text-slate-400 dark:hover:text-slate-200",
                     )}
                     disabled={!isSocketConnected || isReadOnly}
                   >
@@ -511,7 +509,7 @@ export function StandupResponseForm({
             isLoading={isSubmitting}
             icon={<Save className="h-4 w-4" />}
           >
-            {response ? 'Save changes' : 'Save update'}
+            {response ? "Save changes" : "Save update"}
           </Button>
         </form>
       )}

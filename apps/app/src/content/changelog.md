@@ -1,3 +1,7 @@
+## V4
+
+- Added a new Standups feature that allows teams to run asynchronous standup meetings. Attendees will be able to submit what they did yesterday, what they're doing today, any blockers they have and a health check on how they're feeling. They can also answer icebreaker questions, provide kudos to their teammates and react to other responses with emojis.
+
 ## V3.5
 
 - Added restricted teams so that users must be explicitly added or approved by a team admin before they can access that team or create sessions in it.
