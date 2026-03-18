@@ -1,7 +1,7 @@
-import type { RoomGameSession } from '@sprintjam/types';
+import type { RoomGameSession } from "@sprintjam/types";
 
-import type { GameEngine } from '../types';
-import { addEvent, addPoints } from '../helpers';
+import type { GameEngine } from "../types";
+import { addEvent, addPoints } from "../helpers";
 
 const TURNS_PER_PLAYER = 3;
 const DICE_COUNT = 6;
@@ -40,6 +40,26 @@ export const scoreDice = (dice: number[]): number => {
     }
   }
   return score;
+};
+
+export const isValidFarkleKeep = (dice: number[]): boolean => {
+  if (dice.length === 0) return false;
+
+  const counts: Record<number, number> = {};
+  for (const d of dice) counts[d] = (counts[d] ?? 0) + 1;
+
+  // 6-dice special combos: every die is part of the combo
+  if (dice.length === 6) {
+    if (Object.keys(counts).length === 6) return true; // straight
+    if (Object.values(counts).every((c) => c === 2)) return true; // three pairs
+  }
+
+  // Every die must either be a 1, a 5, or part of a three-or-more-of-a-kind
+  for (const [faceStr, count] of Object.entries(counts)) {
+    const face = Number(faceStr);
+    if (count < 3 && face !== 1 && face !== 5) return false;
+  }
+  return true;
 };
 
 const hasScoringDice = (dice: number[]): boolean => {
@@ -86,7 +106,7 @@ const advanceTurn = (session: RoomGameSession) => {
   session.sprintRiskDice = Array(DICE_COUNT).fill(null);
   session.sprintRiskKeptIndices = [];
   session.sprintRiskTurnScore = 0;
-  session.sprintRiskPhase = 'waiting';
+  session.sprintRiskPhase = "waiting";
 };
 
 const checkGameOver = (session: RoomGameSession): boolean => {
@@ -97,12 +117,12 @@ const checkGameOver = (session: RoomGameSession): boolean => {
 };
 
 export const sprintRiskEngine: GameEngine = {
-  title: 'Sprint Risk',
+  title: "Sprint Risk",
   allowConsecutiveMoves: true,
   shouldBlockConsecutiveMoves: () => false,
   canStart: (roomData) =>
     roomData.users.length < 2
-      ? 'Sprint Risk needs at least 2 players.'
+      ? "Sprint Risk needs at least 2 players."
       : undefined,
   initializeSessionState: (roomData) => ({
     sprintRiskTurnOrder: [...roomData.users],
@@ -110,7 +130,7 @@ export const sprintRiskEngine: GameEngine = {
     sprintRiskDice: Array(DICE_COUNT).fill(null),
     sprintRiskKeptIndices: [],
     sprintRiskTurnScore: 0,
-    sprintRiskPhase: 'waiting' as const,
+    sprintRiskPhase: "waiting" as const,
     sprintRiskTurnCount: roomData.users.reduce<Record<string, number>>(
       (acc, user) => ({ ...acc, [user]: 0 }),
       {},
@@ -126,10 +146,10 @@ export const sprintRiskEngine: GameEngine = {
       return;
     }
 
-    if (value === 'roll') {
+    if (value === "roll") {
       if (
-        session.sprintRiskPhase !== 'waiting' &&
-        session.sprintRiskPhase !== 'kept'
+        session.sprintRiskPhase !== "waiting" &&
+        session.sprintRiskPhase !== "kept"
       ) {
         session.moves = session.moves.filter(
           (m) => !(m.user === userName && m.value === value),
@@ -151,7 +171,7 @@ export const sprintRiskEngine: GameEngine = {
         const turnScore = session.sprintRiskTurnScore ?? 0;
         addEvent(
           session,
-          `Farkle! ${userName} loses ${turnScore > 0 ? turnScore + ' pts from this turn.' : 'their turn.'}`,
+          `Farkle! ${userName} loses ${turnScore > 0 ? turnScore + " pts from this turn." : "their turn."}`,
         );
         const turnCount = session.sprintRiskTurnCount ?? {};
         session.sprintRiskTurnCount = {
@@ -161,13 +181,13 @@ export const sprintRiskEngine: GameEngine = {
         advanceTurn(session);
 
         if (checkGameOver(session)) {
-          session.status = 'completed';
+          session.status = "completed";
           const topScore = Math.max(...Object.values(session.leaderboard));
           const winner = Object.entries(session.leaderboard).find(
             ([, score]) => score === topScore,
           )?.[0];
           if (winner) session.winner = winner;
-          addEvent(session, `Game over! ${session.winner ?? 'No one'} wins.`);
+          addEvent(session, `Game over! ${session.winner ?? "No one"} wins.`);
         } else {
           const next = getCurrentPlayer(session);
           if (next) addEvent(session, `${next}'s turn.`);
@@ -175,9 +195,9 @@ export const sprintRiskEngine: GameEngine = {
         return;
       }
 
-      session.sprintRiskPhase = 'rolled';
-    } else if (value.startsWith('keep:')) {
-      if (session.sprintRiskPhase !== 'rolled') {
+      session.sprintRiskPhase = "rolled";
+    } else if (value.startsWith("keep:")) {
+      if (session.sprintRiskPhase !== "rolled") {
         session.moves = session.moves.filter(
           (m) => !(m.user === userName && m.value === value),
         );
@@ -186,7 +206,7 @@ export const sprintRiskEngine: GameEngine = {
 
       const rawIndices = value
         .slice(5)
-        .split(',')
+        .split(",")
         .map((s) => parseInt(s.trim(), 10))
         .filter((n) => !Number.isNaN(n));
 
@@ -199,7 +219,7 @@ export const sprintRiskEngine: GameEngine = {
         .map((i) => currentDice[i])
         .filter((v): v is number => v !== null && v !== undefined);
 
-      if (keptDiceValues.length === 0 || scoreDice(keptDiceValues) === 0) {
+      if (!isValidFarkleKeep(keptDiceValues)) {
         addEvent(
           session,
           `${userName}'s kept dice don't score — pick a valid combination.`,
@@ -217,10 +237,10 @@ export const sprintRiskEngine: GameEngine = {
       ];
       session.sprintRiskKeptIndices = updatedKeptIndices;
       session.sprintRiskTurnScore = (session.sprintRiskTurnScore ?? 0) + gained;
-      session.sprintRiskPhase = 'kept';
+      session.sprintRiskPhase = "kept";
       addEvent(
         session,
-        `${userName} kept ${keptDiceValues.join(', ')} (+${gained} pts, turn total: ${session.sprintRiskTurnScore}).`,
+        `${userName} kept ${keptDiceValues.join(", ")} (+${gained} pts, turn total: ${session.sprintRiskTurnScore}).`,
       );
 
       const hotDice = updatedKeptIndices.length === DICE_COUNT;
@@ -228,10 +248,10 @@ export const sprintRiskEngine: GameEngine = {
         addEvent(session, `Hot dice! ${userName} can re-roll all 6.`);
         session.sprintRiskKeptIndices = [];
         session.sprintRiskDice = Array(DICE_COUNT).fill(null);
-        session.sprintRiskPhase = 'waiting';
+        session.sprintRiskPhase = "waiting";
       }
-    } else if (value === 'bank') {
-      if (session.sprintRiskPhase !== 'kept') {
+    } else if (value === "bank") {
+      if (session.sprintRiskPhase !== "kept") {
         session.moves = session.moves.filter(
           (m) => !(m.user === userName && m.value === value),
         );
@@ -250,13 +270,13 @@ export const sprintRiskEngine: GameEngine = {
       advanceTurn(session);
 
       if (checkGameOver(session)) {
-        session.status = 'completed';
+        session.status = "completed";
         const topScore = Math.max(...Object.values(session.leaderboard));
         const winner = Object.entries(session.leaderboard).find(
           ([, score]) => score === topScore,
         )?.[0];
         if (winner) session.winner = winner;
-        addEvent(session, `Game over! ${session.winner ?? 'No one'} wins.`);
+        addEvent(session, `Game over! ${session.winner ?? "No one"} wins.`);
       } else {
         const next = getCurrentPlayer(session);
         if (next) addEvent(session, `${next}'s turn.`);
