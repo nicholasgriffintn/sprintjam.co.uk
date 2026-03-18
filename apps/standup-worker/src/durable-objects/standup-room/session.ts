@@ -369,26 +369,10 @@ export async function handleSession(
     return;
   }
 
-  if (!canonicalUserName) {
-    return;
-  }
-
   const session = { webSocket, standupKey, userName: canonicalUserName };
   standup.sessions.set(webSocket, session);
 
   webSocket.accept();
-
-  const standupData = await standup.getStandupData();
-  if (!standupData) {
-    webSocket.send(
-      JSON.stringify({
-        type: "error",
-        error: "Unable to load standup data",
-      }),
-    );
-    webSocket.close(1011, "Standup data unavailable");
-    return;
-  }
 
   standup.repository.setUserConnection(canonicalUserName, true);
 

@@ -21,6 +21,7 @@ import {
 let activeSocket: WebSocket | null = null;
 let activeStandupKey: string | null = null;
 let reconnectState: ReconnectState = createReconnectState();
+let intentionalDisconnect = false;
 
 export interface StandupSessionResponse {
   success: boolean;
@@ -203,6 +204,8 @@ export function connectToStandup(
     activeSocket.close();
   }
 
+  intentionalDisconnect = false;
+
   if (!isReconnect) {
     resetReconnectAttempts(reconnectState);
   }
@@ -288,6 +291,10 @@ function handleReconnect(
   onMessage: (data: StandupServerMessage) => void,
   onConnectionStatusChange?: (isConnected: boolean) => void,
 ) {
+  if (intentionalDisconnect) {
+    return;
+  }
+
   if (shouldReconnect(reconnectState)) {
     incrementReconnectAttempts(reconnectState);
     const delay = calculateReconnectDelay(reconnectState);
@@ -312,6 +319,8 @@ function handleReconnect(
 }
 
 export function disconnectFromStandup(): void {
+  intentionalDisconnect = true;
+
   if (activeSocket) {
     activeSocket.close(1000, "User left the standup");
     activeSocket = null;
