@@ -31,6 +31,21 @@ function scoreDice(dice: number[]): number {
   return score;
 }
 
+function isValidFarkleKeep(dice: number[]): boolean {
+  if (dice.length === 0) return false;
+  const counts: Record<number, number> = {};
+  for (const d of dice) counts[d] = (counts[d] ?? 0) + 1;
+  if (dice.length === 6) {
+    if (Object.keys(counts).length === 6) return true;
+    if (Object.values(counts).every((c) => c === 2)) return true;
+  }
+  for (const [faceStr, count] of Object.entries(counts)) {
+    const face = Number(faceStr);
+    if (count < 3 && face !== 1 && face !== 5) return false;
+  }
+  return true;
+}
+
 export const SprintRiskGamePanel = ({
   gameSession,
   userName,
@@ -71,7 +86,10 @@ export const SprintRiskGamePanel = ({
     .map((i) => dice[i])
     .filter((v): v is number => v != null);
   const selectionScore = scoreDice(selectedValues);
-  const selectionIsValid = keptLocal.length > 0 && selectionScore > 0;
+  const selectionIsValid =
+    keptLocal.length > 0 &&
+    selectionScore > 0 &&
+    isValidFarkleKeep(selectedValues);
 
   return (
     <div className="space-y-3 rounded-xl border border-brand-200/70 p-3 dark:border-brand-300/30">
