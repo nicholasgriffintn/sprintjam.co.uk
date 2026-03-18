@@ -5,6 +5,9 @@ import {
   Crosshair,
   HeartPulse,
   Link as LinkIcon,
+  MessageSquareHeart,
+  Sparkles,
+  Trophy,
 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
@@ -14,6 +17,8 @@ import { cn } from "@/lib/cn";
 
 type StandupUserCardVariant = "default" | "presentation";
 
+const REACTION_EMOJIS = ["👏", "🎉", "💡", "❤️"] as const;
+
 interface StandupUserCardProps {
   response: StandupResponse;
   avatar?: string;
@@ -21,6 +26,11 @@ interface StandupUserCardProps {
   isFocused?: boolean;
   canFocus?: boolean;
   onFocus?: (userName: string) => void;
+  isFirstSubmitter?: boolean;
+  reactions?: Record<string, string[]>; // emoji → [reactingUserNames]
+  onAddReaction?: (emoji: string) => void;
+  onRemoveReaction?: (emoji: string) => void;
+  currentUserName?: string;
 }
 
 const HEALTH_COPY: Record<number, string> = {
@@ -62,11 +72,20 @@ export function StandupUserCard({
   isFocused = false,
   canFocus = false,
   onFocus,
+  isFirstSubmitter = false,
+  reactions,
+  onAddReaction,
+  onRemoveReaction,
+  currentUserName,
 }: StandupUserCardProps) {
   const isPresentation = variant === "presentation";
   const healthWidth = `${Math.max(1, Math.min(5, response.healthCheck)) * 20}%`;
   const focusButtonLabel = isFocused ? "First speaker" : "Set first";
   const focusBadgeLabel = isPresentation ? "Live" : "First up";
+  const showReactions =
+    !!onAddReaction ||
+    !!onRemoveReaction ||
+    (reactions && Object.keys(reactions).length > 0);
 
   return (
     <article
@@ -87,7 +106,9 @@ export function StandupUserCard({
             fallback={getInitials(response.userName)}
             className={cn(
               "shrink-0 border border-slate-200 bg-brand-100 text-brand-900 dark:border-slate-700 dark:bg-brand-500/20 dark:text-brand-100",
-              isPresentation ? "h-16 w-16 text-lg font-semibold" : "h-12 w-12 text-sm font-semibold",
+              isPresentation
+                ? "h-16 w-16 text-lg font-semibold"
+                : "h-12 w-12 text-sm font-semibold",
             )}
             fallbackClassName="bg-transparent"
           />
@@ -114,6 +135,12 @@ export function StandupUserCard({
                 <Badge variant="error" size="sm">
                   <AlertTriangle className="mr-1 h-3 w-3" />
                   Blocker
+                </Badge>
+              ) : null}
+              {isFirstSubmitter ? (
+                <Badge variant="warning" size="sm">
+                  <Trophy className="mr-1 h-3 w-3" />
+                  First in!
                 </Badge>
               ) : null}
               {isFocused ? (
@@ -158,7 +185,9 @@ export function StandupUserCard({
           </div>
         </div>
 
-        <div className={cn("grid gap-4", isPresentation ? "lg:grid-cols-2" : "")}>
+        <div
+          className={cn("grid gap-4", isPresentation ? "lg:grid-cols-2" : "")}
+        >
           <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Yesterday
@@ -200,7 +229,42 @@ export function StandupUserCard({
                 isPresentation ? "text-lg leading-8" : "text-sm leading-6",
               )}
             >
-              {response.blockerDescription || "Blocker flagged without extra detail."}
+              {response.blockerDescription ||
+                "Blocker flagged without extra detail."}
+            </p>
+          </section>
+        ) : null}
+
+        {response.kudos ? (
+          <section className="rounded-xl border border-amber-200/80 bg-amber-50/90 p-4 dark:border-amber-400/20 dark:bg-amber-950/20">
+            <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-200">
+              <MessageSquareHeart className="h-4 w-4" />
+              Kudos
+            </div>
+            <p
+              className={cn(
+                "mt-3 whitespace-pre-wrap text-amber-900 dark:text-amber-100",
+                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
+              )}
+            >
+              {response.kudos}
+            </p>
+          </section>
+        ) : null}
+
+        {response.icebreakerAnswer ? (
+          <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <Sparkles className="h-3.5 w-3.5" />
+              Icebreaker
+            </div>
+            <p
+              className={cn(
+                "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
+                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
+              )}
+            >
+              {response.icebreakerAnswer}
             </p>
           </section>
         ) : null}
@@ -243,6 +307,47 @@ export function StandupUserCard({
               })}
             </div>
           </section>
+        ) : null}
+
+        {showReactions ? (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {REACTION_EMOJIS.map((emoji) => {
+              const reactors = reactions?.[emoji] ?? [];
+              const hasReacted = currentUserName
+                ? reactors.some(
+                    (u) => u.toLowerCase() === currentUserName.toLowerCase(),
+                  )
+                : false;
+              const count = reactors.length;
+
+              return (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => {
+                    if (hasReacted) {
+                      onRemoveReaction?.(emoji);
+                    } else {
+                      onAddReaction?.(emoji);
+                    }
+                  }}
+                  disabled={!onAddReaction && !onRemoveReaction}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition",
+                    hasReacted
+                      ? "border-brand-300 bg-brand-50 font-medium text-brand-900 dark:border-brand-400/60 dark:bg-brand-900/20 dark:text-brand-100"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
+                    !onAddReaction && !onRemoveReaction && "cursor-default",
+                  )}
+                >
+                  <span>{emoji}</span>
+                  {count > 0 ? (
+                    <span className="text-xs font-medium">{count}</span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
         ) : null}
       </div>
     </article>

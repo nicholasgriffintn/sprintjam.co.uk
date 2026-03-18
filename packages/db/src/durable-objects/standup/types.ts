@@ -4,6 +4,7 @@ import type * as schema from "./schemas";
 
 import {
   standupMeta,
+  standupReactions,
   standupResponses,
   standupSessionTokens,
   standupUsers,
@@ -23,3 +24,6 @@ export type InsertStandupResponsesItem = typeof standupResponses.$inferInsert;
 export type StandupSessionTokensItem = typeof standupSessionTokens.$inferSelect;
 export type InsertStandupSessionTokensItem =
   typeof standupSessionTokens.$inferInsert;
+
+export type StandupReactionsItem = typeof standupReactions.$inferSelect;
+export type InsertStandupReactionsItem = typeof standupReactions.$inferInsert;

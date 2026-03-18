@@ -13,6 +13,8 @@ export interface StandupResponsePayload {
   blockerDescription?: string;
   healthCheck: number;
   linkedTickets?: LinkedTicket[];
+  kudos?: string;
+  icebreakerAnswer?: string;
 }
 
 export interface StandupResponse extends StandupResponsePayload {
@@ -27,9 +29,11 @@ export interface StandupData {
   moderator: string;
   connectedUsers: Record<string, boolean>;
   status: 'active' | 'locked' | 'presenting' | 'completed';
-  responses: StandupResponse[]; // all for facilitator, own only for respondent
-  respondedUsers: string[]; // usernames who have submitted
+  responses: StandupResponse[];
+  respondedUsers: string[];
   userAvatars?: Record<string, string>;
   teamId?: number;
   focusedUser?: string;
+  reactions?: Record<string, Record<string, string[]>>;
+  presentationTheme?: string;
 }

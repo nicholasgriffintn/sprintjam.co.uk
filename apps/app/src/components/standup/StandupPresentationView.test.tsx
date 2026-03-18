@@ -49,6 +49,9 @@ describe("StandupPresentationView", () => {
         onFocusUser={onFocusUser}
         onEndPresentation={vi.fn()}
         onCompleteStandup={vi.fn()}
+        onAddReaction={vi.fn()}
+        onRemoveReaction={vi.fn()}
+        currentUserName="Alice"
       />,
     );
 
@@ -66,6 +69,9 @@ describe("StandupPresentationView", () => {
         onFocusUser={onFocusUser}
         onEndPresentation={vi.fn()}
         onCompleteStandup={vi.fn()}
+        onAddReaction={vi.fn()}
+        onRemoveReaction={vi.fn()}
+        currentUserName="Alice"
       />,
     );
 

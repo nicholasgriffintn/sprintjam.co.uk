@@ -56,6 +56,19 @@ export type StandupServerMessage =
   | { type: "presentationEnded" }
   | { type: "standupCompleted" }
   | { type: "userFocused"; userName: string }
+  | {
+      type: "reactionAdded";
+      responseUserName: string;
+      reactingUserName: string;
+      emoji: string;
+    }
+  | {
+      type: "reactionRemoved";
+      responseUserName: string;
+      reactingUserName: string;
+      emoji: string;
+    }
+  | { type: "themeUpdated"; theme: string }
   | { type: "pong" }
   | { type: "error"; error: string; reason?: SocketErrorReason }
   | { type: "disconnected"; error: string; reason: "disconnect" };
@@ -280,7 +293,13 @@ function handleReconnect(
     const delay = calculateReconnectDelay(reconnectState);
 
     window.setTimeout(() => {
-      connectToStandup(standupKey, name, onMessage, onConnectionStatusChange, true);
+      connectToStandup(
+        standupKey,
+        name,
+        onMessage,
+        onConnectionStatusChange,
+        true,
+      );
     }, delay);
     return;
   }
@@ -302,9 +321,7 @@ export function disconnectFromStandup(): void {
   resetReconnectAttempts(reconnectState);
 }
 
-export function submitStandupResponse(
-  payload: StandupResponsePayload,
-): void {
+export function submitStandupResponse(payload: StandupResponsePayload): void {
   sendWebSocketMessage(activeSocket, {
     type: "submitResponse",
     yesterday: payload.yesterday,
@@ -313,6 +330,8 @@ export function submitStandupResponse(
     blockerDescription: payload.blockerDescription,
     healthCheck: payload.healthCheck,
     linkedTickets: payload.linkedTickets,
+    kudos: payload.kudos,
+    icebreakerAnswer: payload.icebreakerAnswer,
   });
 }
 
@@ -342,4 +361,30 @@ export function focusStandupUser(userName: string): void {
 
 export function pingStandup(): void {
   sendWebSocketMessage(activeSocket, { type: "ping" });
+}
+
+export function addStandupReaction(
+  responseUserName: string,
+  emoji: string,
+): void {
+  sendWebSocketMessage(activeSocket, {
+    type: "addReaction",
+    responseUserName,
+    emoji,
+  });
+}
+
+export function removeStandupReaction(
+  responseUserName: string,
+  emoji: string,
+): void {
+  sendWebSocketMessage(activeSocket, {
+    type: "removeReaction",
+    responseUserName,
+    emoji,
+  });
+}
+
+export function setStandupTheme(theme: string): void {
+  sendWebSocketMessage(activeSocket, { type: "setTheme", theme });
 }

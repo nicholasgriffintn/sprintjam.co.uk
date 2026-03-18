@@ -28,6 +28,7 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Tabs } from "@/components/ui";
 import { PageSection } from "@/components/layout/PageBackground";
 import { StandupResponseForm } from "@/components/standup/StandupResponseForm";
+import { StandupAudienceView } from "@/components/standup/StandupAudienceView";
 import { StandupPresentationView } from "@/components/standup/StandupPresentationView";
 import { StandupResultsPanel } from "@/components/standup/StandupResultsPanel";
 import { StandupSidebar } from "@/components/standup/StandupSidebar";
@@ -65,6 +66,9 @@ function StandupRoomContent({
     handleEndPresentation,
     handleCompleteStandup,
     handleFocusUser,
+    handleAddReaction,
+    handleRemoveReaction,
+    handleSetTheme,
   } = useStandupActions();
   const {
     setStandupKey,
@@ -249,8 +253,7 @@ function StandupRoomContent({
   const yourResponse = standupData.responses.find(
     (response) => response.userName.toLowerCase() === userName.toLowerCase(),
   );
-  const isPresentationMode =
-    isModeratorView && standupData.status === "presenting";
+  const isPresentationMode = standupData.status === "presenting";
 
   return (
     <div className="min-h-[calc(100vh-65px)] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
@@ -291,13 +294,23 @@ function StandupRoomContent({
             <Alert variant="warning">{standupError}</Alert>
           ) : null}
 
-          {isPresentationMode ? (
+          {isPresentationMode && isModeratorView ? (
             <StandupPresentationView
               standupData={standupData}
               onFocusUser={handleFocusUser}
               onEndPresentation={handleEndPresentation}
               onCompleteStandup={onCompleteStandup}
+              onAddReaction={handleAddReaction}
+              onRemoveReaction={handleRemoveReaction}
+              currentUserName={userName}
               isCompletingStandup={isCompletingStandup}
+            />
+          ) : isPresentationMode ? (
+            <StandupAudienceView
+              standupData={standupData}
+              currentUserName={userName}
+              onAddReaction={handleAddReaction}
+              onRemoveReaction={handleRemoveReaction}
             />
           ) : (
             <Tabs.Root
@@ -336,6 +349,7 @@ function StandupRoomContent({
                   onStartPresentation={onStartPresentation}
                   onCompleteStandup={onCompleteStandup}
                   onFocusUser={handleFocusUser}
+                  onSetTheme={handleSetTheme}
                   isLockingResponses={isLockingResponses}
                   isStartingPresentation={isStartingPresentation}
                   isCompletingStandup={isCompletingStandup}

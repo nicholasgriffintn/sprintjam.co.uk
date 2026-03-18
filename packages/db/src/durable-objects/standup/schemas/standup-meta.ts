@@ -12,6 +12,7 @@ export const standupMeta = sqliteTable("standup_meta", {
   status: text("status").notNull().default("active"),
   passcode: text("passcode"),
   teamId: integer("team_id"),
+  presentationTheme: text("presentation_theme").default("default"),
   createdAt: integer("created_at").notNull(),
 });
 
@@ -31,8 +32,17 @@ export const standupResponses = sqliteTable("standup_responses", {
   blockerDescription: text("blocker_description"),
   healthCheck: integer("health_check").notNull().default(3),
   linkedTickets: text("linked_tickets"), // JSON array of ticket refs
+  kudos: text("kudos"),
+  icebreakerAnswer: text("icebreaker_answer"),
   submittedAt: integer("submitted_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
+});
+
+export const standupReactions = sqliteTable("standup_reactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  responseUserName: text("response_user_name").notNull(),
+  reactingUserName: text("reacting_user_name").notNull(),
+  emoji: text("emoji").notNull(),
 });
 
 export const standupSessionTokens = sqliteTable("standup_session_tokens", {

@@ -1,17 +1,19 @@
 import type { DurableObjectStorage } from "@cloudflare/workers-types";
 import { drizzle } from "drizzle-orm/durable-sqlite";
 import { migrate } from "drizzle-orm/durable-sqlite/migrator";
-import { eq, sql as sqlOperator } from "drizzle-orm";
+import { and, eq, sql as sqlOperator } from "drizzle-orm";
 
 import * as standupSchema from "@sprintjam/db/durable-objects/standup/schemas";
 import {
   standupMeta,
+  standupReactions,
   standupUsers,
   standupResponses,
   standupSessionTokens,
 } from "@sprintjam/db/durable-objects/standup/schemas";
 import type {
   InsertStandupMetaItem,
+  InsertStandupReactionsItem,
   InsertStandupUsersItem,
   InsertStandupResponsesItem,
   InsertStandupSessionTokensItem,
@@ -66,6 +68,8 @@ export class StandupRoomRepository {
       userAvatars,
     } = this.mapUsersToState(users);
 
+    const reactions = await this.getReactions();
+
     return {
       key: row.standupKey,
       users: userList,
@@ -76,6 +80,8 @@ export class StandupRoomRepository {
       respondedUsers: responses.map((r) => r.userName),
       userAvatars,
       teamId: row.teamId ?? undefined,
+      reactions,
+      presentationTheme: row.presentationTheme ?? "default",
     };
   }
 
@@ -96,6 +102,7 @@ export class StandupRoomRepository {
         status: "active",
         passcode: passcode ?? null,
         teamId: teamId ?? null,
+        presentationTheme: "default",
         createdAt: now,
       } satisfies InsertStandupMetaItem)
       .run();
@@ -150,6 +157,14 @@ export class StandupRoomRepository {
       .run();
   }
 
+  setTheme(theme: string) {
+    this.db
+      .update(standupMeta)
+      .set({ presentationTheme: theme })
+      .where(eq(standupMeta.id, STANDUP_ROW_ID))
+      .run();
+  }
+
   submitResponse(userName: string, payload: StandupResponsePayload): void {
     const now = Date.now();
     const canonicalName = this.ensureUser(userName);
@@ -166,6 +181,8 @@ export class StandupRoomRepository {
         linkedTickets: payload.linkedTickets
           ? JSON.stringify(payload.linkedTickets)
           : null,
+        kudos: payload.kudos ?? null,
+        icebreakerAnswer: payload.icebreakerAnswer ?? null,
         submittedAt: now,
         updatedAt: now,
       } satisfies InsertStandupResponsesItem)
@@ -180,10 +197,62 @@ export class StandupRoomRepository {
           linkedTickets: payload.linkedTickets
             ? JSON.stringify(payload.linkedTickets)
             : null,
+          kudos: payload.kudos ?? null,
+          icebreakerAnswer: payload.icebreakerAnswer ?? null,
           updatedAt: now,
         },
       })
       .run();
+  }
+
+  addReaction(
+    reactingUserName: string,
+    responseUserName: string,
+    emoji: string,
+  ): void {
+    this.db
+      .insert(standupReactions)
+      .values({
+        responseUserName,
+        reactingUserName,
+        emoji,
+      } satisfies InsertStandupReactionsItem)
+      .onConflictDoNothing()
+      .run();
+  }
+
+  removeReaction(
+    reactingUserName: string,
+    responseUserName: string,
+    emoji: string,
+  ): void {
+    this.db
+      .delete(standupReactions)
+      .where(
+        and(
+          sqlOperator`LOWER(${standupReactions.responseUserName}) = LOWER(${responseUserName})`,
+          sqlOperator`LOWER(${standupReactions.reactingUserName}) = LOWER(${reactingUserName})`,
+          eq(standupReactions.emoji, emoji),
+        ),
+      )
+      .run();
+  }
+
+  async getReactions(): Promise<Record<string, Record<string, string[]>>> {
+    const rows = await this.db.select().from(standupReactions).all();
+    const result: Record<string, Record<string, string[]>> = {};
+
+    for (const row of rows) {
+      if (!result[row.responseUserName]) {
+        result[row.responseUserName] = {};
+      }
+      if (!result[row.responseUserName][row.emoji]) {
+        result[row.responseUserName][row.emoji] = [];
+      }
+      result[row.responseUserName][row.emoji].push(row.reactingUserName);
+    }
+
+    return result;
   }
 
   getResponse(userName: string): StandupResponse | undefined {
@@ -340,6 +409,8 @@ export class StandupRoomRepository {
       healthCheck: row.healthCheck,
       linkedTickets:
         safeJsonParse<LinkedTicket[]>(row.linkedTickets ?? "") ?? undefined,
+      kudos: row.kudos ?? undefined,
+      icebreakerAnswer: row.icebreakerAnswer ?? undefined,
       submittedAt: row.submittedAt,
       updatedAt: row.updatedAt,
     };

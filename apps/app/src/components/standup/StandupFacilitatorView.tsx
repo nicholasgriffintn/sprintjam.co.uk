@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Lock,
   LockOpen,
+  Palette,
   Play,
 } from "lucide-react";
 
@@ -11,6 +12,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { StandupUserCard } from "@/components/standup/StandupUserCard";
+
+const THEMES = [
+  { id: "default", label: "Default", color: "bg-slate-200 dark:bg-slate-700" },
+  { id: "cosmic", label: "Cosmic", color: "bg-indigo-600" },
+  { id: "forest", label: "Forest", color: "bg-emerald-700" },
+  { id: "ocean", label: "Ocean", color: "bg-sky-600" },
+  { id: "sunset", label: "Sunset", color: "bg-orange-600" },
+] as const;
 
 interface StandupFacilitatorViewProps {
   standupData: StandupData;
@@ -20,6 +29,7 @@ interface StandupFacilitatorViewProps {
   onStartPresentation: () => void;
   onCompleteStandup: () => void;
   onFocusUser: (userName: string) => void;
+  onSetTheme: (theme: string) => void;
   isLockingResponses?: boolean;
   isStartingPresentation?: boolean;
   isCompletingStandup?: boolean;
@@ -35,6 +45,7 @@ export function StandupFacilitatorView({
   onStartPresentation,
   onCompleteStandup,
   onFocusUser,
+  onSetTheme,
   isLockingResponses = false,
   isStartingPresentation = false,
   isCompletingStandup = false,
@@ -63,6 +74,12 @@ export function StandupFacilitatorView({
       .length,
   }));
   const isCompleted = standupData.status === "completed";
+  const firstSubmitter = orderedResponses.length
+    ? orderedResponses.reduce((min, r) =>
+        r.submittedAt < min.submittedAt ? r : min,
+      ).userName
+    : undefined;
+  const currentTheme = standupData.presentationTheme ?? "default";
 
   return (
     <div className="space-y-6">
@@ -140,6 +157,32 @@ export function StandupFacilitatorView({
           <div className="rounded-[1.5rem] border border-emerald-200/70 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-950/20 dark:text-emerald-100">
             This standup is complete. The responses below remain available as
             read-only history.
+          </div>
+        ) : null}
+
+        {!isCompleted ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Palette className="h-4 w-4 text-slate-400" />
+            <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+              Presentation theme
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => onSetTheme(theme.id)}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                    currentTheme === theme.id
+                      ? "ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900"
+                      : "opacity-70 hover:opacity-100"
+                  }`}
+                  title={theme.label}
+                >
+                  <span className={`h-3 w-3 rounded-full ${theme.color}`} />
+                  {theme.label}
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -242,6 +285,7 @@ export function StandupFacilitatorView({
                 response={response}
                 avatar={standupData.userAvatars?.[response.userName]}
                 isFocused={standupData.focusedUser === response.userName}
+                isFirstSubmitter={response.userName === firstSubmitter}
                 canFocus={!isCompleted}
                 onFocus={onFocusUser}
               />

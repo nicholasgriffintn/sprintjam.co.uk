@@ -13,6 +13,7 @@ import type {
 } from "@sprintjam/types";
 
 import {
+  addStandupReaction,
   completeStandup,
   connectToStandup,
   disconnectFromStandup,
@@ -20,6 +21,8 @@ import {
   focusStandupUser,
   lockStandupResponses,
   pingStandup,
+  removeStandupReaction,
+  setStandupTheme,
   startStandupPresentation,
   submitStandupResponse,
   unlockStandupResponses,
@@ -48,6 +51,9 @@ interface StandupActionsContextValue {
   handleCompleteStandup: () => void;
   handleFocusUser: (userName: string) => void;
   handlePing: () => void;
+  handleAddReaction: (responseUserName: string, emoji: string) => void;
+  handleRemoveReaction: (responseUserName: string, emoji: string) => void;
+  handleSetTheme: (theme: string) => void;
 }
 
 const StandupStateContext = createContext<StandupStateContextValue | null>(
@@ -69,7 +75,9 @@ function mergeResponse(
   );
 
   if (existingIndex === -1) {
-    return [...responses, response].sort((a, b) => a.submittedAt - b.submittedAt);
+    return [...responses, response].sort(
+      (a, b) => a.submittedAt - b.submittedAt,
+    );
   }
 
   return responses.map((item, index) =>
@@ -190,15 +198,11 @@ export function StandupProvider({
         break;
 
       case "responsesLocked":
-        setStandupData((prev) =>
-          prev ? { ...prev, status: "locked" } : prev,
-        );
+        setStandupData((prev) => (prev ? { ...prev, status: "locked" } : prev));
         break;
 
       case "responsesUnlocked":
-        setStandupData((prev) =>
-          prev ? { ...prev, status: "active" } : prev,
-        );
+        setStandupData((prev) => (prev ? { ...prev, status: "active" } : prev));
         break;
 
       case "presentationStarted":
@@ -215,13 +219,56 @@ export function StandupProvider({
 
       case "standupCompleted":
         setStandupData((prev) =>
-          prev ? { ...prev, status: "completed", focusedUser: undefined } : prev,
+          prev
+            ? { ...prev, status: "completed", focusedUser: undefined }
+            : prev,
         );
         break;
 
       case "userFocused":
         setStandupData((prev) =>
           prev ? { ...prev, focusedUser: message.userName } : prev,
+        );
+        break;
+
+      case "reactionAdded":
+        setStandupData((prev) => {
+          if (!prev) return prev;
+          const reactions = { ...(prev.reactions ?? {}) };
+          if (!reactions[message.responseUserName]) {
+            reactions[message.responseUserName] = {};
+          }
+          const emojiReactions =
+            reactions[message.responseUserName][message.emoji] ?? [];
+          if (!emojiReactions.includes(message.reactingUserName)) {
+            reactions[message.responseUserName] = {
+              ...reactions[message.responseUserName],
+              [message.emoji]: [...emojiReactions, message.reactingUserName],
+            };
+          }
+          return { ...prev, reactions };
+        });
+        break;
+
+      case "reactionRemoved":
+        setStandupData((prev) => {
+          if (!prev) return prev;
+          const reactions = { ...(prev.reactions ?? {}) };
+          if (reactions[message.responseUserName]?.[message.emoji]) {
+            reactions[message.responseUserName] = {
+              ...reactions[message.responseUserName],
+              [message.emoji]: reactions[message.responseUserName][
+                message.emoji
+              ].filter((u) => u !== message.reactingUserName),
+            };
+          }
+          return { ...prev, reactions };
+        });
+        break;
+
+      case "themeUpdated":
+        setStandupData((prev) =>
+          prev ? { ...prev, presentationTheme: message.theme } : prev,
         );
         break;
 
@@ -269,8 +316,7 @@ export function StandupProvider({
     standupData,
     isModeratorView:
       !!standupData?.moderator &&
-      standupData.moderator.toLowerCase() ===
-        userNameRef.current.toLowerCase(),
+      standupData.moderator.toLowerCase() === userNameRef.current.toLowerCase(),
   };
 
   const statusValue: StandupStatusContextValue = {
@@ -290,6 +336,9 @@ export function StandupProvider({
     handleCompleteStandup: completeStandup,
     handleFocusUser: focusStandupUser,
     handlePing: pingStandup,
+    handleAddReaction: addStandupReaction,
+    handleRemoveReaction: removeStandupReaction,
+    handleSetTheme: setStandupTheme,
   };
 
   return (

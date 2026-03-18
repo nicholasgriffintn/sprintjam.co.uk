@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { StandupData } from "@sprintjam/types";
 import {
   CheckCircle2,
@@ -6,20 +6,42 @@ import {
   ChevronRight,
   Heart,
   Play,
+  Shuffle,
   X,
-} from 'lucide-react';
+} from "lucide-react";
 
 import { StandupUserCard } from "@/components/standup/StandupUserCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { cn } from "@/lib/cn";
+
+const THEME_CLASSES: Record<string, string> = {
+  default: "",
+  cosmic: "bg-indigo-950 text-white",
+  forest: "bg-emerald-950 text-white",
+  ocean: "bg-sky-950 text-white",
+  sunset: "bg-orange-950 text-white",
+};
 
 interface StandupPresentationViewProps {
   standupData: StandupData;
   onFocusUser: (userName: string) => void;
   onEndPresentation: () => void;
   onCompleteStandup: () => void;
+  onAddReaction: (responseUserName: string, emoji: string) => void;
+  onRemoveReaction: (responseUserName: string, emoji: string) => void;
+  currentUserName: string;
   isCompletingStandup?: boolean;
+}
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j]!, copy[i]!];
+  }
+  return copy;
 }
 
 export function StandupPresentationView({
@@ -27,19 +49,41 @@ export function StandupPresentationView({
   onFocusUser,
   onEndPresentation,
   onCompleteStandup,
+  onAddReaction,
+  onRemoveReaction,
+  currentUserName,
   isCompletingStandup = false,
 }: StandupPresentationViewProps) {
-  const orderedResponses = useMemo(() => {
+  const [shuffledOrder, setShuffledOrder] = useState<string[] | null>(null);
+
+  const baseOrderedResponses = useMemo(() => {
     const userOrder = new Map(
       standupData.users.map((user, index) => [user, index]),
     );
-
     return [...standupData.responses].sort(
       (left, right) =>
         (userOrder.get(left.userName) ?? Number.MAX_SAFE_INTEGER) -
         (userOrder.get(right.userName) ?? Number.MAX_SAFE_INTEGER),
     );
   }, [standupData.responses, standupData.users]);
+
+  const orderedResponses = useMemo(() => {
+    if (!shuffledOrder) return baseOrderedResponses;
+    const orderMap = new Map(shuffledOrder.map((name, i) => [name, i]));
+    return [...baseOrderedResponses].sort(
+      (a, b) =>
+        (orderMap.get(a.userName) ?? Number.MAX_SAFE_INTEGER) -
+        (orderMap.get(b.userName) ?? Number.MAX_SAFE_INTEGER),
+    );
+  }, [baseOrderedResponses, shuffledOrder]);
+
+  const firstSubmitter = useMemo(() => {
+    if (!orderedResponses.length) return undefined;
+    return orderedResponses.reduce((min, r) =>
+      r.submittedAt < min.submittedAt ? r : min,
+    ).userName;
+  }, [orderedResponses]);
+
   const averageHealth = orderedResponses.length
     ? orderedResponses.reduce((sum, r) => sum + r.healthCheck, 0) /
       orderedResponses.length
@@ -55,22 +99,26 @@ export function StandupPresentationView({
     if (!orderedResponses.length || standupData.focusedUser) {
       return;
     }
-
     onFocusUser(orderedResponses[0].userName);
   }, [onFocusUser, orderedResponses, standupData.focusedUser]);
 
   const moveFocus = (direction: "previous" | "next") => {
-    if (!orderedResponses.length) {
-      return;
-    }
-
+    if (!orderedResponses.length) return;
     const nextIndex =
       direction === "previous"
         ? (activeIndex - 1 + orderedResponses.length) % orderedResponses.length
         : (activeIndex + 1) % orderedResponses.length;
-
     onFocusUser(orderedResponses[nextIndex].userName);
   };
+
+  const handleShuffle = useCallback(() => {
+    const shuffled = shuffleArray(orderedResponses.map((r) => r.userName));
+    setShuffledOrder(shuffled);
+    onFocusUser(shuffled[0]!);
+  }, [orderedResponses, onFocusUser]);
+
+  const theme = standupData.presentationTheme ?? "default";
+  const themeClass = THEME_CLASSES[theme] ?? "";
 
   if (!orderedResponses.length) {
     return (
@@ -95,26 +143,39 @@ export function StandupPresentationView({
   }
 
   return (
-    <div className="space-y-6">
-      <SurfaceCard className="space-y-5">
+    <div
+      className={cn("space-y-6 rounded-2xl p-1 transition-colors", themeClass)}
+    >
+      <SurfaceCard
+        className={cn(
+          "space-y-5",
+          themeClass &&
+            "bg-white/10 border-white/20 backdrop-blur-sm dark:bg-white/5",
+        )}
+      >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
-            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
+            <h2
+              className={cn(
+                "text-3xl font-semibold tracking-tight",
+                themeClass ? "text-white" : "text-slate-900 dark:text-white",
+              )}
+            >
               Walk the team through one update at a time
             </h2>
             <div className="flex flex-wrap items-center gap-3">
               <Badge variant="default" className="gap-1">
-                {activeIndex + 1} of {orderedResponses.length} —{' '}
-                {activeResponse.userName}
+                {activeIndex + 1} of {orderedResponses.length} —{" "}
+                {activeResponse?.userName}
               </Badge>
               {averageHealth !== null ? (
                 <Badge
                   variant={
                     averageHealth >= 4
-                      ? 'success'
+                      ? "success"
                       : averageHealth >= 2
-                        ? 'warning'
-                        : 'error'
+                        ? "warning"
+                        : "error"
                   }
                   className="gap-1"
                 >
@@ -129,18 +190,26 @@ export function StandupPresentationView({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => moveFocus('previous')}
+              onClick={() => moveFocus("previous")}
               icon={<ChevronLeft className="h-4 w-4" />}
             >
               Previous
             </Button>
             <Button
               size="sm"
-              onClick={() => moveFocus('next')}
+              onClick={() => moveFocus("next")}
               icon={<ChevronRight className="h-4 w-4" />}
               iconPosition="right"
             >
               Next
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleShuffle}
+              icon={<Shuffle className="h-4 w-4" />}
+            >
+              Shuffle
             </Button>
             <Button
               variant="secondary"
@@ -162,12 +231,23 @@ export function StandupPresentationView({
         </div>
       </SurfaceCard>
 
-      <StandupUserCard
-        response={activeResponse}
-        avatar={standupData.userAvatars?.[activeResponse.userName]}
-        variant="presentation"
-        isFocused
-      />
+      {activeResponse ? (
+        <StandupUserCard
+          response={activeResponse}
+          avatar={standupData.userAvatars?.[activeResponse.userName]}
+          variant="presentation"
+          isFocused
+          isFirstSubmitter={activeResponse.userName === firstSubmitter}
+          reactions={standupData.reactions?.[activeResponse.userName]}
+          onAddReaction={(emoji) =>
+            onAddReaction(activeResponse.userName, emoji)
+          }
+          onRemoveReaction={(emoji) =>
+            onRemoveReaction(activeResponse.userName, emoji)
+          }
+          currentUserName={currentUserName}
+        />
+      ) : null}
     </div>
   );
 }

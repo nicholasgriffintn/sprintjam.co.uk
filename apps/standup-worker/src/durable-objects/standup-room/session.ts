@@ -21,6 +21,8 @@ interface SubmitResponseMessage extends StandupClientMessage {
     url?: string;
     provider: "jira" | "linear" | "github";
   }>;
+  kudos?: string;
+  icebreakerAnswer?: string;
 }
 
 interface FocusUserMessage extends StandupClientMessage {
@@ -32,10 +34,30 @@ interface CompleteStandupMessage extends StandupClientMessage {
   type: "completeStandup";
 }
 
+interface AddReactionMessage extends StandupClientMessage {
+  type: "addReaction";
+  responseUserName: string;
+  emoji: string;
+}
+
+interface RemoveReactionMessage extends StandupClientMessage {
+  type: "removeReaction";
+  responseUserName: string;
+  emoji: string;
+}
+
+interface SetThemeMessage extends StandupClientMessage {
+  type: "setTheme";
+  theme: string;
+}
+
 type ValidatedMessage =
   | SubmitResponseMessage
   | FocusUserMessage
   | CompleteStandupMessage
+  | AddReactionMessage
+  | RemoveReactionMessage
+  | SetThemeMessage
   | { type: "lockResponses" }
   | { type: "unlockResponses" }
   | { type: "startPresentation" }
@@ -45,6 +67,8 @@ type ValidatedMessage =
 const LIMITS = {
   responseText: 2000,
   blockerText: 1000,
+  kudosText: 500,
+  icebreakerText: 500,
   linkedTickets: 8,
   ticketId: 128,
   ticketKey: 64,
@@ -53,6 +77,14 @@ const LIMITS = {
 } as const;
 
 const ALLOWED_TICKET_PROVIDERS = new Set(["jira", "linear", "github"]);
+const ALLOWED_REACTION_EMOJIS = new Set(["👏", "🎉", "💡", "❤️"]);
+const ALLOWED_THEMES = new Set([
+  "default",
+  "cosmic",
+  "forest",
+  "ocean",
+  "sunset",
+]);
 
 function normaliseNonEmptyString(
   value: unknown,
@@ -173,6 +205,11 @@ function validateClientMessage(
         LIMITS.blockerText,
       );
       const linkedTickets = normaliseLinkedTickets(msg.linkedTickets);
+      const kudos = normaliseOptionalString(msg.kudos, LIMITS.kudosText);
+      const icebreakerAnswer = normaliseOptionalString(
+        msg.icebreakerAnswer,
+        LIMITS.icebreakerText,
+      );
       const healthCheck =
         typeof msg.healthCheck === "number" &&
         Number.isInteger(msg.healthCheck) &&
@@ -208,6 +245,14 @@ function validateClientMessage(
         result.linkedTickets = linkedTickets;
       }
 
+      if (kudos) {
+        result.kudos = kudos;
+      }
+
+      if (icebreakerAnswer) {
+        result.icebreakerAnswer = icebreakerAnswer;
+      }
+
       return result;
     }
 
@@ -219,6 +264,47 @@ function validateClientMessage(
         type: "focusUser",
         userName: normaliseNonEmptyString(msg.userName, 64)!,
       };
+
+    case "addReaction": {
+      const responseUserName = normaliseNonEmptyString(
+        msg.responseUserName,
+        64,
+      );
+      if (!responseUserName) {
+        return { error: "Invalid addReaction: missing responseUserName" };
+      }
+      if (
+        typeof msg.emoji !== "string" ||
+        !ALLOWED_REACTION_EMOJIS.has(msg.emoji)
+      ) {
+        return { error: "Invalid addReaction: unsupported emoji" };
+      }
+      return { type: "addReaction", responseUserName, emoji: msg.emoji };
+    }
+
+    case "removeReaction": {
+      const responseUserName = normaliseNonEmptyString(
+        msg.responseUserName,
+        64,
+      );
+      if (!responseUserName) {
+        return { error: "Invalid removeReaction: missing responseUserName" };
+      }
+      if (
+        typeof msg.emoji !== "string" ||
+        !ALLOWED_REACTION_EMOJIS.has(msg.emoji)
+      ) {
+        return { error: "Invalid removeReaction: unsupported emoji" };
+      }
+      return { type: "removeReaction", responseUserName, emoji: msg.emoji };
+    }
+
+    case "setTheme": {
+      if (typeof msg.theme !== "string" || !ALLOWED_THEMES.has(msg.theme)) {
+        return { error: "Invalid setTheme: unsupported theme" };
+      }
+      return { type: "setTheme", theme: msg.theme };
+    }
 
     case "lockResponses":
       return { type: "lockResponses" };
@@ -430,6 +516,58 @@ export async function handleSession(
             standup.broadcast({ type: "standupCompleted" });
           }
           break;
+
+        case "addReaction": {
+          const responseUser = findCanonicalUserName(
+            currentStandup.users,
+            validated.responseUserName,
+          );
+          if (responseUser) {
+            standup.repository.addReaction(
+              canonicalUserName,
+              responseUser,
+              validated.emoji,
+            );
+            standup.broadcast({
+              type: "reactionAdded",
+              responseUserName: responseUser,
+              reactingUserName: canonicalUserName,
+              emoji: validated.emoji,
+            });
+          }
+          break;
+        }
+
+        case "removeReaction": {
+          const responseUser = findCanonicalUserName(
+            currentStandup.users,
+            validated.responseUserName,
+          );
+          if (responseUser) {
+            standup.repository.removeReaction(
+              canonicalUserName,
+              responseUser,
+              validated.emoji,
+            );
+            standup.broadcast({
+              type: "reactionRemoved",
+              responseUserName: responseUser,
+              reactingUserName: canonicalUserName,
+              emoji: validated.emoji,
+            });
+          }
+          break;
+        }
+
+        case "setTheme":
+          if (canonicalUserName === currentStandup.moderator) {
+            standup.repository.setTheme(validated.theme);
+            standup.broadcast({
+              type: "themeUpdated",
+              theme: validated.theme,
+            });
+          }
+          break;
       }
     } catch (err: unknown) {
       console.error("WebSocket message error:", err);
@@ -484,6 +622,8 @@ async function handleSubmitResponse(
     blockerDescription: message.blockerDescription,
     healthCheck: message.healthCheck,
     linkedTickets: message.linkedTickets,
+    kudos: message.kudos,
+    icebreakerAnswer: message.icebreakerAnswer,
   };
 
   standup.repository.submitResponse(userName, payload);
