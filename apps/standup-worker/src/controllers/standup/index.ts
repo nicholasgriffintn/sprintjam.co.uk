@@ -6,6 +6,7 @@ import {
   generateID,
   serializePasscodeHash,
   parsePasscodeHash,
+  getStandupSessionToken,
   PASSCODE_MIN_LENGTH,
   PASSCODE_MAX_LENGTH,
 } from "@sprintjam/utils";
@@ -186,8 +187,23 @@ async function handleJoin(
     (u) => u.toLowerCase() === name.toLowerCase(),
   );
 
-  if (existingUser && standupData.connectedUsers[existingUser]) {
-    context.disconnectUserSessions(existingUser);
+  if (existingUser) {
+    const authToken = getStandupSessionToken(request);
+    const hasValidSessionToken = context.repository.validateSessionToken(
+      existingUser,
+      authToken ?? null,
+    );
+
+    const isConnected = !!standupData.connectedUsers[existingUser];
+    const hasResponded = standupData.respondedUsers.includes(existingUser);
+
+    if ((isConnected || hasResponded) && !hasValidSessionToken) {
+      return jsonError("This name is already in use in this standup", 409);
+    }
+
+    if (isConnected) {
+      context.disconnectUserSessions(existingUser);
+    }
   }
 
   const canonicalName = context.repository.ensureUser(name);

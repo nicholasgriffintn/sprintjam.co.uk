@@ -27,6 +27,7 @@ const buildContext = (
       setSessionToken: vi.fn(),
       setUserAvatar: vi.fn(),
       getPasscode: vi.fn().mockReturnValue(null),
+      validateSessionToken: vi.fn().mockReturnValue(false),
     },
     getStandupData: vi.fn(),
     disconnectUserSessions: vi.fn(),
@@ -266,18 +267,16 @@ describe("standup http controller", () => {
       expect(response?.status).toBe(404);
     });
 
-    it("disconnects existing sessions for reconnecting user", async () => {
+    it("rejects join when user is connected and no valid token", async () => {
       const standupData = buildStandupData({
         users: ["mod", "Alice"],
         connectedUsers: { mod: true, Alice: true },
       });
-      const disconnectSpy = vi.fn();
       const context = buildContext({
         getStandupData: vi.fn().mockResolvedValue(standupData),
-        disconnectUserSessions: disconnectSpy,
       });
 
-      await handleHttpRequest(
+      const response = await handleHttpRequest(
         context,
         new Request("https://internal/join", {
           method: "POST",
@@ -286,7 +285,90 @@ describe("standup http controller", () => {
         }),
       );
 
+      expect(response?.status).toBe(409);
+      expect(context.disconnectUserSessions).not.toHaveBeenCalled();
+    });
+
+    it("disconnects existing sessions when reconnecting user has valid token", async () => {
+      const standupData = buildStandupData({
+        users: ["mod", "Alice"],
+        connectedUsers: { mod: true, Alice: true },
+      });
+      const disconnectSpy = vi.fn();
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(standupData),
+        disconnectUserSessions: disconnectSpy,
+        repository: {
+          ...buildContext().repository,
+          validateSessionToken: vi.fn().mockReturnValue(true),
+        } as any,
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/join", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: "standup_session=valid-token",
+          },
+          body: JSON.stringify({ name: "Alice" }),
+        }),
+      );
+
+      expect(response?.status).toBe(200);
       expect(disconnectSpy).toHaveBeenCalledWith("Alice");
+    });
+
+    it("rejects join when user has submitted a response and no valid token", async () => {
+      const standupData = buildStandupData({
+        users: ["mod", "Alice"],
+        connectedUsers: { mod: true, Alice: false },
+        respondedUsers: ["Alice"],
+      });
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(standupData),
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Alice" }),
+        }),
+      );
+
+      expect(response?.status).toBe(409);
+    });
+
+    it("allows rejoin when user has submitted a response with valid token", async () => {
+      const standupData = buildStandupData({
+        users: ["mod", "Alice"],
+        connectedUsers: { mod: true, Alice: false },
+        respondedUsers: ["Alice"],
+      });
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(standupData),
+        repository: {
+          ...buildContext().repository,
+          validateSessionToken: vi.fn().mockReturnValue(true),
+        } as any,
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/join", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: "standup_session=valid-token",
+          },
+          body: JSON.stringify({ name: "Alice" }),
+        }),
+      );
+
+      expect(response?.status).toBe(200);
     });
   });
 
