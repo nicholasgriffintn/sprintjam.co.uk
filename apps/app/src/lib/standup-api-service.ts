@@ -324,6 +324,7 @@ export function disconnectFromStandup(): void {
 export function submitStandupResponse(payload: StandupResponsePayload): void {
   sendWebSocketMessage(activeSocket, {
     type: "submitResponse",
+    isInPerson: payload.isInPerson,
     yesterday: payload.yesterday,
     today: payload.today,
     hasBlocker: payload.hasBlocker,

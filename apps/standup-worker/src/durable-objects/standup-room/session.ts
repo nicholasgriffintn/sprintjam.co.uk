@@ -9,6 +9,7 @@ interface StandupClientMessage {
 
 interface SubmitResponseMessage extends StandupClientMessage {
   type: "submitResponse";
+  isInPerson?: boolean;
   yesterday: string;
   today: string;
   hasBlocker: boolean;
@@ -195,11 +196,13 @@ function validateClientMessage(
 
   switch (msg.type) {
     case "submitResponse": {
-      const yesterday = normaliseNonEmptyString(
-        msg.yesterday,
-        LIMITS.responseText,
-      );
-      const today = normaliseNonEmptyString(msg.today, LIMITS.responseText);
+      const isInPerson = msg.isInPerson === true;
+      const yesterday = isInPerson
+        ? ""
+        : normaliseNonEmptyString(msg.yesterday, LIMITS.responseText);
+      const today = isInPerson
+        ? ""
+        : normaliseNonEmptyString(msg.today, LIMITS.responseText);
       const blockerDescription = normaliseOptionalString(
         msg.blockerDescription,
         LIMITS.blockerText,
@@ -219,8 +222,7 @@ function validateClientMessage(
           : undefined;
 
       if (
-        !yesterday ||
-        !today ||
+        (!isInPerson && (!yesterday || !today)) ||
         typeof msg.hasBlocker !== "boolean" ||
         healthCheck === undefined ||
         (msg.linkedTickets !== undefined && linkedTickets === undefined) ||
@@ -231,8 +233,9 @@ function validateClientMessage(
 
       const result: SubmitResponseMessage = {
         type: "submitResponse",
-        yesterday,
-        today,
+        isInPerson,
+        yesterday: yesterday ?? "",
+        today: today ?? "",
         hasBlocker: msg.hasBlocker,
         healthCheck,
       };
@@ -616,8 +619,9 @@ async function handleSubmitResponse(
   }
 
   const payload: StandupResponsePayload = {
-    yesterday: message.yesterday,
-    today: message.today,
+    isInPerson: message.isInPerson,
+    yesterday: message.yesterday || undefined,
+    today: message.today || undefined,
     hasBlocker: message.hasBlocker,
     blockerDescription: message.blockerDescription,
     healthCheck: message.healthCheck,
