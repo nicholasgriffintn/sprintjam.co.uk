@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 import { navigateTo } from "@/config/routes";
 import { useSessionActions } from "@/context/SessionContext";
@@ -21,15 +21,15 @@ import {
 } from "@/lib/workspace-query";
 import { HttpError } from "@/lib/errors";
 import { validateName } from "@/utils/validators";
-import { Alert } from '@/components/ui/Alert';
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { Tabs } from '@/components/ui';
+import { Tabs } from "@/components/ui";
 import { PageSection } from "@/components/layout/PageBackground";
-import { StandupResponseForm } from '@/components/standup/StandupResponseForm';
+import { StandupResponseForm } from "@/components/standup/StandupResponseForm";
 import { StandupPresentationView } from "@/components/standup/StandupPresentationView";
-import { StandupResultsPanel } from '@/components/standup/StandupResultsPanel';
+import { StandupResultsPanel } from "@/components/standup/StandupResultsPanel";
 import { StandupSidebar } from "@/components/standup/StandupSidebar";
 import { consumeStandupNotice } from "@/lib/standup-notice";
 
@@ -38,7 +38,7 @@ function getStandupKeyFromRoomPath(pathname: string): string | null {
   return match?.[1]?.toUpperCase() ?? null;
 }
 
-type StandupTab = 'response' | 'results';
+type StandupTab = "response" | "results";
 
 function StandupRoomContent({
   standupKey,
@@ -74,7 +74,9 @@ function StandupRoomContent({
   } = useStandupHeader();
   const [completionNotice, setCompletionNotice] = useState<string | null>(null);
   const [isCompletingStandup, setIsCompletingStandup] = useState(false);
-  const [activeTab, setActiveTab] = useState<StandupTab>('response');
+  const [isLockingResponses, setIsLockingResponses] = useState(false);
+  const [isStartingPresentation, setIsStartingPresentation] = useState(false);
+  const [activeTab, setActiveTab] = useState<StandupTab>("response");
 
   useEffect(() => {
     setStandupKey(standupKey);
@@ -107,12 +109,7 @@ function StandupRoomContent({
     setStandupStatus(standupData.status);
     setRespondedCount(standupData.respondedUsers.length);
     setParticipantCount(standupData.users.length);
-  }, [
-    setParticipantCount,
-    setRespondedCount,
-    setStandupStatus,
-    standupData,
-  ]);
+  }, [setParticipantCount, setRespondedCount, setStandupStatus, standupData]);
 
   const completeWorkspaceHistory = async () => {
     if (!standupData?.teamId || !isAuthenticated) {
@@ -145,6 +142,24 @@ function StandupRoomContent({
           : "The standup is complete, but workspace history was not updated.",
       );
     }
+  };
+
+  const onLockResponses = () => {
+    setIsLockingResponses(true);
+    handleLockResponses();
+    setTimeout(() => setIsLockingResponses(false), 1000);
+  };
+
+  const onUnlockResponses = () => {
+    setIsLockingResponses(true);
+    handleUnlockResponses();
+    setTimeout(() => setIsLockingResponses(false), 1000);
+  };
+
+  const onStartPresentation = () => {
+    setIsStartingPresentation(true);
+    handleStartPresentation();
+    setTimeout(() => setIsStartingPresentation(false), 1000);
   };
 
   const onCompleteStandup = async () => {
@@ -182,9 +197,9 @@ function StandupRoomContent({
     const shouldStartOnResponse =
       !isModeratorView &&
       !hasSubmittedResponse &&
-      standupData?.status !== 'completed';
+      standupData?.status !== "completed";
 
-    setActiveTab(shouldStartOnResponse ? 'response' : 'results');
+    setActiveTab(shouldStartOnResponse ? "response" : "results");
   }, [hasSubmittedResponse, isModeratorView, standupData?.status]);
 
   if (standupError && !standupData) {
@@ -206,7 +221,10 @@ function StandupRoomContent({
             >
               Back to join
             </Button>
-            <Button variant="secondary" onClick={() => window.location.reload()}>
+            <Button
+              variant="secondary"
+              onClick={() => window.location.reload()}
+            >
               Reload
             </Button>
           </div>
@@ -313,11 +331,13 @@ function StandupRoomContent({
                   yourResponse={yourResponse}
                   isModeratorView={isModeratorView}
                   isSocketConnected={isSocketConnected}
-                  onLockResponses={handleLockResponses}
-                  onUnlockResponses={handleUnlockResponses}
-                  onStartPresentation={handleStartPresentation}
+                  onLockResponses={onLockResponses}
+                  onUnlockResponses={onUnlockResponses}
+                  onStartPresentation={onStartPresentation}
                   onCompleteStandup={onCompleteStandup}
                   onFocusUser={handleFocusUser}
+                  isLockingResponses={isLockingResponses}
+                  isStartingPresentation={isStartingPresentation}
                   isCompletingStandup={isCompletingStandup}
                 />
               </Tabs.Panel>
@@ -338,7 +358,8 @@ export default function StandupRoomScreen() {
   const [initialNotice, setInitialNotice] = useState<string | null>(null);
   const workspaceName = user?.name?.trim() ?? "";
   const userName = useMemo(
-    () => (validateName(workspaceName).ok ? workspaceName : getStoredUserName()),
+    () =>
+      validateName(workspaceName).ok ? workspaceName : getStoredUserName(),
     [workspaceName],
   );
   const isUserNameValid = validateName(userName).ok;

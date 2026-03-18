@@ -76,6 +76,7 @@ export function StandupResponseForm({
 }: StandupResponseFormProps) {
   const [draft, setDraft] = useState<DraftState>(() => getDraftState(response));
   const [isEditing, setIsEditing] = useState(() => !response);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!response) {
@@ -111,6 +112,7 @@ export function StandupResponseForm({
       return;
     }
 
+    setIsSubmitting(true);
     onSubmit({
       yesterday: draft.yesterday.trim(),
       today: draft.today.trim(),
@@ -121,6 +123,7 @@ export function StandupResponseForm({
         draft.linkedTickets.length > 0 ? draft.linkedTickets : undefined,
     });
 
+    setTimeout(() => setIsSubmitting(false), 1000);
     setIsEditing(false);
   };
 
@@ -349,6 +352,7 @@ export function StandupResponseForm({
             {draft.hasBlocker ? (
               <Textarea
                 id="standup-blocker"
+                autoFocus
                 value={draft.blockerDescription}
                 onChange={(event) =>
                   setDraft((current) => ({
@@ -419,6 +423,7 @@ export function StandupResponseForm({
             type="submit"
             fullWidth
             disabled={isSubmitDisabled}
+            isLoading={isSubmitting}
             icon={<Save className="h-4 w-4" />}
           >
             {response ? "Save changes" : "Save update"}

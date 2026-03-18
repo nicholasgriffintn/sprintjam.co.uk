@@ -22,7 +22,7 @@ import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { cn } from "@/lib/cn";
-import { HttpError } from '@/lib/errors';
+import { HttpError } from "@/lib/errors";
 import {
   listTeamIntegrationBoards,
   listTeamIntegrationSprints,
@@ -321,10 +321,10 @@ export function StandupTicketLinker({
                   disabled={disabled}
                   data-active={provider === activeProvider}
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition',
-                    'border-black/5 bg-white/80 text-slate-600 hover:border-brand-200 hover:text-slate-900 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200 dark:hover:text-white',
+                    "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition",
+                    "border-black/5 bg-white/80 text-slate-600 hover:border-brand-200 hover:text-slate-900 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200 dark:hover:text-white",
                     providerConfig.tabClassName,
-                    disabled && 'cursor-not-allowed opacity-60',
+                    disabled && "cursor-not-allowed opacity-60",
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -344,10 +344,10 @@ export function StandupTicketLinker({
                   label: boardsQuery.isLoading
                     ? `Loading ${config.boardLabel.toLowerCase()}s...`
                     : `Select ${config.boardLabel}`,
-                  value: '',
+                  value: "",
                 },
                 ...boards.map((board) => ({
-                  label: `${board.name}${board.key ? ` (${board.key})` : ''}`,
+                  label: `${board.name}${board.key ? ` (${board.key})` : ""}`,
                   value: board.id,
                 })),
               ]}
@@ -364,10 +364,10 @@ export function StandupTicketLinker({
               options={[
                 {
                   label: `Select ${config.sprintLabel} (optional)`,
-                  value: '',
+                  value: "",
                 },
                 ...sprints.map((sprint) => ({
-                  label: `${sprint.name}${sprint.state ? ` (${sprint.state})` : ''}`,
+                  label: `${sprint.name}${sprint.state ? ` (${sprint.state})` : ""}`,
                   value: sprint.id,
                 })),
               ]}
@@ -403,14 +403,19 @@ export function StandupTicketLinker({
                 </div>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   {selectedBoardId
-                    ? 'Search within the selected source and link the items that matter for today.'
+                    ? "Search within the selected source and link the items that matter for today."
                     : `Choose a ${config.boardLabel.toLowerCase()} to load results.`}
                 </p>
               </div>
               {ticketsQuery.isFetching ? <Spinner size="sm" /> : null}
             </div>
 
-            {selectedBoardId.length === 0 ? null : tickets.length === 0 ? (
+            {selectedBoardId.length === 0 ? null : ticketsQuery.isFetching &&
+              tickets.length === 0 ? (
+              <div className="flex justify-center py-6">
+                <Spinner size="sm" />
+              </div>
+            ) : tickets.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-black/10 px-4 py-6 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
                 No matching tickets found.
               </div>
@@ -460,11 +465,11 @@ export function StandupTicketLinker({
                         ) : null}
                         <Button
                           size="sm"
-                          variant={linked ? 'secondary' : 'primary'}
+                          variant={linked ? "secondary" : "primary"}
                           onClick={() => addTicket(ticket)}
                           disabled={disabled || linked}
                         >
-                          {linked ? 'Linked' : 'Link'}
+                          {linked ? "Linked" : "Link"}
                         </Button>
                       </div>
                     </div>

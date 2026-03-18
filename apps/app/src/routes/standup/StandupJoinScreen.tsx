@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { KeyRound, Lock, LogIn } from "lucide-react";
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 import { navigateTo } from "@/config/routes";
 import { useSessionActions } from "@/context/SessionContext";
@@ -97,7 +97,11 @@ export default function StandupJoinScreen() {
         submitError instanceof Error &&
         submitError.message === "PASSCODE_REQUIRED"
       ) {
-        setError("Passcode incorrect. Ask the facilitator to confirm it.");
+        setError(
+          passcode.trim()
+            ? "Incorrect passcode. Ask the facilitator to confirm it."
+            : "This standup requires a passcode. Ask the facilitator for it.",
+        );
       } else {
         setError(
           submitError instanceof Error
@@ -169,7 +173,7 @@ export default function StandupJoinScreen() {
                 isValid={standupKeyValidation.ok}
                 helperText={
                   standupKeyValidation.ok
-                    ? 'Ask the facilitator for the room key.'
+                    ? "Ask the facilitator for the room key."
                     : standupKeyValidation.error
                 }
                 maxLength={6}
@@ -203,8 +207,8 @@ export default function StandupJoinScreen() {
                 type="button"
                 variant="secondary"
                 onClick={() => {
-                  setScreen('standup');
-                  navigateTo('standup');
+                  setScreen("standup");
+                  navigateTo("standup");
                 }}
               >
                 Back

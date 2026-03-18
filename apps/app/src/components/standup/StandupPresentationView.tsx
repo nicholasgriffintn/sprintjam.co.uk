@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import type { StandupData } from "@sprintjam/types";
-import { CheckCircle2, ChevronLeft, ChevronRight, Play, X } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 
 import { StandupUserCard } from "@/components/standup/StandupUserCard";
 import { Badge } from "@/components/ui/Badge";
@@ -22,20 +22,17 @@ export function StandupPresentationView({
   onCompleteStandup,
   isCompletingStandup = false,
 }: StandupPresentationViewProps) {
-  const orderedResponses = useMemo(
-    () => {
-      const userOrder = new Map(
-        standupData.users.map((user, index) => [user, index]),
-      );
+  const orderedResponses = useMemo(() => {
+    const userOrder = new Map(
+      standupData.users.map((user, index) => [user, index]),
+    );
 
-      return [...standupData.responses].sort(
-        (left, right) =>
-          (userOrder.get(left.userName) ?? Number.MAX_SAFE_INTEGER) -
-          (userOrder.get(right.userName) ?? Number.MAX_SAFE_INTEGER),
-      );
-    },
-    [standupData.responses, standupData.users],
-  );
+    return [...standupData.responses].sort(
+      (left, right) =>
+        (userOrder.get(left.userName) ?? Number.MAX_SAFE_INTEGER) -
+        (userOrder.get(right.userName) ?? Number.MAX_SAFE_INTEGER),
+    );
+  }, [standupData.responses, standupData.users]);
   const focusedIndex = orderedResponses.findIndex(
     (response) => response.userName === standupData.focusedUser,
   );
@@ -94,7 +91,8 @@ export function StandupPresentationView({
               Walk the team through one update at a time
             </h2>
             <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-300">
-              Use next and previous to drive the call manually.
+              {activeIndex + 1} of {orderedResponses.length} —{" "}
+              {activeResponse.userName}
             </p>
           </div>
 
@@ -102,14 +100,14 @@ export function StandupPresentationView({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => moveFocus('previous')}
+              onClick={() => moveFocus("previous")}
               icon={<ChevronLeft className="h-4 w-4" />}
             >
               Previous
             </Button>
             <Button
               size="sm"
-              onClick={() => moveFocus('next')}
+              onClick={() => moveFocus("next")}
               icon={<ChevronRight className="h-4 w-4" />}
               iconPosition="right"
             >

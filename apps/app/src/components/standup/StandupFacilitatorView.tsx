@@ -20,6 +20,8 @@ interface StandupFacilitatorViewProps {
   onStartPresentation: () => void;
   onCompleteStandup: () => void;
   onFocusUser: (userName: string) => void;
+  isLockingResponses?: boolean;
+  isStartingPresentation?: boolean;
   isCompletingStandup?: boolean;
 }
 
@@ -33,6 +35,8 @@ export function StandupFacilitatorView({
   onStartPresentation,
   onCompleteStandup,
   onFocusUser,
+  isLockingResponses = false,
+  isStartingPresentation = false,
   isCompletingStandup = false,
 }: StandupFacilitatorViewProps) {
   const responseOrder = new Map(
@@ -70,13 +74,13 @@ export function StandupFacilitatorView({
             </h2>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="primary">
-                {standupData.respondedUsers.length}/{standupData.users.length}{' '}
+                {standupData.respondedUsers.length}/{standupData.users.length}{" "}
                 submitted
               </Badge>
               {blockers.length ? (
                 <Badge variant="error">
                   <AlertTriangle className="mr-1 h-3 w-3" />
-                  {blockers.length} blocker{blockers.length === 1 ? '' : 's'}
+                  {blockers.length} blocker{blockers.length === 1 ? "" : "s"}
                 </Badge>
               ) : null}
             </div>
@@ -86,31 +90,34 @@ export function StandupFacilitatorView({
             <Button
               variant="secondary"
               size="sm"
-              disabled={!isSocketConnected || isCompleted}
+              disabled={!isSocketConnected || isCompleted || isLockingResponses}
+              isLoading={isLockingResponses}
               onClick={
-                standupData.status === 'locked'
+                standupData.status === "locked"
                   ? onUnlockResponses
                   : onLockResponses
               }
               icon={
-                standupData.status === 'locked' ? (
+                standupData.status === "locked" ? (
                   <LockOpen className="h-4 w-4" />
                 ) : (
                   <Lock className="h-4 w-4" />
                 )
               }
             >
-              {standupData.status === 'locked'
-                ? 'Unlock responses'
-                : 'Lock responses'}
+              {standupData.status === "locked"
+                ? "Unlock responses"
+                : "Lock responses"}
             </Button>
             <Button
               size="sm"
               disabled={
                 !isSocketConnected ||
                 orderedResponses.length === 0 ||
-                isCompleted
+                isCompleted ||
+                isStartingPresentation
               }
+              isLoading={isStartingPresentation}
               onClick={onStartPresentation}
               icon={<Play className="h-4 w-4" />}
             >
@@ -118,7 +125,7 @@ export function StandupFacilitatorView({
             </Button>
             <Button
               size="sm"
-              variant={isCompleted ? 'secondary' : 'primary'}
+              variant={isCompleted ? "secondary" : "primary"}
               disabled={!isSocketConnected || isCompleted}
               isLoading={isCompletingStandup}
               onClick={onCompleteStandup}
@@ -142,7 +149,7 @@ export function StandupFacilitatorView({
               Average health
             </div>
             <div className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
-              {orderedResponses.length ? averageHealth.toFixed(1) : '--'}
+              {orderedResponses.length ? averageHealth.toFixed(1) : "--"}
             </div>
             <div className="mt-3 space-y-2">
               {distribution.map((item) => (
@@ -159,7 +166,7 @@ export function StandupFacilitatorView({
                       style={{
                         width: orderedResponses.length
                           ? `${(item.count / orderedResponses.length) * 100}%`
-                          : '0%',
+                          : "0%",
                       }}
                     />
                   </div>
@@ -184,7 +191,7 @@ export function StandupFacilitatorView({
                   >
                     <span className="font-semibold">{response.userName}</span>
                     <span className="ml-2">
-                      {response.blockerDescription || 'Needs follow-up'}
+                      {response.blockerDescription || "Needs follow-up"}
                     </span>
                   </div>
                 ))}

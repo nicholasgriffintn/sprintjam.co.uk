@@ -1,8 +1,8 @@
-import type { StandupData, StandupResponse } from '@sprintjam/types';
+import type { StandupData, StandupResponse } from "@sprintjam/types";
 
-import { StandupFacilitatorView } from '@/components/standup/StandupFacilitatorView';
-import { StandupUserCard } from '@/components/standup/StandupUserCard';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { StandupFacilitatorView } from "@/components/standup/StandupFacilitatorView";
+import { StandupUserCard } from "@/components/standup/StandupUserCard";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 interface StandupResultsPanelProps {
   standupData: StandupData;
@@ -14,6 +14,8 @@ interface StandupResultsPanelProps {
   onStartPresentation: () => void;
   onCompleteStandup: () => void;
   onFocusUser: (userName: string) => void;
+  isLockingResponses?: boolean;
+  isStartingPresentation?: boolean;
   isCompletingStandup?: boolean;
 }
 
@@ -27,6 +29,8 @@ export function StandupResultsPanel({
   onStartPresentation,
   onCompleteStandup,
   onFocusUser,
+  isLockingResponses = false,
+  isStartingPresentation = false,
   isCompletingStandup = false,
 }: StandupResultsPanelProps) {
   if (isModeratorView) {
@@ -39,6 +43,8 @@ export function StandupResultsPanel({
         onStartPresentation={onStartPresentation}
         onCompleteStandup={onCompleteStandup}
         onFocusUser={onFocusUser}
+        isLockingResponses={isLockingResponses}
+        isStartingPresentation={isStartingPresentation}
         isCompletingStandup={isCompletingStandup}
       />
     );
