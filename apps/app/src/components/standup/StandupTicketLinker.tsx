@@ -22,6 +22,7 @@ import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { cn } from "@/lib/cn";
+import { HttpError } from '@/lib/errors';
 import {
   listTeamIntegrationBoards,
   listTeamIntegrationSprints,
@@ -75,7 +76,9 @@ function getConnectedProviders(
 ): ConnectedProvider[] {
   return statuses
     .filter(
-      (status): status is TeamIntegrationStatus & { provider: ConnectedProvider } =>
+      (
+        status,
+      ): status is TeamIntegrationStatus & { provider: ConnectedProvider } =>
         isConnectedProvider(status.provider) && Boolean(status.connected),
     )
     .map((status) => status.provider);
@@ -129,9 +132,8 @@ export function StandupTicketLinker({
   onChange: (tickets: LinkedTicket[]) => void;
   disabled?: boolean;
 }) {
-  const [activeProvider, setActiveProvider] = useState<ConnectedProvider | null>(
-    null,
-  );
+  const [activeProvider, setActiveProvider] =
+    useState<ConnectedProvider | null>(null);
   const [selectedBoardId, setSelectedBoardId] = useState("");
   const [selectedSprintId, setSelectedSprintId] = useState("");
   const [search, setSearch] = useState("");
@@ -188,8 +190,9 @@ export function StandupTicketLinker({
 
   const selectedSprint = useMemo(
     () =>
-      (sprintsQuery.data ?? []).find((sprint) => sprint.id === selectedSprintId) ??
-      null,
+      (sprintsQuery.data ?? []).find(
+        (sprint) => sprint.id === selectedSprintId,
+      ) ?? null,
     [selectedSprintId, sprintsQuery.data],
   );
 
@@ -280,7 +283,14 @@ export function StandupTicketLinker({
       ) : null}
 
       {integrationsQuery.error instanceof Error ? (
-        <Alert variant="warning">{integrationsQuery.error.message}</Alert>
+        integrationsQuery.error instanceof HttpError &&
+        integrationsQuery.error.status === 401 ? (
+          <Alert variant="info">
+            Sign in to link tickets from your team integrations.
+          </Alert>
+        ) : (
+          <Alert variant="warning">{integrationsQuery.error.message}</Alert>
+        )
       ) : null}
 
       {!integrationsQuery.isLoading &&
@@ -508,12 +518,12 @@ export function StandupTicketLinker({
             ))}
           </div>
         </div>
-      ) : (
+      ) : !integrationsQuery.error ? (
         <div className="rounded-[1.5rem] border border-dashed border-black/10 px-4 py-4 text-sm text-slate-500 dark:border-white/10 dark:text-slate-400">
           No tickets linked yet. Add the one or two items most likely to come up
           during the standup.
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

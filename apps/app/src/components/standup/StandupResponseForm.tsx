@@ -12,13 +12,14 @@ import {
   Lock,
   Pencil,
   Save,
-} from 'lucide-react';
+} from "lucide-react";
 
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { StandupTicketLinker } from "@/components/standup/StandupTicketLinker";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Textarea } from "@/components/ui/Textarea";
 import { cn } from "@/lib/cn";
 
 interface StandupResponseFormProps {
@@ -40,19 +41,19 @@ interface DraftState {
 }
 
 const HEALTH_OPTIONS = [
-  { value: 1, label: "1", copy: "Running on fumes" },
-  { value: 2, label: "2", copy: "Low energy" },
-  { value: 3, label: "3", copy: "Steady" },
-  { value: 4, label: "4", copy: "Strong" },
-  { value: 5, label: "5", copy: "Excellent" },
+  { value: 1, label: "😴", copy: "Running on fumes" },
+  { value: 2, label: "😕", copy: "Low energy" },
+  { value: 3, label: "🙂", copy: "Steady" },
+  { value: 4, label: "💪", copy: "Strong" },
+  { value: 5, label: "🚀", copy: "Excellent" },
 ] as const;
 
 function getDraftState(response?: StandupResponse): DraftState {
   return {
-    yesterday: response?.yesterday ?? '',
-    today: response?.today ?? '',
+    yesterday: response?.yesterday ?? "",
+    today: response?.today ?? "",
     hasBlocker: response?.hasBlocker ?? null,
-    blockerDescription: response?.blockerDescription ?? '',
+    blockerDescription: response?.blockerDescription ?? "",
     healthCheck: response?.healthCheck ?? 3,
     linkedTickets: response?.linkedTickets ?? [],
   };
@@ -199,31 +200,31 @@ export function StandupResponseForm({
 
           <div
             className={cn(
-              'rounded-[1.75rem] border p-4',
+              "rounded-[1.75rem] border p-4",
               draft.hasBlocker
-                ? 'border-rose-200/80 bg-rose-50/90 dark:border-rose-400/20 dark:bg-rose-950/20'
-                : 'border-black/5 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]',
+                ? "border-rose-200/80 bg-rose-50/90 dark:border-rose-400/20 dark:bg-rose-950/20"
+                : "border-black/5 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]",
             )}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
                 Blockers
               </div>
-              <Badge variant={draft.hasBlocker ? 'error' : 'success'}>
-                {draft.hasBlocker ? 'Needs help' : 'Clear path'}
+              <Badge variant={draft.hasBlocker ? "error" : "success"}>
+                {draft.hasBlocker ? "Needs help" : "Clear path"}
               </Badge>
             </div>
             <p
               className={cn(
-                'mt-2 whitespace-pre-wrap text-sm leading-6',
+                "mt-2 whitespace-pre-wrap text-sm leading-6",
                 draft.hasBlocker
-                  ? 'text-rose-800 dark:text-rose-100'
-                  : 'text-slate-700 dark:text-slate-200',
+                  ? "text-rose-800 dark:text-rose-100"
+                  : "text-slate-700 dark:text-slate-200",
               )}
             >
               {draft.hasBlocker
                 ? draft.blockerDescription
-                : 'No blockers shared.'}
+                : "No blockers shared."}
             </p>
           </div>
 
@@ -261,15 +262,10 @@ export function StandupResponseForm({
         </div>
       ) : (
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <section className="space-y-2">
-            <label
-              htmlFor="standup-yesterday"
-              className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
-            >
-              Yesterday
-            </label>
-            <textarea
+          <section>
+            <Textarea
               id="standup-yesterday"
+              label="Yesterday"
               value={draft.yesterday}
               onChange={(event) =>
                 setDraft((current) => ({
@@ -279,20 +275,15 @@ export function StandupResponseForm({
               }
               rows={4}
               placeholder="What moved forward yesterday?"
-              className="w-full rounded-[1.75rem] border border-white/50 bg-white/80 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
               disabled={!isSocketConnected || isReadOnly}
+              fullWidth
             />
           </section>
 
-          <section className="space-y-2">
-            <label
-              htmlFor="standup-today"
-              className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
-            >
-              Today
-            </label>
-            <textarea
+          <section>
+            <Textarea
               id="standup-today"
+              label="Today"
               value={draft.today}
               onChange={(event) =>
                 setDraft((current) => ({
@@ -302,8 +293,8 @@ export function StandupResponseForm({
               }
               rows={4}
               placeholder="What are you doing today?"
-              className="w-full rounded-[1.75rem] border border-white/50 bg-white/80 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-brand-300 focus:ring-2 focus:ring-brand-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900"
               disabled={!isSocketConnected || isReadOnly}
+              fullWidth
             />
           </section>
 
@@ -318,14 +309,14 @@ export function StandupResponseForm({
                   setDraft((current) => ({
                     ...current,
                     hasBlocker: false,
-                    blockerDescription: '',
+                    blockerDescription: "",
                   }))
                 }
                 className={cn(
-                  'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
-                  !draft.hasBlocker
-                    ? 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200',
+                  "rounded-xl border px-4 py-2.5 text-sm font-medium transition",
+                  draft.hasBlocker === false
+                    ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200",
                 )}
                 disabled={!isSocketConnected || isReadOnly}
               >
@@ -340,10 +331,10 @@ export function StandupResponseForm({
                   }))
                 }
                 className={cn(
-                  'rounded-xl border px-4 py-2.5 text-sm font-medium transition',
+                  "rounded-xl border px-4 py-2.5 text-sm font-medium transition",
                   draft.hasBlocker
-                    ? 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200',
+                    ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200",
                 )}
                 disabled={!isSocketConnected || isReadOnly}
               >
@@ -351,12 +342,12 @@ export function StandupResponseForm({
               </button>
             </div>
             {draft.hasBlocker === null ? (
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Select one option.
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                Please select an option to continue.
               </p>
             ) : null}
             {draft.hasBlocker ? (
-              <textarea
+              <Textarea
                 id="standup-blocker"
                 value={draft.blockerDescription}
                 onChange={(event) =>
@@ -367,8 +358,9 @@ export function StandupResponseForm({
                 }
                 rows={3}
                 placeholder="What is blocked and what help do you need?"
-                className="w-full rounded-[1.5rem] border border-rose-200/80 bg-white/90 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-rose-300 focus:ring-2 focus:ring-rose-200 dark:border-rose-400/20 dark:bg-slate-950/60 dark:text-white"
+                variant="error"
                 disabled={!isSocketConnected || isReadOnly}
+                fullWidth
               />
             ) : null}
           </section>
@@ -377,7 +369,7 @@ export function StandupResponseForm({
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
               Health check
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-1 rounded-2xl border border-slate-200/70 bg-slate-100/80 p-1 shadow-sm dark:border-white/10 dark:bg-slate-900/60">
               {HEALTH_OPTIONS.map((option) => {
                 const isSelected = draft.healthCheck === option.value;
 
@@ -392,14 +384,14 @@ export function StandupResponseForm({
                       }))
                     }
                     className={cn(
-                      'rounded-[1.5rem] border px-3 py-3 text-left transition',
+                      "rounded-xl px-3 py-3 text-center transition",
                       isSelected
-                        ? 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground'
-                        : 'border-black/5 bg-white/70 text-slate-600 hover:border-brand-200 hover:text-slate-900 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:text-white',
+                        ? "bg-white shadow-sm text-slate-900 dark:bg-slate-800 dark:text-white"
+                        : "border border-slate-200/60 text-slate-500 hover:text-slate-700 dark:border-white/10 dark:text-slate-400 dark:hover:text-slate-200",
                     )}
                     disabled={!isSocketConnected || isReadOnly}
                   >
-                    <div className="text-lg font-semibold">{option.label}</div>
+                    <div className="text-lg">{option.label}</div>
                     <div className="mt-1 text-[11px] leading-4">
                       {option.copy}
                     </div>
@@ -429,7 +421,7 @@ export function StandupResponseForm({
             disabled={isSubmitDisabled}
             icon={<Save className="h-4 w-4" />}
           >
-            {response ? 'Save changes' : 'Save update'}
+            {response ? "Save changes" : "Save update"}
           </Button>
         </form>
       )}
