@@ -3,12 +3,13 @@ export interface LinkedTicket {
   key: string;
   title: string;
   url?: string;
-  provider: 'jira' | 'linear' | 'github';
+  provider: "jira" | "linear" | "github";
 }
 
 export interface StandupResponsePayload {
-  yesterday: string;
-  today: string;
+  isInPerson?: boolean;
+  yesterday?: string;
+  today?: string;
   hasBlocker: boolean;
   blockerDescription?: string;
   healthCheck: number;
@@ -28,7 +29,7 @@ export interface StandupData {
   users: string[];
   moderator: string;
   connectedUsers: Record<string, boolean>;
-  status: 'active' | 'locked' | 'presenting' | 'completed';
+  status: "active" | "locked" | "presenting" | "completed";
   responses: StandupResponse[];
   respondedUsers: string[];
   userAvatars?: Record<string, string>;

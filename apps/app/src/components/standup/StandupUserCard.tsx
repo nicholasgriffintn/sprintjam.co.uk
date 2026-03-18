@@ -8,6 +8,8 @@ import {
   MessageSquareHeart,
   Sparkles,
   Trophy,
+  Users,
+  Wifi,
 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
@@ -131,6 +133,17 @@ export function StandupUserCard({
                 <HeartPulse className="mr-1 h-3 w-3" />
                 Health {response.healthCheck}/5
               </Badge>
+              {response.isInPerson ? (
+                <Badge variant="info" size="sm">
+                  <Users className="mr-1 h-3 w-3" />
+                  In person
+                </Badge>
+              ) : response.isInPerson === false ? (
+                <Badge variant="info" size="sm">
+                  <Wifi className="mr-1 h-3 w-3" />
+                  Remote
+                </Badge>
+              ) : null}
               {response.hasBlocker ? (
                 <Badge variant="error" size="sm">
                   <AlertTriangle className="mr-1 h-3 w-3" />
@@ -185,37 +198,46 @@ export function StandupUserCard({
           </div>
         </div>
 
-        <div
-          className={cn("grid gap-4", isPresentation ? "lg:grid-cols-2" : "")}
-        >
-          <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Yesterday
-            </h3>
-            <p
-              className={cn(
-                "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
-                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
-              )}
-            >
-              {response.yesterday}
-            </p>
-          </section>
+        {response.isInPerson ? (
+          <div className="rounded-xl border border-brand-200/60 bg-brand-50/40 p-4 dark:border-brand-400/20 dark:bg-brand-950/20">
+            <div className="flex items-center gap-2 text-sm text-brand-800 dark:text-brand-200">
+              <Users className="h-4 w-4" />
+              Joining in person — sharing their update live
+            </div>
+          </div>
+        ) : (
+          <div
+            className={cn("grid gap-4", isPresentation ? "lg:grid-cols-2" : "")}
+          >
+            <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Yesterday
+              </h3>
+              <p
+                className={cn(
+                  "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
+                  isPresentation ? "text-lg leading-8" : "text-sm leading-6",
+                )}
+              >
+                {response.yesterday}
+              </p>
+            </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Today
-            </h3>
-            <p
-              className={cn(
-                "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
-                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
-              )}
-            >
-              {response.today}
-            </p>
-          </section>
-        </div>
+            <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Today
+              </h3>
+              <p
+                className={cn(
+                  "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
+                  isPresentation ? "text-lg leading-8" : "text-sm leading-6",
+                )}
+              >
+                {response.today}
+              </p>
+            </section>
+          </div>
+        )}
 
         {response.hasBlocker ? (
           <section className="rounded-xl border border-rose-200/80 bg-rose-50/90 p-4 dark:border-rose-400/20 dark:bg-rose-950/20">

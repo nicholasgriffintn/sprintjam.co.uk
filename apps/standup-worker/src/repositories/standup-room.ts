@@ -173,8 +173,9 @@ export class StandupRoomRepository {
       .insert(standupResponses)
       .values({
         userName: canonicalName,
-        yesterday: payload.yesterday,
-        today: payload.today,
+        isInPerson: payload.isInPerson ? 1 : 0,
+        yesterday: payload.yesterday ?? "",
+        today: payload.today ?? "",
         hasBlocker: payload.hasBlocker ? 1 : 0,
         blockerDescription: payload.blockerDescription ?? null,
         healthCheck: payload.healthCheck,
@@ -189,8 +190,9 @@ export class StandupRoomRepository {
       .onConflictDoUpdate({
         target: standupResponses.userName,
         set: {
-          yesterday: payload.yesterday,
-          today: payload.today,
+          isInPerson: payload.isInPerson ? 1 : 0,
+          yesterday: payload.yesterday ?? "",
+          today: payload.today ?? "",
           hasBlocker: payload.hasBlocker ? 1 : 0,
           blockerDescription: payload.blockerDescription ?? null,
           healthCheck: payload.healthCheck,
@@ -402,8 +404,9 @@ export class StandupRoomRepository {
   ): StandupResponse {
     return {
       userName: row.userName,
-      yesterday: row.yesterday,
-      today: row.today,
+      isInPerson: !!row.isInPerson,
+      yesterday: row.yesterday || undefined,
+      today: row.today || undefined,
       hasBlocker: !!row.hasBlocker,
       blockerDescription: row.blockerDescription ?? undefined,
       healthCheck: row.healthCheck,

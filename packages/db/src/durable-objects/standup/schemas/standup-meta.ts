@@ -26,8 +26,9 @@ export const standupUsers = sqliteTable("standup_users", {
 export const standupResponses = sqliteTable("standup_responses", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userName: text("user_name").notNull().unique(),
-  yesterday: text("yesterday").notNull(),
-  today: text("today").notNull(),
+  isInPerson: integer("is_in_person").notNull().default(0),
+  yesterday: text("yesterday").notNull().default(""),
+  today: text("today").notNull().default(""),
   hasBlocker: integer("has_blocker").notNull().default(0),
   blockerDescription: text("blocker_description"),
   healthCheck: integer("health_check").notNull().default(3),

@@ -18,6 +18,7 @@ describe("StandupResponseForm", () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole("button", { name: /remote/i }));
     fireEvent.change(screen.getByLabelText("Yesterday"), {
       target: { value: "Wrapped the worker routes" },
     });
@@ -37,6 +38,7 @@ describe("StandupResponseForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save update" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
+      isInPerson: false,
       yesterday: "Wrapped the worker routes",
       today: "Build the standup UI",
       hasBlocker: true,
@@ -50,6 +52,7 @@ describe("StandupResponseForm", () => {
     const onSubmit = vi.fn();
     const response: StandupResponse = {
       userName: "Alice",
+      isInPerson: false,
       yesterday: "Shipped the worker",
       today: "Wire the room screen",
       hasBlocker: false,
@@ -75,6 +78,7 @@ describe("StandupResponseForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
+      isInPerson: false,
       yesterday: "Shipped the worker",
       today: "Wire the full room screen",
       hasBlocker: false,

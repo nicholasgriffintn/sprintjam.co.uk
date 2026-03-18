@@ -14,6 +14,8 @@ import {
   Pencil,
   Save,
   Sparkles,
+  Users,
+  Wifi,
 } from "lucide-react";
 
 import { getIcebreakerQuestion } from "@/lib/icebreaker-questions";
@@ -35,6 +37,7 @@ interface StandupResponseFormProps {
 }
 
 interface DraftState {
+  isInPerson: boolean | null;
   yesterday: string;
   today: string;
   hasBlocker: boolean | null;
@@ -55,6 +58,7 @@ const HEALTH_OPTIONS = [
 
 function getDraftState(response?: StandupResponse): DraftState {
   return {
+    isInPerson: response?.isInPerson ?? true,
     yesterday: response?.yesterday ?? "",
     today: response?.today ?? "",
     hasBlocker: response?.hasBlocker ?? null,
@@ -101,10 +105,11 @@ export function StandupResponseForm({
   const isReadOnly = isCompleted || isLocked;
   const blockerAnswer = draft.blockerDescription.trim();
   const formInvalid =
-    draft.yesterday.trim().length === 0 ||
-    draft.today.trim().length === 0 ||
+    draft.isInPerson === null ||
     draft.hasBlocker === null ||
-    (draft.hasBlocker && blockerAnswer.length === 0);
+    (draft.hasBlocker && blockerAnswer.length === 0) ||
+    (!draft.isInPerson &&
+      (draft.yesterday.trim().length === 0 || draft.today.trim().length === 0));
   const isSubmitDisabled = !isSocketConnected || isReadOnly || formInvalid;
   const showReadOnly = !!response && !isEditing;
 
@@ -114,14 +119,15 @@ export function StandupResponseForm({
     if (isSubmitDisabled) {
       return;
     }
-    if (draft.hasBlocker === null) {
+    if (draft.hasBlocker === null || draft.isInPerson === null) {
       return;
     }
 
     setIsSubmitting(true);
     onSubmit({
-      yesterday: draft.yesterday.trim(),
-      today: draft.today.trim(),
+      isInPerson: draft.isInPerson,
+      yesterday: draft.isInPerson ? undefined : draft.yesterday.trim(),
+      today: draft.isInPerson ? undefined : draft.today.trim(),
       hasBlocker: draft.hasBlocker,
       blockerDescription: draft.hasBlocker ? blockerAnswer : undefined,
       healthCheck: draft.healthCheck,
@@ -148,6 +154,17 @@ export function StandupResponseForm({
               Saved at {formatTime(response.updatedAt)}
             </Badge>
           ) : null}
+          {draft.isInPerson === true ? (
+            <Badge variant="info">
+              <Users className="mr-1 h-3 w-3" />
+              In person
+            </Badge>
+          ) : draft.isInPerson === false ? (
+            <Badge variant="info">
+              <Wifi className="mr-1 h-3 w-3" />
+              Remote
+            </Badge>
+          ) : null}
           {isLocked ? (
             <Badge variant="warning">
               <Lock className="mr-1 h-3 w-3" />
@@ -172,23 +189,34 @@ export function StandupResponseForm({
 
       {showReadOnly ? (
         <div className="space-y-4">
-          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-            <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-              Yesterday
+          {draft.isInPerson ? (
+            <div className="rounded-[1.75rem] border border-brand-200/60 bg-brand-50/40 p-4 dark:border-brand-400/20 dark:bg-brand-950/20">
+              <div className="flex items-center gap-2 text-sm text-brand-800 dark:text-brand-200">
+                <Users className="h-4 w-4" />
+                Joining in person — no written update needed
+              </div>
             </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
-              {draft.yesterday}
-            </p>
-          </div>
+          ) : (
+            <>
+              <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Yesterday
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
+                  {draft.yesterday}
+                </p>
+              </div>
 
-          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-            <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
-              Today
-            </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
-              {draft.today}
-            </p>
-          </div>
+              <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Today
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
+                  {draft.today}
+                </p>
+              </div>
+            </>
+          )}
 
           <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
             <div className="flex items-center justify-between gap-3">
@@ -297,41 +325,90 @@ export function StandupResponseForm({
         </div>
       ) : (
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <section>
-            <Textarea
-              id="standup-yesterday"
-              label="Yesterday"
-              value={draft.yesterday}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  yesterday: event.target.value,
-                }))
-              }
-              rows={4}
-              placeholder="What moved forward yesterday?"
-              disabled={!isSocketConnected || isReadOnly}
-              fullWidth
-            />
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              How are you joining today?
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft((current) => ({ ...current, isInPerson: true }))
+                }
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition",
+                  draft.isInPerson === true
+                    ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200",
+                )}
+                disabled={!isSocketConnected || isReadOnly}
+              >
+                <Users className="h-4 w-4" />
+                In person
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft((current) => ({ ...current, isInPerson: false }))
+                }
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition",
+                  draft.isInPerson === false
+                    ? "border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-400 dark:bg-background/60 dark:text-foreground"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200",
+                )}
+                disabled={!isSocketConnected || isReadOnly}
+              >
+                <Wifi className="h-4 w-4" />
+                Remote
+              </button>
+            </div>
+            {draft.isInPerson === null ? (
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                Please select how you're joining to continue.
+              </p>
+            ) : null}
           </section>
 
-          <section>
-            <Textarea
-              id="standup-today"
-              label="Today"
-              value={draft.today}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  today: event.target.value,
-                }))
-              }
-              rows={4}
-              placeholder="What are you doing today?"
-              disabled={!isSocketConnected || isReadOnly}
-              fullWidth
-            />
-          </section>
+          {draft.isInPerson === false ? (
+            <>
+              <section>
+                <Textarea
+                  id="standup-yesterday"
+                  label="Yesterday"
+                  value={draft.yesterday}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      yesterday: event.target.value,
+                    }))
+                  }
+                  rows={4}
+                  placeholder="What moved forward yesterday?"
+                  disabled={!isSocketConnected || isReadOnly}
+                  fullWidth
+                />
+              </section>
+
+              <section>
+                <Textarea
+                  id="standup-today"
+                  label="Today"
+                  value={draft.today}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      today: event.target.value,
+                    }))
+                  }
+                  rows={4}
+                  placeholder="What are you doing today?"
+                  disabled={!isSocketConnected || isReadOnly}
+                  fullWidth
+                />
+              </section>
+            </>
+          ) : null}
 
           <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
