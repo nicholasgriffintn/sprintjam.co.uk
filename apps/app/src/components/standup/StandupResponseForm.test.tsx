@@ -24,12 +24,14 @@ describe("StandupResponseForm", () => {
     fireEvent.change(screen.getByLabelText("Today"), {
       target: { value: "Build the standup UI" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /4 strong/i }));
+    fireEvent.click(screen.getByRole("button", { name: /strong/i }));
     fireEvent.click(screen.getByRole("button", { name: /i have blockers/i }));
     fireEvent.change(
-      screen.getByPlaceholderText(/what is blocked and what help do you need\?/i),
+      screen.getByPlaceholderText(
+        /what is blocked and what help do you need\?/i,
+      ),
       {
-      target: { value: "Waiting on product copy" },
+        target: { value: "Waiting on product copy" },
       },
     );
     fireEvent.click(screen.getByRole("button", { name: "Save update" }));
@@ -105,12 +107,13 @@ describe("StandupResponseForm", () => {
     );
 
     expect(
-      screen.getByText("This standup is complete. Responses are now read-only history."),
+      screen.getByText(
+        "This standup is complete. Responses are now read-only history.",
+      ),
     ).toBeTruthy();
     expect(
-      (
-        screen.getByRole("button", { name: "Edit update" }) as HTMLButtonElement
-      ).disabled,
+      (screen.getByRole("button", { name: "Edit update" }) as HTMLButtonElement)
+        .disabled,
     ).toBe(true);
   });
 });
