@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1772581795509,
-      "tag": "0000_sturdy_thaddeus_ross",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1773797926294,
-      "tag": "0001_many_callisto",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1773826981413,
-      "tag": "0002_remarkable_martin_li",
+      "when": 1774044930745,
+      "tag": "0000_mean_sprite",
       "breakpoints": true
     }
   ]

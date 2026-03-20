@@ -15,6 +15,7 @@ interface SubmitResponseMessage extends StandupClientMessage {
   hasBlocker: boolean;
   blockerDescription?: string;
   healthCheck: number;
+  isHealthCheckPrivate?: boolean;
   linkedTickets?: Array<{
     id: string;
     key: string;
@@ -24,6 +25,7 @@ interface SubmitResponseMessage extends StandupClientMessage {
   }>;
   kudos?: string;
   icebreakerAnswer?: string;
+  icebreakerQuestion?: string;
 }
 
 interface FocusUserMessage extends StandupClientMessage {
@@ -213,6 +215,11 @@ function validateClientMessage(
         msg.icebreakerAnswer,
         LIMITS.icebreakerText,
       );
+      const icebreakerQuestion = normaliseOptionalString(
+        msg.icebreakerQuestion,
+        LIMITS.icebreakerText,
+      );
+      const isHealthCheckPrivate = msg.isHealthCheckPrivate === true;
       const healthCheck =
         typeof msg.healthCheck === "number" &&
         Number.isInteger(msg.healthCheck) &&
@@ -238,6 +245,7 @@ function validateClientMessage(
         today: today ?? "",
         hasBlocker: msg.hasBlocker,
         healthCheck,
+        isHealthCheckPrivate,
       };
 
       if (msg.hasBlocker && blockerDescription) {
@@ -254,6 +262,10 @@ function validateClientMessage(
 
       if (icebreakerAnswer) {
         result.icebreakerAnswer = icebreakerAnswer;
+      }
+
+      if (icebreakerQuestion) {
+        result.icebreakerQuestion = icebreakerQuestion;
       }
 
       return result;
@@ -609,9 +621,11 @@ async function handleSubmitResponse(
     hasBlocker: message.hasBlocker,
     blockerDescription: message.blockerDescription,
     healthCheck: message.healthCheck,
+    isHealthCheckPrivate: message.isHealthCheckPrivate,
     linkedTickets: message.linkedTickets,
     kudos: message.kudos,
     icebreakerAnswer: message.icebreakerAnswer,
+    icebreakerQuestion: message.icebreakerQuestion,
   };
 
   standup.repository.submitResponse(userName, payload);

@@ -18,7 +18,7 @@ export const Alert = ({
   const variants = {
     error: {
       container:
-        "bg-rose-50/80 border-rose-200 dark:bg-rose-950/30 dark:border-rose-900/50",
+        "bg-rose-50/50 border-rose-200/50 dark:bg-rose-950/15 dark:border-rose-900/30",
       icon: "text-rose-600 dark:text-rose-400",
       title: "text-rose-900 dark:text-rose-300",
       text: "text-rose-800 dark:text-rose-400",
@@ -26,7 +26,7 @@ export const Alert = ({
     },
     warning: {
       container:
-        "bg-yellow-50/80 border-yellow-200 dark:bg-yellow-950/30 dark:border-yellow-900/50",
+        "bg-yellow-50/50 border-yellow-200/50 dark:bg-yellow-950/15 dark:border-yellow-900/30",
       icon: "text-yellow-600 dark:text-yellow-400",
       title: "text-yellow-900 dark:text-yellow-300",
       text: "text-yellow-800 dark:text-yellow-400",
@@ -34,7 +34,7 @@ export const Alert = ({
     },
     success: {
       container:
-        "bg-emerald-50/80 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/50",
+        "bg-emerald-50/50 border-emerald-200/50 dark:bg-emerald-950/15 dark:border-emerald-900/30",
       icon: "text-emerald-600 dark:text-emerald-400",
       title: "text-emerald-900 dark:text-emerald-300",
       text: "text-emerald-800 dark:text-emerald-400",
@@ -42,7 +42,7 @@ export const Alert = ({
     },
     info: {
       container:
-        "bg-blue-50/80 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900/50",
+        "bg-blue-50/50 border-blue-200/50 dark:bg-blue-950/15 dark:border-blue-900/30",
       icon: "text-blue-600 dark:text-blue-400",
       title: "text-blue-900 dark:text-blue-300",
       text: "text-blue-800 dark:text-blue-400",

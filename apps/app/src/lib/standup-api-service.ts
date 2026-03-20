@@ -339,9 +339,11 @@ export function submitStandupResponse(payload: StandupResponsePayload): void {
     hasBlocker: payload.hasBlocker,
     blockerDescription: payload.blockerDescription,
     healthCheck: payload.healthCheck,
+    isHealthCheckPrivate: payload.isHealthCheckPrivate,
     linkedTickets: payload.linkedTickets,
     kudos: payload.kudos,
     icebreakerAnswer: payload.icebreakerAnswer,
+    icebreakerQuestion: payload.icebreakerQuestion,
   });
 }
 

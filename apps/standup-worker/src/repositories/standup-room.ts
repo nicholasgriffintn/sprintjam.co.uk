@@ -184,6 +184,8 @@ export class StandupRoomRepository {
           : null,
         kudos: payload.kudos ?? null,
         icebreakerAnswer: payload.icebreakerAnswer ?? null,
+        icebreakerQuestion: payload.icebreakerQuestion ?? null,
+        isHealthCheckPrivate: payload.isHealthCheckPrivate ? 1 : 0,
         submittedAt: now,
         updatedAt: now,
       } satisfies InsertStandupResponsesItem)
@@ -196,11 +198,13 @@ export class StandupRoomRepository {
           hasBlocker: payload.hasBlocker ? 1 : 0,
           blockerDescription: payload.blockerDescription ?? null,
           healthCheck: payload.healthCheck,
+          isHealthCheckPrivate: payload.isHealthCheckPrivate ? 1 : 0,
           linkedTickets: payload.linkedTickets
             ? JSON.stringify(payload.linkedTickets)
             : null,
           kudos: payload.kudos ?? null,
           icebreakerAnswer: payload.icebreakerAnswer ?? null,
+          icebreakerQuestion: payload.icebreakerQuestion ?? null,
           updatedAt: now,
         },
       })
@@ -415,6 +419,8 @@ export class StandupRoomRepository {
         : undefined,
       kudos: row.kudos ?? undefined,
       icebreakerAnswer: row.icebreakerAnswer ?? undefined,
+      icebreakerQuestion: row.icebreakerQuestion ?? undefined,
+      isHealthCheckPrivate: !!row.isHealthCheckPrivate,
       submittedAt: row.submittedAt,
       updatedAt: row.updatedAt,
     };

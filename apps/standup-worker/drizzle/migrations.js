@@ -1,14 +1,10 @@
 import journal from './meta/_journal.json';
-import m0000 from './0000_sturdy_thaddeus_ross.sql';
-import m0001 from './0001_many_callisto.sql';
-import m0002 from './0002_remarkable_martin_li.sql';
+import m0000 from './0000_mean_sprite.sql';
 
   export default {
     journal,
     migrations: {
-      m0000,
-m0001,
-m0002
+      m0000
     }
   }
   

@@ -43,6 +43,7 @@ interface DraftState {
   hasBlocker: boolean | null;
   blockerDescription: string;
   healthCheck: number;
+  isHealthCheckPrivate: boolean;
   linkedTickets: LinkedTicket[];
   kudos: string;
   icebreakerAnswer: string;
@@ -64,6 +65,7 @@ function getDraftState(response?: StandupResponse): DraftState {
     hasBlocker: response?.hasBlocker ?? null,
     blockerDescription: response?.blockerDescription ?? "",
     healthCheck: response?.healthCheck ?? 3,
+    isHealthCheckPrivate: response?.isHealthCheckPrivate ?? false,
     linkedTickets: response?.linkedTickets ?? [],
     kudos: response?.kudos ?? "",
     icebreakerAnswer: response?.icebreakerAnswer ?? "",
@@ -131,10 +133,14 @@ export function StandupResponseForm({
       hasBlocker: draft.hasBlocker,
       blockerDescription: draft.hasBlocker ? blockerAnswer : undefined,
       healthCheck: draft.healthCheck,
+      isHealthCheckPrivate: draft.isHealthCheckPrivate || undefined,
       linkedTickets:
         draft.linkedTickets.length > 0 ? draft.linkedTickets : undefined,
       kudos: draft.kudos.trim() || undefined,
       icebreakerAnswer: draft.icebreakerAnswer.trim() || undefined,
+      icebreakerQuestion: draft.icebreakerAnswer.trim()
+        ? getIcebreakerQuestion()
+        : undefined,
     });
 
     setTimeout(() => setIsSubmitting(false), 1000);
@@ -157,12 +163,12 @@ export function StandupResponseForm({
           {draft.isInPerson === true ? (
             <Badge variant="info">
               <Users className="mr-1 h-3 w-3" />
-              In person
+              Attending
             </Badge>
           ) : draft.isInPerson === false ? (
             <Badge variant="info">
               <Wifi className="mr-1 h-3 w-3" />
-              Remote
+              Not attending
             </Badge>
           ) : null}
           {isLocked ? (
@@ -190,10 +196,10 @@ export function StandupResponseForm({
       {showReadOnly ? (
         <div className="space-y-4">
           {draft.isInPerson ? (
-            <div className="rounded-[1.75rem] border border-brand-200/60 bg-brand-50/40 p-4 dark:border-brand-400/20 dark:bg-brand-950/20">
+            <div className="rounded-[1.75rem] border border-brand-200/30 bg-brand-50/20 p-4 dark:border-brand-400/10 dark:bg-brand-950/10">
               <div className="flex items-center gap-2 text-sm text-brand-800 dark:text-brand-200">
                 <Users className="h-4 w-4" />
-                Joining in person — no written update needed
+                Attending the meeting — no written update needed
               </div>
             </div>
           ) : (
@@ -241,7 +247,7 @@ export function StandupResponseForm({
             className={cn(
               "rounded-[1.75rem] border p-4",
               draft.hasBlocker
-                ? "border-rose-200/80 bg-rose-50/90 dark:border-rose-400/20 dark:bg-rose-950/20"
+                ? "border-rose-200/40 bg-rose-50/50 dark:border-rose-400/10 dark:bg-rose-950/10"
                 : "border-black/5 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]",
             )}
           >
@@ -290,7 +296,7 @@ export function StandupResponseForm({
           ) : null}
 
           {draft.kudos ? (
-            <div className="rounded-[1.75rem] border border-amber-200/80 bg-amber-50/80 p-4 dark:border-amber-400/20 dark:bg-amber-950/20">
+            <div className="rounded-[1.75rem] border border-amber-200/40 bg-amber-50/40 p-4 dark:border-amber-400/10 dark:bg-amber-950/10">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-amber-600 dark:text-amber-400">
                 <MessageSquareHeart className="h-3.5 w-3.5" />
                 Kudos
@@ -307,6 +313,11 @@ export function StandupResponseForm({
                 <Sparkles className="h-3.5 w-3.5" />
                 Icebreaker
               </div>
+              {response?.icebreakerQuestion ? (
+                <p className="mt-2 text-xs italic text-slate-500 dark:text-slate-400">
+                  {response.icebreakerQuestion}
+                </p>
+              ) : null}
               <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
                 {draft.icebreakerAnswer}
               </p>
@@ -327,7 +338,7 @@ export function StandupResponseForm({
         <form className="space-y-5" onSubmit={handleSubmit}>
           <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-              How are you joining today?
+              Are you attending the meeting?
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -344,7 +355,7 @@ export function StandupResponseForm({
                 disabled={!isSocketConnected || isReadOnly}
               >
                 <Users className="h-4 w-4" />
-                In person
+                Attending the meeting
               </button>
               <button
                 type="button"
@@ -360,12 +371,12 @@ export function StandupResponseForm({
                 disabled={!isSocketConnected || isReadOnly}
               >
                 <Wifi className="h-4 w-4" />
-                Remote
+                Not attending the meeting
               </button>
             </div>
             {draft.isInPerson === null ? (
               <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                Please select how you're joining to continue.
+                Please select an option to continue.
               </p>
             ) : null}
           </section>
@@ -563,6 +574,21 @@ export function StandupResponseForm({
                 );
               })}
             </div>
+            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+              <input
+                type="checkbox"
+                checked={draft.isHealthCheckPrivate}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    isHealthCheckPrivate: event.target.checked,
+                  }))
+                }
+                disabled={!isSocketConnected || isReadOnly}
+                className="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800"
+              />
+              Keep my response private (moderator can still view it)
+            </label>
           </section>
 
           {/* {teamId ? (

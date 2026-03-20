@@ -1,24 +1,27 @@
-import { type StandupData } from "@sprintjam/types";
+import { useState } from 'react';
+import { type StandupData } from '@sprintjam/types';
 import {
   AlertTriangle,
   CheckCircle2,
+  Eye,
+  EyeOff,
   Lock,
   LockOpen,
   Palette,
   Play,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { StandupUserCard } from "@/components/standup/StandupUserCard";
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { SurfaceCard } from '@/components/ui/SurfaceCard';
+import { StandupUserCard } from '@/components/standup/StandupUserCard';
 
 const THEMES = [
-  { id: "default", label: "Default", color: "bg-slate-200 dark:bg-slate-700" },
-  { id: "cosmic", label: "Cosmic", color: "bg-indigo-600" },
-  { id: "forest", label: "Forest", color: "bg-emerald-700" },
-  { id: "ocean", label: "Ocean", color: "bg-sky-600" },
-  { id: "sunset", label: "Sunset", color: "bg-orange-600" },
+  { id: 'default', label: 'Default', color: 'bg-slate-200 dark:bg-slate-700' },
+  { id: 'cosmic', label: 'Cosmic', color: 'bg-indigo-600' },
+  { id: 'forest', label: 'Forest', color: 'bg-emerald-700' },
+  { id: 'ocean', label: 'Ocean', color: 'bg-sky-600' },
+  { id: 'sunset', label: 'Sunset', color: 'bg-orange-600' },
 ] as const;
 
 interface StandupFacilitatorViewProps {
@@ -50,6 +53,9 @@ export function StandupFacilitatorView({
   isStartingPresentation = false,
   isCompletingStandup = false,
 }: StandupFacilitatorViewProps) {
+  const [showResponses, setShowResponses] = useState(false);
+  const [healthRevealed, setHealthRevealed] = useState(false);
+
   const responseOrder = new Map(
     standupData.users.map((user, index) => [user, index]),
   );
@@ -73,13 +79,17 @@ export function StandupFacilitatorView({
     count: orderedResponses.filter((response) => response.healthCheck === value)
       .length,
   }));
-  const isCompleted = standupData.status === "completed";
+  const isCompleted = standupData.status === 'completed';
   const firstSubmitter = orderedResponses.length
     ? orderedResponses.reduce((min, r) =>
         r.submittedAt < min.submittedAt ? r : min,
       ).userName
     : undefined;
-  const currentTheme = standupData.presentationTheme ?? "default";
+  const hasPrivateHealth = orderedResponses.some(
+    (response) => response.isHealthCheckPrivate,
+  );
+  const shouldHideHealth = hasPrivateHealth && !healthRevealed;
+  const currentTheme = standupData.presentationTheme ?? 'default';
 
   return (
     <div className="space-y-6">
@@ -91,13 +101,13 @@ export function StandupFacilitatorView({
             </h2>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="primary">
-                {standupData.respondedUsers.length}/{standupData.users.length}{" "}
+                {standupData.respondedUsers.length}/{standupData.users.length}{' '}
                 submitted
               </Badge>
               {blockers.length ? (
                 <Badge variant="error">
                   <AlertTriangle className="mr-1 h-3 w-3" />
-                  {blockers.length} blocker{blockers.length === 1 ? "" : "s"}
+                  {blockers.length} blocker{blockers.length === 1 ? '' : 's'}
                 </Badge>
               ) : null}
             </div>
@@ -110,21 +120,21 @@ export function StandupFacilitatorView({
               disabled={!isSocketConnected || isCompleted || isLockingResponses}
               isLoading={isLockingResponses}
               onClick={
-                standupData.status === "locked"
+                standupData.status === 'locked'
                   ? onUnlockResponses
                   : onLockResponses
               }
               icon={
-                standupData.status === "locked" ? (
+                standupData.status === 'locked' ? (
                   <LockOpen className="h-4 w-4" />
                 ) : (
                   <Lock className="h-4 w-4" />
                 )
               }
             >
-              {standupData.status === "locked"
-                ? "Unlock responses"
-                : "Lock responses"}
+              {standupData.status === 'locked'
+                ? 'Unlock responses'
+                : 'Lock responses'}
             </Button>
             <Button
               size="sm"
@@ -142,7 +152,7 @@ export function StandupFacilitatorView({
             </Button>
             <Button
               size="sm"
-              variant={isCompleted ? "secondary" : "primary"}
+              variant={isCompleted ? 'secondary' : 'primary'}
               disabled={!isSocketConnected || isCompleted}
               isLoading={isCompletingStandup}
               onClick={onCompleteStandup}
@@ -154,7 +164,7 @@ export function StandupFacilitatorView({
         </div>
 
         {isCompleted ? (
-          <div className="rounded-[1.5rem] border border-emerald-200/70 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-400/20 dark:bg-emerald-950/20 dark:text-emerald-100">
+          <div className="rounded-[1.5rem] border border-emerald-200/40 bg-emerald-50/40 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-400/10 dark:bg-emerald-950/10 dark:text-emerald-100">
             This standup is complete. The responses below remain available as
             read-only history.
           </div>
@@ -173,8 +183,8 @@ export function StandupFacilitatorView({
                   onClick={() => onSetTheme(theme.id)}
                   className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
                     currentTheme === theme.id
-                      ? "ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900"
-                      : "opacity-70 hover:opacity-100"
+                      ? 'ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900'
+                      : 'opacity-70 hover:opacity-100'
                   }`}
                   title={theme.label}
                 >
@@ -191,34 +201,52 @@ export function StandupFacilitatorView({
             <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
               Average health
             </div>
-            <div className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
-              {orderedResponses.length ? averageHealth.toFixed(1) : "--"}
-            </div>
-            <div className="mt-3 space-y-2">
-              {distribution.map((item) => (
-                <div
-                  key={item.value}
-                  className="flex items-center gap-3 text-sm"
+            {shouldHideHealth ? (
+              <div className="mt-3 space-y-3">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Hidden because one or more responses are private.
+                </p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setHealthRevealed(true)}
+                  icon={<Eye className="h-3.5 w-3.5" />}
                 >
-                  <span className="w-3 text-slate-500 dark:text-slate-400">
-                    {item.value}
-                  </span>
-                  <div className="h-2 flex-1 rounded-full bg-slate-200/80 dark:bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-brand-500"
-                      style={{
-                        width: orderedResponses.length
-                          ? `${(item.count / orderedResponses.length) * 100}%`
-                          : "0%",
-                      }}
-                    />
-                  </div>
-                  <span className="w-6 text-right text-slate-600 dark:text-slate-300">
-                    {item.count}
-                  </span>
+                  Reveal
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
+                  {orderedResponses.length ? averageHealth.toFixed(1) : '--'}
                 </div>
-              ))}
-            </div>
+                <div className="mt-3 space-y-2">
+                  {distribution.map((item) => (
+                    <div
+                      key={item.value}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <span className="w-3 text-slate-500 dark:text-slate-400">
+                        {item.value}
+                      </span>
+                      <div className="h-2 flex-1 rounded-full bg-slate-200/80 dark:bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-brand-500"
+                          style={{
+                            width: orderedResponses.length
+                              ? `${(item.count / orderedResponses.length) * 100}%`
+                              : '0%',
+                          }}
+                        />
+                      </div>
+                      <span className="w-6 text-right text-slate-600 dark:text-slate-300">
+                        {item.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
@@ -230,11 +258,11 @@ export function StandupFacilitatorView({
                 {blockers.map((response) => (
                   <div
                     key={response.userName}
-                    className="rounded-2xl border border-rose-200/80 bg-rose-50/90 px-3 py-2 text-sm text-rose-800 dark:border-rose-400/20 dark:bg-rose-950/20 dark:text-rose-100"
+                    className="rounded-2xl border border-rose-200/40 bg-rose-50/50 px-3 py-2 text-sm text-rose-800 dark:border-rose-400/10 dark:bg-rose-950/10 dark:text-rose-100"
                   >
                     <span className="font-semibold">{response.userName}</span>
                     <span className="ml-2">
-                      {response.blockerDescription || "Needs follow-up"}
+                      {response.blockerDescription || 'Needs follow-up'}
                     </span>
                   </div>
                 ))}
@@ -272,25 +300,46 @@ export function StandupFacilitatorView({
 
       {orderedResponses.length ? (
         <div className="space-y-3">
-          {!isCompleted ? (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Use <span className="font-semibold">Set first</span> to pick who
-              starts when presentation begins.
-            </p>
-          ) : null}
-          <div className="grid gap-4 xl:grid-cols-2">
-            {orderedResponses.map((response) => (
-              <StandupUserCard
-                key={response.userName}
-                response={response}
-                avatar={standupData.userAvatars?.[response.userName]}
-                isFocused={standupData.focusedUser === response.userName}
-                isFirstSubmitter={response.userName === firstSubmitter}
-                canFocus={!isCompleted}
-                onFocus={onFocusUser}
-              />
-            ))}
+          <div className="flex items-center justify-between gap-3">
+            {!isCompleted && showResponses ? (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Use <span className="font-semibold">Set first</span> to pick who
+                starts when presentation begins.
+              </p>
+            ) : (
+              <div />
+            )}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowResponses((prev) => !prev)}
+              icon={
+                showResponses ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )
+              }
+            >
+              {showResponses ? 'Hide responses' : 'Show responses'}
+            </Button>
           </div>
+          {showResponses ? (
+            <div className="grid gap-4 xl:grid-cols-2">
+              {orderedResponses.map((response) => (
+                <StandupUserCard
+                  key={response.userName}
+                  response={response}
+                  avatar={standupData.userAvatars?.[response.userName]}
+                  isFocused={standupData.focusedUser === response.userName}
+                  isFirstSubmitter={response.userName === firstSubmitter}
+                  isModerator
+                  canFocus={!isCompleted}
+                  onFocus={onFocusUser}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : (
         <SurfaceCard className="py-10 text-center">

@@ -18,7 +18,9 @@ describe("StandupResponseForm", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /remote/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /not attending the meeting/i }),
+    );
     fireEvent.change(screen.getByLabelText("Yesterday"), {
       target: { value: "Wrapped the worker routes" },
     });

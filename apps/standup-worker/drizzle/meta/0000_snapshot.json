@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "65b28d35-9186-4a32-83f4-f82d0f562e71",
+  "id": "57ff2081-968e-4ef6-aabe-02c99a99c81d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "standup_meta": {
@@ -50,9 +50,55 @@
           "notNull": false,
           "autoincrement": false
         },
+        "presentation_theme": {
+          "name": "presentation_theme",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'default'"
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "standup_reactions": {
+      "name": "standup_reactions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "response_user_name": {
+          "name": "response_user_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reacting_user_name": {
+          "name": "reacting_user_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "emoji": {
+          "name": "emoji",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -81,19 +127,29 @@
           "notNull": true,
           "autoincrement": false
         },
+        "is_in_person": {
+          "name": "is_in_person",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
         "yesterday": {
           "name": "yesterday",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "''"
         },
         "today": {
           "name": "today",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "''"
         },
         "has_blocker": {
           "name": "has_blocker",
@@ -124,6 +180,35 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "kudos": {
+          "name": "kudos",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "icebreaker_answer": {
+          "name": "icebreaker_answer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "icebreaker_question": {
+          "name": "icebreaker_question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_health_check_private": {
+          "name": "is_health_check_private",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "submitted_at": {
           "name": "submitted_at",

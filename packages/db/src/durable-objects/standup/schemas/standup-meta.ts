@@ -35,6 +35,8 @@ export const standupResponses = sqliteTable("standup_responses", {
   linkedTickets: text("linked_tickets"), // JSON array of ticket refs
   kudos: text("kudos"),
   icebreakerAnswer: text("icebreaker_answer"),
+  icebreakerQuestion: text("icebreaker_question"),
+  isHealthCheckPrivate: integer("is_health_check_private").notNull().default(0),
   submittedAt: integer("submitted_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

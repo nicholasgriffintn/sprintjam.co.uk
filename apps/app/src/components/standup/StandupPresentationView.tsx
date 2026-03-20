@@ -84,10 +84,12 @@ export function StandupPresentationView({
     ).userName;
   }, [orderedResponses]);
 
-  const averageHealth = orderedResponses.length
-    ? orderedResponses.reduce((sum, r) => sum + r.healthCheck, 0) /
-      orderedResponses.length
-    : null;
+  const hasPrivateHealth = orderedResponses.some((r) => r.isHealthCheckPrivate);
+  const averageHealth =
+    orderedResponses.length && !hasPrivateHealth
+      ? orderedResponses.reduce((sum, r) => sum + r.healthCheck, 0) /
+        orderedResponses.length
+      : null;
 
   const focusedIndex = orderedResponses.findIndex(
     (response) => response.userName === standupData.focusedUser,

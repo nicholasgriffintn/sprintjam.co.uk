@@ -5,18 +5,31 @@ CREATE TABLE `standup_meta` (
 	`status` text DEFAULT 'active' NOT NULL,
 	`passcode` text,
 	`team_id` integer,
+	`presentation_theme` text DEFAULT 'default',
 	`created_at` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `standup_reactions` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`response_user_name` text NOT NULL,
+	`reacting_user_name` text NOT NULL,
+	`emoji` text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `standup_responses` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`user_name` text NOT NULL,
-	`yesterday` text NOT NULL,
-	`today` text NOT NULL,
+	`is_in_person` integer DEFAULT 0 NOT NULL,
+	`yesterday` text DEFAULT '' NOT NULL,
+	`today` text DEFAULT '' NOT NULL,
 	`has_blocker` integer DEFAULT 0 NOT NULL,
 	`blocker_description` text,
 	`health_check` integer DEFAULT 3 NOT NULL,
 	`linked_tickets` text,
+	`kudos` text,
+	`icebreaker_answer` text,
+	`icebreaker_question` text,
+	`is_health_check_private` integer DEFAULT 0 NOT NULL,
 	`submitted_at` integer NOT NULL,
 	`updated_at` integer NOT NULL
 );

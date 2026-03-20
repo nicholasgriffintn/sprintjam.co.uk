@@ -13,9 +13,11 @@ export interface StandupResponsePayload {
   hasBlocker: boolean;
   blockerDescription?: string;
   healthCheck: number;
+  isHealthCheckPrivate?: boolean;
   linkedTickets?: LinkedTicket[];
   kudos?: string;
   icebreakerAnswer?: string;
+  icebreakerQuestion?: string;
 }
 
 export interface StandupResponse extends StandupResponsePayload {

@@ -1,8 +1,11 @@
-import type { StandupResponse } from "@sprintjam/types";
+import { useState } from 'react';
+import type { StandupResponse } from '@sprintjam/types';
 import {
   AlertTriangle,
   Clock3,
   Crosshair,
+  Eye,
+  EyeOff,
   HeartPulse,
   Link as LinkIcon,
   MessageSquareHeart,
@@ -10,16 +13,16 @@ import {
   Trophy,
   Users,
   Wifi,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/cn";
+import { Avatar } from '@/components/ui/Avatar';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/cn';
 
-type StandupUserCardVariant = "default" | "presentation";
+type StandupUserCardVariant = 'default' | 'presentation';
 
-const REACTION_EMOJIS = ["👏", "🎉", "💡", "❤️"] as const;
+const REACTION_EMOJIS = ['👏', '🎉', '💡', '❤️'] as const;
 
 interface StandupUserCardProps {
   response: StandupResponse;
@@ -29,6 +32,7 @@ interface StandupUserCardProps {
   canFocus?: boolean;
   onFocus?: (userName: string) => void;
   isFirstSubmitter?: boolean;
+  isModerator?: boolean;
   reactions?: Record<string, string[]>; // emoji → [reactingUserNames]
   onAddReaction?: (emoji: string) => void;
   onRemoveReaction?: (emoji: string) => void;
@@ -36,19 +40,19 @@ interface StandupUserCardProps {
 }
 
 const HEALTH_COPY: Record<number, string> = {
-  1: "Running on fumes",
-  2: "Low energy",
-  3: "Steady",
-  4: "Strong",
-  5: "Excellent",
+  1: 'Running on fumes',
+  2: 'Low energy',
+  3: 'Steady',
+  4: 'Strong',
+  5: 'Excellent',
 };
 
 const HEALTH_TONES: Record<number, string> = {
-  1: "bg-rose-500",
-  2: "bg-orange-500",
-  3: "bg-amber-500",
-  4: "bg-emerald-500",
-  5: "bg-sky-500",
+  1: 'bg-rose-500',
+  2: 'bg-orange-500',
+  3: 'bg-amber-500',
+  4: 'bg-emerald-500',
+  5: 'bg-sky-500',
 };
 
 function getInitials(name: string) {
@@ -56,48 +60,55 @@ function getInitials(name: string) {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
 }
 
 function formatTime(timestamp: number) {
-  return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(timestamp);
 }
 
 export function StandupUserCard({
   response,
   avatar,
-  variant = "default",
+  variant = 'default',
   isFocused = false,
   canFocus = false,
   onFocus,
   isFirstSubmitter = false,
+  isModerator = false,
   reactions,
   onAddReaction,
   onRemoveReaction,
   currentUserName,
 }: StandupUserCardProps) {
-  const isPresentation = variant === "presentation";
+  const isPresentation = variant === 'presentation';
   const healthWidth = `${Math.max(1, Math.min(5, response.healthCheck)) * 20}%`;
-  const focusButtonLabel = isFocused ? "First speaker" : "Set first";
-  const focusBadgeLabel = isPresentation ? "Live" : "First up";
+  const focusButtonLabel = isFocused ? 'First speaker' : 'Set first';
+  const focusBadgeLabel = isPresentation ? 'Live' : 'First up';
   const showReactions =
     !!onAddReaction ||
     !!onRemoveReaction ||
     (reactions && Object.keys(reactions).length > 0);
 
+  const isHealthPrivate = !!response.isHealthCheckPrivate;
+  const [healthRevealed, setHealthRevealed] = useState(false);
+  const shouldHideHealth =
+    isHealthPrivate && (isPresentation || !isModerator || !healthRevealed);
+  const canRevealHealth = isHealthPrivate && isModerator && !isPresentation;
+
   return (
     <article
       className={cn(
-        "rounded-2xl border transition-all",
+        'rounded-2xl border transition-all',
         isPresentation
-          ? "border-brand-300/60 bg-white p-8 shadow-lg dark:border-brand-500/30 dark:bg-slate-900/80"
-          : "border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/50",
+          ? 'border-brand-300/60 bg-white p-8 shadow-lg dark:border-brand-500/30 dark:bg-slate-900/80'
+          : 'border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/50',
         isFocused &&
-          "ring-2 ring-brand-300 ring-offset-2 ring-offset-transparent",
+          'ring-2 ring-brand-300 ring-offset-2 ring-offset-transparent',
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -107,10 +118,10 @@ export function StandupUserCard({
             alt={response.userName}
             fallback={getInitials(response.userName)}
             className={cn(
-              "shrink-0 border border-slate-200 bg-brand-100 text-brand-900 dark:border-slate-700 dark:bg-brand-500/20 dark:text-brand-100",
+              'shrink-0 border border-slate-200 bg-brand-100 text-brand-900 dark:border-slate-700 dark:bg-brand-500/20 dark:text-brand-100',
               isPresentation
-                ? "h-16 w-16 text-lg font-semibold"
-                : "h-12 w-12 text-sm font-semibold",
+                ? 'h-16 w-16 text-lg font-semibold'
+                : 'h-12 w-12 text-sm font-semibold',
             )}
             fallbackClassName="bg-transparent"
           />
@@ -118,8 +129,8 @@ export function StandupUserCard({
           <div className="min-w-0">
             <div
               className={cn(
-                "truncate font-semibold tracking-tight text-slate-900 dark:text-white",
-                isPresentation ? "text-3xl" : "text-lg",
+                'truncate font-semibold tracking-tight text-slate-900 dark:text-white',
+                isPresentation ? 'text-3xl' : 'text-lg',
               )}
             >
               {response.userName}
@@ -129,19 +140,26 @@ export function StandupUserCard({
                 <Clock3 className="h-3.5 w-3.5" />
                 Updated {formatTime(response.updatedAt)}
               </span>
-              <Badge variant="info" size="sm">
-                <HeartPulse className="mr-1 h-3 w-3" />
-                Health {response.healthCheck}/5
-              </Badge>
+              {shouldHideHealth ? (
+                <Badge variant="default" size="sm">
+                  <EyeOff className="mr-1 h-3 w-3" />
+                  Private
+                </Badge>
+              ) : (
+                <Badge variant="info" size="sm">
+                  <HeartPulse className="mr-1 h-3 w-3" />
+                  Health {response.healthCheck}/5
+                </Badge>
+              )}
               {response.isInPerson ? (
                 <Badge variant="info" size="sm">
                   <Users className="mr-1 h-3 w-3" />
-                  In person
+                  Attending
                 </Badge>
               ) : response.isInPerson === false ? (
                 <Badge variant="info" size="sm">
                   <Wifi className="mr-1 h-3 w-3" />
-                  Remote
+                  Not attending
                 </Badge>
               ) : null}
               {response.hasBlocker ? (
@@ -157,7 +175,7 @@ export function StandupUserCard({
                 </Badge>
               ) : null}
               {isFocused ? (
-                <Badge variant={isPresentation ? "primary" : "info"} size="sm">
+                <Badge variant={isPresentation ? 'primary' : 'info'} size="sm">
                   {focusBadgeLabel}
                 </Badge>
               ) : null}
@@ -167,7 +185,7 @@ export function StandupUserCard({
 
         {canFocus && onFocus ? (
           <Button
-            variant={isFocused ? "primary" : "secondary"}
+            variant={isFocused ? 'primary' : 'secondary'}
             size="sm"
             onClick={() => onFocus(response.userName)}
             icon={<Crosshair className="h-4 w-4" />}
@@ -178,36 +196,38 @@ export function StandupUserCard({
       </div>
 
       <div className="mt-6 grid gap-5">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              Team health
-            </span>
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              {HEALTH_COPY[response.healthCheck] ?? "Steady"}
-            </span>
-          </div>
-          <div className="mt-3 h-2 rounded-full bg-slate-200/80 dark:bg-white/10">
-            <div
+        {response.icebreakerAnswer ? (
+          <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <Sparkles className="h-3.5 w-3.5" />
+              Icebreaker
+            </div>
+            {response.icebreakerQuestion ? (
+              <p className="mt-2 text-xs italic text-slate-500 dark:text-slate-400">
+                {response.icebreakerQuestion}
+              </p>
+            ) : null}
+            <p
               className={cn(
-                "h-full rounded-full transition-[width]",
-                HEALTH_TONES[response.healthCheck] ?? HEALTH_TONES[3],
+                'mt-2 whitespace-pre-wrap text-slate-700 dark:text-slate-200',
+                isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
               )}
-              style={{ width: healthWidth }}
-            />
-          </div>
-        </div>
+            >
+              {response.icebreakerAnswer}
+            </p>
+          </section>
+        ) : null}
 
         {response.isInPerson ? (
-          <div className="rounded-xl border border-brand-200/60 bg-brand-50/40 p-4 dark:border-brand-400/20 dark:bg-brand-950/20">
+          <div className="rounded-xl border border-brand-200/30 bg-brand-50/20 p-4 dark:border-brand-400/10 dark:bg-brand-950/10">
             <div className="flex items-center gap-2 text-sm text-brand-800 dark:text-brand-200">
               <Users className="h-4 w-4" />
-              Joining in person — sharing their update live
+              Attending the meeting — sharing their update live
             </div>
           </div>
         ) : (
           <div
-            className={cn("grid gap-4", isPresentation ? "lg:grid-cols-2" : "")}
+            className={cn('grid gap-4', isPresentation ? 'lg:grid-cols-2' : '')}
           >
             <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -215,8 +235,8 @@ export function StandupUserCard({
               </h3>
               <p
                 className={cn(
-                  "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
-                  isPresentation ? "text-lg leading-8" : "text-sm leading-6",
+                  'mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200',
+                  isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
                 )}
               >
                 {response.yesterday}
@@ -229,8 +249,8 @@ export function StandupUserCard({
               </h3>
               <p
                 className={cn(
-                  "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
-                  isPresentation ? "text-lg leading-8" : "text-sm leading-6",
+                  'mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200',
+                  isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
                 )}
               >
                 {response.today}
@@ -240,53 +260,36 @@ export function StandupUserCard({
         )}
 
         {response.hasBlocker ? (
-          <section className="rounded-xl border border-rose-200/80 bg-rose-50/90 p-4 dark:border-rose-400/20 dark:bg-rose-950/20">
+          <section className="rounded-xl border border-rose-200/40 bg-rose-50/50 p-4 dark:border-rose-400/10 dark:bg-rose-950/10">
             <div className="flex items-center gap-2 text-sm font-semibold text-rose-700 dark:text-rose-200">
               <AlertTriangle className="h-4 w-4" />
               Blocker
             </div>
             <p
               className={cn(
-                "mt-3 whitespace-pre-wrap text-rose-800 dark:text-rose-100",
-                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
+                'mt-3 whitespace-pre-wrap text-rose-800 dark:text-rose-100',
+                isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
               )}
             >
               {response.blockerDescription ||
-                "Blocker flagged without extra detail."}
+                'Blocker flagged without extra detail.'}
             </p>
           </section>
         ) : null}
 
         {response.kudos ? (
-          <section className="rounded-xl border border-amber-200/80 bg-amber-50/90 p-4 dark:border-amber-400/20 dark:bg-amber-950/20">
+          <section className="rounded-xl border border-amber-200/40 bg-amber-50/40 p-4 dark:border-amber-400/10 dark:bg-amber-950/10">
             <div className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-200">
               <MessageSquareHeart className="h-4 w-4" />
               Kudos
             </div>
             <p
               className={cn(
-                "mt-3 whitespace-pre-wrap text-amber-900 dark:text-amber-100",
-                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
+                'mt-3 whitespace-pre-wrap text-amber-900 dark:text-amber-100',
+                isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
               )}
             >
               {response.kudos}
-            </p>
-          </section>
-        ) : null}
-
-        {response.icebreakerAnswer ? (
-          <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              <Sparkles className="h-3.5 w-3.5" />
-              Icebreaker
-            </div>
-            <p
-              className={cn(
-                "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
-                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
-              )}
-            >
-              {response.icebreakerAnswer}
             </p>
           </section>
         ) : null}
@@ -330,6 +333,49 @@ export function StandupUserCard({
             </div>
           </section>
         ) : null}
+        {shouldHideHealth ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Team health
+              </span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">
+                Response is private
+              </span>
+            </div>
+            {canRevealHealth ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-3"
+                onClick={() => setHealthRevealed(true)}
+                icon={<Eye className="h-3.5 w-3.5" />}
+              >
+                Reveal
+              </Button>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Team health
+              </span>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                {HEALTH_COPY[response.healthCheck] ?? 'Steady'}
+              </span>
+            </div>
+            <div className="mt-3 h-2 rounded-full bg-slate-200/80 dark:bg-white/10">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-[width]',
+                  HEALTH_TONES[response.healthCheck] ?? HEALTH_TONES[3],
+                )}
+                style={{ width: healthWidth }}
+              />
+            </div>
+          </div>
+        )}
 
         {showReactions ? (
           <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -355,11 +401,11 @@ export function StandupUserCard({
                   }}
                   disabled={!onAddReaction && !onRemoveReaction}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition",
+                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition',
                     hasReacted
-                      ? "border-brand-300 bg-brand-50 font-medium text-brand-900 dark:border-brand-400/60 dark:bg-brand-900/20 dark:text-brand-100"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
-                    !onAddReaction && !onRemoveReaction && "cursor-default",
+                      ? 'border-brand-300 bg-brand-50 font-medium text-brand-900 dark:border-brand-400/60 dark:bg-brand-900/20 dark:text-brand-100'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+                    !onAddReaction && !onRemoveReaction && 'cursor-default',
                   )}
                 >
                   <span>{emoji}</span>
