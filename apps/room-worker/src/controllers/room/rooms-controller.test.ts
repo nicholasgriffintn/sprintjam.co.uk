@@ -53,4 +53,47 @@ describe("joinRoomController", () => {
       "room_session=cookie-token",
     );
   });
+
+  it("does not forward mismatched structured room session cookies", async () => {
+    roomFetch.mockResolvedValue(new Response("ok", { status: 200 }));
+
+    const response = (await joinRoomController(
+      new Request("https://test/api/rooms/join", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: "room_session=ROOM2:cookie-token",
+        },
+        body: JSON.stringify({ name: "Alice", roomKey: "ROOM1" }),
+      }) as unknown as CfRequest,
+      env,
+    )) as Response;
+
+    expect(response.status).toBe(200);
+    const forwardedRequest = roomFetch.mock.calls[0]?.[0] as Request;
+    expect(forwardedRequest.headers.get("Cookie")).toBeNull();
+  });
+
+  it("forwards matching structured room session cookies", async () => {
+    roomFetch.mockResolvedValue(new Response("ok", { status: 200 }));
+
+    const response = (await joinRoomController(
+      new Request("https://test/api/rooms/join", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: "room_session=ROOM1:cookie-token",
+        },
+        body: JSON.stringify({ name: "Alice", roomKey: "room1" }),
+      }) as unknown as CfRequest,
+      env,
+    )) as Response;
+
+    expect(response.status).toBe(200);
+    const forwardedRequest = roomFetch.mock.calls[0]?.[0] as Request;
+    expect(forwardedRequest.headers.get("Cookie")).toBe(
+      "room_session=cookie-token",
+    );
+  });
+
 });

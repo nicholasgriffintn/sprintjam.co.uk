@@ -67,9 +67,18 @@ export function createRoomSessionCookie(
   token: string,
   maxAgeSeconds: number,
   isSecure = true,
+  roomKey?: string,
 ): string {
   const secureFlag = isSecure ? " Secure;" : "";
-  return `room_session=${token}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
+  const normalizedRoomKey = roomKey?.trim().toUpperCase();
+  const hasStructuredRoomKey = Boolean(
+    normalizedRoomKey && /^[A-Z0-9]{4,6}$/.test(normalizedRoomKey),
+  );
+  const cookieValue = hasStructuredRoomKey
+    ? `${normalizedRoomKey}:${token}`
+    : token;
+
+  return `room_session=${cookieValue}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
 }
 
 export function clearRoomSessionCookie(isSecure = true): string {
@@ -78,7 +87,25 @@ export function clearRoomSessionCookie(isSecure = true): string {
 }
 
 export function getRoomSessionToken(request: Request): string | null {
-  return getCookieValue(request, "room_session");
+  const parsed = parseRoomSessionCookie(request);
+  return parsed?.token ?? null;
+}
+
+export function getRoomSessionTokenForRoom(
+  request: Request,
+  roomKey?: string | null,
+): string | null {
+  const parsed = parseRoomSessionCookie(request);
+  if (!parsed) {
+    return null;
+  }
+
+  const requestedRoomKey = roomKey?.trim().toUpperCase();
+  if (parsed.roomKey && parsed.roomKey !== requestedRoomKey) {
+    return null;
+  }
+
+  return parsed.token;
 }
 
 export function getWheelSessionToken(request: Request): string | null {
@@ -87,6 +114,38 @@ export function getWheelSessionToken(request: Request): string | null {
 
 export function getStandupSessionToken(request: Request): string | null {
   return getCookieValue(request, "standup_session");
+}
+
+function parseRoomSessionCookie(
+  request: Request,
+): { token: string; roomKey: string | null } | null {
+  const rawValue = getCookieValue(request, "room_session");
+  if (!rawValue) {
+    return null;
+  }
+
+  const separatorIndex = rawValue.indexOf(":");
+  if (separatorIndex <= 0 || separatorIndex >= rawValue.length - 1) {
+    return {
+      token: rawValue,
+      roomKey: null,
+    };
+  }
+
+  const roomKey = rawValue.slice(0, separatorIndex).toUpperCase();
+  const token = rawValue.slice(separatorIndex + 1);
+
+  if (!/^[A-Z0-9]{4,6}$/.test(roomKey)) {
+    return {
+      token: rawValue,
+      roomKey: null,
+    };
+  }
+
+  return {
+    token,
+    roomKey,
+  };
 }
 
 const ALLOWED_ORIGINS = [

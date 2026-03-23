@@ -89,7 +89,12 @@ export async function handleJoin(
   const defaults = getServerDefaults();
 
   const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
-  const cookie = createRoomSessionCookie(newAuthToken, maxAgeSeconds);
+  const cookie = createRoomSessionCookie(
+    newAuthToken,
+    maxAgeSeconds,
+    true,
+    roomData.key,
+  );
 
   return new Response(
     JSON.stringify({

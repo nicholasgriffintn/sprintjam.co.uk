@@ -6,6 +6,7 @@ import type { RoomWorkerEnv, RoomSettings } from "@sprintjam/types";
 
 import {
   generateRoomKey,
+  getRoomSessionTokenForRoom,
   getRoomSessionToken,
   getRoomStub,
 } from "@sprintjam/utils";
@@ -109,7 +110,8 @@ export async function joinRoomController(
   const passcode = body?.passcode;
   const avatar = body?.avatar;
   const authToken = body?.authToken;
-  const sessionToken = getRoomSessionToken(request) ?? authToken;
+  const sessionToken =
+    getRoomSessionTokenForRoom(request, roomKey) ?? authToken;
 
   if (!name || !roomKey) {
     return jsonError("Name and room key are required");
