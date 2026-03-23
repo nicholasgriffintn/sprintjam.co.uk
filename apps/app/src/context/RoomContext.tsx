@@ -76,6 +76,12 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const [pendingCreateSettings, setPendingCreateSettings] =
     useState<Partial<RoomSettings> | null>(null);
 
+  useEffect(() => {
+    if (screen !== "room") {
+      setAutoReconnectDone(false);
+    }
+  }, [screen]);
+
   const {
     serverDefaults,
     isLoadingDefaults,
@@ -118,6 +124,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     screen === "room" && !!roomKey && !autoReconnectDone;
 
   useAutoReconnect({
+    enabled: needsAutoReconnect,
     name: effectiveName,
     screen,
     roomKey,
@@ -205,6 +212,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       setIsModeratorView,
       setPendingCreateSettings,
       setIsLoading,
+      markAutoReconnectDone: () => setAutoReconnectDone(true),
       createSession,
     });
 
@@ -233,6 +241,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       });
     }
     setActiveRoomKey(null);
+    setAutoReconnectDone(false);
     setUserVote(null);
     setIsModeratorView(false);
     setPasscode("");

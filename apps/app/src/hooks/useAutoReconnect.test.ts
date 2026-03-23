@@ -154,6 +154,26 @@ describe("useAutoReconnect", () => {
     expect(joinRoom).not.toHaveBeenCalled();
   });
 
+  it("does not attempt reconnect when disabled", () => {
+    renderHook(() =>
+      useAutoReconnect({
+        enabled: false,
+        name: "alice",
+        screen: "room",
+        roomKey: "ROOM1",
+        isLoadingDefaults: false,
+        selectedAvatar: "user",
+        onReconnectSuccess,
+        onReconnectError,
+        onLoadingChange,
+        applyServerDefaults,
+        onReconnectComplete,
+      }),
+    );
+
+    expect(joinRoom).not.toHaveBeenCalled();
+  });
+
   it("does not attempt reconnect when roomKey is empty", () => {
     renderHook(() =>
       useAutoReconnect({

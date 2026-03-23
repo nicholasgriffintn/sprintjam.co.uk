@@ -25,6 +25,7 @@ interface UseRoomEntryActionsOptions {
   setIsModeratorView: (isModerator: boolean) => void;
   setPendingCreateSettings: (settings: Partial<RoomSettings> | null) => void;
   setIsLoading: (isLoading: boolean) => void;
+  markAutoReconnectDone: () => void;
   createSession: (payload: {
     teamId: number;
     name: string;
@@ -47,6 +48,7 @@ export function useRoomEntryActions({
   setIsModeratorView,
   setPendingCreateSettings,
   setIsLoading,
+  markAutoReconnectDone,
   createSession,
 }: UseRoomEntryActionsOptions) {
   const latestRoomRequestRef = useRef<AbortController | null>(null);
@@ -108,6 +110,7 @@ export function useRoomEntryActions({
 
         setActiveRoomKey(newRoom.key);
         setIsModeratorView(true);
+        markAutoReconnectDone();
         goToRoom(newRoom.key);
         setPendingCreateSettings(null);
       } catch (err: unknown) {
@@ -133,6 +136,7 @@ export function useRoomEntryActions({
       createSession,
       setActiveRoomKey,
       setIsModeratorView,
+      markAutoReconnectDone,
       goToRoom,
       setPendingCreateSettings,
       setError,
@@ -160,6 +164,7 @@ export function useRoomEntryActions({
       await upsertRoom(joinedRoom);
       setActiveRoomKey(joinedRoom.key);
       setIsModeratorView(joinedRoom.moderator === name);
+      markAutoReconnectDone();
       goToRoom(joinedRoom.key);
     } catch (err: unknown) {
       if (isAbortError(err)) {
@@ -185,6 +190,7 @@ export function useRoomEntryActions({
     applyServerDefaults,
     setActiveRoomKey,
     setIsModeratorView,
+    markAutoReconnectDone,
     goToRoom,
     setError,
   ]);

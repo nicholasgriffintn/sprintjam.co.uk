@@ -6,6 +6,7 @@ import type { AvatarId, ServerDefaults } from "@/types";
 import { HttpError } from "@/lib/errors";
 
 interface UseAutoReconnectOptions {
+  enabled?: boolean;
   name: string;
   screen: string;
   roomKey: string;
@@ -25,6 +26,7 @@ interface UseAutoReconnectOptions {
 }
 
 export const useAutoReconnect = ({
+  enabled = true,
   name,
   screen,
   roomKey,
@@ -40,6 +42,11 @@ export const useAutoReconnect = ({
   const didAttemptRestore = useRef(false);
 
   useEffect(() => {
+    if (!enabled) {
+      didAttemptRestore.current = false;
+      return;
+    }
+
     if (didAttemptRestore.current) {
       return;
     }
@@ -102,6 +109,7 @@ export const useAutoReconnect = ({
       cancelled = true;
     };
   }, [
+    enabled,
     name,
     screen,
     roomKey,
