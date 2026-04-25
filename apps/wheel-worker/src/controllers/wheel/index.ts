@@ -8,7 +8,11 @@ import {
   hashPasscode,
   verifyPasscode,
   generateID,
+  generateSessionToken,
+  generateRecoveryPasskey,
   getWheelSessionToken,
+  createWheelSessionCookie,
+  SESSION_TOKEN_TTL_MS,
 } from "@sprintjam/utils";
 import { jsonResponse, jsonError } from "../../lib/response";
 
@@ -51,6 +55,10 @@ export async function handleHttpRequest(
     return handleJoin(context, request);
   }
 
+  if (path === "/recover" && request.method === "POST") {
+    return handleRecover(context, request);
+  }
+
   if (path === "/settings" && request.method === "GET") {
     return handleGetSettings(context, request);
   }
@@ -74,9 +82,24 @@ function passcodeErrorResponse(message: string, status = 401): Response {
   });
 }
 
-function createWheelSessionCookie(token: string, env: WheelWorkerEnv): string {
-  const secure = env.ENVIRONMENT === "development" ? "" : " Secure;";
-  return `wheel_session=${token}; HttpOnly;${secure} SameSite=Strict; Path=/; Max-Age=86400`;
+function buildSessionResponse(
+  body: unknown,
+  sessionToken: string,
+  env: WheelWorkerEnv,
+): Response {
+  const isSecure = env.ENVIRONMENT !== "development";
+  const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": createWheelSessionCookie(
+        sessionToken,
+        maxAgeSeconds,
+        isSecure,
+      ),
+    },
+  });
 }
 
 async function handleInitialize(
@@ -102,7 +125,8 @@ async function handleInitialize(
     return jsonError("Wheel already exists", 409);
   }
 
-  const sessionToken = generateID();
+  const sessionToken = generateSessionToken();
+  const recoveryPasskey = generateRecoveryPasskey();
 
   const wheelSettings: WheelSettings = {
     ...DEFAULT_SETTINGS,
@@ -131,21 +155,16 @@ async function handleInitialize(
 
   await context.putWheelData(wheelData);
   context.repository.setSessionToken(moderator, sessionToken);
+  await context.repository.setRecoveryPasskey(moderator, recoveryPasskey);
+
   if (avatar) {
     context.repository.setUserAvatar(moderator, avatar);
   }
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      wheel: wheelData,
-    }),
-    {
-      status: 200,
-      headers: {
-        "Set-Cookie": createWheelSessionCookie(sessionToken, context.env),
-      },
-    },
+  return buildSessionResponse(
+    { success: true, wheel: wheelData, recoveryPasskey },
+    sessionToken,
+    context.env,
   );
 }
 
@@ -190,8 +209,10 @@ async function handleJoin(
   }
 
   const canonicalName = context.repository.ensureUser(name);
-  const sessionToken = generateID();
+  const sessionToken = generateSessionToken();
+  const recoveryPasskey = generateRecoveryPasskey();
   context.repository.setSessionToken(canonicalName, sessionToken);
+  await context.repository.setRecoveryPasskey(canonicalName, recoveryPasskey);
 
   if (avatar) {
     context.repository.setUserAvatar(canonicalName, avatar);
@@ -199,17 +220,57 @@ async function handleJoin(
 
   const freshWheel = await context.getWheelData();
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      wheel: freshWheel,
-    }),
-    {
-      status: 200,
-      headers: {
-        "Set-Cookie": createWheelSessionCookie(sessionToken, context.env),
-      },
-    },
+  return buildSessionResponse(
+    { success: true, wheel: freshWheel, recoveryPasskey },
+    sessionToken,
+    context.env,
+  );
+}
+
+async function handleRecover(
+  context: WheelRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const body = await request.json<{ name: string; recoveryPasskey: string }>();
+  const { name, recoveryPasskey } = body;
+
+  if (!name || !recoveryPasskey) {
+    return jsonError("Name and recovery passkey are required");
+  }
+
+  const wheelData = await context.getWheelData();
+  if (!wheelData) {
+    return jsonError("Wheel not found", 404);
+  }
+
+  const canonicalName = wheelData.users.find(
+    (u) => u.toLowerCase() === name.toLowerCase(),
+  );
+  if (!canonicalName) {
+    return jsonError("Invalid name or recovery passkey", 401);
+  }
+
+  const isValid = await context.repository.validateRecoveryPasskey(
+    canonicalName,
+    recoveryPasskey,
+  );
+  if (!isValid) {
+    return jsonError("Invalid name or recovery passkey", 401);
+  }
+
+  const sessionToken = generateSessionToken();
+  context.repository.setSessionToken(canonicalName, sessionToken);
+
+  if (wheelData.connectedUsers[canonicalName]) {
+    context.disconnectUserSessions(canonicalName);
+  }
+
+  const freshWheel = await context.getWheelData();
+
+  return buildSessionResponse(
+    { success: true, wheel: freshWheel },
+    sessionToken,
+    context.env,
   );
 }
 

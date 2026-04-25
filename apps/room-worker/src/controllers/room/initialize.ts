@@ -4,6 +4,7 @@ import {
   getServerDefaults,
   createJsonResponse,
   generateSessionToken,
+  generateRecoveryPasskey,
   hashPasscode,
   createRoomSessionCookie,
   SESSION_TOKEN_TTL_MS,
@@ -58,7 +59,9 @@ export async function handleInitialize(
   await ctx.putRoomData(newRoomData);
 
   const authToken = generateSessionToken();
+  const recoveryPasskey = generateRecoveryPasskey();
   ctx.repository.setSessionToken(moderator, authToken);
+  await ctx.repository.setRecoveryPasskey(moderator, recoveryPasskey);
 
   const defaults = getServerDefaults();
 
@@ -75,6 +78,7 @@ export async function handleInitialize(
       success: true,
       room: sanitizeRoomData(newRoomData),
       defaults,
+      recoveryPasskey,
     }),
     {
       status: 200,

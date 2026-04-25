@@ -1,7 +1,15 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Users, Key, Lock, User, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  Key,
+  Lock,
+  User,
+  ChevronRight,
+  KeyRound,
+} from "lucide-react";
 
 import {
   useSessionActions,
@@ -25,6 +33,8 @@ import {
   validateName,
   validateRoomKey,
 } from "@/utils/validators";
+import { recoverRoomSession } from "@/lib/api-service";
+import { HttpError } from "@/lib/errors";
 
 const JoinRoomScreen = () => {
   usePageMeta(META_CONFIGS.join);
@@ -59,6 +69,9 @@ const JoinRoomScreen = () => {
   const isCreateFlow = joinFlowMode === "create";
   const isNameValid = hasEffectiveName;
   const isRoomKeyValid = validateRoomKey(roomKey).ok;
+  const [recoveryPasskey, setRecoveryPasskey] = useState("");
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentStep === "avatar" && !selectedAvatar) {
@@ -69,7 +82,31 @@ const JoinRoomScreen = () => {
   const isPasscodeError = errorKind === "passcode";
   const isPermissionError = errorKind === "permission";
   const isAuthError = errorKind === "auth";
-  const shouldShowAlert = !!error;
+  const isConflictError = errorKind === "conflict";
+  const shouldShowAlert = !!error && !isConflictError;
+
+  const handleRecover = async () => {
+    if (!recoveryPasskey.trim() || !roomKey || !effectiveName) return;
+    setIsRecovering(true);
+    setRecoveryError(null);
+    try {
+      await recoverRoomSession(
+        effectiveName,
+        formatRoomKey(roomKey),
+        recoveryPasskey.trim().toUpperCase(),
+      );
+      clearError();
+      void handleJoinRoom();
+    } catch (err) {
+      setRecoveryError(
+        err instanceof HttpError && err.status === 401
+          ? "Invalid recovery passkey. Check it and try again."
+          : "Recovery failed. Please try again.",
+      );
+    } finally {
+      setIsRecovering(false);
+    }
+  };
 
   useEffect(() => {
     setCurrentStep(
@@ -212,6 +249,46 @@ const JoinRoomScreen = () => {
                     ? "Session expired. Rejoin with a fresh link."
                     : error}
               </Alert>
+            )}
+
+            {isConflictError && (
+              <div className="space-y-3 rounded-2xl border border-yellow-200/50 bg-yellow-50/50 p-4 dark:border-yellow-900/30 dark:bg-yellow-950/15">
+                <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-300">
+                  This name is already connected
+                </p>
+                <p className="text-sm text-yellow-800 dark:text-yellow-400">
+                  If this is you on another device, enter your recovery passkey
+                  to reclaim the session.
+                </p>
+                <Input
+                  id="recovery-passkey"
+                  label={
+                    <span className="flex items-center gap-2">
+                      <KeyRound className="h-4 w-4" />
+                      Recovery passkey
+                    </span>
+                  }
+                  type="text"
+                  value={recoveryPasskey}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setRecoveryPasskey(e.target.value.toUpperCase())
+                  }
+                  placeholder="XXXX-XXXX"
+                  fullWidth
+                  className="font-mono tracking-[0.25em]"
+                  error={recoveryError ?? undefined}
+                />
+                <Button
+                  type="button"
+                  onClick={handleRecover}
+                  disabled={!recoveryPasskey.trim() || isRecovering}
+                  isLoading={isRecovering}
+                  fullWidth
+                  icon={<KeyRound className="h-4 w-4" />}
+                >
+                  Recover session
+                </Button>
+              </div>
             )}
 
             {currentStep === "details" && (

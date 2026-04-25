@@ -2,6 +2,7 @@ import type { CfResponse, PlanningRoomHttpContext } from "./types";
 import { handleInitialize } from "./initialize";
 import { handleSessionValidation } from "./session";
 import { handleJoin } from "./join";
+import { handleRecover } from "./recover";
 import { handleVote } from "./vote";
 import { handleToggleShowVotes } from "./show-votes";
 import { handleResetVotes } from "./reset-votes";
@@ -29,6 +30,10 @@ export async function handleHttpRequest(
 
     if (url.pathname === "/join" && request.method === "POST") {
       return handleJoin(ctx, request);
+    }
+
+    if (url.pathname === "/recover" && request.method === "POST") {
+      return handleRecover(ctx, request);
     }
 
     if (url.pathname === "/vote" && request.method === "POST") {

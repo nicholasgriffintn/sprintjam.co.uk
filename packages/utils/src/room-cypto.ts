@@ -146,6 +146,50 @@ export function generateSessionToken(): string {
   return bytesToBase64Url(bytes);
 }
 
+// Crockford Base32 alphabet — no ambiguous chars (0/O, 1/I/L)
+const PASSKEY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const PASSKEY_SEGMENT_LENGTH = 4;
+const PASSKEY_SEGMENTS = 2;
+export const RECOVERY_PASSKEY_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
+export const RECOVERY_PASSKEY_PBKDF2_ITERATIONS = 10_000;
+
+export function generateRecoveryPasskey(): string {
+  const bytes = new Uint8Array(PASSKEY_SEGMENT_LENGTH * PASSKEY_SEGMENTS);
+  crypto.getRandomValues(bytes);
+
+  const segments: string[] = [];
+  let byteIndex = 0;
+  for (let s = 0; s < PASSKEY_SEGMENTS; s++) {
+    let segment = "";
+    for (let i = 0; i < PASSKEY_SEGMENT_LENGTH; i++) {
+      segment += PASSKEY_ALPHABET[bytes[byteIndex++] % PASSKEY_ALPHABET.length];
+    }
+    segments.push(segment);
+  }
+  return segments.join("-");
+}
+
+export function normalizeRecoveryPasskey(passkey: string): string {
+  return passkey.toUpperCase().replace(/[^A-Z2-9-]/g, "");
+}
+
+export async function hashRecoveryPasskey(
+  passkey: string,
+): Promise<PasscodeHashPayload> {
+  return hashPasscode(
+    normalizeRecoveryPasskey(passkey),
+    undefined,
+    RECOVERY_PASSKEY_PBKDF2_ITERATIONS,
+  );
+}
+
+export async function verifyRecoveryPasskey(
+  passkey: string,
+  stored: PasscodeHashPayload,
+): Promise<boolean> {
+  return verifyPasscode(normalizeRecoveryPasskey(passkey), stored);
+}
+
 type SignedStatePayload<T> = {
   data: T;
   signature: string;

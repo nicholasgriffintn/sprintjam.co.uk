@@ -37,11 +37,13 @@ const eventManager = new EventManager<WheelEventMessage>();
 export interface CreateWheelResponse {
   wheel: WheelData;
   token: string;
+  recoveryPasskey?: string;
 }
 
 export interface JoinWheelResponse {
   wheel: WheelData;
   token: string;
+  recoveryPasskey?: string;
 }
 
 interface RequestOptions {
@@ -152,6 +154,31 @@ export async function joinWheel(
       throw error;
     }
     throw new NetworkError("Failed to join wheel", { cause: error });
+  }
+}
+
+export async function recoverWheelSession(
+  name: string,
+  wheelKey: string,
+  recoveryPasskey: string,
+): Promise<void> {
+  try {
+    const response = await fetch(`${WHEEL_API_BASE_URL}/wheels/recover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, wheelKey, recoveryPasskey }),
+      credentials: "include",
+    });
+
+    await handleJsonResponse<{ success: boolean }>(
+      response,
+      "Failed to recover wheel session",
+    );
+  } catch (error) {
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to recover wheel session", { cause: error });
   }
 }
 

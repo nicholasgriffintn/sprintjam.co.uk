@@ -131,6 +131,34 @@ export async function joinRoomController(
   );
 }
 
+export async function recoverRoomController(
+  request: CfRequest,
+  env: RoomWorkerEnv,
+): Promise<CfResponse> {
+  const body = await request.json<{
+    name?: string;
+    roomKey?: string;
+    recoveryPasskey?: string;
+  }>();
+  const name = body?.name;
+  const roomKey = body?.roomKey;
+  const recoveryPasskey = body?.recoveryPasskey;
+
+  if (!name || !roomKey || !recoveryPasskey) {
+    return jsonError("Name, room key, and recovery passkey are required");
+  }
+
+  const roomObject = getRoomStub(env, roomKey);
+
+  return roomObject.fetch(
+    new Request("https://internal/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, recoveryPasskey }),
+    }) as unknown as CfRequest,
+  );
+}
+
 export async function getRoomSettingsController(
   request: CfRequest,
   env: RoomWorkerEnv,

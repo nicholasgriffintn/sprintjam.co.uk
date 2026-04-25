@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
@@ -33,6 +33,9 @@ import { StandupPresentationView } from "@/components/standup/StandupPresentatio
 import { StandupResultsPanel } from "@/components/standup/StandupResultsPanel";
 import { StandupSidebar } from "@/components/standup/StandupSidebar";
 import { consumeStandupNotice } from "@/lib/standup-notice";
+import { RecoveryPasskeyBanner } from "@/components/ui/RecoveryPasskeyBanner";
+import { getRecoveryPasskeyStorageKey } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
 
 function getStandupKeyFromRoomPath(pathname: string): string | null {
   const match = pathname.match(/^\/standup\/room\/([A-Z0-9]+)$/i);
@@ -76,6 +79,17 @@ function StandupRoomContent({
     setRespondedCount,
     setParticipantCount,
   } = useStandupHeader();
+  const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(() =>
+    safeLocalStorage.get(
+      getRecoveryPasskeyStorageKey("standup", standupKey, userName),
+    ),
+  );
+  const handleDismissPasskeyBanner = useCallback(() => {
+    safeLocalStorage.remove(
+      getRecoveryPasskeyStorageKey("standup", standupKey, userName),
+    );
+    setRecoveryPasskey(null);
+  }, [standupKey, userName]);
   const [completionNotice, setCompletionNotice] = useState<string | null>(null);
   const [isCompletingStandup, setIsCompletingStandup] = useState(false);
   const [isLockingResponses, setIsLockingResponses] = useState(false);
@@ -257,6 +271,14 @@ function StandupRoomContent({
 
   return (
     <div className="min-h-[calc(100vh-65px)] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      {recoveryPasskey && (
+        <div className="px-4 pt-4">
+          <RecoveryPasskeyBanner
+            passkey={recoveryPasskey}
+            onDismiss={handleDismissPasskeyBanner}
+          />
+        </div>
+      )}
       <motion.div
         className="flex flex-1 flex-col py-0 md:grid md:h-[calc(100vh-65px)] md:grid-cols-[minmax(280px,360px)_1fr] md:items-start md:overflow-hidden"
         initial={{ opacity: 0, y: 20 }}

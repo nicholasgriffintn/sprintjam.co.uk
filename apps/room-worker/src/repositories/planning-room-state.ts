@@ -20,6 +20,9 @@ import {
   serializeJSON,
   serializePasscodeHash,
   serializeVote,
+  hashRecoveryPasskey,
+  verifyRecoveryPasskey,
+  RECOVERY_PASSKEY_TTL_MS,
 } from "@sprintjam/utils";
 import { ROOM_ROW_ID } from "@sprintjam/utils/constants";
 
@@ -309,6 +312,55 @@ export class PlanningRoomStateStore {
       providedToken: token,
       createdAt: record?.createdAt,
     });
+  }
+
+  async setRecoveryPasskey(userName: string, passkey: string): Promise<void> {
+    const canonicalName = this.ensureUser(userName);
+    const hashed = await hashRecoveryPasskey(passkey);
+    const createdAt = Date.now();
+
+    this.db
+      .update(sessionTokens)
+      .set({
+        recoveryPasskey: serializePasscodeHash(hashed),
+        recoveryPasskeyCreatedAt: createdAt,
+      })
+      .where(
+        sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${canonicalName})`,
+      )
+      .run();
+  }
+
+  async validateRecoveryPasskey(
+    userName: string,
+    passkey: string,
+  ): Promise<boolean> {
+    const record = this.db
+      .select({
+        recoveryPasskey: sessionTokens.recoveryPasskey,
+        recoveryPasskeyCreatedAt: sessionTokens.recoveryPasskeyCreatedAt,
+      })
+      .from(sessionTokens)
+      .where(sqlOperator`LOWER(${sessionTokens.userName}) = LOWER(${userName})`)
+      .get();
+
+    if (!record?.recoveryPasskey || !record.recoveryPasskeyCreatedAt) {
+      return false;
+    }
+
+    if (
+      Date.now() - record.recoveryPasskeyCreatedAt >
+      RECOVERY_PASSKEY_TTL_MS
+    ) {
+      return false;
+    }
+
+    const stored = parsePasscodeHash(record.recoveryPasskey);
+    if (!stored) {
+      return false;
+    }
+
+    return verifyRecoveryPasskey(passkey, stored);
   }
 
   private findCanonicalUserName(userName: string): string | undefined {

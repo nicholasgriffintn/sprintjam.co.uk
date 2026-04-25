@@ -172,6 +172,14 @@ export class PlanningRoomRepository {
     return this.stateStore.validateSessionToken(userName, token);
   }
 
+  setRecoveryPasskey(userName: string, passkey: string) {
+    return this.stateStore.setRecoveryPasskey(userName, passkey);
+  }
+
+  validateRecoveryPasskey(userName: string, passkey: string) {
+    return this.stateStore.validateRecoveryPasskey(userName, passkey);
+  }
+
   setStrudelState(
     options: Parameters<PlanningRoomStateStore["setStrudelState"]>[0],
   ) {

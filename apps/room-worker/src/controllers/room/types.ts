@@ -10,6 +10,8 @@ export type PlanningRoomRepositoryShape = Pick<
   | "getPasscodeHash"
   | "validateSessionToken"
   | "setSessionToken"
+  | "setRecoveryPasskey"
+  | "validateRecoveryPasskey"
   | "ensureUser"
   | "setUserConnection"
   | "setUserAvatar"

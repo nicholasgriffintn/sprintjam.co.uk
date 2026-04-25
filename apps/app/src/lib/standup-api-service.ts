@@ -26,6 +26,7 @@ let intentionalDisconnect = false;
 export interface StandupSessionResponse {
   success: boolean;
   standup: StandupData;
+  recoveryPasskey?: string;
 }
 
 interface RequestOptions {
@@ -180,6 +181,33 @@ export async function joinStandup(
     }
 
     throw new NetworkError("Failed to join standup", { cause: error });
+  }
+}
+
+export async function recoverStandupSession(
+  name: string,
+  standupKey: string,
+  recoveryPasskey: string,
+): Promise<void> {
+  try {
+    const response = await fetch(`${STANDUP_API_BASE_URL}/standups/recover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, standupKey, recoveryPasskey }),
+      credentials: "include",
+    });
+
+    await handleJsonResponse<{ success: boolean }>(
+      response,
+      "Failed to recover standup session",
+    );
+  } catch (error) {
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to recover standup session", {
+      cause: error,
+    });
   }
 }
 

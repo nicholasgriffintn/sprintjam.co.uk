@@ -4,12 +4,15 @@ import { createRoom, joinRoom } from "@/lib/api-service";
 import { upsertRoom } from "@/lib/data/room-store";
 import { getErrorDetails, isAbortError } from "@/lib/errors";
 import { formatRoomKey } from "@/utils/validators";
+import { getRecoveryPasskeyStorageKey } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
 import type {
   AvatarId,
   ErrorKind,
   RoomSettings,
   ServerDefaults,
 } from "@/types";
+
 interface UseRoomEntryActionsOptions {
   name: string;
   roomKey: string;
@@ -83,7 +86,11 @@ export function useRoomEntryActions({
       const controller = startRoomRequest();
 
       try {
-        const { room: newRoom, defaults } = await createRoom(
+        const {
+          room: newRoom,
+          defaults,
+          recoveryPasskey,
+        } = await createRoom(
           name,
           passcode || undefined,
           resolvedSettings,
@@ -95,6 +102,13 @@ export function useRoomEntryActions({
         );
         applyServerDefaults(defaults);
         await upsertRoom(newRoom);
+
+        if (recoveryPasskey) {
+          safeLocalStorage.set(
+            getRecoveryPasskeyStorageKey("room", newRoom.key, name),
+            recoveryPasskey,
+          );
+        }
 
         if (selectedWorkspaceTeamId) {
           try {
@@ -153,7 +167,11 @@ export function useRoomEntryActions({
     const controller = startRoomRequest();
 
     try {
-      const { room: joinedRoom, defaults } = await joinRoom(
+      const {
+        room: joinedRoom,
+        defaults,
+        recoveryPasskey,
+      } = await joinRoom(
         trimmedName,
         normalizedRoomKey,
         passcode?.trim() || undefined,
@@ -162,6 +180,14 @@ export function useRoomEntryActions({
       );
       applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
+
+      if (recoveryPasskey) {
+        safeLocalStorage.set(
+          getRecoveryPasskeyStorageKey("room", joinedRoom.key, trimmedName),
+          recoveryPasskey,
+        );
+      }
+
       setActiveRoomKey(joinedRoom.key);
       setIsModeratorView(joinedRoom.moderator === name);
       markAutoReconnectDone();

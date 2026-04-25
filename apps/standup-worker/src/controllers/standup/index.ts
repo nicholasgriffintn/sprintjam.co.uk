@@ -3,10 +3,13 @@ import type { StandupData, StandupWorkerEnv } from "@sprintjam/types";
 import {
   hashPasscode,
   verifyPasscode,
-  generateID,
+  generateSessionToken,
+  generateRecoveryPasskey,
   serializePasscodeHash,
   parsePasscodeHash,
   getStandupSessionToken,
+  createStandupSessionCookie,
+  SESSION_TOKEN_TTL_MS,
   PASSCODE_MIN_LENGTH,
   PASSCODE_MAX_LENGTH,
 } from "@sprintjam/utils";
@@ -34,15 +37,11 @@ export async function handleHttpRequest(
     return handleJoin(context, request);
   }
 
-  return null;
-}
+  if (path === "/recover" && request.method === "POST") {
+    return handleRecover(context, request);
+  }
 
-function createStandupSessionCookie(
-  token: string,
-  env: StandupWorkerEnv,
-): string {
-  const secure = env.ENVIRONMENT === "development" ? "" : " Secure;";
-  return `standup_session=${token}; HttpOnly;${secure} SameSite=Strict; Path=/; Max-Age=86400`;
+  return null;
 }
 
 function normalisePasscode(value?: string): string | undefined {
@@ -74,6 +73,26 @@ function passcodeErrorResponse(message: string): Response {
       "X-Content-Type-Options": "nosniff",
       "X-Frame-Options": "DENY",
       "X-Error-Kind": "passcode",
+    },
+  });
+}
+
+function buildSessionResponse(
+  body: unknown,
+  sessionToken: string,
+  env: StandupWorkerEnv,
+): Response {
+  const isSecure = env.ENVIRONMENT !== "development";
+  const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": createStandupSessionCookie(
+        sessionToken,
+        maxAgeSeconds,
+        isSecure,
+      ),
     },
   });
 }
@@ -120,8 +139,10 @@ async function handleInitialize(
     teamId,
   );
 
-  const sessionToken = generateID();
+  const sessionToken = generateSessionToken();
+  const recoveryPasskey = generateRecoveryPasskey();
   context.repository.setSessionToken(moderator, sessionToken);
+  await context.repository.setRecoveryPasskey(moderator, recoveryPasskey);
 
   if (avatar) {
     context.repository.setUserAvatar(moderator, avatar);
@@ -129,17 +150,10 @@ async function handleInitialize(
 
   const standupData = await context.getStandupData();
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      standup: standupData,
-    }),
-    {
-      status: 200,
-      headers: {
-        "Set-Cookie": createStandupSessionCookie(sessionToken, context.env),
-      },
-    },
+  return buildSessionResponse(
+    { success: true, standup: standupData, recoveryPasskey },
+    sessionToken,
+    context.env,
   );
 }
 
@@ -207,8 +221,10 @@ async function handleJoin(
   }
 
   const canonicalName = context.repository.ensureUser(name);
-  const sessionToken = generateID();
+  const sessionToken = generateSessionToken();
+  const recoveryPasskey = generateRecoveryPasskey();
   context.repository.setSessionToken(canonicalName, sessionToken);
+  await context.repository.setRecoveryPasskey(canonicalName, recoveryPasskey);
 
   if (avatar) {
     context.repository.setUserAvatar(canonicalName, avatar);
@@ -216,16 +232,56 @@ async function handleJoin(
 
   const freshStandup = await context.getStandupData();
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      standup: freshStandup,
-    }),
-    {
-      status: 200,
-      headers: {
-        "Set-Cookie": createStandupSessionCookie(sessionToken, context.env),
-      },
-    },
+  return buildSessionResponse(
+    { success: true, standup: freshStandup, recoveryPasskey },
+    sessionToken,
+    context.env,
+  );
+}
+
+async function handleRecover(
+  context: StandupRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const body = await request.json<{ name: string; recoveryPasskey: string }>();
+  const { name, recoveryPasskey } = body;
+
+  if (!name || !recoveryPasskey) {
+    return jsonError("Name and recovery passkey are required");
+  }
+
+  const standupData = await context.getStandupData();
+  if (!standupData) {
+    return jsonError("Standup not found", 404);
+  }
+
+  const canonicalName = standupData.users.find(
+    (u) => u.toLowerCase() === name.toLowerCase(),
+  );
+  if (!canonicalName) {
+    return jsonError("Invalid name or recovery passkey", 401);
+  }
+
+  const isValid = await context.repository.validateRecoveryPasskey(
+    canonicalName,
+    recoveryPasskey,
+  );
+  if (!isValid) {
+    return jsonError("Invalid name or recovery passkey", 401);
+  }
+
+  const sessionToken = generateSessionToken();
+  context.repository.setSessionToken(canonicalName, sessionToken);
+
+  if (standupData.connectedUsers[canonicalName]) {
+    context.disconnectUserSessions(canonicalName);
+  }
+
+  const freshStandup = await context.getStandupData();
+
+  return buildSessionResponse(
+    { success: true, standup: freshStandup },
+    sessionToken,
+    context.env,
   );
 }

@@ -2,11 +2,12 @@ import {
   getServerDefaults,
   createJsonResponse,
   generateSessionToken,
+  generateRecoveryPasskey,
   verifyPasscode,
   createRoomSessionCookie,
   getRoomSessionToken,
   SESSION_TOKEN_TTL_MS,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 import type { Request as CfRequest } from "@cloudflare/workers-types";
 
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
@@ -16,7 +17,7 @@ import {
   markUserConnection,
   normalizeRoomData,
   sanitizeRoomData,
-} from '../../lib/room-data';
+} from "../../lib/room-data";
 
 export async function handleJoin(
   ctx: PlanningRoomHttpContext,
@@ -83,7 +84,9 @@ export async function handleJoin(
   });
 
   const newAuthToken = generateSessionToken();
+  const recoveryPasskey = generateRecoveryPasskey();
   ctx.repository.setSessionToken(canonicalName, newAuthToken);
+  await ctx.repository.setRecoveryPasskey(canonicalName, recoveryPasskey);
   ctx.disconnectUserSessions?.(canonicalName);
 
   const defaults = getServerDefaults();
@@ -101,6 +104,7 @@ export async function handleJoin(
       success: true,
       room: sanitizeRoomData(updatedRoomData),
       defaults,
+      recoveryPasskey,
     }),
     {
       status: 200,

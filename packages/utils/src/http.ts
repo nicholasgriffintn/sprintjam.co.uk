@@ -116,6 +116,34 @@ export function getStandupSessionToken(request: Request): string | null {
   return getCookieValue(request, "standup_session");
 }
 
+export function createStandupSessionCookie(
+  token: string,
+  maxAgeSeconds: number,
+  isSecure = true,
+): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `standup_session=${token}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
+}
+
+export function clearStandupSessionCookie(isSecure = true): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `standup_session=; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=0`;
+}
+
+export function createWheelSessionCookie(
+  token: string,
+  maxAgeSeconds: number,
+  isSecure = true,
+): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `wheel_session=${token}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
+}
+
+export function clearWheelSessionCookie(isSecure = true): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `wheel_session=; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=0`;
+}
+
 function parseRoomSessionCookie(
   request: Request,
 ): { token: string; roomKey: string | null } | null {

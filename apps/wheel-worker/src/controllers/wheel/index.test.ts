@@ -31,6 +31,9 @@ const buildContext = (
       setPasscodeHash: vi.fn(),
       ensureUser: vi.fn((name: string) => name),
       setSessionToken: vi.fn(),
+      setUserAvatar: vi.fn(),
+      setRecoveryPasskey: vi.fn().mockResolvedValue(undefined),
+      validateRecoveryPasskey: vi.fn().mockResolvedValue(false),
     },
     getWheelData: vi.fn(),
     putWheelData: vi.fn(),
@@ -101,5 +104,143 @@ describe("wheel http controller", () => {
     );
 
     expect(response?.status).toBe(403);
+  });
+
+  describe("recover", () => {
+    it("returns 400 when name or passkey is missing", async () => {
+      const context = buildContext({
+        getWheelData: vi.fn().mockResolvedValue(buildWheelData()),
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/recover", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "mod" }),
+        }),
+      );
+
+      expect(response?.status).toBe(400);
+    });
+
+    it("returns 404 when wheel does not exist", async () => {
+      const context = buildContext({
+        getWheelData: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/recover", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "mod", recoveryPasskey: "ABCD-EFGH" }),
+        }),
+      );
+
+      expect(response?.status).toBe(404);
+    });
+
+    it("returns 401 when user is not in the wheel", async () => {
+      const context = buildContext({
+        getWheelData: vi
+          .fn()
+          .mockResolvedValue(buildWheelData({ users: ["mod"] })),
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/recover", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Ghost", recoveryPasskey: "ABCD-EFGH" }),
+        }),
+      );
+
+      expect(response?.status).toBe(401);
+    });
+
+    it("returns 401 when passkey is invalid", async () => {
+      const context = buildContext({
+        getWheelData: vi
+          .fn()
+          .mockResolvedValue(buildWheelData({ users: ["mod", "Alice"] })),
+        repository: {
+          ...buildContext().repository,
+          validateRecoveryPasskey: vi.fn().mockResolvedValue(false),
+        } as any,
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/recover", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Alice", recoveryPasskey: "WRNG-PASS" }),
+        }),
+      );
+
+      expect(response?.status).toBe(401);
+    });
+
+    it("issues a new session cookie when passkey is valid", async () => {
+      const context = buildContext({
+        getWheelData: vi
+          .fn()
+          .mockResolvedValue(
+            buildWheelData({
+              users: ["mod", "Alice"],
+              connectedUsers: { mod: true, Alice: false },
+            }),
+          ),
+        repository: {
+          ...buildContext().repository,
+          validateRecoveryPasskey: vi.fn().mockResolvedValue(true),
+        } as any,
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/recover", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Alice", recoveryPasskey: "ABCD-EFGH" }),
+        }),
+      );
+
+      expect(response?.status).toBe(200);
+      expect(response?.headers.get("Set-Cookie")).toContain("wheel_session=");
+    });
+
+    it("disconnects existing sessions before issuing new one", async () => {
+      const disconnectSpy = vi.fn();
+      const context = buildContext({
+        getWheelData: vi
+          .fn()
+          .mockResolvedValue(
+            buildWheelData({
+              users: ["mod", "Alice"],
+              connectedUsers: { mod: true, Alice: true },
+            }),
+          ),
+        disconnectUserSessions: disconnectSpy,
+        repository: {
+          ...buildContext().repository,
+          validateRecoveryPasskey: vi.fn().mockResolvedValue(true),
+        } as any,
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/recover", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Alice", recoveryPasskey: "ABCD-EFGH" }),
+        }),
+      );
+
+      expect(response?.status).toBe(200);
+      expect(disconnectSpy).toHaveBeenCalledWith("Alice");
+    });
   });
 });
