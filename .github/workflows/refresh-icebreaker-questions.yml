@@ -1,0 +1,45 @@
+name: Refresh Icebreaker Questions
+
+on:
+  schedule:
+    # 09:00 UTC on the 1st of every month
+    - cron: "0 9 1 * *"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    name: Generate new icebreaker questions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Run refresh script
+        env:
+          POLYCHAT_API_KEY: ${{ secrets.POLYCHAT_API_KEY }}
+          POLYCHAT_MODEL: ${{ vars.POLYCHAT_MODEL }}
+        run: node .github/scripts/refresh-icebreaker-questions.mjs
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet apps/app/src/lib/icebreaker-questions.json \
+            && echo "changed=false" >> "$GITHUB_OUTPUT" \
+            || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/app/src/lib/icebreaker-questions.json
+          git commit -m "chore: refresh icebreaker questions [skip ci]"
+          git push
