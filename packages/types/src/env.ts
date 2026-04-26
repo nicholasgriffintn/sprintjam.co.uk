@@ -92,6 +92,7 @@ export interface WheelWorkerEnv extends BaseEnv {
   WHEEL_CREATE_RATE_LIMITER: RateLimit;
   WHEEL_JOIN_RATE_LIMITER: RateLimit;
   WHEEL_IP_RATE_LIMITER: RateLimit;
+  AUTH_WORKER?: Fetcher;
 }
 
 /**
@@ -104,4 +105,5 @@ export interface StandupWorkerEnv extends BaseEnv {
   STANDUP_CREATE_RATE_LIMITER: RateLimit;
   STANDUP_JOIN_RATE_LIMITER: RateLimit;
   STANDUP_IP_RATE_LIMITER: RateLimit;
+  AUTH_WORKER?: Fetcher;
 }

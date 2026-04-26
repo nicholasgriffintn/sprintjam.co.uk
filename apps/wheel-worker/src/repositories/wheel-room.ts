@@ -32,6 +32,9 @@ import {
   parsePasscodeHash,
   serializePasscodeHash,
   safeJsonParse,
+  hashRecoveryPasskey,
+  verifyRecoveryPasskey,
+  RECOVERY_PASSKEY_TTL_MS,
 } from "@sprintjam/utils";
 
 import migrations from "../../drizzle/migrations";
@@ -63,11 +66,7 @@ export class WheelRoomRepository {
     const [users, entries, results] = await Promise.all([
       this.db.select().from(wheelUsers).orderBy(wheelUsers.ordinal).all(),
       this.db.select().from(wheelEntries).orderBy(wheelEntries.ordinal).all(),
-      this.db
-        .select()
-        .from(wheelResults)
-        .orderBy(wheelResults.timestamp)
-        .all(),
+      this.db.select().from(wheelResults).orderBy(wheelResults.timestamp).all(),
     ]);
 
     const {
@@ -131,9 +130,7 @@ export class WheelRoomRepository {
         }),
       );
       if (userValues.length > 0) {
-        tx.insert(wheelUsers)
-          .values(userValues)
-          .run();
+        tx.insert(wheelUsers).values(userValues).run();
       }
 
       tx.delete(wheelEntries).run();
@@ -146,9 +143,7 @@ export class WheelRoomRepository {
         }),
       );
       if (entryValues.length > 0) {
-        tx.insert(wheelEntries)
-          .values(entryValues)
-          .run();
+        tx.insert(wheelEntries).values(entryValues).run();
       }
 
       tx.delete(wheelResults).run();
@@ -161,9 +156,7 @@ export class WheelRoomRepository {
         }),
       );
       if (resultValues.length > 0) {
-        tx.insert(wheelResults)
-          .values(resultValues)
-          .run();
+        tx.insert(wheelResults).values(resultValues).run();
       }
     });
   }
@@ -374,6 +367,73 @@ export class WheelRoomRepository {
     });
   }
 
+  async setRecoveryPasskey(userName: string, passkey: string): Promise<void> {
+    const canonicalName = this.ensureUser(userName);
+    const hashed = await hashRecoveryPasskey(passkey);
+    const createdAt = Date.now();
+
+    this.db
+      .update(wheelSessionTokens)
+      .set({
+        recoveryPasskey: serializePasscodeHash(hashed),
+        recoveryPasskeyCreatedAt: createdAt,
+      })
+      .where(
+        sqlOperator`LOWER(${wheelSessionTokens.userName}) = LOWER(${canonicalName})`,
+      )
+      .run();
+  }
+
+  async validateRecoveryPasskey(
+    userName: string,
+    passkey: string,
+  ): Promise<boolean> {
+    const record = this.db
+      .select({
+        recoveryPasskey: wheelSessionTokens.recoveryPasskey,
+        recoveryPasskeyCreatedAt: wheelSessionTokens.recoveryPasskeyCreatedAt,
+      })
+      .from(wheelSessionTokens)
+      .where(
+        sqlOperator`LOWER(${wheelSessionTokens.userName}) = LOWER(${userName})`,
+      )
+      .get();
+
+    if (!record?.recoveryPasskey || !record.recoveryPasskeyCreatedAt) {
+      return false;
+    }
+
+    if (
+      Date.now() - record.recoveryPasskeyCreatedAt >
+      RECOVERY_PASSKEY_TTL_MS
+    ) {
+      return false;
+    }
+
+    const stored = parsePasscodeHash(record.recoveryPasskey);
+    if (!stored) {
+      return false;
+    }
+
+    return verifyRecoveryPasskey(passkey, stored);
+  }
+
+  findUserNameByWorkspaceId(workspaceUserId: number): string | undefined {
+    return this.db
+      .select({ userName: wheelUsers.userName })
+      .from(wheelUsers)
+      .where(eq(wheelUsers.workspaceUserId, workspaceUserId))
+      .get()?.userName;
+  }
+
+  setWorkspaceUserId(userName: string, workspaceUserId: number) {
+    this.db
+      .update(wheelUsers)
+      .set({ workspaceUserId })
+      .where(sqlOperator`LOWER(${wheelUsers.userName}) = LOWER(${userName})`)
+      .run();
+  }
+
   private findCanonicalUserName(userName: string): string | undefined {
     return this.db
       .select({
@@ -424,7 +484,9 @@ export class WheelRoomRepository {
       wheelStatus: wheelData.status ?? "active",
       passcode: serializePasscodeHash(wheelData.passcodeHash),
       settings: JSON.stringify(wheelData.settings),
-      spinState: wheelData.spinState ? JSON.stringify(wheelData.spinState) : null,
+      spinState: wheelData.spinState
+        ? JSON.stringify(wheelData.spinState)
+        : null,
     };
   }
 
@@ -446,7 +508,8 @@ export class WheelRoomRepository {
     return {
       users: users.map((user) => user.userName),
       connectedUsers,
-      userAvatars: Object.keys(userAvatars).length > 0 ? userAvatars : undefined,
+      userAvatars:
+        Object.keys(userAvatars).length > 0 ? userAvatars : undefined,
     };
   }
 

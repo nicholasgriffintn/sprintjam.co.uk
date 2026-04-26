@@ -2,11 +2,12 @@ import {
   getServerDefaults,
   createJsonResponse,
   generateSessionToken,
+  generateRecoveryPasskey,
   verifyPasscode,
   createRoomSessionCookie,
   getRoomSessionToken,
   SESSION_TOKEN_TTL_MS,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 import type { Request as CfRequest } from "@cloudflare/workers-types";
 
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
@@ -16,17 +17,19 @@ import {
   markUserConnection,
   normalizeRoomData,
   sanitizeRoomData,
-} from '../../lib/room-data';
+} from "../../lib/room-data";
 
 export async function handleJoin(
   ctx: PlanningRoomHttpContext,
   request: Request,
 ): Promise<CfResponse> {
-  const { name, passcode, avatar } = (await request.json()) as {
-    name: string;
-    passcode?: string;
-    avatar?: string;
-  };
+  const { name, passcode, avatar, workspaceUserId } =
+    (await request.json()) as {
+      name: string;
+      passcode?: string;
+      avatar?: string;
+      workspaceUserId?: number;
+    };
 
   const authToken = getRoomSessionToken(request as unknown as CfRequest);
 
@@ -37,8 +40,21 @@ export async function handleJoin(
   }
 
   const normalizedRoomData = normalizeRoomData(roomData);
-  const canonicalName =
-    findCanonicalUserName(normalizedRoomData, name) ?? name.trim();
+
+  // For logged-in workspace users, find their existing slot by user ID first.
+  // This lets them rejoin without a session token or recovery passkey.
+  let canonicalName: string | undefined;
+  if (workspaceUserId) {
+    canonicalName = ctx.repository.findUserNameByWorkspaceId(workspaceUserId);
+  }
+
+  const isWorkspaceUserRejoining = !!canonicalName;
+
+  if (!canonicalName) {
+    canonicalName =
+      findCanonicalUserName(normalizedRoomData, name) ?? name.trim();
+  }
+
   const isConnected = !!normalizedRoomData.connectedUsers?.[canonicalName];
   const storedPasscodeHash = ctx.repository.getPasscodeHash();
   const hasValidSessionToken = ctx.repository.validateSessionToken(
@@ -46,7 +62,11 @@ export async function handleJoin(
     authToken ?? null,
   );
 
-  if (storedPasscodeHash && !hasValidSessionToken) {
+  if (
+    storedPasscodeHash &&
+    !hasValidSessionToken &&
+    !isWorkspaceUserRejoining
+  ) {
     let isValidPasscode = false;
     if (passcode) {
       try {
@@ -61,7 +81,9 @@ export async function handleJoin(
     }
   }
 
-  if (isConnected && !hasValidSessionToken) {
+  // Block name conflicts only when the user has no existing slot by workspace ID
+  // and no valid session token.
+  if (isConnected && !hasValidSessionToken && !isWorkspaceUserRejoining) {
     return createJsonResponse(
       { error: "User with this name is already connected" },
       409,
@@ -76,6 +98,10 @@ export async function handleJoin(
   ctx.repository.setUserConnection(canonicalName, true);
   ctx.repository.setUserAvatar(canonicalName, avatar);
 
+  if (workspaceUserId) {
+    ctx.repository.setWorkspaceUserId(canonicalName, workspaceUserId);
+  }
+
   ctx.broadcast({
     type: "userJoined",
     user: canonicalName,
@@ -85,6 +111,14 @@ export async function handleJoin(
   const newAuthToken = generateSessionToken();
   ctx.repository.setSessionToken(canonicalName, newAuthToken);
   ctx.disconnectUserSessions?.(canonicalName);
+
+  // Only generate a recovery passkey for anonymous users — workspace users
+  // authenticate via their workspace session instead.
+  let recoveryPasskey: string | undefined;
+  if (!workspaceUserId) {
+    recoveryPasskey = generateRecoveryPasskey();
+    await ctx.repository.setRecoveryPasskey(canonicalName, recoveryPasskey);
+  }
 
   const defaults = getServerDefaults();
 
@@ -101,6 +135,7 @@ export async function handleJoin(
       success: true,
       room: sanitizeRoomData(updatedRoomData),
       defaults,
+      recoveryPasskey,
     }),
     {
       status: 200,

@@ -12,6 +12,9 @@ const statusToKind = (status?: number): NullableKind => {
   if (status === 403) {
     return "permission";
   }
+  if (status === 409) {
+    return "conflict";
+  }
   if (status === 422 || status === 400) {
     return "validation";
   }

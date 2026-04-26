@@ -117,6 +117,7 @@ async function createRoomWithProvider(
 
   const room = new RoomPage(page);
   await room.waitForLoaded();
+  await room.dismissRecoveryPasskeyModalIfPresent();
 
   const settingsModal = new SettingsModal(page);
   await settingsModal.open();

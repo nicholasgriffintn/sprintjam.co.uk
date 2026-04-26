@@ -72,7 +72,11 @@ export async function createRoom(
   settings?: Partial<RoomSettings>,
   avatar?: AvatarId,
   options?: RequestOptions & { teamId?: number },
-): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
+): Promise<{
+  room: RoomData;
+  defaults?: ServerDefaults;
+  recoveryPasskey?: string;
+}> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
       method: "POST",
@@ -93,6 +97,7 @@ export async function createRoom(
     const data = await handleJsonResponse<{
       room?: RoomData;
       defaults?: ServerDefaults;
+      recoveryPasskey?: string;
       error?: string;
     }>(response, "Failed to create room");
 
@@ -112,6 +117,7 @@ export async function createRoom(
     return {
       room: data.room,
       defaults: data.defaults,
+      recoveryPasskey: data.recoveryPasskey,
     };
   } catch (error) {
     if (isAbortError(error)) {
@@ -131,7 +137,11 @@ export async function joinRoom(
   passcode?: string,
   avatar?: AvatarId,
   options?: RequestOptions,
-): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
+): Promise<{
+  room: RoomData;
+  defaults?: ServerDefaults;
+  recoveryPasskey?: string;
+}> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
       method: "POST",
@@ -146,6 +156,7 @@ export async function joinRoom(
     const data = await handleJsonResponse<{
       room?: RoomData;
       defaults?: ServerDefaults;
+      recoveryPasskey?: string;
       error?: string;
     }>(response, "Failed to join room");
 
@@ -163,6 +174,7 @@ export async function joinRoom(
     return {
       room: data.room,
       defaults: data.defaults,
+      recoveryPasskey: data.recoveryPasskey,
     };
   } catch (error) {
     if (isAbortError(error)) {
@@ -173,6 +185,31 @@ export async function joinRoom(
       throw error;
     }
     throw new NetworkError("Failed to join room", { cause: error });
+  }
+}
+
+export async function recoverRoomSession(
+  name: string,
+  roomKey: string,
+  recoveryPasskey: string,
+): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/rooms/recover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, roomKey, recoveryPasskey }),
+      credentials: "include",
+    });
+
+    await handleJsonResponse<{ success: boolean }>(
+      response,
+      "Failed to recover session",
+    );
+  } catch (error) {
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to recover session", { cause: error });
   }
 }
 

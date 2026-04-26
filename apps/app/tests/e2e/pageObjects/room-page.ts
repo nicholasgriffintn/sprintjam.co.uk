@@ -7,6 +7,13 @@ export class RoomPage {
     await expect(this.page.getByTestId("participants-panel")).toBeVisible();
   }
 
+  async dismissRecoveryPasskeyModalIfPresent() {
+    const button = this.page.getByRole("button", { name: "Got it" });
+    if (await button.isVisible()) {
+      await button.click();
+    }
+  }
+
   getPage() {
     return this.page;
   }

@@ -13,7 +13,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "types": ["@cloudflare/workers-types"]
   },
   "include": ["src"]
 }

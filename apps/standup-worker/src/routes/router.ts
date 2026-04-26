@@ -7,6 +7,7 @@ import {
   getStandupSessionToken,
   checkBotProtection,
   validateRequestBodySize,
+  resolveWorkspaceUserId
 } from "@sprintjam/utils";
 
 import {
@@ -96,6 +97,7 @@ async function createStandupController(
     return jsonError("Name is required");
   }
 
+  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
   const standupKey = generateStandupKey();
   const standupObject = getStandupStub(env, standupKey);
 
@@ -109,6 +111,7 @@ async function createStandupController(
         passcode,
         avatar,
         teamId,
+        workspaceUserId,
       }),
     }) as unknown as CfRequest,
   );
@@ -158,6 +161,7 @@ async function joinStandupController(
     return jsonError("Name and standup key are required");
   }
 
+  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
   const standupObject = getStandupStub(env, standupKey);
 
   return standupObject.fetch(
@@ -167,7 +171,43 @@ async function joinStandupController(
         "Content-Type": "application/json",
         ...(sessionToken ? { Cookie: `standup_session=${sessionToken}` } : {}),
       },
-      body: JSON.stringify({ name, passcode, avatar }),
+      body: JSON.stringify({ name, passcode, avatar, workspaceUserId }),
+    }) as unknown as CfRequest,
+  );
+}
+
+async function recoverStandupController(
+  request: CfRequest,
+  env: StandupWorkerEnv,
+): Promise<CfResponse> {
+  const sizeCheck = validateRequestBodySize(request);
+  if (!sizeCheck.ok) {
+    return sizeCheck.response as CfResponse;
+  }
+
+  const body = await request.json<{
+    name?: string;
+    standupKey?: string;
+    recoveryPasskey?: string;
+  }>();
+  const name = typeof body?.name === "string" ? body.name.trim() : "";
+  const standupKey =
+    typeof body?.standupKey === "string"
+      ? body.standupKey.trim().toUpperCase()
+      : "";
+  const recoveryPasskey = body?.recoveryPasskey;
+
+  if (!name || !standupKey || !recoveryPasskey) {
+    return jsonError("Name, standup key, and recovery passkey are required");
+  }
+
+  const standupObject = getStandupStub(env, standupKey);
+
+  return standupObject.fetch(
+    new Request("https://internal/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, recoveryPasskey }),
     }) as unknown as CfRequest,
   );
 }
@@ -185,6 +225,10 @@ async function handleApiRoutes(
 
   if (path === "standups/join" && method === "POST") {
     return joinStandupController(request, env);
+  }
+
+  if (path === "standups/recover" && method === "POST") {
+    return recoverStandupController(request, env);
   }
 
   return notFoundResponse("API");

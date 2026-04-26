@@ -25,7 +25,15 @@ import type {
   StandupResponsePayload,
   LinkedTicket,
 } from "@sprintjam/types";
-import { isSessionTokenValid, safeJsonParse } from "@sprintjam/utils";
+import {
+  isSessionTokenValid,
+  safeJsonParse,
+  serializePasscodeHash,
+  parsePasscodeHash,
+  hashRecoveryPasskey,
+  verifyRecoveryPasskey,
+  RECOVERY_PASSKEY_TTL_MS,
+} from "@sprintjam/utils";
 
 import migrations from "../../drizzle/migrations";
 
@@ -337,6 +345,57 @@ export class StandupRoomRepository {
     });
   }
 
+  async setRecoveryPasskey(userName: string, passkey: string): Promise<void> {
+    const canonicalName = this.ensureUser(userName);
+    const hashed = await hashRecoveryPasskey(passkey);
+    const createdAt = Date.now();
+
+    this.db
+      .update(standupSessionTokens)
+      .set({
+        recoveryPasskey: serializePasscodeHash(hashed),
+        recoveryPasskeyCreatedAt: createdAt,
+      })
+      .where(
+        sqlOperator`LOWER(${standupSessionTokens.userName}) = LOWER(${canonicalName})`,
+      )
+      .run();
+  }
+
+  async validateRecoveryPasskey(
+    userName: string,
+    passkey: string,
+  ): Promise<boolean> {
+    const record = this.db
+      .select({
+        recoveryPasskey: standupSessionTokens.recoveryPasskey,
+        recoveryPasskeyCreatedAt: standupSessionTokens.recoveryPasskeyCreatedAt,
+      })
+      .from(standupSessionTokens)
+      .where(
+        sqlOperator`LOWER(${standupSessionTokens.userName}) = LOWER(${userName})`,
+      )
+      .get();
+
+    if (!record?.recoveryPasskey || !record.recoveryPasskeyCreatedAt) {
+      return false;
+    }
+
+    if (
+      Date.now() - record.recoveryPasskeyCreatedAt >
+      RECOVERY_PASSKEY_TTL_MS
+    ) {
+      return false;
+    }
+
+    const stored = parsePasscodeHash(record.recoveryPasskey);
+    if (!stored) {
+      return false;
+    }
+
+    return verifyRecoveryPasskey(passkey, stored);
+  }
+
   getPasscode(): string | null {
     const result = this.db
       .select({ passcode: standupMeta.passcode })
@@ -345,6 +404,22 @@ export class StandupRoomRepository {
       .get();
 
     return result?.passcode ?? null;
+  }
+
+  findUserNameByWorkspaceId(workspaceUserId: number): string | undefined {
+    return this.db
+      .select({ userName: standupUsers.userName })
+      .from(standupUsers)
+      .where(eq(standupUsers.workspaceUserId, workspaceUserId))
+      .get()?.userName;
+  }
+
+  setWorkspaceUserId(userName: string, workspaceUserId: number) {
+    this.db
+      .update(standupUsers)
+      .set({ workspaceUserId })
+      .where(sqlOperator`LOWER(${standupUsers.userName}) = LOWER(${userName})`)
+      .run();
   }
 
   private findCanonicalUserName(userName: string): string | undefined {

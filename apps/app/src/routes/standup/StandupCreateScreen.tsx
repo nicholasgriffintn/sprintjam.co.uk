@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Building2, Lock, Plus } from "lucide-react";
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 import { navigateTo } from "@/config/routes";
 import { useSessionActions } from "@/context/SessionContext";
@@ -15,6 +15,8 @@ import { validateName, validatePasscode } from "@/utils/validators";
 import { createStandup } from "@/lib/standup-api-service";
 import { createTeamSession } from "@/lib/workspace-service";
 import { setStandupNotice } from "@/lib/standup-notice";
+import { getRecoveryPasskeyStorageKey } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -32,13 +34,8 @@ function buildStandupSessionName(): string {
 
 export default function StandupCreateScreen() {
   const { setScreen } = useSessionActions();
-  const {
-    user,
-    teams,
-    selectedTeamId,
-    setSelectedTeamId,
-    isAuthenticated,
-  } = useWorkspaceData();
+  const { user, teams, selectedTeamId, setSelectedTeamId, isAuthenticated } =
+    useWorkspaceData();
   const storedAvatar = useMemo(() => getStoredUserAvatar(), []);
   const workspaceName = user?.name?.trim() ?? "";
   const workspaceAvatar = sanitiseAvatarValue(user?.avatar);
@@ -99,6 +96,17 @@ export default function StandupCreateScreen() {
               : "The standup room is live, but it was not linked into workspace history.";
           setStandupNotice(response.standup.key, warning);
         }
+      }
+
+      if (response.recoveryPasskey) {
+        safeLocalStorage.set(
+          getRecoveryPasskeyStorageKey(
+            "standup",
+            response.standup.key,
+            userName.trim(),
+          ),
+          response.recoveryPasskey,
+        );
       }
 
       setScreen("standupRoom");
@@ -189,9 +197,9 @@ export default function StandupCreateScreen() {
                   </label>
                   <Select
                     id="standup-team-select"
-                    value={selectedTeamId ? String(selectedTeamId) : 'none'}
+                    value={selectedTeamId ? String(selectedTeamId) : "none"}
                     onValueChange={(value) => {
-                      if (value === 'none') {
+                      if (value === "none") {
                         setSelectedTeamId(null);
                         return;
                       }
@@ -202,11 +210,11 @@ export default function StandupCreateScreen() {
                       }
                     }}
                     options={[
-                      { label: 'Personal standup (no team)', value: 'none' },
+                      { label: "Personal standup (no team)", value: "none" },
                       ...teams.map((team) => ({
                         label: team.canAccess
                           ? team.name
-                          : team.currentUserStatus === 'pending'
+                          : team.currentUserStatus === "pending"
                             ? `${team.name} (Access pending)`
                             : `${team.name} (Restricted)`,
                         value: String(team.id),
@@ -218,9 +226,9 @@ export default function StandupCreateScreen() {
                     <span>
                       {selectedTeam
                         ? selectedTeam.canAccess
-                          ? 'Workspace mode saves this standup to team history and unlocks ticket linking.'
-                          : 'You need team access before saving standups into this workspace team.'
-                        : 'Leave this as personal if you only need a standalone standup room.'}
+                          ? "Workspace mode saves this standup to team history and unlocks ticket linking."
+                          : "You need team access before saving standups into this workspace team."
+                        : "Leave this as personal if you only need a standalone standup room."}
                     </span>
                   </div>
                 </div>
@@ -232,8 +240,8 @@ export default function StandupCreateScreen() {
                 type="button"
                 variant="secondary"
                 onClick={() => {
-                  setScreen('standup');
-                  navigateTo('standup');
+                  setScreen("standup");
+                  navigateTo("standup");
                 }}
               >
                 Back

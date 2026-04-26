@@ -25,7 +25,11 @@ const makeContext = (options: {
     setSessionToken: (userName: string, token: string) => {
       tokens.set(userName.toLowerCase(), token);
     },
+    setRecoveryPasskey: vi.fn().mockResolvedValue(undefined),
+    validateRecoveryPasskey: vi.fn().mockResolvedValue(false),
     ensureUser: vi.fn(),
+    findUserNameByWorkspaceId: vi.fn().mockReturnValue(undefined),
+    setWorkspaceUserId: vi.fn(),
     setUserConnection: vi.fn(),
     setUserAvatar: vi.fn(),
     setVote: vi.fn(),
@@ -235,7 +239,11 @@ describe("planning-room-http permissions and state updates", () => {
       setSessionToken: vi.fn((user, token) =>
         tokens.set(user.toLowerCase(), token),
       ),
+      setRecoveryPasskey: vi.fn().mockResolvedValue(undefined),
+      validateRecoveryPasskey: vi.fn().mockResolvedValue(false),
       ensureUser: vi.fn(),
+      findUserNameByWorkspaceId: vi.fn().mockReturnValue(undefined),
+      setWorkspaceUserId: vi.fn(),
       setUserConnection: vi.fn(),
       setUserAvatar: vi.fn(),
       setVote: vi.fn(),
@@ -355,5 +363,80 @@ describe("planning-room-http permissions and state updates", () => {
     expect(response.status).toBe(200);
     const payload = (await response.json()) as any;
     expect(payload.teamId).toBeNull();
+  });
+
+  describe("recover", () => {
+    it("returns 400 when name or passkey is missing", async () => {
+      const { ctx } = makeContext({ roomData: baseRoom });
+
+      const response = (await handleHttpRequest(
+        ctx,
+        jsonRequest("/recover", "POST", { name: "Alice" }),
+      )) as Response;
+
+      expect(response.status).toBe(400);
+    });
+
+    it("returns 401 when user is not in the room", async () => {
+      const { ctx } = makeContext({ roomData: baseRoom });
+      ctx.repository.validateRecoveryPasskey = vi.fn().mockResolvedValue(false);
+
+      const response = (await handleHttpRequest(
+        ctx,
+        jsonRequest("/recover", "POST", {
+          name: "Ghost",
+          recoveryPasskey: "ABCD-EFGH",
+        }),
+      )) as Response;
+
+      expect(response.status).toBe(401);
+    });
+
+    it("returns 401 when passkey is invalid", async () => {
+      const { ctx } = makeContext({ roomData: baseRoom });
+      ctx.repository.validateRecoveryPasskey = vi.fn().mockResolvedValue(false);
+
+      const response = (await handleHttpRequest(
+        ctx,
+        jsonRequest("/recover", "POST", {
+          name: "Alice",
+          recoveryPasskey: "WRNG-PASS",
+        }),
+      )) as Response;
+
+      expect(response.status).toBe(401);
+    });
+
+    it("issues a new session cookie when passkey is valid", async () => {
+      const { ctx } = makeContext({ roomData: baseRoom });
+      ctx.repository.validateRecoveryPasskey = vi.fn().mockResolvedValue(true);
+
+      const response = (await handleHttpRequest(
+        ctx,
+        jsonRequest("/recover", "POST", {
+          name: "Alice",
+          recoveryPasskey: "ABCD-EFGH",
+        }),
+      )) as Response;
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Set-Cookie")).toMatch(/room_session=/);
+    });
+
+    it("disconnects existing sessions before issuing a new one", async () => {
+      baseRoom.connectedUsers = { Alice: true };
+      const { ctx } = makeContext({ roomData: baseRoom });
+      ctx.repository.validateRecoveryPasskey = vi.fn().mockResolvedValue(true);
+
+      await handleHttpRequest(
+        ctx,
+        jsonRequest("/recover", "POST", {
+          name: "Alice",
+          recoveryPasskey: "ABCD-EFGH",
+        }),
+      );
+
+      expect(ctx.disconnectUserSessions).toHaveBeenCalledWith("Alice");
+    });
   });
 });

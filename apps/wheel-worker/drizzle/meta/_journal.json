@@ -8,6 +8,20 @@
       "when": 1768941243480,
       "tag": "0000_open_stryfe",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777144330596,
+      "tag": "0001_lame_colossus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777202009018,
+      "tag": "0002_polite_jack_flag",
+      "breakpoints": true
     }
   ]
 }

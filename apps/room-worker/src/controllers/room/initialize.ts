@@ -4,6 +4,7 @@ import {
   getServerDefaults,
   createJsonResponse,
   generateSessionToken,
+  generateRecoveryPasskey,
   hashPasscode,
   createRoomSessionCookie,
   SESSION_TOKEN_TTL_MS,
@@ -16,15 +17,23 @@ export async function handleInitialize(
   ctx: PlanningRoomHttpContext,
   request: Request,
 ): Promise<CfResponse> {
-  const { roomKey, moderator, passcode, settings, avatar, teamId } =
-    (await request.json()) as {
-      roomKey: string;
-      moderator: string;
-      passcode?: string;
-      settings?: Partial<RoomSettings>;
-      avatar?: string;
-      teamId?: number;
-    };
+  const {
+    roomKey,
+    moderator,
+    passcode,
+    settings,
+    avatar,
+    teamId,
+    workspaceUserId,
+  } = (await request.json()) as {
+    roomKey: string;
+    moderator: string;
+    passcode?: string;
+    settings?: Partial<RoomSettings>;
+    avatar?: string;
+    teamId?: number;
+    workspaceUserId?: number;
+  };
 
   let passcodeHash;
   if (passcode) {
@@ -60,6 +69,17 @@ export async function handleInitialize(
   const authToken = generateSessionToken();
   ctx.repository.setSessionToken(moderator, authToken);
 
+  if (workspaceUserId) {
+    ctx.repository.setWorkspaceUserId(moderator, workspaceUserId);
+  }
+
+  // Only generate a recovery passkey for anonymous users.
+  let recoveryPasskey: string | undefined;
+  if (!workspaceUserId) {
+    recoveryPasskey = generateRecoveryPasskey();
+    await ctx.repository.setRecoveryPasskey(moderator, recoveryPasskey);
+  }
+
   const defaults = getServerDefaults();
 
   const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
@@ -75,6 +95,7 @@ export async function handleInitialize(
       success: true,
       room: sanitizeRoomData(newRoomData),
       defaults,
+      recoveryPasskey,
     }),
     {
       status: 200,

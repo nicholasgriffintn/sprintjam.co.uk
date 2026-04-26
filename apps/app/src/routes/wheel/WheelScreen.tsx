@@ -18,8 +18,19 @@ import {
 } from "@/context/WheelContext";
 import { useWheelHeader } from "@/context/WheelHeaderContext";
 import { playWinnerSound, primeWheelAudio } from "@/lib/wheel-audio";
-import { createWheel, joinWheel } from "@/lib/wheel-api-service";
-import { USERNAME_STORAGE_KEY } from "@/constants";
+import {
+  createWheel,
+  joinWheel,
+  recoverWheelSession,
+} from "@/lib/wheel-api-service";
+import { HttpError } from "@/lib/errors";
+import { Input } from "@/components/ui/Input";
+// RecoveryPasskeyModal intentionally disabled for wheel — retained for future use
+// import { RecoveryPasskeyModal } from "@/components/ui/RecoveryPasskeyModal";
+import {
+  USERNAME_STORAGE_KEY,
+  getRecoveryPasskeyStorageKey,
+} from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 
 const getWheelKeyFromPath = () => {
@@ -64,6 +75,21 @@ function WheelRoomContent({
 
   const [showConfetti, setShowConfetti] = useState(false);
   const [lastResultId, setLastResultId] = useState<string | null>(null);
+  // Recovery passkey modal disabled for wheel — backend generates and stores passkeys but UI is not shown
+  // const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(null);
+  // useEffect(() => {
+  //   if (!isModeratorView) return;
+  //   const stored = safeLocalStorage.get(
+  //     getRecoveryPasskeyStorageKey("wheel", wheelKey, userName),
+  //   );
+  //   if (stored) setRecoveryPasskey(stored);
+  // }, [wheelKey, userName, isModeratorView]);
+  // const handleDismissPasskeyModal = useCallback(() => {
+  //   safeLocalStorage.remove(
+  //     getRecoveryPasskeyStorageKey("wheel", wheelKey, userName),
+  //   );
+  //   setRecoveryPasskey(null);
+  // }, [wheelKey, userName]);
 
   useEffect(() => {
     primeWheelAudio();
@@ -166,6 +192,11 @@ function WheelRoomContent({
 
   return (
     <div className="flex flex-col h-full min-h-0">
+      {/* Recovery passkey modal intentionally disabled for wheel — UX not needed here, backend support retained for future use */}
+      {/* <RecoveryPasskeyModal
+        passkey={recoveryPasskey}
+        onDismiss={handleDismissPasskeyModal}
+      /> */}
       <ShareWheelModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
@@ -227,6 +258,11 @@ export default function WheelScreen() {
   const [userName] = useState(() => getStoredUserName());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConflict, setIsConflict] = useState(false);
+  const [conflictWheelKey, setConflictWheelKey] = useState("");
+  const [recoveryPasskeyInput, setRecoveryPasskeyInput] = useState("");
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const joiningLock = useRef(false);
 
   useEffect(() => {
@@ -250,7 +286,13 @@ export default function WheelScreen() {
 
       const attemptJoin = async () => {
         try {
-          await joinWheel(userName, pathKey);
+          const response = await joinWheel(userName, pathKey);
+          if (response.recoveryPasskey) {
+            safeLocalStorage.set(
+              getRecoveryPasskeyStorageKey("wheel", pathKey, userName),
+              response.recoveryPasskey,
+            );
+          }
           setWheelKey(pathKey);
         } catch (err) {
           if (err instanceof Error && err.message === "PASSCODE_REQUIRED") {
@@ -261,7 +303,17 @@ export default function WheelScreen() {
               throw new Error("Passcode is required to join this wheel.");
             }
             try {
-              await joinWheel(userName, pathKey, passcode.trim());
+              const response = await joinWheel(
+                userName,
+                pathKey,
+                passcode.trim(),
+              );
+              if (response.recoveryPasskey) {
+                safeLocalStorage.set(
+                  getRecoveryPasskeyStorageKey("wheel", pathKey, userName),
+                  response.recoveryPasskey,
+                );
+              }
               setWheelKey(pathKey);
               return;
             } catch (retryErr) {
@@ -273,6 +325,11 @@ export default function WheelScreen() {
               }
               throw retryErr;
             }
+          }
+          if (err instanceof HttpError && err.status === 409) {
+            setConflictWheelKey(pathKey);
+            setIsConflict(true);
+            return;
           }
           throw err;
         }
@@ -301,6 +358,12 @@ export default function WheelScreen() {
       createWheel(userName, undefined, undefined, undefined) // Passcode must be set during creation
         .then((response) => {
           const newKey = response.wheel.key;
+          if (response.recoveryPasskey) {
+            safeLocalStorage.set(
+              getRecoveryPasskeyStorageKey("wheel", newKey, userName),
+              response.recoveryPasskey,
+            );
+          }
           window.history.replaceState(null, "", `/wheel/${newKey}`);
           setWheelKey(newKey);
         })
@@ -315,6 +378,83 @@ export default function WheelScreen() {
         });
     }
   }, [wheelKey, userName]);
+
+  if (isConflict) {
+    const handleRecover = async () => {
+      if (!recoveryPasskeyInput.trim()) return;
+      setIsRecovering(true);
+      setRecoveryError(null);
+      try {
+        await recoverWheelSession(
+          userName,
+          conflictWheelKey,
+          recoveryPasskeyInput.trim().toUpperCase(),
+        );
+        setIsConflict(false);
+        const response = await joinWheel(userName, conflictWheelKey);
+        if (response.recoveryPasskey) {
+          safeLocalStorage.set(
+            getRecoveryPasskeyStorageKey("wheel", conflictWheelKey, userName),
+            response.recoveryPasskey,
+          );
+        }
+        setWheelKey(conflictWheelKey);
+      } catch (err) {
+        setRecoveryError(
+          err instanceof HttpError && err.status === 401
+            ? "Invalid recovery passkey. Check it and try again."
+            : "Recovery failed. Please try again.",
+        );
+      } finally {
+        setIsRecovering(false);
+      }
+    };
+
+    return (
+      <PageSection maxWidth="sm">
+        <SurfaceCard className="space-y-4">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            Name already connected
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            Your name is already active in this wheel. Enter your recovery
+            passkey to reclaim the session.
+          </p>
+          <Input
+            id="wheel-recovery-passkey"
+            label="Recovery passkey"
+            type="text"
+            value={recoveryPasskeyInput}
+            onChange={(e) =>
+              setRecoveryPasskeyInput(e.target.value.toUpperCase())
+            }
+            placeholder="XXXX-XXXX"
+            fullWidth
+            className="font-mono tracking-[0.25em]"
+            error={recoveryError ?? undefined}
+          />
+          <Button
+            onClick={handleRecover}
+            disabled={!recoveryPasskeyInput.trim() || isRecovering}
+            isLoading={isRecovering}
+            fullWidth
+          >
+            Recover session
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setIsConflict(false);
+              navigateTo("wheel");
+            }}
+            fullWidth
+          >
+            Go back
+          </Button>
+        </SurfaceCard>
+      </PageSection>
+    );
+  }
 
   if (error) {
     return (

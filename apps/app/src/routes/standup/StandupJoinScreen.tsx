@@ -10,7 +10,11 @@ import {
   getStoredUserName,
   useUserPersistence,
 } from "@/hooks/useUserPersistence";
-import { joinStandup } from "@/lib/standup-api-service";
+import { joinStandup, recoverStandupSession } from "@/lib/standup-api-service";
+import { HttpError } from "@/lib/errors";
+import { getRecoveryPasskeyStorageKey } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
+import { Input } from "@/components/ui/Input";
 import { sanitiseAvatarValue } from "@/utils/avatars";
 import {
   formatRoomKey,
@@ -20,7 +24,6 @@ import {
 } from "@/utils/validators";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { PageSection } from "@/components/layout/PageBackground";
 
@@ -45,6 +48,10 @@ export default function StandupJoinScreen() {
   const [passcode, setPasscode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConflict, setIsConflict] = useState(false);
+  const [recoveryPasskeyInput, setRecoveryPasskeyInput] = useState("");
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
 
   useUserPersistence({
     name: userName,
@@ -81,6 +88,7 @@ export default function StandupJoinScreen() {
 
     setIsSubmitting(true);
     setError(null);
+    setIsConflict(false);
 
     try {
       const response = await joinStandup(
@@ -89,6 +97,17 @@ export default function StandupJoinScreen() {
         passcode.trim() || undefined,
         avatarValue,
       );
+
+      if (response.recoveryPasskey) {
+        safeLocalStorage.set(
+          getRecoveryPasskeyStorageKey(
+            "standup",
+            response.standup.key,
+            userName.trim(),
+          ),
+          response.recoveryPasskey,
+        );
+      }
 
       setScreen("standupRoom");
       navigateTo("standupRoom", { standupKey: response.standup.key });
@@ -102,6 +121,11 @@ export default function StandupJoinScreen() {
             ? "Incorrect passcode. Ask the facilitator to confirm it."
             : "This standup requires a passcode. Ask the facilitator for it.",
         );
+      } else if (
+        submitError instanceof HttpError &&
+        submitError.status === 409
+      ) {
+        setIsConflict(true);
       } else {
         setError(
           submitError instanceof Error
@@ -111,6 +135,46 @@ export default function StandupJoinScreen() {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRecover = async () => {
+    if (!recoveryPasskeyInput.trim() || !standupKey || !userName) return;
+    setIsRecovering(true);
+    setRecoveryError(null);
+    try {
+      await recoverStandupSession(
+        userName.trim(),
+        standupKey.trim(),
+        recoveryPasskeyInput.trim().toUpperCase(),
+      );
+      setIsConflict(false);
+      const response = await joinStandup(
+        userName.trim(),
+        standupKey.trim(),
+        passcode.trim() || undefined,
+        avatarValue,
+      );
+      if (response.recoveryPasskey) {
+        safeLocalStorage.set(
+          getRecoveryPasskeyStorageKey(
+            "standup",
+            response.standup.key,
+            userName.trim(),
+          ),
+          response.recoveryPasskey,
+        );
+      }
+      setScreen("standupRoom");
+      navigateTo("standupRoom", { standupKey: response.standup.key });
+    } catch (err) {
+      setRecoveryError(
+        err instanceof HttpError && err.status === 401
+          ? "Invalid recovery passkey. Check it and try again."
+          : "Recovery failed. Please try again.",
+      );
+    } finally {
+      setIsRecovering(false);
     }
   };
 
@@ -142,6 +206,46 @@ export default function StandupJoinScreen() {
             transition={{ duration: 0.3 }}
           >
             {error && <Alert variant="error">{error}</Alert>}
+
+            {isConflict && (
+              <div className="space-y-3 rounded-2xl border border-yellow-200/50 bg-yellow-50/50 p-4 dark:border-yellow-900/30 dark:bg-yellow-950/15">
+                <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-300">
+                  This name is already connected
+                </p>
+                <p className="text-sm text-yellow-800 dark:text-yellow-400">
+                  If this is you on another device, enter your recovery passkey
+                  to reclaim the session.
+                </p>
+                <Input
+                  id="standup-recovery-passkey"
+                  label={
+                    <span className="flex items-center gap-2">
+                      <KeyRound className="h-4 w-4" />
+                      Recovery passkey
+                    </span>
+                  }
+                  type="text"
+                  value={recoveryPasskeyInput}
+                  onChange={(e) =>
+                    setRecoveryPasskeyInput(e.target.value.toUpperCase())
+                  }
+                  placeholder="XXXX-XXXX"
+                  fullWidth
+                  className="font-mono tracking-[0.25em]"
+                  error={recoveryError ?? undefined}
+                />
+                <Button
+                  type="button"
+                  onClick={handleRecover}
+                  disabled={!recoveryPasskeyInput.trim() || isRecovering}
+                  isLoading={isRecovering}
+                  fullWidth
+                  icon={<KeyRound className="h-4 w-4" />}
+                >
+                  Recover session
+                </Button>
+              </div>
+            )}
 
             <div className="space-y-6">
               <Input

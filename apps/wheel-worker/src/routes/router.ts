@@ -7,6 +7,7 @@ import {
   getWheelSessionToken,
   checkBotProtection,
   validateRequestBodySize,
+  resolveWorkspaceUserId
 } from "@sprintjam/utils";
 
 import {
@@ -101,6 +102,7 @@ async function createWheelController(
     return jsonError("Name is required");
   }
 
+  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
   const wheelKey = generateWheelKey();
   const wheelObject = getWheelStub(env, wheelKey);
 
@@ -114,6 +116,7 @@ async function createWheelController(
         passcode,
         settings,
         avatar,
+        workspaceUserId,
       }),
     }) as unknown as CfRequest,
   );
@@ -163,6 +166,7 @@ async function joinWheelController(
     return jsonError("Name and wheel key are required");
   }
 
+  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
   const wheelObject = getWheelStub(env, wheelKey);
 
   return wheelObject.fetch(
@@ -172,7 +176,13 @@ async function joinWheelController(
         "Content-Type": "application/json",
         ...(sessionToken ? { Cookie: `wheel_session=${sessionToken}` } : {}),
       },
-      body: JSON.stringify({ name, passcode, avatar, authToken }),
+      body: JSON.stringify({
+        name,
+        passcode,
+        avatar,
+        authToken,
+        workspaceUserId,
+      }),
     }) as unknown as CfRequest,
   );
 }
@@ -206,6 +216,42 @@ async function getWheelSettingsController(
   );
 }
 
+async function recoverWheelController(
+  request: CfRequest,
+  env: WheelWorkerEnv,
+): Promise<CfResponse> {
+  const sizeCheck = validateRequestBodySize(request);
+  if (!sizeCheck.ok) {
+    return sizeCheck.response as CfResponse;
+  }
+
+  const body = await request.json<{
+    name?: string;
+    wheelKey?: string;
+    recoveryPasskey?: string;
+  }>();
+  const name = typeof body?.name === "string" ? body.name.trim() : "";
+  const wheelKey =
+    typeof body?.wheelKey === "string"
+      ? body.wheelKey.trim().toUpperCase()
+      : "";
+  const recoveryPasskey = body?.recoveryPasskey;
+
+  if (!name || !wheelKey || !recoveryPasskey) {
+    return jsonError("Name, wheel key, and recovery passkey are required");
+  }
+
+  const wheelObject = getWheelStub(env, wheelKey);
+
+  return wheelObject.fetch(
+    new Request("https://internal/recover", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, recoveryPasskey }),
+    }) as unknown as CfRequest,
+  );
+}
+
 async function handleApiRoutes(
   request: CfRequest,
   env: WheelWorkerEnv,
@@ -219,6 +265,10 @@ async function handleApiRoutes(
 
   if (path === "wheels/join" && method === "POST") {
     return joinWheelController(request, env);
+  }
+
+  if (path === "wheels/recover" && method === "POST") {
+    return recoverWheelController(request, env);
   }
 
   if (path === "wheels/settings" && method === "GET") {

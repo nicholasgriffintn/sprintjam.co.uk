@@ -8,8 +8,12 @@ import {
   verifyPasscode,
   verifyState,
   generateSessionToken,
-} from './room-cypto';
-import { escapeHtml } from './escape';
+  generateRecoveryPasskey,
+  hashRecoveryPasskey,
+  verifyRecoveryPasskey,
+  normalizeRecoveryPasskey,
+} from "./room-cypto";
+import { escapeHtml } from "./escape";
 
 describe("Security Utils", () => {
   const secret = "test-secret";
@@ -94,5 +98,41 @@ describe("Security Utils", () => {
     const input = '<script>alert("xss")</script>';
     const expected = "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;";
     expect(escapeHtml(input)).toBe(expected);
+  });
+});
+
+describe("recovery passkey", () => {
+  test("generateRecoveryPasskey returns XXXX-XXXX format using valid alphabet", () => {
+    const passkey = generateRecoveryPasskey();
+    expect(passkey).toMatch(/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/);
+  });
+
+  test("generateRecoveryPasskey produces unique values", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 20; i++) {
+      seen.add(generateRecoveryPasskey());
+    }
+    expect(seen.size).toBe(20);
+  });
+
+  test("normalizeRecoveryPasskey uppercases and strips dashes and invalid chars", () => {
+    // dashes are stripped so ABCD-EFGH and ABCDEFGH hash identically
+    expect(normalizeRecoveryPasskey("abcd-efgh")).toBe("ABCDEFGH");
+    expect(normalizeRecoveryPasskey("ABCD-EFGH")).toBe("ABCDEFGH");
+    expect(normalizeRecoveryPasskey("ABCD EFGH")).toBe("ABCDEFGH");
+    expect(normalizeRecoveryPasskey("ab!cd@ef#gh")).toBe("ABCDEFGH");
+  });
+
+  test("hashRecoveryPasskey and verifyRecoveryPasskey roundtrip", async () => {
+    const passkey = generateRecoveryPasskey();
+    const hashed = await hashRecoveryPasskey(passkey);
+    expect(await verifyRecoveryPasskey(passkey, hashed)).toBe(true);
+    expect(await verifyRecoveryPasskey("AAAA-BBBB", hashed)).toBe(false);
+  });
+
+  test("verifyRecoveryPasskey is case-insensitive", async () => {
+    const passkey = "ABCD-EFGH";
+    const hashed = await hashRecoveryPasskey(passkey);
+    expect(await verifyRecoveryPasskey("abcd-efgh", hashed)).toBe(true);
   });
 });
