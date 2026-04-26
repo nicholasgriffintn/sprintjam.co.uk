@@ -25,7 +25,7 @@ import {
 } from "@/lib/wheel-api-service";
 import { HttpError } from "@/lib/errors";
 import { Input } from "@/components/ui/Input";
-import { RecoveryPasskeyBanner } from "@/components/ui/RecoveryPasskeyBanner";
+import { RecoveryPasskeyModal } from "@/components/ui/RecoveryPasskeyModal";
 import {
   USERNAME_STORAGE_KEY,
   getRecoveryPasskeyStorageKey,
@@ -74,12 +74,15 @@ function WheelRoomContent({
 
   const [showConfetti, setShowConfetti] = useState(false);
   const [lastResultId, setLastResultId] = useState<string | null>(null);
-  const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(() =>
-    safeLocalStorage.get(
+  const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isModeratorView) return;
+    const stored = safeLocalStorage.get(
       getRecoveryPasskeyStorageKey("wheel", wheelKey, userName),
-    ),
-  );
-  const handleDismissPasskeyBanner = useCallback(() => {
+    );
+    if (stored) setRecoveryPasskey(stored);
+  }, [wheelKey, userName, isModeratorView]);
+  const handleDismissPasskeyModal = useCallback(() => {
     safeLocalStorage.remove(
       getRecoveryPasskeyStorageKey("wheel", wheelKey, userName),
     );
@@ -187,14 +190,10 @@ function WheelRoomContent({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {recoveryPasskey && (
-        <div className="px-4 pt-4">
-          <RecoveryPasskeyBanner
-            passkey={recoveryPasskey}
-            onDismiss={handleDismissPasskeyBanner}
-          />
-        </div>
-      )}
+      <RecoveryPasskeyModal
+        passkey={recoveryPasskey}
+        onDismiss={handleDismissPasskeyModal}
+      />
       <ShareWheelModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}

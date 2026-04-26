@@ -37,7 +37,7 @@ import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
 import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
-import { RecoveryPasskeyBanner } from "@/components/ui/RecoveryPasskeyBanner";
+import { RecoveryPasskeyModal } from "@/components/ui/RecoveryPasskeyModal";
 import { getRecoveryPasskeyStorageKey } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 import { linkedRoomSessionQueryKey } from "@/lib/workspace-query";
@@ -96,13 +96,15 @@ const RoomScreen = () => {
     setIsHelpPanelOpen,
   } = useRoomHeader();
   const isSpectator = roomData?.spectators?.includes(name) ?? false;
-  const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(() => {
-    if (!roomData?.key || !name) return null;
-    return safeLocalStorage.get(
+  const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(null);
+  useEffect(() => {
+    if (!roomData?.key || !name || !isModeratorView) return;
+    const stored = safeLocalStorage.get(
       getRecoveryPasskeyStorageKey("room", roomData.key, name),
     );
-  });
-  const handleDismissPasskeyBanner = useCallback(() => {
+    if (stored) setRecoveryPasskey(stored);
+  }, [roomData?.key, name, isModeratorView]);
+  const handleDismissPasskeyModal = useCallback(() => {
     if (roomData?.key && name) {
       safeLocalStorage.remove(
         getRecoveryPasskeyStorageKey("room", roomData.key, name),
@@ -287,14 +289,10 @@ const RoomScreen = () => {
         onClearRoomError={clearRoomError}
       />
 
-      {recoveryPasskey && (
-        <div className="px-4 pt-4">
-          <RecoveryPasskeyBanner
-            passkey={recoveryPasskey}
-            onDismiss={handleDismissPasskeyBanner}
-          />
-        </div>
-      )}
+      <RecoveryPasskeyModal
+        passkey={recoveryPasskey}
+        onDismiss={handleDismissPasskeyModal}
+      />
 
       <motion.div
         className="flex flex-1 flex-col py-0 md:grid md:grid-cols-[minmax(280px,360px)_1fr] md:items-start"

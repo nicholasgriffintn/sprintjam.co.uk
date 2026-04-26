@@ -170,7 +170,7 @@ export function generateRecoveryPasskey(): string {
 }
 
 export function normalizeRecoveryPasskey(passkey: string): string {
-  return passkey.toUpperCase().replace(/[^A-Z2-9-]/g, "");
+  return passkey.toUpperCase().replace(/[^A-Z2-9]/g, "");
 }
 
 export async function hashRecoveryPasskey(

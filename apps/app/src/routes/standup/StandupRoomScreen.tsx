@@ -33,7 +33,7 @@ import { StandupPresentationView } from "@/components/standup/StandupPresentatio
 import { StandupResultsPanel } from "@/components/standup/StandupResultsPanel";
 import { StandupSidebar } from "@/components/standup/StandupSidebar";
 import { consumeStandupNotice } from "@/lib/standup-notice";
-import { RecoveryPasskeyBanner } from "@/components/ui/RecoveryPasskeyBanner";
+import { RecoveryPasskeyModal } from "@/components/ui/RecoveryPasskeyModal";
 import { getRecoveryPasskeyStorageKey } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 
@@ -79,12 +79,15 @@ function StandupRoomContent({
     setRespondedCount,
     setParticipantCount,
   } = useStandupHeader();
-  const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(() =>
-    safeLocalStorage.get(
+  const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isModeratorView) return;
+    const stored = safeLocalStorage.get(
       getRecoveryPasskeyStorageKey("standup", standupKey, userName),
-    ),
-  );
-  const handleDismissPasskeyBanner = useCallback(() => {
+    );
+    if (stored) setRecoveryPasskey(stored);
+  }, [standupKey, userName, isModeratorView]);
+  const handleDismissPasskeyModal = useCallback(() => {
     safeLocalStorage.remove(
       getRecoveryPasskeyStorageKey("standup", standupKey, userName),
     );
@@ -271,14 +274,10 @@ function StandupRoomContent({
 
   return (
     <div className="min-h-[calc(100vh-65px)] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
-      {recoveryPasskey && (
-        <div className="px-4 pt-4">
-          <RecoveryPasskeyBanner
-            passkey={recoveryPasskey}
-            onDismiss={handleDismissPasskeyBanner}
-          />
-        </div>
-      )}
+      <RecoveryPasskeyModal
+        passkey={recoveryPasskey}
+        onDismiss={handleDismissPasskeyModal}
+      />
       <motion.div
         className="flex flex-1 flex-col py-0 md:grid md:h-[calc(100vh-65px)] md:grid-cols-[minmax(280px,360px)_1fr] md:items-start md:overflow-hidden"
         initial={{ opacity: 0, y: 20 }}

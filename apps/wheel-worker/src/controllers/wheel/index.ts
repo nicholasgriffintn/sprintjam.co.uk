@@ -205,7 +205,7 @@ async function handleJoin(
   );
 
   if (existingUser && wheelData.connectedUsers[existingUser]) {
-    context.disconnectUserSessions(existingUser);
+    return jsonError("Name already connected", 409);
   }
 
   const canonicalName = context.repository.ensureUser(name);

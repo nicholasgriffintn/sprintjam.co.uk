@@ -115,8 +115,10 @@ describe("recovery passkey", () => {
     expect(seen.size).toBe(20);
   });
 
-  test("normalizeRecoveryPasskey uppercases and strips invalid chars", () => {
-    expect(normalizeRecoveryPasskey("abcd-efgh")).toBe("ABCD-EFGH");
+  test("normalizeRecoveryPasskey uppercases and strips dashes and invalid chars", () => {
+    // dashes are stripped so ABCD-EFGH and ABCDEFGH hash identically
+    expect(normalizeRecoveryPasskey("abcd-efgh")).toBe("ABCDEFGH");
+    expect(normalizeRecoveryPasskey("ABCD-EFGH")).toBe("ABCDEFGH");
     expect(normalizeRecoveryPasskey("ABCD EFGH")).toBe("ABCDEFGH");
     expect(normalizeRecoveryPasskey("ab!cd@ef#gh")).toBe("ABCDEFGH");
   });
