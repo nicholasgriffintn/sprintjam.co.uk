@@ -134,6 +134,8 @@ export async function createRoomWithParticipant(
     await moderatorRoom.waitForParticipants(2);
     await participantRoom.waitForParticipants(2);
 
+    await moderatorRoom.dismissRecoveryPasskeyModalIfPresent();
+
     if (enableTicketQueue) {
       const modal = new SettingsModal(moderatorRoom.getPage());
       await modal.open();

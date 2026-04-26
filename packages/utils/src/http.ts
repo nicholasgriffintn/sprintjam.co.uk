@@ -191,10 +191,11 @@ export async function resolveWorkspaceUserId(
   }
   try {
     const authResponse = await authWorker.fetch(
-      new Request("https://auth-worker/api/auth/me", {
+      "https://auth-worker/api/auth/me",
+      {
         method: "GET",
         headers: { Cookie: cookie },
-      }),
+      },
     );
     if (!authResponse.ok) {
       return undefined;
