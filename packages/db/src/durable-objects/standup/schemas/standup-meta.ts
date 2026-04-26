@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const STANDUP_ROW_ID = 1;
 
@@ -16,12 +16,21 @@ export const standupMeta = sqliteTable("standup_meta", {
   createdAt: integer("created_at").notNull(),
 });
 
-export const standupUsers = sqliteTable("standup_users", {
-  userName: text("user_name").primaryKey().notNull(),
-  avatar: text("avatar"),
-  isConnected: integer("is_connected").notNull().default(0),
-  ordinal: integer("ordinal").notNull().default(0),
-});
+export const standupUsers = sqliteTable(
+  "standup_users",
+  {
+    userName: text("user_name").primaryKey().notNull(),
+    avatar: text("avatar"),
+    isConnected: integer("is_connected").notNull().default(0),
+    ordinal: integer("ordinal").notNull().default(0),
+    workspaceUserId: integer("workspace_user_id"),
+  },
+  (table) => ({
+    workspaceUserIdx: index("idx_standup_users_workspace_user_id").on(
+      table.workspaceUserId,
+    ),
+  }),
+);
 
 export const standupResponses = sqliteTable("standup_responses", {
   id: integer("id").primaryKey({ autoIncrement: true }),

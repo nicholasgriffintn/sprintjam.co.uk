@@ -112,9 +112,11 @@ async function handleInitialize(
     passcode?: string;
     settings?: Partial<WheelSettings>;
     avatar?: string;
+    workspaceUserId?: number;
   }>();
 
-  const { wheelKey, moderator, passcode, settings, avatar } = body;
+  const { wheelKey, moderator, passcode, settings, avatar, workspaceUserId } =
+    body;
 
   if (!wheelKey || !moderator) {
     return jsonError("Wheel key and moderator are required");
@@ -126,7 +128,6 @@ async function handleInitialize(
   }
 
   const sessionToken = generateSessionToken();
-  const recoveryPasskey = generateRecoveryPasskey();
 
   const wheelSettings: WheelSettings = {
     ...DEFAULT_SETTINGS,
@@ -155,10 +156,19 @@ async function handleInitialize(
 
   await context.putWheelData(wheelData);
   context.repository.setSessionToken(moderator, sessionToken);
-  await context.repository.setRecoveryPasskey(moderator, recoveryPasskey);
+
+  if (workspaceUserId) {
+    context.repository.setWorkspaceUserId(moderator, workspaceUserId);
+  }
 
   if (avatar) {
     context.repository.setUserAvatar(moderator, avatar);
+  }
+
+  let recoveryPasskey: string | undefined;
+  if (!workspaceUserId) {
+    recoveryPasskey = generateRecoveryPasskey();
+    await context.repository.setRecoveryPasskey(moderator, recoveryPasskey);
   }
 
   return buildSessionResponse(
@@ -176,9 +186,10 @@ async function handleJoin(
     name: string;
     passcode?: string;
     avatar?: string;
+    workspaceUserId?: number;
   }>();
 
-  const { name, passcode, avatar } = body;
+  const { name, passcode, avatar, workspaceUserId } = body;
 
   if (!name) {
     return jsonError("Name is required");
@@ -189,33 +200,57 @@ async function handleJoin(
     return jsonError("Wheel not found", 404);
   }
 
-  if (wheelData.passcodeHash) {
-    if (!passcode) {
-      return passcodeErrorResponse("Passcode is required", 401);
+  // For workspace users, find their existing slot by user ID first.
+  let canonicalName: string | undefined;
+  if (workspaceUserId) {
+    canonicalName =
+      context.repository.findUserNameByWorkspaceId(workspaceUserId);
+  }
+
+  const isWorkspaceUserRejoining = !!canonicalName;
+
+  if (!isWorkspaceUserRejoining) {
+    if (wheelData.passcodeHash) {
+      if (!passcode) {
+        return passcodeErrorResponse("Passcode is required", 401);
+      }
+
+      const isValid = await verifyPasscode(passcode, wheelData.passcodeHash);
+      if (!isValid) {
+        return passcodeErrorResponse("Invalid passcode", 401);
+      }
     }
 
-    const isValid = await verifyPasscode(passcode, wheelData.passcodeHash);
-    if (!isValid) {
-      return passcodeErrorResponse("Invalid passcode", 401);
+    const existingUser = wheelData.users.find(
+      (u) => u.toLowerCase() === name.toLowerCase(),
+    );
+
+    if (existingUser && wheelData.connectedUsers[existingUser]) {
+      return jsonError("Name already connected", 409);
+    }
+  } else {
+    if (wheelData.connectedUsers[canonicalName!]) {
+      context.disconnectUserSessions(canonicalName!);
     }
   }
 
-  const existingUser = wheelData.users.find(
-    (u) => u.toLowerCase() === name.toLowerCase(),
-  );
-
-  if (existingUser && wheelData.connectedUsers[existingUser]) {
-    return jsonError("Name already connected", 409);
-  }
-
-  const canonicalName = context.repository.ensureUser(name);
+  const resolvedName = canonicalName ?? name;
+  const finalName = context.repository.ensureUser(resolvedName);
   const sessionToken = generateSessionToken();
-  const recoveryPasskey = generateRecoveryPasskey();
-  context.repository.setSessionToken(canonicalName, sessionToken);
-  await context.repository.setRecoveryPasskey(canonicalName, recoveryPasskey);
+  context.repository.setSessionToken(finalName, sessionToken);
+
+  if (workspaceUserId) {
+    context.repository.setWorkspaceUserId(finalName, workspaceUserId);
+  }
 
   if (avatar) {
-    context.repository.setUserAvatar(canonicalName, avatar);
+    context.repository.setUserAvatar(finalName, avatar);
+  }
+
+  let recoveryPasskey: string | undefined;
+  if (!workspaceUserId) {
+    recoveryPasskey = generateRecoveryPasskey();
+    await context.repository.setRecoveryPasskey(finalName, recoveryPasskey);
   }
 
   const freshWheel = await context.getWheelData();

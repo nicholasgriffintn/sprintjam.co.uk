@@ -176,6 +176,34 @@ function parseRoomSessionCookie(
   };
 }
 
+export async function resolveWorkspaceUserId(
+  request: Request,
+  authWorker: Fetcher | undefined,
+): Promise<number | undefined> {
+  if (!authWorker) {
+    return undefined;
+  }
+  const cookie = request.headers.get("Cookie") ?? "";
+  if (!cookie.includes("workspace_session")) {
+    return undefined;
+  }
+  try {
+    const authResponse = await authWorker.fetch(
+      new Request("https://auth-worker/api/auth/me", {
+        method: "GET",
+        headers: { Cookie: cookie },
+      }),
+    );
+    if (!authResponse.ok) {
+      return undefined;
+    }
+    const data = (await authResponse.json()) as { user?: { id?: number } };
+    return typeof data?.user?.id === "number" ? data.user.id : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 const ALLOWED_ORIGINS = [
   "https://sprintjam.co.uk",
   "https://staging.sprintjam.co.uk",

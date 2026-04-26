@@ -30,6 +30,8 @@ const buildContext = (
       setUserAvatar: vi.fn(),
       getPasscode: vi.fn().mockReturnValue(null),
       validateSessionToken: vi.fn().mockReturnValue(false),
+      findUserNameByWorkspaceId: vi.fn().mockReturnValue(undefined),
+      setWorkspaceUserId: vi.fn(),
     },
     getStandupData: vi.fn(),
     disconnectUserSessions: vi.fn(),
@@ -372,6 +374,62 @@ describe("standup http controller", () => {
 
       expect(response?.status).toBe(200);
     });
+
+    it("workspace user bypasses passcode check and name conflict", async () => {
+      const standupData = buildStandupData({
+        users: ["mod", "Alice"],
+        connectedUsers: { mod: true, Alice: true },
+      });
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(standupData),
+        repository: {
+          ...buildContext().repository,
+          findUserNameByWorkspaceId: vi.fn().mockReturnValue("Alice"),
+        } as any,
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Alice", workspaceUserId: 42 }),
+        }),
+      );
+
+      expect(response?.status).toBe(200);
+      expect(
+        (context.repository as any).setRecoveryPasskey,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("workspace user joining for first time gets slot without passcode", async () => {
+      const standupData = buildStandupData({ users: ["mod"] });
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(standupData),
+        repository: {
+          ...buildContext().repository,
+          findUserNameByWorkspaceId: vi.fn().mockReturnValue(undefined),
+        } as any,
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "NewUser", workspaceUserId: 99 }),
+        }),
+      );
+
+      expect(response?.status).toBe(200);
+      expect(
+        (context.repository as any).setWorkspaceUserId,
+      ).toHaveBeenCalledWith("NewUser", 99);
+      expect(
+        (context.repository as any).setRecoveryPasskey,
+      ).not.toHaveBeenCalled();
+    });
   });
 
   describe("recover", () => {
@@ -453,14 +511,12 @@ describe("standup http controller", () => {
 
     it("issues a new session cookie when passkey is valid", async () => {
       const context = buildContext({
-        getStandupData: vi
-          .fn()
-          .mockResolvedValue(
-            buildStandupData({
-              users: ["mod", "Alice"],
-              connectedUsers: { mod: true, Alice: false },
-            }),
-          ),
+        getStandupData: vi.fn().mockResolvedValue(
+          buildStandupData({
+            users: ["mod", "Alice"],
+            connectedUsers: { mod: true, Alice: false },
+          }),
+        ),
         repository: {
           ...buildContext().repository,
           validateRecoveryPasskey: vi.fn().mockResolvedValue(true),
@@ -483,14 +539,12 @@ describe("standup http controller", () => {
     it("disconnects existing sessions before issuing new one", async () => {
       const disconnectSpy = vi.fn();
       const context = buildContext({
-        getStandupData: vi
-          .fn()
-          .mockResolvedValue(
-            buildStandupData({
-              users: ["mod", "Alice"],
-              connectedUsers: { mod: true, Alice: true },
-            }),
-          ),
+        getStandupData: vi.fn().mockResolvedValue(
+          buildStandupData({
+            users: ["mod", "Alice"],
+            connectedUsers: { mod: true, Alice: true },
+          }),
+        ),
         disconnectUserSessions: disconnectSpy,
         repository: {
           ...buildContext().repository,

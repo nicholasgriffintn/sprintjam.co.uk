@@ -15,6 +15,13 @@
       "when": 1777144321371,
       "tag": "0001_even_risque",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777202002812,
+      "tag": "0002_brainy_nicolaos",
+      "breakpoints": true
     }
   ]
 }

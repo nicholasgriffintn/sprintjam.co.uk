@@ -13,6 +13,8 @@ export type PlanningRoomRepositoryShape = Pick<
   | "setRecoveryPasskey"
   | "validateRecoveryPasskey"
   | "ensureUser"
+  | "findUserNameByWorkspaceId"
+  | "setWorkspaceUserId"
   | "setUserConnection"
   | "setUserAvatar"
   | "setVote"

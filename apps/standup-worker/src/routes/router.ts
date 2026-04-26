@@ -7,6 +7,7 @@ import {
   getStandupSessionToken,
   checkBotProtection,
   validateRequestBodySize,
+  resolveWorkspaceUserId
 } from "@sprintjam/utils";
 
 import {
@@ -96,6 +97,7 @@ async function createStandupController(
     return jsonError("Name is required");
   }
 
+  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
   const standupKey = generateStandupKey();
   const standupObject = getStandupStub(env, standupKey);
 
@@ -109,6 +111,7 @@ async function createStandupController(
         passcode,
         avatar,
         teamId,
+        workspaceUserId,
       }),
     }) as unknown as CfRequest,
   );
@@ -158,6 +161,7 @@ async function joinStandupController(
     return jsonError("Name and standup key are required");
   }
 
+  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
   const standupObject = getStandupStub(env, standupKey);
 
   return standupObject.fetch(
@@ -167,7 +171,7 @@ async function joinStandupController(
         "Content-Type": "application/json",
         ...(sessionToken ? { Cookie: `standup_session=${sessionToken}` } : {}),
       },
-      body: JSON.stringify({ name, passcode, avatar }),
+      body: JSON.stringify({ name, passcode, avatar, workspaceUserId }),
     }) as unknown as CfRequest,
   );
 }

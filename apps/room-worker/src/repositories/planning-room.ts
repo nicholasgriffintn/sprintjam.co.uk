@@ -67,6 +67,14 @@ export class PlanningRoomRepository {
     return this.stateStore.ensureUser(userName);
   }
 
+  findUserNameByWorkspaceId(workspaceUserId: number): string | undefined {
+    return this.stateStore.findUserNameByWorkspaceId(workspaceUserId);
+  }
+
+  setWorkspaceUserId(userName: string, workspaceUserId: number) {
+    return this.stateStore.setWorkspaceUserId(userName, workspaceUserId);
+  }
+
   setUserSpectatorMode(userName: string, isSpectator: boolean) {
     return this.stateStore.setUserSpectatorMode(userName, isSpectator);
   }

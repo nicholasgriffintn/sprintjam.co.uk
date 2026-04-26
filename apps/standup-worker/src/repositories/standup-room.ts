@@ -406,6 +406,22 @@ export class StandupRoomRepository {
     return result?.passcode ?? null;
   }
 
+  findUserNameByWorkspaceId(workspaceUserId: number): string | undefined {
+    return this.db
+      .select({ userName: standupUsers.userName })
+      .from(standupUsers)
+      .where(eq(standupUsers.workspaceUserId, workspaceUserId))
+      .get()?.userName;
+  }
+
+  setWorkspaceUserId(userName: string, workspaceUserId: number) {
+    this.db
+      .update(standupUsers)
+      .set({ workspaceUserId })
+      .where(sqlOperator`LOWER(${standupUsers.userName}) = LOWER(${userName})`)
+      .run();
+  }
+
   private findCanonicalUserName(userName: string): string | undefined {
     return this.db
       .select({

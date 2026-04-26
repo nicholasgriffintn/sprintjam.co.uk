@@ -5,6 +5,7 @@ import m0002 from './0002_concerned_lady_vermin.sql';
 import m0003 from './0003_stale_moonstone.sql';
 import m0004 from './0004_mixed_dragon_lord.sql';
 import m0005 from './0005_messy_fabian_cortez.sql';
+import m0006 from './0006_wooden_rockslide.sql';
 
   export default {
     journal,
@@ -14,7 +15,8 @@ m0001,
 m0002,
 m0003,
 m0004,
-m0005
+m0005,
+m0006
     }
   }
   

@@ -418,6 +418,22 @@ export class WheelRoomRepository {
     return verifyRecoveryPasskey(passkey, stored);
   }
 
+  findUserNameByWorkspaceId(workspaceUserId: number): string | undefined {
+    return this.db
+      .select({ userName: wheelUsers.userName })
+      .from(wheelUsers)
+      .where(eq(wheelUsers.workspaceUserId, workspaceUserId))
+      .get()?.userName;
+  }
+
+  setWorkspaceUserId(userName: string, workspaceUserId: number) {
+    this.db
+      .update(wheelUsers)
+      .set({ workspaceUserId })
+      .where(sqlOperator`LOWER(${wheelUsers.userName}) = LOWER(${userName})`)
+      .run();
+  }
+
   private findCanonicalUserName(userName: string): string | undefined {
     return this.db
       .select({

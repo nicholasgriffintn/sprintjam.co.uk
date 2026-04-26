@@ -363,6 +363,22 @@ export class PlanningRoomStateStore {
     return verifyRecoveryPasskey(passkey, stored);
   }
 
+  findUserNameByWorkspaceId(workspaceUserId: number): string | undefined {
+    return this.db
+      .select({ userName: roomUsers.userName })
+      .from(roomUsers)
+      .where(eq(roomUsers.workspaceUserId, workspaceUserId))
+      .get()?.userName;
+  }
+
+  setWorkspaceUserId(userName: string, workspaceUserId: number) {
+    this.db
+      .update(roomUsers)
+      .set({ workspaceUserId })
+      .where(sqlOperator`LOWER(${roomUsers.userName}) = LOWER(${userName})`)
+      .run();
+  }
+
   private findCanonicalUserName(userName: string): string | undefined {
     return this.db
       .select({
