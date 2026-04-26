@@ -1,3 +1,5 @@
+import type { Fetcher } from "@cloudflare/workers-types";
+
 const SECURITY_HEADERS = {
   "Content-Type": "application/json",
   "X-Content-Type-Options": "nosniff",
