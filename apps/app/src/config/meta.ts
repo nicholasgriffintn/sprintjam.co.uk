@@ -3,11 +3,11 @@ import { SITE_NAME } from "@/constants";
 
 export const META_CONFIGS: Record<string, MetaTagConfig> = {
   welcome: {
-    title: `${SITE_NAME} -  Fast, real-time planning poker for distributed teams`,
+    title: `${SITE_NAME} - Fast, real-time planning poker for distributed teams`,
     description:
-      "Estimate stories in minutes with live voting, smart consensus insights, and a distraction-free room that keeps everyone focused. No sign-ups required, just share a link to start.",
+      "Estimate stories in minutes with live voting and smart consensus insights, pick a facilitator, run your stand-up. All from one workspace, no sign-ups required.",
     keywords:
-      "planning poker, agile estimation, scrum poker, story points, sprint planning, agile, scrum, estimation, team collaboration",
+      "planning poker, agile estimation, scrum poker, story points, sprint planning, agile, scrum, estimation, team collaboration, facilitator selection, async standups",
     ogImage: "/og-image.png",
   },
   login: {

@@ -120,10 +120,8 @@ const WelcomeScreen = () => {
             <h1 className="text-3xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
               Fast, real-time planning poker for distributed teams
             </h1>
-            <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg">
-              Estimate stories in minutes with live voting, smart consensus
-              insights, and a distraction-free room that keeps everyone focused.
-              No sign-ups required, just share a link to start.
+            <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg max-w-[60ch] mx-auto">
+              Estimate stories in minutes with live voting and smart consensus insights, pick a facilitator, run your stand-up. All from one workspace, no sign-ups required.
             </p>
           </div>
         </div>
