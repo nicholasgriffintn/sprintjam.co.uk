@@ -39,6 +39,12 @@
       }
     }
   ],
+  "services": [
+    {
+      "binding": "AUTH_WORKER",
+      "service": "sprintjam-auth-worker"
+    }
+  ],
   "durable_objects": {
     "bindings": [
       {
@@ -76,6 +82,12 @@
         "ENABLE_STANDUP_RATE_LIMIT": "false"
       },
       "ratelimits": [],
+      "services": [
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-development",
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {
@@ -115,6 +127,12 @@
             "period": 60
           }
         }
+      ],
+      "services": [
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-staging",
+        },
       ],
       "durable_objects": {
         "bindings": [
