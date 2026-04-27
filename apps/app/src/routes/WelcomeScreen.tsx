@@ -221,7 +221,7 @@ const WelcomeScreen = () => {
           </div>
         </motion.div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
