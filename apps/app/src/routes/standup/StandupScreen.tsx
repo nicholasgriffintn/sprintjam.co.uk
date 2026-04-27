@@ -42,7 +42,7 @@ export default function StandupScreen() {
         <div className="space-y-6">
           <div className="space-y-4">
             <Badge
-              variant="warning"
+              variant="violet"
               className="rounded-full px-3 py-1 text-[11px] tracking-[0.25em] uppercase"
             >
               <Sunrise className="mr-1 h-3.5 w-3.5" />
@@ -95,7 +95,7 @@ export default function StandupScreen() {
               transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
             >
               <SurfaceCard className="h-full text-left">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-sky-500/20 text-brand-600">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400/20 to-purple-500/20 text-violet-600">
                   {feature.icon}
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
