@@ -100,6 +100,6 @@ export function generateSoftwareApplicationSchema() {
       priceCurrency: "USD",
     },
     description:
-      "Fast, real-time planning poker for distributed teams. Estimate stories with live voting, smart consensus insights, and a distraction-free room.",
+      "SprintJam brings facilitator selection, planning poker, and standups into one focused workspace. No sign-ups, just share a link.",
   };
 }

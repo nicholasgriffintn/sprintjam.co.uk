@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   Users,
   Plus,
@@ -11,38 +11,75 @@ import {
   Play,
   GitBranch,
   ArrowUpRight,
-} from 'lucide-react';
+  CircleDashed,
+  MessageSquare,
+  ArrowRight,
+} from "lucide-react";
 
-import { useSessionActions } from '@/context/SessionContext';
-import { PageSection } from '@/components/layout/PageBackground';
-import { Button } from '@/components/ui/Button';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { Footer } from '@/components/layout/Footer';
-import { usePageMeta } from '@/hooks/usePageMeta';
-import { META_CONFIGS } from '@/config/meta';
-import { navigateTo, type AppScreen } from '@/config/routes';
-import { SITE_NAME } from '@/constants';
+import { useSessionActions } from "@/context/SessionContext";
+import { PageSection } from "@/components/layout/PageBackground";
+import { Button } from "@/components/ui/Button";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Footer } from "@/components/layout/Footer";
+import { BetaBadge } from "@/components/BetaBadge";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { META_CONFIGS } from "@/config/meta";
+import { navigateTo, type AppScreen } from "@/config/routes";
+import { SITE_NAME } from "@/constants";
 
 const features = [
   {
     icon: <Zap className="w-5 h-5" />,
-    title: 'Real-time Voting',
-    description: 'Live story point voting with presence and instant reveals',
+    title: "Real-time Voting",
+    description: "Live story point voting with presence and instant reveals",
   },
   {
     icon: <BarChart3 className="w-5 h-5" />,
-    title: 'Smart Consensus',
-    description: 'Calculates median, spread, and outliers to guide agreement',
+    title: "Smart Consensus",
+    description: "Calculates median, spread, and outliers to guide agreement",
   },
   {
     icon: <Shield className="w-5 h-5" />,
-    title: 'Privacy First',
-    description: 'Room-scoped storage, no ads, no tracking, open source',
+    title: "Privacy First",
+    description: "Room-scoped storage, no ads, no tracking, open source",
   },
   {
     icon: <Timer className="w-5 h-5" />,
-    title: 'Voting Options',
-    description: 'Classic planning poker plus structured scoring options',
+    title: "Voting Options",
+    description: "Classic planning poker plus structured scoring options",
+  },
+];
+
+const sprintFlow = [
+  {
+    icon: <CircleDashed className="w-5 h-5" />,
+    title: "Choose a facilitator",
+    description:
+      "Choose facilitators for your sessions or make quick decisions by spinning a wheel of names.",
+    actionLabel: "Spin the wheel",
+    testId: "homepage-flow-wheel",
+    action: "wheel" as const,
+    beta: true,
+  },
+  {
+    icon: <Timer className="w-5 h-5" />,
+    title: "Plan and estimate",
+    description:
+      "Kick off sprint planning with poker estimation, consensus support, and ticket queue controls.",
+    actionLabel: "Start planning poker",
+    testId: "homepage-flow-planning",
+    action: "create" as const,
+    beta: false,
+  },
+  {
+    icon: <MessageSquare className="w-5 h-5" />,
+    title: "Collaborate asynchronously",
+    description:
+      "Close the loop with a focused daily check-in flow that supports async prep and live facilitation.",
+    actionLabel: "Run a standup",
+    testId: "homepage-flow-standup",
+    action: "standup" as const,
+    beta: true,
   },
 ];
 
@@ -55,6 +92,17 @@ const WelcomeScreen = () => {
   const handleNavigate = (screen: AppScreen) => {
     setScreen(screen);
     navigateTo(screen);
+  };
+
+  const handleSprintFlowAction = (
+    action: (typeof sprintFlow)[number]["action"],
+  ) => {
+    if (action === "create") {
+      startCreateFlow();
+      return;
+    }
+
+    handleNavigate(action);
   };
 
   usePageMeta(META_CONFIGS.welcome);
@@ -72,10 +120,8 @@ const WelcomeScreen = () => {
             <h1 className="text-3xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
               Fast, real-time planning poker for distributed teams
             </h1>
-            <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg">
-              Estimate stories in minutes with live voting, smart consensus
-              insights, and a distraction-free room that keeps everyone focused.
-              No sign-ups required, just share a link to start.
+            <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg max-w-[60ch] mx-auto">
+              Estimate stories in minutes with live voting and smart consensus insights, pick a facilitator, run your stand-up. All from one workspace, no sign-ups required.
             </p>
           </div>
         </div>
@@ -105,7 +151,7 @@ const WelcomeScreen = () => {
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.97 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           viewport={{ once: true, amount: 0.4 }}
           className="relative mx-auto max-w-2xl px-4 sm:px-6"
         >
@@ -140,9 +186,9 @@ const WelcomeScreen = () => {
                     className="block h-[220px] w-full origin-bottom transform-gpu rounded-[1.25rem] border border-white/10 object-cover object-top transition duration-700 group-hover:scale-[1.015] sm:h-[360px] sm:scale-[1.01]"
                     style={{
                       maskImage:
-                        'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                        "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
                       WebkitMaskImage:
-                        'linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))',
+                        "linear-gradient(180deg, rgba(0,0,0,1) 94%, rgba(0,0,0,0))",
                     }}
                     loading="lazy"
                   />
@@ -150,8 +196,8 @@ const WelcomeScreen = () => {
                     className="pointer-events-none absolute inset-0 rounded-[1.25rem]"
                     style={{
                       background:
-                        'radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)',
-                      mixBlendMode: 'multiply',
+                        "radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 60%, rgba(2,6,23,0.5) 95%)",
+                      mixBlendMode: "multiply",
                     }}
                   />
                   <div className="pointer-events-none absolute inset-0 rounded-[1.25rem] bg-gradient-to-b from-white/12 via-white/5 to-transparent opacity-30 mix-blend-screen" />
@@ -173,7 +219,7 @@ const WelcomeScreen = () => {
           </div>
         </motion.div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -222,7 +268,7 @@ const WelcomeScreen = () => {
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
-                    onClick={() => handleNavigate('integrations')}
+                    onClick={() => handleNavigate("integrations")}
                   >
                     Explore integrations
                     <ArrowUpRight className="h-4 w-4" />
@@ -260,6 +306,63 @@ const WelcomeScreen = () => {
             </SurfaceCard>
           </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <SurfaceCard className="text-left">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">
+                  Run your full sprint ritual from SprintJam
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-300 sm:text-base">
+                  From quick facilitator selection with the wheel to focused
+                  async standups, SprintJam supports your team through every
+                  step of the sprint process.
+                </p>
+              </div>
+
+              <div className="relative grid gap-4 md:grid-cols-3">
+                {sprintFlow.map((step, index) => (
+                  <div key={step.title} className="relative flex">
+                    <div className="flex-1 rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-white/10 dark:bg-slate-900/40">
+                      <div className="mb-4 flex items-start justify-between">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
+                          {step.icon}
+                        </div>
+                        {step.beta && <BetaBadge />}
+                      </div>
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                        {step.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        {step.description}
+                      </p>
+                      <button
+                        type="button"
+                        className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                        onClick={() => handleSprintFlowAction(step.action)}
+                        data-testid={step.testId}
+                      >
+                        {step.actionLabel}
+                        <ArrowUpRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                    {index < sprintFlow.length - 1 && (
+                      <div className="pointer-events-none absolute -right-5 top-0 hidden h-full items-center md:flex">
+                        <ArrowRight className="h-6 w-6 text-slate-400" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SurfaceCard>
+        </motion.div>
 
         <SurfaceCard variant="subtle" className="mx-auto max-w-2xl text-sm">
           <div className="flex flex-col items-center justify-between gap-4 text-slate-600 dark:text-slate-300 sm:flex-row sm:text-base">
