@@ -1,3 +1,13 @@
+## V4.2
+
+- Added a new automation to generate standup icebreaker questions every 30 days.
+- Standardised and fixed some issues with the handling of cookies for session tokens.
+- Created a new recovery token and API route that will allow users to rejoin rooms if they have lost access to their session token for any reason. This will be shown to the user when they start a session and they can copy it to regain access if they lose their token or switch devices. If a user is logged in they will not be given a token as they can just log in to regain access, this is only for users who are not logged in.
+
+## V4.1
+
+- Made various improvements to the standups feature for better responses and results experiences, this is still in beta.
+
 ## V4
 
 - Added a new Standups feature that allows teams to run asynchronous standup meetings. Attendees will be able to submit what they did yesterday, what they're doing today, any blockers they have and a health check on how they're feeling. They can also answer icebreaker questions, provide kudos to their teammates and react to other responses with emojis.
