@@ -174,7 +174,7 @@ const WelcomeScreen = () => {
                   <video
                     ref={videoRef}
                     src="https://assets.nickgriffin.uk/sprintjam-demo.mp4"
-                    className="block h-[300px] w-full rounded-xl object-cover object-top"
+                    className="block h-[250px] w-full rounded-xl object-cover object-top"
                     controls
                     autoPlay
                     playsInline
@@ -193,7 +193,7 @@ const WelcomeScreen = () => {
                     <img
                       src="/images/screenshot.png"
                       alt={`${SITE_NAME} collaborative room preview`}
-                      className="block h-[300px] w-full origin-bottom transform-gpu rounded-xl object-cover object-top transition duration-700 group-hover:scale-[1.015]"
+                      className="block h-[250px] w-full origin-bottom transform-gpu rounded-xl object-cover object-top transition duration-700 group-hover:scale-[1.015]"
                       style={{
                         maskImage:
                           "linear-gradient(180deg, rgba(0,0,0,1) 80%, rgba(0,0,0,0))",
@@ -237,7 +237,7 @@ const WelcomeScreen = () => {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
               <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400/20 to-pink-500/20 text-orange-500">
                   {sprintFlow[0].icon}
                 </div>
                 <BetaBadge />
@@ -263,7 +263,7 @@ const WelcomeScreen = () => {
 
             <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
               <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400/20 to-purple-500/20 text-violet-600">
                   {sprintFlow[2].icon}
                 </div>
                 <BetaBadge />
@@ -301,23 +301,16 @@ const WelcomeScreen = () => {
                   More to come
                 </h3>
                 <p className="text-sm text-slate-400 dark:text-slate-600">
-                  We&apos;re building more tools to enhance your sprint rituals. Stay tuned.
+                  We&apos;re building more tools to enhance your sprint rituals.
+                  Stay tuned.
                 </p>
               </div>
             </div>
           </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.2 }}
-        >
           <SurfaceCard className="text-left">
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
               <div className="flex-1 space-y-3 md:pr-4">
-                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
+                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/20 to-teal-500/20 text-emerald-600">
                   <GitBranch className="h-4 w-4" />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white">

@@ -3,7 +3,14 @@ import type { ReactNode } from "react";
 import { cn } from "../../lib/cn";
 
 interface BadgeProps {
-  variant?: "default" | "primary" | "success" | "warning" | "error" | "info";
+  variant?:
+    | "default"
+    | "primary"
+    | "success"
+    | "warning"
+    | "error"
+    | "info"
+    | "violet";
   size?: "sm" | "md";
   children: ReactNode;
   className?: string;
@@ -26,6 +33,8 @@ export const Badge = ({
     error:
       "bg-rose-100/80 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
     info: "bg-blue-100/80 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    violet:
+      "bg-violet-100/80 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
   };
 
   const sizes = {
