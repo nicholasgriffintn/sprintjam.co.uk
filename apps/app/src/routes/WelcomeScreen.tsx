@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   CircleDashed,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 
 import { useSessionActions } from "@/context/SessionContext";
@@ -233,7 +234,7 @@ const WelcomeScreen = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
               <div className="flex items-center justify-between">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
@@ -284,6 +285,25 @@ const WelcomeScreen = () => {
                 {sprintFlow[2].actionLabel}
                 <ArrowUpRight className="h-4 w-4" />
               </button>
+            </div>
+
+            <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-slate-300/60 bg-white/40 p-5 text-left dark:border-white/10 dark:bg-slate-900/20">
+              <div className="flex items-center justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-500/10 to-slate-500/15 text-slate-400 dark:text-slate-500">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                  Coming soon
+                </span>
+              </div>
+              <div className="flex-1 space-y-2">
+                <h3 className="text-base font-semibold text-slate-400 dark:text-slate-500">
+                  More to come
+                </h3>
+                <p className="text-sm text-slate-400 dark:text-slate-600">
+                  We&apos;re building more tools to enhance your sprint rituals. Stay tuned.
+                </p>
+              </div>
             </div>
           </div>
         </motion.div>
