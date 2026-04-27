@@ -50,4 +50,23 @@ test.describe("Welcome screen journey", () => {
     await expect(page.locator("#join-room-key")).toHaveValue("ABC123");
     await expect(page.locator("#join-name")).toHaveValue("Join QA");
   });
+
+  test("visitor can move into wheel and standup from sprint flow cards", async ({
+    page,
+  }) => {
+    const welcome = new WelcomePage(page);
+    await welcome.gotoHome();
+
+    await welcome.openWheelFromSprintFlow();
+    await expect(page).toHaveURL(/\/wheel(?:\/[A-Z0-9]+)?$/);
+
+    await page.goto("/");
+    await welcome.openStandupFromSprintFlow();
+    await expect(page).toHaveURL(/\/standup$/);
+    await expect(
+      page.getByRole("heading", {
+        name: /Collaborative daily standup rooms for distributed teams/i,
+      }),
+    ).toBeVisible();
+  });
 });

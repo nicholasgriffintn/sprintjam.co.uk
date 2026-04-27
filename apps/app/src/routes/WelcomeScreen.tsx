@@ -11,6 +11,9 @@ import {
   Play,
   GitBranch,
   ArrowUpRight,
+  CircleDashed,
+  MessageSquare,
+  ArrowRight,
 } from 'lucide-react';
 
 import { useSessionActions } from '@/context/SessionContext';
@@ -46,6 +49,36 @@ const features = [
   },
 ];
 
+const sprintFlow = [
+  {
+    icon: <Timer className="w-5 h-5" />,
+    title: 'Plan and estimate',
+    description:
+      'Kick off sprint planning with poker estimation, consensus support, and ticket queue controls.',
+    actionLabel: 'Start planning room',
+    testId: 'homepage-flow-planning',
+    action: 'create' as const,
+  },
+  {
+    icon: <CircleDashed className="w-5 h-5" />,
+    title: 'Run the wheel',
+    description:
+      'Move from estimation to sequencing by spinning decisions live with your team in the wheel room.',
+    actionLabel: 'Open wheel room',
+    testId: 'homepage-flow-wheel',
+    action: 'wheel' as const,
+  },
+  {
+    icon: <MessageSquare className="w-5 h-5" />,
+    title: 'Finish with standup',
+    description:
+      'Close the loop with a focused daily check-in flow that supports async prep and live facilitation.',
+    actionLabel: 'Open standup room',
+    testId: 'homepage-flow-standup',
+    action: 'standup' as const,
+  },
+];
+
 const WelcomeScreen = () => {
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -55,6 +88,15 @@ const WelcomeScreen = () => {
   const handleNavigate = (screen: AppScreen) => {
     setScreen(screen);
     navigateTo(screen);
+  };
+
+  const handleSprintFlowAction = (action: (typeof sprintFlow)[number]['action']) => {
+    if (action === 'create') {
+      startCreateFlow();
+      return;
+    }
+
+    handleNavigate(action);
   };
 
   usePageMeta(META_CONFIGS.welcome);
@@ -260,6 +302,51 @@ const WelcomeScreen = () => {
             </SurfaceCard>
           </motion.div>
         </div>
+
+        <SurfaceCard className="text-left">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">
+                Run the full sprint ritual in one product
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300 sm:text-base">
+                Start from planning poker, flow naturally into wheel decisions,
+                and wrap with standup updates. Retros are next on the roadmap.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {sprintFlow.map((step, index) => (
+                <div
+                  key={step.title}
+                  className="relative rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-white/10 dark:bg-slate-900/40"
+                >
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
+                    {step.icon}
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                    {step.description}
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                    onClick={() => handleSprintFlowAction(step.action)}
+                    data-testid={step.testId}
+                  >
+                    {step.actionLabel}
+                    <ArrowUpRight className="h-4 w-4" />
+                  </button>
+                  {index < sprintFlow.length - 1 && (
+                    <ArrowRight className="pointer-events-none absolute -right-2 top-6 hidden h-4 w-4 text-slate-400 md:block" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </SurfaceCard>
 
         <SurfaceCard variant="subtle" className="mx-auto max-w-2xl text-sm">
           <div className="flex flex-col items-center justify-between gap-4 text-slate-600 dark:text-slate-300 sm:flex-row sm:text-base">
