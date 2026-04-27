@@ -54,16 +54,19 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { setScreen, setRoomKey, setPasscode, goHome, goToRoom } =
     useSessionActions();
   const { setError, clearError } = useSessionErrors();
-  const { createSession, isAuthenticated, user: workspaceUser } =
-    useWorkspaceData();
+  const {
+    createSession,
+    isAuthenticated,
+    user: workspaceUser,
+  } = useWorkspaceData();
 
   const effectiveName = isAuthenticated
-    ? (workspaceUser?.name?.trim() || name)
+    ? workspaceUser?.name?.trim() || name
     : name;
   const effectiveAvatar = isAuthenticated
-    ? (sanitiseAvatarValue(workspaceUser?.avatar) ||
-        sanitiseAvatarValue(selectedAvatar) ||
-        "user")
+    ? sanitiseAvatarValue(workspaceUser?.avatar) ||
+      sanitiseAvatarValue(selectedAvatar) ||
+      "user"
     : selectedAvatar;
 
   const [activeRoomKey, setActiveRoomKey] = useState<string | null>(null);
@@ -158,13 +161,19 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
           return;
         }
 
+        if (isAuthError) {
+          setScreen("join");
+          setError(message, "passcode");
+          return;
+        }
+
         setError(message);
         setConnectionIssue({
-          type: isAuthError ? "auth" : "disconnected",
+          type: "disconnected",
           message,
         });
       },
-      [setError, goHome, setScreen],
+      [setError, goHome, setScreen, setConnectionIssue],
     ),
     onLoadingChange: setIsLoading,
     applyServerDefaults,
