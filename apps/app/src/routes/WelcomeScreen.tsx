@@ -51,29 +51,29 @@ const features = [
 
 const sprintFlow = [
   {
-    icon: <Timer className="w-5 h-5" />,
-    title: 'Plan and estimate',
-    description:
-      'Kick off sprint planning with poker estimation, consensus support, and ticket queue controls.',
-    actionLabel: 'Start planning room',
-    testId: 'homepage-flow-planning',
-    action: 'create' as const,
-  },
-  {
     icon: <CircleDashed className="w-5 h-5" />,
-    title: 'Run the wheel',
+    title: 'Choose a facilitator',
     description:
-      'Move from estimation to sequencing by spinning decisions live with your team in the wheel room.',
-    actionLabel: 'Open wheel room',
+      'Choose facilitators for your sessions or make quick decisions by spinning a wheel of names.',
+    actionLabel: 'Spin the wheel',
     testId: 'homepage-flow-wheel',
     action: 'wheel' as const,
   },
   {
+    icon: <Timer className="w-5 h-5" />,
+    title: 'Plan and estimate',
+    description:
+      'Kick off sprint planning with poker estimation, consensus support, and ticket queue controls.',
+    actionLabel: 'Start planning poker',
+    testId: 'homepage-flow-planning',
+    action: 'create' as const,
+  },
+  {
     icon: <MessageSquare className="w-5 h-5" />,
-    title: 'Finish with standup',
+    title: 'Collaborate asynchronously',
     description:
       'Close the loop with a focused daily check-in flow that supports async prep and live facilitation.',
-    actionLabel: 'Open standup room',
+    actionLabel: 'Run a standup',
     testId: 'homepage-flow-standup',
     action: 'standup' as const,
   },
@@ -215,7 +215,7 @@ const WelcomeScreen = () => {
           </div>
         </motion.div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-4">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -307,11 +307,11 @@ const WelcomeScreen = () => {
           <div className="space-y-6">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">
-                Run the full sprint ritual in one product
+                Run your full sprint ritual from SprintJam
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-300 sm:text-base">
-                Start from planning poker, flow naturally into wheel decisions,
-                and wrap with standup updates. Retros are next on the roadmap.
+                From quick facilitator selection with the wheel to focused async standups,
+                SprintJam supports your team through every step of the sprint process.
               </p>
             </div>
 
