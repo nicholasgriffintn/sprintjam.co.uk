@@ -20,6 +20,7 @@ import { useWheelHeader } from "@/context/WheelHeaderContext";
 import { playWinnerSound, primeWheelAudio } from "@/lib/wheel-audio";
 import {
   createWheel,
+  getWheelAccessSettings,
   joinWheel,
   recoverWheelSession,
 } from "@/lib/wheel-api-service";
@@ -179,6 +180,7 @@ function WheelRoomContent({
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         wheelKey={wheelKey}
+        userName={userName}
         isModeratorView={isModeratorView}
       />
 
@@ -236,6 +238,10 @@ export default function WheelScreen() {
   const [userName] = useState(() => getStoredUserName());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPasscodeRequired, setIsPasscodeRequired] = useState(false);
+  const [passcodeInput, setPasscodeInput] = useState("");
+  const [passcodeError, setPasscodeError] = useState<string | null>(null);
+  const [isSubmittingPasscode, setIsSubmittingPasscode] = useState(false);
   const [isConflict, setIsConflict] = useState(false);
   const [conflictWheelKey, setConflictWheelKey] = useState("");
   const [recoveryPasskeyInput, setRecoveryPasskeyInput] = useState("");
@@ -264,6 +270,31 @@ export default function WheelScreen() {
 
       const attemptJoin = async () => {
         try {
+          const settings = await getWheelAccessSettings(pathKey, userName);
+          if (settings.hasPasscode) {
+            setIsPasscodeRequired(true);
+            setPasscodeInput("");
+            setPasscodeError(null);
+            return;
+          }
+        } catch (settingsError) {
+          if (
+            settingsError instanceof HttpError &&
+            settingsError.status === 404
+          ) {
+            setError("Wheel not found");
+            return;
+          }
+          console.error("Failed to load wheel settings:", settingsError);
+          setError(
+            settingsError instanceof Error
+              ? settingsError.message
+              : "Failed to join wheel",
+          );
+          return;
+        }
+
+        try {
           const response = await joinWheel(userName, pathKey);
           if (response.recoveryPasskey) {
             safeLocalStorage.set(
@@ -274,35 +305,10 @@ export default function WheelScreen() {
           setWheelKey(pathKey);
         } catch (err) {
           if (err instanceof Error && err.message === "PASSCODE_REQUIRED") {
-            const passcode = window.prompt(
-              "Enter the passcode to join this wheel",
-            );
-            if (!passcode) {
-              throw new Error("Passcode is required to join this wheel.");
-            }
-            try {
-              const response = await joinWheel(
-                userName,
-                pathKey,
-                passcode.trim(),
-              );
-              if (response.recoveryPasskey) {
-                safeLocalStorage.set(
-                  getRecoveryPasskeyStorageKey("wheel", pathKey, userName),
-                  response.recoveryPasskey,
-                );
-              }
-              setWheelKey(pathKey);
-              return;
-            } catch (retryErr) {
-              if (
-                retryErr instanceof Error &&
-                retryErr.message === "PASSCODE_REQUIRED"
-              ) {
-                throw new Error("Invalid passcode. Please try again.");
-              }
-              throw retryErr;
-            }
+            setIsPasscodeRequired(true);
+            setPasscodeInput("");
+            setPasscodeError(null);
+            return;
           }
           if (err instanceof HttpError && err.status === 409) {
             setConflictWheelKey(pathKey);
@@ -356,6 +362,99 @@ export default function WheelScreen() {
         });
     }
   }, [wheelKey, userName]);
+
+  const handleSubmitPasscode = async () => {
+    const normalizedPasscode = passcodeInput.trim();
+    if (!normalizedPasscode) {
+      setPasscodeError("Enter the wheel passcode to continue.");
+      return;
+    }
+
+    setIsSubmittingPasscode(true);
+    setPasscodeError(null);
+    setError(null);
+
+    try {
+      const response = await joinWheel(
+        userName,
+        getWheelKeyFromPath(),
+        normalizedPasscode,
+      );
+      if (response.recoveryPasskey) {
+        safeLocalStorage.set(
+          getRecoveryPasskeyStorageKey("wheel", getWheelKeyFromPath(), userName),
+          response.recoveryPasskey,
+        );
+      }
+      setWheelKey(getWheelKeyFromPath());
+      setIsPasscodeRequired(false);
+      setPasscodeInput("");
+    } catch (err) {
+      if (err instanceof Error && err.message === "PASSCODE_REQUIRED") {
+        setPasscodeError("Incorrect passcode. Please try again.");
+        return;
+      }
+      if (err instanceof HttpError && err.status === 409) {
+        setConflictWheelKey(getWheelKeyFromPath());
+        setIsConflict(true);
+        return;
+      }
+      setError(err instanceof Error ? err.message : "Failed to join wheel");
+    } finally {
+      setIsSubmittingPasscode(false);
+    }
+  };
+
+  if (isPasscodeRequired) {
+    return (
+      <PageSection align="start" maxWidth="sm">
+        <SurfaceCard className="space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+              Wheel requires a passcode
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              This wheel is protected. Enter the passcode provided by the
+              moderator to continue.
+            </p>
+          </div>
+          <Input
+            autoFocus
+            id="wheel-passcode"
+            label="Passcode"
+            type="text"
+            value={passcodeInput}
+            onChange={(e) => setPasscodeInput(e.target.value.toUpperCase())}
+            placeholder="Enter wheel passcode"
+            fullWidth
+            error={passcodeError ?? undefined}
+          />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Button
+              onClick={handleSubmitPasscode}
+              disabled={isSubmittingPasscode}
+              isLoading={isSubmittingPasscode}
+              fullWidth
+            >
+              Join wheel
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setIsPasscodeRequired(false);
+                setPasscodeInput("");
+                setError(null);
+                window.history.replaceState(null, "", "/wheel");
+              }}
+              fullWidth
+            >
+              Back
+            </Button>
+          </div>
+        </SurfaceCard>
+      </PageSection>
+    );
+  }
 
   if (isConflict) {
     const handleRecover = async () => {

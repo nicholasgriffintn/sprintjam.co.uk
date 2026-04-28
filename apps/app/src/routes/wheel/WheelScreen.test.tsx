@@ -1,12 +1,17 @@
 // @vitest-environment jsdom
-import { render, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 
 import WheelScreen from "./WheelScreen";
-import { createWheel, joinWheel } from "@/lib/wheel-api-service";
+import {
+  createWheel,
+  getWheelAccessSettings,
+  joinWheel,
+} from "@/lib/wheel-api-service";
 
 vi.mock("@/lib/wheel-api-service", () => ({
   createWheel: vi.fn(),
+  getWheelAccessSettings: vi.fn(),
   joinWheel: vi.fn(),
 }));
 
@@ -31,5 +36,34 @@ describe("WheelScreen", () => {
 
     expect(createWheel).toHaveBeenCalledTimes(1);
     expect(joinWheel).not.toHaveBeenCalled();
+  });
+
+  it("shows an inline passcode input when joining a protected wheel", async () => {
+    window.history.replaceState(null, "", "/wheel/ABC123");
+    vi.mocked(getWheelAccessSettings).mockResolvedValue({
+      settings: {
+        removeWinnerAfterSpin: false,
+        showConfetti: true,
+        playSounds: true,
+        spinDurationMs: 4000,
+      },
+      moderator: "Moderator",
+      isModerator: false,
+      hasPasscode: true,
+    });
+
+    render(<WheelScreen />);
+
+    await waitFor(() => {
+      expect(getWheelAccessSettings).toHaveBeenCalledTimes(1);
+    });
+
+    const passcodeInput = await screen.findByRole("textbox", {
+      name: /Passcode/i,
+    });
+    expect(passcodeInput).toBeDefined();
+
+    const logo = await screen.findByAltText("SprintJam");
+    expect(logo).toBeInTheDocument();
   });
 });

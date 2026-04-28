@@ -3,6 +3,7 @@ import { useState, useRef, useMemo, lazy, Suspense, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { FallbackLoading } from "@/components/ui/FallbackLoading";
+import { Input } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
 import { toast } from "@/components/ui";
 import { copyText } from "@/lib/clipboard";
@@ -231,7 +232,9 @@ export function ShareWheelModal({
             {passcodeEnabled && (
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  <input
+                  <Input
+                    id="wheel-passcode-input"
+                    label="Passcode"
                     type="text"
                     value={passcode}
                     onChange={(e) => setPasscode(e.target.value.toUpperCase())}
@@ -239,17 +242,15 @@ export function ShareWheelModal({
                       hasExistingPasscode ? "Enter a new passcode" : "XXXXXX"
                     }
                     maxLength={64}
-                    className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                    fullWidth
+                    className="min-w-[180px] font-mono tracking-[0.15em]"
                     disabled={isSavingPasscode}
+                    error={
+                      passcode.trim() && !passcodeValidation.ok
+                        ? passcodeValidation.error
+                        : undefined
+                    }
                   />
-                  <Button
-                    onClick={handleGeneratePasscode}
-                    variant="secondary"
-                    size="sm"
-                    disabled={isSavingPasscode}
-                  >
-                    Generate
-                  </Button>
                   <Button
                     onClick={handleSavePasscode}
                     variant="secondary"
