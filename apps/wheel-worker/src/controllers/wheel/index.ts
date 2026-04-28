@@ -1,6 +1,8 @@
 import type { WheelRoom } from "../../durable-objects/wheel-room";
 import type {
+  WheelAccessSettings,
   WheelData,
+  WheelStateData,
   WheelSettings,
   WheelWorkerEnv,
 } from "@sprintjam/types";
@@ -15,11 +17,12 @@ import {
   SESSION_TOKEN_TTL_MS,
 } from "@sprintjam/utils";
 import { jsonResponse, jsonError } from "../../lib/response";
+import { toClientWheelData } from "../../lib/client-wheel";
 
 export interface WheelRoomHttpContext {
   repository: WheelRoom["repository"];
-  getWheelData(): Promise<WheelData | undefined>;
-  putWheelData(data: WheelData): Promise<void>;
+  getWheelData(): Promise<WheelStateData | undefined>;
+  putWheelData(data: WheelStateData): Promise<void>;
   disconnectUserSessions(userName: string): void;
   env: WheelWorkerEnv;
 }
@@ -140,7 +143,7 @@ async function handleInitialize(
     enabled: true,
   }));
 
-  const wheelData: WheelData = {
+  const wheelData: WheelStateData = {
     key: wheelKey,
     entries: defaultEntries,
     moderator,
@@ -172,7 +175,7 @@ async function handleInitialize(
   }
 
   return buildSessionResponse(
-    { success: true, wheel: wheelData, recoveryPasskey },
+    { success: true, wheel: toClientWheelData(wheelData), recoveryPasskey },
     sessionToken,
     context.env,
   );
@@ -256,7 +259,11 @@ async function handleJoin(
   const freshWheel = await context.getWheelData();
 
   return buildSessionResponse(
-    { success: true, wheel: freshWheel, recoveryPasskey },
+    {
+      success: true,
+      wheel: freshWheel ? toClientWheelData(freshWheel) : undefined,
+      recoveryPasskey,
+    },
     sessionToken,
     context.env,
   );
@@ -303,7 +310,10 @@ async function handleRecover(
   const freshWheel = await context.getWheelData();
 
   return buildSessionResponse(
-    { success: true, wheel: freshWheel },
+    {
+      success: true,
+      wheel: freshWheel ? toClientWheelData(freshWheel) : undefined,
+    },
     sessionToken,
     context.env,
   );
@@ -321,11 +331,14 @@ async function handleGetSettings(
     return jsonError("Wheel not found", 404);
   }
 
-  return jsonResponse({
+  const accessSettings: WheelAccessSettings = {
     settings: wheelData.settings,
     moderator: wheelData.moderator,
     isModerator: name ? wheelData.moderator === name : false,
-  });
+    hasPasscode: !!wheelData.passcodeHash,
+  };
+
+  return jsonResponse(accessSettings);
 }
 
 async function handleUpdatePasscode(

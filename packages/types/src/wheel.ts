@@ -41,8 +41,18 @@ export interface WheelData {
   results: SpinResult[];
   settings: WheelSettings;
   status: WheelStatus;
-  passcodeHash?: PasscodeHashPayload;
   userAvatars?: Record<string, string>;
+}
+
+export interface WheelStateData extends WheelData {
+  passcodeHash?: PasscodeHashPayload;
+}
+
+export interface WheelAccessSettings {
+  settings: WheelSettings;
+  moderator: string;
+  isModerator: boolean;
+  hasPasscode: boolean;
 }
 
 export interface WheelSessionInfo {

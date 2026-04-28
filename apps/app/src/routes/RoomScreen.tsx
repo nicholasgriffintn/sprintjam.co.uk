@@ -37,9 +37,6 @@ import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
 import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
-import { toast } from "@/components/ui";
-import { getRecoveryPasskeyStorageKey } from "@/constants";
-import { safeLocalStorage } from "@/utils/storage";
 import { linkedRoomSessionQueryKey } from "@/lib/workspace-query";
 import { getTeamSessionByRoomKey } from "@/lib/workspace-service";
 import { RoomGuidancePanel } from "@/components/room/RoomGuidancePanel";
@@ -48,6 +45,7 @@ import { RoomCalloutCard } from "@/components/room/RoomCalloutCard";
 import { getVoteSpreadSummary } from "@/utils/room-guidance";
 import { useRoomOnboardingHints } from "@/hooks/useRoomOnboardingHints";
 import { useFacilitationPrompt } from "@/hooks/useFacilitationPrompt";
+import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
 import type { ConnectionStatusState } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 
@@ -96,23 +94,12 @@ const RoomScreen = () => {
     setIsHelpPanelOpen,
   } = useRoomHeader();
   const isSpectator = roomData?.spectators?.includes(name) ?? false;
-  useEffect(() => {
-    if (!roomData?.key || !name || !isModeratorView) return;
-    const storageKey = getRecoveryPasskeyStorageKey("room", roomData.key, name);
-    const stored = safeLocalStorage.get(storageKey);
-    if (!stored) return;
-    safeLocalStorage.remove(storageKey);
-    toast.info({
-      title: "Save your recovery passkey",
-      description:
-        "Use this passkey to reclaim your session from another browser or device if you get locked out.",
-      timeout: 0,
-      data: {
-        code: stored,
-        detail: "Keep this somewhere safe — it won't be shown again.",
-      },
-    });
-  }, [roomData?.key, name, isModeratorView]);
+  useRecoveryPasskeyNotice({
+    feature: "room",
+    sessionKey: roomData?.key,
+    userName: name,
+    enabled: isModeratorView,
+  });
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isCompleteSessionOpen, setIsCompleteSessionOpen] = useState(false);

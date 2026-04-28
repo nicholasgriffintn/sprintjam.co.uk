@@ -2,6 +2,12 @@ import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
 
 import type { WheelRoom } from ".";
 import type { WheelClientMessage, WheelSettings } from "@sprintjam/types";
+import { toClientWheelData } from "../../lib/client-wheel";
+import {
+  validateWheelEntryName,
+  WHEEL_ENTRY_COUNT_MAX,
+  WHEEL_SOCKET_MESSAGE_MAX_CHARS,
+} from "../../lib/wheel-validation";
 
 function findCanonicalUserName(
   users: string[],
@@ -28,6 +34,12 @@ function validateClientMessage(
       if (typeof msg.name !== "string") {
         return { error: "Invalid addEntry message" };
       }
+      {
+        const error = validateWheelEntryName(msg.name);
+        if (error) {
+          return { error };
+        }
+      }
       return { type: "addEntry", name: msg.name };
 
     case "removeEntry":
@@ -39,6 +51,12 @@ function validateClientMessage(
     case "updateEntry":
       if (typeof msg.entryId !== "string" || typeof msg.name !== "string") {
         return { error: "Invalid updateEntry message" };
+      }
+      {
+        const error = validateWheelEntryName(msg.name);
+        if (error) {
+          return { error };
+        }
       }
       return { type: "updateEntry", entryId: msg.entryId, name: msg.name };
 
@@ -58,6 +76,11 @@ function validateClientMessage(
     case "bulkAddEntries":
       if (!Array.isArray(msg.names)) {
         return { error: "Invalid bulkAddEntries message" };
+      }
+      if (msg.names.length > WHEEL_ENTRY_COUNT_MAX) {
+        return {
+          error: `Bulk add is limited to ${WHEEL_ENTRY_COUNT_MAX} entries at a time`,
+        };
       }
       return {
         type: "bulkAddEntries",
@@ -152,7 +175,7 @@ export async function handleSession(
   webSocket.send(
     JSON.stringify({
       type: "initialize",
-      wheel: freshWheelData ?? wheelData,
+      wheel: toClientWheelData(freshWheelData ?? wheelData),
     }),
   );
 
@@ -162,6 +185,17 @@ export async function handleSession(
         typeof msg.data === "string"
           ? msg.data
           : new TextDecoder().decode(msg.data);
+
+      if (messageData.length > WHEEL_SOCKET_MESSAGE_MAX_CHARS) {
+        webSocket.send(
+          JSON.stringify({
+            type: "error",
+            error: "Message too large",
+          }),
+        );
+        return;
+      }
+
       const data = JSON.parse(messageData);
       const validated = validateClientMessage(data);
 

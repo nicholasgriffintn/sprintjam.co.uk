@@ -1,5 +1,10 @@
 import type { WheelRoom } from ".";
 import { generateID } from "@sprintjam/utils";
+import {
+  normalizeWheelEntryNames,
+  validateWheelEntryName,
+  WHEEL_ENTRY_COUNT_MAX,
+} from "../../lib/wheel-validation";
 
 export async function handleAddEntry(
   wheel: WheelRoom,
@@ -19,14 +24,18 @@ export async function handleAddEntry(
     throw new Error("Cannot modify entries while spinning");
   }
 
-  const trimmedName = name.trim();
-  if (!trimmedName) {
-    return;
+  const validationError = validateWheelEntryName(name);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  if (wheelData.entries.length >= WHEEL_ENTRY_COUNT_MAX) {
+    throw new Error(`Wheel can contain at most ${WHEEL_ENTRY_COUNT_MAX} entries`);
   }
 
   const entry = {
     id: generateID(),
-    name: trimmedName,
+    name: name.trim(),
     enabled: true,
   };
 
@@ -85,12 +94,12 @@ export async function handleUpdateEntry(
     throw new Error("Cannot modify entries while spinning");
   }
 
-  const trimmedName = name.trim();
-  if (!trimmedName) {
-    return;
+  const validationError = validateWheelEntryName(name);
+  if (validationError) {
+    throw new Error(validationError);
   }
 
-  wheel.repository.updateEntry(entryId, trimmedName);
+  wheel.repository.updateEntry(entryId, name.trim());
 
   const entries = wheel.repository.getEntries();
   wheel.broadcast({
@@ -167,9 +176,21 @@ export async function handleBulkAddEntries(
     throw new Error("Cannot modify entries while spinning");
   }
 
-  const validNames = names.map((n) => n.trim()).filter((n) => n.length > 0);
+  const validNames = normalizeWheelEntryNames(names);
+  if (validNames.length === 0) {
+    return;
+  }
 
-  for (const name of validNames) {
+  const remainingSlots = Math.max(
+    0,
+    WHEEL_ENTRY_COUNT_MAX - wheelData.entries.length,
+  );
+
+  if (remainingSlots === 0) {
+    throw new Error(`Wheel can contain at most ${WHEEL_ENTRY_COUNT_MAX} entries`);
+  }
+
+  for (const name of validNames.slice(0, remainingSlots)) {
     const entry = {
       id: generateID(),
       name,

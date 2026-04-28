@@ -1,10 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import type { WheelData, WheelWorkerEnv } from "@sprintjam/types";
+import type { WheelStateData, WheelWorkerEnv } from "@sprintjam/types";
 import { hashPasscode } from "@sprintjam/utils";
 
 import { handleHttpRequest, type WheelRoomHttpContext } from "./index";
 
-const buildWheelData = (overrides: Partial<WheelData> = {}): WheelData => ({
+const buildWheelData = (
+  overrides: Partial<WheelStateData> = {},
+): WheelStateData => ({
   key: "WHEEL",
   entries: [],
   moderator: "mod",
@@ -63,6 +65,31 @@ describe("wheel http controller", () => {
 
     expect(response?.status).toBe(401);
     expect(response?.headers.get("X-Error-Kind")).toBe("passcode");
+  });
+
+  it("does not expose passcode hashes in session responses", async () => {
+    const passcodeHash = await hashPasscode("SECRET");
+    const wheelData = buildWheelData({ passcodeHash });
+    const context = buildContext({
+      getWheelData: vi.fn().mockResolvedValue(undefined),
+      putWheelData: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const response = await handleHttpRequest(
+      context,
+      new Request("https://internal/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wheelKey: "WHEEL",
+          moderator: "mod",
+          passcode: "SECRET",
+        }),
+      }),
+    );
+
+    const body = (await response?.json()) as { wheel: Record<string, unknown> };
+    expect(body.wheel).not.toHaveProperty("passcodeHash");
   });
 
   it("rejects passcode updates without a valid session", async () => {
@@ -299,6 +326,33 @@ describe("wheel http controller", () => {
 
       expect(response?.status).toBe(200);
       expect(disconnectSpy).toHaveBeenCalledWith("Alice");
+    });
+  });
+
+  it("returns access settings without exposing the hash", async () => {
+    const passcodeHash = await hashPasscode("SECRET");
+    const context = buildContext({
+      getWheelData: vi.fn().mockResolvedValue(buildWheelData({ passcodeHash })),
+    });
+
+    const response = await handleHttpRequest(
+      context,
+      new Request("https://internal/settings?name=mod", {
+        method: "GET",
+      }),
+    );
+
+    expect(response?.status).toBe(200);
+    await expect(response?.json()).resolves.toEqual({
+      settings: {
+        removeWinnerAfterSpin: false,
+        showConfetti: false,
+        playSounds: false,
+        spinDurationMs: 4000,
+      },
+      moderator: "mod",
+      isModerator: true,
+      hasPasscode: true,
     });
   });
 });

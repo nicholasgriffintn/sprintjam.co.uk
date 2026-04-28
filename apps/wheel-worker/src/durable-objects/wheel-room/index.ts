@@ -10,6 +10,7 @@ import type {
 import type {
   WheelWorkerEnv,
   WheelData,
+  WheelStateData,
   WheelBroadcastMessage,
   WheelSessionInfo,
   WheelSettings,
@@ -186,11 +187,11 @@ export class WheelRoom implements WheelRoomHttpContext {
     });
   }
 
-  async getWheelData(): Promise<WheelData | undefined> {
+  async getWheelData(): Promise<WheelStateData | undefined> {
     return this.repository.getWheelData();
   }
 
-  async putWheelData(wheelData: WheelData): Promise<void> {
+  async putWheelData(wheelData: WheelStateData): Promise<void> {
     await this.repository.replaceWheelData(wheelData);
   }
 }

@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, lazy, Suspense } from "react";
+import { useState, useRef, useMemo, lazy, Suspense, useEffect } from "react";
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -6,9 +6,11 @@ import { FallbackLoading } from "@/components/ui/FallbackLoading";
 import { Switch } from "@/components/ui/Switch";
 import { toast } from "@/components/ui";
 import { copyText } from "@/lib/clipboard";
-import { updateWheelPasscode } from "@/lib/wheel-api-service";
-import { USERNAME_STORAGE_KEY } from "@/constants";
-import { safeLocalStorage } from "@/utils/storage";
+import {
+  getWheelAccessSettings,
+  updateWheelPasscode,
+} from "@/lib/wheel-api-service";
+import { validatePasscode } from "@/utils/validators";
 
 const QRCodeSVG = lazy(() =>
   import("qrcode.react").then((module) => ({ default: module.QRCodeSVG })),
@@ -18,18 +20,33 @@ interface ShareWheelModalProps {
   isOpen: boolean;
   onClose: () => void;
   wheelKey: string;
+  userName: string;
   isModeratorView?: boolean;
+}
+
+function buildGeneratedPasscode() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
 }
 
 export function ShareWheelModal({
   isOpen,
   onClose,
   wheelKey,
+  userName,
   isModeratorView = false,
 }: ShareWheelModalProps) {
   const [passcodeEnabled, setPasscodeEnabled] = useState(false);
   const [passcode, setPasscode] = useState("");
+  const [hasExistingPasscode, setHasExistingPasscode] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isSavingPasscode, setIsSavingPasscode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const passcodeValidation = validatePasscode(passcode);
 
   const shareableUrl = useMemo(() => {
     if (typeof window === "undefined") {
@@ -37,6 +54,41 @@ export function ShareWheelModal({
     }
     return `${window.location.origin}/wheel/${wheelKey}`;
   }, [wheelKey]);
+
+  useEffect(() => {
+    if (!isOpen || !isModeratorView) {
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingSettings(true);
+
+    getWheelAccessSettings(wheelKey, userName)
+      .then((settings) => {
+        if (cancelled) {
+          return;
+        }
+
+        setPasscodeEnabled(settings.hasPasscode);
+        setHasExistingPasscode(settings.hasPasscode);
+        setPasscode("");
+      })
+      .catch((error) => {
+        console.error("Failed to load wheel access settings:", error);
+        if (!cancelled) {
+          toast.error("Couldn't load wheel access settings");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingSettings(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isModeratorView, isOpen, userName, wheelKey]);
 
   const handleCopy = async () => {
     if (inputRef.current) {
@@ -52,6 +104,10 @@ export function ShareWheelModal({
   };
 
   const handleCopyPasscode = async () => {
+    if (!passcode) {
+      return;
+    }
+
     try {
       await copyText(passcode);
       toast.success("Passcode copied");
@@ -61,41 +117,71 @@ export function ShareWheelModal({
     }
   };
 
-  const generatePasscode = async () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setPasscode(code);
+  const savePasscode = async (nextPasscode: string | null) => {
+    setIsSavingPasscode(true);
 
     try {
-      const userName = safeLocalStorage.get(USERNAME_STORAGE_KEY) || "";
-      await updateWheelPasscode(wheelKey, userName, code);
+      await updateWheelPasscode(wheelKey, userName, nextPasscode);
+      setHasExistingPasscode(!!nextPasscode);
+
+      if (!nextPasscode) {
+        setPasscode("");
+      }
+
+      return true;
     } catch (error) {
-      console.error("Failed to save passcode:", error);
-      toast.error("Couldn't save passcode");
+      console.error("Failed to update passcode:", error);
+      toast.error("Couldn't update passcode");
+      return false;
+    } finally {
+      setIsSavingPasscode(false);
+    }
+  };
+
+  const handleGeneratePasscode = () => {
+    const generatedPasscode = buildGeneratedPasscode();
+    setPasscode(generatedPasscode);
+    return generatedPasscode;
+  };
+
+  const handleSavePasscode = async () => {
+    const nextPasscode = passcode.trim().toUpperCase();
+
+    if (!nextPasscode) {
+      toast.error("Enter a passcode first");
+      return;
+    }
+
+    if (!passcodeValidation.ok) {
+      toast.error(passcodeValidation.error || "Invalid passcode");
+      return;
+    }
+
+    const saved = await savePasscode(nextPasscode);
+    if (saved) {
+      setPasscode(nextPasscode);
+      toast.success(hasExistingPasscode ? "Passcode rotated" : "Passcode saved");
     }
   };
 
   const handlePasscodeToggle = async (enabled: boolean) => {
-    setPasscodeEnabled(enabled);
-    if (enabled && !passcode) {
-      generatePasscode();
+    if (enabled) {
+      const nextPasscode = passcode.trim().toUpperCase() || handleGeneratePasscode();
+      setPasscodeEnabled(true);
+      const saved = await savePasscode(nextPasscode);
+      if (saved) {
+        setPasscode(nextPasscode);
+        toast.success("Passcode protection enabled");
+      } else {
+        setPasscodeEnabled(false);
+      }
       return;
     }
 
-    try {
-      const userName = safeLocalStorage.get(USERNAME_STORAGE_KEY) || "";
-      await updateWheelPasscode(wheelKey, userName, enabled ? passcode : null);
-
-      if (!enabled) {
-        setPasscode("");
-      }
-    } catch (error) {
-      console.error("Failed to update passcode:", error);
-      setPasscodeEnabled(!enabled);
-      toast.error("Couldn't update passcode");
+    const disabled = await savePasscode(null);
+    if (disabled) {
+      setPasscodeEnabled(false);
+      toast.success("Passcode protection removed");
     }
   };
 
@@ -127,7 +213,7 @@ export function ShareWheelModal({
 
         {isModeratorView && (
           <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-            <div className="flex items-center justify-between mb-3">
+            <div className="mb-3 flex items-center justify-between">
               <label
                 htmlFor="passcode-toggle"
                 className="text-sm font-medium text-slate-700 dark:text-slate-300"
@@ -138,26 +224,43 @@ export function ShareWheelModal({
                 id="passcode-toggle"
                 checked={passcodeEnabled}
                 onCheckedChange={handlePasscodeToggle}
+                disabled={isLoadingSettings || isSavingPasscode}
               />
             </div>
 
             {passcodeEnabled && (
               <div className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <input
                     type="text"
                     value={passcode}
                     onChange={(e) => setPasscode(e.target.value.toUpperCase())}
-                    placeholder="XXXXXX"
-                    maxLength={6}
-                    className="flex-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-mono text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    placeholder={
+                      hasExistingPasscode ? "Enter a new passcode" : "XXXXXX"
+                    }
+                    maxLength={64}
+                    className="min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
+                    disabled={isSavingPasscode}
                   />
                   <Button
-                    onClick={generatePasscode}
+                    onClick={handleGeneratePasscode}
                     variant="secondary"
                     size="sm"
+                    disabled={isSavingPasscode}
                   >
                     Generate
+                  </Button>
+                  <Button
+                    onClick={handleSavePasscode}
+                    variant="secondary"
+                    size="sm"
+                    disabled={
+                      isSavingPasscode ||
+                      !passcode.trim() ||
+                      !passcodeValidation.ok
+                    }
+                  >
+                    Save code
                   </Button>
                   <Button
                     onClick={handleCopyPasscode}
@@ -169,8 +272,9 @@ export function ShareWheelModal({
                   </Button>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Share this passcode separately with participants. They'll need
-                  it to join the wheel.
+                  {hasExistingPasscode && !passcode
+                    ? "A passcode is already active. Enter a new code if you want to rotate it."
+                    : "Share this passcode separately with participants. They'll need it to join the wheel."}
                 </p>
               </div>
             )}
@@ -181,7 +285,7 @@ export function ShareWheelModal({
           <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
             Or scan this QR code:
           </p>
-          <div className="p-4 bg-white/80 dark:bg-slate-900/60 border border-white/50 dark:border-white/10 rounded-2xl shadow-sm">
+          <div className="rounded-2xl border border-white/50 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-slate-900/60">
             <Suspense fallback={<FallbackLoading />}>
               <QRCodeSVG
                 value={shareableUrl}
@@ -194,7 +298,7 @@ export function ShareWheelModal({
           </div>
         </div>
 
-        <div className="text-sm text-slate-600 dark:text-slate-300 italic">
+        <div className="text-sm italic text-slate-600 dark:text-slate-300">
           Anyone with this link{passcodeEnabled && " and passcode"} can join
           this wheel room.
         </div>

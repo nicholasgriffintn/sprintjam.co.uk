@@ -33,9 +33,7 @@ import { StandupPresentationView } from "@/components/standup/StandupPresentatio
 import { StandupResultsPanel } from "@/components/standup/StandupResultsPanel";
 import { StandupSidebar } from "@/components/standup/StandupSidebar";
 import { consumeStandupNotice } from "@/lib/standup-notice";
-import { toast } from "@/components/ui";
-import { getRecoveryPasskeyStorageKey } from "@/constants";
-import { safeLocalStorage } from "@/utils/storage";
+import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
 
 function getStandupKeyFromRoomPath(pathname: string): string | null {
   const match = pathname.match(/^\/standup\/room\/([A-Z0-9]+)$/i);
@@ -78,27 +76,12 @@ function StandupRoomContent({
     setRespondedCount,
     setParticipantCount,
   } = useStandupHeader();
-  useEffect(() => {
-    if (!isModeratorView) return;
-    const storageKey = getRecoveryPasskeyStorageKey(
-      "standup",
-      standupKey,
-      userName,
-    );
-    const stored = safeLocalStorage.get(storageKey);
-    if (!stored) return;
-    safeLocalStorage.remove(storageKey);
-    toast.info({
-      title: "Save your recovery passkey",
-      description:
-        "Use this passkey to reclaim your session from another browser or device if you get locked out.",
-      timeout: 0,
-      data: {
-        code: stored,
-        detail: "Keep this somewhere safe — it won't be shown again.",
-      },
-    });
-  }, [standupKey, userName, isModeratorView]);
+  useRecoveryPasskeyNotice({
+    feature: "standup",
+    sessionKey: standupKey,
+    userName,
+    enabled: isModeratorView,
+  });
   const [completionNotice, setCompletionNotice] = useState<string | null>(null);
   const [isCompletingStandup, setIsCompletingStandup] = useState(false);
   const [isLockingResponses, setIsLockingResponses] = useState(false);

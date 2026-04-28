@@ -1,4 +1,5 @@
 import type {
+  WheelAccessSettings,
   WheelData,
   WheelServerMessage,
   WheelSettings,
@@ -179,6 +180,36 @@ export async function recoverWheelSession(
       throw error;
     }
     throw new NetworkError("Failed to recover wheel session", { cause: error });
+  }
+}
+
+export async function getWheelAccessSettings(
+  wheelKey: string,
+  name?: string,
+): Promise<WheelAccessSettings> {
+  try {
+    const searchParams = new URLSearchParams({ wheelKey });
+    if (name) {
+      searchParams.set("name", name);
+    }
+
+    const response = await fetch(
+      `${WHEEL_API_BASE_URL}/wheels/settings?${searchParams.toString()}`,
+      {
+        credentials: "include",
+      },
+    );
+
+    return await handleJsonResponse<WheelAccessSettings>(
+      response,
+      "Failed to load wheel settings",
+    );
+  } catch (error) {
+    console.error("Error loading wheel access settings:", error);
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to load wheel settings", { cause: error });
   }
 }
 

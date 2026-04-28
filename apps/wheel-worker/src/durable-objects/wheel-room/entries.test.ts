@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import type { WheelData } from "@sprintjam/types";
+import type { WheelStateData } from "@sprintjam/types";
 import type { WheelRoom } from ".";
 
 import {
@@ -11,7 +11,7 @@ import {
   handleBulkAddEntries,
 } from "./entries";
 
-const baseWheelData: WheelData = {
+const baseWheelData: WheelStateData = {
   key: "wheel",
   entries: [],
   moderator: "mod",
@@ -34,7 +34,7 @@ const baseWheelData: WheelData = {
   status: "active",
 };
 
-const createWheel = (wheelData: WheelData): WheelRoom =>
+const createWheel = (wheelData: WheelStateData): WheelRoom =>
   ({
     getWheelData: vi.fn().mockResolvedValue(wheelData),
     repository: {

@@ -21,6 +21,7 @@ import type {
 } from "@sprintjam/db";
 import type {
   WheelData,
+  WheelStateData,
   WheelEntry,
   WheelSettings,
   SpinState,
@@ -52,7 +53,7 @@ export class WheelRoomRepository {
     await migrate(this.db, migrations);
   }
 
-  async getWheelData(): Promise<WheelData | undefined> {
+  async getWheelData(): Promise<WheelStateData | undefined> {
     const row = await this.db
       .select()
       .from(wheelMeta)
@@ -84,7 +85,7 @@ export class WheelRoomRepository {
       ? safeJsonParse<SpinState>(row.spinState)
       : null;
 
-    const wheelData: WheelData = {
+    const wheelData: WheelStateData = {
       key: row.wheelKey,
       entries: this.mapEntryRows(entries),
       moderator: row.moderator,
@@ -101,7 +102,7 @@ export class WheelRoomRepository {
     return wheelData;
   }
 
-  async replaceWheelData(wheelData: WheelData): Promise<void> {
+  async replaceWheelData(wheelData: WheelStateData): Promise<void> {
     await this.db.transaction((tx) => {
       const metaValues = this.toMetaRow(wheelData);
 
@@ -476,7 +477,7 @@ export class WheelRoomRepository {
       .get()?.userName;
   }
 
-  private toMetaRow(wheelData: WheelData): InsertWheelMetaItem {
+  private toMetaRow(wheelData: WheelStateData): InsertWheelMetaItem {
     return {
       id: WHEEL_ROW_ID,
       wheelKey: wheelData.key,
