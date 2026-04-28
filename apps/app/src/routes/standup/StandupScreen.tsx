@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { PageSection } from "@/components/layout/PageBackground";
+import { Footer } from "@/components/layout/Footer";
 
 const features = [
   {
@@ -110,6 +111,11 @@ export default function StandupScreen() {
           ))}
         </div>
       </motion.div>
+      <Footer
+        displayRepoLink={false}
+        fullWidth={false}
+        priorityLinksOnly={false}
+      />
     </PageSection>
   );
 }

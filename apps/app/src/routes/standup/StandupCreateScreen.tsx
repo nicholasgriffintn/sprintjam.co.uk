@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { PageSection } from "@/components/layout/PageBackground";
+import { Footer } from "@/components/layout/Footer";
 
 function buildStandupSessionName(): string {
   return `Standup ${new Intl.DateTimeFormat("en-GB", {
@@ -266,6 +267,11 @@ export default function StandupCreateScreen() {
           can join in.
         </p>
       </motion.div>
+      <Footer
+        displayRepoLink={false}
+        fullWidth={false}
+        priorityLinksOnly={true}
+      />
     </PageSection>
   );
 }

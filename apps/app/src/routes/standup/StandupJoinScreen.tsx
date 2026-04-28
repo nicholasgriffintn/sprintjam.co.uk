@@ -27,6 +27,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { PageSection } from "@/components/layout/PageBackground";
+import { Footer } from "@/components/layout/Footer";
 
 function getStandupKeyFromJoinPath(pathname: string): string {
   const match = pathname.match(/^\/standup\/join\/([A-Z0-9]+)$/i);
@@ -334,6 +335,11 @@ export default function StandupJoinScreen() {
           </motion.form>
         </SurfaceCard>
       </motion.div>
+      <Footer
+        displayRepoLink={false}
+        fullWidth={false}
+        priorityLinksOnly={true}
+      />
     </PageSection>
   );
 }

@@ -34,6 +34,7 @@ import { StandupResultsPanel } from "@/components/standup/StandupResultsPanel";
 import { StandupSidebar } from "@/components/standup/StandupSidebar";
 import { consumeStandupNotice } from "@/lib/standup-notice";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
+import { Footer } from "@/components/layout/Footer";
 
 function getStandupKeyFromRoomPath(pathname: string): string | null {
   const match = pathname.match(/^\/standup\/room\/([A-Z0-9]+)$/i);
@@ -239,6 +240,11 @@ function StandupRoomContent({
             </Button>
           </div>
         </SurfaceCard>
+        <Footer
+          displayRepoLink={false}
+          fullWidth={false}
+          priorityLinksOnly={true}
+        />
       </PageSection>
     );
   }
@@ -252,6 +258,11 @@ function StandupRoomContent({
             Connecting to standup...
           </p>
         </SurfaceCard>
+        <Footer
+          displayRepoLink={false}
+          fullWidth={false}
+          priorityLinksOnly={true}
+        />
       </PageSection>
     );
   }
@@ -365,6 +376,12 @@ function StandupRoomContent({
               </Tabs.Panel>
             </Tabs.Root>
           )}
+          <Footer
+            displayRepoLink={false}
+            layout="wide"
+            fullWidth={true}
+            priorityLinksOnly={true}
+          />
         </div>
       </motion.div>
     </div>
