@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Toast as BaseToast } from "@base-ui/react/toast";
 import type {
   ToastManagerAddOptions,
@@ -8,7 +8,9 @@ import type {
 } from "@base-ui/react/toast";
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
+  Copy,
   Info,
   Loader2,
   X,
@@ -26,6 +28,8 @@ type AppToastAction = {
 type AppToastData = {
   actions?: AppToastAction[];
   hideClose?: boolean;
+  code?: string;
+  detail?: string;
 };
 type AppToastOptions = ToastManagerAddOptions<AppToastData>;
 type AppToastUpdateOptions = ToastManagerUpdateOptions<AppToastData>;
@@ -170,13 +174,47 @@ const ToastViewport = () => {
   );
 };
 
+function ToastCodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-2 rounded-xl bg-white/50 px-3 py-2 dark:bg-white/5">
+      <code className="flex-1 truncate font-mono text-sm tracking-widest">
+        {code}
+      </code>
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label={copied ? "Copied" : "Copy passkey"}
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-current/10"
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+      </button>
+    </div>
+  );
+}
+
 function ToastItem({ toast }: { toast: ToastObject<AppToastData> }) {
   const toastType = getToastType(toast.type);
   const Icon = getToastIcon(toast.type);
   const isLoading = toast.type === "loading";
   const hasCustomActions = Boolean(toast.data?.actions?.length);
   const isCompactToast =
-    !toast.title && !toast.actionProps && !hasCustomActions;
+    !toast.title &&
+    !toast.actionProps &&
+    !hasCustomActions &&
+    !toast.data?.code;
 
   return (
     <BaseToast.Root
@@ -249,6 +287,12 @@ function ToastItem({ toast }: { toast: ToastObject<AppToastData> }) {
                   </button>
                 ))}
               </div>
+            ) : null}
+            {toast.data?.code ? (
+              <ToastCodeBlock code={toast.data.code} />
+            ) : null}
+            {toast.data?.detail ? (
+              <p className="mt-1.5 text-xs opacity-60">{toast.data.detail}</p>
             ) : null}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Gamepad2, Maximize2, X } from "lucide-react";
@@ -37,7 +37,7 @@ import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
 import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
-import { RecoveryPasskeyModal } from "@/components/ui/RecoveryPasskeyModal";
+import { toast } from "@/components/ui";
 import { getRecoveryPasskeyStorageKey } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 import { linkedRoomSessionQueryKey } from "@/lib/workspace-query";
@@ -96,22 +96,23 @@ const RoomScreen = () => {
     setIsHelpPanelOpen,
   } = useRoomHeader();
   const isSpectator = roomData?.spectators?.includes(name) ?? false;
-  const [recoveryPasskey, setRecoveryPasskey] = useState<string | null>(null);
   useEffect(() => {
     if (!roomData?.key || !name || !isModeratorView) return;
-    const stored = safeLocalStorage.get(
-      getRecoveryPasskeyStorageKey("room", roomData.key, name),
-    );
-    if (stored) setRecoveryPasskey(stored);
+    const storageKey = getRecoveryPasskeyStorageKey("room", roomData.key, name);
+    const stored = safeLocalStorage.get(storageKey);
+    if (!stored) return;
+    safeLocalStorage.remove(storageKey);
+    toast.info({
+      title: "Save your recovery passkey",
+      description:
+        "Use this passkey to reclaim your session from another browser or device if you get locked out.",
+      timeout: 0,
+      data: {
+        code: stored,
+        detail: "Keep this somewhere safe — it won't be shown again.",
+      },
+    });
   }, [roomData?.key, name, isModeratorView]);
-  const handleDismissPasskeyModal = useCallback(() => {
-    if (roomData?.key && name) {
-      safeLocalStorage.remove(
-        getRecoveryPasskeyStorageKey("room", roomData.key, name),
-      );
-    }
-    setRecoveryPasskey(null);
-  }, [roomData?.key, name]);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isCompleteSessionOpen, setIsCompleteSessionOpen] = useState(false);
@@ -287,11 +288,6 @@ const RoomScreen = () => {
         onRetryConnection={retryConnection}
         onLeaveRoom={handleLeaveRoom}
         onClearRoomError={clearRoomError}
-      />
-
-      <RecoveryPasskeyModal
-        passkey={recoveryPasskey}
-        onDismiss={handleDismissPasskeyModal}
       />
 
       <motion.div
