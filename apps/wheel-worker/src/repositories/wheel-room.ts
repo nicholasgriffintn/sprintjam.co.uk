@@ -20,7 +20,6 @@ import type {
   WheelDB,
 } from "@sprintjam/db";
 import type {
-  WheelData,
   WheelStateData,
   WheelEntry,
   WheelSettings,

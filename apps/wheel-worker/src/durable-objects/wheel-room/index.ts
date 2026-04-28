@@ -9,7 +9,6 @@ import type {
 
 import type {
   WheelWorkerEnv,
-  WheelData,
   WheelStateData,
   WheelBroadcastMessage,
   WheelSessionInfo,

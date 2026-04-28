@@ -1,7 +1,6 @@
 import type { WheelRoom } from "../../durable-objects/wheel-room";
 import type {
   WheelAccessSettings,
-  WheelData,
   WheelStateData,
   WheelSettings,
   WheelWorkerEnv,

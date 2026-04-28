@@ -68,8 +68,6 @@ describe("wheel http controller", () => {
   });
 
   it("does not expose passcode hashes in session responses", async () => {
-    const passcodeHash = await hashPasscode("SECRET");
-    const wheelData = buildWheelData({ passcodeHash });
     const context = buildContext({
       getWheelData: vi.fn().mockResolvedValue(undefined),
       putWheelData: vi.fn().mockResolvedValue(undefined),
