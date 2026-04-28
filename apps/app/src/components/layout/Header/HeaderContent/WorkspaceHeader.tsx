@@ -3,11 +3,8 @@ import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
 import { useSessionActions, useSessionState } from "@/context/SessionContext";
-import {
-  getWorkspaceNavItems,
-  navigateTo,
-  type AppScreen,
-} from "@/config/routes";
+import { navigateTo, type AppScreen } from "@/config/routes";
+import { getWorkspaceNavItems } from "@/config/routes/derived";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { HeaderLogo } from "../HeaderLogo";

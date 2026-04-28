@@ -13,7 +13,7 @@ import {
   getScreenFromPath,
 } from "@/config/routes/navigation";
 import {
-  getRouteConfig,
+  getRouteDefinition,
   getBackgroundVariant,
   getHeaderVariant,
   getMarketingVariant,
@@ -22,7 +22,7 @@ import {
   getAdminSidebarItems,
   getScreensInGroup,
 } from "@/config/routes/derived";
-import { ROUTES, type AppScreen } from "@/config/routes/registry";
+import { ROUTES, getRouteConfig, type AppScreen } from "@/config/routes/registry";
 
 describe("navigation", () => {
   describe("parsePath", () => {
@@ -297,24 +297,23 @@ describe("navigation", () => {
 });
 
 describe("derived", () => {
-  describe("getRouteConfig", () => {
+  describe("getRouteDefinition", () => {
     it("returns route config for known screens", () => {
-      const config = getRouteConfig("welcome");
+      const config = getRouteDefinition("welcome");
       expect(config).toBeDefined();
       expect(config?.screen).toBe("welcome");
     });
 
     it("returns undefined for unknown screens", () => {
-      const config = getRouteConfig("unknown" as AppScreen);
+      const config = getRouteDefinition("unknown" as AppScreen);
       expect(config).toBeUndefined();
     });
 
     it("includes all expected properties in route config", () => {
-      const config = getRouteConfig("create");
+      const config = getRouteDefinition("create");
       expect(config).toHaveProperty("screen");
       expect(config).toHaveProperty("path");
       expect(config).toHaveProperty("group");
-      expect(config).toHaveProperty("component");
       expect(config).toHaveProperty("meta");
     });
   });

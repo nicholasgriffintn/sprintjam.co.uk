@@ -1,9 +1,6 @@
 import { cn } from "@/lib/cn";
-import {
-  getAdminSidebarItems,
-  navigateTo,
-  type AppScreen,
-} from "@/config/routes";
+import { navigateTo, type AppScreen } from "@/config/routes";
+import { getAdminSidebarItems } from "@/config/routes/derived";
 import { useSessionActions } from "@/context/SessionContext";
 
 interface AdminSidebarProps {

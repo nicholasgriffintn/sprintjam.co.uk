@@ -1,5 +1,5 @@
-import type { RouteConfig } from "./types";
-import { ROUTES, type AppScreen } from "./registry";
+import { ROUTE_DEFINITIONS, type AppScreen } from "./definitions";
+import type { RoutePathParams } from "./types";
 import { RETURN_URL_KEY } from "@/constants";
 
 export interface ParsedPath {
@@ -8,16 +8,19 @@ export interface ParsedPath {
   standupKey?: string;
 }
 
-type RouteEntry = RouteConfig<AppScreen>;
+type RouteEntry = (typeof ROUTE_DEFINITIONS)[number];
+type DynamicRouteEntry = Extract<RouteEntry, { pathPattern: RegExp }>;
 
-let dynamicRoutes: RouteEntry[] | undefined;
+let dynamicRoutes: DynamicRouteEntry[] | undefined;
 let staticPathToScreen: Map<string, AppScreen> | undefined;
 
-function getDynamicRoutes(): RouteEntry[] {
+function isDynamicRoute(route: RouteEntry): route is DynamicRouteEntry {
+  return "pathPattern" in route;
+}
+
+function getDynamicRoutes(): DynamicRouteEntry[] {
   if (!dynamicRoutes) {
-    dynamicRoutes = (ROUTES as readonly RouteEntry[]).filter(
-      (r) => r.pathPattern,
-    );
+    dynamicRoutes = ROUTE_DEFINITIONS.filter(isDynamicRoute);
   }
   return dynamicRoutes;
 }
@@ -25,7 +28,7 @@ function getDynamicRoutes(): RouteEntry[] {
 function getStaticPathToScreen(): Map<string, AppScreen> {
   if (!staticPathToScreen) {
     staticPathToScreen = new Map<string, AppScreen>(
-      (ROUTES as readonly RouteEntry[])
+      ROUTE_DEFINITIONS
         .filter((r) => typeof r.path === "string")
         .map((r) => [r.path as string, r.screen]),
     );
@@ -81,11 +84,7 @@ export function parsePath(path: string): ParsedPath {
   return { screen: "404" };
 }
 
-export type RouteParams = {
-  roomKey?: string;
-  wheelKey?: string;
-  standupKey?: string;
-};
+export type RouteParams = RoutePathParams;
 
 function normaliseParams(
   params?: RouteParams | string,
@@ -100,9 +99,7 @@ export function getPathFromScreen(
   screen: AppScreen,
   params?: RouteParams | string,
 ): string {
-  const route = (ROUTES as readonly RouteEntry[]).find(
-    (r) => r.screen === screen,
-  );
+  const route = ROUTE_DEFINITIONS.find((r) => r.screen === screen);
   if (!route) return "/404";
 
   const resolvedParams = normaliseParams(params);

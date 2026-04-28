@@ -23,13 +23,9 @@ import { WheelHeaderProvider } from "@/context/WheelHeaderContext";
 import { StandupHeaderProvider } from "@/context/StandupHeaderContext";
 import { ErrorBannerServerDefaults } from "@/components/errors/ErrorBannerServerDefaults";
 import { PageBackground } from "@/components/layout/PageBackground";
-import { useWorkspaceIdentitySync } from '@/hooks/useWorkspaceIdentitySync';
-import {
-  ROUTES,
-  getBackgroundVariant,
-  getRouteConfig,
-  getRoomScreenLoader,
-} from "@/config/routes";
+import { useWorkspaceIdentitySync } from "@/hooks/useWorkspaceIdentitySync";
+import { getBackgroundVariant } from "@/config/routes/derived";
+import { getRoomScreenLoader, getRouteConfig } from "@/config/routes/registry";
 
 const preloadRoomScreen = () => {
   void getRoomScreenLoader();
@@ -74,7 +70,7 @@ const AppContent = () => {
     const route = getRouteConfig(screen);
 
     if (!route) {
-      const notFoundRoute = ROUTES.find((r) => r.screen === "404");
+      const notFoundRoute = getRouteConfig("404");
       if (notFoundRoute) {
         const NotFoundComponent = notFoundRoute.component;
         return <NotFoundComponent />;
@@ -107,7 +103,7 @@ const AppContent = () => {
         />
       )}
 
-      {error && screen !== 'room' && (
+      {error && screen !== "room" && (
         <ErrorBanner message={error} onClose={clearError} />
       )}
 

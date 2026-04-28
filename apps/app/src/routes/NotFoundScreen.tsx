@@ -6,7 +6,7 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 
 const NotFoundScreen = () => {
-  usePageMeta(META_CONFIGS.notFound);
+  usePageMeta(META_CONFIGS["404"]);
 
   return (
     <PageSection maxWidth="xl">

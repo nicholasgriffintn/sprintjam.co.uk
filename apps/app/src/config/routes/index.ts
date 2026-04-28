@@ -1,4 +1,2 @@
-export * from "./registry";
-export type * from "./types";
-export * from "./derived";
+export type { AppScreen } from "./definitions";
 export * from "./navigation";

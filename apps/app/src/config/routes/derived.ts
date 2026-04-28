@@ -1,5 +1,5 @@
-import type { RouteGroup, RouteConfig } from "./types";
-import { ROUTES, type AppScreen } from "./registry";
+import { ROUTE_DEFINITIONS, type AppScreen } from "./definitions";
+import type { RouteDefinition, RouteGroup } from "./types";
 import type { PageBackgroundVariant } from "@/components/layout/PageBackground";
 import type {
   HeaderVariant,
@@ -7,14 +7,15 @@ import type {
 } from "@/components/layout/Header/types";
 import type { MetaTagConfig } from "@/utils/meta";
 
-type RouteEntry = RouteConfig<AppScreen>;
+type RouteEntry = RouteDefinition<AppScreen>;
+const ROUTE_ENTRIES: readonly RouteEntry[] = ROUTE_DEFINITIONS;
 
 let routeByScreen: Map<AppScreen, RouteEntry> | undefined;
 
 function getRouteByScreen(): Map<AppScreen, RouteEntry> {
   if (!routeByScreen) {
     routeByScreen = new Map<AppScreen, RouteEntry>(
-      (ROUTES as readonly RouteEntry[]).map((route) => [route.screen, route]),
+      ROUTE_ENTRIES.map((route) => [route.screen, route]),
     );
   }
   return routeByScreen;
@@ -40,7 +41,7 @@ const GROUP_HEADERS: Record<RouteGroup, HeaderVariant> = {
   standup: "standup",
 };
 
-export function getRouteConfig(screen: AppScreen): RouteEntry | undefined {
+export function getRouteDefinition(screen: AppScreen): RouteEntry | undefined {
   return getRouteByScreen().get(screen);
 }
 
@@ -68,7 +69,7 @@ export function getMetaConfig(screen: AppScreen): MetaTagConfig | undefined {
 }
 
 export function getWorkspaceNavItems() {
-  return (ROUTES as readonly RouteEntry[])
+  return ROUTE_ENTRIES
     .filter((r) => r.group === "workspace" && r.nav && !r.parent)
     .sort((a, b) => (a.nav?.order ?? 99) - (b.nav?.order ?? 99))
     .map((route) => ({
@@ -82,7 +83,7 @@ export function getWorkspaceNavItems() {
 }
 
 export function getAdminSidebarItems() {
-  return (ROUTES as readonly RouteEntry[])
+  return ROUTE_ENTRIES
     .filter(
       (r) =>
         (r.parent === "workspaceAdmin" || r.screen === "workspaceAdmin") &&
@@ -97,7 +98,7 @@ export function getAdminSidebarItems() {
 }
 
 export function getScreensInGroup(group: RouteGroup): AppScreen[] {
-  return (ROUTES as readonly RouteEntry[])
-    .filter((r) => r.group === group)
-    .map((r) => r.screen);
+  return ROUTE_ENTRIES.filter((r) => r.group === group).map(
+    (r) => r.screen,
+  );
 }
