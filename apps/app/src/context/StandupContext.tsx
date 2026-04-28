@@ -22,7 +22,6 @@ import {
   lockStandupResponses,
   pingStandup,
   removeStandupReaction,
-  setStandupTheme,
   startStandupPresentation,
   submitStandupResponse,
   unlockStandupResponses,
@@ -53,7 +52,6 @@ interface StandupActionsContextValue {
   handlePing: () => void;
   handleAddReaction: (responseUserName: string, emoji: string) => void;
   handleRemoveReaction: (responseUserName: string, emoji: string) => void;
-  handleSetTheme: (theme: string) => void;
 }
 
 const StandupStateContext = createContext<StandupStateContextValue | null>(
@@ -266,12 +264,6 @@ export function StandupProvider({
         });
         break;
 
-      case "themeUpdated":
-        setStandupData((prev) =>
-          prev ? { ...prev, presentationTheme: message.theme } : prev,
-        );
-        break;
-
       case "error":
       case "disconnected":
         setStandupError(message.error);
@@ -338,7 +330,6 @@ export function StandupProvider({
     handlePing: pingStandup,
     handleAddReaction: addStandupReaction,
     handleRemoveReaction: removeStandupReaction,
-    handleSetTheme: setStandupTheme,
   };
 
   return (

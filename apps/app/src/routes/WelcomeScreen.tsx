@@ -79,7 +79,7 @@ const sprintFlow = [
     actionLabel: "Run a standup",
     testId: "homepage-flow-standup",
     action: "standup" as const,
-    beta: true,
+    beta: false,
   },
 ];
 
@@ -266,7 +266,6 @@ const WelcomeScreen = () => {
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400/20 to-purple-500/20 text-violet-600">
                   {sprintFlow[2].icon}
                 </div>
-                <BetaBadge />
               </div>
               <div className="flex-1 space-y-2">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">

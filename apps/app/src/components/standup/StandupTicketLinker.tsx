@@ -288,6 +288,11 @@ export function StandupTicketLinker({
           <Alert variant="info">
             Sign in to link tickets from your team integrations.
           </Alert>
+        ) : integrationsQuery.error instanceof HttpError &&
+          integrationsQuery.error.status === 403 ? (
+          <Alert variant="info">
+            You need to be a member of this team to link tickets.
+          </Alert>
         ) : (
           <Alert variant="warning">{integrationsQuery.error.message}</Alert>
         )

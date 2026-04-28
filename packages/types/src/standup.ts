@@ -38,5 +38,4 @@ export interface StandupData {
   teamId?: number;
   focusedUser?: string;
   reactions?: Record<string, Record<string, string[]>>;
-  presentationTheme?: string;
 }

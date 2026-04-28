@@ -10,7 +10,6 @@ import { HeaderLogo } from "./HeaderLogo";
 import DarkModeToggle from "./DarkModeToggle";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 import { HEADER_TRANSITION } from "@/constants";
-import { BetaBadge } from '../../BetaBadge';
 
 const STATUS_BADGE_VARIANTS = {
   active: "success",
@@ -72,13 +71,14 @@ export const StandupHeader: FC = () => {
           layoutId="app-header-logo"
         />
 
-        <BetaBadge />
-
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           {standupKey && (
             <>
               <div className="flex items-center gap-2 rounded-2xl border border-black/5 bg-black/5 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white">
-                <span className="font-mono text-xs tracking-[0.3em] sm:text-sm">
+                <span
+                  data-testid="standup-room-key"
+                  className="font-mono text-xs tracking-[0.3em] sm:text-sm"
+                >
                   {standupKey}
                 </span>
                 {standupStatus ? (
@@ -110,7 +110,7 @@ export const StandupHeader: FC = () => {
                 }
                 className="hidden sm:inline-flex"
               >
-                {isCopied ? 'Copied' : 'Copy link'}
+                {isCopied ? "Copied" : "Copy link"}
               </Button>
             </>
           )}

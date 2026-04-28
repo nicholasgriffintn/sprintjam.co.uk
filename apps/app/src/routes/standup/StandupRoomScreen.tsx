@@ -71,7 +71,6 @@ function StandupRoomContent({
     handleFocusUser,
     handleAddReaction,
     handleRemoveReaction,
-    handleSetTheme,
   } = useStandupActions();
   const {
     setStandupKey,
@@ -273,7 +272,10 @@ function StandupRoomContent({
   const isPresentationMode = standupData.status === "presenting";
 
   return (
-    <div className="min-h-[calc(100vh-65px)] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div
+      data-testid="standup-room"
+      className="min-h-[calc(100vh-65px)] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white"
+    >
       <RecoveryPasskeyModal
         passkey={recoveryPasskey}
         onDismiss={handleDismissPasskeyModal}
@@ -370,7 +372,6 @@ function StandupRoomContent({
                   onStartPresentation={onStartPresentation}
                   onCompleteStandup={onCompleteStandup}
                   onFocusUser={handleFocusUser}
-                  onSetTheme={handleSetTheme}
                   isLockingResponses={isLockingResponses}
                   isStartingPresentation={isStartingPresentation}
                   isCompletingStandup={isCompletingStandup}

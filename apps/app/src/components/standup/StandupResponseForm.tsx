@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Textarea } from "@/components/ui/Textarea";
 import { cn } from "@/lib/cn";
+import { StandupTicketLinker } from "./StandupTicketLinker";
 
 interface StandupResponseFormProps {
   response?: StandupResponse;
@@ -82,6 +83,7 @@ function formatTime(timestamp: number) {
 export function StandupResponseForm({
   response,
   status,
+  teamId,
   isModeratorView,
   isSocketConnected,
   onSubmit,
@@ -591,7 +593,7 @@ export function StandupResponseForm({
             </label>
           </section>
 
-          {/* {teamId ? (
+          {teamId ? (
             <StandupTicketLinker
               teamId={teamId}
               linkedTickets={draft.linkedTickets}
@@ -603,10 +605,11 @@ export function StandupResponseForm({
               }
               disabled={!isSocketConnected || isReadOnly}
             />
-          ) : null} */}
+          ) : null}
 
           <Button
             type="submit"
+            data-testid="standup-submit"
             fullWidth
             disabled={isSubmitDisabled}
             isLoading={isSubmitting}

@@ -12,19 +12,20 @@ const features = [
   {
     icon: <Zap className="h-5 w-5" />,
     title: "Fresh each day",
-    description: "Every standup is a single-use room with a clean join link.",
+    description:
+      "Single-use rooms with a new join link every session. Nothing carries over.",
   },
   {
     icon: <Shield className="h-5 w-5" />,
     title: "Private by default",
     description:
-      "Participants do not receive each other&apos;s response content over the socket.",
+      "Response content is visible to the moderator only. Participants see summaries, not each other's updates.",
   },
   {
     icon: <Briefcase className="h-5 w-5" />,
     title: "Workspace-aware",
     description:
-      "Team standups can link provider tickets and appear in workspace history.",
+      "Link Jira, Linear, or GitHub issues to your update and open them directly during the live walkthrough.",
   },
 ] as const;
 
@@ -49,11 +50,11 @@ export default function StandupScreen() {
               Standup facilitation
             </Badge>
             <h1 className="text-3xl font-semibold leading-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
-              Collaborative daily standup rooms for distributed teams
+              Daily standups for distributed teams
             </h1>
-            <p className="text-base text-slate-600 dark:text-slate-300 sm:text-lg">
-              Run check-ins asynchronously or live, keep updates focused, and
-              move smoothly from written prep into facilitator-led presentation.
+            <p className="mx-auto max-w-[60ch] text-base text-slate-600 dark:text-slate-300 sm:text-lg">
+              Collect updates async before the meeting, then walk through them
+              live with full facilitator controls. No account required.
             </p>
           </div>
         </div>

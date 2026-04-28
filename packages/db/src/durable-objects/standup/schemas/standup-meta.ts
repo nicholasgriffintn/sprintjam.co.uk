@@ -12,7 +12,6 @@ export const standupMeta = sqliteTable("standup_meta", {
   status: text("status").notNull().default("active"),
   passcode: text("passcode"),
   teamId: integer("team_id"),
-  presentationTheme: text("presentation_theme").default("default"),
   createdAt: integer("created_at").notNull(),
 });
 

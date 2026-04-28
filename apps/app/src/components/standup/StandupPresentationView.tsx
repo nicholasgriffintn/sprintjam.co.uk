@@ -14,15 +14,6 @@ import { StandupUserCard } from "@/components/standup/StandupUserCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { cn } from "@/lib/cn";
-
-const THEME_CLASSES: Record<string, string> = {
-  default: "",
-  cosmic: "bg-indigo-950 text-white",
-  forest: "bg-emerald-950 text-white",
-  ocean: "bg-sky-950 text-white",
-  sunset: "bg-orange-950 text-white",
-};
 
 interface StandupPresentationViewProps {
   standupData: StandupData;
@@ -119,9 +110,6 @@ export function StandupPresentationView({
     onFocusUser(shuffled[0]!);
   }, [orderedResponses, onFocusUser]);
 
-  const theme = standupData.presentationTheme ?? "default";
-  const themeClass = THEME_CLASSES[theme] ?? "";
-
   if (!orderedResponses.length) {
     return (
       <SurfaceCard className="space-y-4 py-16 text-center">
@@ -145,24 +133,11 @@ export function StandupPresentationView({
   }
 
   return (
-    <div
-      className={cn("space-y-6 rounded-2xl p-1 transition-colors", themeClass)}
-    >
-      <SurfaceCard
-        className={cn(
-          "space-y-5",
-          themeClass &&
-            "bg-white/10 border-white/20 backdrop-blur-sm dark:bg-white/5",
-        )}
-      >
+    <div className="space-y-6">
+      <SurfaceCard className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
-            <h2
-              className={cn(
-                "text-3xl font-semibold tracking-tight",
-                themeClass ? "text-white" : "text-slate-900 dark:text-white",
-              )}
-            >
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Walk the team through one update at a time
             </h2>
             <div className="flex flex-wrap items-center gap-3">

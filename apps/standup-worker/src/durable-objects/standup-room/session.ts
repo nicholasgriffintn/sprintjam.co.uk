@@ -49,18 +49,12 @@ interface RemoveReactionMessage extends StandupClientMessage {
   emoji: string;
 }
 
-interface SetThemeMessage extends StandupClientMessage {
-  type: "setTheme";
-  theme: string;
-}
-
 type ValidatedMessage =
   | SubmitResponseMessage
   | FocusUserMessage
   | CompleteStandupMessage
   | AddReactionMessage
   | RemoveReactionMessage
-  | SetThemeMessage
   | { type: "lockResponses" }
   | { type: "unlockResponses" }
   | { type: "startPresentation" }
@@ -81,13 +75,6 @@ const LIMITS = {
 
 const ALLOWED_TICKET_PROVIDERS = new Set(["jira", "linear", "github"]);
 const ALLOWED_REACTION_EMOJIS = new Set(["👏", "🎉", "💡", "❤️"]);
-const ALLOWED_THEMES = new Set([
-  "default",
-  "cosmic",
-  "forest",
-  "ocean",
-  "sunset",
-]);
 
 function normaliseNonEmptyString(
   value: unknown,
@@ -312,13 +299,6 @@ function validateClientMessage(
         return { error: "Invalid removeReaction: unsupported emoji" };
       }
       return { type: "removeReaction", responseUserName, emoji: msg.emoji };
-    }
-
-    case "setTheme": {
-      if (typeof msg.theme !== "string" || !ALLOWED_THEMES.has(msg.theme)) {
-        return { error: "Invalid setTheme: unsupported theme" };
-      }
-      return { type: "setTheme", theme: msg.theme };
     }
 
     case "lockResponses":
@@ -557,16 +537,6 @@ export async function handleSession(
           }
           break;
         }
-
-        case "setTheme":
-          if (canonicalUserName === currentStandup.moderator) {
-            standup.repository.setTheme(validated.theme);
-            standup.broadcast({
-              type: "themeUpdated",
-              theme: validated.theme,
-            });
-          }
-          break;
       }
     } catch (err: unknown) {
       console.error("WebSocket message error:", err);

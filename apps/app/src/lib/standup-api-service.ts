@@ -70,7 +70,6 @@ export type StandupServerMessage =
       reactingUserName: string;
       emoji: string;
     }
-  | { type: "themeUpdated"; theme: string }
   | { type: "pong" }
   | { type: "error"; error: string; reason?: SocketErrorReason }
   | { type: "disconnected"; error: string; reason: "disconnect" };
@@ -423,8 +422,4 @@ export function removeStandupReaction(
     responseUserName,
     emoji,
   });
-}
-
-export function setStandupTheme(theme: string): void {
-  sendWebSocketMessage(activeSocket, { type: "setTheme", theme });
 }

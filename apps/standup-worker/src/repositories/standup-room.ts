@@ -89,7 +89,6 @@ export class StandupRoomRepository {
       userAvatars,
       teamId: row.teamId ?? undefined,
       reactions,
-      presentationTheme: row.presentationTheme ?? "default",
     };
   }
 
@@ -110,7 +109,6 @@ export class StandupRoomRepository {
         status: "active",
         passcode: passcode ?? null,
         teamId: teamId ?? null,
-        presentationTheme: "default",
         createdAt: now,
       } satisfies InsertStandupMetaItem)
       .run();
@@ -161,14 +159,6 @@ export class StandupRoomRepository {
     this.db
       .update(standupMeta)
       .set({ status })
-      .where(eq(standupMeta.id, STANDUP_ROW_ID))
-      .run();
-  }
-
-  setTheme(theme: string) {
-    this.db
-      .update(standupMeta)
-      .set({ presentationTheme: theme })
       .where(eq(standupMeta.id, STANDUP_ROW_ID))
       .run();
   }
