@@ -64,8 +64,6 @@ export const WheelHeader: FC = () => {
             </div>
           </div>
         ) : null}
-
-        {wheelKey ? <BetaBadge /> : null}
       </motion.div>
 
       {wheelKey ? (

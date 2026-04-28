@@ -240,7 +240,6 @@ const WelcomeScreen = () => {
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400/20 to-pink-500/20 text-orange-500">
                   {sprintFlow[0].icon}
                 </div>
-                <BetaBadge />
               </div>
               <div className="flex-1 space-y-2">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
