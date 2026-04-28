@@ -2,7 +2,6 @@
  * @vitest-environment jsdom
  */
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sessionStateMock = {
@@ -21,6 +20,18 @@ const workspaceDataMock = {
         email: string;
         avatar: string;
       }
+    | null,
+};
+const sessionErrorMock = {
+  error: "",
+  errorKind: null as
+    | "permission"
+    | "auth"
+    | "passcode"
+    | "network"
+    | "validation"
+    | "conflict"
+    | "unknown"
     | null,
 };
 
@@ -49,8 +60,8 @@ vi.mock("@/context/SessionContext", () => ({
     goToWorkspaceProfile: mockGoToWorkspaceProfile,
   }),
   useSessionErrors: () => ({
-    error: "",
-    errorKind: null,
+    error: sessionErrorMock.error,
+    errorKind: sessionErrorMock.errorKind,
     clearError: mockClearError,
   }),
 }));
@@ -73,53 +84,6 @@ vi.mock("@/hooks/usePageMeta", () => ({
   usePageMeta: vi.fn(),
 }));
 
-vi.mock("@/components/AvatarSelector", () => ({
-  default: () => <div data-testid="avatar-selector" />,
-}));
-
-vi.mock("@/components/layout/PageBackground", () => ({
-  PageSection: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/ui/SurfaceCard", () => ({
-  SurfaceCard: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/ui/Button", () => ({
-  Button: ({
-    children,
-    onClick,
-    disabled,
-    type = "button",
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-    <button type={type} onClick={onClick} disabled={disabled} {...props}>
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@/components/ui/Input", () => ({
-  Input: ({ id, label, value, onChange, ...props }: any) => (
-    <label htmlFor={id}>
-      {typeof label === "string" ? label : "input"}
-      <input id={id} value={value} onChange={onChange} {...props} />
-    </label>
-  ),
-}));
-
-vi.mock("@/components/ui/Alert", () => ({
-  Alert: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/ui/Avatar", () => ({
-  Avatar: ({ fallback }: { fallback?: ReactNode }) => <div>{fallback}</div>,
-}));
-
-vi.mock("@/components/layout/Footer", () => ({
-  Footer: () => null,
-}));
-
 import JoinRoomScreen from "@/routes/JoinRoomScreen";
 
 describe("JoinRoomScreen", () => {
@@ -130,6 +94,8 @@ describe("JoinRoomScreen", () => {
     sessionStateMock.passcode = "";
     sessionStateMock.selectedAvatar = "user";
     sessionStateMock.joinFlowMode = "join";
+    sessionErrorMock.error = "";
+    sessionErrorMock.errorKind = null;
     workspaceDataMock.isAuthenticated = false;
     workspaceDataMock.user = null;
   });
@@ -144,13 +110,26 @@ describe("JoinRoomScreen", () => {
 
     render(<JoinRoomScreen />);
 
-    expect(screen.queryByTestId("avatar-selector")).toBeNull();
     expect(screen.queryByPlaceholderText("Team member name")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /use custom emoji/i }),
+    ).toBeNull();
 
     fireEvent.click(screen.getByTestId("join-room-submit"));
 
     expect(mockClearError).toHaveBeenCalled();
     expect(mockHandleJoinRoom).toHaveBeenCalled();
     expect(mockSetJoinFlowMode).not.toHaveBeenCalledWith("join");
+  });
+
+  it("shows the rejoin guidance for expired sessions", () => {
+    sessionErrorMock.error = "Session expired. Please rejoin the room.";
+    sessionErrorMock.errorKind = "auth";
+
+    render(<JoinRoomScreen />);
+
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Session expired. Rejoin with a fresh link.",
+    );
   });
 });

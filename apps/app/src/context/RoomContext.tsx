@@ -163,7 +163,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
         if (isAuthError) {
           setScreen("join");
-          setError(message, "passcode");
+          setError(message, "auth");
           return;
         }
 

@@ -8,6 +8,7 @@ import { joinStandup, recoverStandupSession } from "@/lib/standup-api-service";
 
 const mockSetScreen = vi.fn();
 const mockNavigateTo = vi.fn();
+const mockPersistUserName = vi.fn();
 
 vi.mock("@/context/SessionContext", () => ({
   useSessionActions: () => ({ setScreen: mockSetScreen }),
@@ -21,6 +22,7 @@ vi.mock("@/hooks/useUserPersistence", () => ({
   useUserPersistence: vi.fn(),
   getStoredUserName: () => "",
   getStoredUserAvatar: () => null,
+  persistUserName: (...args: unknown[]) => mockPersistUserName(...args),
 }));
 
 vi.mock("@/utils/avatars", () => ({
@@ -113,6 +115,7 @@ describe("StandupJoinScreen", () => {
     });
 
     expect(mockSetScreen).toHaveBeenCalledWith("standupRoom");
+    expect(mockPersistUserName).toHaveBeenCalledWith("Bob");
     expect(mockNavigateTo).toHaveBeenCalledWith("standupRoom", {
       standupKey: "ABC123",
     });
@@ -225,5 +228,7 @@ describe("StandupJoinScreen", () => {
       );
       expect(mockSetScreen).toHaveBeenCalledWith("standupRoom");
     });
+
+    expect(mockPersistUserName).toHaveBeenCalledWith("Bob");
   });
 });

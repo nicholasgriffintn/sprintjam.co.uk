@@ -73,13 +73,15 @@ test.describe("Standup — create and join", () => {
     try {
       const page = await context.newPage();
 
-      await page.route("**/standups/join", (route) =>
+      await page.route("**/api/standups/join", (route) =>
         route.fulfill({
-          status: 200,
-          contentType: "application/json",
+          status: 401,
+          headers: {
+            "content-type": "application/json",
+            "x-error-kind": "passcode",
+          },
           body: JSON.stringify({
-            error: "PASSCODE_REQUIRED",
-            code: "PASSCODE_REQUIRED",
+            error: "Passcode is required",
           }),
         }),
       );
@@ -130,8 +132,6 @@ test.describe("Standup — response submission", () => {
 
     try {
       await facilitatorRoom.setAttendance("in-person");
-      await facilitatorRoom.fillYesterday("Kicked off sprint planning");
-      await facilitatorRoom.fillToday("Run the standup");
       await facilitatorRoom.setBlocker(false);
       await facilitatorRoom.submitResponse();
       await facilitatorRoom.expectResponseSubmitted();
@@ -166,8 +166,6 @@ test.describe("Standup — facilitator controls", () => {
 
     try {
       await facilitatorRoom.setAttendance("in-person");
-      await facilitatorRoom.fillYesterday("Reviewed PRs");
-      await facilitatorRoom.fillToday("Lead standup");
       await facilitatorRoom.setBlocker(false);
       await facilitatorRoom.submitResponse();
       await facilitatorRoom.expectResponseSubmitted();
@@ -187,8 +185,6 @@ test.describe("Standup — facilitator controls", () => {
 
     try {
       await facilitatorRoom.setAttendance("in-person");
-      await facilitatorRoom.fillYesterday("Shipped feature");
-      await facilitatorRoom.fillToday("Write tests");
       await facilitatorRoom.setBlocker(false);
       await facilitatorRoom.submitResponse();
       await facilitatorRoom.expectResponseSubmitted();

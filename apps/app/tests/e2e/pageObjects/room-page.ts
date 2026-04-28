@@ -8,9 +8,15 @@ export class RoomPage {
   }
 
   async dismissRecoveryPasskeyModalIfPresent() {
-    const button = this.page.getByRole("button", { name: "Got it" });
-    if (await button.isVisible()) {
-      await button.click();
+    const toastClose = this.page.getByLabel("Close notification");
+    if (await toastClose.isVisible()) {
+      await toastClose.click();
+      return;
+    }
+
+    const legacyButton = this.page.getByRole("button", { name: /got it/i });
+    if (await legacyButton.isVisible()) {
+      await legacyButton.click();
     }
   }
 

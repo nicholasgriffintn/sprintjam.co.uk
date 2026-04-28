@@ -8,6 +8,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import {
   getStoredUserAvatar,
   getStoredUserName,
+  persistUserName,
   useUserPersistence,
 } from "@/hooks/useUserPersistence";
 import { sanitiseAvatarValue } from "@/utils/avatars";
@@ -74,8 +75,9 @@ export default function StandupCreateScreen() {
     setError(null);
 
     try {
+      const normalizedUserName = userName.trim();
       const response = await createStandup(
-        userName.trim(),
+        normalizedUserName,
         passcode.trim() || undefined,
         avatarValue,
         teamIdForCreate,
@@ -103,12 +105,13 @@ export default function StandupCreateScreen() {
           getRecoveryPasskeyStorageKey(
             "standup",
             response.standup.key,
-            userName.trim(),
+            normalizedUserName,
           ),
           response.recoveryPasskey,
         );
       }
 
+      persistUserName(normalizedUserName);
       setScreen("standupRoom");
       navigateTo("standupRoom", { standupKey: response.standup.key });
     } catch (submitError) {

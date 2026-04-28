@@ -8,6 +8,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import {
   getStoredUserAvatar,
   getStoredUserName,
+  persistUserName,
   useUserPersistence,
 } from "@/hooks/useUserPersistence";
 import { joinStandup, recoverStandupSession } from "@/lib/standup-api-service";
@@ -91,8 +92,9 @@ export default function StandupJoinScreen() {
     setIsConflict(false);
 
     try {
+      const normalizedUserName = userName.trim();
       const response = await joinStandup(
-        userName.trim(),
+        normalizedUserName,
         standupKey.trim(),
         passcode.trim() || undefined,
         avatarValue,
@@ -103,12 +105,13 @@ export default function StandupJoinScreen() {
           getRecoveryPasskeyStorageKey(
             "standup",
             response.standup.key,
-            userName.trim(),
+            normalizedUserName,
           ),
           response.recoveryPasskey,
         );
       }
 
+      persistUserName(normalizedUserName);
       setScreen("standupRoom");
       navigateTo("standupRoom", { standupKey: response.standup.key });
     } catch (submitError) {
@@ -143,14 +146,15 @@ export default function StandupJoinScreen() {
     setIsRecovering(true);
     setRecoveryError(null);
     try {
+      const normalizedUserName = userName.trim();
       await recoverStandupSession(
-        userName.trim(),
+        normalizedUserName,
         standupKey.trim(),
         recoveryPasskeyInput.trim().toUpperCase(),
       );
       setIsConflict(false);
       const response = await joinStandup(
-        userName.trim(),
+        normalizedUserName,
         standupKey.trim(),
         passcode.trim() || undefined,
         avatarValue,
@@ -160,11 +164,12 @@ export default function StandupJoinScreen() {
           getRecoveryPasskeyStorageKey(
             "standup",
             response.standup.key,
-            userName.trim(),
+            normalizedUserName,
           ),
           response.recoveryPasskey,
         );
       }
+      persistUserName(normalizedUserName);
       setScreen("standupRoom");
       navigateTo("standupRoom", { standupKey: response.standup.key });
     } catch (err) {

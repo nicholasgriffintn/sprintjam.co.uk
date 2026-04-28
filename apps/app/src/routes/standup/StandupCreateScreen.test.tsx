@@ -8,6 +8,7 @@ import { createTeamSession } from "@/lib/workspace-service";
 
 const mockSetScreen = vi.fn();
 const mockNavigateTo = vi.fn();
+const mockPersistUserName = vi.fn();
 
 const workspaceDataMock = {
   user: null as { name: string; email: string; avatar: string } | null,
@@ -34,6 +35,7 @@ vi.mock("@/hooks/useUserPersistence", () => ({
   useUserPersistence: vi.fn(),
   getStoredUserName: () => "",
   getStoredUserAvatar: () => null,
+  persistUserName: (...args: unknown[]) => mockPersistUserName(...args),
 }));
 
 vi.mock("@/utils/avatars", () => ({
@@ -134,6 +136,7 @@ describe("StandupCreateScreen", () => {
     });
 
     expect(mockSetScreen).toHaveBeenCalledWith("standupRoom");
+    expect(mockPersistUserName).toHaveBeenCalledWith("Alice");
     expect(mockNavigateTo).toHaveBeenCalledWith("standupRoom", {
       standupKey: "ABC123",
     });

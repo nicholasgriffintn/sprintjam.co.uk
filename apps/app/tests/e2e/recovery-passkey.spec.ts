@@ -2,6 +2,12 @@ import { test, expect, type Page } from "@playwright/test";
 
 import { createRoomWithParticipant } from "./helpers/room-journeys";
 
+const getRecoveryPasskeyStorageKey = (
+  feature: "room" | "wheel" | "standup",
+  sessionKey: string,
+  userName: string,
+) => `sprintjam_recovery_${feature}_${sessionKey.toLowerCase()}_${userName.toLowerCase()}`;
+
 const setStoredPasskey = async (
   page: Page,
   feature: "room" | "wheel" | "standup",
@@ -9,11 +15,13 @@ const setStoredPasskey = async (
   userName: string,
   passkey: string,
 ) => {
+  const storageKey = getRecoveryPasskeyStorageKey(feature, key, userName);
+
   await page.addInitScript(
-    ({ feature: f, key: k, userName: u, passkey: p }) => {
-      localStorage.setItem(`sprintjam_recovery_passkey_${f}_${k}_${u}`, p);
+    ({ storageKey: s, passkey: p }) => {
+      localStorage.setItem(s, p);
     },
-    { feature, key, userName, passkey },
+    { storageKey, passkey },
   );
 };
 
@@ -57,7 +65,7 @@ test.describe("Recovery passkey notification", () => {
       timeout: 10_000,
     });
 
-    await page.getByRole("button", { name: "Close notification" }).click();
+    await page.getByLabel("Close notification").click();
 
     await expect(page.getByText("Save your recovery passkey")).not.toBeVisible({
       timeout: 5_000,

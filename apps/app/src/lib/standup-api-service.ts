@@ -175,6 +175,9 @@ export async function joinStandup(
     }
 
     console.error("Error joining standup:", error);
+    if (error instanceof Error && error.message === "PASSCODE_REQUIRED") {
+      throw error;
+    }
     if (error instanceof HttpError || error instanceof NetworkError) {
       throw error;
     }

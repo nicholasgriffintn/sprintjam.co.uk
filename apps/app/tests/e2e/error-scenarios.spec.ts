@@ -48,11 +48,10 @@ test.describe("Error scenarios", () => {
     );
 
     await reconnectPage.goto(`/room/${roomKey}`);
-    const notificationsRegion = reconnectPage.getByRole("region", {
-      name: "Notifications",
-    });
-    await expect(notificationsRegion).toContainText(
-      /Session expired.*rejoin the room/i,
+    await expect(reconnectPage.locator("#join-name")).toBeVisible();
+    await expect(reconnectPage.locator("#join-room-key")).toHaveValue(roomKey);
+    await expect(reconnectPage.getByRole("alert")).toContainText(
+      /Session expired.*fresh link/i,
       { timeout: 5000 },
     );
 

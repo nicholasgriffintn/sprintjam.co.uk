@@ -65,7 +65,7 @@ test.describe("Welcome screen journey", () => {
     await expect(page).toHaveURL(/\/standup$/);
     await expect(
       page.getByRole("heading", {
-        name: /Collaborative daily standup rooms for distributed teams/i,
+        name: /Daily standups for distributed teams/i,
       }),
     ).toBeVisible();
   });
