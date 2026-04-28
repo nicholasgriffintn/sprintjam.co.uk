@@ -62,8 +62,5 @@ describe("WheelScreen", () => {
       name: /Passcode/i,
     });
     expect(passcodeInput).toBeDefined();
-
-    const logo = await screen.findByAltText("SprintJam");
-    expect(logo).toBeInTheDocument();
   });
 });

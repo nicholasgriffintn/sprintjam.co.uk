@@ -21,7 +21,6 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Footer } from "@/components/layout/Footer";
-import { BetaBadge } from "@/components/BetaBadge";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { META_CONFIGS } from "@/config/meta";
 import { navigateTo, type AppScreen } from "@/config/routes";

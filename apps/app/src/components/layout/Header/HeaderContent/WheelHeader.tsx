@@ -10,7 +10,6 @@ import DarkModeToggle from "../DarkModeToggle";
 import { HEADER_TRANSITION } from "@/constants";
 import { HeaderUserMenu } from "../HeaderUserMenu";
 import { useSessionActions } from "@/context/SessionContext";
-import { BetaBadge } from "@/components/BetaBadge";
 
 export const WheelHeader: FC = () => {
   const wheelHeader = useWheelHeaderOptional();
