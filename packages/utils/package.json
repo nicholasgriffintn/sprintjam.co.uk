@@ -19,7 +19,7 @@
   "dependencies": {
     "@sprintjam/db": "workspace:*",
     "@sprintjam/types": "workspace:*",
-    "drizzle-orm": "0.45.1",
+    "drizzle-orm": "0.45.2",
     "isbot": "^5.1.33"
   },
   "devDependencies": {
