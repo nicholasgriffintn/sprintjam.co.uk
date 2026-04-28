@@ -156,7 +156,7 @@ const WelcomeScreen = () => {
           viewport={{ once: true, amount: 0.2 }}
           className="space-y-6"
         >
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.6fr_1fr]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
             <SurfaceCard className="flex flex-col gap-5 text-left">
               <div className="space-y-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
@@ -174,7 +174,7 @@ const WelcomeScreen = () => {
                   <video
                     ref={videoRef}
                     src="https://assets.nickgriffin.uk/sprintjam-demo.mp4"
-                    className="block h-[250px] w-full rounded-xl object-cover object-top"
+                    className="block h-[250px] w-full rounded-xl bg-slate-950 object-contain"
                     controls
                     autoPlay
                     playsInline
