@@ -1,3 +1,10 @@
+## V4.3
+
+- Released the new standups feature out of beta with some improvements to the UI and experience based on user feedback, along with some bug fixes and optimisations.
+- Released the wheel spinner feature out of beta along with some final improvements.
+- Made adjustments to the homepage to showcase the new features and to make it clearer what SprintJam is for.
+- Restructured the router handling to remove some complexity and fix potential bugs.
+
 ## V4.2
 
 - Added a new automation to generate standup icebreaker questions every 30 days.
