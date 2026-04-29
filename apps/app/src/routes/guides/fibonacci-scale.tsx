@@ -5,7 +5,7 @@ import { CardPreview } from "@/components/guides/CardPreview";
 import { cardDecks } from "@/content/guides/cardDecks";
 import guideMarkdown from "@/content/guides/fibonacci-scale.md?raw";
 import { renderMarkdownToHtml } from "@/utils/markdown";
-import { createMeta } from "../meta";
+import { createMeta } from "../../utils/route-meta";
 import { getGuideArticleMeta } from "@/utils/guide-meta";
 
 export const meta = createMeta("guidesFibonacciScale", () =>

@@ -22,7 +22,7 @@ import {
 import { toast } from "@/components/ui";
 import type { WorkspaceMember } from "@sprintjam/types";
 import { BetaBadge } from "@/components/BetaBadge";
-import { createMeta } from "../meta";
+import { createMeta } from "../../utils/route-meta";
 
 export const meta = createMeta("workspaceAdmin");
 

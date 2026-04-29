@@ -24,7 +24,7 @@ import { Footer } from "@/components/layout/Footer";
 import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { SITE_NAME } from "@/constants";
-import { createMeta } from "./meta";
+import { createMeta } from "../utils/route-meta";
 
 export const meta = createMeta("welcome");
 

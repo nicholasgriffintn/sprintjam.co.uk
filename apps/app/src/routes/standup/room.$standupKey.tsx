@@ -36,7 +36,7 @@ import { StandupSidebar } from "@/components/standup/StandupSidebar";
 import { consumeStandupNotice } from "@/lib/standup-notice";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
 import { Footer } from "@/components/layout/Footer";
-import { createMeta } from "../meta";
+import { createMeta } from "../../utils/route-meta";
 
 export const meta = createMeta("standupRoom");
 

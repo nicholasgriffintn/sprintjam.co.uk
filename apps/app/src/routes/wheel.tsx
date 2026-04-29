@@ -31,7 +31,7 @@ import {
   getRecoveryPasskeyStorageKey,
 } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
-import { createMeta } from "./meta";
+import { createMeta } from "../utils/route-meta";
 
 export const meta = createMeta("wheel");
 

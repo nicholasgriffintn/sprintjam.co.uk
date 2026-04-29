@@ -18,7 +18,7 @@ import {
 import { allFaqs } from "@/content/faqs";
 import { generateFAQSchema } from "@/utils/structured-data";
 
-import { createMeta } from "./meta";
+import { createMeta } from "../utils/route-meta";
 
 export const meta = createMeta("faq", () => ({
   jsonLd: generateFAQSchema(

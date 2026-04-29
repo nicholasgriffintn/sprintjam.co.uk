@@ -35,7 +35,7 @@ import { TotpForm } from "@/components/auth/TotpForm";
 import { RecoveryCodesCard } from "@/components/auth/RecoveryCodesCard";
 import { toast } from "@/components/ui";
 import { copyText } from "@/lib/clipboard";
-import { createMeta } from "../meta";
+import { createMeta } from "../../utils/route-meta";
 
 export const meta = createMeta("login");
 

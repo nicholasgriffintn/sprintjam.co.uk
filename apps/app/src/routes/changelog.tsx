@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
 import { renderMarkdownToHtml } from "@/utils/markdown";
 import { SITE_NAME } from "@/constants";
-import { createMeta } from "./meta";
+import { createMeta } from "../utils/route-meta";
 
 export const meta = createMeta("changelog");
 

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
-import { createMeta } from "./meta";
+import { createMeta } from "../utils/route-meta";
 
 export const meta = createMeta("standup");
 

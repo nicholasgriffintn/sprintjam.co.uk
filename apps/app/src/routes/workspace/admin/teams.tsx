@@ -16,7 +16,7 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import type { TeamAccessPolicy, WorkspaceTeam } from "@sprintjam/types";
 import { BetaBadge } from "@/components/BetaBadge";
-import { createMeta } from "../../meta";
+import { createMeta } from "../../../utils/route-meta";
 
 export const meta = createMeta("workspaceAdminTeams");
 

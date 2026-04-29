@@ -21,7 +21,7 @@ import {
 } from "@/lib/team-session-metadata";
 import { requestTeamAccess } from "@/lib/workspace-service";
 import { BetaBadge } from "@/components/BetaBadge";
-import { createMeta } from "../meta";
+import { createMeta } from "../../utils/route-meta";
 
 export const meta = createMeta("workspaceSessions");
 
