@@ -2,7 +2,6 @@
  * @vitest-environment jsdom
  */
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TeamSession, WorkspaceTeam } from "@sprintjam/types";
@@ -13,7 +12,6 @@ const goToRoom = vi.fn();
 const startCreateFlow = vi.fn();
 const requestTeamAccess = vi.fn();
 const toastSuccess = vi.fn();
-const toastError = vi.fn();
 const navigateTo = vi.fn();
 
 const restrictedTeam: WorkspaceTeam = {
@@ -113,80 +111,6 @@ vi.mock("@/lib/workspace-service", () => ({
 
 vi.mock("@/hooks/useAppNavigation", () => ({
   useAppNavigation: () => navigateTo,
-}));
-
-vi.mock("@/components/ui", () => ({
-  toast: {
-    success: (...args: unknown[]) => toastSuccess(...args),
-    error: (...args: unknown[]) => toastError(...args),
-  },
-}));
-
-vi.mock("@/components/workspace/WorkspaceLayout", () => ({
-  WorkspaceLayout: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
-}));
-
-vi.mock("@/components/workspace/TeamSelector", () => ({
-  TeamSelector: () => <div>Team selector</div>,
-}));
-
-vi.mock("@/components/workspace/SessionList", () => ({
-  SessionList: ({ sessions }: { sessions: TeamSession[] }) => (
-    <div>Session list {sessions.map((session) => session.name).join(", ")}</div>
-  ),
-}));
-
-vi.mock("@/components/workspace/TeamInsightsPanel", () => ({
-  TeamInsightsPanel: () => <div>Insights</div>,
-}));
-
-vi.mock("@/components/ui/SurfaceCard", () => ({
-  SurfaceCard: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/ui/Badge", () => ({
-  Badge: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/ui/EmptyState", () => ({
-  EmptyState: ({
-    title,
-    description,
-  }: {
-    title: string;
-    description: string;
-  }) => (
-    <div>
-      <h2>{title}</h2>
-      <p>{description}</p>
-    </div>
-  ),
-}));
-
-vi.mock("@/components/ui/Alert", () => ({
-  Alert: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/ui/Button", () => ({
-  Button: ({
-    children,
-    onClick,
-    disabled,
-  }: {
-    children: ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
-    <button type="button" onClick={onClick} disabled={disabled}>
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@/components/BetaBadge", () => ({
-  BetaBadge: () => <span>Beta</span>,
 }));
 
 import WorkspaceSessions from "@/routes/workspace/sessions";

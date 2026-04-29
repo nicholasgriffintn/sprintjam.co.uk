@@ -2,7 +2,6 @@
  * @vitest-environment jsdom
  */
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSetName = vi.fn();
@@ -84,76 +83,6 @@ vi.mock("@/hooks/useAppNavigation", () => ({
 
 vi.mock("@/lib/workspace-service", () => ({
   getTeamSettings: vi.fn(),
-}));
-
-vi.mock("@/components/layout/PageBackground", () => ({
-  PageSection: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/ui/SurfaceCard", () => ({
-  SurfaceCard: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/components/ui/Button", () => ({
-  Button: ({ children, onClick, disabled, type = "button", ...props }: any) => (
-    <button type={type} onClick={onClick} disabled={disabled} {...props}>
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@/components/ui/Switch", () => ({
-  Switch: ({ checked, onCheckedChange, ...props }: any) => (
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={(event) => onCheckedChange?.(event.target.checked)}
-      {...props}
-    />
-  ),
-}));
-
-vi.mock("@/components/ui/Input", () => ({
-  Input: ({
-    id,
-    value,
-    onChange,
-    label,
-    fullWidth: _fullWidth,
-    showValidation: _showValidation,
-    isValid: _isValid,
-    ...props
-  }: any) => (
-    <label htmlFor={id}>
-      {typeof label === "string" ? label : "input"}
-      <input id={id} value={value} onChange={onChange} {...props} />
-    </label>
-  ),
-}));
-
-vi.mock("@/components/ui/Select", () => ({
-  Select: ({ id, value, onValueChange, options, ...props }: any) => (
-    <select
-      id={id}
-      value={value}
-      onChange={(event) => onValueChange?.(event.target.value)}
-      {...props}
-    >
-      {options.map((option: { label: string; value: string }) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  ),
-}));
-
-vi.mock("@/components/layout/Footer", () => ({
-  Footer: () => null,
-}));
-
-vi.mock("@/components/RoomSettingsTabs", () => ({
-  RoomSettingsTabs: () => null,
 }));
 
 import CreateRoomRoute from "@/routes/create";
