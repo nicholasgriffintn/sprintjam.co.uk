@@ -413,11 +413,7 @@ export function RoomSettingsTabs({
       <Tabs.List fullWidth className="w-full">
         {tabs.map((tab) => {
           return (
-            <Tabs.Tab
-              key={tab.id}
-              value={tab.id}
-              className="flex-1"
-            >
+            <Tabs.Tab key={tab.id} value={tab.id} className="flex-1">
               {tab.label}
             </Tabs.Tab>
           );

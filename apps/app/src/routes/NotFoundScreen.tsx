@@ -2,12 +2,8 @@ import { motion } from "framer-motion";
 
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 
 const NotFoundScreen = () => {
-  usePageMeta(META_CONFIGS["404"]);
-
   return (
     <PageSection maxWidth="xl">
       <motion.div

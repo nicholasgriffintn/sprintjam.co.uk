@@ -30,7 +30,9 @@ export async function handleAddEntry(
   }
 
   if (wheelData.entries.length >= WHEEL_ENTRY_COUNT_MAX) {
-    throw new Error(`Wheel can contain at most ${WHEEL_ENTRY_COUNT_MAX} entries`);
+    throw new Error(
+      `Wheel can contain at most ${WHEEL_ENTRY_COUNT_MAX} entries`,
+    );
   }
 
   const entry = {
@@ -187,7 +189,9 @@ export async function handleBulkAddEntries(
   );
 
   if (remainingSlots === 0) {
-    throw new Error(`Wheel can contain at most ${WHEEL_ENTRY_COUNT_MAX} entries`);
+    throw new Error(
+      `Wheel can contain at most ${WHEEL_ENTRY_COUNT_MAX} entries`,
+    );
   }
 
   for (const name of validNames.slice(0, remainingSlots)) {

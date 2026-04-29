@@ -10,6 +10,11 @@ import { queryClient } from "./lib/data/collections";
 import { ThemeProvider } from "./lib/theme-context";
 import { SENTRY_DSN } from "./constants";
 import { AppToastProvider } from "./components/ui";
+import { getMetaConfig } from "./config/meta";
+import { getScreenFromPath } from "./config/routes";
+import { applyPageMeta } from "./utils/meta";
+
+applyPageMeta(getMetaConfig(getScreenFromPath(window.location.pathname)));
 
 Sentry.init({
   dsn: SENTRY_DSN,

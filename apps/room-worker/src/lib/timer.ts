@@ -1,5 +1,5 @@
-import type { RoomData, TimerState } from '@sprintjam/types';
-import { DEFAULT_TIMER_DURATION_SECONDS } from '@sprintjam/utils/constants';
+import type { RoomData, TimerState } from "@sprintjam/types";
+import { DEFAULT_TIMER_DURATION_SECONDS } from "@sprintjam/utils/constants";
 
 export function calculateTimerSeconds(
   timerState: TimerState | undefined,

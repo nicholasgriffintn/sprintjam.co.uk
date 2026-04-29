@@ -46,8 +46,9 @@ export interface RouteDefinition<TScreen extends string = string> {
   parent?: TScreen;
 }
 
-export interface RouteConfig<TScreen extends string = string>
-  extends RouteDefinition<TScreen> {
+export interface RouteConfig<
+  TScreen extends string = string,
+> extends RouteDefinition<TScreen> {
   component: FC | LazyExoticComponent<ComponentType<unknown>>;
 }
 

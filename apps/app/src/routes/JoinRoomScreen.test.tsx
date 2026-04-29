@@ -14,13 +14,11 @@ const sessionStateMock = {
 
 const workspaceDataMock = {
   isAuthenticated: false,
-  user: null as
-    | {
-        name: string;
-        email: string;
-        avatar: string;
-      }
-    | null,
+  user: null as {
+    name: string;
+    email: string;
+    avatar: string;
+  } | null,
 };
 const sessionErrorMock = {
   error: "",

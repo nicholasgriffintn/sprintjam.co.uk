@@ -26,8 +26,6 @@ import { PrePointingSummaryModal } from "@/components/modals/PrePointingSummaryM
 import { RoomErrorBanners } from "@/components/errors/RoomErrorBanners";
 import { RoomSidebar } from "@/components/layout/RoomSidebar";
 import { getVoteKeyForUser } from "@/utils/room";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 import { Footer } from "@/components/layout/Footer";
 import { RoomGamesModal } from "@/components/games/RoomGamesModal";
 import { RoomGamePanel } from "@/components/games/RoomGamePanel";
@@ -50,7 +48,6 @@ import type { ConnectionStatusState } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 
 const RoomScreen = () => {
-  usePageMeta(META_CONFIGS.room);
   const { roomData, isModeratorView, userVote, serverDefaults } =
     useRoomState();
   const {

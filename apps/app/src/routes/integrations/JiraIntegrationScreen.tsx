@@ -14,8 +14,6 @@ import { useSessionActions } from "@/context/SessionContext";
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { META_CONFIGS } from "@/config/meta";
-import { usePageMeta } from "@/hooks/usePageMeta";
 import { navigateTo, type AppScreen } from "@/config/routes";
 import { SITE_NAME } from "@/constants";
 
@@ -105,7 +103,6 @@ const securityHighlights = [
 ];
 
 const JiraIntegrationScreen = () => {
-  usePageMeta(META_CONFIGS.integrationsJira);
   const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
 
   const handleNavigate = (screen: AppScreen) => {

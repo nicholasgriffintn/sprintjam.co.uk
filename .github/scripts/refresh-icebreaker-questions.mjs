@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
 const TARGET = path.join(
   REPO_ROOT,
-  "apps/app/src/lib/icebreaker-questions.json"
+  "apps/app/src/lib/icebreaker-questions.json",
 );
 
 const PROMPT = `\
@@ -82,7 +82,10 @@ async function main() {
   }
 
   // Strip markdown code fences if the model wraps its output despite the schema
-  const json = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  const json = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
 
   let parsed;
   try {

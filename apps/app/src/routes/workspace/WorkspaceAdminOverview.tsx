@@ -12,8 +12,6 @@ import { Switch } from "@/components/ui/Switch";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
-import { META_CONFIGS } from "@/config/meta";
-import { usePageMeta } from "@/hooks/usePageMeta";
 import {
   approveWorkspaceMember,
   inviteWorkspaceMember,
@@ -26,8 +24,6 @@ import type { WorkspaceMember } from "@sprintjam/types";
 import { BetaBadge } from "../../components/BetaBadge";
 
 export default function WorkspaceAdminOverview() {
-  usePageMeta(META_CONFIGS.workspaceAdmin);
-
   const {
     profile,
     user,

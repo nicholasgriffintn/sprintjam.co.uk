@@ -69,8 +69,9 @@ export function getMetaConfig(screen: AppScreen): MetaTagConfig | undefined {
 }
 
 export function getWorkspaceNavItems() {
-  return ROUTE_ENTRIES
-    .filter((r) => r.group === "workspace" && r.nav && !r.parent)
+  return ROUTE_ENTRIES.filter(
+    (r) => r.group === "workspace" && r.nav && !r.parent,
+  )
     .sort((a, b) => (a.nav?.order ?? 99) - (b.nav?.order ?? 99))
     .map((route) => ({
       screen: route.screen,
@@ -83,12 +84,10 @@ export function getWorkspaceNavItems() {
 }
 
 export function getAdminSidebarItems() {
-  return ROUTE_ENTRIES
-    .filter(
-      (r) =>
-        (r.parent === "workspaceAdmin" || r.screen === "workspaceAdmin") &&
-        r.nav,
-    )
+  return ROUTE_ENTRIES.filter(
+    (r) =>
+      (r.parent === "workspaceAdmin" || r.screen === "workspaceAdmin") && r.nav,
+  )
     .sort((a, b) => (a.nav?.order ?? 99) - (b.nav?.order ?? 99))
     .map((route) => ({
       screen: route.screen,
@@ -98,7 +97,5 @@ export function getAdminSidebarItems() {
 }
 
 export function getScreensInGroup(group: RouteGroup): AppScreen[] {
-  return ROUTE_ENTRIES.filter((r) => r.group === group).map(
-    (r) => r.screen,
-  );
+  return ROUTE_ENTRIES.filter((r) => r.group === group).map((r) => r.screen);
 }

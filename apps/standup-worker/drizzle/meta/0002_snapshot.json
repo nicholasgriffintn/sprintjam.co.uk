@@ -228,9 +228,7 @@
       "indexes": {
         "standup_responses_user_name_unique": {
           "name": "standup_responses_user_name_unique",
-          "columns": [
-            "user_name"
-          ],
+          "columns": ["user_name"],
           "isUnique": true
         }
       },
@@ -328,9 +326,7 @@
       "indexes": {
         "idx_standup_users_workspace_user_id": {
           "name": "idx_standup_users_workspace_user_id",
-          "columns": [
-            "workspace_user_id"
-          ],
+          "columns": ["workspace_user_id"],
           "isUnique": false
         }
       },

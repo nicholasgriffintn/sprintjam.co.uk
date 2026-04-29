@@ -98,7 +98,9 @@ export function toQueueProvider(
   return externalService === "none" ? null : externalService;
 }
 
-export function getProviderLabels(provider: QueueProvider | null): ProviderLabels {
+export function getProviderLabels(
+  provider: QueueProvider | null,
+): ProviderLabels {
   return provider ? PROVIDER_LABELS[provider] : DEFAULT_PROVIDER_LABELS;
 }
 
@@ -154,11 +156,7 @@ export async function fetchSprintsByProvider(
   userName: string,
 ): Promise<ExternalSprintOption[]> {
   if (provider === "jira") {
-    const sprints = await fetchJiraSprints(
-      selectedBoardId,
-      roomKey,
-      userName,
-    );
+    const sprints = await fetchJiraSprints(selectedBoardId, roomKey, userName);
     return sprints.map((sprint) => ({
       id: sprint.id,
       name: sprint.name,

@@ -1,11 +1,9 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { TokenCipher, generateToken, hashToken } from '@sprintjam/utils';
+import { TokenCipher, generateToken, hashToken } from "@sprintjam/utils";
 
 import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
 import { jsonError, jsonResponse } from "../../lib/response";
-import {
-  AUTH_CHALLENGE_EXPIRY_MS,
-} from "../../constants";
+import { AUTH_CHALLENGE_EXPIRY_MS } from "../../constants";
 import {
   createAuthenticatedSessionResponse,
   getChallengeAndUserOrError,
@@ -17,7 +15,7 @@ import {
   verifyWebAuthnAssertion,
 } from "../../lib/webauthn";
 import { getWebAuthnRequestContext } from "./webauthn-context";
-import { verifyTotpCode, hashRecoveryCode } from '../../lib/mfa';
+import { verifyTotpCode, hashRecoveryCode } from "../../lib/mfa";
 
 export async function startMfaVerifyController(
   request: Request,

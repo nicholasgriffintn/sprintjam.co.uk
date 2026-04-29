@@ -7,7 +7,7 @@ import {
   getWheelSessionToken,
   checkBotProtection,
   validateRequestBodySize,
-  resolveWorkspaceUserId
+  resolveWorkspaceUserId,
 } from "@sprintjam/utils";
 
 import {
@@ -102,7 +102,10 @@ async function createWheelController(
     return jsonError("Name is required");
   }
 
-  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
+  const workspaceUserId = await resolveWorkspaceUserId(
+    request,
+    env.AUTH_WORKER,
+  );
   const wheelKey = generateWheelKey();
   const wheelObject = getWheelStub(env, wheelKey);
 
@@ -166,7 +169,10 @@ async function joinWheelController(
     return jsonError("Name and wheel key are required");
   }
 
-  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
+  const workspaceUserId = await resolveWorkspaceUserId(
+    request,
+    env.AUTH_WORKER,
+  );
   const wheelObject = getWheelStub(env, wheelKey);
 
   return wheelObject.fetch(

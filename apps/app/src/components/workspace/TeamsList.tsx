@@ -125,9 +125,7 @@ export function TeamsList({
                     }
                     size="sm"
                   >
-                    {team.accessPolicy === "restricted"
-                      ? "Restricted"
-                      : "Open"}
+                    {team.accessPolicy === "restricted" ? "Restricted" : "Open"}
                   </Badge>
                   {team.canManage && (
                     <Badge variant="success" size="sm">
@@ -168,11 +166,7 @@ export function TeamsList({
                       )}
                     </>
                   ) : (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled
-                    >
+                    <Button variant="secondary" size="sm" disabled>
                       Read only
                     </Button>
                   )}

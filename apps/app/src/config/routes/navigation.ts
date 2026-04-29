@@ -28,9 +28,10 @@ function getDynamicRoutes(): DynamicRouteEntry[] {
 function getStaticPathToScreen(): Map<string, AppScreen> {
   if (!staticPathToScreen) {
     staticPathToScreen = new Map<string, AppScreen>(
-      ROUTE_DEFINITIONS
-        .filter((r) => typeof r.path === "string")
-        .map((r) => [r.path as string, r.screen]),
+      ROUTE_DEFINITIONS.filter((r) => typeof r.path === "string").map((r) => [
+        r.path as string,
+        r.screen,
+      ]),
     );
   }
   return staticPathToScreen;

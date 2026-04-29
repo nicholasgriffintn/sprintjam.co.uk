@@ -14,6 +14,25 @@ export interface MetaTagConfig {
   jsonLd?: Record<string, unknown>;
 }
 
+export function applyPageMeta(config: MetaTagConfig): void {
+  const fullConfig: MetaTagConfig = {
+    ...config,
+    canonical: config.canonical || getAbsoluteUrl(window.location.pathname),
+    ogUrl:
+      config.ogUrl ||
+      config.canonical ||
+      getAbsoluteUrl(window.location.pathname),
+    twitterCard: config.twitterCard || "summary_large_image",
+    ogTitle: config.ogTitle || config.title,
+    twitterTitle: config.twitterTitle || config.title,
+    ogDescription: config.ogDescription || config.description,
+    twitterDescription: config.twitterDescription || config.description,
+    twitterImage: config.twitterImage || config.ogImage,
+  };
+
+  updateMetaTags(fullConfig);
+}
+
 export function updateMetaTags(config: MetaTagConfig): void {
   if (config.title) {
     document.title = config.title;

@@ -44,7 +44,13 @@
     "binding": "ASSETS",
     "directory": "dist/client",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/ws", "/ws/wheel", "/ws/standup", "/robots.txt"],
+    "run_worker_first": [
+      "/api/*",
+      "/ws",
+      "/ws/wheel",
+      "/ws/standup",
+      "/robots.txt",
+    ],
   },
   "migrations": [
     {

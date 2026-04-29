@@ -3,7 +3,10 @@ import { Avatar as BaseAvatar } from "@base-ui/react/avatar";
 
 import { cn } from "@/lib/cn";
 
-export interface AvatarProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
+export interface AvatarProps extends Omit<
+  HTMLAttributes<HTMLSpanElement>,
+  "children"
+> {
   src?: string;
   alt?: string;
   fallback?: ReactNode;
@@ -39,7 +42,10 @@ export const Avatar = ({
       ) : null}
       <BaseAvatar.Fallback
         delay={fallbackDelay}
-        className={cn("flex size-full items-center justify-center", fallbackClassName)}
+        className={cn(
+          "flex size-full items-center justify-center",
+          fallbackClassName,
+        )}
       >
         {fallback}
       </BaseAvatar.Fallback>

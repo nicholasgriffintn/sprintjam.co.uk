@@ -1,12 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from "vitest";
 
-import { selectPresetForPhase } from './strudel';
-import { strudelMusicPresets } from '../config/strudel';
+import { selectPresetForPhase } from "./strudel";
+import { strudelMusicPresets } from "../config/strudel";
 
-describe('strudel utils', () => {
-  it('selects a preset for a known phase', () => {
-    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.6);
-    const preset = selectPresetForPhase('voting');
+describe("strudel utils", () => {
+  it("selects a preset for a known phase", () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.6);
+    const preset = selectPresetForPhase("voting");
     randomSpy.mockRestore();
 
     const expected = strudelMusicPresets.voting[1];
@@ -18,9 +18,9 @@ describe('strudel utils', () => {
     });
   });
 
-  it('falls back to lobby presets for unknown phases', () => {
-    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
-    const preset = selectPresetForPhase('unknown' as any);
+  it("falls back to lobby presets for unknown phases", () => {
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+    const preset = selectPresetForPhase("unknown" as any);
     randomSpy.mockRestore();
 
     const expected = strudelMusicPresets.lobby[0];

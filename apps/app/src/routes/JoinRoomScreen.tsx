@@ -25,8 +25,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Alert } from "@/components/ui/Alert";
 import { Footer } from "@/components/layout/Footer";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 import { sanitiseAvatarValue } from "@/utils/avatars";
 import {
   formatRoomKey,
@@ -37,7 +35,6 @@ import { recoverRoomSession } from "@/lib/api-service";
 import { HttpError } from "@/lib/errors";
 
 const JoinRoomScreen = () => {
-  usePageMeta(META_CONFIGS.join);
   const { name, roomKey, passcode, selectedAvatar, joinFlowMode } =
     useSessionState();
   const {

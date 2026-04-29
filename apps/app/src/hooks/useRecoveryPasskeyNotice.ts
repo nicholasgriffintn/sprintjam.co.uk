@@ -24,7 +24,11 @@ export function useRecoveryPasskeyNotice({
       return;
     }
 
-    const storageKey = getRecoveryPasskeyStorageKey(feature, sessionKey, userName);
+    const storageKey = getRecoveryPasskeyStorageKey(
+      feature,
+      sessionKey,
+      userName,
+    );
     const stored = safeLocalStorage.get(storageKey);
     if (!stored) {
       return;

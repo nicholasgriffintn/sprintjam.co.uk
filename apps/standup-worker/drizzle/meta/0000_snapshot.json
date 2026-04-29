@@ -228,9 +228,7 @@
       "indexes": {
         "standup_responses_user_name_unique": {
           "name": "standup_responses_user_name_unique",
-          "columns": [
-            "user_name"
-          ],
+          "columns": ["user_name"],
           "isUnique": true
         }
       },

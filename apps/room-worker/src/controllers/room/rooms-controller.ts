@@ -9,7 +9,7 @@ import {
   getRoomSessionTokenForRoom,
   getRoomSessionToken,
   getRoomStub,
-  resolveWorkspaceUserId
+  resolveWorkspaceUserId,
 } from "@sprintjam/utils";
 import { jsonError } from "../../lib/response";
 
@@ -76,7 +76,10 @@ export async function createRoomController(
     }
   }
 
-  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
+  const workspaceUserId = await resolveWorkspaceUserId(
+    request,
+    env.AUTH_WORKER,
+  );
   const roomKey = generateRoomKey();
   const roomObject = getRoomStub(env, roomKey);
 
@@ -120,7 +123,10 @@ export async function joinRoomController(
     return jsonError("Name and room key are required");
   }
 
-  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
+  const workspaceUserId = await resolveWorkspaceUserId(
+    request,
+    env.AUTH_WORKER,
+  );
   const roomObject = getRoomStub(env, roomKey);
 
   return roomObject.fetch(

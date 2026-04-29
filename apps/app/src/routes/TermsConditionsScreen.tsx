@@ -3,15 +3,11 @@ import { CalendarCheck } from "lucide-react";
 
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 import { SITE_NAME } from "@/constants";
 
 const LAST_UPDATED = "1st March 2026";
 
 const TermsConditionsScreen = () => {
-  usePageMeta(META_CONFIGS.terms);
-
   return (
     <PageSection maxWidth="xl">
       <motion.div
@@ -72,8 +68,8 @@ const TermsConditionsScreen = () => {
 
               <h3>Workspace Administration</h3>
               <p>
-                If you create or administer a workspace, you are responsible
-                for the teams, sessions, invitations, settings, and connected
+                If you create or administer a workspace, you are responsible for
+                the teams, sessions, invitations, settings, and connected
                 services configured for that workspace.
               </p>
               <p>

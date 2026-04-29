@@ -11,10 +11,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Alert } from "@/components/ui/Alert";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { useSessionActions } from "@/context/SessionContext";
-import {
-  createTeamSession,
-  updateTeamSession,
-} from "@/lib/workspace-service";
+import { createTeamSession, updateTeamSession } from "@/lib/workspace-service";
 import {
   linkedRoomSessionQueryKey,
   teamSessionsQueryKey,
@@ -76,9 +73,13 @@ export function SaveToWorkspaceModal({
 
     try {
       const session = isEditMode
-        ? await updateTeamSession(activeLinkedSession!.teamId, activeLinkedSession!.id, {
-            name: sessionName.trim(),
-          })
+        ? await updateTeamSession(
+            activeLinkedSession!.teamId,
+            activeLinkedSession!.id,
+            {
+              name: sessionName.trim(),
+            },
+          )
         : await createTeamSession(selectedTeamId, sessionName.trim(), roomKey);
       queryClient.setQueryData(linkedRoomSessionQueryKey(roomKey), session);
       await Promise.all([
@@ -191,7 +192,9 @@ export function SaveToWorkspaceModal({
               Already linked to workspace
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              {linkedTeamName ? `Team: ${linkedTeamName}` : `Team ID: ${activeLinkedSession!.teamId}`}
+              {linkedTeamName
+                ? `Team: ${linkedTeamName}`
+                : `Team ID: ${activeLinkedSession!.teamId}`}
             </p>
           </SurfaceCard>
         ) : (
@@ -257,7 +260,9 @@ export function SaveToWorkspaceModal({
             onClick={handleSave}
             isLoading={isSaving}
             disabled={
-              !selectedTeamId || !sessionName.trim() || (!isEditMode && teams.length === 0)
+              !selectedTeamId ||
+              !sessionName.trim() ||
+              (!isEditMode && teams.length === 0)
             }
           >
             {isEditMode ? "Update session" : "Save to Workspace"}

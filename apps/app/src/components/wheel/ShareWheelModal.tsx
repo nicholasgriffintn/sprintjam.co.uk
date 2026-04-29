@@ -161,13 +161,16 @@ export function ShareWheelModal({
     const saved = await savePasscode(nextPasscode);
     if (saved) {
       setPasscode(nextPasscode);
-      toast.success(hasExistingPasscode ? "Passcode rotated" : "Passcode saved");
+      toast.success(
+        hasExistingPasscode ? "Passcode rotated" : "Passcode saved",
+      );
     }
   };
 
   const handlePasscodeToggle = async (enabled: boolean) => {
     if (enabled) {
-      const nextPasscode = passcode.trim().toUpperCase() || handleGeneratePasscode();
+      const nextPasscode =
+        passcode.trim().toUpperCase() || handleGeneratePasscode();
       setPasscodeEnabled(true);
       const saved = await savePasscode(nextPasscode);
       if (saved) {

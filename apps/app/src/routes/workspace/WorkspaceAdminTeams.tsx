@@ -14,14 +14,10 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Select } from "@/components/ui/Select";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
-import { META_CONFIGS } from "@/config/meta";
-import { usePageMeta } from "@/hooks/usePageMeta";
 import type { TeamAccessPolicy, WorkspaceTeam } from "@sprintjam/types";
 import { BetaBadge } from "../../components/BetaBadge";
 
 export default function WorkspaceAdminTeams() {
-  usePageMeta(META_CONFIGS.workspaceAdminTeams);
-
   const {
     user,
     teams,

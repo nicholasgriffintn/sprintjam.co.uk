@@ -22,9 +22,11 @@ export class CreateRoomPage {
 
   async selectPersonalRoomIfAvailable() {
     const teamSelect = this.page.locator("#team-select");
-    await teamSelect.waitFor({ state: "attached", timeout: 1_000 }).catch(() => {
-      // No team selector means auth teams are unavailable for this flow.
-    });
+    await teamSelect
+      .waitFor({ state: "attached", timeout: 1_000 })
+      .catch(() => {
+        // No team selector means auth teams are unavailable for this flow.
+      });
 
     if ((await teamSelect.count()) === 0) {
       return;

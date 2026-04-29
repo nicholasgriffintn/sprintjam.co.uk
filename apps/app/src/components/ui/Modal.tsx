@@ -42,7 +42,9 @@ export const Modal = ({
               sizeClasses[size],
             )}
           >
-            <SurfaceCard className={cn("w-full max-w-full", !title && "relative")}>
+            <SurfaceCard
+              className={cn("w-full max-w-full", !title && "relative")}
+            >
               {title ? (
                 <div className="mb-6 flex items-center justify-between gap-4">
                   <Dialog.Title className="text-2xl font-semibold text-slate-900 dark:text-white">

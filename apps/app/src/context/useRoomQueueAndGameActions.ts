@@ -13,9 +13,7 @@ import {
   submitGameMove,
   endGame,
 } from "@/lib/api-service";
-import {
-  completeSessionByRoomKey,
-} from "@/lib/workspace-service";
+import { completeSessionByRoomKey } from "@/lib/workspace-service";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import {
   linkedRoomSessionQueryKey,

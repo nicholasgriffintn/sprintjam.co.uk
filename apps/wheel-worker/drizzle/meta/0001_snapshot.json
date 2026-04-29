@@ -48,9 +48,7 @@
       "indexes": {
         "wheel_entries_entry_id_unique": {
           "name": "wheel_entries_entry_id_unique",
-          "columns": [
-            "entry_id"
-          ],
+          "columns": ["entry_id"],
           "isUnique": true
         }
       },
@@ -162,9 +160,7 @@
       "indexes": {
         "wheel_results_result_id_unique": {
           "name": "wheel_results_result_id_unique",
-          "columns": [
-            "result_id"
-          ],
+          "columns": ["result_id"],
           "isUnique": true
         }
       },

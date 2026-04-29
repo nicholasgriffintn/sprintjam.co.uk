@@ -1,4 +1,4 @@
-import { escapeHtml } from '@sprintjam/utils';
+import { escapeHtml } from "@sprintjam/utils";
 
 export interface SendVerificationCodeEmailParams {
   email: string;
@@ -19,16 +19,16 @@ export async function sendVerificationCodeEmail({
   code,
   resendApiKey,
 }: SendVerificationCodeEmailParams): Promise<void> {
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${resendApiKey}`,
     },
     body: JSON.stringify({
-      from: 'SprintJam <sprintjam@notifications.nicholasgriffin.co.uk>',
+      from: "SprintJam <sprintjam@notifications.nicholasgriffin.co.uk>",
       to: [email],
-      subject: 'Your SprintJam verification code',
+      subject: "Your SprintJam verification code",
       html: `
         <!DOCTYPE html>
         <html>
@@ -102,18 +102,18 @@ export async function sendWorkspaceInviteEmail({
       const parsed = new URL(loginUrl);
       return parsed.toString();
     } catch {
-      return 'https://sprintjam.co.uk/login';
+      return "https://sprintjam.co.uk/login";
     }
   })();
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${resendApiKey}`,
     },
     body: JSON.stringify({
-      from: 'SprintJam <sprintjam@notifications.nicholasgriffin.co.uk>',
+      from: "SprintJam <sprintjam@notifications.nicholasgriffin.co.uk>",
       to: [email],
       subject: `You were invited to ${safeWorkspaceName} on SprintJam`,
       html: `

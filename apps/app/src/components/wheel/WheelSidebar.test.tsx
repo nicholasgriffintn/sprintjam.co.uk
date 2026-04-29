@@ -28,7 +28,9 @@ describe("WheelSidebar", () => {
       />,
     );
 
-    const textarea = screen.getByPlaceholderText("Enter names, one per line...");
+    const textarea = screen.getByPlaceholderText(
+      "Enter names, one per line...",
+    );
 
     fireEvent.focus(textarea);
     fireEvent.change(textarea, { target: { value: "Alice\nBob" } });
@@ -70,7 +72,9 @@ describe("WheelSidebar", () => {
       />,
     );
 
-    const textarea = screen.getByPlaceholderText("Enter names, one per line...");
+    const textarea = screen.getByPlaceholderText(
+      "Enter names, one per line...",
+    );
 
     fireEvent.focus(textarea);
     fireEvent.change(textarea, { target: { value: "Alice\nBob" } });

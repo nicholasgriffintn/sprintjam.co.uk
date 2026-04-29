@@ -19,11 +19,7 @@ export const WheelHeader: FC = () => {
     return null;
   }
 
-  const {
-    wheelKey,
-    setIsShareModalOpen,
-    setIsSettingsModalOpen,
-  } = wheelHeader;
+  const { wheelKey, setIsShareModalOpen, setIsSettingsModalOpen } = wheelHeader;
 
   return (
     <>

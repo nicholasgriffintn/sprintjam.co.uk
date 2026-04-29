@@ -1,7 +1,7 @@
-import { createJsonResponse } from '@sprintjam/utils';
+import { createJsonResponse } from "@sprintjam/utils";
 
-import type { CfResponse, PlanningRoomHttpContext } from './types';
-import { sanitizeRoomData } from '../../lib/room-data';
+import type { CfResponse, PlanningRoomHttpContext } from "./types";
+import { sanitizeRoomData } from "../../lib/room-data";
 
 export async function handleToggleShowVotes(
   ctx: PlanningRoomHttpContext,
@@ -12,7 +12,7 @@ export async function handleToggleShowVotes(
   const roomData = await ctx.getRoomData();
 
   if (!roomData || !roomData.key) {
-    return createJsonResponse({ error: 'Room not found' }, 404);
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   if (
@@ -20,7 +20,7 @@ export async function handleToggleShowVotes(
     !roomData.settings.allowOthersToShowEstimates
   ) {
     return createJsonResponse(
-      { error: 'Only the moderator can show votes' },
+      { error: "Only the moderator can show votes" },
       403,
     );
   }
@@ -29,7 +29,7 @@ export async function handleToggleShowVotes(
   ctx.repository.setShowVotes(roomData.showVotes);
 
   ctx.broadcast({
-    type: 'showVotes',
+    type: "showVotes",
     showVotes: roomData.showVotes,
   });
 

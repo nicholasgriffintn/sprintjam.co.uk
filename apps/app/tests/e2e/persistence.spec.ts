@@ -128,7 +128,9 @@ test.describe("Data persistence", () => {
     await expect(
       reconnectPage.getByRole("heading", { name: "Join Room" }),
     ).toBeVisible();
-    await expect(reconnectPage.locator("#join-name")).toHaveValue(moderatorName);
+    await expect(reconnectPage.locator("#join-name")).toHaveValue(
+      moderatorName,
+    );
     await expect(reconnectPage.locator("#join-room-key")).toHaveValue(roomKey);
     await expect(
       reconnectPage.getByTestId("participants-panel"),

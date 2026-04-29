@@ -1,19 +1,19 @@
-import { useMemo } from 'react';
-import { HelpCircle, Minimize2, Trophy } from 'lucide-react';
+import { useMemo } from "react";
+import { HelpCircle, Minimize2, Trophy } from "lucide-react";
 
-import { Button } from '@/components/ui/Button';
-import { Popover } from '@/components/ui/Popover';
-import { ScrollArea } from '@/components/ui';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { ROOM_GAMES } from '@/components/games/game-catalog';
-import { CategoryBlitzGamePanel } from '@/components/games/game-panels/CategoryBlitzGamePanel';
-import { ClueboardGamePanel } from '@/components/games/game-panels/ClueboardGamePanel';
-import { OneWordPitchGamePanel } from '@/components/games/game-panels/OneWordPitchGamePanel';
-import { SprintRiskGamePanel } from '@/components/games/game-panels/SprintRiskGamePanel';
-import { SprintWordGamePanel } from '@/components/games/game-panels/SprintWordGamePanel';
-import { TeamThreadsGamePanel } from '@/components/games/game-panels/TeamThreadsGamePanel';
-import { TextInputGamePanel } from '@/components/games/game-panels/TextInputGamePanel';
-import type { RoomData } from '@/types';
+import { Button } from "@/components/ui/Button";
+import { Popover } from "@/components/ui/Popover";
+import { ScrollArea } from "@/components/ui";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { ROOM_GAMES } from "@/components/games/game-catalog";
+import { CategoryBlitzGamePanel } from "@/components/games/game-panels/CategoryBlitzGamePanel";
+import { ClueboardGamePanel } from "@/components/games/game-panels/ClueboardGamePanel";
+import { OneWordPitchGamePanel } from "@/components/games/game-panels/OneWordPitchGamePanel";
+import { SprintRiskGamePanel } from "@/components/games/game-panels/SprintRiskGamePanel";
+import { SprintWordGamePanel } from "@/components/games/game-panels/SprintWordGamePanel";
+import { TeamThreadsGamePanel } from "@/components/games/game-panels/TeamThreadsGamePanel";
+import { TextInputGamePanel } from "@/components/games/game-panels/TextInputGamePanel";
+import type { RoomData } from "@/types";
 
 interface RoomGamePanelProps {
   roomData: RoomData;
@@ -54,7 +54,7 @@ export const RoomGamePanel = ({
             Party game live
           </p>
           <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {gameMeta?.title ?? 'Room game'}
+            {gameMeta?.title ?? "Room game"}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-300">
             Started by {gameSession.startedBy} · Round {gameSession.round}
@@ -70,13 +70,13 @@ export const RoomGamePanel = ({
             >
               <p className="mb-1 text-slate-600 dark:text-slate-300">
                 <span className="font-medium text-slate-700 dark:text-slate-200">
-                  Objective:{' '}
+                  Objective:{" "}
                 </span>
                 {gameMeta.objective}
               </p>
               <p className="text-slate-600 dark:text-slate-300">
                 <span className="font-medium text-slate-700 dark:text-slate-200">
-                  Rules:{' '}
+                  Rules:{" "}
                 </span>
                 {gameMeta.rules}
               </p>
@@ -93,7 +93,7 @@ export const RoomGamePanel = ({
               Minimise
             </Button>
           ) : null}
-          {gameSession.status === 'active' ? (
+          {gameSession.status === "active" ? (
             <Button
               type="button"
               variant="secondary"
@@ -161,37 +161,37 @@ export const RoomGamePanel = ({
         </div>
       </div>
 
-      {gameSession.type === 'one-word-pitch' ? (
+      {gameSession.type === "one-word-pitch" ? (
         <OneWordPitchGamePanel
           gameSession={gameSession}
           userName={userName}
           onSubmitMove={onSubmitMove}
         />
-      ) : gameSession.type === 'category-blitz' ? (
+      ) : gameSession.type === "category-blitz" ? (
         <CategoryBlitzGamePanel
           gameSession={gameSession}
           userName={userName}
           onSubmitMove={onSubmitMove}
         />
-      ) : gameSession.type === 'clueboard' ? (
+      ) : gameSession.type === "clueboard" ? (
         <ClueboardGamePanel
           gameSession={gameSession}
           userName={userName}
           onSubmitMove={onSubmitMove}
         />
-      ) : gameSession.type === 'sprint-word' ? (
+      ) : gameSession.type === "sprint-word" ? (
         <SprintWordGamePanel
           gameSession={gameSession}
           userName={userName}
           onSubmitMove={onSubmitMove}
         />
-      ) : gameSession.type === 'team-threads' ? (
+      ) : gameSession.type === "team-threads" ? (
         <TeamThreadsGamePanel
           gameSession={gameSession}
           userName={userName}
           onSubmitMove={onSubmitMove}
         />
-      ) : gameSession.type === 'sprint-risk' ? (
+      ) : gameSession.type === "sprint-risk" ? (
         <SprintRiskGamePanel
           gameSession={gameSession}
           userName={userName}
@@ -206,7 +206,7 @@ export const RoomGamePanel = ({
         />
       )}
 
-      {gameSession.status === 'completed' ? (
+      {gameSession.status === "completed" ? (
         <div className="relative overflow-hidden rounded-2xl border border-brand-200/80 bg-gradient-to-r from-brand-50 via-white to-black-50/60 px-4 py-3 shadow-sm dark:border-brand-300/30 dark:from-brand-900/30 dark:via-slate-900/70 dark:to-black-900/20">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-brand-300/30 blur-2xl dark:bg-brand-300/20" />
@@ -223,7 +223,7 @@ export const RoomGamePanel = ({
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {gameSession.winner
                   ? `${gameSession.winner} wins this round.`
-                  : 'Game complete.'}{' '}
+                  : "Game complete."}{" "}
                 Thanks for playing {userName}!
               </p>
             </div>

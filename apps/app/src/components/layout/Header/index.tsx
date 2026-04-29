@@ -9,10 +9,7 @@ import { WorkspaceHeader } from "@/components/layout/Header/HeaderContent/Worksp
 import { WheelHeader } from "@/components/layout/Header/HeaderContent/WheelHeader";
 import { StandupHeader } from "@/components/layout/Header/StandupHeader";
 import { HEADER_TRANSITION } from "@/constants";
-import {
-  getHeaderVariant,
-  getMarketingVariant,
-} from "@/config/routes/derived";
+import { getHeaderVariant, getMarketingVariant } from "@/config/routes/derived";
 
 export const Header: FC = () => {
   const { screen } = useSessionState();

@@ -955,10 +955,11 @@ export async function createTeamSessionController(
     }
   }
 
-  const existingSession = await auth.result.repo.getOrganisationTeamSessionByRoomKey(
-    roomKey,
-    teamViewer.viewer.user.organisationId,
-  );
+  const existingSession =
+    await auth.result.repo.getOrganisationTeamSessionByRoomKey(
+      roomKey,
+      teamViewer.viewer.user.organisationId,
+    );
   if (existingSession) {
     return jsonError(
       "This room is already saved to your workspace",

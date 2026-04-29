@@ -4,14 +4,10 @@ import { useMemo } from "react";
 import changelogMd from "@/content/changelog.md?raw";
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
-import { META_CONFIGS } from "@/config/meta";
-import { usePageMeta } from "@/hooks/usePageMeta";
 import { renderMarkdownToHtml } from "@/utils/markdown";
 import { SITE_NAME } from "@/constants";
 
 const ChangelogScreen = () => {
-  usePageMeta(META_CONFIGS.changelog);
-
   const renderedChangelog = useMemo(
     () => renderMarkdownToHtml(changelogMd),
     [],

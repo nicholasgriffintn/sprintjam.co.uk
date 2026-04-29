@@ -7,7 +7,7 @@ import {
   getStandupSessionToken,
   checkBotProtection,
   validateRequestBodySize,
-  resolveWorkspaceUserId
+  resolveWorkspaceUserId,
 } from "@sprintjam/utils";
 
 import {
@@ -97,7 +97,10 @@ async function createStandupController(
     return jsonError("Name is required");
   }
 
-  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
+  const workspaceUserId = await resolveWorkspaceUserId(
+    request,
+    env.AUTH_WORKER,
+  );
   const standupKey = generateStandupKey();
   const standupObject = getStandupStub(env, standupKey);
 
@@ -161,7 +164,10 @@ async function joinStandupController(
     return jsonError("Name and standup key are required");
   }
 
-  const workspaceUserId = await resolveWorkspaceUserId(request, env.AUTH_WORKER);
+  const workspaceUserId = await resolveWorkspaceUserId(
+    request,
+    env.AUTH_WORKER,
+  );
   const standupObject = getStandupStub(env, standupKey);
 
   return standupObject.fetch(

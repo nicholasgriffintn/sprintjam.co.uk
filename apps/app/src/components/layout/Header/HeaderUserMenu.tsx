@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  KeyRound,
-  LayoutGrid,
-  Loader2,
-  LogOut,
-  UserRound,
-} from "lucide-react";
+import { KeyRound, LayoutGrid, Loader2, LogOut, UserRound } from "lucide-react";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";

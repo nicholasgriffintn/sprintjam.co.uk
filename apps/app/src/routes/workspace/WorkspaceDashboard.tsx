@@ -10,12 +10,8 @@ import { BetaBadge } from "@/components/BetaBadge";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useWorkspaceStats } from "@/hooks/useWorkspaceStats";
 import { useSessionActions } from "@/context/SessionContext";
-import { META_CONFIGS } from "@/config/meta";
-import { usePageMeta } from "@/hooks/usePageMeta";
 
 export default function WorkspaceDashboard() {
-  usePageMeta(META_CONFIGS.workspace);
-
   const {
     user,
     teams,

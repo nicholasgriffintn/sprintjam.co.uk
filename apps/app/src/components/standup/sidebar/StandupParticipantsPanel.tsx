@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
-import type { StandupData } from '@sprintjam/types';
+import { useMemo } from "react";
+import type { StandupData } from "@sprintjam/types";
 
 import {
   ParticipantsList,
   type ParticipantsListData,
-} from '@/components/layout/RoomSidebar/ParticipantsList';
+} from "@/components/layout/RoomSidebar/ParticipantsList";
 
 interface StandupParticipantsPanelProps {
   standupData: StandupData;
@@ -23,7 +23,7 @@ export function StandupParticipantsPanel({
     const respondedUsers = new Set(standupData.respondedUsers);
     const votes = standupData.users.reduce<Record<string, string | undefined>>(
       (acc, user) => {
-        acc[user] = respondedUsers.has(user) ? 'submitted' : undefined;
+        acc[user] = respondedUsers.has(user) ? "submitted" : undefined;
         return acc;
       },
       {},
@@ -53,7 +53,7 @@ export function StandupParticipantsPanel({
       roomData={listData}
       stats={{ votedUsers: standupData.respondedUsers.length }}
       name={currentUserName}
-      isCompleted={standupData.status === 'completed'}
+      isCompleted={standupData.status === "completed"}
       isCollapsed={isCollapsed}
       onToggleCollapse={onToggleCollapse}
       hideProgress

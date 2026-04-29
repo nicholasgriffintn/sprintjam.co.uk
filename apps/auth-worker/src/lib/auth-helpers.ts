@@ -104,7 +104,10 @@ export async function getChallengeAndUserOrError(
   repo: WorkspaceAuthRepository,
   challengeToken: string | undefined,
   type: "setup" | "verify",
-): Promise<{ challenge: AuthChallengeRecord; user: AuthUserRecord } | { response: Response }> {
+): Promise<
+  | { challenge: AuthChallengeRecord; user: AuthUserRecord }
+  | { response: Response }
+> {
   const challengeResult = await getChallengeOrError(repo, challengeToken, type);
   if ("response" in challengeResult) {
     return { response: challengeResult.response };
@@ -177,7 +180,9 @@ export async function enforceEmailAndIpRateLimit(
   }
 
   if (!emailLimiter || !env.IP_RATE_LIMITER) {
-    console.error("Rate limiters are not configured but rate limiting is enabled");
+    console.error(
+      "Rate limiters are not configured but rate limiting is enabled",
+    );
     return jsonError("Service temporarily unavailable", 503);
   }
 

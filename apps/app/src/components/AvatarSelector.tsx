@@ -24,18 +24,18 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
   disabled = false,
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [customEmoji, setCustomEmoji] = useState('');
+  const [customEmoji, setCustomEmoji] = useState("");
   const emojiPickerId = useId();
 
   const handleEmojiSelect = (emoji: string) => {
     onSelectAvatar(emoji);
-    setCustomEmoji('');
+    setCustomEmoji("");
   };
 
   const handleCustomEmojiSubmit = () => {
     if (customEmoji.trim()) {
       onSelectAvatar(customEmoji.trim());
-      setCustomEmoji('');
+      setCustomEmoji("");
     }
   };
 
@@ -95,8 +95,8 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
               aria-pressed={selectedAvatar === avatar.id}
               className={`w-full aspect-square rounded-full border-2 p-1 hover:scale-105 active:scale-95 focus-visible:ring-blue-400 dark:focus-visible:ring-indigo-400 ${
                 selectedAvatar === avatar.id
-                  ? 'border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg scale-110'
-                  : 'border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-indigo-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? "border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg scale-110"
+                  : "border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-indigo-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
               }`}
               title={avatar.label}
             >
@@ -129,7 +129,7 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
             ) : (
               <Smile className="h-4 w-4" />
             )}
-            {showEmojiPicker ? 'Show Icon Avatars' : 'Use Custom Emoji'}
+            {showEmojiPicker ? "Show Icon Avatars" : "Use Custom Emoji"}
           </div>
         </Button>
 
@@ -137,7 +137,7 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
           <motion.div
             id={emojiPickerId}
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             className="space-y-3"
@@ -157,8 +157,8 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
                   aria-pressed={selectedAvatar === emoji}
                   className={`aspect-square rounded-lg text-2xl hover:scale-110 active:scale-95 border-2 ${
                     selectedAvatar === emoji
-                      ? 'border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg'
-                      : 'border-transparent hover:border-blue-400 dark:hover:border-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                      ? "border-blue-500 dark:border-indigo-400 bg-blue-50 dark:bg-blue-900 shadow-lg"
+                      : "border-transparent hover:border-blue-400 dark:hover:border-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                   }`}
                   title={emoji}
                 >
@@ -174,7 +174,7 @@ const AvatarSelector: FC<AvatarSelectorProps> = ({
                 value={customEmoji}
                 onChange={(e) => setCustomEmoji(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     handleCustomEmojiSubmit();
                   }
                 }}

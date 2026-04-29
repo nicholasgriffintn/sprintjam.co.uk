@@ -1,8 +1,8 @@
-import type { RoomGameSession } from '@sprintjam/types';
+import type { RoomGameSession } from "@sprintjam/types";
 
-import type { GameEngine } from '../types';
-import { addEvent, addPoints } from '../helpers';
-import { SPRINT_WORD_BANK } from '../words';
+import type { GameEngine } from "../types";
+import { addEvent, addPoints } from "../helpers";
+import { SPRINT_WORD_BANK } from "../words";
 
 const MAX_GUESSES = 6;
 
@@ -15,23 +15,23 @@ const pickFreshWord = (history: string[]): string => {
 const scoreGuess = (
   guess: string,
   answer: string,
-): ('correct' | 'present' | 'absent')[] => {
-  const result: ('correct' | 'present' | 'absent')[] = Array(5).fill('absent');
-  const answerRemaining = answer.split('');
+): ("correct" | "present" | "absent")[] => {
+  const result: ("correct" | "present" | "absent")[] = Array(5).fill("absent");
+  const answerRemaining = answer.split("");
 
   for (let i = 0; i < 5; i++) {
     if (guess[i] === answer[i]) {
-      result[i] = 'correct';
-      answerRemaining[i] = '';
+      result[i] = "correct";
+      answerRemaining[i] = "";
     }
   }
 
   for (let i = 0; i < 5; i++) {
-    if (result[i] === 'correct') continue;
+    if (result[i] === "correct") continue;
     const idx = answerRemaining.indexOf(guess[i]);
     if (idx !== -1) {
-      result[i] = 'present';
-      answerRemaining[idx] = '';
+      result[i] = "present";
+      answerRemaining[idx] = "";
     }
   }
 
@@ -49,7 +49,7 @@ const assignNextWord = (session: Partial<RoomGameSession>) => {
 };
 
 export const sprintWordEngine: GameEngine = {
-  title: 'Sprint Word',
+  title: "Sprint Word",
   maxRounds: 3,
   shouldBlockConsecutiveMoves: ({ session, userName }) => {
     return Boolean(session.sprintWordPlayerDone?.[userName]);
@@ -75,7 +75,7 @@ export const sprintWordEngine: GameEngine = {
     }
 
     const guess = value.toUpperCase();
-    const answer = session.sprintWordWord ?? '';
+    const answer = session.sprintWordWord ?? "";
     const result = scoreGuess(guess, answer);
 
     const playerGuesses = session.sprintWordPlayerGuesses ?? {};
@@ -85,7 +85,7 @@ export const sprintWordEngine: GameEngine = {
     ];
     session.sprintWordPlayerGuesses = { ...playerGuesses, [userName]: guesses };
 
-    const isCorrect = result.every((r) => r === 'correct');
+    const isCorrect = result.every((r) => r === "correct");
 
     if (isCorrect) {
       const points = Math.max(1, 7 - guesses.length);
@@ -93,7 +93,7 @@ export const sprintWordEngine: GameEngine = {
       session.sprintWordPlayerDone = { ...done, [userName]: true };
       addEvent(
         session,
-        `${userName} solved it in ${guesses.length} ${guesses.length === 1 ? 'guess' : 'guesses'} (+${points} pts).`,
+        `${userName} solved it in ${guesses.length} ${guesses.length === 1 ? "guess" : "guesses"} (+${points} pts).`,
       );
     } else if (guesses.length >= MAX_GUESSES) {
       session.sprintWordPlayerDone = { ...done, [userName]: true };

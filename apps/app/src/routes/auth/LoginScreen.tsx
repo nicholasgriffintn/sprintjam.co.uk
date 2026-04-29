@@ -20,8 +20,6 @@ import {
   buildRegistrationOptions,
   toWebAuthnCredential,
 } from "@/lib/auth/webauthn";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 import { useSessionActions } from "@/context/SessionContext";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { BetaBadge } from "@/components/BetaBadge";
@@ -57,8 +55,6 @@ type LoginState =
 type MfaFlowMode = "setup" | "verify";
 
 export default function LoginScreen() {
-  usePageMeta(META_CONFIGS.login);
-
   const { goToWorkspace } = useSessionActions();
   const { refreshAuth } = useWorkspaceAuth();
 

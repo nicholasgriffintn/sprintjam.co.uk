@@ -9,8 +9,6 @@ import {
 
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 import { SITE_NAME } from "@/constants";
 
 const LAST_UPDATED = "1st March 2026";
@@ -103,8 +101,6 @@ const integrationOptions = [
 ];
 
 const PrivacyPolicyScreen = () => {
-  usePageMeta(META_CONFIGS.privacy);
-
   return (
     <PageSection maxWidth="xl">
       <motion.div
@@ -239,10 +235,10 @@ const PrivacyPolicyScreen = () => {
 }`}</pre>
               </div>
               <p className="mt-3 rounded-2xl bg-slate-50/80 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100 dark:bg-white/5 dark:text-slate-200 dark:ring-white/10">
-                Adjust{' '}
+                Adjust{" "}
                 <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-800 dark:bg-white/10 dark:text-white">
                   wrangler.jsonc
-                </code>{' '}
+                </code>{" "}
                 before deploy if you require zero logging.
               </p>
               <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-slate-600 dark:text-slate-300">

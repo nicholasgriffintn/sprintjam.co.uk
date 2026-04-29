@@ -26,6 +26,8 @@ import { PageBackground } from "@/components/layout/PageBackground";
 import { useWorkspaceIdentitySync } from "@/hooks/useWorkspaceIdentitySync";
 import { getBackgroundVariant } from "@/config/routes/derived";
 import { getRoomScreenLoader, getRouteConfig } from "@/config/routes/registry";
+import { getMetaConfig } from "@/config/meta";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const preloadRoomScreen = () => {
   void getRoomScreenLoader();
@@ -35,6 +37,8 @@ const AppContent = () => {
   useWorkspaceIdentitySync();
 
   const { screen } = useSessionState();
+  usePageMeta(getMetaConfig(screen));
+
   const { error, clearError } = useSessionErrors();
   const { serverDefaults, roomData } = useRoomState();
   const {

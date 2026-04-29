@@ -5,10 +5,10 @@ import type {
   SessionRoundVote,
   TicketQueueWithVotes,
 } from "@sprintjam/types";
-import { postRoundStats, generateID } from '@sprintjam/utils';
+import { postRoundStats, generateID } from "@sprintjam/utils";
 
 import type { PlanningRoom } from ".";
-import { getAnonymousUserId, remapRoundHistory } from '../../lib/room-data';
+import { getAnonymousUserId, remapRoundHistory } from "../../lib/room-data";
 
 export function shouldAnonymizeVotes(roomData: RoomData): boolean {
   return (

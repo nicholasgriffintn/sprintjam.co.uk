@@ -15,17 +15,16 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { navigateTo } from "@/config/routes";
-import { META_CONFIGS } from "@/config/meta";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { getTeamSessionType, type TeamSessionType } from "@/lib/team-session-metadata";
+import {
+  getTeamSessionType,
+  type TeamSessionType,
+} from "@/lib/team-session-metadata";
 import { requestTeamAccess } from "@/lib/workspace-service";
 import { BetaBadge } from "../../components/BetaBadge";
 
 type SessionFilter = "all" | TeamSessionType;
 
 export default function WorkspaceSessions() {
-  usePageMeta(META_CONFIGS.workspaceSessions);
-
   const {
     user,
     teams,

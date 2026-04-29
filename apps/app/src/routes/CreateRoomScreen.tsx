@@ -26,22 +26,14 @@ import { Switch } from "@/components/ui/Switch";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Footer } from "@/components/layout/Footer";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 import { RoomSettingsTabs } from "@/components/RoomSettingsTabs";
 import { sanitiseAvatarValue } from "@/utils/avatars";
 import { validateName } from "@/utils/validators";
 
 const CreateRoomScreen = () => {
-  usePageMeta(META_CONFIGS.create);
   const { name, passcode } = useSessionState();
-  const {
-    setName,
-    setPasscode,
-    setRoomKey,
-    setScreen,
-    setJoinFlowMode,
-  } = useSessionActions();
+  const { setName, setPasscode, setRoomKey, setScreen, setJoinFlowMode } =
+    useSessionActions();
   const { clearError } = useSessionErrors();
 
   const { teams, isAuthenticated, user } = useWorkspaceData();

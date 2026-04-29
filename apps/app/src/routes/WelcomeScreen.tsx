@@ -21,8 +21,6 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Footer } from "@/components/layout/Footer";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 import { navigateTo, type AppScreen } from "@/config/routes";
 import { SITE_NAME } from "@/constants";
 
@@ -102,8 +100,6 @@ const WelcomeScreen = () => {
     }
     handleNavigate(action);
   };
-
-  usePageMeta(META_CONFIGS.welcome);
 
   return (
     <PageSection maxWidth="xl">

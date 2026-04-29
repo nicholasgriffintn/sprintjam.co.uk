@@ -129,7 +129,9 @@ vi.mock("@/components/ui", () => ({
 }));
 
 vi.mock("@/components/workspace/WorkspaceLayout", () => ({
-  WorkspaceLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  WorkspaceLayout: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock("@/components/workspace/TeamSelector", () => ({
@@ -230,9 +232,7 @@ describe("WorkspaceSessions", () => {
     expect(
       screen.getByText("Your access request is pending team admin approval."),
     ).toBeTruthy();
-    expect(
-      screen.queryByRole("button", { name: "Request access" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Request access" })).toBeNull();
   });
 
   it("filters standups separately from planning sessions", () => {

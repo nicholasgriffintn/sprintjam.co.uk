@@ -18,13 +18,11 @@ const mockGoToWorkspaceProfile = vi.fn();
 const workspaceDataMock = {
   teams: [] as Array<{ id: number; name: string }>,
   isAuthenticated: false,
-  user: null as
-    | {
-        name: string;
-        email: string;
-        avatar: string;
-      }
-    | null,
+  user: null as {
+    name: string;
+    email: string;
+    avatar: string;
+  } | null,
 };
 const mockServerDefaults = {
   roomSettings: {
@@ -98,13 +96,7 @@ vi.mock("@/components/ui/SurfaceCard", () => ({
 }));
 
 vi.mock("@/components/ui/Button", () => ({
-  Button: ({
-    children,
-    onClick,
-    disabled,
-    type = "button",
-    ...props
-  }: any) => (
+  Button: ({ children, onClick, disabled, type = "button", ...props }: any) => (
     <button type={type} onClick={onClick} disabled={disabled} {...props}>
       {children}
     </button>

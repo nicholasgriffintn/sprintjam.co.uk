@@ -382,7 +382,11 @@ export default function WheelScreen() {
       );
       if (response.recoveryPasskey) {
         safeLocalStorage.set(
-          getRecoveryPasskeyStorageKey("wheel", getWheelKeyFromPath(), userName),
+          getRecoveryPasskeyStorageKey(
+            "wheel",
+            getWheelKeyFromPath(),
+            userName,
+          ),
           response.recoveryPasskey,
         );
       }

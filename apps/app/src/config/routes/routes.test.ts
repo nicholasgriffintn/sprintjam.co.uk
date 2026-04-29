@@ -22,7 +22,11 @@ import {
   getAdminSidebarItems,
   getScreensInGroup,
 } from "@/config/routes/derived";
-import { ROUTES, getRouteConfig, type AppScreen } from "@/config/routes/registry";
+import {
+  ROUTES,
+  getRouteConfig,
+  type AppScreen,
+} from "@/config/routes/registry";
 
 describe("navigation", () => {
   describe("parsePath", () => {
@@ -342,8 +346,8 @@ describe("derived", () => {
       expect(getHeaderVariant("welcome")).toBe("marketing");
       expect(getHeaderVariant("workspace")).toBe("workspace");
       expect(getHeaderVariant("room")).toBe("room");
-      expect(getHeaderVariant('standup')).toBe('marketing');
-      expect(getHeaderVariant('standupRoom')).toBe('standup');
+      expect(getHeaderVariant("standup")).toBe("marketing");
+      expect(getHeaderVariant("standupRoom")).toBe("standup");
       expect(getHeaderVariant("login")).toBe("marketing");
       expect(getHeaderVariant("create")).toBe("marketing");
     });

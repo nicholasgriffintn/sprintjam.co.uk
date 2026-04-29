@@ -5,7 +5,7 @@ import type { RoomData, TicketQueueItem } from "@/types";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Progress } from "@/components/ui/Progress";
 import { Button } from "@/components/ui/Button";
-import { ScrollArea } from '@/components/ui';
+import { ScrollArea } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { BetaBadge } from "@/components/BetaBadge";
 import { calculateStoryPointsFromVotes } from "@/utils/votes";
@@ -132,9 +132,9 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
     return (
       <div
         className={[
-          'w-full max-w-full min-w-0 rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/60',
-          isPendingRow ? 'max-h-28 overflow-hidden' : '',
-        ].join(' ')}
+          "w-full max-w-full min-w-0 rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/60",
+          isPendingRow ? "max-h-28 overflow-hidden" : "",
+        ].join(" ")}
       >
         <div className="flex min-w-0 max-w-full items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
@@ -163,7 +163,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                 {ticket.description}
               </p>
             )}
-            {!isPendingRow && meta && ticket.externalService !== 'none' && (
+            {!isPendingRow && meta && ticket.externalService !== "none" && (
               <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
                 <span className="max-w-full break-words">
                   {ticket.externalService}
@@ -185,7 +185,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
           {showReorder && (
             <div className="flex flex-col items-center gap-1">
               <Button
-                onClick={() => moveTicket(ticket.id, 'up')}
+                onClick={() => moveTicket(ticket.id, "up")}
                 variant="unstyled"
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move up"
@@ -193,7 +193,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                 <ChevronUp className="h-4 w-4" />
               </Button>
               <Button
-                onClick={() => moveTicket(ticket.id, 'down')}
+                onClick={() => moveTicket(ticket.id, "down")}
                 variant="unstyled"
                 className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Move down"
@@ -208,15 +208,15 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
   };
 
   return (
-    <aside className={cn('flex h-full flex-col', className)}>
+    <aside className={cn("flex h-full flex-col", className)}>
       <SurfaceCard
         padding="none"
         className="flex h-full flex-col overflow-hidden border border-slate-200/80 shadow-lg dark:border-slate-800"
       >
         <div
           className={cn(
-            'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
-            collapsed && 'border-b-0 py-2',
+            "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
+            collapsed && "border-b-0 py-2",
           )}
         >
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -240,7 +240,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
               variant="unstyled"
               onClick={handleToggle}
               aria-label={
-                collapsed ? 'Expand ticket queue' : 'Collapse ticket queue'
+                collapsed ? "Expand ticket queue" : "Collapse ticket queue"
               }
               aria-expanded={!collapsed}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
@@ -256,7 +256,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
 
         <ScrollArea
           aria-label="Ticket queue summary"
-          className={cn('flex-1 px-4 py-4', collapsed && 'hidden')}
+          className={cn("flex-1 px-4 py-4", collapsed && "hidden")}
           contentClassName="w-full max-w-full space-y-3"
         >
           <div className="w-full max-w-full space-y-3">
@@ -295,18 +295,18 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                   <span>
                     {capacityUsed}/{capacityPoints} points
                   </span>
-                  {capacityStatus === 'over' && (
+                  {capacityStatus === "over" && (
                     <span className="text-xs font-semibold text-red-600 dark:text-red-400">
                       Over capacity
                     </span>
                   )}
-                  {capacityStatus === 'near' && (
+                  {capacityStatus === "near" && (
                     <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
                       Near capacity
                     </span>
                   )}
                 </div>
-                {capacityStatus === 'over' && (
+                {capacityStatus === "over" && (
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                     Sprint at {capacityPercent}% capacity. Consider moving the
                     lowest priority item.
@@ -318,12 +318,12 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
             {current ? (
               <>
                 <div data-testid="queue-current-ticket">
-                  {renderTicketRow(current, 'Current')}
+                  {renderTicketRow(current, "Current")}
                 </div>
 
                 {next && (
                   <div data-testid="queue-next-ticket">
-                    {renderTicketRow(next, 'Pending')}
+                    {renderTicketRow(next, "Pending")}
                   </div>
                 )}
               </>

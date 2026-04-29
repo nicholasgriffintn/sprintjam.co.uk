@@ -81,9 +81,8 @@ describe("useRoomQueueAndGameActions", () => {
       },
     });
 
-    return ({ children }: { children: ReactNode }) => (
-      createElement(QueryClientProvider, { client: queryClient }, children)
-    );
+    return ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
   };
 
   beforeEach(() => {

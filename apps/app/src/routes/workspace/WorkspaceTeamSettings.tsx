@@ -29,8 +29,6 @@ import {
   saveTeamSettings,
   updateTeamMemberRole,
 } from "@/lib/workspace-service";
-import { usePageMeta } from "@/hooks/usePageMeta";
-import { META_CONFIGS } from "@/config/meta";
 import type { RoomSettings } from "@/types";
 
 function metaStr(
@@ -42,8 +40,6 @@ function metaStr(
 }
 
 export default function WorkspaceTeamSettings() {
-  usePageMeta(META_CONFIGS.workspaceAdminTeamSettings);
-
   const {
     profile,
     user,

@@ -6,7 +6,8 @@ const getRecoveryPasskeyStorageKey = (
   feature: "room" | "wheel" | "standup",
   sessionKey: string,
   userName: string,
-) => `sprintjam_recovery_${feature}_${sessionKey.toLowerCase()}_${userName.toLowerCase()}`;
+) =>
+  `sprintjam_recovery_${feature}_${sessionKey.toLowerCase()}_${userName.toLowerCase()}`;
 
 const setStoredPasskey = async (
   page: Page,

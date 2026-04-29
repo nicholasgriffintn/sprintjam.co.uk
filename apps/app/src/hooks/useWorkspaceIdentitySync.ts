@@ -22,5 +22,12 @@ export function useWorkspaceIdentitySync() {
     if (avatar) {
       setSelectedAvatar(avatar as AvatarId);
     }
-  }, [isAuthenticated, setName, setSelectedAvatar, user, user?.avatar, user?.name]);
+  }, [
+    isAuthenticated,
+    setName,
+    setSelectedAvatar,
+    user,
+    user?.avatar,
+    user?.name,
+  ]);
 }

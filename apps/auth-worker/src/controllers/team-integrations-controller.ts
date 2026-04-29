@@ -1,11 +1,11 @@
-import type { AuthWorkerEnv, OAuthProvider } from '@sprintjam/types';
+import type { AuthWorkerEnv, OAuthProvider } from "@sprintjam/types";
 import {
   signState,
   verifyState,
   generateID,
   escapeHtml,
   hashToken,
-} from '@sprintjam/utils';
+} from "@sprintjam/utils";
 import {
   fetchGithubMilestones,
   fetchGithubRepoIssues,
@@ -20,20 +20,20 @@ import {
   findDefaultSprintField,
   getLinearOrganization,
   getLinearViewer,
-} from '@sprintjam/services';
-import { authenticateRequest, isAuthError, type AuthResult } from '../lib/auth';
+} from "@sprintjam/services";
+import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
 import {
   jsonResponse,
   jsonError,
   unauthorizedResponse,
   forbiddenResponse,
   notFoundResponse,
-} from '../lib/response';
-import { AUTH_CHALLENGE_EXPIRY_MS } from '../constants';
-import { TeamIntegrationRepository } from '../repositories/team-integration-repository';
-import { TeamRepository } from '../repositories/team-repository';
-import { WorkspaceAuthRepository } from '../repositories/workspace-auth';
-import { canAccessTeam, canManageTeam } from '../lib/team-access';
+} from "../lib/response";
+import { AUTH_CHALLENGE_EXPIRY_MS } from "../constants";
+import { TeamIntegrationRepository } from "../repositories/team-integration-repository";
+import { TeamRepository } from "../repositories/team-repository";
+import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
+import { canAccessTeam, canManageTeam } from "../lib/team-access";
 
 type TeamOAuthState = {
   teamId: number;
@@ -64,7 +64,7 @@ async function getAuthOrError(
 function verifyInternalSecret(request: Request, env: AuthWorkerEnv): boolean {
   const secret = env.INTERNAL_API_SECRET;
   if (!secret) return false;
-  const header = request.headers.get('Authorization');
+  const header = request.headers.get("Authorization");
   if (!header) return false;
   const expected = `Bearer ${secret}`;
   if (header.length !== expected.length) return false;
@@ -95,7 +95,7 @@ async function verifyTeamAdminAccess(
 }
 
 async function canUserAccessTeam(
-  repo: AuthResult['repo'],
+  repo: AuthResult["repo"],
   userId: number,
   teamId: number,
 ): Promise<boolean> {
@@ -118,7 +118,7 @@ async function canUserAccessTeam(
 }
 
 async function canUserManageTeam(
-  repo: AuthResult['repo'],
+  repo: AuthResult["repo"],
   userId: number,
   teamId: number,
 ): Promise<boolean> {
@@ -147,24 +147,24 @@ function oauthHtmlResponse(
   autoClose = false,
 ): Response {
   const closeScript = autoClose
-    ? '<script>setTimeout(function(){window.close()},1500)</script>'
-    : '';
+    ? "<script>setTimeout(function(){window.close()},1500)</script>"
+    : "";
   return new Response(
     `<html><body><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p>${closeScript}</body></html>`,
-    { status, headers: { 'Content-Type': 'text/html' } },
+    { status, headers: { "Content-Type": "text/html" } },
   );
 }
 
 function oauthHtmlError(message: string, status = 400): Response {
-  return oauthHtmlResponse('OAuth Error', message, status);
+  return oauthHtmlResponse("OAuth Error", message, status);
 }
 
 function oauthHtmlSuccess(message: string): Response {
-  return oauthHtmlResponse('Success!', message, 200, true);
+  return oauthHtmlResponse("Success!", message, 200, true);
 }
 
 async function createSignedTeamOAuthState(
-  repo: AuthResult['repo'],
+  repo: AuthResult["repo"],
   userId: number,
   teamId: number,
   authorizedBy: string,
@@ -175,7 +175,7 @@ async function createSignedTeamOAuthState(
   await repo.createAuthChallenge({
     userId,
     tokenHash: nonceHash,
-    type: 'oauth',
+    type: "oauth",
     metadata: JSON.stringify({
       teamId,
       authorizedBy,
@@ -200,7 +200,7 @@ async function consumeOAuthNonce(
   if (
     !challenge ||
     challenge.userId !== stateData.userId ||
-    challenge.type !== 'oauth' ||
+    challenge.type !== "oauth" ||
     challenge.usedAt ||
     challenge.expiresAt < Date.now()
   ) {
@@ -219,7 +219,7 @@ async function consumeOAuthNonce(
   if (
     !metadata ||
     metadata.teamId !== stateData.teamId ||
-    typeof metadata.authorizedBy !== 'string' ||
+    typeof metadata.authorizedBy !== "string" ||
     metadata.authorizedBy.trim().length === 0
   ) {
     return null;
@@ -238,7 +238,7 @@ export async function listTeamIntegrationsController(
   teamId: number,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-  if ('response' in auth) return auth.response;
+  if ("response" in auth) return auth.response;
 
   const { userId, repo } = auth.result;
   if (!(await canUserAccessTeam(repo, userId, teamId))) {
@@ -257,7 +257,7 @@ export async function getTeamIntegrationStatusController(
   provider: OAuthProvider,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-  if ('response' in auth) return auth.response;
+  if ("response" in auth) return auth.response;
 
   const { userId, repo } = auth.result;
   if (!(await canUserAccessTeam(repo, userId, teamId))) {
@@ -301,11 +301,11 @@ async function requireTeamAccess(
   env: AuthWorkerEnv,
   teamId: number,
 ): Promise<
-  | { integrationRepo: TeamIntegrationRepository; repo: AuthResult['repo'] }
+  | { integrationRepo: TeamIntegrationRepository; repo: AuthResult["repo"] }
   | { response: Response }
 > {
   const auth = await getAuthOrError(request, env);
-  if ('response' in auth) {
+  if ("response" in auth) {
     return { response: auth.response };
   }
 
@@ -322,12 +322,12 @@ async function requireTeamAccess(
 
 function isSupportedProvider(
   provider: OAuthProvider,
-): provider is 'jira' | 'linear' | 'github' {
-  return provider === 'jira' || provider === 'linear' || provider === 'github';
+): provider is "jira" | "linear" | "github" {
+  return provider === "jira" || provider === "linear" || provider === "github";
 }
 
 function parseOptionalLimit(limit: unknown): number | null {
-  if (limit === undefined || limit === null || limit === '') {
+  if (limit === undefined || limit === null || limit === "") {
     return null;
   }
 
@@ -346,12 +346,12 @@ async function getTeamJiraCredentials(
 ) {
   const credentials = await integrationRepo.getJiraCredentials(teamId);
   if (!credentials) {
-    throw new Error('Jira is not connected for this team.');
+    throw new Error("Jira is not connected for this team.");
   }
 
   const oauthConfig = getJiraOAuthConfig(env);
   if (!oauthConfig) {
-    throw new Error('Jira OAuth is not configured.');
+    throw new Error("Jira OAuth is not configured.");
   }
 
   return {
@@ -364,7 +364,7 @@ async function getTeamJiraCredentials(
     ) => {
       await integrationRepo.updateTokens(
         teamId,
-        'jira',
+        "jira",
         accessToken,
         refreshToken,
         expiresAt,
@@ -380,12 +380,12 @@ async function getTeamLinearCredentials(
 ) {
   const credentials = await integrationRepo.getLinearCredentials(teamId);
   if (!credentials) {
-    throw new Error('Linear is not connected for this team.');
+    throw new Error("Linear is not connected for this team.");
   }
 
   const oauthConfig = getLinearOAuthConfig(env);
   if (!oauthConfig) {
-    throw new Error('Linear OAuth is not configured.');
+    throw new Error("Linear OAuth is not configured.");
   }
 
   return {
@@ -398,7 +398,7 @@ async function getTeamLinearCredentials(
     ) => {
       await integrationRepo.updateTokens(
         teamId,
-        'linear',
+        "linear",
         accessToken,
         refreshToken,
         expiresAt,
@@ -413,7 +413,7 @@ async function getTeamGithubCredentials(
 ) {
   const credentials = await integrationRepo.getGithubCredentials(teamId);
   if (!credentials) {
-    throw new Error('GitHub is not connected for this team.');
+    throw new Error("GitHub is not connected for this team.");
   }
 
   return credentials;
@@ -426,16 +426,16 @@ export async function listTeamIntegrationBoardsController(
   provider: OAuthProvider,
 ): Promise<Response> {
   if (!isSupportedProvider(provider)) {
-    return jsonError('Unknown provider', 400);
+    return jsonError("Unknown provider", 400);
   }
 
   const access = await requireTeamAccess(request, env, teamId);
-  if ('response' in access) {
+  if ("response" in access) {
     return access.response;
   }
 
   try {
-    if (provider === 'jira') {
+    if (provider === "jira") {
       const { credentials, oauthConfig, onTokenRefresh } =
         await getTeamJiraCredentials(env, access.integrationRepo, teamId);
       const boards = await fetchJiraBoards(
@@ -452,7 +452,7 @@ export async function listTeamIntegrationBoardsController(
       });
     }
 
-    if (provider === 'linear') {
+    if (provider === "linear") {
       const { credentials, oauthConfig, onTokenRefresh } =
         await getTeamLinearCredentials(env, access.integrationRepo, teamId);
       const teams = await fetchLinearTeams(
@@ -486,7 +486,7 @@ export async function listTeamIntegrationBoardsController(
     return jsonError(
       error instanceof Error
         ? error.message
-        : 'Failed to fetch integration boards',
+        : "Failed to fetch integration boards",
       400,
     );
   }
@@ -499,11 +499,11 @@ export async function listTeamIntegrationSprintsController(
   provider: OAuthProvider,
 ): Promise<Response> {
   if (!isSupportedProvider(provider)) {
-    return jsonError('Unknown provider', 400);
+    return jsonError("Unknown provider", 400);
   }
 
   const access = await requireTeamAccess(request, env, teamId);
-  if ('response' in access) {
+  if ("response" in access) {
     return access.response;
   }
 
@@ -511,16 +511,16 @@ export async function listTeamIntegrationSprintsController(
   try {
     body = await request.json();
   } catch {
-    return jsonError('Invalid request body', 400);
+    return jsonError("Invalid request body", 400);
   }
 
   const boardId = body.boardId?.trim();
   if (!boardId) {
-    return jsonError('boardId is required', 400);
+    return jsonError("boardId is required", 400);
   }
 
   try {
-    if (provider === 'jira') {
+    if (provider === "jira") {
       const { credentials, oauthConfig, onTokenRefresh } =
         await getTeamJiraCredentials(env, access.integrationRepo, teamId);
       const sprints = await fetchJiraSprints(
@@ -533,7 +533,7 @@ export async function listTeamIntegrationSprintsController(
       return jsonResponse({ sprints });
     }
 
-    if (provider === 'linear') {
+    if (provider === "linear") {
       const { credentials, oauthConfig, onTokenRefresh } =
         await getTeamLinearCredentials(env, access.integrationRepo, teamId);
       const cycles = await fetchLinearCycles(
@@ -571,7 +571,7 @@ export async function listTeamIntegrationSprintsController(
     return jsonError(
       error instanceof Error
         ? error.message
-        : 'Failed to fetch integration sprints',
+        : "Failed to fetch integration sprints",
       400,
     );
   }
@@ -584,11 +584,11 @@ export async function searchTeamIntegrationTicketsController(
   provider: OAuthProvider,
 ): Promise<Response> {
   if (!isSupportedProvider(provider)) {
-    return jsonError('Unknown provider', 400);
+    return jsonError("Unknown provider", 400);
   }
 
   const access = await requireTeamAccess(request, env, teamId);
-  if ('response' in access) {
+  if ("response" in access) {
     return access.response;
   }
 
@@ -603,23 +603,23 @@ export async function searchTeamIntegrationTicketsController(
   try {
     body = await request.json();
   } catch {
-    return jsonError('Invalid request body', 400);
+    return jsonError("Invalid request body", 400);
   }
 
   const boardId = body.boardId?.trim();
   if (!boardId) {
-    return jsonError('boardId is required', 400);
+    return jsonError("boardId is required", 400);
   }
 
   const sprintId = body.sprintId?.trim() || null;
   const sprintName = body.sprintName?.trim() || null;
   const sprintNumber =
-    typeof body.sprintNumber === 'number' ? body.sprintNumber : null;
+    typeof body.sprintNumber === "number" ? body.sprintNumber : null;
   const query = body.query?.trim() || null;
   const limit = parseOptionalLimit(body.limit);
 
   try {
-    if (provider === 'jira') {
+    if (provider === "jira") {
       const { credentials, oauthConfig, onTokenRefresh } =
         await getTeamJiraCredentials(env, access.integrationRepo, teamId);
       const tickets = await fetchJiraBoardIssues(
@@ -637,7 +637,7 @@ export async function searchTeamIntegrationTicketsController(
       return jsonResponse({ tickets });
     }
 
-    if (provider === 'linear') {
+    if (provider === "linear") {
       const { credentials, oauthConfig, onTokenRefresh } =
         await getTeamLinearCredentials(env, access.integrationRepo, teamId);
       const tickets = await fetchLinearIssues(
@@ -670,7 +670,7 @@ export async function searchTeamIntegrationTicketsController(
     return jsonError(
       error instanceof Error
         ? error.message
-        : 'Failed to search integration tickets',
+        : "Failed to search integration tickets",
       400,
     );
   }
@@ -683,31 +683,31 @@ export async function initiateTeamOAuthController(
   provider: OAuthProvider,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-  if ('response' in auth) return auth.response;
+  if ("response" in auth) return auth.response;
 
   const { userId, repo } = auth.result;
   const team = await repo.getTeamById(teamId);
 
-  if (!team) return notFoundResponse('Team not found');
+  if (!team) return notFoundResponse("Team not found");
 
   if (!(await canUserManageTeam(repo, userId, teamId))) {
-    return forbiddenResponse('Only team admins can configure integrations');
+    return forbiddenResponse("Only team admins can configure integrations");
   }
 
   const user = await repo.getUserById(userId);
-  if (!user) return notFoundResponse('User not found');
+  if (!user) return notFoundResponse("User not found");
 
   try {
-    if (provider === 'jira') {
+    if (provider === "jira") {
       const clientId = env.JIRA_OAUTH_CLIENT_ID;
       const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
       const redirectUri =
         env.JIRA_OAUTH_REDIRECT_URI ||
-        'https://sprintjam.co.uk/api/teams/integrations/jira/callback';
+        "https://sprintjam.co.uk/api/teams/integrations/jira/callback";
 
       if (!clientId || !clientSecret) {
         return jsonError(
-          'Jira OAuth not configured. Please contact administrator.',
+          "Jira OAuth not configured. Please contact administrator.",
           500,
         );
       }
@@ -720,31 +720,31 @@ export async function initiateTeamOAuthController(
         clientSecret,
       );
 
-      const authUrl = new URL('https://auth.atlassian.com/authorize');
-      authUrl.searchParams.set('audience', 'api.atlassian.com');
-      authUrl.searchParams.set('client_id', clientId);
+      const authUrl = new URL("https://auth.atlassian.com/authorize");
+      authUrl.searchParams.set("audience", "api.atlassian.com");
+      authUrl.searchParams.set("client_id", clientId);
       authUrl.searchParams.set(
-        'scope',
-        'read:jira-work write:jira-work read:board-scope:jira-software read:project:jira read:sprint:jira-software read:issue-details:jira read:jql:jira read:jira-user offline_access',
+        "scope",
+        "read:jira-work write:jira-work read:board-scope:jira-software read:project:jira read:sprint:jira-software read:issue-details:jira read:jql:jira read:jira-user offline_access",
       );
-      authUrl.searchParams.set('redirect_uri', redirectUri);
-      authUrl.searchParams.set('state', state);
-      authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('prompt', 'consent');
+      authUrl.searchParams.set("redirect_uri", redirectUri);
+      authUrl.searchParams.set("state", state);
+      authUrl.searchParams.set("response_type", "code");
+      authUrl.searchParams.set("prompt", "consent");
 
       return jsonResponse({ authorizationUrl: authUrl.toString() });
     }
 
-    if (provider === 'linear') {
+    if (provider === "linear") {
       const clientId = env.LINEAR_OAUTH_CLIENT_ID;
       const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
       const redirectUri =
         env.LINEAR_OAUTH_REDIRECT_URI ||
-        'https://sprintjam.co.uk/api/teams/integrations/linear/callback';
+        "https://sprintjam.co.uk/api/teams/integrations/linear/callback";
 
       if (!clientId || !clientSecret) {
         return jsonError(
-          'Linear OAuth not configured. Please contact administrator.',
+          "Linear OAuth not configured. Please contact administrator.",
           500,
         );
       }
@@ -757,26 +757,26 @@ export async function initiateTeamOAuthController(
         clientSecret,
       );
 
-      const authUrl = new URL('https://linear.app/oauth/authorize');
-      authUrl.searchParams.set('client_id', clientId);
-      authUrl.searchParams.set('redirect_uri', redirectUri);
-      authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('scope', 'read,write');
-      authUrl.searchParams.set('state', state);
+      const authUrl = new URL("https://linear.app/oauth/authorize");
+      authUrl.searchParams.set("client_id", clientId);
+      authUrl.searchParams.set("redirect_uri", redirectUri);
+      authUrl.searchParams.set("response_type", "code");
+      authUrl.searchParams.set("scope", "read,write");
+      authUrl.searchParams.set("state", state);
 
       return jsonResponse({ authorizationUrl: authUrl.toString() });
     }
 
-    if (provider === 'github') {
+    if (provider === "github") {
       const clientId = env.GITHUB_OAUTH_CLIENT_ID;
       const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
       const redirectUri =
         env.GITHUB_OAUTH_REDIRECT_URI ||
-        'https://sprintjam.co.uk/api/teams/integrations/github/callback';
+        "https://sprintjam.co.uk/api/teams/integrations/github/callback";
 
       if (!clientId || !clientSecret) {
         return jsonError(
-          'GitHub OAuth not configured. Please contact administrator.',
+          "GitHub OAuth not configured. Please contact administrator.",
           500,
         );
       }
@@ -789,19 +789,19 @@ export async function initiateTeamOAuthController(
         clientSecret,
       );
 
-      const authUrl = new URL('https://github.com/login/oauth/authorize');
-      authUrl.searchParams.set('client_id', clientId);
-      authUrl.searchParams.set('redirect_uri', redirectUri);
-      authUrl.searchParams.set('state', state);
-      authUrl.searchParams.set('scope', 'repo read:user user:email');
+      const authUrl = new URL("https://github.com/login/oauth/authorize");
+      authUrl.searchParams.set("client_id", clientId);
+      authUrl.searchParams.set("redirect_uri", redirectUri);
+      authUrl.searchParams.set("state", state);
+      authUrl.searchParams.set("scope", "repo read:user user:email");
 
       return jsonResponse({ authorizationUrl: authUrl.toString() });
     }
 
-    return jsonError('Unknown provider', 400);
+    return jsonError("Unknown provider", 400);
   } catch (error) {
-    console.error('Failed to initiate OAuth:', error);
-    return jsonError('Failed to initiate OAuth', 500);
+    console.error("Failed to initiate OAuth:", error);
+    return jsonError("Failed to initiate OAuth", 500);
   }
 }
 
@@ -809,46 +809,49 @@ export async function handleJiraTeamOAuthCallbackController(
   url: URL,
   env: AuthWorkerEnv,
 ): Promise<Response> {
-  const code = url.searchParams.get('code');
-  const state = url.searchParams.get('state');
-  const error = url.searchParams.get('error');
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const error = url.searchParams.get("error");
 
   if (error) return oauthHtmlError(error, 400);
-  if (!code || !state) return oauthHtmlError('Missing code or state', 400);
+  if (!code || !state) return oauthHtmlError("Missing code or state", 400);
 
   const clientId = env.JIRA_OAUTH_CLIENT_ID;
   const clientSecret = env.JIRA_OAUTH_CLIENT_SECRET;
   const redirectUri =
     env.JIRA_OAUTH_REDIRECT_URI ||
-    'https://sprintjam.co.uk/api/teams/integrations/jira/callback';
+    "https://sprintjam.co.uk/api/teams/integrations/jira/callback";
 
   if (!clientId || !clientSecret)
-    return oauthHtmlError('OAuth not configured', 500);
+    return oauthHtmlError("OAuth not configured", 500);
 
   try {
-    const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
+    const stateData = (await verifyState(
+      state,
+      clientSecret,
+    )) as TeamOAuthState;
     const { teamId, userId } = stateData;
 
     const stillAdmin = await verifyTeamAdminAccess(env, teamId, userId);
     if (!stillAdmin) {
-      return oauthHtmlError(
-        'Team access has changed. Please try again.',
-        403,
-      );
+      return oauthHtmlError("Team access has changed. Please try again.", 403);
     }
     const oauthChallenge = await consumeOAuthNonce(env, stateData);
     if (!oauthChallenge) {
-      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+      return oauthHtmlError(
+        "Invalid OAuth state. Please retry connection.",
+        400,
+      );
     }
     const { authorizedBy } = oauthChallenge;
 
     const tokenResponse = await fetch(
-      'https://auth.atlassian.com/oauth/token',
+      "https://auth.atlassian.com/oauth/token",
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          grant_type: 'authorization_code',
+          grant_type: "authorization_code",
           client_id: clientId,
           client_secret: clientSecret,
           code,
@@ -858,8 +861,8 @@ export async function handleJiraTeamOAuthCallbackController(
     );
 
     if (!tokenResponse.ok) {
-      console.error('Jira token exchange failed:', tokenResponse.status);
-      return oauthHtmlError('Failed to exchange code for token', 500);
+      console.error("Jira token exchange failed:", tokenResponse.status);
+      return oauthHtmlError("Failed to exchange code for token", 500);
     }
 
     const tokenData = await tokenResponse.json<{
@@ -871,17 +874,17 @@ export async function handleJiraTeamOAuthCallbackController(
     }>();
 
     const resourcesResponse = await fetch(
-      'https://api.atlassian.com/oauth/token/accessible-resources',
+      "https://api.atlassian.com/oauth/token/accessible-resources",
       {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
-          Accept: 'application/json',
+          Accept: "application/json",
         },
       },
     );
 
     if (!resourcesResponse.ok) {
-      return oauthHtmlError('Failed to fetch Jira resources', 500);
+      return oauthHtmlError("Failed to fetch Jira resources", 500);
     }
 
     const resources = await resourcesResponse.json<
@@ -894,12 +897,12 @@ export async function handleJiraTeamOAuthCallbackController(
     >();
 
     if (resources.length === 0)
-      return oauthHtmlError('No Jira sites accessible', 400);
+      return oauthHtmlError("No Jira sites accessible", 400);
 
     const requiredScopes = [
-      'read:board-scope:jira-software',
-      'read:sprint:jira-software',
-      'read:issue-details:jira',
+      "read:board-scope:jira-software",
+      "read:sprint:jira-software",
+      "read:issue-details:jira",
     ];
     const jiraResource =
       resources.find((r) =>
@@ -912,7 +915,7 @@ export async function handleJiraTeamOAuthCallbackController(
       {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
-          Accept: 'application/json',
+          Accept: "application/json",
         },
       },
     );
@@ -936,7 +939,7 @@ export async function handleJiraTeamOAuthCallbackController(
         {
           headers: {
             Authorization: `Bearer ${tokenData.access_token}`,
-            Accept: 'application/json',
+            Accept: "application/json",
           },
         },
       );
@@ -952,7 +955,7 @@ export async function handleJiraTeamOAuthCallbackController(
         sprintField = findDefaultSprintField(fields);
       }
     } catch (fieldError) {
-      console.error('Failed to pre-select Jira fields', fieldError);
+      console.error("Failed to pre-select Jira fields", fieldError);
     }
 
     const integrationRepo = getIntegrationRepo(env);
@@ -973,15 +976,18 @@ export async function handleJiraTeamOAuthCallbackController(
     });
 
     return oauthHtmlSuccess(
-      'Jira connected successfully. You can close this window.',
+      "Jira connected successfully. You can close this window.",
     );
   } catch (error) {
-    if (error instanceof Error && error.message === 'Invalid state') {
-      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+    if (error instanceof Error && error.message === "Invalid state") {
+      return oauthHtmlError(
+        "Invalid OAuth state. Please retry connection.",
+        400,
+      );
     }
-    console.error('Jira team OAuth callback error:', error);
+    console.error("Jira team OAuth callback error:", error);
     return oauthHtmlError(
-      'An error occurred during Jira authorization. Please try again.',
+      "An error occurred during Jira authorization. Please try again.",
       500,
     );
   }
@@ -991,56 +997,59 @@ export async function handleLinearTeamOAuthCallbackController(
   url: URL,
   env: AuthWorkerEnv,
 ): Promise<Response> {
-  const code = url.searchParams.get('code');
-  const state = url.searchParams.get('state');
-  const error = url.searchParams.get('error');
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const error = url.searchParams.get("error");
 
   if (error) return oauthHtmlError(error, 400);
-  if (!code || !state) return oauthHtmlError('Missing code or state', 400);
+  if (!code || !state) return oauthHtmlError("Missing code or state", 400);
 
   const clientId = env.LINEAR_OAUTH_CLIENT_ID;
   const clientSecret = env.LINEAR_OAUTH_CLIENT_SECRET;
   const redirectUri =
     env.LINEAR_OAUTH_REDIRECT_URI ||
-    'https://sprintjam.co.uk/api/teams/integrations/linear/callback';
+    "https://sprintjam.co.uk/api/teams/integrations/linear/callback";
 
   if (!clientId || !clientSecret)
-    return oauthHtmlError('OAuth not configured', 500);
+    return oauthHtmlError("OAuth not configured", 500);
 
   try {
-    const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
+    const stateData = (await verifyState(
+      state,
+      clientSecret,
+    )) as TeamOAuthState;
     const { teamId, userId } = stateData;
 
     const stillAdmin = await verifyTeamAdminAccess(env, teamId, userId);
     if (!stillAdmin) {
-      return oauthHtmlError(
-        'Team access has changed. Please try again.',
-        403,
-      );
+      return oauthHtmlError("Team access has changed. Please try again.", 403);
     }
     const oauthChallenge = await consumeOAuthNonce(env, stateData);
     if (!oauthChallenge) {
-      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+      return oauthHtmlError(
+        "Invalid OAuth state. Please retry connection.",
+        400,
+      );
     }
     const { authorizedBy } = oauthChallenge;
 
     const params = new URLSearchParams({
-      grant_type: 'authorization_code',
+      grant_type: "authorization_code",
       client_id: clientId,
       client_secret: clientSecret,
       code,
       redirect_uri: redirectUri,
     });
 
-    const tokenResponse = await fetch('https://api.linear.app/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    const tokenResponse = await fetch("https://api.linear.app/oauth/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params.toString(),
     });
 
     if (!tokenResponse.ok) {
-      console.error('Linear token exchange failed:', tokenResponse.status);
-      return oauthHtmlError('Failed to exchange code for token', 500);
+      console.error("Linear token exchange failed:", tokenResponse.status);
+      return oauthHtmlError("Failed to exchange code for token", 500);
     }
 
     const tokenData = await tokenResponse.json<{
@@ -1066,7 +1075,7 @@ export async function handleLinearTeamOAuthCallbackController(
       linearUserId = viewer?.id ?? null;
       linearUserEmail = viewer?.email ?? null;
     } catch (profileError) {
-      console.error('Failed to fetch Linear profile', profileError);
+      console.error("Failed to fetch Linear profile", profileError);
     }
 
     const integrationRepo = getIntegrationRepo(env);
@@ -1085,15 +1094,18 @@ export async function handleLinearTeamOAuthCallbackController(
     });
 
     return oauthHtmlSuccess(
-      'Linear connected successfully. You can close this window.',
+      "Linear connected successfully. You can close this window.",
     );
   } catch (error) {
-    if (error instanceof Error && error.message === 'Invalid state') {
-      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+    if (error instanceof Error && error.message === "Invalid state") {
+      return oauthHtmlError(
+        "Invalid OAuth state. Please retry connection.",
+        400,
+      );
     }
-    console.error('Linear team OAuth callback error:', error);
+    console.error("Linear team OAuth callback error:", error);
     return oauthHtmlError(
-      'An error occurred during Linear authorization. Please try again.',
+      "An error occurred during Linear authorization. Please try again.",
       500,
     );
   }
@@ -1103,46 +1115,49 @@ export async function handleGithubTeamOAuthCallbackController(
   url: URL,
   env: AuthWorkerEnv,
 ): Promise<Response> {
-  const code = url.searchParams.get('code');
-  const state = url.searchParams.get('state');
-  const error = url.searchParams.get('error');
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const error = url.searchParams.get("error");
 
   if (error) return oauthHtmlError(error, 400);
-  if (!code || !state) return oauthHtmlError('Missing code or state', 400);
+  if (!code || !state) return oauthHtmlError("Missing code or state", 400);
 
   const clientId = env.GITHUB_OAUTH_CLIENT_ID;
   const clientSecret = env.GITHUB_OAUTH_CLIENT_SECRET;
   const redirectUri =
     env.GITHUB_OAUTH_REDIRECT_URI ||
-    'https://sprintjam.co.uk/api/teams/integrations/github/callback';
+    "https://sprintjam.co.uk/api/teams/integrations/github/callback";
 
   if (!clientId || !clientSecret)
-    return oauthHtmlError('OAuth not configured', 500);
+    return oauthHtmlError("OAuth not configured", 500);
 
   try {
-    const stateData = (await verifyState(state, clientSecret)) as TeamOAuthState;
+    const stateData = (await verifyState(
+      state,
+      clientSecret,
+    )) as TeamOAuthState;
     const { teamId, userId } = stateData;
 
     const stillAdmin = await verifyTeamAdminAccess(env, teamId, userId);
     if (!stillAdmin) {
-      return oauthHtmlError(
-        'Team access has changed. Please try again.',
-        403,
-      );
+      return oauthHtmlError("Team access has changed. Please try again.", 403);
     }
     const oauthChallenge = await consumeOAuthNonce(env, stateData);
     if (!oauthChallenge) {
-      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+      return oauthHtmlError(
+        "Invalid OAuth state. Please retry connection.",
+        400,
+      );
     }
     const { authorizedBy } = oauthChallenge;
 
     const tokenResponse = await fetch(
-      'https://github.com/login/oauth/access_token',
+      "https://github.com/login/oauth/access_token",
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           client_id: clientId,
@@ -1154,8 +1169,8 @@ export async function handleGithubTeamOAuthCallbackController(
     );
 
     if (!tokenResponse.ok) {
-      console.error('GitHub token exchange failed:', tokenResponse.status);
-      return oauthHtmlError('Failed to exchange code for token', 500);
+      console.error("GitHub token exchange failed:", tokenResponse.status);
+      return oauthHtmlError("Failed to exchange code for token", 500);
     }
 
     const tokenData = await tokenResponse.json<{
@@ -1173,10 +1188,10 @@ export async function handleGithubTeamOAuthCallbackController(
     let githubUserEmail: string | null = null;
 
     try {
-      const userResponse = await fetch('https://api.github.com/user', {
+      const userResponse = await fetch("https://api.github.com/user", {
         headers: {
           Authorization: `Bearer ${tokenData.access_token}`,
-          Accept: 'application/vnd.github+json',
+          Accept: "application/vnd.github+json",
         },
       });
       if (userResponse.ok) {
@@ -1188,7 +1203,7 @@ export async function handleGithubTeamOAuthCallbackController(
         githubUserEmail = userData.email ?? null;
       }
     } catch (profileError) {
-      console.error('Failed to fetch GitHub user profile', profileError);
+      console.error("Failed to fetch GitHub user profile", profileError);
     }
 
     const integrationRepo = getIntegrationRepo(env);
@@ -1207,15 +1222,18 @@ export async function handleGithubTeamOAuthCallbackController(
     });
 
     return oauthHtmlSuccess(
-      'GitHub connected successfully. You can close this window.',
+      "GitHub connected successfully. You can close this window.",
     );
   } catch (error) {
-    if (error instanceof Error && error.message === 'Invalid state') {
-      return oauthHtmlError('Invalid OAuth state. Please retry connection.', 400);
+    if (error instanceof Error && error.message === "Invalid state") {
+      return oauthHtmlError(
+        "Invalid OAuth state. Please retry connection.",
+        400,
+      );
     }
-    console.error('GitHub team OAuth callback error:', error);
+    console.error("GitHub team OAuth callback error:", error);
     return oauthHtmlError(
-      'An error occurred during GitHub authorization. Please try again.',
+      "An error occurred during GitHub authorization. Please try again.",
       500,
     );
   }
@@ -1228,15 +1246,15 @@ export async function revokeTeamIntegrationController(
   provider: OAuthProvider,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-  if ('response' in auth) return auth.response;
+  if ("response" in auth) return auth.response;
 
   const { userId, repo } = auth.result;
   const team = await repo.getTeamById(teamId);
 
-  if (!team) return notFoundResponse('Team not found');
+  if (!team) return notFoundResponse("Team not found");
 
   if (!(await canUserManageTeam(repo, userId, teamId))) {
-    return forbiddenResponse('Only team admins can revoke integrations');
+    return forbiddenResponse("Only team admins can revoke integrations");
   }
 
   const integrationRepo = getIntegrationRepo(env);
@@ -1249,39 +1267,39 @@ export async function getTeamCredentialsInternalController(
   env: AuthWorkerEnv,
 ): Promise<Response> {
   if (!verifyInternalSecret(request, env)) {
-    return jsonError('Unauthorized', 401);
+    return jsonError("Unauthorized", 401);
   }
 
   let body: { teamId?: number; provider?: OAuthProvider };
   try {
     body = await request.json();
   } catch {
-    return jsonError('Invalid request body', 400);
+    return jsonError("Invalid request body", 400);
   }
 
   const { teamId, provider } = body;
-  if (typeof teamId !== 'number' || !provider) {
-    return jsonError('teamId and provider are required', 400);
+  if (typeof teamId !== "number" || !provider) {
+    return jsonError("teamId and provider are required", 400);
   }
 
   const integrationRepo = getIntegrationRepo(env);
 
   let credentials = null;
-  if (provider === 'jira') {
+  if (provider === "jira") {
     credentials = await integrationRepo.getJiraCredentials(teamId);
-  } else if (provider === 'linear') {
+  } else if (provider === "linear") {
     credentials = await integrationRepo.getLinearCredentials(teamId);
-  } else if (provider === 'github') {
+  } else if (provider === "github") {
     credentials = await integrationRepo.getGithubCredentials(teamId);
   } else {
-    return jsonError('Unknown provider', 400);
+    return jsonError("Unknown provider", 400);
   }
 
   if (!credentials) {
-    return jsonError('Not connected', 404);
+    return jsonError("Not connected", 404);
   }
 
-  return jsonResponse({ credentials }, { 'Cache-Control': 'no-store' });
+  return jsonResponse({ credentials }, { "Cache-Control": "no-store" });
 }
 
 export async function refreshTeamCredentialsInternalController(
@@ -1289,7 +1307,7 @@ export async function refreshTeamCredentialsInternalController(
   env: AuthWorkerEnv,
 ): Promise<Response> {
   if (!verifyInternalSecret(request, env)) {
-    return jsonError('Unauthorized', 401);
+    return jsonError("Unauthorized", 401);
   }
 
   let body: {
@@ -1302,18 +1320,18 @@ export async function refreshTeamCredentialsInternalController(
   try {
     body = await request.json();
   } catch {
-    return jsonError('Invalid request body', 400);
+    return jsonError("Invalid request body", 400);
   }
 
   const { teamId, provider, accessToken, refreshToken, expiresAt } = body;
   if (
-    typeof teamId !== 'number' ||
+    typeof teamId !== "number" ||
     !provider ||
-    typeof accessToken !== 'string' ||
-    typeof expiresAt !== 'number'
+    typeof accessToken !== "string" ||
+    typeof expiresAt !== "number"
   ) {
     return jsonError(
-      'teamId, provider, accessToken, and expiresAt are required',
+      "teamId, provider, accessToken, and expiresAt are required",
       400,
     );
   }
