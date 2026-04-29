@@ -94,6 +94,7 @@ function areOptionsEqual(
   if (a.length !== b.length) return false;
   return a.every(
     (value, index) =>
+      b[index] !== undefined &&
       toComparableString(value) === toComparableString(b[index]),
   );
 }

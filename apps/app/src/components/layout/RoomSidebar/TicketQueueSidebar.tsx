@@ -111,6 +111,9 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
     if (swapIndex < 0 || swapIndex >= tickets.length) return;
     const target = tickets[index];
     const swap = tickets[swapIndex];
+    if (!target || !swap) {
+      return;
+    }
     onUpdateTicket(target.id, { ordinal: swap.ordinal });
     onUpdateTicket(swap.id, { ordinal: target.ordinal });
   };

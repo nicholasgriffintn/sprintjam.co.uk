@@ -37,6 +37,9 @@ export class MockSqlStorage {
       );
       if (match) {
         const tableName = match[1];
+        if (!tableName) {
+          return cursor();
+        }
         if (!this.tables.has(tableName)) {
           this.tables.set(tableName, []);
           this.autoIncrements.set(tableName, 1);

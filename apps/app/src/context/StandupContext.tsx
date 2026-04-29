@@ -233,14 +233,12 @@ export function StandupProvider({
         setStandupData((prev) => {
           if (!prev) return prev;
           const reactions = { ...(prev.reactions ?? {}) };
-          if (!reactions[message.responseUserName]) {
-            reactions[message.responseUserName] = {};
-          }
+          const userReactions = reactions[message.responseUserName] ?? {};
           const emojiReactions =
-            reactions[message.responseUserName][message.emoji] ?? [];
+            userReactions[message.emoji] ?? [];
           if (!emojiReactions.includes(message.reactingUserName)) {
             reactions[message.responseUserName] = {
-              ...reactions[message.responseUserName],
+              ...userReactions,
               [message.emoji]: [...emojiReactions, message.reactingUserName],
             };
           }
@@ -253,11 +251,13 @@ export function StandupProvider({
           if (!prev) return prev;
           const reactions = { ...(prev.reactions ?? {}) };
           if (reactions[message.responseUserName]?.[message.emoji]) {
+            const userReactions = reactions[message.responseUserName];
+            const emojiReactions = userReactions?.[message.emoji] ?? [];
             reactions[message.responseUserName] = {
-              ...reactions[message.responseUserName],
-              [message.emoji]: reactions[message.responseUserName][
-                message.emoji
-              ].filter((u) => u !== message.reactingUserName),
+              ...userReactions,
+              [message.emoji]: emojiReactions.filter(
+                (u) => u !== message.reactingUserName,
+              ),
             };
           }
           return { ...prev, reactions };

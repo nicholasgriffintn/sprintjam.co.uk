@@ -5,8 +5,8 @@ import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { navigateTo, type AppScreen } from "@/config/routes";
-import { useSessionActions } from "@/context/SessionContext";
+import type { AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 type FooterProps = {
   displayRepoLink?: boolean;
@@ -25,10 +25,9 @@ export const Footer = ({
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
-  const { setScreen } = useSessionActions();
+  const navigateTo = useAppNavigation();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 

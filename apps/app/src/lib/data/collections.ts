@@ -7,7 +7,6 @@ import {
 
 import { API_BASE_URL } from "@/constants";
 import { isUnauthorizedWorkspaceError } from "@/lib/workspace-errors";
-import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { workspaceRequest } from "@/lib/workspace-service";
 import type { RoomData, ServerDefaults } from "@/types";
 import type {
@@ -89,23 +88,7 @@ const workspaceProfileCollectionConfig = {
   id: "workspace-profile",
   queryKey: ["workspace-profile"],
   startSync: false,
-  queryFn: async () => {
-    if (!isWorkspacesEnabled()) {
-      return [];
-    }
-
-    try {
-      const profile = await workspaceRequest<WorkspaceAuthProfile>(
-        `${API_BASE_URL}/auth/me`,
-      );
-      return [profile];
-    } catch (error) {
-      if (isUnauthorizedWorkspaceError(error)) {
-        return [];
-      }
-      throw error;
-    }
-  },
+  queryFn: async (): Promise<WorkspaceAuthProfile[]> => [],
   getKey: () => WORKSPACE_PROFILE_DOCUMENT_KEY,
   queryClient,
   staleTime: 1000 * 60 * 5,
@@ -192,9 +175,6 @@ export const teamSessionsCollection = createCollection<TeamSession, string>(
 export const ensureServerDefaultsCollectionReady = createEnsureCollectionReady(
   serverDefaultsCollection,
 );
-
-export const ensureWorkspaceProfileCollectionReady =
-  createEnsureCollectionReady(workspaceProfileCollection);
 
 export const ensureWorkspaceStatsCollectionReady = createEnsureCollectionReady(
   workspaceStatsCollection,

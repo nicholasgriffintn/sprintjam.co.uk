@@ -1,7 +1,6 @@
 type StorageValue = string | null;
 
-const canUseLocalStorage = () =>
-  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+const canUseLocalStorage = () => typeof localStorage !== "undefined";
 
 const logStorageError = (action: string, error: unknown) => {
   if (error instanceof Error) {
@@ -18,7 +17,7 @@ export const safeLocalStorage = {
     }
 
     try {
-      return window.localStorage.getItem(key);
+      return localStorage.getItem(key);
     } catch (error) {
       logStorageError("get", error);
       return null;
@@ -30,7 +29,7 @@ export const safeLocalStorage = {
     }
 
     try {
-      window.localStorage.setItem(key, value);
+      localStorage.setItem(key, value);
       return true;
     } catch (error) {
       logStorageError("set", error);
@@ -43,7 +42,7 @@ export const safeLocalStorage = {
     }
 
     try {
-      window.localStorage.removeItem(key);
+      localStorage.removeItem(key);
       return true;
     } catch (error) {
       logStorageError("remove", error);

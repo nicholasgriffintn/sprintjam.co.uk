@@ -91,18 +91,21 @@ export const getVoteSpreadSummary = (roomData: RoomData): VoteSpreadSummary => {
   let lowestVoter: string | null = null;
 
   if (numericVoteCount > 0) {
-    let highest = numericVotes[0];
-    let lowest = numericVotes[0];
+    const firstVote = numericVotes[0];
+    if (firstVote) {
+      let highest = firstVote;
+      let lowest = firstVote;
 
-    numericVotes.forEach((vote) => {
-      if (vote.value > highest.value) highest = vote;
-      if (vote.value < lowest.value) lowest = vote;
-    });
+      numericVotes.forEach((vote) => {
+        if (vote.value > highest.value) highest = vote;
+        if (vote.value < lowest.value) lowest = vote;
+      });
 
-    highestVoteValue = highest.value;
-    lowestVoteValue = lowest.value;
-    highestVoter = highest.user;
-    lowestVoter = lowest.user;
+      highestVoteValue = highest.value;
+      lowestVoteValue = lowest.value;
+      highestVoter = highest.user;
+      lowestVoter = lowest.user;
+    }
   }
 
   const range =

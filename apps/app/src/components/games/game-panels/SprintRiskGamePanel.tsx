@@ -20,7 +20,7 @@ function scoreDice(dice: number[]): number {
     return 750;
   let score = 0;
   for (const face of faces) {
-    const count = counts[face];
+    const count = counts[face] ?? 0;
     if (count >= 3) {
       score += (face === 1 ? 1000 : face * 100) * Math.pow(2, count - 3);
     } else {

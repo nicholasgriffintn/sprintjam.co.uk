@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./api/index.ts",
   "scripts": {
-    "dev": "CLOUDFLARE_ENV=development vite",
+    "dev": "CLOUDFLARE_ENV=development react-router dev",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -16,14 +16,13 @@
     "test:e2e:smoke:production": "PLAYWRIGHT_RUN_SMOKE=1 E2E_BASE_URL=https://sprintjam.co.uk pnpm test:e2e",
     "test:e2e:all": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e",
     "test:e2e:a11y": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e tests/e2e/a11y",
-    "build": "vite build",
-    "build:staging": "CLOUDFLARE_ENV=staging vite build",
+    "build": "react-router build",
+    "build:staging": "CLOUDFLARE_ENV=staging react-router build",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy",
     "typecheck": "tsc -b --noEmit",
-    "generate:types": "wrangler types --include-runtime=false",
-    "preview": "vite preview"
+    "generate:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
@@ -44,6 +43,7 @@
     "qrcode.react": "4.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-router": "^7.13.1",
     "tailwindcss": "4.1.14",
     "zod": "4.3.5"
   },
@@ -51,6 +51,7 @@
     "@axe-core/playwright": "^4.11.1",
     "@cloudflare/vite-plugin": "1.20.0",
     "@cloudflare/workers-types": "4.20260115.0",
+    "@react-router/dev": "^7.13.1",
     "@playwright/test": "1.57.0",
     "@tailwindcss/vite": "4.1.18",
     "@testing-library/react": "16.3.2",

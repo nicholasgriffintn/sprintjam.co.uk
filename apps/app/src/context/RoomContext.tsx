@@ -41,17 +41,20 @@ import { useRoomQueueAndGameActions } from "./useRoomQueueAndGameActions";
 import { useRoomRealtimeState } from "./useRoomRealtimeState";
 import { useRoomVotingActions } from "./useRoomVotingActions";
 import { sanitiseAvatarValue } from "@/utils/avatars";
+import { useCurrentRoute } from "@/hooks/useCurrentRoute";
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const {
-    screen,
     name,
-    roomKey,
+    roomKey: sessionRoomKey,
     passcode,
     selectedAvatar,
     selectedWorkspaceTeamId,
   } = useSessionState();
-  const { setScreen, setRoomKey, setPasscode, goHome, goToRoom } =
+  const currentRoute = useCurrentRoute();
+  const isRoomRoute = currentRoute.screen === "room";
+  const routeRoomKey = currentRoute.roomKey ?? "";
+  const { setRoomKey, setPasscode, goHome, goToRoom, startJoinFlow } =
     useSessionActions();
   const { setError, clearError } = useSessionErrors();
   const {
@@ -80,10 +83,10 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     useState<Partial<RoomSettings> | null>(null);
 
   useEffect(() => {
-    if (screen !== "room") {
+    if (!isRoomRoute) {
       setAutoReconnectDone(false);
     }
-  }, [screen]);
+  }, [isRoomRoute]);
 
   const {
     serverDefaults,
@@ -124,13 +127,12 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const needsAutoReconnect =
-    screen === "room" && !!roomKey && !autoReconnectDone;
+    isRoomRoute && !!routeRoomKey && !autoReconnectDone;
 
   useAutoReconnect({
     enabled: needsAutoReconnect,
     name: effectiveName,
-    screen,
-    roomKey,
+    roomKey: routeRoomKey,
     isLoadingDefaults,
     selectedAvatar: effectiveAvatar,
     onReconnectSuccess: useCallback(
@@ -157,12 +159,12 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
             message: "Please choose a different name to join the room.",
           });
 
-          setScreen("join");
+          startJoinFlow();
           return;
         }
 
         if (isAuthError) {
-          setScreen("join");
+          startJoinFlow();
           setError(message, "auth");
           return;
         }
@@ -173,18 +175,18 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
           message,
         });
       },
-      [setError, goHome, setScreen, setConnectionIssue],
+      [setError, goHome, startJoinFlow, setConnectionIssue],
     ),
     onLoadingChange: setIsLoading,
     applyServerDefaults,
     onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
     onNeedsJoin: useCallback(() => {
-      setScreen("join");
-    }, [setScreen]),
+      startJoinFlow();
+    }, [startJoinFlow]),
   });
 
   useRoomConnection({
-    screen,
+    enabled: isRoomRoute,
     name: effectiveName,
     activeRoomKey,
     onMessage: handleRoomMessage,
@@ -208,7 +210,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { handleCreateRoom, handleJoinRoom, abortLatestRoomRequest } =
     useRoomEntryActions({
       name: effectiveName,
-      roomKey,
+      roomKey: sessionRoomKey,
       passcode,
       selectedAvatar: effectiveAvatar,
       selectedWorkspaceTeamId,
