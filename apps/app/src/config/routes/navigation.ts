@@ -42,7 +42,7 @@ export function parsePath(path: string): ParsedPath {
     return { screen: "welcome" };
   }
 
-  const pathWithoutQuery = path.split("?")[0];
+  const pathWithoutQuery = path.split("?")[0] ?? "";
   const normalizedPath = pathWithoutQuery.endsWith("/")
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
@@ -113,27 +113,6 @@ export function getPathFromScreen(
     });
   }
   return route.path;
-}
-
-export function navigateTo(
-  screen: AppScreen,
-  params?: RouteParams | string,
-): void {
-  const resolvedParams = normaliseParams(params);
-  const path = getPathFromScreen(screen, resolvedParams);
-
-  if (window.location.pathname !== path) {
-    window.history.pushState({ screen, ...resolvedParams }, "", path);
-  }
-
-  const scrollToTop = () =>
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-
-  if ("requestAnimationFrame" in window) {
-    window.requestAnimationFrame(scrollToTop);
-  } else {
-    scrollToTop();
-  }
 }
 
 export function setReturnUrl(url: string): void {

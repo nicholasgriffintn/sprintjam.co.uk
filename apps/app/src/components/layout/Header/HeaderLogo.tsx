@@ -1,8 +1,10 @@
 import type { FC } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router";
 
 import { cn } from "@/lib/cn";
 import { type HeaderLogoProps } from "@/components/layout/Header/types";
+import { getPathFromScreen } from "@/config/routes";
 import {
   LOGO_SIZES,
   LOGO_TEXT_SIZES,
@@ -51,17 +53,16 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({
 
   if (onClick) {
     return (
-      <motion.a
-        href="/"
+      <Link
+        to={getPathFromScreen("welcome")}
         onClick={(e) => {
           e.preventDefault();
           onClick();
         }}
         className={cn(containerClass, "cursor-pointer")}
-        transition={HEADER_TRANSITION}
       >
         {content}
-      </motion.a>
+      </Link>
     );
   }
 

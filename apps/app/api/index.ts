@@ -2,9 +2,25 @@ import type {
   ExportedHandler,
   Request as CfRequest,
   Response as CfResponse,
+  ExecutionContext,
 } from "@cloudflare/workers-types";
+import { createRequestHandler } from "react-router";
 import type { DispatchWorkerEnv } from "@sprintjam/types";
 import * as Sentry from "@sentry/cloudflare";
+
+declare module "react-router" {
+  export interface AppLoadContext {
+    cloudflare: {
+      env: DispatchWorkerEnv;
+      ctx: ExecutionContext;
+    };
+  }
+}
+
+const requestHandler = createRequestHandler(
+  () => import("virtual:react-router/server-build"),
+  import.meta.env.MODE,
+);
 
 function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
   const isStaging = env.ENVIRONMENT === "staging";
@@ -24,6 +40,7 @@ function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
 async function handleRequest(
   request: CfRequest,
   env: DispatchWorkerEnv,
+  ctx: ExecutionContext,
 ): Promise<CfResponse> {
   try {
     const url = new URL(request.url);
@@ -75,7 +92,9 @@ async function handleRequest(
       return await env.STANDUP_WORKER.fetch(request);
     }
 
-    return env.ASSETS.fetch(request);
+    return requestHandler(request, {
+      cloudflare: { env, ctx },
+    });
   } catch (error) {
     Sentry.captureException(error);
     console.error("[main] Internal Server Error", error);
@@ -99,8 +118,9 @@ export default Sentry.withSentry(
     async fetch(
       request: CfRequest,
       env: DispatchWorkerEnv,
+      ctx: ExecutionContext,
     ): Promise<CfResponse> {
-      return handleRequest(request, env);
+      return handleRequest(request, env, ctx);
     },
   } satisfies ExportedHandler<DispatchWorkerEnv>,
 );

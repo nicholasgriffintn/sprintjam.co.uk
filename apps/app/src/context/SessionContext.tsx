@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useLocation } from "react-router";
 
 import {
   getStoredUserAvatar,
@@ -15,7 +16,8 @@ import {
 } from "@/hooks/useUserPersistence";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
-import { navigateTo, parsePath, type AppScreen } from "@/config/routes";
+import { parsePath, type AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 interface SessionStateContextValue {
   screen: AppScreen;
@@ -71,14 +73,10 @@ const SessionErrorContext = createContext<SessionErrorContextValue | undefined>(
   undefined,
 );
 
-export const SessionProvider = ({
-  currentPath,
-  children,
-}: {
-  currentPath: string;
-  children: ReactNode;
-}) => {
-  const initialPath = parsePath(currentPath);
+export const SessionProvider = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+  const navigateTo = useAppNavigation();
+  const initialPath = parsePath(location.pathname);
   const [screen, setScreen] = useState<AppScreen>(initialPath.screen);
   const [joinFlowMode, setJoinFlowMode] = useState<"join" | "create">(
     initialPath.screen === "create" ? "create" : "join",
@@ -206,23 +204,18 @@ export const SessionProvider = ({
   useUrlParams({
     onJoinRoom: (joinRoomKey) => {
       setRoomKey(joinRoomKey);
-      setScreen("join");
+      navigateTo("join");
     },
   });
 
   useEffect(() => {
-    const handlePopState = () => {
-      const parsed = parsePath(window.location.pathname);
-      setScreen(parsed.screen);
-      if (parsed.roomKey) {
-        setRoomKey(parsed.roomKey);
-      }
-      clearError();
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [clearError]);
+    const parsed = parsePath(location.pathname);
+    setScreen(parsed.screen);
+    if (parsed.roomKey) {
+      setRoomKey(parsed.roomKey);
+    }
+    clearError();
+  }, [clearError, location.pathname]);
 
   useUserPersistence({
     name,

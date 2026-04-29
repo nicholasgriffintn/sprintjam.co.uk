@@ -1,12 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 
 import {
   parsePath,
   getPathFromScreen,
-  navigateTo,
   setReturnUrl,
   getReturnUrl,
   clearReturnUrl,
@@ -23,10 +22,9 @@ import {
   getScreensInGroup,
 } from "@/config/routes/derived";
 import {
-  ROUTES,
-  getRouteConfig,
+  ROUTE_DEFINITIONS as ROUTES,
   type AppScreen,
-} from "@/config/routes/registry";
+} from "@/config/routes/definitions";
 
 describe("navigation", () => {
   describe("parsePath", () => {
@@ -186,80 +184,6 @@ describe("navigation", () => {
     });
   });
 
-  describe("navigateTo", () => {
-    let pushStateSpy: ReturnType<typeof vi.spyOn>;
-    let scrollToSpy: ReturnType<typeof vi.spyOn>;
-    let rafSpy: ReturnType<typeof vi.spyOn>;
-
-    beforeEach(() => {
-      pushStateSpy = vi.spyOn(window.history, "pushState");
-      scrollToSpy = vi.spyOn(window, "scrollTo");
-      rafSpy = vi
-        .spyOn(window, "requestAnimationFrame")
-        .mockImplementation((cb) => {
-          cb(0);
-          return 0;
-        });
-    });
-
-    afterEach(() => {
-      pushStateSpy.mockRestore();
-      scrollToSpy.mockRestore();
-      rafSpy.mockRestore();
-    });
-
-    it("navigates to screen using pushState", () => {
-      navigateTo("create");
-      expect(pushStateSpy).toHaveBeenCalledWith(
-        { screen: "create" },
-        "",
-        "/create",
-      );
-    });
-
-    it("navigates to room with room key", () => {
-      navigateTo("room", "ABC123");
-      expect(pushStateSpy).toHaveBeenCalledWith(
-        { screen: "room", roomKey: "ABC123" },
-        "",
-        "/room/ABC123",
-      );
-    });
-
-    it("navigates to wheel with wheel key", () => {
-      navigateTo("wheel", { wheelKey: "512D3O" });
-      expect(pushStateSpy).toHaveBeenCalledWith(
-        { screen: "wheel", wheelKey: "512D3O" },
-        "",
-        "/wheel/512D3O",
-      );
-    });
-
-    it("navigates to standup join with standup key", () => {
-      navigateTo("standupJoin", { standupKey: "ABC123" });
-      expect(pushStateSpy).toHaveBeenCalledWith(
-        { screen: "standupJoin", standupKey: "ABC123" },
-        "",
-        "/standup/join/ABC123",
-      );
-    });
-
-    it("scrolls to top on navigation", () => {
-      navigateTo("create");
-      expect(scrollToSpy).toHaveBeenCalledWith({
-        top: 0,
-        left: 0,
-        behavior: "smooth",
-      });
-    });
-
-    it("does not navigate if already on the same path", () => {
-      window.history.replaceState({ screen: "create" }, "", "/create");
-      navigateTo("create");
-      expect(pushStateSpy).not.toHaveBeenCalled();
-    });
-  });
-
   describe("return URL management", () => {
     afterEach(() => {
       sessionStorage.clear();
@@ -409,8 +333,11 @@ describe("derived", () => {
       const items = getWorkspaceNavItems();
       if (items.length > 1) {
         for (let i = 1; i < items.length; i++) {
-          const prevRoute = getRouteConfig(items[i - 1].screen);
-          const currRoute = getRouteConfig(items[i].screen);
+          const prevItem = items[i - 1];
+          const currItem = items[i];
+          if (!prevItem || !currItem) continue;
+          const prevRoute = getRouteDefinition(prevItem.screen);
+          const currRoute = getRouteDefinition(currItem.screen);
           const prevOrder = prevRoute?.nav?.order ?? 99;
           const currOrder = currRoute?.nav?.order ?? 99;
           expect(prevOrder).toBeLessThanOrEqual(currOrder);
@@ -421,7 +348,7 @@ describe("derived", () => {
     it("includes only workspace group items with nav config", () => {
       const items = getWorkspaceNavItems();
       for (const item of items) {
-        const route = getRouteConfig(item.screen);
+        const route = getRouteDefinition(item.screen);
         expect(route?.group).toBe("workspace");
         expect(route?.nav).toBeDefined();
       }
@@ -463,8 +390,11 @@ describe("derived", () => {
       const items = getAdminSidebarItems();
       if (items.length > 1) {
         for (let i = 1; i < items.length; i++) {
-          const prevRoute = getRouteConfig(items[i - 1].screen);
-          const currRoute = getRouteConfig(items[i].screen);
+          const prevItem = items[i - 1];
+          const currItem = items[i];
+          if (!prevItem || !currItem) continue;
+          const prevRoute = getRouteDefinition(prevItem.screen);
+          const currRoute = getRouteDefinition(currItem.screen);
           const prevOrder = prevRoute?.nav?.order ?? 99;
           const currOrder = currRoute?.nav?.order ?? 99;
           expect(prevOrder).toBeLessThanOrEqual(currOrder);
@@ -541,7 +471,6 @@ describe("ROUTES registry", () => {
       expect(route).toHaveProperty("screen");
       expect(route).toHaveProperty("path");
       expect(route).toHaveProperty("group");
-      expect(route).toHaveProperty("component");
       expect(route).toHaveProperty("meta");
     }
   });

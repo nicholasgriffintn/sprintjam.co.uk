@@ -25,12 +25,18 @@ describe("applyPageMeta", () => {
   });
 
   it("applies full route metadata synchronously", () => {
-    applyPageMeta({
-      title: "Planning Poker Guide - SprintJam",
-      description: "Learn planning poker.",
-      keywords: "planning poker, agile",
-      ogImage: "/og-image.png",
-    });
+    applyPageMeta(
+      {
+        title: "Planning Poker Guide - SprintJam",
+        description: "Learn planning poker.",
+        keywords: "planning poker, agile",
+        ogImage: "/og-image.png",
+      },
+      {
+        origin: "http://localhost:3000",
+        pathname: "/guides/planning-poker",
+      },
+    );
 
     expect(document.title).toBe("Planning Poker Guide - SprintJam");
     expect(getMeta("name", "description")).toBe("Learn planning poker.");

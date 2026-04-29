@@ -51,7 +51,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     selectedAvatar,
     selectedWorkspaceTeamId,
   } = useSessionState();
-  const { setScreen, setRoomKey, setPasscode, goHome, goToRoom } =
+  const { setRoomKey, setPasscode, goHome, goToRoom, startJoinFlow } =
     useSessionActions();
   const { setError, clearError } = useSessionErrors();
   const {
@@ -157,12 +157,12 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
             message: "Please choose a different name to join the room.",
           });
 
-          setScreen("join");
+          startJoinFlow();
           return;
         }
 
         if (isAuthError) {
-          setScreen("join");
+          startJoinFlow();
           setError(message, "auth");
           return;
         }
@@ -173,14 +173,14 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
           message,
         });
       },
-      [setError, goHome, setScreen, setConnectionIssue],
+      [setError, goHome, startJoinFlow, setConnectionIssue],
     ),
     onLoadingChange: setIsLoading,
     applyServerDefaults,
     onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
     onNeedsJoin: useCallback(() => {
-      setScreen("join");
-    }, [setScreen]),
+      startJoinFlow();
+    }, [startJoinFlow]),
   });
 
   useRoomConnection({

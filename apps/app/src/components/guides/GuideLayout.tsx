@@ -1,21 +1,15 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowUpRight, Clock } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo } from "react";
 
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui";
-import { usePageMeta } from "@/hooks/usePageMeta";
 import { SITE_NAME } from "@/constants";
-import {
-  generateArticleSchema,
-  generateBreadcrumbSchema,
-} from "@/utils/structured-data";
-import type { MetaTagConfig } from "@/utils/meta";
 import { useSessionActions } from "@/context/SessionContext";
-import { navigateTo, type AppScreen } from "@/config/routes";
-import { guides, type GuideInfo } from "@/routes/guides/GuidesScreen";
+import { getScreenFromPath, type AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { guides, type GuideInfo } from "@/content/guides";
 
 interface GuideLayoutProps {
   slug: string;
@@ -42,6 +36,7 @@ export const GuideLayout = ({
   preview,
 }: GuideLayoutProps) => {
   const { startCreateFlow, setScreen } = useSessionActions();
+  const navigateTo = useAppNavigation();
 
   const guide = guides.find((g) => g.slug === slug);
 
@@ -59,40 +54,6 @@ export const GuideLayout = ({
     .filter((g) => g.category === guide.category || g.featured)
     .slice(0, 3);
 
-  const jsonLd = useMemo(
-    () => ({
-      "@context": "https://schema.org",
-      "@graph": [
-        generateBreadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Guides", path: "/guides" },
-          { name: guide.title, path: `/guides/${slug}` },
-        ]),
-        generateArticleSchema({
-          headline: guide.title,
-          description: guide.description,
-          datePublished,
-          dateModified,
-          path: `/guides/${slug}`,
-        }),
-      ],
-    }),
-    [guide, slug, datePublished, dateModified],
-  );
-
-  const metaConfig: MetaTagConfig = useMemo(
-    () => ({
-      title: `${guide.title} - ${SITE_NAME}`,
-      description: guide.description,
-      keywords: `${guide.title.toLowerCase()}, planning poker, agile estimation, scrum, story points, ${guide.category}`,
-      ogImage: "/og-image.png",
-      jsonLd,
-    }),
-    [guide, jsonLd],
-  );
-
-  usePageMeta(metaConfig);
-
   return (
     <PageSection maxWidth="xl">
       <motion.div
@@ -104,7 +65,7 @@ export const GuideLayout = ({
         <div className="space-y-6 text-left">
           <button
             type="button"
-            onClick={() => handleNavigate("guides" as AppScreen)}
+            onClick={() => handleNavigate("guides")}
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-brand-700 dark:text-slate-400 dark:hover:text-brand-200"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -202,7 +163,7 @@ export const GuideLayout = ({
                         className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
                         onClick={() =>
                           handleNavigate(
-                            `guides${related.slug.charAt(0).toUpperCase() + related.slug.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())}` as AppScreen,
+                            getScreenFromPath(`/guides/${related.slug}`),
                           )
                         }
                       >

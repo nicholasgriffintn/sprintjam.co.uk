@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-// @ts-ignore - no types available
-import { initStrudel, evaluate, hush, setDefaultValue } from "@strudel/web";
 
-import { prebake } from "@/lib/strudel";
+import {
+  loadStrudelRuntime,
+  prebake,
+  type StrudelRuntime,
+} from "@/lib/strudel";
 import { safeLocalStorage } from "@/utils/storage";
 import { MUTE_STORAGE_KEY, VOLUME_STORAGE_KEY } from "@/constants";
 
 let sharedInitPromise: Promise<void> | null = null;
 let sharedInitialized = false;
+let sharedRuntime: StrudelRuntime | null = null;
 
 interface UseStrudelPlayerOptions {
   onError?: (error: Error) => void;
@@ -103,6 +106,22 @@ const parseStrudelCodePayload = (payload: StrudelCodePayload): string => {
   throw new Error("Strudel payload missing code property");
 };
 
+const getLoadedRuntime = (): StrudelRuntime | null => sharedRuntime;
+
+const hushPlayback = () => {
+  getLoadedRuntime()?.hush();
+};
+
+const setRuntimeVolume = (value: number) => {
+  const runtime = getLoadedRuntime();
+  if (!runtime) {
+    return;
+  }
+
+  runtime.setDefaultValue("postgain", value);
+  runtime.setDefaultValue("gain", value);
+};
+
 export function useStrudelPlayer(
   options: UseStrudelPlayerOptions = {},
 ): UseStrudelPlayerReturn {
@@ -154,7 +173,7 @@ export function useStrudelPlayer(
       try {
         console.info("StrudelPlayer] Cleaning up Strudel");
         if (sharedInitialized || sharedInitPromise || initPromiseRef.current) {
-          hush();
+          hushPlayback();
         }
       } catch (e) {
         console.error("Failed to clean up Strudel:", e);
@@ -176,9 +195,13 @@ export function useStrudelPlayer(
         sharedInitPromise ||
         (async () => {
           try {
-            await initStrudel({
-              prebake,
+            const runtime = await loadStrudelRuntime();
+            sharedRuntime = runtime;
+
+            await runtime.initStrudel({
+              prebake: () => prebake(runtime),
             });
+            setRuntimeVolume(volume);
 
             sharedInitialized = true;
 
@@ -209,8 +232,7 @@ export function useStrudelPlayer(
   useEffect(() => {
     const clampedVolume = Math.min(Math.max(volume, 0), 1);
     safeLocalStorage.set(VOLUME_STORAGE_KEY, String(clampedVolume));
-    setDefaultValue("postgain", clampedVolume);
-    setDefaultValue("gain", clampedVolume);
+    setRuntimeVolume(clampedVolume);
   }, [volume]);
 
   const play = useCallback(async () => {
@@ -223,7 +245,7 @@ export function useStrudelPlayer(
     }
 
     try {
-      await evaluate(currentCodeRef.current);
+      await sharedRuntime?.evaluate(currentCodeRef.current);
       console.info("[StrudelPlayer] Playing code:", currentCodeRef.current);
       setIsPlaying(true);
     } catch (error) {
@@ -244,7 +266,7 @@ export function useStrudelPlayer(
 
     try {
       console.info("[StrudelPlayer] Pausing playback");
-      hush();
+      hushPlayback();
       setIsPlaying(false);
     } catch (error) {
       console.error("Failed to pause:", error);
@@ -265,7 +287,7 @@ export function useStrudelPlayer(
 
     try {
       console.info("[StrudelPlayer] Stopping playback");
-      hush();
+      hushPlayback();
       setIsPlaying(false);
       currentCodeRef.current = null;
     } catch (error) {
@@ -287,7 +309,7 @@ export function useStrudelPlayer(
       try {
         console.info("[StrudelPlayer] Muting playback");
         if (isInitializedRef.current || initPromiseRef.current) {
-          hush();
+          hushPlayback();
         }
         setIsPlaying(false);
       } catch (error) {
@@ -324,7 +346,7 @@ export function useStrudelPlayer(
           console.info(
             "StrudelPlayer] Stopping existing playback before playing new code",
           );
-          hush();
+          hushPlayback();
           setIsPlaying(false);
         } catch (error) {
           console.error("Failed to stop existing playback:", error);
@@ -348,12 +370,12 @@ export function useStrudelPlayer(
 
       try {
         console.info("[StrudelPlayer] Stopping any existing playback");
-        hush();
+        hushPlayback();
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
         if (!isMutedRef.current && currentCodeRef.current) {
-          await evaluate(currentCodeRef.current);
+          await sharedRuntime?.evaluate(currentCodeRef.current);
           console.info("[StrudelPlayer] Playing code:", currentCodeRef.current);
           setIsPlaying(true);
         } else {

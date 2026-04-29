@@ -5,7 +5,8 @@ import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { navigateTo, type AppScreen } from "@/config/routes";
+import type { AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useSessionActions } from "@/context/SessionContext";
 
 type FooterProps = {
@@ -26,6 +27,7 @@ export const Footer = ({
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const { setScreen } = useSessionActions();
+  const navigateTo = useAppNavigation();
 
   const handleNavigate = (screen: AppScreen) => {
     setScreen(screen);

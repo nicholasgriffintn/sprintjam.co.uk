@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
+import { reactRouter } from "@react-router/dev/vite";
 import path from "path";
 import fs from "fs";
 
@@ -45,9 +45,10 @@ export default defineConfig(() => {
       sourcemap: true,
     },
     plugins: [
-      react(),
       tailwindcss(),
+      reactRouter(),
       cloudflare({
+        viteEnvironment: { name: "ssr" },
         auxiliaryWorkers: [
           {
             configPath: "../room-worker/wrangler.jsonc",

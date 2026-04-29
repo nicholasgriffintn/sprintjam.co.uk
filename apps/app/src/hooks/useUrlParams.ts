@@ -1,10 +1,12 @@
 import { useEffect, useRef } from "react";
+import { useLocation } from "react-router";
 
 interface UseUrlParamsOptions {
   onJoinRoom: (roomKey: string) => void;
 }
 
 export const useUrlParams = ({ onJoinRoom }: UseUrlParamsOptions) => {
+  const location = useLocation();
   const didCheckUrlParams = useRef(false);
 
   useEffect(() => {
@@ -12,16 +14,11 @@ export const useUrlParams = ({ onJoinRoom }: UseUrlParamsOptions) => {
 
     didCheckUrlParams.current = true;
 
-    try {
-      const url = new URL(window.location.href);
-      const joinParam = url.searchParams.get("join");
+    const searchParams = new URLSearchParams(location.search);
+    const joinParam = searchParams.get("join");
 
-      if (joinParam && joinParam.length > 0) {
-        onJoinRoom(joinParam.toUpperCase());
-        window.history.replaceState({}, document.title, "/");
-      }
-    } catch (err) {
-      console.error("Failed to parse URL parameters", err);
+    if (joinParam && joinParam.length > 0) {
+      onJoinRoom(joinParam.toUpperCase());
     }
-  }, [onJoinRoom]);
+  }, [location.search, onJoinRoom]);
 };
