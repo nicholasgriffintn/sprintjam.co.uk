@@ -3,7 +3,6 @@ import { Building2, Lock, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { useSessionActions } from "@/context/SessionContext";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import {
   getStoredUserAvatar,
@@ -38,7 +37,6 @@ function buildStandupSessionName(): string {
 }
 
 export default function StandupCreateRoute() {
-  const { setScreen } = useSessionActions();
   const navigateTo = useAppNavigation();
   const { user, teams, selectedTeamId, setSelectedTeamId, isAuthenticated } =
     useWorkspaceData();
@@ -117,7 +115,6 @@ export default function StandupCreateRoute() {
       }
 
       persistUserName(normalizedUserName);
-      setScreen("standupRoom");
       navigateTo("standupRoom", { standupKey: response.standup.key });
     } catch (submitError) {
       setError(
@@ -247,10 +244,7 @@ export default function StandupCreateRoute() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => {
-                  setScreen("standup");
-                  navigateTo("standup");
-                }}
+                onClick={() => navigateTo("standup")}
               >
                 Back
               </Button>

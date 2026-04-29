@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { useSessionActions } from "@/context/SessionContext";
 
 type FooterProps = {
   displayRepoLink?: boolean;
@@ -26,11 +25,9 @@ export const Footer = ({
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
-  const { setScreen } = useSessionActions();
   const navigateTo = useAppNavigation();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 

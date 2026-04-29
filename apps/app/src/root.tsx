@@ -23,7 +23,7 @@ import { WheelHeaderProvider } from "@/context/WheelHeaderContext";
 import { WorkspaceAuthProvider } from "@/context/WorkspaceAuthContext";
 import { AppToastProvider } from "@/components/ui";
 import { getBackgroundVariant } from "@/config/routes/derived";
-import { parsePath } from "@/config/routes/navigation";
+import { useCurrentRoute } from "@/hooks/useCurrentRoute";
 import { queryClient } from "@/lib/data/collections";
 import { ThemeProvider } from "@/lib/theme-context";
 import type { ServerDefaults } from "@/types";
@@ -129,16 +129,12 @@ async function loadServerDefaults({
 }
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const { screen } = parsePath(url.pathname);
-
   const [initialWorkspaceProfile, initialServerDefaults] = await Promise.all([
     loadWorkspaceProfile({ request, context }),
     loadServerDefaults({ request, context }),
   ]);
 
   return {
-    screen,
     initialWorkspaceProfile,
     initialServerDefaults,
   };
@@ -166,8 +162,9 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  const { screen, initialWorkspaceProfile, initialServerDefaults } =
+  const { initialWorkspaceProfile, initialServerDefaults } =
     useLoaderData<typeof loader>();
+  const { screen } = useCurrentRoute();
 
   return (
     <QueryClientProvider client={queryClient}>

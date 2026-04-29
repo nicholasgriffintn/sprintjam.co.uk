@@ -145,6 +145,9 @@ export function useTeamSessions(teamId: number | null): TeamSession[] {
     for (let i = 0; i < prev.length; i++) {
       const prevItem = prev[i];
       const nextItem = next[i];
+      if (!prevItem || !nextItem) {
+        return false;
+      }
       if (
         prevItem.id !== nextItem.id ||
         prevItem.teamId !== nextItem.teamId ||

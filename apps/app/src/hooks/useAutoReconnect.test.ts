@@ -47,7 +47,6 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
@@ -72,7 +71,6 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
@@ -109,7 +107,6 @@ describe("useAutoReconnect", () => {
     const { unmount } = renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
@@ -139,7 +136,7 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "welcome",
+        enabled: false,
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
@@ -159,7 +156,6 @@ describe("useAutoReconnect", () => {
       useAutoReconnect({
         enabled: false,
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
@@ -178,7 +174,6 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "",
         isLoadingDefaults: false,
         selectedAvatar: "user",
@@ -199,7 +194,6 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
@@ -223,7 +217,6 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: null,
@@ -250,7 +243,6 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "https://example.com/alice.png",

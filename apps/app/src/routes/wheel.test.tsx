@@ -11,6 +11,8 @@ import {
   joinWheel,
 } from "@/lib/wheel-api-service";
 
+const navigateToMock = vi.hoisted(() => vi.fn());
+
 vi.mock("@/lib/wheel-api-service", () => ({
   createWheel: vi.fn(),
   getWheelAccessSettings: vi.fn(),
@@ -18,14 +20,17 @@ vi.mock("@/lib/wheel-api-service", () => ({
 }));
 
 vi.mock("@/hooks/useAppNavigation", () => ({
-  useAppNavigation: () => vi.fn(),
+  useAppNavigation: () => navigateToMock,
 }));
 
 describe("WheelRoute", () => {
   beforeEach(() => {
     window.history.replaceState(null, "", "/wheel");
     window.scrollTo = vi.fn();
+    window.localStorage.clear();
+    navigateToMock.mockReset();
     vi.mocked(createWheel).mockReset();
+    vi.mocked(getWheelAccessSettings).mockReset();
     vi.mocked(joinWheel).mockReset();
   });
 
@@ -41,6 +46,42 @@ describe("WheelRoute", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(createWheel).toHaveBeenCalledTimes(1);
+    expect(joinWheel).not.toHaveBeenCalled();
+  });
+
+  it("redirects after creating a wheel without mounting the created room first", async () => {
+    vi.mocked(createWheel).mockResolvedValue({
+      token: "token",
+      recoveryPasskey: "ABCD-EFGH",
+      wheel: {
+        key: "531N72",
+        entries: [],
+        users: ["User-test"],
+        connectedUsers: { "User-test": false },
+        moderator: "User-test",
+        spinState: null,
+        results: [],
+        settings: {
+          removeWinnerAfterSpin: false,
+          showConfetti: true,
+          playSounds: true,
+          spinDurationMs: 4000,
+        },
+        status: "active",
+      },
+    });
+
+    render(<WheelRoute />);
+
+    await waitFor(() => {
+      expect(navigateToMock).toHaveBeenCalledWith(
+        "wheel",
+        { wheelKey: "531N72" },
+        { replace: true },
+      );
+    });
+
+    expect(screen.getByText("Creating your wheel...")).toBeTruthy();
     expect(joinWheel).not.toHaveBeenCalled();
   });
 

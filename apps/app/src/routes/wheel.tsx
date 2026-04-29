@@ -344,7 +344,6 @@ export default function WheelRoute() {
             );
           }
           navigateTo("wheel", { wheelKey: newKey }, { replace: true });
-          setWheelKey(newKey);
         })
         .catch((err) => {
           setError(

@@ -2,19 +2,16 @@ import { cn } from "@/lib/cn";
 import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { getAdminSidebarItems } from "@/config/routes/derived";
-import { useSessionActions } from "@/context/SessionContext";
 
 interface AdminSidebarProps {
   activeScreen: AppScreen;
 }
 
 export function AdminSidebar({ activeScreen }: AdminSidebarProps) {
-  const { setScreen } = useSessionActions();
   const navigateTo = useAppNavigation();
   const items = getAdminSidebarItems();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 

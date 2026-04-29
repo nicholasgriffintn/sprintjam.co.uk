@@ -44,15 +44,20 @@ import { getVoteSpreadSummary } from "@/utils/room-guidance";
 import { useRoomOnboardingHints } from "@/hooks/useRoomOnboardingHints";
 import { useFacilitationPrompt } from "@/hooks/useFacilitationPrompt";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
-import type { ConnectionStatusState } from "@/types";
+import type { ConnectionStatusState, RoomData, ServerDefaults } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 import { createMeta } from "../meta";
 
 export const meta = createMeta("room");
 
-const RoomContent = () => {
-  const { roomData, isModeratorView, userVote, serverDefaults } =
-    useRoomState();
+const RoomContent = ({
+  roomData,
+  serverDefaults,
+}: {
+  roomData: RoomData;
+  serverDefaults: ServerDefaults;
+}) => {
+  const { isModeratorView, userVote } = useRoomState();
   const {
     roomError,
     roomErrorKind,
@@ -863,7 +868,7 @@ const RoomRoute = () => {
     );
   }
 
-  return <RoomContent />;
+  return <RoomContent roomData={roomData} serverDefaults={serverDefaults} />;
 };
 
 export default RoomRoute;

@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   writeUpsert: vi.fn(),
   writeDelete: vi.fn(),
   refetch: vi.fn(),
+  get: vi.fn(),
   logout: vi.fn(),
 }));
 
@@ -37,6 +38,7 @@ vi.mock("@/lib/data/hooks", () => ({
 vi.mock("@/lib/data/collections", () => ({
   WORKSPACE_PROFILE_DOCUMENT_KEY: "workspace-profile",
   workspaceProfileCollection: {
+    get: mocks.get,
     utils: {
       writeUpsert: mocks.writeUpsert,
       writeDelete: mocks.writeDelete,
@@ -68,6 +70,10 @@ const initialProfile: WorkspaceAuthProfile = {
     organisationId: 1,
     avatar: null,
   },
+  membership: {
+    role: "admin",
+    status: "active",
+  },
   teams: [
     {
       id: 10,
@@ -77,7 +83,7 @@ const initialProfile: WorkspaceAuthProfile = {
       accessPolicy: "open",
       createdAt: 1,
       updatedAt: 1,
-      currentUserRole: "owner",
+      currentUserRole: "admin",
       currentUserStatus: "active",
       canAccess: true,
       canManage: true,
@@ -91,6 +97,7 @@ describe("WorkspaceAuthProvider", () => {
     mocks.writeUpsert.mockReset();
     mocks.writeDelete.mockReset();
     mocks.refetch.mockReset();
+    mocks.get.mockReset();
     mocks.logout.mockReset();
   });
 
@@ -112,6 +119,8 @@ describe("WorkspaceAuthProvider", () => {
   });
 
   it("clears stale auth state when the root loader has no profile", async () => {
+    mocks.get.mockReturnValue(initialProfile);
+
     render(
       <WorkspaceAuthProvider initialProfile={null}>
         <AuthProbe />

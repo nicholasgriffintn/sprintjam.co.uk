@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createStandup } from "@/lib/standup-api-service";
 import { createTeamSession } from "@/lib/workspace-service";
 
-const mockSetScreen = vi.fn();
 const mockNavigateTo = vi.fn();
 const mockPersistUserName = vi.fn();
 
@@ -22,10 +21,6 @@ const workspaceDataMock = {
   setSelectedTeamId: vi.fn(),
   isAuthenticated: false,
 };
-
-vi.mock("@/context/SessionContext", () => ({
-  useSessionActions: () => ({ setScreen: mockSetScreen }),
-}));
 
 vi.mock("@/hooks/useWorkspaceData", () => ({
   useWorkspaceData: () => workspaceDataMock,
@@ -134,8 +129,6 @@ describe("StandupCreateRoute", () => {
         undefined,
       );
     });
-
-    expect(mockSetScreen).toHaveBeenCalledWith("standupRoom");
     expect(mockPersistUserName).toHaveBeenCalledWith("Alice");
     expect(mockNavigateTo).toHaveBeenCalledWith("standupRoom", {
       standupKey: "ABC123",

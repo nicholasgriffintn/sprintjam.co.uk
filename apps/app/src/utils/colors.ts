@@ -7,7 +7,9 @@ const parseColor = (color: string): RGB | null => {
   if (color.startsWith("#")) {
     const hex = color.slice(1);
     if (hex.length === 3) {
-      const [r, g, b] = hex.split("").map((v) => parseInt(v + v, 16));
+      const [r = 0, g = 0, b = 0] = hex
+        .split("")
+        .map((v) => parseInt(v + v, 16));
       return { r, g, b };
     }
     if (hex.length === 6) {
@@ -22,7 +24,7 @@ const parseColor = (color: string): RGB | null => {
     /rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/i,
   );
   if (rgbMatch) {
-    const [, r, g, b] = rgbMatch.map(Number);
+    const [, r = 0, g = 0, b = 0] = rgbMatch.map(Number);
     return { r, g, b };
   }
 

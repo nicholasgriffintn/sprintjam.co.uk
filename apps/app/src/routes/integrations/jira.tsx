@@ -107,11 +107,10 @@ const securityHighlights = [
 ];
 
 const JiraIntegrationRoute = () => {
-  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
+  const { startCreateFlow, startJoinFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 

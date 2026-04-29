@@ -41,16 +41,19 @@ import { useRoomQueueAndGameActions } from "./useRoomQueueAndGameActions";
 import { useRoomRealtimeState } from "./useRoomRealtimeState";
 import { useRoomVotingActions } from "./useRoomVotingActions";
 import { sanitiseAvatarValue } from "@/utils/avatars";
+import { useCurrentRoute } from "@/hooks/useCurrentRoute";
 
 export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const {
-    screen,
     name,
-    roomKey,
+    roomKey: sessionRoomKey,
     passcode,
     selectedAvatar,
     selectedWorkspaceTeamId,
   } = useSessionState();
+  const currentRoute = useCurrentRoute();
+  const isRoomRoute = currentRoute.screen === "room";
+  const routeRoomKey = currentRoute.roomKey ?? "";
   const { setRoomKey, setPasscode, goHome, goToRoom, startJoinFlow } =
     useSessionActions();
   const { setError, clearError } = useSessionErrors();
@@ -80,10 +83,10 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     useState<Partial<RoomSettings> | null>(null);
 
   useEffect(() => {
-    if (screen !== "room") {
+    if (!isRoomRoute) {
       setAutoReconnectDone(false);
     }
-  }, [screen]);
+  }, [isRoomRoute]);
 
   const {
     serverDefaults,
@@ -124,13 +127,12 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const needsAutoReconnect =
-    screen === "room" && !!roomKey && !autoReconnectDone;
+    isRoomRoute && !!routeRoomKey && !autoReconnectDone;
 
   useAutoReconnect({
     enabled: needsAutoReconnect,
     name: effectiveName,
-    screen,
-    roomKey,
+    roomKey: routeRoomKey,
     isLoadingDefaults,
     selectedAvatar: effectiveAvatar,
     onReconnectSuccess: useCallback(
@@ -184,7 +186,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useRoomConnection({
-    screen,
+    enabled: isRoomRoute,
     name: effectiveName,
     activeRoomKey,
     onMessage: handleRoomMessage,
@@ -208,7 +210,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { handleCreateRoom, handleJoinRoom, abortLatestRoomRequest } =
     useRoomEntryActions({
       name: effectiveName,
-      roomKey,
+      roomKey: sessionRoomKey,
       passcode,
       selectedAvatar: effectiveAvatar,
       selectedWorkspaceTeamId,

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, type ReactElement } from "react";
 import { Check, AlertTriangle } from "lucide-react";
 import type {
   StructuredVote,
@@ -38,7 +38,7 @@ function CriterionRow({
 }: CriterionRowProps) {
   const titleId = useId();
   const descriptionId = useId();
-  const scoreButtons = [];
+  const scoreButtons: ReactElement[] = [];
 
   for (let i = criterion.minScore; i <= criterion.maxScore; i++) {
     scoreButtons.push(

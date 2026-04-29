@@ -47,7 +47,6 @@ const JoinRoomRoute = () => {
     setRoomKey,
     setPasscode,
     setSelectedAvatar,
-    setJoinFlowMode,
     goHome,
   } = useSessionActions();
   const { error, errorKind, clearError } = useSessionErrors();
@@ -128,7 +127,6 @@ const JoinRoomRoute = () => {
         clearError();
         if (isCreateFlow) {
           void handleCreateRoom();
-          setJoinFlowMode("join");
         } else {
           void handleJoinRoom();
         }
@@ -140,7 +138,6 @@ const JoinRoomRoute = () => {
       clearError();
       if (isCreateFlow) {
         void handleCreateRoom();
-        setJoinFlowMode("join");
       } else {
         void handleJoinRoom();
       }

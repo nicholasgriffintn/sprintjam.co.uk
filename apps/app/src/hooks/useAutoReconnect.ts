@@ -8,7 +8,6 @@ import { HttpError } from "@/lib/errors";
 interface UseAutoReconnectOptions {
   enabled?: boolean;
   name: string;
-  screen: string;
   roomKey: string;
   isLoadingDefaults: boolean;
   selectedAvatar: AvatarId | null;
@@ -28,7 +27,6 @@ interface UseAutoReconnectOptions {
 export const useAutoReconnect = ({
   enabled = true,
   name,
-  screen,
   roomKey,
   isLoadingDefaults,
   selectedAvatar,
@@ -50,7 +48,7 @@ export const useAutoReconnect = ({
     if (didAttemptRestore.current) {
       return;
     }
-    if (screen !== "room" || !roomKey) {
+    if (!roomKey) {
       return;
     }
     if (isLoadingDefaults) {
@@ -111,7 +109,6 @@ export const useAutoReconnect = ({
   }, [
     enabled,
     name,
-    screen,
     roomKey,
     isLoadingDefaults,
     selectedAvatar,

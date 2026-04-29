@@ -16,11 +16,10 @@ import {
 } from "@/hooks/useUserPersistence";
 import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
-import { parsePath, type AppScreen } from "@/config/routes";
+import { parsePath } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 interface SessionStateContextValue {
-  screen: AppScreen;
   joinFlowMode: "join" | "create";
   name: string;
   roomKey: string;
@@ -30,7 +29,6 @@ interface SessionStateContextValue {
 }
 
 interface SessionActionsContextValue {
-  setScreen: (screen: AppScreen) => void;
   setJoinFlowMode: (mode: "join" | "create") => void;
   setName: (name: string) => void;
   setRoomKey: (key: string) => void;
@@ -77,7 +75,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const navigateTo = useAppNavigation();
   const initialPath = parsePath(location.pathname);
-  const [screen, setScreen] = useState<AppScreen>(initialPath.screen);
   const [joinFlowMode, setJoinFlowMode] = useState<"join" | "create">(
     initialPath.screen === "create" ? "create" : "join",
   );
@@ -109,7 +106,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goHome = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("welcome");
     setSelectedWorkspaceTeamId(null);
     navigateTo("welcome");
     clearError();
@@ -118,7 +114,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToLogin = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("login");
     navigateTo("login");
     clearError();
   }, [clearError]);
@@ -126,7 +121,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToWorkspace = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("workspace");
     navigateTo("workspace");
     clearError();
   }, [clearError]);
@@ -134,7 +128,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToWorkspaceProfile = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("workspaceProfile");
     navigateTo("workspaceProfile");
     clearError();
   }, [clearError]);
@@ -142,7 +135,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToWorkspaceSessions = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("workspaceSessions");
     navigateTo("workspaceSessions");
     clearError();
   }, [clearError]);
@@ -150,7 +142,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToWorkspaceAdmin = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("workspaceAdmin");
     navigateTo("workspaceAdmin");
     clearError();
   }, [clearError]);
@@ -158,7 +149,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToWorkspaceAdminTeams = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("workspaceAdminTeams");
     navigateTo("workspaceAdminTeams");
     clearError();
   }, [clearError]);
@@ -166,7 +156,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToWorkspaceAdminTeamSettings = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("workspaceAdminTeamSettings");
     navigateTo("workspaceAdminTeamSettings");
     clearError();
   }, [clearError]);
@@ -174,7 +163,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToRoom = useCallback(
     (key: string) => {
       setRoomKey(key);
-      setScreen("room");
+      setJoinFlowMode("join");
       navigateTo("room", key);
       clearError();
     },
@@ -185,7 +174,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     (teamId?: number) => {
       setPasscode("");
       setJoinFlowMode("create");
-      setScreen("create");
       setSelectedWorkspaceTeamId(teamId ?? null);
       navigateTo("create");
       clearError();
@@ -196,7 +184,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const startJoinFlow = useCallback(() => {
     setPasscode("");
     setJoinFlowMode("join");
-    setScreen("join");
     navigateTo("join");
     clearError();
   }, [clearError]);
@@ -210,7 +197,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const parsed = parsePath(location.pathname);
-    setScreen(parsed.screen);
     if (parsed.roomKey) {
       setRoomKey(parsed.roomKey);
     }
@@ -224,7 +210,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const stateValue = useMemo<SessionStateContextValue>(
     () => ({
-      screen,
       joinFlowMode,
       name,
       roomKey,
@@ -233,7 +218,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       selectedWorkspaceTeamId,
     }),
     [
-      screen,
       joinFlowMode,
       name,
       roomKey,
@@ -245,7 +229,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
 
   const actionsValue = useMemo<SessionActionsContextValue>(
     () => ({
-      setScreen,
       setJoinFlowMode,
       setName,
       setRoomKey,

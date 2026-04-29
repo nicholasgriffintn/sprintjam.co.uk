@@ -88,11 +88,10 @@ const WelcomeRoute = () => {
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
+  const { startCreateFlow, startJoinFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 

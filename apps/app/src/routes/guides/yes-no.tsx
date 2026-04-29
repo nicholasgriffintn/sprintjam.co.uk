@@ -6,7 +6,7 @@ import { cardDecks } from "@/content/guides/cardDecks";
 import guideMarkdown from "@/content/guides/yes-no.md?raw";
 import { renderMarkdownToHtml } from "@/utils/markdown";
 import { createMeta } from "../meta";
-import { getGuideArticleMeta } from "./guide-meta";
+import { getGuideArticleMeta } from "@/utils/guide-meta";
 
 export const meta = createMeta("guidesYesNo", () =>
   getGuideArticleMeta("yes-no", "2024-01-15", "2025-01-16"),

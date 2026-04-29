@@ -35,7 +35,7 @@ export const GuideLayout = ({
   contentHtml,
   preview,
 }: GuideLayoutProps) => {
-  const { startCreateFlow, setScreen } = useSessionActions();
+  const { startCreateFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
 
   const guide = guides.find((g) => g.slug === slug);
@@ -45,7 +45,6 @@ export const GuideLayout = ({
   }
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 

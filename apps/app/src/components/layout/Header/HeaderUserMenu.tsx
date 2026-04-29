@@ -18,7 +18,7 @@ const getInitials = (nameOrEmail: string | null | undefined) => {
 
   const parts = trimmed.split(" ");
   if (parts.length > 1) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
+    return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
   }
 
   return trimmed.slice(0, 2).toUpperCase();

@@ -11,7 +11,7 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 import { guides, type GuideInfo } from "@/content/guides";
 import { createMeta } from "./meta";
-import { getGuidesIndexMeta } from "./guides/guide-meta";
+import { getGuidesIndexMeta } from "../utils/guide-meta";
 
 export const meta = createMeta("guides", getGuidesIndexMeta);
 
@@ -30,11 +30,10 @@ const categoryDescriptions: Record<GuideInfo["category"], string> = {
 };
 
 const GuidesRoute = () => {
-  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
+  const { startCreateFlow, startJoinFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 

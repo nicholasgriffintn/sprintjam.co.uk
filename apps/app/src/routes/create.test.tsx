@@ -8,13 +8,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockSetName = vi.fn();
 const mockSetPasscode = vi.fn();
 const mockSetRoomKey = vi.fn();
-const mockSetScreen = vi.fn();
 const mockSetJoinFlowMode = vi.fn();
 const mockSetSelectedAvatar = vi.fn();
 const mockClearError = vi.fn();
 const mockSetPendingCreateSettings = vi.fn();
 const mockHandleCreateRoom = vi.fn();
 const mockGoToWorkspaceProfile = vi.fn();
+const mockNavigateTo = vi.fn();
 const workspaceDataMock = {
   teams: [] as Array<{ id: number; name: string }>,
   isAuthenticated: false,
@@ -52,7 +52,6 @@ vi.mock("@/context/SessionContext", () => ({
     setPasscode: mockSetPasscode,
     setSelectedAvatar: mockSetSelectedAvatar,
     setRoomKey: mockSetRoomKey,
-    setScreen: mockSetScreen,
     setJoinFlowMode: mockSetJoinFlowMode,
     setSelectedWorkspaceTeamId: vi.fn(),
     goToWorkspaceProfile: mockGoToWorkspaceProfile,
@@ -77,6 +76,10 @@ vi.mock("@/context/RoomContext", () => ({
 
 vi.mock("@/hooks/useWorkspaceData", () => ({
   useWorkspaceData: () => workspaceDataMock,
+}));
+
+vi.mock("@/hooks/useAppNavigation", () => ({
+  useAppNavigation: () => mockNavigateTo,
 }));
 
 vi.mock("@/lib/workspace-service", () => ({
@@ -161,6 +164,7 @@ describe("CreateRoomRoute", () => {
     workspaceDataMock.teams = [];
     workspaceDataMock.isAuthenticated = false;
     workspaceDataMock.user = null;
+    mockNavigateTo.mockReset();
   });
 
   it("does not clear a previously selected avatar when starting the create flow", () => {
@@ -172,7 +176,7 @@ describe("CreateRoomRoute", () => {
     expect(mockSetPendingCreateSettings).toHaveBeenCalled();
     expect(mockSetJoinFlowMode).toHaveBeenCalledWith("create");
     expect(mockSetRoomKey).toHaveBeenCalledWith("");
-    expect(mockSetScreen).toHaveBeenCalledWith("join");
+    expect(mockNavigateTo).toHaveBeenCalledWith("join");
     expect(mockSetSelectedAvatar).not.toHaveBeenCalled();
   });
 
@@ -192,6 +196,5 @@ describe("CreateRoomRoute", () => {
     expect(mockHandleCreateRoom).toHaveBeenCalled();
     expect(mockSetPendingCreateSettings).not.toHaveBeenCalled();
     expect(mockSetJoinFlowMode).not.toHaveBeenCalled();
-    expect(mockSetScreen).not.toHaveBeenCalled();
   });
 });

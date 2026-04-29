@@ -12,7 +12,7 @@ import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
-  const { goHome, setScreen, startCreateFlow, startJoinFlow } =
+  const { goHome, startCreateFlow, startJoinFlow } =
     useSessionActions();
   const navigateTo = useAppNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,7 +28,6 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
   ];
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
     setIsMenuOpen(false);
   };

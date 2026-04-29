@@ -4,7 +4,7 @@ import { GuideLayout } from "@/components/guides/GuideLayout";
 import guideMarkdown from "@/content/guides/remote-estimation.md?raw";
 import { renderMarkdownToHtml } from "@/utils/markdown";
 import { createMeta } from "../meta";
-import { getGuideArticleMeta } from "./guide-meta";
+import { getGuideArticleMeta } from "@/utils/guide-meta";
 
 export const meta = createMeta("guidesRemoteEstimation", () =>
   getGuideArticleMeta("remote-estimation", "2024-01-15", "2025-01-16"),

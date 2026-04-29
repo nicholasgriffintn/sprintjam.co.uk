@@ -37,7 +37,6 @@ const mockSetName = vi.fn();
 const mockSetRoomKey = vi.fn();
 const mockSetPasscode = vi.fn();
 const mockSetSelectedAvatar = vi.fn();
-const mockSetScreen = vi.fn();
 const mockSetJoinFlowMode = vi.fn();
 const mockGoHome = vi.fn();
 const mockGoToWorkspaceProfile = vi.fn();
@@ -52,7 +51,6 @@ vi.mock("@/context/SessionContext", () => ({
     setRoomKey: mockSetRoomKey,
     setPasscode: mockSetPasscode,
     setSelectedAvatar: mockSetSelectedAvatar,
-    setScreen: mockSetScreen,
     setJoinFlowMode: mockSetJoinFlowMode,
     goHome: mockGoHome,
     goToWorkspaceProfile: mockGoToWorkspaceProfile,
@@ -129,5 +127,17 @@ describe("JoinRoomRoute", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "Session expired. Rejoin with a fresh link.",
     );
+  });
+
+  it("keeps create flow mode until room creation navigates to the room", () => {
+    sessionStateMock.joinFlowMode = "create";
+
+    render(<JoinRoomRoute />);
+
+    fireEvent.click(screen.getByTestId("join-room-submit"));
+
+    expect(mockClearError).toHaveBeenCalled();
+    expect(mockHandleCreateRoom).toHaveBeenCalled();
+    expect(mockSetJoinFlowMode).not.toHaveBeenCalledWith("join");
   });
 });

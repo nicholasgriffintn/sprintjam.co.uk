@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { Briefcase, Plus, Shield, Sunrise, Users, Zap } from "lucide-react";
 
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { useSessionActions } from "@/context/SessionContext";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -34,7 +33,6 @@ const features = [
 ] as const;
 
 export default function StandupRoute() {
-  const { setScreen } = useSessionActions();
   const navigateTo = useAppNavigation();
 
   return (
@@ -70,10 +68,7 @@ export default function StandupRoute() {
             icon={<Plus className="h-4 w-4" />}
             size="lg"
             className="w-full sm:w-auto"
-            onClick={() => {
-              setScreen("standupCreate");
-              navigateTo("standupCreate");
-            }}
+            onClick={() => navigateTo("standupCreate")}
           >
             Create a standup
           </Button>
@@ -83,10 +78,7 @@ export default function StandupRoute() {
             icon={<Users className="h-4 w-4" />}
             size="lg"
             className="w-full sm:w-auto"
-            onClick={() => {
-              setScreen("standupJoin");
-              navigateTo("standupJoin");
-            }}
+            onClick={() => navigateTo("standupJoin")}
           >
             Join a session
           </Button>

@@ -108,11 +108,10 @@ const securityHighlights = [
 ];
 
 const GithubIntegrationRoute = () => {
-  const { startCreateFlow, startJoinFlow, setScreen } = useSessionActions();
+  const { startCreateFlow, startJoinFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 
