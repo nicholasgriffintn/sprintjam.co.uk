@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { useSessionActions } from "@/context/SessionContext";
 import { useStandupHeader } from "@/context/StandupHeaderContext";
 import {
   StandupProvider,
@@ -52,8 +51,7 @@ function StandupRoomContent({
   userName: string;
   isAuthenticated: boolean;
   initialNotice?: string | null;
-}) {
-  const { setScreen } = useSessionActions();
+  }) {
   const navigateTo = useAppNavigation();
   const queryClient = useQueryClient();
   const { standupData, isModeratorView } = useStandupState();
@@ -227,7 +225,6 @@ function StandupRoomContent({
           <div className="flex justify-center gap-3">
             <Button
               onClick={() => {
-                setScreen("standupJoin");
                 navigateTo("standupJoin", { standupKey });
               }}
             >
@@ -392,7 +389,6 @@ function StandupRoomContent({
 export default function StandupRoomRoute() {
   const { standupKey: routeStandupKey } = useParams<{ standupKey: string }>();
   const { user, isAuthenticated } = useWorkspaceData();
-  const { setScreen } = useSessionActions();
   const navigateTo = useAppNavigation();
   const [standupKey, setStandupKey] = useState<string | null>(
     () => routeStandupKey?.toUpperCase() ?? null,
@@ -408,22 +404,20 @@ export default function StandupRoomRoute() {
 
   useEffect(() => {
     if (!standupKey) {
-      setScreen("standupJoin");
       navigateTo("standupJoin");
       return;
     }
 
     setInitialNotice(consumeStandupNotice(standupKey));
-  }, [setScreen, standupKey]);
+  }, [standupKey]);
 
   useEffect(() => {
     if (!standupKey || isUserNameValid) {
       return;
     }
 
-    setScreen("standupJoin");
     navigateTo("standupJoin", { standupKey });
-  }, [isUserNameValid, setScreen, standupKey]);
+  }, [isUserNameValid, standupKey]);
 
   if (!standupKey) {
     return null;
