@@ -30,7 +30,7 @@ import {
   updateTeamMemberRole,
 } from "@/lib/workspace-service";
 import type { RoomSettings } from "@/types";
-import { createMeta } from "../../../../utils/route-meta";
+import { createMeta } from "../../@/utils/route-meta";
 
 export const meta = createMeta("workspaceAdminTeamSettings");
 

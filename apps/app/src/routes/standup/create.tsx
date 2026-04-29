@@ -24,7 +24,7 @@ import { Select } from "@/components/ui/Select";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
-import { createMeta } from "../../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("standupCreate");
 

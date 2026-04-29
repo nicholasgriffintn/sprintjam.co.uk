@@ -4,7 +4,7 @@ import { CalendarCheck } from "lucide-react";
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
 import { SITE_NAME } from "@/constants";
-import { createMeta } from "../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("terms");
 

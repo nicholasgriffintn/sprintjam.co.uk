@@ -10,8 +10,8 @@ import { getScreenFromPath, type AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 import { guides, type GuideInfo } from "@/content/guides";
-import { createMeta } from "../utils/route-meta";
-import { getGuidesIndexMeta } from "../utils/guide-meta";
+import { createMeta } from "@/utils/route-meta";
+import { getGuidesIndexMeta } from "@/utils/guide-meta";
 
 export const meta = createMeta("guides", getGuidesIndexMeta);
 

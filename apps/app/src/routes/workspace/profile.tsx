@@ -13,7 +13,7 @@ import { updateCurrentUserProfile } from "@/lib/workspace-service";
 import { isAvatarUrl, sanitiseAvatarValue } from "@/utils/avatars";
 import { validateName } from "@/utils/validators";
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
-import { createMeta } from "../../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("workspaceProfile");
 

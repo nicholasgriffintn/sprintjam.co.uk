@@ -30,7 +30,7 @@ import { Footer } from "@/components/layout/Footer";
 import { RoomSettingsTabs } from "@/components/RoomSettingsTabs";
 import { sanitiseAvatarValue } from "@/utils/avatars";
 import { validateName } from "@/utils/validators";
-import { createMeta } from "../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("create");
 

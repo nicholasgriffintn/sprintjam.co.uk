@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
-import { createMeta } from "../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("404");
 

@@ -18,7 +18,7 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { SITE_NAME } from "@/constants";
-import { createMeta } from "../../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("integrationsGithub");
 

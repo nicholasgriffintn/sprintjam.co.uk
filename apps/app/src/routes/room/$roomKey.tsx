@@ -46,7 +46,7 @@ import { useFacilitationPrompt } from "@/hooks/useFacilitationPrompt";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
 import type { ConnectionStatusState, RoomData, ServerDefaults } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
-import { createMeta } from "../../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("room");
 

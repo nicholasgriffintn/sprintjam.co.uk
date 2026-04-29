@@ -34,7 +34,7 @@ import {
 } from "@/utils/validators";
 import { recoverRoomSession } from "@/lib/api-service";
 import { HttpError } from "@/lib/errors";
-import { createMeta } from "../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("join");
 

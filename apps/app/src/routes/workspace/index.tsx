@@ -10,7 +10,7 @@ import { BetaBadge } from "@/components/BetaBadge";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useWorkspaceStats } from "@/hooks/useWorkspaceStats";
 import { useSessionActions } from "@/context/SessionContext";
-import { createMeta } from "../utils/route-meta";
+import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("workspace");
 
