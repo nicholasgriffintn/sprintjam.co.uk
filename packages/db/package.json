@@ -18,7 +18,7 @@
     "db:generate:d1": "drizzle-kit generate --config=drizzle.d1.config.ts"
   },
   "dependencies": {
-    "drizzle-orm": "0.45.1"
+    "drizzle-orm": "0.45.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260115.0",
