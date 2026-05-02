@@ -17,8 +17,8 @@ export class CreateRoomPage {
     }
   }
 
-  async selectWorkspaceTeam(teamId: number, isSignedIn = false) {
-    if (!isSignedIn) {
+  async selectWorkspaceTeam(teamId: number = 0, isSignedIn = false) {
+    if (!isSignedIn || teamId === 0) {
       return;
     }
 
@@ -26,7 +26,7 @@ export class CreateRoomPage {
     await expect(teamSelect).toBeVisible();
     await teamSelect.selectOption(teamId.toString());
   }
-  
+
   async startInstantRoom() {
     const instantButton = this.page.getByTestId("create-room-submit");
     await expect(instantButton).toBeEnabled();
