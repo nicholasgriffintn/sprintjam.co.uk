@@ -21,6 +21,7 @@ export class StandupCreatePage extends BasePage {
   }
 
   async submit() {
+    // TODO: Fix this, button not showing sometimes
     const button = this.page.getByRole("button", { name: /create standup/i });
     await expect(button).toBeEnabled();
     await button.click();

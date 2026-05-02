@@ -172,7 +172,7 @@ test.describe("Results", () => {
   });
 
   // TODO: Figure out a good way to do this now that state is on the server
-  test.skip("saves a room once and lets the linked session be renamed", async ({
+  test("saves a room once and lets the linked session be renamed", async ({
     browser,
   }) => {
     const workspaceMock = createWorkspaceRouteMock();
