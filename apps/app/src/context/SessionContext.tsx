@@ -163,7 +163,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const goToRoom = useCallback(
     (key: string) => {
       setRoomKey(key);
-      setJoinFlowMode("join");
       navigateTo("room", key);
       clearError();
     },
@@ -199,6 +198,9 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     const parsed = parsePath(location.pathname);
     if (parsed.roomKey) {
       setRoomKey(parsed.roomKey);
+    }
+    if (parsed.screen !== "join" && parsed.screen !== "create") {
+      setJoinFlowMode("join");
     }
     clearError();
   }, [clearError, location.pathname]);
