@@ -439,13 +439,13 @@ export async function getRoomSettings(roomKey: string): Promise<RoomSettings> {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() as Record<string, any>;
       throw new Error(
         errorData.error || `Failed to get room settings: ${response.status}`,
       );
     }
 
-    const data = await response.json();
+    const data = await response.json() as { settings: RoomSettings };
     return data.settings;
   } catch (error) {
     console.error("Error getting room settings:", error);
@@ -468,13 +468,13 @@ export async function updateRoomSettings(
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() as Record<string, any>;
       throw new Error(
         errorData.error || `Failed to update room settings: ${response.status}`,
       );
     }
 
-    const data = await response.json();
+    const data = await response.json() as { settings: RoomSettings };
     return data.settings;
   } catch (error) {
     console.error("Error updating room settings:", error);

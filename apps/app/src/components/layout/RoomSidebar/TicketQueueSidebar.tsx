@@ -1,4 +1,4 @@
-import { FC, useMemo, useId, useState } from "react";
+import { type FC, useMemo, useId, useState } from "react";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 
 import type { RoomData, TicketQueueItem } from "@/types";

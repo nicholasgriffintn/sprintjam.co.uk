@@ -1,3 +1,4 @@
+// @ts-expect-error - no types available for @strudel/web
 export type StrudelRuntime = typeof import("@strudel/web");
 
 let runtimePromise: Promise<StrudelRuntime> | null = null;
@@ -9,6 +10,7 @@ export function loadStrudelRuntime(): Promise<StrudelRuntime> {
     );
   }
 
+  // @ts-expect-error - no types available for @strudel/web
   runtimePromise ??= import("@strudel/web");
   return runtimePromise;
 }

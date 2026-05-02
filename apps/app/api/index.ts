@@ -119,6 +119,7 @@ export default Sentry.withSentry(
     enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
   }),
   {
+    // @ts-expect-error - types are weird
     async fetch(
       request: CfRequest,
       env: DispatchWorkerEnv,
