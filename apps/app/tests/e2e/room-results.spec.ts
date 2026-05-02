@@ -18,30 +18,6 @@ function createWorkspaceRouteMock() {
   } | null = null;
 
   const setupRoutes = async (context: BrowserContext) => {
-    await context.route("**/api/auth/me", (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: 42,
-            email: "qa@sprintjam.co.uk",
-            name: "Workspace QA",
-            organisationId: 7,
-          },
-          teams: [
-            {
-              id: 88,
-              name: "QA Team",
-              organisationId: 7,
-              ownerId: 42,
-              createdAt: Date.now(),
-            },
-          ],
-        }),
-      });
-    });
-
     await context.route("**/api/sessions/by-room?*", async (route) => {
       const roomKey = new URL(route.request().url()).searchParams.get(
         "roomKey",
