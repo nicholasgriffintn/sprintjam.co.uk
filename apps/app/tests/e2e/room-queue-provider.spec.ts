@@ -85,7 +85,6 @@ async function createRoomWithProvider(
 
   const createRoom = new CreateRoomPage(page);
   await createRoom.fillBasics("Queue Creator");
-  await createRoom.selectWorkspaceTeam();
   await createRoom.startInstantRoom();
 
   const joinRoom = new JoinRoomPage(page);

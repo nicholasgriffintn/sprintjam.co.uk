@@ -17,8 +17,8 @@ export class CreateRoomPage {
     }
   }
 
-  async selectWorkspaceTeam(teamId: number = 0, isSignedIn = false) {
-    if (!isSignedIn || teamId === 0) {
+  async selectWorkspaceTeam(teamId, isSignedIn = false) {
+    if (!isSignedIn) {
       return;
     }
 
