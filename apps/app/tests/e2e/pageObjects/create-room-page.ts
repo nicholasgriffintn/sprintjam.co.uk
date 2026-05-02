@@ -3,20 +3,17 @@ import { expect, type Page } from "@playwright/test";
 export class CreateRoomPage {
   constructor(private readonly page: Page) {}
 
-  async fillBasics(name: string, passcode?: string) {
-    const nameInput = this.page.locator("#create-name");
-    await nameInput
-      .waitFor({ state: "attached", timeout: 1_000 })
-      .catch(() => {
-        // No team selector means auth teams are unavailable for this flow.
-      });
-    
-    if ((await nameInput.count()) > 0) {
+  async fillBasics(name: string, passcode?: string, isSignedIn = false) {
+    if (!isSignedIn) {
+      const nameInput = this.page.locator("#create-name");
+      await expect(nameInput).toBeVisible();
       await nameInput.fill(name);
     }
 
     if (typeof passcode === "string") {
-      await this.page.locator("#create-passcode").fill(passcode);
+      const passcodeInput = this.page.locator("#create-passcode");
+      await expect(passcodeInput).toBeVisible();
+      await passcodeInput.fill(passcode);
     }
   }
 
@@ -26,18 +23,12 @@ export class CreateRoomPage {
     await teamSelect.selectOption(teamId.toString());
   }
 
-  async selectPersonalRoomIfAvailable() {
-    const teamSelect = this.page.locator("#team-select");
-    await teamSelect
-      .waitFor({ state: "attached", timeout: 1_000 })
-      .catch(() => {
-        // No team selector means auth teams are unavailable for this flow.
-      });
-
-    if ((await teamSelect.count()) === 0) {
+  async selectPersonalRoomIfAvailable(isSignedIn = false) {
+    if (!isSignedIn) {
       return;
     }
 
+    const teamSelect = this.page.locator("#team-select");
     await expect(teamSelect).toBeVisible();
     await teamSelect.selectOption("none");
   }
