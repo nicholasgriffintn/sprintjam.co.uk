@@ -51,19 +51,19 @@ export default defineConfig(() => {
         viteEnvironment: { name: "ssr" },
         auxiliaryWorkers: [
           {
-            configPath: "../room-worker/wrangler.jsonc",
+            configPath: "../room-worker/wrangler.json",
           },
           {
-            configPath: "../wheel-worker/wrangler.jsonc",
+            configPath: "../wheel-worker/wrangler.json",
           },
           {
-            configPath: "../auth-worker/wrangler.jsonc",
+            configPath: "../auth-worker/wrangler.json",
           },
           {
-            configPath: "../stats-worker/wrangler.jsonc",
+            configPath: "../stats-worker/wrangler.json",
           },
           {
-            configPath: "../standup-worker/wrangler.jsonc",
+            configPath: "../standup-worker/wrangler.json",
           },
         ],
         persistState: {

@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sprintjam",
-  "compatibility_date": "2026-02-24",
+  "compatibility_date": "2026-04-21",
   "compatibility_flags": [
     "nodejs_compat"
   ],

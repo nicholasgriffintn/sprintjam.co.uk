@@ -2,8 +2,10 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sprintjam-room-worker",
   "main": "src/index.ts",
-  "compatibility_date": "2025-07-15",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2026-04-21",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "workers_dev": false,
   "preview_urls": false,
   "placement": {
@@ -24,14 +26,18 @@
   "rules": [
     {
       "type": "Text",
-      "globs": ["**/*.sql"],
+      "globs": [
+        "**/*.sql"
+      ],
       "fallthrough": true,
     },
   ],
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["PlanningRoom"],
+      "new_sqlite_classes": [
+        "PlanningRoom"
+      ],
     },
   ],
   "services": [
