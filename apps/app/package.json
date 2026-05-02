@@ -21,8 +21,8 @@
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy",
-    "typecheck": "tsc -b --noEmit",
-    "generate:types": "wrangler types --include-runtime=false"
+    "typecheck": "react-router typegen && tsc -b --noEmit",
+    "generate:types": "react-router typegen && wrangler types --include-runtime=false"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
