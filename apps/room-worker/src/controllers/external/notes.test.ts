@@ -1,5 +1,4 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { Request as CfRequest } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types";
 
 import { updateJiraStoryPointsController } from "./jira-controller";

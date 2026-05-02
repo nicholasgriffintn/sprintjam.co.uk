@@ -1,4 +1,3 @@
-import type { Request as CfRequest } from "@cloudflare/workers-types";
 import type {
   GithubOAuthCredentials,
   JiraOAuthCredentials,

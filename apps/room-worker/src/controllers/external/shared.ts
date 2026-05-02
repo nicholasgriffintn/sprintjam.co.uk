@@ -1,5 +1,4 @@
 import type {
-  Request as CfRequest,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types";
