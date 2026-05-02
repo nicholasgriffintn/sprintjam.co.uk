@@ -5,7 +5,13 @@ export class CreateRoomPage {
 
   async fillBasics(name: string, passcode?: string) {
     const nameInput = this.page.locator("#create-name");
-    if ((await nameInput.count()) > 0 && (await nameInput.isVisible())) {
+    await nameInput
+      .waitFor({ state: "attached", timeout: 1_000 })
+      .catch(() => {
+        // No team selector means auth teams are unavailable for this flow.
+      });
+    
+    if ((await nameInput.count()) > 0) {
       await nameInput.fill(name);
     }
 
