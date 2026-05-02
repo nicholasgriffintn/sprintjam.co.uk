@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { HttpError } from "@/lib/errors";
@@ -56,7 +57,7 @@ const mockResponse = {
   recoveryPasskey: undefined,
 };
 
-import StandupJoinRoute from "@/routes/standup/join";
+import StandupJoinRoute from "@/routes/standup/join.$standupKey";
 
 describe("StandupJoinRoute", () => {
   beforeEach(() => {
@@ -73,9 +74,16 @@ describe("StandupJoinRoute", () => {
   });
 
   it("pre-fills the standup key from the URL path", () => {
-    window.history.replaceState(null, "", "/standup/join/XYZ789");
-
-    render(<StandupJoinRoute />);
+    render(
+      <MemoryRouter initialEntries={["/standup/join/XYZ789"]}>
+        <Routes>
+          <Route
+            path="/standup/join/:standupKey"
+            element={<StandupJoinRoute />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     const keyInput = screen.getByLabelText(/standup key/i) as HTMLInputElement;
     expect(keyInput.value).toBe("XYZ789");
@@ -105,7 +113,6 @@ describe("StandupJoinRoute", () => {
       );
     });
 
-    expect(mockSetScreen).toHaveBeenCalledWith("standupRoom");
     expect(mockPersistUserName).toHaveBeenCalledWith("Bob");
     expect(mockNavigateTo).toHaveBeenCalledWith("standupRoom", {
       standupKey: "ABC123",
@@ -217,7 +224,6 @@ describe("StandupJoinRoute", () => {
         "ABC123",
         "ABCD-1234",
       );
-      expect(mockSetScreen).toHaveBeenCalledWith("standupRoom");
     });
 
     expect(mockPersistUserName).toHaveBeenCalledWith("Bob");

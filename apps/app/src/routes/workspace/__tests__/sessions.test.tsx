@@ -2,16 +2,18 @@
  * @vitest-environment jsdom
  */
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TeamSession, WorkspaceTeam } from "@sprintjam/types";
+
+const toastSuccess = vi.hoisted(() => vi.fn());
 
 const refreshWorkspace = vi.fn();
 const goToLogin = vi.fn();
 const goToRoom = vi.fn();
 const startCreateFlow = vi.fn();
 const requestTeamAccess = vi.fn();
-const toastSuccess = vi.fn();
 const navigateTo = vi.fn();
 
 const restrictedTeam: WorkspaceTeam = {
@@ -107,10 +109,23 @@ vi.mock("@/context/SessionContext", () => ({
 
 vi.mock("@/lib/workspace-service", () => ({
   requestTeamAccess: (...args: unknown[]) => requestTeamAccess(...args),
+  getTeamInsights: () => Promise.resolve(null),
+  getBatchSessionStats: () => Promise.resolve({}),
 }));
 
 vi.mock("@/hooks/useAppNavigation", () => ({
   useAppNavigation: () => navigateTo,
+}));
+
+vi.mock("@/components/ui/Toast", () => ({
+  AppToastProvider: () => null,
+  toast: {
+    success: toastSuccess,
+    error: vi.fn(),
+    warning: vi.fn(),
+    info: vi.fn(),
+  },
+  useToast: () => ({ toasts: [] }),
 }));
 
 import WorkspaceSessions from "@/routes/workspace/sessions";
@@ -158,14 +173,21 @@ describe("WorkspaceSessions", () => {
     workspaceDataMock.sessions = [planningSession, standupSession];
     workspaceDataMock.selectedTeamId = accessibleTeam.id;
 
-    render(<WorkspaceSessions />);
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <WorkspaceSessions />
+      </QueryClientProvider>,
+    );
 
-    expect(
-      screen.getByText("Session list Sprint 12 Planning, Daily Standup"),
-    ).toBeTruthy();
+    expect(screen.getByText("Sprint 12 Planning")).toBeTruthy();
+    expect(screen.getByText("Daily Standup")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: /Standups \(1\)/ }));
 
-    expect(screen.getByText("Session list Daily Standup")).toBeTruthy();
+    expect(screen.getByText("Daily Standup")).toBeTruthy();
+    expect(screen.queryByText("Sprint 12 Planning")).toBeNull();
   });
 });
