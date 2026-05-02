@@ -3,8 +3,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 
-import WheelRoute from "./wheel";
-import WheelKeyRoute from "./wheel/$wheelKey";
+import WheelRoute from "../wheel";
+import WheelKeyRoute from "../wheel/$wheelKey";
 import {
   createWheel,
   getWheelAccessSettings,

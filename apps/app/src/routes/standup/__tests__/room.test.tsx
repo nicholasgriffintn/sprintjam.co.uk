@@ -52,7 +52,7 @@ const mockResponse = {
   recoveryPasskey: undefined,
 };
 
-import StandupJoinRoute from "@/routes/standup/room";
+import StandupJoinRoute from "@/routes/standup/join";
 
 describe("StandupJoinRoute", () => {
   beforeEach(() => {

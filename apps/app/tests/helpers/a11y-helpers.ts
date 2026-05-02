@@ -8,7 +8,7 @@ export async function checkA11y(
     runOnly?: string[];
     context?: string | { include?: string[][]; exclude?: string[][] };
   },
-) {
+): ReturnType<AxeBuilder["analyze"]> {
   const axeBuilder = new AxeBuilder({ page });
 
   if (options?.disableRules) {

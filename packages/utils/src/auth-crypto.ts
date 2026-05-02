@@ -9,7 +9,7 @@ export async function generateToken(): Promise<string> {
 export function generateVerificationCode(): string {
   const array = new Uint32Array(1);
   crypto.getRandomValues(array);
-  return String(array[0] % 1000000).padStart(6, "0");
+  return String(array[0]! % 1000000).padStart(6, "0");
 }
 
 export async function hashToken(token: string): Promise<string> {
@@ -24,7 +24,7 @@ export function extractDomain(email: string): string {
   if (parts.length !== 2) {
     throw new Error("Invalid email format");
   }
-  return parts[1];
+  return parts[1]!;
 }
 
 function bytesToHex(bytes: Uint8Array): string {

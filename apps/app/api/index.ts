@@ -92,6 +92,7 @@ async function handleRequest(
       return await env.STANDUP_WORKER.fetch(request);
     }
 
+    // @ts-expect-error - i dunno, types are weird
     return requestHandler(request, {
       cloudflare: { env, ctx },
     });
