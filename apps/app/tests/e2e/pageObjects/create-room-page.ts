@@ -17,22 +17,16 @@ export class CreateRoomPage {
     }
   }
 
-  async selectWorkspaceTeam(teamId: number) {
-    const teamSelect = this.page.locator("#team-select");
-    await expect(teamSelect).toBeVisible();
-    await teamSelect.selectOption(teamId.toString());
-  }
-
-  async selectPersonalRoomIfAvailable(isSignedIn = false) {
+  async selectWorkspaceTeam(teamId: number, isSignedIn = false) {
     if (!isSignedIn) {
       return;
     }
 
     const teamSelect = this.page.locator("#team-select");
     await expect(teamSelect).toBeVisible();
-    await teamSelect.selectOption("none");
+    await teamSelect.selectOption(teamId.toString());
   }
-
+  
   async startInstantRoom() {
     const instantButton = this.page.getByTestId("create-room-submit");
     await expect(instantButton).toBeEnabled();

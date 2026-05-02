@@ -78,7 +78,7 @@ export async function createRoomWithParticipant(
     if (workspaceTeamId) {
       await createRoom.selectWorkspaceTeam(workspaceTeamId);
     } else {
-      await createRoom.selectPersonalRoomIfAvailable();
+      await createRoom.selectWorkspaceTeam();
     }
 
     if (enableStructuredVotingOnCreate) {
