@@ -2,7 +2,6 @@ import type {
   AvatarId,
   RoomData,
   RoomSettings,
-  ServerDefaults,
   TicketQueueItem,
   WebSocketMessage,
   WebSocketMessageType,
@@ -10,11 +9,8 @@ import type {
 import type { RoomGameType, StructuredVote, VoteValue } from "@sprintjam/types";
 import { API_BASE_URL, WS_BASE_URL } from "@/constants";
 import {
-  SERVER_DEFAULTS_DOCUMENT_KEY,
   roomsCollection,
-  serverDefaultsCollection,
   ensureRoomsCollectionReady,
-  ensureServerDefaultsCollectionReady,
 } from "./data/collections";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 import { handleJsonResponse } from "@/lib/api-utils";
@@ -42,30 +38,6 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
-export function getCachedDefaultSettings(): ServerDefaults | null {
-  return serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
-}
-
-export async function fetchDefaultSettings(
-  forceRefresh = false,
-): Promise<ServerDefaults> {
-  if (forceRefresh) {
-    await serverDefaultsCollection.utils.refetch({ throwOnError: true });
-  } else {
-    await serverDefaultsCollection.preload();
-    await serverDefaultsCollection.toArrayWhenReady();
-  }
-
-  const defaults =
-    serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
-
-  if (!defaults) {
-    throw new Error("Unable to load default settings from server");
-  }
-
-  return defaults;
-}
-
 export async function createRoom(
   name: string,
   passcode?: string,
@@ -74,7 +46,6 @@ export async function createRoom(
   options?: RequestOptions & { teamId?: number },
 ): Promise<{
   room: RoomData;
-  defaults?: ServerDefaults;
   recoveryPasskey?: string;
 }> {
   try {
@@ -96,7 +67,6 @@ export async function createRoom(
 
     const data = await handleJsonResponse<{
       room?: RoomData;
-      defaults?: ServerDefaults;
       recoveryPasskey?: string;
       error?: string;
     }>(response, "Failed to create room");
@@ -109,14 +79,9 @@ export async function createRoom(
 
     await ensureRoomsCollectionReady();
     roomsCollection.utils.writeUpsert(data.room);
-    if (data.defaults) {
-      await ensureServerDefaultsCollectionReady();
-      serverDefaultsCollection.utils.writeUpsert(data.defaults);
-    }
 
     return {
       room: data.room,
-      defaults: data.defaults,
       recoveryPasskey: data.recoveryPasskey,
     };
   } catch (error) {
@@ -139,7 +104,6 @@ export async function joinRoom(
   options?: RequestOptions,
 ): Promise<{
   room: RoomData;
-  defaults?: ServerDefaults;
   recoveryPasskey?: string;
 }> {
   try {
@@ -155,7 +119,6 @@ export async function joinRoom(
 
     const data = await handleJsonResponse<{
       room?: RoomData;
-      defaults?: ServerDefaults;
       recoveryPasskey?: string;
       error?: string;
     }>(response, "Failed to join room");
@@ -166,14 +129,9 @@ export async function joinRoom(
 
     await ensureRoomsCollectionReady();
     roomsCollection.utils.writeUpsert(data.room);
-    if (data.defaults) {
-      await ensureServerDefaultsCollectionReady();
-      serverDefaultsCollection.utils.writeUpsert(data.defaults);
-    }
 
     return {
       room: data.room,
-      defaults: data.defaults,
       recoveryPasskey: data.recoveryPasskey,
     };
   } catch (error) {

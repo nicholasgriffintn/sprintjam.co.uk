@@ -10,7 +10,6 @@ import type {
   AvatarId,
   ErrorKind,
   RoomSettings,
-  ServerDefaults,
 } from "@/types";
 
 interface UseRoomEntryActionsOptions {
@@ -20,7 +19,6 @@ interface UseRoomEntryActionsOptions {
   selectedAvatar: AvatarId | null;
   selectedWorkspaceTeamId?: number | null;
   pendingCreateSettings: Partial<RoomSettings> | null;
-  applyServerDefaults: (defaults?: ServerDefaults) => void;
   clearError: () => void;
   setError: (message: string, kind?: ErrorKind | null) => void;
   goToRoom: (roomKey: string) => void;
@@ -43,7 +41,6 @@ export function useRoomEntryActions({
   selectedAvatar,
   selectedWorkspaceTeamId,
   pendingCreateSettings,
-  applyServerDefaults,
   clearError,
   setError,
   goToRoom,
@@ -86,11 +83,7 @@ export function useRoomEntryActions({
       const controller = startRoomRequest();
 
       try {
-        const {
-          room: newRoom,
-          defaults,
-          recoveryPasskey,
-        } = await createRoom(
+        const { room: newRoom, recoveryPasskey } = await createRoom(
           name,
           passcode || undefined,
           resolvedSettings,
@@ -100,7 +93,6 @@ export function useRoomEntryActions({
             teamId: selectedWorkspaceTeamId ?? undefined,
           },
         );
-        applyServerDefaults(defaults);
         await upsertRoom(newRoom);
 
         if (recoveryPasskey) {
@@ -146,7 +138,6 @@ export function useRoomEntryActions({
       clearError,
       startRoomRequest,
       passcode,
-      applyServerDefaults,
       createSession,
       setActiveRoomKey,
       setIsModeratorView,
@@ -167,18 +158,13 @@ export function useRoomEntryActions({
     const controller = startRoomRequest();
 
     try {
-      const {
-        room: joinedRoom,
-        defaults,
-        recoveryPasskey,
-      } = await joinRoom(
+      const { room: joinedRoom, recoveryPasskey } = await joinRoom(
         trimmedName,
         normalizedRoomKey,
         passcode?.trim() || undefined,
         selectedAvatar,
         { signal: controller.signal },
       );
-      applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
 
       if (recoveryPasskey) {
@@ -213,7 +199,6 @@ export function useRoomEntryActions({
     clearError,
     startRoomRequest,
     passcode,
-    applyServerDefaults,
     setActiveRoomKey,
     setIsModeratorView,
     markAutoReconnectDone,

@@ -11,7 +11,7 @@ import type { StructuredVote, VoteValue } from "@sprintjam/types";
 import { disconnectFromRoom, updateTicket } from "@/lib/api-service";
 import { removeRoomFromCollection } from "@/lib/data/room-store";
 import { useRoomData } from "@/lib/data/hooks";
-import { useServerDefaults } from "@/hooks/useServerDefaults";
+import { useServerDefaults } from "@/context/ServerDefaultsContext";
 import { useAutoReconnect } from "@/hooks/useAutoReconnect";
 import { useAutoEstimateUpdate } from "@/hooks/useAutoEstimateUpdate";
 import { useRoomConnection } from "@/hooks/useRoomConnection";
@@ -88,13 +88,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isRoomRoute]);
 
-  const {
-    serverDefaults,
-    isLoadingDefaults,
-    defaultsError,
-    applyServerDefaults,
-    handleRetryDefaults,
-  } = useServerDefaults();
+  const { serverDefaults, isLoadingDefaults } = useServerDefaults();
 
   const roomData = useRoomData(activeRoomKey);
   const activeRoomKeyRef = useRef<string | null>(null);
@@ -178,7 +172,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       [setError, goHome, startJoinFlow, setConnectionIssue],
     ),
     onLoadingChange: setIsLoading,
-    applyServerDefaults,
     onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
     onNeedsJoin: useCallback(() => {
       startJoinFlow();
@@ -205,8 +198,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     onModeratorViewChange: setIsModeratorView,
   });
 
-  const derivedServerDefaults = serverDefaults ?? null;
-
   const { handleCreateRoom, handleJoinRoom, abortLatestRoomRequest } =
     useRoomEntryActions({
       name: effectiveName,
@@ -215,7 +206,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       selectedAvatar: effectiveAvatar,
       selectedWorkspaceTeamId,
       pendingCreateSettings,
-      applyServerDefaults,
       clearError,
       setError,
       goToRoom,
@@ -303,7 +293,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   const stateValue = useMemo<RoomStateContextValue>(
     () => ({
-      serverDefaults: derivedServerDefaults,
+      serverDefaults,
       roomData,
       activeRoomKey,
       isModeratorView,
@@ -312,10 +302,10 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }),
     [
       activeRoomKey,
-      derivedServerDefaults,
       isModeratorView,
       pendingCreateSettings,
       roomData,
+      serverDefaults,
       userVote,
     ],
   );
@@ -323,7 +313,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const statusValue = useMemo<RoomStatusContextValue>(
     () => ({
       isLoadingDefaults,
-      defaultsError,
       isLoading,
       isSocketConnected,
       isSocketStatusKnown,
@@ -333,7 +322,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     }),
     [
       connectionIssue,
-      defaultsError,
       isLoading,
       isLoadingDefaults,
       isSocketConnected,
@@ -345,7 +333,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
   const actionsValue = useMemo<RoomActionsContextValue>(
     () => ({
-      handleRetryDefaults,
       clearRoomError,
       reportRoomError,
       setPendingCreateSettings,
@@ -379,7 +366,6 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
       handleLeaveRoom,
       handleNextTicket,
       handleResetVotes,
-      handleRetryDefaults,
       handleSelectTicket,
       handleToggleShowVotes,
       handleToggleSpectatorMode,

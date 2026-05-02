@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 import { joinRoom } from "@/lib/api-service";
 import { upsertRoom } from "@/lib/data/room-store";
-import type { AvatarId, ServerDefaults } from "@/types";
+import type { AvatarId } from "@/types";
 import { HttpError } from "@/lib/errors";
 
 interface UseAutoReconnectOptions {
@@ -19,7 +19,6 @@ interface UseAutoReconnectOptions {
     isNameConflict?: boolean;
   }) => void;
   onLoadingChange: (isLoading: boolean) => void;
-  applyServerDefaults: (defaults?: ServerDefaults) => void;
   onReconnectComplete?: () => void;
   onNeedsJoin?: () => void;
 }
@@ -33,7 +32,6 @@ export const useAutoReconnect = ({
   onReconnectSuccess,
   onReconnectError,
   onLoadingChange,
-  applyServerDefaults,
   onReconnectComplete,
   onNeedsJoin,
 }: UseAutoReconnectOptions) => {
@@ -68,11 +66,10 @@ export const useAutoReconnect = ({
 
     onLoadingChange(true);
     joinRoom(name, roomKey, undefined, selectedAvatar)
-      .then(async ({ room: joinedRoom, defaults }) => {
+      .then(async ({ room: joinedRoom }) => {
         if (cancelled) {
           return;
         }
-        applyServerDefaults(defaults);
         await upsertRoom(joinedRoom);
         onReconnectSuccess(joinedRoom.key, joinedRoom.moderator === name);
       })
@@ -115,7 +112,6 @@ export const useAutoReconnect = ({
     onReconnectSuccess,
     onReconnectError,
     onLoadingChange,
-    applyServerDefaults,
     onReconnectComplete,
     onNeedsJoin,
   ]);

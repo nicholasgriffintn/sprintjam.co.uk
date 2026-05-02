@@ -47,14 +47,13 @@ const CreateRoomRoute = () => {
   const { setPendingCreateSettings, handleCreateRoom } = useRoomActions();
   const { isLoading } = useRoomStatus();
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const defaults = serverDefaults?.roomSettings;
-  const structuredOptions = serverDefaults?.structuredVotingOptions ?? [];
-  const votingPresets = serverDefaults?.votingSequences;
-  const extraVoteOptions = serverDefaults?.extraVoteOptions;
-  const [advancedSettings, setAdvancedSettings] = useState<RoomSettings | null>(
-    defaults ?? null,
-  );
-  const advancedSettingsRef = useRef<RoomSettings | null>(defaults ?? null);
+  const defaults = serverDefaults.roomSettings;
+  const structuredOptions = serverDefaults.structuredVotingOptions;
+  const votingPresets = serverDefaults.votingSequences;
+  const extraVoteOptions = serverDefaults.extraVoteOptions;
+  const [advancedSettings, setAdvancedSettings] =
+    useState<RoomSettings>(defaults);
+  const advancedSettingsRef = useRef<RoomSettings>(defaults);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
   const [votingMode, setVotingMode] = useState<"standard" | "structured">(
     "standard",
@@ -85,9 +84,8 @@ const CreateRoomRoute = () => {
     setSelectedSequenceId(settings.votingSequenceId ?? "fibonacci-short");
   };
 
-  // Apply server defaults initially (only when no team is selected)
   useEffect(() => {
-    if (defaults && !selectedWorkspaceTeamId) {
+    if (!selectedWorkspaceTeamId) {
       applySettings(defaults);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,8 +93,6 @@ const CreateRoomRoute = () => {
 
   // Preload team settings when the selected team changes
   useEffect(() => {
-    if (!defaults) return;
-
     if (!selectedWorkspaceTeamId) {
       applySettings(defaults);
       return;
@@ -108,8 +104,8 @@ const CreateRoomRoute = () => {
           teamSettings ? { ...defaults, ...teamSettings } : defaults,
         );
       })
-      .catch(() => {
-        // Fall back to server defaults if fetch fails
+      .catch((error) => {
+        console.error("Failed to load team settings", error);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedWorkspaceTeamId]);
@@ -148,8 +144,6 @@ const CreateRoomRoute = () => {
   };
 
   const canStart = validateName(effectiveName).ok;
-  const advancedReady = Boolean(advancedSettings && defaults);
-
   const handleStartFlow = (settings?: Partial<RoomSettings> | null) => {
     if (!canStart) return;
 
@@ -166,14 +160,12 @@ const CreateRoomRoute = () => {
     navigateTo("join");
   };
 
-  const buildQuickSettings = (): Partial<RoomSettings> | null => {
-    if (!defaults) return null;
-
+  const buildQuickSettings = (): Partial<RoomSettings> => {
     const preset = votingPresets?.find((p) => p.id === selectedSequenceId);
     const estimateOptions = preset?.options ?? defaults.estimateOptions;
 
     return {
-      ...(advancedSettings ?? {}),
+      ...advancedSettings,
       enableStructuredVoting: votingMode === "structured",
       votingSequenceId: selectedSequenceId,
       estimateOptions,
@@ -362,26 +354,20 @@ const CreateRoomRoute = () => {
                   </p>
                 </div>
 
-                {advancedReady ? (
-                  <RoomSettingsTabs
-                    initialSettings={advancedSettings as RoomSettings}
-                    defaultSettings={defaults as RoomSettings}
-                    structuredVotingOptions={structuredOptions}
-                    votingPresets={votingPresets}
-                    extraVoteOptions={extraVoteOptions}
-                    defaultSequenceId={defaults?.votingSequenceId}
-                    onSettingsChange={(updated) => {
-                      advancedSettingsRef.current = updated;
-                    }}
-                    resetKey={settingsResetKey}
-                    hideVotingModeAndEstimates={true}
-                    isCreating={true}
-                  />
-                ) : (
-                  <div className="rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300">
-                    Loading default settings…
-                  </div>
-                )}
+                <RoomSettingsTabs
+                  initialSettings={advancedSettings}
+                  defaultSettings={defaults}
+                  structuredVotingOptions={structuredOptions}
+                  votingPresets={votingPresets}
+                  extraVoteOptions={extraVoteOptions}
+                  defaultSequenceId={defaults.votingSequenceId}
+                  onSettingsChange={(updated) => {
+                    advancedSettingsRef.current = updated;
+                  }}
+                  resetKey={settingsResetKey}
+                  hideVotingModeAndEstimates={true}
+                  isCreating={true}
+                />
 
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Button
@@ -397,7 +383,7 @@ const CreateRoomRoute = () => {
                   <Button
                     type="button"
                     onClick={() => handleStartFlow(advancedSettingsRef.current)}
-                    disabled={!canStart || !advancedReady || isLoading}
+                    disabled={!canStart || isLoading}
                     className="sm:flex-1"
                     data-testid="create-advanced-continue"
                     fullWidth

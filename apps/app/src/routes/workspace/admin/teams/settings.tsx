@@ -61,10 +61,10 @@ export default function WorkspaceTeamSettings() {
   const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
   const canManageTeam = selectedTeam?.canManage ?? false;
   const isWorkspaceAdmin = profile?.membership.role === "admin";
-  const defaults = serverDefaults?.roomSettings;
-  const structuredOptions = serverDefaults?.structuredVotingOptions ?? [];
-  const votingPresets = serverDefaults?.votingSequences;
-  const extraVoteOptions = serverDefaults?.extraVoteOptions;
+  const defaults = serverDefaults.roomSettings;
+  const structuredOptions = serverDefaults.structuredVotingOptions;
+  const votingPresets = serverDefaults.votingSequences;
+  const extraVoteOptions = serverDefaults.extraVoteOptions;
 
   const settingsQueryKey = ["team-settings", selectedTeamId] as const;
   const teamMembersQueryKey = ["team-members", selectedTeamId] as const;
@@ -171,12 +171,12 @@ export default function WorkspaceTeamSettings() {
   );
   const [targetTeamId, setTargetTeamId] = useState("");
 
-  const effectiveSettings: RoomSettings | null = useMemo(() => {
-    if (settingsQuery.data && defaults) {
+  const effectiveSettings: RoomSettings = useMemo(() => {
+    if (settingsQuery.data) {
       return { ...defaults, ...settingsQuery.data };
     }
 
-    return defaults ?? null;
+    return defaults;
   }, [settingsQuery.data, defaults]);
 
   useEffect(() => {
@@ -489,7 +489,7 @@ export default function WorkspaceTeamSettings() {
                   </p>
                 </div>
 
-                {settingsQuery.isLoading || !effectiveSettings || !defaults ? (
+                {settingsQuery.isLoading ? (
                   <div className="flex items-center gap-3">
                     <Spinner />
                     <span className="text-sm text-slate-600 dark:text-slate-300">

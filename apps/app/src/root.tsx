@@ -14,8 +14,8 @@ import type { WorkspaceAuthProfile } from "@sprintjam/types";
 
 import { Header } from "@/components/layout/Header";
 import { PageBackground } from "@/components/layout/PageBackground";
-import { RouteDataHydrator } from "@/components/layout/RouteDataHydrator";
 import { RoomHeaderProvider } from "@/context/RoomHeaderContext";
+import { ServerDefaultsProvider } from "@/context/ServerDefaultsContext";
 import { SessionProvider } from "@/context/SessionContext";
 import { StandupHeaderProvider } from "@/context/StandupHeaderContext";
 import { RoomProvider } from "@/context/RoomContext";
@@ -79,6 +79,21 @@ async function readWorkerJson<T>(
   return (await response.json()) as T;
 }
 
+async function readRequiredWorkerJson<T>(
+  response: Response,
+  errorPrefix: string,
+): Promise<T> {
+  if (response.status !== 200) {
+    const errorText = await response.text();
+    throw new Response(errorText || errorPrefix, {
+      status: response.status,
+      statusText: response.statusText,
+    });
+  }
+
+  return (await response.json()) as T;
+}
+
 function createWorkerRequest(request: Request, path: string): Request {
   const url = new URL(request.url);
   url.pathname = path;
@@ -115,17 +130,22 @@ async function loadWorkspaceProfile({
 async function loadServerDefaults({
   request,
   context,
-}: WorkerLoaderArgs): Promise<ServerDefaults | null> {
+}: WorkerLoaderArgs): Promise<ServerDefaults> {
   const roomWorker = context.cloudflare?.env.ROOM_WORKER;
   if (!roomWorker) {
-    return null;
+    throw new Response("ROOM_WORKER binding is required to load defaults", {
+      status: 500,
+    });
   }
 
   const response = await roomWorker.fetch(
     createWorkerRequest(request, "/api/defaults"),
   );
 
-  return readWorkerJson<ServerDefaults>(response);
+  return readRequiredWorkerJson<ServerDefaults>(
+    response,
+    "Unable to load default settings from server",
+  );
 }
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -172,23 +192,24 @@ export default function App() {
         <AppToastProvider>
           <SessionProvider>
             <WorkspaceAuthProvider initialProfile={initialWorkspaceProfile}>
-              <RouteDataHydrator serverDefaults={initialServerDefaults} />
-              <RoomProvider>
-                <RoomHeaderProvider>
-                  <WheelHeaderProvider>
-                    <StandupHeaderProvider>
-                      <PageBackground variant={getBackgroundVariant(screen)}>
-                        <Header />
-                        <MotionConfig reducedMotion="user">
-                          <main className="flex-1">
-                            <Outlet />
-                          </main>
-                        </MotionConfig>
-                      </PageBackground>
-                    </StandupHeaderProvider>
-                  </WheelHeaderProvider>
-                </RoomHeaderProvider>
-              </RoomProvider>
+              <ServerDefaultsProvider defaults={initialServerDefaults}>
+                <RoomProvider>
+                  <RoomHeaderProvider>
+                    <WheelHeaderProvider>
+                      <StandupHeaderProvider>
+                        <PageBackground variant={getBackgroundVariant(screen)}>
+                          <Header />
+                          <MotionConfig reducedMotion="user">
+                            <main className="flex-1">
+                              <Outlet />
+                            </main>
+                          </MotionConfig>
+                        </PageBackground>
+                      </StandupHeaderProvider>
+                    </WheelHeaderProvider>
+                  </RoomHeaderProvider>
+                </RoomProvider>
+              </ServerDefaultsProvider>
             </WorkspaceAuthProvider>
           </SessionProvider>
         </AppToastProvider>
