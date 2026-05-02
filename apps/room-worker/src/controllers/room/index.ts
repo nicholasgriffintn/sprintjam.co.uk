@@ -61,7 +61,7 @@ export async function handleHttpRequest(
       return new Response(
         JSON.stringify({ teamId: roomData?.teamId ?? null }),
         { status: 200, headers: { "Content-Type": "application/json" } },
-      ) as unknown as CfResponse;
+      );
     }
 
     return null;

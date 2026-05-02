@@ -28,7 +28,7 @@ export async function validateSession(
         sessionToken,
         requireQueueManagement: options?.requireQueueManagement === true,
       }),
-    }) as unknown as CfRequest,
+    }),
   );
 
   if (!response.ok) {
@@ -77,7 +77,7 @@ function oauthHtmlResponse(
   return new Response(
     `<html><body><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p>${closeScript}</body></html>`,
     { status, headers: { "Content-Type": "text/html" } },
-  ) as unknown as CfResponse;
+  );
 }
 
 export function oauthHtmlErrorResponse(
@@ -114,7 +114,7 @@ export async function fetchOAuthStatus<T>(
           : {}),
       },
       body: JSON.stringify(payload),
-    }) as unknown as CfRequest,
+    }),
   );
 
   if (!response.ok) {
@@ -143,7 +143,7 @@ export async function revokeOAuthCredentials(
           : {}),
       },
       body: JSON.stringify(payload),
-    }) as unknown as CfRequest,
+    }),
   );
 
   if (!response.ok) {

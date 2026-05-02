@@ -616,7 +616,7 @@ export async function handleRequest(
     if (request.method === "POST" || request.method === "PUT") {
       const bodySizeCheck = validateRequestBodySize(request);
       if (!bodySizeCheck.ok) {
-        return bodySizeCheck.response as unknown as Response;
+        return bodySizeCheck.response;
       }
     }
 

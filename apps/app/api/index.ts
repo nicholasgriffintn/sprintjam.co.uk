@@ -28,13 +28,14 @@ function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
     ? "User-agent: *\nDisallow: /"
     : "User-agent: *\nAllow: /\nSitemap: https://sprintjam.co.uk/sitemap.xml";
 
+  // @ts-expect-error - types are weird
   return new Response(robotsBody, {
     status: 200,
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       ...(isStaging ? { "X-Robots-Tag": "noindex, nofollow" } : {}),
     },
-  }) as unknown as CfResponse;
+  });
 }
 
 async function handleRequest(
@@ -99,13 +100,15 @@ async function handleRequest(
   } catch (error) {
     Sentry.captureException(error);
     console.error("[main] Internal Server Error", error);
+
+     // @ts-expect-error - types are weird
     return new Response(
       JSON.stringify({ error: "[main] handleRequest errored" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
       },
-    ) as unknown as CfResponse;
+    );
   }
 }
 

@@ -10,9 +10,9 @@ export function parseTeamSessionMetadata(
   }
 
   try {
-    const parsed = JSON.parse(session.metadata) as unknown;
+    const parsed = JSON.parse(session.metadata);
     return parsed && typeof parsed === "object"
-      ? (parsed as Record<string, unknown>)
+      ? parsed
       : null;
   } catch {
     return null;

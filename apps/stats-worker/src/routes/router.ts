@@ -90,7 +90,7 @@ function notFoundResponse(): CfResponse {
   return new Response(JSON.stringify({ error: "Stats Route Not found" }), {
     status: 404,
     headers: { "Content-Type": "application/json" },
-  }) as unknown as CfResponse;
+  });
 }
 
 function rootResponse(): CfResponse {
@@ -103,7 +103,7 @@ function rootResponse(): CfResponse {
       status: 200,
       headers: { "Content-Type": "application/json" },
     },
-  ) as unknown as CfResponse;
+  );
 }
 
 function parseParams(
@@ -155,6 +155,6 @@ export async function handleRequest(
         status: 500,
         headers: { "Content-Type": "application/json" },
       },
-    ) as unknown as CfResponse;
+    );
   }
 }

@@ -21,7 +21,7 @@ export async function handleRecover(
     return createJsonResponse(
       { error: "Name and recovery passkey are required" },
       400,
-    ) as unknown as CfResponse;
+    );
   }
 
   const roomData = await ctx.getRoomData();
@@ -29,7 +29,7 @@ export async function handleRecover(
     return createJsonResponse(
       { error: "Room not found" },
       404,
-    ) as unknown as CfResponse;
+    );
   }
 
   const normalizedRoomData = normalizeRoomData(roomData);
@@ -38,7 +38,7 @@ export async function handleRecover(
     return createJsonResponse(
       { error: "Invalid name or recovery passkey" },
       401,
-    ) as unknown as CfResponse;
+    );
   }
 
   const isValid = await ctx.repository.validateRecoveryPasskey(
@@ -49,7 +49,7 @@ export async function handleRecover(
     return createJsonResponse(
       { error: "Invalid name or recovery passkey" },
       401,
-    ) as unknown as CfResponse;
+    );
   }
 
   const newAuthToken = generateSessionToken();
@@ -73,5 +73,5 @@ export async function handleRecover(
       "Content-Type": "application/json",
       "Set-Cookie": cookie,
     },
-  }) as unknown as CfResponse;
+  });
 }

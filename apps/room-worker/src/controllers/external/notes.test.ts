@@ -48,7 +48,7 @@ const makeRequest = (body: Record<string, unknown>, sessionToken = "token") =>
       Cookie: `room_session=${sessionToken}`,
     },
     body: JSON.stringify(body),
-  }) as unknown as CfRequest;
+  });
 
 const makeRoomStub = (options?: { allowQueueManagement?: boolean }) => ({
   fetch: vi.fn(async (request: Request) => {
