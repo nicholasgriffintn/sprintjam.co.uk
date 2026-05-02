@@ -188,7 +188,7 @@ export async function handleLinearOAuthCallbackController(
           authorizedBy: userName,
           estimateField: "estimate",
         }),
-      }) as unknown as CfRequest,
+      }),
     );
 
     if (!saveResponse.ok) {
@@ -276,7 +276,7 @@ export async function revokeLinearOAuthController(
     const credentialsResponse = await roomObject.fetch(
       new Request("https://internal/linear/oauth/credentials", {
         method: "GET",
-      }) as unknown as CfRequest,
+      }),
     );
 
     if (!credentialsResponse.ok) {

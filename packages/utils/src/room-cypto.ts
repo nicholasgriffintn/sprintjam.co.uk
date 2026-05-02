@@ -40,7 +40,7 @@ function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
   for (let i = 0; i < a.length; i++) {
-    diff |= a[i] ^ b[i];
+    diff |= (a[i] ?? 0) ^ (b[i] ?? 0);
   }
   return diff === 0;
 }
@@ -162,7 +162,8 @@ export function generateRecoveryPasskey(): string {
   for (let s = 0; s < PASSKEY_SEGMENTS; s++) {
     let segment = "";
     for (let i = 0; i < PASSKEY_SEGMENT_LENGTH; i++) {
-      segment += PASSKEY_ALPHABET[bytes[byteIndex++] % PASSKEY_ALPHABET.length];
+      const byte = bytes[byteIndex++] ?? 0;
+      segment += PASSKEY_ALPHABET[byte % PASSKEY_ALPHABET.length] ?? "";
     }
     segments.push(segment);
   }

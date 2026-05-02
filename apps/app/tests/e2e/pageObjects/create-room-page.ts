@@ -3,37 +3,28 @@ import { expect, type Page } from "@playwright/test";
 export class CreateRoomPage {
   constructor(private readonly page: Page) {}
 
-  async fillBasics(name: string, passcode?: string) {
-    const nameInput = this.page.locator("#create-name");
-    if ((await nameInput.count()) > 0 && (await nameInput.isVisible())) {
+  async fillBasics(name: string, passcode?: string, isSignedIn = false) {
+    if (!isSignedIn) {
+      const nameInput = this.page.locator("#create-name");
+      await expect(nameInput).toBeVisible();
       await nameInput.fill(name);
     }
 
     if (typeof passcode === "string") {
-      await this.page.locator("#create-passcode").fill(passcode);
+      const passcodeInput = this.page.locator("#create-passcode");
+      await expect(passcodeInput).toBeVisible();
+      await passcodeInput.fill(passcode);
     }
   }
 
-  async selectWorkspaceTeam(teamId: number) {
-    const teamSelect = this.page.locator("#team-select");
-    await expect(teamSelect).toBeVisible();
-    await teamSelect.selectOption(teamId.toString());
-  }
-
-  async selectPersonalRoomIfAvailable() {
-    const teamSelect = this.page.locator("#team-select");
-    await teamSelect
-      .waitFor({ state: "attached", timeout: 1_000 })
-      .catch(() => {
-        // No team selector means auth teams are unavailable for this flow.
-      });
-
-    if ((await teamSelect.count()) === 0) {
+  async selectWorkspaceTeam(teamId, isSignedIn = false) {
+    if (!isSignedIn) {
       return;
     }
 
+    const teamSelect = this.page.locator("#team-select");
     await expect(teamSelect).toBeVisible();
-    await teamSelect.selectOption("none");
+    await teamSelect.selectOption(teamId.toString());
   }
 
   async startInstantRoom() {

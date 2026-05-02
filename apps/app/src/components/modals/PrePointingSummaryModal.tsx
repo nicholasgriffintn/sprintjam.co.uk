@@ -1,4 +1,4 @@
-import { FC, useMemo } from "react";
+import { type FC, useMemo } from "react";
 import { CheckCircle2, Users } from "lucide-react";
 import type { VoteValue } from "@sprintjam/types";
 

@@ -137,9 +137,9 @@ export class RoomPage {
       `[data-participant-name="${name}"] .border-emerald-300`,
     );
     if (connected) {
-      await expect(connectedIndicator).toHaveCount(1);
+      await expect(connectedIndicator).toHaveCount(1, { timeout: 5000 });
     } else {
-      await expect(connectedIndicator).toHaveCount(0);
+      await expect(connectedIndicator).toHaveCount(0, { timeout: 5000 });
     }
   }
 

@@ -1,5 +1,4 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { Request as CfRequest } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types";
 
 import { updateJiraStoryPointsController } from "./jira-controller";
@@ -48,7 +47,7 @@ const makeRequest = (body: Record<string, unknown>, sessionToken = "token") =>
       Cookie: `room_session=${sessionToken}`,
     },
     body: JSON.stringify(body),
-  }) as unknown as CfRequest;
+  });
 
 const makeRoomStub = (options?: { allowQueueManagement?: boolean }) => ({
   fetch: vi.fn(async (request: Request) => {

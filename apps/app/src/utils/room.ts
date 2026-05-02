@@ -1,4 +1,4 @@
-import { RoomData, WebSocketMessage, TicketQueueItem } from "../types";
+import type { RoomData, WebSocketMessage, TicketQueueItem } from "../types";
 
 export const getAnonymousUserId = (
   roomData: RoomData,

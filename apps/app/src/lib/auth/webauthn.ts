@@ -8,6 +8,16 @@ import type {
 
 export { base64UrlToBuffer };
 
+export function isPasskeySupported(): boolean {
+  return typeof PublicKeyCredential !== "undefined";
+}
+
+export function isPasskeyCredential(
+  credential: Credential,
+): credential is PublicKeyCredential {
+  return isPasskeySupported() && credential instanceof PublicKeyCredential;
+}
+
 function isAttestationResponse(
   response: AuthenticatorResponse,
 ): response is AuthenticatorAttestationResponse {

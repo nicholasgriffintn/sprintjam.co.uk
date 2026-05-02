@@ -14,14 +14,25 @@ export interface MetaTagConfig {
   jsonLd?: Record<string, unknown>;
 }
 
-export function applyPageMeta(config: MetaTagConfig): void {
+interface ApplyPageMetaOptions {
+  pathname?: string;
+  origin?: string;
+}
+
+const SITE_ORIGIN = "https://sprintjam.co.uk";
+
+export function applyPageMeta(
+  config: MetaTagConfig,
+  options: ApplyPageMetaOptions = {},
+): void {
+  const pathname = options.pathname ?? "/";
   const fullConfig: MetaTagConfig = {
     ...config,
-    canonical: config.canonical || getAbsoluteUrl(window.location.pathname),
+    canonical: config.canonical || getAbsoluteUrl(pathname, options.origin),
     ogUrl:
       config.ogUrl ||
       config.canonical ||
-      getAbsoluteUrl(window.location.pathname),
+      getAbsoluteUrl(pathname, options.origin),
     twitterCard: config.twitterCard || "summary_large_image",
     ogTitle: config.ogTitle || config.title,
     twitterTitle: config.twitterTitle || config.title,
@@ -114,9 +125,11 @@ function updateCanonicalLink(url: string): void {
   }
 }
 
-export function getAbsoluteUrl(path: string = ""): string {
-  const baseUrl = window.location.origin;
-  return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+export function getAbsoluteUrl(
+  path: string = "",
+  origin: string = SITE_ORIGIN,
+): string {
+  return new URL(path.startsWith("/") ? path : `/${path}`, origin).toString();
 }
 
 const JSON_LD_SCRIPT_ID = "sprintjam-json-ld";

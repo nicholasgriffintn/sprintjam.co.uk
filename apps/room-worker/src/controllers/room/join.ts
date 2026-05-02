@@ -144,5 +144,5 @@ export async function handleJoin(
         "Set-Cookie": cookie,
       },
     },
-  ) as unknown as CfResponse;
+  );
 }

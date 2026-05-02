@@ -2,13 +2,12 @@ import { useEffect, useRef } from "react";
 
 import { joinRoom } from "@/lib/api-service";
 import { upsertRoom } from "@/lib/data/room-store";
-import type { AvatarId, ServerDefaults } from "@/types";
+import type { AvatarId } from "@/types";
 import { HttpError } from "@/lib/errors";
 
 interface UseAutoReconnectOptions {
   enabled?: boolean;
   name: string;
-  screen: string;
   roomKey: string;
   isLoadingDefaults: boolean;
   selectedAvatar: AvatarId | null;
@@ -20,7 +19,6 @@ interface UseAutoReconnectOptions {
     isNameConflict?: boolean;
   }) => void;
   onLoadingChange: (isLoading: boolean) => void;
-  applyServerDefaults: (defaults?: ServerDefaults) => void;
   onReconnectComplete?: () => void;
   onNeedsJoin?: () => void;
 }
@@ -28,14 +26,12 @@ interface UseAutoReconnectOptions {
 export const useAutoReconnect = ({
   enabled = true,
   name,
-  screen,
   roomKey,
   isLoadingDefaults,
   selectedAvatar,
   onReconnectSuccess,
   onReconnectError,
   onLoadingChange,
-  applyServerDefaults,
   onReconnectComplete,
   onNeedsJoin,
 }: UseAutoReconnectOptions) => {
@@ -50,7 +46,7 @@ export const useAutoReconnect = ({
     if (didAttemptRestore.current) {
       return;
     }
-    if (screen !== "room" || !roomKey) {
+    if (!roomKey) {
       return;
     }
     if (isLoadingDefaults) {
@@ -70,11 +66,10 @@ export const useAutoReconnect = ({
 
     onLoadingChange(true);
     joinRoom(name, roomKey, undefined, selectedAvatar)
-      .then(async ({ room: joinedRoom, defaults }) => {
+      .then(async ({ room: joinedRoom }) => {
         if (cancelled) {
           return;
         }
-        applyServerDefaults(defaults);
         await upsertRoom(joinedRoom);
         onReconnectSuccess(joinedRoom.key, joinedRoom.moderator === name);
       })
@@ -111,14 +106,12 @@ export const useAutoReconnect = ({
   }, [
     enabled,
     name,
-    screen,
     roomKey,
     isLoadingDefaults,
     selectedAvatar,
     onReconnectSuccess,
     onReconnectError,
     onLoadingChange,
-    applyServerDefaults,
     onReconnectComplete,
     onNeedsJoin,
   ]);

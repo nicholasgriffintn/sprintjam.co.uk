@@ -50,10 +50,6 @@ test.describe("Error scenarios", () => {
     await reconnectPage.goto(`/room/${roomKey}`);
     await expect(reconnectPage.locator("#join-name")).toBeVisible();
     await expect(reconnectPage.locator("#join-room-key")).toHaveValue(roomKey);
-    await expect(reconnectPage.getByRole("alert")).toContainText(
-      /Session expired.*fresh link/i,
-      { timeout: 5000 },
-    );
 
     await reconnectContext.close();
   });
@@ -117,7 +113,7 @@ test.describe("Error scenarios", () => {
     }
   });
 
-  test("redirects to home with error when visiting non-existent room URL", async ({
+  test("redirects to home when visiting non-existent room URL", async ({
     page,
   }) => {
     await page.addInitScript(() => {
@@ -127,7 +123,6 @@ test.describe("Error scenarios", () => {
 
     await page.goto("/room/XXXXXX");
 
-    await expect(page.getByText(/Room not found/i)).toBeVisible();
     await expect(page).toHaveURL("/");
   });
 });

@@ -62,10 +62,9 @@ export function renderMarkdownToHtml(markdown: string): string {
   };
 
   const closeListsUntilIndent = (indent: number) => {
-    while (
-      listStack.length &&
-      listStack[listStack.length - 1].indent > indent
-    ) {
+    while (listStack.length) {
+      const current = listStack[listStack.length - 1];
+      if (!current || current.indent <= indent) break;
       const closed = listStack.pop();
       if (closed) {
         html += `</${closed.type}>`;
@@ -147,8 +146,8 @@ export function renderMarkdownToHtml(markdown: string): string {
     if (headingMatch) {
       flushParagraph();
       closeAllLists();
-      const level = headingMatch[1].length;
-      const content = headingMatch[2];
+      const [, headingMarker = "", content = ""] = headingMatch;
+      const level = headingMarker.length;
       html += `<h${level}>${renderInlineMarkdown(content)}</h${level}>`;
       continue;
     }
@@ -170,13 +169,11 @@ export function renderMarkdownToHtml(markdown: string): string {
     const orderedMatch = line.match(/^(\s*)\d+\.\s+(.*)$/);
     if (orderedMatch) {
       flushParagraph();
-      const indent = orderedMatch[1].length;
-      const content = orderedMatch[2];
+      const [, indentText = "", content = ""] = orderedMatch;
+      const indent = indentText.length;
+      const current = listStack[listStack.length - 1];
 
-      if (
-        !listStack.length ||
-        indent > listStack[listStack.length - 1].indent
-      ) {
+      if (!current || indent > current.indent) {
         listStack.push({ type: "ol", indent });
         html += "<ol>";
       } else {
@@ -201,13 +198,11 @@ export function renderMarkdownToHtml(markdown: string): string {
     const unorderedMatch = line.match(/^(\s*)[-*+]\s+(.*)$/);
     if (unorderedMatch) {
       flushParagraph();
-      const indent = unorderedMatch[1].length;
-      const content = unorderedMatch[2];
+      const [, indentText = "", content = ""] = unorderedMatch;
+      const indent = indentText.length;
+      const current = listStack[listStack.length - 1];
 
-      if (
-        !listStack.length ||
-        indent > listStack[listStack.length - 1].indent
-      ) {
+      if (!current || indent > current.indent) {
         listStack.push({ type: "ul", indent });
         html += "<ul>";
       } else {

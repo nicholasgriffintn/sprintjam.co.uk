@@ -268,7 +268,7 @@ export async function handleJiraOAuthCallbackController(
           storyPointsField,
           sprintField,
         }),
-      }) as unknown as CfRequest,
+      }),
     );
 
     if (!saveResponse.ok) {
@@ -351,7 +351,7 @@ export async function revokeJiraOAuthController(
     const credentialsResponse = await roomObject.fetch(
       new Request("https://internal/jira/oauth/credentials", {
         method: "GET",
-      }) as unknown as CfRequest,
+      }),
     );
 
     if (!credentialsResponse.ok) {
@@ -437,7 +437,7 @@ export async function getJiraFieldsController(
     const credentialsResponse = await roomObject.fetch(
       new Request("https://internal/jira/oauth/credentials", {
         method: "GET",
-      }) as unknown as CfRequest,
+      }),
     );
 
     if (!credentialsResponse.ok) {
@@ -478,7 +478,7 @@ export async function getJiraFieldsController(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-        }) as unknown as CfRequest,
+        }),
       );
     };
 
@@ -551,7 +551,7 @@ export async function updateJiraFieldsController(
     const credentialsResponse = await roomObject.fetch(
       new Request("https://internal/jira/oauth/credentials", {
         method: "GET",
-      }) as unknown as CfRequest,
+      }),
     );
 
     if (!credentialsResponse.ok) {
@@ -592,7 +592,7 @@ export async function updateJiraFieldsController(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accessToken, refreshToken, expiresAt }),
-        }) as unknown as CfRequest,
+        }),
       );
     };
 
@@ -620,7 +620,7 @@ export async function updateJiraFieldsController(
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ storyPointsField, sprintField }),
-      }) as unknown as CfRequest,
+      }),
     );
 
     if (!updateResponse.ok) {

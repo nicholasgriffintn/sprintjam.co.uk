@@ -1,4 +1,4 @@
-import { RoomWorkerEnv } from "@sprintjam/types";
+import type { RoomWorkerEnv } from "@sprintjam/types";
 
 export function generateRoomKey() {
   const array = new Uint8Array(4);

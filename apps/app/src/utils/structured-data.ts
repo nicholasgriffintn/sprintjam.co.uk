@@ -1,5 +1,10 @@
 import { SITE_NAME } from "@/constants";
-import { getAbsoluteUrl } from "./meta";
+
+const SITE_ORIGIN = "https://sprintjam.co.uk";
+
+function getAbsoluteUrl(path: string = ""): string {
+  return new URL(path, SITE_ORIGIN).toString();
+}
 
 export interface FAQSchemaItem {
   question: string;

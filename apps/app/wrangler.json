@@ -1,0 +1,144 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sprintjam",
+  "compatibility_date": "2026-02-24",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "./api/index.ts",
+  "preview_urls": false,
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "sprintjam.co.uk",
+      "custom_domain": true,
+    },
+    {
+      "pattern": "www.sprintjam.co.uk",
+      "zone_name": "sprintjam.co.uk",
+      "custom_domain": true,
+    },
+  ],
+  "vars": {
+    "ENVIRONMENT": "production",
+  },
+  "placement": {
+    "mode": "smart",
+  },
+  "services": [
+    {
+      "binding": "ROOM_WORKER",
+      "service": "sprintjam-room-worker",
+    },
+    {
+      "binding": "WHEEL_WORKER",
+      "service": "sprintjam-wheel-worker",
+    },
+    {
+      "binding": "AUTH_WORKER",
+      "service": "sprintjam-auth-worker",
+    },
+    {
+      "binding": "STATS_WORKER",
+      "service": "sprintjam-stats-worker",
+    },
+    {
+      "binding": "STANDUP_WORKER",
+      "service": "sprintjam-standup-worker",
+    },
+  ],
+  "migrations": [
+    {
+      "tag": "<v2>",
+      "deleted_classes": [
+        "PlanningRoom"
+      ],
+    },
+  ],
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "destinations": [
+        "sprint-jam-api-otlp-logs"
+      ],
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": false,
+    },
+    "traces": {
+      "enabled": true,
+      "destinations": [
+        "sprint-jam-api-otlp-traces"
+      ],
+      "persist": true,
+      "head_sampling_rate": 1,
+    },
+  },
+  "env": {
+    "development": {
+      "routes": [],
+      "vars": {
+        "ENVIRONMENT": "development",
+      },
+      "services": [
+        {
+          "binding": "ROOM_WORKER",
+          "service": "sprintjam-room-worker-development",
+        },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-development",
+        },
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-development",
+        },
+        {
+          "binding": "WHEEL_WORKER",
+          "service": "sprintjam-wheel-worker-development",
+        },
+        {
+          "binding": "STANDUP_WORKER",
+          "service": "sprintjam-standup-worker-development",
+        },
+      ],
+      "migrations": [],
+    },
+    "staging": {
+      "name": "sprintjam-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+      },
+      "routes": [
+        {
+          "pattern": "staging.sprintjam.co.uk",
+          "custom_domain": true,
+        },
+      ],
+      "services": [
+        {
+          "binding": "ROOM_WORKER",
+          "service": "sprintjam-room-worker-staging",
+        },
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-staging",
+        },
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-staging",
+        },
+        {
+          "binding": "WHEEL_WORKER",
+          "service": "sprintjam-wheel-worker-staging",
+        },
+        {
+          "binding": "STANDUP_WORKER",
+          "service": "sprintjam-standup-worker-staging",
+        },
+      ],
+    },
+  },
+}

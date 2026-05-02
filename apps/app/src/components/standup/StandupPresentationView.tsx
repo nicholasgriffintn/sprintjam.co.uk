@@ -92,7 +92,10 @@ export function StandupPresentationView({
     if (!orderedResponses.length || standupData.focusedUser) {
       return;
     }
-    onFocusUser(orderedResponses[0].userName);
+    const firstResponse = orderedResponses[0];
+    if (firstResponse) {
+      onFocusUser(firstResponse.userName);
+    }
   }, [onFocusUser, orderedResponses, standupData.focusedUser]);
 
   const moveFocus = (direction: "previous" | "next") => {
@@ -101,7 +104,10 @@ export function StandupPresentationView({
       direction === "previous"
         ? (activeIndex - 1 + orderedResponses.length) % orderedResponses.length
         : (activeIndex + 1) % orderedResponses.length;
-    onFocusUser(orderedResponses[nextIndex].userName);
+    const nextResponse = orderedResponses[nextIndex];
+    if (nextResponse) {
+      onFocusUser(nextResponse.userName);
+    }
   };
 
   const handleShuffle = useCallback(() => {

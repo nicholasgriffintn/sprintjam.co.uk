@@ -37,7 +37,7 @@ export class StandupJoinPage extends BasePage {
     });
   }
 
-  async expectAlertMessage(message: string) {
+  async expectAlertMessage(message: string | RegExp) {
     await expect(this.page.getByRole("alert")).toContainText(message);
   }
 

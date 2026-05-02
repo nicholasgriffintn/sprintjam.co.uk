@@ -28,7 +28,6 @@ describe("useAutoReconnect", () => {
   const onReconnectSuccess = vi.fn();
   const onReconnectError = vi.fn();
   const onLoadingChange = vi.fn();
-  const applyServerDefaults = vi.fn();
   const onReconnectComplete = vi.fn();
 
   beforeEach(() => {
@@ -40,21 +39,18 @@ describe("useAutoReconnect", () => {
   it("calls onReconnectComplete after successful reconnect", async () => {
     (joinRoom as Mock).mockResolvedValue({
       room: { key: "ROOM1", moderator: "alice" },
-      defaults: undefined,
       authToken: "tok-new",
     });
 
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
       }),
     );
@@ -72,14 +68,12 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
       }),
     );
@@ -109,14 +103,12 @@ describe("useAutoReconnect", () => {
     const { unmount } = renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
       }),
     );
@@ -125,7 +117,6 @@ describe("useAutoReconnect", () => {
 
     deferred.resolve?.({
       room: { key: "ROOM1", moderator: "alice" },
-      defaults: undefined,
       authToken: "tok-new",
     });
 
@@ -139,14 +130,13 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "welcome",
+        enabled: false,
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
       }),
     );
@@ -159,14 +149,12 @@ describe("useAutoReconnect", () => {
       useAutoReconnect({
         enabled: false,
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
       }),
     );
@@ -178,14 +166,12 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "",
         isLoadingDefaults: false,
         selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
       }),
     );
@@ -199,14 +185,12 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "user",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
         onNeedsJoin,
       }),
@@ -223,14 +207,12 @@ describe("useAutoReconnect", () => {
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: null,
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
         onNeedsJoin,
       }),
@@ -244,20 +226,17 @@ describe("useAutoReconnect", () => {
   it("passes a URL avatar through reconnect", async () => {
     (joinRoom as Mock).mockResolvedValue({
       room: { key: "ROOM1", moderator: "alice" },
-      defaults: undefined,
     });
 
     renderHook(() =>
       useAutoReconnect({
         name: "alice",
-        screen: "room",
         roomKey: "ROOM1",
         isLoadingDefaults: false,
         selectedAvatar: "https://example.com/alice.png",
         onReconnectSuccess,
         onReconnectError,
         onLoadingChange,
-        applyServerDefaults,
         onReconnectComplete,
       }),
     );

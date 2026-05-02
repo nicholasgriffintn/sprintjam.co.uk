@@ -175,7 +175,7 @@ export function getDefaultEstimateOptions(): (string | number)[] {
   const defaultTemplate =
     VOTING_SEQUENCE_TEMPLATES.find(
       (preset) => preset.id === DEFAULT_VOTING_SEQUENCE_ID,
-    ) ?? VOTING_SEQUENCE_TEMPLATES[0];
+    ) ?? VOTING_SEQUENCE_TEMPLATES[0]!;
 
   return buildEstimateOptions(
     [...defaultTemplate.options],
@@ -193,7 +193,7 @@ export function getDefaultRoomSettings(
   const templates = cloneVotingTemplates();
   const defaultTemplate =
     templates.find((template) => template.id === DEFAULT_VOTING_SEQUENCE_ID) ??
-    templates[0];
+    templates[0]!;
 
   const defaultResultsDisplay = getDefaultResultsDisplay();
   const defaultStructuredDisplay = getDefaultStructuredVotingDisplay();

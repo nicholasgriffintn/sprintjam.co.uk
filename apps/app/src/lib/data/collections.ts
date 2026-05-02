@@ -7,9 +7,8 @@ import {
 
 import { API_BASE_URL } from "@/constants";
 import { isUnauthorizedWorkspaceError } from "@/lib/workspace-errors";
-import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { workspaceRequest } from "@/lib/workspace-service";
-import type { RoomData, ServerDefaults } from "@/types";
+import type { RoomData } from "@/types";
 import type {
   TeamSession,
   WheelData,
@@ -17,7 +16,6 @@ import type {
   WorkspaceStats,
 } from "@sprintjam/types";
 
-export const SERVER_DEFAULTS_DOCUMENT_KEY = "server-defaults";
 export const WORKSPACE_PROFILE_DOCUMENT_KEY = "workspace-profile";
 export const WORKSPACE_STATS_DOCUMENT_KEY = "workspace-stats";
 
@@ -54,58 +52,11 @@ function createEnsureCollectionReady(
   };
 }
 
-const serverDefaultsCollectionConfig = {
-  id: "server-defaults",
-  queryKey: ["server-defaults"],
-  queryFn: async () => {
-    const response = await fetch(`${API_BASE_URL}/defaults`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        errorText || `Failed to fetch defaults: ${response.status}`,
-      );
-    }
-
-    const defaults = (await response.json()) as ServerDefaults;
-    return [defaults];
-  },
-  getKey: () => SERVER_DEFAULTS_DOCUMENT_KEY,
-  queryClient,
-  staleTime: 1000 * 60 * 5,
-} satisfies QueryCollectionConfig<ServerDefaults>;
-
-export const serverDefaultsCollection = createCollection<
-  ServerDefaults,
-  string
->(queryCollectionOptions(serverDefaultsCollectionConfig));
-
 const workspaceProfileCollectionConfig = {
   id: "workspace-profile",
   queryKey: ["workspace-profile"],
   startSync: false,
-  queryFn: async () => {
-    if (!isWorkspacesEnabled()) {
-      return [];
-    }
-
-    try {
-      const profile = await workspaceRequest<WorkspaceAuthProfile>(
-        `${API_BASE_URL}/auth/me`,
-      );
-      return [profile];
-    } catch (error) {
-      if (isUnauthorizedWorkspaceError(error)) {
-        return [];
-      }
-      throw error;
-    }
-  },
+  queryFn: async (): Promise<WorkspaceAuthProfile[]> => [],
   getKey: () => WORKSPACE_PROFILE_DOCUMENT_KEY,
   queryClient,
   staleTime: 1000 * 60 * 5,
@@ -188,13 +139,6 @@ const teamSessionsCollectionConfig = {
 export const teamSessionsCollection = createCollection<TeamSession, string>(
   queryCollectionOptions(teamSessionsCollectionConfig),
 );
-
-export const ensureServerDefaultsCollectionReady = createEnsureCollectionReady(
-  serverDefaultsCollection,
-);
-
-export const ensureWorkspaceProfileCollectionReady =
-  createEnsureCollectionReady(workspaceProfileCollection);
 
 export const ensureWorkspaceStatsCollectionReady = createEnsureCollectionReady(
   workspaceStatsCollection,

@@ -251,6 +251,7 @@ test.describe("Smoke tests @smoke", () => {
     }
   });
 
+  // TODO: fix this, it is expecting a button not shown.
   test("completion journey (mixed reset + queue): shows reset-only round history and completed tickets", async ({
     browser,
   }) => {

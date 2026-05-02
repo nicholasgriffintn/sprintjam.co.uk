@@ -104,5 +104,5 @@ export async function handleInitialize(
         "Set-Cookie": cookie,
       },
     },
-  ) as unknown as CfResponse;
+  );
 }

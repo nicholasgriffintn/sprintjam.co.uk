@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "react-router";
 import { Building2, Check, LogIn } from "lucide-react";
 import type { TeamSession } from "@sprintjam/types";
 
@@ -43,6 +44,7 @@ export function SaveToWorkspaceModal({
   } = useWorkspaceAuth();
   const { goToLogin } = useSessionActions();
   const queryClient = useQueryClient();
+  const location = useLocation();
 
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [sessionName, setSessionName] = useState(suggestedName || "");
@@ -58,7 +60,8 @@ export function SaveToWorkspaceModal({
     if (isOpen) {
       setSessionName(linkedSession?.name ?? suggestedName ?? "");
       setSelectedTeamId(
-        linkedSession?.teamId ?? (teams.length === 1 ? teams[0].id : null),
+        linkedSession?.teamId ??
+          (teams.length === 1 ? (teams[0]?.id ?? null) : null),
       );
       setIsSuccess(false);
       setError(null);
@@ -107,7 +110,7 @@ export function SaveToWorkspaceModal({
   };
 
   const handleLoginClick = () => {
-    setReturnUrl(window.location.pathname);
+    setReturnUrl(location.pathname);
     onClose();
     goToLogin();
   };

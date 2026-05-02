@@ -5,5 +5,5 @@ export function getIcebreakerQuestion(): string {
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) /
       86400000,
   );
-  return QUESTIONS[dayOfYear % QUESTIONS.length] ?? QUESTIONS[0];
+  return QUESTIONS[dayOfYear % QUESTIONS.length] ?? "N/A";
 }
