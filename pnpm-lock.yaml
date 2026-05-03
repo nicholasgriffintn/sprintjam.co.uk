@@ -71,6 +71,9 @@ importers:
       framer-motion:
         specifier: 12.23.26
         version: 12.23.26(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      isbot:
+        specifier: ^5.1.33
+        version: 5.1.33
       lucide-react:
         specifier: 0.574.0
         version: 0.574.0(react@19.2.3)
