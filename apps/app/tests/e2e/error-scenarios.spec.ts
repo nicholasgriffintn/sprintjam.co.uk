@@ -113,6 +113,53 @@ test.describe("Error scenarios", () => {
     }
   });
 
+  test("shows reconnect spinner immediately and toast after delay on connection loss", async ({
+    browser,
+  }) => {
+    test.setTimeout(30_000);
+
+    const activeWs: { close: () => void } = { close: () => { } };
+    let killSwitch = false;
+
+    const setup = await createRoomWithParticipant(browser, {
+      setupModeratorRoutes: async (context) => {
+        await context.routeWebSocket(/.*/, (ws) => {
+          if (killSwitch) {
+            ws.close();
+            return;
+          }
+          const server = ws.connectToServer();
+          ws.onMessage((msg) => server.send(msg));
+          server.onMessage((msg) => ws.send(msg));
+          activeWs.close = () => ws.close();
+        });
+      },
+    });
+
+    const { moderatorRoom, cleanup } = setup;
+
+    try {
+      await moderatorRoom.waitForLoaded();
+
+      killSwitch = true;
+      activeWs?.close();
+
+      await expect(
+        moderatorRoom.getPage().getByTestId("reconnect-spinner"),
+      ).toBeVisible({ timeout: 3_000 });
+
+      await expect(
+        moderatorRoom.getPage().getByRole("dialog", { name: "Connection lost. Trying to" }),
+      ).not.toBeVisible();
+
+      await expect(
+        moderatorRoom.getPage().getByRole("dialog", { name: "Connection lost. Trying to" }),
+      ).toBeVisible({ timeout: 15_000 });
+    } finally {
+      await cleanup();
+    }
+  });
+
   test("redirects to home when visiting non-existent room URL", async ({
     page,
   }) => {
