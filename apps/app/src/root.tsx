@@ -12,6 +12,13 @@ import {
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 import type { WorkspaceAuthProfile } from "@sprintjam/types";
 
+import {
+  createWorkerRequest,
+  readRequiredWorkerJson,
+  readWorkerJson,
+  type WorkerLoaderArgs,
+} from "@/lib/worker-utils";
+
 import { Header } from "@/components/layout/Header";
 import { PageBackground } from "@/components/layout/PageBackground";
 import { RoomHeaderProvider } from "@/context/RoomHeaderContext";
@@ -29,8 +36,6 @@ import { ThemeProvider } from "@/lib/theme-context";
 import type { ServerDefaults } from "@/types";
 
 import "./index.css";
-
-type WorkerLoaderArgs = Pick<LoaderFunctionArgs, "request" | "context">;
 
 const themeScript = `
 (function () {
@@ -67,49 +72,6 @@ export const links: LinksFunction = () => [
   },
   { rel: "manifest", href: "/site.webmanifest" },
 ];
-
-async function readWorkerJson<T>(
-  response: Response,
-  expectedStatus = 200,
-): Promise<T | null> {
-  if (response.status !== expectedStatus) {
-    return null;
-  }
-
-  return (await response.json()) as T;
-}
-
-async function readRequiredWorkerJson<T>(
-  response: Response,
-  errorPrefix: string,
-): Promise<T> {
-  if (response.status !== 200) {
-    const errorText = await response.text();
-    throw new Response(errorText || errorPrefix, {
-      status: response.status,
-      statusText: response.statusText,
-    });
-  }
-
-  return (await response.json()) as T;
-}
-
-function createWorkerRequest(request: Request, path: string): Request {
-  const url = new URL(request.url);
-  url.pathname = path;
-  url.search = "";
-
-  const headers = new Headers();
-  const cookie = request.headers.get("Cookie");
-  if (cookie) {
-    headers.set("Cookie", cookie);
-  }
-
-  return new Request(url, {
-    headers,
-    method: "GET",
-  });
-}
 
 async function loadWorkspaceProfile({
   request,

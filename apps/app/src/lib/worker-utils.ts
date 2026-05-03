@@ -1,0 +1,46 @@
+import type { LoaderFunctionArgs } from "react-router";
+
+export type WorkerLoaderArgs = Pick<LoaderFunctionArgs, "request" | "context">;
+
+export async function readWorkerJson<T>(
+  response: Response,
+  expectedStatus = 200,
+): Promise<T | null> {
+  if (response.status !== expectedStatus) {
+    return null;
+  }
+
+  return (await response.json()) as T;
+}
+
+export async function readRequiredWorkerJson<T>(
+  response: Response,
+  errorPrefix: string,
+): Promise<T> {
+  if (response.status !== 200) {
+    const errorText = await response.text();
+    throw new Response(errorText || errorPrefix, {
+      status: response.status,
+      statusText: response.statusText,
+    });
+  }
+
+  return (await response.json()) as T;
+}
+
+export function createWorkerRequest(request: Request, path: string): Request {
+  const url = new URL(request.url);
+  url.pathname = path;
+  url.search = "";
+
+  const headers = new Headers();
+  const cookie = request.headers.get("Cookie");
+  if (cookie) {
+    headers.set("Cookie", cookie);
+  }
+
+  return new Request(url, {
+    headers,
+    method: "GET",
+  });
+}

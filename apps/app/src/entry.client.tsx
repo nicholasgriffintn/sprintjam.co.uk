@@ -7,13 +7,14 @@ const onError: ClientOnErrorFunction = (
   error,
   { location, params, unstable_pattern, errorInfo },
 ) => {
-  const context = {
+  console.error("[client] hydration error", {
     source: "react-router-client",
     url: `${location.pathname}${location.search ?? ""}${location.hash ?? ""}`,
     routePattern: unstable_pattern ?? undefined,
     params,
     componentStack: errorInfo?.componentStack ?? undefined,
-  } as const;
+    error,
+  });
 };
 
 startTransition(() => {

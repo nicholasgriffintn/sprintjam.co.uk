@@ -1,6 +1,9 @@
 import { renderToReadableStream } from "react-dom/server";
+import { isbot } from "isbot";
 import { ServerRouter } from "react-router";
 import type { EntryContext, HandleErrorFunction } from "react-router";
+
+export const streamTimeout = 5_000;
 
 export default async function handleRequest(
   request: Request,
@@ -17,16 +20,21 @@ export default async function handleRequest(
           return;
         }
 
-        const context = {
+        console.error("[ssr] renderToReadableStream error", {
           source: "react-dom-server",
           method: request.method,
           url: request.url,
-        } as const;
+          error,
+        });
 
         responseStatusCode = 500;
       },
     },
   );
+
+  if (isbot(request.headers.get("user-agent") ?? "")) {
+    await body.allReady;
+  }
 
   responseHeaders.set("Content-Type", "text/html");
   return new Response(body, {
@@ -43,10 +51,11 @@ export const handleError: HandleErrorFunction = (
     return;
   }
 
-  const context = {
+  console.error("[ssr] handleError", {
     source: "react-router-server",
     method: request.method,
     url: request.url,
     params,
-  } as const;
+    error,
+  });
 };

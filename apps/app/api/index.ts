@@ -84,8 +84,6 @@ async function handleRequest(
     }
 
     if (url.pathname === "/ws/wheel") {
-      const proxyUrl = new URL(request.url);
-      proxyUrl.pathname = "/ws";
       return await env.WHEEL_WORKER.fetch(request);
     }
 
