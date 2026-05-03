@@ -1,3 +1,13 @@
+## V4.4
+
+- Moved to server side rendering using React Router with Vite instead of just Client side rendering. This should improve performance while also improving the SEO of the application.
+- Fixed some issues with Websocket connections being initiated multiple times on the wheel and in standup rooms.
+- Made a change to the default settings to change the following options by default:
+  - Auto handover of the moderator role to ensure rooms can continue without interruption if the moderator leaves, it is believed that this is the default expectation for most users and it can be disabled in the settings if not wanted.
+  - Show user presence has now been enabled by default so that users can see who is currently connected to the room or disconnected.
+  - Disabled the Strudel player by default as it is a bit of a niche feature and can be enabled in the settings for those who want to use it.
+- Changed the room error banner to show a reconnecting spinner for 5s on disconnect rather than immediately showing a warning toast.
+
 ## V4.3
 
 - Released the new standups feature out of beta with some improvements to the UI and experience based on user feedback, along with some bug fixes and optimisations.
