@@ -21,10 +21,9 @@ export async function sendVerificationCodeEmail({
   code,
   sendEmail,
 }: SendVerificationCodeEmailParams): Promise<void> {
-
   await sendEmail.send({
-    from: "SprintJam <emails.sprintjam.co.uk>",
     to: email,
+    from: "SprintJam <noreply@emails.sprintjam.co.uk>",
     // @ts-expect-error - types are wrong.
     subject: "Your SprintJam verification code",
     text: `Your SprintJam verification code is: ${code}`,
@@ -100,8 +99,8 @@ export async function sendWorkspaceInviteEmail({
   })();
 
   await sendEmail.send({
-    from: "emails.sprintjam.co.uk",
     to: email,
+    from: "SprintJam <noreply@emails.sprintjam.co.uk>",
     // @ts-expect-error - types are wrong.
     subject: `You were invited to ${safeWorkspaceName} on SprintJam`,
     text: `${inviterName} invited you to join ${workspaceName} on SprintJam. Use this email when you sign in and we'll route you to the invited workspace: ${loginUrl}`,
