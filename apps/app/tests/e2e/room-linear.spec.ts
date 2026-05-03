@@ -184,6 +184,10 @@ test.describe("Linear integration", () => {
 
       await moderatorRoom.castVote("5");
       await participantRoom.castVote("5");
+      await expect(page.getByTestId("voting-progress-bar")).toHaveAttribute(
+        "aria-valuetext",
+        "2 of 2 participants complete",
+      );
       await moderatorRoom.revealVotes();
 
       await page.getByTestId("queue-expand").click();

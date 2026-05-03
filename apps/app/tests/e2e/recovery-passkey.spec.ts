@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 
 import { createRoomWithParticipant } from "./helpers/room-journeys";
+import { SettingsModal } from "./pageObjects/settings-modal";
 
 const getRecoveryPasskeyStorageKey = (
   feature: "room" | "wheel" | "standup",
@@ -26,12 +27,21 @@ const setStoredPasskey = async (
   );
 };
 
+const disableAutoHandover = async (moderatorRoom: { getPage: () => Page }) => {
+  const modal = new SettingsModal(moderatorRoom.getPage());
+  await modal.open();
+  await modal.toggle("settings-toggle-handover-moderator", false);
+  await modal.save();
+};
+
 test.describe("Recovery passkey notification", () => {
   test("moderator sees recovery passkey notification after joining a room", async ({
     browser,
   }) => {
     const { moderatorRoom, cleanup, roomKey, moderatorName } =
       await createRoomWithParticipant(browser);
+
+    await disableAutoHandover(moderatorRoom);
 
     const page = moderatorRoom.getPage();
 
@@ -54,6 +64,8 @@ test.describe("Recovery passkey notification", () => {
   }) => {
     const { moderatorRoom, cleanup, roomKey, moderatorName } =
       await createRoomWithParticipant(browser);
+
+    await disableAutoHandover(moderatorRoom);
 
     const page = moderatorRoom.getPage();
 
@@ -78,8 +90,15 @@ test.describe("Recovery passkey notification", () => {
   test("participant does not see recovery passkey notification", async ({
     browser,
   }) => {
-    const { participantRoom, cleanup, roomKey, participantName } =
-      await createRoomWithParticipant(browser);
+    const {
+      moderatorRoom,
+      participantRoom,
+      cleanup,
+      roomKey,
+      participantName,
+    } = await createRoomWithParticipant(browser);
+
+    await disableAutoHandover(moderatorRoom);
 
     const page = participantRoom.getPage();
 
