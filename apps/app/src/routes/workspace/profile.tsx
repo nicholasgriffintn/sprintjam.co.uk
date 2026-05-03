@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link, isRouteErrorResponse, useRouteError } from "react-router";
 import { Save } from "lucide-react";
 
 import AvatarSelector from "@/components/AvatarSelector";
@@ -16,6 +17,29 @@ import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("workspaceProfile");
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const message = isRouteErrorResponse(error)
+    ? error.data
+    : error instanceof Error
+      ? error.message
+      : "An unexpected error occurred";
+  return (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 text-center">
+      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+        Failed to load profile
+      </p>
+      <p className="text-sm text-slate-600 dark:text-slate-300">{message}</p>
+      <Link
+        to="/workspace"
+        className="text-sm text-brand-600 underline dark:text-brand-400"
+      >
+        Back to workspace
+      </Link>
+    </div>
+  );
+}
 
 const DEFAULT_PROFILE_AVATAR = "user";
 

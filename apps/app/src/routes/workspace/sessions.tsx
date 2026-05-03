@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link, isRouteErrorResponse, useRouteError } from "react-router";
 import { Building2, MessageSquareQuote, Plus, Target } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -24,6 +25,29 @@ import { BetaBadge } from "@/components/BetaBadge";
 import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("workspaceSessions");
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const message = isRouteErrorResponse(error)
+    ? error.data
+    : error instanceof Error
+      ? error.message
+      : "An unexpected error occurred";
+  return (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 text-center">
+      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+        Failed to load sessions
+      </p>
+      <p className="text-sm text-slate-600 dark:text-slate-300">{message}</p>
+      <Link
+        to="/workspace"
+        className="text-sm text-brand-600 underline dark:text-brand-400"
+      >
+        Back to workspace
+      </Link>
+    </div>
+  );
+}
 
 type SessionFilter = "all" | TeamSessionType;
 

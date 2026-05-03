@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
+import {
+  Link,
+  isRouteErrorResponse,
+  useParams,
+  useRouteError,
+} from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
@@ -38,6 +43,29 @@ import { Footer } from "@/components/layout/Footer";
 import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("standupRoom");
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const message = isRouteErrorResponse(error)
+    ? error.data
+    : error instanceof Error
+      ? error.message
+      : "An unexpected error occurred";
+  return (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 text-center">
+      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+        Failed to load standup room
+      </p>
+      <p className="text-sm text-slate-600 dark:text-slate-300">{message}</p>
+      <Link
+        to="/standup/join"
+        className="text-sm text-brand-600 underline dark:text-brand-400"
+      >
+        Back to join
+      </Link>
+    </div>
+  );
+}
 
 type StandupTab = "response" | "results";
 

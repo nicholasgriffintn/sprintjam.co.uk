@@ -1,16 +1,17 @@
-import { type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { MotionConfig } from "framer-motion";
 import {
   Links,
   Meta,
-  Outlet,
   Scripts,
   ScrollRestoration,
   useLoaderData,
 } from "react-router";
-import type { LinksFunction, LoaderFunctionArgs } from "react-router";
-import type { WorkspaceAuthProfile } from "@sprintjam/types";
+import type {
+  LinksFunction,
+  LoaderFunctionArgs,
+  ShouldRevalidateFunctionArgs,
+} from "react-router";
 
 import {
   createWorkerRequest,
@@ -19,21 +20,16 @@ import {
   type WorkerLoaderArgs,
 } from "@/lib/worker-utils";
 
-import { Header } from "@/components/layout/Header";
-import { PageBackground } from "@/components/layout/PageBackground";
-import { RoomHeaderProvider } from "@/context/RoomHeaderContext";
-import { ServerDefaultsProvider } from "@/context/ServerDefaultsContext";
+import { AuthBridge } from "@/context/AuthBridge";
+import { AppShell } from "@/components/layout/AppShell";
 import { SessionProvider } from "@/context/SessionContext";
-import { StandupHeaderProvider } from "@/context/StandupHeaderContext";
-import { RoomProvider } from "@/context/RoomContext";
-import { WheelHeaderProvider } from "@/context/WheelHeaderContext";
 import { WorkspaceAuthProvider } from "@/context/WorkspaceAuthContext";
 import { AppToastProvider } from "@/components/ui";
-import { getBackgroundVariant } from "@/config/routes/derived";
 import { useCurrentRoute } from "@/hooks/useCurrentRoute";
 import { queryClient } from "@/lib/data/collections";
 import { ThemeProvider } from "@/lib/theme-context";
 import type { ServerDefaults } from "@/types";
+import type { WorkspaceAuthProfile } from "@sprintjam/types";
 
 import "./index.css";
 
@@ -110,15 +106,14 @@ async function loadServerDefaults({
   );
 }
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
-  const [initialWorkspaceProfile, initialServerDefaults] = await Promise.all([
-    loadWorkspaceProfile({ request, context }),
-    loadServerDefaults({ request, context }),
-  ]);
+export function shouldRevalidate(_: ShouldRevalidateFunctionArgs) {
+  return false;
+}
 
+export async function loader({ request, context }: LoaderFunctionArgs) {
   return {
-    initialWorkspaceProfile,
-    initialServerDefaults,
+    initialServerDefaults: await loadServerDefaults({ request, context }),
+    initialWorkspaceProfile: loadWorkspaceProfile({ request, context }),
   };
 }
 
@@ -153,26 +148,23 @@ export default function App() {
       <ThemeProvider>
         <AppToastProvider>
           <SessionProvider>
-            <WorkspaceAuthProvider initialProfile={initialWorkspaceProfile}>
-              <ServerDefaultsProvider defaults={initialServerDefaults}>
-                <RoomProvider>
-                  <RoomHeaderProvider>
-                    <WheelHeaderProvider>
-                      <StandupHeaderProvider>
-                        <PageBackground variant={getBackgroundVariant(screen)}>
-                          <Header />
-                          <MotionConfig reducedMotion="user">
-                            <main className="flex-1">
-                              <Outlet />
-                            </main>
-                          </MotionConfig>
-                        </PageBackground>
-                      </StandupHeaderProvider>
-                    </WheelHeaderProvider>
-                  </RoomHeaderProvider>
-                </RoomProvider>
-              </ServerDefaultsProvider>
-            </WorkspaceAuthProvider>
+            <Suspense
+              fallback={
+                <WorkspaceAuthProvider initialProfile={null}>
+                  <AppShell
+                    serverDefaults={initialServerDefaults}
+                    screen={screen}
+                  />
+                </WorkspaceAuthProvider>
+              }
+            >
+              <AuthBridge profilePromise={initialWorkspaceProfile}>
+                <AppShell
+                  serverDefaults={initialServerDefaults}
+                  screen={screen}
+                />
+              </AuthBridge>
+            </Suspense>
           </SessionProvider>
         </AppToastProvider>
       </ThemeProvider>

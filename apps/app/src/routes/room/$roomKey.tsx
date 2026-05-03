@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link, isRouteErrorResponse, useRouteError } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Gamepad2, Maximize2, X } from "lucide-react";
@@ -49,6 +50,29 @@ import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("room");
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const message = isRouteErrorResponse(error)
+    ? error.data
+    : error instanceof Error
+      ? error.message
+      : "An unexpected error occurred";
+  return (
+    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8 text-center">
+      <p className="text-lg font-semibold text-slate-900 dark:text-white">
+        Failed to load room
+      </p>
+      <p className="text-sm text-slate-600 dark:text-slate-300">{message}</p>
+      <Link
+        to="/join"
+        className="text-sm text-brand-600 underline dark:text-brand-400"
+      >
+        Back to join
+      </Link>
+    </div>
+  );
+}
 
 const RoomContent = ({
   roomData,
