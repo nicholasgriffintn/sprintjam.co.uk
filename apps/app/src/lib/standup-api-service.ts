@@ -21,7 +21,7 @@ import {
 let activeSocket: WebSocket | null = null;
 let activeStandupKey: string | null = null;
 let reconnectState: ReconnectState = createReconnectState();
-let intentionalDisconnect = false;
+let disconnectPending = false;
 
 export interface StandupSessionResponse {
   success: boolean;
@@ -220,9 +220,12 @@ export function connectToStandup(
   onConnectionStatusChange?: (isConnected: boolean) => void,
   isReconnect = false,
 ): WebSocket {
+  disconnectPending = false;
+
   if (
     activeSocket &&
-    activeSocket.readyState === WebSocket.OPEN &&
+    (activeSocket.readyState === WebSocket.OPEN ||
+      activeSocket.readyState === WebSocket.CONNECTING) &&
     activeStandupKey === standupKey
   ) {
     return activeSocket;
@@ -233,8 +236,6 @@ export function connectToStandup(
   if (activeSocket) {
     activeSocket.close();
   }
-
-  intentionalDisconnect = false;
 
   if (!isReconnect) {
     resetReconnectAttempts(reconnectState);
@@ -321,10 +322,6 @@ function handleReconnect(
   onMessage: (data: StandupServerMessage) => void,
   onConnectionStatusChange?: (isConnected: boolean) => void,
 ) {
-  if (intentionalDisconnect) {
-    return;
-  }
-
   if (shouldReconnect(reconnectState)) {
     incrementReconnectAttempts(reconnectState);
     const delay = calculateReconnectDelay(reconnectState);
@@ -349,15 +346,24 @@ function handleReconnect(
 }
 
 export function disconnectFromStandup(): void {
-  intentionalDisconnect = true;
+  disconnectPending = true;
 
-  if (activeSocket) {
-    activeSocket.close(1000, "User left the standup");
-    activeSocket = null;
-  }
+  void Promise.resolve().then(() => {
+    if (!disconnectPending) return;
+    disconnectPending = false;
 
-  activeStandupKey = null;
-  resetReconnectAttempts(reconnectState);
+    if (activeSocket) {
+      const socket = activeSocket;
+      activeSocket = null;
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      socket.close(1000, "User left the standup");
+    }
+    activeStandupKey = null;
+    resetReconnectAttempts(reconnectState);
+  });
 }
 
 export function submitStandupResponse(payload: StandupResponsePayload): void {
