@@ -103,7 +103,7 @@ const RoomContent = ({
     feature: "room",
     sessionKey: roomData?.key,
     userName: name,
-    enabled: isModeratorView,
+    enabled: isModeratorView && !roomData?.settings?.autoHandoverModerator,
   });
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
