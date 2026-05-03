@@ -11,9 +11,7 @@ export function parseTeamSessionMetadata(
 
   try {
     const parsed = JSON.parse(session.metadata);
-    return parsed && typeof parsed === "object"
-      ? parsed
-      : null;
+    return parsed && typeof parsed === "object" ? parsed : null;
   } catch {
     return null;
   }

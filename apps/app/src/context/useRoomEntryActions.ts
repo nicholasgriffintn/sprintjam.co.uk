@@ -6,11 +6,7 @@ import { getErrorDetails, isAbortError } from "@/lib/errors";
 import { formatRoomKey } from "@/utils/validators";
 import { getRecoveryPasskeyStorageKey } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
-import type {
-  AvatarId,
-  ErrorKind,
-  RoomSettings,
-} from "@/types";
+import type { AvatarId, ErrorKind, RoomSettings } from "@/types";
 
 interface UseRoomEntryActionsOptions {
   name: string;

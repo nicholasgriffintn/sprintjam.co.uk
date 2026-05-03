@@ -1,9 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useMemo,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useRevalidator } from "react-router";
 
 import type { ServerDefaults } from "@/types";
@@ -14,8 +9,9 @@ interface ServerDefaultsContextValue {
   isLoadingDefaults: boolean;
 }
 
-const ServerDefaultsContext =
-  createContext<ServerDefaultsContextValue | null>(null);
+const ServerDefaultsContext = createContext<ServerDefaultsContextValue | null>(
+  null,
+);
 
 export function ServerDefaultsProvider({
   children,

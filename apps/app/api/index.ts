@@ -101,7 +101,7 @@ async function handleRequest(
     Sentry.captureException(error);
     console.error("[main] Internal Server Error", error);
 
-     // @ts-expect-error - types are weird
+    // @ts-expect-error - types are weird
     return new Response(
       JSON.stringify({ error: "[main] handleRequest errored" }),
       {

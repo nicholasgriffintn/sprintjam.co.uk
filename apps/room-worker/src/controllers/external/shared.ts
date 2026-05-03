@@ -1,6 +1,4 @@
-import type {
-  Response as CfResponse,
-} from "@cloudflare/workers-types";
+import type { Response as CfResponse } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types";
 import { escapeHtml, getRoomStub } from "@sprintjam/utils";
 

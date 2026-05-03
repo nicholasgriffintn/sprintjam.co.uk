@@ -26,10 +26,7 @@ export async function handleRecover(
 
   const roomData = await ctx.getRoomData();
   if (!roomData?.key) {
-    return createJsonResponse(
-      { error: "Room not found" },
-      404,
-    );
+    return createJsonResponse({ error: "Room not found" }, 404);
   }
 
   const normalizedRoomData = normalizeRoomData(roomData);

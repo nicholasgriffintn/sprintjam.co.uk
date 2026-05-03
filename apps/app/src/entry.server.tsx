@@ -35,7 +35,10 @@ export default async function handleRequest(
   });
 }
 
-export const handleError: HandleErrorFunction = (error, { request, params }) => {
+export const handleError: HandleErrorFunction = (
+  error,
+  { request, params },
+) => {
   if (request.signal.aborted) {
     return;
   }

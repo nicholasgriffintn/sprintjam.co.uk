@@ -42,13 +42,8 @@ const JoinRoomRoute = () => {
   const navigateTo = useAppNavigation();
   const { name, roomKey, passcode, selectedAvatar, joinFlowMode } =
     useSessionState();
-  const {
-    setName,
-    setRoomKey,
-    setPasscode,
-    setSelectedAvatar,
-    goHome,
-  } = useSessionActions();
+  const { setName, setRoomKey, setPasscode, setSelectedAvatar, goHome } =
+    useSessionActions();
   const { error, errorKind, clearError } = useSessionErrors();
   const { handleJoinRoom, handleCreateRoom } = useRoomActions();
   const { isLoading } = useRoomStatus();

@@ -12,8 +12,7 @@ import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
-  const { goHome, startCreateFlow, startJoinFlow } =
-    useSessionActions();
+  const { goHome, startCreateFlow, startJoinFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

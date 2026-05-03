@@ -51,7 +51,7 @@ function StandupRoomContent({
   userName: string;
   isAuthenticated: boolean;
   initialNotice?: string | null;
-  }) {
+}) {
   const navigateTo = useAppNavigation();
   const queryClient = useQueryClient();
   const { standupData, isModeratorView } = useStandupState();

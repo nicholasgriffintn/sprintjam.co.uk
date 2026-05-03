@@ -41,8 +41,7 @@ export default function WorkspaceSessions() {
     refreshWorkspace,
   } = useWorkspaceData({ includeSessions: true });
 
-  const { goToLogin, goToRoom, startCreateFlow } =
-    useSessionActions();
+  const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");

@@ -234,8 +234,7 @@ export function StandupProvider({
           if (!prev) return prev;
           const reactions = { ...(prev.reactions ?? {}) };
           const userReactions = reactions[message.responseUserName] ?? {};
-          const emojiReactions =
-            userReactions[message.emoji] ?? [];
+          const emojiReactions = userReactions[message.emoji] ?? [];
           if (!emojiReactions.includes(message.reactingUserName)) {
             reactions[message.responseUserName] = {
               ...userReactions,
