@@ -27,6 +27,7 @@ import {
 let activeSocket: WebSocket | null = null;
 let activeWheelKey: string | null = null;
 let reconnectState: ReconnectState = createReconnectState();
+let disconnectPending = false;
 
 type WheelEventMessage =
   | WheelServerMessage
@@ -220,9 +221,12 @@ export function connectToWheel(
   onConnectionStatusChange?: (isConnected: boolean) => void,
   isReconnect = false,
 ): WebSocket {
+  disconnectPending = false;
+
   if (
     activeSocket &&
-    activeSocket.readyState === WebSocket.OPEN &&
+    (activeSocket.readyState === WebSocket.OPEN ||
+      activeSocket.readyState === WebSocket.CONNECTING) &&
     activeWheelKey === wheelKey
   ) {
     return activeSocket;
@@ -384,12 +388,24 @@ function handleReconnect(
 }
 
 export function disconnectFromWheel(): void {
-  if (activeSocket) {
-    activeSocket.close(1000, "User left the wheel");
-    activeSocket = null;
-  }
-  activeWheelKey = null;
-  resetReconnectAttempts(reconnectState);
+  disconnectPending = true;
+
+  void Promise.resolve().then(() => {
+    if (!disconnectPending) return;
+    disconnectPending = false;
+
+    if (activeSocket) {
+      const socket = activeSocket;
+      activeSocket = null;
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      socket.close(1000, "User left the wheel");
+    }
+    activeWheelKey = null;
+    resetReconnectAttempts(reconnectState);
+  });
 }
 
 export function addEventListener(
