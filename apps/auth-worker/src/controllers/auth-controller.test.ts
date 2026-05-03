@@ -40,7 +40,9 @@ describe("requestMagicLinkController", () => {
     vi.clearAllMocks();
     mockEnv = {
       DB: {} as any,
-      RESEND_API_KEY: "test-api-key",
+      SEND_EMAIL: {
+        send: vi.fn(),
+      } as any,
     } as AuthWorkerEnv;
 
     mockRepo = {
@@ -221,7 +223,7 @@ describe("requestMagicLinkController", () => {
     expect(services.sendVerificationCodeEmail).toHaveBeenCalledWith({
       email: "test@example.com",
       code: "123456",
-      resendApiKey: "test-api-key",
+      sendEmail: mockEnv.SEND_EMAIL,
     });
     expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -302,6 +304,9 @@ describe("verifyCodeController", () => {
     mockEnv = {
       DB: {} as any,
       TOKEN_ENCRYPTION_SECRET: "test-secret",
+      SEND_EMAIL: {
+        send: vi.fn(),
+      } as any,
     } as AuthWorkerEnv;
 
     mockRepo = {

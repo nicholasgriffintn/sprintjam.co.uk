@@ -3,6 +3,7 @@ import type {
   Fetcher,
   RateLimit,
   D1Database,
+  SendEmail
 } from "@cloudflare/workers-types";
 
 /**
@@ -56,7 +57,6 @@ export interface RoomWorkerEnv extends BaseEnv {
  */
 export interface AuthWorkerEnv extends BaseEnv {
   DB: D1Database;
-  RESEND_API_KEY: string;
   TOKEN_ENCRYPTION_SECRET: string;
   INTERNAL_API_SECRET?: string;
   ENABLE_MAGIC_LINK_RATE_LIMIT?: string;
@@ -72,6 +72,7 @@ export interface AuthWorkerEnv extends BaseEnv {
   GITHUB_OAUTH_CLIENT_ID?: string;
   GITHUB_OAUTH_CLIENT_SECRET?: string;
   GITHUB_OAUTH_REDIRECT_URI?: string;
+  SEND_EMAIL: SendEmail;
 }
 
 /**

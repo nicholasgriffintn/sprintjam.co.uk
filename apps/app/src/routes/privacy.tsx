@@ -87,11 +87,6 @@ const integrationOptions = [
     detail: `Workspace team owners can connect Jira, Linear, or GitHub. We store encrypted access tokens and provider metadata such as account identifiers, email address, site, organisation, repository, and selected field mappings so we can read tickets and, when you choose, write estimates or comments back to that provider.`,
   },
   {
-    name: "Workspace sign-in email delivery (Resend)",
-    detail:
-      "We use Resend to deliver verification codes and workspace invitation emails. That means the recipient email address, message content, and normal email delivery metadata are processed by our email provider.",
-  },
-  {
     name: "Strudel music (optional)",
     detail:
       "We send generated Strudel prompt text only (no participant identifiers) to api.polychat.app to generate snippets.",

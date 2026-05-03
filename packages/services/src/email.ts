@@ -1,9 +1,11 @@
+import { SendEmail } from "@cloudflare/workers-types";
+
 import { escapeHtml } from "@sprintjam/utils";
 
 export interface SendVerificationCodeEmailParams {
   email: string;
   code: string;
-  resendApiKey: string;
+  sendEmail: SendEmail;
 }
 
 export interface SendWorkspaceInviteEmailParams {
@@ -11,25 +13,22 @@ export interface SendWorkspaceInviteEmailParams {
   workspaceName: string;
   inviterName: string;
   loginUrl: string;
-  resendApiKey: string;
+  sendEmail: SendEmail;
 }
 
 export async function sendVerificationCodeEmail({
   email,
   code,
-  resendApiKey,
+  sendEmail,
 }: SendVerificationCodeEmailParams): Promise<void> {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${resendApiKey}`,
-    },
-    body: JSON.stringify({
-      from: "SprintJam <sprintjam@notifications.nicholasgriffin.co.uk>",
-      to: [email],
-      subject: "Your SprintJam verification code",
-      html: `
+
+  await sendEmail.send({
+    from: "SprintJam <emails.sprintjam.co.uk>",
+    to: email,
+    // @ts-expect-error - types are wrong.
+    subject: "Your SprintJam verification code",
+    text: `Your SprintJam verification code is: ${code}`,
+    html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -78,14 +77,8 @@ export async function sendVerificationCodeEmail({
           </div>
         </body>
         </html>
-      `,
-    }),
+      `
   });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to send email: ${error}`);
-  }
 }
 
 export async function sendWorkspaceInviteEmail({
@@ -93,7 +86,7 @@ export async function sendWorkspaceInviteEmail({
   workspaceName,
   inviterName,
   loginUrl,
-  resendApiKey,
+  sendEmail,
 }: SendWorkspaceInviteEmailParams): Promise<void> {
   const safeWorkspaceName = escapeHtml(workspaceName);
   const safeInviterName = escapeHtml(inviterName);
@@ -106,17 +99,13 @@ export async function sendWorkspaceInviteEmail({
     }
   })();
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${resendApiKey}`,
-    },
-    body: JSON.stringify({
-      from: "SprintJam <sprintjam@notifications.nicholasgriffin.co.uk>",
-      to: [email],
-      subject: `You were invited to ${safeWorkspaceName} on SprintJam`,
-      html: `
+  await sendEmail.send({
+    from: "SprintJam <emails.sprintjam.co.uk>",
+    to: email,
+    // @ts-expect-error - types are wrong.
+    subject: `You were invited to ${safeWorkspaceName} on SprintJam`,
+    text: `${inviterName} invited you to join ${workspaceName} on SprintJam. Use this email when you sign in and we'll route you to the invited workspace: ${loginUrl}`,
+    html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -148,11 +137,5 @@ export async function sendWorkspaceInviteEmail({
         </body>
         </html>
       `,
-    }),
   });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to send workspace invite email: ${error}`);
-  }
 }

@@ -164,7 +164,6 @@ describe("teams-controller", () => {
     vi.clearAllMocks();
     env = {
       DB: {} as any,
-      RESEND_API_KEY: "test-resend",
     } as AuthWorkerEnv;
     vi.mocked(services.sendWorkspaceInviteEmail).mockResolvedValue(undefined);
   });

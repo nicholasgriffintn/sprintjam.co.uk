@@ -7,9 +7,9 @@ declare namespace Cloudflare {
   interface Env {
     ENVIRONMENT: "production" | "development" | "staging";
     ENABLE_MAGIC_LINK_RATE_LIMIT: "true" | "false";
-    RESEND_API_KEY: string;
     DB: D1Database;
     MAGIC_LINK_RATE_LIMITER: RateLimit;
+    SEND_EMAIL?: SendEmail;
   }
 }
 interface Env extends Cloudflare.Env {}

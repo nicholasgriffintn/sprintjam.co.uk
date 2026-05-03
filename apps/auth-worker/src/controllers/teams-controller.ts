@@ -1501,7 +1501,7 @@ export async function inviteWorkspaceMemberController(
       workspaceName,
       inviterName,
       loginUrl,
-      resendApiKey: env.RESEND_API_KEY,
+      sendEmail: env.SEND_EMAIL,
     });
   } catch (error) {
     console.error("Failed to send workspace invite email:", error);
