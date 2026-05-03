@@ -100,7 +100,7 @@ export async function sendWorkspaceInviteEmail({
   })();
 
   await sendEmail.send({
-    from: "SprintJam <emails.sprintjam.co.uk>",
+    from: "emails.sprintjam.co.uk",
     to: email,
     // @ts-expect-error - types are wrong.
     subject: `You were invited to ${safeWorkspaceName} on SprintJam`,
