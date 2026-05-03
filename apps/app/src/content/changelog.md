@@ -1,3 +1,7 @@
+## V4.5
+
+- Changed to send emails from Cloudflare rather than Resend, cutting down on the number of third parties we need to share data with. As we already use Cloudflare, this means that we can keep all of our user data within a single location.
+
 ## V4.4
 
 - Moved to server side rendering using React Router with Vite instead of just Client side rendering. This should improve performance while also improving the SEO of the application.
