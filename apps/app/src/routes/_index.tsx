@@ -152,7 +152,6 @@ const WelcomeRoute = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          viewport={{ once: true, amount: 0.2 }}
           className="space-y-6"
         >
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
