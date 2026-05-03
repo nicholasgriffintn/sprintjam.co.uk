@@ -1,4 +1,4 @@
-import { Suspense, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   Links,
@@ -20,7 +20,6 @@ import {
   type WorkerLoaderArgs,
 } from "@/lib/worker-utils";
 
-import { AuthBridge } from "@/context/AuthBridge";
 import { AppShell } from "@/components/layout/AppShell";
 import { SessionProvider } from "@/context/SessionContext";
 import { WorkspaceAuthProvider } from "@/context/WorkspaceAuthContext";
@@ -148,23 +147,12 @@ export default function App() {
       <ThemeProvider>
         <AppToastProvider>
           <SessionProvider>
-            <Suspense
-              fallback={
-                <WorkspaceAuthProvider initialProfile={null}>
-                  <AppShell
-                    serverDefaults={initialServerDefaults}
-                    screen={screen}
-                  />
-                </WorkspaceAuthProvider>
-              }
-            >
-              <AuthBridge profilePromise={initialWorkspaceProfile}>
-                <AppShell
-                  serverDefaults={initialServerDefaults}
-                  screen={screen}
-                />
-              </AuthBridge>
-            </Suspense>
+            <WorkspaceAuthProvider initialProfile={initialWorkspaceProfile}>
+              <AppShell
+                serverDefaults={initialServerDefaults}
+                screen={screen}
+              />
+            </WorkspaceAuthProvider>
           </SessionProvider>
         </AppToastProvider>
       </ThemeProvider>

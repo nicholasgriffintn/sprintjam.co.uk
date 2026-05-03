@@ -33,35 +33,47 @@ const WorkspaceAuthContext = createContext<WorkspaceAuthContextValue | null>(
   null,
 );
 
+function seedCollection(profile: WorkspaceAuthProfile | null) {
+  if (profile) {
+    workspaceProfileCollection.utils.writeUpsert(profile);
+  } else if (workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY)) {
+    workspaceProfileCollection.utils.writeDelete(
+      WORKSPACE_PROFILE_DOCUMENT_KEY,
+    );
+  }
+}
+
 export function WorkspaceAuthProvider({
   children,
   initialProfile = null,
 }: {
   children: ReactNode;
-  initialProfile?: WorkspaceAuthProfile | null;
+  initialProfile?:
+    | WorkspaceAuthProfile
+    | null
+    | Promise<WorkspaceAuthProfile | null>;
 }) {
   const workspacesEnabled = isWorkspacesEnabled();
   const collectionProfile = useWorkspaceProfile(workspacesEnabled);
-  const profile = collectionProfile ?? initialProfile;
+  const [resolvedProfile, setResolvedProfile] =
+    useState<WorkspaceAuthProfile | null>(
+      initialProfile instanceof Promise ? null : (initialProfile ?? null),
+    );
+  const profile = collectionProfile ?? resolvedProfile;
   const [isLoading, setIsLoading] = useState(false);
   const revalidator = useRevalidator();
 
   useEffect(() => {
-    if (!workspacesEnabled) {
+    if (!(initialProfile instanceof Promise)) {
+      seedCollection(initialProfile ?? null);
       return;
     }
 
-    if (initialProfile) {
-      workspaceProfileCollection.utils.writeUpsert(initialProfile);
-      return;
-    }
-
-    if (workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY)) {
-      workspaceProfileCollection.utils.writeDelete(
-        WORKSPACE_PROFILE_DOCUMENT_KEY,
-      );
-    }
-  }, [initialProfile, workspacesEnabled]);
+    initialProfile.then((resolved) => {
+      setResolvedProfile(resolved);
+      seedCollection(resolved);
+    });
+  }, []);
 
   const refreshAuth = useCallback(async () => {
     setIsLoading(true);
