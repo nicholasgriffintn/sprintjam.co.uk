@@ -493,6 +493,22 @@ export const ROUTE_DEFINITIONS = [
     },
   },
   {
+    screen: "workspaceTeam",
+    path: (params) =>
+      params.teamId ? `/workspace/teams/${params.teamId}` : "/workspace/teams",
+    pathPattern: /^\/workspace\/teams\/(\d+)$/i,
+    group: "workspace",
+    parent: "workspaceSessions",
+    meta: {
+      title: `Team Home - ${SITE_NAME}`,
+      description:
+        "Open a team landing page to join active sessions or start a new planning room.",
+      keywords:
+        "team planning page, team sessions, planning poker, workspace team",
+      ogImage: "/og-image.png",
+    },
+  },
+  {
     screen: "workspaceAdmin",
     path: "/workspace/admin",
     group: "workspace",

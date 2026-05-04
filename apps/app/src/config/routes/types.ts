@@ -21,6 +21,7 @@ export interface RoutePathParams {
   roomKey?: string;
   wheelKey?: string;
   standupKey?: string;
+  teamId?: number | string;
 }
 
 export interface RouteNavConfig {

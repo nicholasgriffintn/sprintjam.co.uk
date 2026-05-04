@@ -63,6 +63,10 @@ describe("navigation", () => {
       expect(parsePath("/workspace/sessions")).toEqual({
         screen: "workspaceSessions",
       });
+      expect(parsePath("/workspace/teams/12")).toEqual({
+        screen: "workspaceTeam",
+        teamId: 12,
+      });
       expect(parsePath("/workspace/admin")).toEqual({
         screen: "workspaceAdmin",
       });
@@ -176,6 +180,12 @@ describe("navigation", () => {
     it("generates standup room path with standup key", () => {
       expect(getPathFromScreen("standupRoom", { standupKey: "ABC123" })).toBe(
         "/standup/room/ABC123",
+      );
+    });
+
+    it("generates workspace team path with team id", () => {
+      expect(getPathFromScreen("workspaceTeam", { teamId: 12 })).toBe(
+        "/workspace/teams/12",
       );
     });
 
@@ -430,6 +440,7 @@ describe("derived", () => {
       const screens = getScreensInGroup("workspace");
       expect(screens).toContain("workspace");
       expect(screens).toContain("workspaceSessions");
+      expect(screens).toContain("workspaceTeam");
       expect(screens).toContain("workspaceAdmin");
       expect(screens).toContain("workspaceAdminTeams");
     });

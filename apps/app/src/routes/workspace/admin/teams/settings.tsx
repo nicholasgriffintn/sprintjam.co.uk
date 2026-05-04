@@ -125,6 +125,17 @@ export default function WorkspaceTeamSettings() {
 
     return `${window.location.origin}/teams-manifest.json`;
   }, []);
+  const teamHomeUrl = useMemo(() => {
+    if (!selectedTeamId) {
+      return null;
+    }
+
+    if (typeof window === "undefined") {
+      return `https://sprintjam.co.uk/workspace/teams/${selectedTeamId}`;
+    }
+
+    return `${window.location.origin}/workspace/teams/${selectedTeamId}`;
+  }, [selectedTeamId]);
 
   const settingsQuery = useQuery<RoomSettings | null>({
     queryKey: settingsQueryKey,
@@ -384,6 +395,20 @@ export default function WorkspaceTeamSettings() {
     }
   };
 
+  const handleCopyTeamHomeUrl = async () => {
+    if (!teamHomeUrl) {
+      return;
+    }
+
+    try {
+      await copyText(teamHomeUrl);
+      toast.success("Team page URL copied");
+    } catch (error) {
+      console.error("Failed to copy team page URL:", error);
+      toast.error("Couldn't copy team page URL");
+    }
+  };
+
   return (
     <WorkspaceLayout
       isLoading={isLoading}
@@ -402,7 +427,7 @@ export default function WorkspaceTeamSettings() {
           <ArrowLeft className="h-4 w-4" />
           Back to teams
         </button>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
               {selectedTeam?.name ?? "Team"} Settings
@@ -411,6 +436,26 @@ export default function WorkspaceTeamSettings() {
               Default settings, integrations, and access for this team
             </p>
           </div>
+          {teamHomeUrl && (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<Copy className="h-4 w-4" />}
+                onClick={() => void handleCopyTeamHomeUrl()}
+              >
+                Copy team page
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<ExternalLink className="h-4 w-4" />}
+                onClick={() => window.open(teamHomeUrl, "_blank")}
+              >
+                Open
+              </Button>
+            </div>
+          )}
         </div>
 
         {!selectedTeam && !isLoading && (
