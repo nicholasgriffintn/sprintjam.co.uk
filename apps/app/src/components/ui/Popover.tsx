@@ -24,6 +24,7 @@ export const Popover = ({
 }: PopoverProps) => (
   <BasePopover.Root>
     <BasePopover.Trigger
+      type="button"
       aria-label={triggerAriaLabel}
       className={cn(
         "flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300",

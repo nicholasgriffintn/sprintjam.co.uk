@@ -153,10 +153,14 @@ export function WheelCanvas({
   if (enabledEntries.length === 0) {
     return (
       <div className="relative aspect-square w-full">
-        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-800/50 border-4 border-slate-700">
-          <p className="text-slate-400 text-center px-8">
-            Add entries to spin the wheel
-          </p>
+        <div className="absolute inset-0 rounded-full border-4 border-dashed border-cyan-300/70 bg-gradient-to-br from-white via-cyan-50 to-amber-50 shadow-inner dark:border-cyan-300/30 dark:from-slate-900 dark:via-cyan-950/30 dark:to-amber-950/20" />
+        <div className="absolute inset-[10%] rounded-full border border-white/80 dark:border-white/10" />
+        <div className="absolute inset-0 flex items-center justify-center px-8 text-center">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Add entries to spin the wheel
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -164,6 +168,8 @@ export function WheelCanvas({
 
   return (
     <div className="relative aspect-square w-full">
+      <div className="pointer-events-none absolute -inset-4 rounded-full bg-gradient-to-br from-cyan-200/35 via-transparent to-amber-200/40 blur-2xl dark:from-cyan-300/15 dark:to-amber-300/15" />
+      <div className="pointer-events-none absolute inset-0 rounded-full border border-white/80 shadow-[inset_0_0_42px_rgba(255,255,255,0.55)] dark:border-white/10 dark:shadow-[inset_0_0_42px_rgba(255,255,255,0.08)]" />
       <div
         className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10"
         style={{
@@ -178,7 +184,7 @@ export function WheelCanvas({
       />
 
       <motion.div
-        className="w-full h-full cursor-pointer"
+        className="relative w-full h-full cursor-pointer drop-shadow-2xl"
         animate={
           spinState?.isSpinning || spinState?.status === "completed"
             ? controls
@@ -196,6 +202,14 @@ export function WheelCanvas({
         data-testid="wheel-canvas"
       >
         <svg viewBox="0 0 100 100" className="w-full h-full">
+          <circle
+            cx="50"
+            cy="50"
+            r="49"
+            fill="none"
+            stroke="rgba(255,255,255,0.75)"
+            strokeWidth="1"
+          />
           {enabledEntries.map((entry, index) => {
             const color = WHEEL_COLORS[index % WHEEL_COLORS.length];
 
@@ -277,18 +291,26 @@ export function WheelCanvas({
           <circle
             cx="50"
             cy="50"
-            r="8"
-            fill="#f8fafc"
-            stroke="#1e293b"
+            r="9.5"
+            fill="#0f172a"
+            stroke="#f8fafc"
             strokeWidth="1"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="4"
+            fill="#f8fafc"
           />
         </svg>
       </motion.div>
 
       {!spinState?.isSpinning && enabledEntries.length >= 2 && onSpin && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl px-6 py-3 border border-white/10">
-            <p className="text-lg font-semibold text-white">Click to spin</p>
+          <div className="rounded-2xl border border-white/20 bg-slate-950/85 px-6 py-4 text-center shadow-2xl backdrop-blur-sm">
+            <p className="inline-flex items-center gap-2 text-lg font-semibold text-white">
+              Click to spin
+            </p>
             <p className="text-sm text-white/70">or press ctrl/cmd+enter</p>
           </div>
         </div>

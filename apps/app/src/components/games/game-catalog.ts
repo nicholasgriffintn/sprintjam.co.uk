@@ -18,6 +18,9 @@ export const ROOM_GAMES: Array<{
   description: string;
   objective: string;
   rules: string;
+  accent: {
+    icon: string;
+  };
 }> = [
   {
     type: "one-word-pitch",
@@ -27,6 +30,9 @@ export const ROOM_GAMES: Array<{
     objective: "Land unique one-word takes before the round closes.",
     rules:
       "One word only. Unique answer +3, duplicate answer +1, then the room votes for +2 bonus.",
+    accent: {
+      icon: "bg-rose-500/10 text-rose-600 dark:bg-rose-400/20 dark:text-rose-200",
+    },
   },
   {
     type: "category-blitz",
@@ -35,6 +41,9 @@ export const ROOM_GAMES: Array<{
       "A category and starting letter appear. Submit a valid answer fast.",
     objective: "Find valid, unique answers to outscore duplicated picks.",
     rules: "Answer must start with the shown letter. Unique +3, duplicate +1.",
+    accent: {
+      icon: "bg-cyan-500/10 text-cyan-700 dark:bg-cyan-400/20 dark:text-cyan-100",
+    },
   },
   {
     type: "clueboard",
@@ -44,6 +53,9 @@ export const ROOM_GAMES: Array<{
     objective: "Decode clues, hit target words, and avoid the blocker word.",
     rules:
       "Clue giver selects target words then sends clue:word|1-4|i,j. Guessers pick words. 3 rounds max, blocker word ends game.",
+    accent: {
+      icon: "bg-violet-500/10 text-violet-700 dark:bg-violet-400/20 dark:text-violet-100",
+    },
   },
   {
     type: "guess-the-number",
@@ -52,6 +64,9 @@ export const ROOM_GAMES: Array<{
       "Everyone guesses 1-20. Exact guess scores big; close guesses still earn points.",
     objective: "Fast rounds, quick leaderboard shifts, good for a quick break.",
     rules: "Whole numbers only (1-20). Exact +3, within 2 +1, otherwise 0.",
+    accent: {
+      icon: "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-100",
+    },
   },
   {
     type: "word-chain",
@@ -61,6 +76,9 @@ export const ROOM_GAMES: Array<{
     objective: "Keep the chain alive and outplay the room on streaks.",
     rules:
       "Words need at least 2 letters and must follow the last-letter chain.",
+    accent: {
+      icon: "bg-sky-500/10 text-sky-700 dark:bg-sky-400/20 dark:text-sky-100",
+    },
   },
   {
     type: "emoji-story",
@@ -69,6 +87,9 @@ export const ROOM_GAMES: Array<{
       "Build a collaborative story one emoji burst at a time. Builds up over 5 rounds.",
     objective: "Create a story together using only emojis.",
     rules: "Emoji only, 1-6 emojis per move.",
+    accent: {
+      icon: "bg-amber-500/10 text-amber-700 dark:bg-amber-400/20 dark:text-amber-100",
+    },
   },
   {
     type: "sprint-word",
@@ -78,6 +99,9 @@ export const ROOM_GAMES: Array<{
     objective: "Fewer guesses = more points. Beat the room to it.",
     rules:
       "5-letter words only. Green = right letter, right spot. Yellow = right letter, wrong spot.",
+    accent: {
+      icon: "bg-lime-500/10 text-lime-700 dark:bg-lime-400/20 dark:text-lime-100",
+    },
   },
   {
     type: "team-threads",
@@ -87,6 +111,9 @@ export const ROOM_GAMES: Array<{
     objective: "Reveal all 4 groups before the team runs out of lives.",
     rules:
       "Pick 4 words that share a connection and submit. Correct reveals the group (+3 to finder, +2 everyone on full solve). 4 shared lives.",
+    accent: {
+      icon: "bg-fuchsia-500/10 text-fuchsia-700 dark:bg-fuchsia-400/20 dark:text-fuchsia-100",
+    },
   },
   {
     type: "sprint-risk",
@@ -96,6 +123,9 @@ export const ROOM_GAMES: Array<{
     objective: "Highest score after 3 turns each wins.",
     rules:
       "1s=100pts, 5s=50pts, three-of-a-kind=face×100. No scoring dice on a roll = Farkle, lose your turn score.",
+    accent: {
+      icon: "bg-orange-500/10 text-orange-700 dark:bg-orange-400/20 dark:text-orange-100",
+    },
   },
 ];
 
