@@ -1,4 +1,4 @@
-import { ClientMessage, ROOM_GAME_TYPES } from "@sprintjam/types";
+import { type ClientMessage, ROOM_GAME_TYPES } from "@sprintjam/types";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -186,6 +186,8 @@ export function validateClientMessage(
       return { error: "toggleSpectator payload invalid" };
     case "completeSession":
       return { type: "completeSession" };
+    case "leaveRoom":
+      return { type: "leaveRoom" };
     case "startGame":
       if (isRoomGameType(data.gameType)) {
         return { type: "startGame", gameType: data.gameType };

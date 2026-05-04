@@ -62,10 +62,8 @@ function parsePayload(payload: string): EncryptedTokenPayload {
     v: candidate.v,
     algo: typeof candidate.algo === "string" ? candidate.algo : "",
     kdf: typeof candidate.kdf === "string" ? candidate.kdf : "",
-    kdf_hash:
-      typeof candidate.kdf_hash === "string" ? candidate.kdf_hash : "",
-    kdf_info:
-      typeof candidate.kdf_info === "string" ? candidate.kdf_info : "",
+    kdf_hash: typeof candidate.kdf_hash === "string" ? candidate.kdf_hash : "",
+    kdf_info: typeof candidate.kdf_info === "string" ? candidate.kdf_info : "",
     iv: candidate.iv,
     salt: candidate.salt,
     data: candidate.data,

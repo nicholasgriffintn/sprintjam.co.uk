@@ -101,7 +101,8 @@ async function executeWithTokenRefresh<T>(
     onTokenRefresh,
     refreshToken: (refreshToken) =>
       refreshOAuthToken(refreshToken, clientId, clientSecret),
-    reconnectErrorMessage: "OAuth token expired. Please reconnect your Jira account.",
+    reconnectErrorMessage:
+      "OAuth token expired. Please reconnect your Jira account.",
   });
 }
 

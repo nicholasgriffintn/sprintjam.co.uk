@@ -126,7 +126,9 @@ export async function updateLinearEstimateController(
   }
 
   try {
-    await validateSession(env, roomKey, userName, sessionToken);
+    await validateSession(env, roomKey, userName, sessionToken, {
+      requireQueueManagement: true,
+    });
 
     const oauthConfig = getLinearOAuthConfig(env);
     if (!oauthConfig) {

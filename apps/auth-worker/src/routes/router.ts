@@ -9,6 +9,7 @@ import {
   startMfaVerifyController,
   verifyMfaController,
   getCurrentUserController,
+  updateCurrentUserProfileController,
   logoutController,
 } from "../controllers/auth-controller";
 import {
@@ -17,12 +18,25 @@ import {
   getTeamController,
   updateTeamController,
   deleteTeamController,
+  listTeamMembersController,
+  addTeamMemberController,
+  requestTeamAccessController,
+  approveTeamMemberController,
+  moveTeamMemberController,
+  updateTeamMemberController,
+  removeTeamMemberController,
   listTeamSessionsController,
   createTeamSessionController,
   getTeamSessionController,
+  getTeamSessionByRoomKeyController,
+  updateTeamSessionController,
   completeSessionByRoomKeyController,
+  getWorkspaceProfileController,
   getWorkspaceStatsController,
   updateWorkspaceProfileController,
+  approveWorkspaceMemberController,
+  updateWorkspaceMemberController,
+  removeWorkspaceMemberController,
   inviteWorkspaceMemberController,
 } from "../controllers/teams-controller";
 import {
@@ -30,8 +44,17 @@ import {
   saveTeamSettingsController,
 } from "../controllers/team-settings-controller";
 import {
+  deleteTeamCollaborationInstallationController,
+  listTeamCollaborationInstallationsController,
+  resolveTeamsCollaborationInstallationController,
+  saveTeamsCollaborationInstallationController,
+} from "../controllers/team-collaboration-controller";
+import {
   listTeamIntegrationsController,
   getTeamIntegrationStatusController,
+  listTeamIntegrationBoardsController,
+  listTeamIntegrationSprintsController,
+  searchTeamIntegrationTicketsController,
   initiateTeamOAuthController,
   handleJiraTeamOAuthCallbackController,
   handleLinearTeamOAuthCallbackController,
@@ -111,6 +134,12 @@ const ROUTES: RouteDefinition[] = [
     paramTypes: ["none"],
   },
   {
+    method: "PUT",
+    pattern: /^auth\/me$/,
+    handler: (request, env) => updateCurrentUserProfileController(request, env),
+    paramTypes: ["none"],
+  },
+  {
     method: "POST",
     pattern: /^auth\/logout$/,
     handler: (request, env) => logoutController(request, env),
@@ -160,6 +189,104 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "GET",
+    pattern: /^teams\/(\d+)\/members$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamMembersController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/members$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return addTeamMemberController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/request-access$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return requestTeamAccessController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/members\/(\d+)\/approve$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const userIdResult = requireNumberParam(params[1], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return approveTeamMemberController(
+        request,
+        env,
+        teamIdResult.value,
+        userIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/members\/(\d+)\/move$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const userIdResult = requireNumberParam(params[1], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return moveTeamMemberController(
+        request,
+        env,
+        teamIdResult.value,
+        userIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "PUT",
+    pattern: /^teams\/(\d+)\/members\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const userIdResult = requireNumberParam(params[1], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return updateTeamMemberController(
+        request,
+        env,
+        teamIdResult.value,
+        userIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^teams\/(\d+)\/members\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const userIdResult = requireNumberParam(params[1], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return removeTeamMemberController(
+        request,
+        env,
+        teamIdResult.value,
+        userIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "GET",
     pattern: /^teams\/(\d+)\/sessions$/,
     handler: (request, env, params) => {
       const teamIdResult = requireNumberParam(params[0], "teamId");
@@ -196,9 +323,38 @@ const ROUTES: RouteDefinition[] = [
     paramTypes: ["number", "number"],
   },
   {
+    method: "PUT",
+    pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const sessionIdResult = requireNumberParam(params[1], "sessionId");
+      if (!sessionIdResult.ok) return sessionIdResult.response;
+      return updateTeamSessionController(
+        request,
+        env,
+        teamIdResult.value,
+        sessionIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "GET",
+    pattern: /^sessions\/by-room$/,
+    handler: (request, env) => getTeamSessionByRoomKeyController(request, env),
+    paramTypes: ["none"],
+  },
+  {
     method: "POST",
     pattern: /^sessions\/complete$/,
     handler: (request, env) => completeSessionByRoomKeyController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "GET",
+    pattern: /^workspace\/profile$/,
+    handler: (request, env) => getWorkspaceProfileController(request, env),
     paramTypes: ["none"],
   },
   {
@@ -220,6 +376,36 @@ const ROUTES: RouteDefinition[] = [
     paramTypes: ["none"],
   },
   {
+    method: "POST",
+    pattern: /^workspace\/members\/(\d+)\/approve$/,
+    handler: (request, env, params) => {
+      const userIdResult = requireNumberParam(params[0], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return approveWorkspaceMemberController(request, env, userIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "PUT",
+    pattern: /^workspace\/members\/(\d+)$/,
+    handler: (request, env, params) => {
+      const userIdResult = requireNumberParam(params[0], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return updateWorkspaceMemberController(request, env, userIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^workspace\/members\/(\d+)$/,
+    handler: (request, env, params) => {
+      const userIdResult = requireNumberParam(params[0], "userId");
+      if (!userIdResult.ok) return userIdResult.response;
+      return removeWorkspaceMemberController(request, env, userIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
     method: "GET",
     pattern: /^teams\/(\d+)\/settings$/,
     handler: (request, env, params) => {
@@ -238,6 +424,61 @@ const ROUTES: RouteDefinition[] = [
       return saveTeamSettingsController(request, env, teamIdResult.value);
     },
     paramTypes: ["number"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/(\d+)\/collaboration-installations$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamCollaborationInstallationsController(
+        request,
+        env,
+        teamIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^collaboration-installations\/teams\/resolve$/,
+    handler: (request, env) =>
+      resolveTeamsCollaborationInstallationController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/collaboration-installations\/teams$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return saveTeamsCollaborationInstallationController(
+        request,
+        env,
+        teamIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^teams\/(\d+)\/collaboration-installations\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const installationIdResult = requireNumberParam(
+        params[1],
+        "installationId",
+      );
+      if (!installationIdResult.ok) return installationIdResult.response;
+      return deleteTeamCollaborationInstallationController(
+        request,
+        env,
+        teamIdResult.value,
+        installationIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
   },
   {
     method: "GET",
@@ -271,6 +512,51 @@ const ROUTES: RouteDefinition[] = [
       const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamIntegrationStatusController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/boards$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamIntegrationBoardsController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/sprints$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamIntegrationSprintsController(
+        request,
+        env,
+        teamIdResult.value,
+        params[1] as "jira" | "linear" | "github",
+      );
+    },
+    paramTypes: ["number", "string"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/tickets$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return searchTeamIntegrationTicketsController(
         request,
         env,
         teamIdResult.value,
@@ -391,7 +677,7 @@ export async function handleRequest(
     if (request.method === "POST" || request.method === "PUT") {
       const bodySizeCheck = validateRequestBodySize(request);
       if (!bodySizeCheck.ok) {
-        return bodySizeCheck.response as unknown as Response;
+        return bodySizeCheck.response;
       }
     }
 

@@ -84,7 +84,7 @@ describe("postRoundStats", () => {
         ok: false,
         status: 401,
         text: vi.fn().mockResolvedValue(responseText),
-      } as unknown as Response),
+      }),
     } as unknown as Fetcher;
 
     await postRoundStats(fetcher, "token-123", samplePayload);

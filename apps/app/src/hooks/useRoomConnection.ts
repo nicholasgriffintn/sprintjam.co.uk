@@ -9,7 +9,7 @@ import {
 import type { WebSocketMessage, WebSocketMessageType } from "@/types";
 
 interface UseRoomConnectionOptions {
-  screen: string;
+  enabled?: boolean;
   name: string;
   activeRoomKey: string | null;
   onMessage: (message: WebSocketMessage) => void;
@@ -23,7 +23,7 @@ interface UseRoomConnectionOptions {
 }
 
 export const useRoomConnection = ({
-  screen,
+  enabled = true,
   name,
   activeRoomKey,
   onMessage,
@@ -33,10 +33,10 @@ export const useRoomConnection = ({
   skip = false,
 }: UseRoomConnectionOptions) => {
   useEffect(() => {
-    if (skip) {
+    if (skip || !enabled) {
       return;
     }
-    if (screen === "room" && name && activeRoomKey) {
+    if (name && activeRoomKey) {
       try {
         connectToRoom(activeRoomKey, name, onMessage, onConnectionChange);
       } catch (error) {
@@ -82,7 +82,7 @@ export const useRoomConnection = ({
     }
   }, [
     skip,
-    screen,
+    enabled,
     activeRoomKey,
     name,
     onMessage,

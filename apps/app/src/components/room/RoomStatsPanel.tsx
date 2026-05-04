@@ -14,12 +14,11 @@ interface RoomStatsPanelProps {
 
 export function RoomStatsPanel({ roomKey }: RoomStatsPanelProps) {
   const { isAuthenticated } = useWorkspaceData();
-
   const { data: stats, isLoading } = useQuery<SessionStats | null>({
     queryKey: ["session-stats", roomKey],
     enabled: isAuthenticated,
-    staleTime: 60_000,
     queryFn: () => getSessionStats(roomKey),
+    staleTime: 0,
   });
 
   if (!isAuthenticated) return null;

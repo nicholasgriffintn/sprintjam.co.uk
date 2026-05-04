@@ -1,4 +1,4 @@
-import { VoteValue } from "@sprintjam/types";
+import type { VoteValue } from "@sprintjam/types";
 
 export function serializeJSON(value: unknown): string | null {
   return value === undefined || value === null ? null : JSON.stringify(value);

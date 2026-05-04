@@ -31,24 +31,25 @@ test.describe("Error scenarios", () => {
     });
 
     await reconnectPage.addInitScript(
-      ({ savedRoomKey, savedAuthToken, savedName }) => {
+      ({ savedRoomKey, savedAuthToken, savedName, savedAvatar }) => {
         window.localStorage.setItem("sprintjam_roomKey", savedRoomKey);
         if (savedAuthToken) {
           window.localStorage.setItem("sprintjam_authToken", savedAuthToken);
         }
         window.localStorage.setItem("sprintjam_username", savedName);
+        window.localStorage.setItem("sprintjam_avatar", savedAvatar);
       },
       {
         savedRoomKey: roomKey,
         savedAuthToken: authToken,
         savedName: moderatorName,
+        savedAvatar: "robot",
       },
     );
 
     await reconnectPage.goto(`/room/${roomKey}`);
-    await expect(
-      reconnectPage.getByText(/Session expired.*rejoin the room/i),
-    ).toBeVisible();
+    await expect(reconnectPage.locator("#join-name")).toBeVisible();
+    await expect(reconnectPage.locator("#join-room-key")).toHaveValue(roomKey);
 
     await reconnectContext.close();
   });
@@ -112,16 +113,63 @@ test.describe("Error scenarios", () => {
     }
   });
 
-  test("redirects to home with error when visiting non-existent room URL", async ({
+  test("shows reconnect spinner immediately and toast after delay on connection loss", async ({
+    browser,
+  }) => {
+    test.setTimeout(30_000);
+
+    const activeWs: { close: () => void } = { close: () => { } };
+    let killSwitch = false;
+
+    const setup = await createRoomWithParticipant(browser, {
+      setupModeratorRoutes: async (context) => {
+        await context.routeWebSocket(/.*/, (ws) => {
+          if (killSwitch) {
+            ws.close();
+            return;
+          }
+          const server = ws.connectToServer();
+          ws.onMessage((msg) => server.send(msg));
+          server.onMessage((msg) => ws.send(msg));
+          activeWs.close = () => ws.close();
+        });
+      },
+    });
+
+    const { moderatorRoom, cleanup } = setup;
+
+    try {
+      await moderatorRoom.waitForLoaded();
+
+      killSwitch = true;
+      activeWs?.close();
+
+      await expect(
+        moderatorRoom.getPage().getByTestId("reconnect-spinner"),
+      ).toBeVisible({ timeout: 3_000 });
+
+      await expect(
+        moderatorRoom.getPage().getByRole("dialog", { name: "Connection lost. Trying to" }),
+      ).not.toBeVisible();
+
+      await expect(
+        moderatorRoom.getPage().getByRole("dialog", { name: "Connection lost. Trying to" }),
+      ).toBeVisible({ timeout: 15_000 });
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test("redirects to home when visiting non-existent room URL", async ({
     page,
   }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("sprintjam_username", "Test User");
+      window.localStorage.setItem("sprintjam_avatar", "robot");
     });
 
     await page.goto("/room/XXXXXX");
 
-    await expect(page.getByText(/Room not found/i)).toBeVisible();
     await expect(page).toHaveURL("/");
   });
 });

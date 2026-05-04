@@ -67,6 +67,14 @@ export class PlanningRoomRepository {
     return this.stateStore.ensureUser(userName);
   }
 
+  findUserNameByWorkspaceId(workspaceUserId: number): string | undefined {
+    return this.stateStore.findUserNameByWorkspaceId(workspaceUserId);
+  }
+
+  setWorkspaceUserId(userName: string, workspaceUserId: number) {
+    return this.stateStore.setWorkspaceUserId(userName, workspaceUserId);
+  }
+
   setUserSpectatorMode(userName: string, isSpectator: boolean) {
     return this.stateStore.setUserSpectatorMode(userName, isSpectator);
   }
@@ -170,6 +178,14 @@ export class PlanningRoomRepository {
 
   validateSessionToken(userName: string, token: string | null) {
     return this.stateStore.validateSessionToken(userName, token);
+  }
+
+  setRecoveryPasskey(userName: string, passkey: string) {
+    return this.stateStore.setRecoveryPasskey(userName, passkey);
+  }
+
+  validateRecoveryPasskey(userName: string, passkey: string) {
+    return this.stateStore.validateRecoveryPasskey(userName, passkey);
   }
 
   setStrudelState(

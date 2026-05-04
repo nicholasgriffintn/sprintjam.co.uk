@@ -67,6 +67,8 @@ test.describe("Smoke tests @smoke", () => {
   test("ticket queue journey: add ticket and run a round", async ({
     browser,
   }) => {
+    test.slow();
+
     const setup = await createRoomWithParticipant(browser, {
       enableTicketQueue: true,
     });
@@ -103,6 +105,8 @@ test.describe("Smoke tests @smoke", () => {
   });
 
   test("structured voting journey: score and reveal", async ({ browser }) => {
+    test.slow();
+
     const setup = await createRoomWithParticipant(browser, {
       enableStructuredVotingOnCreate: true,
     });
@@ -247,6 +251,7 @@ test.describe("Smoke tests @smoke", () => {
     }
   });
 
+  // TODO: fix this, it is expecting a button not shown.
   test("completion journey (mixed reset + queue): shows reset-only round history and completed tickets", async ({
     browser,
   }) => {

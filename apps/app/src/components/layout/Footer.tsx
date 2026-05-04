@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Gamepad2, Github, MessageSquare } from "lucide-react";
+import { Gamepad2, Github, MessageSquare, Joystick } from "lucide-react";
 
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import { Button } from "@/components/ui/Button";
-import { navigateTo, type AppScreen } from "@/config/routes";
-import { useSessionActions } from "@/context/SessionContext";
+import { Separator } from "@/components/ui/Separator";
+import type { AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useFidgetToys } from "@/components/easter-eggs/FidgetToyContext";
 
 type FooterProps = {
   displayRepoLink?: boolean;
@@ -24,10 +26,10 @@ export const Footer = ({
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
-  const { setScreen } = useSessionActions();
+  const navigateTo = useAppNavigation();
+  const { openPicker } = useFidgetToys();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 
@@ -58,7 +60,10 @@ export const Footer = ({
                   Nicholas Griffin
                 </a>
               </span>
-              <span className="hidden sm:inline">|</span>
+              <Separator
+                orientation="vertical"
+                className="hidden sm:block h-4"
+              />
             </>
           )}
           <a
@@ -69,7 +74,7 @@ export const Footer = ({
           >
             Status
           </a>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
             onClick={() => handleNavigate("privacy")}
@@ -77,7 +82,7 @@ export const Footer = ({
           >
             Privacy Policy
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
             onClick={() => handleNavigate("terms")}
@@ -85,7 +90,7 @@ export const Footer = ({
           >
             Terms
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
             onClick={() => handleNavigate("integrations")}
@@ -93,7 +98,7 @@ export const Footer = ({
           >
             Integrations
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
             onClick={() => handleNavigate("faq")}
@@ -101,7 +106,7 @@ export const Footer = ({
           >
             FAQ
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
             onClick={() => handleNavigate("guides")}
@@ -109,7 +114,7 @@ export const Footer = ({
           >
             Guides
           </button>
-          <span className="hidden sm:inline">|</span>
+          <Separator orientation="vertical" className="hidden sm:block h-4" />
           <button
             type="button"
             onClick={() => handleNavigate("changelog")}
@@ -122,7 +127,7 @@ export const Footer = ({
         <div
           className={`${
             fullWidth ? " lg:w-auto lg:flex-nowrap" : ""
-          } flex w-full flex-wrap items-center justify-center gap-2 mt-4`}
+          } flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2`}
         >
           {onOpenGames ? (
             <Button
@@ -135,6 +140,16 @@ export const Footer = ({
               Party games
             </Button>
           ) : null}
+
+          <Button
+            type="button"
+            variant="unstyled"
+            onClick={openPicker}
+            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 dark:border-purple-300/30 dark:bg-purple-400/10 dark:text-purple-100"
+          >
+            <Joystick className="h-3.5 w-3.5" />
+            Fidget box
+          </Button>
 
           <Button
             type="button"

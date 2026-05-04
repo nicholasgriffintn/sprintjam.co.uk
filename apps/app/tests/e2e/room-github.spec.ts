@@ -6,30 +6,6 @@ import { SettingsModal } from "./pageObjects/settings-modal";
 const WORKSPACE_TEAM_ID = 88;
 
 async function setupWorkspaceRoutes(context: BrowserContext) {
-  await context.route("**/api/auth/me", (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        user: {
-          id: 42,
-          email: "qa@sprintjam.co.uk",
-          name: "Workspace QA",
-          organisationId: 7,
-        },
-        teams: [
-          {
-            id: WORKSPACE_TEAM_ID,
-            name: "QA Team",
-            organisationId: 7,
-            ownerId: 42,
-            createdAt: Date.now(),
-          },
-        ],
-      }),
-    });
-  });
-
   await context.route("**/api/teams/88/settings", (route) => {
     route.fulfill({
       status: 200,
@@ -216,6 +192,10 @@ test.describe("GitHub integration", () => {
 
       await moderatorRoom.castVote("5");
       await participantRoom.castVote("5");
+      await expect(page.getByTestId("voting-progress-bar")).toHaveAttribute(
+        "aria-valuetext",
+        "2 of 2 participants complete",
+      );
       await moderatorRoom.revealVotes();
 
       await page.getByTestId("queue-expand").click();

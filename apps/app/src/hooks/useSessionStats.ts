@@ -1,4 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+import { normaliseSessionRoomKeys } from "@/lib/session-stats";
+import { getTeamSessionType } from "@/lib/team-session-metadata";
 import { getBatchSessionStats } from "@/lib/workspace-service";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
 
@@ -12,42 +16,28 @@ interface UseSessionStatsReturn {
 export function useSessionStats(
   sessions: TeamSession[],
 ): UseSessionStatsReturn {
-  const [statsMap, setStatsMap] = useState<Record<string, SessionStats>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchStats = useCallback(async () => {
-    if (sessions.length === 0) {
-      setStatsMap({});
-      return;
-    }
-
-    const roomKeys = sessions.map((s) => s.roomKey);
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await getBatchSessionStats(roomKeys);
-      setStatsMap(data);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch session stats"),
-      );
-      setStatsMap({});
-    } finally {
-      setIsLoading(false);
-    }
-  }, [sessions]);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  const roomKeys = useMemo(
+    () =>
+      normaliseSessionRoomKeys(
+        sessions
+          .filter((session) => getTeamSessionType(session) === "planning")
+          .map((session) => session.roomKey),
+      ),
+    [sessions],
+  );
+  const statsQuery = useQuery<Record<string, SessionStats>>({
+    queryKey: ["batch-session-stats", roomKeys],
+    enabled: roomKeys.length > 0,
+    queryFn: () => getBatchSessionStats(roomKeys),
+    staleTime: 0,
+  });
 
   return {
-    statsMap,
-    isLoading,
-    error,
-    refetch: fetchStats,
+    statsMap: roomKeys.length === 0 ? {} : (statsQuery.data ?? {}),
+    isLoading: roomKeys.length > 0 && statsQuery.isFetching,
+    error: statsQuery.error instanceof Error ? statsQuery.error : null,
+    refetch: async () => {
+      await statsQuery.refetch();
+    },
   };
 }

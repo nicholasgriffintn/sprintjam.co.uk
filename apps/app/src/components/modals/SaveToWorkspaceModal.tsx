@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router";
 import { Building2, Check, LogIn } from "lucide-react";
+import type { TeamSession } from "@sprintjam/types";
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -9,7 +11,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Alert } from "@/components/ui/Alert";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { useSessionActions } from "@/context/SessionContext";
-import { createTeamSession } from "@/lib/workspace-service";
+import { createTeamSession, updateTeamSession } from "@/lib/workspace-service";
 import { cn } from "@/lib/cn";
 import { BetaBadge } from "@/components/BetaBadge";
 import { setReturnUrl } from "@/config/routes";
@@ -19,6 +21,8 @@ interface SaveToWorkspaceModalProps {
   onClose: () => void;
   roomKey: string;
   suggestedName?: string;
+  linkedSession?: TeamSession | null;
+  onSaved?: (session: TeamSession) => void;
 }
 
 export function SaveToWorkspaceModal({
@@ -26,6 +30,8 @@ export function SaveToWorkspaceModal({
   onClose,
   roomKey,
   suggestedName,
+  linkedSession = null,
+  onSaved,
 }: SaveToWorkspaceModalProps) {
   const {
     isAuthenticated,
@@ -33,21 +39,29 @@ export function SaveToWorkspaceModal({
     teams,
   } = useWorkspaceAuth();
   const { goToLogin } = useSessionActions();
+  const location = useLocation();
 
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [sessionName, setSessionName] = useState(suggestedName || "");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isEditMode = Boolean(linkedSession);
+  const activeLinkedSession = linkedSession;
+  const linkedTeamName =
+    teams.find((team) => team.id === linkedSession?.teamId)?.name ?? null;
 
   useEffect(() => {
     if (isOpen) {
-      setSessionName(suggestedName || "");
-      setSelectedTeamId(teams.length === 1 ? teams[0].id : null);
+      setSessionName(linkedSession?.name ?? suggestedName ?? "");
+      setSelectedTeamId(
+        linkedSession?.teamId ??
+          (teams.length === 1 ? (teams[0]?.id ?? null) : null),
+      );
       setIsSuccess(false);
       setError(null);
     }
-  }, [isOpen, suggestedName, teams]);
+  }, [isOpen, linkedSession, suggestedName, teams]);
 
   const handleSave = async () => {
     if (!selectedTeamId || !sessionName.trim()) return;
@@ -56,7 +70,16 @@ export function SaveToWorkspaceModal({
     setError(null);
 
     try {
-      await createTeamSession(selectedTeamId, sessionName.trim(), roomKey);
+      const session = isEditMode
+        ? await updateTeamSession(
+            activeLinkedSession!.teamId,
+            activeLinkedSession!.id,
+            {
+              name: sessionName.trim(),
+            },
+          )
+        : await createTeamSession(selectedTeamId, sessionName.trim(), roomKey);
+      onSaved?.(session);
       setIsSuccess(true);
       setTimeout(() => {
         onClose();
@@ -74,7 +97,7 @@ export function SaveToWorkspaceModal({
   };
 
   const handleLoginClick = () => {
-    setReturnUrl(window.location.pathname);
+    setReturnUrl(location.pathname);
     onClose();
     goToLogin();
   };
@@ -136,7 +159,7 @@ export function SaveToWorkspaceModal({
             <Check className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
           <p className="text-lg font-semibold text-slate-900 dark:text-white">
-            Saved to workspace
+            {isEditMode ? "Workspace session updated" : "Saved to workspace"}
           </p>
         </div>
       </Modal>
@@ -147,47 +170,60 @@ export function SaveToWorkspaceModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Save to Workspace"
+      title={isEditMode ? "Edit Workspace Session" : "Save to Workspace"}
       size="md"
     >
       <div className="space-y-5">
         {error && <Alert variant="error">{error}</Alert>}
 
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Select team
-          </label>
-          {teams.length === 0 ? (
-            <SurfaceCard variant="subtle" className="text-center">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                No teams yet. Create one in your workspace first.
-              </p>
-            </SurfaceCard>
-          ) : (
-            <div className="grid gap-2">
-              {teams.map((team) => (
-                <button
-                  key={team.id}
-                  type="button"
-                  onClick={() => setSelectedTeamId(team.id)}
-                  className={cn(
-                    "w-full rounded-xl border p-3 text-left transition",
-                    selectedTeamId === team.id
-                      ? "border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-900/20"
-                      : "border-white/50 bg-white/70 hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/40 dark:hover:border-brand-800",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-brand-500" />
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {team.name}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {isEditMode ? (
+          <SurfaceCard variant="subtle" className="space-y-2">
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              Already linked to workspace
+            </p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              {linkedTeamName
+                ? `Team: ${linkedTeamName}`
+                : `Team ID: ${activeLinkedSession!.teamId}`}
+            </p>
+          </SurfaceCard>
+        ) : (
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Select team
+            </label>
+            {teams.length === 0 ? (
+              <SurfaceCard variant="subtle" className="text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  No teams yet. Create one in your workspace first.
+                </p>
+              </SurfaceCard>
+            ) : (
+              <div className="grid gap-2">
+                {teams.map((team) => (
+                  <button
+                    key={team.id}
+                    type="button"
+                    onClick={() => setSelectedTeamId(team.id)}
+                    className={cn(
+                      "w-full rounded-xl border p-3 text-left transition",
+                      selectedTeamId === team.id
+                        ? "border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-900/20"
+                        : "border-white/50 bg-white/70 hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/40 dark:hover:border-brand-800",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-brand-500" />
+                      <span className="font-medium text-slate-900 dark:text-white">
+                        {team.name}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <Input
           label="Session name"
@@ -214,10 +250,12 @@ export function SaveToWorkspaceModal({
             onClick={handleSave}
             isLoading={isSaving}
             disabled={
-              !selectedTeamId || !sessionName.trim() || teams.length === 0
+              !selectedTeamId ||
+              !sessionName.trim() ||
+              (!isEditMode && teams.length === 0)
             }
           >
-            Save to Workspace
+            {isEditMode ? "Update session" : "Save to Workspace"}
           </Button>
         </div>
       </div>

@@ -2,24 +2,49 @@ import { useId, useMemo, useState, memo } from "react";
 import { Users, ChevronDown, ChevronUp, Crown, User } from "lucide-react";
 import { motion } from "framer-motion";
 
-import type { RoomData, RoomStats } from "@/types";
-import { getAvatarInfo } from "@/utils/avatars";
+import { getAvatarInfo, isAvatarUrl } from "@/utils/avatars";
+import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { HorizontalProgress } from "@/components/ui/HorizontalProgress";
+import { Progress } from "@/components/ui/Progress";
+import { ScrollArea } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
+export interface ParticipantsListData {
+  users: string[];
+  moderator: string;
+  connectedUsers: Record<string, boolean>;
+  votes?: Record<string, string | number | null | undefined>;
+  showVotes: boolean;
+  settings: {
+    anonymousVotes: boolean;
+    hideParticipantNames?: boolean;
+  };
+  userAvatars?: Record<string, string>;
+  spectators?: string[];
+  votingCompletion?: {
+    completedCount: number;
+    totalCount: number;
+  };
+}
+
+export interface ParticipantsListStats {
+  votedUsers: number;
+}
+
 export type ParticipantsListProps = {
-  roomData: RoomData | null;
-  stats: RoomStats;
+  roomData: ParticipantsListData | null;
+  stats: ParticipantsListStats;
   name: string;
   className?: string;
   contentClassName?: string;
   isCompleted?: boolean;
+  hideProgress?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   onToggleSpectatorMode?: (isSpectator: boolean) => void;
+  progressLabel?: string;
 };
 
 type ParticipantItemProps = {
@@ -48,10 +73,13 @@ const ParticipantItem = memo(
     anonymousVotes,
     hideParticipantNames,
   }: ParticipantItemProps) => {
+    const avatarInfo = userAvatar ? getAvatarInfo(userAvatar) : null;
+
     return (
       <motion.li
         data-testid="participant-row"
         data-participant-name={user}
+        data-connected={isConnected ? "true" : "false"}
         className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-slate-900 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -62,27 +90,24 @@ const ParticipantItem = memo(
         whileHover={{ scale: 1.01 }}
       >
         <div className="flex items-center space-x-3">
-          {userAvatar && (
-            <div
-              className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
-                isConnected
-                  ? "border-emerald-300 dark:border-emerald-600"
-                  : "border-slate-200 dark:border-slate-600"
-              }`}
-            >
-              {(() => {
-                const avatarInfo = getAvatarInfo(userAvatar);
-
-                if (avatarInfo) {
-                  return (
-                    <avatarInfo.Icon size={20} className={avatarInfo.color} />
-                  );
-                }
-
-                return <span className="text-lg">{userAvatar}</span>;
-              })()}
-            </div>
-          )}
+          <Avatar
+            className={`flex h-9 w-9 items-center justify-center rounded-2xl border-2 ${
+              isConnected
+                ? "border-emerald-300 dark:border-emerald-600"
+                : "border-slate-200 dark:border-slate-600"
+            }`}
+            src={isAvatarUrl(userAvatar) ? userAvatar : undefined}
+            alt={user}
+            fallback={
+              avatarInfo && !isAvatarUrl(userAvatar) ? (
+                <avatarInfo.Icon size={20} className={avatarInfo.color} />
+              ) : userAvatar && !isAvatarUrl(userAvatar) ? (
+                <span className="text-lg">{userAvatar}</span>
+              ) : (
+                <User className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+              )
+            }
+          />
           <span
             className={`flex items-center gap-2 text-sm ${
               user === currentUser ? "font-semibold" : ""
@@ -126,9 +151,13 @@ export const ParticipantsList = memo(function ParticipantsList({
   onToggleCollapse,
   onToggleSpectatorMode,
   isCompleted,
+  hideProgress = false,
+  progressLabel = "Voting progress",
 }: ParticipantsListProps) {
   const totalParticipants = roomData?.users.length ?? 0;
   const votingCompletion = roomData?.votingCompletion;
+  const completedCount = votingCompletion?.completedCount ?? stats.votedUsers;
+  const progressTotal = votingCompletion?.totalCount ?? totalParticipants;
 
   const votingProgress = useMemo(() => {
     if (totalParticipants === 0) {
@@ -206,99 +235,97 @@ export const ParticipantsList = memo(function ParticipantsList({
           {collapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
         </Button>
       </div>
-      <div
+      <ScrollArea
         id={contentId}
+        aria-label="Participants and spectators"
         className={cn(
-          "flex-1 space-y-3 overflow-y-auto px-4 py-4",
+          "flex-1 px-4 py-4",
           collapsed && "hidden",
           contentClassName,
         )}
       >
-        {!isCompleted ? (
-          <div className="space-y-3">
-            <div>
-              <div
-                id={progressLabelId}
-                className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
-              >
-                <span>Voting progress</span>
-                <span id={progressDescriptionId}>
-                  {votingCompletion
-                    ? `${votingCompletion.completedCount}/${votingCompletion.totalCount}`
-                    : `${stats.votedUsers}/${totalParticipants}`}
-                </span>
-              </div>
-              <HorizontalProgress
-                completed={votingProgress}
-                total={100}
-                role="progressbar"
-                aria-valuenow={votingProgress}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-labelledby={progressLabelId}
-                aria-describedby={progressDescriptionId}
-                aria-valuetext={`${stats.votedUsers} of ${totalParticipants} participants have voted`}
-                data-testid="voting-progress-bar"
-              />
-            </div>
-            {onToggleSpectatorMode && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => onToggleSpectatorMode(!isCurrentUserSpectator)}
-                data-testid="toggle-spectator-button"
-              >
-                {isCurrentUserSpectator
-                  ? "Join as Participant"
-                  : "Watch as Spectator"}
-              </Button>
-            )}
-          </div>
-        ) : null}
-        <ul className="space-y-2 pr-1" data-testid="participants-list">
-          {roomData?.users.map((user: string, index: number) => (
-            <ParticipantItem
-              key={user}
-              user={user}
-              index={index}
-              currentUser={name}
-              moderator={roomData.moderator}
-              userAvatar={roomData.userAvatars?.[user]}
-              isConnected={roomData.connectedUsers?.[user] ?? false}
-              vote={roomData.votes[user] ?? undefined}
-              showVotes={roomData.showVotes}
-              anonymousVotes={roomData.settings.anonymousVotes}
-              hideParticipantNames={roomData.settings.hideParticipantNames}
-            />
-          ))}
-        </ul>
-        {roomData?.spectators && roomData.spectators.length > 0 && (
-          <div className="space-y-2">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Spectators
-            </div>
-            <ul className="space-y-2 pr-1" data-testid="spectators-list">
-              {roomData.spectators.map((user: string, index: number) => (
-                <ParticipantItem
-                  key={user}
-                  user={user}
-                  index={index + (roomData.users.length || 0)}
-                  currentUser={name}
-                  moderator={roomData.moderator}
-                  userAvatar={roomData.userAvatars?.[user]}
-                  isConnected={roomData.connectedUsers?.[user] ?? false}
-                  vote={undefined}
-                  showVotes={roomData.showVotes}
-                  anonymousVotes={roomData.settings.anonymousVotes}
-                  hideParticipantNames={roomData.settings.hideParticipantNames}
+        <div className="space-y-3">
+          {!isCompleted && !hideProgress ? (
+            <div className="space-y-3">
+              <div>
+                <div
+                  id={progressLabelId}
+                  className="mb-2 flex justify-between text-sm text-slate-700 dark:text-slate-200"
+                >
+                  <span>{progressLabel}</span>
+                  <span id={progressDescriptionId}>
+                    {`${completedCount}/${progressTotal}`}
+                  </span>
+                </div>
+                <Progress
+                  value={votingProgress}
+                  aria-labelledby={progressLabelId}
+                  aria-describedby={progressDescriptionId}
+                  aria-valuetext={`${completedCount} of ${progressTotal} participants complete`}
+                  data-testid="voting-progress-bar"
                 />
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+              </div>
+              {onToggleSpectatorMode && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="w-full text-xs"
+                  onClick={() => onToggleSpectatorMode(!isCurrentUserSpectator)}
+                  data-testid="toggle-spectator-button"
+                >
+                  {isCurrentUserSpectator
+                    ? "Join as Participant"
+                    : "Watch as Spectator"}
+                </Button>
+              )}
+            </div>
+          ) : null}
+          <ul className="space-y-2" data-testid="participants-list">
+            {roomData?.users.map((user: string, index: number) => (
+              <ParticipantItem
+                key={user}
+                user={user}
+                index={index}
+                currentUser={name}
+                moderator={roomData.moderator}
+                userAvatar={roomData.userAvatars?.[user]}
+                isConnected={roomData.connectedUsers?.[user] ?? false}
+                vote={roomData.votes?.[user] ?? undefined}
+                showVotes={roomData.showVotes}
+                anonymousVotes={roomData.settings.anonymousVotes}
+                hideParticipantNames={roomData.settings.hideParticipantNames}
+              />
+            ))}
+          </ul>
+          {roomData?.spectators && roomData.spectators.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Spectators
+              </div>
+              <ul className="space-y-2" data-testid="spectators-list">
+                {roomData.spectators.map((user: string, index: number) => (
+                  <ParticipantItem
+                    key={user}
+                    user={user}
+                    index={index + (roomData.users.length || 0)}
+                    currentUser={name}
+                    moderator={roomData.moderator}
+                    userAvatar={roomData.userAvatars?.[user]}
+                    isConnected={roomData.connectedUsers?.[user] ?? false}
+                    vote={undefined}
+                    showVotes={roomData.showVotes}
+                    anonymousVotes={roomData.settings.anonymousVotes}
+                    hideParticipantNames={
+                      roomData.settings.hideParticipantNames
+                    }
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
     </SurfaceCard>
   );
 });

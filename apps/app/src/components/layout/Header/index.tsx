@@ -1,17 +1,18 @@
 import type { FC } from "react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 
-import { useSessionState } from "@/context/SessionContext";
+import { useCurrentRoute } from "@/hooks/useCurrentRoute";
 import { HeaderContainer } from "@/components/layout/Header/HeaderContainer";
 import { MarketingHeader } from "@/components/layout/Header/HeaderContent/MarketingHeader";
 import { RoomHeader } from "@/components/layout/Header/HeaderContent/RoomHeader";
 import { WorkspaceHeader } from "@/components/layout/Header/HeaderContent/WorkspaceHeader";
 import { WheelHeader } from "@/components/layout/Header/HeaderContent/WheelHeader";
+import { StandupHeader } from "@/components/layout/Header/StandupHeader";
 import { HEADER_TRANSITION } from "@/constants";
-import { getHeaderVariant, getMarketingVariant } from "@/config/routes";
+import { getHeaderVariant, getMarketingVariant } from "@/config/routes/derived";
 
 export const Header: FC = () => {
-  const { screen } = useSessionState();
+  const { screen } = useCurrentRoute();
 
   const variant = getHeaderVariant(screen);
 
@@ -56,6 +57,20 @@ export const Header: FC = () => {
             className="contents w-full"
           >
             <WheelHeader />
+          </motion.div>
+        );
+
+      case "standup":
+        return (
+          <motion.div
+            key="standup"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={HEADER_TRANSITION}
+            className="contents w-full"
+          >
+            <StandupHeader />
           </motion.div>
         );
 

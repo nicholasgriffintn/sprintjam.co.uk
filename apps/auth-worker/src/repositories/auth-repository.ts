@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import { and, desc, eq, inArray, isNull, lt } from "drizzle-orm";
+import { and, desc, eq, isNull, lt } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   allowedDomains,
@@ -8,6 +8,8 @@ import {
   magicLinks,
   workspaceSessions,
   workspaceInvites,
+  workspaceMemberships,
+  teamMemberships,
   authChallenges,
   mfaCredentials,
   mfaRecoveryCodes,
@@ -15,6 +17,7 @@ import {
 } from "@sprintjam/db";
 import * as schema from "@sprintjam/db/d1/schemas";
 import { extractDomain } from "@sprintjam/utils";
+import { SESSION_LAST_USED_UPDATE_THRESHOLD_MS } from "../constants";
 
 export class AuthRepository {
   private db: ReturnType<typeof drizzle>;
@@ -168,32 +171,51 @@ export class AuthRepository {
     });
   }
 
-  async validateSession(
-    tokenHash: string,
-  ): Promise<{ userId: number; email: string } | null> {
+  async validateSession(tokenHash: string): Promise<{
+    userId: number;
+    email: string;
+    organisationId: number;
+    workspaceRole: "admin" | "member";
+  } | null> {
     const session = await this.db
       .select({
         userId: workspaceSessions.userId,
         expiresAt: workspaceSessions.expiresAt,
+        lastUsedAt: workspaceSessions.lastUsedAt,
         email: users.email,
+        organisationId: users.organisationId,
+        workspaceRole: workspaceMemberships.role,
       })
       .from(workspaceSessions)
       .innerJoin(users, eq(users.id, workspaceSessions.userId))
+      .innerJoin(
+        workspaceMemberships,
+        and(
+          eq(workspaceMemberships.userId, users.id),
+          eq(workspaceMemberships.organisationId, users.organisationId),
+          eq(workspaceMemberships.status, "active"),
+        ),
+      )
       .where(eq(workspaceSessions.tokenHash, tokenHash))
       .get();
 
-    if (!session || session.expiresAt < Date.now()) {
+    const now = Date.now();
+    if (!session || session.expiresAt < now) {
       return null;
     }
 
-    await this.db
-      .update(workspaceSessions)
-      .set({ lastUsedAt: Date.now() })
-      .where(eq(workspaceSessions.tokenHash, tokenHash));
+    if (now - session.lastUsedAt > SESSION_LAST_USED_UPDATE_THRESHOLD_MS) {
+      await this.db
+        .update(workspaceSessions)
+        .set({ lastUsedAt: now })
+        .where(eq(workspaceSessions.tokenHash, tokenHash));
+    }
 
     return {
       userId: session.userId,
       email: session.email,
+      organisationId: session.organisationId,
+      workspaceRole: session.workspaceRole,
     };
   }
 
@@ -201,6 +223,12 @@ export class AuthRepository {
     await this.db
       .delete(workspaceSessions)
       .where(eq(workspaceSessions.tokenHash, tokenHash));
+  }
+
+  async invalidateSessionsForUser(userId: number): Promise<void> {
+    await this.db
+      .delete(workspaceSessions)
+      .where(eq(workspaceSessions.userId, userId));
   }
 
   async getUserByEmail(email: string) {
@@ -211,6 +239,7 @@ export class AuthRepository {
         emailDomain: users.emailDomain,
         organisationId: users.organisationId,
         name: users.name,
+        avatar: users.avatar,
       })
       .from(users)
       .where(eq(users.email, email.toLowerCase()))
@@ -225,10 +254,27 @@ export class AuthRepository {
         emailDomain: users.emailDomain,
         organisationId: users.organisationId,
         name: users.name,
+        avatar: users.avatar,
       })
       .from(users)
       .where(eq(users.id, userId))
       .get();
+  }
+
+  async updateUserProfile(
+    userId: number,
+    updates: {
+      name?: string | null;
+      avatar?: string | null;
+    },
+  ): Promise<void> {
+    await this.db
+      .update(users)
+      .set({
+        ...updates,
+        updatedAt: Date.now(),
+      })
+      .where(eq(users.id, userId));
   }
 
   async getOrganisationById(organisationId: number) {
@@ -238,6 +284,8 @@ export class AuthRepository {
         domain: organisations.domain,
         name: organisations.name,
         logoUrl: organisations.logoUrl,
+        ownerId: organisations.ownerId,
+        requireMemberApproval: organisations.requireMemberApproval,
         createdAt: organisations.createdAt,
         updatedAt: organisations.updatedAt,
       })
@@ -248,7 +296,11 @@ export class AuthRepository {
 
   async updateOrganisation(
     organisationId: number,
-    updates: { name?: string; logoUrl?: string | null },
+    updates: {
+      name?: string;
+      logoUrl?: string | null;
+      requireMemberApproval?: boolean;
+    },
   ): Promise<void> {
     await this.db
       .update(organisations)
@@ -259,18 +311,242 @@ export class AuthRepository {
       .where(eq(organisations.id, organisationId));
   }
 
-  async getOrganisationMembers(organisationId: number) {
+  async getOrganisationMemberById(organisationId: number, userId: number) {
     return await this.db
       .select({
         id: users.id,
         email: users.email,
         name: users.name,
+        avatar: users.avatar,
         createdAt: users.createdAt,
         lastLoginAt: users.lastLoginAt,
+        role: workspaceMemberships.role,
+        status: workspaceMemberships.status,
+        approvedAt: workspaceMemberships.approvedAt,
+      })
+      .from(workspaceMemberships)
+      .innerJoin(users, eq(users.id, workspaceMemberships.userId))
+      .where(
+        and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.userId, userId),
+        ),
+      )
+      .get();
+  }
+
+  async getOrganisationMembers(
+    organisationId: number,
+    statusFilter?: "active" | "pending",
+  ) {
+    const condition = statusFilter
+      ? and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.status, statusFilter),
+        )
+      : eq(workspaceMemberships.organisationId, organisationId);
+
+    return await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        avatar: users.avatar,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+        role: workspaceMemberships.role,
+        status: workspaceMemberships.status,
+        approvedAt: workspaceMemberships.approvedAt,
+      })
+      .from(workspaceMemberships)
+      .innerJoin(users, eq(users.id, workspaceMemberships.userId))
+      .where(condition)
+      .orderBy(users.email);
+  }
+
+  async getOrganisationMembership(userId: number, organisationId: number) {
+    return await this.db
+      .select({
+        id: workspaceMemberships.id,
+        organisationId: workspaceMemberships.organisationId,
+        userId: workspaceMemberships.userId,
+        role: workspaceMemberships.role,
+        status: workspaceMemberships.status,
+        approvedById: workspaceMemberships.approvedById,
+        approvedAt: workspaceMemberships.approvedAt,
+        createdAt: workspaceMemberships.createdAt,
+        updatedAt: workspaceMemberships.updatedAt,
+      })
+      .from(workspaceMemberships)
+      .where(
+        and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.userId, userId),
+        ),
+      )
+      .get();
+  }
+
+  async getActiveOrganisationMembershipByEmail(email: string) {
+    return await this.db
+      .select({
+        userId: users.id,
+        organisationId: workspaceMemberships.organisationId,
+        role: workspaceMemberships.role,
+        status: workspaceMemberships.status,
       })
       .from(users)
-      .where(eq(users.organisationId, organisationId))
-      .orderBy(users.email);
+      .innerJoin(
+        workspaceMemberships,
+        and(
+          eq(workspaceMemberships.userId, users.id),
+          eq(workspaceMemberships.organisationId, users.organisationId),
+          eq(workspaceMemberships.status, "active"),
+        ),
+      )
+      .where(eq(users.email, email.toLowerCase()))
+      .get();
+  }
+
+  async upsertWorkspaceMembership(params: {
+    organisationId: number;
+    userId: number;
+    role: "admin" | "member";
+    status: "pending" | "active";
+    approvedById?: number | null;
+  }): Promise<void> {
+    const now = Date.now();
+    const approvedAt = params.status === "active" ? now : null;
+
+    await this.db
+      .insert(workspaceMemberships)
+      .values({
+        organisationId: params.organisationId,
+        userId: params.userId,
+        role: params.role,
+        status: params.status,
+        approvedById:
+          params.status === "active" ? (params.approvedById ?? null) : null,
+        approvedAt,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [
+          workspaceMemberships.organisationId,
+          workspaceMemberships.userId,
+        ],
+        set: {
+          role: params.role,
+          status: params.status,
+          approvedById:
+            params.status === "active" ? (params.approvedById ?? null) : null,
+          approvedAt,
+          updatedAt: now,
+        },
+      });
+  }
+
+  async approveWorkspaceMembership(
+    organisationId: number,
+    userId: number,
+    approvedById: number,
+  ): Promise<void> {
+    await this.db
+      .update(workspaceMemberships)
+      .set({
+        status: "active",
+        approvedById,
+        approvedAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      .where(
+        and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.userId, userId),
+        ),
+      );
+  }
+
+  async updateWorkspaceMembershipRole(
+    userId: number,
+    organisationId: number,
+    role: "admin" | "member",
+  ): Promise<boolean> {
+    const result = await this.db
+      .update(workspaceMemberships)
+      .set({
+        role,
+        updatedAt: Date.now(),
+      })
+      .where(
+        and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.userId, userId),
+          eq(workspaceMemberships.status, "active"),
+        ),
+      )
+      .returning({ id: workspaceMemberships.id });
+
+    return result.length > 0;
+  }
+
+  async removeWorkspaceMembership(
+    organisationId: number,
+    userId: number,
+  ): Promise<void> {
+    await this.db
+      .delete(workspaceMemberships)
+      .where(
+        and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.userId, userId),
+        ),
+      );
+  }
+
+  async isOrganisationAdmin(
+    userId: number,
+    organisationId: number,
+  ): Promise<boolean> {
+    const membership = await this.db
+      .select({ role: workspaceMemberships.role })
+      .from(workspaceMemberships)
+      .where(
+        and(
+          eq(workspaceMemberships.organisationId, organisationId),
+          eq(workspaceMemberships.userId, userId),
+          eq(workspaceMemberships.status, "active"),
+        ),
+      )
+      .get();
+
+    if (membership?.role === "admin") {
+      return true;
+    }
+
+    const org = await this.db
+      .select({ ownerId: organisations.ownerId })
+      .from(organisations)
+      .where(eq(organisations.id, organisationId))
+      .get();
+
+    return org?.ownerId === userId;
+  }
+
+  async setOrganisationOwnerIfNull(
+    organisationId: number,
+    userId: number,
+  ): Promise<void> {
+    await this.db
+      .update(organisations)
+      .set({ ownerId: userId, updatedAt: Date.now() })
+      .where(
+        and(
+          eq(organisations.id, organisationId),
+          isNull(organisations.ownerId),
+        ),
+      );
   }
 
   async updateUserOrganisation(
@@ -278,12 +554,22 @@ export class AuthRepository {
     organisationId: number,
   ): Promise<void> {
     await this.db
+      .delete(teamMemberships)
+      .where(eq(teamMemberships.userId, userId));
+
+    await this.db
+      .delete(workspaceMemberships)
+      .where(eq(workspaceMemberships.userId, userId));
+
+    await this.db
       .update(users)
       .set({
         organisationId,
         updatedAt: Date.now(),
       })
       .where(eq(users.id, userId));
+
+    await this.invalidateSessionsForUser(userId);
   }
 
   async createOrUpdateWorkspaceInvite(
@@ -441,7 +727,7 @@ export class AuthRepository {
   }: {
     userId: number;
     tokenHash: string;
-    type: "setup" | "verify";
+    type: "setup" | "verify" | "oauth";
     method?: string | null;
     metadata?: string | null;
     expiresAt: number;
@@ -654,40 +940,18 @@ export class AuthRepository {
   }
 
   async cleanupExpiredMagicLinks(): Promise<number> {
-    const now = Date.now();
-    const expiredLinks = await this.db
-      .select({ id: magicLinks.id })
-      .from(magicLinks)
-      .where(lt(magicLinks.expiresAt, now))
-      .all();
-
-    if (expiredLinks.length === 0) {
-      return 0;
-    }
-
-    const ids = expiredLinks.map((link) => link.id);
-    await this.db.delete(magicLinks).where(inArray(magicLinks.id, ids));
-
-    return expiredLinks.length;
+    const deleted = await this.db
+      .delete(magicLinks)
+      .where(lt(magicLinks.expiresAt, Date.now()))
+      .returning({ id: magicLinks.id });
+    return deleted.length;
   }
 
   async cleanupExpiredSessions(): Promise<number> {
-    const now = Date.now();
-    const expiredSessions = await this.db
-      .select({ tokenHash: workspaceSessions.tokenHash })
-      .from(workspaceSessions)
-      .where(lt(workspaceSessions.expiresAt, now))
-      .all();
-
-    if (expiredSessions.length === 0) {
-      return 0;
-    }
-
-    const tokenHashes = expiredSessions.map((s) => s.tokenHash);
-    await this.db
+    const deleted = await this.db
       .delete(workspaceSessions)
-      .where(inArray(workspaceSessions.tokenHash, tokenHashes));
-
-    return expiredSessions.length;
+      .where(lt(workspaceSessions.expiresAt, Date.now()))
+      .returning({ userId: workspaceSessions.userId });
+    return deleted.length;
   }
 }

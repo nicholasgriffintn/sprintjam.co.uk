@@ -27,11 +27,11 @@ export async function requestMagicLinkController(
   const email = body?.email?.toLowerCase().trim();
 
   if (!email) {
-    return jsonError("Email is required", 400);
+    return jsonError("Email is required", 400, "email_required");
   }
 
   if (!EMAIL_REGEX.test(email)) {
-    return jsonError("Invalid email format", 400);
+    return jsonError("Invalid email format", 400, "invalid_email_format");
   }
 
   const rateLimitResponse = await enforceEmailAndIpRateLimit(
@@ -54,15 +54,18 @@ export async function requestMagicLinkController(
   let pendingInvite: Awaited<
     ReturnType<WorkspaceAuthRepository["getPendingWorkspaceInviteByEmail"]>
   > | null = null;
-  let existingUser: Awaited<
-    ReturnType<WorkspaceAuthRepository["getUserByEmail"]>
+  let activeMembership: Awaited<
+    ReturnType<
+      WorkspaceAuthRepository["getActiveOrganisationMembershipByEmail"]
+    >
   > | null = null;
   try {
     isDomainAllowed = await repo.isDomainAllowed(domain);
     if (!isDomainAllowed) {
       pendingInvite = await repo.getPendingWorkspaceInviteByEmail(email);
       if (!pendingInvite) {
-        existingUser = await repo.getUserByEmail(email);
+        activeMembership =
+          await repo.getActiveOrganisationMembershipByEmail(email);
       }
     }
   } catch (error) {
@@ -75,10 +78,14 @@ export async function requestMagicLinkController(
       ip,
       userAgent,
     });
-    return jsonError("Service temporarily unavailable", 503);
+    return jsonError(
+      "Service temporarily unavailable",
+      503,
+      "service_unavailable",
+    );
   }
 
-  if (!isDomainAllowed && !pendingInvite && !existingUser) {
+  if (!isDomainAllowed && !pendingInvite && !activeMembership) {
     await repo.logAuditEvent({
       email,
       event: "magic_link_request",
@@ -87,12 +94,10 @@ export async function requestMagicLinkController(
       ip,
       userAgent,
     });
-    return jsonResponse(
-      {
-        error: "domain_not_allowed",
-        message: "Your email domain is not authorized for workspace access. Please contact your administrator."
-      },
+    return jsonError(
+      "Your email domain is not authorized for workspace access. Please contact your administrator.",
       403,
+      "domain_not_allowed",
     );
   }
 
@@ -115,6 +120,26 @@ export async function requestMagicLinkController(
     return jsonError(
       "Unable to create a verification code right now. Please try again shortly.",
       500,
+      "verification_code_creation_failed",
+    );
+  }
+
+  if (!env.SEND_EMAIL) {
+    console.warn(
+      "SEND_EMAIL is not configured. Skipping sending verification code email.",
+    );
+    await repo.logAuditEvent({
+      email,
+      event: "magic_link_request",
+      status: "success",
+      reason: "code_generated_but_email_not_sent",
+      ip,
+      userAgent,
+    });
+    return jsonError(
+      "Verification code generated but email sending is disabled in this environment.",
+      500,
+      "verification_code_email_disabled",
     );
   }
 
@@ -122,7 +147,7 @@ export async function requestMagicLinkController(
     await sendVerificationCodeEmail({
       email,
       code,
-      resendApiKey: env.RESEND_API_KEY,
+      sendEmail: env.SEND_EMAIL,
     });
   } catch (error) {
     console.error("Failed to send verification code email:", error);
@@ -134,7 +159,11 @@ export async function requestMagicLinkController(
       ip,
       userAgent,
     });
-    return jsonError("Failed to send verification code email", 500);
+    return jsonError(
+      "Failed to send verification code email",
+      500,
+      "verification_code_email_failed",
+    );
   }
 
   await repo.logAuditEvent({
@@ -143,8 +172,8 @@ export async function requestMagicLinkController(
     status: "success",
     reason: pendingInvite
       ? "code_sent_for_invite"
-      : existingUser
-        ? "code_sent_for_existing_user"
+      : activeMembership
+        ? "code_sent_for_existing_member"
         : "code_sent",
     ip,
     userAgent,
@@ -162,7 +191,11 @@ export async function verifyCodeController(
   const code = body?.code?.trim();
 
   if (!email || !code) {
-    return jsonError("Email and code are required", 400);
+    return jsonError(
+      "Email and code are required",
+      400,
+      "email_and_code_required",
+    );
   }
 
   const verifyRateLimitResponse = await enforceEmailAndIpRateLimit(
@@ -189,6 +222,12 @@ export async function verifyCodeController(
       used: "Verification code has already been used",
       locked: "Too many failed attempts. Please request a new code.",
     };
+    const errorCodes = {
+      invalid: "invalid_verification_code",
+      expired: "verification_code_expired",
+      used: "verification_code_used",
+      locked: "verification_code_locked",
+    } as const;
     await repo.logAuditEvent({
       email,
       event: "magic_link_verify",
@@ -197,7 +236,11 @@ export async function verifyCodeController(
       ip,
       userAgent,
     });
-    return jsonError(errorMessages[result.error], 401);
+    return jsonError(
+      errorMessages[result.error],
+      401,
+      errorCodes[result.error],
+    );
   }
 
   const domain = extractDomain(result.email);
@@ -205,6 +248,10 @@ export async function verifyCodeController(
     result.email,
   );
   const existingUser = await repo.getUserByEmail(email);
+  const activeMembership = await repo.getActiveOrganisationMembershipByEmail(
+    result.email,
+  );
+  const isDomainAllowed = await repo.isDomainAllowed(domain);
 
   let organisationId: number;
   if (pendingInvite) {
@@ -212,19 +259,84 @@ export async function verifyCodeController(
     if (existingUser && existingUser.organisationId !== organisationId) {
       await repo.updateUserOrganisation(existingUser.id, organisationId);
     }
-  } else if (existingUser) {
-    organisationId = existingUser.organisationId;
-  } else {
+  } else if (activeMembership) {
+    organisationId = activeMembership.organisationId;
+  } else if (isDomainAllowed) {
     organisationId = await repo.getOrCreateOrganisation(domain);
+  } else {
+    await repo.logAuditEvent({
+      email,
+      event: "magic_link_verify",
+      status: "failure",
+      reason: "membership_not_allowed",
+      ip,
+      userAgent,
+    });
+    return jsonError(
+      "Your workspace access is not allowed",
+      403,
+      "workspace_access_not_allowed",
+    );
   }
 
   const userId = await repo.getOrCreateUser(email, organisationId);
-  if (pendingInvite) {
-    await repo.markWorkspaceInviteAccepted(pendingInvite.id, userId);
+  await repo.setOrganisationOwnerIfNull(organisationId, userId);
+  const organisation = await repo.getOrganisationById(organisationId);
+  if (!organisation) {
+    return jsonError("Organisation not found", 404, "organisation_not_found");
   }
+
+  const role = organisation.ownerId === userId ? "admin" : "member";
+  const existingMembership = await repo.getOrganisationMembership(
+    userId,
+    organisationId,
+  );
+
+  if (pendingInvite) {
+    await repo.upsertWorkspaceMembership({
+      organisationId,
+      userId,
+      role,
+      status: "active",
+      approvedById: pendingInvite.invitedById,
+    });
+    await repo.markWorkspaceInviteAccepted(pendingInvite.id, userId);
+  } else if (!existingMembership || existingMembership.status !== "active") {
+    if (organisation.requireMemberApproval && organisation.ownerId !== userId) {
+      await repo.upsertWorkspaceMembership({
+        organisationId,
+        userId,
+        role,
+        status: "pending",
+      });
+      await repo.logAuditEvent({
+        userId,
+        email,
+        event: "magic_link_verify",
+        status: "failure",
+        reason: "membership_pending_approval",
+        ip,
+        userAgent,
+      });
+      return jsonError(
+        "Your workspace membership is pending approval",
+        403,
+        "workspace_membership_pending_approval",
+      );
+    }
+
+    await repo.upsertWorkspaceMembership({
+      organisationId,
+      userId,
+      role,
+      status: "active",
+      approvedById: organisation.ownerId === userId ? userId : null,
+    });
+  }
+
   const user = await repo.getUserByEmail(email);
   if (!user?.id) {
-    return jsonError("User not found", 404);
+    return jsonError("User not found", 404, "user_not_found");
   }
 
   const existingMfa = await repo.listMfaCredentials(userId);

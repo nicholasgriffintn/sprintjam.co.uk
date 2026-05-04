@@ -1,17 +1,33 @@
 import { API_BASE_URL } from "@/constants";
+import { readJsonSafe } from "@/lib/api-utils";
+import { HttpError } from "@/lib/errors";
+import {
+  getWorkspaceErrorCode,
+  getWorkspaceErrorMessage,
+} from "@/lib/workspace-errors";
 import type { RoomSettings } from "@/types";
 import type {
+  ExternalBoardOption,
+  ExternalSprintOption,
+  ExternalTicketMetadata,
   OAuthProvider,
   SessionStats,
-  Team,
+  SaveTeamsCollaborationInstallationInput,
+  TeamAccessPolicy,
+  TeamCollaborationInstallation,
+  TeamMember,
   TeamInsights,
   TeamIntegrationStatus,
   TeamSession,
+  WorkspaceMember,
   WorkspaceInsights,
   WorkspaceInvite,
   WorkspaceOrganisation,
+  WorkspaceAuthProfile,
   WorkspaceProfile,
   WorkspaceStats,
+  WorkspaceTeam,
+  WorkspaceRole,
   WorkspaceUser,
 } from "@sprintjam/types";
 
@@ -82,19 +98,16 @@ export async function workspaceRequest<T>(
     credentials: "include",
   });
 
-  let parsed: unknown = null;
-  try {
-    parsed = await response.json();
-  } catch {
-    parsed = null;
-  }
+  const parsed = await readJsonSafe(response);
 
   if (!response.ok) {
-    const errorMessage =
-      (parsed as { error?: string })?.error ||
-      response.statusText ||
-      `Request failed: ${response.status}`;
-    throw new Error(errorMessage);
+    const fallbackMessage =
+      response.statusText || `Request failed: ${response.status}`;
+    throw new HttpError({
+      message: getWorkspaceErrorMessage(parsed, fallbackMessage),
+      status: response.status,
+      code: getWorkspaceErrorCode(parsed),
+    });
   }
 
   return parsed as T;
@@ -170,46 +183,77 @@ export async function verifyMfa(
   });
 }
 
-export async function getCurrentUser(): Promise<WorkspaceProfile | null> {
-  try {
-    return await workspaceRequest<WorkspaceProfile>(`${API_BASE_URL}/auth/me`);
-  } catch {
-    return null;
-  }
+export async function getWorkspaceProfile(): Promise<WorkspaceProfile> {
+  return workspaceRequest<WorkspaceProfile>(
+    `${API_BASE_URL}/workspace/profile`,
+  );
+}
+
+export async function getWorkspaceAuthProfile(): Promise<WorkspaceAuthProfile> {
+  return workspaceRequest<WorkspaceAuthProfile>(`${API_BASE_URL}/auth/me`);
+}
+
+export async function updateCurrentUserProfile(payload: {
+  name: string;
+  avatar: string | null;
+}): Promise<WorkspaceUser> {
+  const data = await workspaceRequest<{ user: WorkspaceUser }>(
+    `${API_BASE_URL}/auth/me`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return data.user;
 }
 
 export async function logout(): Promise<void> {
   await workspaceRequest(`${API_BASE_URL}/auth/logout`, { method: "POST" });
 }
 
-export async function listTeams(): Promise<Team[]> {
-  const data = await workspaceRequest<{ teams: Team[] }>(
+export async function listTeams(): Promise<WorkspaceTeam[]> {
+  const data = await workspaceRequest<{ teams: WorkspaceTeam[] }>(
     `${API_BASE_URL}/teams`,
   );
   return data.teams;
 }
 
-export async function createTeam(name: string): Promise<Team> {
-  const data = await workspaceRequest<{ team: Team }>(`${API_BASE_URL}/teams`, {
-    method: "POST",
-    body: JSON.stringify({ name }),
-  });
+export async function createTeam(
+  name: string,
+  accessPolicy: TeamAccessPolicy = "open",
+  logoUrl: string | null = null,
+): Promise<WorkspaceTeam> {
+  const data = await workspaceRequest<{ team: WorkspaceTeam }>(
+    `${API_BASE_URL}/teams`,
+    {
+      method: "POST",
+      body: JSON.stringify({ name, accessPolicy, logoUrl }),
+    },
+  );
   return data.team;
 }
 
-export async function getTeam(teamId: number): Promise<Team> {
-  const data = await workspaceRequest<{ team: Team }>(
+export async function getTeam(teamId: number): Promise<WorkspaceTeam> {
+  const data = await workspaceRequest<{ team: WorkspaceTeam }>(
     `${API_BASE_URL}/teams/${teamId}`,
   );
   return data.team;
 }
 
-export async function updateTeam(teamId: number, name: string): Promise<Team> {
-  const data = await workspaceRequest<{ team: Team }>(
+export async function updateTeam(
+  teamId: number,
+  payload: {
+    name?: string;
+    accessPolicy?: TeamAccessPolicy;
+    logoUrl?: string | null;
+  },
+): Promise<WorkspaceTeam> {
+  const data = await workspaceRequest<{ team: WorkspaceTeam }>(
     `${API_BASE_URL}/teams/${teamId}`,
     {
       method: "PUT",
-      body: JSON.stringify({ name }),
+      body: JSON.stringify(payload),
     },
   );
   return data.team;
@@ -244,12 +288,43 @@ export async function createTeamSession(
   return data.session;
 }
 
+export async function getTeamSessionByRoomKey(
+  roomKey: string,
+): Promise<TeamSession | null> {
+  try {
+    const data = await workspaceRequest<{ session: TeamSession }>(
+      `${API_BASE_URL}/sessions/by-room?roomKey=${encodeURIComponent(roomKey)}`,
+    );
+    return data.session;
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function getTeamSession(
   teamId: number,
   sessionId: number,
 ): Promise<TeamSession> {
   const data = await workspaceRequest<{ session: TeamSession }>(
     `${API_BASE_URL}/teams/${teamId}/sessions/${sessionId}`,
+  );
+  return data.session;
+}
+
+export async function updateTeamSession(
+  teamId: number,
+  sessionId: number,
+  payload: { name: string },
+): Promise<TeamSession> {
+  const data = await workspaceRequest<{ session: TeamSession }>(
+    `${API_BASE_URL}/teams/${teamId}/sessions/${sessionId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
   );
   return data.session;
 }
@@ -277,6 +352,7 @@ export async function getWorkspaceStats(): Promise<WorkspaceStats | null> {
 export async function updateWorkspaceProfile(payload: {
   name?: string;
   logoUrl?: string | null;
+  requireMemberApproval?: boolean;
 }): Promise<WorkspaceOrganisation> {
   const data = await workspaceRequest<{ organisation: WorkspaceOrganisation }>(
     `${API_BASE_URL}/workspace/profile`,
@@ -299,6 +375,126 @@ export async function inviteWorkspaceMember(
     },
   );
   return data.invite;
+}
+
+export async function approveWorkspaceMember(
+  userId: number,
+): Promise<WorkspaceMember> {
+  const data = await workspaceRequest<{ member: WorkspaceMember }>(
+    `${API_BASE_URL}/workspace/members/${userId}/approve`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+  return data.member;
+}
+
+export async function updateWorkspaceMemberRole(
+  userId: number,
+  role: WorkspaceRole,
+): Promise<WorkspaceMember> {
+  const data = await workspaceRequest<{ member: WorkspaceMember }>(
+    `${API_BASE_URL}/workspace/members/${userId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    },
+  );
+  return data.member;
+}
+
+export async function removeWorkspaceMember(userId: number): Promise<void> {
+  await workspaceRequest(`${API_BASE_URL}/workspace/members/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function listTeamMembers(teamId: number): Promise<TeamMember[]> {
+  const data = await workspaceRequest<{ members: TeamMember[] }>(
+    `${API_BASE_URL}/teams/${teamId}/members`,
+  );
+  return data.members;
+}
+
+export async function addTeamMember(
+  teamId: number,
+  userId: number,
+  role: "admin" | "member" = "member",
+): Promise<TeamMember> {
+  const data = await workspaceRequest<{ member: TeamMember }>(
+    `${API_BASE_URL}/teams/${teamId}/members`,
+    {
+      method: "POST",
+      body: JSON.stringify({ userId, role }),
+    },
+  );
+  return data.member;
+}
+
+export async function requestTeamAccess(teamId: number): Promise<void> {
+  await workspaceRequest<{ member: unknown }>(
+    `${API_BASE_URL}/teams/${teamId}/request-access`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+}
+
+export async function approveTeamMember(
+  teamId: number,
+  userId: number,
+): Promise<TeamMember> {
+  const data = await workspaceRequest<{ member: TeamMember }>(
+    `${API_BASE_URL}/teams/${teamId}/members/${userId}/approve`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+  return data.member;
+}
+
+export async function updateTeamMemberRole(
+  teamId: number,
+  userId: number,
+  role: "admin" | "member",
+): Promise<TeamMember> {
+  const data = await workspaceRequest<{ member: TeamMember }>(
+    `${API_BASE_URL}/teams/${teamId}/members/${userId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    },
+  );
+  return data.member;
+}
+
+export async function removeTeamMember(
+  teamId: number,
+  userId: number,
+): Promise<void> {
+  await workspaceRequest(`${API_BASE_URL}/teams/${teamId}/members/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function moveTeamMember(
+  sourceTeamId: number,
+  userId: number,
+  targetTeamId: number,
+  role: "admin" | "member",
+): Promise<TeamMember | null> {
+  const data = await workspaceRequest<{
+    member?: TeamMember | null;
+    message: string;
+  }>(`${API_BASE_URL}/teams/${sourceTeamId}/members/${userId}/move`, {
+    method: "POST",
+    body: JSON.stringify({ targetTeamId, role }),
+  });
+
+  return data.member ?? null;
 }
 
 export async function getTeamInsights(
@@ -347,11 +543,6 @@ export async function getBatchSessionStats(
   return data;
 }
 
-export async function isAuthenticated(): Promise<boolean> {
-  const user = await getCurrentUser();
-  return !!user;
-}
-
 export async function getTeamSettings(
   teamId: number,
 ): Promise<RoomSettings | null> {
@@ -394,6 +585,57 @@ export async function getTeamIntegrationStatus(
   return data.status;
 }
 
+export async function listTeamIntegrationBoards(
+  teamId: number,
+  provider: OAuthProvider,
+): Promise<ExternalBoardOption[]> {
+  const data = await workspaceRequest<{ boards: ExternalBoardOption[] }>(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/boards`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
+  return data.boards;
+}
+
+export async function listTeamIntegrationSprints(
+  teamId: number,
+  provider: OAuthProvider,
+  boardId: string,
+): Promise<ExternalSprintOption[]> {
+  const data = await workspaceRequest<{ sprints: ExternalSprintOption[] }>(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/sprints`,
+    {
+      method: "POST",
+      body: JSON.stringify({ boardId }),
+    },
+  );
+  return data.sprints;
+}
+
+export async function searchTeamIntegrationTickets(
+  teamId: number,
+  provider: OAuthProvider,
+  payload: {
+    boardId: string;
+    sprintId?: string;
+    sprintName?: string;
+    sprintNumber?: number;
+    query?: string;
+    limit?: number;
+  },
+): Promise<ExternalTicketMetadata[]> {
+  const data = await workspaceRequest<{ tickets: ExternalTicketMetadata[] }>(
+    `${API_BASE_URL}/teams/${teamId}/integrations/${provider}/tickets`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.tickets;
+}
+
 export async function initiateTeamOAuth(
   teamId: number,
   provider: OAuthProvider,
@@ -411,6 +653,53 @@ export async function revokeTeamIntegration(
 ): Promise<void> {
   await workspaceRequest(
     `${API_BASE_URL}/teams/${teamId}/integrations/${provider}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function listTeamCollaborationInstallations(
+  teamId: number,
+): Promise<TeamCollaborationInstallation[]> {
+  const data = await workspaceRequest<{
+    installations: TeamCollaborationInstallation[];
+  }>(`${API_BASE_URL}/teams/${teamId}/collaboration-installations`);
+  return data.installations;
+}
+
+export async function saveTeamsCollaborationInstallation(
+  teamId: number,
+  payload: SaveTeamsCollaborationInstallationInput,
+): Promise<TeamCollaborationInstallation> {
+  const data = await workspaceRequest<{
+    installation: TeamCollaborationInstallation;
+  }>(
+    `${API_BASE_URL}/teams/${teamId}/collaboration-installations/teams`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.installation;
+}
+
+export async function resolveTeamsCollaborationInstallation(
+  payload: SaveTeamsCollaborationInstallationInput,
+): Promise<TeamCollaborationInstallation | null> {
+  const data = await workspaceRequest<{
+    installation: TeamCollaborationInstallation | null;
+  }>(`${API_BASE_URL}/collaboration-installations/teams/resolve`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return data.installation;
+}
+
+export async function deleteTeamCollaborationInstallation(
+  teamId: number,
+  installationId: number,
+): Promise<void> {
+  await workspaceRequest(
+    `${API_BASE_URL}/teams/${teamId}/collaboration-installations/${installationId}`,
     { method: "DELETE" },
   );
 }

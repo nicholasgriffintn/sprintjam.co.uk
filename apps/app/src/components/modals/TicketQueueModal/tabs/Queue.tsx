@@ -9,6 +9,7 @@ import { getJiraMetadata } from "@/utils/jira";
 import { getLinearMetadata } from "@/utils/linear";
 import { ExternalServiceBadge } from "@/components/ExternalServiceBadge";
 import { Button } from "@/components/ui/Button";
+import { ScrollArea } from "@/components/ui";
 import {
   fetchTicketByProvider,
   getProviderLabels,
@@ -322,7 +323,11 @@ export function TicketQueueModalQueueTab({
           <QueueProviderImportPanel importState={providerImport} />
         )}
 
-        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+        <ScrollArea
+          className="max-h-72"
+          contentClassName="space-y-2 pr-3"
+          aria-label="Pending tickets"
+        >
           {pendingTickets.length === 0 ? (
             <p className="py-4 text-center text-sm text-slate-500">
               No pending tickets
@@ -361,7 +366,7 @@ export function TicketQueueModalQueueTab({
               />
             ))
           )}
-        </div>
+        </ScrollArea>
       </div>
     </>
   );

@@ -9,7 +9,7 @@ import type {
 import type { RoomGameType, StructuredVote, VoteValue } from "@sprintjam/types";
 
 export interface RoomStateContextValue {
-  serverDefaults: ServerDefaults | null;
+  serverDefaults: ServerDefaults;
   roomData: RoomData | null;
   activeRoomKey: string | null;
   isModeratorView: boolean;
@@ -19,7 +19,6 @@ export interface RoomStateContextValue {
 
 export interface RoomStatusContextValue {
   isLoadingDefaults: boolean;
-  defaultsError: string | null;
   isLoading: boolean;
   isSocketConnected: boolean;
   isSocketStatusKnown: boolean;
@@ -29,7 +28,6 @@ export interface RoomStatusContextValue {
 }
 
 export interface RoomActionsContextValue {
-  handleRetryDefaults: () => void;
   clearRoomError: () => void;
   reportRoomError: (message: string, kind?: ErrorKind | null) => void;
   setPendingCreateSettings: (settings: Partial<RoomSettings> | null) => void;

@@ -15,6 +15,7 @@ import { getDefaultsController } from "../controllers/room/defaults-controller";
 import {
   createRoomController,
   joinRoomController,
+  recoverRoomController,
   getRoomSettingsController,
   updateRoomSettingsController,
 } from "../controllers/room/rooms-controller";
@@ -79,6 +80,10 @@ async function handleApiRoutes(
 
   if (path === "rooms/join" && method === "POST") {
     return joinRoomController(request, env);
+  }
+
+  if (path === "rooms/recover" && method === "POST") {
+    return recoverRoomController(request, env);
   }
 
   if (path === "rooms/settings" && method === "GET") {

@@ -10,4 +10,8 @@ export {
   startMfaVerifyController,
   verifyMfaController,
 } from "./auth/mfa-verify-controller";
-export { getCurrentUserController, logoutController } from "./auth/session-controller";
+export {
+  getCurrentUserController,
+  updateCurrentUserProfileController,
+  logoutController,
+} from "./auth/session-controller";

@@ -34,7 +34,9 @@ export async function getRoomStatsController(
   const auth = authResult as AuthResult;
   const hasAccess = await canUserAccessRoom(
     env.DB,
+    auth.userId,
     auth.organisationId,
+    auth.workspaceRole === "admin",
     roomKey,
   );
   if (!hasAccess) {
@@ -65,7 +67,9 @@ export async function getUserRoomStatsController(
   const auth = authResult as AuthResult;
   const hasAccess = await canUserAccessRoom(
     env.DB,
+    auth.userId,
     auth.organisationId,
+    auth.workspaceRole === "admin",
     roomKey,
   );
   if (!hasAccess) {
@@ -107,7 +111,9 @@ export async function getBatchRoomStatsController(
   const auth = authResult as AuthResult;
   const accessibleRoomKeys = await filterAccessibleRoomKeys(
     env.DB,
+    auth.userId,
     auth.organisationId,
+    auth.workspaceRole === "admin",
     roomKeys,
   );
 
@@ -129,7 +135,14 @@ export async function getTeamStatsController(
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
-  const isMember = await isUserInTeam(env.DB, authResult.userId, teamId);
+  const auth = authResult as AuthResult;
+  const isMember = await isUserInTeam(
+    env.DB,
+    auth.userId,
+    auth.organisationId,
+    auth.workspaceRole === "admin",
+    teamId,
+  );
   if (!isMember) {
     return errorResponse("You do not have access to this team's stats", 403);
   }
@@ -161,7 +174,14 @@ export async function getTeamInsightsController(
     return errorResponse(getAuthError(authResult.code), 401);
   }
 
-  const isMember = await isUserInTeam(env.DB, authResult.userId, teamId);
+  const auth = authResult as AuthResult;
+  const isMember = await isUserInTeam(
+    env.DB,
+    auth.userId,
+    auth.organisationId,
+    auth.workspaceRole === "admin",
+    teamId,
+  );
   if (!isMember) {
     return errorResponse("You do not have access to this team's stats", 403);
   }
@@ -195,7 +215,12 @@ export async function getWorkspaceInsightsController(
   }
 
   const auth = authResult as AuthResult;
-  const teamIds = await getUserTeamIds(env.DB, auth.userId);
+  const teamIds = await getUserTeamIds(
+    env.DB,
+    auth.userId,
+    auth.organisationId,
+    auth.workspaceRole === "admin",
+  );
 
   if (teamIds.length === 0) {
     return successResponse(null, true);
@@ -236,7 +261,9 @@ export async function getSessionStatsController(
   const auth = authResult as AuthResult;
   const hasAccess = await canUserAccessRoom(
     env.DB,
+    auth.userId,
     auth.organisationId,
+    auth.workspaceRole === "admin",
     roomKey,
   );
   if (!hasAccess) {
@@ -278,7 +305,9 @@ export async function getBatchSessionStatsController(
   const auth = authResult as AuthResult;
   const accessibleRoomKeys = await filterAccessibleRoomKeys(
     env.DB,
+    auth.userId,
     auth.organisationId,
+    auth.workspaceRole === "admin",
     roomKeys,
   );
 

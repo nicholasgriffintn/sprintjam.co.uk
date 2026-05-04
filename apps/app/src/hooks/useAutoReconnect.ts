@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 
 import { joinRoom } from "@/lib/api-service";
-import { upsertRoom } from "@/lib/data/room-store";
-import type { AvatarId, ServerDefaults } from "@/types";
+import { upsertRoom } from "@/lib/room-store";
+import type { AvatarId } from "@/types";
 import { HttpError } from "@/lib/errors";
 
 interface UseAutoReconnectOptions {
+  enabled?: boolean;
   name: string;
-  screen: string;
   roomKey: string;
   isLoadingDefaults: boolean;
   selectedAvatar: AvatarId | null;
@@ -19,38 +19,41 @@ interface UseAutoReconnectOptions {
     isNameConflict?: boolean;
   }) => void;
   onLoadingChange: (isLoading: boolean) => void;
-  applyServerDefaults: (defaults?: ServerDefaults) => void;
   onReconnectComplete?: () => void;
   onNeedsJoin?: () => void;
 }
 
 export const useAutoReconnect = ({
+  enabled = true,
   name,
-  screen,
   roomKey,
   isLoadingDefaults,
   selectedAvatar,
   onReconnectSuccess,
   onReconnectError,
   onLoadingChange,
-  applyServerDefaults,
   onReconnectComplete,
   onNeedsJoin,
 }: UseAutoReconnectOptions) => {
   const didAttemptRestore = useRef(false);
 
   useEffect(() => {
+    if (!enabled) {
+      didAttemptRestore.current = false;
+      return;
+    }
+
     if (didAttemptRestore.current) {
       return;
     }
-    if (screen !== "room" || !roomKey) {
+    if (!roomKey) {
       return;
     }
     if (isLoadingDefaults) {
       return;
     }
 
-    if (!name) {
+    if (!name || !selectedAvatar) {
       didAttemptRestore.current = true;
       onNeedsJoin?.();
       onReconnectComplete?.();
@@ -62,13 +65,11 @@ export const useAutoReconnect = ({
     let cancelled = false;
 
     onLoadingChange(true);
-    const avatarToUse = selectedAvatar || "user";
-    joinRoom(name, roomKey, undefined, avatarToUse)
-      .then(async ({ room: joinedRoom, defaults }) => {
+    joinRoom(name, roomKey, undefined, selectedAvatar)
+      .then(async ({ room: joinedRoom }) => {
         if (cancelled) {
           return;
         }
-        applyServerDefaults(defaults);
         await upsertRoom(joinedRoom);
         onReconnectSuccess(joinedRoom.key, joinedRoom.moderator === name);
       })
@@ -103,15 +104,14 @@ export const useAutoReconnect = ({
       cancelled = true;
     };
   }, [
+    enabled,
     name,
-    screen,
     roomKey,
     isLoadingDefaults,
     selectedAvatar,
     onReconnectSuccess,
     onReconnectError,
     onLoadingChange,
-    applyServerDefaults,
     onReconnectComplete,
     onNeedsJoin,
   ]);

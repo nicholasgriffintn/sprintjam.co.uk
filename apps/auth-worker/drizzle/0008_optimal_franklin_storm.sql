@@ -24,5 +24,4 @@ CREATE TABLE `team_integrations` (
 	FOREIGN KEY (`team_id`) REFERENCES `teams`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_team_integrations_team_provider` ON `team_integrations` (`team_id`,`provider`);--> statement-breakpoint
 CREATE UNIQUE INDEX `team_integrations_team_id_provider_unique` ON `team_integrations` (`team_id`,`provider`);

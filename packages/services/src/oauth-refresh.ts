@@ -43,7 +43,10 @@ export async function executeWithTokenRefresh<T>({
   reconnectErrorMessage,
   refreshWindowMs = DEFAULT_REFRESH_WINDOW_MS,
 }: ExecuteWithTokenRefreshOptions<T>): Promise<T> {
-  if (isExpiringSoon(credentials.expiresAt, refreshWindowMs) && credentials.refreshToken) {
+  if (
+    isExpiringSoon(credentials.expiresAt, refreshWindowMs) &&
+    credentials.refreshToken
+  ) {
     try {
       const refreshed = await refreshToken(credentials.refreshToken);
       const newExpiresAt = Date.now() + refreshed.expiresIn * 1000;

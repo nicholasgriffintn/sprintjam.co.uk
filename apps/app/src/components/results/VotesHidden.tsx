@@ -1,7 +1,7 @@
 import { Lock, Timer } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/EmptyState";
-import { RoomData } from "@/types";
+import type { RoomData } from "@/types";
 
 interface VotesHiddenProps {
   votes: RoomData["votes"];

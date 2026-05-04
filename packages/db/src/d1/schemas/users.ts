@@ -10,6 +10,7 @@ export const users = sqliteTable("users", {
     .notNull()
     .references(() => organisations.id),
   name: text("name"),
+  avatar: text("avatar"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
   lastLoginAt: integer("last_login_at"),

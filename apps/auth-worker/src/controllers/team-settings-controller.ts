@@ -7,6 +7,7 @@ import {
   forbiddenResponse,
   notFoundResponse,
 } from "../lib/response";
+import { canAccessTeam, canManageTeam } from "../lib/team-access";
 
 async function getAuthOrError(
   request: Request,
@@ -83,6 +84,22 @@ export async function getTeamSettingsController(
     return forbiddenResponse();
   }
 
+  const isWorkspaceAdmin = await repo.isOrganisationAdmin(
+    userId,
+    user.organisationId,
+  );
+  const teamMembership = await repo.getTeamMembership(teamId, userId);
+  const canAccess = canAccessTeam(
+    team,
+    teamMembership,
+    userId,
+    isWorkspaceAdmin,
+  );
+
+  if (!canAccess) {
+    return forbiddenResponse("You do not have access to this team");
+  }
+
   const settings = await repo.getTeamSettings(teamId);
   return jsonResponse({ settings });
 }
@@ -100,8 +117,24 @@ export async function saveTeamSettingsController(
 
   if (!team) return notFoundResponse("Team not found");
 
-  if (team.ownerId !== userId) {
-    return forbiddenResponse("Only the team owner can update team settings");
+  const user = await repo.getUserById(userId);
+  if (!user || user.organisationId !== team.organisationId) {
+    return forbiddenResponse();
+  }
+
+  const isWorkspaceAdmin = await repo.isOrganisationAdmin(
+    userId,
+    user.organisationId,
+  );
+  const teamMembership = await repo.getTeamMembership(teamId, userId);
+  const isTeamAdmin = canManageTeam(
+    team,
+    teamMembership,
+    userId,
+    isWorkspaceAdmin,
+  );
+  if (!isTeamAdmin) {
+    return forbiddenResponse("Only team admins can update team settings");
   }
 
   let settings: Partial<RoomSettings>;

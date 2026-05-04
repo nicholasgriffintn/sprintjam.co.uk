@@ -1,18 +1,54 @@
-import type { AuthWorkerEnv } from "@sprintjam/types";
+import type {
+  AuthWorkerEnv,
+  TeamAccessPolicy,
+  WorkspaceTeam,
+} from "@sprintjam/types";
 import { sendWorkspaceInviteEmail } from "@sprintjam/services";
-import { jsonError } from "../lib/response";
 
 import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
 import { EMAIL_REGEX } from "../lib/auth-helpers";
 import {
-  jsonResponse,
-  unauthorizedResponse,
   forbiddenResponse,
+  jsonError,
+  jsonResponse,
   notFoundResponse,
+  unauthorizedResponse,
 } from "../lib/response";
+import {
+  buildWorkspaceTeam,
+  canAccessTeam,
+  canManageTeam,
+  isActiveTeamMember,
+} from "../lib/team-access";
+import { normalizeOptionalHttpUrl } from "../lib/url-validation";
 
 const MAX_WORKSPACE_NAME_LENGTH = 120;
 const MAX_LOGO_URL_LENGTH = 500;
+const MAX_TEAM_NAME_LENGTH = 100;
+const MAX_SESSION_NAME_LENGTH = 200;
+const MAX_ROOM_KEY_LENGTH = 100;
+
+type WorkspaceViewer = {
+  user: NonNullable<Awaited<ReturnType<AuthResult["repo"]["getUserById"]>>>;
+  membership: NonNullable<
+    Awaited<ReturnType<AuthResult["repo"]["getOrganisationMembership"]>>
+  >;
+  isWorkspaceAdmin: boolean;
+};
+
+type TeamViewer = WorkspaceViewer & {
+  team: NonNullable<Awaited<ReturnType<AuthResult["repo"]["getTeamById"]>>>;
+  teamMembership: Awaited<
+    ReturnType<AuthResult["repo"]["getTeamMembership"]>
+  > | null;
+  isTeamAdmin: boolean;
+  isTeamMember: boolean;
+  canAccess: boolean;
+};
+
+type TeamMembershipRecord = NonNullable<
+  Awaited<ReturnType<AuthResult["repo"]["getTeamMembership"]>>
+>;
 
 async function getAuthOrError(
   request: Request,
@@ -24,10 +60,198 @@ async function getAuthOrError(
     if (result.code === "unauthorized") {
       return { response: unauthorizedResponse() };
     }
-    return { response: unauthorizedResponse("Session expired") };
+
+    return {
+      response: unauthorizedResponse("Session expired", "session_expired"),
+    };
   }
 
   return { result };
+}
+
+async function getWorkspaceViewer(
+  result: AuthResult,
+): Promise<{ viewer: WorkspaceViewer } | { response: Response }> {
+  const user = await result.repo.getUserById(result.userId);
+  if (!user) {
+    return { response: notFoundResponse("User not found") };
+  }
+
+  const membership = await result.repo.getOrganisationMembership(
+    result.userId,
+    user.organisationId,
+  );
+  if (!membership || membership.status !== "active") {
+    return { response: forbiddenResponse("Workspace access is not active") };
+  }
+
+  const isWorkspaceAdmin = await result.repo.isOrganisationAdmin(
+    result.userId,
+    user.organisationId,
+  );
+
+  return {
+    viewer: {
+      user,
+      membership,
+      isWorkspaceAdmin,
+    },
+  };
+}
+
+async function getTeamViewer(
+  result: AuthResult,
+  teamId: number,
+): Promise<{ viewer: TeamViewer } | { response: Response }> {
+  const workspace = await getWorkspaceViewer(result);
+  if ("response" in workspace) {
+    return workspace;
+  }
+
+  const team = await result.repo.getTeamById(teamId);
+  if (!team) {
+    return { response: notFoundResponse("Team not found") };
+  }
+
+  if (team.organisationId !== workspace.viewer.user.organisationId) {
+    return { response: forbiddenResponse() };
+  }
+
+  const teamMembership = await result.repo.getTeamMembership(
+    teamId,
+    result.userId,
+  );
+  const isTeamMember = isActiveTeamMember(team, teamMembership, result.userId);
+  const isTeamAdmin = canManageTeam(
+    team,
+    teamMembership,
+    result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+  const canAccess = canAccessTeam(
+    team,
+    teamMembership,
+    result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+
+  return {
+    viewer: {
+      ...workspace.viewer,
+      team,
+      teamMembership,
+      isTeamAdmin,
+      isTeamMember,
+      canAccess,
+    },
+  };
+}
+
+async function buildTeamResponse(
+  repo: AuthResult["repo"],
+  viewer: WorkspaceViewer,
+  team: Awaited<ReturnType<AuthResult["repo"]["getTeamById"]>>,
+): Promise<WorkspaceTeam> {
+  const membership = await repo.getTeamMembership(team!.id, viewer.user.id);
+  return buildWorkspaceTeam(
+    team!,
+    membership,
+    viewer.user.id,
+    viewer.isWorkspaceAdmin,
+  );
+}
+
+async function buildTeamResponsesBatch(
+  repo: AuthResult["repo"],
+  viewer: WorkspaceViewer,
+  teams: Awaited<ReturnType<AuthResult["repo"]["getOrganisationTeams"]>>,
+): Promise<WorkspaceTeam[]> {
+  const teamIds = teams.map((t) => t.id);
+  const memberships = await repo.getTeamMembershipsForUser(
+    viewer.user.id,
+    teamIds,
+  );
+  const membershipMap = new Map(memberships.map((m) => [m.teamId, m]));
+
+  return teams.map((team) =>
+    buildWorkspaceTeam(
+      team,
+      membershipMap.get(team.id) ?? null,
+      viewer.user.id,
+      viewer.isWorkspaceAdmin,
+    ),
+  );
+}
+
+function parseAccessPolicy(value: unknown): TeamAccessPolicy | null {
+  return value === "open" || value === "restricted" ? value : null;
+}
+
+function parseRole(value: unknown): "admin" | "member" | null {
+  return value === "admin" || value === "member" ? value : null;
+}
+
+async function ensureNotLastWorkspaceAdmin(
+  repo: AuthResult["repo"],
+  organisationId: number,
+  userId: number,
+): Promise<Response | null> {
+  const members = await repo.getOrganisationMembers(organisationId, "active");
+  const activeAdmins = members.filter((member) => member.role === "admin");
+
+  if (activeAdmins.length === 1 && activeAdmins[0]?.id === userId) {
+    return jsonError("At least one workspace admin is required", 409);
+  }
+
+  return null;
+}
+
+async function ensureNotLastTeamAdmin(
+  repo: AuthResult["repo"],
+  teamId: number,
+  userId: number,
+): Promise<Response | null> {
+  const members = await repo.listTeamMembers(teamId);
+  const activeAdmins = members.filter(
+    (member) => member.status === "active" && member.role === "admin",
+  );
+
+  if (activeAdmins.length === 1 && activeAdmins[0]?.id === userId) {
+    return jsonError("At least one team admin is required", 409);
+  }
+
+  return null;
+}
+
+function ensureNotTeamOwnerMembershipRemoval(
+  team: TeamViewer["team"],
+  memberUserId: number,
+): Response | null {
+  if (team.ownerId === memberUserId) {
+    return jsonError("Team owner membership cannot be removed", 409);
+  }
+
+  return null;
+}
+
+async function restoreTeamMembership(
+  repo: AuthResult["repo"],
+  teamId: number,
+  userId: number,
+  membership: TeamMembershipRecord | null,
+): Promise<void> {
+  if (!membership) {
+    await repo.removeTeamMembership(teamId, userId);
+    return;
+  }
+
+  await repo.upsertTeamMembership({
+    teamId,
+    userId,
+    role: membership.role,
+    status: membership.status,
+    approvedById: membership.approvedById ?? null,
+  });
 }
 
 export async function listTeamsController(
@@ -35,15 +259,22 @@ export async function listTeamsController(
   env: AuthWorkerEnv,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const teams = await repo.getUserTeams(userId);
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
 
-  return jsonResponse({ teams });
+  const repo = auth.result.repo;
+  const teams = await repo.getOrganisationTeams(
+    workspace.viewer.user.organisationId,
+  );
+  const hydrated = await buildTeamResponsesBatch(repo, workspace.viewer, teams);
+
+  return jsonResponse({ teams: hydrated });
 }
 
 export async function createTeamController(
@@ -51,32 +282,57 @@ export async function createTeamController(
   env: AuthWorkerEnv,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const body = await request.json<{ name?: string }>();
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const body = await request.json<{
+    name?: string;
+    accessPolicy?: TeamAccessPolicy;
+    logoUrl?: string | null;
+  }>();
   const name = body?.name?.trim();
+  const accessPolicy = parseAccessPolicy(body?.accessPolicy) ?? "open";
+  const logoUrl = normalizeOptionalHttpUrl(body?.logoUrl, {
+    label: "Logo URL",
+    maxLength: MAX_LOGO_URL_LENGTH,
+  });
 
   if (!name) {
     return jsonError("Team name is required", 400);
   }
 
-  if (name.length > 100) {
-    return jsonError("Team name must be 100 characters or less", 400);
+  if (name.length > MAX_TEAM_NAME_LENGTH) {
+    return jsonError(
+      `Team name must be ${MAX_TEAM_NAME_LENGTH} characters or less`,
+      400,
+    );
   }
 
-  const user = await repo.getUserById(userId);
-  if (!user) {
-    return notFoundResponse("User not found");
+  if (!logoUrl.ok) {
+    return jsonError(logoUrl.message, 400);
   }
 
-  const teamId = await repo.createTeam(user.organisationId, name, userId);
-  const team = await repo.getTeamById(teamId);
+  const teamId = await auth.result.repo.createTeam(
+    workspace.viewer.user.organisationId,
+    name,
+    workspace.viewer.user.id,
+    accessPolicy,
+    logoUrl.value,
+  );
+  const team = await auth.result.repo.getTeamById(teamId);
 
-  return jsonResponse({ team }, 201);
+  return jsonResponse(
+    {
+      team: await buildTeamResponse(auth.result.repo, workspace.viewer, team),
+    },
+    201,
+  );
 }
 
 export async function getTeamController(
@@ -85,24 +341,26 @@ export async function getTeamController(
   teamId: number,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const team = await repo.getTeamById(teamId);
-
-  if (!team) {
-    return notFoundResponse("Team not found");
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
   }
 
-  const user = await repo.getUserById(userId);
-  if (!user || user.organisationId !== team.organisationId) {
-    return forbiddenResponse();
+  if (!teamViewer.viewer.canAccess) {
+    return forbiddenResponse("You do not have access to this team");
   }
 
-  return jsonResponse({ team });
+  return jsonResponse({
+    team: await buildTeamResponse(
+      auth.result.repo,
+      teamViewer.viewer,
+      teamViewer.viewer.team,
+    ),
+  });
 }
 
 export async function updateTeamController(
@@ -111,37 +369,69 @@ export async function updateTeamController(
   teamId: number,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const team = await repo.getTeamById(teamId);
-
-  if (!team) {
-    return notFoundResponse("Team not found");
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
   }
 
-  if (team.ownerId !== userId) {
-    return forbiddenResponse("Only the team owner can update the team");
+  if (!teamViewer.viewer.isTeamAdmin) {
+    return forbiddenResponse("Only team admins can update the team");
   }
 
-  const body = await request.json<{ name?: string }>();
-  const name = body?.name?.trim();
+  const body = await request.json<{
+    name?: string;
+    accessPolicy?: TeamAccessPolicy;
+    logoUrl?: string | null;
+  }>();
+  const nextName = body?.name?.trim();
+  const nextAccessPolicy = body?.accessPolicy
+    ? parseAccessPolicy(body.accessPolicy)
+    : null;
+  const hasLogoUpdate = Object.prototype.hasOwnProperty.call(body, "logoUrl");
+  const nextLogoUrl = hasLogoUpdate
+    ? normalizeOptionalHttpUrl(body.logoUrl, {
+        label: "Logo URL",
+        maxLength: MAX_LOGO_URL_LENGTH,
+      })
+    : null;
 
-  if (!name) {
-    return jsonError("Team name is required", 400);
+  if (!nextName && !nextAccessPolicy && !hasLogoUpdate) {
+    return jsonError("At least one field is required", 400);
   }
 
-  if (name.length > 100) {
-    return jsonError("Team name must be 100 characters or less", 400);
+  if (nextName && nextName.length > MAX_TEAM_NAME_LENGTH) {
+    return jsonError(
+      `Team name must be ${MAX_TEAM_NAME_LENGTH} characters or less`,
+      400,
+    );
   }
 
-  await repo.updateTeam(teamId, { name });
-  const updatedTeam = await repo.getTeamById(teamId);
+  if (body?.accessPolicy && !nextAccessPolicy) {
+    return jsonError("Invalid team access policy", 400);
+  }
 
-  return jsonResponse({ team: updatedTeam });
+  if (nextLogoUrl && !nextLogoUrl.ok) {
+    return jsonError(nextLogoUrl.message, 400);
+  }
+
+  await auth.result.repo.updateTeam(teamId, {
+    ...(nextName ? { name: nextName } : {}),
+    ...(nextAccessPolicy ? { accessPolicy: nextAccessPolicy } : {}),
+    ...(nextLogoUrl?.ok ? { logoUrl: nextLogoUrl.value } : {}),
+  });
+
+  const updatedTeam = await auth.result.repo.getTeamById(teamId);
+  return jsonResponse({
+    team: await buildTeamResponse(
+      auth.result.repo,
+      teamViewer.viewer,
+      updatedTeam,
+    ),
+  });
 }
 
 export async function deleteTeamController(
@@ -150,25 +440,462 @@ export async function deleteTeamController(
   teamId: number,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const team = await repo.getTeamById(teamId);
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
 
+  if (!teamViewer.viewer.isTeamAdmin) {
+    return forbiddenResponse("Only team admins can delete the team");
+  }
+
+  await auth.result.repo.deleteTeam(teamId);
+  return jsonResponse({ message: "Team deleted successfully" });
+}
+
+export async function listTeamMembersController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  if (!teamViewer.viewer.isTeamAdmin) {
+    return forbiddenResponse("Only team admins can manage team members");
+  }
+
+  const members = await auth.result.repo.listTeamMembers(teamId);
+  return jsonResponse({ members });
+}
+
+export async function addTeamMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  if (!teamViewer.viewer.isTeamAdmin) {
+    return forbiddenResponse("Only team admins can manage team members");
+  }
+
+  const body = await request.json<{
+    userId?: number;
+    role?: "admin" | "member";
+  }>();
+  const userId = body?.userId;
+  const role = parseRole(body?.role) ?? "member";
+
+  if (!userId || !Number.isInteger(userId) || userId <= 0) {
+    return jsonError("Valid userId is required", 400);
+  }
+
+  const member = await auth.result.repo.getUserById(userId);
+  if (
+    !member ||
+    member.organisationId !== teamViewer.viewer.user.organisationId
+  ) {
+    return notFoundResponse("Workspace member not found");
+  }
+
+  const workspaceMembership = await auth.result.repo.getOrganisationMembership(
+    userId,
+    member.organisationId,
+  );
+  if (!workspaceMembership || workspaceMembership.status !== "active") {
+    return jsonError("User must be an active workspace member", 409);
+  }
+
+  await auth.result.repo.upsertTeamMembership({
+    teamId,
+    userId,
+    role,
+    status: "active",
+    approvedById: auth.result.userId,
+  });
+
+  const created = await auth.result.repo.getTeamMemberById(teamId, userId);
+  return jsonResponse({ member: created }, 201);
+}
+
+export async function requestTeamAccessController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const team = await auth.result.repo.getTeamById(teamId);
   if (!team) {
     return notFoundResponse("Team not found");
   }
 
-  if (team.ownerId !== userId) {
-    return forbiddenResponse("Only the team owner can delete the team");
+  if (team.organisationId !== workspace.viewer.user.organisationId) {
+    return forbiddenResponse();
   }
 
-  await repo.deleteTeam(teamId);
+  if (workspace.viewer.isWorkspaceAdmin) {
+    return jsonError("Workspace admins already have access to all teams", 409);
+  }
 
-  return jsonResponse({ message: "Team deleted successfully" });
+  if (team.accessPolicy === "open") {
+    return jsonError("Open teams do not require an access request", 409);
+  }
+
+  const existingMembership = await auth.result.repo.getTeamMembership(
+    teamId,
+    auth.result.userId,
+  );
+
+  if (existingMembership?.status === "active") {
+    return jsonError("You already have access to this team", 409);
+  }
+
+  if (existingMembership?.status === "pending") {
+    return jsonResponse({ member: existingMembership }, 202);
+  }
+
+  await auth.result.repo.upsertTeamMembership({
+    teamId,
+    userId: auth.result.userId,
+    role: "member",
+    status: "pending",
+  });
+
+  const membership = await auth.result.repo.getTeamMembership(
+    teamId,
+    auth.result.userId,
+  );
+  return jsonResponse({ member: membership }, 202);
+}
+
+export async function approveTeamMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  memberUserId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  if (!teamViewer.viewer.isTeamAdmin) {
+    return forbiddenResponse("Only team admins can manage team members");
+  }
+
+  const membership = await auth.result.repo.getTeamMembership(
+    teamId,
+    memberUserId,
+  );
+  if (!membership) {
+    return notFoundResponse("Team member not found");
+  }
+
+  if (membership.status !== "pending") {
+    return jsonError("Member is not pending approval", 409);
+  }
+
+  await auth.result.repo.approveTeamMembership(
+    teamId,
+    memberUserId,
+    auth.result.userId,
+  );
+
+  const member = await auth.result.repo.getTeamMemberById(teamId, memberUserId);
+  return jsonResponse({ member });
+}
+
+export async function updateTeamMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  memberUserId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  if (!teamViewer.viewer.isTeamAdmin) {
+    return forbiddenResponse("Only team admins can manage team members");
+  }
+
+  const body = await request.json<{ role?: "admin" | "member" }>();
+  const role = parseRole(body?.role);
+  if (!role) {
+    return jsonError("Valid role is required", 400);
+  }
+
+  const membership = await auth.result.repo.getTeamMembership(
+    teamId,
+    memberUserId,
+  );
+  if (!membership || membership.status !== "active") {
+    return notFoundResponse("Active team member not found");
+  }
+
+  if (membership.role === "admin" && role === "member") {
+    const lastAdminResponse = await ensureNotLastTeamAdmin(
+      auth.result.repo,
+      teamId,
+      memberUserId,
+    );
+    if (lastAdminResponse) {
+      return lastAdminResponse;
+    }
+  }
+
+  await auth.result.repo.updateTeamMembershipRole(teamId, memberUserId, role);
+
+  const member = await auth.result.repo.getTeamMemberById(teamId, memberUserId);
+  return jsonResponse({ member });
+}
+
+export async function removeTeamMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  memberUserId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  if (!teamViewer.viewer.isTeamAdmin) {
+    return forbiddenResponse("Only team admins can manage team members");
+  }
+
+  const membership = await auth.result.repo.getTeamMembership(
+    teamId,
+    memberUserId,
+  );
+  if (!membership) {
+    return notFoundResponse("Team member not found");
+  }
+
+  const ownerRemovalResponse = ensureNotTeamOwnerMembershipRemoval(
+    teamViewer.viewer.team,
+    memberUserId,
+  );
+  if (ownerRemovalResponse) {
+    return ownerRemovalResponse;
+  }
+
+  if (membership.role === "admin") {
+    const lastAdminResponse = await ensureNotLastTeamAdmin(
+      auth.result.repo,
+      teamId,
+      memberUserId,
+    );
+    if (lastAdminResponse) {
+      return lastAdminResponse;
+    }
+  }
+
+  await auth.result.repo.removeTeamMembership(teamId, memberUserId);
+  return jsonResponse({ message: "Team member removed" });
+}
+
+export async function moveTeamMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  sourceTeamId: number,
+  memberUserId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const body = await request.json<{
+    targetTeamId?: number;
+    role?: "admin" | "member";
+  }>();
+  const targetTeamId = body?.targetTeamId;
+
+  if (!targetTeamId || !Number.isInteger(targetTeamId) || targetTeamId <= 0) {
+    return jsonError("Valid targetTeamId is required", 400);
+  }
+
+  if (targetTeamId === sourceTeamId) {
+    return jsonError("Source and target teams must be different", 400);
+  }
+
+  const [sourceTeam, targetTeam] = await Promise.all([
+    auth.result.repo.getTeamById(sourceTeamId),
+    auth.result.repo.getTeamById(targetTeamId),
+  ]);
+
+  if (!sourceTeam) {
+    return notFoundResponse("Source team not found");
+  }
+
+  if (!targetTeam) {
+    return notFoundResponse("Target team not found");
+  }
+
+  if (
+    sourceTeam.organisationId !== workspace.viewer.user.organisationId ||
+    targetTeam.organisationId !== workspace.viewer.user.organisationId
+  ) {
+    return forbiddenResponse();
+  }
+
+  const [sourceViewerMembership, targetViewerMembership] = await Promise.all([
+    auth.result.repo.getTeamMembership(sourceTeamId, auth.result.userId),
+    auth.result.repo.getTeamMembership(targetTeamId, auth.result.userId),
+  ]);
+
+  const canManageSource = canManageTeam(
+    sourceTeam,
+    sourceViewerMembership,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+  const canManageTarget = canManageTeam(
+    targetTeam,
+    targetViewerMembership,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+
+  if (!canManageSource || !canManageTarget) {
+    return forbiddenResponse(
+      "Only team admins can move team members between teams",
+    );
+  }
+
+  const sourceMembership = await auth.result.repo.getTeamMembership(
+    sourceTeamId,
+    memberUserId,
+  );
+  if (!sourceMembership || sourceMembership.status !== "active") {
+    return notFoundResponse("Active team member not found");
+  }
+
+  const ownerRemovalResponse = ensureNotTeamOwnerMembershipRemoval(
+    sourceTeam,
+    memberUserId,
+  );
+  if (ownerRemovalResponse) {
+    return ownerRemovalResponse;
+  }
+
+  if (sourceMembership.role === "admin") {
+    const lastAdminResponse = await ensureNotLastTeamAdmin(
+      auth.result.repo,
+      sourceTeamId,
+      memberUserId,
+    );
+    if (lastAdminResponse) {
+      return lastAdminResponse;
+    }
+  }
+
+  const member = await auth.result.repo.getUserById(memberUserId);
+  if (
+    !member ||
+    member.organisationId !== workspace.viewer.user.organisationId
+  ) {
+    return notFoundResponse("Workspace member not found");
+  }
+
+  const workspaceMembership = await auth.result.repo.getOrganisationMembership(
+    memberUserId,
+    member.organisationId,
+  );
+  if (!workspaceMembership || workspaceMembership.status !== "active") {
+    return jsonError("User must be an active workspace member", 409);
+  }
+
+  const role = parseRole(body?.role) ?? sourceMembership.role;
+  const targetMembership = await auth.result.repo.getTeamMembership(
+    targetTeamId,
+    memberUserId,
+  );
+
+  await auth.result.repo.upsertTeamMembership({
+    teamId: targetTeamId,
+    userId: memberUserId,
+    role,
+    status: "active",
+    approvedById: auth.result.userId,
+  });
+
+  try {
+    await auth.result.repo.removeTeamMembership(sourceTeamId, memberUserId);
+  } catch (error) {
+    try {
+      await restoreTeamMembership(
+        auth.result.repo,
+        targetTeamId,
+        memberUserId,
+        targetMembership ?? null,
+      );
+    } catch (rollbackError) {
+      console.error("Failed to rollback moved team member", rollbackError);
+    }
+
+    console.error("Failed to move team member", error);
+    return jsonError("Unable to move team member", 500);
+  }
+
+  const movedMember = await auth.result.repo.getTeamMemberById(
+    targetTeamId,
+    memberUserId,
+  );
+
+  return jsonResponse({ member: movedMember, message: "Team member moved" });
 }
 
 export async function listTeamSessionsController(
@@ -177,25 +904,20 @@ export async function listTeamSessionsController(
   teamId: number,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const team = await repo.getTeamById(teamId);
-
-  if (!team) {
-    return notFoundResponse("Team not found");
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
   }
 
-  const isOwner = await repo.isTeamOwner(teamId, userId);
-  if (!isOwner) {
-    return forbiddenResponse("Only the team owner can access team sessions");
+  if (!teamViewer.viewer.canAccess) {
+    return forbiddenResponse("You do not have access to team sessions");
   }
 
-  const sessions = await repo.getTeamSessions(teamId);
-
+  const sessions = await auth.result.repo.getTeamSessions(teamId);
   return jsonResponse({ sessions });
 }
 
@@ -205,21 +927,19 @@ export async function createTeamSessionController(
   teamId: number,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const team = await repo.getTeamById(teamId);
-
-  if (!team) {
-    return notFoundResponse("Team not found");
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
   }
 
-  const isOwner = await repo.isTeamOwner(teamId, userId);
-  if (!isOwner) {
-    return forbiddenResponse("Only the team owner can access team sessions");
+  if (!teamViewer.viewer.canAccess) {
+    return forbiddenResponse(
+      "You must be a team member to create sessions in this team",
+    );
   }
 
   const body = await request.json<{
@@ -227,7 +947,6 @@ export async function createTeamSessionController(
     roomKey?: string;
     metadata?: Record<string, unknown>;
   }>();
-
   const name = body?.name?.trim();
   const roomKey = body?.roomKey?.trim();
 
@@ -235,8 +954,22 @@ export async function createTeamSessionController(
     return jsonError("Session name is required", 400);
   }
 
+  if (name.length > MAX_SESSION_NAME_LENGTH) {
+    return jsonError(
+      `Session name must be ${MAX_SESSION_NAME_LENGTH} characters or less`,
+      400,
+    );
+  }
+
   if (!roomKey) {
     return jsonError("Room key is required", 400);
+  }
+
+  if (roomKey.length > MAX_ROOM_KEY_LENGTH) {
+    return jsonError(
+      `Room key must be ${MAX_ROOM_KEY_LENGTH} characters or less`,
+      400,
+    );
   }
 
   if (body?.metadata) {
@@ -246,17 +979,61 @@ export async function createTeamSessionController(
     }
   }
 
-  const sessionId = await repo.createTeamSession(
+  const existingSession =
+    await auth.result.repo.getOrganisationTeamSessionByRoomKey(
+      roomKey,
+      teamViewer.viewer.user.organisationId,
+    );
+  if (existingSession) {
+    return jsonError(
+      "This room is already saved to your workspace",
+      409,
+      "session_already_linked",
+    );
+  }
+
+  const sessionId = await auth.result.repo.createTeamSession(
     teamId,
     roomKey,
     name,
-    userId,
+    auth.result.userId,
     body?.metadata,
   );
-
-  const session = await repo.getTeamSessionById(sessionId);
+  const session = await auth.result.repo.getTeamSessionById(sessionId);
 
   return jsonResponse({ session }, 201);
+}
+
+export async function getTeamSessionByRoomKeyController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const roomKey = new URL(request.url).searchParams.get("roomKey")?.trim();
+  if (!roomKey) {
+    return jsonError("Room key is required", 400);
+  }
+
+  const session = await auth.result.repo.getAccessibleTeamSessionByRoomKey(
+    roomKey,
+    workspace.viewer.user.organisationId,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+  if (!session) {
+    return notFoundResponse("Session not found");
+  }
+
+  return jsonResponse({ session });
 }
 
 export async function getTeamSessionController(
@@ -266,25 +1043,20 @@ export async function getTeamSessionController(
   sessionId: number,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const team = await repo.getTeamById(teamId);
-
-  if (!team) {
-    return notFoundResponse("Team not found");
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
   }
 
-  const isOwner = await repo.isTeamOwner(teamId, userId);
-  if (!isOwner) {
-    return forbiddenResponse("Only the team owner can access team sessions");
+  if (!teamViewer.viewer.canAccess) {
+    return forbiddenResponse("You do not have access to team sessions");
   }
 
-  const session = await repo.getTeamSessionById(sessionId);
-
+  const session = await auth.result.repo.getTeamSessionById(sessionId);
   if (!session || session.teamId !== teamId) {
     return notFoundResponse("Session not found");
   }
@@ -292,27 +1064,76 @@ export async function getTeamSessionController(
   return jsonResponse({ session });
 }
 
+export async function updateTeamSessionController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  sessionId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  if (!teamViewer.viewer.canAccess) {
+    return forbiddenResponse("You do not have access to team sessions");
+  }
+
+  const session = await auth.result.repo.getTeamSessionById(sessionId);
+  if (!session || session.teamId !== teamId) {
+    return notFoundResponse("Session not found");
+  }
+
+  const body = await request.json<{ name?: string }>();
+  const name = body?.name?.trim();
+  if (!name) {
+    return jsonError("Session name is required", 400);
+  }
+
+  if (name.length > MAX_SESSION_NAME_LENGTH) {
+    return jsonError(
+      `Session name must be ${MAX_SESSION_NAME_LENGTH} characters or less`,
+      400,
+    );
+  }
+
+  await auth.result.repo.updateTeamSessionName(sessionId, name);
+  const updatedSession = await auth.result.repo.getTeamSessionById(sessionId);
+
+  return jsonResponse({ session: updatedSession });
+}
+
 export async function completeSessionByRoomKeyController(
   request: Request,
   env: AuthWorkerEnv,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
   const body = await request.json<{ roomKey?: string }>();
   const roomKey = body?.roomKey?.trim();
-
   if (!roomKey) {
     return jsonError("Room key is required", 400);
   }
 
+  const repo = auth.result.repo;
   const updatedSession = await repo.completeLatestSessionByRoomKey(
     roomKey,
-    userId,
+    workspace.viewer.user.organisationId,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
   );
 
   if (!updatedSession) {
@@ -327,15 +1148,62 @@ export async function getWorkspaceStatsController(
   env: AuthWorkerEnv,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const stats = await repo.getWorkspaceStats(userId);
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const repo = auth.result.repo;
+  const stats = await repo.getWorkspaceStats(
+    workspace.viewer.user.organisationId,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
 
   return jsonResponse(stats);
+}
+
+export async function getWorkspaceProfileController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const organisation = await auth.result.repo.getOrganisationById(
+    workspace.viewer.user.organisationId,
+  );
+  if (!organisation) {
+    return notFoundResponse("Organisation not found");
+  }
+
+  const members = await auth.result.repo.getOrganisationMembers(
+    workspace.viewer.user.organisationId,
+    workspace.viewer.isWorkspaceAdmin ? undefined : "active",
+  );
+  const invites = workspace.viewer.isWorkspaceAdmin
+    ? await auth.result.repo.listPendingWorkspaceInvites(
+        workspace.viewer.user.organisationId,
+      )
+    : [];
+
+  return jsonResponse({
+    membership: workspace.viewer.membership,
+    organisation,
+    members,
+    invites,
+  });
 }
 
 export async function updateWorkspaceProfileController(
@@ -343,26 +1211,32 @@ export async function updateWorkspaceProfileController(
   env: AuthWorkerEnv,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const user = await repo.getUserById(userId);
-  if (!user) {
-    return notFoundResponse("User not found");
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
   }
 
-  const body = await request.json<{ name?: string; logoUrl?: string | null }>();
+  if (!workspace.viewer.isWorkspaceAdmin) {
+    return forbiddenResponse(
+      "Only workspace admins can update workspace profile",
+    );
+  }
+
+  const body = await request.json<{
+    name?: string;
+    logoUrl?: string | null;
+    requireMemberApproval?: boolean;
+  }>();
   const nextName = body?.name?.trim();
   const hasNameUpdate = typeof nextName === "string";
-  const hasLogoUpdate =
-    typeof body === "object" &&
-    body !== null &&
-    Object.prototype.hasOwnProperty.call(body, "logoUrl");
+  const hasLogoUpdate = Object.prototype.hasOwnProperty.call(body, "logoUrl");
+  const hasApprovalUpdate = typeof body?.requireMemberApproval === "boolean";
 
-  if (!hasNameUpdate && !hasLogoUpdate) {
+  if (!hasNameUpdate && !hasLogoUpdate && !hasApprovalUpdate) {
     return jsonError("At least one field is required", 400);
   }
 
@@ -370,6 +1244,7 @@ export async function updateWorkspaceProfileController(
     if (!nextName) {
       return jsonError("Workspace name is required", 400);
     }
+
     if (nextName.length > MAX_WORKSPACE_NAME_LENGTH) {
       return jsonError(
         `Workspace name must be ${MAX_WORKSPACE_NAME_LENGTH} characters or less`,
@@ -380,43 +1255,180 @@ export async function updateWorkspaceProfileController(
 
   let normalizedLogoUrl: string | null | undefined;
   if (hasLogoUpdate) {
-    if (body.logoUrl === null) {
-      normalizedLogoUrl = null;
-    } else {
-      const trimmed = body.logoUrl?.trim() ?? "";
-      if (!trimmed) {
-        normalizedLogoUrl = null;
-      } else {
-        if (trimmed.length > MAX_LOGO_URL_LENGTH) {
-          return jsonError(
-            `Logo URL must be ${MAX_LOGO_URL_LENGTH} characters or less`,
-            400,
-          );
-        }
+    const logoUrl = normalizeOptionalHttpUrl(body.logoUrl, {
+      label: "Logo URL",
+      maxLength: MAX_LOGO_URL_LENGTH,
+    });
+    if (!logoUrl.ok) {
+      return jsonError(logoUrl.message, 400);
+    }
+    normalizedLogoUrl = logoUrl.value;
+  }
 
-        let parsed: URL;
-        try {
-          parsed = new URL(trimmed);
-        } catch {
-          return jsonError("Logo URL must be a valid URL", 400);
-        }
+  await auth.result.repo.updateOrganisation(
+    workspace.viewer.user.organisationId,
+    {
+      ...(hasNameUpdate ? { name: nextName } : {}),
+      ...(hasLogoUpdate ? { logoUrl: normalizedLogoUrl ?? null } : {}),
+      ...(hasApprovalUpdate
+        ? { requireMemberApproval: body.requireMemberApproval }
+        : {}),
+    },
+  );
 
-        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-          return jsonError("Logo URL must start with http:// or https://", 400);
-        }
+  const organisation = await auth.result.repo.getOrganisationById(
+    workspace.viewer.user.organisationId,
+  );
+  return jsonResponse({ organisation });
+}
 
-        normalizedLogoUrl = parsed.toString();
-      }
+export async function approveWorkspaceMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  memberUserId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  if (!workspace.viewer.isWorkspaceAdmin) {
+    return forbiddenResponse("Only workspace admins can manage members");
+  }
+
+  const membership = await auth.result.repo.getOrganisationMembership(
+    memberUserId,
+    workspace.viewer.user.organisationId,
+  );
+  if (!membership) {
+    return notFoundResponse("Workspace member not found");
+  }
+
+  if (membership.status !== "pending") {
+    return jsonError("Member is not pending approval", 409);
+  }
+
+  await auth.result.repo.approveWorkspaceMembership(
+    workspace.viewer.user.organisationId,
+    memberUserId,
+    auth.result.userId,
+  );
+
+  const member = await auth.result.repo.getOrganisationMemberById(
+    workspace.viewer.user.organisationId,
+    memberUserId,
+  );
+  return jsonResponse({ member });
+}
+
+export async function updateWorkspaceMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  memberUserId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  if (!workspace.viewer.isWorkspaceAdmin) {
+    return forbiddenResponse("Only workspace admins can manage members");
+  }
+
+  const body = await request.json<{ role?: "admin" | "member" }>();
+  const role = parseRole(body?.role);
+  if (!role) {
+    return jsonError("Valid role is required", 400);
+  }
+
+  const membership = await auth.result.repo.getOrganisationMembership(
+    memberUserId,
+    workspace.viewer.user.organisationId,
+  );
+  if (!membership || membership.status !== "active") {
+    return notFoundResponse("Active workspace member not found");
+  }
+
+  if (membership.role === "admin" && role === "member") {
+    const lastAdminResponse = await ensureNotLastWorkspaceAdmin(
+      auth.result.repo,
+      workspace.viewer.user.organisationId,
+      memberUserId,
+    );
+    if (lastAdminResponse) {
+      return lastAdminResponse;
     }
   }
 
-  await repo.updateOrganisation(user.organisationId, {
-    ...(hasNameUpdate ? { name: nextName } : {}),
-    ...(hasLogoUpdate ? { logoUrl: normalizedLogoUrl ?? null } : {}),
-  });
+  await auth.result.repo.updateWorkspaceMembershipRole(
+    memberUserId,
+    workspace.viewer.user.organisationId,
+    role,
+  );
 
-  const organisation = await repo.getOrganisationById(user.organisationId);
-  return jsonResponse({ organisation });
+  const member = await auth.result.repo.getOrganisationMemberById(
+    workspace.viewer.user.organisationId,
+    memberUserId,
+  );
+  return jsonResponse({ member });
+}
+
+export async function removeWorkspaceMemberController(
+  request: Request,
+  env: AuthWorkerEnv,
+  memberUserId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  if (!workspace.viewer.isWorkspaceAdmin) {
+    return forbiddenResponse("Only workspace admins can manage members");
+  }
+
+  const membership = await auth.result.repo.getOrganisationMembership(
+    memberUserId,
+    workspace.viewer.user.organisationId,
+  );
+  if (!membership) {
+    return notFoundResponse("Workspace member not found");
+  }
+
+  if (membership.role === "admin") {
+    const lastAdminResponse = await ensureNotLastWorkspaceAdmin(
+      auth.result.repo,
+      workspace.viewer.user.organisationId,
+      memberUserId,
+    );
+    if (lastAdminResponse) {
+      return lastAdminResponse;
+    }
+  }
+
+  await auth.result.repo.removeUserFromTeams(memberUserId);
+  await auth.result.repo.removeWorkspaceMembership(
+    workspace.viewer.user.organisationId,
+    memberUserId,
+  );
+  await auth.result.repo.invalidateSessionsForUser(memberUserId);
+
+  return jsonResponse({ message: "Workspace member removed" });
 }
 
 export async function inviteWorkspaceMemberController(
@@ -424,20 +1436,21 @@ export async function inviteWorkspaceMemberController(
   env: AuthWorkerEnv,
 ): Promise<Response> {
   const auth = await getAuthOrError(request, env);
-
   if ("response" in auth) {
     return auth.response;
   }
 
-  const { userId, repo } = auth.result;
-  const user = await repo.getUserById(userId);
-  if (!user) {
-    return notFoundResponse("User not found");
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  if (!workspace.viewer.isWorkspaceAdmin) {
+    return forbiddenResponse("Only workspace admins can invite members");
   }
 
   const body = await request.json<{ email?: string }>();
   const email = body?.email?.toLowerCase().trim();
-
   if (!email) {
     return jsonError("Email is required", 400);
   }
@@ -446,28 +1459,44 @@ export async function inviteWorkspaceMemberController(
     return jsonError("Invalid email format", 400);
   }
 
-  if (email === user.email.toLowerCase()) {
+  if (email === workspace.viewer.user.email.toLowerCase()) {
     return jsonError("You are already a workspace member", 409);
   }
 
-  const existingUser = await repo.getUserByEmail(email);
-  if (existingUser && existingUser.organisationId === user.organisationId) {
-    return jsonError("This user is already in your workspace", 409);
+  const existingUser = await auth.result.repo.getUserByEmail(email);
+  if (
+    existingUser &&
+    existingUser.organisationId === workspace.viewer.user.organisationId
+  ) {
+    const membership = await auth.result.repo.getOrganisationMembership(
+      existingUser.id,
+      existingUser.organisationId,
+    );
+
+    if (membership?.status === "active") {
+      return jsonError("This user is already in your workspace", 409);
+    }
+
+    if (membership?.status === "pending") {
+      return jsonError("This user is already pending workspace approval", 409);
+    }
   }
 
-  const invite = await repo.createOrUpdateWorkspaceInvite(
-    user.organisationId,
+  const invite = await auth.result.repo.createOrUpdateWorkspaceInvite(
+    workspace.viewer.user.organisationId,
     email,
-    user.id,
+    workspace.viewer.user.id,
   );
-
   if (!invite) {
     return jsonError("Unable to create invite", 500);
   }
 
-  const organisation = await repo.getOrganisationById(user.organisationId);
+  const organisation = await auth.result.repo.getOrganisationById(
+    workspace.viewer.user.organisationId,
+  );
   const workspaceName = organisation?.name ?? "your workspace";
-  const inviterName = user.name?.trim() || user.email;
+  const inviterName =
+    workspace.viewer.user.name?.trim() || workspace.viewer.user.email;
   const loginUrl = `${new URL(request.url).origin}/login`;
 
   try {
@@ -476,7 +1505,7 @@ export async function inviteWorkspaceMemberController(
       workspaceName,
       inviterName,
       loginUrl,
-      resendApiKey: env.RESEND_API_KEY,
+      sendEmail: env.SEND_EMAIL,
     });
   } catch (error) {
     console.error("Failed to send workspace invite email:", error);

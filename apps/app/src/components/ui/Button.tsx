@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { forwardRef } from "react";
+import { Button as BaseButton } from "@base-ui/react/button";
 import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/cn";
@@ -122,23 +123,24 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           : sizeStyles[size];
 
     return (
-      <button
+      <BaseButton
         ref={ref}
         type="button"
+        focusableWhenDisabled={isLoading}
         className={cn(
-          "inline-flex items-center justify-center gap-2 font-semibold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:opacity-60",
+          "inline-flex items-center justify-center gap-2 font-semibold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:opacity-60 data-disabled:opacity-60",
           variantStyles[variant],
           sizeClass,
           fullWidth && "w-full",
           expandOnHover && "group gap-0",
-          `cursor-${cursor} disabled:cursor-not-allowed`,
+          `cursor-${cursor} disabled:cursor-not-allowed data-disabled:cursor-not-allowed`,
           className,
         )}
         disabled={disabled || isLoading}
         {...props}
       >
         {content}
-      </button>
+      </BaseButton>
     );
   },
 );

@@ -23,7 +23,7 @@ test.describe("The Judge", () => {
         name: "Room Settings",
       });
       await settingsDialog
-        .getByRole("button", { name: "Results", exact: true })
+        .getByRole("tab", { name: "Results", exact: true })
         .click();
       const judgeToggle = settingsDialog.getByLabel(/Enable The Judge/i);
       if (!(await judgeToggle.isChecked())) {

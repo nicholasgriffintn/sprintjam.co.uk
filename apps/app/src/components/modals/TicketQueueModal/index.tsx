@@ -1,4 +1,4 @@
-import { FC } from "react";
+import type { FC } from "react";
 import type { SessionRoundHistoryItem } from "@sprintjam/types";
 
 import type { TicketQueueItem } from "@/types";

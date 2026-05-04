@@ -193,6 +193,11 @@ describe("validateClientMessage", () => {
     expect(result).toEqual({ type: "completeSession" });
   });
 
+  it("validates leaveRoom", () => {
+    const result = validateClientMessage({ type: "leaveRoom" });
+    expect(result).toEqual({ type: "leaveRoom" });
+  });
+
   it("validates startGame payload", () => {
     const result = validateClientMessage({
       type: "startGame",

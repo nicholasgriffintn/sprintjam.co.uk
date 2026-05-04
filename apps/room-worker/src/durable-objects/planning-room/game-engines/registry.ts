@@ -6,6 +6,9 @@ import { guessTheNumberEngine } from "./engines/guess-the-number";
 import { clueboardEngine } from "./engines/clueboard";
 import { oneWordPitchEngine } from "./engines/one-word-pitch";
 import { wordChainEngine } from "./engines/word-chain";
+import { sprintWordEngine } from "./engines/sprint-word";
+import { teamThreadsEngine } from "./engines/team-threads";
+import { sprintRiskEngine } from "./engines/sprint-risk";
 import type { GameEngine } from "./types";
 
 export const GAME_ENGINES: Record<RoomGameType, GameEngine> = {
@@ -15,4 +18,7 @@ export const GAME_ENGINES: Record<RoomGameType, GameEngine> = {
   "one-word-pitch": oneWordPitchEngine,
   "category-blitz": categoryBlitzEngine,
   clueboard: clueboardEngine,
+  "sprint-word": sprintWordEngine,
+  "team-threads": teamThreadsEngine,
+  "sprint-risk": sprintRiskEngine,
 };

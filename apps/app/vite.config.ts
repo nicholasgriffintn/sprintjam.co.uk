@@ -1,11 +1,11 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
+import { reactRouter } from "@react-router/dev/vite";
 import path from "path";
 import fs from "fs";
 
-export default defineConfig(() => {
+export default defineConfig((env) => {
   const localCertPath = path.resolve(__dirname, ".certs/local.pem");
   const localKeyPath = path.resolve(__dirname, ".certs/local-key.pem");
   const useHttps = fs.existsSync(localCertPath) && fs.existsSync(localKeyPath);
@@ -24,44 +24,31 @@ export default defineConfig(() => {
           }
         : undefined,
     },
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            "react-vendor": ["react", "react-dom"],
-            "strudel-vendor": ["@strudel/web"],
-            "tanstack-vendor": [
-              "@tanstack/react-query",
-              "@tanstack/db",
-              "@tanstack/query-core",
-              "@tanstack/query-db-collection",
-            ],
-            "framer-vendor": ["framer-motion"],
-            "icons-vendor": ["lucide-react"],
-            "ui-vendor": ["qrcode.react", "canvas-confetti"],
-          },
-        },
-      },
-      sourcemap: true,
-    },
     plugins: [
-      react(),
       tailwindcss(),
+      reactRouter(),
       cloudflare({
-        auxiliaryWorkers: [
-          {
-            configPath: "../room-worker/wrangler.jsonc",
-          },
-          {
-            configPath: "../wheel-worker/wrangler.jsonc",
-          },
-          {
-            configPath: "../auth-worker/wrangler.jsonc",
-          },
-          {
-            configPath: "../stats-worker/wrangler.jsonc",
-          },
-        ],
+        viteEnvironment: { name: "ssr" },
+        auxiliaryWorkers:
+          env.command === "build"
+            ? []
+            : [
+              {
+                configPath: "../room-worker/wrangler.json",
+              },
+              {
+                configPath: "../wheel-worker/wrangler.json",
+              },
+              {
+                configPath: "../auth-worker/wrangler.json",
+              },
+              {
+                configPath: "../stats-worker/wrangler.json",
+              },
+              {
+                configPath: "../standup-worker/wrangler.json",
+              },
+            ],
         persistState: {
           path: "../../.data",
         },

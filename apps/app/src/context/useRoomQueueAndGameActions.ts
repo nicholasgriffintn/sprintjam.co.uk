@@ -13,6 +13,8 @@ import {
   endGame,
 } from "@/lib/api-service";
 import { completeSessionByRoomKey } from "@/lib/workspace-service";
+import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
+import { HttpError } from "@/lib/errors";
 import type { ErrorKind, RoomData, TicketQueueItem } from "@/types";
 
 interface UseRoomQueueAndGameActionsOptions {
@@ -34,6 +36,8 @@ export function useRoomQueueAndGameActions({
   setRoomErrorKind,
   assignRoomError,
 }: UseRoomQueueAndGameActionsOptions) {
+  const { isAuthenticated } = useWorkspaceAuth();
+
   const handleSelectTicket = useCallback(
     (ticketId: number) => {
       if (roomData?.status === "completed") {
@@ -121,20 +125,30 @@ export function useRoomQueueAndGameActions({
 
     try {
       completeSession();
+      if (!isAuthenticated) {
+        return;
+      }
+
       void completeSessionByRoomKey(roomData.key).catch((err: unknown) => {
+        if (err instanceof HttpError && err.status === 404) {
+          return;
+        }
         assignRoomError(err, "Failed to update workspace session");
       });
     } catch (err: unknown) {
       assignRoomError(err, "Failed to complete session");
     }
-  }, [assignRoomError, roomData, setRoomError, setRoomErrorKind, userName]);
+  }, [
+    assignRoomError,
+    isAuthenticated,
+    roomData,
+    setRoomError,
+    setRoomErrorKind,
+    userName,
+  ]);
 
   const handleStartGame = useCallback(
     (gameType: RoomGameType) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-
       try {
         startGame(gameType);
       } catch (err: unknown) {
@@ -146,10 +160,6 @@ export function useRoomQueueAndGameActions({
 
   const handleSubmitGameMove = useCallback(
     (value: string) => {
-      if (roomData?.status === "completed") {
-        return;
-      }
-
       try {
         submitGameMove(value);
       } catch (err: unknown) {

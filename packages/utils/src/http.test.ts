@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   createJsonResponse,
+  createRoomSessionCookie,
+  getRoomSessionToken,
+  getRoomSessionTokenForRoom,
   jsonError,
   isAllowedOrigin,
   validateRequestBodySize,
@@ -125,5 +128,35 @@ describe("validateRequestBodySize", () => {
     const request = createMockRequest("1000");
     const result = validateRequestBodySize(request, 1000);
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("room session cookie helpers", () => {
+  it("stores room key metadata in room session cookies", () => {
+    const cookie = createRoomSessionCookie("token-abc", 3600, true, "abc123");
+    expect(cookie).toContain("room_session=ABC123:token-abc");
+  });
+
+  it("parses structured room session cookies", () => {
+    const request = new Request("https://sprintjam.co.uk", {
+      headers: {
+        Cookie: "room_session=ABC123:token-abc",
+      },
+    });
+
+    expect(getRoomSessionToken(request)).toBe("token-abc");
+    expect(getRoomSessionTokenForRoom(request, "ABC123")).toBe("token-abc");
+    expect(getRoomSessionTokenForRoom(request, "XYZ999")).toBeNull();
+  });
+
+  it("supports legacy room session cookies without room key metadata", () => {
+    const request = new Request("https://sprintjam.co.uk", {
+      headers: {
+        Cookie: "room_session=legacy-token",
+      },
+    });
+
+    expect(getRoomSessionToken(request)).toBe("legacy-token");
+    expect(getRoomSessionTokenForRoom(request, "ABC123")).toBe("legacy-token");
   });
 });

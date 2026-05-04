@@ -3,6 +3,7 @@ import type {
   Fetcher,
   RateLimit,
   D1Database,
+  SendEmail
 } from "@cloudflare/workers-types";
 
 /**
@@ -22,6 +23,7 @@ export interface DispatchWorkerEnv extends BaseEnv {
   AUTH_WORKER: Fetcher;
   STATS_WORKER: Fetcher;
   WHEEL_WORKER: Fetcher;
+  STANDUP_WORKER: Fetcher;
 }
 
 /**
@@ -55,7 +57,6 @@ export interface RoomWorkerEnv extends BaseEnv {
  */
 export interface AuthWorkerEnv extends BaseEnv {
   DB: D1Database;
-  RESEND_API_KEY: string;
   TOKEN_ENCRYPTION_SECRET: string;
   INTERNAL_API_SECRET?: string;
   ENABLE_MAGIC_LINK_RATE_LIMIT?: string;
@@ -71,6 +72,7 @@ export interface AuthWorkerEnv extends BaseEnv {
   GITHUB_OAUTH_CLIENT_ID?: string;
   GITHUB_OAUTH_CLIENT_SECRET?: string;
   GITHUB_OAUTH_REDIRECT_URI?: string;
+  SEND_EMAIL: SendEmail;
 }
 
 /**
@@ -91,4 +93,18 @@ export interface WheelWorkerEnv extends BaseEnv {
   WHEEL_CREATE_RATE_LIMITER: RateLimit;
   WHEEL_JOIN_RATE_LIMITER: RateLimit;
   WHEEL_IP_RATE_LIMITER: RateLimit;
+  AUTH_WORKER?: Fetcher;
+}
+
+/**
+ * Environment for the standup worker
+ */
+export interface StandupWorkerEnv extends BaseEnv {
+  STANDUP_ROOM: DurableObjectNamespace;
+  TOKEN_ENCRYPTION_SECRET: string;
+  ENABLE_STANDUP_RATE_LIMIT?: string;
+  STANDUP_CREATE_RATE_LIMITER: RateLimit;
+  STANDUP_JOIN_RATE_LIMITER: RateLimit;
+  STANDUP_IP_RATE_LIMITER: RateLimit;
+  AUTH_WORKER?: Fetcher;
 }

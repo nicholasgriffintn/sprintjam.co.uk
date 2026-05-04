@@ -1,7 +1,4 @@
-import type {
-  Request as CfRequest,
-  Response as CfResponse,
-} from "@cloudflare/workers-types";
+import type { Response as CfResponse } from "@cloudflare/workers-types";
 import type { RoomWorkerEnv } from "@sprintjam/types";
 import { escapeHtml, getRoomStub } from "@sprintjam/utils";
 
@@ -10,6 +7,9 @@ export async function validateSession(
   roomKey: string,
   userName: string,
   sessionToken?: string | null,
+  options?: {
+    requireQueueManagement?: boolean;
+  },
 ): Promise<void> {
   if (!sessionToken) {
     throw new Error("Missing session token");
@@ -20,8 +20,12 @@ export async function validateSession(
     new Request("https://internal/session/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: userName, sessionToken }),
-    }) as unknown as CfRequest,
+      body: JSON.stringify({
+        name: userName,
+        sessionToken,
+        requireQueueManagement: options?.requireQueueManagement === true,
+      }),
+    }),
   );
 
   if (!response.ok) {
@@ -70,7 +74,7 @@ function oauthHtmlResponse(
   return new Response(
     `<html><body><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p>${closeScript}</body></html>`,
     { status, headers: { "Content-Type": "text/html" } },
-  ) as unknown as CfResponse;
+  );
 }
 
 export function oauthHtmlErrorResponse(
@@ -107,7 +111,7 @@ export async function fetchOAuthStatus<T>(
           : {}),
       },
       body: JSON.stringify(payload),
-    }) as unknown as CfRequest,
+    }),
   );
 
   if (!response.ok) {
@@ -136,7 +140,7 @@ export async function revokeOAuthCredentials(
           : {}),
       },
       body: JSON.stringify(payload),
-    }) as unknown as CfRequest,
+    }),
   );
 
   if (!response.ok) {

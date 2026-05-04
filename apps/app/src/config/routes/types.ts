@@ -10,10 +10,19 @@ import type {
 export type RouteGroup =
   | "marketing"
   | "workspace"
+  | "collaboration"
   | "room"
   | "wheel"
+  | "standup"
   | "auth"
   | "flow";
+
+export interface RoutePathParams {
+  roomKey?: string;
+  wheelKey?: string;
+  standupKey?: string;
+  teamId?: number | string;
+}
 
 export interface RouteNavConfig {
   label: string;
@@ -28,11 +37,10 @@ export interface RouteLayoutConfig {
   marketingVariant?: MarketingVariant;
 }
 
-export interface RouteConfig<TScreen extends string = string> {
+export interface RouteDefinition<TScreen extends string = string> {
   screen: TScreen;
-  path: string | ((params: { roomKey?: string; wheelKey?: string }) => string);
+  path: string | ((params: RoutePathParams) => string);
   group: RouteGroup;
-  component: FC | LazyExoticComponent<ComponentType<unknown>>;
   meta: MetaTagConfig;
   nav?: RouteNavConfig;
   layout?: RouteLayoutConfig;
@@ -40,5 +48,11 @@ export interface RouteConfig<TScreen extends string = string> {
   parent?: TScreen;
 }
 
-export type ScreenFromRoutes<T extends readonly RouteConfig[]> =
+export interface RouteConfig<
+  TScreen extends string = string,
+> extends RouteDefinition<TScreen> {
+  component: FC | LazyExoticComponent<ComponentType<unknown>>;
+}
+
+export type ScreenFromRoutes<T extends readonly RouteDefinition[]> =
   T[number]["screen"];

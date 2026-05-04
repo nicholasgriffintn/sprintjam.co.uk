@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 
 import type { RoomData } from "@/types";
 import { Button } from "@/components/ui/Button";
+import { ScrollArea } from "@/components/ui";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { getVisibleEstimateOptions } from "@/utils/votingOptions";
 import { getGuidancePhase, getVoteSpreadSummary } from "@/utils/room-guidance";
@@ -151,7 +152,12 @@ export const RoomGuidancePanel: FC<RoomGuidancePanelProps> = ({
           </Button>
         </div>
 
-        <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <ScrollArea
+          rootClassName="mt-4"
+          className="min-h-0 flex-1 w-full max-w-full"
+          contentClassName="w-full max-w-full space-y-4 pr-3"
+          aria-label="Room guidance content"
+        >
           <div className="rounded-2xl border border-slate-200/70 bg-slate-50/80 p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
               In this moment
@@ -232,7 +238,7 @@ export const RoomGuidancePanel: FC<RoomGuidancePanelProps> = ({
               criteria. Each slice should be independently shippable.
             </p>
           </div>
-        </div>
+        </ScrollArea>
       </SurfaceCard>
     </motion.aside>
   );

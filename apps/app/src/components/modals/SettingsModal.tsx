@@ -59,7 +59,7 @@ const SettingsModal: FC<SettingsModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Room Settings" size="md">
       <>
-        <div className="max-h-[60vh] space-y-6 overflow-y-auto pr-1">
+        <div className="space-y-6">
           <RoomSettingsTabs
             initialSettings={draftSettings}
             defaultSettings={defaultSettings}

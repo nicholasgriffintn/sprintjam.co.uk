@@ -1,5 +1,5 @@
 import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
-import { validateClientMessage } from '@sprintjam/utils';
+import { validateClientMessage } from "@sprintjam/utils";
 
 import type { PlanningRoom } from ".";
 import {
@@ -7,7 +7,60 @@ import {
   normalizeRoomData,
   anonymizeRoomData,
   findCanonicalUserName,
-} from '../../lib/room-data';
+} from "../../lib/room-data";
+
+const COMPLETED_ROOM_ALLOWED_MESSAGE_TYPES: Set<string> = new Set([
+  "completeSession",
+  "leaveRoom",
+  "startGame",
+  "submitGameMove",
+  "endGame",
+]);
+
+async function markDisconnectedIfLastSession(
+  room: PlanningRoom,
+  userName: string,
+) {
+  const stillConnected = Array.from(room.sessions.values()).some(
+    (session) => session.userName === userName,
+  );
+
+  if (stillConnected) {
+    return;
+  }
+
+  const latestRoomData = await room.getRoomData();
+  if (!latestRoomData || latestRoomData.connectedUsers?.[userName] === false) {
+    return;
+  }
+
+  markUserConnection(latestRoomData, userName, false);
+  room.repository.setUserConnection(userName, false);
+  room.broadcast({
+    type: "userConnectionStatus",
+    user: userName,
+    isConnected: false,
+  });
+
+  if (
+    userName === latestRoomData.moderator &&
+    latestRoomData.settings.autoHandoverModerator
+  ) {
+    const connectedUsers = latestRoomData.users
+      .filter((user) => latestRoomData.connectedUsers[user])
+      .sort((a, b) => a.localeCompare(b));
+
+    if (connectedUsers.length > 0) {
+      latestRoomData.moderator = connectedUsers[0];
+      room.repository.setModerator(latestRoomData.moderator);
+
+      room.broadcast({
+        type: "newModerator",
+        moderator: latestRoomData.moderator,
+      });
+    }
+  }
+}
 
 export async function handleSession(
   room: PlanningRoom,
@@ -118,7 +171,7 @@ export async function handleSession(
       const roomData = await room.getRoomData();
       if (
         roomData?.status === "completed" &&
-        validated.type !== "completeSession"
+        !COMPLETED_ROOM_ALLOWED_MESSAGE_TYPES.has(validated.type)
       ) {
         return;
       }
@@ -185,6 +238,11 @@ export async function handleSession(
         case "completeSession":
           await room.handleCompleteSession(canonicalUserName);
           break;
+        case "leaveRoom":
+          room.sessions.delete(webSocket);
+          await markDisconnectedIfLastSession(room, canonicalUserName);
+          webSocket.close(1000, "User left the room");
+          break;
         case "startGame":
           await room.handleStartGame(canonicalUserName, validated.gameType);
           break;
@@ -208,42 +266,6 @@ export async function handleSession(
 
   webSocket.addEventListener("close", async () => {
     room.sessions.delete(webSocket);
-    const stillConnected = Array.from(room.sessions.values()).some(
-      (s) => s.userName === canonicalUserName,
-    );
-
-    if (!stillConnected) {
-      const latestRoomData = await room.getRoomData();
-
-      if (latestRoomData) {
-        markUserConnection(latestRoomData, canonicalUserName, false);
-
-        room.repository.setUserConnection(canonicalUserName, false);
-        room.broadcast({
-          type: "userConnectionStatus",
-          user: canonicalUserName,
-          isConnected: false,
-        });
-
-        if (
-          canonicalUserName === latestRoomData.moderator &&
-          latestRoomData.settings.autoHandoverModerator
-        ) {
-          const connectedUsers = latestRoomData.users
-            .filter((user) => latestRoomData.connectedUsers[user])
-            .sort((a, b) => a.localeCompare(b));
-
-          if (connectedUsers.length > 0) {
-            latestRoomData.moderator = connectedUsers[0];
-            room.repository.setModerator(latestRoomData.moderator);
-
-            room.broadcast({
-              type: "newModerator",
-              moderator: latestRoomData.moderator,
-            });
-          }
-        }
-      }
-    }
+    await markDisconnectedIfLastSession(room, canonicalUserName);
   });
 }

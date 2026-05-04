@@ -14,12 +14,14 @@ import { downloadCsv } from "@/utils/csv";
 import { buildCsv } from "@/components/modals/TicketQueueModal/utils/csv";
 import { ExternalServiceBadge } from "@/components/ExternalServiceBadge";
 import { Button } from "@/components/ui/Button";
+import { ScrollArea } from "@/components/ui";
 
 interface TicketQueueModalCompletedTabProps {
   completedTickets: TicketQueueItem[];
   roundHistory?: SessionRoundHistoryItem[];
   roomKey: string;
   userName: string;
+  canManageQueue: boolean;
   onError?: (message: string) => void;
   onUpdateTicket?: (
     ticketId: number,
@@ -34,6 +36,7 @@ export function TicketQueueModalCompletedTab({
   roundHistory,
   roomKey,
   userName,
+  canManageQueue,
   onError,
   onUpdateTicket,
 }: TicketQueueModalCompletedTabProps) {
@@ -86,18 +89,17 @@ export function TicketQueueModalCompletedTab({
 
   const setUpdatedTicketMetadata = (ticketId: number, metadata: unknown) => {
     onUpdateTicket?.(ticketId, {
-      externalServiceMetadata: metadata as TicketQueueItem["externalServiceMetadata"],
+      externalServiceMetadata:
+        metadata as TicketQueueItem["externalServiceMetadata"],
     });
   };
 
-  const runSyncMutation = async <TResult,>(
-    options: {
-      ticketId: number;
-      provider: SyncProvider;
-      execute: () => Promise<TResult>;
-      fallbackError: string;
-    },
-  ) => {
+  const runSyncMutation = async <TResult,>(options: {
+    ticketId: number;
+    provider: SyncProvider;
+    execute: () => Promise<TResult>;
+    fallbackError: string;
+  }) => {
     setSyncing({ id: options.ticketId, provider: options.provider });
     try {
       const updated = await options.execute();
@@ -113,6 +115,14 @@ export function TicketQueueModalCompletedTab({
   };
 
   const handleSyncToJira = async (ticket: TicketQueueItem) => {
+    if (!canManageQueue) {
+      handleError(
+        "You do not have permission to sync provider estimates for this room.",
+        onError,
+      );
+      return;
+    }
+
     if (ticket.externalService !== "jira") {
       handleError("Sync available only for Jira-linked tickets.", onError);
       return;
@@ -138,6 +148,14 @@ export function TicketQueueModalCompletedTab({
   };
 
   const handleSyncToLinear = async (ticket: TicketQueueItem) => {
+    if (!canManageQueue) {
+      handleError(
+        "You do not have permission to sync provider estimates for this room.",
+        onError,
+      );
+      return;
+    }
+
     if (ticket.externalService !== "linear") {
       handleError("Sync available only for Linear-linked tickets.", onError);
       return;
@@ -170,6 +188,14 @@ export function TicketQueueModalCompletedTab({
   };
 
   const handleSyncToGithub = async (ticket: TicketQueueItem) => {
+    if (!canManageQueue) {
+      handleError(
+        "You do not have permission to sync provider estimates for this room.",
+        onError,
+      );
+      return;
+    }
+
     if (ticket.externalService !== "github") {
       handleError("Sync available only for GitHub-linked tickets.", onError);
       return;
@@ -198,6 +224,10 @@ export function TicketQueueModalCompletedTab({
     syncing?.id === ticketId && syncing.provider === provider;
 
   const getSyncButtonConfig = (ticket: TicketQueueItem) => {
+    if (!canManageQueue) {
+      return null;
+    }
+
     if (ticket.externalService === "jira") {
       return {
         provider: "jira" as const,
@@ -285,9 +315,11 @@ export function TicketQueueModalCompletedTab({
   };
 
   return (
-    <div
-      className="max-h-[70vh] space-y-3 overflow-y-auto pr-1"
+    <ScrollArea
+      className="max-h-[70vh]"
+      contentClassName="space-y-3 pr-3"
       data-testid="queue-history-tab-panel"
+      aria-label="Completed tickets and round history"
     >
       {!hasTicketHistory && !hasRoundHistory ? (
         <p className="py-6 text-center text-sm text-slate-500">
@@ -414,11 +446,17 @@ export function TicketQueueModalCompletedTab({
                         {syncButton && (
                           <Button
                             onClick={syncButton.onClick}
-                            disabled={isSyncingProvider(ticket.id, syncButton.provider)}
+                            disabled={isSyncingProvider(
+                              ticket.id,
+                              syncButton.provider,
+                            )}
                             variant="unstyled"
                             className={syncButton.className}
                           >
-                            {isSyncingProvider(ticket.id, syncButton.provider) ? (
+                            {isSyncingProvider(
+                              ticket.id,
+                              syncButton.provider,
+                            ) ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
                               <RefreshCw className="h-3.5 w-3.5" />
@@ -484,6 +522,6 @@ export function TicketQueueModalCompletedTab({
           )}
         </>
       )}
-    </div>
+    </ScrollArea>
   );
 }

@@ -122,7 +122,9 @@ export async function updateJiraStoryPointsController(
   }
 
   try {
-    await validateSession(env, roomKey, userName, sessionToken);
+    await validateSession(env, roomKey, userName, sessionToken, {
+      requireQueueManagement: true,
+    });
 
     const oauthConfig = getJiraOAuthConfig(env);
     if (!oauthConfig) {

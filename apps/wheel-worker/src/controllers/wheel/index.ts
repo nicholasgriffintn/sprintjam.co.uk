@@ -1,6 +1,7 @@
 import type { WheelRoom } from "../../durable-objects/wheel-room";
 import type {
-  WheelData,
+  WheelAccessSettings,
+  WheelStateData,
   WheelSettings,
   WheelWorkerEnv,
 } from "@sprintjam/types";
@@ -8,24 +9,23 @@ import {
   hashPasscode,
   verifyPasscode,
   generateID,
+  generateSessionToken,
+  generateRecoveryPasskey,
   getWheelSessionToken,
+  createWheelSessionCookie,
+  SESSION_TOKEN_TTL_MS,
 } from "@sprintjam/utils";
 import { jsonResponse, jsonError } from "../../lib/response";
+import { toClientWheelData } from "../../lib/client-wheel";
+import { normalizeWheelSettings } from "../../lib/wheel-validation";
 
 export interface WheelRoomHttpContext {
   repository: WheelRoom["repository"];
-  getWheelData(): Promise<WheelData | undefined>;
-  putWheelData(data: WheelData): Promise<void>;
+  getWheelData(): Promise<WheelStateData | undefined>;
+  putWheelData(data: WheelStateData): Promise<void>;
   disconnectUserSessions(userName: string): void;
   env: WheelWorkerEnv;
 }
-
-const DEFAULT_SETTINGS: WheelSettings = {
-  removeWinnerAfterSpin: false,
-  showConfetti: true,
-  playSounds: true,
-  spinDurationMs: 4000,
-};
 
 const DEFAULT_ENTRY_NAMES = [
   "Ada",
@@ -51,6 +51,10 @@ export async function handleHttpRequest(
     return handleJoin(context, request);
   }
 
+  if (path === "/recover" && request.method === "POST") {
+    return handleRecover(context, request);
+  }
+
   if (path === "/settings" && request.method === "GET") {
     return handleGetSettings(context, request);
   }
@@ -74,9 +78,24 @@ function passcodeErrorResponse(message: string, status = 401): Response {
   });
 }
 
-function createWheelSessionCookie(token: string, env: WheelWorkerEnv): string {
-  const secure = env.ENVIRONMENT === "development" ? "" : " Secure;";
-  return `wheel_session=${token}; HttpOnly;${secure} SameSite=Strict; Path=/; Max-Age=86400`;
+function buildSessionResponse(
+  body: unknown,
+  sessionToken: string,
+  env: WheelWorkerEnv,
+): Response {
+  const isSecure = env.ENVIRONMENT !== "development";
+  const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": createWheelSessionCookie(
+        sessionToken,
+        maxAgeSeconds,
+        isSecure,
+      ),
+    },
+  });
 }
 
 async function handleInitialize(
@@ -89,9 +108,11 @@ async function handleInitialize(
     passcode?: string;
     settings?: Partial<WheelSettings>;
     avatar?: string;
+    workspaceUserId?: number;
   }>();
 
-  const { wheelKey, moderator, passcode, settings, avatar } = body;
+  const { wheelKey, moderator, passcode, settings, avatar, workspaceUserId } =
+    body;
 
   if (!wheelKey || !moderator) {
     return jsonError("Wheel key and moderator are required");
@@ -102,12 +123,9 @@ async function handleInitialize(
     return jsonError("Wheel already exists", 409);
   }
 
-  const sessionToken = generateID();
+  const sessionToken = generateSessionToken();
 
-  const wheelSettings: WheelSettings = {
-    ...DEFAULT_SETTINGS,
-    ...settings,
-  };
+  const wheelSettings = normalizeWheelSettings(undefined, settings);
 
   const defaultEntries = DEFAULT_ENTRY_NAMES.map((name) => ({
     id: generateID(),
@@ -115,7 +133,7 @@ async function handleInitialize(
     enabled: true,
   }));
 
-  const wheelData: WheelData = {
+  const wheelData: WheelStateData = {
     key: wheelKey,
     entries: defaultEntries,
     moderator,
@@ -131,21 +149,25 @@ async function handleInitialize(
 
   await context.putWheelData(wheelData);
   context.repository.setSessionToken(moderator, sessionToken);
+
+  if (workspaceUserId) {
+    context.repository.setWorkspaceUserId(moderator, workspaceUserId);
+  }
+
   if (avatar) {
     context.repository.setUserAvatar(moderator, avatar);
   }
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      wheel: wheelData,
-    }),
-    {
-      status: 200,
-      headers: {
-        "Set-Cookie": createWheelSessionCookie(sessionToken, context.env),
-      },
-    },
+  let recoveryPasskey: string | undefined;
+  if (!workspaceUserId) {
+    recoveryPasskey = generateRecoveryPasskey();
+    await context.repository.setRecoveryPasskey(moderator, recoveryPasskey);
+  }
+
+  return buildSessionResponse(
+    { success: true, wheel: toClientWheelData(wheelData), recoveryPasskey },
+    sessionToken,
+    context.env,
   );
 }
 
@@ -157,9 +179,10 @@ async function handleJoin(
     name: string;
     passcode?: string;
     avatar?: string;
+    workspaceUserId?: number;
   }>();
 
-  const { name, passcode, avatar } = body;
+  const { name, passcode, avatar, workspaceUserId } = body;
 
   if (!name) {
     return jsonError("Name is required");
@@ -170,46 +193,119 @@ async function handleJoin(
     return jsonError("Wheel not found", 404);
   }
 
-  if (wheelData.passcodeHash) {
-    if (!passcode) {
-      return passcodeErrorResponse("Passcode is required", 401);
+  // For workspace users, find their existing slot by user ID first.
+  let canonicalName: string | undefined;
+  if (workspaceUserId) {
+    canonicalName =
+      context.repository.findUserNameByWorkspaceId(workspaceUserId);
+  }
+
+  const isWorkspaceUserRejoining = !!canonicalName;
+
+  if (!isWorkspaceUserRejoining) {
+    if (wheelData.passcodeHash) {
+      if (!passcode) {
+        return passcodeErrorResponse("Passcode is required", 401);
+      }
+
+      const isValid = await verifyPasscode(passcode, wheelData.passcodeHash);
+      if (!isValid) {
+        return passcodeErrorResponse("Invalid passcode", 401);
+      }
     }
 
-    const isValid = await verifyPasscode(passcode, wheelData.passcodeHash);
-    if (!isValid) {
-      return passcodeErrorResponse("Invalid passcode", 401);
+    const existingUser = wheelData.users.find(
+      (u) => u.toLowerCase() === name.toLowerCase(),
+    );
+
+    if (existingUser && wheelData.connectedUsers[existingUser]) {
+      return jsonError("Name already connected", 409);
+    }
+  } else {
+    if (wheelData.connectedUsers[canonicalName!]) {
+      context.disconnectUserSessions(canonicalName!);
     }
   }
 
-  const existingUser = wheelData.users.find(
-    (u) => u.toLowerCase() === name.toLowerCase(),
-  );
+  const resolvedName = canonicalName ?? name;
+  const finalName = context.repository.ensureUser(resolvedName);
+  const sessionToken = generateSessionToken();
+  context.repository.setSessionToken(finalName, sessionToken);
 
-  if (existingUser && wheelData.connectedUsers[existingUser]) {
-    context.disconnectUserSessions(existingUser);
+  if (workspaceUserId) {
+    context.repository.setWorkspaceUserId(finalName, workspaceUserId);
   }
-
-  const canonicalName = context.repository.ensureUser(name);
-  const sessionToken = generateID();
-  context.repository.setSessionToken(canonicalName, sessionToken);
 
   if (avatar) {
-    context.repository.setUserAvatar(canonicalName, avatar);
+    context.repository.setUserAvatar(finalName, avatar);
+  }
+
+  let recoveryPasskey: string | undefined;
+  if (!workspaceUserId) {
+    recoveryPasskey = generateRecoveryPasskey();
+    await context.repository.setRecoveryPasskey(finalName, recoveryPasskey);
   }
 
   const freshWheel = await context.getWheelData();
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      wheel: freshWheel,
-    }),
+  return buildSessionResponse(
     {
-      status: 200,
-      headers: {
-        "Set-Cookie": createWheelSessionCookie(sessionToken, context.env),
-      },
+      success: true,
+      wheel: freshWheel ? toClientWheelData(freshWheel) : undefined,
+      recoveryPasskey,
     },
+    sessionToken,
+    context.env,
+  );
+}
+
+async function handleRecover(
+  context: WheelRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const body = await request.json<{ name: string; recoveryPasskey: string }>();
+  const { name, recoveryPasskey } = body;
+
+  if (!name || !recoveryPasskey) {
+    return jsonError("Name and recovery passkey are required");
+  }
+
+  const wheelData = await context.getWheelData();
+  if (!wheelData) {
+    return jsonError("Wheel not found", 404);
+  }
+
+  const canonicalName = wheelData.users.find(
+    (u) => u.toLowerCase() === name.toLowerCase(),
+  );
+  if (!canonicalName) {
+    return jsonError("Invalid name or recovery passkey", 401);
+  }
+
+  const isValid = await context.repository.validateRecoveryPasskey(
+    canonicalName,
+    recoveryPasskey,
+  );
+  if (!isValid) {
+    return jsonError("Invalid name or recovery passkey", 401);
+  }
+
+  const sessionToken = generateSessionToken();
+  context.repository.setSessionToken(canonicalName, sessionToken);
+
+  if (wheelData.connectedUsers[canonicalName]) {
+    context.disconnectUserSessions(canonicalName);
+  }
+
+  const freshWheel = await context.getWheelData();
+
+  return buildSessionResponse(
+    {
+      success: true,
+      wheel: freshWheel ? toClientWheelData(freshWheel) : undefined,
+    },
+    sessionToken,
+    context.env,
   );
 }
 
@@ -225,11 +321,14 @@ async function handleGetSettings(
     return jsonError("Wheel not found", 404);
   }
 
-  return jsonResponse({
+  const accessSettings: WheelAccessSettings = {
     settings: wheelData.settings,
     moderator: wheelData.moderator,
     isModerator: name ? wheelData.moderator === name : false,
-  });
+    hasPasscode: !!wheelData.passcodeHash,
+  };
+
+  return jsonResponse(accessSettings);
 }
 
 async function handleUpdatePasscode(

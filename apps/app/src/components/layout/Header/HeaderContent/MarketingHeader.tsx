@@ -8,11 +8,12 @@ import { useSessionActions } from "@/context/SessionContext";
 import { HeaderUserMenu } from "../HeaderUserMenu";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
-import { navigateTo, type AppScreen } from "@/config/routes";
+import type { AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
-  const { goHome, setScreen, startCreateFlow, startJoinFlow } =
-    useSessionActions();
+  const { goHome, startCreateFlow, startJoinFlow } = useSessionActions();
+  const navigateTo = useAppNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -26,7 +27,6 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
   ];
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
     setIsMenuOpen(false);
   };

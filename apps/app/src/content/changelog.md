@@ -1,3 +1,65 @@
+## V4.5
+
+- Changed to send emails from Cloudflare rather than Resend, cutting down on the number of third parties we need to share data with. As we already use Cloudflare, this means that we can keep all of our user data within a single location.
+
+## V4.4
+
+- Moved to server side rendering using React Router with Vite instead of just Client side rendering. This should improve performance while also improving the SEO of the application.
+- Fixed some issues with Websocket connections being initiated multiple times on the wheel and in standup rooms.
+- Made a change to the default settings to change the following options by default:
+  - Auto handover of the moderator role to ensure rooms can continue without interruption if the moderator leaves, it is believed that this is the default expectation for most users and it can be disabled in the settings if not wanted.
+  - Show user presence has now been enabled by default so that users can see who is currently connected to the room or disconnected.
+  - Disabled the Strudel player by default as it is a bit of a niche feature and can be enabled in the settings for those who want to use it.
+- Changed the room error banner to show a reconnecting spinner for 5s on disconnect rather than immediately showing a warning toast.
+
+## V4.3
+
+- Released the new standups feature out of beta with some improvements to the UI and experience based on user feedback, along with some bug fixes and optimisations.
+- Released the wheel spinner feature out of beta along with some final improvements.
+- Made adjustments to the homepage to showcase the new features and to make it clearer what SprintJam is for.
+- Restructured the router handling to remove some complexity and fix potential bugs.
+
+## V4.2
+
+- Added a new automation to generate standup icebreaker questions every 30 days.
+- Standardised and fixed some issues with the handling of cookies for session tokens.
+- Created a new recovery token and API route that will allow users to rejoin rooms if they have lost access to their session token for any reason. This will be shown to the user when they start a session and they can copy it to regain access if they lose their token or switch devices. If a user is logged in they will not be given a token as they can just log in to regain access, this is only for users who are not logged in.
+
+## V4.1
+
+- Made various improvements to the standups feature for better responses and results experiences, this is still in beta.
+
+## V4
+
+- Added a new Standups feature that allows teams to run asynchronous standup meetings. Attendees will be able to submit what they did yesterday, what they're doing today, any blockers they have and a health check on how they're feeling. They can also answer icebreaker questions, provide kudos to their teammates and react to other responses with emojis.
+
+## V3.5
+
+- Added restricted teams so that users must be explicitly added or approved by a team admin before they can access that team or create sessions in it.
+- Added a workspace setting to require manual approval for new workspace members before they can join.
+- Expanded workspace admin controls so that workspace admins can manage all teams, add and move users between teams, and remove users from teams or the workspace entirely.
+- Added support for promoting additional workspace admins and team admins instead of relying on a single owner/admin.
+- Improved the workspace sessions experience for restricted teams by showing pending access states and allowing users to request team access directly.
+
+## V3.4
+
+- Your selected avatar should now persist across sessions so you won't have to select it each time you join a room.
+- Also added a new user profile system for signed in workspace users. This allows them to set a display name and avatar that will be used across all rooms they join while signed in.
+- Also fixed an issue where the owner of the workspace was not being correctly assigned when the workspace was created.
+
+## V3.3
+
+- Added three new games to the party games feature:
+  - Sprint Word - Guess the hidden 5-letter sprint word in 6 tries. Everyone plays at once. Similar to Wordle.
+  - Team Threads - 16 sprint and tech words hide 4 secret groups. Find them all together. Similar to Connections.
+  - Sprint Risk - Roll dice, press your luck, and bank before you farkle. 3 turns each. Similar to Farkle but made a bit faster.
+- Added a help popover to the game panel so participants can see the rules.
+- Expanded the words list for the games.
+
+## V3.2
+
+- Moved a number of components to use base ui instead of custom code that improves the UX and accessibility of the app. This should also make it easier to maintain and add new features in the future.
+
 ## V3.0-v3.1
 
 - Enabled sign in to workspaces, this is currently in beta but allows users from approved domains to track and store their sessions with the rest of their team(s) in a shared workspace. You will also be able to configure default settings and integrations for specific teams that will be pre loaded for any of the rooms that are saved to that team.

@@ -8,8 +8,12 @@ export const roomUsers = sqliteTable(
     isConnected: integer("is_connected").notNull().default(0),
     isSpectator: integer("is_spectator").notNull().default(0),
     ordinal: integer("ordinal").notNull(),
+    workspaceUserId: integer("workspace_user_id"),
   },
   (table) => ({
     connectedIdx: index("idx_users_connected").on(table.isConnected),
+    workspaceUserIdx: index("idx_users_workspace_user_id").on(
+      table.workspaceUserId,
+    ),
   }),
 );

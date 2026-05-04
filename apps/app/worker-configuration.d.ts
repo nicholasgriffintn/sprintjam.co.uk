@@ -18,7 +18,6 @@ declare namespace Cloudflare {
     GITHUB_OAUTH_REDIRECT_URI: string;
     TOKEN_ENCRYPTION_SECRET: string;
     FEEDBACK_GITHUB_TOKEN: string;
-    RESEND_API_KEY: string;
     ROOM_WORKER: Fetcher /* sprintjam-room-worker */;
     AUTH_WORKER: Fetcher /* sprintjam-auth-worker */;
     ASSETS: Fetcher;
