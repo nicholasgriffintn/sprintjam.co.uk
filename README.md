@@ -103,7 +103,6 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    # apps/auth-worker/.dev.vars
 
    TOKEN_ENCRYPTION_SECRET=replace-me
-   RESEND_API_KEY=replace-me
 
    # Optional:
    # INTERNAL_API_SECRET=replace-me

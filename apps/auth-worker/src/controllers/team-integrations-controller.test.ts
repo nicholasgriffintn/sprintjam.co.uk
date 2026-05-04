@@ -107,7 +107,9 @@ describe("team integrations OAuth security", () => {
         organisationId: 5,
       }),
       isOrganisationAdmin: vi.fn().mockResolvedValue(false),
-      getTeamMembership: vi.fn().mockResolvedValue({ role: "admin", status: "active" }),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "admin", status: "active" }),
       isTeamAdmin: vi.fn().mockResolvedValue(true),
       createAuthChallenge: vi.fn().mockResolvedValue(1),
     };
@@ -154,9 +156,7 @@ describe("team integrations OAuth security", () => {
     expect(authorizationUrl.searchParams.get("state")).toBeTruthy();
 
     const encodedState = authorizationUrl.searchParams.get("state");
-    const signedState = JSON.parse(
-      atob(encodedState as string),
-    ) as {
+    const signedState = JSON.parse(atob(encodedState as string)) as {
       data: {
         teamId: number;
         userId: number;

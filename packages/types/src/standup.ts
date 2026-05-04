@@ -22,6 +22,7 @@ export interface StandupResponsePayload {
 
 export interface StandupResponse extends StandupResponsePayload {
   userName: string;
+  blockerResolved?: boolean;
   submittedAt: number;
   updatedAt: number;
 }
@@ -37,6 +38,6 @@ export interface StandupData {
   userAvatars?: Record<string, string>;
   teamId?: number;
   focusedUser?: string;
+  presentationOrder?: string[];
   reactions?: Record<string, Record<string, string[]>>;
-  presentationTheme?: string;
 }

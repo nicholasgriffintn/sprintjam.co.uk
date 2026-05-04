@@ -1,7 +1,7 @@
 import { useCallback, useState, type MutableRefObject } from "react";
 
 import { isConnected } from "@/lib/api-service";
-import { applyRoomMessageToCollections } from "@/lib/data/room-store";
+import { applyRoomMessageToStore } from "@/lib/room-store";
 import { getErrorDetails } from "@/lib/errors";
 import type {
   ErrorConnectionIssue,
@@ -75,7 +75,7 @@ export function useRoomRealtimeState({
         return;
       }
 
-      void applyRoomMessageToCollections(message, activeRoomKeyRef.current)
+      void applyRoomMessageToStore(message, activeRoomKeyRef.current)
         .then((updatedRoom) => {
           if (!activeRoomKeyRef.current && updatedRoom?.key) {
             setActiveRoomKey(updatedRoom.key);

@@ -14,6 +14,7 @@ export * from "./team-sessions";
 export * from "./team-settings";
 export * from "./team-memberships";
 export * from "./team-integrations";
+export * from "./team-collaboration-installations";
 export * from "./round-votes";
 export * from "./vote-records";
 export * from "./room-stats";

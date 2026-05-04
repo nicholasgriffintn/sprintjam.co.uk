@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { type FC } from "react";
 import type { SessionRoundHistoryItem } from "@sprintjam/types";
 import type { TeamSession } from "@sprintjam/types";
 
@@ -46,7 +46,6 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
   onUpdateTicket,
   onDeleteTicket,
   onSelectTicket,
-  canManageQueue,
   onSaveToWorkspace,
   showSaveToWorkspace = false,
   linkedWorkspaceSession = null,
@@ -79,7 +78,7 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
             onUpdateTicket={onUpdateTicket}
             onDeleteTicket={onDeleteTicket}
             onSelectTicket={onSelectTicket}
-            canManageQueue={canManageQueue}
+            canManageQueue={false}
             initialTab="history"
             onError={onError}
           />
@@ -101,7 +100,9 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
             <div className="mr-auto min-w-0">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 Saved to workspace
-                {linkedWorkspaceTeamName ? ` in ${linkedWorkspaceTeamName}` : ""}
+                {linkedWorkspaceTeamName
+                  ? ` in ${linkedWorkspaceTeamName}`
+                  : ""}
               </p>
               <p className="truncate text-sm text-slate-700 dark:text-slate-200">
                 {linkedWorkspaceSession.name}
@@ -109,18 +110,24 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
             </div>
           )}
           <small>Note: Completing the session locks the room.</small>
-          {!linkedWorkspaceSession && showSaveToWorkspace && onSaveToWorkspace && (
+          {!linkedWorkspaceSession &&
+            showSaveToWorkspace &&
+            onSaveToWorkspace && (
+              <Button
+                type="button"
+                variant="secondary"
+                data-testid="save-to-workspace-modal-button"
+                onClick={onSaveToWorkspace}
+              >
+                Save to workspace
+              </Button>
+            )}
+          {linkedWorkspaceSession && onSaveToWorkspace && (
             <Button
               type="button"
               variant="secondary"
-              data-testid="save-to-workspace-modal-button"
               onClick={onSaveToWorkspace}
             >
-              Save to workspace
-            </Button>
-          )}
-          {linkedWorkspaceSession && onSaveToWorkspace && (
-            <Button type="button" variant="secondary" onClick={onSaveToWorkspace}>
               Rename workspace session
             </Button>
           )}

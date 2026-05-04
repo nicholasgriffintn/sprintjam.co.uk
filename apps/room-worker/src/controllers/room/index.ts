@@ -2,6 +2,7 @@ import type { CfResponse, PlanningRoomHttpContext } from "./types";
 import { handleInitialize } from "./initialize";
 import { handleSessionValidation } from "./session";
 import { handleJoin } from "./join";
+import { handleRecover } from "./recover";
 import { handleVote } from "./vote";
 import { handleToggleShowVotes } from "./show-votes";
 import { handleResetVotes } from "./reset-votes";
@@ -31,6 +32,10 @@ export async function handleHttpRequest(
       return handleJoin(ctx, request);
     }
 
+    if (url.pathname === "/recover" && request.method === "POST") {
+      return handleRecover(ctx, request);
+    }
+
     if (url.pathname === "/vote" && request.method === "POST") {
       return handleVote(ctx, request);
     }
@@ -56,7 +61,7 @@ export async function handleHttpRequest(
       return new Response(
         JSON.stringify({ teamId: roomData?.teamId ?? null }),
         { status: 200, headers: { "Content-Type": "application/json" } },
-      ) as unknown as CfResponse;
+      );
     }
 
     return null;

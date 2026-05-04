@@ -27,7 +27,7 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
     if (typeof window === "undefined") {
       return "";
     }
-    return `${window.location.origin}/?join=${roomKey}`;
+    return `${window.location.origin}/room/${roomKey}`;
   }, [roomKey]);
 
   const handleCopy = async () => {

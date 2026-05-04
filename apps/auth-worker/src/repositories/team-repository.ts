@@ -26,6 +26,7 @@ const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 const teamSelection = {
   id: teams.id,
   name: teams.name,
+  logoUrl: teams.logoUrl,
   organisationId: teams.organisationId,
   ownerId: teams.ownerId,
   accessPolicy: teams.accessPolicy,
@@ -96,6 +97,7 @@ export class TeamRepository {
     name: string,
     ownerId: number,
     accessPolicy: "open" | "restricted" = "open",
+    logoUrl: string | null = null,
   ): Promise<number> {
     const now = Date.now();
     const result = await this.db
@@ -103,6 +105,7 @@ export class TeamRepository {
       .values({
         organisationId,
         name,
+        logoUrl,
         ownerId,
         accessPolicy,
         createdAt: now,
@@ -133,7 +136,11 @@ export class TeamRepository {
 
   async updateTeam(
     teamId: number,
-    updates: { name?: string; accessPolicy?: "open" | "restricted" },
+    updates: {
+      name?: string;
+      accessPolicy?: "open" | "restricted";
+      logoUrl?: string | null;
+    },
   ): Promise<void> {
     await this.db
       .update(teams)
@@ -581,7 +588,12 @@ export class TeamRepository {
     await this.db
       .update(teamSessions)
       .set({ completedAt })
-      .where(inArray(teamSessions.id, activeSessions.map((item) => item.id)));
+      .where(
+        inArray(
+          teamSessions.id,
+          activeSessions.map((item) => item.id),
+        ),
+      );
 
     return await this.getTeamSessionById(session.id);
   }

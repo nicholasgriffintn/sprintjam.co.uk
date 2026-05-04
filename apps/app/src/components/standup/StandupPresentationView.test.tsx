@@ -48,6 +48,7 @@ describe("StandupPresentationView", () => {
         standupData={baseStandupData}
         onFocusUser={onFocusUser}
         onEndPresentation={vi.fn()}
+        onSetPresentationOrder={vi.fn()}
         onCompleteStandup={vi.fn()}
         onAddReaction={vi.fn()}
         onRemoveReaction={vi.fn()}
@@ -68,6 +69,7 @@ describe("StandupPresentationView", () => {
         standupData={{ ...baseStandupData, focusedUser: "Alice" }}
         onFocusUser={onFocusUser}
         onEndPresentation={vi.fn()}
+        onSetPresentationOrder={vi.fn()}
         onCompleteStandup={vi.fn()}
         onAddReaction={vi.fn()}
         onRemoveReaction={vi.fn()}
@@ -78,5 +80,51 @@ describe("StandupPresentationView", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
 
     expect(onFocusUser).toHaveBeenCalledWith("Bob");
+  });
+
+  it("uses the persisted presentation order", () => {
+    const onFocusUser = vi.fn();
+
+    render(
+      <StandupPresentationView
+        standupData={{
+          ...baseStandupData,
+          focusedUser: "Bob",
+          presentationOrder: ["Bob", "Alice"],
+        }}
+        onFocusUser={onFocusUser}
+        onEndPresentation={vi.fn()}
+        onSetPresentationOrder={vi.fn()}
+        onCompleteStandup={vi.fn()}
+        onAddReaction={vi.fn()}
+        onRemoveReaction={vi.fn()}
+        currentUserName="Alice"
+      />,
+    );
+
+    expect(screen.getByText(/1 of 2/).textContent).toContain("Bob");
+  });
+
+  it("persists shuffled order through the room state", () => {
+    const onSetPresentationOrder = vi.fn();
+
+    render(
+      <StandupPresentationView
+        standupData={{ ...baseStandupData, focusedUser: "Alice" }}
+        onFocusUser={vi.fn()}
+        onEndPresentation={vi.fn()}
+        onSetPresentationOrder={onSetPresentationOrder}
+        onCompleteStandup={vi.fn()}
+        onAddReaction={vi.fn()}
+        onRemoveReaction={vi.fn()}
+        currentUserName="Alice"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Shuffle" }));
+
+    expect(onSetPresentationOrder).toHaveBeenCalledWith(
+      expect.arrayContaining(["Alice", "Bob"]),
+    );
   });
 });

@@ -12,17 +12,15 @@ interface StandupHeaderContextValue {
   setParticipantCount: (count: number) => void;
 }
 
-const StandupHeaderContext =
-  createContext<StandupHeaderContextValue | null>(null);
+const StandupHeaderContext = createContext<StandupHeaderContextValue | null>(
+  null,
+);
 
-export function StandupHeaderProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function StandupHeaderProvider({ children }: { children: ReactNode }) {
   const [standupKey, setStandupKey] = useState<string | null>(null);
-  const [standupStatus, setStandupStatus] =
-    useState<StandupData["status"] | null>(null);
+  const [standupStatus, setStandupStatus] = useState<
+    StandupData["status"] | null
+  >(null);
   const [respondedCount, setRespondedCount] = useState(0);
   const [participantCount, setParticipantCount] = useState(0);
 

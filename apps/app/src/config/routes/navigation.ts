@@ -1,23 +1,27 @@
-import type { RouteConfig } from "./types";
-import { ROUTES, type AppScreen } from "./registry";
+import { ROUTE_DEFINITIONS, type AppScreen } from "./definitions";
+import type { RoutePathParams } from "./types";
 import { RETURN_URL_KEY } from "@/constants";
 
 export interface ParsedPath {
   screen: AppScreen;
   roomKey?: string;
   standupKey?: string;
+  teamId?: number;
 }
 
-type RouteEntry = RouteConfig<AppScreen>;
+type RouteEntry = (typeof ROUTE_DEFINITIONS)[number];
+type DynamicRouteEntry = Extract<RouteEntry, { pathPattern: RegExp }>;
 
-let dynamicRoutes: RouteEntry[] | undefined;
+let dynamicRoutes: DynamicRouteEntry[] | undefined;
 let staticPathToScreen: Map<string, AppScreen> | undefined;
 
-function getDynamicRoutes(): RouteEntry[] {
+function isDynamicRoute(route: RouteEntry): route is DynamicRouteEntry {
+  return "pathPattern" in route;
+}
+
+function getDynamicRoutes(): DynamicRouteEntry[] {
   if (!dynamicRoutes) {
-    dynamicRoutes = (ROUTES as readonly RouteEntry[]).filter(
-      (r) => r.pathPattern,
-    );
+    dynamicRoutes = ROUTE_DEFINITIONS.filter(isDynamicRoute);
   }
   return dynamicRoutes;
 }
@@ -25,9 +29,10 @@ function getDynamicRoutes(): RouteEntry[] {
 function getStaticPathToScreen(): Map<string, AppScreen> {
   if (!staticPathToScreen) {
     staticPathToScreen = new Map<string, AppScreen>(
-      (ROUTES as readonly RouteEntry[])
-        .filter((r) => typeof r.path === "string")
-        .map((r) => [r.path as string, r.screen]),
+      ROUTE_DEFINITIONS.filter((r) => typeof r.path === "string").map((r) => [
+        r.path as string,
+        r.screen,
+      ]),
     );
   }
   return staticPathToScreen;
@@ -38,7 +43,7 @@ export function parsePath(path: string): ParsedPath {
     return { screen: "welcome" };
   }
 
-  const pathWithoutQuery = path.split("?")[0];
+  const pathWithoutQuery = path.split("?")[0] ?? "";
   const normalizedPath = pathWithoutQuery.endsWith("/")
     ? pathWithoutQuery.slice(0, -1)
     : pathWithoutQuery;
@@ -74,6 +79,16 @@ export function parsePath(path: string): ParsedPath {
         return { screen: route.screen, standupKey: standupKey.toUpperCase() };
       }
 
+      if (route.screen === "workspaceTeam") {
+        const teamId = Number.parseInt(match[1] ?? "", 10);
+
+        if (Number.isNaN(teamId)) {
+          return { screen: "404" };
+        }
+
+        return { screen: "workspaceTeam", teamId };
+      }
+
       return { screen: route.screen };
     }
   }
@@ -81,11 +96,7 @@ export function parsePath(path: string): ParsedPath {
   return { screen: "404" };
 }
 
-export type RouteParams = {
-  roomKey?: string;
-  wheelKey?: string;
-  standupKey?: string;
-};
+export type RouteParams = RoutePathParams;
 
 function normaliseParams(
   params?: RouteParams | string,
@@ -100,9 +111,7 @@ export function getPathFromScreen(
   screen: AppScreen,
   params?: RouteParams | string,
 ): string {
-  const route = (ROUTES as readonly RouteEntry[]).find(
-    (r) => r.screen === screen,
-  );
+  const route = ROUTE_DEFINITIONS.find((r) => r.screen === screen);
   if (!route) return "/404";
 
   const resolvedParams = normaliseParams(params);
@@ -112,30 +121,10 @@ export function getPathFromScreen(
       roomKey: resolvedParams?.roomKey,
       wheelKey: resolvedParams?.wheelKey,
       standupKey: resolvedParams?.standupKey,
+      teamId: resolvedParams?.teamId,
     });
   }
   return route.path;
-}
-
-export function navigateTo(
-  screen: AppScreen,
-  params?: RouteParams | string,
-): void {
-  const resolvedParams = normaliseParams(params);
-  const path = getPathFromScreen(screen, resolvedParams);
-
-  if (window.location.pathname !== path) {
-    window.history.pushState({ screen, ...resolvedParams }, "", path);
-  }
-
-  const scrollToTop = () =>
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-
-  if ("requestAnimationFrame" in window) {
-    window.requestAnimationFrame(scrollToTop);
-  } else {
-    scrollToTop();
-  }
 }
 
 export function setReturnUrl(url: string): void {

@@ -64,6 +64,7 @@ const makeMembership = (overrides: Record<string, unknown> = {}) => ({
 const makeTeam = (overrides: Record<string, unknown> = {}) => ({
   id: 10,
   name: "Platform",
+  logoUrl: null,
   organisationId: 1,
   ownerId: 2,
   accessPolicy: "open" as const,
@@ -164,7 +165,6 @@ describe("teams-controller", () => {
     vi.clearAllMocks();
     env = {
       DB: {} as any,
-      RESEND_API_KEY: "test-resend",
     } as AuthWorkerEnv;
     vi.mocked(services.sendWorkspaceInviteEmail).mockResolvedValue(undefined);
   });
@@ -252,7 +252,13 @@ describe("teams-controller", () => {
 
     expect(response.status).toBe(201);
     expect(data.team.name).toBe("New Team");
-    expect(repo.createTeam).toHaveBeenCalledWith(1, "New Team", 1, "open");
+    expect(repo.createTeam).toHaveBeenCalledWith(
+      1,
+      "New Team",
+      1,
+      "open",
+      null,
+    );
   });
 
   it("rejects access to a restricted team for non-members", async () => {

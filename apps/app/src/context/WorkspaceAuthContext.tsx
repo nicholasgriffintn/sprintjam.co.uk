@@ -4,21 +4,17 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { useRevalidator } from "react-router";
 import type { WorkspaceTeam, WorkspaceUser } from "@sprintjam/types";
+import type { WorkspaceAuthProfile } from "@sprintjam/types";
 
-import { isWorkspacesEnabled } from "@/utils/feature-flags";
-import { logout as logoutService } from "@/lib/workspace-service";
-
-import { useWorkspaceProfile } from "@/lib/data/hooks";
 import {
-  WORKSPACE_PROFILE_DOCUMENT_KEY,
-  ensureWorkspaceProfileCollectionReady,
-  workspaceProfileCollection,
-} from "@/lib/data/collections";
+  getWorkspaceAuthProfile,
+  logout as logoutService,
+} from "@/lib/workspace-service";
 
 interface WorkspaceAuthContextValue {
   user: WorkspaceUser | null;
@@ -33,41 +29,76 @@ const WorkspaceAuthContext = createContext<WorkspaceAuthContextValue | null>(
   null,
 );
 
-export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
-  const workspacesEnabled = isWorkspacesEnabled();
-  const profile = useWorkspaceProfile(workspacesEnabled);
-  const [isLoading, setIsLoading] = useState(workspacesEnabled);
-  const hasInitialized = useRef(false);
+export function WorkspaceAuthProvider({
+  children,
+  initialProfile = null,
+}: {
+  children: ReactNode;
+  initialProfile?:
+    | WorkspaceAuthProfile
+    | null
+    | Promise<WorkspaceAuthProfile | null>;
+}) {
+  const isInitialProfilePromise =
+    initialProfile !== null && typeof initialProfile === "object" && "then" in initialProfile;
+  const [resolvedProfile, setResolvedProfile] =
+    useState<WorkspaceAuthProfile | null>(
+      isInitialProfilePromise ? null : initialProfile,
+    );
+  const profile = resolvedProfile;
+  const [isLoading, setIsLoading] = useState(isInitialProfilePromise);
+  const revalidator = useRevalidator();
 
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+    let isActive = true;
 
-    if (!workspacesEnabled) {
-      setIsLoading(false);
-      return;
+    if (initialProfile && "then" in initialProfile) {
+      setIsLoading(true);
+      initialProfile
+        .then((profile) => {
+          if (isActive) {
+            setResolvedProfile(profile);
+          }
+        })
+        .catch((error: unknown) => {
+          if (
+            error instanceof Error &&
+            !/401|403|unauthori[sz]ed|forbidden/i.test(error.message)
+          ) {
+            console.error("Failed to load workspace auth", error);
+          }
+          if (isActive) {
+            setResolvedProfile(null);
+          }
+        })
+        .finally(() => {
+          if (isActive) {
+            setIsLoading(false);
+          }
+        });
+
+      return () => {
+        isActive = false;
+      };
     }
 
-    ensureWorkspaceProfileCollectionReady()
-      .then(() => {
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Failed to initialize workspace auth", error);
-        setIsLoading(false);
-      });
-  }, [workspacesEnabled]);
+    setResolvedProfile(initialProfile);
+    setIsLoading(false);
+  }, [initialProfile]);
 
   const refreshAuth = useCallback(async () => {
     setIsLoading(true);
     try {
-      await ensureWorkspaceProfileCollectionReady();
-      await workspaceProfileCollection.utils.refetch({ throwOnError: false });
+      const profile = await getWorkspaceAuthProfile();
+      setResolvedProfile(profile);
     } catch (error) {
-      console.error("Failed to refresh workspace auth", error);
-      workspaceProfileCollection.utils.writeDelete(
-        WORKSPACE_PROFILE_DOCUMENT_KEY,
-      );
+      if (
+        error instanceof Error &&
+        !/401|403|unauthori[sz]ed|forbidden/i.test(error.message)
+      ) {
+        console.error("Failed to refresh workspace auth", error);
+      }
+      setResolvedProfile(null);
     } finally {
       setIsLoading(false);
     }
@@ -76,14 +107,12 @@ export function WorkspaceAuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await logoutService();
-      await ensureWorkspaceProfileCollectionReady();
-      workspaceProfileCollection.utils.writeDelete(
-        WORKSPACE_PROFILE_DOCUMENT_KEY,
-      );
+      setResolvedProfile(null);
+      await revalidator.revalidate();
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [revalidator]);
 
   useEffect(() => {
     if (profile) {

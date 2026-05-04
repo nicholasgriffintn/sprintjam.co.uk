@@ -1,8 +1,9 @@
-import type { RoomData, RoomGameSession } from '@sprintjam/types';
+import type { RoomData, RoomGameSession } from "@sprintjam/types";
+import { secureRandomInt } from "@sprintjam/utils";
 
-import type { GameEngine } from '../types';
-import { addEvent, addPoints } from '../helpers';
-import { TEAM_THREADS_PUZZLES } from '../words';
+import type { GameEngine } from "../types";
+import { addEvent, addPoints, getGameWinner } from "../helpers";
+import { TEAM_THREADS_PUZZLES } from "../words";
 
 const TEAM_THREADS_LIVES = 4;
 const BONUS_POINTS_ON_COMPLETE = 2;
@@ -14,14 +15,14 @@ const pickPuzzleIndex = (used: number[]): number => {
   );
   const pool =
     available.length > 0 ? available : TEAM_THREADS_PUZZLES.map((_, i) => i);
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[secureRandomInt(pool.length)]!;
 };
 
 const loadPuzzle = (session: Partial<RoomGameSession>, puzzleIndex: number) => {
   const puzzle = TEAM_THREADS_PUZZLES[puzzleIndex];
   const allWords = puzzle.groups.flatMap((g) => g.words);
   for (let i = allWords.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureRandomInt(i + 1);
     [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
   }
   session.teamThreadsWords = allWords;
@@ -45,7 +46,7 @@ const initializePuzzle = (
 };
 
 export const teamThreadsEngine: GameEngine = {
-  title: 'Team Threads',
+  title: "Team Threads",
   maxRounds: 3,
   shouldBlockConsecutiveMoves: () => false,
   initializeSessionState: (roomData) => {
@@ -57,14 +58,14 @@ export const teamThreadsEngine: GameEngine = {
   },
   isMoveValueValid: (value) => {
     const parts = value
-      .split(',')
+      .split(",")
       .map((w) => w.trim())
       .filter(Boolean);
     return parts.length === 4;
   },
   applyMove: ({ session, userName, value }) => {
     const submitted = value
-      .split(',')
+      .split(",")
       .map((w) => w.trim().toUpperCase())
       .filter(Boolean);
 
@@ -119,7 +120,7 @@ export const teamThreadsEngine: GameEngine = {
       session.teamThreadsLives = remaining;
       addEvent(
         session,
-        `${userName}'s guess was wrong. ${remaining} ${remaining === 1 ? 'life' : 'lives'} remaining.`,
+        `${userName}'s guess was wrong. ${remaining} ${remaining === 1 ? "life" : "lives"} remaining.`,
       );
 
       if (remaining <= 0) {
@@ -127,15 +128,11 @@ export const teamThreadsEngine: GameEngine = {
         for (const group of unfound) {
           addEvent(
             session,
-            `"${group.category}" was: ${group.words.join(', ')}.`,
+            `"${group.category}" was: ${group.words.join(", ")}.`,
           );
         }
-        session.status = 'completed';
-        const topScore = Math.max(...Object.values(session.leaderboard));
-        const winner = Object.entries(session.leaderboard).find(
-          ([, score]) => score === topScore,
-        )?.[0];
-        if (winner) session.winner = winner;
+        session.status = "completed";
+        session.winner = getGameWinner(session);
       }
     }
   },

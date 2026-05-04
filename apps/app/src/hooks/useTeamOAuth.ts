@@ -33,23 +33,14 @@ export function useTeamOAuth(
   provider: OAuthProvider,
 ): TeamOAuthResult {
   const queryClient = useQueryClient();
-  const queryKey = ["team-oauth", teamId, provider] as const;
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (pollTimerRef.current !== null) {
-        clearInterval(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
-    };
-  }, []);
+  const queryKey = ["team-oauth", teamId, provider] as const;
 
   const statusQuery = useQuery<TeamIntegrationStatus>({
     queryKey,
     enabled: teamId !== null,
-    staleTime: 30_000,
     queryFn: () => getTeamIntegrationStatus(teamId!, provider),
+    staleTime: 0,
   });
 
   const connectMutation = useMutation({
@@ -83,16 +74,23 @@ export function useTeamOAuth(
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
   });
 
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current !== null) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const status: TeamIntegrationStatus = statusQuery.data ?? {
     provider,
     connected: false,
   };
-
   const loading =
     (teamId !== null && statusQuery.isLoading) ||
     connectMutation.isPending ||
     disconnectMutation.isPending;
-
   const error =
     (statusQuery.error instanceof Error ? statusQuery.error.message : null) ||
     (connectMutation.error instanceof Error

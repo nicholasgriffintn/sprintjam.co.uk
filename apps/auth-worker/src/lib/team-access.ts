@@ -3,7 +3,7 @@ import type {
   Team,
   TeamRole,
   WorkspaceTeam,
-} from '@sprintjam/types';
+} from "@sprintjam/types";
 
 type TeamLike = {
   id: number;
@@ -50,7 +50,7 @@ export function canManageTeam(
 ): boolean {
   return (
     isWorkspaceAdmin ||
-    (membership?.role === 'admin' && membership?.status === 'active') ||
+    (membership?.role === "admin" && membership?.status === "active") ||
     team.ownerId === userId
   );
 }

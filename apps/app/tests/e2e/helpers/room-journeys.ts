@@ -77,8 +77,6 @@ export async function createRoomWithParticipant(
     await createRoom.fillBasics(moderatorName, roomPasscode);
     if (workspaceTeamId) {
       await createRoom.selectWorkspaceTeam(workspaceTeamId);
-    } else {
-      await createRoom.selectPersonalRoomIfAvailable();
     }
 
     if (enableStructuredVotingOnCreate) {
@@ -133,6 +131,8 @@ export async function createRoomWithParticipant(
 
     await moderatorRoom.waitForParticipants(2);
     await participantRoom.waitForParticipants(2);
+
+    await moderatorRoom.dismissRecoveryPasskeyModalIfPresent();
 
     if (enableTicketQueue) {
       const modal = new SettingsModal(moderatorRoom.getPage());

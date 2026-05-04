@@ -25,7 +25,15 @@ import type {
   StandupResponsePayload,
   LinkedTicket,
 } from "@sprintjam/types";
-import { isSessionTokenValid, safeJsonParse } from "@sprintjam/utils";
+import {
+  isSessionTokenValid,
+  safeJsonParse,
+  serializePasscodeHash,
+  parsePasscodeHash,
+  hashRecoveryPasskey,
+  verifyRecoveryPasskey,
+  RECOVERY_PASSKEY_TTL_MS,
+} from "@sprintjam/utils";
 
 import migrations from "../../drizzle/migrations";
 
@@ -81,7 +89,6 @@ export class StandupRoomRepository {
       userAvatars,
       teamId: row.teamId ?? undefined,
       reactions,
-      presentationTheme: row.presentationTheme ?? "default",
     };
   }
 
@@ -102,7 +109,6 @@ export class StandupRoomRepository {
         status: "active",
         passcode: passcode ?? null,
         teamId: teamId ?? null,
-        presentationTheme: "default",
         createdAt: now,
       } satisfies InsertStandupMetaItem)
       .run();
@@ -157,14 +163,6 @@ export class StandupRoomRepository {
       .run();
   }
 
-  setTheme(theme: string) {
-    this.db
-      .update(standupMeta)
-      .set({ presentationTheme: theme })
-      .where(eq(standupMeta.id, STANDUP_ROW_ID))
-      .run();
-  }
-
   submitResponse(userName: string, payload: StandupResponsePayload): void {
     const now = Date.now();
     const canonicalName = this.ensureUser(userName);
@@ -178,6 +176,7 @@ export class StandupRoomRepository {
         today: payload.today ?? "",
         hasBlocker: payload.hasBlocker ? 1 : 0,
         blockerDescription: payload.blockerDescription ?? null,
+        blockerResolved: 0,
         healthCheck: payload.healthCheck,
         linkedTickets: payload.linkedTickets
           ? JSON.stringify(payload.linkedTickets)
@@ -197,6 +196,7 @@ export class StandupRoomRepository {
           today: payload.today ?? "",
           hasBlocker: payload.hasBlocker ? 1 : 0,
           blockerDescription: payload.blockerDescription ?? null,
+          blockerResolved: 0,
           healthCheck: payload.healthCheck,
           isHealthCheckPrivate: payload.isHealthCheckPrivate ? 1 : 0,
           linkedTickets: payload.linkedTickets
@@ -208,6 +208,27 @@ export class StandupRoomRepository {
           updatedAt: now,
         },
       })
+      .run();
+  }
+
+  setBlockerResolved(userName: string, resolved: boolean): void {
+    const canonicalName = this.findCanonicalUserName(userName);
+    if (!canonicalName) {
+      return;
+    }
+
+    this.db
+      .update(standupResponses)
+      .set({
+        blockerResolved: resolved ? 1 : 0,
+        updatedAt: Date.now(),
+      })
+      .where(
+        and(
+          sqlOperator`LOWER(${standupResponses.userName}) = LOWER(${canonicalName})`,
+          eq(standupResponses.hasBlocker, 1),
+        ),
+      )
       .run();
   }
 
@@ -337,6 +358,57 @@ export class StandupRoomRepository {
     });
   }
 
+  async setRecoveryPasskey(userName: string, passkey: string): Promise<void> {
+    const canonicalName = this.ensureUser(userName);
+    const hashed = await hashRecoveryPasskey(passkey);
+    const createdAt = Date.now();
+
+    this.db
+      .update(standupSessionTokens)
+      .set({
+        recoveryPasskey: serializePasscodeHash(hashed),
+        recoveryPasskeyCreatedAt: createdAt,
+      })
+      .where(
+        sqlOperator`LOWER(${standupSessionTokens.userName}) = LOWER(${canonicalName})`,
+      )
+      .run();
+  }
+
+  async validateRecoveryPasskey(
+    userName: string,
+    passkey: string,
+  ): Promise<boolean> {
+    const record = this.db
+      .select({
+        recoveryPasskey: standupSessionTokens.recoveryPasskey,
+        recoveryPasskeyCreatedAt: standupSessionTokens.recoveryPasskeyCreatedAt,
+      })
+      .from(standupSessionTokens)
+      .where(
+        sqlOperator`LOWER(${standupSessionTokens.userName}) = LOWER(${userName})`,
+      )
+      .get();
+
+    if (!record?.recoveryPasskey || !record.recoveryPasskeyCreatedAt) {
+      return false;
+    }
+
+    if (
+      Date.now() - record.recoveryPasskeyCreatedAt >
+      RECOVERY_PASSKEY_TTL_MS
+    ) {
+      return false;
+    }
+
+    const stored = parsePasscodeHash(record.recoveryPasskey);
+    if (!stored) {
+      return false;
+    }
+
+    return verifyRecoveryPasskey(passkey, stored);
+  }
+
   getPasscode(): string | null {
     const result = this.db
       .select({ passcode: standupMeta.passcode })
@@ -345,6 +417,22 @@ export class StandupRoomRepository {
       .get();
 
     return result?.passcode ?? null;
+  }
+
+  findUserNameByWorkspaceId(workspaceUserId: number): string | undefined {
+    return this.db
+      .select({ userName: standupUsers.userName })
+      .from(standupUsers)
+      .where(eq(standupUsers.workspaceUserId, workspaceUserId))
+      .get()?.userName;
+  }
+
+  setWorkspaceUserId(userName: string, workspaceUserId: number) {
+    this.db
+      .update(standupUsers)
+      .set({ workspaceUserId })
+      .where(sqlOperator`LOWER(${standupUsers.userName}) = LOWER(${userName})`)
+      .run();
   }
 
   private findCanonicalUserName(userName: string): string | undefined {
@@ -413,6 +501,7 @@ export class StandupRoomRepository {
       today: row.today || undefined,
       hasBlocker: !!row.hasBlocker,
       blockerDescription: row.blockerDescription ?? undefined,
+      blockerResolved: !!row.blockerResolved,
       healthCheck: row.healthCheck,
       linkedTickets: row.linkedTickets
         ? (safeJsonParse<LinkedTicket[]>(row.linkedTickets) ?? undefined)

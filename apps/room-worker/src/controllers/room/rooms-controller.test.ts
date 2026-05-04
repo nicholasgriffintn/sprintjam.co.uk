@@ -95,5 +95,4 @@ describe("joinRoomController", () => {
       "room_session=cookie-token",
     );
   });
-
 });

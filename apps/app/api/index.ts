@@ -2,9 +2,25 @@ import type {
   ExportedHandler,
   Request as CfRequest,
   Response as CfResponse,
+  ExecutionContext,
 } from "@cloudflare/workers-types";
+import { createRequestHandler } from "react-router";
 import type { DispatchWorkerEnv } from "@sprintjam/types";
 import * as Sentry from "@sentry/cloudflare";
+
+declare module "react-router" {
+  export interface AppLoadContext {
+    cloudflare: {
+      env: DispatchWorkerEnv;
+      ctx: ExecutionContext;
+    };
+  }
+}
+
+const requestHandler = createRequestHandler(
+  () => import("virtual:react-router/server-build"),
+  import.meta.env.MODE,
+);
 
 function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
   const isStaging = env.ENVIRONMENT === "staging";
@@ -12,18 +28,20 @@ function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
     ? "User-agent: *\nDisallow: /"
     : "User-agent: *\nAllow: /\nSitemap: https://sprintjam.co.uk/sitemap.xml";
 
+  // @ts-expect-error - types are weird
   return new Response(robotsBody, {
     status: 200,
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       ...(isStaging ? { "X-Robots-Tag": "noindex, nofollow" } : {}),
     },
-  }) as unknown as CfResponse;
+  });
 }
 
 async function handleRequest(
   request: CfRequest,
   env: DispatchWorkerEnv,
+  ctx: ExecutionContext,
 ): Promise<CfResponse> {
   try {
     const url = new URL(request.url);
@@ -66,8 +84,6 @@ async function handleRequest(
     }
 
     if (url.pathname === "/ws/wheel") {
-      const proxyUrl = new URL(request.url);
-      proxyUrl.pathname = "/ws";
       return await env.WHEEL_WORKER.fetch(request);
     }
 
@@ -75,17 +91,22 @@ async function handleRequest(
       return await env.STANDUP_WORKER.fetch(request);
     }
 
-    return env.ASSETS.fetch(request);
+    // @ts-expect-error - i dunno, types are weird
+    return requestHandler(request, {
+      cloudflare: { env, ctx },
+    });
   } catch (error) {
     Sentry.captureException(error);
     console.error("[main] Internal Server Error", error);
+
+    // @ts-expect-error - types are weird
     return new Response(
       JSON.stringify({ error: "[main] handleRequest errored" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
       },
-    ) as unknown as CfResponse;
+    );
   }
 }
 
@@ -96,11 +117,13 @@ export default Sentry.withSentry(
     enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
   }),
   {
+    // @ts-expect-error - types are weird
     async fetch(
       request: CfRequest,
       env: DispatchWorkerEnv,
+      ctx: ExecutionContext,
     ): Promise<CfResponse> {
-      return handleRequest(request, env);
+      return handleRequest(request, env, ctx);
     },
   } satisfies ExportedHandler<DispatchWorkerEnv>,
 );

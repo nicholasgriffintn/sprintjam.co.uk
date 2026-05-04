@@ -1,5 +1,6 @@
 import { type FormEvent, useMemo, useState } from "react";
 import { Send } from "lucide-react";
+import { useLocation } from "react-router";
 import type { GithubIssue } from "@sprintjam/types";
 
 import { submitFeedback } from "@/lib/feedback-service";
@@ -32,6 +33,7 @@ const LABEL_OPTIONS = [
 type SubmissionState = "idle" | "submitting" | "success" | "error";
 
 export function FeedbackForm() {
+  const location = useLocation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [email, setEmail] = useState("");
@@ -55,6 +57,15 @@ export function FeedbackForm() {
     return null;
   }, [issue]);
 
+  const pageUrl = useMemo(() => {
+    if (typeof window === "undefined") return undefined;
+
+    return new URL(
+      `${location.pathname}${location.search}${location.hash}`,
+      window.location.origin,
+    ).toString();
+  }, [location.hash, location.pathname, location.search]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isSubmitDisabled) return;
@@ -69,8 +80,7 @@ export function FeedbackForm() {
         description: description.trim(),
         labels: [label],
         email: email.trim() || undefined,
-        pageUrl:
-          typeof window !== "undefined" ? window.location.href : undefined,
+        pageUrl,
       });
 
       setIssue(createdIssue);

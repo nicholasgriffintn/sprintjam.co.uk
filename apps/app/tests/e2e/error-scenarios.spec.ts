@@ -48,13 +48,8 @@ test.describe("Error scenarios", () => {
     );
 
     await reconnectPage.goto(`/room/${roomKey}`);
-    const notificationsRegion = reconnectPage.getByRole("region", {
-      name: "Notifications",
-    });
-    await expect(notificationsRegion).toContainText(
-      /Session expired.*rejoin the room/i,
-      { timeout: 5000 },
-    );
+    await expect(reconnectPage.locator("#join-name")).toBeVisible();
+    await expect(reconnectPage.locator("#join-room-key")).toHaveValue(roomKey);
 
     await reconnectContext.close();
   });
@@ -118,7 +113,54 @@ test.describe("Error scenarios", () => {
     }
   });
 
-  test("redirects to home with error when visiting non-existent room URL", async ({
+  test("shows reconnect spinner immediately and toast after delay on connection loss", async ({
+    browser,
+  }) => {
+    test.setTimeout(30_000);
+
+    const activeWs: { close: () => void } = { close: () => { } };
+    let killSwitch = false;
+
+    const setup = await createRoomWithParticipant(browser, {
+      setupModeratorRoutes: async (context) => {
+        await context.routeWebSocket(/.*/, (ws) => {
+          if (killSwitch) {
+            ws.close();
+            return;
+          }
+          const server = ws.connectToServer();
+          ws.onMessage((msg) => server.send(msg));
+          server.onMessage((msg) => ws.send(msg));
+          activeWs.close = () => ws.close();
+        });
+      },
+    });
+
+    const { moderatorRoom, cleanup } = setup;
+
+    try {
+      await moderatorRoom.waitForLoaded();
+
+      killSwitch = true;
+      activeWs?.close();
+
+      await expect(
+        moderatorRoom.getPage().getByTestId("reconnect-spinner"),
+      ).toBeVisible({ timeout: 3_000 });
+
+      await expect(
+        moderatorRoom.getPage().getByRole("dialog", { name: "Connection lost. Trying to" }),
+      ).not.toBeVisible();
+
+      await expect(
+        moderatorRoom.getPage().getByRole("dialog", { name: "Connection lost. Trying to" }),
+      ).toBeVisible({ timeout: 15_000 });
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test("redirects to home when visiting non-existent room URL", async ({
     page,
   }) => {
     await page.addInitScript(() => {
@@ -128,7 +170,6 @@ test.describe("Error scenarios", () => {
 
     await page.goto("/room/XXXXXX");
 
-    await expect(page.getByText(/Room not found/i)).toBeVisible();
     await expect(page).toHaveURL("/");
   });
 });

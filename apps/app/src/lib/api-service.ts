@@ -2,20 +2,12 @@ import type {
   AvatarId,
   RoomData,
   RoomSettings,
-  ServerDefaults,
   TicketQueueItem,
   WebSocketMessage,
   WebSocketMessageType,
 } from "@/types";
 import type { RoomGameType, StructuredVote, VoteValue } from "@sprintjam/types";
 import { API_BASE_URL, WS_BASE_URL } from "@/constants";
-import {
-  SERVER_DEFAULTS_DOCUMENT_KEY,
-  roomsCollection,
-  serverDefaultsCollection,
-  ensureRoomsCollectionReady,
-  ensureServerDefaultsCollectionReady,
-} from "./data/collections";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 import { handleJsonResponse } from "@/lib/api-utils";
 import {
@@ -42,37 +34,16 @@ interface RequestOptions {
   signal?: AbortSignal;
 }
 
-export function getCachedDefaultSettings(): ServerDefaults | null {
-  return serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
-}
-
-export async function fetchDefaultSettings(
-  forceRefresh = false,
-): Promise<ServerDefaults> {
-  if (forceRefresh) {
-    await serverDefaultsCollection.utils.refetch({ throwOnError: true });
-  } else {
-    await serverDefaultsCollection.preload();
-    await serverDefaultsCollection.toArrayWhenReady();
-  }
-
-  const defaults =
-    serverDefaultsCollection.get(SERVER_DEFAULTS_DOCUMENT_KEY) ?? null;
-
-  if (!defaults) {
-    throw new Error("Unable to load default settings from server");
-  }
-
-  return defaults;
-}
-
 export async function createRoom(
   name: string,
   passcode?: string,
   settings?: Partial<RoomSettings>,
   avatar?: AvatarId,
   options?: RequestOptions & { teamId?: number },
-): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
+): Promise<{
+  room: RoomData;
+  recoveryPasskey?: string;
+}> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms`, {
       method: "POST",
@@ -92,7 +63,7 @@ export async function createRoom(
 
     const data = await handleJsonResponse<{
       room?: RoomData;
-      defaults?: ServerDefaults;
+      recoveryPasskey?: string;
       error?: string;
     }>(response, "Failed to create room");
 
@@ -102,16 +73,9 @@ export async function createRoom(
       );
     }
 
-    await ensureRoomsCollectionReady();
-    roomsCollection.utils.writeUpsert(data.room);
-    if (data.defaults) {
-      await ensureServerDefaultsCollectionReady();
-      serverDefaultsCollection.utils.writeUpsert(data.defaults);
-    }
-
     return {
       room: data.room,
-      defaults: data.defaults,
+      recoveryPasskey: data.recoveryPasskey,
     };
   } catch (error) {
     if (isAbortError(error)) {
@@ -131,7 +95,10 @@ export async function joinRoom(
   passcode?: string,
   avatar?: AvatarId,
   options?: RequestOptions,
-): Promise<{ room: RoomData; defaults?: ServerDefaults }> {
+): Promise<{
+  room: RoomData;
+  recoveryPasskey?: string;
+}> {
   try {
     const response = await fetch(`${API_BASE_URL}/rooms/join`, {
       method: "POST",
@@ -145,7 +112,7 @@ export async function joinRoom(
 
     const data = await handleJsonResponse<{
       room?: RoomData;
-      defaults?: ServerDefaults;
+      recoveryPasskey?: string;
       error?: string;
     }>(response, "Failed to join room");
 
@@ -153,16 +120,9 @@ export async function joinRoom(
       throw new NetworkError("Invalid response from server while joining room");
     }
 
-    await ensureRoomsCollectionReady();
-    roomsCollection.utils.writeUpsert(data.room);
-    if (data.defaults) {
-      await ensureServerDefaultsCollectionReady();
-      serverDefaultsCollection.utils.writeUpsert(data.defaults);
-    }
-
     return {
       room: data.room,
-      defaults: data.defaults,
+      recoveryPasskey: data.recoveryPasskey,
     };
   } catch (error) {
     if (isAbortError(error)) {
@@ -173,6 +133,31 @@ export async function joinRoom(
       throw error;
     }
     throw new NetworkError("Failed to join room", { cause: error });
+  }
+}
+
+export async function recoverRoomSession(
+  name: string,
+  roomKey: string,
+  recoveryPasskey: string,
+): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/rooms/recover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, roomKey, recoveryPasskey }),
+      credentials: "include",
+    });
+
+    await handleJsonResponse<{ success: boolean }>(
+      response,
+      "Failed to recover session",
+    );
+  } catch (error) {
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to recover session", { cause: error });
   }
 }
 
@@ -396,17 +381,41 @@ export function toggleStrudelPlayback(): void {
   sendWebSocketMessage(activeSocket, { type: "toggleStrudelPlayback" });
 }
 
-export function disconnectFromRoom(): void {
-  if (activeSocket) {
-    activeSocket.close(1000, "User left the room");
-    activeSocket = null;
-  }
+function clearRoomConnectionState() {
   if (voteDebounceTimer) {
     clearTimeout(voteDebounceTimer);
     voteDebounceTimer = null;
   }
   activeRoomKey = null;
   resetReconnectAttempts(reconnectState);
+}
+
+export function disconnectFromRoom(): Promise<void> {
+  if (activeSocket) {
+    const socket = activeSocket;
+    activeSocket = null;
+
+    if (socket.readyState === WebSocket.OPEN) {
+      clearRoomConnectionState();
+      return new Promise((resolve) => {
+        const originalOnClose = socket.onclose;
+        socket.onclose = (event) => {
+          originalOnClose?.call(socket, event);
+          resolve();
+        };
+
+        try {
+          socket.send(JSON.stringify({ type: "leaveRoom" }));
+        } catch {
+          socket.close(1000, "User left the room");
+        }
+      });
+    }
+
+    socket.close(1000, "User left the room");
+  }
+  clearRoomConnectionState();
+  return Promise.resolve();
 }
 
 export function addEventListener(
@@ -444,13 +453,13 @@ export async function getRoomSettings(roomKey: string): Promise<RoomSettings> {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = (await response.json()) as Record<string, any>;
       throw new Error(
         errorData.error || `Failed to get room settings: ${response.status}`,
       );
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { settings: RoomSettings };
     return data.settings;
   } catch (error) {
     console.error("Error getting room settings:", error);
@@ -473,13 +482,13 @@ export async function updateRoomSettings(
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = (await response.json()) as Record<string, any>;
       throw new Error(
         errorData.error || `Failed to update room settings: ${response.status}`,
       );
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { settings: RoomSettings };
     return data.settings;
   } catch (error) {
     console.error("Error updating room settings:", error);

@@ -30,6 +30,7 @@ export type ErrorKind =
   | "passcode"
   | "network"
   | "validation"
+  | "conflict"
   | "unknown";
 
 export type ConnectionStatusState = "connected" | "connecting" | "disconnected";
@@ -201,6 +202,7 @@ interface WebSocketPayloads {
     reason?: WebSocketErrorReason;
     closeCode?: number;
   };
+  leaveRoom: Record<string, never>;
   avatarChanged: {
     user: string;
     avatar: AvatarId;

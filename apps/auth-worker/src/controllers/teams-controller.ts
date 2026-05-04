@@ -20,6 +20,7 @@ import {
   canManageTeam,
   isActiveTeamMember,
 } from "../lib/team-access";
+import { normalizeOptionalHttpUrl } from "../lib/url-validation";
 
 const MAX_WORKSPACE_NAME_LENGTH = 120;
 const MAX_LOGO_URL_LENGTH = 500;
@@ -293,9 +294,14 @@ export async function createTeamController(
   const body = await request.json<{
     name?: string;
     accessPolicy?: TeamAccessPolicy;
+    logoUrl?: string | null;
   }>();
   const name = body?.name?.trim();
   const accessPolicy = parseAccessPolicy(body?.accessPolicy) ?? "open";
+  const logoUrl = normalizeOptionalHttpUrl(body?.logoUrl, {
+    label: "Logo URL",
+    maxLength: MAX_LOGO_URL_LENGTH,
+  });
 
   if (!name) {
     return jsonError("Team name is required", 400);
@@ -308,11 +314,16 @@ export async function createTeamController(
     );
   }
 
+  if (!logoUrl.ok) {
+    return jsonError(logoUrl.message, 400);
+  }
+
   const teamId = await auth.result.repo.createTeam(
     workspace.viewer.user.organisationId,
     name,
     workspace.viewer.user.id,
     accessPolicy,
+    logoUrl.value,
   );
   const team = await auth.result.repo.getTeamById(teamId);
 
@@ -374,13 +385,21 @@ export async function updateTeamController(
   const body = await request.json<{
     name?: string;
     accessPolicy?: TeamAccessPolicy;
+    logoUrl?: string | null;
   }>();
   const nextName = body?.name?.trim();
   const nextAccessPolicy = body?.accessPolicy
     ? parseAccessPolicy(body.accessPolicy)
     : null;
+  const hasLogoUpdate = Object.prototype.hasOwnProperty.call(body, "logoUrl");
+  const nextLogoUrl = hasLogoUpdate
+    ? normalizeOptionalHttpUrl(body.logoUrl, {
+        label: "Logo URL",
+        maxLength: MAX_LOGO_URL_LENGTH,
+      })
+    : null;
 
-  if (!nextName && !nextAccessPolicy) {
+  if (!nextName && !nextAccessPolicy && !hasLogoUpdate) {
     return jsonError("At least one field is required", 400);
   }
 
@@ -395,9 +414,14 @@ export async function updateTeamController(
     return jsonError("Invalid team access policy", 400);
   }
 
+  if (nextLogoUrl && !nextLogoUrl.ok) {
+    return jsonError(nextLogoUrl.message, 400);
+  }
+
   await auth.result.repo.updateTeam(teamId, {
     ...(nextName ? { name: nextName } : {}),
     ...(nextAccessPolicy ? { accessPolicy: nextAccessPolicy } : {}),
+    ...(nextLogoUrl?.ok ? { logoUrl: nextLogoUrl.value } : {}),
   });
 
   const updatedTeam = await auth.result.repo.getTeamById(teamId);
@@ -955,10 +979,11 @@ export async function createTeamSessionController(
     }
   }
 
-  const existingSession = await auth.result.repo.getOrganisationTeamSessionByRoomKey(
-    roomKey,
-    teamViewer.viewer.user.organisationId,
-  );
+  const existingSession =
+    await auth.result.repo.getOrganisationTeamSessionByRoomKey(
+      roomKey,
+      teamViewer.viewer.user.organisationId,
+    );
   if (existingSession) {
     return jsonError(
       "This room is already saved to your workspace",
@@ -1230,34 +1255,14 @@ export async function updateWorkspaceProfileController(
 
   let normalizedLogoUrl: string | null | undefined;
   if (hasLogoUpdate) {
-    if (body.logoUrl === null) {
-      normalizedLogoUrl = null;
-    } else {
-      const trimmed = body.logoUrl?.trim() ?? "";
-      if (!trimmed) {
-        normalizedLogoUrl = null;
-      } else {
-        if (trimmed.length > MAX_LOGO_URL_LENGTH) {
-          return jsonError(
-            `Logo URL must be ${MAX_LOGO_URL_LENGTH} characters or less`,
-            400,
-          );
-        }
-
-        let parsed: URL;
-        try {
-          parsed = new URL(trimmed);
-        } catch {
-          return jsonError("Logo URL must be a valid URL", 400);
-        }
-
-        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-          return jsonError("Logo URL must start with http:// or https://", 400);
-        }
-
-        normalizedLogoUrl = parsed.toString();
-      }
+    const logoUrl = normalizeOptionalHttpUrl(body.logoUrl, {
+      label: "Logo URL",
+      maxLength: MAX_LOGO_URL_LENGTH,
+    });
+    if (!logoUrl.ok) {
+      return jsonError(logoUrl.message, 400);
     }
+    normalizedLogoUrl = logoUrl.value;
   }
 
   await auth.result.repo.updateOrganisation(
@@ -1500,7 +1505,7 @@ export async function inviteWorkspaceMemberController(
       workspaceName,
       inviterName,
       loginUrl,
-      resendApiKey: env.RESEND_API_KEY,
+      sendEmail: env.SEND_EMAIL,
     });
   } catch (error) {
     console.error("Failed to send workspace invite email:", error);

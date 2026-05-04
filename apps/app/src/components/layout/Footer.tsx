@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Gamepad2, Github, MessageSquare } from "lucide-react";
+import { Gamepad2, Github, MessageSquare, Joystick } from "lucide-react";
 
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
-import { navigateTo, type AppScreen } from "@/config/routes";
-import { useSessionActions } from "@/context/SessionContext";
+import type { AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useFidgetToys } from "@/components/easter-eggs/FidgetToyContext";
 
 type FooterProps = {
   displayRepoLink?: boolean;
@@ -25,10 +26,10 @@ export const Footer = ({
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
-  const { setScreen } = useSessionActions();
+  const navigateTo = useAppNavigation();
+  const { openPicker } = useFidgetToys();
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
   };
 
@@ -139,6 +140,16 @@ export const Footer = ({
               Party games
             </Button>
           ) : null}
+
+          <Button
+            type="button"
+            variant="unstyled"
+            onClick={openPicker}
+            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 dark:border-purple-300/30 dark:bg-purple-400/10 dark:text-purple-100"
+          >
+            <Joystick className="h-3.5 w-3.5" />
+            Fidget box
+          </Button>
 
           <Button
             type="button"

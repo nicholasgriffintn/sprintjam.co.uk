@@ -14,7 +14,7 @@ interface StandupResultsPanelProps {
   onStartPresentation: () => void;
   onCompleteStandup: () => void;
   onFocusUser: (userName: string) => void;
-  onSetTheme: (theme: string) => void;
+  onSetBlockerResolved: (userName: string, resolved: boolean) => void;
   isLockingResponses?: boolean;
   isStartingPresentation?: boolean;
   isCompletingStandup?: boolean;
@@ -30,7 +30,7 @@ export function StandupResultsPanel({
   onStartPresentation,
   onCompleteStandup,
   onFocusUser,
-  onSetTheme,
+  onSetBlockerResolved,
   isLockingResponses = false,
   isStartingPresentation = false,
   isCompletingStandup = false,
@@ -45,7 +45,7 @@ export function StandupResultsPanel({
         onStartPresentation={onStartPresentation}
         onCompleteStandup={onCompleteStandup}
         onFocusUser={onFocusUser}
-        onSetTheme={onSetTheme}
+        onSetBlockerResolved={onSetBlockerResolved}
         isLockingResponses={isLockingResponses}
         isStartingPresentation={isStartingPresentation}
         isCompletingStandup={isCompletingStandup}

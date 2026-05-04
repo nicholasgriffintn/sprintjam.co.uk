@@ -9,7 +9,7 @@ vi.mock("@/lib/api-service", () => ({
   joinRoom: vi.fn(),
 }));
 
-vi.mock("@/lib/data/room-store", () => ({
+vi.mock("@/lib/room-store", () => ({
   upsertRoom: vi.fn(),
 }));
 
@@ -24,7 +24,6 @@ describe("useRoomEntryActions", () => {
   it("marks auto reconnect done after successful join", async () => {
     vi.mocked(joinRoom).mockResolvedValue({
       room: { key: "1I1L1P", moderator: "Nick" } as any,
-      defaults: undefined,
     });
 
     const markAutoReconnectDone = vi.fn();
@@ -37,7 +36,6 @@ describe("useRoomEntryActions", () => {
         passcode: "test",
         selectedAvatar: "user",
         pendingCreateSettings: null,
-        applyServerDefaults: vi.fn(),
         clearError: vi.fn(),
         setError: vi.fn(),
         goToRoom,
@@ -61,7 +59,6 @@ describe("useRoomEntryActions", () => {
   it("marks auto reconnect done after successful create", async () => {
     vi.mocked(createRoom).mockResolvedValue({
       room: { key: "AB12CD", moderator: "Nick" } as any,
-      defaults: undefined,
     });
 
     const markAutoReconnectDone = vi.fn();
@@ -74,7 +71,6 @@ describe("useRoomEntryActions", () => {
         passcode: "test",
         selectedAvatar: "user",
         pendingCreateSettings: null,
-        applyServerDefaults: vi.fn(),
         clearError: vi.fn(),
         setError: vi.fn(),
         goToRoom,

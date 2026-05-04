@@ -20,12 +20,15 @@ import {
 
 let activeSocket: WebSocket | null = null;
 let activeStandupKey: string | null = null;
+let activeUserName: string | null = null;
 let reconnectState: ReconnectState = createReconnectState();
-let intentionalDisconnect = false;
+let disconnectPending = false;
+let reconnectTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
 
 export interface StandupSessionResponse {
   success: boolean;
   standup: StandupData;
+  recoveryPasskey?: string;
 }
 
 interface RequestOptions {
@@ -53,10 +56,12 @@ export type StandupServerMessage =
   | { type: "responseConfirmed"; response: StandupResponse }
   | { type: "responsesLocked" }
   | { type: "responsesUnlocked" }
-  | { type: "presentationStarted" }
+  | { type: "presentationStarted"; presentationOrder?: string[] }
   | { type: "presentationEnded" }
   | { type: "standupCompleted" }
   | { type: "userFocused"; userName: string }
+  | { type: "presentationOrderUpdated"; presentationOrder: string[] }
+  | { type: "blockerResolutionUpdated"; userName: string; resolved: boolean }
   | {
       type: "reactionAdded";
       responseUserName: string;
@@ -69,7 +74,6 @@ export type StandupServerMessage =
       reactingUserName: string;
       emoji: string;
     }
-  | { type: "themeUpdated"; theme: string }
   | { type: "pong" }
   | { type: "error"; error: string; reason?: SocketErrorReason }
   | { type: "disconnected"; error: string; reason: "disconnect" };
@@ -175,11 +179,41 @@ export async function joinStandup(
     }
 
     console.error("Error joining standup:", error);
+    if (error instanceof Error && error.message === "PASSCODE_REQUIRED") {
+      throw error;
+    }
     if (error instanceof HttpError || error instanceof NetworkError) {
       throw error;
     }
 
     throw new NetworkError("Failed to join standup", { cause: error });
+  }
+}
+
+export async function recoverStandupSession(
+  name: string,
+  standupKey: string,
+  recoveryPasskey: string,
+): Promise<void> {
+  try {
+    const response = await fetch(`${STANDUP_API_BASE_URL}/standups/recover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, standupKey, recoveryPasskey }),
+      credentials: "include",
+    });
+
+    await handleJsonResponse<{ success: boolean }>(
+      response,
+      "Failed to recover standup session",
+    );
+  } catch (error) {
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to recover standup session", {
+      cause: error,
+    });
   }
 }
 
@@ -190,21 +224,24 @@ export function connectToStandup(
   onConnectionStatusChange?: (isConnected: boolean) => void,
   isReconnect = false,
 ): WebSocket {
+  disconnectPending = false;
+
   if (
     activeSocket &&
-    activeSocket.readyState === WebSocket.OPEN &&
-    activeStandupKey === standupKey
+    (activeSocket.readyState === WebSocket.OPEN ||
+      activeSocket.readyState === WebSocket.CONNECTING) &&
+    activeStandupKey === standupKey &&
+    activeUserName === name
   ) {
     return activeSocket;
   }
 
   activeStandupKey = standupKey;
+  activeUserName = name;
 
   if (activeSocket) {
     activeSocket.close();
   }
-
-  intentionalDisconnect = false;
 
   if (!isReconnect) {
     resetReconnectAttempts(reconnectState);
@@ -291,15 +328,19 @@ function handleReconnect(
   onMessage: (data: StandupServerMessage) => void,
   onConnectionStatusChange?: (isConnected: boolean) => void,
 ) {
-  if (intentionalDisconnect) {
-    return;
-  }
-
   if (shouldReconnect(reconnectState)) {
     incrementReconnectAttempts(reconnectState);
     const delay = calculateReconnectDelay(reconnectState);
 
-    window.setTimeout(() => {
+    reconnectTimer = globalThis.setTimeout(() => {
+      reconnectTimer = null;
+      if (disconnectPending) {
+        return;
+      }
+      if (activeStandupKey !== standupKey || activeUserName !== name) {
+        return;
+      }
+
       connectToStandup(
         standupKey,
         name,
@@ -319,15 +360,29 @@ function handleReconnect(
 }
 
 export function disconnectFromStandup(): void {
-  intentionalDisconnect = true;
-
-  if (activeSocket) {
-    activeSocket.close(1000, "User left the standup");
-    activeSocket = null;
+  disconnectPending = true;
+  if (reconnectTimer !== null) {
+    globalThis.clearTimeout(reconnectTimer);
+    reconnectTimer = null;
   }
 
-  activeStandupKey = null;
-  resetReconnectAttempts(reconnectState);
+  void Promise.resolve().then(() => {
+    if (!disconnectPending) return;
+    disconnectPending = false;
+
+    if (activeSocket) {
+      const socket = activeSocket;
+      activeSocket = null;
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      socket.close(1000, "User left the standup");
+    }
+    activeStandupKey = null;
+    activeUserName = null;
+    resetReconnectAttempts(reconnectState);
+  });
 }
 
 export function submitStandupResponse(payload: StandupResponsePayload): void {
@@ -357,6 +412,21 @@ export function unlockStandupResponses(): void {
 
 export function startStandupPresentation(): void {
   sendWebSocketMessage(activeSocket, { type: "startPresentation" });
+}
+
+export function setStandupPresentationOrder(order: string[]): void {
+  sendWebSocketMessage(activeSocket, { type: "setPresentationOrder", order });
+}
+
+export function setStandupBlockerResolved(
+  userName: string,
+  resolved: boolean,
+): void {
+  sendWebSocketMessage(activeSocket, {
+    type: "setBlockerResolved",
+    userName,
+    resolved,
+  });
 }
 
 export function endStandupPresentation(): void {
@@ -395,8 +465,4 @@ export function removeStandupReaction(
     responseUserName,
     emoji,
   });
-}
-
-export function setStandupTheme(theme: string): void {
-  sendWebSocketMessage(activeSocket, { type: "setTheme", theme });
 }

@@ -1,36 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   TeamAccessPolicy,
   TeamSession,
-  WorkspaceAuthProfile,
   WorkspaceProfile,
+  WorkspaceStats,
   WorkspaceTeam,
 } from "@sprintjam/types";
 
 import { SELECTED_TEAM_STORAGE_KEY } from "@/constants";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import {
-  WORKSPACE_PROFILE_DOCUMENT_KEY,
-  workspaceProfileCollection,
-} from "@/lib/data/collections";
-import {
-  teamSessionsQueryKey,
-  WORKSPACE_STATS_QUERY_KEY,
-} from "@/lib/workspace-query";
-import {
   createTeam,
   createTeamSession,
   deleteTeam,
-  getWorkspaceProfile,
-  getWorkspaceStats,
-  listTeamSessions,
   updateTeam,
 } from "@/lib/workspace-service";
-import { isUnauthorizedWorkspaceError } from "@/lib/workspace-errors";
 import { safeLocalStorage } from "@/utils/storage";
-
-const WORKSPACE_DETAILS_QUERY_KEY = ["workspace-details"] as const;
 
 interface CreateSessionPayload {
   teamId: number;
@@ -41,12 +26,13 @@ interface CreateSessionPayload {
 interface CreateTeamPayload {
   name: string;
   accessPolicy?: TeamAccessPolicy;
+  logoUrl?: string | null;
 }
 
 interface UseWorkspaceDataOptions {
-  includeProfile?: boolean;
-  includeStats?: boolean;
-  includeSessions?: boolean;
+  profile?: WorkspaceProfile | null;
+  stats?: WorkspaceStats | null;
+  sessionsByTeamId?: Record<number, TeamSession[]>;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -76,62 +62,8 @@ function persistSelectedTeamId(teamId: number | null) {
   safeLocalStorage.set(SELECTED_TEAM_STORAGE_KEY, String(teamId));
 }
 
-function updateAuthCollection(
-  updater: (
-    current: WorkspaceAuthProfile | null,
-  ) => WorkspaceAuthProfile | null,
-) {
-  const currentProfile =
-    workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY) ?? null;
-  const nextProfile = updater(currentProfile);
-
-  if (!nextProfile) {
-    return;
-  }
-
-  workspaceProfileCollection.utils.writeUpsert(nextProfile);
-}
-
-async function queryWorkspaceProfile(): Promise<WorkspaceProfile | null> {
-  try {
-    return await getWorkspaceProfile();
-  } catch (error) {
-    if (isUnauthorizedWorkspaceError(error)) {
-      return null;
-    }
-    throw error;
-  }
-}
-
-async function queryWorkspaceStats() {
-  try {
-    return await getWorkspaceStats();
-  } catch (error) {
-    if (isUnauthorizedWorkspaceError(error)) {
-      return null;
-    }
-    throw error;
-  }
-}
-
-async function queryTeamSessions(teamId: number) {
-  try {
-    return await listTeamSessions(teamId);
-  } catch (error) {
-    if (isUnauthorizedWorkspaceError(error)) {
-      return [];
-    }
-    throw error;
-  }
-}
-
 export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
-  const {
-    includeProfile = false,
-    includeStats = false,
-    includeSessions = false,
-  } = options;
-  const queryClient = useQueryClient();
+  const { profile = null, stats = null, sessionsByTeamId = {} } = options;
   const {
     user,
     teams,
@@ -184,74 +116,11 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
     [selectedTeamIdState, teams],
   );
 
-  const profileQuery = useQuery({
-    queryKey: WORKSPACE_DETAILS_QUERY_KEY,
-    enabled: includeProfile && isAuthenticated,
-    queryFn: queryWorkspaceProfile,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const statsQuery = useQuery({
-    queryKey: WORKSPACE_STATS_QUERY_KEY,
-    enabled: includeStats && isAuthenticated,
-    queryFn: queryWorkspaceStats,
-    staleTime: 1000 * 60 * 2,
-  });
-
-  const sessionsQuery = useQuery({
-    queryKey:
-      selectedTeamIdState === null
-        ? ["team-sessions", "none"]
-        : teamSessionsQueryKey(selectedTeamIdState),
-    enabled:
-      includeSessions &&
-      isAuthenticated &&
-      selectedTeamIdState !== null &&
-      Boolean(selectedTeam?.canAccess),
-    queryFn: () => queryTeamSessions(selectedTeamIdState!),
-    staleTime: 1000 * 60,
-  });
-
   const refreshWorkspace = useCallback(
-    async (forceRefresh = false) => {
+    async (_forceRefresh = false) => {
       setIsRefreshing(true);
       try {
         await refreshAuth();
-
-        if (includeProfile && isAuthenticated) {
-          if (forceRefresh) {
-            await profileQuery.refetch();
-          } else {
-            await queryClient.invalidateQueries({
-              queryKey: WORKSPACE_DETAILS_QUERY_KEY,
-            });
-          }
-        }
-
-        if (includeStats && isAuthenticated) {
-          if (forceRefresh) {
-            await statsQuery.refetch();
-          } else {
-            await queryClient.invalidateQueries({
-              queryKey: WORKSPACE_STATS_QUERY_KEY,
-            });
-          }
-        }
-
-        if (
-          includeSessions &&
-          selectedTeamIdState !== null &&
-          selectedTeam?.canAccess
-        ) {
-          if (forceRefresh) {
-            await sessionsQuery.refetch();
-          } else {
-            await queryClient.invalidateQueries({
-              queryKey: teamSessionsQueryKey(selectedTeamIdState),
-            });
-          }
-        }
-
         setError(null);
       } catch (refreshError) {
         setError(
@@ -264,19 +133,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         setIsRefreshing(false);
       }
     },
-    [
-      includeProfile,
-      includeSessions,
-      includeStats,
-      isAuthenticated,
-      profileQuery,
-      queryClient,
-      refreshAuth,
-      selectedTeam?.canAccess,
-      selectedTeamIdState,
-      sessionsQuery,
-      statsQuery,
-    ],
+    [refreshAuth],
   );
 
   const refreshSessions = useCallback(
@@ -292,13 +149,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       }
 
       try {
-        if (includeSessions && teamId === selectedTeamIdState) {
-          await sessionsQuery.refetch();
-        } else {
-          await queryClient.invalidateQueries({
-            queryKey: teamSessionsQueryKey(teamId),
-          });
-        }
+        await refreshWorkspace(true);
         setActionError(null);
       } catch (refreshError) {
         setActionError(
@@ -309,13 +160,14 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         );
       }
     },
-    [includeSessions, queryClient, selectedTeamIdState, sessionsQuery, teams],
+    [refreshWorkspace, selectedTeamIdState, teams],
   );
 
   const handleCreateTeam = useCallback(
     async ({
       name,
       accessPolicy = "open",
+      logoUrl = null,
     }: CreateTeamPayload): Promise<WorkspaceTeam | null> => {
       if (!isAuthenticated) {
         setActionError("Load workspace before creating teams");
@@ -325,23 +177,9 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setIsMutating(true);
       setActionError(null);
       try {
-        const team = await createTeam(name, accessPolicy);
-
-        updateAuthCollection((currentProfile) => {
-          if (!currentProfile) {
-            return null;
-          }
-
-          return {
-            ...currentProfile,
-            teams: [...currentProfile.teams, team],
-          };
-        });
-
+        const team = await createTeam(name, accessPolicy, logoUrl);
         setSelectedTeamId(team.id);
-        await queryClient.invalidateQueries({
-          queryKey: WORKSPACE_STATS_QUERY_KEY,
-        });
+        await refreshWorkspace(true);
         return team;
       } catch (mutationError) {
         setActionError(getErrorMessage(mutationError, "Unable to create team"));
@@ -350,13 +188,17 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         setIsMutating(false);
       }
     },
-    [isAuthenticated, queryClient, setSelectedTeamId],
+    [isAuthenticated, refreshWorkspace, setSelectedTeamId],
   );
 
   const handleUpdateTeam = useCallback(
     async (
       teamId: number,
-      payload: { name?: string; accessPolicy?: TeamAccessPolicy },
+      payload: {
+        name?: string;
+        accessPolicy?: TeamAccessPolicy;
+        logoUrl?: string | null;
+      },
     ): Promise<WorkspaceTeam | null> => {
       if (!isAuthenticated) {
         setActionError("Load workspace before updating teams");
@@ -367,20 +209,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setActionError(null);
       try {
         const updated = await updateTeam(teamId, payload);
-
-        updateAuthCollection((currentProfile) => {
-          if (!currentProfile) {
-            return null;
-          }
-
-          return {
-            ...currentProfile,
-            teams: currentProfile.teams.map((team) =>
-              team.id === teamId ? updated : team,
-            ),
-          };
-        });
-
+        await refreshWorkspace(true);
         return updated;
       } catch (mutationError) {
         setActionError(getErrorMessage(mutationError, "Unable to update team"));
@@ -389,7 +218,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         setIsMutating(false);
       }
     },
-    [isAuthenticated],
+    [isAuthenticated, refreshWorkspace],
   );
 
   const handleDeleteTeam = useCallback(
@@ -403,24 +232,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setActionError(null);
       try {
         await deleteTeam(teamId);
-
-        updateAuthCollection((currentProfile) => {
-          if (!currentProfile) {
-            return null;
-          }
-
-          return {
-            ...currentProfile,
-            teams: currentProfile.teams.filter((team) => team.id !== teamId),
-          };
-        });
-
-        await queryClient.removeQueries({
-          queryKey: teamSessionsQueryKey(teamId),
-        });
-        await queryClient.invalidateQueries({
-          queryKey: WORKSPACE_STATS_QUERY_KEY,
-        });
+        await refreshWorkspace(true);
 
         if (selectedTeamIdState === teamId) {
           setSelectedTeamId(null);
@@ -434,7 +246,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         setIsMutating(false);
       }
     },
-    [isAuthenticated, queryClient, selectedTeamIdState, setSelectedTeamId],
+    [isAuthenticated, refreshWorkspace, selectedTeamIdState, setSelectedTeamId],
   );
 
   const handleCreateSession = useCallback(
@@ -454,16 +266,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setActionError(null);
       try {
         const session = await createTeamSession(teamId, name, roomKey);
-
-        await Promise.all([
-          queryClient.invalidateQueries({
-            queryKey: teamSessionsQueryKey(teamId),
-          }),
-          queryClient.invalidateQueries({
-            queryKey: WORKSPACE_STATS_QUERY_KEY,
-          }),
-        ]);
-
+        await refreshWorkspace(true);
         return session;
       } catch (mutationError) {
         setActionError(
@@ -474,80 +277,42 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         setIsMutating(false);
       }
     },
-    [isAuthenticated, queryClient],
+    [isAuthenticated, refreshWorkspace],
   );
 
   const handleLogout = useCallback(async () => {
     setIsMutating(true);
     try {
       await logoutAuth();
-      await Promise.all([
-        queryClient.removeQueries({ queryKey: WORKSPACE_DETAILS_QUERY_KEY }),
-        queryClient.removeQueries({ queryKey: WORKSPACE_STATS_QUERY_KEY }),
-        queryClient.removeQueries({ queryKey: ["team-sessions"] }),
-      ]);
       setSelectedTeamId(null);
       setError(null);
       setActionError(null);
     } finally {
       setIsMutating(false);
     }
-  }, [logoutAuth, queryClient, setSelectedTeamId]);
+  }, [logoutAuth, setSelectedTeamId]);
 
-  const queryError = useMemo(() => {
-    if (profileQuery.error) {
-      return getErrorMessage(profileQuery.error, "Unable to load workspace");
-    }
-
-    if (statsQuery.error) {
-      return getErrorMessage(
-        statsQuery.error,
-        "Unable to load workspace stats",
-      );
-    }
-
-    return null;
-  }, [profileQuery.error, statsQuery.error]);
-
-  const queryActionError = useMemo(() => {
-    if (actionError) {
-      return actionError;
-    }
-
-    if (sessionsQuery.error) {
-      return getErrorMessage(
-        sessionsQuery.error,
-        "Unable to load sessions for this team",
-      );
-    }
-
-    return null;
-  }, [actionError, sessionsQuery.error]);
+  const sessions =
+    selectedTeamIdState !== null && selectedTeam?.canAccess
+      ? (sessionsByTeamId[selectedTeamIdState] ?? [])
+      : [];
 
   return {
-    profile: profileQuery.data ?? null,
+    profile,
     user,
     teams,
-    stats: statsQuery.data ?? null,
-    sessions:
-      includeSessions && selectedTeam?.canAccess
-        ? (sessionsQuery.data ?? [])
-        : [],
+    stats,
+    sessions,
     selectedTeamId: selectedTeamIdState,
     setSelectedTeamId,
     isAuthenticated,
     isLoading:
       isAuthLoading ||
-      isRefreshing ||
-      Boolean(includeProfile && profileQuery.isLoading) ||
-      Boolean(includeStats && statsQuery.isLoading),
-    isLoadingSessions:
-      includeSessions && selectedTeam?.canAccess
-        ? sessionsQuery.isLoading || sessionsQuery.isFetching
-        : false,
+      isRefreshing,
+    isLoadingSessions: false,
     isMutating,
-    error: error ?? queryError,
-    actionError: queryActionError,
+    error,
+    actionError,
     refreshWorkspace,
     refreshSessions,
     createTeam: handleCreateTeam,

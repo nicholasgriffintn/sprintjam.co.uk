@@ -16,30 +16,6 @@ import { createRoomWithParticipant } from "./helpers/room-journeys";
 const WORKSPACE_TEAM_ID = 88;
 
 async function setupWorkspaceRoutes(context: BrowserContext) {
-  await context.route("**/api/auth/me", (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        user: {
-          id: 42,
-          email: "qa@sprintjam.co.uk",
-          name: "Workspace QA",
-          organisationId: 7,
-        },
-        teams: [
-          {
-            id: WORKSPACE_TEAM_ID,
-            name: "QA Team",
-            organisationId: 7,
-            ownerId: 42,
-            createdAt: Date.now(),
-          },
-        ],
-      }),
-    });
-  });
-
   await context.route("**/api/teams/88/settings", (route) => {
     route.fulfill({
       status: 200,
@@ -109,7 +85,6 @@ async function createRoomWithProvider(
 
   const createRoom = new CreateRoomPage(page);
   await createRoom.fillBasics("Queue Creator");
-  await createRoom.selectPersonalRoomIfAvailable();
   await createRoom.startInstantRoom();
 
   const joinRoom = new JoinRoomPage(page);
@@ -117,6 +92,7 @@ async function createRoomWithProvider(
 
   const room = new RoomPage(page);
   await room.waitForLoaded();
+  await room.dismissRecoveryPasskeyModalIfPresent();
 
   const settingsModal = new SettingsModal(page);
   await settingsModal.open();

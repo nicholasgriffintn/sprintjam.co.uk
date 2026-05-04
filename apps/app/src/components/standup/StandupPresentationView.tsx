@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import type { StandupData } from "@sprintjam/types";
+import { secureRandomInt } from "@sprintjam/utils";
 import {
   CheckCircle2,
   ChevronLeft,
@@ -14,20 +15,13 @@ import { StandupUserCard } from "@/components/standup/StandupUserCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { cn } from "@/lib/cn";
-
-const THEME_CLASSES: Record<string, string> = {
-  default: "",
-  cosmic: "bg-indigo-950 text-white",
-  forest: "bg-emerald-950 text-white",
-  ocean: "bg-sky-950 text-white",
-  sunset: "bg-orange-950 text-white",
-};
+import { getOrderedStandupResponses } from "@/utils/standup-recap";
 
 interface StandupPresentationViewProps {
   standupData: StandupData;
   onFocusUser: (userName: string) => void;
   onEndPresentation: () => void;
+  onSetPresentationOrder: (order: string[]) => void;
   onCompleteStandup: () => void;
   onAddReaction: (responseUserName: string, emoji: string) => void;
   onRemoveReaction: (responseUserName: string, emoji: string) => void;
@@ -38,7 +32,7 @@ interface StandupPresentationViewProps {
 function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureRandomInt(i + 1);
     [copy[i], copy[j]] = [copy[j]!, copy[i]!];
   }
   return copy;
@@ -48,34 +42,17 @@ export function StandupPresentationView({
   standupData,
   onFocusUser,
   onEndPresentation,
+  onSetPresentationOrder,
   onCompleteStandup,
   onAddReaction,
   onRemoveReaction,
   currentUserName,
   isCompletingStandup = false,
 }: StandupPresentationViewProps) {
-  const [shuffledOrder, setShuffledOrder] = useState<string[] | null>(null);
-
-  const baseOrderedResponses = useMemo(() => {
-    const userOrder = new Map(
-      standupData.users.map((user, index) => [user, index]),
-    );
-    return [...standupData.responses].sort(
-      (left, right) =>
-        (userOrder.get(left.userName) ?? Number.MAX_SAFE_INTEGER) -
-        (userOrder.get(right.userName) ?? Number.MAX_SAFE_INTEGER),
-    );
-  }, [standupData.responses, standupData.users]);
-
-  const orderedResponses = useMemo(() => {
-    if (!shuffledOrder) return baseOrderedResponses;
-    const orderMap = new Map(shuffledOrder.map((name, i) => [name, i]));
-    return [...baseOrderedResponses].sort(
-      (a, b) =>
-        (orderMap.get(a.userName) ?? Number.MAX_SAFE_INTEGER) -
-        (orderMap.get(b.userName) ?? Number.MAX_SAFE_INTEGER),
-    );
-  }, [baseOrderedResponses, shuffledOrder]);
+  const orderedResponses = useMemo(
+    () => getOrderedStandupResponses(standupData),
+    [standupData],
+  );
 
   const firstSubmitter = useMemo(() => {
     if (!orderedResponses.length) return undefined;
@@ -101,7 +78,10 @@ export function StandupPresentationView({
     if (!orderedResponses.length || standupData.focusedUser) {
       return;
     }
-    onFocusUser(orderedResponses[0].userName);
+    const firstResponse = orderedResponses[0];
+    if (firstResponse) {
+      onFocusUser(firstResponse.userName);
+    }
   }, [onFocusUser, orderedResponses, standupData.focusedUser]);
 
   const moveFocus = (direction: "previous" | "next") => {
@@ -110,17 +90,17 @@ export function StandupPresentationView({
       direction === "previous"
         ? (activeIndex - 1 + orderedResponses.length) % orderedResponses.length
         : (activeIndex + 1) % orderedResponses.length;
-    onFocusUser(orderedResponses[nextIndex].userName);
+    const nextResponse = orderedResponses[nextIndex];
+    if (nextResponse) {
+      onFocusUser(nextResponse.userName);
+    }
   };
 
   const handleShuffle = useCallback(() => {
     const shuffled = shuffleArray(orderedResponses.map((r) => r.userName));
-    setShuffledOrder(shuffled);
+    onSetPresentationOrder(shuffled);
     onFocusUser(shuffled[0]!);
-  }, [orderedResponses, onFocusUser]);
-
-  const theme = standupData.presentationTheme ?? "default";
-  const themeClass = THEME_CLASSES[theme] ?? "";
+  }, [onFocusUser, onSetPresentationOrder, orderedResponses]);
 
   if (!orderedResponses.length) {
     return (
@@ -145,24 +125,11 @@ export function StandupPresentationView({
   }
 
   return (
-    <div
-      className={cn("space-y-6 rounded-2xl p-1 transition-colors", themeClass)}
-    >
-      <SurfaceCard
-        className={cn(
-          "space-y-5",
-          themeClass &&
-            "bg-white/10 border-white/20 backdrop-blur-sm dark:bg-white/5",
-        )}
-      >
+    <div className="space-y-6">
+      <SurfaceCard className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
-            <h2
-              className={cn(
-                "text-3xl font-semibold tracking-tight",
-                themeClass ? "text-white" : "text-slate-900 dark:text-white",
-              )}
-            >
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
               Walk the team through one update at a time
             </h2>
             <div className="flex flex-wrap items-center gap-3">

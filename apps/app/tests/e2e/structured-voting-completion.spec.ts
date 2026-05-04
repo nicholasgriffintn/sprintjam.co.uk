@@ -180,6 +180,7 @@ test.describe("Structured voting completion warnings", () => {
       await participantPanel.selectScore("volume", 1);
       await participantPanel.selectScore("unknowns", 0);
       await participantPanel.expectStoryPoints(3);
+      await moderatorRoom.expectVotingProgress(2, 2);
 
       // Should not show warning since extra option counts as complete
       await moderatorRoom.revealVotes();

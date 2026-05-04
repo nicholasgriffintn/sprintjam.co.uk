@@ -39,7 +39,7 @@ export const guessTheNumberEngine: GameEngine = {
       if (alreadyGuessedSameValueThisRound) {
         addEvent(
           session,
-          `${userName} already guessed that number this wrong this round.`,
+          `${userName} already guessed that number this round.`,
         );
       } else {
         if (guess === target) {

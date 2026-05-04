@@ -1,12 +1,13 @@
 import type { RoomGameSession } from "@sprintjam/types";
+import { secureRandomInt } from "@sprintjam/utils";
 
 import type { GameEngine } from "../types";
-import { addEvent, addPoints } from "../helpers";
+import { addEvent, addPoints, getGameWinner } from "../helpers";
 
 const TURNS_PER_PLAYER = 3;
 const DICE_COUNT = 6;
 
-const rollDie = () => Math.floor(Math.random() * 6) + 1;
+const rollDie = () => secureRandomInt(6) + 1;
 
 export const scoreDice = (dice: number[]): number => {
   if (dice.length === 0) return 0;
@@ -116,6 +117,10 @@ const checkGameOver = (session: RoomGameSession): boolean => {
   );
 };
 
+const removeMove = (session: RoomGameSession, moveId: string) => {
+  session.moves = session.moves.filter((move) => move.id !== moveId);
+};
+
 export const sprintRiskEngine: GameEngine = {
   title: "Sprint Risk",
   allowConsecutiveMoves: true,
@@ -136,13 +141,11 @@ export const sprintRiskEngine: GameEngine = {
       {},
     ),
   }),
-  applyMove: ({ session, userName, value }) => {
+  applyMove: ({ session, userName, value, move }) => {
     const currentPlayer = getCurrentPlayer(session);
 
     if (currentPlayer !== userName) {
-      session.moves = session.moves.filter(
-        (m) => !(m.user === userName && m.value === value),
-      );
+      removeMove(session, move.id);
       return;
     }
 
@@ -151,9 +154,7 @@ export const sprintRiskEngine: GameEngine = {
         session.sprintRiskPhase !== "waiting" &&
         session.sprintRiskPhase !== "kept"
       ) {
-        session.moves = session.moves.filter(
-          (m) => !(m.user === userName && m.value === value),
-        );
+        removeMove(session, move.id);
         return;
       }
 
@@ -182,11 +183,7 @@ export const sprintRiskEngine: GameEngine = {
 
         if (checkGameOver(session)) {
           session.status = "completed";
-          const topScore = Math.max(...Object.values(session.leaderboard));
-          const winner = Object.entries(session.leaderboard).find(
-            ([, score]) => score === topScore,
-          )?.[0];
-          if (winner) session.winner = winner;
+          session.winner = getGameWinner(session);
           addEvent(session, `Game over! ${session.winner ?? "No one"} wins.`);
         } else {
           const next = getCurrentPlayer(session);
@@ -198,17 +195,19 @@ export const sprintRiskEngine: GameEngine = {
       session.sprintRiskPhase = "rolled";
     } else if (value.startsWith("keep:")) {
       if (session.sprintRiskPhase !== "rolled") {
-        session.moves = session.moves.filter(
-          (m) => !(m.user === userName && m.value === value),
-        );
+        removeMove(session, move.id);
         return;
       }
 
-      const rawIndices = value
-        .slice(5)
-        .split(",")
-        .map((s) => parseInt(s.trim(), 10))
-        .filter((n) => !Number.isNaN(n));
+      const rawIndices = Array.from(
+        new Set(
+          value
+            .slice(5)
+            .split(",")
+            .map((s) => parseInt(s.trim(), 10))
+            .filter((n) => !Number.isNaN(n)),
+        ),
+      );
 
       const currentDice = session.sprintRiskDice ?? [];
       const alreadyKept = new Set(session.sprintRiskKeptIndices ?? []);
@@ -224,9 +223,7 @@ export const sprintRiskEngine: GameEngine = {
           session,
           `${userName}'s kept dice don't score — pick a valid combination.`,
         );
-        session.moves = session.moves.filter(
-          (m) => !(m.user === userName && m.value === value),
-        );
+        removeMove(session, move.id);
         return;
       }
 
@@ -252,9 +249,7 @@ export const sprintRiskEngine: GameEngine = {
       }
     } else if (value === "bank") {
       if (session.sprintRiskPhase !== "kept") {
-        session.moves = session.moves.filter(
-          (m) => !(m.user === userName && m.value === value),
-        );
+        removeMove(session, move.id);
         return;
       }
 
@@ -271,11 +266,7 @@ export const sprintRiskEngine: GameEngine = {
 
       if (checkGameOver(session)) {
         session.status = "completed";
-        const topScore = Math.max(...Object.values(session.leaderboard));
-        const winner = Object.entries(session.leaderboard).find(
-          ([, score]) => score === topScore,
-        )?.[0];
-        if (winner) session.winner = winner;
+        session.winner = getGameWinner(session);
         addEvent(session, `Game over! ${session.winner ?? "No one"} wins.`);
       } else {
         const next = getCurrentPlayer(session);

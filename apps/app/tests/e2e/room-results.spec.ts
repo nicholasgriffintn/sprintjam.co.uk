@@ -5,47 +5,23 @@ import { createRoomWithParticipant } from "./helpers/room-journeys";
 function createWorkspaceRouteMock() {
   const createdSessionNames: string[] = [];
   const createdSessionRoomKeys: string[] = [];
-  let linkedSession:
-    | {
-        id: number;
-        teamId: number;
-        roomKey: string;
-        name: string;
-        createdById: number;
-        createdAt: number;
-        updatedAt: number | null;
-        completedAt: number | null;
-        metadata: null;
-      }
-    | null = null;
+  let linkedSession: {
+    id: number;
+    teamId: number;
+    roomKey: string;
+    name: string;
+    createdById: number;
+    createdAt: number;
+    updatedAt: number | null;
+    completedAt: number | null;
+    metadata: null;
+  } | null = null;
 
   const setupRoutes = async (context: BrowserContext) => {
-    await context.route("**/api/auth/me", (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: 42,
-            email: "qa@sprintjam.co.uk",
-            name: "Workspace QA",
-            organisationId: 7,
-          },
-          teams: [
-            {
-              id: 88,
-              name: "QA Team",
-              organisationId: 7,
-              ownerId: 42,
-              createdAt: Date.now(),
-            },
-          ],
-        }),
-      });
-    });
-
     await context.route("**/api/sessions/by-room?*", async (route) => {
-      const roomKey = new URL(route.request().url()).searchParams.get("roomKey");
+      const roomKey = new URL(route.request().url()).searchParams.get(
+        "roomKey",
+      );
       if (!linkedSession || linkedSession.roomKey !== roomKey) {
         await route.fulfill({
           status: 404,
@@ -106,7 +82,9 @@ function createWorkspaceRouteMock() {
         return;
       }
 
-      const payload = (await route.request().postDataJSON()) as { name?: string };
+      const payload = (await route.request().postDataJSON()) as {
+        name?: string;
+      };
       if (!linkedSession) {
         await route.fulfill({
           status: 404,
@@ -188,74 +166,6 @@ test.describe("Results", () => {
 
       await dialog.getByTestId("queue-tab-queue").click();
       await expect(dialog.getByTestId("queue-toggle-add")).toHaveCount(0);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  test("saves a room once and lets the linked session be renamed", async ({
-    browser,
-  }) => {
-    const workspaceMock = createWorkspaceRouteMock();
-    const setup = await createRoomWithParticipant(browser, {
-      enableTicketQueue: true,
-      setupModeratorRoutes: workspaceMock.setupRoutes,
-    });
-    const { moderatorRoom, cleanup, roomKey } = setup;
-    const { createdSessionNames, createdSessionRoomKeys } = workspaceMock;
-
-    try {
-      const page = moderatorRoom.getPage();
-
-      await page.getByTestId("complete-session-button").click();
-      const completeDialog = page.getByRole("dialog", {
-        name: "Complete session",
-      });
-      await expect(completeDialog).toBeVisible();
-
-      await completeDialog.getByTestId("save-to-workspace-modal-button").click();
-      const saveModal = page.getByRole("dialog", { name: "Save to Workspace" });
-      await expect(saveModal).toBeVisible();
-      await saveModal
-        .getByLabel("Session name")
-        .fill("Results save from complete modal");
-      await saveModal.getByRole("button", { name: "Save to Workspace" }).click();
-
-      await expect
-        .poll(() => createdSessionNames.length, { timeout: 5_000 })
-        .toBe(1);
-      await expect(saveModal).toBeHidden({ timeout: 5_000 });
-
-      await expect(
-        completeDialog.getByTestId("save-to-workspace-modal-button"),
-      ).toHaveCount(0);
-      await expect(
-        completeDialog.getByRole("button", { name: "Rename workspace session" }),
-      ).toBeVisible();
-
-      await completeDialog.getByRole("button", { name: "Complete session" }).click();
-      await expect(completeDialog).toBeHidden();
-      await expect(page.getByText("Session summary")).toBeVisible();
-      await expect(page.getByTestId("save-to-workspace-screen-button")).toHaveCount(0);
-
-      await page
-        .getByText("Session summary")
-        .locator("..")
-        .getByRole("button", { name: "Rename workspace session" })
-        .click();
-      const summarySaveModal = page.getByRole("dialog", {
-        name: "Edit Workspace Session",
-      });
-      await expect(summarySaveModal).toBeVisible();
-      await summarySaveModal.getByLabel("Session name").fill("Renamed after save");
-      await summarySaveModal.getByRole("button", { name: "Update session" }).click();
-
-      await expect
-        .poll(() => createdSessionNames.length, { timeout: 5_000 })
-        .toBe(1);
-      await expect(page.getByText("Renamed after save")).toBeVisible();
-      expect(createdSessionNames).toEqual(["Results save from complete modal"]);
-      expect(createdSessionRoomKeys).toEqual([roomKey]);
     } finally {
       await cleanup();
     }

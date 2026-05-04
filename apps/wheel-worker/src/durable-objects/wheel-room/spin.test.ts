@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { WheelData } from "@sprintjam/types";
+import type { WheelStateData } from "@sprintjam/types";
 import type { WheelRoom } from ".";
 
 import {
@@ -9,7 +9,9 @@ import {
   handleUpdateSettings,
 } from "./spin";
 
-const buildWheelData = (overrides: Partial<WheelData> = {}): WheelData => ({
+const buildWheelData = (
+  overrides: Partial<WheelStateData> = {},
+): WheelStateData => ({
   key: "wheel",
   entries: [],
   moderator: "mod",
@@ -28,8 +30,8 @@ const buildWheelData = (overrides: Partial<WheelData> = {}): WheelData => ({
 });
 
 const createWheel = (
-  wheelData: WheelData,
-  entriesAfter?: WheelData["entries"],
+  wheelData: WheelStateData,
+  entriesAfter?: WheelStateData["entries"],
 ) =>
   ({
     getWheelData: vi.fn().mockResolvedValue(wheelData),

@@ -1,7 +1,7 @@
 import type { FC } from "react";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 
-import { useSessionState } from "@/context/SessionContext";
+import { useCurrentRoute } from "@/hooks/useCurrentRoute";
 import { HeaderContainer } from "@/components/layout/Header/HeaderContainer";
 import { MarketingHeader } from "@/components/layout/Header/HeaderContent/MarketingHeader";
 import { RoomHeader } from "@/components/layout/Header/HeaderContent/RoomHeader";
@@ -9,10 +9,10 @@ import { WorkspaceHeader } from "@/components/layout/Header/HeaderContent/Worksp
 import { WheelHeader } from "@/components/layout/Header/HeaderContent/WheelHeader";
 import { StandupHeader } from "@/components/layout/Header/StandupHeader";
 import { HEADER_TRANSITION } from "@/constants";
-import { getHeaderVariant, getMarketingVariant } from "@/config/routes";
+import { getHeaderVariant, getMarketingVariant } from "@/config/routes/derived";
 
 export const Header: FC = () => {
-  const { screen } = useSessionState();
+  const { screen } = useCurrentRoute();
 
   const variant = getHeaderVariant(screen);
 

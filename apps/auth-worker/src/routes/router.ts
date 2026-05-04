@@ -44,6 +44,12 @@ import {
   saveTeamSettingsController,
 } from "../controllers/team-settings-controller";
 import {
+  deleteTeamCollaborationInstallationController,
+  listTeamCollaborationInstallationsController,
+  resolveTeamsCollaborationInstallationController,
+  saveTeamsCollaborationInstallationController,
+} from "../controllers/team-collaboration-controller";
+import {
   listTeamIntegrationsController,
   getTeamIntegrationStatusController,
   listTeamIntegrationBoardsController,
@@ -421,6 +427,61 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "GET",
+    pattern: /^teams\/(\d+)\/collaboration-installations$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listTeamCollaborationInstallationsController(
+        request,
+        env,
+        teamIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^collaboration-installations\/teams\/resolve$/,
+    handler: (request, env) =>
+      resolveTeamsCollaborationInstallationController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/collaboration-installations\/teams$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return saveTeamsCollaborationInstallationController(
+        request,
+        env,
+        teamIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^teams\/(\d+)\/collaboration-installations\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const installationIdResult = requireNumberParam(
+        params[1],
+        "installationId",
+      );
+      if (!installationIdResult.ok) return installationIdResult.response;
+      return deleteTeamCollaborationInstallationController(
+        request,
+        env,
+        teamIdResult.value,
+        installationIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "GET",
     pattern: /^teams\/(\d+)\/integrations$/,
     handler: (request, env, params) => {
       const teamIdResult = requireNumberParam(params[0], "teamId");
@@ -616,7 +677,7 @@ export async function handleRequest(
     if (request.method === "POST" || request.method === "PUT") {
       const bodySizeCheck = validateRequestBodySize(request);
       if (!bodySizeCheck.ok) {
-        return bodySizeCheck.response as unknown as Response;
+        return bodySizeCheck.response;
       }
     }
 

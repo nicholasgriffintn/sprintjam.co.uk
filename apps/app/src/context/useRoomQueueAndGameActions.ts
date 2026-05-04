@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import type { RoomGameType } from "@sprintjam/types";
 
 import {
@@ -13,15 +12,8 @@ import {
   submitGameMove,
   endGame,
 } from "@/lib/api-service";
-import {
-  completeSessionByRoomKey,
-} from "@/lib/workspace-service";
+import { completeSessionByRoomKey } from "@/lib/workspace-service";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
-import {
-  linkedRoomSessionQueryKey,
-  teamSessionsQueryKey,
-  WORKSPACE_STATS_QUERY_KEY,
-} from "@/lib/workspace-query";
 import { HttpError } from "@/lib/errors";
 import type { ErrorKind, RoomData, TicketQueueItem } from "@/types";
 
@@ -44,7 +36,6 @@ export function useRoomQueueAndGameActions({
   setRoomErrorKind,
   assignRoomError,
 }: UseRoomQueueAndGameActionsOptions) {
-  const queryClient = useQueryClient();
   const { isAuthenticated } = useWorkspaceAuth();
 
   const handleSelectTicket = useCallback(
@@ -138,34 +129,18 @@ export function useRoomQueueAndGameActions({
         return;
       }
 
-      void completeSessionByRoomKey(roomData.key)
-        .then(async (updatedSession) => {
-          queryClient.setQueryData(
-            linkedRoomSessionQueryKey(roomData.key),
-            updatedSession,
-          );
-          await Promise.all([
-            queryClient.invalidateQueries({
-              queryKey: teamSessionsQueryKey(updatedSession.teamId),
-            }),
-            queryClient.invalidateQueries({
-              queryKey: WORKSPACE_STATS_QUERY_KEY,
-            }),
-          ]);
-        })
-        .catch((err: unknown) => {
-          if (err instanceof HttpError && err.status === 404) {
-            return;
-          }
-          assignRoomError(err, "Failed to update workspace session");
-        });
+      void completeSessionByRoomKey(roomData.key).catch((err: unknown) => {
+        if (err instanceof HttpError && err.status === 404) {
+          return;
+        }
+        assignRoomError(err, "Failed to update workspace session");
+      });
     } catch (err: unknown) {
       assignRoomError(err, "Failed to complete session");
     }
   }, [
     assignRoomError,
     isAuthenticated,
-    queryClient,
     roomData,
     setRoomError,
     setRoomErrorKind,

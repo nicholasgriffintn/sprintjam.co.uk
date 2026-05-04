@@ -9,6 +9,7 @@ export const teams = sqliteTable("teams", {
     .notNull()
     .references(() => organisations.id),
   name: text("name").notNull(),
+  logoUrl: text("logo_url"),
   ownerId: integer("owner_id")
     .notNull()
     .references(() => users.id),

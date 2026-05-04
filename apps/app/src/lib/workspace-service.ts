@@ -12,16 +12,18 @@ import type {
   ExternalTicketMetadata,
   OAuthProvider,
   SessionStats,
+  SaveTeamsCollaborationInstallationInput,
   TeamAccessPolicy,
+  TeamCollaborationInstallation,
   TeamMember,
   TeamInsights,
   TeamIntegrationStatus,
   TeamSession,
-  WorkspaceAuthProfile,
   WorkspaceMember,
   WorkspaceInsights,
   WorkspaceInvite,
   WorkspaceOrganisation,
+  WorkspaceAuthProfile,
   WorkspaceProfile,
   WorkspaceStats,
   WorkspaceTeam,
@@ -181,20 +183,14 @@ export async function verifyMfa(
   });
 }
 
-export async function getCurrentUser(): Promise<WorkspaceAuthProfile | null> {
-  try {
-    return await workspaceRequest<WorkspaceAuthProfile>(
-      `${API_BASE_URL}/auth/me`,
-    );
-  } catch {
-    return null;
-  }
-}
-
 export async function getWorkspaceProfile(): Promise<WorkspaceProfile> {
   return workspaceRequest<WorkspaceProfile>(
     `${API_BASE_URL}/workspace/profile`,
   );
+}
+
+export async function getWorkspaceAuthProfile(): Promise<WorkspaceAuthProfile> {
+  return workspaceRequest<WorkspaceAuthProfile>(`${API_BASE_URL}/auth/me`);
 }
 
 export async function updateCurrentUserProfile(payload: {
@@ -226,12 +222,13 @@ export async function listTeams(): Promise<WorkspaceTeam[]> {
 export async function createTeam(
   name: string,
   accessPolicy: TeamAccessPolicy = "open",
+  logoUrl: string | null = null,
 ): Promise<WorkspaceTeam> {
   const data = await workspaceRequest<{ team: WorkspaceTeam }>(
     `${API_BASE_URL}/teams`,
     {
       method: "POST",
-      body: JSON.stringify({ name, accessPolicy }),
+      body: JSON.stringify({ name, accessPolicy, logoUrl }),
     },
   );
   return data.team;
@@ -246,7 +243,11 @@ export async function getTeam(teamId: number): Promise<WorkspaceTeam> {
 
 export async function updateTeam(
   teamId: number,
-  payload: { name?: string; accessPolicy?: TeamAccessPolicy },
+  payload: {
+    name?: string;
+    accessPolicy?: TeamAccessPolicy;
+    logoUrl?: string | null;
+  },
 ): Promise<WorkspaceTeam> {
   const data = await workspaceRequest<{ team: WorkspaceTeam }>(
     `${API_BASE_URL}/teams/${teamId}`,
@@ -542,11 +543,6 @@ export async function getBatchSessionStats(
   return data;
 }
 
-export async function isAuthenticated(): Promise<boolean> {
-  const user = await getCurrentUser();
-  return !!user;
-}
-
 export async function getTeamSettings(
   teamId: number,
 ): Promise<RoomSettings | null> {
@@ -657,6 +653,53 @@ export async function revokeTeamIntegration(
 ): Promise<void> {
   await workspaceRequest(
     `${API_BASE_URL}/teams/${teamId}/integrations/${provider}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function listTeamCollaborationInstallations(
+  teamId: number,
+): Promise<TeamCollaborationInstallation[]> {
+  const data = await workspaceRequest<{
+    installations: TeamCollaborationInstallation[];
+  }>(`${API_BASE_URL}/teams/${teamId}/collaboration-installations`);
+  return data.installations;
+}
+
+export async function saveTeamsCollaborationInstallation(
+  teamId: number,
+  payload: SaveTeamsCollaborationInstallationInput,
+): Promise<TeamCollaborationInstallation> {
+  const data = await workspaceRequest<{
+    installation: TeamCollaborationInstallation;
+  }>(
+    `${API_BASE_URL}/teams/${teamId}/collaboration-installations/teams`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.installation;
+}
+
+export async function resolveTeamsCollaborationInstallation(
+  payload: SaveTeamsCollaborationInstallationInput,
+): Promise<TeamCollaborationInstallation | null> {
+  const data = await workspaceRequest<{
+    installation: TeamCollaborationInstallation | null;
+  }>(`${API_BASE_URL}/collaboration-installations/teams/resolve`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return data.installation;
+}
+
+export async function deleteTeamCollaborationInstallation(
+  teamId: number,
+  installationId: number,
+): Promise<void> {
+  await workspaceRequest(
+    `${API_BASE_URL}/teams/${teamId}/collaboration-installations/${installationId}`,
     { method: "DELETE" },
   );
 }

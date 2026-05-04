@@ -33,9 +33,7 @@ function hasTeamAccess(
   isWorkspaceAdmin: boolean,
 ): boolean {
   return (
-    isWorkspaceAdmin ||
-    accessPolicy === "open" ||
-    membershipUserId === userId
+    isWorkspaceAdmin || accessPolicy === "open" || membershipUserId === userId
   );
 }
 

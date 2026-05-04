@@ -3,10 +3,13 @@ import type { StandupData, StandupWorkerEnv } from "@sprintjam/types";
 import {
   hashPasscode,
   verifyPasscode,
-  generateID,
+  generateSessionToken,
+  generateRecoveryPasskey,
   serializePasscodeHash,
   parsePasscodeHash,
   getStandupSessionToken,
+  createStandupSessionCookie,
+  SESSION_TOKEN_TTL_MS,
   PASSCODE_MIN_LENGTH,
   PASSCODE_MAX_LENGTH,
 } from "@sprintjam/utils";
@@ -34,15 +37,11 @@ export async function handleHttpRequest(
     return handleJoin(context, request);
   }
 
-  return null;
-}
+  if (path === "/recover" && request.method === "POST") {
+    return handleRecover(context, request);
+  }
 
-function createStandupSessionCookie(
-  token: string,
-  env: StandupWorkerEnv,
-): string {
-  const secure = env.ENVIRONMENT === "development" ? "" : " Secure;";
-  return `standup_session=${token}; HttpOnly;${secure} SameSite=Strict; Path=/; Max-Age=86400`;
+  return null;
 }
 
 function normalisePasscode(value?: string): string | undefined {
@@ -78,6 +77,26 @@ function passcodeErrorResponse(message: string): Response {
   });
 }
 
+function buildSessionResponse(
+  body: unknown,
+  sessionToken: string,
+  env: StandupWorkerEnv,
+): Response {
+  const isSecure = env.ENVIRONMENT !== "development";
+  const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": createStandupSessionCookie(
+        sessionToken,
+        maxAgeSeconds,
+        isSecure,
+      ),
+    },
+  });
+}
+
 async function handleInitialize(
   context: StandupRoomHttpContext,
   request: Request,
@@ -88,9 +107,11 @@ async function handleInitialize(
     passcode?: string;
     avatar?: string;
     teamId?: number;
+    workspaceUserId?: number;
   }>();
 
-  const { standupKey, moderator, passcode, avatar, teamId } = body;
+  const { standupKey, moderator, passcode, avatar, teamId, workspaceUserId } =
+    body;
 
   if (!standupKey || !moderator) {
     return jsonError("Standup key and moderator are required");
@@ -120,26 +141,29 @@ async function handleInitialize(
     teamId,
   );
 
-  const sessionToken = generateID();
+  const sessionToken = generateSessionToken();
   context.repository.setSessionToken(moderator, sessionToken);
+
+  if (workspaceUserId) {
+    context.repository.setWorkspaceUserId(moderator, workspaceUserId);
+  }
 
   if (avatar) {
     context.repository.setUserAvatar(moderator, avatar);
   }
 
+  let recoveryPasskey: string | undefined;
+  if (!workspaceUserId) {
+    recoveryPasskey = generateRecoveryPasskey();
+    await context.repository.setRecoveryPasskey(moderator, recoveryPasskey);
+  }
+
   const standupData = await context.getStandupData();
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      standup: standupData,
-    }),
-    {
-      status: 200,
-      headers: {
-        "Set-Cookie": createStandupSessionCookie(sessionToken, context.env),
-      },
-    },
+  return buildSessionResponse(
+    { success: true, standup: standupData, recoveryPasskey },
+    sessionToken,
+    context.env,
   );
 }
 
@@ -151,9 +175,10 @@ async function handleJoin(
     name: string;
     passcode?: string;
     avatar?: string;
+    workspaceUserId?: number;
   }>();
 
-  const { name, passcode, avatar } = body;
+  const { name, passcode, avatar, workspaceUserId } = body;
 
   if (!name) {
     return jsonError("Name is required");
@@ -164,68 +189,137 @@ async function handleJoin(
     return jsonError("Standup not found", 404);
   }
 
-  const storedPasscode = context.repository.getPasscode();
-  const parsedPasscode = parsePasscodeHash(storedPasscode);
-  if (parsedPasscode) {
-    const normalisedPasscode = normalisePasscode(passcode);
-    if (!normalisedPasscode) {
-      return passcodeErrorResponse("Passcode is required");
-    }
-
-    const validationError = validatePasscode(normalisedPasscode);
-    if (validationError) {
-      return passcodeErrorResponse(validationError);
-    }
-
-    const isValid = await verifyPasscode(normalisedPasscode, parsedPasscode);
-    if (!isValid) {
-      return passcodeErrorResponse("Invalid passcode");
-    }
+  // For workspace users, find their existing slot by user ID first.
+  let canonicalName: string | undefined;
+  if (workspaceUserId) {
+    canonicalName =
+      context.repository.findUserNameByWorkspaceId(workspaceUserId);
   }
 
-  const existingUser = standupData.users.find(
-    (u) => u.toLowerCase() === name.toLowerCase(),
-  );
+  const isWorkspaceUserRejoining = !!canonicalName;
 
-  if (existingUser) {
-    const authToken = getStandupSessionToken(request);
-    const hasValidSessionToken = context.repository.validateSessionToken(
-      existingUser,
-      authToken ?? null,
+  if (!isWorkspaceUserRejoining) {
+    const storedPasscode = context.repository.getPasscode();
+    const parsedPasscode = parsePasscodeHash(storedPasscode);
+    if (parsedPasscode) {
+      const normalisedPasscode = normalisePasscode(passcode);
+      if (!normalisedPasscode) {
+        return passcodeErrorResponse("Passcode is required");
+      }
+
+      const validationError = validatePasscode(normalisedPasscode);
+      if (validationError) {
+        return passcodeErrorResponse(validationError);
+      }
+
+      const isValid = await verifyPasscode(normalisedPasscode, parsedPasscode);
+      if (!isValid) {
+        return passcodeErrorResponse("Invalid passcode");
+      }
+    }
+
+    const existingUser = standupData.users.find(
+      (u) => u.toLowerCase() === name.toLowerCase(),
     );
 
-    const isConnected = !!standupData.connectedUsers[existingUser];
-    const hasResponded = standupData.respondedUsers.includes(existingUser);
+    if (existingUser) {
+      const authToken = getStandupSessionToken(request);
+      const hasValidSessionToken = context.repository.validateSessionToken(
+        existingUser,
+        authToken ?? null,
+      );
 
-    if ((isConnected || hasResponded) && !hasValidSessionToken) {
-      return jsonError("This name is already in use in this standup", 409);
+      const isConnected = !!standupData.connectedUsers[existingUser];
+      const hasResponded = standupData.respondedUsers.includes(existingUser);
+
+      if ((isConnected || hasResponded) && !hasValidSessionToken) {
+        return jsonError("This name is already in use in this standup", 409);
+      }
+
+      if (isConnected) {
+        context.disconnectUserSessions(existingUser);
+      }
+
+      canonicalName = existingUser;
     }
-
+  } else {
+    const isConnected = !!standupData.connectedUsers[canonicalName!];
     if (isConnected) {
-      context.disconnectUserSessions(existingUser);
+      context.disconnectUserSessions(canonicalName!);
     }
   }
 
-  const canonicalName = context.repository.ensureUser(name);
-  const sessionToken = generateID();
-  context.repository.setSessionToken(canonicalName, sessionToken);
+  const resolvedName = canonicalName ?? name;
+  const finalName = context.repository.ensureUser(resolvedName);
+  const sessionToken = generateSessionToken();
+  context.repository.setSessionToken(finalName, sessionToken);
+
+  if (workspaceUserId) {
+    context.repository.setWorkspaceUserId(finalName, workspaceUserId);
+  }
 
   if (avatar) {
-    context.repository.setUserAvatar(canonicalName, avatar);
+    context.repository.setUserAvatar(finalName, avatar);
+  }
+
+  let recoveryPasskey: string | undefined;
+  if (!workspaceUserId) {
+    recoveryPasskey = generateRecoveryPasskey();
+    await context.repository.setRecoveryPasskey(finalName, recoveryPasskey);
   }
 
   const freshStandup = await context.getStandupData();
 
-  return new Response(
-    JSON.stringify({
-      success: true,
-      standup: freshStandup,
-    }),
-    {
-      status: 200,
-      headers: {
-        "Set-Cookie": createStandupSessionCookie(sessionToken, context.env),
-      },
-    },
+  return buildSessionResponse(
+    { success: true, standup: freshStandup, recoveryPasskey },
+    sessionToken,
+    context.env,
+  );
+}
+
+async function handleRecover(
+  context: StandupRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const body = await request.json<{ name: string; recoveryPasskey: string }>();
+  const { name, recoveryPasskey } = body;
+
+  if (!name || !recoveryPasskey) {
+    return jsonError("Name and recovery passkey are required");
+  }
+
+  const standupData = await context.getStandupData();
+  if (!standupData) {
+    return jsonError("Standup not found", 404);
+  }
+
+  const canonicalName = standupData.users.find(
+    (u) => u.toLowerCase() === name.toLowerCase(),
+  );
+  if (!canonicalName) {
+    return jsonError("Invalid name or recovery passkey", 401);
+  }
+
+  const isValid = await context.repository.validateRecoveryPasskey(
+    canonicalName,
+    recoveryPasskey,
+  );
+  if (!isValid) {
+    return jsonError("Invalid name or recovery passkey", 401);
+  }
+
+  const sessionToken = generateSessionToken();
+  context.repository.setSessionToken(canonicalName, sessionToken);
+
+  if (standupData.connectedUsers[canonicalName]) {
+    context.disconnectUserSessions(canonicalName);
+  }
+
+  const freshStandup = await context.getStandupData();
+
+  return buildSessionResponse(
+    { success: true, standup: freshStandup },
+    sessionToken,
+    context.env,
   );
 }

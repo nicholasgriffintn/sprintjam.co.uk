@@ -22,7 +22,8 @@ import {
   lockStandupResponses,
   pingStandup,
   removeStandupReaction,
-  setStandupTheme,
+  setStandupBlockerResolved,
+  setStandupPresentationOrder,
   startStandupPresentation,
   submitStandupResponse,
   unlockStandupResponses,
@@ -47,13 +48,14 @@ interface StandupActionsContextValue {
   handleLockResponses: () => void;
   handleUnlockResponses: () => void;
   handleStartPresentation: () => void;
+  handleSetPresentationOrder: (order: string[]) => void;
+  handleSetBlockerResolved: (userName: string, resolved: boolean) => void;
   handleEndPresentation: () => void;
   handleCompleteStandup: () => void;
   handleFocusUser: (userName: string) => void;
   handlePing: () => void;
   handleAddReaction: (responseUserName: string, emoji: string) => void;
   handleRemoveReaction: (responseUserName: string, emoji: string) => void;
-  handleSetTheme: (theme: string) => void;
 }
 
 const StandupStateContext = createContext<StandupStateContextValue | null>(
@@ -207,20 +209,39 @@ export function StandupProvider({
 
       case "presentationStarted":
         setStandupData((prev) =>
-          prev ? { ...prev, status: "presenting" } : prev,
+          prev
+            ? {
+                ...prev,
+                status: "presenting",
+                presentationOrder:
+                  message.presentationOrder ?? prev.presentationOrder,
+              }
+            : prev,
         );
         break;
 
       case "presentationEnded":
         setStandupData((prev) =>
-          prev ? { ...prev, status: "active", focusedUser: undefined } : prev,
+          prev
+            ? {
+                ...prev,
+                status: "active",
+                focusedUser: undefined,
+                presentationOrder: undefined,
+              }
+            : prev,
         );
         break;
 
       case "standupCompleted":
         setStandupData((prev) =>
           prev
-            ? { ...prev, status: "completed", focusedUser: undefined }
+            ? {
+                ...prev,
+                status: "completed",
+                focusedUser: undefined,
+                presentationOrder: undefined,
+              }
             : prev,
         );
         break;
@@ -231,18 +252,38 @@ export function StandupProvider({
         );
         break;
 
+      case "presentationOrderUpdated":
+        setStandupData((prev) =>
+          prev ? { ...prev, presentationOrder: message.presentationOrder } : prev,
+        );
+        break;
+
+      case "blockerResolutionUpdated":
+        setStandupData((prev) => {
+          if (!prev) {
+            return prev;
+          }
+
+          return {
+            ...prev,
+            responses: prev.responses.map((response) =>
+              response.userName === message.userName
+                ? { ...response, blockerResolved: message.resolved }
+                : response,
+            ),
+          };
+        });
+        break;
+
       case "reactionAdded":
         setStandupData((prev) => {
           if (!prev) return prev;
           const reactions = { ...(prev.reactions ?? {}) };
-          if (!reactions[message.responseUserName]) {
-            reactions[message.responseUserName] = {};
-          }
-          const emojiReactions =
-            reactions[message.responseUserName][message.emoji] ?? [];
+          const userReactions = reactions[message.responseUserName] ?? {};
+          const emojiReactions = userReactions[message.emoji] ?? [];
           if (!emojiReactions.includes(message.reactingUserName)) {
             reactions[message.responseUserName] = {
-              ...reactions[message.responseUserName],
+              ...userReactions,
               [message.emoji]: [...emojiReactions, message.reactingUserName],
             };
           }
@@ -255,21 +296,17 @@ export function StandupProvider({
           if (!prev) return prev;
           const reactions = { ...(prev.reactions ?? {}) };
           if (reactions[message.responseUserName]?.[message.emoji]) {
+            const userReactions = reactions[message.responseUserName];
+            const emojiReactions = userReactions?.[message.emoji] ?? [];
             reactions[message.responseUserName] = {
-              ...reactions[message.responseUserName],
-              [message.emoji]: reactions[message.responseUserName][
-                message.emoji
-              ].filter((u) => u !== message.reactingUserName),
+              ...userReactions,
+              [message.emoji]: emojiReactions.filter(
+                (u) => u !== message.reactingUserName,
+              ),
             };
           }
           return { ...prev, reactions };
         });
-        break;
-
-      case "themeUpdated":
-        setStandupData((prev) =>
-          prev ? { ...prev, presentationTheme: message.theme } : prev,
-        );
         break;
 
       case "error":
@@ -332,13 +369,14 @@ export function StandupProvider({
     handleLockResponses: lockStandupResponses,
     handleUnlockResponses: unlockStandupResponses,
     handleStartPresentation: startStandupPresentation,
+    handleSetPresentationOrder: setStandupPresentationOrder,
+    handleSetBlockerResolved: setStandupBlockerResolved,
     handleEndPresentation: endStandupPresentation,
     handleCompleteStandup: completeStandup,
     handleFocusUser: focusStandupUser,
     handlePing: pingStandup,
     handleAddReaction: addStandupReaction,
     handleRemoveReaction: removeStandupReaction,
-    handleSetTheme: setStandupTheme,
   };
 
   return (

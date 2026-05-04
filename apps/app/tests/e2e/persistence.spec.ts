@@ -14,6 +14,7 @@ test.describe("Data persistence", () => {
       await participantRoom.castVote("3");
       await moderatorRoom.revealVotes();
 
+      // TODO: Fix this, is not expecting a modal, says 1 out of 2 votes not completed.
       await moderatorRoom.getPage().getByTestId("queue-expand").click();
       await moderatorRoom.getPage().getByTestId("queue-toggle-add").click();
       await moderatorRoom
@@ -128,7 +129,9 @@ test.describe("Data persistence", () => {
     await expect(
       reconnectPage.getByRole("heading", { name: "Join Room" }),
     ).toBeVisible();
-    await expect(reconnectPage.locator("#join-name")).toHaveValue(moderatorName);
+    await expect(reconnectPage.locator("#join-name")).toHaveValue(
+      moderatorName,
+    );
     await expect(reconnectPage.locator("#join-room-key")).toHaveValue(roomKey);
     await expect(
       reconnectPage.getByTestId("participants-panel"),

@@ -1,4 +1,4 @@
-import { RoomWorkerEnv } from "@sprintjam/types";
+import type { RoomWorkerEnv } from "@sprintjam/types";
 
 export function generateRoomKey() {
   const array = new Uint8Array(4);
@@ -12,7 +12,7 @@ export function generateRoomKey() {
 
 export function getRoomId(roomKey: string) {
   if (!roomKey) {
-    throw new Error('Room key is required to get room ID');
+    throw new Error("Room key is required to get room ID");
   }
   return `room-${roomKey.toLowerCase()}`;
 }

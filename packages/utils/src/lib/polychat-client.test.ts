@@ -51,7 +51,7 @@ describe("generateStrudelCode", () => {
       status: 200,
       statusText: "OK",
       json,
-    } as unknown as Response);
+    });
 
     const result = await generateStrudelCode(sampleRequest, "token-123");
 
@@ -82,7 +82,7 @@ describe("generateStrudelCode", () => {
       ok: false,
       status: 502,
       statusText: "Bad Gateway",
-    } as unknown as Response);
+    });
 
     await expect(
       generateStrudelCode(sampleRequest, "token-123"),
@@ -99,7 +99,7 @@ describe("generateStrudelCode", () => {
       status: 200,
       statusText: "OK",
       json,
-    } as unknown as Response);
+    });
 
     await expect(
       generateStrudelCode(sampleRequest, "token-123"),

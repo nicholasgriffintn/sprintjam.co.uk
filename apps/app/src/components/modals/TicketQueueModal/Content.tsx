@@ -1,4 +1,4 @@
-import { FC, useMemo, useState } from "react";
+import { type FC, useMemo, useState } from "react";
 import type { SessionRoundHistoryItem } from "@sprintjam/types";
 import { ArrowDownToLine } from "lucide-react";
 

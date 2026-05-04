@@ -23,7 +23,7 @@ export function jsonResponse(
   return new Response(JSON.stringify(data), {
     status,
     headers,
-  }) as unknown as CfResponse;
+  });
 }
 
 export function errorResponse(error: string, status: number): CfResponse {

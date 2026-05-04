@@ -219,7 +219,7 @@ export async function handleGithubOAuthCallbackController(
           defaultRepo: null,
           authorizedBy: userName,
         }),
-      }) as unknown as CfRequest,
+      }),
     );
 
     return oauthHtmlSuccessResponse(
@@ -304,7 +304,7 @@ export async function revokeGithubOAuthController(
     const credentialsResponse = await roomObject.fetch(
       new Request("https://internal/github/oauth/credentials", {
         method: "GET",
-      }) as unknown as CfRequest,
+      }),
     );
 
     if (!credentialsResponse.ok) {
