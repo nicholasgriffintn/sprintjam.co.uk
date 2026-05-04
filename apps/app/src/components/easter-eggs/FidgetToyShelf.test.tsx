@@ -7,7 +7,9 @@ import { FidgetToyShelf } from "./FidgetToyShelf";
 
 vi.mock("@/lib/fidget-audio", () => ({
   playFidgetBeadSound: vi.fn(),
+  playFidgetMagnetSound: vi.fn(),
   playFidgetPopSound: vi.fn(),
+  playFidgetRubberBandSound: vi.fn(),
   playFidgetSlideSound: vi.fn(),
   playFidgetSpinSound: vi.fn(),
   playFidgetStickSound: vi.fn(),
@@ -80,6 +82,11 @@ describe("FidgetToyShelf", () => {
     expect(screen.getByRole("button", { name: "Switch panel" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Slider maze" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Mini abacus" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Desk cube" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Magnet balls" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Rubber band ball" }),
+    ).toBeTruthy();
   });
 
   it("can mute sounds, add a new toy, and clear toys", () => {
@@ -119,6 +126,49 @@ describe("FidgetToyShelf", () => {
     ).toBeTruthy();
     expect(
       screen.getByRole("slider", { name: "Slide the bead through the maze" }),
+    ).toBeTruthy();
+  });
+
+  it("renders the physical desk toy surfaces", () => {
+    render(
+      <FidgetToyProvider>
+        <FidgetHarness />
+      </FidgetToyProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open fidget box" }));
+    fireEvent.click(screen.getByRole("button", { name: "Desk cube" }));
+    fireEvent.click(screen.getByRole("button", { name: "Magnet balls" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rubber band ball" }));
+
+    expect(
+      screen.getByRole("group", { name: "Rotate desk cube" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Desk cube button 1" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("group", { name: "Arrange magnet balls" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("slider", { name: "Pull the rubber band ball" }),
+    ).toBeTruthy();
+  });
+
+  it("lets users rotate the desk cube to another interactive face", () => {
+    render(
+      <FidgetToyProvider>
+        <FidgetHarness />
+      </FidgetToyProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open fidget box" }));
+    fireEvent.click(screen.getByRole("button", { name: "Desk cube" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Rotate desk cube right" }));
+
+    expect(
+      screen.getByRole("switch", { name: "Desk cube switch" }),
     ).toBeTruthy();
   });
 

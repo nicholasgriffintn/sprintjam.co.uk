@@ -113,3 +113,21 @@ export function playFidgetBeadSound(position: number): void {
     volume: 0.075,
   });
 }
+
+export function playFidgetMagnetSound(position: number): void {
+  playTone({
+    frequency: 220 + position * 28,
+    duration: 0.045,
+    type: "sine",
+    volume: 0.065,
+  });
+}
+
+export function playFidgetRubberBandSound(strength: number): void {
+  playTone({
+    frequency: 160 + strength * 520,
+    duration: 0.055,
+    type: "sawtooth",
+    volume: 0.045,
+  });
+}

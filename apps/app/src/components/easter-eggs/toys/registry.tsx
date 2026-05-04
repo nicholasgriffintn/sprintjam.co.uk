@@ -1,18 +1,24 @@
 import type { ReactElement } from "react";
 import {
   CircleDot,
+  Cuboid,
   GalleryHorizontalEnd,
+  Magnet,
   Route,
   RotateCw,
   SlidersHorizontal,
   ToggleLeft,
+  Volleyball,
 } from "lucide-react";
 
 import type { ToyKind } from "@/components/easter-eggs/FidgetToyContext";
 
+import { DeskCubeToy } from "./desk-cube";
 import { Joystick } from "./joystick";
+import { MagnetBallsToy } from "./magnet-balls";
 import { MiniAbacusToy } from "./mini-abacus";
 import { PopPadToy } from "./poppad";
+import { RubberBandBallToy } from "./rubber-band-ball";
 import { SliderMazeToy } from "./slider-maze";
 import { SpinnerToy } from "./spinner";
 import { SwitchPanelToy } from "./switch-panel";
@@ -53,6 +59,24 @@ export const TOY_OPTIONS: Array<{
     label: "Mini abacus",
     Icon: GalleryHorizontalEnd,
     Component: MiniAbacusToy,
+  },
+  {
+    kind: "desk-cube",
+    label: "Desk cube",
+    Icon: Cuboid,
+    Component: DeskCubeToy,
+  },
+  {
+    kind: "magnet-balls",
+    label: "Magnet balls",
+    Icon: Magnet,
+    Component: MagnetBallsToy,
+  },
+  {
+    kind: "rubber-band-ball",
+    label: "Rubber band ball",
+    Icon: Volleyball,
+    Component: RubberBandBallToy,
   },
 ];
 

@@ -14,7 +14,10 @@ export type ToyKind =
   | "joystick"
   | "switch-panel"
   | "slider-maze"
-  | "mini-abacus";
+  | "mini-abacus"
+  | "desk-cube"
+  | "magnet-balls"
+  | "rubber-band-ball";
 
 export type ToyPosition = {
   x: number;
