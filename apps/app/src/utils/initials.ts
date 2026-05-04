@@ -1,8 +1,5 @@
 export function getInitials(value: string | null | undefined): string {
-  const words = value
-    ?.trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const words = value?.trim().split(/\s+/).filter(Boolean);
 
   if (!words?.length) {
     return "";

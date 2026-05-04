@@ -76,7 +76,7 @@ export async function sendVerificationCodeEmail({
           </div>
         </body>
         </html>
-      `
+      `,
   });
 }
 

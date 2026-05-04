@@ -106,7 +106,9 @@ export function getOrderedStandupResponses(standupData: StandupData) {
   const presentationOrder = standupData.presentationOrder;
 
   if (presentationOrder?.length) {
-    const orderMap = new Map(presentationOrder.map((name, index) => [name, index]));
+    const orderMap = new Map(
+      presentationOrder.map((name, index) => [name, index]),
+    );
     return [...standupData.responses].sort(
       (left, right) =>
         (orderMap.get(left.userName) ?? Number.MAX_SAFE_INTEGER) -

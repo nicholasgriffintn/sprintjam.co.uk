@@ -7,9 +7,11 @@ describe("createSeededRandom", () => {
     const first = createSeededRandom(1234);
     const second = createSeededRandom(1234);
 
-    expect([first.next(), first.int(10), first.pick(["a", "b", "c"])]).toEqual(
-      [second.next(), second.int(10), second.pick(["a", "b", "c"])],
-    );
+    expect([first.next(), first.int(10), first.pick(["a", "b", "c"])]).toEqual([
+      second.next(),
+      second.int(10),
+      second.pick(["a", "b", "c"]),
+    ]);
   });
 
   it("returns different values for different seeds", () => {

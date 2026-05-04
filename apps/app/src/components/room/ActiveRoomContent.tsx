@@ -170,9 +170,7 @@ export const ActiveRoomContent = ({
             const existingNote = roomData.currentTicket?.outcome ?? "";
             onOpenSummary(existingNote || getSuggestedNote());
           }}
-          onCompleteSession={
-            canManageQueue ? onOpenCompleteSession : undefined
-          }
+          onCompleteSession={canManageQueue ? onOpenCompleteSession : undefined}
           onOpenResultsSettings={
             isModeratorView ? () => onOpenSettings("results") : undefined
           }

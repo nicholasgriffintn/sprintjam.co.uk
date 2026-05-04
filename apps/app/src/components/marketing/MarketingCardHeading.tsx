@@ -3,7 +3,12 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 type MarketingCardHeadingSize = "base" | "lg" | "xl";
-type MarketingCardIconTone = "brand" | "orange" | "violet" | "emerald" | "slate";
+type MarketingCardIconTone =
+  | "brand"
+  | "orange"
+  | "violet"
+  | "emerald"
+  | "slate";
 type MarketingCardHeadingTag = "h2" | "h3";
 
 type MarketingCardHeadingProps = PropsWithChildren<{

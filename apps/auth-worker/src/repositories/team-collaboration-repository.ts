@@ -157,7 +157,10 @@ export class TeamCollaborationRepository {
     return this.toInstallation(saved);
   }
 
-  async deleteForTeam(teamId: number, installationId: number): Promise<boolean> {
+  async deleteForTeam(
+    teamId: number,
+    installationId: number,
+  ): Promise<boolean> {
     const existing = await this.db
       .select({ id: teamCollaborationInstallations.id })
       .from(teamCollaborationInstallations)

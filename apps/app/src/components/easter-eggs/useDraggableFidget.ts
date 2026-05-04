@@ -31,7 +31,10 @@ const keepInViewport = (position: Position, bounds: DragBounds) => {
   }
 
   const maxX = Math.max(MIN_DRAG_POSITION.x, window.innerWidth - bounds.width);
-  const maxY = Math.max(MIN_DRAG_POSITION.y, window.innerHeight - bounds.height);
+  const maxY = Math.max(
+    MIN_DRAG_POSITION.y,
+    window.innerHeight - bounds.height,
+  );
 
   return {
     x: Math.min(Math.max(position.x, MIN_DRAG_POSITION.x), maxX),

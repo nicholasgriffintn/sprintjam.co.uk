@@ -63,14 +63,8 @@ export function ErrorBoundary() {
 
 export default function WorkspaceDashboard() {
   const { stats, insights: initialInsights } = useLoaderData<typeof loader>();
-  const {
-    user,
-    teams,
-    isAuthenticated,
-    isLoading,
-    error,
-    refreshWorkspace,
-  } = useWorkspaceData({ stats });
+  const { user, teams, isAuthenticated, isLoading, error, refreshWorkspace } =
+    useWorkspaceData({ stats });
 
   const { goToLogin } = useSessionActions();
 

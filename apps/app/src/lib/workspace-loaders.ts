@@ -1,7 +1,4 @@
-import {
-  createWorkerRequest,
-  type WorkerLoaderArgs,
-} from "@/lib/worker-utils";
+import { createWorkerRequest, type WorkerLoaderArgs } from "@/lib/worker-utils";
 import type { RoomSettings } from "@/types";
 import type {
   TeamInsights,
@@ -43,7 +40,11 @@ async function loadFromAuthWorker<T>(
   args: WorkerLoaderArgs,
   path: string,
 ): Promise<T | null> {
-  return loadFromWorker<T>(args, args.context.cloudflare?.env.AUTH_WORKER, path);
+  return loadFromWorker<T>(
+    args,
+    args.context.cloudflare?.env.AUTH_WORKER,
+    path,
+  );
 }
 
 async function loadFromStatsWorker<T>(
@@ -146,5 +147,8 @@ export async function loadTeamSettings(
   args: WorkerLoaderArgs,
   teamId: number,
 ): Promise<RoomSettings | null> {
-  return loadFromAuthWorker<RoomSettings>(args, `/api/teams/${teamId}/settings`);
+  return loadFromAuthWorker<RoomSettings>(
+    args,
+    `/api/teams/${teamId}/settings`,
+  );
 }

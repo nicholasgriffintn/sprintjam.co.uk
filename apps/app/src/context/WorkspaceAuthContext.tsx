@@ -40,7 +40,9 @@ export function WorkspaceAuthProvider({
     | Promise<WorkspaceAuthProfile | null>;
 }) {
   const isInitialProfilePromise =
-    initialProfile !== null && typeof initialProfile === "object" && "then" in initialProfile;
+    initialProfile !== null &&
+    typeof initialProfile === "object" &&
+    "then" in initialProfile;
   const [resolvedProfile, setResolvedProfile] =
     useState<WorkspaceAuthProfile | null>(
       isInitialProfilePromise ? null : initialProfile,

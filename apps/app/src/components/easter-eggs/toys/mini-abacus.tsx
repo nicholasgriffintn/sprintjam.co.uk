@@ -10,11 +10,7 @@ const ROWS = [
   { label: "Bottom row", beadCount: 5, tone: "bg-sky-400" },
 ];
 
-export function MiniAbacusToy({
-  isSoundEnabled,
-}: {
-  isSoundEnabled: boolean;
-}) {
+export function MiniAbacusToy({ isSoundEnabled }: { isSoundEnabled: boolean }) {
   const [positions, setPositions] = useState(() =>
     ROWS.map((row) => Math.floor(row.beadCount / 2)),
   );

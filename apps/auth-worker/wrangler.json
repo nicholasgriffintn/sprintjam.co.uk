@@ -3,9 +3,7 @@
   "name": "sprintjam-auth-worker",
   "main": "src/index.ts",
   "compatibility_date": "2026-04-21",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": false,
   "placement": {
@@ -17,7 +15,7 @@
   },
   "send_email": [
     {
-      "name": "SEND_EMAIL",
+      "name": "SEND_EMAIL"
     }
   ],
   "ratelimits": [
@@ -64,9 +62,7 @@
     }
   },
   "triggers": {
-    "crons": [
-      "0 */6 * * *"
-    ]
+    "crons": ["0 */6 * * *"]
   },
   "env": {
     "development": {
@@ -97,7 +93,7 @@
       },
       "send_email": [
         {
-          "name": "SEND_EMAIL",
+          "name": "SEND_EMAIL"
         }
       ],
       "ratelimits": [

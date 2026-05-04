@@ -37,7 +37,13 @@ const getRotateDegrees = (styleAttribute: string | null | undefined) => {
   return match ? Number(match[1]) : null;
 };
 
-const setViewportSize = ({ width, height }: { width: number; height: number }) => {
+const setViewportSize = ({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}) => {
   Object.defineProperty(window, "innerWidth", {
     configurable: true,
     value: width,
@@ -165,7 +171,9 @@ describe("FidgetToyShelf", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open fidget box" }));
     fireEvent.click(screen.getByRole("button", { name: "Desk cube" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Rotate desk cube right" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Rotate desk cube right" }),
+    );
 
     expect(
       screen.getByRole("switch", { name: "Desk cube switch" }),

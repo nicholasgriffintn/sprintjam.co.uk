@@ -306,9 +306,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
     selectedTeamId: selectedTeamIdState,
     setSelectedTeamId,
     isAuthenticated,
-    isLoading:
-      isAuthLoading ||
-      isRefreshing,
+    isLoading: isAuthLoading || isRefreshing,
     isLoadingSessions: false,
     isMutating,
     error,

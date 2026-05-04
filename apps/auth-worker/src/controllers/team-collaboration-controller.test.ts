@@ -111,13 +111,16 @@ describe("team collaboration controller", () => {
     authenticateAs(repo);
 
     const response = await saveTeamsCollaborationInstallationController(
-      makeRequest("https://test/api/teams/7/collaboration-installations/teams", {
-        method: "POST",
-        body: JSON.stringify({
-          tenantId: "tenant-1",
-          externalChannelId: "channel-1",
-        }),
-      }),
+      makeRequest(
+        "https://test/api/teams/7/collaboration-installations/teams",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            tenantId: "tenant-1",
+            externalChannelId: "channel-1",
+          }),
+        },
+      ),
       env,
       7,
     );
@@ -147,17 +150,20 @@ describe("team collaboration controller", () => {
     });
 
     const response = await saveTeamsCollaborationInstallationController(
-      makeRequest("https://test/api/teams/7/collaboration-installations/teams", {
-        method: "POST",
-        body: JSON.stringify({
-          tenantId: "tenant-1",
-          externalTeamId: "team-1",
-          externalChannelId: "channel-1",
-          externalUserId: "user-1",
-          displayName: "Planning",
-          metadata: { source: "teams" },
-        }),
-      }),
+      makeRequest(
+        "https://test/api/teams/7/collaboration-installations/teams",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            tenantId: "tenant-1",
+            externalTeamId: "team-1",
+            externalChannelId: "channel-1",
+            externalUserId: "user-1",
+            displayName: "Planning",
+            metadata: { source: "teams" },
+          }),
+        },
+      ),
       env,
       7,
     );
@@ -191,14 +197,17 @@ describe("team collaboration controller", () => {
     );
 
     const response = await saveTeamsCollaborationInstallationController(
-      makeRequest("https://test/api/teams/7/collaboration-installations/teams", {
-        method: "POST",
-        body: JSON.stringify({
-          tenantId: "tenant-1",
-          externalChannelId: "channel-1",
-          externalUserId: "user-1",
-        }),
-      }),
+      makeRequest(
+        "https://test/api/teams/7/collaboration-installations/teams",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            tenantId: "tenant-1",
+            externalChannelId: "channel-1",
+            externalUserId: "user-1",
+          }),
+        },
+      ),
       env,
       7,
     );
@@ -233,14 +242,17 @@ describe("team collaboration controller", () => {
     });
 
     const response = await resolveTeamsCollaborationInstallationController(
-      makeRequest("https://test/api/collaboration-installations/teams/resolve", {
-        method: "POST",
-        body: JSON.stringify({
-          tenantId: "tenant-1",
-          externalChannelId: "channel-1",
-          externalUserId: "user-1",
-        }),
-      }),
+      makeRequest(
+        "https://test/api/collaboration-installations/teams/resolve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            tenantId: "tenant-1",
+            externalChannelId: "channel-1",
+            externalUserId: "user-1",
+          }),
+        },
+      ),
       env,
     );
     const data = (await response.json()) as {
@@ -286,15 +298,18 @@ describe("team collaboration controller", () => {
     });
 
     const response = await resolveTeamsCollaborationInstallationController(
-      makeRequest("https://test/api/collaboration-installations/teams/resolve", {
-        method: "POST",
-        body: JSON.stringify({
-          tenantId: "tenant-1",
-          externalMeetingId: "meeting-1",
-          externalUserId: "user-1",
-          metadata: { frameContext: "sidePanel" },
-        }),
-      }),
+      makeRequest(
+        "https://test/api/collaboration-installations/teams/resolve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            tenantId: "tenant-1",
+            externalMeetingId: "meeting-1",
+            externalUserId: "user-1",
+            metadata: { frameContext: "sidePanel" },
+          }),
+        },
+      ),
       env,
     );
     const data = (await response.json()) as {
@@ -320,10 +335,13 @@ describe("team collaboration controller", () => {
     authenticateAs(repo);
 
     const response = await saveTeamsCollaborationInstallationController(
-      makeRequest("https://test/api/teams/7/collaboration-installations/teams", {
-        method: "POST",
-        body: JSON.stringify({ externalChannelId: "channel-1" }),
-      }),
+      makeRequest(
+        "https://test/api/teams/7/collaboration-installations/teams",
+        {
+          method: "POST",
+          body: JSON.stringify({ externalChannelId: "channel-1" }),
+        },
+      ),
       env,
       7,
     );

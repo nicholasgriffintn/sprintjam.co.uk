@@ -30,8 +30,7 @@ async function getTeamAccess(
   result: AuthResult,
   teamId: number,
 ): Promise<
-  | { canManage: boolean; canAccess: boolean }
-  | { response: Response }
+  { canManage: boolean; canAccess: boolean } | { response: Response }
 > {
   const team = await result.repo.getTeamById(teamId);
   if (!team) {
@@ -47,10 +46,7 @@ async function getTeamAccess(
     result.userId,
     user.organisationId,
   );
-  const membership = await result.repo.getTeamMembership(
-    teamId,
-    result.userId,
-  );
+  const membership = await result.repo.getTeamMembership(teamId, result.userId);
 
   return {
     canAccess: canAccessTeam(team, membership, result.userId, isWorkspaceAdmin),

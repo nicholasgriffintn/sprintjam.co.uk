@@ -49,7 +49,9 @@ export const CompletedRoomContent = ({
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
               <p className="font-medium">
                 Saved to workspace
-                {linkedWorkspaceTeamName ? ` in ${linkedWorkspaceTeamName}` : ""}
+                {linkedWorkspaceTeamName
+                  ? ` in ${linkedWorkspaceTeamName}`
+                  : ""}
                 .
               </p>
               <p className="mt-1 text-emerald-800/90 dark:text-emerald-200/90">

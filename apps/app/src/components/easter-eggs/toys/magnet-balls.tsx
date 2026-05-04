@@ -188,7 +188,8 @@ export function MagnetBallsToy({
           type="button"
           onPointerDown={(event) => {
             event.currentTarget.setPointerCapture(event.pointerId);
-            boardRectRef.current = boardRef.current?.getBoundingClientRect() ?? null;
+            boardRectRef.current =
+              boardRef.current?.getBoundingClientRect() ?? null;
             setDraggingBallId(ball.id);
             selectBall(ball.id);
             updateFromPointer(event, ball.id);

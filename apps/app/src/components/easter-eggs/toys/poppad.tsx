@@ -67,10 +67,11 @@ export function PopPadToy({ isSoundEnabled }: { isSoundEnabled: boolean }) {
               toggleBubble(index);
             }}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`aspect-square rounded-full border transition motion-reduce:transition-none ${isPopped
-              ? "border-slate-300 bg-slate-300 shadow-inner dark:border-slate-500 dark:bg-slate-600"
-              : "border-brand-200 bg-brand-100 shadow-[inset_0_-6px_10px_rgba(47,109,255,0.22)] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 dark:border-brand-300/30 dark:bg-brand-400/20"
-              }`}
+            className={`aspect-square rounded-full border transition motion-reduce:transition-none ${
+              isPopped
+                ? "border-slate-300 bg-slate-300 shadow-inner dark:border-slate-500 dark:bg-slate-600"
+                : "border-brand-200 bg-brand-100 shadow-[inset_0_-6px_10px_rgba(47,109,255,0.22)] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 dark:border-brand-300/30 dark:bg-brand-400/20"
+            }`}
             aria-label={`Bubble ${index + 1}: ${isPopped ? "popped" : "unpopped"}`}
             aria-pressed={isPopped}
           />

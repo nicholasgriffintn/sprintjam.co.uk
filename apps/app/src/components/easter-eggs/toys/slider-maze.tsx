@@ -124,7 +124,8 @@ export function SliderMazeToy({
   const maze = useMemo(() => getMazeConfig(seed), [seed]);
   const [positionIndex, setPositionIndex] = useState(0);
   const mazeRef = useRef<HTMLDivElement | null>(null);
-  const mazePoints = maze.points.length > 0 ? maze.points : FALLBACK_MAZE_POINTS;
+  const mazePoints =
+    maze.points.length > 0 ? maze.points : FALLBACK_MAZE_POINTS;
 
   const setPosition = (index: number) => {
     setPositionIndex((current) => {

@@ -52,9 +52,7 @@ export const useRoomSessionRecap = (
     votesCount,
     votersCount: voters.size,
     estimatedItemCount,
-    estimatedItemLabel: isQueueEnabled
-      ? "Items estimated"
-      : "Rounds completed",
+    estimatedItemLabel: isQueueEnabled ? "Items estimated" : "Rounds completed",
     recapTitle: isQueueEnabled ? "Ticket recap" : "Round recap",
     emptyRecapMessage: isQueueEnabled
       ? "No completed tickets or rounds recorded for this session."

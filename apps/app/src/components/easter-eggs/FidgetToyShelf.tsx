@@ -10,11 +10,7 @@ import {
 } from "@/components/easter-eggs/FidgetToyContext";
 import { useDraggableFidget } from "@/components/easter-eggs/useDraggableFidget";
 import { cn } from "@/lib/cn";
-import {
-  getToyOption,
-  getToyTitle,
-  TOY_OPTIONS,
-} from "./toys/registry";
+import { getToyOption, getToyTitle, TOY_OPTIONS } from "./toys/registry";
 
 export function FidgetToyShelf() {
   const {
@@ -197,10 +193,7 @@ function DraggableToy({
       />
       <div className="p-4">
         {ToyComponent ? (
-          <ToyComponent
-            seed={toy.visualSeed}
-            isSoundEnabled={isSoundEnabled}
-          />
+          <ToyComponent seed={toy.visualSeed} isSoundEnabled={isSoundEnabled} />
         ) : null}
       </div>
     </section>

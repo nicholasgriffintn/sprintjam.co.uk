@@ -118,7 +118,7 @@ test.describe("Error scenarios", () => {
   }) => {
     test.setTimeout(30_000);
 
-    const activeWs: { close: () => void } = { close: () => { } };
+    const activeWs: { close: () => void } = { close: () => {} };
     let killSwitch = false;
 
     const setup = await createRoomWithParticipant(browser, {
@@ -149,11 +149,15 @@ test.describe("Error scenarios", () => {
       ).toBeVisible({ timeout: 3_000 });
 
       await expect(
-        moderatorRoom.getPage().getByRole("dialog", { name: "Connection lost. Trying to" }),
+        moderatorRoom
+          .getPage()
+          .getByRole("dialog", { name: "Connection lost. Trying to" }),
       ).not.toBeVisible();
 
       await expect(
-        moderatorRoom.getPage().getByRole("dialog", { name: "Connection lost. Trying to" }),
+        moderatorRoom
+          .getPage()
+          .getByRole("dialog", { name: "Connection lost. Trying to" }),
       ).toBeVisible({ timeout: 15_000 });
     } finally {
       await cleanup();

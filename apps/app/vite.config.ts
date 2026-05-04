@@ -33,22 +33,22 @@ export default defineConfig((env) => {
           env.command === "build"
             ? []
             : [
-              {
-                configPath: "../room-worker/wrangler.json",
-              },
-              {
-                configPath: "../wheel-worker/wrangler.json",
-              },
-              {
-                configPath: "../auth-worker/wrangler.json",
-              },
-              {
-                configPath: "../stats-worker/wrangler.json",
-              },
-              {
-                configPath: "../standup-worker/wrangler.json",
-              },
-            ],
+                {
+                  configPath: "../room-worker/wrangler.json",
+                },
+                {
+                  configPath: "../wheel-worker/wrangler.json",
+                },
+                {
+                  configPath: "../auth-worker/wrangler.json",
+                },
+                {
+                  configPath: "../stats-worker/wrangler.json",
+                },
+                {
+                  configPath: "../standup-worker/wrangler.json",
+                },
+              ],
         persistState: {
           path: "../../.data",
         },

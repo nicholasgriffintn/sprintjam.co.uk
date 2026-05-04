@@ -44,7 +44,10 @@ export function RubberBandBallToy({
 
   const releasePull = () => {
     const releasedPull = pullRef.current;
-    const strength = Math.min(1, Math.hypot(releasedPull.x, releasedPull.y) / MAX_PULL);
+    const strength = Math.min(
+      1,
+      Math.hypot(releasedPull.x, releasedPull.y) / MAX_PULL,
+    );
     if (isSoundEnabled && strength > 0.08) {
       playFidgetRubberBandSound(strength);
     }

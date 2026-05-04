@@ -672,13 +672,10 @@ export async function saveTeamsCollaborationInstallation(
 ): Promise<TeamCollaborationInstallation> {
   const data = await workspaceRequest<{
     installation: TeamCollaborationInstallation;
-  }>(
-    `${API_BASE_URL}/teams/${teamId}/collaboration-installations/teams`,
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    },
-  );
+  }>(`${API_BASE_URL}/teams/${teamId}/collaboration-installations/teams`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
   return data.installation;
 }
 

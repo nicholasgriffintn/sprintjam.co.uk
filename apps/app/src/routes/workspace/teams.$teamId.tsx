@@ -29,10 +29,7 @@ import { useSessionActions } from "@/context/SessionContext";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { createMeta } from "@/utils/route-meta";
 import { copyText } from "@/lib/clipboard";
-import {
-  listTeamSessions,
-  requestTeamAccess,
-} from "@/lib/workspace-service";
+import { listTeamSessions, requestTeamAccess } from "@/lib/workspace-service";
 import {
   getTeamSessionType,
   type TeamSessionType,

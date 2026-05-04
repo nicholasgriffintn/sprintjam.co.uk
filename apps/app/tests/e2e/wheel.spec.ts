@@ -113,7 +113,9 @@ test.describe("Wheel journey", () => {
 
     try {
       await guestPage.goto(`/wheel/${wheelKey}`);
-      await expect(guestPage.getByText("Wheel requires a passcode")).toBeVisible();
+      await expect(
+        guestPage.getByText("Wheel requires a passcode"),
+      ).toBeVisible();
       await guestPage.locator("#wheel-passcode").fill(passcode);
       await guestPage.getByRole("button", { name: "Join wheel" }).click();
       await expect(guestPage.getByText("Wheel control")).toBeVisible({
@@ -156,9 +158,15 @@ test.describe("Wheel journey", () => {
 
     try {
       await recoveryPage.goto(`/wheel/${wheelKey}`);
-      await expect(recoveryPage.getByText("Name already connected")).toBeVisible();
-      await recoveryPage.locator("#wheel-recovery-passkey").fill(recoveryPasskey);
-      await recoveryPage.getByRole("button", { name: "Recover session" }).click();
+      await expect(
+        recoveryPage.getByText("Name already connected"),
+      ).toBeVisible();
+      await recoveryPage
+        .locator("#wheel-recovery-passkey")
+        .fill(recoveryPasskey);
+      await recoveryPage
+        .getByRole("button", { name: "Recover session" })
+        .click();
       await expect(recoveryPage.getByText("Wheel control")).toBeVisible({
         timeout: 15_000,
       });

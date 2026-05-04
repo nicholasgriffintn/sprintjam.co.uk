@@ -269,7 +269,10 @@ function WheelResultsPanel({ results }: { results: SpinResult[] }) {
           <button
             type="button"
             onClick={() =>
-              downloadCsv("sprintjam-wheel-results.csv", buildWheelResultsCsv(results))
+              downloadCsv(
+                "sprintjam-wheel-results.csv",
+                buildWheelResultsCsv(results),
+              )
             }
             className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
           >

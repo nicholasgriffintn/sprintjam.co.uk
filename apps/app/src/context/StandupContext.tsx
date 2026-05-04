@@ -254,7 +254,9 @@ export function StandupProvider({
 
       case "presentationOrderUpdated":
         setStandupData((prev) =>
-          prev ? { ...prev, presentationOrder: message.presentationOrder } : prev,
+          prev
+            ? { ...prev, presentationOrder: message.presentationOrder }
+            : prev,
         );
         break;
 

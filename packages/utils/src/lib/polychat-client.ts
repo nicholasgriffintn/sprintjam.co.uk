@@ -44,7 +44,7 @@ export async function generateStrudelCode(
       options: {
         cache_ttl_seconds: 1,
       },
-    })
+    });
 
     const response = await fetch(`${POLYCHAT_API_URL}/apps/strudel/generate`, {
       method: "POST",

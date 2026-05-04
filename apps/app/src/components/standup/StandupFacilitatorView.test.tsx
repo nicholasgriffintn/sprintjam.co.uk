@@ -75,7 +75,9 @@ describe("StandupFacilitatorView", () => {
 
     expect(screen.queryByText("1 blocker")).toBeNull();
     expect(screen.getByText("Resolved")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Mark unresolved" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Mark unresolved" }),
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Mark unresolved" }));
 

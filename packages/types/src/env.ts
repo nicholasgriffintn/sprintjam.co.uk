@@ -3,7 +3,7 @@ import type {
   Fetcher,
   RateLimit,
   D1Database,
-  SendEmail
+  SendEmail,
 } from "@cloudflare/workers-types";
 
 /**

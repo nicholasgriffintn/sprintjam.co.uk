@@ -25,8 +25,7 @@ const renderStrudelPlayer = async (
   };
 
   vi.doMock("@/lib/strudel", async (importOriginal) => {
-    const actual =
-      await importOriginal<typeof import("@/lib/strudel")>();
+    const actual = await importOriginal<typeof import("@/lib/strudel")>();
 
     return {
       ...actual,

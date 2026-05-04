@@ -8,10 +8,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/cn";
-import {
-  playFidgetBeadSound,
-  playFidgetSwitchSound,
-} from "@/lib/fidget-audio";
+import { playFidgetBeadSound, playFidgetSwitchSound } from "@/lib/fidget-audio";
 import { createSeededRandom } from "@/lib/seeded-random";
 
 const FACE_COUNT = 4;
@@ -252,7 +249,10 @@ export function DeskCubeToy({
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <div className="flex min-w-0 items-center justify-center gap-1" aria-hidden="true">
+          <div
+            className="flex min-w-0 items-center justify-center gap-1"
+            aria-hidden="true"
+          >
             {Array.from({ length: FACE_COUNT }, (_, index) => (
               <span
                 key={index}

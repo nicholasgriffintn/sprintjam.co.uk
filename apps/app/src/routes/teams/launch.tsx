@@ -98,8 +98,7 @@ export default function TeamsLaunch() {
   const { goToLogin, goToRoom, goToWorkspaceSessions, startCreateFlow } =
     useSessionActions();
   const queryClient = useQueryClient();
-  const selectedTeam =
-    teams.find((team) => team.id === selectedTeamId) ?? null;
+  const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
   const [context, setContext] = useState<TeamsLaunchContext>(() =>
     typeof window === "undefined"
       ? {
@@ -157,11 +156,11 @@ export default function TeamsLaunch() {
 
   const hasResolvableContext = Boolean(
     context.tenantId &&
-      (context.externalTeamId ||
-        context.externalChannelId ||
-        context.externalChatId ||
-        context.externalMeetingId ||
-        context.externalUserId),
+    (context.externalTeamId ||
+      context.externalChannelId ||
+      context.externalChatId ||
+      context.externalMeetingId ||
+      context.externalUserId),
   );
   const frameLabel = getTeamsFrameLabel(context.frameContext);
   const teamsMetadata = {
@@ -203,7 +202,10 @@ export default function TeamsLaunch() {
   const latestActiveSession = activeSessions[0] ?? null;
 
   useEffect(() => {
-    if (resolvedInstallation && selectedTeamId !== resolvedInstallation.teamId) {
+    if (
+      resolvedInstallation &&
+      selectedTeamId !== resolvedInstallation.teamId
+    ) {
       setSelectedTeamId(resolvedInstallation.teamId);
     }
   }, [resolvedInstallation, selectedTeamId, setSelectedTeamId]);

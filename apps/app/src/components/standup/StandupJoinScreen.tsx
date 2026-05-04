@@ -15,7 +15,9 @@ interface StandupJoinScreenProps {
   initialStandupKey?: string;
 }
 
-export function StandupJoinScreen({ initialStandupKey }: StandupJoinScreenProps) {
+export function StandupJoinScreen({
+  initialStandupKey,
+}: StandupJoinScreenProps) {
   const {
     error,
     handleRecover,
@@ -167,11 +169,7 @@ export function StandupJoinScreen({ initialStandupKey }: StandupJoinScreenProps)
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={navigateBack}
-              >
+              <Button type="button" variant="secondary" onClick={navigateBack}>
                 Back
               </Button>
               <Button

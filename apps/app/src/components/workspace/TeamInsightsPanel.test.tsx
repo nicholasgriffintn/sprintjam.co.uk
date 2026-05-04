@@ -21,9 +21,7 @@ const insights: TeamInsights = {
 
 describe("TeamInsightsPanel", () => {
   it("renders loader-provided team insights", () => {
-    render(
-      <TeamInsightsPanel teamName="Platform" insights={insights} />,
-    );
+    render(<TeamInsightsPanel teamName="Platform" insights={insights} />);
 
     expect(screen.getByText("Team insights")).toBeTruthy();
     expect(screen.getByText("61%")).toBeTruthy();
