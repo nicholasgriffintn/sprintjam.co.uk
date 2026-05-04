@@ -39,6 +39,7 @@ export default [
   route("create", "routes/create.tsx"),
   route("join", "routes/join.tsx"),
   route("room/:roomKey", "routes/room/$roomKey.tsx"),
+  route("teams/launch", "routes/teams/launch.tsx"),
   route("wheel", "routes/wheel/index.tsx"),
   route("wheel/:wheelKey", "routes/wheel/$wheelKey.tsx"),
   route("standup", "routes/standup/index.tsx"),
@@ -52,6 +53,7 @@ export default [
   ...prefix("workspace", [
     route("profile", "routes/workspace/profile.tsx"),
     route("sessions", "routes/workspace/sessions.tsx"),
+    route("teams/:teamId", "routes/workspace/teams.$teamId.tsx"),
     route("admin", "routes/workspace/admin.tsx"),
     route("admin/teams", "routes/workspace/admin/teams.tsx"),
     route("admin/teams/settings", "routes/workspace/admin/teams/settings.tsx"),

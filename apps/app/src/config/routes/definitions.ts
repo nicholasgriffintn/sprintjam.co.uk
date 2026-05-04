@@ -342,6 +342,21 @@ export const ROUTE_DEFINITIONS = [
     },
   },
   {
+    screen: "teamsLaunch",
+    path: "/teams/launch",
+    group: "collaboration",
+    meta: {
+      title: `Microsoft Teams - ${SITE_NAME}`,
+      description: `Launch ${SITE_NAME} planning sessions from a Microsoft Teams chat or channel.`,
+      keywords: "microsoft teams planning poker, teams sprint planning",
+      ogImage: "/og-image.png",
+    },
+    layout: {
+      header: "workspace",
+      background: "plain",
+    },
+  },
+  {
     screen: "wheel",
     path: (params) =>
       params.wheelKey ? `/wheel/${params.wheelKey}` : "/wheel",
@@ -475,6 +490,22 @@ export const ROUTE_DEFINITIONS = [
       label: "Sessions",
       icon: Target,
       order: 2,
+    },
+  },
+  {
+    screen: "workspaceTeam",
+    path: (params) =>
+      params.teamId ? `/workspace/teams/${params.teamId}` : "/workspace/teams",
+    pathPattern: /^\/workspace\/teams\/(\d+)$/i,
+    group: "workspace",
+    parent: "workspaceSessions",
+    meta: {
+      title: `Team Home - ${SITE_NAME}`,
+      description:
+        "Open a team landing page to join active sessions or start a new planning room.",
+      keywords:
+        "team planning page, team sessions, planning poker, workspace team",
+      ogImage: "/og-image.png",
     },
   },
   {

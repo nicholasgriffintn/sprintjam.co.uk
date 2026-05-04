@@ -49,7 +49,7 @@ export const HeaderContainer: FC<HeaderContainerProps> = ({
       transition={HEADER_TRANSITION}
     >
       {variant === "workspace" ? (
-        <div className="flex items-center justify-between gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1">
           {children}
         </div>
       ) : (

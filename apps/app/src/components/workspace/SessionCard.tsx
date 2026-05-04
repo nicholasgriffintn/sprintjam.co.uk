@@ -74,9 +74,9 @@ export function SessionCard({
 
   return (
     <SurfaceCard variant="subtle" padding="sm" className="flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1 min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
               {session.name}
             </p>
@@ -119,6 +119,7 @@ export function SessionCard({
             variant="secondary"
             icon={<ArrowUpRight className="h-3.5 w-3.5" />}
             onClick={() => onOpenSession(session)}
+            className="w-full sm:w-auto"
           >
             {isStandup ? "Open standup" : "Open room"}
           </Button>

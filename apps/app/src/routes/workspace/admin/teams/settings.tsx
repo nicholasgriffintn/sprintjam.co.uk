@@ -3,8 +3,21 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRightLeft, Shield, UserMinus } from "lucide-react";
-import type { TeamIntegrationStatus, TeamMember } from "@sprintjam/types";
+import {
+  ArrowLeft,
+  ArrowRightLeft,
+  Copy,
+  ExternalLink,
+  MessageSquare,
+  Shield,
+  Trash2,
+  UserMinus,
+} from "lucide-react";
+import type {
+  TeamCollaborationInstallation,
+  TeamIntegrationStatus,
+  TeamMember,
+} from "@sprintjam/types";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { AdminSidebar } from "@/components/workspace/AdminSidebar";
@@ -21,10 +34,13 @@ import { useSessionActions } from "@/context/SessionContext";
 import { useRoomState } from "@/context/RoomContext";
 import { useTeamOAuth } from "@/hooks/useTeamOAuth";
 import { toast } from "@/components/ui";
+import { copyText } from "@/lib/clipboard";
 import {
   addTeamMember,
   approveTeamMember,
+  deleteTeamCollaborationInstallation,
   getTeamSettings,
+  listTeamCollaborationInstallations,
   listTeamMembers,
   moveTeamMember,
   removeTeamMember,
@@ -78,6 +94,10 @@ export default function WorkspaceTeamSettings() {
   const queryClient = useQueryClient();
   const settingsQueryKey = ["team-settings", selectedTeamId] as const;
   const teamMembersQueryKey = ["team-members", selectedTeamId] as const;
+  const collaborationQueryKey = [
+    "team-collaboration-installations",
+    selectedTeamId,
+  ] as const;
   const settingsRef = useRef<RoomSettings | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
@@ -91,6 +111,17 @@ export default function WorkspaceTeamSettings() {
     null,
   );
   const [targetTeamId, setTargetTeamId] = useState("");
+  const teamHomeUrl = useMemo(() => {
+    if (!selectedTeamId) {
+      return null;
+    }
+
+    if (typeof window === "undefined") {
+      return `https://sprintjam.co.uk/workspace/teams/${selectedTeamId}`;
+    }
+
+    return `${window.location.origin}/workspace/teams/${selectedTeamId}`;
+  }, [selectedTeamId]);
 
   const settingsQuery = useQuery<RoomSettings | null>({
     queryKey: settingsQueryKey,
@@ -126,6 +157,13 @@ export default function WorkspaceTeamSettings() {
   const jiraOAuth = useTeamOAuth(selectedTeamId, "jira");
   const linearOAuth = useTeamOAuth(selectedTeamId, "linear");
   const githubOAuth = useTeamOAuth(selectedTeamId, "github");
+
+  const collaborationQuery = useQuery<TeamCollaborationInstallation[]>({
+    queryKey: collaborationQueryKey,
+    enabled: selectedTeamId !== null,
+    queryFn: () => listTeamCollaborationInstallations(selectedTeamId!),
+    staleTime: 0,
+  });
 
   const handleSaveSettings = () => {
     if (settingsRef.current && selectedTeamId && canManageTeam) {
@@ -262,8 +300,24 @@ export default function WorkspaceTeamSettings() {
     },
   });
 
+  const disconnectCollaborationMutation = useMutation({
+    mutationFn: (installationId: number) =>
+      deleteTeamCollaborationInstallation(selectedTeamId!, installationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: collaborationQueryKey });
+      toast.success("Collaboration app disconnected");
+    },
+    onError: (error) => {
+      setSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Unable to disconnect collaboration app",
+      );
+    },
+  });
+
   const handleApproveMember = async (userId: number) => {
-    if (!selectedTeamId) {
+    if (!selectedTeamId || !canManageTeam) {
       return;
     }
 
@@ -275,7 +329,7 @@ export default function WorkspaceTeamSettings() {
     userId: number,
     role: "admin" | "member",
   ) => {
-    if (!selectedTeamId) {
+    if (!selectedTeamId || !canManageTeam) {
       return;
     }
 
@@ -284,7 +338,7 @@ export default function WorkspaceTeamSettings() {
   };
 
   const handleAddMember = async () => {
-    if (!selectedWorkspaceUserId || !selectedTeamId) {
+    if (!selectedWorkspaceUserId || !selectedTeamId || !canManageTeam) {
       return;
     }
 
@@ -296,7 +350,7 @@ export default function WorkspaceTeamSettings() {
   };
 
   const handleRemoveMember = async () => {
-    if (!pendingRemovalMember || !selectedTeamId) {
+    if (!pendingRemovalMember || !selectedTeamId || !canManageTeam) {
       return;
     }
 
@@ -305,7 +359,12 @@ export default function WorkspaceTeamSettings() {
   };
 
   const handleMoveMember = async () => {
-    if (!pendingMoveMember || !targetTeamId || !selectedTeamId) {
+    if (
+      !pendingMoveMember ||
+      !targetTeamId ||
+      !selectedTeamId ||
+      !isWorkspaceAdmin
+    ) {
       return;
     }
 
@@ -315,6 +374,20 @@ export default function WorkspaceTeamSettings() {
       userId: pendingMoveMember.id,
       role: pendingMoveMember.role,
     });
+  };
+
+  const handleCopyTeamHomeUrl = async () => {
+    if (!teamHomeUrl) {
+      return;
+    }
+
+    try {
+      await copyText(teamHomeUrl);
+      toast.success("Team page URL copied");
+    } catch (error) {
+      console.error("Failed to copy team page URL:", error);
+      toast.error("Couldn't copy team page URL");
+    }
   };
 
   return (
@@ -335,7 +408,7 @@ export default function WorkspaceTeamSettings() {
           <ArrowLeft className="h-4 w-4" />
           Back to teams
         </button>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
               {selectedTeam?.name ?? "Team"} Settings
@@ -344,6 +417,28 @@ export default function WorkspaceTeamSettings() {
               Default settings, integrations, and access for this team
             </p>
           </div>
+          {teamHomeUrl && (
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<Copy className="h-4 w-4" />}
+                onClick={() => void handleCopyTeamHomeUrl()}
+                className="w-full sm:w-auto"
+              >
+                Copy team page
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<ExternalLink className="h-4 w-4" />}
+                onClick={() => window.open(teamHomeUrl, "_blank")}
+                className="w-full sm:w-auto"
+              >
+                Open
+              </Button>
+            </div>
+          )}
         </div>
 
         {!selectedTeam && !isLoading && (
@@ -375,7 +470,7 @@ export default function WorkspaceTeamSettings() {
                 </div>
 
                 {canManageTeam && (
-                  <div className="grid gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 md:grid-cols-[1fr_180px_160px] dark:border-white/10 dark:bg-slate-900/50">
+                  <div className="grid gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 lg:grid-cols-[1fr_180px_160px] dark:border-white/10 dark:bg-slate-900/50">
                     <Select
                       options={availableWorkspaceMembers.map((member) => ({
                         label: member.name?.trim() || member.email,
@@ -399,13 +494,18 @@ export default function WorkspaceTeamSettings() {
                       onClick={() => void handleAddMember()}
                       isLoading={addMemberMutation.isPending}
                       disabled={!selectedWorkspaceUserId}
+                      className="w-full"
                     >
                       Add to team
                     </Button>
                   </div>
                 )}
 
-                {teamMembersQuery.isLoading ? (
+                {!canManageTeam ? (
+                  <Alert variant="info">
+                    Team membership is only visible to team admins.
+                  </Alert>
+                ) : teamMembersQuery.isLoading ? (
                   <div className="flex items-center gap-3">
                     <Spinner />
                     <span className="text-sm text-slate-600 dark:text-slate-300">
@@ -425,7 +525,7 @@ export default function WorkspaceTeamSettings() {
                         key={member.id}
                         className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50"
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="font-medium text-slate-900 dark:text-white">
                               {member.name?.trim() || member.email}
@@ -434,7 +534,7 @@ export default function WorkspaceTeamSettings() {
                               {member.email}
                             </p>
                           </div>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 sm:justify-end">
                             <Badge
                               variant={
                                 member.status === "pending"
@@ -462,7 +562,7 @@ export default function WorkspaceTeamSettings() {
                         </div>
 
                         {canManageTeam && (
-                          <div className="mt-3 flex flex-wrap gap-2">
+                          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                             {member.status === "pending" ? (
                               <Button
                                 size="sm"
@@ -587,6 +687,7 @@ export default function WorkspaceTeamSettings() {
                       onClick={handleSaveSettings}
                       isLoading={saveSettingsMutation.isPending}
                       disabled={!canManageTeam}
+                      className="w-full sm:w-auto"
                     >
                       Save default settings
                     </Button>
@@ -682,6 +783,81 @@ export default function WorkspaceTeamSettings() {
                   }
                 />
               </SurfaceCard>
+
+              <SurfaceCard className="flex flex-col gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                    Collaboration apps
+                  </h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Link this team to chat apps that can launch SprintJam from a
+                    shared conversation.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/40 dark:bg-blue-950/20">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold text-blue-950 dark:text-blue-200">
+                          How to connect Microsoft Teams
+                        </p>
+                        <p className="mt-1 text-xs text-blue-900 dark:text-blue-300">
+                          In Microsoft Teams, go to Apps, install SprintJam, and
+                          open it from the channel, chat, or meeting you want to
+                          connect. Then sign in, select this workspace team, and
+                          connect it.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {collaborationQuery.isLoading ? (
+                  <div className="flex items-center gap-3">
+                    <Spinner />
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      Loading collaboration apps…
+                    </span>
+                  </div>
+                ) : collaborationQuery.data?.length ? (
+                  <div className="space-y-3">
+                    {collaborationQuery.data.map((installation) => (
+                      <CollaborationInstallationRow
+                        key={installation.id}
+                        installation={installation}
+                        disabled={!canManageTeam}
+                        isDisconnecting={
+                          disconnectCollaborationMutation.isPending &&
+                          disconnectCollaborationMutation.variables ===
+                            installation.id
+                        }
+                        onDisconnect={() =>
+                          disconnectCollaborationMutation.mutateAsync(
+                            installation.id,
+                          )
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                    <div className="flex items-start gap-3">
+                      <MessageSquare className="mt-0.5 h-5 w-5 text-slate-500" />
+                      <div>
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          No collaboration apps connected
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Add the SprintJam Teams app and open the launch tab to
+                          connect a channel, chat, or meeting to this workspace
+                          team.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </SurfaceCard>
             </div>
           </div>
         )}
@@ -757,6 +933,69 @@ export default function WorkspaceTeamSettings() {
   );
 }
 
+function getCollaborationLabel(installation: TeamCollaborationInstallation) {
+  if (installation.displayName) {
+    return installation.displayName;
+  }
+  if (installation.externalChannelId) {
+    return "Teams channel";
+  }
+  if (installation.externalChatId) {
+    return "Teams chat";
+  }
+  if (installation.externalMeetingId) {
+    return "Teams meeting";
+  }
+  if (installation.externalTeamId) {
+    return "Teams team";
+  }
+  return "Teams";
+}
+
+function CollaborationInstallationRow({
+  installation,
+  disabled,
+  isDisconnecting,
+  onDisconnect,
+}: {
+  installation: TeamCollaborationInstallation;
+  disabled: boolean;
+  isDisconnecting: boolean;
+  onDisconnect: () => Promise<void>;
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
+            {getCollaborationLabel(installation)}
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Microsoft Teams · Tenant {installation.tenantId}
+            {metaStr(installation.metadata, "frameContext")
+              ? ` · ${metaStr(installation.metadata, "frameContext")}`
+              : ""}
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            Connected {new Date(installation.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+        <Button
+          onClick={() => void onDisconnect()}
+          disabled={disabled}
+          isLoading={isDisconnecting}
+          variant="secondary"
+          size="sm"
+          icon={<Trash2 className="h-4 w-4" />}
+          className="w-full sm:w-auto"
+        >
+          Disconnect
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function IntegrationRow({
   label,
   description,
@@ -789,7 +1028,7 @@ function IntegrationRow({
   return (
     <>
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <p className="text-sm font-medium text-slate-900 dark:text-white">
               {status.connected ? `✓ Connected to ${label}` : label}
@@ -817,7 +1056,7 @@ function IntegrationRow({
                 onClick={handleDisconnect}
                 disabled={disabled}
                 variant="unstyled"
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                className="w-full rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 sm:w-auto"
               >
                 Disconnect
               </Button>
@@ -826,7 +1065,7 @@ function IntegrationRow({
                 onClick={onConnect}
                 disabled={disabled}
                 variant="unstyled"
-                className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+                className="w-full rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 sm:w-auto"
               >
                 Connect
               </Button>

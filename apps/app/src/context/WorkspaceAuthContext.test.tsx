@@ -56,6 +56,7 @@ const initialProfile: WorkspaceAuthProfile = {
     {
       id: 10,
       name: "Platform",
+      logoUrl: null,
       organisationId: 1,
       ownerId: 1,
       accessPolicy: "open",

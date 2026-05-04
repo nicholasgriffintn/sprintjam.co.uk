@@ -131,6 +131,10 @@ export default function WorkspaceAdminOverview() {
   }, [organisation, requireMemberApproval, workspaceLogoUrl, workspaceName]);
 
   const handleSaveWorkspace = async () => {
+    if (!isWorkspaceAdmin) {
+      return;
+    }
+
     if (!workspaceName.trim()) {
       setLocalError("Workspace name is required");
       return;
@@ -158,6 +162,10 @@ export default function WorkspaceAdminOverview() {
 
   const handleInvite = async (event: FormEvent) => {
     event.preventDefault();
+    if (!isWorkspaceAdmin) {
+      return;
+    }
+
     const normalizedEmail = inviteEmail.toLowerCase().trim();
 
     if (!normalizedEmail) {
@@ -183,6 +191,10 @@ export default function WorkspaceAdminOverview() {
   };
 
   const handleApproveMember = async (member: WorkspaceMember) => {
+    if (!isWorkspaceAdmin) {
+      return;
+    }
+
     setIsUpdatingMemberId(member.id);
     setLocalError(null);
 
@@ -203,6 +215,10 @@ export default function WorkspaceAdminOverview() {
     member: WorkspaceMember,
     role: "admin" | "member",
   ) => {
+    if (!isWorkspaceAdmin) {
+      return;
+    }
+
     setIsUpdatingMemberId(member.id);
     setLocalError(null);
 
@@ -224,7 +240,7 @@ export default function WorkspaceAdminOverview() {
   };
 
   const handleRemoveMember = async () => {
-    if (!pendingRemovalMember) {
+    if (!isWorkspaceAdmin || !pendingRemovalMember) {
       return;
     }
 
@@ -301,6 +317,7 @@ export default function WorkspaceAdminOverview() {
                     value={workspaceName}
                     onChange={(event) => setWorkspaceName(event.target.value)}
                     placeholder="Acme Engineering"
+                    disabled={!isWorkspaceAdmin}
                     fullWidth
                   />
 
@@ -312,6 +329,7 @@ export default function WorkspaceAdminOverview() {
                     }
                     placeholder="https://example.com/logo.png"
                     helperText="Optional. Use a public HTTPS image URL."
+                    disabled={!isWorkspaceAdmin}
                     fullWidth
                   />
 
@@ -329,6 +347,7 @@ export default function WorkspaceAdminOverview() {
                       <Switch
                         checked={requireMemberApproval}
                         onCheckedChange={setRequireMemberApproval}
+                        disabled={!isWorkspaceAdmin}
                       />
                     </div>
                   </div>
@@ -337,7 +356,9 @@ export default function WorkspaceAdminOverview() {
                     <Button
                       onClick={handleSaveWorkspace}
                       isLoading={isSavingWorkspace}
-                      disabled={!organisation || !isSettingsDirty}
+                      disabled={
+                        !isWorkspaceAdmin || !organisation || !isSettingsDirty
+                      }
                     >
                       Save workspace
                     </Button>
@@ -384,13 +405,14 @@ export default function WorkspaceAdminOverview() {
                   onChange={(event) => setInviteEmail(event.target.value)}
                   placeholder="teammate@example.com"
                   fullWidth
+                  disabled={!isWorkspaceAdmin}
                   required
                 />
                 <Button
                   type="submit"
                   icon={<MailPlus className="h-4 w-4" />}
                   isLoading={isSendingInvite}
-                  disabled={!inviteEmail.trim()}
+                  disabled={!isWorkspaceAdmin || !inviteEmail.trim()}
                   className="sm:h-[50px]"
                 >
                   Send invite
@@ -441,6 +463,7 @@ export default function WorkspaceAdminOverview() {
                               size="sm"
                               variant="secondary"
                               isLoading={isUpdatingMemberId === member.id}
+                              disabled={!isWorkspaceAdmin}
                               onClick={() =>
                                 void handleRoleChange(member, "member")
                               }
@@ -452,6 +475,7 @@ export default function WorkspaceAdminOverview() {
                               size="sm"
                               variant="secondary"
                               isLoading={isUpdatingMemberId === member.id}
+                              disabled={!isWorkspaceAdmin}
                               onClick={() =>
                                 void handleRoleChange(member, "admin")
                               }
@@ -464,6 +488,7 @@ export default function WorkspaceAdminOverview() {
                             variant="danger"
                             icon={<UserMinus className="h-4 w-4" />}
                             isLoading={isUpdatingMemberId === member.id}
+                            disabled={!isWorkspaceAdmin}
                             onClick={() => setPendingRemovalMember(member)}
                           >
                             Remove
@@ -509,6 +534,7 @@ export default function WorkspaceAdminOverview() {
                           <Button
                             size="sm"
                             isLoading={isUpdatingMemberId === member.id}
+                            disabled={!isWorkspaceAdmin}
                             onClick={() => void handleApproveMember(member)}
                           >
                             Approve
@@ -517,6 +543,7 @@ export default function WorkspaceAdminOverview() {
                             size="sm"
                             variant="danger"
                             isLoading={isUpdatingMemberId === member.id}
+                            disabled={!isWorkspaceAdmin}
                             onClick={() => setPendingRemovalMember(member)}
                           >
                             Remove

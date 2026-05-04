@@ -24,6 +24,7 @@ function getRouteByScreen(): Map<AppScreen, RouteEntry> {
 const GROUP_BACKGROUNDS: Record<RouteGroup, PageBackgroundVariant> = {
   marketing: "compact",
   workspace: "plain",
+  collaboration: "plain",
   room: "room",
   auth: "compact",
   flow: "compact",
@@ -34,6 +35,7 @@ const GROUP_BACKGROUNDS: Record<RouteGroup, PageBackgroundVariant> = {
 const GROUP_HEADERS: Record<RouteGroup, HeaderVariant> = {
   marketing: "marketing",
   workspace: "workspace",
+  collaboration: "workspace",
   room: "room",
   auth: "marketing",
   flow: "marketing",

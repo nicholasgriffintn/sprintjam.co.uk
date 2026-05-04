@@ -10,6 +10,7 @@ import type {
 export type RouteGroup =
   | "marketing"
   | "workspace"
+  | "collaboration"
   | "room"
   | "wheel"
   | "standup"
@@ -20,6 +21,7 @@ export interface RoutePathParams {
   roomKey?: string;
   wheelKey?: string;
   standupKey?: string;
+  teamId?: number | string;
 }
 
 export interface RouteNavConfig {
