@@ -1,0 +1,1 @@
+ALTER TABLE `teams` ADD `logo_url` text;

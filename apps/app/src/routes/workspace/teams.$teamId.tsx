@@ -20,6 +20,7 @@ import type { TeamSession } from "@sprintjam/types";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Avatar } from "@/components/ui/Avatar";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { SessionList } from "@/components/workspace/SessionList";
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
@@ -41,6 +42,7 @@ import {
   loadWorkspaceAuthProfile,
 } from "@/lib/workspace-loaders";
 import { toast } from "@/components/ui";
+import { getInitials } from "@/utils/initials";
 
 export const meta = createMeta("workspaceTeam");
 
@@ -184,17 +186,28 @@ export default function WorkspaceTeamHome() {
     >
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-brand-700 dark:text-brand-200">
-              Team home
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold text-slate-950 dark:text-white sm:text-3xl">
-              {team?.name ?? "Team"}
-            </h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Join an active team session or start the next planning room from
-              the same shared page.
-            </p>
+          <div className="flex min-w-0 gap-4">
+            {team && (
+              <Avatar
+                src={team.logoUrl ?? undefined}
+                alt={`${team.name} logo`}
+                fallback={getInitials(team.name)}
+                className="mt-1 h-12 w-12 shrink-0 rounded-2xl bg-slate-200 text-base font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-white/10"
+                fallbackClassName="bg-brand-500/10 text-brand-700 dark:text-brand-300"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-brand-700 dark:text-brand-200">
+                Team home
+              </p>
+              <h1 className="mt-1 truncate text-2xl font-semibold text-slate-950 dark:text-white sm:text-3xl">
+                {team?.name ?? "Team"}
+              </h1>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Join an active team session or start the next planning room from
+                the same shared page.
+              </p>
+            </div>
           </div>
           <Button
             variant="secondary"

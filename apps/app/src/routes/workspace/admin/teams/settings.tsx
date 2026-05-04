@@ -331,7 +331,7 @@ export default function WorkspaceTeamSettings() {
   });
 
   const handleApproveMember = async (userId: number) => {
-    if (!selectedTeamId) {
+    if (!selectedTeamId || !canManageTeam) {
       return;
     }
 
@@ -343,7 +343,7 @@ export default function WorkspaceTeamSettings() {
     userId: number,
     role: "admin" | "member",
   ) => {
-    if (!selectedTeamId) {
+    if (!selectedTeamId || !canManageTeam) {
       return;
     }
 
@@ -352,7 +352,7 @@ export default function WorkspaceTeamSettings() {
   };
 
   const handleAddMember = async () => {
-    if (!selectedWorkspaceUserId || !selectedTeamId) {
+    if (!selectedWorkspaceUserId || !selectedTeamId || !canManageTeam) {
       return;
     }
 
@@ -364,7 +364,7 @@ export default function WorkspaceTeamSettings() {
   };
 
   const handleRemoveMember = async () => {
-    if (!pendingRemovalMember || !selectedTeamId) {
+    if (!pendingRemovalMember || !selectedTeamId || !canManageTeam) {
       return;
     }
 
@@ -373,7 +373,12 @@ export default function WorkspaceTeamSettings() {
   };
 
   const handleMoveMember = async () => {
-    if (!pendingMoveMember || !targetTeamId || !selectedTeamId) {
+    if (
+      !pendingMoveMember ||
+      !targetTeamId ||
+      !selectedTeamId ||
+      !isWorkspaceAdmin
+    ) {
       return;
     }
 
@@ -437,12 +442,13 @@ export default function WorkspaceTeamSettings() {
             </p>
           </div>
           {teamHomeUrl && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button
                 size="sm"
                 variant="secondary"
                 icon={<Copy className="h-4 w-4" />}
                 onClick={() => void handleCopyTeamHomeUrl()}
+                className="w-full sm:w-auto"
               >
                 Copy team page
               </Button>
@@ -451,6 +457,7 @@ export default function WorkspaceTeamSettings() {
                 variant="secondary"
                 icon={<ExternalLink className="h-4 w-4" />}
                 onClick={() => window.open(teamHomeUrl, "_blank")}
+                className="w-full sm:w-auto"
               >
                 Open
               </Button>
@@ -487,7 +494,7 @@ export default function WorkspaceTeamSettings() {
                 </div>
 
                 {canManageTeam && (
-                  <div className="grid gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 md:grid-cols-[1fr_180px_160px] dark:border-white/10 dark:bg-slate-900/50">
+                  <div className="grid gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 lg:grid-cols-[1fr_180px_160px] dark:border-white/10 dark:bg-slate-900/50">
                     <Select
                       options={availableWorkspaceMembers.map((member) => ({
                         label: member.name?.trim() || member.email,
@@ -511,13 +518,18 @@ export default function WorkspaceTeamSettings() {
                       onClick={() => void handleAddMember()}
                       isLoading={addMemberMutation.isPending}
                       disabled={!selectedWorkspaceUserId}
+                      className="w-full"
                     >
                       Add to team
                     </Button>
                   </div>
                 )}
 
-                {teamMembersQuery.isLoading ? (
+                {!canManageTeam ? (
+                  <Alert variant="info">
+                    Team membership is only visible to team admins.
+                  </Alert>
+                ) : teamMembersQuery.isLoading ? (
                   <div className="flex items-center gap-3">
                     <Spinner />
                     <span className="text-sm text-slate-600 dark:text-slate-300">
@@ -537,7 +549,7 @@ export default function WorkspaceTeamSettings() {
                         key={member.id}
                         className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50"
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="font-medium text-slate-900 dark:text-white">
                               {member.name?.trim() || member.email}
@@ -546,7 +558,7 @@ export default function WorkspaceTeamSettings() {
                               {member.email}
                             </p>
                           </div>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 sm:justify-end">
                             <Badge
                               variant={
                                 member.status === "pending"
@@ -574,7 +586,7 @@ export default function WorkspaceTeamSettings() {
                         </div>
 
                         {canManageTeam && (
-                          <div className="mt-3 flex flex-wrap gap-2">
+                          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                             {member.status === "pending" ? (
                               <Button
                                 size="sm"
@@ -699,6 +711,7 @@ export default function WorkspaceTeamSettings() {
                       onClick={handleSaveSettings}
                       isLoading={saveSettingsMutation.isPending}
                       disabled={!canManageTeam}
+                      className="w-full sm:w-auto"
                     >
                       Save default settings
                     </Button>
@@ -822,10 +835,12 @@ export default function WorkspaceTeamSettings() {
                       </div>
                       <ul className="space-y-1 text-xs text-blue-900 dark:text-blue-300">
                         <li>
-                          1. Use this manifest: {teamsManifestUrl}
+                          1. Use this manifest:{" "}
+                          <span className="break-all">{teamsManifestUrl}</span>
                         </li>
                         <li>
-                          2. Confirm the tab content URL is {teamsLaunchUrl}.
+                          2. Confirm the tab content URL is{" "}
+                          <span className="break-all">{teamsLaunchUrl}</span>.
                         </li>
                         <li>
                           3. Enable channel, chat, meeting details, meeting
@@ -837,12 +852,13 @@ export default function WorkspaceTeamSettings() {
                         </li>
                       </ul>
                     </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
+                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
                       <Button
                         size="sm"
                         variant="secondary"
                         icon={<Copy className="h-4 w-4" />}
                         onClick={() => void handleCopyTeamsLaunchUrl()}
+                        className="w-full sm:w-auto"
                       >
                         Copy URL
                       </Button>
@@ -851,6 +867,7 @@ export default function WorkspaceTeamSettings() {
                         variant="secondary"
                         icon={<ExternalLink className="h-4 w-4" />}
                         onClick={() => window.open(teamsManifestUrl, "_blank")}
+                        className="w-full sm:w-auto"
                       >
                         Manifest
                       </Button>
@@ -859,6 +876,7 @@ export default function WorkspaceTeamSettings() {
                         variant="secondary"
                         icon={<ExternalLink className="h-4 w-4" />}
                         onClick={() => window.open(teamsLaunchUrl, "_blank")}
+                        className="w-full sm:w-auto"
                       >
                         Open
                       </Button>
@@ -1018,7 +1036,7 @@ function CollaborationInstallationRow({
 }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-medium text-slate-900 dark:text-white">
             {getCollaborationLabel(installation)}
@@ -1040,6 +1058,7 @@ function CollaborationInstallationRow({
           variant="secondary"
           size="sm"
           icon={<Trash2 className="h-4 w-4" />}
+          className="w-full sm:w-auto"
         >
           Disconnect
         </Button>
@@ -1080,7 +1099,7 @@ function IntegrationRow({
   return (
     <>
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <p className="text-sm font-medium text-slate-900 dark:text-white">
               {status.connected ? `✓ Connected to ${label}` : label}
@@ -1108,7 +1127,7 @@ function IntegrationRow({
                 onClick={handleDisconnect}
                 disabled={disabled}
                 variant="unstyled"
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                className="w-full rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 sm:w-auto"
               >
                 Disconnect
               </Button>
@@ -1117,7 +1136,7 @@ function IntegrationRow({
                 onClick={onConnect}
                 disabled={disabled}
                 variant="unstyled"
-                className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+                className="w-full rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 sm:w-auto"
               >
                 Connect
               </Button>

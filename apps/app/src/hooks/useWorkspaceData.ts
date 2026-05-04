@@ -26,6 +26,7 @@ interface CreateSessionPayload {
 interface CreateTeamPayload {
   name: string;
   accessPolicy?: TeamAccessPolicy;
+  logoUrl?: string | null;
 }
 
 interface UseWorkspaceDataOptions {
@@ -166,6 +167,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
     async ({
       name,
       accessPolicy = "open",
+      logoUrl = null,
     }: CreateTeamPayload): Promise<WorkspaceTeam | null> => {
       if (!isAuthenticated) {
         setActionError("Load workspace before creating teams");
@@ -175,7 +177,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setIsMutating(true);
       setActionError(null);
       try {
-        const team = await createTeam(name, accessPolicy);
+        const team = await createTeam(name, accessPolicy, logoUrl);
         setSelectedTeamId(team.id);
         await refreshWorkspace(true);
         return team;
@@ -192,7 +194,11 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
   const handleUpdateTeam = useCallback(
     async (
       teamId: number,
-      payload: { name?: string; accessPolicy?: TeamAccessPolicy },
+      payload: {
+        name?: string;
+        accessPolicy?: TeamAccessPolicy;
+        logoUrl?: string | null;
+      },
     ): Promise<WorkspaceTeam | null> => {
       if (!isAuthenticated) {
         setActionError("Load workspace before updating teams");

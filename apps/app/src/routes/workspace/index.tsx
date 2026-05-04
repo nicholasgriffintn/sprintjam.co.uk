@@ -95,7 +95,7 @@ export default function WorkspaceDashboard() {
       onLogin={goToLogin}
     >
       <div className="space-y-6">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-white sm:text-3xl">
               Dashboard <BetaBadge />

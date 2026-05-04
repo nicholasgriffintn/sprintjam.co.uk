@@ -42,17 +42,22 @@ function TrendIndicator({
   );
 }
 
-export function StatCards({ stats, insights }: StatCardsProps) {
+export function StatCards({
+  stats,
+  insights,
+  teamCount,
+  sessionCount,
+}: StatCardsProps) {
   const statCards = [
     {
       label: "Teams",
-      value: stats?.totalTeams ?? 0,
+      value: stats?.totalTeams ?? teamCount ?? 0,
       icon: <Building2 className="h-5 w-5 text-brand-500" />,
       trend: null,
     },
     {
       label: "Sessions",
-      value: stats?.totalSessions ?? 0,
+      value: stats?.totalSessions ?? sessionCount ?? 0,
       icon: <Target className="h-5 w-5 text-indigo-500" />,
       trend: null,
     },

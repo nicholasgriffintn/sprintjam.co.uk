@@ -1,183 +1,129 @@
-import { useState } from "react";
-import { Plus, Pencil, ChevronRight, Settings } from "lucide-react";
+import { Pencil, ExternalLink, Settings } from "lucide-react";
 
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Select } from "@/components/ui/Select";
-import { cn } from "@/lib/cn";
-import type { TeamAccessPolicy, WorkspaceTeam } from "@sprintjam/types";
+import { getInitials } from "@/utils/initials";
+import type { WorkspaceTeam } from "@sprintjam/types";
 
 interface TeamsListProps {
   teams: WorkspaceTeam[];
-  selectedTeamId: number | null;
-  isMutating: boolean;
-  onCreateTeam: (payload: {
-    name: string;
-    accessPolicy: TeamAccessPolicy;
-  }) => Promise<void>;
-  onSelectTeam: (teamId: number) => void;
+  onOpenTeam: (team: WorkspaceTeam) => void;
   onEditTeam: (team: WorkspaceTeam) => void;
   onTeamSettings?: (team: WorkspaceTeam) => void;
 }
 
 export function TeamsList({
   teams,
-  selectedTeamId,
-  isMutating,
-  onCreateTeam,
-  onSelectTeam,
+  onOpenTeam,
   onEditTeam,
   onTeamSettings,
 }: TeamsListProps) {
-  const [newTeamName, setNewTeamName] = useState("");
-  const [accessPolicy, setAccessPolicy] = useState<TeamAccessPolicy>("open");
-
-  const handleCreateTeam = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!newTeamName.trim()) return;
-    await onCreateTeam({
-      name: newTeamName.trim(),
-      accessPolicy,
-    });
-    setNewTeamName("");
-    setAccessPolicy("open");
-  };
-
   return (
-    <div className="space-y-5">
-      <form
-        onSubmit={handleCreateTeam}
-        className="grid gap-3 sm:grid-cols-[7fr_3fr] sm:items-end"
-      >
-        <Input
-          label="New team"
-          placeholder="Product team"
-          value={newTeamName}
-          onChange={(event) => setNewTeamName(event.target.value)}
-          required
-          fullWidth
+    <div className="space-y-2">
+      {teams.length === 0 && (
+        <EmptyState
+          title="No teams yet"
+          description="Create your first team to start linking rooms."
         />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Select
-            options={[
-              { label: "Open to workspace", value: "open" },
-              { label: "Restricted members", value: "restricted" },
-            ]}
-            value={accessPolicy}
-            onValueChange={(value) =>
-              setAccessPolicy(value as TeamAccessPolicy)
-            }
-          />
-          <Button
-            type="submit"
-            icon={<Plus className="h-4 w-4" />}
-            isLoading={isMutating}
-            disabled={!newTeamName.trim()}
-            className="sm:h-[50px]"
-            fullWidth
-          >
-            Create team
-          </Button>
-        </div>
-      </form>
-
-      <div className="space-y-2">
-        {teams.length === 0 && (
-          <EmptyState
-            title="No teams yet"
-            description="Create your first team to start linking rooms."
-          />
-        )}
-        {teams.map((team) => (
-          <div
-            key={team.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => onSelectTeam(team.id)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                onSelectTeam(team.id);
-              }
-            }}
-            className={cn(
-              "w-full rounded-2xl border border-slate-200/60 bg-white/70 p-4 text-left shadow-sm transition hover:border-brand-200 hover:bg-white dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-brand-700/50 dark:hover:bg-slate-900",
-              selectedTeamId === team.id &&
-                "border-brand-300 bg-brand-50/70 shadow-md dark:border-brand-800/80 dark:bg-brand-900/20",
-            )}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {team.name}
-                  {selectedTeamId === team.id && (
-                    <Badge variant="primary" size="sm">
-                      Selected
-                    </Badge>
-                  )}
-                </p>
-                <div className="mt-1 flex flex-wrap gap-2">
+      )}
+      {teams.map((team) => (
+        <div
+          key={team.id}
+          className="grid w-full gap-4 rounded-2xl border border-slate-200/60 bg-white/70 p-4 shadow-sm transition dark:border-white/10 dark:bg-slate-900/60 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+        >
+          <div className="flex min-w-0 gap-3">
+            <Avatar
+              src={team.logoUrl ?? undefined}
+              alt={`${team.name} logo`}
+              fallback={getInitials(team.name)}
+              className="h-11 w-11 shrink-0 rounded-xl bg-slate-200 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-white/10"
+              fallbackClassName="bg-brand-500/10 text-brand-700 dark:text-brand-300"
+            />
+            <div className="min-w-0 space-y-2">
+              <p className="flex min-w-0 flex-wrap items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+                <span className="min-w-0 truncate">{team.name}</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  variant={
+                    team.accessPolicy === "restricted" ? "warning" : "info"
+                  }
+                  size="sm"
+                >
+                  {team.accessPolicy === "restricted" ? "Restricted" : "Open"}
+                </Badge>
+                <Badge
+                  variant={
+                    team.canAccess
+                      ? "success"
+                      : team.currentUserStatus === "pending"
+                        ? "warning"
+                        : "default"
+                  }
+                  size="sm"
+                >
+                  {team.canAccess
+                    ? "Active access"
+                    : team.currentUserStatus === "pending"
+                      ? "Access pending"
+                      : "No access"}
+                </Badge>
+                {team.currentUserRole && (
                   <Badge
-                    variant={
-                      team.accessPolicy === "restricted" ? "warning" : "info"
-                    }
+                    variant={team.canManage ? "success" : "default"}
                     size="sm"
                   >
-                    {team.accessPolicy === "restricted" ? "Restricted" : "Open"}
+                    {team.currentUserRole === "admin"
+                      ? "Team admin"
+                      : "Team member"}
                   </Badge>
-                  {team.canManage && (
-                    <Badge variant="success" size="sm">
-                      Team admin
-                    </Badge>
-                  )}
-                </div>
+                )}
               </div>
-              {selectedTeamId === team.id ? (
-                <div className="flex flex-col items-end gap-2 sm:flex-row">
-                  {team.canManage ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        icon={<Pencil className="h-4 w-4" />}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onEditTeam(team);
-                        }}
-                        size="sm"
-                      >
-                        Edit team
-                      </Button>
-                      {onTeamSettings && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          icon={<Settings className="h-4 w-4" />}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onTeamSettings(team);
-                          }}
-                          size="sm"
-                        >
-                          Settings
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <Button variant="secondary" size="sm" disabled>
-                      Read only
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-              )}
             </div>
           </div>
-        ))}
-      </div>
+          <div className="grid gap-2 sm:flex sm:justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              icon={<ExternalLink className="h-4 w-4" />}
+              onClick={() => onOpenTeam(team)}
+              size="sm"
+            >
+              Open page
+            </Button>
+            {team.canManage ? (
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  icon={<Pencil className="h-4 w-4" />}
+                  onClick={() => onEditTeam(team)}
+                  size="sm"
+                >
+                  Edit team
+                </Button>
+                {onTeamSettings && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    icon={<Settings className="h-4 w-4" />}
+                    onClick={() => onTeamSettings(team)}
+                    size="sm"
+                  >
+                    Settings
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button variant="secondary" size="sm" disabled>
+                Read only
+              </Button>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -306,8 +306,15 @@ export class WorkspaceAuthRepository {
     name: string,
     ownerId: number,
     accessPolicy?: "open" | "restricted",
+    logoUrl?: string | null,
   ): Promise<number> {
-    return this.teams.createTeam(organisationId, name, ownerId, accessPolicy);
+    return this.teams.createTeam(
+      organisationId,
+      name,
+      ownerId,
+      accessPolicy,
+      logoUrl,
+    );
   }
 
   getTeamById(teamId: number) {
@@ -316,7 +323,11 @@ export class WorkspaceAuthRepository {
 
   updateTeam(
     teamId: number,
-    updates: { name?: string; accessPolicy?: "open" | "restricted" },
+    updates: {
+      name?: string;
+      accessPolicy?: "open" | "restricted";
+      logoUrl?: string | null;
+    },
   ): Promise<void> {
     return this.teams.updateTeam(teamId, updates);
   }

@@ -217,12 +217,13 @@ export async function listTeams(): Promise<WorkspaceTeam[]> {
 export async function createTeam(
   name: string,
   accessPolicy: TeamAccessPolicy = "open",
+  logoUrl: string | null = null,
 ): Promise<WorkspaceTeam> {
   const data = await workspaceRequest<{ team: WorkspaceTeam }>(
     `${API_BASE_URL}/teams`,
     {
       method: "POST",
-      body: JSON.stringify({ name, accessPolicy }),
+      body: JSON.stringify({ name, accessPolicy, logoUrl }),
     },
   );
   return data.team;
@@ -237,7 +238,11 @@ export async function getTeam(teamId: number): Promise<WorkspaceTeam> {
 
 export async function updateTeam(
   teamId: number,
-  payload: { name?: string; accessPolicy?: TeamAccessPolicy },
+  payload: {
+    name?: string;
+    accessPolicy?: TeamAccessPolicy;
+    logoUrl?: string | null;
+  },
 ): Promise<WorkspaceTeam> {
   const data = await workspaceRequest<{ team: WorkspaceTeam }>(
     `${API_BASE_URL}/teams/${teamId}`,

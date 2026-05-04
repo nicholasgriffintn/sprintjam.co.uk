@@ -204,7 +204,7 @@ export default function WorkspaceSessions() {
               )}
 
               <SurfaceCard className="flex flex-col gap-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                       {selectedTeam.name}
@@ -217,21 +217,22 @@ export default function WorkspaceSessions() {
                           : "Restricted team"}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
                     <Badge
                       variant="success"
                       size="sm"
-                      className="font-semibold"
+                      className="w-fit self-start font-semibold sm:self-auto"
                     >
                       <Target className="mr-1.5 h-3.5 w-3.5" />
                       {filteredSessions.length}
                     </Badge>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                       <Button
                         size="sm"
                         onClick={() => startCreateFlow(selectedTeam.id)}
                         icon={<Plus className="h-4 w-4" />}
                         disabled={!selectedTeam.canAccess}
+                        className="w-full sm:w-auto"
                       >
                         New planning session
                       </Button>
@@ -241,6 +242,7 @@ export default function WorkspaceSessions() {
                         onClick={() => navigateTo("standupCreate")}
                         icon={<MessageSquareQuote className="h-4 w-4" />}
                         disabled={!selectedTeam.canAccess}
+                        className="w-full sm:w-auto"
                       >
                         New standup
                       </Button>

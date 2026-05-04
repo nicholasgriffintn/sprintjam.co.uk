@@ -23,6 +23,7 @@ const loaderDataMock = {
 const restrictedTeam: WorkspaceTeam = {
   id: 10,
   name: "Platform",
+  logoUrl: null,
   organisationId: 1,
   ownerId: 2,
   accessPolicy: "restricted",
