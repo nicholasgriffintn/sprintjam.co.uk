@@ -342,6 +342,21 @@ export const ROUTE_DEFINITIONS = [
     },
   },
   {
+    screen: "teamsLaunch",
+    path: "/teams/launch",
+    group: "collaboration",
+    meta: {
+      title: `Microsoft Teams - ${SITE_NAME}`,
+      description: `Launch ${SITE_NAME} planning sessions from a Microsoft Teams chat or channel.`,
+      keywords: "microsoft teams planning poker, teams sprint planning",
+      ogImage: "/og-image.png",
+    },
+    layout: {
+      header: "workspace",
+      background: "plain",
+    },
+  },
+  {
     screen: "wheel",
     path: (params) =>
       params.wheelKey ? `/wheel/${params.wheelKey}` : "/wheel",

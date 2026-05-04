@@ -3,8 +3,21 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useLoaderData } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRightLeft, Shield, UserMinus } from "lucide-react";
-import type { TeamIntegrationStatus, TeamMember } from "@sprintjam/types";
+import {
+  ArrowLeft,
+  ArrowRightLeft,
+  Copy,
+  ExternalLink,
+  MessageSquare,
+  Shield,
+  Trash2,
+  UserMinus,
+} from "lucide-react";
+import type {
+  TeamCollaborationInstallation,
+  TeamIntegrationStatus,
+  TeamMember,
+} from "@sprintjam/types";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { AdminSidebar } from "@/components/workspace/AdminSidebar";
@@ -21,10 +34,13 @@ import { useSessionActions } from "@/context/SessionContext";
 import { useRoomState } from "@/context/RoomContext";
 import { useTeamOAuth } from "@/hooks/useTeamOAuth";
 import { toast } from "@/components/ui";
+import { copyText } from "@/lib/clipboard";
 import {
   addTeamMember,
   approveTeamMember,
+  deleteTeamCollaborationInstallation,
   getTeamSettings,
+  listTeamCollaborationInstallations,
   listTeamMembers,
   moveTeamMember,
   removeTeamMember,
@@ -78,6 +94,10 @@ export default function WorkspaceTeamSettings() {
   const queryClient = useQueryClient();
   const settingsQueryKey = ["team-settings", selectedTeamId] as const;
   const teamMembersQueryKey = ["team-members", selectedTeamId] as const;
+  const collaborationQueryKey = [
+    "team-collaboration-installations",
+    selectedTeamId,
+  ] as const;
   const settingsRef = useRef<RoomSettings | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
@@ -91,6 +111,13 @@ export default function WorkspaceTeamSettings() {
     null,
   );
   const [targetTeamId, setTargetTeamId] = useState("");
+  const teamsLaunchUrl = useMemo(() => {
+    if (typeof window === "undefined") {
+      return "https://sprintjam.co.uk/teams/launch";
+    }
+
+    return `${window.location.origin}/teams/launch`;
+  }, []);
 
   const settingsQuery = useQuery<RoomSettings | null>({
     queryKey: settingsQueryKey,
@@ -126,6 +153,13 @@ export default function WorkspaceTeamSettings() {
   const jiraOAuth = useTeamOAuth(selectedTeamId, "jira");
   const linearOAuth = useTeamOAuth(selectedTeamId, "linear");
   const githubOAuth = useTeamOAuth(selectedTeamId, "github");
+
+  const collaborationQuery = useQuery<TeamCollaborationInstallation[]>({
+    queryKey: collaborationQueryKey,
+    enabled: selectedTeamId !== null,
+    queryFn: () => listTeamCollaborationInstallations(selectedTeamId!),
+    staleTime: 0,
+  });
 
   const handleSaveSettings = () => {
     if (settingsRef.current && selectedTeamId && canManageTeam) {
@@ -262,6 +296,22 @@ export default function WorkspaceTeamSettings() {
     },
   });
 
+  const disconnectCollaborationMutation = useMutation({
+    mutationFn: (installationId: number) =>
+      deleteTeamCollaborationInstallation(selectedTeamId!, installationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: collaborationQueryKey });
+      toast.success("Collaboration app disconnected");
+    },
+    onError: (error) => {
+      setSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Unable to disconnect collaboration app",
+      );
+    },
+  });
+
   const handleApproveMember = async (userId: number) => {
     if (!selectedTeamId) {
       return;
@@ -315,6 +365,16 @@ export default function WorkspaceTeamSettings() {
       userId: pendingMoveMember.id,
       role: pendingMoveMember.role,
     });
+  };
+
+  const handleCopyTeamsLaunchUrl = async () => {
+    try {
+      await copyText(teamsLaunchUrl);
+      toast.success("Teams launch URL copied");
+    } catch (error) {
+      console.error("Failed to copy Teams launch URL:", error);
+      toast.error("Couldn't copy Teams launch URL");
+    }
   };
 
   return (
@@ -682,6 +742,112 @@ export default function WorkspaceTeamSettings() {
                   }
                 />
               </SurfaceCard>
+
+              <SurfaceCard className="flex flex-col gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                    Collaboration apps
+                  </h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    Link this team to chat apps that can launch SprintJam from a
+                    shared conversation.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/40 dark:bg-blue-950/20">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold text-blue-950 dark:text-blue-200">
+                          How to connect Microsoft Teams
+                        </p>
+                        <p className="mt-1 text-xs text-blue-900 dark:text-blue-300">
+                          Create or edit the SprintJam app in Microsoft Teams
+                          Developer Portal, add a tab that points to the launch
+                          URL below, then open that tab from the Teams channel
+                          or chat you want to connect.
+                        </p>
+                      </div>
+                      <ul className="space-y-1 text-xs text-blue-900 dark:text-blue-300">
+                        <li>1. Add a static or configurable Teams tab.</li>
+                        <li>
+                          2. Use this as the tab content URL: {teamsLaunchUrl}
+                        </li>
+                        <li>
+                          3. Set the valid domain to{" "}
+                          {new URL(teamsLaunchUrl).host}.
+                        </li>
+                        <li>
+                          4. Open the tab in Teams, sign in, select this
+                          workspace team, and connect it.
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={<Copy className="h-4 w-4" />}
+                        onClick={() => void handleCopyTeamsLaunchUrl()}
+                      >
+                        Copy URL
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={<ExternalLink className="h-4 w-4" />}
+                        onClick={() => window.open(teamsLaunchUrl, "_blank")}
+                      >
+                        Open
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {collaborationQuery.isLoading ? (
+                  <div className="flex items-center gap-3">
+                    <Spinner />
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      Loading collaboration apps…
+                    </span>
+                  </div>
+                ) : collaborationQuery.data?.length ? (
+                  <div className="space-y-3">
+                    {collaborationQuery.data.map((installation) => (
+                      <CollaborationInstallationRow
+                        key={installation.id}
+                        installation={installation}
+                        disabled={!canManageTeam}
+                        isDisconnecting={
+                          disconnectCollaborationMutation.isPending &&
+                          disconnectCollaborationMutation.variables ===
+                            installation.id
+                        }
+                        onDisconnect={() =>
+                          disconnectCollaborationMutation.mutateAsync(
+                            installation.id,
+                          )
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                    <div className="flex items-start gap-3">
+                      <MessageSquare className="mt-0.5 h-5 w-5 text-slate-500" />
+                      <div>
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          No collaboration apps connected
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Add the SprintJam Teams app and open the launch tab to
+                          connect a channel or chat to this workspace team.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </SurfaceCard>
             </div>
           </div>
         )}
@@ -754,6 +920,62 @@ export default function WorkspaceTeamSettings() {
         </div>
       </Modal>
     </WorkspaceLayout>
+  );
+}
+
+function getCollaborationLabel(installation: TeamCollaborationInstallation) {
+  if (installation.displayName) {
+    return installation.displayName;
+  }
+  if (installation.externalChannelId) {
+    return "Teams channel";
+  }
+  if (installation.externalChatId) {
+    return "Teams chat";
+  }
+  if (installation.externalTeamId) {
+    return "Teams team";
+  }
+  return "Teams";
+}
+
+function CollaborationInstallationRow({
+  installation,
+  disabled,
+  isDisconnecting,
+  onDisconnect,
+}: {
+  installation: TeamCollaborationInstallation;
+  disabled: boolean;
+  isDisconnecting: boolean;
+  onDisconnect: () => Promise<void>;
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
+            {getCollaborationLabel(installation)}
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Microsoft Teams · Tenant {installation.tenantId}
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            Connected {new Date(installation.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+        <Button
+          onClick={() => void onDisconnect()}
+          disabled={disabled}
+          isLoading={isDisconnecting}
+          variant="secondary"
+          size="sm"
+          icon={<Trash2 className="h-4 w-4" />}
+        >
+          Disconnect
+        </Button>
+      </div>
+    </div>
   );
 }
 

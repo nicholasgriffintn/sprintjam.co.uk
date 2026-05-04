@@ -54,6 +54,10 @@ describe("navigation", () => {
       expect(parsePath("/join")).toEqual({ screen: "join" });
     });
 
+    it("parses collaboration launch routes", () => {
+      expect(parsePath("/teams/launch")).toEqual({ screen: "teamsLaunch" });
+    });
+
     it("parses workspace routes", () => {
       expect(parsePath("/workspace")).toEqual({ screen: "workspace" });
       expect(parsePath("/workspace/sessions")).toEqual({
@@ -485,6 +489,7 @@ describe("ROUTES registry", () => {
     const validGroups = [
       "marketing",
       "workspace",
+      "collaboration",
       "room",
       "auth",
       "flow",

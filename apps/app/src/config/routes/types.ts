@@ -10,6 +10,7 @@ import type {
 export type RouteGroup =
   | "marketing"
   | "workspace"
+  | "collaboration"
   | "room"
   | "wheel"
   | "standup"

@@ -39,6 +39,7 @@ export default [
   route("create", "routes/create.tsx"),
   route("join", "routes/join.tsx"),
   route("room/:roomKey", "routes/room/$roomKey.tsx"),
+  route("teams/launch", "routes/teams/launch.tsx"),
   route("wheel", "routes/wheel/index.tsx"),
   route("wheel/:wheelKey", "routes/wheel/$wheelKey.tsx"),
   route("standup", "routes/standup/index.tsx"),

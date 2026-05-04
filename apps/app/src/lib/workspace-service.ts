@@ -12,7 +12,9 @@ import type {
   ExternalTicketMetadata,
   OAuthProvider,
   SessionStats,
+  SaveTeamsCollaborationInstallationInput,
   TeamAccessPolicy,
+  TeamCollaborationInstallation,
   TeamMember,
   TeamInsights,
   TeamIntegrationStatus,
@@ -641,6 +643,41 @@ export async function revokeTeamIntegration(
 ): Promise<void> {
   await workspaceRequest(
     `${API_BASE_URL}/teams/${teamId}/integrations/${provider}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function listTeamCollaborationInstallations(
+  teamId: number,
+): Promise<TeamCollaborationInstallation[]> {
+  const data = await workspaceRequest<{
+    installations: TeamCollaborationInstallation[];
+  }>(`${API_BASE_URL}/teams/${teamId}/collaboration-installations`);
+  return data.installations;
+}
+
+export async function saveTeamsCollaborationInstallation(
+  teamId: number,
+  payload: SaveTeamsCollaborationInstallationInput,
+): Promise<TeamCollaborationInstallation> {
+  const data = await workspaceRequest<{
+    installation: TeamCollaborationInstallation;
+  }>(
+    `${API_BASE_URL}/teams/${teamId}/collaboration-installations/teams`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.installation;
+}
+
+export async function deleteTeamCollaborationInstallation(
+  teamId: number,
+  installationId: number,
+): Promise<void> {
+  await workspaceRequest(
+    `${API_BASE_URL}/teams/${teamId}/collaboration-installations/${installationId}`,
     { method: "DELETE" },
   );
 }

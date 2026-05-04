@@ -5,6 +5,7 @@ import type {
   organisations,
   teamMemberships,
   teamIntegrations,
+  teamCollaborationInstallations,
   teamSessions,
   teamSettings,
   teams,
@@ -20,6 +21,8 @@ export type TeamMembershipRow = typeof teamMemberships.$inferSelect;
 export type TeamSession = typeof teamSessions.$inferSelect;
 export type TeamSettingsRow = typeof teamSettings.$inferSelect;
 export type TeamIntegrationRow = typeof teamIntegrations.$inferSelect;
+export type TeamCollaborationInstallationRow =
+  typeof teamCollaborationInstallations.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Organisation = typeof organisations.$inferSelect;
 export type WorkspaceInvite = typeof workspaceInvites.$inferSelect;
@@ -38,6 +41,34 @@ export interface TeamIntegrationStatus {
   connected: boolean;
   authorizedBy?: string;
   expiresAt?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export type CollaborationPlatform = "teams" | "slack";
+
+export interface TeamCollaborationInstallation {
+  id: number;
+  teamId: number;
+  platform: CollaborationPlatform;
+  tenantId: string;
+  externalTeamId: string | null;
+  externalChannelId: string | null;
+  externalChatId: string | null;
+  externalUserId: string | null;
+  displayName: string | null;
+  installedById: number;
+  metadata: Record<string, unknown>;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SaveTeamsCollaborationInstallationInput {
+  tenantId: string;
+  externalTeamId?: string | null;
+  externalChannelId?: string | null;
+  externalChatId?: string | null;
+  externalUserId?: string | null;
+  displayName?: string | null;
   metadata?: Record<string, unknown>;
 }
 
