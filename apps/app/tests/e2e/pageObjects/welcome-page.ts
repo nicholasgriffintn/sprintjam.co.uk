@@ -13,7 +13,8 @@ export class WelcomePage extends BasePage {
   }
 
   async gotoWithInvite(roomKey: string) {
-    await this.goto(`/?join=${roomKey}`);
+    await this.goto(`/room/${roomKey}`);
+    await expect(this.page.locator("#join-room-key")).toHaveValue(roomKey);
     await expect(this.page.getByTestId("join-room-submit")).toBeVisible();
   }
 

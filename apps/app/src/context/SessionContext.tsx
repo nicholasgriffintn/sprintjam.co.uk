@@ -14,7 +14,6 @@ import {
   getStoredUserName,
   useUserPersistence,
 } from "@/hooks/useUserPersistence";
-import { useUrlParams } from "@/hooks/useUrlParams";
 import type { AvatarId, ErrorKind } from "@/types";
 import { parsePath } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
@@ -186,13 +185,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     navigateTo("join");
     clearError();
   }, [clearError]);
-
-  useUrlParams({
-    onJoinRoom: (joinRoomKey) => {
-      setRoomKey(joinRoomKey);
-      navigateTo("join");
-    },
-  });
 
   useEffect(() => {
     const parsed = parsePath(location.pathname);

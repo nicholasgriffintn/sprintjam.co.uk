@@ -19,11 +19,14 @@ export class JoinRoomPage {
     passcode?: string;
   }) {
     await this.page.locator("#join-name").fill(name);
+    await expect(this.page.locator("#join-name")).toHaveValue(name);
     if (roomKey) {
       await this.page.locator("#join-room-key").fill(roomKey);
+      await expect(this.page.locator("#join-room-key")).toHaveValue(roomKey);
     }
     if (typeof passcode === "string") {
       await this.page.locator("#join-passcode").fill(passcode);
+      await expect(this.page.locator("#join-passcode")).toHaveValue(passcode);
     }
     await this.submitCurrentStep();
   }
