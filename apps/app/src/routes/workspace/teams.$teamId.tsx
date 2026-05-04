@@ -18,6 +18,7 @@ import {
 import type { TeamSession } from "@sprintjam/types";
 
 import { Alert } from "@/components/ui/Alert";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { SessionList } from "@/components/workspace/SessionList";
@@ -181,7 +182,7 @@ export default function WorkspaceTeamHome() {
       onRefresh={() => refreshWorkspace(true)}
       onLogin={goToLogin}
     >
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-brand-700 dark:text-brand-200">
@@ -239,9 +240,9 @@ export default function WorkspaceTeamHome() {
         )}
 
         {team?.canAccess && (
-          <div className="grid gap-4 md:grid-cols-[1fr_260px]">
-            <SurfaceCard className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+          <SurfaceCard className="space-y-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3">
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                     Active sessions
@@ -250,40 +251,28 @@ export default function WorkspaceTeamHome() {
                     Rooms currently open for this team.
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                  <Radio className="h-4 w-4 text-emerald-600" />
-                  {activeSessions.length} active
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="success" size="sm">
+                    <Radio className="mr-1.5 h-3.5 w-3.5" />
+                    {activeSessions.length} active
+                  </Badge>
+                  <Badge variant="warning" size="sm">
+                    {activePlanningCount} planning
+                  </Badge>
+                  <Badge variant="info" size="sm">
+                    {activeStandupCount} standups
+                  </Badge>
                 </div>
               </div>
 
-              <SessionList
-                sessions={activeSessions}
-                isLoading={sessionsQuery.isLoading}
-                emptyTitle="No active sessions"
-                emptyDescription="Start a planning room when the team is ready."
-                onOpenSession={handleOpenSession}
-              />
-            </SurfaceCard>
-
-            <SurfaceCard className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                  Start something
-                </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  New rooms use this team context automatically.
-                </p>
-              </div>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
                 <Button
-                  fullWidth
                   icon={<Plus className="h-4 w-4" />}
                   onClick={() => startCreateFlow(team.id)}
                 >
                   New planning room
                 </Button>
                 <Button
-                  fullWidth
                   variant="secondary"
                   icon={<MessageSquareQuote className="h-4 w-4" />}
                   onClick={() => {
@@ -293,23 +282,25 @@ export default function WorkspaceTeamHome() {
                 >
                   New standup
                 </Button>
+                <Button
+                  variant="secondary"
+                  icon={<ExternalLink className="h-4 w-4" />}
+                  onClick={() => navigateTo("workspaceSessions")}
+                >
+                  View all sessions
+                </Button>
               </div>
-              <div className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
-                <p>{activePlanningCount} active planning rooms</p>
-                <p>{activeStandupCount} active standups</p>
-              </div>
-              <Button
-                fullWidth
-                variant="secondary"
-                icon={<ExternalLink className="h-4 w-4" />}
-                onClick={() => navigateTo("workspaceSessions")}
-              >
-                View all sessions
-              </Button>
-            </SurfaceCard>
-          </div>
-        )}
+            </div>
 
+            <SessionList
+              sessions={activeSessions}
+              isLoading={sessionsQuery.isLoading}
+              emptyTitle="No active sessions"
+              emptyDescription="Start a planning room when the team is ready."
+              onOpenSession={handleOpenSession}
+            />
+          </SurfaceCard>
+        )}
       </div>
     </WorkspaceLayout>
   );
