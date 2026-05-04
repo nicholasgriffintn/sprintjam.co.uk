@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Gamepad2, Github, MessageSquare, Sparkles } from "lucide-react";
+import { Gamepad2, Github, MessageSquare, Joystick } from "lucide-react";
 
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
@@ -145,9 +145,9 @@ export const Footer = ({
             type="button"
             variant="unstyled"
             onClick={openPicker}
-            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 dark:border-emerald-300/30 dark:bg-emerald-400/10 dark:text-emerald-100"
+            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 dark:border-purple-300/30 dark:bg-purple-400/10 dark:text-purple-100"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <Joystick className="h-3.5 w-3.5" />
             Fidget box
           </Button>
 
