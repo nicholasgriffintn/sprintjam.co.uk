@@ -108,7 +108,8 @@ describe("api-service", () => {
 
     vi.runAllTimers();
 
-    expect(sendSpy).not.toHaveBeenCalled();
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+    expect(sendSpy).toHaveBeenCalledWith(JSON.stringify({ type: "leaveRoom" }));
   });
 
   it("returns existing socket when already connected to same room with same token", () => {

@@ -19,10 +19,14 @@ export class WelcomePage extends BasePage {
 
   async startCreateRoom() {
     await this.page.getByTestId("create-room-button").click();
+    await expect(this.page).toHaveURL(/\/create$/);
+    await expect(this.page.getByTestId("create-room-submit")).toBeVisible();
   }
 
   async startJoinRoom() {
     await this.page.getByTestId("join-room-button").click();
+    await expect(this.page).toHaveURL(/\/join$/);
+    await expect(this.page.getByTestId("join-room-submit")).toBeVisible();
   }
 
   async openWheelFromSprintFlow() {

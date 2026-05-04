@@ -11,7 +11,10 @@ import { useRevalidator } from "react-router";
 import type { WorkspaceTeam, WorkspaceUser } from "@sprintjam/types";
 import type { WorkspaceAuthProfile } from "@sprintjam/types";
 
-import { logout as logoutService } from "@/lib/workspace-service";
+import {
+  getWorkspaceAuthProfile,
+  logout as logoutService,
+} from "@/lib/workspace-service";
 
 interface WorkspaceAuthContextValue {
   user: WorkspaceUser | null;
@@ -31,29 +34,75 @@ export function WorkspaceAuthProvider({
   initialProfile = null,
 }: {
   children: ReactNode;
-  initialProfile?: WorkspaceAuthProfile | null;
+  initialProfile?:
+    | WorkspaceAuthProfile
+    | null
+    | Promise<WorkspaceAuthProfile | null>;
 }) {
+  const isInitialProfilePromise =
+    initialProfile !== null && typeof initialProfile === "object" && "then" in initialProfile;
   const [resolvedProfile, setResolvedProfile] =
-    useState<WorkspaceAuthProfile | null>(initialProfile);
+    useState<WorkspaceAuthProfile | null>(
+      isInitialProfilePromise ? null : initialProfile,
+    );
   const profile = resolvedProfile;
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isInitialProfilePromise);
   const revalidator = useRevalidator();
 
   useEffect(() => {
+    let isActive = true;
+
+    if (initialProfile && "then" in initialProfile) {
+      setIsLoading(true);
+      initialProfile
+        .then((profile) => {
+          if (isActive) {
+            setResolvedProfile(profile);
+          }
+        })
+        .catch((error: unknown) => {
+          if (
+            error instanceof Error &&
+            !/401|403|unauthori[sz]ed|forbidden/i.test(error.message)
+          ) {
+            console.error("Failed to load workspace auth", error);
+          }
+          if (isActive) {
+            setResolvedProfile(null);
+          }
+        })
+        .finally(() => {
+          if (isActive) {
+            setIsLoading(false);
+          }
+        });
+
+      return () => {
+        isActive = false;
+      };
+    }
+
     setResolvedProfile(initialProfile);
+    setIsLoading(false);
   }, [initialProfile]);
 
   const refreshAuth = useCallback(async () => {
     setIsLoading(true);
     try {
-      await revalidator.revalidate();
+      const profile = await getWorkspaceAuthProfile();
+      setResolvedProfile(profile);
     } catch (error) {
-      console.error("Failed to refresh workspace auth", error);
+      if (
+        error instanceof Error &&
+        !/401|403|unauthori[sz]ed|forbidden/i.test(error.message)
+      ) {
+        console.error("Failed to refresh workspace auth", error);
+      }
       setResolvedProfile(null);
     } finally {
       setIsLoading(false);
     }
-  }, [revalidator]);
+  }, []);
 
   const logout = useCallback(async () => {
     try {

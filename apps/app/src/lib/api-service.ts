@@ -381,17 +381,41 @@ export function toggleStrudelPlayback(): void {
   sendWebSocketMessage(activeSocket, { type: "toggleStrudelPlayback" });
 }
 
-export function disconnectFromRoom(): void {
-  if (activeSocket) {
-    activeSocket.close(1000, "User left the room");
-    activeSocket = null;
-  }
+function clearRoomConnectionState() {
   if (voteDebounceTimer) {
     clearTimeout(voteDebounceTimer);
     voteDebounceTimer = null;
   }
   activeRoomKey = null;
   resetReconnectAttempts(reconnectState);
+}
+
+export function disconnectFromRoom(): Promise<void> {
+  if (activeSocket) {
+    const socket = activeSocket;
+    activeSocket = null;
+
+    if (socket.readyState === WebSocket.OPEN) {
+      clearRoomConnectionState();
+      return new Promise((resolve) => {
+        const originalOnClose = socket.onclose;
+        socket.onclose = (event) => {
+          originalOnClose?.call(socket, event);
+          resolve();
+        };
+
+        try {
+          socket.send(JSON.stringify({ type: "leaveRoom" }));
+        } catch {
+          socket.close(1000, "User left the room");
+        }
+      });
+    }
+
+    socket.close(1000, "User left the room");
+  }
+  clearRoomConnectionState();
+  return Promise.resolve();
 }
 
 export function addEventListener(

@@ -28,7 +28,12 @@ export class StandupJoinPage extends BasePage {
   async submit() {
     const button = this.page.getByRole("button", { name: /join standup/i });
     await expect(button).toBeEnabled();
-    await button.click();
+    await Promise.all([
+      this.page.waitForResponse((response) =>
+        response.url().includes("/api/standups/join"),
+      ),
+      button.click(),
+    ]);
   }
 
   async waitForRoom() {

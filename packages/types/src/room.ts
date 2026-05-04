@@ -428,6 +428,7 @@ export type ClientMessage =
     }
   | { type: "toggleSpectator"; isSpectator: boolean }
   | { type: "completeSession" }
+  | { type: "leaveRoom" }
   | { type: "startGame"; gameType: RoomGameType }
   | { type: "submitGameMove"; value: string }
   | { type: "endGame" }

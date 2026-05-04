@@ -31,6 +31,7 @@ export class CreateRoomPage {
     const instantButton = this.page.getByTestId("create-room-submit");
     await expect(instantButton).toBeEnabled();
     await instantButton.click();
+    await expect(instantButton).toBeHidden();
   }
 
   async enableStructuredVoting() {

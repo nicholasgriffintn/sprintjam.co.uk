@@ -23,6 +23,7 @@ import type {
   WorkspaceInsights,
   WorkspaceInvite,
   WorkspaceOrganisation,
+  WorkspaceAuthProfile,
   WorkspaceProfile,
   WorkspaceStats,
   WorkspaceTeam,
@@ -186,6 +187,10 @@ export async function getWorkspaceProfile(): Promise<WorkspaceProfile> {
   return workspaceRequest<WorkspaceProfile>(
     `${API_BASE_URL}/workspace/profile`,
   );
+}
+
+export async function getWorkspaceAuthProfile(): Promise<WorkspaceAuthProfile> {
+  return workspaceRequest<WorkspaceAuthProfile>(`${API_BASE_URL}/auth/me`);
 }
 
 export async function updateCurrentUserProfile(payload: {

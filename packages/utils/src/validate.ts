@@ -186,6 +186,8 @@ export function validateClientMessage(
       return { error: "toggleSpectator payload invalid" };
     case "completeSession":
       return { type: "completeSession" };
+    case "leaveRoom":
+      return { type: "leaveRoom" };
     case "startGame":
       if (isRoomGameType(data.gameType)) {
         return { type: "startGame", gameType: data.gameType };

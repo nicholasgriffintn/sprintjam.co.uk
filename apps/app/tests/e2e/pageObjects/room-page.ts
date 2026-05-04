@@ -4,6 +4,7 @@ export class RoomPage {
   constructor(private readonly page: Page) {}
 
   async waitForLoaded() {
+    await expect(this.page.getByTestId("room-key-value")).toBeVisible();
     await expect(this.page.getByTestId("participants-panel")).toBeVisible();
   }
 
@@ -133,14 +134,19 @@ export class RoomPage {
   }
 
   async expectParticipantConnectionState(name: string, connected: boolean) {
-    const connectedIndicator = this.page.locator(
-      `[data-participant-name="${name}"] .border-emerald-300`,
+    const participantRow = this.page.locator(
+      `[data-participant-name="${name}"]`,
     );
-    if (connected) {
-      await expect(connectedIndicator).toHaveCount(1, { timeout: 5000 });
-    } else {
-      await expect(connectedIndicator).toHaveCount(0, { timeout: 5000 });
-    }
+    await expect(participantRow).toHaveAttribute(
+      "data-connected",
+      connected ? "true" : "false",
+    );
+  }
+
+  async expectVotingProgress(completed: number, total: number) {
+    await expect(this.page.getByTestId("participants-panel")).toContainText(
+      `${completed}/${total}`,
+    );
   }
 
   async openSettingsModal() {
