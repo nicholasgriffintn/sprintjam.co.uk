@@ -72,13 +72,14 @@ function FidgetPicker({
   onToggleSound: () => void;
 }) {
   const pickerBounds = useMemo(() => ({ width: 360, height: 330 }), []);
-  const { position, isDragging, startDrag, moveBy } = useDraggableFidget(
-    {
-      x: 28,
-      y: 120,
-    },
-    pickerBounds,
-  );
+  const { position, isDragging, isSettling, startDrag, moveBy, resetPosition } =
+    useDraggableFidget(
+      {
+        x: 28,
+        y: 120,
+      },
+      pickerBounds,
+    );
   const handleMoveBy = useCallback(
     (delta: ActiveToy["position"]) => moveBy(delta),
     [moveBy],
@@ -87,8 +88,11 @@ function FidgetPicker({
   return (
     <section
       className={cn(
-        "pointer-events-auto fixed w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-floating backdrop-blur transition-shadow motion-reduce:transition-none dark:border-white/15 dark:bg-slate-950/95",
-        isDragging && "shadow-2xl",
+        "pointer-events-auto fixed w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-floating backdrop-blur transition-[box-shadow,filter,transform] duration-150 ease-out motion-reduce:transition-none dark:border-white/15 dark:bg-slate-950/95",
+        isDragging &&
+          "scale-[1.006] shadow-2xl ring-2 ring-brand-300/45 brightness-[1.02]",
+        isSettling &&
+          "scale-[1.01] shadow-2xl ring-2 ring-emerald-300/35 transition-[left,top,box-shadow,filter,transform] duration-200",
       )}
       style={{ left: position.x, top: position.y }}
       aria-label="Fidget box"
@@ -97,6 +101,7 @@ function FidgetPicker({
         title="Fidget box"
         onPointerDown={startDrag}
         onMoveBy={handleMoveBy}
+        onReset={resetPosition}
         onClose={onClose}
       />
       <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2 text-xs text-slate-500 dark:border-white/10 dark:text-slate-300">
@@ -164,7 +169,7 @@ function DraggableToy({
     (position: ActiveToy["position"]) => onPositionChange(position),
     [onPositionChange],
   );
-  const { position, isDragging, startDrag, moveBy } =
+  const { position, isDragging, isSettling, startDrag, moveBy, resetPosition } =
     useDraggableFidget(toy.position, undefined, handlePositionChange);
   const handleMoveBy = useCallback(
     (delta: ActiveToy["position"]) => moveBy(delta),
@@ -174,8 +179,11 @@ function DraggableToy({
   return (
     <section
       className={cn(
-        "pointer-events-auto fixed w-52 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-floating backdrop-blur transition-shadow motion-reduce:transition-none dark:border-white/15 dark:bg-slate-950/95",
-        isDragging && "shadow-2xl",
+        "pointer-events-auto fixed w-52 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-floating backdrop-blur transition-[box-shadow,filter,transform] duration-150 ease-out motion-reduce:transition-none dark:border-white/15 dark:bg-slate-950/95",
+        isDragging &&
+          "scale-[1.006] shadow-2xl ring-2 ring-brand-300/45 brightness-[1.02]",
+        isSettling &&
+          "scale-[1.01] shadow-2xl ring-2 ring-emerald-300/35 transition-[left,top,box-shadow,filter,transform] duration-200",
       )}
       style={{ left: position.x, top: position.y }}
       aria-label={getToyTitle(toy.kind)}
@@ -184,6 +192,7 @@ function DraggableToy({
         title={getToyTitle(toy.kind)}
         onPointerDown={startDrag}
         onMoveBy={handleMoveBy}
+        onReset={resetPosition}
         onClose={onRemove}
       />
       <div className="p-4">
@@ -202,11 +211,13 @@ function WindowHeader({
   title,
   onPointerDown,
   onMoveBy,
+  onReset,
   onClose,
 }: {
   title: string;
   onPointerDown: ReturnType<typeof useDraggableFidget>["startDrag"];
   onMoveBy: (delta: ActiveToy["position"]) => void;
+  onReset: ReturnType<typeof useDraggableFidget>["resetPosition"];
   onClose: () => void;
 }) {
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
@@ -231,12 +242,14 @@ function WindowHeader({
       <button
         type="button"
         onPointerDown={onPointerDown}
+        onDoubleClick={onReset}
         onKeyDown={handleKeyDown}
-        className="inline-flex cursor-grab items-center gap-2 rounded-sm text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+        className="inline-flex min-w-0 flex-1 cursor-grab items-center gap-2 rounded-sm py-0.5 text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
         aria-label={`Move ${title} window`}
+        title="Drag to move. Double-click to reset."
       >
         <Grip className="h-3.5 w-3.5" />
-        {title}
+        <span className="truncate">{title}</span>
       </button>
       <button
         type="button"

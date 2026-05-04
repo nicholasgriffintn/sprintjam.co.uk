@@ -92,7 +92,7 @@ describe("FidgetToyProvider", () => {
       String(MAX_FIDGET_TOYS),
     );
     expect(screen.getByTestId("toy-kinds").textContent).toBe(
-      "pop-pad,joystick,switch-panel,slider-maze,mini-abacus",
+      "spinner,pop-pad,joystick,switch-panel,slider-maze,mini-abacus",
     );
 
     act(() => {

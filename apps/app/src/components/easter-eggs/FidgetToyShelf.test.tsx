@@ -143,6 +143,43 @@ describe("FidgetToyShelf", () => {
     );
 
     expect(spinnerWindow.style.left).toBe("40px");
+
+    fireEvent.doubleClick(
+      screen.getByRole("button", { name: "Move Spinner window" }),
+    );
+
+    expect(spinnerWindow.style.left).toBe("28px");
+  });
+
+  it("adds a short clamped glide when users release a dragged toy window", () => {
+    vi.spyOn(performance, "now")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(100);
+
+    render(
+      <FidgetToyProvider>
+        <FidgetHarness />
+      </FidgetToyProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open fidget box" }));
+    fireEvent.click(screen.getByRole("button", { name: "Spinner" }));
+
+    const spinnerWindow = screen.getByRole("region", { name: "Spinner" });
+    const moveButton = screen.getByRole("button", {
+      name: "Move Spinner window",
+    });
+
+    fireEvent.pointerDown(moveButton, { clientX: 40, clientY: 110 });
+    fireEvent.pointerMove(window, { clientX: 140, clientY: 110 });
+
+    expect(spinnerWindow.style.left).toBe("128px");
+    expect(spinnerWindow.className).toContain("ring-brand-300/45");
+
+    fireEvent.pointerUp(window);
+
+    expect(spinnerWindow.style.left).toBe("192px");
+    expect(spinnerWindow.className).toContain("ring-emerald-300/35");
   });
 
   it("keeps draggable windows visible when the viewport is smaller than their bounds", () => {

@@ -46,7 +46,7 @@ const FidgetToyContext = createContext<FidgetToyContextValue | undefined>(
   undefined,
 );
 
-export const MAX_FIDGET_TOYS = 5;
+export const MAX_FIDGET_TOYS = 6;
 
 const fallbackFidgetToyContext: FidgetToyContextValue = {
   isPickerOpen: false,
