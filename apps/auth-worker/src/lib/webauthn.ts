@@ -90,13 +90,12 @@ export async function verifyWebAuthnAttestation({
     throw new Error("WebAuthn registration not verified");
   }
 
-  const { credentialID, credentialPublicKey, counter } =
-    verification.registrationInfo;
+  const { credential } = verification.registrationInfo;
 
   return {
-    credentialId: credentialID,
-    publicKey: isoBase64URL.fromBuffer(credentialPublicKey),
-    counter,
+    credentialId: credential.id,
+    publicKey: isoBase64URL.fromBuffer(credential.publicKey),
+    counter: credential.counter,
   };
 }
 
@@ -122,9 +121,9 @@ export async function verifyWebAuthnAssertion({
     expectedChallenge,
     expectedOrigin,
     expectedRPID: expectedRpId,
-    authenticator: {
-      credentialID: credential.id,
-      credentialPublicKey: isoBase64URL.toBuffer(credential.publicKey),
+    credential: {
+      id: credential.id,
+      publicKey: isoBase64URL.toBuffer(credential.publicKey),
       counter: credential.counter,
     },
   });
