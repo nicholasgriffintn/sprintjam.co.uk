@@ -100,8 +100,12 @@ export function Joystick({ isSoundEnabled }: { isSoundEnabled: boolean }) {
       style={{
         backgroundColor: `hsl(${hue} 88% ${Math.min(92, lightness + 38)}%)`,
       }}
-      role="application"
+      role="slider"
       aria-label="Move the joystick around the pad to change its colour"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(strength * 100)}
+      aria-valuetext={`X ${Math.round(stick.x * 100)}, Y ${Math.round(stick.y * 100)}`}
     >
       <div
         className="absolute inset-4 rounded-2xl border border-white/60 shadow-inner"

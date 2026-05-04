@@ -1,9 +1,39 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FidgetToyProvider, useFidgetToys } from "./FidgetToyContext";
 import { FidgetToyShelf } from "./FidgetToyShelf";
+
+vi.mock("@/lib/fidget-audio", () => ({
+  playFidgetBeadSound: vi.fn(),
+  playFidgetPopSound: vi.fn(),
+  playFidgetSlideSound: vi.fn(),
+  playFidgetSpinSound: vi.fn(),
+  playFidgetStickSound: vi.fn(),
+  playFidgetSwitchSound: vi.fn(),
+}));
+
+const setReducedMotionPreference = (matches: boolean) => {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+};
+
+const getRotateDegrees = (styleAttribute: string | null | undefined) => {
+  const match = styleAttribute?.match(/rotate\((\d+)deg\)/);
+  return match ? Number(match[1]) : null;
+};
 
 function FidgetHarness() {
   const { openPicker } = useFidgetToys();
@@ -19,6 +49,10 @@ function FidgetHarness() {
 }
 
 describe("FidgetToyShelf", () => {
+  beforeEach(() => {
+    setReducedMotionPreference(false);
+  });
+
   it("renders every registered toy from the picker", () => {
     render(
       <FidgetToyProvider>
@@ -74,5 +108,53 @@ describe("FidgetToyShelf", () => {
     expect(
       screen.getByRole("slider", { name: "Slide the bead through the maze" }),
     ).toBeTruthy();
+  });
+
+  it("lets keyboard users move floating toy windows", () => {
+    render(
+      <FidgetToyProvider>
+        <FidgetHarness />
+      </FidgetToyProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open fidget box" }));
+    fireEvent.click(screen.getByRole("button", { name: "Spinner" }));
+
+    const spinnerWindow = screen.getByRole("region", { name: "Spinner" });
+    expect(spinnerWindow.style.left).toBe("28px");
+
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: "Move Spinner window" }),
+      {
+        key: "ArrowRight",
+      },
+    );
+
+    expect(spinnerWindow.style.left).toBe("40px");
+  });
+
+  it("uses a static spinner step for reduced-motion users", () => {
+    setReducedMotionPreference(true);
+
+    render(
+      <FidgetToyProvider>
+        <FidgetHarness />
+      </FidgetToyProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open fidget box" }));
+    fireEvent.click(screen.getByRole("button", { name: "Spinner" }));
+
+    const spinnerButton = screen.getByRole("button", {
+      name: "Spin fidget spinner",
+    });
+    const spinnerBody = spinnerButton.querySelector("span");
+    const initialRotate = getRotateDegrees(spinnerBody?.getAttribute("style"));
+
+    fireEvent.click(spinnerButton);
+
+    const nextRotate = getRotateDegrees(spinnerBody?.getAttribute("style"));
+    expect(initialRotate).not.toBeNull();
+    expect(nextRotate).toBe((initialRotate ?? 0) + 45);
   });
 });

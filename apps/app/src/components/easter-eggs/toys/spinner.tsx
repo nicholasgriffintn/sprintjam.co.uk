@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { playFidgetSpinSound } from "@/lib/fidget-audio";
 import { createSeededRandom } from "@/lib/seeded-random";
 
@@ -42,6 +43,7 @@ export function SpinnerToy({
     };
   }, [seed]);
   const [spin, setSpin] = useState(0);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   return (
     <button
@@ -50,13 +52,13 @@ export function SpinnerToy({
         if (isSoundEnabled) {
           playFidgetSpinSound();
         }
-        setSpin((current) => current + 720);
+        setSpin((current) => current + (prefersReducedMotion ? 45 : 720));
       }}
-      className={`mx-auto grid h-36 w-36 place-items-center rounded-full border transition hover:scale-[1.02] ${variant.palette.shell}`}
+      className={`mx-auto grid h-36 w-36 place-items-center rounded-full border transition hover:scale-[1.02] motion-reduce:transition-none motion-reduce:hover:scale-100 ${variant.palette.shell}`}
       aria-label="Spin fidget spinner"
     >
       <span
-        className="relative block h-24 w-24 rounded-full transition-transform duration-1000 ease-out motion-reduce:duration-100"
+        className="relative block h-24 w-24 rounded-full transition-transform duration-1000 ease-out motion-reduce:transition-none"
         style={{ transform: `rotate(${spin + variant.offset}deg)` }}
       >
         {variant.design === "barbell" ? (

@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useMemo, useState } from "react";
+import { type KeyboardEvent, useMemo, useRef, useState } from "react";
 
 import { playFidgetPopSound } from "@/lib/fidget-audio";
 
@@ -7,6 +7,7 @@ const BUBBLE_COLUMNS = 4;
 
 export function PopPadToy({ isSoundEnabled }: { isSoundEnabled: boolean }) {
   const [popped, setPopped] = useState<Set<number>>(() => new Set());
+  const bubbleRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const bubbles = useMemo(
     () => Array.from({ length: BUBBLE_COUNT }, (_, index) => index),
     [],
@@ -25,9 +26,7 @@ export function PopPadToy({ isSoundEnabled }: { isSoundEnabled: boolean }) {
   };
 
   const focusBubble = (index: number) => {
-    document
-      .querySelector<HTMLButtonElement>(`[data-fidget-bubble="${index}"]`)
-      ?.focus();
+    bubbleRefs.current[index]?.focus();
   };
 
   const handleKeyDown = (
@@ -58,7 +57,9 @@ export function PopPadToy({ isSoundEnabled }: { isSoundEnabled: boolean }) {
           <button
             key={index}
             type="button"
-            data-fidget-bubble={index}
+            ref={(element) => {
+              bubbleRefs.current[index] = element;
+            }}
             onClick={() => {
               if (isSoundEnabled) {
                 playFidgetPopSound(!isPopped);
@@ -66,11 +67,12 @@ export function PopPadToy({ isSoundEnabled }: { isSoundEnabled: boolean }) {
               toggleBubble(index);
             }}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            className={`aspect-square rounded-full border transition ${isPopped
+            className={`aspect-square rounded-full border transition motion-reduce:transition-none ${isPopped
               ? "border-slate-300 bg-slate-300 shadow-inner dark:border-slate-500 dark:bg-slate-600"
-              : "border-brand-200 bg-brand-100 shadow-[inset_0_-6px_10px_rgba(47,109,255,0.22)] hover:-translate-y-0.5 dark:border-brand-300/30 dark:bg-brand-400/20"
+              : "border-brand-200 bg-brand-100 shadow-[inset_0_-6px_10px_rgba(47,109,255,0.22)] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 dark:border-brand-300/30 dark:bg-brand-400/20"
               }`}
-            aria-label={isPopped ? "Unpop bubble" : "Pop bubble"}
+            aria-label={`Bubble ${index + 1}: ${isPopped ? "popped" : "unpopped"}`}
+            aria-pressed={isPopped}
           />
         );
       })}

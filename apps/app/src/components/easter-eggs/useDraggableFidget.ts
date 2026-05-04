@@ -1,5 +1,6 @@
 import {
   type PointerEvent as ReactPointerEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -37,21 +38,25 @@ export function useDraggableFidget(
   const [isDragging, setIsDragging] = useState(false);
   const dragOffsetRef = useRef<Position>({ x: 0, y: 0 });
 
+  const updatePosition = useCallback(
+    (nextPosition: Position) => {
+      const viewportPosition = keepInViewport(nextPosition, bounds);
+      setPosition(viewportPosition);
+      onPositionChange?.(viewportPosition);
+    },
+    [bounds, onPositionChange],
+  );
+
   useEffect(() => {
     if (!isDragging) {
       return;
     }
 
     const handleMove = (event: PointerEvent) => {
-      const nextPosition = keepInViewport(
-        {
-          x: event.clientX - dragOffsetRef.current.x,
-          y: event.clientY - dragOffsetRef.current.y,
-        },
-        bounds,
-      );
-      setPosition(nextPosition);
-      onPositionChange?.(nextPosition);
+      updatePosition({
+        x: event.clientX - dragOffsetRef.current.x,
+        y: event.clientY - dragOffsetRef.current.y,
+      });
     };
     const handleUp = () => setIsDragging(false);
 
@@ -62,7 +67,7 @@ export function useDraggableFidget(
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("pointerup", handleUp);
     };
-  }, [bounds, isDragging, onPositionChange]);
+  }, [isDragging, updatePosition]);
 
   const startDrag = (
     event: ReactPointerEvent<HTMLButtonElement | HTMLDivElement>,
@@ -75,5 +80,15 @@ export function useDraggableFidget(
     setIsDragging(true);
   };
 
-  return { position, isDragging, startDrag };
+  const moveBy = useCallback(
+    (delta: Position) => {
+      updatePosition({
+        x: position.x + delta.x,
+        y: position.y + delta.y,
+      });
+    },
+    [position.x, position.y, updatePosition],
+  );
+
+  return { position, isDragging, startDrag, moveBy };
 }

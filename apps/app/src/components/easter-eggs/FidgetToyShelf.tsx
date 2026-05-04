@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { type KeyboardEvent, useCallback, useMemo } from "react";
 import { Grip, Trash2, Volume2, VolumeX, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -9,6 +9,7 @@ import {
   useFidgetToys,
 } from "@/components/easter-eggs/FidgetToyContext";
 import { useDraggableFidget } from "@/components/easter-eggs/useDraggableFidget";
+import { cn } from "@/lib/cn";
 import {
   getToyOption,
   getToyTitle,
@@ -71,24 +72,31 @@ function FidgetPicker({
   onToggleSound: () => void;
 }) {
   const pickerBounds = useMemo(() => ({ width: 360, height: 330 }), []);
-  const { position, isDragging, startDrag } = useDraggableFidget(
+  const { position, isDragging, startDrag, moveBy } = useDraggableFidget(
     {
       x: 28,
       y: 120,
     },
     pickerBounds,
   );
+  const handleMoveBy = useCallback(
+    (delta: ActiveToy["position"]) => moveBy(delta),
+    [moveBy],
+  );
 
   return (
     <section
-      className={`pointer-events-auto fixed w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-floating backdrop-blur transition-shadow dark:border-white/15 dark:bg-slate-950/95 ${isDragging ? "shadow-2xl" : ""
-        }`}
+      className={cn(
+        "pointer-events-auto fixed w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-floating backdrop-blur transition-shadow motion-reduce:transition-none dark:border-white/15 dark:bg-slate-950/95",
+        isDragging && "shadow-2xl",
+      )}
       style={{ left: position.x, top: position.y }}
       aria-label="Fidget box"
     >
       <WindowHeader
         title="Fidget box"
         onPointerDown={startDrag}
+        onMoveBy={handleMoveBy}
         onClose={onClose}
       />
       <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2 text-xs text-slate-500 dark:border-white/10 dark:text-slate-300">
@@ -99,7 +107,7 @@ function FidgetPicker({
           <button
             type="button"
             onClick={onToggleSound}
-            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 motion-reduce:transition-none dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
             aria-label={
               isSoundEnabled ? "Mute fidget sounds" : "Unmute fidget sounds"
             }
@@ -114,7 +122,7 @@ function FidgetPicker({
             type="button"
             onClick={onClear}
             disabled={activeToyCount === 0}
-            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 motion-reduce:transition-none disabled:opacity-40 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
             aria-label="Clear fidget toys"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -128,7 +136,7 @@ function FidgetPicker({
             type="button"
             variant="unstyled"
             onClick={() => onAddToy(kind)}
-            className="min-h-20 flex-col rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:border-brand-300/50"
+            className="min-h-20 flex-col rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:text-brand-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:border-brand-300/50"
           >
             <Icon className="h-5 w-5" />
             {label}
@@ -156,19 +164,26 @@ function DraggableToy({
     (position: ActiveToy["position"]) => onPositionChange(position),
     [onPositionChange],
   );
-  const { position, isDragging, startDrag } =
+  const { position, isDragging, startDrag, moveBy } =
     useDraggableFidget(toy.position, undefined, handlePositionChange);
+  const handleMoveBy = useCallback(
+    (delta: ActiveToy["position"]) => moveBy(delta),
+    [moveBy],
+  );
 
   return (
     <section
-      className={`pointer-events-auto fixed w-52 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-floating backdrop-blur transition-shadow dark:border-white/15 dark:bg-slate-950/95 ${isDragging ? "shadow-2xl" : ""
-        }`}
+      className={cn(
+        "pointer-events-auto fixed w-52 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-floating backdrop-blur transition-shadow motion-reduce:transition-none dark:border-white/15 dark:bg-slate-950/95",
+        isDragging && "shadow-2xl",
+      )}
       style={{ left: position.x, top: position.y }}
       aria-label={getToyTitle(toy.kind)}
     >
       <WindowHeader
         title={getToyTitle(toy.kind)}
         onPointerDown={startDrag}
+        onMoveBy={handleMoveBy}
         onClose={onRemove}
       />
       <div className="p-4">
@@ -186,26 +201,48 @@ function DraggableToy({
 function WindowHeader({
   title,
   onPointerDown,
+  onMoveBy,
   onClose,
 }: {
   title: string;
   onPointerDown: ReturnType<typeof useDraggableFidget>["startDrag"];
+  onMoveBy: (delta: ActiveToy["position"]) => void;
   onClose: () => void;
 }) {
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const keyOffsets: Record<string, ActiveToy["position"]> = {
+      ArrowLeft: { x: -12, y: 0 },
+      ArrowRight: { x: 12, y: 0 },
+      ArrowUp: { x: 0, y: -12 },
+      ArrowDown: { x: 0, y: 12 },
+    };
+    const offset = keyOffsets[event.key];
+
+    if (!offset) {
+      return;
+    }
+
+    event.preventDefault();
+    onMoveBy(offset);
+  };
+
   return (
-    <div
-      onPointerDown={onPointerDown}
-      className="flex cursor-grab items-center justify-between gap-2 border-b border-slate-200/80 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 active:cursor-grabbing dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
-    >
-      <span className="inline-flex items-center gap-2">
+    <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+      <button
+        type="button"
+        onPointerDown={onPointerDown}
+        onKeyDown={handleKeyDown}
+        className="inline-flex cursor-grab items-center gap-2 rounded-sm text-left active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+        aria-label={`Move ${title} window`}
+      >
         <Grip className="h-3.5 w-3.5" />
         {title}
-      </span>
+      </button>
       <button
         type="button"
         onPointerDown={(event) => event.stopPropagation()}
         onClick={onClose}
-        className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
+        className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 motion-reduce:transition-none dark:hover:bg-white/10 dark:hover:text-white"
         aria-label={`Close ${title}`}
       >
         <X className="h-3.5 w-3.5" />
