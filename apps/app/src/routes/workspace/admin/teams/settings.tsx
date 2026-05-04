@@ -111,20 +111,6 @@ export default function WorkspaceTeamSettings() {
     null,
   );
   const [targetTeamId, setTargetTeamId] = useState("");
-  const teamsLaunchUrl = useMemo(() => {
-    if (typeof window === "undefined") {
-      return "https://sprintjam.co.uk/teams/launch";
-    }
-
-    return `${window.location.origin}/teams/launch`;
-  }, []);
-  const teamsManifestUrl = useMemo(() => {
-    if (typeof window === "undefined") {
-      return "https://sprintjam.co.uk/teams-manifest.json";
-    }
-
-    return `${window.location.origin}/teams-manifest.json`;
-  }, []);
   const teamHomeUrl = useMemo(() => {
     if (!selectedTeamId) {
       return null;
@@ -388,16 +374,6 @@ export default function WorkspaceTeamSettings() {
       userId: pendingMoveMember.id,
       role: pendingMoveMember.role,
     });
-  };
-
-  const handleCopyTeamsLaunchUrl = async () => {
-    try {
-      await copyText(teamsLaunchUrl);
-      toast.success("Teams launch URL copied");
-    } catch (error) {
-      console.error("Failed to copy Teams launch URL:", error);
-      toast.error("Couldn't copy Teams launch URL");
-    }
   };
 
   const handleCopyTeamHomeUrl = async () => {
@@ -827,59 +803,12 @@ export default function WorkspaceTeamSettings() {
                           How to connect Microsoft Teams
                         </p>
                         <p className="mt-1 text-xs text-blue-900 dark:text-blue-300">
-                          Create or edit the SprintJam app in Microsoft Teams
-                          Developer Portal using the manifest below, then open
-                          the SprintJam tab from the Teams channel, chat, or
-                          meeting you want to connect.
+                          In Microsoft Teams, go to Apps, install SprintJam, and
+                          open it from the channel, chat, or meeting you want to
+                          connect. Then sign in, select this workspace team, and
+                          connect it.
                         </p>
                       </div>
-                      <ul className="space-y-1 text-xs text-blue-900 dark:text-blue-300">
-                        <li>
-                          1. Use this manifest:{" "}
-                          <span className="break-all">{teamsManifestUrl}</span>
-                        </li>
-                        <li>
-                          2. Confirm the tab content URL is{" "}
-                          <span className="break-all">{teamsLaunchUrl}</span>.
-                        </li>
-                        <li>
-                          3. Enable channel, chat, meeting details, meeting
-                          side panel, and meeting stage tab contexts.
-                        </li>
-                        <li>
-                          4. Open the tab in Teams, sign in, select this
-                          workspace team, and connect it.
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        icon={<Copy className="h-4 w-4" />}
-                        onClick={() => void handleCopyTeamsLaunchUrl()}
-                        className="w-full sm:w-auto"
-                      >
-                        Copy URL
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        icon={<ExternalLink className="h-4 w-4" />}
-                        onClick={() => window.open(teamsManifestUrl, "_blank")}
-                        className="w-full sm:w-auto"
-                      >
-                        Manifest
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        icon={<ExternalLink className="h-4 w-4" />}
-                        onClick={() => window.open(teamsLaunchUrl, "_blank")}
-                        className="w-full sm:w-auto"
-                      >
-                        Open
-                      </Button>
                     </div>
                   </div>
                 </div>
