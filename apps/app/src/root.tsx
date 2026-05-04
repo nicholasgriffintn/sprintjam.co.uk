@@ -7,10 +7,7 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from "react-router";
-import type {
-  LinksFunction,
-  LoaderFunctionArgs,
-} from "react-router";
+import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 
 import { getServerDefaults } from "@sprintjam/utils";
 
@@ -71,13 +68,10 @@ function loadInitialServerDefaults(): ServerDefaults {
   };
 }
 
-export async function loader({ request, context }: LoaderFunctionArgs) {
+export function loader({ request, context }: LoaderFunctionArgs) {
   return {
     initialServerDefaults: loadInitialServerDefaults(),
-    initialWorkspaceProfile: await loadWorkspaceAuthProfile({
-      request,
-      context,
-    }),
+    initialWorkspaceProfile: loadWorkspaceAuthProfile({ request, context }),
   };
 }
 

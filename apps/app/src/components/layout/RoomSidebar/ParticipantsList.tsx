@@ -79,6 +79,7 @@ const ParticipantItem = memo(
       <motion.li
         data-testid="participant-row"
         data-participant-name={user}
+        data-connected={isConnected ? "true" : "false"}
         className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-slate-900 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

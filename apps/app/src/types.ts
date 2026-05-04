@@ -202,6 +202,7 @@ interface WebSocketPayloads {
     reason?: WebSocketErrorReason;
     closeCode?: number;
   };
+  leaveRoom: Record<string, never>;
   avatarChanged: {
     user: string;
     avatar: AvatarId;

@@ -46,7 +46,6 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
   onUpdateTicket,
   onDeleteTicket,
   onSelectTicket,
-  canManageQueue,
   onSaveToWorkspace,
   showSaveToWorkspace = false,
   linkedWorkspaceSession = null,
@@ -79,7 +78,7 @@ export const CompleteSessionModal: FC<CompleteSessionModalProps> = ({
             onUpdateTicket={onUpdateTicket}
             onDeleteTicket={onDeleteTicket}
             onSelectTicket={onSelectTicket}
-            canManageQueue={canManageQueue}
+            canManageQueue={false}
             initialTab="history"
             onError={onError}
           />

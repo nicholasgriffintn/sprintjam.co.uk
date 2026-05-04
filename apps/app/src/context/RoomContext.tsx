@@ -229,9 +229,9 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
     onError: reportRoomError,
   });
 
-  const handleLeaveRoom = useCallback(() => {
+  const handleLeaveRoom = useCallback(async () => {
     abortLatestRoomRequest();
-    disconnectFromRoom();
+    await disconnectFromRoom();
     resetRealtimeState();
 
     const key = activeRoomKeyRef.current;
