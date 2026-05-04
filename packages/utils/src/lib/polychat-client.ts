@@ -1,8 +1,20 @@
+export const POLYCHAT_STRUDEL_STYLES = [
+  "techno",
+  "ambient",
+  "house",
+  "jazz",
+  "drums",
+  "experimental",
+] as const;
+
+export type PolychatStrudelStyle = (typeof POLYCHAT_STRUDEL_STYLES)[number];
+export type StrudelGenerationComplexity = "simple" | "medium" | "complex";
+
 export interface StrudelGenerateRequest {
   prompt: string;
-  style: string;
+  style: PolychatStrudelStyle;
   tempo: number;
-  complexity: string;
+  complexity: StrudelGenerationComplexity;
   model?: string;
   options?: Record<string, unknown>;
 }
@@ -24,6 +36,13 @@ export async function generateStrudelCode(
       throw new Error("API token is required for Strudel code generation");
     }
 
+    const body = JSON.stringify({
+      ...request,
+      options: {
+        cache_ttl_seconds: 1,
+      },
+    })
+
     const response = await fetch(`${POLYCHAT_API_URL}/apps/strudel/generate`, {
       method: "POST",
       headers: {
@@ -31,16 +50,14 @@ export async function generateStrudelCode(
         "User-Agent": "SprintJam/1.0",
         Authorization: `Bearer ${apiToken}`,
       },
-      body: JSON.stringify({
-        ...request,
-        model: "cerebras/gpt-oss-120b",
-        options: {
-          cache_ttl_seconds: 1,
-        },
-      }),
+      body,
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        `Polychat API error: ${response.status} ${response.statusText} - ${errorText}`,
+      );
       throw new Error(
         `Polychat API returned ${response.status}: ${response.statusText}`,
       );

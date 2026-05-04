@@ -16,7 +16,7 @@ interface UseRoomConnectionOptions {
   onConnectionChange: (isConnected: boolean) => void;
   onError: (
     error: string,
-    meta?: { reason?: "auth" | "disconnect"; code?: number },
+    meta?: { reason?: "auth" | "disconnect" | "network"; code?: number },
   ) => void;
   reconnectSignal?: number;
   skip?: boolean;
@@ -55,12 +55,18 @@ export const useRoomConnection = ({
           message.includes("Invalid session");
         const isDisconnect =
           data.reason === "disconnect" || data.type === "disconnected";
+        const isNetworkError = data.reason === "network";
+
+        if (!isAuthError && !isDisconnect && !isNetworkError) {
+          return;
+        }
+
         onError(message, {
           reason: isAuthError
             ? "auth"
             : isDisconnect
               ? "disconnect"
-              : undefined,
+              : "network",
           code: data.closeCode,
         });
         onConnectionChange(false);

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { POLYCHAT_STRUDEL_STYLES } from "@sprintjam/utils";
 
 import { strudelMusicPresets } from "./strudel";
 
@@ -34,6 +35,14 @@ describe("strudelMusicPresets", () => {
         requiredFields.forEach((field) => {
           expect((preset as any)[field]).toBeTruthy();
         });
+      });
+    }
+  });
+
+  it("only uses styles supported by Polychat", () => {
+    for (const presets of Object.values(strudelMusicPresets)) {
+      presets.forEach((preset) => {
+        expect(POLYCHAT_STRUDEL_STYLES).toContain(preset.style);
       });
     }
   });

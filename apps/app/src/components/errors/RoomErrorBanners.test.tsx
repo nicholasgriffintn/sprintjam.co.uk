@@ -41,7 +41,9 @@ describe("RoomErrorBanners", () => {
   });
 
   afterEach(() => {
-    vi.runAllTimers();
+    act(() => {
+      vi.runAllTimers();
+    });
     vi.useRealTimers();
     cleanup();
     vi.clearAllMocks();
@@ -139,5 +141,42 @@ describe("RoomErrorBanners", () => {
     render(<RoomErrorBanners {...defaultProps} />);
 
     expect(screen.queryByTestId("reconnect-spinner")).toBeNull();
+  });
+
+  it("clears transient room errors after the dismiss delay", () => {
+    render(
+      <RoomErrorBanners
+        {...defaultProps}
+        roomError="Failed to generate music"
+      />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(4999);
+    });
+
+    expect(defaultProps.onClearRoomError).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(defaultProps.onClearRoomError).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps auth room errors visible until manual action", () => {
+    render(
+      <RoomErrorBanners
+        {...defaultProps}
+        roomError="Session expired."
+        roomErrorKind="auth"
+      />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(defaultProps.onClearRoomError).not.toHaveBeenCalled();
   });
 });

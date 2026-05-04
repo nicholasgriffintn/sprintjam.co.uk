@@ -103,7 +103,7 @@ export function useRoomRealtimeState({
   const handleConnectionError = useCallback(
     (
       message: string,
-      meta?: { reason?: "auth" | "disconnect"; code?: number },
+      meta?: { reason?: "auth" | "disconnect" | "network"; code?: number },
     ) => {
       if (meta?.reason === "auth") {
         setConnectionIssue({ type: "auth", message });

@@ -21,6 +21,7 @@ interface RoomErrorBannersProps {
 }
 
 const ROOM_STATUS_TOAST_ID = "room-status";
+const ROOM_ERROR_DISMISS_DELAY = 5000;
 
 export function RoomErrorBanners({
   connectionStatus,
@@ -161,6 +162,16 @@ export function RoomErrorBanners({
       hasShownStatusToast.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!roomError || roomErrorKind === "auth") {
+      return;
+    }
+
+    const timer = setTimeout(onClearRoomError, ROOM_ERROR_DISMISS_DELAY);
+
+    return () => clearTimeout(timer);
+  }, [onClearRoomError, roomError, roomErrorKind]);
 
   return (
     <>

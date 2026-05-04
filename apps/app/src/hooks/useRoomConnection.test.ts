@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, cleanup } from "@testing-library/react";
+import { act, renderHook, cleanup } from "@testing-library/react";
 
 const mockConnectToRoom = vi.fn();
 const mockDisconnectFromRoom = vi.fn();
@@ -27,6 +27,31 @@ describe("useRoomConnection", () => {
     vi.resetAllMocks();
     cleanup();
   });
+
+  const renderConnectedHook = () =>
+    renderHook(() =>
+      useRoomConnection({
+        name: "alice",
+        activeRoomKey: "ROOM1",
+        onMessage,
+        onConnectionChange,
+        onError,
+      }),
+    );
+
+  const getErrorHandler = () => {
+    const registration = mockAddEventListener.mock.calls.find(
+      ([event]) => event === "error",
+    );
+
+    expect(registration).toBeDefined();
+    return registration?.[1] as (message: {
+      type: "error" | "disconnected";
+      error?: string;
+      reason?: "auth" | "disconnect" | "permission" | "network";
+      closeCode?: number;
+    }) => void;
+  };
 
   it("connects when on room screen with valid params", () => {
     renderHook(() =>
@@ -167,5 +192,71 @@ describe("useRoomConnection", () => {
       "error",
       expect.any(Function),
     );
+  });
+
+  it("does not mark the room disconnected for operation errors", () => {
+    renderConnectedHook();
+
+    act(() => {
+      getErrorHandler()({
+        type: "error",
+        error: "Failed to generate music",
+      });
+    });
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(onConnectionChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it("does not mark the room disconnected for permission errors", () => {
+    renderConnectedHook();
+
+    act(() => {
+      getErrorHandler()({
+        type: "error",
+        error: "Only the moderator can generate music",
+        reason: "permission",
+      });
+    });
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(onConnectionChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it("reports auth errors as connection failures", () => {
+    renderConnectedHook();
+
+    act(() => {
+      getErrorHandler()({
+        type: "error",
+        error: "Session expired",
+        reason: "auth",
+        closeCode: 4003,
+      });
+    });
+
+    expect(onError).toHaveBeenCalledWith("Session expired", {
+      reason: "auth",
+      code: 4003,
+    });
+    expect(onConnectionChange).toHaveBeenCalledWith(false);
+  });
+
+  it("reports network errors as connection failures", () => {
+    renderConnectedHook();
+
+    act(() => {
+      getErrorHandler()({
+        type: "error",
+        error: "Connection error occurred",
+        reason: "network",
+      });
+    });
+
+    expect(onError).toHaveBeenCalledWith("Connection error occurred", {
+      reason: "network",
+      code: undefined,
+    });
+    expect(onConnectionChange).toHaveBeenCalledWith(false);
   });
 });
