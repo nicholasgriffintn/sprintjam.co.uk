@@ -1,3 +1,13 @@
+## V4.6
+
+- Refactored a lot of the codebase for better maintainability and readability.
+- Moved some apis to load on the server rather than the client.
+- A whole range of minor fixes and optimisations across the app.
+- A number of fixes to the sprint planning games to make them more playable.
+- Added new fidget toy easter eggs that you can enable and drag around a room to help improve focus and engagement during meetings.
+- Added a new teams integration endpoint (in beta) that will allow users to integrate a Sprintjam tab into their Teams chats and channels. Once it's ready that is.
+- Added a new team specific URL that teams can use to direct members to a new standup room without having to send the specific room link every time.
+
 ## V4.5
 
 - Changed to send emails from Cloudflare rather than Resend, cutting down on the number of third parties we need to share data with. As we already use Cloudflare, this means that we can keep all of our user data within a single location.
