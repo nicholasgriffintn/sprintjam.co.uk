@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 import {
+  getStrudelLogErrorMessage,
   loadStrudelRuntime,
   prebake,
+  STRUDEL_LOG_EVENT_KEY,
   type StrudelRuntime,
 } from "@/lib/strudel";
 import { safeLocalStorage } from "@/utils/storage";
@@ -149,10 +151,37 @@ export function useStrudelPlayer(
   const isPlayingRef = useRef(false);
   const isMutedRef = useRef(isMuted);
   const isInitializedRef = useRef(false);
+  const isLoadingRef = useRef(false);
+  const playbackErrorHandledRef = useRef(false);
   const onErrorRef = useRef<UseStrudelPlayerOptions["onError"]>(onError);
   const reportError = useCallback((error: Error) => {
     onErrorRef.current?.(error);
   }, []);
+
+  const stopAfterRuntimeError = useCallback(
+    (message: string) => {
+      if (playbackErrorHandledRef.current) {
+        return;
+      }
+
+      playbackErrorHandledRef.current = true;
+
+      try {
+        hushPlayback();
+      } catch (error) {
+        console.error("Failed to stop Strudel after runtime error:", error);
+      }
+
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setIsLoading(false);
+      }
+      isLoadingRef.current = false;
+
+      reportError(new Error(`Strudel playback stopped: ${message}`));
+    },
+    [reportError],
+  );
 
   useEffect(() => {
     onErrorRef.current = onError;
@@ -165,6 +194,36 @@ export function useStrudelPlayer(
   useEffect(() => {
     isInitializedRef.current = isInitialized;
   }, [isInitialized]);
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const handleStrudelLog = (event: Event) => {
+      if (!isPlayingRef.current && !isLoadingRef.current) {
+        return;
+      }
+
+      const message = getStrudelLogErrorMessage(
+        typeof CustomEvent !== "undefined" && event instanceof CustomEvent
+          ? event.detail
+          : null,
+      );
+      if (message) {
+        stopAfterRuntimeError(message);
+      }
+    };
+
+    document.addEventListener(STRUDEL_LOG_EVENT_KEY, handleStrudelLog);
+    return () => {
+      document.removeEventListener(STRUDEL_LOG_EVENT_KEY, handleStrudelLog);
+    };
+  }, [stopAfterRuntimeError]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -238,23 +297,36 @@ export function useStrudelPlayer(
   const play = useCallback(async () => {
     if (!currentCodeRef.current || isMutedRef.current) return;
 
+    playbackErrorHandledRef.current = false;
+    isLoadingRef.current = true;
+
     try {
       await ensureInitialized();
     } catch {
+      isLoadingRef.current = false;
       return;
     }
 
     try {
-      await sharedRuntime?.evaluate(currentCodeRef.current);
+      const pattern = await sharedRuntime?.evaluate(currentCodeRef.current);
+      if (playbackErrorHandledRef.current) {
+        return;
+      }
+      if (!pattern) {
+        throw new Error("Strudel returned no playable pattern");
+      }
       console.info("[StrudelPlayer] Playing code:", currentCodeRef.current);
       setIsPlaying(true);
     } catch (error) {
+      playbackErrorHandledRef.current = true;
       console.error("Failed to play:", error);
       if (onErrorRef.current) {
         reportError(
           error instanceof Error ? error : new Error("Failed to play"),
         );
       }
+    } finally {
+      isLoadingRef.current = false;
     }
   }, [ensureInitialized, reportError]);
 
@@ -266,6 +338,7 @@ export function useStrudelPlayer(
 
     try {
       console.info("[StrudelPlayer] Pausing playback");
+      playbackErrorHandledRef.current = true;
       hushPlayback();
       setIsPlaying(false);
     } catch (error) {
@@ -287,6 +360,7 @@ export function useStrudelPlayer(
 
     try {
       console.info("[StrudelPlayer] Stopping playback");
+      playbackErrorHandledRef.current = true;
       hushPlayback();
       setIsPlaying(false);
       currentCodeRef.current = null;
@@ -308,6 +382,7 @@ export function useStrudelPlayer(
     if (newMuted && isPlayingRef.current) {
       try {
         console.info("[StrudelPlayer] Muting playback");
+        playbackErrorHandledRef.current = true;
         if (isInitializedRef.current || initPromiseRef.current) {
           hushPlayback();
         }
@@ -332,10 +407,13 @@ export function useStrudelPlayer(
       }
 
       setIsLoading(true);
+      isLoadingRef.current = true;
+      playbackErrorHandledRef.current = false;
 
       try {
         await ensureInitialized();
       } catch (_error) {
+        isLoadingRef.current = false;
         setIsLoading(false);
         setIsPlaying(false);
         return;
@@ -346,6 +424,7 @@ export function useStrudelPlayer(
           console.info(
             "StrudelPlayer] Stopping existing playback before playing new code",
           );
+          playbackErrorHandledRef.current = true;
           hushPlayback();
           setIsPlaying(false);
         } catch (error) {
@@ -364,18 +443,28 @@ export function useStrudelPlayer(
         console.error("Failed to parse Strudel response:", parseError);
         reportError(new Error(errorMessage));
         setIsPlaying(false);
+        isLoadingRef.current = false;
         setIsLoading(false);
         return;
       }
 
       try {
         console.info("[StrudelPlayer] Stopping any existing playback");
+        playbackErrorHandledRef.current = true;
         hushPlayback();
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
+        playbackErrorHandledRef.current = false;
+
         if (!isMutedRef.current && currentCodeRef.current) {
-          await sharedRuntime?.evaluate(currentCodeRef.current);
+          const pattern = await sharedRuntime?.evaluate(currentCodeRef.current);
+          if (playbackErrorHandledRef.current) {
+            return;
+          }
+          if (!pattern) {
+            throw new Error("Strudel returned no playable pattern");
+          }
           console.info("[StrudelPlayer] Playing code:", currentCodeRef.current);
           setIsPlaying(true);
         } else {
@@ -388,9 +477,11 @@ export function useStrudelPlayer(
             ? `Invalid Strudel code: ${error.message}`
             : "Failed to play code";
 
+        playbackErrorHandledRef.current = true;
         reportError(new Error(errorMessage));
         setIsPlaying(false);
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
       }
     },

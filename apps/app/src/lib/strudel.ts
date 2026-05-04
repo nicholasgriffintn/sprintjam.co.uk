@@ -3,6 +3,40 @@ export type StrudelRuntime = typeof import("@strudel/web");
 
 let runtimePromise: Promise<StrudelRuntime> | null = null;
 
+export const STRUDEL_LOG_EVENT_KEY = "strudel.log";
+
+const STRUDEL_LOG_ERROR_PREFIX = /^\[[^\]]+\]\s*error:\s*/;
+
+const isStrudelLogDetail = (
+  detail: unknown,
+): detail is { message?: unknown; type?: unknown } =>
+  typeof detail === "object" && detail !== null;
+
+export const getStrudelLogErrorMessage = (detail: unknown): string | null => {
+  if (!isStrudelLogDetail(detail) || typeof detail.message !== "string") {
+    return null;
+  }
+
+  const message = detail.message.trim();
+  if (!message) {
+    return null;
+  }
+
+  if (STRUDEL_LOG_ERROR_PREFIX.test(message)) {
+    return message.replace(STRUDEL_LOG_ERROR_PREFIX, "");
+  }
+
+  if (detail.type === "error") {
+    return message;
+  }
+
+  if (message.includes("unknown chord")) {
+    return message;
+  }
+
+  return null;
+};
+
 export function loadStrudelRuntime(): Promise<StrudelRuntime> {
   if (typeof window === "undefined") {
     return Promise.reject(

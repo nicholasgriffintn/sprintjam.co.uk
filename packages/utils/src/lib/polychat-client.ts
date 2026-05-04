@@ -1,3 +1,5 @@
+export const STRUDEL_AI_MODEL = "@cf/zai-org/glm-4.7-flash";
+
 export const POLYCHAT_STRUDEL_STYLES = [
   "techno",
   "ambient",
@@ -38,6 +40,7 @@ export async function generateStrudelCode(
 
     const body = JSON.stringify({
       ...request,
+      model: STRUDEL_AI_MODEL,
       options: {
         cache_ttl_seconds: 1,
       },
