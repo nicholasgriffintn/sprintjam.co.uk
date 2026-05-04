@@ -35,6 +35,17 @@ const getRotateDegrees = (styleAttribute: string | null | undefined) => {
   return match ? Number(match[1]) : null;
 };
 
+const setViewportSize = ({ width, height }: { width: number; height: number }) => {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    value: width,
+  });
+  Object.defineProperty(window, "innerHeight", {
+    configurable: true,
+    value: height,
+  });
+};
+
 function FidgetHarness() {
   const { openPicker } = useFidgetToys();
 
@@ -51,6 +62,7 @@ function FidgetHarness() {
 describe("FidgetToyShelf", () => {
   beforeEach(() => {
     setReducedMotionPreference(false);
+    setViewportSize({ width: 1024, height: 768 });
   });
 
   it("renders every registered toy from the picker", () => {
@@ -131,6 +143,29 @@ describe("FidgetToyShelf", () => {
     );
 
     expect(spinnerWindow.style.left).toBe("40px");
+  });
+
+  it("keeps draggable windows visible when the viewport is smaller than their bounds", () => {
+    setViewportSize({ width: 240, height: 260 });
+
+    render(
+      <FidgetToyProvider>
+        <FidgetHarness />
+      </FidgetToyProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open fidget box" }));
+
+    const pickerWindow = screen.getByRole("region", { name: "Fidget box" });
+    fireEvent.keyDown(
+      screen.getByRole("button", { name: "Move Fidget box window" }),
+      {
+        key: "ArrowRight",
+      },
+    );
+
+    expect(pickerWindow.style.left).toBe("12px");
+    expect(pickerWindow.style.top).toBe("72px");
   });
 
   it("uses a static spinner step for reduced-motion users", () => {

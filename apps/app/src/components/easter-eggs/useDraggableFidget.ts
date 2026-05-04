@@ -17,15 +17,19 @@ type DragBounds = {
 };
 
 const DEFAULT_DRAG_BOUNDS: DragBounds = { width: 220, height: 180 };
+const MIN_DRAG_POSITION: Position = { x: 12, y: 72 };
 
 const keepInViewport = (position: Position, bounds: DragBounds) => {
   if (typeof window === "undefined") {
     return position;
   }
 
+  const maxX = Math.max(MIN_DRAG_POSITION.x, window.innerWidth - bounds.width);
+  const maxY = Math.max(MIN_DRAG_POSITION.y, window.innerHeight - bounds.height);
+
   return {
-    x: Math.min(Math.max(position.x, 12), window.innerWidth - bounds.width),
-    y: Math.min(Math.max(position.y, 72), window.innerHeight - bounds.height),
+    x: Math.min(Math.max(position.x, MIN_DRAG_POSITION.x), maxX),
+    y: Math.min(Math.max(position.y, MIN_DRAG_POSITION.y), maxY),
   };
 };
 
