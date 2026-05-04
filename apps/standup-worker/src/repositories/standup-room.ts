@@ -176,6 +176,7 @@ export class StandupRoomRepository {
         today: payload.today ?? "",
         hasBlocker: payload.hasBlocker ? 1 : 0,
         blockerDescription: payload.blockerDescription ?? null,
+        blockerResolved: 0,
         healthCheck: payload.healthCheck,
         linkedTickets: payload.linkedTickets
           ? JSON.stringify(payload.linkedTickets)
@@ -195,6 +196,7 @@ export class StandupRoomRepository {
           today: payload.today ?? "",
           hasBlocker: payload.hasBlocker ? 1 : 0,
           blockerDescription: payload.blockerDescription ?? null,
+          blockerResolved: 0,
           healthCheck: payload.healthCheck,
           isHealthCheckPrivate: payload.isHealthCheckPrivate ? 1 : 0,
           linkedTickets: payload.linkedTickets
@@ -206,6 +208,27 @@ export class StandupRoomRepository {
           updatedAt: now,
         },
       })
+      .run();
+  }
+
+  setBlockerResolved(userName: string, resolved: boolean): void {
+    const canonicalName = this.findCanonicalUserName(userName);
+    if (!canonicalName) {
+      return;
+    }
+
+    this.db
+      .update(standupResponses)
+      .set({
+        blockerResolved: resolved ? 1 : 0,
+        updatedAt: Date.now(),
+      })
+      .where(
+        and(
+          sqlOperator`LOWER(${standupResponses.userName}) = LOWER(${canonicalName})`,
+          eq(standupResponses.hasBlocker, 1),
+        ),
+      )
       .run();
   }
 
@@ -478,6 +501,7 @@ export class StandupRoomRepository {
       today: row.today || undefined,
       hasBlocker: !!row.hasBlocker,
       blockerDescription: row.blockerDescription ?? undefined,
+      blockerResolved: !!row.blockerResolved,
       healthCheck: row.healthCheck,
       linkedTickets: row.linkedTickets
         ? (safeJsonParse<LinkedTicket[]>(row.linkedTickets) ?? undefined)

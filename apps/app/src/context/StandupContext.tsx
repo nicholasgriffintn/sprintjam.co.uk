@@ -22,6 +22,8 @@ import {
   lockStandupResponses,
   pingStandup,
   removeStandupReaction,
+  setStandupBlockerResolved,
+  setStandupPresentationOrder,
   startStandupPresentation,
   submitStandupResponse,
   unlockStandupResponses,
@@ -46,6 +48,8 @@ interface StandupActionsContextValue {
   handleLockResponses: () => void;
   handleUnlockResponses: () => void;
   handleStartPresentation: () => void;
+  handleSetPresentationOrder: (order: string[]) => void;
+  handleSetBlockerResolved: (userName: string, resolved: boolean) => void;
   handleEndPresentation: () => void;
   handleCompleteStandup: () => void;
   handleFocusUser: (userName: string) => void;
@@ -205,20 +209,39 @@ export function StandupProvider({
 
       case "presentationStarted":
         setStandupData((prev) =>
-          prev ? { ...prev, status: "presenting" } : prev,
+          prev
+            ? {
+                ...prev,
+                status: "presenting",
+                presentationOrder:
+                  message.presentationOrder ?? prev.presentationOrder,
+              }
+            : prev,
         );
         break;
 
       case "presentationEnded":
         setStandupData((prev) =>
-          prev ? { ...prev, status: "active", focusedUser: undefined } : prev,
+          prev
+            ? {
+                ...prev,
+                status: "active",
+                focusedUser: undefined,
+                presentationOrder: undefined,
+              }
+            : prev,
         );
         break;
 
       case "standupCompleted":
         setStandupData((prev) =>
           prev
-            ? { ...prev, status: "completed", focusedUser: undefined }
+            ? {
+                ...prev,
+                status: "completed",
+                focusedUser: undefined,
+                presentationOrder: undefined,
+              }
             : prev,
         );
         break;
@@ -227,6 +250,29 @@ export function StandupProvider({
         setStandupData((prev) =>
           prev ? { ...prev, focusedUser: message.userName } : prev,
         );
+        break;
+
+      case "presentationOrderUpdated":
+        setStandupData((prev) =>
+          prev ? { ...prev, presentationOrder: message.presentationOrder } : prev,
+        );
+        break;
+
+      case "blockerResolutionUpdated":
+        setStandupData((prev) => {
+          if (!prev) {
+            return prev;
+          }
+
+          return {
+            ...prev,
+            responses: prev.responses.map((response) =>
+              response.userName === message.userName
+                ? { ...response, blockerResolved: message.resolved }
+                : response,
+            ),
+          };
+        });
         break;
 
       case "reactionAdded":
@@ -323,6 +369,8 @@ export function StandupProvider({
     handleLockResponses: lockStandupResponses,
     handleUnlockResponses: unlockStandupResponses,
     handleStartPresentation: startStandupPresentation,
+    handleSetPresentationOrder: setStandupPresentationOrder,
+    handleSetBlockerResolved: setStandupBlockerResolved,
     handleEndPresentation: endStandupPresentation,
     handleCompleteStandup: completeStandup,
     handleFocusUser: focusStandupUser,

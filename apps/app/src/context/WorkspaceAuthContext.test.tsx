@@ -19,10 +19,6 @@ vi.mock("react-router", () => ({
   useRevalidator: () => ({ revalidate: mocks.revalidate }),
 }));
 
-vi.mock("@/utils/feature-flags", () => ({
-  isWorkspacesEnabled: () => true,
-}));
-
 vi.mock("@/lib/workspace-service", () => ({
   logout: mocks.logout,
 }));

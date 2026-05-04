@@ -30,6 +30,7 @@ export class StandupRoom implements StandupRoomHttpContext {
   sessions: Map<CfWebSocket, StandupSessionInfo>;
   repository: StandupRoomRepository;
   focusedUser: string | undefined;
+  presentationOrder: string[] | undefined;
 
   constructor(state: DurableObjectState, env: StandupWorkerEnv) {
     this.state = state;
@@ -154,6 +155,9 @@ export class StandupRoom implements StandupRoomHttpContext {
     const data = await this.repository.getStandupData();
     if (data && this.focusedUser) {
       data.focusedUser = this.focusedUser;
+    }
+    if (data && this.presentationOrder) {
+      data.presentationOrder = this.presentationOrder;
     }
     return data;
   }

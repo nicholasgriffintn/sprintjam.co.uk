@@ -84,6 +84,8 @@ function StandupRoomContent({
     handleLockResponses,
     handleUnlockResponses,
     handleStartPresentation,
+    handleSetPresentationOrder,
+    handleSetBlockerResolved,
     handleEndPresentation,
     handleCompleteStandup,
     handleFocusUser,
@@ -326,6 +328,7 @@ function StandupRoomContent({
               standupData={standupData}
               onFocusUser={handleFocusUser}
               onEndPresentation={handleEndPresentation}
+              onSetPresentationOrder={handleSetPresentationOrder}
               onCompleteStandup={onCompleteStandup}
               onAddReaction={handleAddReaction}
               onRemoveReaction={handleRemoveReaction}
@@ -376,6 +379,7 @@ function StandupRoomContent({
                   onStartPresentation={onStartPresentation}
                   onCompleteStandup={onCompleteStandup}
                   onFocusUser={handleFocusUser}
+                  onSetBlockerResolved={handleSetBlockerResolved}
                   isLockingResponses={isLockingResponses}
                   isStartingPresentation={isStartingPresentation}
                   isCompletingStandup={isCompletingStandup}

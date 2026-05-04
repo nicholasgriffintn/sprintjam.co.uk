@@ -56,10 +56,12 @@ export type StandupServerMessage =
   | { type: "responseConfirmed"; response: StandupResponse }
   | { type: "responsesLocked" }
   | { type: "responsesUnlocked" }
-  | { type: "presentationStarted" }
+  | { type: "presentationStarted"; presentationOrder?: string[] }
   | { type: "presentationEnded" }
   | { type: "standupCompleted" }
   | { type: "userFocused"; userName: string }
+  | { type: "presentationOrderUpdated"; presentationOrder: string[] }
+  | { type: "blockerResolutionUpdated"; userName: string; resolved: boolean }
   | {
       type: "reactionAdded";
       responseUserName: string;
@@ -410,6 +412,21 @@ export function unlockStandupResponses(): void {
 
 export function startStandupPresentation(): void {
   sendWebSocketMessage(activeSocket, { type: "startPresentation" });
+}
+
+export function setStandupPresentationOrder(order: string[]): void {
+  sendWebSocketMessage(activeSocket, { type: "setPresentationOrder", order });
+}
+
+export function setStandupBlockerResolved(
+  userName: string,
+  resolved: boolean,
+): void {
+  sendWebSocketMessage(activeSocket, {
+    type: "setBlockerResolved",
+    userName,
+    resolved,
+  });
 }
 
 export function endStandupPresentation(): void {

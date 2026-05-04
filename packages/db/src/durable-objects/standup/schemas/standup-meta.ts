@@ -39,6 +39,7 @@ export const standupResponses = sqliteTable("standup_responses", {
   today: text("today").notNull().default(""),
   hasBlocker: integer("has_blocker").notNull().default(0),
   blockerDescription: text("blocker_description"),
+  blockerResolved: integer("blocker_resolved").notNull().default(0),
   healthCheck: integer("health_check").notNull().default(3),
   linkedTickets: text("linked_tickets"), // JSON array of ticket refs
   kudos: text("kudos"),

@@ -11,7 +11,6 @@ import { useRevalidator } from "react-router";
 import type { WorkspaceTeam, WorkspaceUser } from "@sprintjam/types";
 import type { WorkspaceAuthProfile } from "@sprintjam/types";
 
-import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { logout as logoutService } from "@/lib/workspace-service";
 
 interface WorkspaceAuthContextValue {
@@ -34,10 +33,9 @@ export function WorkspaceAuthProvider({
   children: ReactNode;
   initialProfile?: WorkspaceAuthProfile | null;
 }) {
-  const workspacesEnabled = isWorkspacesEnabled();
   const [resolvedProfile, setResolvedProfile] =
     useState<WorkspaceAuthProfile | null>(initialProfile);
-  const profile = workspacesEnabled ? resolvedProfile : null;
+  const profile = resolvedProfile;
   const [isLoading, setIsLoading] = useState(false);
   const revalidator = useRevalidator();
 

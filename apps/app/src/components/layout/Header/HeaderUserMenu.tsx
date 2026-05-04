@@ -6,7 +6,6 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { cn } from "@/lib/cn";
-import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { useSessionActions } from "@/context/SessionContext";
 import type { MarketingVariant } from "@/components/layout/Header/types";
 import { isAvatarUrl } from "@/utils/avatars";
@@ -36,7 +35,6 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
   const { goHome, goToWorkspace, goToWorkspaceProfile, goToLogin } =
     useSessionActions();
 
-  const showNavigation = isWorkspacesEnabled();
   const isHero = variant === "hero";
 
   useEffect(() => {
@@ -105,10 +103,6 @@ export const HeaderUserMenu = ({ variant }: HeaderUserMenuProps = {}) => {
   ) : (
     avatarLabel || <UserRound className="h-5 w-5" />
   );
-
-  if (!showNavigation) {
-    return null;
-  }
 
   if (!isAuthenticated || !user) {
     return (

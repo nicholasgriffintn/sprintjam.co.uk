@@ -35,7 +35,6 @@ import SettingsModal from "@/components/modals/SettingsModal";
 import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
 import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
-import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { getTeamSessionByRoomKey } from "@/lib/workspace-service";
 import { RoomGuidancePanel } from "@/components/room/RoomGuidancePanel";
 import { RoomStatsPanel } from "@/components/room/RoomStatsPanel";
@@ -137,14 +136,13 @@ const RoomContent = ({
   const [isGamesModalOpen, setIsGamesModalOpen] = useState(false);
   const [gameAnnouncement, setGameAnnouncement] = useState<string | null>(null);
   const [isGamePanelMinimised, setIsGamePanelMinimised] = useState(false);
-  const workspacesEnabled = isWorkspacesEnabled();
   const linkedWorkspaceSessionQueryKey = [
     "linked-workspace-session",
     roomData.key,
   ] as const;
   const linkedWorkspaceSessionQuery = useQuery({
     queryKey: linkedWorkspaceSessionQueryKey,
-    enabled: workspacesEnabled && isAuthenticated && Boolean(roomData.key),
+    enabled: isAuthenticated && Boolean(roomData.key),
     queryFn: () => getTeamSessionByRoomKey(roomData.key),
     staleTime: 0,
   });
@@ -187,10 +185,8 @@ const RoomContent = ({
   const canManageQueue =
     isModeratorView || roomData.settings.allowOthersToManageQueue === true;
   const showSaveToWorkspace =
-    workspacesEnabled &&
-    (!isAuthenticated ||
-      (!linkedWorkspaceSessionQuery.isLoading &&
-        linkedWorkspaceSession === null));
+    !isAuthenticated ||
+    (!linkedWorkspaceSessionQuery.isLoading && linkedWorkspaceSession === null);
 
   useEffect(() => {
     if (!roomData.gameSession || roomData.gameSession.status !== "active") {
@@ -270,6 +266,45 @@ const RoomContent = ({
       return "Wide spread; align on scope or split the work.";
     }
     return "";
+  };
+
+  const addFollowUpTicket = async (title: string, outcome: string) => {
+    const pendingQueue = roomData.ticketQueue || [];
+    const maxOrdinal =
+      pendingQueue.reduce((max, ticket) => Math.max(max, ticket.ordinal), 0) +
+      1;
+
+    await handleAddTicket({
+      ticketId: `FOLLOW-${maxOrdinal}`,
+      title,
+      outcome,
+      status: "pending",
+      ordinal: maxOrdinal,
+      externalService: "none",
+    });
+  };
+
+  const handleCaptureUnknownsFollowUp = async () => {
+    const currentTitle = roomData.currentTicket?.title ?? "current item";
+    await addFollowUpTicket(
+      `Clarify unknowns for ${currentTitle}`,
+      "Unknowns flagged during estimation; clarify acceptance criteria before the next vote.",
+    );
+    dismissHints();
+  };
+
+  const handleSplitCurrentTicket = async () => {
+    const currentTitle = roomData.currentTicket?.title ?? "current item";
+    await addFollowUpTicket(
+      `Split ${currentTitle}`,
+      "Wide spread during estimation; split scope or separate risky assumptions.",
+    );
+    dismissHints();
+  };
+
+  const handleStartRevote = () => {
+    handleResetVotes();
+    dismissHints();
   };
 
   const handleOpenSettings = (tab?: RoomSettingsTabId) => {
@@ -393,6 +428,52 @@ const RoomContent = ({
                 </div>
               </SurfaceCard>
 
+              {roomData.gameSession?.status === "completed" ? (
+                <SurfaceCard padding="md" className="space-y-3 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Game recap
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Game
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {gameTitle}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Winner
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {roomData.gameSession.winner ?? "Tie"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Moves
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {roomData.gameSession.moves.length}
+                      </div>
+                    </div>
+                  </div>
+                  {roomData.gameSession.events.length > 0 ? (
+                    <div className="space-y-2">
+                      {roomData.gameSession.events.slice(-3).map((event) => (
+                        <p
+                          key={event.id}
+                          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                        >
+                          {event.message}
+                        </p>
+                      ))}
+                    </div>
+                  ) : null}
+                </SurfaceCard>
+              ) : null}
+
               <RoomStatsPanel roomKey={roomData.key} />
 
               <SurfaceCard padding="md" className="space-y-3 text-sm">
@@ -495,6 +576,24 @@ const RoomContent = ({
                   badge="Facilitation prompt"
                   title={facilitationPrompt.title}
                   body={facilitationPrompt.body}
+                  primaryAction={
+                    facilitationPrompt.title === "Unknowns flagged" &&
+                    isQueueEnabled
+                      ? {
+                          label: "Add follow-up",
+                          onClick: handleCaptureUnknownsFollowUp,
+                        }
+                      : facilitationPrompt.title === "Quick consensus" &&
+                          roomData.currentTicket
+                        ? {
+                            label: "Add note",
+                            onClick: () => {
+                              setSummaryNote(getSuggestedNote());
+                              setIsSummaryOpen(true);
+                            },
+                          }
+                        : undefined
+                  }
                 />
               )}
 
@@ -592,9 +691,20 @@ const RoomContent = ({
                               : "Ask the highest and lowest voters to explain their thinking."
                           }
                           primaryAction={{
-                            label: "Got it",
-                            onClick: dismissHints,
+                            label: "Re-vote",
+                            onClick: handleStartRevote,
                           }}
+                          secondaryAction={
+                            isQueueEnabled
+                              ? {
+                                  label: "Split ticket",
+                                  onClick: handleSplitCurrentTicket,
+                                }
+                              : {
+                                  label: "Got it",
+                                  onClick: dismissHints,
+                                }
+                          }
                         />
                       </div>
                     )}
@@ -810,7 +920,7 @@ const RoomContent = ({
         onAddTicket={handleAddTicket}
         onUpdateTicket={handleUpdateTicket}
         onDeleteTicket={handleDeleteTicket}
-        canManageQueue={false}
+        canManageQueue={canManageQueue}
         onSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
         showSaveToWorkspace={showSaveToWorkspace}
         linkedWorkspaceSession={linkedWorkspaceSession}
