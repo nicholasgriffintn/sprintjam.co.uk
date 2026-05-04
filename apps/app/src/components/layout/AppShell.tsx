@@ -3,6 +3,8 @@ import { Outlet } from "react-router";
 
 import { Header } from "@/components/layout/Header";
 import { PageBackground } from "@/components/layout/PageBackground";
+import { FidgetToyShelf } from "@/components/easter-eggs/FidgetToyShelf";
+import { FidgetToyProvider } from "@/components/easter-eggs/FidgetToyContext";
 import { RoomHeaderProvider } from "@/context/RoomHeaderContext";
 import { ServerDefaultsProvider } from "@/context/ServerDefaultsContext";
 import { StandupHeaderProvider } from "@/context/StandupHeaderContext";
@@ -25,14 +27,17 @@ export function AppShell({
         <RoomHeaderProvider>
           <WheelHeaderProvider>
             <StandupHeaderProvider>
-              <PageBackground variant={getBackgroundVariant(screen)}>
-                <Header />
-                <MotionConfig reducedMotion="user">
-                  <main className="flex-1">
-                    <Outlet />
-                  </main>
-                </MotionConfig>
-              </PageBackground>
+              <FidgetToyProvider>
+                <PageBackground variant={getBackgroundVariant(screen)}>
+                  <Header />
+                  <MotionConfig reducedMotion="user">
+                    <main className="flex-1">
+                      <Outlet />
+                    </main>
+                    <FidgetToyShelf />
+                  </MotionConfig>
+                </PageBackground>
+              </FidgetToyProvider>
             </StandupHeaderProvider>
           </WheelHeaderProvider>
         </RoomHeaderProvider>
