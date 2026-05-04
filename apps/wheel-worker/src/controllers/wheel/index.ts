@@ -17,6 +17,7 @@ import {
 } from "@sprintjam/utils";
 import { jsonResponse, jsonError } from "../../lib/response";
 import { toClientWheelData } from "../../lib/client-wheel";
+import { normalizeWheelSettings } from "../../lib/wheel-validation";
 
 export interface WheelRoomHttpContext {
   repository: WheelRoom["repository"];
@@ -25,13 +26,6 @@ export interface WheelRoomHttpContext {
   disconnectUserSessions(userName: string): void;
   env: WheelWorkerEnv;
 }
-
-const DEFAULT_SETTINGS: WheelSettings = {
-  removeWinnerAfterSpin: false,
-  showConfetti: true,
-  playSounds: true,
-  spinDurationMs: 4000,
-};
 
 const DEFAULT_ENTRY_NAMES = [
   "Ada",
@@ -131,10 +125,7 @@ async function handleInitialize(
 
   const sessionToken = generateSessionToken();
 
-  const wheelSettings: WheelSettings = {
-    ...DEFAULT_SETTINGS,
-    ...settings,
-  };
+  const wheelSettings = normalizeWheelSettings(undefined, settings);
 
   const defaultEntries = DEFAULT_ENTRY_NAMES.map((name) => ({
     id: generateID(),

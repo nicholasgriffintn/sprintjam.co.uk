@@ -90,6 +90,44 @@ describe("wheel http controller", () => {
     expect(body.wheel).not.toHaveProperty("passcodeHash");
   });
 
+  it("normalizes settings during initialization", async () => {
+    const putWheelData = vi.fn().mockResolvedValue(undefined);
+    const context = buildContext({
+      getWheelData: vi.fn().mockResolvedValue(undefined),
+      putWheelData,
+    });
+
+    const response = await handleHttpRequest(
+      context,
+      new Request("https://internal/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wheelKey: "WHEEL",
+          moderator: "mod",
+          settings: {
+            removeWinnerAfterSpin: "yes",
+            showConfetti: false,
+            playSounds: "no",
+            spinDurationMs: 999_999,
+          },
+        }),
+      }),
+    );
+
+    expect(response?.status).toBe(200);
+    expect(putWheelData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: {
+          removeWinnerAfterSpin: false,
+          showConfetti: false,
+          playSounds: true,
+          spinDurationMs: 10000,
+        },
+      }),
+    );
+  });
+
   it("rejects passcode updates without a valid session", async () => {
     const wheelData = buildWheelData();
     const context = buildContext({
