@@ -12,11 +12,7 @@ import type {
   LoaderFunctionArgs,
 } from "react-router";
 
-import {
-  createWorkerRequest,
-  readRequiredWorkerJson,
-  type WorkerLoaderArgs,
-} from "@/lib/worker-utils";
+import { getServerDefaults } from "@sprintjam/utils";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { SessionProvider } from "@/context/SessionContext";
@@ -66,30 +62,18 @@ export const links: LinksFunction = () => [
   { rel: "manifest", href: "/site.webmanifest" },
 ];
 
-async function loadServerDefaults({
-  request,
-  context,
-}: WorkerLoaderArgs): Promise<ServerDefaults> {
-  const roomWorker = context.cloudflare?.env.ROOM_WORKER;
-  if (!roomWorker) {
-    throw new Response("ROOM_WORKER binding is required to load defaults", {
-      status: 500,
-    });
-  }
+function loadInitialServerDefaults(): ServerDefaults {
+  const defaults = getServerDefaults();
 
-  const response = await roomWorker.fetch(
-    createWorkerRequest(request, "/api/defaults"),
-  );
-
-  return readRequiredWorkerJson<ServerDefaults>(
-    response,
-    "Unable to load default settings from server",
-  );
+  return {
+    ...defaults,
+    votingCriteria: defaults.votingCriteria ?? [],
+  };
 }
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   return {
-    initialServerDefaults: await loadServerDefaults({ request, context }),
+    initialServerDefaults: loadInitialServerDefaults(),
     initialWorkspaceProfile: await loadWorkspaceAuthProfile({
       request,
       context,

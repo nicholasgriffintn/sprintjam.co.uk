@@ -41,10 +41,14 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const args = { request, context };
   const profile = await loadWorkspaceAuthProfile(args);
   const teams = profile?.teams ?? [];
+  const [sessionsByTeamId, teamInsightsByTeamId] = await Promise.all([
+    loadAccessibleTeamSessions(args, teams),
+    loadAccessibleTeamInsights(args, teams),
+  ]);
 
   return {
-    sessionsByTeamId: await loadAccessibleTeamSessions(args, teams),
-    teamInsightsByTeamId: await loadAccessibleTeamInsights(args, teams),
+    sessionsByTeamId,
+    teamInsightsByTeamId,
   };
 }
 

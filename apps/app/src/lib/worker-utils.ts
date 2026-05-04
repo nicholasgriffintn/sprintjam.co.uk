@@ -13,21 +13,6 @@ export async function readWorkerJson<T>(
   return (await response.json()) as T;
 }
 
-export async function readRequiredWorkerJson<T>(
-  response: Response,
-  errorPrefix: string,
-): Promise<T> {
-  if (response.status !== 200) {
-    const errorText = await response.text();
-    throw new Response(errorText || errorPrefix, {
-      status: response.status,
-      statusText: response.statusText,
-    });
-  }
-
-  return (await response.json()) as T;
-}
-
 export function createWorkerRequest(request: Request, path: string): Request {
   const url = new URL(request.url);
   const target = new URL(path, url.origin);

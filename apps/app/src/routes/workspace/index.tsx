@@ -27,10 +27,14 @@ export const meta = createMeta("workspace");
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const args = { request, context };
+  const [stats, insights] = await Promise.all([
+    loadWorkspaceStats(args),
+    loadWorkspaceInsights(args),
+  ]);
 
   return {
-    stats: await loadWorkspaceStats(args),
-    insights: await loadWorkspaceInsights(args),
+    stats,
+    insights,
   };
 }
 
