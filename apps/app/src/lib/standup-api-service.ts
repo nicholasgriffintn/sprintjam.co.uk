@@ -20,8 +20,10 @@ import {
 
 let activeSocket: WebSocket | null = null;
 let activeStandupKey: string | null = null;
+let activeUserName: string | null = null;
 let reconnectState: ReconnectState = createReconnectState();
 let disconnectPending = false;
+let reconnectTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
 
 export interface StandupSessionResponse {
   success: boolean;
@@ -226,12 +228,14 @@ export function connectToStandup(
     activeSocket &&
     (activeSocket.readyState === WebSocket.OPEN ||
       activeSocket.readyState === WebSocket.CONNECTING) &&
-    activeStandupKey === standupKey
+    activeStandupKey === standupKey &&
+    activeUserName === name
   ) {
     return activeSocket;
   }
 
   activeStandupKey = standupKey;
+  activeUserName = name;
 
   if (activeSocket) {
     activeSocket.close();
@@ -326,7 +330,15 @@ function handleReconnect(
     incrementReconnectAttempts(reconnectState);
     const delay = calculateReconnectDelay(reconnectState);
 
-    window.setTimeout(() => {
+    reconnectTimer = globalThis.setTimeout(() => {
+      reconnectTimer = null;
+      if (disconnectPending) {
+        return;
+      }
+      if (activeStandupKey !== standupKey || activeUserName !== name) {
+        return;
+      }
+
       connectToStandup(
         standupKey,
         name,
@@ -347,6 +359,10 @@ function handleReconnect(
 
 export function disconnectFromStandup(): void {
   disconnectPending = true;
+  if (reconnectTimer !== null) {
+    globalThis.clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
 
   void Promise.resolve().then(() => {
     if (!disconnectPending) return;
@@ -362,6 +378,7 @@ export function disconnectFromStandup(): void {
       socket.close(1000, "User left the standup");
     }
     activeStandupKey = null;
+    activeUserName = null;
     resetReconnectAttempts(reconnectState);
   });
 }
