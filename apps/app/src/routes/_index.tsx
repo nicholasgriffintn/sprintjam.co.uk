@@ -213,7 +213,7 @@ const WelcomeRoute = () => {
               </div>
             </SurfaceCard>
 
-            <div className="grid grid-cols-2 grid-rows-2 gap-4 h-full">
+            <div className="grid h-full grid-cols-1 gap-4 sm:grid-cols-2 sm:grid-rows-2">
               {pokerFeatures.map((feature) => (
                 <SurfaceCard key={feature.title} className="h-full text-left">
                   <MarketingCardHeading icon={feature.icon} size="base">
