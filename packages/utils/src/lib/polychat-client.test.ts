@@ -72,7 +72,7 @@ describe("generateStrudelCode", () => {
     const body = JSON.parse((options as RequestInit).body as string);
     expect(body).toMatchObject({
       ...sampleRequest,
-      model: "cerebras/gpt-oss-120b",
+      model: "@cf/zai-org/glm-4.7-flash",
       options: { cache_ttl_seconds: 1 },
     });
   });

@@ -57,10 +57,6 @@ export async function generateStrudelCode(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(
-        `Polychat API error: ${response.status} ${response.statusText} - ${errorText}`,
-      );
       throw new Error(
         `Polychat API returned ${response.status}: ${response.statusText}`,
       );
