@@ -4,6 +4,7 @@ import { Briefcase, Plus, Shield, Sunrise, Users, Zap } from "lucide-react";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { MarketingCardHeading } from "@/components/marketing/MarketingCardHeading";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
@@ -93,12 +94,9 @@ export default function StandupRoute() {
               transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
             >
               <SurfaceCard className="h-full text-left">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400/20 to-purple-500/20 text-violet-600">
-                  {feature.icon}
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <MarketingCardHeading icon={feature.icon} tone="violet">
                   {feature.title}
-                </h3>
+                </MarketingCardHeading>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   {feature.description}
                 </p>

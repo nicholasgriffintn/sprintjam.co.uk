@@ -14,6 +14,7 @@ import {
 import { useSessionActions } from "@/context/SessionContext";
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
+import { MarketingCardHeading } from "@/components/marketing/MarketingCardHeading";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
@@ -202,12 +203,9 @@ const GithubIntegrationRoute = () => {
           <div className="grid gap-4 md:grid-cols-2">
             {featureCards.map(({ title, description, icon: Icon }) => (
               <SurfaceCard key={title} className="h-full text-left">
-                <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/30">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <MarketingCardHeading icon={<Icon />} size="lg">
                   {title}
-                </h3>
+                </MarketingCardHeading>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   {description}
                 </p>
@@ -261,14 +259,9 @@ const GithubIntegrationRoute = () => {
           <div className="grid gap-4 md:grid-cols-2">
             {securityHighlights.map(({ title, detail, icon: Icon, cta }) => (
               <SurfaceCard key={title} className="h-full text-left">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/30">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {title}
-                  </h3>
-                </div>
+                <MarketingCardHeading icon={<Icon />} size="lg">
+                  {title}
+                </MarketingCardHeading>
                 <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
                   {detail}
                 </p>

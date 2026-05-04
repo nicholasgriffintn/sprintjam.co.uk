@@ -9,6 +9,7 @@ import {
 
 import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
+import { MarketingCardHeading } from "@/components/marketing/MarketingCardHeading";
 import { SITE_NAME } from "@/constants";
 import { createMeta } from "@/utils/route-meta";
 
@@ -128,15 +129,11 @@ const PrivacyPolicyRoute = () => {
               {highlightCards.map(({ icon: Icon, title, description }) => (
                 <div
                   key={title}
-                  className="flex flex-col items-center rounded-2xl border border-slate-200/80 bg-white/70 p-5 text-center shadow-sm ring-1 ring-slate-100 dark:border-white/10 dark:bg-white/5 dark:ring-white/10"
+                  className="rounded-2xl border border-slate-200/80 bg-white/70 p-5 text-left shadow-sm ring-1 ring-slate-100 dark:border-white/10 dark:bg-white/5 dark:ring-white/10"
                 >
-                  <Icon
-                    className="h-6 w-6 text-slate-900 dark:text-white"
-                    aria-hidden="true"
-                  />
-                  <h2 className="mt-3 text-lg font-semibold text-slate-900 dark:text-white">
+                  <MarketingCardHeading as="h2" icon={<Icon />} size="lg">
                     {title}
-                  </h2>
+                  </MarketingCardHeading>
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                     {description}
                   </p>

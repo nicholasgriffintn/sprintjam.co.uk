@@ -21,6 +21,7 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Footer } from "@/components/layout/Footer";
+import { MarketingCardHeading } from "@/components/marketing/MarketingCardHeading";
 import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { SITE_NAME } from "@/constants";
@@ -157,12 +158,9 @@ const WelcomeRoute = () => {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
             <SurfaceCard className="flex flex-col gap-5 text-left">
               <div className="space-y-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
-                  {sprintFlow[1].icon}
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <MarketingCardHeading icon={sprintFlow[1].icon}>
                   {sprintFlow[1].title}
-                </h3>
+                </MarketingCardHeading>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   {sprintFlow[1].description}
                 </p>
@@ -218,12 +216,9 @@ const WelcomeRoute = () => {
             <div className="grid grid-cols-2 grid-rows-2 gap-4 h-full">
               {pokerFeatures.map((feature) => (
                 <SurfaceCard key={feature.title} className="h-full text-left">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/15 to-indigo-500/20 text-brand-600">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                  <MarketingCardHeading icon={feature.icon} size="base">
                     {feature.title}
-                  </h3>
+                  </MarketingCardHeading>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                     {feature.description}
                   </p>
@@ -234,15 +229,14 @@ const WelcomeRoute = () => {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
-              <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400/20 to-pink-500/20 text-orange-500">
-                  {sprintFlow[0].icon}
-                </div>
-              </div>
               <div className="flex-1 space-y-2">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                <MarketingCardHeading
+                  icon={sprintFlow[0].icon}
+                  size="base"
+                  tone="orange"
+                >
                   {sprintFlow[0].title}
-                </h3>
+                </MarketingCardHeading>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   {sprintFlow[0].description}
                 </p>
@@ -259,15 +253,14 @@ const WelcomeRoute = () => {
             </div>
 
             <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
-              <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400/20 to-purple-500/20 text-violet-600">
-                  {sprintFlow[2].icon}
-                </div>
-              </div>
               <div className="flex-1 space-y-2">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                <MarketingCardHeading
+                  icon={sprintFlow[2].icon}
+                  size="base"
+                  tone="violet"
+                >
                   {sprintFlow[2].title}
-                </h3>
+                </MarketingCardHeading>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   {sprintFlow[2].description}
                 </p>
@@ -285,17 +278,19 @@ const WelcomeRoute = () => {
 
             <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-slate-300/60 bg-white/40 p-5 text-left dark:border-white/10 dark:bg-slate-900/20">
               <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-500/10 to-slate-500/15 text-slate-400 dark:text-slate-500">
-                  <Sparkles className="h-5 w-5" />
-                </div>
+                <MarketingCardHeading
+                  icon={<Sparkles className="h-5 w-5" />}
+                  size="base"
+                  tone="slate"
+                  titleClassName="text-slate-400 dark:text-slate-500"
+                >
+                  More to come
+                </MarketingCardHeading>
                 <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-slate-800 dark:text-slate-500">
                   Coming soon
                 </span>
               </div>
               <div className="flex-1 space-y-2">
-                <h3 className="text-base font-semibold text-slate-400 dark:text-slate-500">
-                  More to come
-                </h3>
                 <p className="text-sm text-slate-400 dark:text-slate-600">
                   We&apos;re building more tools to enhance your sprint rituals.
                   Stay tuned.
@@ -306,12 +301,13 @@ const WelcomeRoute = () => {
           <SurfaceCard className="text-left">
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
               <div className="flex-1 space-y-3 md:pr-4">
-                <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/20 to-teal-500/20 text-emerald-600">
-                  <GitBranch className="h-4 w-4" />
-                </div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                <MarketingCardHeading
+                  icon={<GitBranch className="h-4 w-4" />}
+                  size="xl"
+                  tone="emerald"
+                >
                   Bring your backlog into the room
-                </h3>
+                </MarketingCardHeading>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   Set up integrations once in your workspace team settings and
                   every room created under that team inherits the connection

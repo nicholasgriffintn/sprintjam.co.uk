@@ -3,6 +3,7 @@ import { ArrowUpRight, BookOpen, Clock, Users } from "lucide-react";
 
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
+import { MarketingCardHeading } from "@/components/marketing/MarketingCardHeading";
 import { SurfaceCard } from "@/components/ui";
 import { SITE_NAME } from "@/constants";
 import { useSessionActions } from "@/context/SessionContext";
@@ -110,35 +111,26 @@ const GuidesRoute = () => {
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/40">
-                <BookOpen className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <MarketingCardHeading as="h2" icon={<BookOpen />} size="lg">
                 Comprehensive Guides
-              </h2>
+              </MarketingCardHeading>
               <p className="text-sm text-slate-700 dark:text-slate-200">
                 From basics to advanced techniques, covering estimation
                 end-to-end.
               </p>
             </div>
             <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/40">
-                <Clock className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <MarketingCardHeading as="h2" icon={<Clock />} size="lg">
                 Quick reads
-              </h2>
+              </MarketingCardHeading>
               <p className="text-sm text-slate-700 dark:text-slate-200">
                 Each guide takes 4-7 minutes. Learn during a coffee break.
               </p>
             </div>
             <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/40">
-                <Users className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <MarketingCardHeading as="h2" icon={<Users />} size="lg">
                 Team-ready
-              </h2>
+              </MarketingCardHeading>
               <p className="text-sm text-slate-700 dark:text-slate-200">
                 Share with your team to align on estimation practices.
               </p>

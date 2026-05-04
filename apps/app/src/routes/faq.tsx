@@ -3,6 +3,7 @@ import { Link } from "react-router";
 
 import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
+import { MarketingCardHeading } from "@/components/marketing/MarketingCardHeading";
 import { Accordion, SurfaceCard } from "@/components/ui";
 import { getPathFromScreen } from "@/config/routes";
 import { SITE_NAME } from "@/constants";
@@ -58,12 +59,9 @@ const FaqRoute = () => {
                 key={title}
                 className="flex flex-col gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left shadow-sm dark:border-white/10 dark:bg-white/5"
               >
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:ring-brand-300/40">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <MarketingCardHeading as="h2" icon={<Icon />} size="lg">
                   {title}
-                </h2>
+                </MarketingCardHeading>
                 <p className="text-sm text-slate-700 dark:text-slate-200">
                   {description}
                 </p>
