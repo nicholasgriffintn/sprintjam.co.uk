@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { secureRandomString } from "@sprintjam/utils";
 
 import { WheelCanvas } from "@/components/wheel";
 import { useWheelConfetti } from "@/hooks/useWheelConfetti";
@@ -38,7 +39,7 @@ export const meta = createMeta("wheel");
 const getStoredUserName = () => {
   const stored = safeLocalStorage.get(USERNAME_STORAGE_KEY);
   if (stored) return stored;
-  const generated = `User-${Math.random().toString(36).slice(2, 6)}`;
+  const generated = `User-${secureRandomString("abcdefghijklmnopqrstuvwxyz0123456789", 4)}`;
   safeLocalStorage.set(USERNAME_STORAGE_KEY, generated);
   return generated;
 };

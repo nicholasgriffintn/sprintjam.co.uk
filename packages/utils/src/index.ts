@@ -18,3 +18,4 @@ export * from "./generate-id";
 export * from "./lib/stats-client";
 export * from "./bot-check";
 export * from "./escape";
+export * from "./random";

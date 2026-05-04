@@ -1,4 +1,5 @@
 import type { RoomData, RoomGameSession } from "@sprintjam/types";
+import { secureRandomInt } from "@sprintjam/utils";
 
 import type { GameEngine } from "../types";
 import { addEvent, addPoints } from "../helpers";
@@ -14,14 +15,14 @@ const pickPuzzleIndex = (used: number[]): number => {
   );
   const pool =
     available.length > 0 ? available : TEAM_THREADS_PUZZLES.map((_, i) => i);
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[secureRandomInt(pool.length)]!;
 };
 
 const loadPuzzle = (session: Partial<RoomGameSession>, puzzleIndex: number) => {
   const puzzle = TEAM_THREADS_PUZZLES[puzzleIndex];
   const allWords = puzzle.groups.flatMap((g) => g.words);
   for (let i = allWords.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureRandomInt(i + 1);
     [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
   }
   session.teamThreadsWords = allWords;

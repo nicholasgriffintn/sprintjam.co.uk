@@ -1,4 +1,5 @@
 import type { RoomGameSession } from "@sprintjam/types";
+import { secureRandomInt } from "@sprintjam/utils";
 
 import type { GameEngine } from "../types";
 import { addEvent, addPoints } from "../helpers";
@@ -6,7 +7,7 @@ import { addEvent, addPoints } from "../helpers";
 const TURNS_PER_PLAYER = 3;
 const DICE_COUNT = 6;
 
-const rollDie = () => Math.floor(Math.random() * 6) + 1;
+const rollDie = () => secureRandomInt(6) + 1;
 
 export const scoreDice = (dice: number[]): number => {
   if (dice.length === 0) return 0;

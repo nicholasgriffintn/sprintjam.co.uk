@@ -1,4 +1,5 @@
 import type { RoomData, RoomGameSession, RoomGameType } from "@sprintjam/types";
+import { secureRandomInt, secureRandomString } from "@sprintjam/utils";
 
 import type { GameEngine } from "./types";
 import {
@@ -17,10 +18,10 @@ const MAX_EMOJI_STORY_MOVE_EMOJIS = 6;
 const EMOJI_TOKEN_PATTERN =
   /(?:\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*|\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3)/gu;
 
-export const createNumberTarget = () => Math.floor(Math.random() * 20) + 1;
+export const createNumberTarget = () => secureRandomInt(20) + 1;
 
 export const createGameEvent = (message: string) => ({
-  id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+  id: `${Date.now()}-${secureRandomString("0123456789abcdef", 6)}`,
   message,
   createdAt: Date.now(),
 });
@@ -30,7 +31,7 @@ export const createGameMove = (
   userName: string,
   value: string,
 ) => ({
-  id: `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+  id: `${Date.now()}-${secureRandomString("0123456789abcdef", 6)}`,
   user: userName,
   submittedAt: Date.now(),
   value,
@@ -76,8 +77,7 @@ export const getRoundSubmissionCounts = (
   return counts;
 };
 
-const pickRandom = <T>(values: T[]) =>
-  values[Math.floor(Math.random() * values.length)];
+const pickRandom = <T>(values: T[]) => values[secureRandomInt(values.length)];
 
 const pickFreshValue = (pool: string[], history: string[]) => {
   const freshPool = pool.filter((value) => !history.includes(value));
@@ -123,7 +123,7 @@ const randomIndices = (size: number, count: number) => {
   const selected: number[] = [];
 
   while (selected.length < count && available.length > 0) {
-    const selectedIndex = Math.floor(Math.random() * available.length);
+    const selectedIndex = secureRandomInt(available.length);
     const [value] = available.splice(selectedIndex, 1);
     selected.push(value);
   }

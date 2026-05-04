@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { StandupData } from "@sprintjam/types";
+import { secureRandomInt } from "@sprintjam/utils";
 import {
   CheckCircle2,
   ChevronLeft,
@@ -29,7 +30,7 @@ interface StandupPresentationViewProps {
 function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureRandomInt(i + 1);
     [copy[i], copy[j]] = [copy[j]!, copy[i]!];
   }
   return copy;

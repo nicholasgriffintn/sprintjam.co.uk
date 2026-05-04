@@ -1,4 +1,5 @@
 import type { RoomGameSession } from "@sprintjam/types";
+import { secureRandomInt } from "@sprintjam/utils";
 
 import type { GameEngine } from "../types";
 import { addEvent, addPoints } from "../helpers";
@@ -9,7 +10,7 @@ const MAX_GUESSES = 6;
 const pickFreshWord = (history: string[]): string => {
   const fresh = SPRINT_WORD_BANK.filter((w) => !history.includes(w));
   const pool = fresh.length > 0 ? fresh : SPRINT_WORD_BANK;
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[secureRandomInt(pool.length)]!;
 };
 
 const scoreGuess = (
