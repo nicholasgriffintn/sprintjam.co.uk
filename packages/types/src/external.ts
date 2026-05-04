@@ -3,7 +3,7 @@
  */
 import type { OauthCredentialsItem as DbOauthCredentialsItem } from "@sprintjam/db";
 
-export type OAuthProvider = "jira" | "linear" | "github";
+export type OAuthProvider = "jira" | "linear" | "github" | "slack";
 
 export interface ExternalTicketMetadata {
   id?: string;
@@ -122,6 +122,16 @@ export interface GithubOAuthCredentials extends BaseOAuthCredentials {
   defaultRepo: string | null;
 }
 
+export interface SlackOAuthCredentials extends BaseOAuthCredentials {
+  slackTeamId: string | null;
+  slackTeamName: string | null;
+  slackEnterpriseId: string | null;
+  slackEnterpriseName: string | null;
+  slackBotUserId: string | null;
+  slackAppId: string | null;
+  slackAuthedUserId: string | null;
+}
+
 export interface GithubIssue {
   id: string;
   key: string;
@@ -159,6 +169,14 @@ export interface GithubOAuthStatus extends OAuthStatusBase {
   githubUserEmail?: string | null;
   defaultOwner?: string | null;
   defaultRepo?: string | null;
+}
+
+export interface SlackOAuthStatus extends OAuthStatusBase {
+  slackTeamId?: string | null;
+  slackTeamName?: string | null;
+  slackEnterpriseId?: string | null;
+  slackBotUserId?: string | null;
+  slackAppId?: string | null;
 }
 
 export interface JiraFieldOption {

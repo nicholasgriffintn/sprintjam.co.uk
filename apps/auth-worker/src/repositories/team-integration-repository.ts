@@ -8,6 +8,7 @@ import type {
   JiraOAuthCredentials,
   LinearOAuthCredentials,
   OAuthProvider,
+  SlackOAuthCredentials,
 } from "@sprintjam/types";
 import { safeJsonParse, TokenCipher } from "@sprintjam/utils";
 
@@ -32,6 +33,16 @@ type GithubMetadata = {
   githubUserEmail?: string | null;
   defaultOwner?: string | null;
   defaultRepo?: string | null;
+};
+
+type SlackMetadata = {
+  slackTeamId?: string | null;
+  slackTeamName?: string | null;
+  slackEnterpriseId?: string | null;
+  slackEnterpriseName?: string | null;
+  slackBotUserId?: string | null;
+  slackAppId?: string | null;
+  slackAuthedUserId?: string | null;
 };
 
 export class TeamIntegrationRepository {
@@ -355,6 +366,65 @@ export class TeamIntegrationRepository {
         defaultOwner: params.defaultOwner,
         defaultRepo: params.defaultRepo,
       } satisfies GithubMetadata),
+    });
+  }
+
+  async getSlackCredentials(
+    teamId: number,
+  ): Promise<SlackOAuthCredentials | null> {
+    const result = await this.getCredentials<SlackMetadata>(teamId, "slack");
+    if (!result) return null;
+
+    return {
+      ...result.core,
+      roomKey: `team:${teamId}`,
+      id: 0,
+      createdAt: 0,
+      updatedAt: 0,
+      slackTeamId: result.metadata.slackTeamId ?? null,
+      slackTeamName: result.metadata.slackTeamName ?? null,
+      slackEnterpriseId: result.metadata.slackEnterpriseId ?? null,
+      slackEnterpriseName: result.metadata.slackEnterpriseName ?? null,
+      slackBotUserId: result.metadata.slackBotUserId ?? null,
+      slackAppId: result.metadata.slackAppId ?? null,
+      slackAuthedUserId: result.metadata.slackAuthedUserId ?? null,
+    };
+  }
+
+  async saveSlackCredentials(params: {
+    teamId: number;
+    accessToken: string;
+    refreshToken: string | null;
+    tokenType: string;
+    expiresAt: number;
+    scope: string | null;
+    authorizedBy: string;
+    slackTeamId: string | null;
+    slackTeamName: string | null;
+    slackEnterpriseId: string | null;
+    slackEnterpriseName: string | null;
+    slackBotUserId: string | null;
+    slackAppId: string | null;
+    slackAuthedUserId: string | null;
+  }): Promise<void> {
+    await this.saveIntegration({
+      teamId: params.teamId,
+      provider: "slack",
+      accessToken: params.accessToken,
+      refreshToken: params.refreshToken,
+      tokenType: params.tokenType,
+      expiresAt: params.expiresAt,
+      scope: params.scope,
+      authorizedBy: params.authorizedBy,
+      metadata: JSON.stringify({
+        slackTeamId: params.slackTeamId,
+        slackTeamName: params.slackTeamName,
+        slackEnterpriseId: params.slackEnterpriseId,
+        slackEnterpriseName: params.slackEnterpriseName,
+        slackBotUserId: params.slackBotUserId,
+        slackAppId: params.slackAppId,
+        slackAuthedUserId: params.slackAuthedUserId,
+      } satisfies SlackMetadata),
     });
   }
 }

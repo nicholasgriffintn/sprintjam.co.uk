@@ -16,6 +16,7 @@ import {
   fetchLinearCycles,
   fetchLinearIssues,
   fetchLinearTeams,
+  exchangeSlackOAuthCode,
   findDefaultStoryPointsField,
   findDefaultSprintField,
   getLinearOrganization,
@@ -293,6 +294,17 @@ function getLinearOAuthConfig(env: AuthWorkerEnv) {
   return {
     clientId: env.LINEAR_OAUTH_CLIENT_ID,
     clientSecret: env.LINEAR_OAUTH_CLIENT_SECRET,
+  };
+}
+
+function getSlackOAuthConfig(env: AuthWorkerEnv) {
+  if (!env.SLACK_OAUTH_CLIENT_ID || !env.SLACK_OAUTH_CLIENT_SECRET) {
+    return null;
+  }
+
+  return {
+    clientId: env.SLACK_OAUTH_CLIENT_ID,
+    clientSecret: env.SLACK_OAUTH_CLIENT_SECRET,
   };
 }
 
@@ -798,6 +810,40 @@ export async function initiateTeamOAuthController(
       return jsonResponse({ authorizationUrl: authUrl.toString() });
     }
 
+    if (provider === "slack") {
+      const clientId = env.SLACK_OAUTH_CLIENT_ID;
+      const clientSecret = env.SLACK_OAUTH_CLIENT_SECRET;
+      const redirectUri =
+        env.SLACK_OAUTH_REDIRECT_URI ||
+        "https://sprintjam.co.uk/api/teams/integrations/slack/callback";
+
+      if (!clientId || !clientSecret) {
+        return jsonError(
+          "Slack OAuth not configured. Please contact administrator.",
+          500,
+        );
+      }
+
+      const state = await createSignedTeamOAuthState(
+        repo,
+        userId,
+        teamId,
+        user.email,
+        clientSecret,
+      );
+
+      const authUrl = new URL("https://slack.com/oauth/v2/authorize");
+      authUrl.searchParams.set("client_id", clientId);
+      authUrl.searchParams.set(
+        "scope",
+        "commands,chat:write,channels:read,groups:read",
+      );
+      authUrl.searchParams.set("redirect_uri", redirectUri);
+      authUrl.searchParams.set("state", state);
+
+      return jsonResponse({ authorizationUrl: authUrl.toString() });
+    }
+
     return jsonError("Unknown provider", 400);
   } catch (error) {
     console.error("Failed to initiate OAuth:", error);
@@ -1234,6 +1280,97 @@ export async function handleGithubTeamOAuthCallbackController(
     console.error("GitHub team OAuth callback error:", error);
     return oauthHtmlError(
       "An error occurred during GitHub authorization. Please try again.",
+      500,
+    );
+  }
+}
+
+export async function handleSlackTeamOAuthCallbackController(
+  url: URL,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const error = url.searchParams.get("error");
+
+  if (error) return oauthHtmlError(error, 400);
+  if (!code || !state) return oauthHtmlError("Missing code or state", 400);
+
+  const oauthConfig = getSlackOAuthConfig(env);
+  const redirectUri =
+    env.SLACK_OAUTH_REDIRECT_URI ||
+    "https://sprintjam.co.uk/api/teams/integrations/slack/callback";
+
+  if (!oauthConfig) {
+    return oauthHtmlError("OAuth not configured", 500);
+  }
+
+  try {
+    const stateData = (await verifyState(
+      state,
+      oauthConfig.clientSecret,
+    )) as TeamOAuthState;
+    const { teamId, userId } = stateData;
+
+    const stillAdmin = await verifyTeamAdminAccess(env, teamId, userId);
+    if (!stillAdmin) {
+      return oauthHtmlError("Team access has changed. Please try again.", 403);
+    }
+
+    const oauthChallenge = await consumeOAuthNonce(env, stateData);
+    if (!oauthChallenge) {
+      return oauthHtmlError(
+        "Invalid OAuth state. Please retry connection.",
+        400,
+      );
+    }
+
+    const tokenData = await exchangeSlackOAuthCode({
+      clientId: oauthConfig.clientId,
+      clientSecret: oauthConfig.clientSecret,
+      code,
+      redirectUri,
+    });
+
+    if (!tokenData.ok || !tokenData.access_token) {
+      return oauthHtmlError(
+        tokenData.error ?? "Failed to exchange code for token",
+        400,
+      );
+    }
+
+    const integrationRepo = getIntegrationRepo(env);
+    await integrationRepo.saveSlackCredentials({
+      teamId,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token ?? null,
+      tokenType: tokenData.token_type ?? "bot",
+      expiresAt:
+        Date.now() + (tokenData.expires_in ?? 90 * 24 * 60 * 60) * 1000,
+      scope: tokenData.scope ?? null,
+      authorizedBy: oauthChallenge.authorizedBy,
+      slackTeamId: tokenData.team?.id ?? null,
+      slackTeamName: tokenData.team?.name ?? null,
+      slackEnterpriseId: tokenData.enterprise?.id ?? null,
+      slackEnterpriseName: tokenData.enterprise?.name ?? null,
+      slackBotUserId: tokenData.bot_user_id ?? null,
+      slackAppId: tokenData.app_id ?? null,
+      slackAuthedUserId: tokenData.authed_user?.id ?? null,
+    });
+
+    return oauthHtmlSuccess(
+      "Slack connected successfully. You can close this window.",
+    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "Invalid state") {
+      return oauthHtmlError(
+        "Invalid OAuth state. Please retry connection.",
+        400,
+      );
+    }
+    console.error("Slack team OAuth callback error:", error);
+    return oauthHtmlError(
+      "An error occurred during Slack authorization. Please try again.",
       500,
     );
   }

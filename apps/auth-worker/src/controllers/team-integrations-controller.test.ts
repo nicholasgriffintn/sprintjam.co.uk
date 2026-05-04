@@ -5,6 +5,7 @@ import { signState } from "@sprintjam/utils";
 import {
   initiateTeamOAuthController,
   handleGithubTeamOAuthCallbackController,
+  handleSlackTeamOAuthCallbackController,
   listTeamIntegrationBoardsController,
   searchTeamIntegrationTicketsController,
 } from "./team-integrations-controller";
@@ -18,8 +19,10 @@ const mockWorkspaceIsOrganisationAdmin = vi.fn();
 const mockGetJiraCredentials = vi.fn();
 const mockGetGithubCredentials = vi.fn();
 const mockUpdateTokens = vi.fn();
+const mockSaveSlackCredentials = vi.fn();
 const mockFetchJiraBoards = vi.fn();
 const mockFetchGithubRepoIssues = vi.fn();
+const mockExchangeSlackOAuthCode = vi.fn();
 
 vi.mock("../lib/auth", () => ({
   authenticateRequest: (...args: unknown[]) => mockAuthenticateRequest(...args),
@@ -52,6 +55,10 @@ vi.mock("../repositories/team-integration-repository", () => ({
     updateTokens(...args: unknown[]) {
       return mockUpdateTokens(...args);
     }
+
+    saveSlackCredentials(...args: unknown[]) {
+      return mockSaveSlackCredentials(...args);
+    }
   },
 }));
 
@@ -61,6 +68,8 @@ vi.mock("@sprintjam/services", () => ({
     mockFetchGithubRepoIssues(...args),
   fetchGithubMilestones: vi.fn(),
   fetchGithubRepos: vi.fn(),
+  exchangeSlackOAuthCode: (...args: unknown[]) =>
+    mockExchangeSlackOAuthCode(...args),
   fetchJiraBoardIssues: vi.fn(),
   fetchJiraSprints: vi.fn(),
   fetchLinearCycles: vi.fn(),
@@ -172,6 +181,118 @@ describe("team integrations OAuth security", () => {
       }),
     );
     expect(JSON.stringify(signedState.data)).not.toContain("owner@example.com");
+  });
+
+  it("initiates Slack OAuth with app scopes and signed team state", async () => {
+    const repo = {
+      getTeamById: vi.fn().mockResolvedValue({
+        id: 7,
+        ownerId: 12,
+        organisationId: 5,
+        accessPolicy: "restricted",
+      }),
+      getUserById: vi.fn().mockResolvedValue({
+        id: 12,
+        email: "owner@example.com",
+        organisationId: 5,
+      }),
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "admin", status: "active" }),
+      createAuthChallenge: vi.fn().mockResolvedValue(1),
+    };
+    mockAuthenticateRequest.mockResolvedValue({
+      userId: 12,
+      email: "owner@example.com",
+      repo,
+    });
+
+    const env = {
+      DB: {} as any,
+      SLACK_OAUTH_CLIENT_ID: "slack-id",
+      SLACK_OAUTH_CLIENT_SECRET: "slack-secret",
+      TOKEN_ENCRYPTION_SECRET: "token-secret",
+    } as AuthWorkerEnv;
+
+    const response = await initiateTeamOAuthController(
+      new Request("https://test/api/teams/7/integrations/slack/authorize", {
+        method: "POST",
+      }),
+      env,
+      7,
+      "slack",
+    );
+    const body = (await response.json()) as { authorizationUrl: string };
+    const authorizationUrl = new URL(body.authorizationUrl);
+
+    expect(response.status).toBe(200);
+    expect(authorizationUrl.origin).toBe("https://slack.com");
+    expect(authorizationUrl.pathname).toBe("/oauth/v2/authorize");
+    expect(authorizationUrl.searchParams.get("scope")).toBe(
+      "commands,chat:write,channels:read,groups:read",
+    );
+    expect(authorizationUrl.searchParams.get("state")).toBeTruthy();
+  });
+
+  it("stores Slack bot credentials from the OAuth callback", async () => {
+    const state = await signState(
+      {
+        teamId: 7,
+        userId: 12,
+        nonce: "slack-nonce",
+      },
+      "slack-secret",
+    );
+    const url = new URL(
+      `https://test/api/teams/integrations/slack/callback?code=abc&state=${encodeURIComponent(state)}`,
+    );
+    mockTeamIsAdmin.mockResolvedValue(true);
+    mockWorkspaceGetChallenge.mockResolvedValue({
+      id: 99,
+      userId: 12,
+      type: "oauth",
+      usedAt: null,
+      expiresAt: Date.now() + 60_000,
+      metadata: JSON.stringify({
+        teamId: 7,
+        authorizedBy: "owner@example.com",
+      }),
+    });
+    mockExchangeSlackOAuthCode.mockResolvedValue({
+      ok: true,
+      access_token: "xoxb-token",
+      token_type: "bot",
+      scope: "commands,chat:write,channels:read,groups:read",
+      bot_user_id: "U-BOT",
+      app_id: "A123",
+      team: { id: "T123", name: "Example" },
+      enterprise: null,
+      authed_user: { id: "U123" },
+    });
+
+    const response = await handleSlackTeamOAuthCallbackController(url, {
+      DB: {} as any,
+      SLACK_OAUTH_CLIENT_ID: "slack-id",
+      SLACK_OAUTH_CLIENT_SECRET: "slack-secret",
+      TOKEN_ENCRYPTION_SECRET: "token-secret",
+    } as AuthWorkerEnv);
+
+    expect(response.status).toBe(200);
+    expect(mockWorkspaceMarkChallengeUsed).toHaveBeenCalledWith(99);
+    expect(mockSaveSlackCredentials).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 7,
+        accessToken: "xoxb-token",
+        tokenType: "bot",
+        authorizedBy: "owner@example.com",
+        slackTeamId: "T123",
+        slackTeamName: "Example",
+        slackBotUserId: "U-BOT",
+        slackAppId: "A123",
+        slackAuthedUserId: "U123",
+      }),
+    );
   });
 
   it("rejects callback when nonce challenge is missing", async () => {

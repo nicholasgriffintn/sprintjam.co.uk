@@ -157,6 +157,7 @@ export default function WorkspaceTeamSettings() {
   const jiraOAuth = useTeamOAuth(selectedTeamId, "jira");
   const linearOAuth = useTeamOAuth(selectedTeamId, "linear");
   const githubOAuth = useTeamOAuth(selectedTeamId, "github");
+  const slackOAuth = useTeamOAuth(selectedTeamId, "slack");
 
   const collaborationQuery = useQuery<TeamCollaborationInstallation[]>({
     queryKey: collaborationQueryKey,
@@ -782,6 +783,36 @@ export default function WorkspaceTeamSettings() {
                       : undefined
                   }
                 />
+
+                <IntegrationRow
+                  label="Slack"
+                  description="Install the public Slack app for commands and channel updates"
+                  status={slackOAuth.status}
+                  loading={slackOAuth.loading}
+                  error={slackOAuth.error}
+                  disabled={!canManageTeam}
+                  onConnect={slackOAuth.connect}
+                  onDisconnect={slackOAuth.disconnect}
+                  metadata={
+                    slackOAuth.status.connected
+                      ? [
+                          metaStr(slackOAuth.status.metadata, "slackTeamName"),
+                          metaStr(
+                            slackOAuth.status.metadata,
+                            "slackEnterpriseName",
+                          ),
+                          metaStr(
+                            slackOAuth.status.metadata,
+                            "slackBotUserId",
+                          )
+                            ? `Bot: ${metaStr(slackOAuth.status.metadata, "slackBotUserId")}`
+                            : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || undefined
+                      : undefined
+                  }
+                />
               </SurfaceCard>
 
               <SurfaceCard className="flex flex-col gap-4">
@@ -797,7 +828,7 @@ export default function WorkspaceTeamSettings() {
 
                 <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/40 dark:bg-blue-950/20">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-3">
+                    <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <p className="text-sm font-semibold text-blue-950 dark:text-blue-200">
                           How to connect Microsoft Teams
@@ -807,6 +838,16 @@ export default function WorkspaceTeamSettings() {
                           open it from the channel, chat, or meeting you want to
                           connect. Then sign in, select this workspace team, and
                           connect it.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-blue-950 dark:text-blue-200">
+                          How to connect Slack
+                        </p>
+                        <p className="mt-1 text-xs text-blue-900 dark:text-blue-300">
+                          Connect Slack in team integrations above. The public
+                          Slack app can then use commands and channel actions
+                          against this team&apos;s encrypted Slack installation.
                         </p>
                       </div>
                     </div>
@@ -849,9 +890,9 @@ export default function WorkspaceTeamSettings() {
                           No collaboration apps connected
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Add the SprintJam Teams app and open the launch tab to
-                          connect a channel, chat, or meeting to this workspace
-                          team.
+                          Open the SprintJam Teams app from a shared
+                          conversation, or connect Slack above before using
+                          Slack commands and channel updates for this team.
                         </p>
                       </div>
                     </div>
@@ -937,6 +978,9 @@ function getCollaborationLabel(installation: TeamCollaborationInstallation) {
   if (installation.displayName) {
     return installation.displayName;
   }
+  if (installation.platform === "slack") {
+    return installation.externalChannelId ? "Slack channel" : "Slack";
+  }
   if (installation.externalChannelId) {
     return "Teams channel";
   }
@@ -950,6 +994,31 @@ function getCollaborationLabel(installation: TeamCollaborationInstallation) {
     return "Teams team";
   }
   return "Teams";
+}
+
+function getCollaborationMetadata(
+  installation: TeamCollaborationInstallation,
+): string {
+  if (installation.platform === "slack") {
+    return [
+      "Slack",
+      metaStr(installation.metadata, "teamDomain") ??
+        `Workspace ${installation.tenantId}`,
+      metaStr(installation.metadata, "channelName")
+        ? `#${metaStr(installation.metadata, "channelName")}`
+        : undefined,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  return [
+    "Microsoft Teams",
+    `Tenant ${installation.tenantId}`,
+    metaStr(installation.metadata, "frameContext"),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function CollaborationInstallationRow({
@@ -971,10 +1040,7 @@ function CollaborationInstallationRow({
             {getCollaborationLabel(installation)}
           </p>
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            Microsoft Teams · Tenant {installation.tenantId}
-            {metaStr(installation.metadata, "frameContext")
-              ? ` · ${metaStr(installation.metadata, "frameContext")}`
-              : ""}
+            {getCollaborationMetadata(installation)}
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500">
             Connected {new Date(installation.createdAt).toLocaleDateString()}
