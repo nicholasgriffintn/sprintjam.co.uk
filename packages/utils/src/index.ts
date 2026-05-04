@@ -19,3 +19,5 @@ export * from "./lib/stats-client";
 export * from "./bot-check";
 export * from "./escape";
 export * from "./random";
+export * from "./object";
+export * from "./string";

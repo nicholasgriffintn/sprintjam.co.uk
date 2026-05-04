@@ -72,6 +72,9 @@ export interface AuthWorkerEnv extends BaseEnv {
   GITHUB_OAUTH_CLIENT_ID?: string;
   GITHUB_OAUTH_CLIENT_SECRET?: string;
   GITHUB_OAUTH_REDIRECT_URI?: string;
+  SLACK_OAUTH_CLIENT_ID?: string;
+  SLACK_OAUTH_CLIENT_SECRET?: string;
+  SLACK_OAUTH_REDIRECT_URI?: string;
   SEND_EMAIL: SendEmail;
 }
 

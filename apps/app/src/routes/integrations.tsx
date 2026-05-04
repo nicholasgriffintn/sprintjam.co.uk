@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   GitBranch,
   LayoutTemplate,
+  MessageSquare,
   ShieldCheck,
   Sparkles,
   Workflow,
@@ -81,6 +82,19 @@ const highlights = [
   },
 ];
 
+const chatIntegrations = [
+  {
+    name: "Microsoft Teams",
+    description:
+      "Launch SprintJam from a Teams tab, chat, channel, or meeting and keep the room tied to the right workspace team.",
+  },
+  {
+    name: "Slack",
+    description:
+      "Run SprintJam from a Slack channel, connect that channel to a workspace team, and bring teammates back to active planning rooms.",
+  },
+];
+
 const IntegrationsRoute = () => {
   const { startCreateFlow, startJoinFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
@@ -134,6 +148,32 @@ const IntegrationsRoute = () => {
                     <ArrowUpRight className="h-4 w-4" />
                   </button>
                 </div>
+              </SurfaceCard>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="text-left">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand-600">
+              Chat apps
+            </p>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
+              Start sessions where the conversation already happens
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {chatIntegrations.map(({ name, description }) => (
+              <SurfaceCard key={name} className="h-full text-left">
+                <MarketingCardHeading
+                  icon={<MessageSquare />}
+                  size="lg"
+                >
+                  {name}
+                </MarketingCardHeading>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                  {description}
+                </p>
               </SurfaceCard>
             ))}
           </div>

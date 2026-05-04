@@ -1,10 +1,14 @@
 import type { SaveTeamsCollaborationInstallationInput } from "@sprintjam/types";
+import {
+  boundedRecord,
+  optionalTrimmedString,
+} from "@sprintjam/utils";
 
 const MAX_CONTEXT_VALUE_LENGTH = 256;
 const MAX_DISPLAY_NAME_LENGTH = 120;
 const MAX_METADATA_LENGTH = 4096;
 
-type ParseResult =
+type TeamsParseResult =
   | { ok: true; value: SaveTeamsCollaborationInstallationInput }
   | { ok: false; error: string };
 
@@ -13,36 +17,6 @@ export class TeamsContextAlreadyLinkedError extends Error {
     super("Teams context is already linked to another team");
     this.name = "TeamsContextAlreadyLinkedError";
   }
-}
-
-function optionalString(value: unknown, maxLength = MAX_CONTEXT_VALUE_LENGTH) {
-  if (value === undefined || value === null) {
-    return null;
-  }
-
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  return trimmed.slice(0, maxLength);
-}
-
-function metadataObject(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {};
-  }
-
-  const serialized = JSON.stringify(value);
-  if (serialized.length > MAX_METADATA_LENGTH) {
-    return {};
-  }
-
-  return value as Record<string, unknown>;
 }
 
 export function buildTeamsContextKey(
@@ -71,22 +45,42 @@ export function buildTeamsContextKey(
   return `${input.tenantId}:${scope}`;
 }
 
-export function parseTeamsInstallationPayload(raw: unknown): ParseResult {
+export function parseTeamsInstallationPayload(
+  raw: unknown,
+): TeamsParseResult {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     return { ok: false, error: "request body must be an object" };
   }
 
   const body = raw as Record<string, unknown>;
-  const tenantId = optionalString(body.tenantId);
+  const tenantId = optionalTrimmedString(
+    body.tenantId,
+    MAX_CONTEXT_VALUE_LENGTH,
+  );
   if (!tenantId) {
     return { ok: false, error: "tenantId is required" };
   }
 
-  const externalTeamId = optionalString(body.externalTeamId);
-  const externalChannelId = optionalString(body.externalChannelId);
-  const externalChatId = optionalString(body.externalChatId);
-  const externalMeetingId = optionalString(body.externalMeetingId);
-  const externalUserId = optionalString(body.externalUserId);
+  const externalTeamId = optionalTrimmedString(
+    body.externalTeamId,
+    MAX_CONTEXT_VALUE_LENGTH,
+  );
+  const externalChannelId = optionalTrimmedString(
+    body.externalChannelId,
+    MAX_CONTEXT_VALUE_LENGTH,
+  );
+  const externalChatId = optionalTrimmedString(
+    body.externalChatId,
+    MAX_CONTEXT_VALUE_LENGTH,
+  );
+  const externalMeetingId = optionalTrimmedString(
+    body.externalMeetingId,
+    MAX_CONTEXT_VALUE_LENGTH,
+  );
+  const externalUserId = optionalTrimmedString(
+    body.externalUserId,
+    MAX_CONTEXT_VALUE_LENGTH,
+  );
 
   if (
     !externalTeamId &&
@@ -111,8 +105,11 @@ export function parseTeamsInstallationPayload(raw: unknown): ParseResult {
       externalChatId,
       externalMeetingId,
       externalUserId,
-      displayName: optionalString(body.displayName, MAX_DISPLAY_NAME_LENGTH),
-      metadata: metadataObject(body.metadata),
+      displayName: optionalTrimmedString(
+        body.displayName,
+        MAX_DISPLAY_NAME_LENGTH,
+      ),
+      metadata: boundedRecord(body.metadata, MAX_METADATA_LENGTH),
     },
   };
 }

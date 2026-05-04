@@ -10,7 +10,7 @@ export const teamIntegrations = sqliteTable(
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
     provider: text("provider", {
-      enum: ["jira", "linear", "github"],
+      enum: ["jira", "linear", "github", "slack"],
     }).notNull(),
     accessToken: text("access_token").notNull(),
     refreshToken: text("refresh_token"),

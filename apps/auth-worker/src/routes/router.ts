@@ -59,6 +59,7 @@ import {
   handleJiraTeamOAuthCallbackController,
   handleLinearTeamOAuthCallbackController,
   handleGithubTeamOAuthCallbackController,
+  handleSlackTeamOAuthCallbackController,
   revokeTeamIntegrationController,
   getTeamCredentialsInternalController,
   refreshTeamCredentialsInternalController,
@@ -492,7 +493,7 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/authorize$/,
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github|slack)\/authorize$/,
     handler: (request, env, params) => {
       const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -500,14 +501,14 @@ const ROUTES: RouteDefinition[] = [
         request,
         env,
         teamIdResult.value,
-        params[1] as "jira" | "linear" | "github",
+        params[1] as "jira" | "linear" | "github" | "slack",
       );
     },
     paramTypes: ["number", "string"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/status$/,
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github|slack)\/status$/,
     handler: (request, env, params) => {
       const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -515,7 +516,7 @@ const ROUTES: RouteDefinition[] = [
         request,
         env,
         teamIdResult.value,
-        params[1] as "jira" | "linear" | "github",
+        params[1] as "jira" | "linear" | "github" | "slack",
       );
     },
     paramTypes: ["number", "string"],
@@ -567,7 +568,7 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "DELETE",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)$/,
+    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github|slack)$/,
     handler: (request, env, params) => {
       const teamIdResult = requireNumberParam(params[0], "teamId");
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -575,7 +576,7 @@ const ROUTES: RouteDefinition[] = [
         request,
         env,
         teamIdResult.value,
-        params[1] as "jira" | "linear" | "github",
+        params[1] as "jira" | "linear" | "github" | "slack",
       );
     },
     paramTypes: ["number", "string"],
@@ -622,6 +623,21 @@ const ROUTES: RouteDefinition[] = [
         if (!success) return jsonError("Rate limit exceeded", 429);
       }
       return handleGithubTeamOAuthCallbackController(new URL(request.url), env);
+    },
+    paramTypes: ["none"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/integrations\/slack\/callback$/,
+    handler: async (request, env) => {
+      if (env.IP_RATE_LIMITER) {
+        const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+        const { success } = await env.IP_RATE_LIMITER.limit({
+          key: `oauth-callback:${ip}`,
+        });
+        if (!success) return jsonError("Rate limit exceeded", 429);
+      }
+      return handleSlackTeamOAuthCallbackController(new URL(request.url), env);
     },
     paramTypes: ["none"],
   },
