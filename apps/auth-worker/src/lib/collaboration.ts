@@ -41,16 +41,22 @@ function metadataObject(value: unknown): Record<string, unknown> {
 export function buildTeamsContextKey(
   input: Pick<
     SaveTeamsCollaborationInstallationInput,
-    "tenantId" | "externalTeamId" | "externalChannelId" | "externalChatId"
+    | "tenantId"
+    | "externalTeamId"
+    | "externalChannelId"
+    | "externalChatId"
+    | "externalMeetingId"
   >,
 ): string {
   const scope = input.externalChannelId
     ? `channel:${input.externalChannelId}`
     : input.externalChatId
       ? `chat:${input.externalChatId}`
-      : input.externalTeamId
-        ? `team:${input.externalTeamId}`
-        : "personal";
+      : input.externalMeetingId
+        ? `meeting:${input.externalMeetingId}`
+        : input.externalTeamId
+          ? `team:${input.externalTeamId}`
+          : "personal";
 
   return `${input.tenantId}:${scope}`;
 }
@@ -69,12 +75,20 @@ export function parseTeamsInstallationPayload(raw: unknown): ParseResult {
   const externalTeamId = optionalString(body.externalTeamId);
   const externalChannelId = optionalString(body.externalChannelId);
   const externalChatId = optionalString(body.externalChatId);
+  const externalMeetingId = optionalString(body.externalMeetingId);
   const externalUserId = optionalString(body.externalUserId);
 
-  if (!externalTeamId && !externalChannelId && !externalChatId && !externalUserId) {
+  if (
+    !externalTeamId &&
+    !externalChannelId &&
+    !externalChatId &&
+    !externalMeetingId &&
+    !externalUserId
+  ) {
     return {
       ok: false,
-      error: "Teams context must include a team, channel, chat, or user id",
+      error:
+        "Teams context must include a team, channel, chat, meeting, or user id",
     };
   }
 
@@ -85,6 +99,7 @@ export function parseTeamsInstallationPayload(raw: unknown): ParseResult {
       externalTeamId,
       externalChannelId,
       externalChatId,
+      externalMeetingId,
       externalUserId,
       displayName: optionalString(body.displayName, MAX_DISPLAY_NAME_LENGTH),
       metadata: metadataObject(body.metadata),

@@ -672,6 +672,18 @@ export async function saveTeamsCollaborationInstallation(
   return data.installation;
 }
 
+export async function resolveTeamsCollaborationInstallation(
+  payload: SaveTeamsCollaborationInstallationInput,
+): Promise<TeamCollaborationInstallation | null> {
+  const data = await workspaceRequest<{
+    installation: TeamCollaborationInstallation | null;
+  }>(`${API_BASE_URL}/collaboration-installations/teams/resolve`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return data.installation;
+}
+
 export async function deleteTeamCollaborationInstallation(
   teamId: number,
   installationId: number,

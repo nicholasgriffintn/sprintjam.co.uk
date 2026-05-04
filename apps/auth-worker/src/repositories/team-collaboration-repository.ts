@@ -19,14 +19,10 @@ export class TeamCollaborationRepository {
     this.db = drizzle(d1, { schema });
   }
 
-  async listForTeam(teamId: number): Promise<TeamCollaborationInstallation[]> {
-    const rows = await this.db
-      .select()
-      .from(teamCollaborationInstallations)
-      .where(eq(teamCollaborationInstallations.teamId, teamId))
-      .orderBy(teamCollaborationInstallations.platform);
-
-    return rows.map((row) => ({
+  private toInstallation(
+    row: typeof teamCollaborationInstallations.$inferSelect,
+  ): TeamCollaborationInstallation {
+    return {
       id: row.id,
       teamId: row.teamId,
       platform: row.platform as CollaborationPlatform,
@@ -34,6 +30,7 @@ export class TeamCollaborationRepository {
       externalTeamId: row.externalTeamId,
       externalChannelId: row.externalChannelId,
       externalChatId: row.externalChatId,
+      externalMeetingId: row.externalMeetingId,
       externalUserId: row.externalUserId,
       displayName: row.displayName,
       installedById: row.installedById,
@@ -41,7 +38,42 @@ export class TeamCollaborationRepository {
         safeJsonParse<Record<string, unknown>>(row.metadata ?? "{}") ?? {},
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-    }));
+    };
+  }
+
+  async listForTeam(teamId: number): Promise<TeamCollaborationInstallation[]> {
+    const rows = await this.db
+      .select()
+      .from(teamCollaborationInstallations)
+      .where(eq(teamCollaborationInstallations.teamId, teamId))
+      .orderBy(teamCollaborationInstallations.platform);
+
+    return rows.map((row) => this.toInstallation(row));
+  }
+
+  async getTeamsInstallationByContext(
+    input: Pick<
+      SaveTeamsCollaborationInstallationInput,
+      | "tenantId"
+      | "externalTeamId"
+      | "externalChannelId"
+      | "externalChatId"
+      | "externalMeetingId"
+    >,
+  ): Promise<TeamCollaborationInstallation | null> {
+    const contextKey = buildTeamsContextKey(input);
+    const row = await this.db
+      .select()
+      .from(teamCollaborationInstallations)
+      .where(
+        and(
+          eq(teamCollaborationInstallations.platform, "teams"),
+          eq(teamCollaborationInstallations.contextKey, contextKey),
+        ),
+      )
+      .get();
+
+    return row ? this.toInstallation(row) : null;
   }
 
   async saveTeamsInstallation(params: {
@@ -63,6 +95,7 @@ export class TeamCollaborationRepository {
         externalTeamId: params.input.externalTeamId ?? null,
         externalChannelId: params.input.externalChannelId ?? null,
         externalChatId: params.input.externalChatId ?? null,
+        externalMeetingId: params.input.externalMeetingId ?? null,
         externalUserId: params.input.externalUserId ?? null,
         displayName: params.input.displayName ?? null,
         installedById: params.installedById,
@@ -81,6 +114,7 @@ export class TeamCollaborationRepository {
           externalTeamId: params.input.externalTeamId ?? null,
           externalChannelId: params.input.externalChannelId ?? null,
           externalChatId: params.input.externalChatId ?? null,
+          externalMeetingId: params.input.externalMeetingId ?? null,
           externalUserId: params.input.externalUserId ?? null,
           displayName: params.input.displayName ?? null,
           installedById: params.installedById,
@@ -104,22 +138,7 @@ export class TeamCollaborationRepository {
       throw new Error("Failed to save Teams installation");
     }
 
-    return {
-      id: saved.id,
-      teamId: saved.teamId,
-      platform: saved.platform as CollaborationPlatform,
-      tenantId: saved.tenantId,
-      externalTeamId: saved.externalTeamId,
-      externalChannelId: saved.externalChannelId,
-      externalChatId: saved.externalChatId,
-      externalUserId: saved.externalUserId,
-      displayName: saved.displayName,
-      installedById: saved.installedById,
-      metadata:
-        safeJsonParse<Record<string, unknown>>(saved.metadata ?? "{}") ?? {},
-      createdAt: saved.createdAt,
-      updatedAt: saved.updatedAt,
-    };
+    return this.toInstallation(saved);
   }
 
   async deleteForTeam(teamId: number, installationId: number): Promise<boolean> {

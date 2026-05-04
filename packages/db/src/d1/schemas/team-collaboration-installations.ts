@@ -16,6 +16,7 @@ export const teamCollaborationInstallations = sqliteTable(
     externalTeamId: text("external_team_id"),
     externalChannelId: text("external_channel_id"),
     externalChatId: text("external_chat_id"),
+    externalMeetingId: text("external_meeting_id"),
     externalUserId: text("external_user_id"),
     displayName: text("display_name"),
     installedById: integer("installed_by_id")

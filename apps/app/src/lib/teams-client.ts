@@ -15,6 +15,12 @@ type TeamsContext = {
   chat?: {
     id?: string;
   };
+  meeting?: {
+    id?: string;
+  };
+  page?: {
+    frameContext?: string;
+  };
   team?: {
     groupId?: string;
     displayName?: string;

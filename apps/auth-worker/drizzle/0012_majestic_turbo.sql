@@ -7,6 +7,7 @@ CREATE TABLE `team_collaboration_installations` (
 	`external_team_id` text,
 	`external_channel_id` text,
 	`external_chat_id` text,
+	`external_meeting_id` text,
 	`external_user_id` text,
 	`display_name` text,
 	`installed_by_id` integer NOT NULL,

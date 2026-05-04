@@ -54,6 +54,7 @@ export interface TeamCollaborationInstallation {
   externalTeamId: string | null;
   externalChannelId: string | null;
   externalChatId: string | null;
+  externalMeetingId: string | null;
   externalUserId: string | null;
   displayName: string | null;
   installedById: number;
@@ -67,6 +68,7 @@ export interface SaveTeamsCollaborationInstallationInput {
   externalTeamId?: string | null;
   externalChannelId?: string | null;
   externalChatId?: string | null;
+  externalMeetingId?: string | null;
   externalUserId?: string | null;
   displayName?: string | null;
   metadata?: Record<string, unknown>;

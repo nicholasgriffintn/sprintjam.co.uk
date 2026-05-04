@@ -3,12 +3,14 @@ import type { AuthWorkerEnv } from "@sprintjam/types";
 
 import {
   listTeamCollaborationInstallationsController,
+  resolveTeamsCollaborationInstallationController,
   saveTeamsCollaborationInstallationController,
 } from "./team-collaboration-controller";
 
 const mockAuthenticateRequest = vi.fn();
 const mockListForTeam = vi.fn();
 const mockSaveTeamsInstallation = vi.fn();
+const mockGetTeamsInstallationByContext = vi.fn();
 
 vi.mock("../lib/auth", () => ({
   authenticateRequest: (...args: unknown[]) => mockAuthenticateRequest(...args),
@@ -24,6 +26,10 @@ vi.mock("../repositories/team-collaboration-repository", () => ({
 
     saveTeamsInstallation(...args: unknown[]) {
       return mockSaveTeamsInstallation(...args);
+    }
+
+    getTeamsInstallationByContext(...args: unknown[]) {
+      return mockGetTeamsInstallationByContext(...args);
     }
   },
 }));
@@ -130,6 +136,7 @@ describe("team collaboration controller", () => {
       externalTeamId: "team-1",
       externalChannelId: "channel-1",
       externalChatId: null,
+      externalMeetingId: null,
       externalUserId: "user-1",
       displayName: "Planning",
       metadata: { source: "teams" },
@@ -167,10 +174,118 @@ describe("team collaboration controller", () => {
         externalTeamId: "team-1",
         externalChannelId: "channel-1",
         externalChatId: null,
+        externalMeetingId: null,
         externalUserId: "user-1",
         displayName: "Planning",
         metadata: { source: "teams" },
       },
+    });
+  });
+
+  it("resolves a linked Teams context for team members", async () => {
+    const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
+    });
+    authenticateAs(repo);
+    mockGetTeamsInstallationByContext.mockResolvedValue({
+      id: 4,
+      teamId: 7,
+      platform: "teams",
+      tenantId: "tenant-1",
+      externalTeamId: "team-1",
+      externalChannelId: "channel-1",
+      externalChatId: null,
+      externalMeetingId: null,
+      externalUserId: "user-1",
+      displayName: "Planning",
+      metadata: { source: "teams" },
+      installedById: 1,
+      createdAt: 1700000000000,
+      updatedAt: 1700000000000,
+    });
+
+    const response = await resolveTeamsCollaborationInstallationController(
+      makeRequest("https://test/api/collaboration-installations/teams/resolve", {
+        method: "POST",
+        body: JSON.stringify({
+          tenantId: "tenant-1",
+          externalChannelId: "channel-1",
+          externalUserId: "user-1",
+        }),
+      }),
+      env,
+    );
+    const data = (await response.json()) as {
+      installation: { teamId: number } | null;
+    };
+
+    expect(response.status).toBe(200);
+    expect(data.installation?.teamId).toBe(7);
+    expect(mockGetTeamsInstallationByContext).toHaveBeenCalledWith({
+      tenantId: "tenant-1",
+      externalTeamId: null,
+      externalChannelId: "channel-1",
+      externalChatId: null,
+      externalMeetingId: null,
+      externalUserId: "user-1",
+      displayName: null,
+      metadata: {},
+    });
+  });
+
+  it("resolves a linked Teams meeting context", async () => {
+    const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
+    });
+    authenticateAs(repo);
+    mockGetTeamsInstallationByContext.mockResolvedValue({
+      id: 5,
+      teamId: 7,
+      platform: "teams",
+      tenantId: "tenant-1",
+      externalTeamId: null,
+      externalChannelId: null,
+      externalChatId: null,
+      externalMeetingId: "meeting-1",
+      externalUserId: "user-1",
+      displayName: "Sprint planning",
+      metadata: { source: "teams", frameContext: "sidePanel" },
+      installedById: 1,
+      createdAt: 1700000000000,
+      updatedAt: 1700000000000,
+    });
+
+    const response = await resolveTeamsCollaborationInstallationController(
+      makeRequest("https://test/api/collaboration-installations/teams/resolve", {
+        method: "POST",
+        body: JSON.stringify({
+          tenantId: "tenant-1",
+          externalMeetingId: "meeting-1",
+          externalUserId: "user-1",
+          metadata: { frameContext: "sidePanel" },
+        }),
+      }),
+      env,
+    );
+    const data = (await response.json()) as {
+      installation: { teamId: number } | null;
+    };
+
+    expect(response.status).toBe(200);
+    expect(data.installation?.teamId).toBe(7);
+    expect(mockGetTeamsInstallationByContext).toHaveBeenCalledWith({
+      tenantId: "tenant-1",
+      externalTeamId: null,
+      externalChannelId: null,
+      externalChatId: null,
+      externalMeetingId: "meeting-1",
+      externalUserId: "user-1",
+      displayName: null,
+      metadata: { frameContext: "sidePanel" },
     });
   });
 

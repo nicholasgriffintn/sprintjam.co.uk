@@ -7,6 +7,7 @@ import type {
 import { createRequestHandler } from "react-router";
 import type { DispatchWorkerEnv } from "@sprintjam/types";
 import * as Sentry from "@sentry/cloudflare";
+import { handleTeamsManifest } from "./teams-manifest";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -48,6 +49,10 @@ async function handleRequest(
 
     if (url.pathname === "/robots.txt") {
       return handleRobotsTxt(env);
+    }
+
+    if (url.pathname === "/teams-manifest.json") {
+      return handleTeamsManifest(request);
     }
 
     if (url.pathname.startsWith("/api/")) {

@@ -1613,6 +1613,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "external_meeting_id": {
+          "name": "external_meeting_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "external_user_id": {
           "name": "external_user_id",
           "type": "text",

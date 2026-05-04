@@ -110,6 +110,40 @@ export async function saveTeamsCollaborationInstallationController(
   return jsonResponse({ installation }, 201);
 }
 
+export async function resolveTeamsCollaborationInstallationController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) return auth.response;
+
+  let raw: unknown;
+  try {
+    raw = await request.json();
+  } catch {
+    return jsonError("Invalid request body", 400);
+  }
+
+  const parsed = parseTeamsInstallationPayload(raw);
+  if (!parsed.ok) {
+    return jsonError(parsed.error, 400);
+  }
+
+  const repo = new TeamCollaborationRepository(env.DB);
+  const installation = await repo.getTeamsInstallationByContext(parsed.value);
+  if (!installation) {
+    return jsonResponse({ installation: null });
+  }
+
+  const access = await getTeamAccess(auth.result, installation.teamId);
+  if ("response" in access) return access.response;
+  if (!access.canAccess) {
+    return forbiddenResponse("You do not have access to this team");
+  }
+
+  return jsonResponse({ installation });
+}
+
 export async function deleteTeamCollaborationInstallationController(
   request: Request,
   env: AuthWorkerEnv,

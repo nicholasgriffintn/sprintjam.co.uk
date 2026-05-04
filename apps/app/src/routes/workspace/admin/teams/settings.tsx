@@ -118,6 +118,13 @@ export default function WorkspaceTeamSettings() {
 
     return `${window.location.origin}/teams/launch`;
   }, []);
+  const teamsManifestUrl = useMemo(() => {
+    if (typeof window === "undefined") {
+      return "https://sprintjam.co.uk/teams-manifest.json";
+    }
+
+    return `${window.location.origin}/teams-manifest.json`;
+  }, []);
 
   const settingsQuery = useQuery<RoomSettings | null>({
     queryKey: settingsQueryKey,
@@ -763,19 +770,21 @@ export default function WorkspaceTeamSettings() {
                         </p>
                         <p className="mt-1 text-xs text-blue-900 dark:text-blue-300">
                           Create or edit the SprintJam app in Microsoft Teams
-                          Developer Portal, add a tab that points to the launch
-                          URL below, then open that tab from the Teams channel
-                          or chat you want to connect.
+                          Developer Portal using the manifest below, then open
+                          the SprintJam tab from the Teams channel, chat, or
+                          meeting you want to connect.
                         </p>
                       </div>
                       <ul className="space-y-1 text-xs text-blue-900 dark:text-blue-300">
-                        <li>1. Add a static or configurable Teams tab.</li>
                         <li>
-                          2. Use this as the tab content URL: {teamsLaunchUrl}
+                          1. Use this manifest: {teamsManifestUrl}
                         </li>
                         <li>
-                          3. Set the valid domain to{" "}
-                          {new URL(teamsLaunchUrl).host}.
+                          2. Confirm the tab content URL is {teamsLaunchUrl}.
+                        </li>
+                        <li>
+                          3. Enable channel, chat, meeting details, meeting
+                          side panel, and meeting stage tab contexts.
                         </li>
                         <li>
                           4. Open the tab in Teams, sign in, select this
@@ -791,6 +800,14 @@ export default function WorkspaceTeamSettings() {
                         onClick={() => void handleCopyTeamsLaunchUrl()}
                       >
                         Copy URL
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        icon={<ExternalLink className="h-4 w-4" />}
+                        onClick={() => window.open(teamsManifestUrl, "_blank")}
+                      >
+                        Manifest
                       </Button>
                       <Button
                         size="sm"
@@ -841,7 +858,8 @@ export default function WorkspaceTeamSettings() {
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           Add the SprintJam Teams app and open the launch tab to
-                          connect a channel or chat to this workspace team.
+                          connect a channel, chat, or meeting to this workspace
+                          team.
                         </p>
                       </div>
                     </div>
@@ -933,6 +951,9 @@ function getCollaborationLabel(installation: TeamCollaborationInstallation) {
   if (installation.externalChatId) {
     return "Teams chat";
   }
+  if (installation.externalMeetingId) {
+    return "Teams meeting";
+  }
   if (installation.externalTeamId) {
     return "Teams team";
   }
@@ -959,6 +980,9 @@ function CollaborationInstallationRow({
           </p>
           <p className="text-xs text-slate-600 dark:text-slate-400">
             Microsoft Teams · Tenant {installation.tenantId}
+            {metaStr(installation.metadata, "frameContext")
+              ? ` · ${metaStr(installation.metadata, "frameContext")}`
+              : ""}
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500">
             Connected {new Date(installation.createdAt).toLocaleDateString()}

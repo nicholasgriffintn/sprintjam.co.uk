@@ -46,6 +46,7 @@ import {
 import {
   deleteTeamCollaborationInstallationController,
   listTeamCollaborationInstallationsController,
+  resolveTeamsCollaborationInstallationController,
   saveTeamsCollaborationInstallationController,
 } from "../controllers/team-collaboration-controller";
 import {
@@ -437,6 +438,13 @@ const ROUTES: RouteDefinition[] = [
       );
     },
     paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^collaboration-installations\/teams\/resolve$/,
+    handler: (request, env) =>
+      resolveTeamsCollaborationInstallationController(request, env),
+    paramTypes: ["none"],
   },
   {
     method: "POST",
