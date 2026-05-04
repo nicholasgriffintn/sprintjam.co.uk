@@ -86,3 +86,30 @@ export function playFidgetStickSound(strength: number): void {
     volume: 0.045,
   });
 }
+
+export function playFidgetSwitchSound(isOn: boolean): void {
+  playTone({
+    frequency: isOn ? 420 : 260,
+    duration: 0.045,
+    type: "square",
+    volume: 0.08,
+  });
+}
+
+export function playFidgetSlideSound(position: number): void {
+  playTone({
+    frequency: 240 + position * 44,
+    duration: 0.04,
+    type: "triangle",
+    volume: 0.055,
+  });
+}
+
+export function playFidgetBeadSound(position: number): void {
+  playTone({
+    frequency: 300 + position * 36,
+    duration: 0.05,
+    type: "sine",
+    volume: 0.075,
+  });
+}

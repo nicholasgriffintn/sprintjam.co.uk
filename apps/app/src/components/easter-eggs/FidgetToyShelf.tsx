@@ -1,56 +1,54 @@
-import {
-  type PointerEvent as ReactPointerEvent,
-  useMemo,
-} from "react";
-import {
-  CircleDot,
-  Grip,
-  RotateCw,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+import { useCallback, useMemo } from "react";
+import { Grip, Trash2, Volume2, VolumeX, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import {
   type ActiveToy,
+  MAX_FIDGET_TOYS,
   type ToyKind,
   useFidgetToys,
 } from "@/components/easter-eggs/FidgetToyContext";
 import { useDraggableFidget } from "@/components/easter-eggs/useDraggableFidget";
-import { Joystick } from "./toys/joystick";
-import { SpinnerToy } from "./toys/spinner";
-import { PopPadToy } from "./toys/poppad";
-
-const TOY_OPTIONS: Array<{
-  kind: ToyKind;
-  label: string;
-  Icon: typeof CircleDot;
-}> = [
-    { kind: "spinner", label: "Spinner", Icon: RotateCw },
-    { kind: "pop-pad", label: "Pop pad", Icon: CircleDot },
-    { kind: "joystick", label: "Joystick", Icon: SlidersHorizontal },
-  ];
-
-const getToyTitle = (kind: ToyKind) =>
-  TOY_OPTIONS.find((toy) => toy.kind === kind)?.label ?? "Fidget";
+import {
+  getToyOption,
+  getToyTitle,
+  TOY_OPTIONS,
+} from "./toys/registry";
 
 export function FidgetToyShelf() {
-  const { isPickerOpen, closePicker, toys, addToy, removeToy } =
-    useFidgetToys();
-  const visibleToys = useMemo(() => toys.slice(-5), [toys]);
+  const {
+    isPickerOpen,
+    isSoundEnabled,
+    closePicker,
+    toys,
+    addToy,
+    removeToy,
+    clearToys,
+    toggleSound,
+    updateToyPosition,
+  } = useFidgetToys();
+  const visibleToys = useMemo(() => toys.slice(-MAX_FIDGET_TOYS), [toys]);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40">
       {isPickerOpen ? (
-        <FidgetPicker onAddToy={addToy} onClose={closePicker} />
+        <FidgetPicker
+          activeToyCount={visibleToys.length}
+          isSoundEnabled={isSoundEnabled}
+          onAddToy={addToy}
+          onClear={clearToys}
+          onClose={closePicker}
+          onToggleSound={toggleSound}
+        />
       ) : null}
 
-      {visibleToys.map((toy, index) => (
+      {visibleToys.map((toy) => (
         <DraggableToy
           key={toy.id}
           toy={toy}
-          index={index}
           onRemove={() => removeToy(toy.id)}
+          onPositionChange={(position) => updateToyPosition(toy.id, position)}
+          isSoundEnabled={isSoundEnabled}
         />
       ))}
     </div>
@@ -58,16 +56,28 @@ export function FidgetToyShelf() {
 }
 
 function FidgetPicker({
+  activeToyCount,
+  isSoundEnabled,
   onAddToy,
+  onClear,
   onClose,
+  onToggleSound,
 }: {
+  activeToyCount: number;
+  isSoundEnabled: boolean;
   onAddToy: (kind: ToyKind) => void;
+  onClear: () => void;
   onClose: () => void;
+  onToggleSound: () => void;
 }) {
-  const { position, isDragging, startDrag } = useDraggableFidget({
-    x: 28,
-    y: 120,
-  }, { width: 360, height: 220 });
+  const pickerBounds = useMemo(() => ({ width: 360, height: 330 }), []);
+  const { position, isDragging, startDrag } = useDraggableFidget(
+    {
+      x: 28,
+      y: 120,
+    },
+    pickerBounds,
+  );
 
   return (
     <section
@@ -81,6 +91,36 @@ function FidgetPicker({
         onPointerDown={startDrag}
         onClose={onClose}
       />
+      <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 px-3 py-2 text-xs text-slate-500 dark:border-white/10 dark:text-slate-300">
+        <span>
+          {activeToyCount}/{MAX_FIDGET_TOYS} toys
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onToggleSound}
+            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+            aria-label={
+              isSoundEnabled ? "Mute fidget sounds" : "Unmute fidget sounds"
+            }
+          >
+            {isSoundEnabled ? (
+              <Volume2 className="h-3.5 w-3.5" />
+            ) : (
+              <VolumeX className="h-3.5 w-3.5" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={activeToyCount === 0}
+            className="rounded-full p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+            aria-label="Clear fidget toys"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
       <div className="grid grid-cols-3 gap-2 p-3">
         {TOY_OPTIONS.map(({ kind, label, Icon }) => (
           <Button
@@ -101,22 +141,23 @@ function FidgetPicker({
 
 function DraggableToy({
   toy,
-  index,
   onRemove,
+  onPositionChange,
+  isSoundEnabled,
 }: {
   toy: ActiveToy;
-  index: number;
   onRemove: () => void;
+  onPositionChange: (position: ActiveToy["position"]) => void;
+  isSoundEnabled: boolean;
 }) {
-  const initialPosition = useMemo(
-    () => ({
-      x: 28 + index * 28,
-      y: 96 + index * 22,
-    }),
-    [index],
+  const toyOption = getToyOption(toy.kind);
+  const ToyComponent = toyOption?.Component;
+  const handlePositionChange = useCallback(
+    (position: ActiveToy["position"]) => onPositionChange(position),
+    [onPositionChange],
   );
   const { position, isDragging, startDrag } =
-    useDraggableFidget(initialPosition);
+    useDraggableFidget(toy.position, undefined, handlePositionChange);
 
   return (
     <section
@@ -131,13 +172,12 @@ function DraggableToy({
         onClose={onRemove}
       />
       <div className="p-4">
-        {toy.kind === "spinner" ? (
-          <SpinnerToy seed={toy.createdAt} />
-        ) : toy.kind === "pop-pad" ? (
-          <PopPadToy />
-        ) : (
-          <Joystick />
-        )}
+        {ToyComponent ? (
+          <ToyComponent
+            seed={toy.visualSeed}
+            isSoundEnabled={isSoundEnabled}
+          />
+        ) : null}
       </div>
     </section>
   );

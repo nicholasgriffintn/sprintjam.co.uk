@@ -1,24 +1,30 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import {
-  playFidgetSpinSound,
-} from "@/lib/fidget-audio";
+import { playFidgetSpinSound } from "@/lib/fidget-audio";
 
-export function SpinnerToy({ seed }: { seed: number }) {
+export function SpinnerToy({
+  seed,
+  isSoundEnabled,
+}: {
+  seed: number;
+  isSoundEnabled: boolean;
+}) {
   const [spin, setSpin] = useState(seed * 90);
 
   return (
     <button
       type="button"
       onClick={() => {
-        playFidgetSpinSound();
+        if (isSoundEnabled) {
+          playFidgetSpinSound();
+        }
         setSpin((current) => current + 720);
       }}
       className="mx-auto grid h-36 w-36 place-items-center rounded-full border border-brand-100 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.95),rgba(238,246,255,0.72)_48%,rgba(47,109,255,0.12)_49%,rgba(47,109,255,0.06)_100%)] transition hover:scale-[1.02] dark:border-brand-300/20 dark:bg-[radial-gradient(circle_at_50%_50%,rgba(15,23,42,0.95),rgba(23,45,112,0.5)_50%,rgba(83,152,255,0.12)_51%,rgba(83,152,255,0.04)_100%)]"
       aria-label="Spin fidget spinner"
     >
       <span
-        className="relative block h-24 w-24 rounded-full transition-transform duration-1000 ease-out"
+        className="relative block h-24 w-24 rounded-full transition-transform duration-1000 ease-out motion-reduce:duration-100"
         style={{ transform: `rotate(${spin}deg)` }}
       >
         <span className="absolute left-1/2 top-1/2 h-4 w-16 origin-left -translate-y-1/2 rounded-full bg-slate-900 shadow-sm dark:bg-slate-100" />
