@@ -77,7 +77,7 @@
       "send_email": [
         {
           "name": "SEND_EMAIL",
-          "remote": true
+          "remote": false
         }
       ],
       "ratelimits": [],
