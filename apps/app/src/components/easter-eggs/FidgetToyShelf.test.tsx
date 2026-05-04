@@ -56,4 +56,23 @@ describe("FidgetToyShelf", () => {
 
     expect(screen.queryByRole("switch", { name: "Top switch" })).toBeNull();
   });
+
+  it("renders randomised spinner and maze toy surfaces", () => {
+    render(
+      <FidgetToyProvider>
+        <FidgetHarness />
+      </FidgetToyProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open fidget box" }));
+    fireEvent.click(screen.getByRole("button", { name: "Spinner" }));
+    fireEvent.click(screen.getByRole("button", { name: "Slider maze" }));
+
+    expect(
+      screen.getByRole("button", { name: "Spin fidget spinner" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("slider", { name: "Slide the bead through the maze" }),
+    ).toBeTruthy();
+  });
 });
