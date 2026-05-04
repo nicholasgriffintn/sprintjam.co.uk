@@ -14,12 +14,6 @@ import type { WorkspaceAuthProfile } from "@sprintjam/types";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
 import { logout as logoutService } from "@/lib/workspace-service";
 
-import { useWorkspaceProfile } from "@/lib/data/hooks";
-import {
-  WORKSPACE_PROFILE_DOCUMENT_KEY,
-  workspaceProfileCollection,
-} from "@/lib/data/collections";
-
 interface WorkspaceAuthContextValue {
   user: WorkspaceUser | null;
   teams: WorkspaceTeam[];
@@ -33,47 +27,23 @@ const WorkspaceAuthContext = createContext<WorkspaceAuthContextValue | null>(
   null,
 );
 
-function seedCollection(profile: WorkspaceAuthProfile | null) {
-  if (profile) {
-    workspaceProfileCollection.utils.writeUpsert(profile);
-  } else if (workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY)) {
-    workspaceProfileCollection.utils.writeDelete(
-      WORKSPACE_PROFILE_DOCUMENT_KEY,
-    );
-  }
-}
-
 export function WorkspaceAuthProvider({
   children,
   initialProfile = null,
 }: {
   children: ReactNode;
-  initialProfile?:
-    | WorkspaceAuthProfile
-    | null
-    | Promise<WorkspaceAuthProfile | null>;
+  initialProfile?: WorkspaceAuthProfile | null;
 }) {
   const workspacesEnabled = isWorkspacesEnabled();
-  const collectionProfile = useWorkspaceProfile(workspacesEnabled);
   const [resolvedProfile, setResolvedProfile] =
-    useState<WorkspaceAuthProfile | null>(
-      initialProfile instanceof Promise ? null : (initialProfile ?? null),
-    );
-  const profile = collectionProfile ?? resolvedProfile;
+    useState<WorkspaceAuthProfile | null>(initialProfile);
+  const profile = workspacesEnabled ? resolvedProfile : null;
   const [isLoading, setIsLoading] = useState(false);
   const revalidator = useRevalidator();
 
   useEffect(() => {
-    if (!(initialProfile instanceof Promise)) {
-      seedCollection(initialProfile ?? null);
-      return;
-    }
-
-    initialProfile.then((resolved) => {
-      setResolvedProfile(resolved);
-      seedCollection(resolved);
-    });
-  }, []);
+    setResolvedProfile(initialProfile);
+  }, [initialProfile]);
 
   const refreshAuth = useCallback(async () => {
     setIsLoading(true);
@@ -81,11 +51,7 @@ export function WorkspaceAuthProvider({
       await revalidator.revalidate();
     } catch (error) {
       console.error("Failed to refresh workspace auth", error);
-      if (workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY)) {
-        workspaceProfileCollection.utils.writeDelete(
-          WORKSPACE_PROFILE_DOCUMENT_KEY,
-        );
-      }
+      setResolvedProfile(null);
     } finally {
       setIsLoading(false);
     }
@@ -94,15 +60,12 @@ export function WorkspaceAuthProvider({
   const logout = useCallback(async () => {
     try {
       await logoutService();
-      if (workspaceProfileCollection.get(WORKSPACE_PROFILE_DOCUMENT_KEY)) {
-        workspaceProfileCollection.utils.writeDelete(
-          WORKSPACE_PROFILE_DOCUMENT_KEY,
-        );
-      }
+      setResolvedProfile(null);
+      await revalidator.revalidate();
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [revalidator]);
 
   useEffect(() => {
     if (profile) {

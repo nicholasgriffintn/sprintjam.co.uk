@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, isRouteErrorResponse, useRouteError } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Gamepad2, Maximize2, X } from "lucide-react";
 
@@ -36,7 +36,6 @@ import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
 import { CompleteSessionModal } from "@/components/modals/CompleteSessionModal";
 import { UnifiedResults } from "@/components/results/UnifiedResults";
 import { isWorkspacesEnabled } from "@/utils/feature-flags";
-import { linkedRoomSessionQueryKey } from "@/lib/workspace-query";
 import { getTeamSessionByRoomKey } from "@/lib/workspace-service";
 import { RoomGuidancePanel } from "@/components/room/RoomGuidancePanel";
 import { RoomStatsPanel } from "@/components/room/RoomStatsPanel";
@@ -122,6 +121,7 @@ const RoomContent = ({
     isHelpPanelOpen,
     setIsHelpPanelOpen,
   } = useRoomHeader();
+  const queryClient = useQueryClient();
   const isSpectator = roomData?.spectators?.includes(name) ?? false;
   useRecoveryPasskeyNotice({
     feature: "room",
@@ -138,11 +138,15 @@ const RoomContent = ({
   const [gameAnnouncement, setGameAnnouncement] = useState<string | null>(null);
   const [isGamePanelMinimised, setIsGamePanelMinimised] = useState(false);
   const workspacesEnabled = isWorkspacesEnabled();
+  const linkedWorkspaceSessionQueryKey = [
+    "linked-workspace-session",
+    roomData.key,
+  ] as const;
   const linkedWorkspaceSessionQuery = useQuery({
-    queryKey: linkedRoomSessionQueryKey(roomData?.key ?? "unknown"),
-    enabled: workspacesEnabled && isAuthenticated && Boolean(roomData?.key),
-    queryFn: () => getTeamSessionByRoomKey(roomData!.key),
-    staleTime: 1000 * 30,
+    queryKey: linkedWorkspaceSessionQueryKey,
+    enabled: workspacesEnabled && isAuthenticated && Boolean(roomData.key),
+    queryFn: () => getTeamSessionByRoomKey(roomData.key),
+    staleTime: 0,
   });
   const linkedWorkspaceSession = linkedWorkspaceSessionQuery.data ?? null;
   const linkedWorkspaceTeamName =
@@ -853,6 +857,9 @@ const RoomContent = ({
         roomKey={roomData.key}
         suggestedName={roomData.currentTicket?.title}
         linkedSession={linkedWorkspaceSession}
+        onSaved={(session) => {
+          queryClient.setQueryData(linkedWorkspaceSessionQueryKey, session);
+        }}
       />
     </div>
   );

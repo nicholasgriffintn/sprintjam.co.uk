@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { WorkspaceAuthProfile } from "@sprintjam/types";
 
@@ -12,10 +12,6 @@ import {
 
 const mocks = vi.hoisted(() => ({
   revalidate: vi.fn(),
-  writeUpsert: vi.fn(),
-  writeDelete: vi.fn(),
-  refetch: vi.fn(),
-  get: vi.fn(),
   logout: vi.fn(),
 }));
 
@@ -29,22 +25,6 @@ vi.mock("@/utils/feature-flags", () => ({
 
 vi.mock("@/lib/workspace-service", () => ({
   logout: mocks.logout,
-}));
-
-vi.mock("@/lib/data/hooks", () => ({
-  useWorkspaceProfile: () => null,
-}));
-
-vi.mock("@/lib/data/collections", () => ({
-  WORKSPACE_PROFILE_DOCUMENT_KEY: "workspace-profile",
-  workspaceProfileCollection: {
-    get: mocks.get,
-    utils: {
-      writeUpsert: mocks.writeUpsert,
-      writeDelete: mocks.writeDelete,
-      refetch: mocks.refetch,
-    },
-  },
 }));
 
 function AuthProbe() {
@@ -94,10 +74,6 @@ const initialProfile: WorkspaceAuthProfile = {
 describe("WorkspaceAuthProvider", () => {
   beforeEach(() => {
     mocks.revalidate.mockReset();
-    mocks.writeUpsert.mockReset();
-    mocks.writeDelete.mockReset();
-    mocks.refetch.mockReset();
-    mocks.get.mockReset();
     mocks.logout.mockReset();
   });
 
@@ -112,24 +88,19 @@ describe("WorkspaceAuthProvider", () => {
     expect(screen.getByTestId("team-count").textContent).toBe("1");
     expect(screen.getByTestId("authenticated").textContent).toBe("true");
 
-    await waitFor(() => {
-      expect(mocks.writeUpsert).toHaveBeenCalledWith(initialProfile);
-    });
-    expect(mocks.refetch).not.toHaveBeenCalled();
+    expect(mocks.revalidate).not.toHaveBeenCalled();
   });
 
   it("clears stale auth state when the root loader has no profile", async () => {
-    mocks.get.mockReturnValue(initialProfile);
-
     render(
       <WorkspaceAuthProvider initialProfile={null}>
         <AuthProbe />
       </WorkspaceAuthProvider>,
     );
 
-    await waitFor(() => {
-      expect(mocks.writeDelete).toHaveBeenCalledWith("workspace-profile");
-    });
-    expect(mocks.refetch).not.toHaveBeenCalled();
+    expect(screen.getByTestId("user-name").textContent).toBe("none");
+    expect(screen.getByTestId("team-count").textContent).toBe("0");
+    expect(screen.getByTestId("authenticated").textContent).toBe("false");
+    expect(mocks.revalidate).not.toHaveBeenCalled();
   });
 });

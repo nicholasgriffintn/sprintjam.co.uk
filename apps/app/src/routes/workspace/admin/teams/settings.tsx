@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useLoaderData } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRightLeft, Shield, UserMinus } from "lucide-react";
 import type { TeamIntegrationStatus, TeamMember } from "@sprintjam/types";
@@ -31,8 +33,15 @@ import {
 } from "@/lib/workspace-service";
 import type { RoomSettings } from "@/types";
 import { createMeta } from "@/utils/route-meta";
+import { loadWorkspaceProfile } from "@/lib/workspace-loaders";
 
 export const meta = createMeta("workspaceAdminTeamSettings");
+
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  return {
+    profile: await loadWorkspaceProfile({ request, context }),
+  };
+}
 
 function metaStr(
   metadata: Record<string, unknown> | undefined,
@@ -43,6 +52,7 @@ function metaStr(
 }
 
 export default function WorkspaceTeamSettings() {
+  const { profile: initialProfile } = useLoaderData<typeof loader>();
   const {
     profile,
     user,
@@ -52,11 +62,10 @@ export default function WorkspaceTeamSettings() {
     isLoading,
     error,
     refreshWorkspace,
-  } = useWorkspaceData({ includeProfile: true });
+  } = useWorkspaceData({ profile: initialProfile });
 
   const { goToLogin, goToWorkspaceAdminTeams } = useSessionActions();
   const { serverDefaults } = useRoomState();
-  const queryClient = useQueryClient();
 
   const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
   const canManageTeam = selectedTeam?.canManage ?? false;
@@ -66,99 +75,11 @@ export default function WorkspaceTeamSettings() {
   const votingPresets = serverDefaults.votingSequences;
   const extraVoteOptions = serverDefaults.extraVoteOptions;
 
+  const queryClient = useQueryClient();
   const settingsQueryKey = ["team-settings", selectedTeamId] as const;
   const teamMembersQueryKey = ["team-members", selectedTeamId] as const;
-
-  const settingsQuery = useQuery<RoomSettings | null>({
-    queryKey: settingsQueryKey,
-    enabled: selectedTeamId !== null,
-    queryFn: () => getTeamSettings(selectedTeamId!),
-    staleTime: 30_000,
-  });
-
-  const teamMembersQuery = useQuery<TeamMember[]>({
-    queryKey: teamMembersQueryKey,
-    enabled: selectedTeamId !== null && canManageTeam,
-    queryFn: () => listTeamMembers(selectedTeamId!),
-    staleTime: 15_000,
-  });
-
-  const saveSettingsMutation = useMutation({
-    mutationFn: (settings: RoomSettings) =>
-      saveTeamSettings(selectedTeamId!, settings),
-    onSuccess: (saved) => {
-      queryClient.setQueryData(settingsQueryKey, saved);
-      toast.success("Default settings saved");
-    },
-  });
-
-  const refreshTeamMembers = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: teamMembersQueryKey }),
-      refreshWorkspace(true),
-    ]);
-  };
-
-  const addMemberMutation = useMutation({
-    mutationFn: (payload: { userId: number; role: "admin" | "member" }) =>
-      addTeamMember(selectedTeamId!, payload.userId, payload.role),
-    onSuccess: async () => {
-      await refreshTeamMembers();
-      toast.success("Team member added");
-    },
-  });
-
-  const approveMemberMutation = useMutation({
-    mutationFn: (userId: number) => approveTeamMember(selectedTeamId!, userId),
-    onSuccess: async () => {
-      await refreshTeamMembers();
-      toast.success("Team member approved");
-    },
-  });
-
-  const updateMemberRoleMutation = useMutation({
-    mutationFn: (payload: { userId: number; role: "admin" | "member" }) =>
-      updateTeamMemberRole(selectedTeamId!, payload.userId, payload.role),
-    onSuccess: async (_, variables) => {
-      await refreshTeamMembers();
-      toast.success(
-        variables.role === "admin"
-          ? "Team admin granted"
-          : "Team admin removed",
-      );
-    },
-  });
-
-  const removeMemberMutation = useMutation({
-    mutationFn: (userId: number) => removeTeamMember(selectedTeamId!, userId),
-    onSuccess: async () => {
-      await refreshTeamMembers();
-      toast.success("Team member removed");
-    },
-  });
-
-  const moveMemberMutation = useMutation({
-    mutationFn: async (payload: {
-      targetTeamId: number;
-      userId: number;
-      role: "admin" | "member";
-    }) =>
-      moveTeamMember(
-        selectedTeamId!,
-        payload.userId,
-        payload.targetTeamId,
-        payload.role,
-      ),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: teamMembersQueryKey }),
-        refreshWorkspace(true),
-      ]);
-      toast.success("Team member moved");
-    },
-  });
-
   const settingsRef = useRef<RoomSettings | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsResetKey, setSettingsResetKey] = useState(0);
   const [selectedWorkspaceUserId, setSelectedWorkspaceUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<"member" | "admin">(
@@ -170,6 +91,22 @@ export default function WorkspaceTeamSettings() {
     null,
   );
   const [targetTeamId, setTargetTeamId] = useState("");
+
+  const settingsQuery = useQuery<RoomSettings | null>({
+    queryKey: settingsQueryKey,
+    enabled: selectedTeamId !== null,
+    queryFn: () => getTeamSettings(selectedTeamId!),
+    staleTime: 0,
+  });
+
+  const teamMembersQuery = useQuery<TeamMember[]>({
+    queryKey: teamMembersQueryKey,
+    enabled: selectedTeamId !== null && canManageTeam,
+    queryFn: () => listTeamMembers(selectedTeamId!),
+    staleTime: 0,
+  });
+
+  const teamMembers = teamMembersQuery.data ?? [];
 
   const effectiveSettings: RoomSettings = useMemo(() => {
     if (settingsQuery.data) {
@@ -192,11 +129,11 @@ export default function WorkspaceTeamSettings() {
 
   const handleSaveSettings = () => {
     if (settingsRef.current && selectedTeamId && canManageTeam) {
-      saveSettingsMutation.mutate(settingsRef.current);
+      setSettingsError(null);
+      void saveSettingsMutation.mutateAsync(settingsRef.current);
     }
   };
 
-  const teamMembers = teamMembersQuery.data ?? [];
   const availableWorkspaceMembers = useMemo(() => {
     const currentIds = new Set(teamMembers.map((member) => member.id));
     return (profile?.members ?? [])
@@ -212,40 +149,172 @@ export default function WorkspaceTeamSettings() {
     [isWorkspaceAdmin, selectedTeamId, teams],
   );
 
-  const handleAddMember = async () => {
-    if (!selectedWorkspaceUserId) {
+  const refreshTeamMembers = async () => {
+    if (!selectedTeamId || !canManageTeam) {
       return;
     }
 
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: teamMembersQueryKey }),
+      refreshWorkspace(true),
+    ]);
+  };
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: (settings: RoomSettings) =>
+      saveTeamSettings(selectedTeamId!, settings),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(settingsQueryKey, saved);
+      toast.success("Default settings saved");
+    },
+    onError: (error) => {
+      setSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Unable to save default settings",
+      );
+    },
+  });
+
+  const addMemberMutation = useMutation({
+    mutationFn: (payload: { userId: number; role: "admin" | "member" }) =>
+      addTeamMember(selectedTeamId!, payload.userId, payload.role),
+    onSuccess: async () => {
+      await refreshTeamMembers();
+      setSelectedWorkspaceUserId("");
+      setSelectedRole("member");
+      toast.success("Team member added");
+    },
+    onError: (error) => {
+      setSettingsError(
+        error instanceof Error ? error.message : "Unable to add team member",
+      );
+    },
+  });
+
+  const approveMemberMutation = useMutation({
+    mutationFn: (userId: number) => approveTeamMember(selectedTeamId!, userId),
+    onSuccess: async () => {
+      await refreshTeamMembers();
+      toast.success("Team member approved");
+    },
+    onError: (error) => {
+      setSettingsError(
+        error instanceof Error ? error.message : "Unable to approve member",
+      );
+    },
+  });
+
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: (payload: { userId: number; role: "admin" | "member" }) =>
+      updateTeamMemberRole(selectedTeamId!, payload.userId, payload.role),
+    onSuccess: async (_, variables) => {
+      await refreshTeamMembers();
+      toast.success(
+        variables.role === "admin"
+          ? "Team admin granted"
+          : "Team admin removed",
+      );
+    },
+    onError: (error) => {
+      setSettingsError(
+        error instanceof Error ? error.message : "Unable to update member role",
+      );
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (userId: number) => removeTeamMember(selectedTeamId!, userId),
+    onSuccess: async () => {
+      await refreshTeamMembers();
+      toast.success("Team member removed");
+      setPendingRemovalMember(null);
+    },
+    onError: (error) => {
+      setSettingsError(
+        error instanceof Error ? error.message : "Unable to remove team member",
+      );
+    },
+  });
+
+  const moveMemberMutation = useMutation({
+    mutationFn: (payload: {
+      targetTeamId: number;
+      userId: number;
+      role: "admin" | "member";
+    }) =>
+      moveTeamMember(
+        selectedTeamId!,
+        payload.userId,
+        payload.targetTeamId,
+        payload.role,
+      ),
+    onSuccess: async () => {
+      await refreshTeamMembers();
+      toast.success("Team member moved");
+      setPendingMoveMember(null);
+      setTargetTeamId("");
+    },
+    onError: (error) => {
+      setSettingsError(
+        error instanceof Error ? error.message : "Unable to move team member",
+      );
+    },
+  });
+
+  const handleApproveMember = async (userId: number) => {
+    if (!selectedTeamId) {
+      return;
+    }
+
+    setSettingsError(null);
+    await approveMemberMutation.mutateAsync(userId);
+  };
+
+  const handleUpdateMemberRole = async (
+    userId: number,
+    role: "admin" | "member",
+  ) => {
+    if (!selectedTeamId) {
+      return;
+    }
+
+    setSettingsError(null);
+    await updateMemberRoleMutation.mutateAsync({ userId, role });
+  };
+
+  const handleAddMember = async () => {
+    if (!selectedWorkspaceUserId || !selectedTeamId) {
+      return;
+    }
+
+    setSettingsError(null);
     await addMemberMutation.mutateAsync({
       userId: Number.parseInt(selectedWorkspaceUserId, 10),
       role: selectedRole,
     });
-    setSelectedWorkspaceUserId("");
-    setSelectedRole("member");
   };
 
   const handleRemoveMember = async () => {
-    if (!pendingRemovalMember) {
+    if (!pendingRemovalMember || !selectedTeamId) {
       return;
     }
 
+    setSettingsError(null);
     await removeMemberMutation.mutateAsync(pendingRemovalMember.id);
-    setPendingRemovalMember(null);
   };
 
   const handleMoveMember = async () => {
-    if (!pendingMoveMember || !targetTeamId) {
+    if (!pendingMoveMember || !targetTeamId || !selectedTeamId) {
       return;
     }
 
+    setSettingsError(null);
     await moveMemberMutation.mutateAsync({
       targetTeamId: Number.parseInt(targetTeamId, 10),
       userId: pendingMoveMember.id,
       role: pendingMoveMember.role,
     });
-    setPendingMoveMember(null);
-    setTargetTeamId("");
   };
 
   return (
@@ -402,9 +471,7 @@ export default function WorkspaceTeamSettings() {
                                   approveMemberMutation.variables === member.id
                                 }
                                 onClick={() =>
-                                  void approveMemberMutation.mutateAsync(
-                                    member.id,
-                                  )
+                                  void handleApproveMember(member.id)
                                 }
                               >
                                 Approve
@@ -419,10 +486,10 @@ export default function WorkspaceTeamSettings() {
                                     member.id
                                 }
                                 onClick={() =>
-                                  void updateMemberRoleMutation.mutateAsync({
-                                    userId: member.id,
-                                    role: "member",
-                                  })
+                                  void handleUpdateMemberRole(
+                                    member.id,
+                                    "member",
+                                  )
                                 }
                               >
                                 Make member
@@ -437,10 +504,10 @@ export default function WorkspaceTeamSettings() {
                                     member.id
                                 }
                                 onClick={() =>
-                                  void updateMemberRoleMutation.mutateAsync({
-                                    userId: member.id,
-                                    role: "admin",
-                                  })
+                                  void handleUpdateMemberRole(
+                                    member.id,
+                                    "admin",
+                                  )
                                 }
                               >
                                 Make admin
@@ -512,10 +579,8 @@ export default function WorkspaceTeamSettings() {
                       teamId={selectedTeamId}
                     />
 
-                    {saveSettingsMutation.error instanceof Error && (
-                      <Alert variant="warning">
-                        {saveSettingsMutation.error.message}
-                      </Alert>
+                    {settingsError && (
+                      <Alert variant="warning">{settingsError}</Alert>
                     )}
 
                     <Button

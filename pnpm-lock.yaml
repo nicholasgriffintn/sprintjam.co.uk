@@ -50,15 +50,9 @@ importers:
       '@tailwindcss/typography':
         specifier: 0.5.19
         version: 0.5.19(tailwindcss@4.1.14)
-      '@tanstack/db':
-        specifier: 0.5.11
-        version: 0.5.11(typescript@5.9.3)
       '@tanstack/query-core':
         specifier: 5.90.12
         version: 5.90.12
-      '@tanstack/query-db-collection':
-        specifier: 1.0.6
-        version: 1.0.6(@tanstack/query-core@5.90.12)(typescript@5.9.3)
       '@tanstack/react-query':
         specifier: 5.90.12
         version: 5.90.12(react@19.2.3)
@@ -1891,28 +1885,8 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
 
-  '@tanstack/db-ivm@0.1.13':
-    resolution: {integrity: sha512-sBOWGY4tqMEym2ewjdWrDb5c5c8akvgnEbGVPAtkfFS3QVV0zfVb5RJAkAc8GSxb3ByVfYjyaShVr0kMJhMuow==}
-    peerDependencies:
-      typescript: '>=4.7'
-
-  '@tanstack/db@0.5.11':
-    resolution: {integrity: sha512-D/JA4FWqTl4AeSZmjJNA5qOcT5cRBoTlSZjIdvZkbQu/mfphK+/fsICBVNxhLKq4mg+Q3EibIZO7VJwJiJ/cqw==}
-    peerDependencies:
-      typescript: '>=4.7'
-
-  '@tanstack/pacer-lite@0.1.1':
-    resolution: {integrity: sha512-y/xtNPNt/YeyoVxE/JCx+T7yjEzpezmbb+toK8DDD1P4m7Kzs5YR956+7OKexG3f8aXgC3rLZl7b1V+yNUSy5w==}
-    engines: {node: '>=18'}
-
   '@tanstack/query-core@5.90.12':
     resolution: {integrity: sha512-T1/8t5DhV/SisWjDnaiU2drl6ySvsHj1bHBCWNXd+/T+Hh1cf6JodyEYMd5sgwm+b/mETT4EV3H+zCVczCU5hg==}
-
-  '@tanstack/query-db-collection@1.0.6':
-    resolution: {integrity: sha512-XGEtuXQ5GbVidTXabVagQrnzOd3ozv6BJZ1Hz+iS2SoyctYh2VOL8oGkVqL7YW/n7bkr20iTHwCln+dAEDU3mg==}
-    peerDependencies:
-      '@tanstack/query-core': ^5.0.0
-      typescript: '>=4.7'
 
   '@tanstack/query-devtools@5.93.0':
     resolution: {integrity: sha512-+kpsx1NQnOFTZsw6HAFCW3HkKg0+2cepGtAWXjiiSOJJ1CtQpt72EE2nyZb+AjAbLRPoeRmPJ8MtQd8r8gsPdg==}
@@ -2455,10 +2429,6 @@ packages:
   fraction.js@5.3.4:
     resolution: {integrity: sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==}
 
-  fractional-indexing@3.2.0:
-    resolution: {integrity: sha512-PcOxmqwYCW7O2ovKRU8OoQQj2yqTfEB/yeTYk4gPid6dN5ODRfU1hXd9tTVZzax/0NkO7AxpHykvZnT1aYp/BQ==}
-    engines: {node: ^14.13.1 || >=16.0.0}
-
   framer-motion@12.23.26:
     resolution: {integrity: sha512-cPcIhgR42xBn1Uj+PzOyheMtZ73H927+uWPDVhUMqxy8UHt6Okavb6xIz9J/phFUHUj0OncR6UvMfJTXoc/LKA==}
     peerDependencies:
@@ -2916,9 +2886,6 @@ packages:
 
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
-
-  sorted-btree@1.8.1:
-    resolution: {integrity: sha512-395+XIP+wqNn3USkFSrNz7G3Ss/MXlZEqesxvzCRFwL14h6e8LukDHdLBePn5pwbm5OQ9vGu8mDyz2lLDIqamQ==}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -4445,29 +4412,7 @@ snapshots:
       tailwindcss: 4.1.18
       vite: 7.3.2(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)
 
-  '@tanstack/db-ivm@0.1.13(typescript@5.9.3)':
-    dependencies:
-      fractional-indexing: 3.2.0
-      sorted-btree: 1.8.1
-      typescript: 5.9.3
-
-  '@tanstack/db@0.5.11(typescript@5.9.3)':
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@tanstack/db-ivm': 0.1.13(typescript@5.9.3)
-      '@tanstack/pacer-lite': 0.1.1
-      typescript: 5.9.3
-
-  '@tanstack/pacer-lite@0.1.1': {}
-
   '@tanstack/query-core@5.90.12': {}
-
-  '@tanstack/query-db-collection@1.0.6(@tanstack/query-core@5.90.12)(typescript@5.9.3)':
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@tanstack/db': 0.5.11(typescript@5.9.3)
-      '@tanstack/query-core': 5.90.12
-      typescript: 5.9.3
 
   '@tanstack/query-devtools@5.93.0': {}
 
@@ -5108,8 +5053,6 @@ snapshots:
 
   fraction.js@5.3.4: {}
 
-  fractional-indexing@3.2.0: {}
-
   framer-motion@12.23.26(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       motion-dom: 12.23.23
@@ -5547,8 +5490,6 @@ snapshots:
       sherif-windows-x64: 1.9.0
 
   siginfo@2.0.0: {}
-
-  sorted-btree@1.8.1: {}
 
   source-map-js@1.2.1: {}
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { joinRoom } from "@/lib/api-service";
-import { upsertRoom } from "@/lib/data/room-store";
+import { upsertRoom } from "@/lib/room-store";
 import type { AvatarId } from "@/types";
 import { HttpError } from "@/lib/errors";
 

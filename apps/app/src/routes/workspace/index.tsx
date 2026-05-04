@@ -1,5 +1,11 @@
 import { RefreshCcw } from "lucide-react";
-import { Link, isRouteErrorResponse, useRouteError } from "react-router";
+import {
+  Link,
+  isRouteErrorResponse,
+  useLoaderData,
+  useRouteError,
+} from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { StatCards } from "@/components/workspace/StatCards";
@@ -12,8 +18,21 @@ import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useWorkspaceStats } from "@/hooks/useWorkspaceStats";
 import { useSessionActions } from "@/context/SessionContext";
 import { createMeta } from "@/utils/route-meta";
+import {
+  loadWorkspaceInsights,
+  loadWorkspaceStats,
+} from "@/lib/workspace-loaders";
 
 export const meta = createMeta("workspace");
+
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  const args = { request, context };
+
+  return {
+    stats: await loadWorkspaceStats(args),
+    insights: await loadWorkspaceInsights(args),
+  };
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();
@@ -39,15 +58,15 @@ export function ErrorBoundary() {
 }
 
 export default function WorkspaceDashboard() {
+  const { stats, insights: initialInsights } = useLoaderData<typeof loader>();
   const {
     user,
     teams,
-    stats,
     isAuthenticated,
     isLoading,
     error,
     refreshWorkspace,
-  } = useWorkspaceData({ includeStats: true });
+  } = useWorkspaceData({ stats });
 
   const { goToLogin } = useSessionActions();
 
@@ -55,7 +74,7 @@ export default function WorkspaceDashboard() {
     sessionsOverTime,
     insights,
     refetch: refetchInsights,
-  } = useWorkspaceStats(stats);
+  } = useWorkspaceStats(stats, initialInsights);
 
   const handleRefresh = async () => {
     await refreshWorkspace(true);

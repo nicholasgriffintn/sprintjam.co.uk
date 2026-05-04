@@ -30,8 +30,9 @@ export async function readRequiredWorkerJson<T>(
 
 export function createWorkerRequest(request: Request, path: string): Request {
   const url = new URL(request.url);
-  url.pathname = path;
-  url.search = "";
+  const target = new URL(path, url.origin);
+  url.pathname = target.pathname;
+  url.search = target.search;
 
   const headers = new Headers();
   const cookie = request.headers.get("Cookie");

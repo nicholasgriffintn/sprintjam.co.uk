@@ -10,13 +10,11 @@ import {
 import type {
   LinksFunction,
   LoaderFunctionArgs,
-  ShouldRevalidateFunctionArgs,
 } from "react-router";
 
 import {
   createWorkerRequest,
   readRequiredWorkerJson,
-  readWorkerJson,
   type WorkerLoaderArgs,
 } from "@/lib/worker-utils";
 
@@ -25,10 +23,10 @@ import { SessionProvider } from "@/context/SessionContext";
 import { WorkspaceAuthProvider } from "@/context/WorkspaceAuthContext";
 import { AppToastProvider } from "@/components/ui";
 import { useCurrentRoute } from "@/hooks/useCurrentRoute";
-import { queryClient } from "@/lib/data/collections";
+import { queryClient } from "@/lib/query-client";
+import { loadWorkspaceAuthProfile } from "@/lib/workspace-loaders";
 import { ThemeProvider } from "@/lib/theme-context";
 import type { ServerDefaults } from "@/types";
-import type { WorkspaceAuthProfile } from "@sprintjam/types";
 
 import "./index.css";
 
@@ -68,22 +66,6 @@ export const links: LinksFunction = () => [
   { rel: "manifest", href: "/site.webmanifest" },
 ];
 
-async function loadWorkspaceProfile({
-  request,
-  context,
-}: WorkerLoaderArgs): Promise<WorkspaceAuthProfile | null> {
-  const authWorker = context.cloudflare?.env.AUTH_WORKER;
-  if (!authWorker) {
-    return null;
-  }
-
-  const response = await authWorker.fetch(
-    createWorkerRequest(request, "/api/auth/me"),
-  );
-
-  return readWorkerJson<WorkspaceAuthProfile>(response);
-}
-
 async function loadServerDefaults({
   request,
   context,
@@ -105,14 +87,13 @@ async function loadServerDefaults({
   );
 }
 
-export function shouldRevalidate(_: ShouldRevalidateFunctionArgs) {
-  return false;
-}
-
 export async function loader({ request, context }: LoaderFunctionArgs) {
   return {
     initialServerDefaults: await loadServerDefaults({ request, context }),
-    initialWorkspaceProfile: loadWorkspaceProfile({ request, context }),
+    initialWorkspaceProfile: await loadWorkspaceAuthProfile({
+      request,
+      context,
+    }),
   };
 }
 

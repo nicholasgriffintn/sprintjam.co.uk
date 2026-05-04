@@ -9,8 +9,7 @@ import {
 import type { StructuredVote, VoteValue } from "@sprintjam/types";
 
 import { disconnectFromRoom, updateTicket } from "@/lib/api-service";
-import { removeRoomFromCollection } from "@/lib/data/room-store";
-import { useRoomData } from "@/lib/data/hooks";
+import { removeRoomFromStore, useRoomData } from "@/lib/room-store";
 import { useServerDefaults } from "@/context/ServerDefaultsContext";
 import { useAutoReconnect } from "@/hooks/useAutoReconnect";
 import { useAutoEstimateUpdate } from "@/hooks/useAutoEstimateUpdate";
@@ -237,7 +236,7 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
 
     const key = activeRoomKeyRef.current;
     if (key) {
-      void removeRoomFromCollection(key).catch((err) => {
+      void removeRoomFromStore(key).catch((err) => {
         console.error("Failed to remove room from collection", err);
       });
     }

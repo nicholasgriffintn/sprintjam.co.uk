@@ -15,6 +15,10 @@ const goToRoom = vi.fn();
 const startCreateFlow = vi.fn();
 const requestTeamAccess = vi.fn();
 const navigateTo = vi.fn();
+const loaderDataMock = {
+  sessionsByTeamId: {},
+  teamInsightsByTeamId: {},
+};
 
 const restrictedTeam: WorkspaceTeam = {
   id: 10,
@@ -117,6 +121,17 @@ vi.mock("@/hooks/useAppNavigation", () => ({
   useAppNavigation: () => navigateTo,
 }));
 
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual<typeof import("react-router")>(
+    "react-router",
+  );
+
+  return {
+    ...actual,
+    useLoaderData: () => loaderDataMock,
+  };
+});
+
 vi.mock("@/components/ui/Toast", () => ({
   AppToastProvider: () => null,
   toast: {
@@ -136,6 +151,8 @@ describe("WorkspaceSessions", () => {
     workspaceDataMock.teams = [restrictedTeam];
     workspaceDataMock.sessions = [];
     workspaceDataMock.selectedTeamId = restrictedTeam.id;
+    loaderDataMock.sessionsByTeamId = {};
+    loaderDataMock.teamInsightsByTeamId = {};
   });
 
   it("requests access for a restricted team", async () => {

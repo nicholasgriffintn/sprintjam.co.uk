@@ -1,28 +1,12 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
-import type { PropsWithChildren } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
 import type { TeamInsights } from "@sprintjam/types";
 
-const getTeamInsights = vi.fn();
-
-vi.mock("@/lib/workspace-service", () => ({
-  getTeamInsights: (...args: unknown[]) => getTeamInsights(...args),
-}));
-
 import { TeamInsightsPanel } from "@/components/workspace/TeamInsightsPanel";
-
-function createWrapper(queryClient: QueryClient) {
-  return function Wrapper({ children }: PropsWithChildren) {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-  };
-}
 
 const insights: TeamInsights = {
   sessionsAnalyzed: 4,
@@ -36,33 +20,12 @@ const insights: TeamInsights = {
 };
 
 describe("TeamInsightsPanel", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("deduplicates matching team insight requests", async () => {
-    getTeamInsights.mockResolvedValue(insights);
-
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
-
+  it("renders loader-provided team insights", () => {
     render(
-      <>
-        <TeamInsightsPanel teamId={7} teamName="Platform" />
-        <TeamInsightsPanel teamId={7} teamName="Platform" />
-      </>,
-      { wrapper: createWrapper(queryClient) },
+      <TeamInsightsPanel teamName="Platform" insights={insights} />,
     );
 
-    await waitFor(() => {
-      expect(screen.getAllByText("Team insights")).toHaveLength(2);
-    });
-
-    expect(getTeamInsights).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Team insights")).toBeTruthy();
+    expect(screen.getByText("61%")).toBeTruthy();
   });
 });

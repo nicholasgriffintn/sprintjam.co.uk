@@ -8,7 +8,7 @@ vi.mock("@/lib/api-service", () => ({
   joinRoom: vi.fn(),
 }));
 
-vi.mock("@/lib/data/room-store", () => ({
+vi.mock("@/lib/room-store", () => ({
   upsertRoom: vi.fn(),
 }));
 

@@ -1,12 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { sessionStatsQueryKey } from "@/lib/workspace-query";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
 
 const getBatchSessionStats = vi.fn();
@@ -60,29 +59,20 @@ describe("useSessionStats", () => {
     cleanup();
   });
 
-  it("deduplicates matching requests and seeds per-session cache", async () => {
+  it("loads planning session stats directly", async () => {
     getBatchSessionStats.mockResolvedValue({ "ROOM-1": sessionStats });
-
     const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
+      defaultOptions: { queries: { retry: false, staleTime: 0 } },
     });
-    const wrapper = createWrapper(queryClient);
 
-    const first = renderHook(() => useSessionStats(sessions), { wrapper });
-    const second = renderHook(() => useSessionStats(sessions), { wrapper });
+    const { result } = renderHook(() => useSessionStats(sessions), {
+      wrapper: createWrapper(queryClient),
+    });
 
     await waitFor(() => {
-      expect(first.result.current.statsMap["ROOM-1"]).toEqual(sessionStats);
+      expect(result.current.statsMap["ROOM-1"]).toEqual(sessionStats);
     });
 
-    expect(second.result.current.statsMap["ROOM-1"]).toEqual(sessionStats);
     expect(getBatchSessionStats).toHaveBeenCalledTimes(1);
-    expect(queryClient.getQueryData(sessionStatsQueryKey("ROOM-1"))).toEqual(
-      sessionStats,
-    );
   });
 });

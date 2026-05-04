@@ -1,14 +1,39 @@
-import type { RoomData, WebSocketMessage } from "@/types";
-import { applyRoomUpdate } from "@/utils/room";
-import { ensureRoomsCollectionReady, roomsCollection } from "./collections";
+import { useMemo, useSyncExternalStore } from "react";
 
-async function readyRoomsCollection(): Promise<void> {
-  await ensureRoomsCollectionReady();
-}
+import type { RoomData, WebSocketMessage } from "@/types";
+import { createKeyedStore } from "@/lib/keyed-store";
+import { applyRoomUpdate } from "@/utils/room";
+
+const roomStore = createKeyedStore<RoomData, string>((room) => room.key);
+
+const noopSubscribe = () => () => {};
 
 export async function upsertRoom(room: RoomData): Promise<void> {
-  await readyRoomsCollection();
-  roomsCollection.utils.writeUpsert(room);
+  roomStore.upsert(room);
+}
+
+export function getRoom(roomKey: string): RoomData | null {
+  return roomStore.get(roomKey) ?? null;
+}
+
+export function useRoomData(roomKey: string | null): RoomData | null {
+  const subscribe = useMemo(
+    () => (onChange: () => void) => {
+      const subscription = roomStore.subscribe(onChange, {
+        includeInitialState: true,
+      });
+      return () => subscription.unsubscribe();
+    },
+    [],
+  );
+
+  const getSnapshot = () => (roomKey ? getRoom(roomKey) : null);
+
+  return useSyncExternalStore(
+    roomKey ? subscribe : noopSubscribe,
+    getSnapshot,
+    getSnapshot,
+  );
 }
 
 const extractRoomData = (message: WebSocketMessage): RoomData | undefined => {
@@ -29,17 +54,15 @@ const extractRoomKey = (
   return fallbackRoomKey ?? null;
 };
 
-export async function applyRoomMessageToCollections(
+export async function applyRoomMessageToStore(
   message: WebSocketMessage,
   fallbackRoomKey?: string | null,
 ): Promise<RoomData | null> {
-  await readyRoomsCollection();
-
   const candidateKey = extractRoomKey(message, fallbackRoomKey);
 
   const currentRoom =
     candidateKey !== null && candidateKey !== undefined
-      ? (roomsCollection.get(candidateKey) ?? null)
+      ? getRoom(candidateKey)
       : null;
 
   const initialRoom = extractRoomData(message);
@@ -50,16 +73,15 @@ export async function applyRoomMessageToCollections(
       : applyRoomUpdate(baseRoom, message);
 
   if (nextRoom && nextRoom !== currentRoom) {
-    roomsCollection.utils.writeUpsert(nextRoom);
+    roomStore.upsert(nextRoom);
     return nextRoom;
   }
 
   return nextRoom ?? currentRoom;
 }
 
-export async function removeRoomFromCollection(roomKey: string): Promise<void> {
-  await readyRoomsCollection();
-  if (roomsCollection.has(roomKey)) {
-    roomsCollection.utils.writeDelete(roomKey);
+export async function removeRoomFromStore(roomKey: string): Promise<void> {
+  if (roomStore.has(roomKey)) {
+    roomStore.remove(roomKey);
   }
 }

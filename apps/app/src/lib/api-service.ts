@@ -8,10 +8,6 @@ import type {
 } from "@/types";
 import type { RoomGameType, StructuredVote, VoteValue } from "@sprintjam/types";
 import { API_BASE_URL, WS_BASE_URL } from "@/constants";
-import {
-  roomsCollection,
-  ensureRoomsCollectionReady,
-} from "./data/collections";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 import { handleJsonResponse } from "@/lib/api-utils";
 import {
@@ -77,9 +73,6 @@ export async function createRoom(
       );
     }
 
-    await ensureRoomsCollectionReady();
-    roomsCollection.utils.writeUpsert(data.room);
-
     return {
       room: data.room,
       recoveryPasskey: data.recoveryPasskey,
@@ -126,9 +119,6 @@ export async function joinRoom(
     if (!data.room) {
       throw new NetworkError("Invalid response from server while joining room");
     }
-
-    await ensureRoomsCollectionReady();
-    roomsCollection.utils.writeUpsert(data.room);
 
     return {
       room: data.room,

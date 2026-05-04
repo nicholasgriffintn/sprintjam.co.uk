@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router";
 import { Building2, Check, LogIn } from "lucide-react";
 import type { TeamSession } from "@sprintjam/types";
@@ -13,11 +12,6 @@ import { Alert } from "@/components/ui/Alert";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { useSessionActions } from "@/context/SessionContext";
 import { createTeamSession, updateTeamSession } from "@/lib/workspace-service";
-import {
-  linkedRoomSessionQueryKey,
-  teamSessionsQueryKey,
-  WORKSPACE_STATS_QUERY_KEY,
-} from "@/lib/workspace-query";
 import { cn } from "@/lib/cn";
 import { BetaBadge } from "@/components/BetaBadge";
 import { setReturnUrl } from "@/config/routes";
@@ -28,6 +22,7 @@ interface SaveToWorkspaceModalProps {
   roomKey: string;
   suggestedName?: string;
   linkedSession?: TeamSession | null;
+  onSaved?: (session: TeamSession) => void;
 }
 
 export function SaveToWorkspaceModal({
@@ -36,6 +31,7 @@ export function SaveToWorkspaceModal({
   roomKey,
   suggestedName,
   linkedSession = null,
+  onSaved,
 }: SaveToWorkspaceModalProps) {
   const {
     isAuthenticated,
@@ -43,7 +39,6 @@ export function SaveToWorkspaceModal({
     teams,
   } = useWorkspaceAuth();
   const { goToLogin } = useSessionActions();
-  const queryClient = useQueryClient();
   const location = useLocation();
 
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
@@ -84,15 +79,7 @@ export function SaveToWorkspaceModal({
             },
           )
         : await createTeamSession(selectedTeamId, sessionName.trim(), roomKey);
-      queryClient.setQueryData(linkedRoomSessionQueryKey(roomKey), session);
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: teamSessionsQueryKey(session.teamId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: WORKSPACE_STATS_QUERY_KEY,
-        }),
-      ]);
+      onSaved?.(session);
       setIsSuccess(true);
       setTimeout(() => {
         onClose();

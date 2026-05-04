@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 
 import { createRoom, joinRoom } from "@/lib/api-service";
-import { upsertRoom } from "@/lib/data/room-store";
+import { upsertRoom } from "@/lib/room-store";
 import { getErrorDetails, isAbortError } from "@/lib/errors";
 import { formatRoomKey } from "@/utils/validators";
 import { getRecoveryPasskeyStorageKey } from "@/constants";

@@ -8,10 +8,7 @@ import type {
 import { WHEEL_API_BASE_URL, WHEEL_WS_BASE_URL } from "@/constants";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 import { readJsonSafe, handleJsonResponse } from "@/lib/api-utils";
-import {
-  wheelsCollection,
-  ensureWheelsCollectionReady,
-} from "./data/collections";
+import { getWheel, upsertWheel } from "@/lib/wheel-store";
 import {
   createReconnectState,
   resetReconnectAttempts,
@@ -53,7 +50,7 @@ interface RequestOptions {
 }
 
 export function getCachedWheel(wheelKey: string): WheelData | null {
-  return wheelsCollection.get(wheelKey) ?? null;
+  return getWheel(wheelKey);
 }
 
 export async function createWheel(
@@ -85,8 +82,7 @@ export async function createWheel(
       );
     }
 
-    await ensureWheelsCollectionReady();
-    wheelsCollection.utils.writeUpsert(data.wheel);
+    upsertWheel(data.wheel);
 
     return data;
   } catch (error) {
@@ -143,8 +139,7 @@ export async function joinWheel(
       );
     }
 
-    await ensureWheelsCollectionReady();
-    wheelsCollection.utils.writeUpsert(data.wheel);
+    upsertWheel(data.wheel);
 
     return data;
   } catch (error) {

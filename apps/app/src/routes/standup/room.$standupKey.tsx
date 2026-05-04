@@ -5,7 +5,6 @@ import {
   useParams,
   useRouteError,
 } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 
 import { useAppNavigation } from "@/hooks/useAppNavigation";
@@ -19,11 +18,6 @@ import {
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { getStoredUserName } from "@/hooks/useUserPersistence";
 import { completeSessionByRoomKey } from "@/lib/workspace-service";
-import {
-  linkedRoomSessionQueryKey,
-  teamSessionsQueryKey,
-  WORKSPACE_STATS_QUERY_KEY,
-} from "@/lib/workspace-query";
 import { HttpError } from "@/lib/errors";
 import { validateName } from "@/utils/validators";
 import { Alert } from "@/components/ui/Alert";
@@ -81,7 +75,6 @@ function StandupRoomContent({
   initialNotice?: string | null;
 }) {
   const navigateTo = useAppNavigation();
-  const queryClient = useQueryClient();
   const { standupData, isModeratorView } = useStandupState();
   const { isSocketConnected, standupError, isLoading } = useStandupStatus();
   const {
@@ -155,19 +148,7 @@ function StandupRoomContent({
     }
 
     try {
-      const updatedSession = await completeSessionByRoomKey(standupKey);
-      queryClient.setQueryData(
-        linkedRoomSessionQueryKey(standupKey),
-        updatedSession,
-      );
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: teamSessionsQueryKey(updatedSession.teamId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: WORKSPACE_STATS_QUERY_KEY,
-        }),
-      ]);
+      await completeSessionByRoomKey(standupKey);
       setCompletionNotice(null);
     } catch (error) {
       if (error instanceof HttpError && error.status === 404) {

@@ -1,5 +1,11 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, isRouteErrorResponse, useRouteError } from "react-router";
+import {
+  Link,
+  isRouteErrorResponse,
+  useLoaderData,
+  useRouteError,
+} from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { Building2, Clock3, MailPlus, Shield, UserMinus } from "lucide-react";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
@@ -24,8 +30,15 @@ import { toast } from "@/components/ui";
 import type { WorkspaceMember } from "@sprintjam/types";
 import { BetaBadge } from "@/components/BetaBadge";
 import { createMeta } from "@/utils/route-meta";
+import { loadWorkspaceProfile } from "@/lib/workspace-loaders";
 
 export const meta = createMeta("workspaceAdmin");
+
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  return {
+    profile: await loadWorkspaceProfile({ request, context }),
+  };
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();
@@ -51,6 +64,7 @@ export function ErrorBoundary() {
 }
 
 export default function WorkspaceAdminOverview() {
+  const { profile: initialProfile } = useLoaderData<typeof loader>();
   const {
     profile,
     user,
@@ -59,7 +73,7 @@ export default function WorkspaceAdminOverview() {
     error,
     actionError,
     refreshWorkspace,
-  } = useWorkspaceData({ includeProfile: true });
+  } = useWorkspaceData({ profile: initialProfile });
 
   const { goToLogin } = useSessionActions();
   const [workspaceName, setWorkspaceName] = useState("");

@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
-import { Link, isRouteErrorResponse, useRouteError } from "react-router";
+import {
+  Link,
+  isRouteErrorResponse,
+  useLoaderData,
+  useRouteError,
+} from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { Building2, MessageSquareQuote, Plus, Target } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -23,8 +29,24 @@ import {
 import { requestTeamAccess } from "@/lib/workspace-service";
 import { BetaBadge } from "@/components/BetaBadge";
 import { createMeta } from "@/utils/route-meta";
+import {
+  loadAccessibleTeamInsights,
+  loadAccessibleTeamSessions,
+  loadWorkspaceAuthProfile,
+} from "@/lib/workspace-loaders";
 
 export const meta = createMeta("workspaceSessions");
+
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  const args = { request, context };
+  const profile = await loadWorkspaceAuthProfile(args);
+  const teams = profile?.teams ?? [];
+
+  return {
+    sessionsByTeamId: await loadAccessibleTeamSessions(args, teams),
+    teamInsightsByTeamId: await loadAccessibleTeamInsights(args, teams),
+  };
+}
 
 export function ErrorBoundary() {
   const error = useRouteError();
@@ -52,6 +74,8 @@ export function ErrorBoundary() {
 type SessionFilter = "all" | TeamSessionType;
 
 export default function WorkspaceSessions() {
+  const { sessionsByTeamId, teamInsightsByTeamId } =
+    useLoaderData<typeof loader>();
   const {
     user,
     teams,
@@ -63,7 +87,7 @@ export default function WorkspaceSessions() {
     isLoadingSessions,
     error,
     refreshWorkspace,
-  } = useWorkspaceData({ includeSessions: true });
+  } = useWorkspaceData({ sessionsByTeamId });
 
   const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
@@ -164,8 +188,8 @@ export default function WorkspaceSessions() {
             <div className="space-y-4">
               {selectedTeam.canAccess ? (
                 <TeamInsightsPanel
-                  teamId={selectedTeam.id}
                   teamName={selectedTeam.name}
+                  insights={teamInsightsByTeamId[selectedTeam.id] ?? null}
                 />
               ) : (
                 <Alert variant="warning">
