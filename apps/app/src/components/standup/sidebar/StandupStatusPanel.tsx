@@ -1,13 +1,13 @@
-import { useId } from 'react';
-import type { StandupData } from '@sprintjam/types';
-import { ChevronDown, ChevronUp, Info, Radio } from 'lucide-react';
+import { useId } from "react";
+import type { StandupData } from "@sprintjam/types";
+import { ChevronDown, ChevronUp, Info, Radio } from "lucide-react";
 
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Progress } from '@/components/ui/Progress';
-import { ScrollArea } from '@/components/ui';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { cn } from '@/lib/cn';
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Progress } from "@/components/ui/Progress";
+import { ScrollArea } from "@/components/ui";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { cn } from "@/lib/cn";
 
 interface StandupStatusPanelProps {
   standupData: StandupData;
@@ -51,8 +51,8 @@ export function StandupStatusPanel({
     >
       <div
         className={cn(
-          'flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10',
-          isCollapsed && 'border-b-0 py-2',
+          "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
+          isCollapsed && "border-b-0 py-2",
         )}
       >
         <h2
@@ -70,7 +70,7 @@ export function StandupStatusPanel({
           className="inline-flex items-center rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
           onClick={onToggleCollapse}
           aria-label={
-            isCollapsed ? 'Expand room status' : 'Collapse room status'
+            isCollapsed ? "Expand room status" : "Collapse room status"
           }
           aria-expanded={!isCollapsed}
           aria-controls={contentId}
@@ -83,17 +83,17 @@ export function StandupStatusPanel({
       <ScrollArea
         id={contentId}
         aria-label="Live room status summary"
-        className={cn('px-4 py-4', isCollapsed && 'hidden')}
+        className={cn("px-4 py-4", isCollapsed && "hidden")}
         contentClassName="space-y-3"
       >
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={isSocketConnected ? 'success' : 'warning'}>
+            <Badge variant={isSocketConnected ? "success" : "warning"}>
               <Radio className="mr-1 h-3 w-3" />
-              {isSocketConnected ? 'Connected' : 'Reconnecting'}
+              {isSocketConnected ? "Connected" : "Reconnecting"}
             </Badge>
-            <Badge variant={hasResponded ? 'success' : 'default'}>
-              {hasResponded ? 'Your update saved' : 'Waiting for your update'}
+            <Badge variant={hasResponded ? "success" : "default"}>
+              {hasResponded ? "Your update saved" : "Waiting for your update"}
             </Badge>
           </div>
 

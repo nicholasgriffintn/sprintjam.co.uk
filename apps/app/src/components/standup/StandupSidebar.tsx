@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import type { StandupData } from '@sprintjam/types';
+import { useState } from "react";
+import type { StandupData } from "@sprintjam/types";
 
-import { StandupParticipantsPanel } from '@/components/standup/sidebar/StandupParticipantsPanel';
-import { StandupStatusPanel } from '@/components/standup/sidebar/StandupStatusPanel';
+import { StandupParticipantsPanel } from "@/components/standup/sidebar/StandupParticipantsPanel";
+import { StandupStatusPanel } from "@/components/standup/sidebar/StandupStatusPanel";
 
 interface StandupSidebarProps {
   standupData: StandupData;
@@ -33,8 +33,8 @@ export function StandupSidebar({
       <div
         className={`flex min-w-0 flex-col md:min-h-0 ${
           isParticipantsCollapsed
-            ? 'md:min-h-[54px]'
-            : 'flex-1 md:min-h-[220px]'
+            ? "md:min-h-[54px]"
+            : "flex-1 md:min-h-[220px]"
         }`}
       >
         <StandupParticipantsPanel

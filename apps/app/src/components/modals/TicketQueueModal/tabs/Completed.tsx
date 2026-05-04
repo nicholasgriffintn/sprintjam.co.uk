@@ -89,18 +89,17 @@ export function TicketQueueModalCompletedTab({
 
   const setUpdatedTicketMetadata = (ticketId: number, metadata: unknown) => {
     onUpdateTicket?.(ticketId, {
-      externalServiceMetadata: metadata as TicketQueueItem["externalServiceMetadata"],
+      externalServiceMetadata:
+        metadata as TicketQueueItem["externalServiceMetadata"],
     });
   };
 
-  const runSyncMutation = async <TResult,>(
-    options: {
-      ticketId: number;
-      provider: SyncProvider;
-      execute: () => Promise<TResult>;
-      fallbackError: string;
-    },
-  ) => {
+  const runSyncMutation = async <TResult,>(options: {
+    ticketId: number;
+    provider: SyncProvider;
+    execute: () => Promise<TResult>;
+    fallbackError: string;
+  }) => {
     setSyncing({ id: options.ticketId, provider: options.provider });
     try {
       const updated = await options.execute();
@@ -447,11 +446,17 @@ export function TicketQueueModalCompletedTab({
                         {syncButton && (
                           <Button
                             onClick={syncButton.onClick}
-                            disabled={isSyncingProvider(ticket.id, syncButton.provider)}
+                            disabled={isSyncingProvider(
+                              ticket.id,
+                              syncButton.provider,
+                            )}
                             variant="unstyled"
                             className={syncButton.className}
                           >
-                            {isSyncingProvider(ticket.id, syncButton.provider) ? (
+                            {isSyncingProvider(
+                              ticket.id,
+                              syncButton.provider,
+                            ) ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             ) : (
                               <RefreshCw className="h-3.5 w-3.5" />

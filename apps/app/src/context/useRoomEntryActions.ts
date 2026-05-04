@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useRef } from "react";
 
 import { createRoom, joinRoom } from "@/lib/api-service";
-import { upsertRoom } from "@/lib/data/room-store";
+import { upsertRoom } from "@/lib/room-store";
 import { getErrorDetails, isAbortError } from "@/lib/errors";
 import { formatRoomKey } from "@/utils/validators";
-import type {
-  AvatarId,
-  ErrorKind,
-  RoomSettings,
-  ServerDefaults,
-} from "@/types";
+import { getRecoveryPasskeyStorageKey } from "@/constants";
+import { safeLocalStorage } from "@/utils/storage";
+import type { AvatarId, ErrorKind, RoomSettings } from "@/types";
+
 interface UseRoomEntryActionsOptions {
   name: string;
   roomKey: string;
@@ -17,7 +15,6 @@ interface UseRoomEntryActionsOptions {
   selectedAvatar: AvatarId | null;
   selectedWorkspaceTeamId?: number | null;
   pendingCreateSettings: Partial<RoomSettings> | null;
-  applyServerDefaults: (defaults?: ServerDefaults) => void;
   clearError: () => void;
   setError: (message: string, kind?: ErrorKind | null) => void;
   goToRoom: (roomKey: string) => void;
@@ -40,7 +37,6 @@ export function useRoomEntryActions({
   selectedAvatar,
   selectedWorkspaceTeamId,
   pendingCreateSettings,
-  applyServerDefaults,
   clearError,
   setError,
   goToRoom,
@@ -83,7 +79,7 @@ export function useRoomEntryActions({
       const controller = startRoomRequest();
 
       try {
-        const { room: newRoom, defaults } = await createRoom(
+        const { room: newRoom, recoveryPasskey } = await createRoom(
           name,
           passcode || undefined,
           resolvedSettings,
@@ -93,8 +89,14 @@ export function useRoomEntryActions({
             teamId: selectedWorkspaceTeamId ?? undefined,
           },
         );
-        applyServerDefaults(defaults);
         await upsertRoom(newRoom);
+
+        if (recoveryPasskey) {
+          safeLocalStorage.set(
+            getRecoveryPasskeyStorageKey("room", newRoom.key, name),
+            recoveryPasskey,
+          );
+        }
 
         if (selectedWorkspaceTeamId) {
           try {
@@ -132,7 +134,6 @@ export function useRoomEntryActions({
       clearError,
       startRoomRequest,
       passcode,
-      applyServerDefaults,
       createSession,
       setActiveRoomKey,
       setIsModeratorView,
@@ -153,15 +154,22 @@ export function useRoomEntryActions({
     const controller = startRoomRequest();
 
     try {
-      const { room: joinedRoom, defaults } = await joinRoom(
+      const { room: joinedRoom, recoveryPasskey } = await joinRoom(
         trimmedName,
         normalizedRoomKey,
         passcode?.trim() || undefined,
         selectedAvatar,
         { signal: controller.signal },
       );
-      applyServerDefaults(defaults);
       await upsertRoom(joinedRoom);
+
+      if (recoveryPasskey) {
+        safeLocalStorage.set(
+          getRecoveryPasskeyStorageKey("room", joinedRoom.key, trimmedName),
+          recoveryPasskey,
+        );
+      }
+
       setActiveRoomKey(joinedRoom.key);
       setIsModeratorView(joinedRoom.moderator === name);
       markAutoReconnectDone();
@@ -187,7 +195,6 @@ export function useRoomEntryActions({
     clearError,
     startRoomRequest,
     passcode,
-    applyServerDefaults,
     setActiveRoomKey,
     setIsModeratorView,
     markAutoReconnectDone,

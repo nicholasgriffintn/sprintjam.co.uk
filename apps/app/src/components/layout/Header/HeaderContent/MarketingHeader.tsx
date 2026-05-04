@@ -8,11 +8,12 @@ import { useSessionActions } from "@/context/SessionContext";
 import { HeaderUserMenu } from "../HeaderUserMenu";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
-import { navigateTo, type AppScreen } from "@/config/routes";
+import type { AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
-  const { goHome, setScreen, startCreateFlow, startJoinFlow } =
-    useSessionActions();
+  const { goHome, startCreateFlow, startJoinFlow } = useSessionActions();
+  const navigateTo = useAppNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -26,7 +27,6 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
   ];
 
   const handleNavigate = (screen: AppScreen) => {
-    setScreen(screen);
     navigateTo(screen);
     setIsMenuOpen(false);
   };
@@ -77,8 +77,8 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
             aria-label="Open marketing navigation"
             onClick={() => setIsMenuOpen((open) => !open)}
             className={cn(
-              'min-h-9 min-w-9 border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white',
-              variant === 'hero' && 'sm:min-h-10 sm:min-w-10',
+              "min-h-9 min-w-9 border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white",
+              variant === "hero" && "sm:min-h-10 sm:min-w-10",
             )}
             data-testid="marketing-menu-button"
           >
@@ -156,7 +156,7 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
         size={logoSize}
         showText
         onClick={goHome}
-        className={variant === 'hero' ? 'scale-95 sm:scale-100' : ''}
+        className={variant === "hero" ? "scale-95 sm:scale-100" : ""}
         layoutId="marketing-header-logo"
       />
       <div className="flex justify-end">

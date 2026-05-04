@@ -955,10 +955,11 @@ export async function createTeamSessionController(
     }
   }
 
-  const existingSession = await auth.result.repo.getOrganisationTeamSessionByRoomKey(
-    roomKey,
-    teamViewer.viewer.user.organisationId,
-  );
+  const existingSession =
+    await auth.result.repo.getOrganisationTeamSessionByRoomKey(
+      roomKey,
+      teamViewer.viewer.user.organisationId,
+    );
   if (existingSession) {
     return jsonError(
       "This room is already saved to your workspace",
@@ -1500,7 +1501,7 @@ export async function inviteWorkspaceMemberController(
       workspaceName,
       inviterName,
       loginUrl,
-      resendApiKey: env.RESEND_API_KEY,
+      sendEmail: env.SEND_EMAIL,
     });
   } catch (error) {
     console.error("Failed to send workspace invite email:", error);

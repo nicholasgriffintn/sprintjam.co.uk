@@ -1,4 +1,4 @@
-import { ClientMessage, ROOM_GAME_TYPES } from "@sprintjam/types";
+import { type ClientMessage, ROOM_GAME_TYPES } from "@sprintjam/types";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;

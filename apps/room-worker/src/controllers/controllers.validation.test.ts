@@ -59,7 +59,7 @@ const jsonRequest = (
     method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  }) as unknown as CfRequest;
+  });
 
 const makeUrl = (path: string) =>
   new URL(`https://test.sprintjam.co.uk${path}`);

@@ -17,7 +17,6 @@ import type {
   TeamInsights,
   TeamIntegrationStatus,
   TeamSession,
-  WorkspaceAuthProfile,
   WorkspaceMember,
   WorkspaceInsights,
   WorkspaceInvite,
@@ -179,16 +178,6 @@ export async function verifyMfa(
     method: "POST",
     body: JSON.stringify({ challengeToken, method, ...payload }),
   });
-}
-
-export async function getCurrentUser(): Promise<WorkspaceAuthProfile | null> {
-  try {
-    return await workspaceRequest<WorkspaceAuthProfile>(
-      `${API_BASE_URL}/auth/me`,
-    );
-  } catch {
-    return null;
-  }
 }
 
 export async function getWorkspaceProfile(): Promise<WorkspaceProfile> {
@@ -540,11 +529,6 @@ export async function getBatchSessionStats(
     `${API_BASE_URL}/stats/sessions?${params.toString()}`,
   );
   return data;
-}
-
-export async function isAuthenticated(): Promise<boolean> {
-  const user = await getCurrentUser();
-  return !!user;
 }
 
 export async function getTeamSettings(

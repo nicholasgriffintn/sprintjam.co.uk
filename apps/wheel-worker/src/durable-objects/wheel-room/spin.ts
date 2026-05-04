@@ -1,6 +1,7 @@
 import type { WheelRoom } from ".";
 import type { SpinState, SpinResult, WheelSettings } from "@sprintjam/types";
 import { generateID } from "@sprintjam/utils";
+import { normalizeWheelSettings } from "../../lib/wheel-validation";
 
 export async function handleSpin(wheel: WheelRoom, userName: string) {
   const wheelData = await wheel.getWheelData();
@@ -129,22 +130,7 @@ export async function handleUpdateSettings(
     throw new Error("Only the moderator can update settings");
   }
 
-  const newSettings: WheelSettings = {
-    ...wheelData.settings,
-    ...settings,
-  };
-
-  if (
-    typeof newSettings.spinDurationMs !== "number" ||
-    !Number.isFinite(newSettings.spinDurationMs)
-  ) {
-    newSettings.spinDurationMs = wheelData.settings.spinDurationMs;
-  } else {
-    newSettings.spinDurationMs = Math.max(
-      2000,
-      Math.min(10000, newSettings.spinDurationMs),
-    );
-  }
+  const newSettings = normalizeWheelSettings(wheelData.settings, settings);
 
   wheel.repository.setSettings(newSettings);
 

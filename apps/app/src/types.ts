@@ -30,6 +30,7 @@ export type ErrorKind =
   | "passcode"
   | "network"
   | "validation"
+  | "conflict"
   | "unknown";
 
 export type ConnectionStatusState = "connected" | "connecting" | "disconnected";

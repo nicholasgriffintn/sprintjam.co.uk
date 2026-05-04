@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import {
   Target,
   MessageSquare,
@@ -10,18 +9,12 @@ import {
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { Spinner } from "@/components/ui/Spinner";
 import { formatVelocity } from "@/lib/formatters";
-import {
-  TEAM_INSIGHTS_STALE_TIME_MS,
-  teamInsightsQueryKey,
-} from "@/lib/workspace-query";
 import type { TeamInsights } from "@sprintjam/types";
-import { getTeamInsights } from "@/lib/workspace-service";
 
 interface TeamInsightsPanelProps {
-  teamId: number;
   teamName: string;
+  insights: TeamInsights | null;
 }
 
 function formatPercentage(value: number): string {
@@ -64,41 +57,9 @@ function MetricCard({
 }
 
 export function TeamInsightsPanel({
-  teamId,
   teamName,
+  insights,
 }: TeamInsightsPanelProps) {
-  const {
-    data: insights,
-    isPending: isLoading,
-    error,
-  } = useQuery<TeamInsights | null>({
-    queryKey: teamInsightsQueryKey(teamId),
-    queryFn: () => getTeamInsights(teamId),
-    staleTime: TEAM_INSIGHTS_STALE_TIME_MS,
-  });
-
-  if (isLoading) {
-    return (
-      <SurfaceCard>
-        <div className="flex items-center justify-center py-8">
-          <Spinner size="md" />
-        </div>
-      </SurfaceCard>
-    );
-  }
-
-  if (error) {
-    return (
-      <SurfaceCard>
-        <div className="py-8 text-center">
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Failed to load team insights
-          </p>
-        </div>
-      </SurfaceCard>
-    );
-  }
-
   if (!insights) {
     return (
       <SurfaceCard>

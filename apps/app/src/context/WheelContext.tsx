@@ -26,7 +26,7 @@ import {
   resetWheel as apiResetWheel,
   updateWheelSettings as apiUpdateWheelSettings,
 } from "@/lib/wheel-api-service";
-import { wheelsCollection } from "@/lib/data/collections";
+import { upsertWheel } from "@/lib/wheel-store";
 
 interface WheelStateContextValue {
   wheelData: WheelData | null;
@@ -101,7 +101,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
     switch (message.type) {
       case "initialize":
         setWheelData(message.wheel);
-        wheelsCollection.utils.writeUpsert(message.wheel);
+        upsertWheel(message.wheel);
         setIsLoading(false);
         break;
 

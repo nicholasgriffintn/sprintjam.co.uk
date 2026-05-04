@@ -1,3 +1,34 @@
+## V4.5
+
+- Changed to send emails from Cloudflare rather than Resend, cutting down on the number of third parties we need to share data with. As we already use Cloudflare, this means that we can keep all of our user data within a single location.
+
+## V4.4
+
+- Moved to server side rendering using React Router with Vite instead of just Client side rendering. This should improve performance while also improving the SEO of the application.
+- Fixed some issues with Websocket connections being initiated multiple times on the wheel and in standup rooms.
+- Made a change to the default settings to change the following options by default:
+  - Auto handover of the moderator role to ensure rooms can continue without interruption if the moderator leaves, it is believed that this is the default expectation for most users and it can be disabled in the settings if not wanted.
+  - Show user presence has now been enabled by default so that users can see who is currently connected to the room or disconnected.
+  - Disabled the Strudel player by default as it is a bit of a niche feature and can be enabled in the settings for those who want to use it.
+- Changed the room error banner to show a reconnecting spinner for 5s on disconnect rather than immediately showing a warning toast.
+
+## V4.3
+
+- Released the new standups feature out of beta with some improvements to the UI and experience based on user feedback, along with some bug fixes and optimisations.
+- Released the wheel spinner feature out of beta along with some final improvements.
+- Made adjustments to the homepage to showcase the new features and to make it clearer what SprintJam is for.
+- Restructured the router handling to remove some complexity and fix potential bugs.
+
+## V4.2
+
+- Added a new automation to generate standup icebreaker questions every 30 days.
+- Standardised and fixed some issues with the handling of cookies for session tokens.
+- Created a new recovery token and API route that will allow users to rejoin rooms if they have lost access to their session token for any reason. This will be shown to the user when they start a session and they can copy it to regain access if they lose their token or switch devices. If a user is logged in they will not be given a token as they can just log in to regain access, this is only for users who are not logged in.
+
+## V4.1
+
+- Made various improvements to the standups feature for better responses and results experiences, this is still in beta.
+
 ## V4
 
 - Added a new Standups feature that allows teams to run asynchronous standup meetings. Attendees will be able to submit what they did yesterday, what they're doing today, any blockers they have and a health check on how they're feeling. They can also answer icebreaker questions, provide kudos to their teammates and react to other responses with emojis.

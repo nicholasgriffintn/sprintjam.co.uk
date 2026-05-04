@@ -66,7 +66,9 @@ export const ScrollArea = ({
           scrollbarClassName,
         )}
       >
-        <BaseScrollArea.Thumb className={cn(THUMB_BASE_CLASSNAME, thumbClassName)} />
+        <BaseScrollArea.Thumb
+          className={cn(THUMB_BASE_CLASSNAME, thumbClassName)}
+        />
       </BaseScrollArea.Scrollbar>
       {showHorizontalScrollbar ? (
         <>

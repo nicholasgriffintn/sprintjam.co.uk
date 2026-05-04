@@ -1,5 +1,5 @@
-import type { RoomSettings } from '@sprintjam/types';
-import { getDefaultRoomSettings } from '@sprintjam/utils';
+import type { RoomSettings } from "@sprintjam/types";
+import { getDefaultRoomSettings } from "@sprintjam/utils";
 
 export function applySettingsUpdate({
   currentSettings,
@@ -25,12 +25,12 @@ export function applySettingsUpdate({
       mergedSettings.customEstimateOptions;
 
     if (!hasExplicitSequence && customOptions) {
-      mergedSettings.votingSequenceId = 'custom';
+      mergedSettings.votingSequenceId = "custom";
     }
 
     if (
-      mergedSettings.votingSequenceId === 'custom' ||
-      settingsUpdate?.votingSequenceId === 'custom'
+      mergedSettings.votingSequenceId === "custom" ||
+      settingsUpdate?.votingSequenceId === "custom"
     ) {
       mergedSettings.customEstimateOptions = customOptions;
     }

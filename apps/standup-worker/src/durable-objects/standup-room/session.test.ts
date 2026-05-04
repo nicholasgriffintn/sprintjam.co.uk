@@ -413,6 +413,10 @@ describe("standup session", () => {
   it("allows facilitator to start and end presentation", async () => {
     const broadcastSpy = vi.fn();
     const setStatusSpy = vi.fn();
+    const data: StandupData = {
+      ...standupWithResponses,
+      users: ["Bob", "Alice"],
+    };
 
     const standup = {
       sessions: new Map(),
@@ -421,7 +425,114 @@ describe("standup session", () => {
         setUserConnection: vi.fn(),
         setStatus: setStatusSpy,
       },
-      getStandupData: vi.fn().mockResolvedValue(baseStandupData),
+      getStandupData: vi.fn().mockResolvedValue(data),
+      broadcast: broadcastSpy,
+      sendToModerator: vi.fn(),
+      sendToUser: vi.fn(),
+      focusedUser: undefined,
+      presentationOrder: undefined,
+    } as unknown as StandupRoom;
+
+    const socket = new MockWebSocket();
+
+    await handleSession(
+      standup,
+      socket as unknown as WebSocket,
+      "standup",
+      "Alice",
+      "valid-token",
+    );
+
+    const messageHandler = socket.handlers.get("message");
+    if (!messageHandler) {
+      throw new Error("Missing message handler");
+    }
+
+    broadcastSpy.mockClear();
+
+    await messageHandler({
+      data: JSON.stringify({ type: "startPresentation" }),
+    });
+    expect(setStatusSpy).toHaveBeenCalledWith("presenting");
+    expect(standup.presentationOrder).toEqual(["Bob", "Alice"]);
+    expect(broadcastSpy).toHaveBeenCalledWith({
+      type: "presentationStarted",
+      presentationOrder: ["Bob", "Alice"],
+    });
+
+    await messageHandler({
+      data: JSON.stringify({ type: "endPresentation" }),
+    });
+    expect(setStatusSpy).toHaveBeenCalledWith("active");
+    expect(standup.presentationOrder).toBeUndefined();
+  });
+
+  it("allows facilitator to update presentation order", async () => {
+    const broadcastSpy = vi.fn();
+    const data: StandupData = {
+      ...standupWithResponses,
+      users: ["Alice", "Bob", "Charlie"],
+      connectedUsers: { Alice: true, Bob: true, Charlie: true },
+    };
+
+    const standup = {
+      sessions: new Map(),
+      repository: {
+        validateSessionToken: vi.fn().mockReturnValue(true),
+        setUserConnection: vi.fn(),
+        setStatus: vi.fn(),
+      },
+      getStandupData: vi.fn().mockResolvedValue(data),
+      broadcast: broadcastSpy,
+      sendToModerator: vi.fn(),
+      sendToUser: vi.fn(),
+      focusedUser: undefined,
+      presentationOrder: undefined,
+    } as unknown as StandupRoom;
+
+    const socket = new MockWebSocket();
+
+    await handleSession(
+      standup,
+      socket as unknown as WebSocket,
+      "standup",
+      "Alice",
+      "valid-token",
+    );
+
+    const messageHandler = socket.handlers.get("message");
+    if (!messageHandler) {
+      throw new Error("Missing message handler");
+    }
+
+    broadcastSpy.mockClear();
+
+    await messageHandler({
+      data: JSON.stringify({
+        type: "setPresentationOrder",
+        order: ["Charlie", "Bob", "Unknown", "bob"],
+      }),
+    });
+
+    expect(standup.presentationOrder).toEqual(["Charlie", "Bob"]);
+    expect(broadcastSpy).toHaveBeenCalledWith({
+      type: "presentationOrderUpdated",
+      presentationOrder: ["Charlie", "Bob"],
+    });
+  });
+
+  it("allows facilitator to persist blocker resolution", async () => {
+    const broadcastSpy = vi.fn();
+    const setBlockerResolvedSpy = vi.fn();
+
+    const standup = {
+      sessions: new Map(),
+      repository: {
+        validateSessionToken: vi.fn().mockReturnValue(true),
+        setUserConnection: vi.fn(),
+        setBlockerResolved: setBlockerResolvedSpy,
+      },
+      getStandupData: vi.fn().mockResolvedValue(standupWithResponses),
       broadcast: broadcastSpy,
       sendToModerator: vi.fn(),
       sendToUser: vi.fn(),
@@ -446,14 +557,19 @@ describe("standup session", () => {
     broadcastSpy.mockClear();
 
     await messageHandler({
-      data: JSON.stringify({ type: "startPresentation" }),
+      data: JSON.stringify({
+        type: "setBlockerResolved",
+        userName: "Bob",
+        resolved: true,
+      }),
     });
-    expect(setStatusSpy).toHaveBeenCalledWith("presenting");
 
-    await messageHandler({
-      data: JSON.stringify({ type: "endPresentation" }),
+    expect(setBlockerResolvedSpy).toHaveBeenCalledWith("Bob", true);
+    expect(broadcastSpy).toHaveBeenCalledWith({
+      type: "blockerResolutionUpdated",
+      userName: "Bob",
+      resolved: true,
     });
-    expect(setStatusSpy).toHaveBeenCalledWith("active");
   });
 
   it("allows facilitator to complete the standup", async () => {

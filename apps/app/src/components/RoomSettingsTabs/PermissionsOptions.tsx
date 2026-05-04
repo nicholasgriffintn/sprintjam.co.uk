@@ -58,6 +58,7 @@ function PermissionsSection({
             onCheckedChange={(checked) =>
               handleChange("autoHandoverModerator", checked)
             }
+            data-testid="settings-toggle-handover-moderator"
           />
           <label
             htmlFor="autoHandoverModerator"

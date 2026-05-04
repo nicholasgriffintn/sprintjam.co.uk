@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { StandupResponse } from '@sprintjam/types';
+import { useState } from "react";
+import type { StandupResponse } from "@sprintjam/types";
 import {
   AlertTriangle,
   Clock3,
@@ -13,16 +13,16 @@ import {
   Trophy,
   Users,
   Wifi,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/cn';
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/cn";
 
-type StandupUserCardVariant = 'default' | 'presentation';
+type StandupUserCardVariant = "default" | "presentation";
 
-const REACTION_EMOJIS = ['👏', '🎉', '💡', '❤️'] as const;
+const REACTION_EMOJIS = ["👏", "🎉", "💡", "❤️"] as const;
 
 interface StandupUserCardProps {
   response: StandupResponse;
@@ -40,19 +40,19 @@ interface StandupUserCardProps {
 }
 
 const HEALTH_COPY: Record<number, string> = {
-  1: 'Running on fumes',
-  2: 'Low energy',
-  3: 'Steady',
-  4: 'Strong',
-  5: 'Excellent',
+  1: "Running on fumes",
+  2: "Low energy",
+  3: "Steady",
+  4: "Strong",
+  5: "Excellent",
 };
 
 const HEALTH_TONES: Record<number, string> = {
-  1: 'bg-rose-500',
-  2: 'bg-orange-500',
-  3: 'bg-amber-500',
-  4: 'bg-emerald-500',
-  5: 'bg-sky-500',
+  1: "bg-rose-500",
+  2: "bg-orange-500",
+  3: "bg-amber-500",
+  4: "bg-emerald-500",
+  5: "bg-sky-500",
 };
 
 function getInitials(name: string) {
@@ -60,21 +60,21 @@ function getInitials(name: string) {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 function formatTime(timestamp: number) {
-  return new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(timestamp);
 }
 
 export function StandupUserCard({
   response,
   avatar,
-  variant = 'default',
+  variant = "default",
   isFocused = false,
   canFocus = false,
   onFocus,
@@ -85,10 +85,10 @@ export function StandupUserCard({
   onRemoveReaction,
   currentUserName,
 }: StandupUserCardProps) {
-  const isPresentation = variant === 'presentation';
+  const isPresentation = variant === "presentation";
   const healthWidth = `${Math.max(1, Math.min(5, response.healthCheck)) * 20}%`;
-  const focusButtonLabel = isFocused ? 'First speaker' : 'Set first';
-  const focusBadgeLabel = isPresentation ? 'Live' : 'First up';
+  const focusButtonLabel = isFocused ? "First speaker" : "Set first";
+  const focusBadgeLabel = isPresentation ? "Live" : "First up";
   const showReactions =
     !!onAddReaction ||
     !!onRemoveReaction ||
@@ -103,12 +103,12 @@ export function StandupUserCard({
   return (
     <article
       className={cn(
-        'rounded-2xl border transition-all',
+        "rounded-2xl border transition-all",
         isPresentation
-          ? 'border-brand-300/60 bg-white p-8 shadow-lg dark:border-brand-500/30 dark:bg-slate-900/80'
-          : 'border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/50',
+          ? "border-brand-300/60 bg-white p-8 shadow-lg dark:border-brand-500/30 dark:bg-slate-900/80"
+          : "border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/50",
         isFocused &&
-          'ring-2 ring-brand-300 ring-offset-2 ring-offset-transparent',
+          "ring-2 ring-brand-300 ring-offset-2 ring-offset-transparent",
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -118,10 +118,10 @@ export function StandupUserCard({
             alt={response.userName}
             fallback={getInitials(response.userName)}
             className={cn(
-              'shrink-0 border border-slate-200 bg-brand-100 text-brand-900 dark:border-slate-700 dark:bg-brand-500/20 dark:text-brand-100',
+              "shrink-0 border border-slate-200 bg-brand-100 text-brand-900 dark:border-slate-700 dark:bg-brand-500/20 dark:text-brand-100",
               isPresentation
-                ? 'h-16 w-16 text-lg font-semibold'
-                : 'h-12 w-12 text-sm font-semibold',
+                ? "h-16 w-16 text-lg font-semibold"
+                : "h-12 w-12 text-sm font-semibold",
             )}
             fallbackClassName="bg-transparent"
           />
@@ -129,8 +129,8 @@ export function StandupUserCard({
           <div className="min-w-0">
             <div
               className={cn(
-                'truncate font-semibold tracking-tight text-slate-900 dark:text-white',
-                isPresentation ? 'text-3xl' : 'text-lg',
+                "truncate font-semibold tracking-tight text-slate-900 dark:text-white",
+                isPresentation ? "text-3xl" : "text-lg",
               )}
             >
               {response.userName}
@@ -175,7 +175,7 @@ export function StandupUserCard({
                 </Badge>
               ) : null}
               {isFocused ? (
-                <Badge variant={isPresentation ? 'primary' : 'info'} size="sm">
+                <Badge variant={isPresentation ? "primary" : "info"} size="sm">
                   {focusBadgeLabel}
                 </Badge>
               ) : null}
@@ -185,7 +185,7 @@ export function StandupUserCard({
 
         {canFocus && onFocus ? (
           <Button
-            variant={isFocused ? 'primary' : 'secondary'}
+            variant={isFocused ? "primary" : "secondary"}
             size="sm"
             onClick={() => onFocus(response.userName)}
             icon={<Crosshair className="h-4 w-4" />}
@@ -209,8 +209,8 @@ export function StandupUserCard({
             ) : null}
             <p
               className={cn(
-                'mt-2 whitespace-pre-wrap text-slate-700 dark:text-slate-200',
-                isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
+                "mt-2 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
+                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
               )}
             >
               {response.icebreakerAnswer}
@@ -227,7 +227,7 @@ export function StandupUserCard({
           </div>
         ) : (
           <div
-            className={cn('grid gap-4', isPresentation ? 'lg:grid-cols-2' : '')}
+            className={cn("grid gap-4", isPresentation ? "lg:grid-cols-2" : "")}
           >
             <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -235,8 +235,8 @@ export function StandupUserCard({
               </h3>
               <p
                 className={cn(
-                  'mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200',
-                  isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
+                  "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
+                  isPresentation ? "text-lg leading-8" : "text-sm leading-6",
                 )}
               >
                 {response.yesterday}
@@ -249,8 +249,8 @@ export function StandupUserCard({
               </h3>
               <p
                 className={cn(
-                  'mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200',
-                  isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
+                  "mt-3 whitespace-pre-wrap text-slate-700 dark:text-slate-200",
+                  isPresentation ? "text-lg leading-8" : "text-sm leading-6",
                 )}
               >
                 {response.today}
@@ -267,12 +267,12 @@ export function StandupUserCard({
             </div>
             <p
               className={cn(
-                'mt-3 whitespace-pre-wrap text-rose-800 dark:text-rose-100',
-                isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
+                "mt-3 whitespace-pre-wrap text-rose-800 dark:text-rose-100",
+                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
               )}
             >
               {response.blockerDescription ||
-                'Blocker flagged without extra detail.'}
+                "Blocker flagged without extra detail."}
             </p>
           </section>
         ) : null}
@@ -285,8 +285,8 @@ export function StandupUserCard({
             </div>
             <p
               className={cn(
-                'mt-3 whitespace-pre-wrap text-amber-900 dark:text-amber-100',
-                isPresentation ? 'text-lg leading-8' : 'text-sm leading-6',
+                "mt-3 whitespace-pre-wrap text-amber-900 dark:text-amber-100",
+                isPresentation ? "text-lg leading-8" : "text-sm leading-6",
               )}
             >
               {response.kudos}
@@ -362,13 +362,13 @@ export function StandupUserCard({
                 Team health
               </span>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                {HEALTH_COPY[response.healthCheck] ?? 'Steady'}
+                {HEALTH_COPY[response.healthCheck] ?? "Steady"}
               </span>
             </div>
             <div className="mt-3 h-2 rounded-full bg-slate-200/80 dark:bg-white/10">
               <div
                 className={cn(
-                  'h-full rounded-full transition-[width]',
+                  "h-full rounded-full transition-[width]",
                   HEALTH_TONES[response.healthCheck] ?? HEALTH_TONES[3],
                 )}
                 style={{ width: healthWidth }}
@@ -401,11 +401,11 @@ export function StandupUserCard({
                   }}
                   disabled={!onAddReaction && !onRemoveReaction}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition',
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition",
                     hasReacted
-                      ? 'border-brand-300 bg-brand-50 font-medium text-brand-900 dark:border-brand-400/60 dark:bg-brand-900/20 dark:text-brand-100'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
-                    !onAddReaction && !onRemoveReaction && 'cursor-default',
+                      ? "border-brand-300 bg-brand-50 font-medium text-brand-900 dark:border-brand-400/60 dark:bg-brand-900/20 dark:text-brand-100"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
+                    !onAddReaction && !onRemoveReaction && "cursor-default",
                   )}
                 >
                   <span>{emoji}</span>

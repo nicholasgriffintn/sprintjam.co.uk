@@ -3,6 +3,12 @@ import type { WheelEntry, SpinResult } from "@sprintjam/types";
 
 import { ScrollArea } from "@/components/ui";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { copyText } from "@/lib/clipboard";
+import { downloadCsv } from "@/utils/csv";
+import {
+  buildWheelResultsCsv,
+  buildWheelResultsText,
+} from "@/utils/wheel-results";
 
 interface WheelSidebarProps {
   entries: WheelEntry[];
@@ -204,6 +210,8 @@ const WheelEntriesPanel = memo(function WheelEntriesPanel({
 });
 
 function WheelResultsPanel({ results }: { results: SpinResult[] }) {
+  const hasResults = results.length > 0;
+
   return (
     <div className="flex flex-col min-h-0 gap-4">
       <ScrollArea
@@ -249,6 +257,26 @@ function WheelResultsPanel({ results }: { results: SpinResult[] }) {
         <span>Latest spin at the top</span>
         <span>{results.length} total</span>
       </div>
+      {hasResults ? (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void copyText(buildWheelResultsText(results))}
+            className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+          >
+            Copy results
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              downloadCsv("sprintjam-wheel-results.csv", buildWheelResultsCsv(results))
+            }
+            className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+          >
+            Export CSV
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const STANDUP_ROW_ID = 1;
 
@@ -12,16 +12,24 @@ export const standupMeta = sqliteTable("standup_meta", {
   status: text("status").notNull().default("active"),
   passcode: text("passcode"),
   teamId: integer("team_id"),
-  presentationTheme: text("presentation_theme").default("default"),
   createdAt: integer("created_at").notNull(),
 });
 
-export const standupUsers = sqliteTable("standup_users", {
-  userName: text("user_name").primaryKey().notNull(),
-  avatar: text("avatar"),
-  isConnected: integer("is_connected").notNull().default(0),
-  ordinal: integer("ordinal").notNull().default(0),
-});
+export const standupUsers = sqliteTable(
+  "standup_users",
+  {
+    userName: text("user_name").primaryKey().notNull(),
+    avatar: text("avatar"),
+    isConnected: integer("is_connected").notNull().default(0),
+    ordinal: integer("ordinal").notNull().default(0),
+    workspaceUserId: integer("workspace_user_id"),
+  },
+  (table) => ({
+    workspaceUserIdx: index("idx_standup_users_workspace_user_id").on(
+      table.workspaceUserId,
+    ),
+  }),
+);
 
 export const standupResponses = sqliteTable("standup_responses", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -31,6 +39,7 @@ export const standupResponses = sqliteTable("standup_responses", {
   today: text("today").notNull().default(""),
   hasBlocker: integer("has_blocker").notNull().default(0),
   blockerDescription: text("blocker_description"),
+  blockerResolved: integer("blocker_resolved").notNull().default(0),
   healthCheck: integer("health_check").notNull().default(3),
   linkedTickets: text("linked_tickets"), // JSON array of ticket refs
   kudos: text("kudos"),
@@ -52,4 +61,6 @@ export const standupSessionTokens = sqliteTable("standup_session_tokens", {
   userName: text("user_name").primaryKey().notNull(),
   token: text("token").notNull(),
   createdAt: integer("created_at").notNull(),
+  recoveryPasskey: text("recovery_passkey"),
+  recoveryPasskeyCreatedAt: integer("recovery_passkey_created_at"),
 });

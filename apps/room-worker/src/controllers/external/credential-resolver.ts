@@ -1,4 +1,3 @@
-import type { Request as CfRequest } from "@cloudflare/workers-types";
 import type {
   GithubOAuthCredentials,
   JiraOAuthCredentials,
@@ -19,7 +18,7 @@ async function getRoomTeamId(
   const response = await roomObject.fetch(
     new Request("https://internal/room/team-id", {
       method: "GET",
-    }) as unknown as CfRequest,
+    }),
   );
 
   if (!response.ok) return null;

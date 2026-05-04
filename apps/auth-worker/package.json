@@ -27,7 +27,7 @@
     "@sprintjam/services": "workspace:*",
     "@sprintjam/types": "workspace:*",
     "@sprintjam/utils": "workspace:*",
-    "drizzle-orm": "0.45.1"
+    "drizzle-orm": "0.45.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260115.0",
@@ -35,6 +35,6 @@
     "drizzle-kit": "0.31.8",
     "typescript": "5.9.3",
     "vitest": "4.0.16",
-    "wrangler": "4.64.0"
+    "wrangler": "4.87.0"
   }
 }

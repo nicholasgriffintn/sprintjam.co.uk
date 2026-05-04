@@ -124,11 +124,30 @@ export async function requestMagicLinkController(
     );
   }
 
+  if (!env.SEND_EMAIL) {
+    console.warn(
+      "SEND_EMAIL is not configured. Skipping sending verification code email.",
+    );
+    await repo.logAuditEvent({
+      email,
+      event: "magic_link_request",
+      status: "success",
+      reason: "code_generated_but_email_not_sent",
+      ip,
+      userAgent,
+    });
+    return jsonError(
+      "Verification code generated but email sending is disabled in this environment.",
+      500,
+      "verification_code_email_disabled",
+    );
+  }
+
   try {
     await sendVerificationCodeEmail({
       email,
       code,
-      resendApiKey: env.RESEND_API_KEY,
+      sendEmail: env.SEND_EMAIL,
     });
   } catch (error) {
     console.error("Failed to send verification code email:", error);

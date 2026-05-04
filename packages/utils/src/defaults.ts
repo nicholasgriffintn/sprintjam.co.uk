@@ -175,7 +175,7 @@ export function getDefaultEstimateOptions(): (string | number)[] {
   const defaultTemplate =
     VOTING_SEQUENCE_TEMPLATES.find(
       (preset) => preset.id === DEFAULT_VOTING_SEQUENCE_ID,
-    ) ?? VOTING_SEQUENCE_TEMPLATES[0];
+    ) ?? VOTING_SEQUENCE_TEMPLATES[0]!;
 
   return buildEstimateOptions(
     [...defaultTemplate.options],
@@ -193,7 +193,7 @@ export function getDefaultRoomSettings(
   const templates = cloneVotingTemplates();
   const defaultTemplate =
     templates.find((template) => template.id === DEFAULT_VOTING_SEQUENCE_ID) ??
-    templates[0];
+    templates[0]!;
 
   const defaultResultsDisplay = getDefaultResultsDisplay();
   const defaultStructuredDisplay = getDefaultStructuredVotingDisplay();
@@ -297,7 +297,7 @@ export function getDefaultRoomSettings(
     capacityPoints:
       settings?.capacityPoints === undefined ? null : settings.capacityPoints,
     showTimer: settings?.showTimer ?? true,
-    showUserPresence: settings?.showUserPresence ?? false,
+    showUserPresence: settings?.showUserPresence ?? true,
     showAverage: settings?.showAverage ?? true,
     showMedian: settings?.showMedian ?? true,
     showTopVotes: settings?.showTopVotes ?? true,
@@ -317,8 +317,8 @@ export function getDefaultRoomSettings(
     structuredVotingDisplay: settings?.structuredVotingDisplay
       ? { ...defaultStructuredDisplay, ...settings.structuredVotingDisplay }
       : defaultStructuredDisplay,
-    autoHandoverModerator: settings?.autoHandoverModerator ?? false,
-    enableStrudelPlayer: settings?.enableStrudelPlayer ?? true,
+    autoHandoverModerator: settings?.autoHandoverModerator ?? true,
+    enableStrudelPlayer: settings?.enableStrudelPlayer ?? false,
     strudelAutoGenerate: settings?.strudelAutoGenerate ?? false,
     enableTicketQueue: settings?.enableTicketQueue ?? true,
     votingSequenceId: sequenceId,

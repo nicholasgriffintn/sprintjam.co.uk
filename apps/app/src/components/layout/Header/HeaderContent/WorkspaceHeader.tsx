@@ -2,12 +2,11 @@ import type { FC } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
-import { useSessionActions, useSessionState } from "@/context/SessionContext";
-import {
-  getWorkspaceNavItems,
-  navigateTo,
-  type AppScreen,
-} from "@/config/routes";
+import { useSessionActions } from "@/context/SessionContext";
+import type { AppScreen } from "@/config/routes";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useCurrentRoute } from "@/hooks/useCurrentRoute";
+import { getWorkspaceNavItems } from "@/config/routes/derived";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { HeaderLogo } from "../HeaderLogo";
@@ -16,12 +15,12 @@ import { HEADER_TRANSITION } from "@/constants";
 import { HeaderUserMenu } from "../HeaderUserMenu";
 
 export const WorkspaceHeader: FC = () => {
-  const { screen } = useSessionState();
-  const { goHome, startCreateFlow, setScreen } = useSessionActions();
+  const { screen } = useCurrentRoute();
+  const { goHome, startCreateFlow } = useSessionActions();
+  const navigateTo = useAppNavigation();
   const navItems = getWorkspaceNavItems();
 
   const handleNavigate = (targetScreen: AppScreen) => {
-    setScreen(targetScreen);
     navigateTo(targetScreen);
   };
 

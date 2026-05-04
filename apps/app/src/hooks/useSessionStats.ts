@@ -1,12 +1,7 @@
 import { useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import {
-  batchSessionStatsQueryKey,
-  normaliseSessionRoomKeys,
-  SESSION_STATS_STALE_TIME_MS,
-  sessionStatsQueryKey,
-} from "@/lib/workspace-query";
+import { normaliseSessionRoomKeys } from "@/lib/session-stats";
 import { getTeamSessionType } from "@/lib/team-session-metadata";
 import { getBatchSessionStats } from "@/lib/workspace-service";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
@@ -21,7 +16,6 @@ interface UseSessionStatsReturn {
 export function useSessionStats(
   sessions: TeamSession[],
 ): UseSessionStatsReturn {
-  const queryClient = useQueryClient();
   const roomKeys = useMemo(
     () =>
       normaliseSessionRoomKeys(
@@ -31,21 +25,11 @@ export function useSessionStats(
       ),
     [sessions],
   );
-
   const statsQuery = useQuery<Record<string, SessionStats>>({
-    queryKey: batchSessionStatsQueryKey(roomKeys),
+    queryKey: ["batch-session-stats", roomKeys],
     enabled: roomKeys.length > 0,
-    staleTime: SESSION_STATS_STALE_TIME_MS,
-    queryFn: async () => {
-      const data = await getBatchSessionStats(roomKeys);
-      for (const roomKey of roomKeys) {
-        queryClient.setQueryData(
-          sessionStatsQueryKey(roomKey),
-          data[roomKey] ?? null,
-        );
-      }
-      return data;
-    },
+    queryFn: () => getBatchSessionStats(roomKeys),
+    staleTime: 0,
   });
 
   return {

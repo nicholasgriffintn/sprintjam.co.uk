@@ -581,7 +581,12 @@ export class TeamRepository {
     await this.db
       .update(teamSessions)
       .set({ completedAt })
-      .where(inArray(teamSessions.id, activeSessions.map((item) => item.id)));
+      .where(
+        inArray(
+          teamSessions.id,
+          activeSessions.map((item) => item.id),
+        ),
+      );
 
     return await this.getTeamSessionById(session.id);
   }

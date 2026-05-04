@@ -1,3 +1,5 @@
+import type { Fetcher } from "@cloudflare/workers-types";
+
 const SECURITY_HEADERS = {
   "Content-Type": "application/json",
   "X-Content-Type-Options": "nosniff",
@@ -116,6 +118,34 @@ export function getStandupSessionToken(request: Request): string | null {
   return getCookieValue(request, "standup_session");
 }
 
+export function createStandupSessionCookie(
+  token: string,
+  maxAgeSeconds: number,
+  isSecure = true,
+): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `standup_session=${token}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
+}
+
+export function clearStandupSessionCookie(isSecure = true): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `standup_session=; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=0`;
+}
+
+export function createWheelSessionCookie(
+  token: string,
+  maxAgeSeconds: number,
+  isSecure = true,
+): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `wheel_session=${token}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
+}
+
+export function clearWheelSessionCookie(isSecure = true): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `wheel_session=; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=0`;
+}
+
 function parseRoomSessionCookie(
   request: Request,
 ): { token: string; roomKey: string | null } | null {
@@ -146,6 +176,35 @@ function parseRoomSessionCookie(
     token,
     roomKey,
   };
+}
+
+export async function resolveWorkspaceUserId(
+  request: Request,
+  authWorker: Fetcher | undefined,
+): Promise<number | undefined> {
+  if (!authWorker) {
+    return undefined;
+  }
+  const cookie = request.headers.get("Cookie") ?? "";
+  if (!cookie.includes("workspace_session")) {
+    return undefined;
+  }
+  try {
+    const authResponse = await authWorker.fetch(
+      "https://auth-worker/api/auth/me",
+      {
+        method: "GET",
+        headers: { Cookie: cookie },
+      },
+    );
+    if (!authResponse.ok) {
+      return undefined;
+    }
+    const data = (await authResponse.json()) as { user?: { id?: number } };
+    return typeof data?.user?.id === "number" ? data.user.id : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 const ALLOWED_ORIGINS = [

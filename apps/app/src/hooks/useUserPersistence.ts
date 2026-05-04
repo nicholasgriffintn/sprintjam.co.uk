@@ -13,6 +13,15 @@ interface UseUserPersistenceOptions {
 export const getStoredUserName = () =>
   safeLocalStorage.get(USERNAME_STORAGE_KEY) ?? "";
 
+export const persistUserName = (name: string) => {
+  if (name === "") {
+    safeLocalStorage.remove(USERNAME_STORAGE_KEY);
+    return;
+  }
+
+  safeLocalStorage.set(USERNAME_STORAGE_KEY, name);
+};
+
 export const getStoredUserAvatar = (): AvatarId | null => {
   const avatar = safeLocalStorage.get(AVATAR_STORAGE_KEY);
   return (sanitiseAvatarValue(avatar) as AvatarId | null) ?? null;
@@ -24,12 +33,12 @@ export const useUserPersistence = ({
 }: UseUserPersistenceOptions) => {
   useEffect(() => {
     if (name === "") {
-      safeLocalStorage.remove(USERNAME_STORAGE_KEY);
+      persistUserName(name);
       return;
     }
 
     const saveTimeout = setTimeout(() => {
-      safeLocalStorage.set(USERNAME_STORAGE_KEY, name);
+      persistUserName(name);
     }, 500);
 
     return () => clearTimeout(saveTimeout);

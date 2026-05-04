@@ -1,34 +1,32 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from "vitest";
 
-import { selectPresetForPhase } from './strudel';
-import { strudelMusicPresets } from '../config/strudel';
+import { selectPresetForPhase } from "./strudel";
+import { strudelMusicPresets } from "../config/strudel";
 
-describe('strudel utils', () => {
-  it('selects a preset for a known phase', () => {
-    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.6);
-    const preset = selectPresetForPhase('voting');
-    randomSpy.mockRestore();
+describe("strudel utils", () => {
+  it("selects a preset for a known phase", () => {
+    const preset = selectPresetForPhase("voting");
 
-    const expected = strudelMusicPresets.voting[1];
-    expect(preset).toMatchObject({
-      style: expected.style,
-      complexity: expected.complexity,
-      prompt: expected.prompt,
-      tempo: 120,
-    });
+    expect(strudelMusicPresets.voting).toContainEqual(
+      expect.objectContaining({
+        style: preset.style,
+        complexity: preset.complexity,
+        prompt: preset.prompt,
+      }),
+    );
+    expect(preset.tempo).toBe(120);
   });
 
-  it('falls back to lobby presets for unknown phases', () => {
-    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
-    const preset = selectPresetForPhase('unknown' as any);
-    randomSpy.mockRestore();
+  it("falls back to lobby presets for unknown phases", () => {
+    const preset = selectPresetForPhase("unknown");
 
-    const expected = strudelMusicPresets.lobby[0];
-    expect(preset).toMatchObject({
-      style: expected.style,
-      complexity: expected.complexity,
-      prompt: expected.prompt,
-      tempo: 120,
-    });
+    expect(strudelMusicPresets.lobby).toContainEqual(
+      expect.objectContaining({
+        style: preset.style,
+        complexity: preset.complexity,
+        prompt: preset.prompt,
+      }),
+    );
+    expect(preset.tempo).toBe(120);
   });
 });

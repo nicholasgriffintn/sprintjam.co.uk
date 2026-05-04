@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { WheelData } from "@sprintjam/types";
+import type { WheelStateData } from "@sprintjam/types";
 import type { WheelRoom } from ".";
 import { handleSession } from "./session";
 
@@ -24,7 +24,7 @@ const createDeferred = <T>() => {
   return { promise, resolve, reject };
 };
 
-const baseWheelData: WheelData = {
+const baseWheelData: WheelStateData = {
   key: "wheel",
   entries: [],
   moderator: "Alice",
@@ -43,7 +43,7 @@ const baseWheelData: WheelData = {
 
 describe("wheel session close", () => {
   it("marks the user disconnected before awaiting wheel data", async () => {
-    const deferred = createDeferred<WheelData>();
+    const deferred = createDeferred<WheelStateData>();
     const getWheelData = vi
       .fn()
       .mockResolvedValueOnce(baseWheelData)

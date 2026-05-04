@@ -1,5 +1,5 @@
 import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
-import { validateClientMessage } from '@sprintjam/utils';
+import { validateClientMessage } from "@sprintjam/utils";
 
 import type { PlanningRoom } from ".";
 import {
@@ -7,13 +7,13 @@ import {
   normalizeRoomData,
   anonymizeRoomData,
   findCanonicalUserName,
-} from '../../lib/room-data';
+} from "../../lib/room-data";
 
 const COMPLETED_ROOM_ALLOWED_MESSAGE_TYPES: Set<string> = new Set([
-  'completeSession',
-  'startGame',
-  'submitGameMove',
-  'endGame',
+  "completeSession",
+  "startGame",
+  "submitGameMove",
+  "endGame",
 ]);
 
 export async function handleSession(

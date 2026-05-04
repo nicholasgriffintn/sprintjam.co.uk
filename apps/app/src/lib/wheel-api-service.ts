@@ -1,4 +1,5 @@
 import type {
+  WheelAccessSettings,
   WheelData,
   WheelServerMessage,
   WheelSettings,
@@ -7,10 +8,7 @@ import type {
 import { WHEEL_API_BASE_URL, WHEEL_WS_BASE_URL } from "@/constants";
 import { HttpError, NetworkError, isAbortError } from "@/lib/errors";
 import { readJsonSafe, handleJsonResponse } from "@/lib/api-utils";
-import {
-  wheelsCollection,
-  ensureWheelsCollectionReady,
-} from "./data/collections";
+import { getWheel, upsertWheel } from "@/lib/wheel-store";
 import {
   createReconnectState,
   resetReconnectAttempts,
@@ -26,6 +24,7 @@ import {
 let activeSocket: WebSocket | null = null;
 let activeWheelKey: string | null = null;
 let reconnectState: ReconnectState = createReconnectState();
+let disconnectPending = false;
 
 type WheelEventMessage =
   | WheelServerMessage
@@ -37,11 +36,13 @@ const eventManager = new EventManager<WheelEventMessage>();
 export interface CreateWheelResponse {
   wheel: WheelData;
   token: string;
+  recoveryPasskey?: string;
 }
 
 export interface JoinWheelResponse {
   wheel: WheelData;
   token: string;
+  recoveryPasskey?: string;
 }
 
 interface RequestOptions {
@@ -49,7 +50,7 @@ interface RequestOptions {
 }
 
 export function getCachedWheel(wheelKey: string): WheelData | null {
-  return wheelsCollection.get(wheelKey) ?? null;
+  return getWheel(wheelKey);
 }
 
 export async function createWheel(
@@ -81,8 +82,7 @@ export async function createWheel(
       );
     }
 
-    await ensureWheelsCollectionReady();
-    wheelsCollection.utils.writeUpsert(data.wheel);
+    upsertWheel(data.wheel);
 
     return data;
   } catch (error) {
@@ -139,8 +139,7 @@ export async function joinWheel(
       );
     }
 
-    await ensureWheelsCollectionReady();
-    wheelsCollection.utils.writeUpsert(data.wheel);
+    upsertWheel(data.wheel);
 
     return data;
   } catch (error) {
@@ -155,6 +154,61 @@ export async function joinWheel(
   }
 }
 
+export async function recoverWheelSession(
+  name: string,
+  wheelKey: string,
+  recoveryPasskey: string,
+): Promise<void> {
+  try {
+    const response = await fetch(`${WHEEL_API_BASE_URL}/wheels/recover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, wheelKey, recoveryPasskey }),
+      credentials: "include",
+    });
+
+    await handleJsonResponse<{ success: boolean }>(
+      response,
+      "Failed to recover wheel session",
+    );
+  } catch (error) {
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to recover wheel session", { cause: error });
+  }
+}
+
+export async function getWheelAccessSettings(
+  wheelKey: string,
+  name?: string,
+): Promise<WheelAccessSettings> {
+  try {
+    const searchParams = new URLSearchParams({ wheelKey });
+    if (name) {
+      searchParams.set("name", name);
+    }
+
+    const response = await fetch(
+      `${WHEEL_API_BASE_URL}/wheels/settings?${searchParams.toString()}`,
+      {
+        credentials: "include",
+      },
+    );
+
+    return await handleJsonResponse<WheelAccessSettings>(
+      response,
+      "Failed to load wheel settings",
+    );
+  } catch (error) {
+    console.error("Error loading wheel access settings:", error);
+    if (error instanceof HttpError || error instanceof NetworkError) {
+      throw error;
+    }
+    throw new NetworkError("Failed to load wheel settings", { cause: error });
+  }
+}
+
 export function connectToWheel(
   wheelKey: string,
   name: string,
@@ -162,9 +216,12 @@ export function connectToWheel(
   onConnectionStatusChange?: (isConnected: boolean) => void,
   isReconnect = false,
 ): WebSocket {
+  disconnectPending = false;
+
   if (
     activeSocket &&
-    activeSocket.readyState === WebSocket.OPEN &&
+    (activeSocket.readyState === WebSocket.OPEN ||
+      activeSocket.readyState === WebSocket.CONNECTING) &&
     activeWheelKey === wheelKey
   ) {
     return activeSocket;
@@ -326,12 +383,24 @@ function handleReconnect(
 }
 
 export function disconnectFromWheel(): void {
-  if (activeSocket) {
-    activeSocket.close(1000, "User left the wheel");
-    activeSocket = null;
-  }
-  activeWheelKey = null;
-  resetReconnectAttempts(reconnectState);
+  disconnectPending = true;
+
+  void Promise.resolve().then(() => {
+    if (!disconnectPending) return;
+    disconnectPending = false;
+
+    if (activeSocket) {
+      const socket = activeSocket;
+      activeSocket = null;
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      socket.close(1000, "User left the wheel");
+    }
+    activeWheelKey = null;
+    resetReconnectAttempts(reconnectState);
+  });
 }
 
 export function addEventListener(

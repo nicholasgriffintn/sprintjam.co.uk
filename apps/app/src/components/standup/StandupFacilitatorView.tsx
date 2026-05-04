@@ -1,28 +1,28 @@
-import { useState } from 'react';
-import { type StandupData } from '@sprintjam/types';
+import { useState } from "react";
+import { type StandupData } from "@sprintjam/types";
 import {
   AlertTriangle,
   CheckCircle2,
+  ClipboardCheck,
+  Download,
   Eye,
   EyeOff,
   Lock,
   LockOpen,
-  Palette,
   Play,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { SurfaceCard } from '@/components/ui/SurfaceCard';
-import { StandupUserCard } from '@/components/standup/StandupUserCard';
-
-const THEMES = [
-  { id: 'default', label: 'Default', color: 'bg-slate-200 dark:bg-slate-700' },
-  { id: 'cosmic', label: 'Cosmic', color: 'bg-indigo-600' },
-  { id: 'forest', label: 'Forest', color: 'bg-emerald-700' },
-  { id: 'ocean', label: 'Ocean', color: 'bg-sky-600' },
-  { id: 'sunset', label: 'Sunset', color: 'bg-orange-600' },
-] as const;
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { StandupUserCard } from "@/components/standup/StandupUserCard";
+import { copyText } from "@/lib/clipboard";
+import { downloadCsv } from "@/utils/csv";
+import {
+  buildStandupBlockerFollowUpText,
+  buildStandupRecapCsv,
+  getOrderedStandupResponses,
+} from "@/utils/standup-recap";
 
 interface StandupFacilitatorViewProps {
   standupData: StandupData;
@@ -32,7 +32,7 @@ interface StandupFacilitatorViewProps {
   onStartPresentation: () => void;
   onCompleteStandup: () => void;
   onFocusUser: (userName: string) => void;
-  onSetTheme: (theme: string) => void;
+  onSetBlockerResolved: (userName: string, resolved: boolean) => void;
   isLockingResponses?: boolean;
   isStartingPresentation?: boolean;
   isCompletingStandup?: boolean;
@@ -48,23 +48,18 @@ export function StandupFacilitatorView({
   onStartPresentation,
   onCompleteStandup,
   onFocusUser,
-  onSetTheme,
+  onSetBlockerResolved,
   isLockingResponses = false,
   isStartingPresentation = false,
   isCompletingStandup = false,
 }: StandupFacilitatorViewProps) {
   const [showResponses, setShowResponses] = useState(false);
   const [healthRevealed, setHealthRevealed] = useState(false);
-
-  const responseOrder = new Map(
-    standupData.users.map((user, index) => [user, index]),
-  );
-  const orderedResponses = [...standupData.responses].sort(
-    (left, right) =>
-      (responseOrder.get(left.userName) ?? Number.MAX_SAFE_INTEGER) -
-      (responseOrder.get(right.userName) ?? Number.MAX_SAFE_INTEGER),
-  );
+  const orderedResponses = getOrderedStandupResponses(standupData);
   const blockers = orderedResponses.filter((response) => response.hasBlocker);
+  const unresolvedBlockers = blockers.filter(
+    (response) => !response.blockerResolved,
+  );
   const pendingUsers = standupData.users.filter(
     (user) => !standupData.respondedUsers.includes(user),
   );
@@ -79,7 +74,7 @@ export function StandupFacilitatorView({
     count: orderedResponses.filter((response) => response.healthCheck === value)
       .length,
   }));
-  const isCompleted = standupData.status === 'completed';
+  const isCompleted = standupData.status === "completed";
   const firstSubmitter = orderedResponses.length
     ? orderedResponses.reduce((min, r) =>
         r.submittedAt < min.submittedAt ? r : min,
@@ -89,7 +84,6 @@ export function StandupFacilitatorView({
     (response) => response.isHealthCheckPrivate,
   );
   const shouldHideHealth = hasPrivateHealth && !healthRevealed;
-  const currentTheme = standupData.presentationTheme ?? 'default';
 
   return (
     <div className="space-y-6">
@@ -101,13 +95,14 @@ export function StandupFacilitatorView({
             </h2>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="primary">
-                {standupData.respondedUsers.length}/{standupData.users.length}{' '}
+                {standupData.respondedUsers.length}/{standupData.users.length}{" "}
                 submitted
               </Badge>
-              {blockers.length ? (
+              {unresolvedBlockers.length ? (
                 <Badge variant="error">
                   <AlertTriangle className="mr-1 h-3 w-3" />
-                  {blockers.length} blocker{blockers.length === 1 ? '' : 's'}
+                  {unresolvedBlockers.length} blocker
+                  {unresolvedBlockers.length === 1 ? "" : "s"}
                 </Badge>
               ) : null}
             </div>
@@ -120,21 +115,21 @@ export function StandupFacilitatorView({
               disabled={!isSocketConnected || isCompleted || isLockingResponses}
               isLoading={isLockingResponses}
               onClick={
-                standupData.status === 'locked'
+                standupData.status === "locked"
                   ? onUnlockResponses
                   : onLockResponses
               }
               icon={
-                standupData.status === 'locked' ? (
+                standupData.status === "locked" ? (
                   <LockOpen className="h-4 w-4" />
                 ) : (
                   <Lock className="h-4 w-4" />
                 )
               }
             >
-              {standupData.status === 'locked'
-                ? 'Unlock responses'
-                : 'Lock responses'}
+              {standupData.status === "locked"
+                ? "Unlock responses"
+                : "Lock responses"}
             </Button>
             <Button
               size="sm"
@@ -152,13 +147,44 @@ export function StandupFacilitatorView({
             </Button>
             <Button
               size="sm"
-              variant={isCompleted ? 'secondary' : 'primary'}
+              variant={isCompleted ? "secondary" : "primary"}
               disabled={!isSocketConnected || isCompleted}
               isLoading={isCompletingStandup}
               onClick={onCompleteStandup}
               icon={<CheckCircle2 className="h-4 w-4" />}
             >
               Complete standup
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                void copyText(
+                  buildStandupBlockerFollowUpText(standupData, {
+                    resolvedBlockers: new Set(
+                      blockers
+                        .filter((response) => response.blockerResolved)
+                        .map((response) => response.userName),
+                    ),
+                  }),
+                )
+              }
+              icon={<ClipboardCheck className="h-4 w-4" />}
+            >
+              Copy blockers
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                downloadCsv(
+                  `standup-${standupData.key}-recap.csv`,
+                  buildStandupRecapCsv(standupData),
+                )
+              }
+              icon={<Download className="h-4 w-4" />}
+            >
+              Export recap
             </Button>
           </div>
         </div>
@@ -167,32 +193,6 @@ export function StandupFacilitatorView({
           <div className="rounded-[1.5rem] border border-emerald-200/40 bg-emerald-50/40 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-400/10 dark:bg-emerald-950/10 dark:text-emerald-100">
             This standup is complete. The responses below remain available as
             read-only history.
-          </div>
-        ) : null}
-
-        {!isCompleted ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Palette className="h-4 w-4 text-slate-400" />
-            <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
-              Presentation theme
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {THEMES.map((theme) => (
-                <button
-                  key={theme.id}
-                  onClick={() => onSetTheme(theme.id)}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                    currentTheme === theme.id
-                      ? 'ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900'
-                      : 'opacity-70 hover:opacity-100'
-                  }`}
-                  title={theme.label}
-                >
-                  <span className={`h-3 w-3 rounded-full ${theme.color}`} />
-                  {theme.label}
-                </button>
-              ))}
-            </div>
           </div>
         ) : null}
 
@@ -218,7 +218,7 @@ export function StandupFacilitatorView({
             ) : (
               <>
                 <div className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">
-                  {orderedResponses.length ? averageHealth.toFixed(1) : '--'}
+                  {orderedResponses.length ? averageHealth.toFixed(1) : "--"}
                 </div>
                 <div className="mt-3 space-y-2">
                   {distribution.map((item) => (
@@ -235,7 +235,7 @@ export function StandupFacilitatorView({
                           style={{
                             width: orderedResponses.length
                               ? `${(item.count / orderedResponses.length) * 100}%`
-                              : '0%',
+                              : "0%",
                           }}
                         />
                       </div>
@@ -255,17 +255,52 @@ export function StandupFacilitatorView({
             </div>
             {blockers.length ? (
               <div className="mt-3 space-y-2">
-                {blockers.map((response) => (
-                  <div
-                    key={response.userName}
-                    className="rounded-2xl border border-rose-200/40 bg-rose-50/50 px-3 py-2 text-sm text-rose-800 dark:border-rose-400/10 dark:bg-rose-950/10 dark:text-rose-100"
-                  >
-                    <span className="font-semibold">{response.userName}</span>
-                    <span className="ml-2">
-                      {response.blockerDescription || 'Needs follow-up'}
-                    </span>
-                  </div>
-                ))}
+                {blockers.map((response) => {
+                  const isResolved = response.blockerResolved === true;
+
+                  return (
+                    <div
+                      key={response.userName}
+                      className={
+                        isResolved
+                          ? "rounded-2xl border border-emerald-200/50 bg-emerald-50/50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-400/10 dark:bg-emerald-950/10 dark:text-emerald-100"
+                          : "rounded-2xl border border-rose-200/40 bg-rose-50/50 px-3 py-2 text-sm text-rose-800 dark:border-rose-400/10 dark:bg-rose-950/10 dark:text-rose-100"
+                      }
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span>
+                          <span className="font-semibold">
+                            {response.userName}
+                          </span>
+                          <span className="ml-2">
+                            {response.blockerDescription || "Needs follow-up"}
+                          </span>
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {isResolved ? (
+                            <Badge variant="success" size="sm">
+                              <CheckCircle2 className="mr-1 h-3 w-3" />
+                              Resolved
+                            </Badge>
+                          ) : null}
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() =>
+                              onSetBlockerResolved(
+                                response.userName,
+                                !isResolved,
+                              )
+                            }
+                          >
+                            {isResolved ? "Mark unresolved" : "Mark resolved"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
@@ -321,7 +356,7 @@ export function StandupFacilitatorView({
                 )
               }
             >
-              {showResponses ? 'Hide responses' : 'Show responses'}
+              {showResponses ? "Hide responses" : "Show responses"}
             </Button>
           </div>
           {showResponses ? (

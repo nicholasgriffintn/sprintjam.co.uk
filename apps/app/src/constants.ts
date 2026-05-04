@@ -28,9 +28,16 @@ export const STANDUP_WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws/standup`;
 
 export const SENTRY_DSN =
   import.meta.env.VITE_SENTRY_DSN ||
-  'https://ae2cfc4ec7ef4879be068f2fc80e54c0@ingest.bitwobbly.com/10';
+  "https://ae2cfc4ec7ef4879be068f2fc80e54c0@ingest.bitwobbly.com/10";
 
 export const SITE_NAME = "SprintJam";
+
+export const getRecoveryPasskeyStorageKey = (
+  feature: "room" | "standup" | "wheel",
+  sessionKey: string,
+  userName: string,
+): string =>
+  `sprintjam_recovery_${feature}_${sessionKey.toLowerCase()}_${userName.toLowerCase()}`;
 
 export const WORKSPACE_TOKEN_STORAGE_KEY = "sprintjam_workspaceToken";
 export const MUTE_STORAGE_KEY = "sprintjam_strudelPlayerMuted";

@@ -1,3 +1,5 @@
+import { secureRandomFloat } from "@sprintjam/utils";
+
 export interface WebSocketConfig {
   maxReconnectAttempts?: number;
   reconnectBaseDelay?: number;
@@ -27,7 +29,7 @@ export function resetReconnectAttempts(state: ReconnectState): void {
 }
 
 export function calculateReconnectDelay(state: ReconnectState): number {
-  const jitter = Math.random() * 0.3 + 0.85;
+  const jitter = secureRandomFloat() * 0.3 + 0.85;
   return Math.min(
     state.baseDelay * 2 ** state.attempts * jitter,
     state.maxDelay,

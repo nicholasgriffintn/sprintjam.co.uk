@@ -24,4 +24,12 @@ export class WelcomePage extends BasePage {
   async startJoinRoom() {
     await this.page.getByTestId("join-room-button").click();
   }
+
+  async openWheelFromSprintFlow() {
+    await this.page.getByTestId("homepage-flow-wheel").click();
+  }
+
+  async openStandupFromSprintFlow() {
+    await this.page.getByTestId("homepage-flow-standup").click();
+  }
 }

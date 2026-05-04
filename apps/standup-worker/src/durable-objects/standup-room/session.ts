@@ -33,6 +33,17 @@ interface FocusUserMessage extends StandupClientMessage {
   userName: string;
 }
 
+interface SetPresentationOrderMessage extends StandupClientMessage {
+  type: "setPresentationOrder";
+  order: string[];
+}
+
+interface SetBlockerResolvedMessage extends StandupClientMessage {
+  type: "setBlockerResolved";
+  userName: string;
+  resolved: boolean;
+}
+
 interface CompleteStandupMessage extends StandupClientMessage {
   type: "completeStandup";
 }
@@ -49,18 +60,14 @@ interface RemoveReactionMessage extends StandupClientMessage {
   emoji: string;
 }
 
-interface SetThemeMessage extends StandupClientMessage {
-  type: "setTheme";
-  theme: string;
-}
-
 type ValidatedMessage =
   | SubmitResponseMessage
   | FocusUserMessage
+  | SetPresentationOrderMessage
+  | SetBlockerResolvedMessage
   | CompleteStandupMessage
   | AddReactionMessage
   | RemoveReactionMessage
-  | SetThemeMessage
   | { type: "lockResponses" }
   | { type: "unlockResponses" }
   | { type: "startPresentation" }
@@ -81,13 +88,6 @@ const LIMITS = {
 
 const ALLOWED_TICKET_PROVIDERS = new Set(["jira", "linear", "github"]);
 const ALLOWED_REACTION_EMOJIS = new Set(["👏", "🎉", "💡", "❤️"]);
-const ALLOWED_THEMES = new Set([
-  "default",
-  "cosmic",
-  "forest",
-  "ocean",
-  "sunset",
-]);
 
 function normaliseNonEmptyString(
   value: unknown,
@@ -280,6 +280,39 @@ function validateClientMessage(
         userName: normaliseNonEmptyString(msg.userName, 64)!,
       };
 
+    case "setPresentationOrder": {
+      if (!Array.isArray(msg.order) || msg.order.length > 50) {
+        return { error: "Invalid setPresentationOrder message" };
+      }
+
+      const order: string[] = [];
+      for (const userName of msg.order) {
+        const normalisedUserName = normaliseNonEmptyString(userName, 64);
+        if (!normalisedUserName) {
+          return { error: "Invalid setPresentationOrder message" };
+        }
+        order.push(normalisedUserName);
+      }
+
+      return {
+        type: "setPresentationOrder",
+        order,
+      };
+    }
+
+    case "setBlockerResolved": {
+      const targetUserName = normaliseNonEmptyString(msg.userName, 64);
+      if (!targetUserName || typeof msg.resolved !== "boolean") {
+        return { error: "Invalid setBlockerResolved message" };
+      }
+
+      return {
+        type: "setBlockerResolved",
+        userName: targetUserName,
+        resolved: msg.resolved,
+      };
+    }
+
     case "addReaction": {
       const responseUserName = normaliseNonEmptyString(
         msg.responseUserName,
@@ -312,13 +345,6 @@ function validateClientMessage(
         return { error: "Invalid removeReaction: unsupported emoji" };
       }
       return { type: "removeReaction", responseUserName, emoji: msg.emoji };
-    }
-
-    case "setTheme": {
-      if (typeof msg.theme !== "string" || !ALLOWED_THEMES.has(msg.theme)) {
-        return { error: "Invalid setTheme: unsupported theme" };
-      }
-      return { type: "setTheme", theme: msg.theme };
     }
 
     case "lockResponses":
@@ -470,14 +496,26 @@ export async function handleSession(
 
         case "startPresentation":
           if (canonicalUserName === currentStandup.moderator) {
+            const respondedUsers = new Set(
+              currentStandup.responses.map((response) =>
+                response.userName.toLowerCase(),
+              ),
+            );
+            standup.presentationOrder = currentStandup.users.filter((user) =>
+              respondedUsers.has(user.toLowerCase()),
+            );
             standup.repository.setStatus("presenting");
-            standup.broadcast({ type: "presentationStarted" });
+            standup.broadcast({
+              type: "presentationStarted",
+              presentationOrder: standup.presentationOrder,
+            });
           }
           break;
 
         case "endPresentation":
           if (canonicalUserName === currentStandup.moderator) {
             standup.focusedUser = undefined;
+            standup.presentationOrder = undefined;
             standup.repository.setStatus("active");
             standup.broadcast({ type: "presentationEnded" });
           }
@@ -508,9 +546,51 @@ export async function handleSession(
           }
           break;
 
+        case "setPresentationOrder":
+          if (canonicalUserName === currentStandup.moderator) {
+            const canonicalOrder = validated.order
+              .map((user) => findCanonicalUserName(currentStandup.users, user))
+              .filter((user): user is string => Boolean(user));
+
+            standup.presentationOrder = Array.from(new Set(canonicalOrder));
+            standup.broadcast({
+              type: "presentationOrderUpdated",
+              presentationOrder: standup.presentationOrder,
+            });
+          }
+          break;
+
+        case "setBlockerResolved":
+          if (canonicalUserName === currentStandup.moderator) {
+            const responseUser = findCanonicalUserName(
+              currentStandup.users,
+              validated.userName,
+            );
+            const response = responseUser
+              ? currentStandup.responses.find(
+                  (item) =>
+                    item.userName.toLowerCase() === responseUser.toLowerCase(),
+                )
+              : undefined;
+
+            if (responseUser && response?.hasBlocker) {
+              standup.repository.setBlockerResolved(
+                responseUser,
+                validated.resolved,
+              );
+              standup.broadcast({
+                type: "blockerResolutionUpdated",
+                userName: responseUser,
+                resolved: validated.resolved,
+              });
+            }
+          }
+          break;
+
         case "completeStandup":
           if (canonicalUserName === currentStandup.moderator) {
             standup.focusedUser = undefined;
+            standup.presentationOrder = undefined;
             standup.repository.setStatus("completed");
             standup.broadcast({ type: "standupCompleted" });
           }
@@ -557,16 +637,6 @@ export async function handleSession(
           }
           break;
         }
-
-        case "setTheme":
-          if (canonicalUserName === currentStandup.moderator) {
-            standup.repository.setTheme(validated.theme);
-            standup.broadcast({
-              type: "themeUpdated",
-              theme: validated.theme,
-            });
-          }
-          break;
       }
     } catch (err: unknown) {
       console.error("WebSocket message error:", err);

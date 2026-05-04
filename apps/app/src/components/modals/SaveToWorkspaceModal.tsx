@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "react-router";
 import { Building2, Check, LogIn } from "lucide-react";
 import type { TeamSession } from "@sprintjam/types";
 
@@ -11,15 +11,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Alert } from "@/components/ui/Alert";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { useSessionActions } from "@/context/SessionContext";
-import {
-  createTeamSession,
-  updateTeamSession,
-} from "@/lib/workspace-service";
-import {
-  linkedRoomSessionQueryKey,
-  teamSessionsQueryKey,
-  WORKSPACE_STATS_QUERY_KEY,
-} from "@/lib/workspace-query";
+import { createTeamSession, updateTeamSession } from "@/lib/workspace-service";
 import { cn } from "@/lib/cn";
 import { BetaBadge } from "@/components/BetaBadge";
 import { setReturnUrl } from "@/config/routes";
@@ -30,6 +22,7 @@ interface SaveToWorkspaceModalProps {
   roomKey: string;
   suggestedName?: string;
   linkedSession?: TeamSession | null;
+  onSaved?: (session: TeamSession) => void;
 }
 
 export function SaveToWorkspaceModal({
@@ -38,6 +31,7 @@ export function SaveToWorkspaceModal({
   roomKey,
   suggestedName,
   linkedSession = null,
+  onSaved,
 }: SaveToWorkspaceModalProps) {
   const {
     isAuthenticated,
@@ -45,7 +39,7 @@ export function SaveToWorkspaceModal({
     teams,
   } = useWorkspaceAuth();
   const { goToLogin } = useSessionActions();
-  const queryClient = useQueryClient();
+  const location = useLocation();
 
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [sessionName, setSessionName] = useState(suggestedName || "");
@@ -61,7 +55,8 @@ export function SaveToWorkspaceModal({
     if (isOpen) {
       setSessionName(linkedSession?.name ?? suggestedName ?? "");
       setSelectedTeamId(
-        linkedSession?.teamId ?? (teams.length === 1 ? teams[0].id : null),
+        linkedSession?.teamId ??
+          (teams.length === 1 ? (teams[0]?.id ?? null) : null),
       );
       setIsSuccess(false);
       setError(null);
@@ -76,19 +71,15 @@ export function SaveToWorkspaceModal({
 
     try {
       const session = isEditMode
-        ? await updateTeamSession(activeLinkedSession!.teamId, activeLinkedSession!.id, {
-            name: sessionName.trim(),
-          })
+        ? await updateTeamSession(
+            activeLinkedSession!.teamId,
+            activeLinkedSession!.id,
+            {
+              name: sessionName.trim(),
+            },
+          )
         : await createTeamSession(selectedTeamId, sessionName.trim(), roomKey);
-      queryClient.setQueryData(linkedRoomSessionQueryKey(roomKey), session);
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: teamSessionsQueryKey(session.teamId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: WORKSPACE_STATS_QUERY_KEY,
-        }),
-      ]);
+      onSaved?.(session);
       setIsSuccess(true);
       setTimeout(() => {
         onClose();
@@ -106,7 +97,7 @@ export function SaveToWorkspaceModal({
   };
 
   const handleLoginClick = () => {
-    setReturnUrl(window.location.pathname);
+    setReturnUrl(location.pathname);
     onClose();
     goToLogin();
   };
@@ -191,7 +182,9 @@ export function SaveToWorkspaceModal({
               Already linked to workspace
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-300">
-              {linkedTeamName ? `Team: ${linkedTeamName}` : `Team ID: ${activeLinkedSession!.teamId}`}
+              {linkedTeamName
+                ? `Team: ${linkedTeamName}`
+                : `Team ID: ${activeLinkedSession!.teamId}`}
             </p>
           </SurfaceCard>
         ) : (
@@ -257,7 +250,9 @@ export function SaveToWorkspaceModal({
             onClick={handleSave}
             isLoading={isSaving}
             disabled={
-              !selectedTeamId || !sessionName.trim() || (!isEditMode && teams.length === 0)
+              !selectedTeamId ||
+              !sessionName.trim() ||
+              (!isEditMode && teams.length === 0)
             }
           >
             {isEditMode ? "Update session" : "Save to Workspace"}
