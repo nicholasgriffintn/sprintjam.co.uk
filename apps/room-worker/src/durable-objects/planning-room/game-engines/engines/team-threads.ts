@@ -2,7 +2,7 @@ import type { RoomData, RoomGameSession } from "@sprintjam/types";
 import { secureRandomInt } from "@sprintjam/utils";
 
 import type { GameEngine } from "../types";
-import { addEvent, addPoints } from "../helpers";
+import { addEvent, addPoints, getGameWinner } from "../helpers";
 import { TEAM_THREADS_PUZZLES } from "../words";
 
 const TEAM_THREADS_LIVES = 4;
@@ -132,11 +132,7 @@ export const teamThreadsEngine: GameEngine = {
           );
         }
         session.status = "completed";
-        const topScore = Math.max(...Object.values(session.leaderboard));
-        const winner = Object.entries(session.leaderboard).find(
-          ([, score]) => score === topScore,
-        )?.[0];
-        if (winner) session.winner = winner;
+        session.winner = getGameWinner(session);
       }
     }
   },

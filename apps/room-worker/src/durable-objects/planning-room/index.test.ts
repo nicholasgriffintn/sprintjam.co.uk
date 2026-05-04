@@ -1024,6 +1024,71 @@ describe("PlanningRoom critical flows", () => {
     );
   });
 
+  it("does not declare a Team Threads winner when the score is tied", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-team-threads-tie",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "team-threads");
+    roomData.gameSession!.teamThreadsLives = 1;
+    roomData.gameSession!.teamThreadsGroups = [
+      {
+        category: "Planning",
+        words: ["POINTS", "ESTIMATE", "STORY", "SPRINT"],
+        difficulty: 1,
+      },
+    ];
+    roomData.gameSession!.teamThreadsFoundGroups = [];
+
+    await room.handleSubmitGameMove("alice", "NOPE,NAH,MISS,FAIL");
+
+    expect(roomData.gameSession?.status).toBe("completed");
+    expect(roomData.gameSession?.leaderboard).toEqual({ alice: 0, bob: 0 });
+    expect(roomData.gameSession?.winner).toBeUndefined();
+  });
+
+  it("keeps Sprint Risk move history when rejecting only the latest command", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-sprint-risk-history",
+      users: ["alice", "bob"],
+      moderator: "alice",
+      connectedUsers: { alice: true, bob: true },
+    });
+
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+    room.putRoomData = vi.fn(async () => undefined);
+
+    await room.handleStartGame("alice", "sprint-risk");
+    roomData.gameSession!.moves = [
+      {
+        id: "prior-bank",
+        user: "alice",
+        value: "bank",
+        round: 1,
+        submittedAt: Date.now() - 1,
+      },
+    ];
+    roomData.gameSession!.sprintRiskPhase = "waiting";
+
+    await room.handleSubmitGameMove("alice", "bank");
+
+    expect(roomData.gameSession?.moves).toEqual([
+      expect.objectContaining({ id: "prior-bank", value: "bank" }),
+    ]);
+  });
+
   it("persists structured votes and broadcasts structured payloads", async () => {
     const state = makeState();
     const room = new PlanningRoom(state, env);

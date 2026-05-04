@@ -5,26 +5,11 @@ import {
   MAX_GAME_ROUNDS,
   addEvent,
   createGameMove,
+  getGameWinner,
   initializeGameSession,
 } from "./game-engines/helpers";
 import { GAME_ENGINES } from "./game-engines/registry";
 import { sanitizeGameSession } from "../../lib/room-data";
-
-const getWinner = (session: RoomGameSession) => {
-  const sortedScores = Object.entries(session.leaderboard).sort(
-    (a, b) => b[1] - a[1],
-  );
-  const topScore = sortedScores[0]?.[1];
-
-  if (topScore === undefined) {
-    return undefined;
-  }
-
-  const topScorers = sortedScores
-    .filter(([, score]) => score === topScore)
-    .map(([name]) => name);
-  return topScorers.length === 1 ? topScorers[0] : undefined;
-};
 
 const getClientGameSession = (session: RoomGameSession): RoomGameSession =>
   sanitizeGameSession(session) ?? session;
@@ -74,7 +59,7 @@ const completeGameSession = async (
   reason: "manual" | "round-limit",
   roundLimit = MAX_GAME_ROUNDS,
 ) => {
-  const winner = getWinner(session);
+  const winner = getGameWinner(session);
   session.status = "completed";
   session.winner = winner;
 

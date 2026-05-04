@@ -50,6 +50,22 @@ export const addEvent = (session: RoomGameSession, message: string) => {
   session.events = [...session.events.slice(-9), createGameEvent(message)];
 };
 
+export const getGameWinner = (session: RoomGameSession) => {
+  const sortedScores = Object.entries(session.leaderboard).sort(
+    (a, b) => b[1] - a[1],
+  );
+  const topScore = sortedScores[0]?.[1];
+
+  if (topScore === undefined) {
+    return undefined;
+  }
+
+  const topScorers = sortedScores
+    .filter(([, score]) => score === topScore)
+    .map(([name]) => name);
+  return topScorers.length === 1 ? topScorers[0] : undefined;
+};
+
 export const getCurrentRoundMoves = (session: RoomGameSession) =>
   session.moves.filter((gameMove) => gameMove.round === session.round);
 
