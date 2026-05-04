@@ -8,6 +8,13 @@ type ParseResult =
   | { ok: true; value: SaveTeamsCollaborationInstallationInput }
   | { ok: false; error: string };
 
+export class TeamsContextAlreadyLinkedError extends Error {
+  constructor() {
+    super("Teams context is already linked to another team");
+    this.name = "TeamsContextAlreadyLinkedError";
+  }
+}
+
 function optionalString(value: unknown, maxLength = MAX_CONTEXT_VALUE_LENGTH) {
   if (value === undefined || value === null) {
     return null;
@@ -46,6 +53,7 @@ export function buildTeamsContextKey(
     | "externalChannelId"
     | "externalChatId"
     | "externalMeetingId"
+    | "externalUserId"
   >,
 ): string {
   const scope = input.externalChannelId
@@ -56,7 +64,9 @@ export function buildTeamsContextKey(
         ? `meeting:${input.externalMeetingId}`
         : input.externalTeamId
           ? `team:${input.externalTeamId}`
-          : "personal";
+          : input.externalUserId
+            ? `personal:${input.externalUserId}`
+            : "personal";
 
   return `${input.tenantId}:${scope}`;
 }

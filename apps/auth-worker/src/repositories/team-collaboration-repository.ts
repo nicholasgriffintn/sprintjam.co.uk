@@ -10,7 +10,10 @@ import type {
 } from "@sprintjam/types";
 import { safeJsonParse } from "@sprintjam/utils";
 
-import { buildTeamsContextKey } from "../lib/collaboration";
+import {
+  buildTeamsContextKey,
+  TeamsContextAlreadyLinkedError,
+} from "../lib/collaboration";
 
 export class TeamCollaborationRepository {
   private db: ReturnType<typeof drizzle>;
@@ -59,6 +62,7 @@ export class TeamCollaborationRepository {
       | "externalChannelId"
       | "externalChatId"
       | "externalMeetingId"
+      | "externalUserId"
     >,
   ): Promise<TeamCollaborationInstallation | null> {
     const contextKey = buildTeamsContextKey(input);
@@ -85,9 +89,39 @@ export class TeamCollaborationRepository {
     const contextKey = buildTeamsContextKey(params.input);
     const metadata = JSON.stringify(params.input.metadata ?? {});
 
-    await this.db
-      .insert(teamCollaborationInstallations)
-      .values({
+    const existing = await this.db
+      .select()
+      .from(teamCollaborationInstallations)
+      .where(
+        and(
+          eq(teamCollaborationInstallations.platform, "teams"),
+          eq(teamCollaborationInstallations.contextKey, contextKey),
+        ),
+      )
+      .get();
+
+    if (existing && existing.teamId !== params.teamId) {
+      throw new TeamsContextAlreadyLinkedError();
+    }
+
+    if (existing) {
+      await this.db
+        .update(teamCollaborationInstallations)
+        .set({
+          tenantId: params.input.tenantId,
+          externalTeamId: params.input.externalTeamId ?? null,
+          externalChannelId: params.input.externalChannelId ?? null,
+          externalChatId: params.input.externalChatId ?? null,
+          externalMeetingId: params.input.externalMeetingId ?? null,
+          externalUserId: params.input.externalUserId ?? null,
+          displayName: params.input.displayName ?? null,
+          installedById: params.installedById,
+          metadata,
+          updatedAt: now,
+        })
+        .where(eq(teamCollaborationInstallations.id, existing.id));
+    } else {
+      await this.db.insert(teamCollaborationInstallations).values({
         teamId: params.teamId,
         platform: "teams",
         contextKey,
@@ -102,26 +136,8 @@ export class TeamCollaborationRepository {
         metadata,
         createdAt: now,
         updatedAt: now,
-      })
-      .onConflictDoUpdate({
-        target: [
-          teamCollaborationInstallations.platform,
-          teamCollaborationInstallations.contextKey,
-        ],
-        set: {
-          teamId: params.teamId,
-          tenantId: params.input.tenantId,
-          externalTeamId: params.input.externalTeamId ?? null,
-          externalChannelId: params.input.externalChannelId ?? null,
-          externalChatId: params.input.externalChatId ?? null,
-          externalMeetingId: params.input.externalMeetingId ?? null,
-          externalUserId: params.input.externalUserId ?? null,
-          displayName: params.input.displayName ?? null,
-          installedById: params.installedById,
-          metadata,
-          updatedAt: now,
-        },
       });
+    }
 
     const saved = await this.db
       .select()

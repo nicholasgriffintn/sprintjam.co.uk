@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthWorkerEnv } from "@sprintjam/types";
 
+import { TeamsContextAlreadyLinkedError } from "../lib/collaboration";
 import {
   listTeamCollaborationInstallationsController,
   resolveTeamsCollaborationInstallationController,
@@ -180,6 +181,31 @@ describe("team collaboration controller", () => {
         metadata: { source: "teams" },
       },
     });
+  });
+
+  it("returns conflict when a Teams context is linked to another team", async () => {
+    const repo = createRepo();
+    authenticateAs(repo);
+    mockSaveTeamsInstallation.mockRejectedValue(
+      new TeamsContextAlreadyLinkedError(),
+    );
+
+    const response = await saveTeamsCollaborationInstallationController(
+      makeRequest("https://test/api/teams/7/collaboration-installations/teams", {
+        method: "POST",
+        body: JSON.stringify({
+          tenantId: "tenant-1",
+          externalChannelId: "channel-1",
+          externalUserId: "user-1",
+        }),
+      }),
+      env,
+      7,
+    );
+    const data = (await response.json()) as { error: string };
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("Teams context is already linked to another team");
   });
 
   it("resolves a linked Teams context for team members", async () => {

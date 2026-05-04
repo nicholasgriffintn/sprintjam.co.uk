@@ -1,7 +1,10 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
 
 import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
-import { parseTeamsInstallationPayload } from "../lib/collaboration";
+import {
+  parseTeamsInstallationPayload,
+  TeamsContextAlreadyLinkedError,
+} from "../lib/collaboration";
 import {
   forbiddenResponse,
   jsonError,
@@ -101,11 +104,19 @@ export async function saveTeamsCollaborationInstallationController(
   }
 
   const repo = new TeamCollaborationRepository(env.DB);
-  const installation = await repo.saveTeamsInstallation({
-    teamId,
-    installedById: auth.result.userId,
-    input: parsed.value,
-  });
+  let installation;
+  try {
+    installation = await repo.saveTeamsInstallation({
+      teamId,
+      installedById: auth.result.userId,
+      input: parsed.value,
+    });
+  } catch (error) {
+    if (error instanceof TeamsContextAlreadyLinkedError) {
+      return jsonError(error.message, 409);
+    }
+    throw error;
+  }
 
   return jsonResponse({ installation }, 201);
 }
