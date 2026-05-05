@@ -7,6 +7,7 @@ import {
   getTeamSessionType,
   getLinkedSessionContext,
   getPlanningFollowUps,
+  getWheelOutcomes,
   parseTeamSessionMetadata,
 } from "@/lib/team-session-metadata";
 
@@ -90,6 +91,42 @@ describe("team-session-metadata", () => {
     ]);
   });
 
+  it("normalises wheel outcomes from metadata", () => {
+    const session = createSession(
+      JSON.stringify({
+        type: "wheel",
+        wheelOutcomes: [
+          {
+            id: "spin-1",
+            mode: "reviewer",
+            resultLabel: "Reviewer",
+            winner: "Ava",
+            timestamp: 1_700_000_000_000,
+            removedAfter: false,
+            recordedAt: 1_700_000_000_100,
+            automation: [
+              {
+                label: "Assign reviewer",
+                detail: "Assign Ava on the linked item.",
+                provider: "github",
+              },
+            ],
+          },
+          { id: "spin-2", mode: "pair_picker" },
+        ],
+      }),
+    );
+
+    expect(getWheelOutcomes(session)).toEqual([
+      expect.objectContaining({
+        id: "spin-1",
+        mode: "reviewer",
+        resultLabel: "Reviewer",
+        winner: "Ava",
+      }),
+    ]);
+  });
+
   it("builds linked session metadata with planning follow-ups", () => {
     expect(
       buildTeamSessionMetadata({
@@ -127,16 +164,36 @@ describe("team-session-metadata", () => {
         JSON.stringify({
           type: "standup",
           sessionContext,
-          planningFollowUps: [{ title: "Estimate blocked API", ticketKey: "API-1" }],
+          planningFollowUps: [
+            { title: "Estimate blocked API", ticketKey: "API-1" },
+          ],
         }),
         { id: 2, roomKey: "STAND44", name: "Standup", createdAt: 1 },
       ),
-      createSession(JSON.stringify({ type: "wheel", sessionContext }), {
-        id: 3,
-        roomKey: "WHEEL44",
-        name: "Wheel",
-        createdAt: 3,
-      }),
+      createSession(
+        JSON.stringify({
+          type: "wheel",
+          sessionContext,
+          wheelOutcomes: [
+            {
+              id: "spin-1",
+              mode: "decision",
+              resultLabel: "Decision",
+              winner: "Ship it",
+              timestamp: 1_700_000_000_000,
+              removedAfter: false,
+              recordedAt: 1_700_000_000_100,
+              automation: [],
+            },
+          ],
+        }),
+        {
+          id: 3,
+          roomKey: "WHEEL44",
+          name: "Wheel",
+          createdAt: 3,
+        },
+      ),
     ]);
 
     expect(recaps).toHaveLength(1);
@@ -144,6 +201,10 @@ describe("team-session-metadata", () => {
     expect(recaps[0]?.planningFollowUps).toEqual([
       { title: "Estimate blocked API", ticketKey: "API-1", source: "standup" },
     ]);
+    expect(recaps[0]?.wheelOutcomes).toEqual([
+      expect.objectContaining({ resultLabel: "Decision", winner: "Ship it" }),
+    ]);
     expect(recaps[0]?.recapText).toContain("Sprint 44 session");
+    expect(recaps[0]?.recapText).toContain("Decision: Ship it");
   });
 });

@@ -13,7 +13,10 @@ import {
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { getTeamSessionType } from "@/lib/team-session-metadata";
+import {
+  getTeamSessionType,
+  getWheelOutcomes,
+} from "@/lib/team-session-metadata";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
 
 interface SessionCardProps {
@@ -72,6 +75,7 @@ export function SessionCard({
   const sessionType = getTeamSessionType(session);
   const isStandup = sessionType === "standup";
   const isWheel = sessionType === "wheel";
+  const wheelOutcomes = isWheel ? getWheelOutcomes(session) : [];
   const sessionLabel = isStandup ? "Standup" : isWheel ? "Wheel" : "Planning";
   const sessionIcon = isStandup ? (
     <MessageSquareQuote className="mr-1.5 h-3 w-3" />
@@ -166,6 +170,16 @@ export function SessionCard({
           )}
         </div>
       )}
+
+      {isWheel && wheelOutcomes.length > 0 ? (
+        <div className="border-t border-slate-100 pt-2 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">
+          <span className="font-medium text-slate-700 dark:text-slate-200">
+            Latest outcome:
+          </span>{" "}
+          {wheelOutcomes[wheelOutcomes.length - 1]?.resultLabel}:{" "}
+          {wheelOutcomes[wheelOutcomes.length - 1]?.winner}
+        </div>
+      ) : null}
     </SurfaceCard>
   );
 }

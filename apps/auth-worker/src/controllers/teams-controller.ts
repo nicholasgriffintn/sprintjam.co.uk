@@ -1,14 +1,23 @@
 import type {
   AuthWorkerEnv,
+  SpinResult,
   TeamAccessPolicy,
+  WheelMode,
+  WorkspaceWheelMode,
   WorkspaceTeam,
   WorkspaceTeamSessionFilter,
 } from "@sprintjam/types";
 import { sendWorkspaceInviteEmail } from "@sprintjam/services";
 import {
+  appendWorkspaceWheelOutcome,
   buildPaginationMeta,
+  buildWorkspaceWheelOutcome,
+  isRecord,
   isPaginationError,
+  isWorkspaceWheelMode,
+  normaliseOptionalString,
   parsePagination,
+  safeJsonParse,
 } from "@sprintjam/utils";
 
 import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
@@ -73,6 +82,54 @@ function parseTeamSessionFilter(
   }
 
   return { error: "type must be one of all, planning, standup, or wheel" };
+}
+
+function parseTeamSessionMetadata(
+  metadata: string | null,
+): Record<string, unknown> | null {
+  if (!metadata) {
+    return null;
+  }
+
+  const parsed = safeJsonParse<unknown>(metadata, { silent: true });
+  return isRecord(parsed) ? parsed : null;
+}
+
+function parseWheelOutcomeBody(body: {
+  result?: Partial<SpinResult>;
+  mode?: WheelMode;
+}): { result: SpinResult; mode: WorkspaceWheelMode } | { error: string } {
+  const id = normaliseOptionalString(body.result?.id);
+  const winner = normaliseOptionalString(body.result?.winner);
+  const timestamp = body.result?.timestamp;
+  const removedAfter = body.result?.removedAfter;
+  const mode = body.mode;
+
+  if (!id || !winner) {
+    return { error: "Wheel result id and winner are required" };
+  }
+
+  if (typeof timestamp !== "number" || !Number.isFinite(timestamp)) {
+    return { error: "Wheel result timestamp is required" };
+  }
+
+  if (typeof removedAfter !== "boolean") {
+    return { error: "Wheel result removedAfter flag is required" };
+  }
+
+  if (!isWorkspaceWheelMode(mode)) {
+    return { error: "Wheel mode must be decision, reviewer, or speaker_order" };
+  }
+
+  return {
+    mode,
+    result: {
+      id,
+      winner,
+      timestamp,
+      removedAfter,
+    },
+  };
 }
 
 async function getAuthOrError(
@@ -1186,6 +1243,67 @@ export async function completeSessionByRoomKeyController(
   if (!updatedSession) {
     return notFoundResponse("Session not found");
   }
+
+  return jsonResponse({ session: updatedSession });
+}
+
+export async function recordWheelOutcomeByRoomKeyController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) {
+    return workspace.response;
+  }
+
+  const body = await request.json<{
+    roomKey?: string;
+    mode?: WheelMode;
+    result?: Partial<SpinResult>;
+  }>();
+  const roomKey = body?.roomKey?.trim();
+  if (!roomKey) {
+    return jsonError("Room key is required", 400);
+  }
+
+  const parsedOutcome = parseWheelOutcomeBody(body);
+  if ("error" in parsedOutcome) {
+    return jsonError(parsedOutcome.error, 400);
+  }
+
+  const repo = auth.result.repo;
+  const session = await repo.getAccessibleTeamSessionByRoomKey(
+    roomKey,
+    workspace.viewer.user.organisationId,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+  if (!session) {
+    return notFoundResponse("Session not found");
+  }
+
+  const metadata = parseTeamSessionMetadata(session.metadata);
+  if (metadata?.type !== "wheel") {
+    return jsonError("Session is not a wheel session", 409);
+  }
+
+  const outcome = buildWorkspaceWheelOutcome(
+    parsedOutcome.result,
+    parsedOutcome.mode,
+  );
+  const nextMetadata = appendWorkspaceWheelOutcome(metadata, outcome);
+  const metadataString = JSON.stringify(nextMetadata);
+  if (metadataString.length > 10000) {
+    return jsonError("Metadata is too large (max 10KB)", 400);
+  }
+
+  await repo.updateTeamSessionMetadata(session.id, nextMetadata);
+  const updatedSession = await repo.getTeamSessionById(session.id);
 
   return jsonResponse({ session: updatedSession });
 }

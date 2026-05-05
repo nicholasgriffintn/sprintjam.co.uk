@@ -31,7 +31,7 @@ describe("wheel result utilities", () => {
   it("exports wheel results as csv", () => {
     const csv = buildWheelResultsCsv(results);
 
-    expect(csv).toContain('"Spin","Choice","Mode"');
+    expect(csv).toContain('"Spin","Decision","Mode"');
     expect(csv).toContain('"2","Bob","Decision","Yes"');
   });
 });

@@ -1,4 +1,9 @@
-import { ClipboardCopy, Download, Link2, ListChecks } from "lucide-react";
+import {
+  ClipboardCopy,
+  Download,
+  Link2,
+  ListChecks,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +28,21 @@ function formatSessionTypes(recap: LinkedSessionSummary) {
   return recap.sessionTypes
     .map((type) => (type === "standup" ? "standup" : type))
     .join(" + ");
+}
+
+function buildRecapActions(recap: LinkedSessionSummary) {
+  return [
+    ...recap.planningFollowUps.map((followUp) => ({
+      id: `follow-up-${followUp.source}-${followUp.ticketKey ?? ""}-${followUp.title}`,
+      title: followUp.title,
+      detail: followUp.ticketKey ? `[${followUp.ticketKey}]` : null,
+    })),
+    ...recap.wheelOutcomes.map((outcome) => ({
+      id: `wheel-${outcome.id}`,
+      title: `${outcome.resultLabel}: ${outcome.winner}`,
+      detail: outcome.automation[0]?.label ?? null,
+    })),
+  ];
 }
 
 export function LinkedSessionSummaryPanel({
@@ -81,55 +101,55 @@ export function LinkedSessionSummaryPanel({
       </div>
 
       <div className="grid gap-3">
-        {recaps.map((recap) => (
-          <div
-            key={recap.context.id}
-            className="rounded-md border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40"
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-slate-900 dark:text-white">
-                  {recap.context.label}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {recap.sessions.length} linked sessions ·{" "}
-                  {formatSessionTypes(recap)}
-                </p>
-              </div>
-              <Badge variant="info" size="sm" className="w-fit">
-                <ListChecks className="mr-1.5 h-3 w-3" />
-                {recap.planningFollowUps.length} follow-up
-                {recap.planningFollowUps.length === 1 ? "" : "s"}
-              </Badge>
-            </div>
+        {recaps.map((recap) => {
+          const actions = buildRecapActions(recap);
 
-            {recap.planningFollowUps.length > 0 ? (
-              <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                {recap.planningFollowUps.slice(0, 3).map((followUp) => (
-                  <li
-                    key={`${followUp.source}-${followUp.ticketKey ?? ""}-${followUp.title}`}
-                    className="flex gap-2"
-                  >
-                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
-                    <span>
-                      {followUp.title}
-                      {followUp.ticketKey ? (
-                        <span className="text-slate-400">
-                          {" "}
-                          [{followUp.ticketKey}]
-                        </span>
-                      ) : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                No planning follow-ups captured.
-              </p>
-            )}
-          </div>
-        ))}
+          return (
+            <div
+              key={recap.context.id}
+              className="rounded-md border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40"
+            >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    {recap.context.label}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {recap.sessions.length} linked sessions ·{" "}
+                    {formatSessionTypes(recap)}
+                  </p>
+                </div>
+                <Badge variant="info" size="sm" className="w-fit">
+                  <ListChecks className="mr-1.5 h-3 w-3" />
+                  {actions.length} action{actions.length === 1 ? "" : "s"}
+                </Badge>
+              </div>
+
+              {actions.length > 0 ? (
+                <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                  {actions.slice(0, 6).map((action) => (
+                    <li key={action.id} className="flex gap-2">
+                      <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
+                      <span>
+                        {action.title}
+                        {action.detail ? (
+                          <span className="text-slate-400">
+                            {" "}
+                            · {action.detail}
+                          </span>
+                        ) : null}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                  No linked actions captured.
+                </p>
+              )}
+            </div>
+          );
+        })}
       </div>
     </section>
   );

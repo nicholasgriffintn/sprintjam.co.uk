@@ -12,6 +12,7 @@ import type {
   WheelSettings,
   WheelServerMessage,
 } from "@sprintjam/types";
+import { isWorkspaceWheelMode } from "@sprintjam/utils";
 import {
   connectToWheel,
   disconnectFromWheel,
@@ -26,6 +27,8 @@ import {
   resetWheel as apiResetWheel,
   updateWheelSettings as apiUpdateWheelSettings,
 } from "@/lib/wheel-api-service";
+import { HttpError } from "@/lib/errors";
+import { recordWheelOutcomeByRoomKey } from "@/lib/workspace-service";
 import { upsertWheel } from "@/lib/wheel-store";
 
 interface WheelStateContextValue {
@@ -95,7 +98,37 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const userNameRef = useRef(userName);
+  const wheelDataRef = useRef<WheelData | null>(null);
   userNameRef.current = userName;
+  wheelDataRef.current = wheelData;
+
+  const recordWorkspaceOutcome = useCallback(
+    async (wheel: WheelData, result: WheelData["results"][number]) => {
+      if (!isWorkspaceWheelMode(wheel.settings.mode)) {
+        return;
+      }
+
+      try {
+        await recordWheelOutcomeByRoomKey(
+          wheel.key,
+          wheel.settings.mode,
+          result,
+        );
+      } catch (error) {
+        if (
+          error instanceof HttpError &&
+          (error.status === 401 ||
+            error.status === 403 ||
+            error.status === 404 ||
+            error.status === 409)
+        ) {
+          return;
+        }
+        console.error("Failed to record wheel outcome:", error);
+      }
+    },
+    [],
+  );
 
   const handleMessage = useCallback((message: WheelServerMessage) => {
     switch (message.type) {
@@ -155,6 +188,9 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         break;
 
       case "spinEnded":
+        if (wheelDataRef.current) {
+          void recordWorkspaceOutcome(wheelDataRef.current, message.result);
+        }
         setWheelData((prev) => {
           if (!prev) return prev;
           return {
@@ -202,7 +238,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
         setWheelError(message.error);
         break;
     }
-  }, []);
+  }, [recordWorkspaceOutcome]);
 
   const handleConnectionChange = useCallback((connected: boolean) => {
     setIsSocketConnected(connected);

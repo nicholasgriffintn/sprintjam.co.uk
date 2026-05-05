@@ -1,4 +1,5 @@
 import type { WheelMode } from "@sprintjam/types";
+import { getWorkspaceWheelModeResultLabel } from "@sprintjam/utils";
 
 export const WHEEL_MODE_OPTIONS: Array<{
   value: WheelMode;
@@ -9,32 +10,23 @@ export const WHEEL_MODE_OPTIONS: Array<{
   {
     value: "decision",
     label: "Decision",
-    description: "Pick from options when the team needs a fast choice.",
-    resultLabel: "Choice",
+    description:
+      "Record a team choice that can be shared to Slack or Teams and attached to linked work.",
+    resultLabel: getWorkspaceWheelModeResultLabel("decision"),
   },
   {
     value: "speaker_order",
     label: "Speaker order",
-    description: "Choose who speaks next during planning or standup.",
-    resultLabel: "Speaker",
+    description:
+      "Build a facilitation queue for linked planning or standup sessions.",
+    resultLabel: getWorkspaceWheelModeResultLabel("speaker_order"),
   },
   {
     value: "reviewer",
     label: "Reviewer",
-    description: "Pick someone to review, pair, or sanity-check work.",
-    resultLabel: "Reviewer",
-  },
-  {
-    value: "break_picker",
-    label: "Break picker",
-    description: "Choose a short reset activity or break option.",
-    resultLabel: "Break",
-  },
-  {
-    value: "pair_picker",
-    label: "Pair picker",
-    description: "Pick the first person for a pairing round.",
-    resultLabel: "Pick",
+    description:
+      "Choose a reviewer for a linked Jira, Linear, or GitHub item.",
+    resultLabel: getWorkspaceWheelModeResultLabel("reviewer"),
   },
 ];
 

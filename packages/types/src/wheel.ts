@@ -25,9 +25,7 @@ export interface SpinResult {
 export type WheelMode =
   | "decision"
   | "speaker_order"
-  | "reviewer"
-  | "break_picker"
-  | "pair_picker";
+  | "reviewer";
 
 export interface WheelSettings {
   mode?: WheelMode;
@@ -120,8 +118,6 @@ export const WHEEL_MODES: WheelMode[] = [
   "decision",
   "speaker_order",
   "reviewer",
-  "break_picker",
-  "pair_picker",
 ];
 
 export function isWheelMode(value: string): value is WheelMode {

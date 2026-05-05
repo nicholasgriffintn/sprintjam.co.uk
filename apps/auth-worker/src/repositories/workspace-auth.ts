@@ -463,6 +463,13 @@ export class WorkspaceAuthRepository {
     return this.teams.updateTeamSessionName(sessionId, name);
   }
 
+  updateTeamSessionMetadata(
+    sessionId: number,
+    metadata: Record<string, unknown>,
+  ): Promise<void> {
+    return this.teams.updateTeamSessionMetadata(sessionId, metadata);
+  }
+
   completeTeamSession(sessionId: number): Promise<void> {
     return this.teams.completeTeamSession(sessionId);
   }

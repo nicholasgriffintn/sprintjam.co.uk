@@ -1,9 +1,14 @@
 import {
   isRecord,
+  isWorkspaceWheelMode,
   normaliseOptionalString,
   safeJsonParse,
 } from "@sprintjam/utils";
-import type { TeamSession } from "@sprintjam/types";
+import type {
+  TeamSession,
+  WorkspaceWheelAutomationSuggestion,
+  WorkspaceWheelOutcome,
+} from "@sprintjam/types";
 
 export type TeamSessionType = "planning" | "standup" | "wheel";
 
@@ -24,7 +29,26 @@ export interface LinkedSessionSummary {
   sessions: TeamSession[];
   sessionTypes: TeamSessionType[];
   planningFollowUps: PlanningFollowUp[];
+  wheelOutcomes: WorkspaceWheelOutcome[];
   recapText: string;
+}
+
+function parseWheelAutomationProvider(
+  value: unknown,
+): WorkspaceWheelAutomationSuggestion["provider"] | undefined {
+  const provider = normaliseOptionalString(value);
+
+  if (
+    provider === "github" ||
+    provider === "jira" ||
+    provider === "linear" ||
+    provider === "slack" ||
+    provider === "teams"
+  ) {
+    return provider;
+  }
+
+  return undefined;
 }
 
 interface BuildTeamSessionMetadataOptions {
@@ -165,6 +189,75 @@ export function getPlanningFollowUps(
   });
 }
 
+function parseWheelAutomationSuggestion(
+  value: unknown,
+): WorkspaceWheelAutomationSuggestion | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const label = normaliseOptionalString(value.label);
+  const detail = normaliseOptionalString(value.detail);
+  if (!label || !detail) {
+    return null;
+  }
+
+  return {
+    label,
+    detail,
+    provider: parseWheelAutomationProvider(value.provider),
+  };
+}
+
+export function getWheelOutcomes(
+  session: Pick<TeamSession, "metadata">,
+): WorkspaceWheelOutcome[] {
+  const metadata = parseTeamSessionMetadata(session);
+  const rawOutcomes = metadata?.wheelOutcomes;
+
+  if (!Array.isArray(rawOutcomes)) {
+    return [];
+  }
+
+  return rawOutcomes.flatMap((outcome): WorkspaceWheelOutcome[] => {
+    if (!isRecord(outcome) || !isWorkspaceWheelMode(outcome.mode)) {
+      return [];
+    }
+
+    const id = normaliseOptionalString(outcome.id);
+    const winner = normaliseOptionalString(outcome.winner);
+    const resultLabel = normaliseOptionalString(outcome.resultLabel);
+    if (
+      !id ||
+      !winner ||
+      !resultLabel ||
+      typeof outcome.timestamp !== "number" ||
+      typeof outcome.recordedAt !== "number" ||
+      typeof outcome.removedAfter !== "boolean"
+    ) {
+      return [];
+    }
+
+    return [
+      {
+        id,
+        mode: outcome.mode,
+        resultLabel,
+        winner,
+        timestamp: outcome.timestamp,
+        removedAfter: outcome.removedAfter,
+        recordedAt: outcome.recordedAt,
+        automation: Array.isArray(outcome.automation)
+          ? outcome.automation.flatMap((suggestion) => {
+              const parsed = parseWheelAutomationSuggestion(suggestion);
+              return parsed ? [parsed] : [];
+            })
+          : [],
+      },
+    ];
+  });
+}
+
 export function buildLinkedSessionSummaryText(
   recap: Omit<LinkedSessionSummary, "recapText">,
 ): string {
@@ -184,6 +277,15 @@ export function buildLinkedSessionSummaryText(
           return `- ${followUp.title}${ticket}${detail}`;
         })
       : ["No planning follow-ups captured."];
+  const wheelOutcomeLines =
+    recap.wheelOutcomes.length > 0
+      ? recap.wheelOutcomes.map((outcome) => {
+          const automation = outcome.automation[0]?.label
+            ? `; next: ${outcome.automation[0].label}`
+            : "";
+          return `- ${outcome.resultLabel}: ${outcome.winner}${automation}`;
+        })
+      : ["No wheel outcomes captured."];
 
   return [
     recap.context.label,
@@ -193,6 +295,9 @@ export function buildLinkedSessionSummaryText(
     "",
     "Planning follow-ups",
     ...followUpLines,
+    "",
+    "Wheel outcomes",
+    ...wheelOutcomeLines,
   ].join("\n");
 }
 
@@ -218,6 +323,7 @@ export function buildLinkedSessionSummaries(
           new Set([...existing.sessionTypes, sessionType]),
         );
         existing.planningFollowUps.push(...getPlanningFollowUps(session));
+        existing.wheelOutcomes.push(...getWheelOutcomes(session));
         existing.recapText = buildLinkedSessionSummaryText(existing);
         return;
       }
@@ -227,6 +333,7 @@ export function buildLinkedSessionSummaries(
         sessions: [session],
         sessionTypes: [sessionType],
         planningFollowUps: getPlanningFollowUps(session),
+        wheelOutcomes: getWheelOutcomes(session),
         recapText: "",
       };
       recap.recapText = buildLinkedSessionSummaryText(recap);

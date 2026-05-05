@@ -15,6 +15,7 @@ import type {
 } from "@sprintjam/db";
 import type { RoomSettings, RoundTransitionType } from "./room";
 import type { OAuthProvider } from "./external";
+import type { WheelMode } from "./wheel";
 
 export type Team = typeof teams.$inferSelect;
 export type TeamMembershipRow = typeof teamMemberships.$inferSelect;
@@ -134,6 +135,28 @@ export interface SessionTimelineData {
   avgConsensusRate?: number;
   avgVelocity?: number | null;
   totalVotes?: number;
+}
+
+export type WorkspaceWheelMode = Extract<
+  WheelMode,
+  "decision" | "reviewer" | "speaker_order"
+>;
+
+export interface WorkspaceWheelAutomationSuggestion {
+  label: string;
+  detail: string;
+  provider?: OAuthProvider | CollaborationPlatform;
+}
+
+export interface WorkspaceWheelOutcome {
+  id: string;
+  mode: WorkspaceWheelMode;
+  resultLabel: string;
+  winner: string;
+  timestamp: number;
+  removedAfter: boolean;
+  recordedAt: number;
+  automation: WorkspaceWheelAutomationSuggestion[];
 }
 
 export interface WorkspaceStats {

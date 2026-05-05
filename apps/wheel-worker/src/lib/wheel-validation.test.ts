@@ -12,7 +12,7 @@ describe("wheel settings validation", () => {
   it("ignores unsupported wheel modes", () => {
     expect(
       normalizeWheelSettings(undefined, {
-        mode: "unsupported",
+        mode: "pair_picker",
       }),
     ).toEqual(expect.objectContaining({ mode: "decision" }));
   });

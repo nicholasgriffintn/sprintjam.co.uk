@@ -19,6 +19,7 @@ import {
   getTeamSessionByRoomKeyController,
   updateTeamSessionController,
   completeSessionByRoomKeyController,
+  recordWheelOutcomeByRoomKeyController,
   getWorkspaceProfileController,
   getWorkspaceStatsController,
   updateWorkspaceProfileController,
@@ -137,6 +138,7 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
     name: "Sprint Planning",
   }),
   updateTeamSessionName: vi.fn(),
+  updateTeamSessionMetadata: vi.fn(),
   completeLatestSessionByRoomKey: vi.fn().mockResolvedValue({
     id: 21,
     teamId: 10,
@@ -1150,6 +1152,84 @@ describe("teams-controller", () => {
       1,
       true,
     );
+  });
+
+  it("records a wheel outcome in linked session metadata", async () => {
+    const repo = createRepo({
+      getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue({
+        id: 21,
+        teamId: 10,
+        roomKey: "WHEEL-1",
+        name: "Review picker",
+        metadata: JSON.stringify({ type: "wheel", existing: true }),
+      }),
+      getTeamSessionById: vi.fn().mockResolvedValue({
+        id: 21,
+        teamId: 10,
+        roomKey: "WHEEL-1",
+        name: "Review picker",
+      }),
+    });
+    authenticateAs(repo);
+
+    const response = await recordWheelOutcomeByRoomKeyController(
+      makeRequest("https://test.com/sessions/wheel-outcomes", {
+        method: "POST",
+        body: JSON.stringify({
+          roomKey: "WHEEL-1",
+          mode: "reviewer",
+          result: {
+            id: "spin-1",
+            winner: "Ava",
+            timestamp: 1_700_000_000_000,
+            removedAfter: false,
+          },
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(repo.updateTeamSessionMetadata).toHaveBeenCalledWith(
+      21,
+      expect.objectContaining({
+        type: "wheel",
+        existing: true,
+        wheelOutcomes: [
+          expect.objectContaining({
+            id: "spin-1",
+            mode: "reviewer",
+            resultLabel: "Reviewer",
+            winner: "Ava",
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("rejects wheel outcomes for unsupported modes", async () => {
+    const repo = createRepo();
+    authenticateAs(repo);
+
+    const response = await recordWheelOutcomeByRoomKeyController(
+      makeRequest("https://test.com/sessions/wheel-outcomes", {
+        method: "POST",
+        body: JSON.stringify({
+          roomKey: "WHEEL-1",
+          mode: "pair_picker",
+          result: {
+            id: "spin-1",
+            winner: "Ava",
+            timestamp: 1_700_000_000_000,
+            removedAfter: false,
+          },
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(400);
+    expect(repo.updateTeamSessionMetadata).not.toHaveBeenCalled();
   });
 
   it("returns workspace stats using the caller scope", async () => {

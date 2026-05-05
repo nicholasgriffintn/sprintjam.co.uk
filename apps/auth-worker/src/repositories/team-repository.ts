@@ -597,6 +597,16 @@ export class TeamRepository {
       .where(eq(teamSessions.id, sessionId));
   }
 
+  async updateTeamSessionMetadata(
+    sessionId: number,
+    metadata: Record<string, unknown>,
+  ): Promise<void> {
+    await this.db
+      .update(teamSessions)
+      .set({ metadata: JSON.stringify(metadata) })
+      .where(eq(teamSessions.id, sessionId));
+  }
+
   async completeTeamSession(sessionId: number): Promise<void> {
     await this.db
       .update(teamSessions)

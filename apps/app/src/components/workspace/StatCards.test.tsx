@@ -55,7 +55,7 @@ describe("StatCards", () => {
     expect(screen.getByText("Review saved and active work")).toBeTruthy();
     expect(screen.getByText("Estimate backlog items")).toBeTruthy();
     expect(screen.getByText("Collect updates and blockers")).toBeTruthy();
-    expect(screen.getByText("Pick speakers or reviewers")).toBeTruthy();
+    expect(screen.getByText("Record decisions and reviewers")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /Sessions/ }));
     fireEvent.click(screen.getByRole("button", { name: /Planning room/ }));

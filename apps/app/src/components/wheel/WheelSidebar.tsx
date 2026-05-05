@@ -1,6 +1,10 @@
 import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { Trophy } from "lucide-react";
 import type { WheelEntry, SpinResult, WheelSettings } from "@sprintjam/types";
+import {
+  buildWheelOutcomeAutomationSuggestions,
+  isWorkspaceWheelMode,
+} from "@sprintjam/utils";
 
 import { ScrollArea } from "@/components/ui";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -222,6 +226,14 @@ function WheelResultsPanel({
 }) {
   const hasResults = results.length > 0;
   const mode = getWheelModeOption(settings.mode);
+  const latestResult = results[results.length - 1] ?? null;
+  const automationSuggestions =
+    latestResult && isWorkspaceWheelMode(settings.mode)
+      ? buildWheelOutcomeAutomationSuggestions(
+          settings.mode,
+          latestResult.winner,
+        )
+      : [];
 
   return (
     <div className="flex flex-col min-h-0 gap-4">
@@ -276,28 +288,49 @@ function WheelResultsPanel({
         </span>
       </div>
       {hasResults ? (
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() =>
-              void copyText(buildWheelResultsText(results, settings.mode))
-            }
-            className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
-          >
-            Copy results
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              downloadCsv(
-                "sprintjam-wheel-results.csv",
-                buildWheelResultsCsv(results, settings.mode),
-              )
-            }
-            className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
-          >
-            Export CSV
-          </button>
+        <div className="space-y-3">
+          {automationSuggestions.length > 0 ? (
+            <div className="rounded-xl border border-slate-200/70 bg-white/70 p-3 dark:border-white/10 dark:bg-slate-900/60">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                Automation path
+              </p>
+              <ul className="mt-2 space-y-2">
+                {automationSuggestions.map((suggestion) => (
+                  <li key={suggestion.label} className="text-xs">
+                    <p className="font-medium text-slate-800 dark:text-slate-100">
+                      {suggestion.label}
+                    </p>
+                    <p className="text-slate-500 dark:text-slate-400">
+                      {suggestion.detail}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                void copyText(buildWheelResultsText(results, settings.mode))
+              }
+              className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+            >
+              Copy results
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                downloadCsv(
+                  "sprintjam-wheel-results.csv",
+                  buildWheelResultsCsv(results, settings.mode),
+                )
+              }
+              className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
+            >
+              Export CSV
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

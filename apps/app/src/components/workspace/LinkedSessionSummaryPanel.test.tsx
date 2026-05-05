@@ -48,7 +48,27 @@ describe("LinkedSessionSummaryPanel", () => {
             { id: 2, name: "Standup", roomKey: "STAND44" },
           ),
           createSession(
-            { type: "wheel", sessionContext },
+            {
+              type: "wheel",
+              sessionContext,
+              wheelOutcomes: [
+                {
+                  id: "spin-1",
+                  mode: "reviewer",
+                  resultLabel: "Reviewer",
+                  winner: "Ava",
+                  timestamp: 1_700_000_000_000,
+                  removedAfter: false,
+                  recordedAt: 1_700_000_000_100,
+                  automation: [
+                    {
+                      label: "Assign reviewer",
+                      detail: "Assign Ava on the linked item.",
+                    },
+                  ],
+                },
+              ],
+            },
             { id: 3, name: "Wheel", roomKey: "WHEEL44" },
           ),
         ]}
@@ -58,6 +78,7 @@ describe("LinkedSessionSummaryPanel", () => {
     expect(screen.getByText("Linked summary")).toBeTruthy();
     expect(screen.getByText("Sprint 44 session")).toBeTruthy();
     expect(screen.getByText("Estimate blocked API")).toBeTruthy();
+    expect(screen.getByText(/Reviewer: Ava/)).toBeTruthy();
     expect(screen.queryByText("Planning")).toBeNull();
   });
 

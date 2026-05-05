@@ -31,6 +31,8 @@ import type {
   WorkspaceTeam,
   WorkspaceRole,
   WorkspaceUser,
+  SpinResult,
+  WheelMode,
 } from "@sprintjam/types";
 
 export type MfaMethod = "totp" | "webauthn";
@@ -362,6 +364,21 @@ export async function completeSessionByRoomKey(
     {
       method: "POST",
       body: JSON.stringify({ roomKey }),
+    },
+  );
+  return data.session;
+}
+
+export async function recordWheelOutcomeByRoomKey(
+  roomKey: string,
+  mode: WheelMode,
+  result: SpinResult,
+): Promise<TeamSession> {
+  const data = await workspaceRequest<{ session: TeamSession }>(
+    `${API_BASE_URL}/sessions/wheel-outcomes`,
+    {
+      method: "POST",
+      body: JSON.stringify({ roomKey, mode, result }),
     },
   );
   return data.session;

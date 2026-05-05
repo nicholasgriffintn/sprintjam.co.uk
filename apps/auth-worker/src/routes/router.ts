@@ -31,6 +31,7 @@ import {
   getTeamSessionByRoomKeyController,
   updateTeamSessionController,
   completeSessionByRoomKeyController,
+  recordWheelOutcomeByRoomKeyController,
   getWorkspaceProfileController,
   getWorkspaceStatsController,
   updateWorkspaceProfileController,
@@ -349,6 +350,13 @@ const ROUTES: RouteDefinition[] = [
     method: "POST",
     pattern: /^sessions\/complete$/,
     handler: (request, env) => completeSessionByRoomKeyController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^sessions\/wheel-outcomes$/,
+    handler: (request, env) =>
+      recordWheelOutcomeByRoomKeyController(request, env),
     paramTypes: ["none"],
   },
   {

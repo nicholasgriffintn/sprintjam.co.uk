@@ -38,6 +38,7 @@ import {
 } from "@sprintjam/utils";
 
 import migrations from "../../drizzle/migrations";
+import { normalizeWheelSettings } from "../lib/wheel-validation";
 
 const WHEEL_ROW_ID = 1;
 
@@ -75,10 +76,11 @@ export class WheelRoomRepository {
       userAvatars,
     } = this.mapUsersToState(users);
 
-    const settings = safeJsonParse<WheelSettings>(row.settings);
-    if (!settings) {
+    const parsedSettings = safeJsonParse<Record<string, unknown>>(row.settings);
+    if (!parsedSettings) {
       throw new Error("Failed to parse wheel settings from storage");
     }
+    const settings = normalizeWheelSettings(undefined, parsedSettings);
 
     const spinState = row.spinState
       ? safeJsonParse<SpinState>(row.spinState)

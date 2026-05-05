@@ -251,7 +251,7 @@ export function StatCards({
           />
           <QuickAction
             label="Wheel"
-            description="Pick speakers or reviewers"
+            description="Record decisions and reviewers"
             icon={<Wand2 className="h-4 w-4" />}
             onClick={onOpenWheel}
           />
