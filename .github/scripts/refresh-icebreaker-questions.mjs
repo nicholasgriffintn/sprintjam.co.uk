@@ -25,6 +25,9 @@ Avoid generic or clichéd questions. Prioritise questions that spark genuine, sh
 
 Return a JSON object with a single key "questions" whose value is an array of exactly 30 strings. No other keys. No markdown. No explanation.`;
 
+const EXPECTED_QUESTION_COUNT = 30;
+const MAX_QUESTION_WORDS = 15;
+
 function getResponseContent(message) {
   if (typeof message?.content === "string" && message.content.trim() !== "") {
     return message.content;
@@ -39,6 +42,48 @@ function getResponseContent(message) {
   );
 
   return textPart?.text;
+}
+
+function countWords(value) {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function validateQuestions(questions) {
+  const errors = [];
+
+  if (!Array.isArray(questions)) {
+    return ['Parsed JSON is missing a "questions" array.'];
+  }
+
+  if (questions.length !== EXPECTED_QUESTION_COUNT) {
+    errors.push(
+      `Expected ${EXPECTED_QUESTION_COUNT} questions, got ${questions.length}.`,
+    );
+  }
+
+  const seen = new Set();
+
+  questions.forEach((question, index) => {
+    if (typeof question !== "string" || question.trim() === "") {
+      errors.push(`Question ${index + 1} is not a non-empty string.`);
+      return;
+    }
+
+    const normalized = question.trim().toLowerCase();
+
+    if (seen.has(normalized)) {
+      errors.push(`Question ${index + 1} duplicates an earlier question.`);
+    }
+    seen.add(normalized);
+
+    if (countWords(question) > MAX_QUESTION_WORDS) {
+      errors.push(
+        `Question ${index + 1} is longer than ${MAX_QUESTION_WORDS} words.`,
+      );
+    }
+  });
+
+  return errors;
 }
 
 async function main() {
@@ -126,22 +171,11 @@ async function main() {
   }
 
   const questions = parsed?.questions;
+  const validationErrors = validateQuestions(questions);
 
-  if (!Array.isArray(questions)) {
-    console.error('Parsed JSON is missing a "questions" array.');
+  if (validationErrors.length > 0) {
+    validationErrors.forEach((error) => console.error(error));
     process.exit(1);
-  }
-
-  if (questions.length !== 30) {
-    console.error(`Expected 30 questions, got ${questions.length}.`);
-    process.exit(1);
-  }
-
-  for (const q of questions) {
-    if (typeof q !== "string" || q.trim() === "") {
-      console.error("One or more questions are not non-empty strings.");
-      process.exit(1);
-    }
   }
 
   writeFileSync(TARGET, JSON.stringify(questions, null, 2) + "\n", "utf8");
