@@ -7,6 +7,12 @@ export interface PaginationError {
   error: string;
 }
 
+export interface PaginationMeta extends PaginationOptions {
+  total: number;
+  hasMore: boolean;
+  nextOffset: number | null;
+}
+
 export const DEFAULT_PAGE_SIZE = 50;
 export const MAX_PAGE_SIZE = 100;
 export const MIN_PAGE_SIZE = 1;
@@ -40,4 +46,19 @@ export function isPaginationError(
   result: PaginationOptions | PaginationError,
 ): result is PaginationError {
   return "error" in result;
+}
+
+export function buildPaginationMeta(
+  pagination: PaginationOptions,
+  total: number,
+): PaginationMeta {
+  const nextOffset = pagination.offset + pagination.limit;
+  const hasMore = nextOffset < total;
+
+  return {
+    ...pagination,
+    total,
+    hasMore,
+    nextOffset: hasMore ? nextOffset : null,
+  };
 }

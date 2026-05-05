@@ -5,7 +5,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { TeamSession, WorkspaceTeam } from "@sprintjam/types";
+import type {
+  TeamSession,
+  TeamSessionsPage,
+  WorkspaceTeam,
+} from "@sprintjam/types";
 
 const toastSuccess = vi.hoisted(() => vi.fn());
 
@@ -14,6 +18,7 @@ const goToLogin = vi.fn();
 const goToRoom = vi.fn();
 const startCreateFlow = vi.fn();
 const requestTeamAccess = vi.fn();
+const listTeamSessionsPage = vi.fn();
 const navigateTo = vi.fn();
 const loaderDataMock = {
   sessionsByTeamId: {},
@@ -111,6 +116,32 @@ const wheelSession: TeamSession = {
   metadata: JSON.stringify({ type: "wheel" }),
 };
 
+function createSessionsPage(
+  sessions: TeamSession[],
+  overrides: Partial<TeamSessionsPage> = {},
+): TeamSessionsPage {
+  return {
+    sessions,
+    pagination: {
+      limit: sessions.length || 20,
+      offset: 0,
+      total: sessions.length,
+      hasMore: false,
+      nextOffset: null,
+    },
+    counts: {
+      all: sessions.length,
+      planning: sessions.filter((session) => session.metadata === null).length,
+      standup: sessions.filter((session) =>
+        session.metadata?.includes("standup"),
+      ).length,
+      wheel: sessions.filter((session) => session.metadata?.includes("wheel"))
+        .length,
+    },
+    ...overrides,
+  };
+}
+
 vi.mock("@/hooks/useWorkspaceData", () => ({
   useWorkspaceData: () => workspaceDataMock,
 }));
@@ -125,6 +156,7 @@ vi.mock("@/context/SessionContext", () => ({
 
 vi.mock("@/lib/workspace-service", () => ({
   requestTeamAccess: (...args: unknown[]) => requestTeamAccess(...args),
+  listTeamSessionsPage: (...args: unknown[]) => listTeamSessionsPage(...args),
   getTeamInsights: () => Promise.resolve(null),
   getBatchSessionStats: () => Promise.resolve({}),
 }));
@@ -164,6 +196,7 @@ describe("WorkspaceSessions", () => {
     workspaceDataMock.selectedTeamId = restrictedTeam.id;
     loaderDataMock.sessionsByTeamId = {};
     loaderDataMock.teamInsightsByTeamId = {};
+    listTeamSessionsPage.mockReset();
   });
 
   it("requests access for a restricted team", async () => {
@@ -196,10 +229,56 @@ describe("WorkspaceSessions", () => {
     expect(screen.queryByRole("button", { name: "Request access" })).toBeNull();
   });
 
-  it("filters standups and wheels separately from planning sessions", () => {
+  it("filters standups and wheels separately from planning sessions", async () => {
     workspaceDataMock.teams = [accessibleTeam];
     workspaceDataMock.sessions = [planningSession, standupSession, wheelSession];
     workspaceDataMock.selectedTeamId = accessibleTeam.id;
+    loaderDataMock.sessionsByTeamId = {
+      [accessibleTeam.id]: createSessionsPage([
+        planningSession,
+        standupSession,
+        wheelSession,
+      ]),
+    };
+    listTeamSessionsPage.mockImplementation((_teamId: number, options) => {
+      if (options.type === "standup") {
+        return Promise.resolve(
+          createSessionsPage([standupSession], {
+            pagination: {
+              limit: 20,
+              offset: 0,
+              total: 1,
+              hasMore: false,
+              nextOffset: null,
+            },
+            counts: {
+              all: 3,
+              planning: 1,
+              standup: 1,
+              wheel: 1,
+            },
+          }),
+        );
+      }
+
+      return Promise.resolve(
+        createSessionsPage([wheelSession], {
+          pagination: {
+            limit: 20,
+            offset: 0,
+            total: 1,
+            hasMore: false,
+            nextOffset: null,
+          },
+          counts: {
+            all: 3,
+            planning: 1,
+            standup: 1,
+            wheel: 1,
+          },
+        }),
+      );
+    });
 
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -214,14 +293,81 @@ describe("WorkspaceSessions", () => {
     expect(screen.getByText("Daily Standup")).toBeTruthy();
     expect(screen.getByText("Retro Wheel")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("tab", { name: /Standups \(1\)/ }));
+    fireEvent.click(screen.getByRole("tab", { name: "Standups (1)" }));
 
-    expect(screen.getByText("Daily Standup")).toBeTruthy();
+    expect(await screen.findByText("Daily Standup")).toBeTruthy();
     expect(screen.queryByText("Sprint 12 Planning")).toBeNull();
+    expect(listTeamSessionsPage).toHaveBeenCalledWith(10, {
+      limit: 20,
+      offset: 0,
+      type: "standup",
+    });
 
-    fireEvent.click(screen.getByRole("tab", { name: /Wheels \(1\)/ }));
+    fireEvent.click(screen.getByRole("tab", { name: "Wheels (1)" }));
 
-    expect(screen.getByText("Retro Wheel")).toBeTruthy();
+    expect(await screen.findByText("Retro Wheel")).toBeTruthy();
     expect(screen.queryByText("Daily Standup")).toBeNull();
+  });
+
+  it("loads the next sessions page for the selected team", async () => {
+    workspaceDataMock.teams = [accessibleTeam];
+    workspaceDataMock.sessions = [planningSession];
+    workspaceDataMock.selectedTeamId = accessibleTeam.id;
+    loaderDataMock.sessionsByTeamId = {
+      [accessibleTeam.id]: createSessionsPage([planningSession], {
+        pagination: {
+          limit: 1,
+          offset: 0,
+          total: 2,
+          hasMore: true,
+          nextOffset: 1,
+        },
+        counts: {
+          all: 2,
+          planning: 1,
+          standup: 1,
+          wheel: 0,
+        },
+      }),
+    };
+    listTeamSessionsPage.mockResolvedValue({
+      sessions: [standupSession],
+      pagination: {
+        limit: 20,
+        offset: 1,
+        total: 2,
+        hasMore: false,
+        nextOffset: null,
+      },
+      counts: {
+        all: 2,
+        planning: 1,
+        standup: 1,
+        wheel: 0,
+      },
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <WorkspaceSessions />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Load more sessions" }));
+
+    await waitFor(() => {
+      expect(listTeamSessionsPage).toHaveBeenCalledWith(10, {
+        limit: 20,
+        offset: 1,
+        type: "all",
+      });
+    });
+    expect(await screen.findByText("Daily Standup")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Load more sessions" }),
+    ).toBeNull();
   });
 });

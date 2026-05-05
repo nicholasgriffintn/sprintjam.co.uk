@@ -32,6 +32,25 @@ export type MembershipStatus = WorkspaceMembershipRow["status"];
 export type TeamRole = TeamMembershipRow["role"];
 export type TeamAccessPolicy = Team["accessPolicy"];
 
+export interface WorkspacePaginationMeta {
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
+  nextOffset: number | null;
+}
+
+export type WorkspaceTeamSessionType = "planning" | "standup" | "wheel";
+export type WorkspaceTeamSessionFilter = "all" | WorkspaceTeamSessionType;
+
+export type TeamSessionCounts = Record<WorkspaceTeamSessionFilter, number>;
+
+export interface TeamSessionsPage {
+  sessions: TeamSession[];
+  pagination: WorkspacePaginationMeta;
+  counts: TeamSessionCounts;
+}
+
 export interface TeamWithSettings extends Team {
   settings?: RoomSettings;
 }

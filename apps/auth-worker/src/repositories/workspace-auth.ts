@@ -1,4 +1,9 @@
 import type { D1Database } from "@cloudflare/workers-types";
+import type { PaginationOptions } from "@sprintjam/utils";
+import type {
+  TeamSessionCounts,
+  WorkspaceTeamSessionFilter,
+} from "@sprintjam/types";
 
 import { AuthRepository } from "./auth-repository";
 import { TeamRepository } from "./team-repository";
@@ -410,8 +415,23 @@ export class WorkspaceAuthRepository {
     );
   }
 
-  getTeamSessions(teamId: number) {
-    return this.teams.getTeamSessions(teamId);
+  getTeamSessions(
+    teamId: number,
+    pagination?: PaginationOptions,
+    type?: WorkspaceTeamSessionFilter,
+  ) {
+    return this.teams.getTeamSessions(teamId, pagination, type);
+  }
+
+  countTeamSessions(
+    teamId: number,
+    type?: WorkspaceTeamSessionFilter,
+  ): Promise<number> {
+    return this.teams.countTeamSessions(teamId, type);
+  }
+
+  getTeamSessionCounts(teamId: number): Promise<TeamSessionCounts> {
+    return this.teams.getTeamSessionCounts(teamId);
   }
 
   getOrganisationTeamSessionByRoomKey(roomKey: string, organisationId: number) {

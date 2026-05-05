@@ -3,6 +3,7 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 import type { StatsWorkerEnv } from "@sprintjam/types";
+import { parsePagination, isPaginationError } from "@sprintjam/utils";
 
 import { StatsRepository } from "../repositories/stats";
 import {
@@ -15,7 +16,6 @@ import {
   type AuthResult,
 } from "../lib/auth";
 import { errorResponse, successResponse } from "../lib/response";
-import { parsePagination, isPaginationError } from "../lib/pagination";
 
 function getAuthError(code: "unauthorized" | "expired"): string {
   return code === "unauthorized" ? "Unauthorized" : "Session expired";

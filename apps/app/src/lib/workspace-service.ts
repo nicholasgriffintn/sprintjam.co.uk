@@ -19,6 +19,8 @@ import type {
   TeamInsights,
   TeamIntegrationStatus,
   TeamSession,
+  TeamSessionsPage,
+  WorkspaceTeamSessionFilter,
   WorkspaceMember,
   WorkspaceInsights,
   WorkspaceInvite,
@@ -265,10 +267,33 @@ export async function deleteTeam(teamId: number): Promise<void> {
   });
 }
 
-export async function listTeamSessions(teamId: number): Promise<TeamSession[]> {
-  const data = await workspaceRequest<{ sessions: TeamSession[] }>(
-    `${API_BASE_URL}/teams/${teamId}/sessions`,
+export async function listTeamSessionsPage(
+  teamId: number,
+  options: {
+    limit?: number;
+    offset?: number;
+    type?: WorkspaceTeamSessionFilter;
+  } = {},
+): Promise<TeamSessionsPage> {
+  const params = new URLSearchParams();
+  if (options.limit !== undefined) {
+    params.set("limit", String(options.limit));
+  }
+  if (options.offset !== undefined) {
+    params.set("offset", String(options.offset));
+  }
+  if (options.type !== undefined) {
+    params.set("type", options.type);
+  }
+
+  const query = params.toString();
+  return workspaceRequest<TeamSessionsPage>(
+    `${API_BASE_URL}/teams/${teamId}/sessions${query ? `?${query}` : ""}`,
   );
+}
+
+export async function listTeamSessions(teamId: number): Promise<TeamSession[]> {
+  const data = await listTeamSessionsPage(teamId);
   return data.sessions;
 }
 

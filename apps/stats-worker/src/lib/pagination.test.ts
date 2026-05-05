@@ -6,7 +6,7 @@ import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
   MIN_PAGE_SIZE,
-} from "./pagination";
+} from "@sprintjam/utils";
 
 describe("parsePagination", () => {
   it("returns default values when no params provided", () => {

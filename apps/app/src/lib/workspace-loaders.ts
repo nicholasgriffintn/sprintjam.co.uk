@@ -4,11 +4,15 @@ import type {
   TeamInsights,
   TeamMember,
   TeamSession,
+  TeamSessionsPage,
+  WorkspaceTeamSessionFilter,
   WorkspaceAuthProfile,
   WorkspaceInsights,
   WorkspaceProfile,
   WorkspaceStats,
 } from "@sprintjam/types";
+
+export const WORKSPACE_SESSIONS_PAGE_SIZE = 20;
 
 async function loadFromWorker<T>(
   args: WorkerLoaderArgs,
@@ -89,24 +93,49 @@ export async function loadTeamSessions(
   args: WorkerLoaderArgs,
   teamId: number,
 ): Promise<TeamSession[]> {
-  const data = await loadFromAuthWorker<{ sessions: TeamSession[] }>(
-    args,
-    `/api/teams/${teamId}/sessions`,
-  );
+  const data = await loadTeamSessionsPage(args, teamId);
   return data?.sessions ?? [];
+}
+
+export async function loadTeamSessionsPage(
+  args: WorkerLoaderArgs,
+  teamId: number,
+  options: {
+    limit?: number;
+    offset?: number;
+    type?: WorkspaceTeamSessionFilter;
+  } = {},
+): Promise<TeamSessionsPage | null> {
+  const params = new URLSearchParams({
+    limit: String(options.limit ?? WORKSPACE_SESSIONS_PAGE_SIZE),
+    offset: String(options.offset ?? 0),
+    type: options.type ?? "all",
+  });
+  const data = await loadFromAuthWorker<TeamSessionsPage>(
+    args,
+    `/api/teams/${teamId}/sessions?${params.toString()}`,
+  );
+  return data;
 }
 
 export async function loadAccessibleTeamSessions(
   args: WorkerLoaderArgs,
   teams: WorkspaceAuthProfile["teams"],
-): Promise<Record<number, TeamSession[]>> {
+): Promise<Record<number, TeamSessionsPage>> {
   const entries = await Promise.all(
     teams
       .filter((team) => team.canAccess)
-      .map(async (team) => [team.id, await loadTeamSessions(args, team.id)]),
+      .map(async (team) => [
+        team.id,
+        await loadTeamSessionsPage(args, team.id),
+      ]),
   );
 
-  return Object.fromEntries(entries);
+  return Object.fromEntries(
+    entries.filter((entry): entry is [number, TeamSessionsPage] =>
+      Boolean(entry[1]),
+    ),
+  );
 }
 
 export async function loadTeamInsights(

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Link,
   isRouteErrorResponse,
@@ -23,14 +23,19 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { getTeamSessionType } from "@/lib/team-session-metadata";
+import type {
+  TeamSessionsPage,
+  WorkspaceTeamSessionFilter,
+} from "@sprintjam/types";
 import {
-  getTeamSessionType,
-  type TeamSessionType,
-} from "@/lib/team-session-metadata";
-import { requestTeamAccess } from "@/lib/workspace-service";
+  listTeamSessionsPage,
+  requestTeamAccess,
+} from "@/lib/workspace-service";
 import { BetaBadge } from "@/components/BetaBadge";
 import { createMeta } from "@/utils/route-meta";
 import {
+  WORKSPACE_SESSIONS_PAGE_SIZE,
   loadAccessibleTeamInsights,
   loadAccessibleTeamSessions,
   loadWorkspaceAuthProfile,
@@ -76,15 +81,26 @@ export function ErrorBoundary() {
   );
 }
 
-type SessionFilter = "all" | TeamSessionType;
+type SessionFilter = WorkspaceTeamSessionFilter;
+type TeamSessionPagesByFilter = Partial<Record<SessionFilter, TeamSessionsPage>>;
 
 export default function WorkspaceSessions() {
   const { sessionsByTeamId, teamInsightsByTeamId } =
     useLoaderData<typeof loader>();
+  const initialSessionsByTeamId = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(sessionsByTeamId).map(([teamId, page]) => [
+          Number(teamId),
+          page.sessions,
+        ]),
+      ),
+    [sessionsByTeamId],
+  );
   const {
     user,
     teams,
-    sessions,
+    sessions: initialSessions,
     selectedTeamId,
     setSelectedTeamId,
     isAuthenticated,
@@ -92,41 +108,105 @@ export default function WorkspaceSessions() {
     isLoadingSessions,
     error,
     refreshWorkspace,
-  } = useWorkspaceData({ sessionsByTeamId });
+  } = useWorkspaceData({ sessionsByTeamId: initialSessionsByTeamId });
 
   const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
+  const [sessionPagesByTeamId, setSessionPagesByTeamId] = useState<
+    Record<number, TeamSessionPagesByFilter>
+  >(() =>
+    Object.fromEntries(
+      Object.entries(sessionsByTeamId).map(([teamId, page]) => [
+        Number(teamId),
+        { all: page },
+      ]),
+    ),
+  );
+  const [isLoadingFilteredSessions, setIsLoadingFilteredSessions] =
+    useState(false);
+  const [isLoadingMoreSessions, setIsLoadingMoreSessions] = useState(false);
+
+  useEffect(() => {
+    setSessionPagesByTeamId(
+      Object.fromEntries(
+        Object.entries(sessionsByTeamId).map(([teamId, page]) => [
+          Number(teamId),
+          { all: page },
+        ]),
+      ),
+    );
+  }, [sessionsByTeamId]);
 
   const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
-  const filteredSessions = useMemo(
-    () =>
-      sessions.filter((session) =>
-        sessionFilter === "all"
-          ? true
-          : getTeamSessionType(session) === sessionFilter,
-      ),
-    [sessionFilter, sessions],
-  );
-  const planningCount = useMemo(
-    () =>
-      sessions.filter((session) => getTeamSessionType(session) === "planning")
-        .length,
-    [sessions],
-  );
-  const standupCount = useMemo(
-    () =>
-      sessions.filter((session) => getTeamSessionType(session) === "standup")
-        .length,
-    [sessions],
-  );
-  const wheelCount = useMemo(
-    () =>
-      sessions.filter((session) => getTeamSessionType(session) === "wheel")
-        .length,
-    [sessions],
-  );
+  const selectedTeamSessionPages =
+    selectedTeamId === null
+      ? null
+      : (sessionPagesByTeamId[selectedTeamId] ?? null);
+  const selectedTeamSessionPage =
+    selectedTeamSessionPages?.[sessionFilter] ?? null;
+  const selectedTeamAllSessionsPage = selectedTeamSessionPages?.all ?? null;
+  const sessions = selectedTeamSessionPage?.sessions ?? initialSessions;
+  const linkedSummarySessions =
+    selectedTeamAllSessionsPage?.sessions ?? initialSessions;
+  const sessionCounts =
+    selectedTeamSessionPage?.counts ?? selectedTeamAllSessionsPage?.counts;
+  const totalSessions = sessionCounts?.[sessionFilter] ?? sessions.length;
+  const canLoadMoreSessions =
+    selectedTeam?.canAccess === true &&
+    selectedTeamId !== null &&
+    selectedTeamSessionPage?.pagination.hasMore === true;
+
+  useEffect(() => {
+    if (
+      selectedTeamId === null ||
+      !selectedTeam?.canAccess ||
+      sessionPagesByTeamId[selectedTeamId]?.[sessionFilter]
+    ) {
+      return;
+    }
+
+    let isCancelled = false;
+    setIsLoadingFilteredSessions(true);
+
+    void listTeamSessionsPage(selectedTeamId, {
+      limit: WORKSPACE_SESSIONS_PAGE_SIZE,
+      offset: 0,
+      type: sessionFilter,
+    })
+      .then((page) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setSessionPagesByTeamId((current) => ({
+          ...current,
+          [selectedTeamId]: {
+            ...(current[selectedTeamId] ?? {}),
+            [sessionFilter]: page,
+          },
+        }));
+      })
+      .catch((err) => {
+        if (isCancelled) {
+          return;
+        }
+
+        const message =
+          err instanceof Error ? err.message : "Unable to load sessions";
+        toast.error(message);
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setIsLoadingFilteredSessions(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedTeam, selectedTeamId, sessionFilter, sessionPagesByTeamId]);
 
   const handleOpenSession = (session: (typeof sessions)[number]) => {
     const targetKey = session.roomKey.trim();
@@ -164,6 +244,53 @@ export default function WorkspaceSessions() {
       toast.error(message);
     } finally {
       setIsRequestingAccess(false);
+    }
+  };
+
+  const handleLoadMoreSessions = async () => {
+    if (
+      selectedTeamId === null ||
+      selectedTeamSessionPage?.pagination.nextOffset === null ||
+      selectedTeamSessionPage?.pagination.nextOffset === undefined
+    ) {
+      return;
+    }
+
+    setIsLoadingMoreSessions(true);
+    try {
+      const nextPage = await listTeamSessionsPage(selectedTeamId, {
+        limit: WORKSPACE_SESSIONS_PAGE_SIZE,
+        offset: selectedTeamSessionPage.pagination.nextOffset,
+        type: sessionFilter,
+      });
+      setSessionPagesByTeamId((current) => {
+        const existingPage =
+          current[selectedTeamId]?.[sessionFilter] ?? selectedTeamSessionPage;
+        const existingSessionIds = new Set(
+          existingPage.sessions.map((session) => session.id),
+        );
+        const newSessions = nextPage.sessions.filter(
+          (session) => !existingSessionIds.has(session.id),
+        );
+
+        return {
+          ...current,
+          [selectedTeamId]: {
+            ...(current[selectedTeamId] ?? {}),
+            [sessionFilter]: {
+              sessions: [...existingPage.sessions, ...newSessions],
+              pagination: nextPage.pagination,
+              counts: nextPage.counts,
+            },
+          },
+        };
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Unable to load more sessions";
+      toast.error(message);
+    } finally {
+      setIsLoadingMoreSessions(false);
     }
   };
 
@@ -237,7 +364,7 @@ export default function WorkspaceSessions() {
                       className="w-fit self-start font-semibold sm:self-auto"
                     >
                       <Target className="mr-1.5 h-3.5 w-3.5" />
-                      {filteredSessions.length}
+                      {totalSessions}
                     </Badge>
                     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                       <Button
@@ -275,7 +402,9 @@ export default function WorkspaceSessions() {
                 </div>
                 {selectedTeam.canAccess ? (
                   <div className="space-y-4">
-                    <LinkedSessionSummaryPanel sessions={sessions} />
+                    <LinkedSessionSummaryPanel
+                      sessions={linkedSummarySessions}
+                    />
                     <Tabs.Root
                       value={sessionFilter}
                       onValueChange={(value) =>
@@ -283,20 +412,26 @@ export default function WorkspaceSessions() {
                       }
                     >
                       <Tabs.List fullWidth>
-                        <Tabs.Tab value="all">All ({sessions.length})</Tabs.Tab>
+                        <Tabs.Tab value="all">
+                          All ({sessionCounts?.all ?? totalSessions})
+                        </Tabs.Tab>
                         <Tabs.Tab value="planning">
-                          Planning ({planningCount})
+                          Planning ({sessionCounts?.planning ?? 0})
                         </Tabs.Tab>
                         <Tabs.Tab value="standup">
-                          Standups ({standupCount})
+                          Standups ({sessionCounts?.standup ?? 0})
                         </Tabs.Tab>
-                        <Tabs.Tab value="wheel">Wheels ({wheelCount})</Tabs.Tab>
+                        <Tabs.Tab value="wheel">
+                          Wheels ({sessionCounts?.wheel ?? 0})
+                        </Tabs.Tab>
                       </Tabs.List>
 
                       <Tabs.Panel value={sessionFilter}>
                         <SessionList
-                          sessions={filteredSessions}
-                          isLoading={isLoadingSessions}
+                          sessions={sessions}
+                          isLoading={
+                            isLoadingSessions || isLoadingFilteredSessions
+                          }
                           emptyTitle={
                             sessionFilter === "standup"
                               ? "No standups linked"
@@ -317,6 +452,19 @@ export default function WorkspaceSessions() {
                           }
                           onOpenSession={handleOpenSession}
                         />
+                        {canLoadMoreSessions && (
+                          <div className="flex justify-center pt-2">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => void handleLoadMoreSessions()}
+                              isLoading={isLoadingMoreSessions}
+                            >
+                              Load more sessions
+                            </Button>
+                          </div>
+                        )}
                       </Tabs.Panel>
                     </Tabs.Root>
                   </div>

@@ -120,6 +120,13 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
   updateTeam: vi.fn(),
   deleteTeam: vi.fn(),
   getTeamSessions: vi.fn().mockResolvedValue([]),
+  countTeamSessions: vi.fn().mockResolvedValue(0),
+  getTeamSessionCounts: vi.fn().mockResolvedValue({
+    all: 0,
+    planning: 0,
+    standup: 0,
+    wheel: 0,
+  }),
   createTeamSession: vi.fn().mockResolvedValue(21),
   getOrganisationTeamSessionByRoomKey: vi.fn().mockResolvedValue(null),
   getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue(null),
@@ -874,18 +881,63 @@ describe("teams-controller", () => {
       getTeamSessions: vi
         .fn()
         .mockResolvedValue([{ id: 3, teamId: 10, roomKey: "ROOM-1" }]),
+      getTeamSessionCounts: vi.fn().mockResolvedValue({
+        all: 21,
+        planning: 10,
+        standup: 8,
+        wheel: 3,
+      }),
     });
     authenticateAs(repo);
 
     const response = await listTeamSessionsController(
-      makeRequest("https://test.com/teams/10/sessions"),
+      makeRequest(
+        "https://test.com/teams/10/sessions?limit=10&offset=20&type=standup",
+      ),
       env,
       10,
     );
-    const data = (await response.json()) as { sessions: Array<{ id: number }> };
+    const data = (await response.json()) as {
+      sessions: Array<{ id: number }>;
+      pagination: { limit: number; offset: number; total: number };
+      counts: { all: number; planning: number; standup: number; wheel: number };
+    };
 
     expect(response.status).toBe(200);
+    expect(repo.getTeamSessions).toHaveBeenCalledWith(
+      10,
+      {
+        limit: 10,
+        offset: 20,
+      },
+      "standup",
+    );
     expect(data.sessions).toEqual([{ id: 3, teamId: 10, roomKey: "ROOM-1" }]);
+    expect(data.pagination).toMatchObject({
+      limit: 10,
+      offset: 20,
+      total: 8,
+    });
+    expect(data.counts).toEqual({
+      all: 21,
+      planning: 10,
+      standup: 8,
+      wheel: 3,
+    });
+  });
+
+  it("rejects invalid team session pagination", async () => {
+    const repo = createRepo();
+    authenticateAs(repo);
+
+    const response = await listTeamSessionsController(
+      makeRequest("https://test.com/teams/10/sessions?limit=500"),
+      env,
+      10,
+    );
+
+    expect(response.status).toBe(400);
+    expect(repo.getTeamSessions).not.toHaveBeenCalled();
   });
 
   it("prevents non-members from creating sessions in a restricted team", async () => {

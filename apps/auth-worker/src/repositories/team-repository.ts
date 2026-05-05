@@ -11,6 +11,7 @@ import {
   sql,
 } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
+import type { PaginationOptions } from "@sprintjam/utils";
 import {
   teamMemberships,
   teamSessions,
@@ -19,7 +20,11 @@ import {
   users,
 } from "@sprintjam/db";
 import * as schema from "@sprintjam/db/d1/schemas";
-import type { RoomSettings } from "@sprintjam/types";
+import type {
+  RoomSettings,
+  TeamSessionCounts,
+  WorkspaceTeamSessionFilter,
+} from "@sprintjam/types";
 
 const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 
@@ -44,6 +49,28 @@ const teamSessionSelection = {
   completedAt: teamSessions.completedAt,
   metadata: teamSessions.metadata,
 };
+
+function getTeamSessionMetadataTypeExpression() {
+  return sql`CASE WHEN json_valid(${teamSessions.metadata}) THEN json_extract(${teamSessions.metadata}, '$.type') ELSE NULL END`;
+}
+
+function getTeamSessionTypeCondition(type: WorkspaceTeamSessionFilter) {
+  const metadataType = getTeamSessionMetadataTypeExpression();
+
+  if (type === "standup") {
+    return sql`${metadataType} = 'standup'`;
+  }
+
+  if (type === "wheel") {
+    return sql`${metadataType} = 'wheel'`;
+  }
+
+  if (type === "planning") {
+    return sql`${metadataType} IS NULL OR ${metadataType} NOT IN ('standup', 'wheel')`;
+  }
+
+  return undefined;
+}
 
 export class TeamRepository {
   private db: ReturnType<typeof drizzle>;
@@ -451,12 +478,53 @@ export class TeamRepository {
     return result[0].id;
   }
 
-  async getTeamSessions(teamId: number) {
-    return await this.db
+  async getTeamSessions(
+    teamId: number,
+    pagination?: PaginationOptions,
+    type: WorkspaceTeamSessionFilter = "all",
+  ) {
+    const typeCondition = getTeamSessionTypeCondition(type);
+    const whereCondition = typeCondition
+      ? and(eq(teamSessions.teamId, teamId), typeCondition)
+      : eq(teamSessions.teamId, teamId);
+    const query = this.db
       .select(teamSessionSelection)
       .from(teamSessions)
-      .where(eq(teamSessions.teamId, teamId))
-      .orderBy(schema.teamSessions.createdAt);
+      .where(whereCondition)
+      .orderBy(desc(schema.teamSessions.createdAt));
+
+    if (!pagination) {
+      return await query;
+    }
+
+    return await query.limit(pagination.limit).offset(pagination.offset);
+  }
+
+  async countTeamSessions(
+    teamId: number,
+    type: WorkspaceTeamSessionFilter = "all",
+  ): Promise<number> {
+    const typeCondition = getTeamSessionTypeCondition(type);
+    const whereCondition = typeCondition
+      ? and(eq(teamSessions.teamId, teamId), typeCondition)
+      : eq(teamSessions.teamId, teamId);
+    const result = await this.db
+      .select({ value: count() })
+      .from(teamSessions)
+      .where(whereCondition);
+
+    return result[0]?.value ?? 0;
+  }
+
+  async getTeamSessionCounts(teamId: number): Promise<TeamSessionCounts> {
+    const [all, planning, standup, wheel] = await Promise.all([
+      this.countTeamSessions(teamId, "all"),
+      this.countTeamSessions(teamId, "planning"),
+      this.countTeamSessions(teamId, "standup"),
+      this.countTeamSessions(teamId, "wheel"),
+    ]);
+
+    return { all, planning, standup, wheel };
   }
 
   async getOrganisationTeamSessionByRoomKey(

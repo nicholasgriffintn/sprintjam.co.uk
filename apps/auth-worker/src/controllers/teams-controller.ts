@@ -2,8 +2,14 @@ import type {
   AuthWorkerEnv,
   TeamAccessPolicy,
   WorkspaceTeam,
+  WorkspaceTeamSessionFilter,
 } from "@sprintjam/types";
 import { sendWorkspaceInviteEmail } from "@sprintjam/services";
+import {
+  buildPaginationMeta,
+  isPaginationError,
+  parsePagination,
+} from "@sprintjam/utils";
 
 import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
 import { EMAIL_REGEX } from "../lib/auth-helpers";
@@ -27,6 +33,13 @@ const MAX_LOGO_URL_LENGTH = 500;
 const MAX_TEAM_NAME_LENGTH = 100;
 const MAX_SESSION_NAME_LENGTH = 200;
 const MAX_ROOM_KEY_LENGTH = 100;
+const DEFAULT_TEAM_SESSIONS_LIMIT = 20;
+const TEAM_SESSION_FILTERS = new Set<WorkspaceTeamSessionFilter>([
+  "all",
+  "planning",
+  "standup",
+  "wheel",
+]);
 
 type WorkspaceViewer = {
   user: NonNullable<Awaited<ReturnType<AuthResult["repo"]["getUserById"]>>>;
@@ -49,6 +62,18 @@ type TeamViewer = WorkspaceViewer & {
 type TeamMembershipRecord = NonNullable<
   Awaited<ReturnType<AuthResult["repo"]["getTeamMembership"]>>
 >;
+
+function parseTeamSessionFilter(
+  url: URL,
+): WorkspaceTeamSessionFilter | { error: string } {
+  const rawType = url.searchParams.get("type") ?? "all";
+
+  if (TEAM_SESSION_FILTERS.has(rawType as WorkspaceTeamSessionFilter)) {
+    return rawType as WorkspaceTeamSessionFilter;
+  }
+
+  return { error: "type must be one of all, planning, standup, or wheel" };
+}
 
 async function getAuthOrError(
   request: Request,
@@ -917,8 +942,30 @@ export async function listTeamSessionsController(
     return forbiddenResponse("You do not have access to team sessions");
   }
 
-  const sessions = await auth.result.repo.getTeamSessions(teamId);
-  return jsonResponse({ sessions });
+  const url = new URL(request.url);
+  const pagination = parsePagination(url, {
+    defaultLimit: DEFAULT_TEAM_SESSIONS_LIMIT,
+  });
+
+  if (isPaginationError(pagination)) {
+    return jsonError(pagination.error, 400);
+  }
+
+  const type = parseTeamSessionFilter(url);
+  if (typeof type === "object") {
+    return jsonError(type.error, 400);
+  }
+
+  const [sessions, counts] = await Promise.all([
+    auth.result.repo.getTeamSessions(teamId, pagination, type),
+    auth.result.repo.getTeamSessionCounts(teamId),
+  ]);
+
+  return jsonResponse({
+    sessions,
+    pagination: buildPaginationMeta(pagination, counts[type]),
+    counts,
+  });
 }
 
 export async function createTeamSessionController(

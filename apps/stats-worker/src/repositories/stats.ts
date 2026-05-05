@@ -30,7 +30,7 @@ import {
   calculateInsightMetrics,
 } from "../lib/metrics";
 
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "../lib/pagination";
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@sprintjam/utils";
 
 const MAX_SESSIONS_FOR_AGGREGATION = 1000;
 const MAX_VOTES_FOR_AGGREGATION = 50000;
