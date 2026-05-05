@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/Button";
 import { BetaBadge } from "@/components/BetaBadge";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useWorkspaceStats } from "@/hooks/useWorkspaceStats";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useSessionActions } from "@/context/SessionContext";
 import { createMeta } from "@/utils/route-meta";
 import {
@@ -67,6 +68,7 @@ export default function WorkspaceDashboard() {
     useWorkspaceData({ stats });
 
   const { goToLogin } = useSessionActions();
+  const navigateTo = useAppNavigation();
 
   const {
     sessionsOverTime,
@@ -114,6 +116,10 @@ export default function WorkspaceDashboard() {
           insights={insights}
           teamCount={teams.length}
           sessionCount={stats?.totalSessions ?? 0}
+          onOpenSessions={() => navigateTo("workspaceSessions")}
+          onCreateRoom={() => navigateTo("create")}
+          onCreateStandup={() => navigateTo("standupCreate")}
+          onOpenWheel={() => navigateTo("wheel")}
         />
 
         <div className="grid gap-6 lg:grid-cols-2">

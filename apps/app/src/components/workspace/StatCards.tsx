@@ -6,9 +6,13 @@ import {
   Vote,
   TrendingUp,
   TrendingDown,
+  CalendarClock,
+  MessageSquareQuote,
+  Wand2,
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { cn } from "@/lib/cn";
 import type { WorkspaceInsights, WorkspaceStats } from "@sprintjam/types";
 
 interface StatCardsProps {
@@ -16,6 +20,10 @@ interface StatCardsProps {
   insights: WorkspaceInsights | null;
   teamCount?: number;
   sessionCount?: number;
+  onOpenSessions?: () => void;
+  onCreateRoom?: () => void;
+  onCreateStandup?: () => void;
+  onOpenWheel?: () => void;
 }
 
 function TrendIndicator({
@@ -42,11 +50,53 @@ function TrendIndicator({
   );
 }
 
+function QuickAction({
+  label,
+  description,
+  icon,
+  onClick,
+}: {
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className={cn(
+        "flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3 text-left transition dark:border-white/10 dark:bg-slate-900/50",
+        onClick
+          ? "hover:border-brand-300 hover:bg-white dark:hover:border-brand-400/40 dark:hover:bg-slate-900"
+          : "cursor-default opacity-60",
+      )}
+    >
+      <span className="rounded-lg bg-slate-100 p-2 text-brand-600 dark:bg-slate-950/70 dark:text-brand-300">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-slate-900 dark:text-white">
+          {label}
+        </span>
+        <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+          {description}
+        </span>
+      </span>
+    </button>
+  );
+}
+
 export function StatCards({
   stats,
   insights,
   teamCount,
   sessionCount,
+  onOpenSessions,
+  onCreateRoom,
+  onCreateStandup,
+  onOpenWheel,
 }: StatCardsProps) {
   const statCards = [
     {
@@ -143,6 +193,39 @@ export function StatCards({
           ))}
         </div>
       )}
+      <SurfaceCard variant="subtle" className="space-y-3">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Quick actions
+          </h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <QuickAction
+            label="Sessions"
+            description="Review saved and active work"
+            icon={<CalendarClock className="h-4 w-4" />}
+            onClick={onOpenSessions}
+          />
+          <QuickAction
+            label="Planning room"
+            description="Estimate backlog items"
+            icon={<Target className="h-4 w-4" />}
+            onClick={onCreateRoom}
+          />
+          <QuickAction
+            label="Standup"
+            description="Collect updates and blockers"
+            icon={<MessageSquareQuote className="h-4 w-4" />}
+            onClick={onCreateStandup}
+          />
+          <QuickAction
+            label="Wheel"
+            description="Pick speakers or reviewers"
+            icon={<Wand2 className="h-4 w-4" />}
+            onClick={onOpenWheel}
+          />
+        </div>
+      </SurfaceCard>
     </div>
   );
 }
