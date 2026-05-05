@@ -5,6 +5,10 @@ import type { StandupResponse } from "@sprintjam/types";
 
 import { StandupResponseForm } from "@/components/standup/StandupResponseForm";
 
+vi.mock("@/lib/icebreaker-questions", () => ({
+  getIcebreakerQuestion: vi.fn(() => "Which tiny tool saved you time lately?"),
+}));
+
 describe("StandupResponseForm", () => {
   it("submits a fresh response payload", () => {
     const onSubmit = vi.fn();
@@ -39,15 +43,17 @@ describe("StandupResponseForm", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Save update" }));
 
-    expect(onSubmit).toHaveBeenCalledWith({
-      isInPerson: false,
-      yesterday: "Wrapped the worker routes",
-      today: "Build the standup UI",
-      hasBlocker: true,
-      blockerDescription: "Waiting on product copy",
-      healthCheck: 4,
-      linkedTickets: undefined,
-    });
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isInPerson: false,
+        yesterday: "Wrapped the worker routes",
+        today: "Build the standup UI",
+        hasBlocker: true,
+        blockerDescription: "Waiting on product copy",
+        healthCheck: 4,
+        linkedTickets: undefined,
+      }),
+    );
   });
 
   it("allows an existing response to be edited and resubmitted", () => {
@@ -79,15 +85,47 @@ describe("StandupResponseForm", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
-    expect(onSubmit).toHaveBeenCalledWith({
-      isInPerson: false,
-      yesterday: "Shipped the worker",
-      today: "Wire the full room screen",
-      hasBlocker: false,
-      blockerDescription: undefined,
-      healthCheck: 3,
-      linkedTickets: undefined,
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isInPerson: false,
+        yesterday: "Shipped the worker",
+        today: "Wire the full room screen",
+        hasBlocker: false,
+        blockerDescription: undefined,
+        healthCheck: 3,
+        linkedTickets: undefined,
+      }),
+    );
+  });
+
+  it("stores the same icebreaker question shown to the participant", () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <StandupResponseForm
+        status="active"
+        isModeratorView={false}
+        isSocketConnected
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(
+      screen.getByText("Which tiny tool saved you time lately?"),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /no blockers/i }));
+    fireEvent.change(screen.getByPlaceholderText("Your answer..."), {
+      target: { value: "A clipboard manager" },
     });
+    fireEvent.click(screen.getByRole("button", { name: "Save update" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        icebreakerAnswer: "A clipboard manager",
+        icebreakerQuestion: "Which tiny tool saved you time lately?",
+      }),
+    );
   });
 
   it("treats completed standups as read-only history", () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type {
   LinkedTicket,
   StandupData,
@@ -91,6 +91,10 @@ export function StandupResponseForm({
   const [draft, setDraft] = useState<DraftState>(() => getDraftState(response));
   const [isEditing, setIsEditing] = useState(() => !response);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const icebreakerQuestion = useMemo(
+    () => response?.icebreakerQuestion ?? getIcebreakerQuestion(),
+    [response?.icebreakerQuestion],
+  );
 
   useEffect(() => {
     if (!response) {
@@ -141,7 +145,7 @@ export function StandupResponseForm({
       kudos: draft.kudos.trim() || undefined,
       icebreakerAnswer: draft.icebreakerAnswer.trim() || undefined,
       icebreakerQuestion: draft.icebreakerAnswer.trim()
-        ? getIcebreakerQuestion()
+        ? icebreakerQuestion
         : undefined,
     });
 
@@ -315,9 +319,9 @@ export function StandupResponseForm({
                 <Sparkles className="h-3.5 w-3.5" />
                 Icebreaker
               </div>
-              {response?.icebreakerQuestion ? (
+              {icebreakerQuestion ? (
                 <p className="mt-2 text-xs italic text-slate-500 dark:text-slate-400">
-                  {response.icebreakerQuestion}
+                  {icebreakerQuestion}
                 </p>
               ) : null}
               <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200">
@@ -500,7 +504,7 @@ export function StandupResponseForm({
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {getIcebreakerQuestion()}
+              {icebreakerQuestion}
             </p>
             <Textarea
               id="standup-icebreaker"
