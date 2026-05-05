@@ -50,5 +50,13 @@ describe("parse utils", () => {
       expect(spy).toHaveBeenCalledOnce();
       spy.mockRestore();
     });
+
+    it("can suppress invalid JSON logging", () => {
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const result = safeJsonParse('{"foo":bad}', { silent: true });
+      expect(result).toBeUndefined();
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
   });
 });

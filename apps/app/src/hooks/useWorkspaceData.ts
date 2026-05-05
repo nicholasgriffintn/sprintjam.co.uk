@@ -21,6 +21,7 @@ interface CreateSessionPayload {
   teamId: number;
   name: string;
   roomKey: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface CreateTeamPayload {
@@ -254,6 +255,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       teamId,
       name,
       roomKey,
+      metadata,
     }: CreateSessionPayload): Promise<TeamSession | null> => {
       if (!isAuthenticated) {
         setActionError(
@@ -265,7 +267,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setIsMutating(true);
       setActionError(null);
       try {
-        const session = await createTeamSession(teamId, name, roomKey);
+        const session = await createTeamSession(teamId, name, roomKey, metadata);
         await refreshWorkspace(true);
         return session;
       } catch (mutationError) {

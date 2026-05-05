@@ -100,6 +100,17 @@ const standupSession: TeamSession = {
   metadata: JSON.stringify({ type: "standup" }),
 };
 
+const wheelSession: TeamSession = {
+  id: 3,
+  teamId: 10,
+  roomKey: "WHEEL7",
+  name: "Retro Wheel",
+  createdById: 1,
+  createdAt: Date.now(),
+  completedAt: null,
+  metadata: JSON.stringify({ type: "wheel" }),
+};
+
 vi.mock("@/hooks/useWorkspaceData", () => ({
   useWorkspaceData: () => workspaceDataMock,
 }));
@@ -185,9 +196,9 @@ describe("WorkspaceSessions", () => {
     expect(screen.queryByRole("button", { name: "Request access" })).toBeNull();
   });
 
-  it("filters standups separately from planning sessions", () => {
+  it("filters standups and wheels separately from planning sessions", () => {
     workspaceDataMock.teams = [accessibleTeam];
-    workspaceDataMock.sessions = [planningSession, standupSession];
+    workspaceDataMock.sessions = [planningSession, standupSession, wheelSession];
     workspaceDataMock.selectedTeamId = accessibleTeam.id;
 
     const queryClient = new QueryClient({
@@ -201,10 +212,16 @@ describe("WorkspaceSessions", () => {
 
     expect(screen.getByText("Sprint 12 Planning")).toBeTruthy();
     expect(screen.getByText("Daily Standup")).toBeTruthy();
+    expect(screen.getByText("Retro Wheel")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("tab", { name: /Standups \(1\)/ }));
 
     expect(screen.getByText("Daily Standup")).toBeTruthy();
     expect(screen.queryByText("Sprint 12 Planning")).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Wheels \(1\)/ }));
+
+    expect(screen.getByText("Retro Wheel")).toBeTruthy();
+    expect(screen.queryByText("Daily Standup")).toBeNull();
   });
 });

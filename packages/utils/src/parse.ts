@@ -22,11 +22,20 @@ export function parseJudgeScore(
   return value;
 }
 
-export function safeJsonParse<T>(json: string): T | undefined {
+interface SafeJsonParseOptions {
+  silent?: boolean;
+}
+
+export function safeJsonParse<T>(
+  json: string,
+  options: SafeJsonParseOptions = {},
+): T | undefined {
   try {
     return JSON.parse(json) as T;
   } catch (error) {
-    console.error("Error parsing JSON:", error);
+    if (!options.silent) {
+      console.error("Error parsing JSON:", error);
+    }
     return undefined;
   }
 }

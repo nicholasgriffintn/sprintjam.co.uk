@@ -6,6 +6,7 @@ import { getErrorDetails, isAbortError } from "@/lib/errors";
 import { formatRoomKey } from "@/utils/validators";
 import { getRecoveryPasskeyStorageKey } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
+import { buildTeamSessionMetadata } from "@/lib/team-session-metadata";
 import type { AvatarId, ErrorKind, RoomSettings } from "@/types";
 
 interface UseRoomEntryActionsOptions {
@@ -27,6 +28,7 @@ interface UseRoomEntryActionsOptions {
     teamId: number;
     name: string;
     roomKey: string;
+    metadata?: Record<string, unknown>;
   }) => Promise<unknown>;
 }
 
@@ -104,6 +106,9 @@ export function useRoomEntryActions({
               teamId: selectedWorkspaceTeamId,
               name: `${name}'s Session`,
               roomKey: newRoom.key,
+              metadata: buildTeamSessionMetadata({
+                type: "planning",
+              }),
             });
           } catch (e) {
             console.error("Failed to link room to team", e);

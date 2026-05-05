@@ -71,6 +71,22 @@ export function SessionCard({
   const duration = formatDuration(stats?.durationMinutes ?? null);
   const sessionType = getTeamSessionType(session);
   const isStandup = sessionType === "standup";
+  const isWheel = sessionType === "wheel";
+  const sessionLabel = isStandup ? "Standup" : isWheel ? "Wheel" : "Planning";
+  const sessionIcon = isStandup ? (
+    <MessageSquareQuote className="mr-1.5 h-3 w-3" />
+  ) : isWheel ? (
+    <Vote className="mr-1.5 h-3 w-3" />
+  ) : (
+    <Target className="mr-1.5 h-3 w-3" />
+  );
+  const metaIcon = isStandup ? (
+    <MessageSquareQuote className="h-3.5 w-3.5" />
+  ) : isWheel ? (
+    <Vote className="h-3.5 w-3.5" />
+  ) : (
+    <Target className="h-3.5 w-3.5" />
+  );
 
   return (
     <SurfaceCard variant="subtle" padding="sm" className="flex flex-col gap-3">
@@ -80,13 +96,9 @@ export function SessionCard({
             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
               {session.name}
             </p>
-            <Badge variant={isStandup ? "info" : "warning"} size="sm">
-              {isStandup ? (
-                <MessageSquareQuote className="mr-1.5 h-3 w-3" />
-              ) : (
-                <Target className="mr-1.5 h-3 w-3" />
-              )}
-              {isStandup ? "Standup" : "Planning"}
+            <Badge variant={isStandup || isWheel ? "info" : "warning"} size="sm">
+              {sessionIcon}
+              {sessionLabel}
             </Badge>
             <Badge variant={isComplete ? "default" : "success"} size="sm">
               {isComplete ? "Completed" : "Active"}
@@ -94,12 +106,9 @@ export function SessionCard({
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1">
-              {isStandup ? (
-                <MessageSquareQuote className="h-3.5 w-3.5" />
-              ) : (
-                <Target className="h-3.5 w-3.5" />
-              )}
-              {isStandup ? "Standup" : "Room"} {session.roomKey}
+              {metaIcon}
+              {isStandup ? "Standup" : isWheel ? "Wheel" : "Room"}{" "}
+              {session.roomKey}
             </span>
             <span className="flex items-center gap-1">
               <CalendarClock className="h-3.5 w-3.5" />
@@ -121,7 +130,7 @@ export function SessionCard({
             onClick={() => onOpenSession(session)}
             className="w-full sm:w-auto"
           >
-            {isStandup ? "Open standup" : "Open room"}
+            {isStandup ? "Open standup" : isWheel ? "Open wheel" : "Open room"}
           </Button>
         </div>
       </div>

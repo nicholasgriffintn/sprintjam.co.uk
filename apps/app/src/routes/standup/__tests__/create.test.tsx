@@ -201,4 +201,42 @@ describe("StandupCreateRoute", () => {
       );
     });
   });
+
+  it("writes linked session context when selected", async () => {
+    vi.mocked(createStandup).mockResolvedValue(mockResponse);
+    vi.mocked(createTeamSession).mockResolvedValue(undefined as never);
+
+    workspaceDataMock.isAuthenticated = true;
+    workspaceDataMock.selectedTeamId = 1;
+    workspaceDataMock.teams = [{ id: 1, name: "Acme", canAccess: true }];
+
+    render(<StandupCreateRoute />);
+
+    fireEvent.change(screen.getByLabelText(/your name/i), {
+      target: { value: "Alice" },
+    });
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: /link with today's team sessions/i,
+      }),
+    );
+    fireEvent.submit(
+      screen.getByRole("button", { name: /create standup/i }).closest("form")!,
+    );
+
+    await waitFor(() => {
+      expect(createTeamSession).toHaveBeenCalledWith(
+        1,
+        expect.stringMatching(/^Standup /),
+        "ABC123",
+        expect.objectContaining({
+          type: "standup",
+          sessionContext: expect.objectContaining({
+            id: expect.stringMatching(/^team-1-/),
+            intentionallyLinked: true,
+          }),
+        }),
+      );
+    });
+  });
 });

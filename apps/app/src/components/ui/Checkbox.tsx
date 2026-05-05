@@ -10,6 +10,7 @@ export interface CheckboxProps {
   id?: string;
   className?: string;
   value?: string;
+  "aria-label"?: string;
   "data-testid"?: string;
 }
 
@@ -20,6 +21,7 @@ export function Checkbox({
   id,
   className,
   value,
+  "aria-label": ariaLabel,
   "data-testid": dataTestId,
 }: CheckboxProps) {
   return (
@@ -29,6 +31,7 @@ export function Checkbox({
       onCheckedChange={onCheckedChange}
       disabled={disabled}
       value={value}
+      aria-label={ariaLabel}
       data-testid={dataTestId}
       className={cn(
         "flex h-4 w-4 flex-shrink-0 items-center justify-center rounded",

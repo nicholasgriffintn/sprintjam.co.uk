@@ -10,7 +10,9 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/components/ui";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import {
   WheelProvider,
   useWheelState,
@@ -26,6 +28,8 @@ import {
   recoverWheelSession,
 } from "@/lib/wheel-api-service";
 import { HttpError } from "@/lib/errors";
+import { createTeamSession } from "@/lib/workspace-service";
+import { buildTeamSessionMetadata } from "@/lib/team-session-metadata";
 import { Input } from "@/components/ui/Input";
 import {
   USERNAME_STORAGE_KEY,
@@ -41,6 +45,14 @@ const getStoredUserName = () => {
   safeLocalStorage.set(USERNAME_STORAGE_KEY, generated);
   return generated;
 };
+
+function buildWheelSessionName(): string {
+  return `Wheel ${new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date())}`;
+}
 
 function storeRecoveryPasskey(
   wheelKey: string,
@@ -258,6 +270,7 @@ interface WheelSetupProps {
 export function WheelSetup({ initialWheelKey = "" }: WheelSetupProps) {
   const pathKey = initialWheelKey.toUpperCase();
   const navigateTo = useAppNavigation();
+  const { teams, selectedTeamId } = useWorkspaceData();
   const [wheelKey, setWheelKey] = useState("");
   const [userName] = useState(() => getStoredUserName());
   const [isLoading, setIsLoading] = useState(false);
@@ -273,6 +286,8 @@ export function WheelSetup({ initialWheelKey = "" }: WheelSetupProps) {
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const joiningLock = useRef(false);
+  const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
+  const teamIdForCreate = selectedTeam?.canAccess ? selectedTeam.id : undefined;
 
   useEffect(() => {
     if (pathKey && !wheelKey) {
@@ -350,9 +365,27 @@ export function WheelSetup({ initialWheelKey = "" }: WheelSetupProps) {
       setError(null);
 
       createWheel(userName, undefined, undefined, undefined)
-        .then((response) => {
+        .then(async (response) => {
           const newKey = response.wheel.key;
           storeRecoveryPasskey(newKey, userName, response.recoveryPasskey);
+          if (teamIdForCreate) {
+            try {
+              await createTeamSession(
+                teamIdForCreate,
+                buildWheelSessionName(),
+                newKey,
+                buildTeamSessionMetadata({
+                  type: "wheel",
+                  teamId: teamIdForCreate,
+                  linkSessionContext: true,
+                }),
+              );
+            } catch {
+              toast.error(
+                "The wheel is live, but it was not linked into workspace history.",
+              );
+            }
+          }
           navigateTo("wheel", { wheelKey: newKey }, { replace: true });
         })
         .catch((err) => {
@@ -365,7 +398,7 @@ export function WheelSetup({ initialWheelKey = "" }: WheelSetupProps) {
           joiningLock.current = false;
         });
     }
-  }, [pathKey, retryNonce, wheelKey, userName, navigateTo]);
+  }, [pathKey, retryNonce, teamIdForCreate, wheelKey, userName, navigateTo]);
 
   const handleSubmitPasscode = async () => {
     const normalizedPasscode = passcodeInput.trim();

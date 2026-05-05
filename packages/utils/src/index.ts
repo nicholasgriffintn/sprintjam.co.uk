@@ -5,6 +5,8 @@ export * from "./votes";
 export * from "./serialize";
 export * from "./array";
 export * from "./parse";
+export * from "./object";
+export * from "./string";
 export * from "./http";
 export * from "./defaults";
 export * from "./colors";

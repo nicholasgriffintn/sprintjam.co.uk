@@ -16,6 +16,7 @@ import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { TeamSelector } from "@/components/workspace/TeamSelector";
 import { SessionList } from "@/components/workspace/SessionList";
 import { TeamInsightsPanel } from "@/components/workspace/TeamInsightsPanel";
+import { LinkedSessionSummaryPanel } from "@/components/workspace/LinkedSessionSummaryPanel";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -120,6 +121,12 @@ export default function WorkspaceSessions() {
         .length,
     [sessions],
   );
+  const wheelCount = useMemo(
+    () =>
+      sessions.filter((session) => getTeamSessionType(session) === "wheel")
+        .length,
+    [sessions],
+  );
 
   const handleOpenSession = (session: (typeof sessions)[number]) => {
     const targetKey = session.roomKey.trim();
@@ -127,8 +134,14 @@ export default function WorkspaceSessions() {
       return;
     }
 
-    if (getTeamSessionType(session) === "standup") {
+    const sessionType = getTeamSessionType(session);
+    if (sessionType === "standup") {
       navigateTo("standupJoin", { standupKey: targetKey });
+      return;
+    }
+
+    if (sessionType === "wheel") {
+      navigateTo("wheel", { wheelKey: targetKey });
       return;
     }
 
@@ -169,7 +182,7 @@ export default function WorkspaceSessions() {
             Sessions <BetaBadge />
           </h1>
           <p className="text-slate-600 dark:text-slate-300">
-            View and manage planning sessions and standups
+            View and manage planning sessions, standups, and wheels
           </p>
         </div>
 
@@ -261,44 +274,52 @@ export default function WorkspaceSessions() {
                   </div>
                 </div>
                 {selectedTeam.canAccess ? (
-                  <Tabs.Root
-                    value={sessionFilter}
-                    onValueChange={(value) =>
-                      setSessionFilter(value as SessionFilter)
-                    }
-                  >
-                    <Tabs.List fullWidth>
-                      <Tabs.Tab value="all">All ({sessions.length})</Tabs.Tab>
-                      <Tabs.Tab value="planning">
-                        Planning ({planningCount})
-                      </Tabs.Tab>
-                      <Tabs.Tab value="standup">
-                        Standups ({standupCount})
-                      </Tabs.Tab>
-                    </Tabs.List>
+                  <div className="space-y-4">
+                    <LinkedSessionSummaryPanel sessions={sessions} />
+                    <Tabs.Root
+                      value={sessionFilter}
+                      onValueChange={(value) =>
+                        setSessionFilter(value as SessionFilter)
+                      }
+                    >
+                      <Tabs.List fullWidth>
+                        <Tabs.Tab value="all">All ({sessions.length})</Tabs.Tab>
+                        <Tabs.Tab value="planning">
+                          Planning ({planningCount})
+                        </Tabs.Tab>
+                        <Tabs.Tab value="standup">
+                          Standups ({standupCount})
+                        </Tabs.Tab>
+                        <Tabs.Tab value="wheel">Wheels ({wheelCount})</Tabs.Tab>
+                      </Tabs.List>
 
-                    <Tabs.Panel value={sessionFilter}>
-                      <SessionList
-                        sessions={filteredSessions}
-                        isLoading={isLoadingSessions}
-                        emptyTitle={
-                          sessionFilter === "standup"
-                            ? "No standups linked"
-                            : sessionFilter === "planning"
-                              ? "No planning sessions linked"
-                              : "No sessions linked"
-                        }
-                        emptyDescription={
-                          sessionFilter === "standup"
-                            ? "Create a team standup to keep daily check-ins alongside your planning history."
-                            : sessionFilter === "planning"
-                              ? "Use the save flow in a planning room to link it to this team."
-                              : "Create a planning session or standup to start building team history."
-                        }
-                        onOpenSession={handleOpenSession}
-                      />
-                    </Tabs.Panel>
-                  </Tabs.Root>
+                      <Tabs.Panel value={sessionFilter}>
+                        <SessionList
+                          sessions={filteredSessions}
+                          isLoading={isLoadingSessions}
+                          emptyTitle={
+                            sessionFilter === "standup"
+                              ? "No standups linked"
+                              : sessionFilter === "wheel"
+                                ? "No wheels linked"
+                                : sessionFilter === "planning"
+                                  ? "No planning sessions linked"
+                                  : "No sessions linked"
+                          }
+                          emptyDescription={
+                            sessionFilter === "standup"
+                              ? "Create a team standup to link it here."
+                              : sessionFilter === "wheel"
+                                ? "Create or link a wheel to show it here."
+                                : sessionFilter === "planning"
+                                  ? "Use the save flow in a planning room to link it to this team."
+                                  : "Create or link a session to show it here."
+                          }
+                          onOpenSession={handleOpenSession}
+                        />
+                      </Tabs.Panel>
+                    </Tabs.Root>
+                  </div>
                 ) : (
                   <EmptyState
                     icon={<Building2 className="h-8 w-8" />}
