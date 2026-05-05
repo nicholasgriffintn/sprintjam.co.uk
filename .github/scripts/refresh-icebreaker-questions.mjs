@@ -25,6 +25,22 @@ Avoid generic or clichéd questions. Prioritise questions that spark genuine, sh
 
 Return a JSON object with a single key "questions" whose value is an array of exactly 30 strings. No other keys. No markdown. No explanation.`;
 
+function getResponseContent(message) {
+  if (typeof message?.content === "string" && message.content.trim() !== "") {
+    return message.content;
+  }
+
+  if (!Array.isArray(message?.parts)) {
+    return undefined;
+  }
+
+  const textPart = message.parts.find(
+    (part) => part?.type === "text" && typeof part.text === "string",
+  );
+
+  return textPart?.text;
+}
+
 async function main() {
   const apiKey = process.env.POLYCHAT_API_KEY;
   if (!apiKey) {
@@ -32,7 +48,11 @@ async function main() {
     process.exit(1);
   }
 
-  const model = process.env.POLYCHAT_MODEL ?? "mistral-large";
+  const model = process.env.POLYCHAT_MODEL?.trim();
+  if (!model) {
+    console.error("Error: POLYCHAT_MODEL is not set.");
+    process.exit(1);
+  }
 
   const res = await fetch("https://api.polychat.app/chat/completions", {
     method: "POST",
@@ -70,14 +90,24 @@ async function main() {
 
   if (!res.ok) {
     console.error(`API request failed: ${res.status} ${res.statusText}`);
+    try {
+      const errorBody = (await res.text()).trim();
+      if (errorBody) {
+        console.error(`API response body: ${errorBody}`);
+      }
+    } catch {
+      console.error("API response body could not be read.");
+    }
     process.exit(1);
   }
 
   const data = await res.json();
-  const raw = data?.choices?.[0]?.message?.content;
+  const raw = getResponseContent(data?.choices?.[0]?.message);
 
   if (typeof raw !== "string") {
-    console.error("Unexpected API response shape — missing message content.");
+    console.error(
+      "Unexpected API response shape — missing message content or text part.",
+    );
     process.exit(1);
   }
 

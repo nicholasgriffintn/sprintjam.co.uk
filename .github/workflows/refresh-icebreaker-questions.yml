@@ -25,7 +25,7 @@ jobs:
       - name: Run refresh script
         env:
           POLYCHAT_API_KEY: ${{ secrets.POLYCHAT_API_KEY }}
-          POLYCHAT_MODEL: ${{ vars.POLYCHAT_MODEL }}
+          POLYCHAT_MODEL: ${{ secrets.POLYCHAT_MODEL }}
         run: node .github/scripts/refresh-icebreaker-questions.mjs
 
       - name: Check for changes
