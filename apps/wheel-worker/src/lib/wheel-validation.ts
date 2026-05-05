@@ -1,6 +1,7 @@
 import type { WheelSettings } from "@sprintjam/types";
 import {
   DEFAULT_WHEEL_SETTINGS,
+  isWheelMode,
   WHEEL_SPIN_DURATION_MAX,
   WHEEL_SPIN_DURATION_MIN,
 } from "@sprintjam/types";
@@ -42,9 +43,13 @@ export function normalizeWheelEntryNames(names: string[]): string[] {
 
 export function normalizeWheelSettings(
   currentSettings: WheelSettings = DEFAULT_WHEEL_SETTINGS,
-  settings?: Partial<WheelSettings>,
+  settings?: Partial<WheelSettings> | Record<string, unknown>,
 ): WheelSettings {
   const nextSettings: WheelSettings = { ...currentSettings };
+
+  if (typeof settings?.mode === "string" && isWheelMode(settings.mode)) {
+    nextSettings.mode = settings.mode;
+  }
 
   if (typeof settings?.removeWinnerAfterSpin === "boolean") {
     nextSettings.removeWinnerAfterSpin = settings.removeWinnerAfterSpin;

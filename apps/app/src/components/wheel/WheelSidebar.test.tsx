@@ -8,6 +8,13 @@ import { WheelSidebar } from "./WheelSidebar";
 
 const baseProps = {
   results: [],
+  settings: {
+    mode: "decision" as const,
+    removeWinnerAfterSpin: false,
+    showConfetti: true,
+    playSounds: true,
+    spinDurationMs: 4000,
+  },
   isModeratorView: true,
   onBulkAddEntries: vi.fn(),
   onClearEntries: vi.fn(),

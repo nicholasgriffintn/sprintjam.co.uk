@@ -240,6 +240,7 @@ function WheelRoomContent({
         <WheelSidebar
           entries={wheelData.entries}
           results={wheelData.results}
+          settings={wheelData.settings}
           isModeratorView={isModeratorView}
           onBulkAddEntries={handleBulkAddEntries}
           onClearEntries={handleClearEntries}

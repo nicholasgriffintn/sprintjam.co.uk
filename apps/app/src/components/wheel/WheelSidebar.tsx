@@ -1,6 +1,6 @@
 import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { Trophy } from "lucide-react";
-import type { WheelEntry, SpinResult } from "@sprintjam/types";
+import type { WheelEntry, SpinResult, WheelSettings } from "@sprintjam/types";
 
 import { ScrollArea } from "@/components/ui";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -11,10 +11,12 @@ import {
   buildWheelResultsCsv,
   buildWheelResultsText,
 } from "@/utils/wheel-results";
+import { getWheelModeOption } from "@/utils/wheel-mode";
 
 interface WheelSidebarProps {
   entries: WheelEntry[];
   results: SpinResult[];
+  settings: WheelSettings;
   isModeratorView: boolean;
   onBulkAddEntries: (names: string[]) => void;
   onClearEntries: () => void;
@@ -211,8 +213,15 @@ const WheelEntriesPanel = memo(function WheelEntriesPanel({
   );
 });
 
-function WheelResultsPanel({ results }: { results: SpinResult[] }) {
+function WheelResultsPanel({
+  results,
+  settings,
+}: {
+  results: SpinResult[];
+  settings: WheelSettings;
+}) {
   const hasResults = results.length > 0;
+  const mode = getWheelModeOption(settings.mode);
 
   return (
     <div className="flex flex-col min-h-0 gap-4">
@@ -251,7 +260,7 @@ function WheelResultsPanel({ results }: { results: SpinResult[] }) {
                     <span className="truncate">{result.winner}</span>
                   </span>
                   <span className="text-xs text-slate-400">
-                    #{results.length - index}
+                    {mode.resultLabel} #{results.length - index}
                   </span>
                 </div>
               </li>
@@ -261,13 +270,18 @@ function WheelResultsPanel({ results }: { results: SpinResult[] }) {
       </ScrollArea>
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span>Latest spin at the top</span>
-        <span>{results.length} total</span>
+        <span>
+          {results.length} {mode.resultLabel.toLowerCase()}
+          {results.length === 1 ? "" : "s"}
+        </span>
       </div>
       {hasResults ? (
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => void copyText(buildWheelResultsText(results))}
+            onClick={() =>
+              void copyText(buildWheelResultsText(results, settings.mode))
+            }
             className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
           >
             Copy results
@@ -277,7 +291,7 @@ function WheelResultsPanel({ results }: { results: SpinResult[] }) {
             onClick={() =>
               downloadCsv(
                 "sprintjam-wheel-results.csv",
-                buildWheelResultsCsv(results),
+                buildWheelResultsCsv(results, settings.mode),
               )
             }
             className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:text-white"
@@ -293,12 +307,14 @@ function WheelResultsPanel({ results }: { results: SpinResult[] }) {
 export function WheelSidebar({
   entries,
   results,
+  settings,
   isModeratorView,
   onBulkAddEntries,
   onClearEntries,
   disabled,
 }: WheelSidebarProps) {
   const [activeTab, setActiveTab] = useState<TabId>("entries");
+  const mode = getWheelModeOption(settings.mode);
 
   return (
     <SurfaceCard
@@ -312,7 +328,10 @@ export function WheelSidebar({
             Wheel control
           </p>
           <p className="text-sm font-semibold text-slate-900 dark:text-white">
-            Entries &amp; results
+            {mode.label}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {mode.description}
           </p>
         </div>
         <div className="flex w-full rounded-full bg-slate-100/80 p-1 dark:bg-slate-800/80">
@@ -351,7 +370,7 @@ export function WheelSidebar({
             disabled={disabled}
           />
         ) : (
-          <WheelResultsPanel results={results} />
+          <WheelResultsPanel results={results} settings={settings} />
         )}
       </div>
     </SurfaceCard>

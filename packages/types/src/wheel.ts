@@ -22,7 +22,15 @@ export interface SpinResult {
   removedAfter: boolean;
 }
 
+export type WheelMode =
+  | "decision"
+  | "speaker_order"
+  | "reviewer"
+  | "break_picker"
+  | "pair_picker";
+
 export interface WheelSettings {
+  mode?: WheelMode;
   removeWinnerAfterSpin: boolean;
   showConfetti: boolean;
   playSounds: boolean;
@@ -101,11 +109,24 @@ export type WheelServerMessage =
   | { type: "pong" };
 
 export const DEFAULT_WHEEL_SETTINGS: WheelSettings = {
+  mode: "decision",
   removeWinnerAfterSpin: false,
   showConfetti: true,
   playSounds: true,
   spinDurationMs: 4000,
 };
+
+export const WHEEL_MODES: WheelMode[] = [
+  "decision",
+  "speaker_order",
+  "reviewer",
+  "break_picker",
+  "pair_picker",
+];
+
+export function isWheelMode(value: string): value is WheelMode {
+  return WHEEL_MODES.some((mode) => mode === value);
+}
 
 export const WHEEL_SPIN_DURATION_MIN = 2000;
 export const WHEEL_SPIN_DURATION_MAX = 10000;

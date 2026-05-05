@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import type { WheelSettings } from "@sprintjam/types";
+import { isWheelMode } from "@sprintjam/types";
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { WHEEL_MODE_OPTIONS, getWheelModeOption } from "@/utils/wheel-mode";
 
 interface WheelSettingsModalProps {
   isOpen: boolean;
@@ -39,11 +41,46 @@ export function WheelSettingsModal({
     onReset();
     onClose();
   };
+  const selectedMode = getWheelModeOption(draftSettings.mode);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Wheel Settings" size="md">
       <div className="space-y-6">
         <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="wheel-mode"
+              className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Wheel mode
+            </label>
+            <select
+              id="wheel-mode"
+              value={draftSettings.mode ?? "decision"}
+              onChange={(event) => {
+                const nextMode = event.target.value;
+                if (!isWheelMode(nextMode)) {
+                  return;
+                }
+                setDraftSettings({
+                  ...draftSettings,
+                  mode: nextMode,
+                });
+              }}
+              disabled={disabled}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-white/10 dark:bg-slate-900 dark:text-white"
+            >
+              {WHEEL_MODE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              {selectedMode.description}
+            </p>
+          </div>
+
           <label className="flex items-center gap-3">
             <Checkbox
               checked={draftSettings.removeWinnerAfterSpin}
