@@ -25,5 +25,6 @@ describe("TeamInsightsPanel", () => {
 
     expect(screen.getByText("Team insights")).toBeTruthy();
     expect(screen.getByText("61%")).toBeTruthy();
+    expect(screen.getByText("Pre-split unclear work")).toBeTruthy();
   });
 });

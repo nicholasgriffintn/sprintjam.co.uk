@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { SuggestedFocusCards } from "@/components/workspace/SuggestedFocusCards";
 import { formatVelocity } from "@/lib/formatters";
+import { buildInsightPrompts } from "@/utils/workspace-insight-prompts";
 import type { WorkspaceInsights } from "@sprintjam/types";
 
 interface InsightsGridProps {
@@ -73,6 +75,7 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
   ];
 
   const hasContributors = insights.topContributors.length > 0;
+  const insightPrompts = buildInsightPrompts(insights);
 
   return (
     <div className="space-y-4">
@@ -106,6 +109,15 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
           </SurfaceCard>
         ))}
       </div>
+
+      {insightPrompts.length > 0 ? (
+        <div className="space-y-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+          <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+            Suggested focus
+          </h4>
+          <SuggestedFocusCards prompts={insightPrompts} />
+        </div>
+      ) : null}
 
       {hasContributors && (
         <div className="pt-2">

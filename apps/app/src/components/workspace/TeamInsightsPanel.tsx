@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { SuggestedFocusCards } from "@/components/workspace/SuggestedFocusCards";
 import { formatVelocity } from "@/lib/formatters";
+import { buildInsightPrompts } from "@/utils/workspace-insight-prompts";
 import type { TeamInsights } from "@sprintjam/types";
 
 interface TeamInsightsPanelProps {
@@ -118,6 +120,7 @@ export function TeamInsightsPanel({
       bgColor: "bg-slate-100 dark:bg-slate-700",
     },
   ];
+  const prompts = buildInsightPrompts(insights);
 
   return (
     <SurfaceCard>
@@ -139,6 +142,15 @@ export function TeamInsightsPanel({
             <MetricCard key={metric.label} {...metric} />
           ))}
         </div>
+
+        {prompts.length > 0 ? (
+          <div className="space-y-2 rounded-lg border border-slate-100 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              Suggested focus
+            </h4>
+            <SuggestedFocusCards prompts={prompts} />
+          </div>
+        ) : null}
 
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
           <span className="text-xs text-slate-500 dark:text-slate-400">
