@@ -97,7 +97,7 @@ export default function WorkspaceDashboard() {
               Dashboard <BetaBadge />
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
-              Manage your teams and planning sessions
+              Manage your teams, planning sessions, standups, and wheels
             </p>
           </div>
           <Button

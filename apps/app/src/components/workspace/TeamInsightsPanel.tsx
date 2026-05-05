@@ -12,11 +12,12 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { SuggestedFocusCards } from "@/components/workspace/SuggestedFocusCards";
 import { formatVelocity } from "@/lib/formatters";
 import { buildInsightPrompts } from "@/utils/workspace-insight-prompts";
-import type { TeamInsights } from "@sprintjam/types";
+import type { TeamInsights, TeamSessionCounts } from "@sprintjam/types";
 
 interface TeamInsightsPanelProps {
   teamName: string;
   insights: TeamInsights | null;
+  sessionCounts?: TeamSessionCounts;
 }
 
 function formatPercentage(value: number): string {
@@ -58,20 +59,48 @@ function MetricCard({
   );
 }
 
+function ToolCountStrip({ counts }: { counts: TeamSessionCounts }) {
+  const items = [
+    { label: "Planning", value: counts.planning },
+    { label: "Standups", value: counts.standup },
+    { label: "Wheels", value: counts.wheel },
+  ];
+
+  return (
+    <div className="grid grid-cols-3 divide-x divide-slate-100 border-y border-slate-100 py-3 dark:divide-slate-800 dark:border-slate-800">
+      {items.map((item) => (
+        <div key={item.label} className="px-3 first:pl-0 last:pr-0">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {item.label}
+          </p>
+          <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
+            {item.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function TeamInsightsPanel({
   teamName,
   insights,
+  sessionCounts,
 }: TeamInsightsPanelProps) {
   if (!insights) {
     return (
       <SurfaceCard>
-        <div className="py-8 text-center">
-          <BarChart3 className="mx-auto h-8 w-8 text-slate-400 dark:text-slate-500" />
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            No insights available for {teamName}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Complete some sessions to see collaboration metrics
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              Team insights
+            </h3>
+          </div>
+          {sessionCounts ? <ToolCountStrip counts={sessionCounts} /> : null}
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            No planning insights available for {teamName}. Complete planning
+            sessions, standups, and wheels to build team history.
           </p>
         </div>
       </SurfaceCard>
@@ -136,6 +165,8 @@ export function TeamInsightsPanel({
             {insights.sessionsAnalyzed} sessions · {insights.totalRounds} rounds
           </span>
         </div>
+
+        {sessionCounts ? <ToolCountStrip counts={sessionCounts} /> : null}
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {metrics.map((metric) => (

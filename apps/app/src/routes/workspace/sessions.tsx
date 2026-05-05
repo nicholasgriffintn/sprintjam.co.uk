@@ -334,6 +334,7 @@ export default function WorkspaceSessions() {
                 <TeamInsightsPanel
                   teamName={selectedTeam.name}
                   insights={teamInsightsByTeamId[selectedTeam.id] ?? null}
+                  sessionCounts={selectedTeamAllSessionsPage?.counts}
                 />
               ) : (
                 <Alert variant="warning">

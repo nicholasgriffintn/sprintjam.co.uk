@@ -147,6 +147,12 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
     totalSessions: 12,
     activeSessions: 2,
     completedSessions: 10,
+    sessionTypeCounts: {
+      all: 12,
+      planning: 7,
+      standup: 4,
+      wheel: 1,
+    },
   }),
   updateOrganisation: vi.fn(),
   getOrganisationById: vi.fn().mockResolvedValue(makeOrganisation()),

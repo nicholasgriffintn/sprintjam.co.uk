@@ -141,6 +141,7 @@ export interface WorkspaceStats {
   totalSessions: number;
   activeSessions: number;
   completedSessions: number;
+  sessionTypeCounts: TeamSessionCounts;
   sessionTimeline: SessionTimelineData[];
 }
 

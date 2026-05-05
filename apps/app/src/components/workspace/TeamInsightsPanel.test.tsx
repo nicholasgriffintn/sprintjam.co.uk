@@ -21,10 +21,17 @@ const insights: TeamInsights = {
 
 describe("TeamInsightsPanel", () => {
   it("renders loader-provided team insights", () => {
-    render(<TeamInsightsPanel teamName="Platform" insights={insights} />);
+    render(
+      <TeamInsightsPanel
+        teamName="Platform"
+        insights={insights}
+        sessionCounts={{ all: 6, planning: 3, standup: 2, wheel: 1 }}
+      />,
+    );
 
     expect(screen.getByText("Team insights")).toBeTruthy();
     expect(screen.getByText("61%")).toBeTruthy();
+    expect(screen.getByText("Standups")).toBeTruthy();
     expect(screen.getByText("Pre-split unclear work")).toBeTruthy();
   });
 });

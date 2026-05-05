@@ -683,16 +683,26 @@ export class TeamRepository {
         totalSessions: 0,
         activeSessions: 0,
         completedSessions: 0,
+        sessionTypeCounts: {
+          all: 0,
+          planning: 0,
+          standup: 0,
+          wheel: 0,
+        },
         sessionTimeline: [],
       };
     }
 
     const teamIds = userTeams.map((team) => team.id);
+    const metadataType = getTeamSessionMetadataTypeExpression();
 
     const [sessionCounts] = await this.db
       .select({
         total: count(),
         active: sql<number>`sum(case when ${teamSessions.completedAt} is null then 1 else 0 end)`,
+        planning: sql<number>`sum(case when ${metadataType} is null or ${metadataType} not in ('standup', 'wheel') then 1 else 0 end)`,
+        standup: sql<number>`sum(case when ${metadataType} = 'standup' then 1 else 0 end)`,
+        wheel: sql<number>`sum(case when ${metadataType} = 'wheel' then 1 else 0 end)`,
       })
       .from(teamSessions)
       .where(inArray(teamSessions.teamId, teamIds));
@@ -719,6 +729,12 @@ export class TeamRepository {
       totalSessions,
       activeSessions,
       completedSessions,
+      sessionTypeCounts: {
+        all: totalSessions,
+        planning: Number(sessionCounts?.planning ?? 0),
+        standup: Number(sessionCounts?.standup ?? 0),
+        wheel: Number(sessionCounts?.wheel ?? 0),
+      },
       sessionTimeline: this.buildSessionTimeline(timelineSessions),
     };
   }
