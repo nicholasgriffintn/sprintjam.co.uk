@@ -1566,7 +1566,7 @@ describe("teams-controller", () => {
         processLoopId: null,
         sourceSessionId: 21,
         source: "wheel",
-        sourceRef: "wheel-outcome-21-spin-1",
+        sourceRef: "wheel-outcome-21-reviewer",
         title: "Reviewer: Ava",
       }),
     );

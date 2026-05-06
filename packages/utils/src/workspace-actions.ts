@@ -1,6 +1,6 @@
 import {
+  buildCurrentWheelOutcomeActionId,
   buildPlanningFollowUpActionId,
-  buildWheelOutcomeActionId,
 } from "./recap-actions";
 import { normaliseOptionalString } from "./string";
 import { isRecord } from "./object";
@@ -218,7 +218,7 @@ export function buildWheelActionIntent(
   resultLabel: string,
   automationLabel?: string,
 ): WorkspaceActionIntent | null {
-  const sourceRef = buildWheelOutcomeActionId(sessionId, result.id);
+  const sourceRef = buildCurrentWheelOutcomeActionId(sessionId, mode);
   if (!sourceRef) {
     return null;
   }

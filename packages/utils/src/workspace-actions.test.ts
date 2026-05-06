@@ -106,7 +106,7 @@ describe("workspace-actions", () => {
       ),
     ).toEqual({
       source: "wheel",
-      sourceRef: "wheel-outcome-9-spin-1",
+      sourceRef: "wheel-outcome-9-decision",
       title: "Decision: Ship",
       detail: "Create ticket",
       priority: "high",
