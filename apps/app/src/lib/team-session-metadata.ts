@@ -74,7 +74,6 @@ function parseWheelAutomationProvider(
 interface BuildTeamSessionMetadataOptions {
   type: TeamSessionType;
   teamId?: number;
-  planningFollowUps?: string[];
   date?: Date;
 }
 
@@ -102,17 +101,12 @@ export function parsePlanningFollowUpText(value: string): string[] {
 export function buildTeamSessionMetadata({
   type,
   teamId,
-  planningFollowUps = [],
   date = new Date(),
 }: BuildTeamSessionMetadataOptions): Record<string, unknown> {
   const metadata: Record<string, unknown> = { type };
 
   if (teamId !== undefined) {
     metadata.processLoop = buildWorkspaceProcessLoopIntent(teamId, date);
-  }
-
-  if (planningFollowUps.length > 0) {
-    metadata.planningFollowUps = planningFollowUps;
   }
 
   return metadata;

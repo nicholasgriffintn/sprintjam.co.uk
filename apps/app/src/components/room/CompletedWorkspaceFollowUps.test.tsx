@@ -97,6 +97,7 @@ describe("CompletedWorkspaceFollowUps", () => {
     const onSaved = vi.fn();
     const createdSession = { ...linkedSession, id: 22 };
     vi.mocked(createTeamSession).mockResolvedValue(createdSession);
+    vi.mocked(recordPlanningActionsByRoomKey).mockResolvedValue([41]);
     renderComponent({
       linkedWorkspaceSession: null,
       linkedWorkspaceTeamName: null,
@@ -115,11 +116,13 @@ describe("CompletedWorkspaceFollowUps", () => {
         "ROOM1",
         expect.objectContaining({
           type: "planning",
-          planningFollowUps: ["Review the rollout notes"],
         }),
       );
     });
+    expect(recordPlanningActionsByRoomKey).toHaveBeenCalledWith({
+      roomKey: "ROOM1",
+      followUps: [{ title: "Review the rollout notes" }],
+    });
     expect(onSaved).toHaveBeenCalledWith(createdSession);
-    expect(recordPlanningActionsByRoomKey).not.toHaveBeenCalled();
   });
 });

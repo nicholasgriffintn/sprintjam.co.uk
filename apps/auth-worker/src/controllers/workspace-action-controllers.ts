@@ -351,7 +351,7 @@ function parseWheelOutcomeBody(body: {
   };
 }
 
-export async function applySessionWorkspaceMetadata(params: {
+export async function applySessionProcessLoopMetadata(params: {
   repo: AuthResult["repo"];
   teamId: number;
   sessionId: number;
@@ -382,23 +382,6 @@ export async function applySessionWorkspaceMetadata(params: {
       linkedById: params.createdById,
     });
   }
-
-  const actionIntents = buildPlanningActionIntents(
-    params.sessionId,
-    params.metadata?.planningFollowUps,
-  );
-
-  await Promise.all(
-    actionIntents.map((intent) =>
-      params.repo.upsertWorkspaceAction({
-        teamId: params.teamId,
-        processLoopId: processLoop?.id ?? null,
-        sourceSessionId: params.sessionId,
-        createdById: params.createdById,
-        ...intent,
-      }),
-    ),
-  );
 }
 
 export async function listWorkspaceProcessLoopsController(

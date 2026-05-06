@@ -1046,7 +1046,7 @@ describe("teams-controller", () => {
     );
   });
 
-  it("creates planning actions when saving a session with follow-ups", async () => {
+  it("links session metadata without recording actions during session creation", async () => {
     const repo = createRepo({
       isOrganisationAdmin: vi.fn().mockResolvedValue(false),
       getOrganisationMembership: vi
@@ -1097,16 +1097,7 @@ describe("teams-controller", () => {
       sessionId: 21,
       linkedById: 1,
     });
-    expect(repo.upsertWorkspaceAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        teamId: 10,
-        processLoopId: 12,
-        sourceSessionId: 21,
-        source: "planning",
-        sourceRef: "planning-follow-up-21-review-api-blocker",
-        title: "Review API blocker",
-      }),
-    );
+    expect(repo.upsertWorkspaceAction).not.toHaveBeenCalled();
   });
 
   it("creates process loops for accessible teams", async () => {

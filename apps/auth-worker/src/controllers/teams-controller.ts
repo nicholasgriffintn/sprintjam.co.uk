@@ -25,7 +25,7 @@ import {
 import { buildWorkspaceTeam, canManageTeam } from "../lib/team-access";
 import { normalizeOptionalHttpUrl } from "../lib/url-validation";
 import { parseTeamSessionMetadata } from "./controller-parsing";
-import { applySessionWorkspaceMetadata } from "./workspace-action-controllers";
+import { applySessionProcessLoopMetadata } from "./workspace-action-controllers";
 import {
   getAuthOrError,
   getTeamViewer,
@@ -956,7 +956,7 @@ export async function createTeamSessionController(
     auth.result.userId,
     body?.metadata,
   );
-  await applySessionWorkspaceMetadata({
+  await applySessionProcessLoopMetadata({
     repo: auth.result.repo,
     teamId,
     sessionId,

@@ -94,9 +94,12 @@ export function CompletedWorkspaceFollowUps({
           buildTeamSessionMetadata({
             type: "planning",
             teamId: selectedTeamId!,
-            planningFollowUps: followUps.map((followUp) => followUp.title),
           }),
         );
+        await recordPlanningActionsByRoomKey({
+          roomKey,
+          followUps,
+        });
         onWorkspaceSessionSaved(session);
       }
 

@@ -135,12 +135,11 @@ describe("team-session-metadata", () => {
     ]);
   });
 
-  it("builds linked session metadata with planning follow-ups", () => {
+  it("builds linked session metadata with process loop context", () => {
     expect(
       buildTeamSessionMetadata({
         type: "planning",
         teamId: 7,
-        planningFollowUps: ["Review API blocker"],
         date: new Date("2026-05-05T12:00:00Z"),
       }),
     ).toEqual({
@@ -151,7 +150,6 @@ describe("team-session-metadata", () => {
         status: "active",
         startsAt: new Date("2026-05-05T00:00:00").getTime(),
       },
-      planningFollowUps: ["Review API blocker"],
     });
   });
 
