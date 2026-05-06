@@ -5,11 +5,18 @@ import {
   HelpCircle,
   Link2,
   MessageSquare,
+  Repeat2,
+  RotateCw,
   Target,
+  Trophy,
   Users,
+  UserMinus,
   Zap,
 } from "lucide-react";
-import type { WorkspaceStandupInsights } from "@sprintjam/types";
+import type {
+  WorkspaceStandupInsights,
+  WorkspaceWheelInsights,
+} from "@sprintjam/types";
 
 import { formatVelocity } from "@/lib/formatters";
 
@@ -134,6 +141,45 @@ export function buildStandupInsightMetrics(
       description: "Attached to updates",
       color: "text-cyan-600 dark:text-cyan-400",
       bgColor: "bg-cyan-50 dark:bg-cyan-900/20",
+    },
+  ];
+}
+
+export function buildWheelInsightMetrics(
+  wheel: WorkspaceWheelInsights,
+): WorkspaceInsightMetric[] {
+  return [
+    {
+      label: "Wheel spins",
+      value: String(wheel.spinCount),
+      icon: <RotateCw className="h-4 w-4" />,
+      description: "Recorded selections",
+      color: "text-indigo-600 dark:text-indigo-400",
+      bgColor: "bg-indigo-50 dark:bg-indigo-900/20",
+    },
+    {
+      label: "Winner spread",
+      value: `${Math.round(wheel.uniqueWinnerRate)}%`,
+      icon: <Trophy className="h-4 w-4" />,
+      description: "Unique winners per spin",
+      color: "text-emerald-600 dark:text-emerald-400",
+      bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+    },
+    {
+      label: "Repeat winners",
+      value: `${Math.round(wheel.repeatWinnerRate)}%`,
+      icon: <Repeat2 className="h-4 w-4" />,
+      description: "Repeated selections",
+      color: "text-amber-600 dark:text-amber-400",
+      bgColor: "bg-amber-50 dark:bg-amber-900/20",
+    },
+    {
+      label: "Removed after win",
+      value: `${Math.round(wheel.removalRate)}%`,
+      icon: <UserMinus className="h-4 w-4" />,
+      description: "Winners removed",
+      color: "text-rose-600 dark:text-rose-400",
+      bgColor: "bg-rose-50 dark:bg-rose-900/20",
     },
   ];
 }

@@ -28,6 +28,22 @@ const insights: WorkspaceInsights = {
     linkedTicketCount: 4,
     kudosCount: 2,
   },
+  wheel: {
+    sessionsAnalyzed: 1,
+    totalParticipants: 4,
+    entryCount: 4,
+    enabledEntryCount: 3,
+    spinCount: 3,
+    uniqueWinnerCount: 2,
+    removedAfterCount: 1,
+    repeatWinnerCount: 1,
+    averageSpinsPerSession: 3,
+    uniqueWinnerRate: 67,
+    repeatWinnerRate: 33,
+    removalRate: 33,
+    modeSessionCounts: { decision: 0, reviewer: 1, facilitator: 0 },
+    modeSpinCounts: { decision: 0, reviewer: 3, facilitator: 0 },
+  },
   participationRate: 88,
   firstRoundConsensusRate: 67,
   discussionRate: 33,
@@ -47,5 +63,6 @@ describe("InsightsGrid", () => {
     expect(screen.getByText("Wheels")).toBeTruthy();
     expect(screen.getByText("Standup response")).toBeTruthy();
     expect(screen.getByText("Average health")).toBeTruthy();
+    expect(screen.getByText("Wheel spins")).toBeTruthy();
   });
 });

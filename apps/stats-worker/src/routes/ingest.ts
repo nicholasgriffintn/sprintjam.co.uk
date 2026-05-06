@@ -4,6 +4,7 @@ import type {
 } from "@cloudflare/workers-types";
 import type {
   RecordStandupSessionStatsInput,
+  RecordWheelSessionStatsInput,
   RoundIngestPayload,
   StatsWorkerEnv,
 } from "@sprintjam/types";
@@ -12,6 +13,7 @@ import { StatsRepository } from "../repositories/stats";
 import {
   validateRoundIngestPayload,
   validateStandupSessionStatsPayload,
+  validateWheelSessionStatsPayload,
 } from "../lib/validation";
 import { successResponse, errorResponse } from "../lib/response";
 import {
@@ -86,6 +88,42 @@ export async function recordStandupSessionStatsController(
 
   const repo = new StatsRepository(env.DB);
   await repo.recordStandupSessionStats(payload);
+
+  return successResponse({ status: "recorded" });
+}
+
+export async function recordWheelSessionStatsController(
+  request: CfRequest,
+  env: StatsWorkerEnv,
+): Promise<CfResponse> {
+  const authResult = await authenticateRequest(request, env.DB);
+  if (isAuthError(authResult)) {
+    return errorResponse(
+      authResult.code === "unauthorized" ? "Unauthorized" : "Session expired",
+      401,
+    );
+  }
+
+  const body = await request.json();
+  const validation = validateWheelSessionStatsPayload(body);
+  if (!validation.valid) {
+    return errorResponse(validation.error, 400);
+  }
+
+  const payload = body as RecordWheelSessionStatsInput;
+  const hasAccess = await canUserAccessRoom(
+    env.DB,
+    authResult.userId,
+    authResult.organisationId,
+    authResult.workspaceRole === "admin",
+    payload.roomKey,
+  );
+  if (!hasAccess) {
+    return errorResponse("You do not have access to this wheel's stats", 403);
+  }
+
+  const repo = new StatsRepository(env.DB);
+  await repo.recordWheelSessionStats(payload);
 
   return successResponse({ status: "recorded" });
 }

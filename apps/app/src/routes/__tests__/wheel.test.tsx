@@ -51,6 +51,8 @@ vi.mock("@/hooks/useWorkspaceData", () => ({
 vi.mock("@/lib/workspace-service", () => ({
   createTeamSession: vi.fn(),
   getTeamSessionByRoomKey: vi.fn(),
+  recordWheelOutcomeByRoomKey: vi.fn(),
+  recordWheelSessionStats: vi.fn(),
 }));
 
 describe("WheelRoute", () => {

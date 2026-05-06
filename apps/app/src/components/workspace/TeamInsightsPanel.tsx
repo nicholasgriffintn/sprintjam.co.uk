@@ -9,6 +9,7 @@ import { CeremonyCountStrip } from "@/components/workspace/InsightActivitySummar
 import {
   buildPlanningInsightMetrics,
   buildStandupInsightMetrics,
+  buildWheelInsightMetrics,
 } from "@/components/workspace/workspaceInsightMetrics";
 import { buildInsightPrompts } from "@/utils/workspace-insight-prompts";
 import type { TeamInsights, TeamSessionCounts } from "@sprintjam/types";
@@ -73,8 +74,8 @@ export function TeamInsightsPanel({
             <CeremonyCountStrip counts={sessionCounts} label="Linked sessions" />
           ) : null}
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            No completed insights available for {teamName}. Complete planning
-            sessions, standups, or wheels to build team history.
+            No analysed insights available for {teamName}. Complete planning
+            sessions, standups, or record wheel spins to build team history.
           </p>
         </div>
       </SurfaceCard>
@@ -88,8 +89,10 @@ export function TeamInsightsPanel({
     uncertaintyDescription: '"?" votes cast',
   });
   const standupMetrics = buildStandupInsightMetrics(insights.standup);
+  const wheelMetrics = buildWheelInsightMetrics(insights.wheel);
   const hasPlanningRounds = insights.totalRounds > 0;
   const hasStandupInsights = insights.standup.sessionsAnalyzed > 0;
+  const hasWheelInsights = insights.wheel.sessionsAnalyzed > 0;
   const prompts = buildInsightPrompts(insights);
 
   return (
@@ -146,6 +149,24 @@ export function TeamInsightsPanel({
           )}
         </div>
 
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            Wheel signals
+          </h4>
+          {hasWheelInsights ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {wheelMetrics.map((metric) => (
+                <MetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              Wheel-specific metrics appear after a linked wheel room records a
+              spin.
+            </p>
+          )}
+        </div>
+
         {prompts.length > 0 ? (
           <div className="space-y-2 rounded-lg border border-slate-100 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/40">
             <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -162,7 +183,7 @@ export function TeamInsightsPanel({
               : "No planning tickets estimated yet"}
           </span>
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            Based on last {insights.sessionsAnalyzed} completed sessions
+            Based on last {insights.sessionsAnalyzed} analysed sessions
           </span>
         </div>
       </div>

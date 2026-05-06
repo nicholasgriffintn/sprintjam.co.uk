@@ -155,6 +155,18 @@ export interface RecordStandupSessionStatsInput {
   }>;
 }
 
+export interface RecordWheelSessionStatsInput {
+  roomKey: string;
+  mode: WorkspaceWheelMode;
+  totalParticipants: number;
+  entryCount: number;
+  enabledEntryCount: number;
+  results: Array<{
+    winner: string;
+    removedAfter: boolean;
+  }>;
+}
+
 export interface RecordPlanningWorkspaceActionsInput {
   roomKey: string;
   followUps: Array<{
@@ -301,6 +313,7 @@ export interface TeamInsights {
   sessionsAnalyzed: number;
   sessionTypeCounts: TeamSessionCounts;
   standup: WorkspaceStandupInsights;
+  wheel: WorkspaceWheelInsights;
   totalTickets: number;
   totalRounds: number;
   participationRate: number;
@@ -330,6 +343,28 @@ export interface WorkspaceStandupInsights
   unresolvedBlockerRate: number;
 }
 
+export interface WorkspaceWheelSessionInsights {
+  mode: WorkspaceWheelMode;
+  totalParticipants: number;
+  entryCount: number;
+  enabledEntryCount: number;
+  spinCount: number;
+  uniqueWinnerCount: number;
+  removedAfterCount: number;
+  repeatWinnerCount: number;
+}
+
+export interface WorkspaceWheelInsights
+  extends Omit<WorkspaceWheelSessionInsights, "mode"> {
+  sessionsAnalyzed: number;
+  averageSpinsPerSession: number;
+  uniqueWinnerRate: number;
+  repeatWinnerRate: number;
+  removalRate: number;
+  modeSessionCounts: Record<WorkspaceWheelMode, number>;
+  modeSpinCounts: Record<WorkspaceWheelMode, number>;
+}
+
 export interface WorkspaceInsightsContributor {
   userName: string;
   totalVotes: number;
@@ -343,6 +378,7 @@ export interface WorkspaceInsights {
   totalTickets: number;
   sessionTypeCounts: TeamSessionCounts;
   standup: WorkspaceStandupInsights;
+  wheel: WorkspaceWheelInsights;
   participationRate: number;
   firstRoundConsensusRate: number;
   discussionRate: number;

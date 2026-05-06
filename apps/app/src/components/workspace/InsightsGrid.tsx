@@ -10,12 +10,36 @@ import { CeremonyCountStrip } from "@/components/workspace/InsightActivitySummar
 import {
   buildPlanningInsightMetrics,
   buildStandupInsightMetrics,
+  buildWheelInsightMetrics,
+  type WorkspaceInsightMetric,
 } from "@/components/workspace/workspaceInsightMetrics";
 import { buildInsightPrompts } from "@/utils/workspace-insight-prompts";
 import type { WorkspaceInsights } from "@sprintjam/types";
 
 interface InsightsGridProps {
   insights: WorkspaceInsights | null;
+}
+
+function InsightMetricCard({ metric }: { metric: WorkspaceInsightMetric }) {
+  return (
+    <SurfaceCard variant="subtle" padding="sm">
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-9 w-9 items-center justify-center rounded-lg ${metric.bgColor} ${metric.color}`}
+        >
+          {metric.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+            {metric.label}
+          </p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">
+            {metric.value}
+          </p>
+        </div>
+      </div>
+    </SurfaceCard>
+  );
 }
 
 export function InsightsGrid({ insights }: InsightsGridProps) {
@@ -44,7 +68,9 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
   const insightPrompts = buildInsightPrompts(insights);
   const hasPlanningRounds = insights.totalRounds > 0;
   const hasStandupInsights = insights.standup.sessionsAnalyzed > 0;
+  const hasWheelInsights = insights.wheel.sessionsAnalyzed > 0;
   const standupMetrics = buildStandupInsightMetrics(insights.standup);
+  const wheelMetrics = buildWheelInsightMetrics(insights.wheel);
 
   return (
     <div className="space-y-4">
@@ -63,23 +89,7 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
         </div>
         {hasPlanningRounds ? (
           collaborationMetrics.map((metric) => (
-            <SurfaceCard key={metric.label} variant="subtle" padding="sm">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg ${metric.bgColor} ${metric.color}`}
-                >
-                  {metric.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {metric.label}
-                  </p>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {metric.value}
-                  </p>
-                </div>
-              </div>
-            </SurfaceCard>
+            <InsightMetricCard key={metric.label} metric={metric} />
           ))
         ) : (
           <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 sm:col-span-2">
@@ -89,23 +99,12 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
         )}
         {hasStandupInsights
           ? standupMetrics.map((metric) => (
-              <SurfaceCard key={metric.label} variant="subtle" padding="sm">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg ${metric.bgColor} ${metric.color}`}
-                  >
-                    {metric.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                      {metric.label}
-                    </p>
-                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                      {metric.value}
-                    </p>
-                  </div>
-                </div>
-              </SurfaceCard>
+              <InsightMetricCard key={metric.label} metric={metric} />
+            ))
+          : null}
+        {hasWheelInsights
+          ? wheelMetrics.map((metric) => (
+              <InsightMetricCard key={metric.label} metric={metric} />
             ))
           : null}
       </div>

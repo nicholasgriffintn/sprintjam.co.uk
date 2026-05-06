@@ -28,7 +28,10 @@ import {
   updateWheelSettings as apiUpdateWheelSettings,
 } from "@/lib/wheel-api-service";
 import { HttpError } from "@/lib/errors";
-import { recordWheelOutcomeByRoomKey } from "@/lib/workspace-service";
+import {
+  recordWheelOutcomeByRoomKey,
+  recordWheelSessionStats,
+} from "@/lib/workspace-service";
 import { upsertWheel } from "@/lib/wheel-store";
 
 interface WheelStateContextValue {
@@ -54,6 +57,30 @@ interface WheelActionsContextValue {
   handleSpin: () => void;
   handleResetWheel: () => void;
   handleUpdateSettings: (settings: Partial<WheelSettings>) => void;
+}
+
+function isExpectedWorkspaceRecordError(error: unknown): boolean {
+  return (
+    error instanceof HttpError &&
+    (error.status === 401 ||
+      error.status === 403 ||
+      error.status === 404 ||
+      error.status === 409)
+  );
+}
+
+function logWorkspaceRecordFailure(
+  label: string,
+  result: PromiseSettledResult<unknown>,
+): void {
+  if (
+    result.status === "fulfilled" ||
+    isExpectedWorkspaceRecordError(result.reason)
+  ) {
+    return;
+  }
+
+  console.error(`Failed to record wheel ${label}:`, result.reason);
 }
 
 const WheelStateContext = createContext<WheelStateContextValue | null>(null);
@@ -103,29 +130,33 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
   wheelDataRef.current = wheelData;
 
   const recordWorkspaceOutcome = useCallback(
-    async (wheel: WheelData, result: WheelData["results"][number]) => {
+    async (
+      wheel: WheelData,
+      result: WheelData["results"][number],
+      entries: WheelData["entries"],
+    ) => {
       if (!isWorkspaceWheelMode(wheel.settings.mode)) {
         return;
       }
 
-      try {
-        await recordWheelOutcomeByRoomKey(
-          wheel.key,
-          wheel.settings.mode,
-          result,
-        );
-      } catch (error) {
-        if (
-          error instanceof HttpError &&
-          (error.status === 401 ||
-            error.status === 403 ||
-            error.status === 404 ||
-            error.status === 409)
-        ) {
-          return;
-        }
-        console.error("Failed to record wheel outcome:", error);
-      }
+      const results = [...wheel.results, result];
+      const [outcomeResult, statsResult] = await Promise.allSettled([
+        recordWheelOutcomeByRoomKey(wheel.key, wheel.settings.mode, result),
+        recordWheelSessionStats({
+          roomKey: wheel.key,
+          mode: wheel.settings.mode,
+          totalParticipants: wheel.users.length,
+          entryCount: entries.length,
+          enabledEntryCount: entries.filter((entry) => entry.enabled).length,
+          results: results.map((item) => ({
+            winner: item.winner,
+            removedAfter: item.removedAfter,
+          })),
+        }),
+      ]);
+
+      logWorkspaceRecordFailure("outcome", outcomeResult);
+      logWorkspaceRecordFailure("stats", statsResult);
     },
     [],
   );
@@ -189,7 +220,11 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
 
       case "spinEnded":
         if (wheelDataRef.current) {
-          void recordWorkspaceOutcome(wheelDataRef.current, message.result);
+          void recordWorkspaceOutcome(
+            wheelDataRef.current,
+            message.result,
+            message.entries,
+          );
         }
         setWheelData((prev) => {
           if (!prev) return prev;

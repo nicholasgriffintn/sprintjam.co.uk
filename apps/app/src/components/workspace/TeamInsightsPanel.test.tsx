@@ -26,6 +26,22 @@ const insights: TeamInsights = {
     linkedTicketCount: 2,
     kudosCount: 1,
   },
+  wheel: {
+    sessionsAnalyzed: 1,
+    totalParticipants: 4,
+    entryCount: 4,
+    enabledEntryCount: 3,
+    spinCount: 3,
+    uniqueWinnerCount: 2,
+    removedAfterCount: 1,
+    repeatWinnerCount: 1,
+    averageSpinsPerSession: 3,
+    uniqueWinnerRate: 67,
+    repeatWinnerRate: 33,
+    removalRate: 33,
+    modeSessionCounts: { decision: 0, reviewer: 1, facilitator: 0 },
+    modeSpinCounts: { decision: 0, reviewer: 3, facilitator: 0 },
+  },
   totalTickets: 18,
   totalRounds: 22,
   participationRate: 96,
@@ -50,6 +66,7 @@ describe("TeamInsightsPanel", () => {
     expect(screen.getByText("Standups")).toBeTruthy();
     expect(screen.getByText("Average health")).toBeTruthy();
     expect(screen.getByText("3.5/5")).toBeTruthy();
+    expect(screen.getByText("Wheel spins")).toBeTruthy();
     expect(screen.getByText("Pre-split unclear work")).toBeTruthy();
   });
 });

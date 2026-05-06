@@ -1,7 +1,9 @@
 import type {
   RecordStandupSessionStatsInput,
+  RecordWheelSessionStatsInput,
   RoundIngestPayload,
 } from "@sprintjam/types";
+import { isWorkspaceWheelMode } from "@sprintjam/utils";
 
 export const LIMITS = {
   MAX_VOTES_PER_ROUND: 100,
@@ -15,6 +17,9 @@ export const LIMITS = {
   MAX_JUDGE_METADATA_SIZE: 10000,
   MAX_TYPE_LENGTH: 50,
   MAX_STANDUP_RESPONSES: 100,
+  MAX_WHEEL_RESULTS: 100,
+  MAX_WHEEL_ENTRIES: 200,
+  MAX_WHEEL_WINNER_LENGTH: 200,
 } as const;
 
 export type ValidationResult =
@@ -272,6 +277,113 @@ export function validateStandupSessionStatsPayload(
       return {
         valid: false,
         error: `responses[${index}].hasKudos must be a boolean`,
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
+export function validateWheelSessionStatsPayload(
+  body: unknown,
+): ValidationResult {
+  if (!body || typeof body !== "object") {
+    return { valid: false, error: "Request body must be an object" };
+  }
+
+  const b = body as Partial<RecordWheelSessionStatsInput>;
+
+  if (
+    !b.roomKey ||
+    !b.mode ||
+    b.totalParticipants === undefined ||
+    b.entryCount === undefined ||
+    b.enabledEntryCount === undefined ||
+    !b.results
+  ) {
+    return { valid: false, error: "Missing required fields" };
+  }
+
+  if (
+    typeof b.roomKey !== "string" ||
+    b.roomKey.length > LIMITS.MAX_ROOM_KEY_LENGTH
+  ) {
+    return {
+      valid: false,
+      error: `roomKey must be a string with max ${LIMITS.MAX_ROOM_KEY_LENGTH} characters`,
+    };
+  }
+
+  if (!isWorkspaceWheelMode(b.mode)) {
+    return {
+      valid: false,
+      error: "mode must be one of decision, reviewer, or facilitator",
+    };
+  }
+
+  if (
+    typeof b.totalParticipants !== "number" ||
+    !Number.isInteger(b.totalParticipants) ||
+    b.totalParticipants < 0 ||
+    b.totalParticipants > LIMITS.MAX_WHEEL_ENTRIES
+  ) {
+    return {
+      valid: false,
+      error: `totalParticipants must be an integer between 0 and ${LIMITS.MAX_WHEEL_ENTRIES}`,
+    };
+  }
+
+  if (
+    typeof b.entryCount !== "number" ||
+    !Number.isInteger(b.entryCount) ||
+    b.entryCount < 0 ||
+    b.entryCount > LIMITS.MAX_WHEEL_ENTRIES
+  ) {
+    return {
+      valid: false,
+      error: `entryCount must be an integer between 0 and ${LIMITS.MAX_WHEEL_ENTRIES}`,
+    };
+  }
+
+  if (
+    typeof b.enabledEntryCount !== "number" ||
+    !Number.isInteger(b.enabledEntryCount) ||
+    b.enabledEntryCount < 0 ||
+    b.enabledEntryCount > b.entryCount
+  ) {
+    return {
+      valid: false,
+      error: "enabledEntryCount must be an integer between 0 and entryCount",
+    };
+  }
+
+  if (!Array.isArray(b.results) || b.results.length > LIMITS.MAX_WHEEL_RESULTS) {
+    return {
+      valid: false,
+      error: `results must be an array with max ${LIMITS.MAX_WHEEL_RESULTS} items`,
+    };
+  }
+
+  for (const [index, result] of b.results.entries()) {
+    if (!result || typeof result !== "object") {
+      return { valid: false, error: `results[${index}] must be an object` };
+    }
+
+    if (
+      typeof result.winner !== "string" ||
+      result.winner.length === 0 ||
+      result.winner.length > LIMITS.MAX_WHEEL_WINNER_LENGTH
+    ) {
+      return {
+        valid: false,
+        error: `results[${index}].winner must be a non-empty string with max ${LIMITS.MAX_WHEEL_WINNER_LENGTH} characters`,
+      };
+    }
+
+    if (typeof result.removedAfter !== "boolean") {
+      return {
+        valid: false,
+        error: `results[${index}].removedAfter must be a boolean`,
       };
     }
   }

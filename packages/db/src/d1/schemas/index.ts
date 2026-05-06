@@ -23,3 +23,4 @@ export * from "./round-votes";
 export * from "./vote-records";
 export * from "./room-stats";
 export * from "./standup-session-stats";
+export * from "./wheel-session-stats";

@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { validateRoundIngestPayload, LIMITS } from "./validation";
+import {
+  validateRoundIngestPayload,
+  validateWheelSessionStatsPayload,
+  LIMITS,
+} from "./validation";
 
 describe("validateRoundIngestPayload", () => {
   const validPayload = {
@@ -465,5 +469,62 @@ describe("validateRoundIngestPayload", () => {
       });
       expect(result.valid).toBe(true);
     });
+  });
+});
+
+describe("validateWheelSessionStatsPayload", () => {
+  const validPayload = {
+    roomKey: "wheel-123",
+    mode: "reviewer",
+    totalParticipants: 4,
+    entryCount: 5,
+    enabledEntryCount: 4,
+    results: [
+      { winner: "Ava", removedAfter: false },
+      { winner: "Ben", removedAfter: true },
+    ],
+  };
+
+  it("accepts valid wheel stats payloads", () => {
+    expect(validateWheelSessionStatsPayload(validPayload).valid).toBe(true);
+  });
+
+  it("rejects unsupported wheel modes", () => {
+    const result = validateWheelSessionStatsPayload({
+      ...validPayload,
+      mode: "unsupported",
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result).toHaveProperty(
+      "error",
+      "mode must be one of decision, reviewer, or facilitator",
+    );
+  });
+
+  it("rejects enabled entries above the total entry count", () => {
+    const result = validateWheelSessionStatsPayload({
+      ...validPayload,
+      enabledEntryCount: 6,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result).toHaveProperty(
+      "error",
+      "enabledEntryCount must be an integer between 0 and entryCount",
+    );
+  });
+
+  it("rejects malformed results", () => {
+    const result = validateWheelSessionStatsPayload({
+      ...validPayload,
+      results: [{ winner: "", removedAfter: false }],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result).toHaveProperty(
+      "error",
+      `results[0].winner must be a non-empty string with max ${LIMITS.MAX_WHEEL_WINNER_LENGTH} characters`,
+    );
   });
 });

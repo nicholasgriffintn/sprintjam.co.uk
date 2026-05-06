@@ -6,6 +6,7 @@ import {
   roomStats,
   teamSessions,
   standupSessionStats,
+  wheelSessionStats,
 } from "@sprintjam/db/d1/schemas";
 import { drizzle } from "drizzle-orm/d1";
 
@@ -175,6 +176,76 @@ describe("StatsRepository recordStandupSessionStats", () => {
   });
 });
 
+describe("StatsRepository recordWheelSessionStats", () => {
+  let mockD1: {
+    batch: ReturnType<typeof vi.fn>;
+    prepare: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockD1 = {
+      batch: vi.fn().mockResolvedValue(undefined),
+      prepare: vi.fn(() => ({
+        bind: vi.fn(() => ({})),
+      })),
+    };
+  });
+
+  it("stores derived wheel metrics in the stats table", async () => {
+    const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined);
+    const values = vi.fn(() => ({ onConflictDoUpdate }));
+    const insert = vi.fn((table) => {
+      if (table !== wheelSessionStats) {
+        throw new Error("Unexpected insert table");
+      }
+
+      return { values };
+    });
+
+    vi.mocked(drizzle).mockReturnValue({ insert } as any);
+
+    const repo = new StatsRepository(mockD1 as any);
+    await repo.recordWheelSessionStats({
+      roomKey: "wheel-a",
+      mode: "reviewer",
+      totalParticipants: 4,
+      entryCount: 3,
+      enabledEntryCount: 2,
+      results: [
+        { winner: "Ava", removedAfter: false },
+        { winner: "Ben", removedAfter: true },
+        { winner: "Ava", removedAfter: false },
+      ],
+    });
+
+    expect(insert).toHaveBeenCalledWith(wheelSessionStats);
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roomKey: "wheel-a",
+        mode: "reviewer",
+        totalParticipants: 4,
+        entryCount: 3,
+        enabledEntryCount: 2,
+        spinCount: 3,
+        uniqueWinnerCount: 2,
+        removedAfterCount: 1,
+        repeatWinnerCount: 1,
+      }),
+    );
+    expect(onConflictDoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: wheelSessionStats.roomKey,
+        set: expect.objectContaining({
+          spinCount: 3,
+          uniqueWinnerCount: 2,
+          repeatWinnerCount: 1,
+        }),
+      }),
+    );
+  });
+});
+
 describe("StatsRepository getTeamInsights", () => {
   let mockD1: {
     batch: ReturnType<typeof vi.fn>;
@@ -221,6 +292,7 @@ describe("StatsRepository getTeamInsights", () => {
         lastUpdatedAt: 1,
       },
     ];
+    const wheelStats: [] = [];
     const rounds = [
       {
         roomKey: "room-a",
@@ -283,6 +355,13 @@ describe("StatsRepository getTeamInsights", () => {
             })),
           };
         }
+        if (table === wheelSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue(wheelStats),
+            })),
+          };
+        }
         throw new Error("Unexpected select table");
       },
     }));
@@ -301,6 +380,7 @@ describe("StatsRepository getTeamInsights", () => {
       wheel: 0,
     });
     expect(result?.standup.sessionsAnalyzed).toBe(1);
+    expect(result?.wheel.sessionsAnalyzed).toBe(0);
     expect(result?.standup.responseRate).toBeCloseTo(66.7, 1);
     expect(result?.standup.averageHealth).toBe(3);
     expect(result?.standup.blockerRate).toBe(50);
@@ -343,6 +423,20 @@ describe("StatsRepository getTeamInsights", () => {
         lastUpdatedAt: 1,
       },
     ];
+    const wheelStats = [
+      {
+        roomKey: "wheel-a",
+        mode: "reviewer",
+        totalParticipants: 3,
+        entryCount: 3,
+        enabledEntryCount: 2,
+        spinCount: 3,
+        uniqueWinnerCount: 2,
+        removedAfterCount: 1,
+        repeatWinnerCount: 1,
+        lastUpdatedAt: 1,
+      },
+    ];
 
     const select = vi.fn(() => ({
       from: (table: unknown) => {
@@ -378,6 +472,13 @@ describe("StatsRepository getTeamInsights", () => {
             })),
           };
         }
+        if (table === wheelSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue(wheelStats),
+            })),
+          };
+        }
         throw new Error("Unexpected select table");
       },
     }));
@@ -399,6 +500,97 @@ describe("StatsRepository getTeamInsights", () => {
     expect(result?.standup.sessionsAnalyzed).toBe(1);
     expect(result?.standup.averageHealth).toBe(2.5);
     expect(result?.standup.unresolvedBlockerRate).toBe(50);
+    expect(result?.wheel.sessionsAnalyzed).toBe(1);
+    expect(result?.wheel.spinCount).toBe(3);
+    expect(result?.wheel.repeatWinnerRate).toBeCloseTo(33.3, 1);
+  });
+
+  it("includes active wheel sessions once Stats Worker has wheel stats", async () => {
+    const sessions = [
+      {
+        roomKey: "wheel-active",
+        teamId: 1,
+        createdAt: 3000,
+        completedAt: null,
+        metadata: '{"type":"wheel"}',
+      },
+    ];
+    const wheelStats = [
+      {
+        roomKey: "wheel-active",
+        mode: "facilitator",
+        totalParticipants: 1,
+        entryCount: 6,
+        enabledEntryCount: 6,
+        spinCount: 4,
+        uniqueWinnerCount: 4,
+        removedAfterCount: 0,
+        repeatWinnerCount: 0,
+        lastUpdatedAt: 1,
+      },
+    ];
+
+    const select = vi.fn(() => ({
+      from: (table: unknown) => {
+        if (table === teamSessions) {
+          return {
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                all: vi.fn().mockResolvedValue(sessions),
+              })),
+            })),
+          };
+        }
+        if (table === standupSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
+        if (table === wheelSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue(wheelStats),
+            })),
+          };
+        }
+        if (table === roundVotes) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
+        if (table === voteRecords) {
+          return {
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                all: vi.fn().mockResolvedValue([]),
+              })),
+            })),
+          };
+        }
+        throw new Error("Unexpected select table");
+      },
+    }));
+
+    vi.mocked(drizzle).mockReturnValue({ select } as any);
+
+    const repo = new StatsRepository(mockD1 as any);
+    const result = await repo.getTeamInsights(1, { limit: 6 });
+
+    expect(result).not.toBeNull();
+    expect(result?.sessionsAnalyzed).toBe(1);
+    expect(result?.sessionTypeCounts).toEqual({
+      all: 1,
+      planning: 0,
+      standup: 0,
+      wheel: 1,
+    });
+    expect(result?.wheel.sessionsAnalyzed).toBe(1);
+    expect(result?.wheel.spinCount).toBe(4);
+    expect(result?.wheel.uniqueWinnerRate).toBe(100);
   });
 });
 
@@ -457,6 +649,7 @@ describe("StatsRepository getWorkspaceInsights", () => {
         lastUpdatedAt: 1,
       },
     ];
+    const wheelStats: [] = [];
     const rounds = [
       {
         roomKey: "room-a",
@@ -511,6 +704,13 @@ describe("StatsRepository getWorkspaceInsights", () => {
             })),
           };
         }
+        if (table === wheelSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue(wheelStats),
+            })),
+          };
+        }
         throw new Error("Unexpected select table");
       },
     }));
@@ -524,12 +724,95 @@ describe("StatsRepository getWorkspaceInsights", () => {
     expect(result?.sessionsAnalyzed).toBe(2);
     expect(result?.sessionTypeCounts.standup).toBe(1);
     expect(result?.standup.sessionsAnalyzed).toBe(1);
+    expect(result?.wheel.sessionsAnalyzed).toBe(0);
     expect(result?.standup.responseRate).toBe(75);
     expect(result?.teamCount).toBe(2);
     expect(result?.totalVotes).toBe(3);
     expect(result?.totalRounds).toBe(2);
     expect(result?.topContributors).toHaveLength(3);
     expect(result?.topContributors[0].userName).toBe("Alice");
+  });
+
+  it("includes active wheel sessions with recorded wheel stats", async () => {
+    const sessions = [
+      {
+        roomKey: "wheel-active",
+        teamId: 2,
+        createdAt: 3000,
+        completedAt: null,
+        metadata: '{"type":"wheel"}',
+      },
+    ];
+    const wheelStats = [
+      {
+        roomKey: "wheel-active",
+        mode: "facilitator",
+        totalParticipants: 1,
+        entryCount: 6,
+        enabledEntryCount: 6,
+        spinCount: 4,
+        uniqueWinnerCount: 4,
+        removedAfterCount: 0,
+        repeatWinnerCount: 0,
+        lastUpdatedAt: 1,
+      },
+    ];
+
+    const select = vi.fn(() => ({
+      from: (table: unknown) => {
+        if (table === teamSessions) {
+          return {
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                all: vi.fn().mockResolvedValue(sessions),
+              })),
+            })),
+          };
+        }
+        if (table === standupSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
+        if (table === wheelSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue(wheelStats),
+            })),
+          };
+        }
+        if (table === roundVotes) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
+        if (table === voteRecords) {
+          return {
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                all: vi.fn().mockResolvedValue([]),
+              })),
+            })),
+          };
+        }
+        throw new Error("Unexpected select table");
+      },
+    }));
+
+    vi.mocked(drizzle).mockReturnValue({ select } as any);
+
+    const repo = new StatsRepository(mockD1 as any);
+    const result = await repo.getWorkspaceInsights([2]);
+
+    expect(result).not.toBeNull();
+    expect(result?.sessionsAnalyzed).toBe(1);
+    expect(result?.sessionTypeCounts.wheel).toBe(1);
+    expect(result?.wheel.spinCount).toBe(4);
+    expect(result?.wheel.uniqueWinnerRate).toBe(100);
   });
 });
 

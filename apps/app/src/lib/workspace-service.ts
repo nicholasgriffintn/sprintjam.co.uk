@@ -15,6 +15,7 @@ import type {
   RecordPlanningWorkspaceActionsInput,
   RecordStandupSessionStatsInput,
   RecordStandupWorkspaceActionsInput,
+  RecordWheelSessionStatsInput,
   SessionStats,
   SaveTeamsCollaborationInstallationInput,
   TeamAccessPolicy,
@@ -502,6 +503,15 @@ export async function recordStandupSessionStats(
   payload: RecordStandupSessionStatsInput,
 ): Promise<void> {
   await workspaceRequest(`${API_BASE_URL}/stats/standup-session`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function recordWheelSessionStats(
+  payload: RecordWheelSessionStatsInput,
+): Promise<void> {
+  await workspaceRequest(`${API_BASE_URL}/stats/wheel-session`, {
     method: "POST",
     body: JSON.stringify(payload),
   });

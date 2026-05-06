@@ -4,6 +4,7 @@ import type { StatsWorkerEnv } from "@sprintjam/types";
 import {
   ingestRoundController,
   recordStandupSessionStatsController,
+  recordWheelSessionStatsController,
 } from "./ingest";
 import { StatsRepository } from "../repositories/stats";
 import { authenticateRequest, canUserAccessRoom } from "../lib/auth";
@@ -206,6 +207,7 @@ describe("recordStandupSessionStatsController", () => {
 
     mockRepo = {
       recordStandupSessionStats: vi.fn().mockResolvedValue(undefined),
+      recordWheelSessionStats: vi.fn().mockResolvedValue(undefined),
     };
 
     vi.mocked(StatsRepository).mockImplementation(function () {
@@ -319,5 +321,65 @@ describe("recordStandupSessionStatsController", () => {
       "standup-a",
     );
     expect(mockRepo.recordStandupSessionStats).toHaveBeenCalledWith(payload);
+  });
+
+  it("records wheel stats when the user can access the room", async () => {
+    const payload = {
+      roomKey: "wheel-a",
+      mode: "reviewer",
+      totalParticipants: 3,
+      entryCount: 3,
+      enabledEntryCount: 2,
+      results: [
+        { winner: "Ava", removedAfter: false },
+        { winner: "Ben", removedAfter: true },
+      ],
+    };
+    const request = new Request("https://test.com/stats/wheel-session", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    const response = await recordWheelSessionStatsController(
+      request as any,
+      mockEnv,
+    );
+    const data = (await response.json()) as any;
+
+    expect(response.status).toBe(200);
+    expect(data.status).toBe("recorded");
+    expect(canUserAccessRoom).toHaveBeenCalledWith(
+      mockEnv.DB,
+      10,
+      2,
+      false,
+      "wheel-a",
+    );
+    expect(mockRepo.recordWheelSessionStats).toHaveBeenCalledWith(payload);
+  });
+
+  it("rejects invalid wheel stats payloads", async () => {
+    const request = new Request("https://test.com/stats/wheel-session", {
+      method: "POST",
+      body: JSON.stringify({
+        roomKey: "wheel-a",
+        mode: "unsupported",
+        totalParticipants: 3,
+        entryCount: 3,
+        enabledEntryCount: 2,
+        results: [],
+      }),
+    });
+
+    const response = await recordWheelSessionStatsController(
+      request as any,
+      mockEnv,
+    );
+    const data = (await response.json()) as any;
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe(
+      "mode must be one of decision, reviewer, or facilitator",
+    );
   });
 });

@@ -8,14 +8,17 @@ import {
   roomStats,
   teamSessions,
   standupSessionStats,
+  wheelSessionStats,
 } from "@sprintjam/db/d1/schemas";
 import type {
   RecordStandupSessionStatsInput,
+  RecordWheelSessionStatsInput,
   RoundIngestPayload,
   SessionStats,
   TeamInsights,
   TeamSessionCounts,
   WorkspaceStandupInsights,
+  WorkspaceWheelInsights,
   WorkspaceInsights,
 } from "@sprintjam/types";
 
@@ -38,8 +41,11 @@ import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
   aggregateWorkspaceStandupInsights,
+  aggregateWorkspaceWheelInsights,
   buildWorkspaceStandupSessionInsightsFromResponses,
+  buildWorkspaceWheelSessionInsights,
   countWorkspaceTeamSessionTypes,
+  isWorkspaceWheelMode,
 } from "@sprintjam/utils";
 
 const MAX_SESSIONS_FOR_AGGREGATION = 1000;
@@ -60,10 +66,17 @@ interface InsightsQueryData {
   }>;
 }
 
+interface InsightSessionCandidate {
+  roomKey: string;
+  completedAt: number | null;
+  createdAt?: number | null;
+}
+
 interface InsightsResult {
   sessionsAnalyzed: number;
   sessionTypeCounts: TeamSessionCounts;
   standup: WorkspaceStandupInsights;
+  wheel: WorkspaceWheelInsights;
   totalTickets: number;
   totalRounds: number;
   participationRate: number;
@@ -182,6 +195,42 @@ export class StatsRepository {
           unresolvedBlockerCount: insights.unresolvedBlockerCount,
           linkedTicketCount: insights.linkedTicketCount,
           kudosCount: insights.kudosCount,
+          lastUpdatedAt: now,
+        },
+      });
+  }
+
+  async recordWheelSessionStats(
+    data: RecordWheelSessionStatsInput,
+  ): Promise<void> {
+    const now = Math.floor(Date.now() / 1000);
+    const insights = buildWorkspaceWheelSessionInsights(data);
+
+    await this.db
+      .insert(wheelSessionStats)
+      .values({
+        roomKey: data.roomKey,
+        mode: insights.mode,
+        totalParticipants: insights.totalParticipants,
+        entryCount: insights.entryCount,
+        enabledEntryCount: insights.enabledEntryCount,
+        spinCount: insights.spinCount,
+        uniqueWinnerCount: insights.uniqueWinnerCount,
+        removedAfterCount: insights.removedAfterCount,
+        repeatWinnerCount: insights.repeatWinnerCount,
+        lastUpdatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: wheelSessionStats.roomKey,
+        set: {
+          mode: insights.mode,
+          totalParticipants: insights.totalParticipants,
+          entryCount: insights.entryCount,
+          enabledEntryCount: insights.enabledEntryCount,
+          spinCount: insights.spinCount,
+          uniqueWinnerCount: insights.uniqueWinnerCount,
+          removedAfterCount: insights.removedAfterCount,
+          repeatWinnerCount: insights.repeatWinnerCount,
           lastUpdatedAt: now,
         },
       });
@@ -449,6 +498,7 @@ export class StatsRepository {
     const sessions = await this.db
       .select({
         roomKey: teamSessions.roomKey,
+        createdAt: teamSessions.createdAt,
         completedAt: teamSessions.completedAt,
         metadata: teamSessions.metadata,
       })
@@ -457,26 +507,36 @@ export class StatsRepository {
       .orderBy(desc(teamSessions.completedAt))
       .all();
 
-    const completedSessions = sessions
-      .filter((s) => s.completedAt)
-      .sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0))
-      .slice(0, limit);
-
-    if (completedSessions.length === 0) return null;
-
-    const roomKeys = [...new Set(completedSessions.map((s) => s.roomKey))];
-    const [data, standupStats] = await Promise.all([
-      this.queryInsightsData(roomKeys),
-      this.queryStandupSessionStats(roomKeys),
+    const sessionRoomKeys = [...new Set(sessions.map((s) => s.roomKey))];
+    const [standupStats, wheelStats] = await Promise.all([
+      this.queryStandupSessionStats(sessionRoomKeys),
+      this.queryWheelSessionStats(sessionRoomKeys),
     ]);
+    const statsRoomKeys = this.buildStatsRoomKeySet(standupStats, wheelStats);
+    const insightSessions = this.selectInsightSessions(
+      sessions,
+      statsRoomKeys,
+      limit,
+    );
+
+    if (insightSessions.length === 0) return null;
+
+    const roomKeys = [...new Set(insightSessions.map((s) => s.roomKey))];
+    const roomKeySet = new Set(roomKeys);
+    const data = await this.queryInsightsData(roomKeys);
 
     const baseMetrics = this.calculateBaseMetrics(data);
     const metrics = this.calculateInsights(data, baseMetrics);
 
     return {
-      sessionsAnalyzed: completedSessions.length,
-      sessionTypeCounts: countWorkspaceTeamSessionTypes(completedSessions),
-      standup: this.calculateStandupInsights(standupStats),
+      sessionsAnalyzed: insightSessions.length,
+      sessionTypeCounts: countWorkspaceTeamSessionTypes(insightSessions),
+      standup: this.calculateStandupInsights(
+        standupStats.filter((stats) => roomKeySet.has(stats.roomKey)),
+      ),
+      wheel: this.calculateWheelInsights(
+        wheelStats.filter((stats) => roomKeySet.has(stats.roomKey)),
+      ),
       ...metrics,
     };
   }
@@ -494,6 +554,7 @@ export class StatsRepository {
       .select({
         roomKey: teamSessions.roomKey,
         teamId: teamSessions.teamId,
+        createdAt: teamSessions.createdAt,
         completedAt: teamSessions.completedAt,
         metadata: teamSessions.metadata,
       })
@@ -502,18 +563,24 @@ export class StatsRepository {
       .orderBy(desc(teamSessions.completedAt))
       .all();
 
-    const completedSessions = sessions
-      .filter((s) => s.completedAt)
-      .slice(0, sessionsLimit);
-
-    if (completedSessions.length === 0) return null;
-
-    const roomKeys = [...new Set(completedSessions.map((s) => s.roomKey))];
-    const uniqueTeamIds = new Set(completedSessions.map((s) => s.teamId));
-    const [data, standupStats] = await Promise.all([
-      this.queryInsightsData(roomKeys),
-      this.queryStandupSessionStats(roomKeys),
+    const sessionRoomKeys = [...new Set(sessions.map((s) => s.roomKey))];
+    const [standupStats, wheelStats] = await Promise.all([
+      this.queryStandupSessionStats(sessionRoomKeys),
+      this.queryWheelSessionStats(sessionRoomKeys),
     ]);
+    const statsRoomKeys = this.buildStatsRoomKeySet(standupStats, wheelStats);
+    const insightSessions = this.selectInsightSessions(
+      sessions,
+      statsRoomKeys,
+      sessionsLimit,
+    );
+
+    if (insightSessions.length === 0) return null;
+
+    const roomKeys = [...new Set(insightSessions.map((s) => s.roomKey))];
+    const roomKeySet = new Set(roomKeys);
+    const uniqueTeamIds = new Set(insightSessions.map((s) => s.teamId));
+    const data = await this.queryInsightsData(roomKeys);
 
     const baseMetrics = this.calculateBaseMetrics(data);
     const metrics = this.calculateInsights(data, baseMetrics);
@@ -526,11 +593,16 @@ export class StatsRepository {
 
     return {
       totalVotes: data.votes.length,
-      sessionTypeCounts: countWorkspaceTeamSessionTypes(completedSessions),
-      standup: this.calculateStandupInsights(standupStats),
+      sessionTypeCounts: countWorkspaceTeamSessionTypes(insightSessions),
+      standup: this.calculateStandupInsights(
+        standupStats.filter((stats) => roomKeySet.has(stats.roomKey)),
+      ),
+      wheel: this.calculateWheelInsights(
+        wheelStats.filter((stats) => roomKeySet.has(stats.roomKey)),
+      ),
       ...metrics,
       teamCount: uniqueTeamIds.size,
-      sessionsAnalyzed: completedSessions.length,
+      sessionsAnalyzed: insightSessions.length,
       topContributors,
     };
   }
@@ -654,6 +726,48 @@ export class StatsRepository {
       .all();
   }
 
+  private async queryWheelSessionStats(roomKeys: string[]) {
+    if (roomKeys.length === 0) {
+      return [];
+    }
+
+    return await this.db
+      .select()
+      .from(wheelSessionStats)
+      .where(inArray(wheelSessionStats.roomKey, roomKeys))
+      .all();
+  }
+
+  private buildStatsRoomKeySet(
+    standupStats: Array<{ roomKey: string }>,
+    wheelStats: Array<{ roomKey: string }>,
+  ): Set<string> {
+    return new Set([
+      ...standupStats.map((stats) => stats.roomKey),
+      ...wheelStats.map((stats) => stats.roomKey),
+    ]);
+  }
+
+  private selectInsightSessions<T extends InsightSessionCandidate>(
+    sessions: T[],
+    statsRoomKeys: Set<string>,
+    limit: number,
+  ): T[] {
+    return sessions
+      .filter(
+        (session) => session.completedAt || statsRoomKeys.has(session.roomKey),
+      )
+      .sort(
+        (a, b) =>
+          this.getInsightSessionSortTime(b) - this.getInsightSessionSortTime(a),
+      )
+      .slice(0, limit);
+  }
+
+  private getInsightSessionSortTime(session: InsightSessionCandidate): number {
+    return session.completedAt ?? session.createdAt ?? 0;
+  }
+
   private calculateBaseMetrics(data: InsightsQueryData) {
     const roundsPerTicket = countRoundsPerTicket(data.rounds);
     const ticketMetrics = calculateTicketMetrics(roundsPerTicket);
@@ -685,7 +799,7 @@ export class StatsRepository {
     baseMetrics: ReturnType<typeof this.calculateBaseMetrics>,
   ): Omit<
     InsightsResult,
-    "sessionsAnalyzed" | "sessionTypeCounts" | "standup"
+    "sessionsAnalyzed" | "sessionTypeCounts" | "standup" | "wheel"
   > {
     const metrics = calculateInsightMetrics(
       baseMetrics.ticketMetrics,
@@ -726,6 +840,40 @@ export class StatsRepository {
     }));
 
     return aggregateWorkspaceStandupInsights(standupSessionInsights);
+  }
+
+  private calculateWheelInsights(
+    sessions: Array<{
+      mode: string;
+      totalParticipants: number;
+      entryCount: number;
+      enabledEntryCount: number;
+      spinCount: number;
+      uniqueWinnerCount: number;
+      removedAfterCount: number;
+      repeatWinnerCount: number;
+    }>,
+  ): WorkspaceWheelInsights {
+    const wheelSessionInsights = sessions.flatMap((session) => {
+      if (!isWorkspaceWheelMode(session.mode)) {
+        return [];
+      }
+
+      return [
+        {
+          mode: session.mode,
+          totalParticipants: session.totalParticipants,
+          entryCount: session.entryCount,
+          enabledEntryCount: session.enabledEntryCount,
+          spinCount: session.spinCount,
+          uniqueWinnerCount: session.uniqueWinnerCount,
+          removedAfterCount: session.removedAfterCount,
+          repeatWinnerCount: session.repeatWinnerCount,
+        },
+      ];
+    });
+
+    return aggregateWorkspaceWheelInsights(wheelSessionInsights);
   }
 
   private calculateTopContributors(
