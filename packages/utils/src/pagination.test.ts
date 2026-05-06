@@ -53,6 +53,26 @@ describe("parsePagination", () => {
     });
   });
 
+  it("parses custom pagination parameter names", () => {
+    const result = parsePagination(
+      new URL("https://example.com/api?sessionsLimit=12&sessionsOffset=24"),
+      {
+        defaultLimit: 10,
+        limitParam: "sessionsLimit",
+        offsetParam: "sessionsOffset",
+      },
+    );
+
+    if (isPaginationError(result)) {
+      throw new Error("Expected pagination options");
+    }
+
+    expect(result).toEqual({
+      limit: 12,
+      offset: 24,
+    });
+  });
+
   it("returns errors for invalid pagination params", () => {
     expect(
       isPaginationError(

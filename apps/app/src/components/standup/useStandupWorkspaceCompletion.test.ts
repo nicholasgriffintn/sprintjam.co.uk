@@ -33,6 +33,7 @@ describe("completeStandupWorkspaceHistory", () => {
     const recordActions = vi
       .fn()
       .mockRejectedValue(new Error("Action write failed"));
+    const recordStats = vi.fn().mockResolvedValue(undefined);
     const completeSession = vi.fn().mockResolvedValue({ id: 1 });
 
     const warning = await completeStandupWorkspaceHistory(
@@ -41,7 +42,7 @@ describe("completeStandupWorkspaceHistory", () => {
         standupKey: "5W362R",
         isAuthenticated: true,
       },
-      { recordActions, completeSession },
+      { recordActions, recordStats, completeSession },
     );
 
     expect(recordActions).toHaveBeenCalledWith({
@@ -61,6 +62,19 @@ describe("completeStandupWorkspaceHistory", () => {
         },
       ],
     });
+    expect(recordStats).toHaveBeenCalledWith({
+      roomKey: "5W362R",
+      totalParticipants: 1,
+      responses: [
+        {
+          healthCheck: 4,
+          hasBlocker: true,
+          blockerResolved: false,
+          linkedTicketCount: 0,
+          hasKudos: false,
+        },
+      ],
+    });
     expect(completeSession).toHaveBeenCalledWith("5W362R");
     expect(warning).toContain("workspace actions were not updated");
   });
@@ -69,6 +83,7 @@ describe("completeStandupWorkspaceHistory", () => {
     const recordActions = vi
       .fn()
       .mockRejectedValue(new HttpError({ status: 404, message: "Missing" }));
+    const recordStats = vi.fn().mockResolvedValue(undefined);
     const completeSession = vi.fn().mockResolvedValue({ id: 1 });
 
     const warning = await completeStandupWorkspaceHistory(
@@ -77,7 +92,7 @@ describe("completeStandupWorkspaceHistory", () => {
         standupKey: "5W362R",
         isAuthenticated: true,
       },
-      { recordActions, completeSession },
+      { recordActions, recordStats, completeSession },
     );
 
     expect(recordActions).toHaveBeenCalledWith(
@@ -91,12 +106,21 @@ describe("completeStandupWorkspaceHistory", () => {
         ],
       }),
     );
+    expect(recordStats).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roomKey: "5W362R",
+        responses: expect.arrayContaining([
+          expect.objectContaining({ healthCheck: 4 }),
+        ]),
+      }),
+    );
     expect(completeSession).toHaveBeenCalledWith("5W362R");
     expect(warning).toBeNull();
   });
 
   it("does not complete workspace history again when backfilling a completed standup", async () => {
     const recordActions = vi.fn().mockResolvedValue([1]);
+    const recordStats = vi.fn().mockResolvedValue(undefined);
     const completeSession = vi.fn().mockResolvedValue({ id: 1 });
 
     const warning = await completeStandupWorkspaceHistory(
@@ -105,7 +129,7 @@ describe("completeStandupWorkspaceHistory", () => {
         standupKey: "5W362R",
         isAuthenticated: true,
       },
-      { recordActions, completeSession },
+      { recordActions, recordStats, completeSession },
     );
 
     expect(recordActions).toHaveBeenCalledWith(
@@ -113,7 +137,30 @@ describe("completeStandupWorkspaceHistory", () => {
         roomKey: "5W362R",
       }),
     );
+    expect(recordStats).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roomKey: "5W362R",
+      }),
+    );
     expect(completeSession).not.toHaveBeenCalled();
     expect(warning).toBeNull();
+  });
+
+  it("completes the workspace session when stats recording fails", async () => {
+    const recordActions = vi.fn().mockResolvedValue([1]);
+    const recordStats = vi.fn().mockRejectedValue(new Error("Stats failed"));
+    const completeSession = vi.fn().mockResolvedValue({ id: 1 });
+
+    const warning = await completeStandupWorkspaceHistory(
+      {
+        standupData,
+        standupKey: "5W362R",
+        isAuthenticated: true,
+      },
+      { recordActions, recordStats, completeSession },
+    );
+
+    expect(completeSession).toHaveBeenCalledWith("5W362R");
+    expect(warning).toContain("workspace stats were not updated");
   });
 });

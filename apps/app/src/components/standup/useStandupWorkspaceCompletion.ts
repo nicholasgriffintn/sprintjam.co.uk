@@ -3,6 +3,7 @@ import type { StandupData } from "@sprintjam/types";
 
 import {
   completeSessionByRoomKey,
+  recordStandupSessionStats,
   recordStandupActionsByRoomKey,
 } from "@/lib/workspace-service";
 import { HttpError } from "@/lib/errors";
@@ -15,6 +16,7 @@ interface CompleteStandupWorkspaceHistoryOptions {
 
 interface StandupWorkspaceHistoryServices {
   recordActions: typeof recordStandupActionsByRoomKey;
+  recordStats: typeof recordStandupSessionStats;
   completeSession: typeof completeSessionByRoomKey;
 }
 
@@ -35,6 +37,19 @@ function buildStandupActionPayload(standupData: StandupData) {
   };
 }
 
+function buildStandupStatsPayload(standupData: StandupData) {
+  return {
+    totalParticipants: standupData.users.length,
+    responses: standupData.responses.map((response) => ({
+      healthCheck: response.healthCheck,
+      hasBlocker: response.hasBlocker,
+      blockerResolved: response.blockerResolved,
+      linkedTicketCount: response.linkedTickets?.length ?? 0,
+      hasKudos: Boolean(response.kudos?.trim()),
+    })),
+  };
+}
+
 function workspaceHistoryWarning(error: unknown, suffix: string): string {
   return error instanceof Error
     ? `${error.message} ${suffix}`
@@ -45,6 +60,7 @@ export async function completeStandupWorkspaceHistory(
   options: CompleteStandupWorkspaceHistoryOptions,
   services: StandupWorkspaceHistoryServices = {
     recordActions: recordStandupActionsByRoomKey,
+    recordStats: recordStandupSessionStats,
     completeSession: completeSessionByRoomKey,
   },
 ): Promise<string | null> {
@@ -65,11 +81,30 @@ export async function completeStandupWorkspaceHistory(
     }
   }
 
+  let statsError: unknown = null;
+  try {
+    await services.recordStats({
+      roomKey: standupKey,
+      ...buildStandupStatsPayload(standupData),
+    });
+  } catch (error) {
+    if (!(error instanceof HttpError && error.status === 404)) {
+      statsError = error;
+    }
+  }
+
   if (standupData.status === "completed") {
-    return actionsError
+    if (actionsError) {
+      return workspaceHistoryWarning(
+        actionsError,
+        "The standup is complete, but workspace actions were not updated.",
+      );
+    }
+
+    return statsError
       ? workspaceHistoryWarning(
-          actionsError,
-          "The standup is complete, but workspace actions were not updated.",
+          statsError,
+          "The standup is complete, but workspace stats were not updated.",
         )
       : null;
   }
@@ -87,10 +122,17 @@ export async function completeStandupWorkspaceHistory(
     );
   }
 
-  return actionsError
+  if (actionsError) {
+    return workspaceHistoryWarning(
+      actionsError,
+      "The standup is complete, but workspace actions were not updated.",
+    );
+  }
+
+  return statsError
     ? workspaceHistoryWarning(
-        actionsError,
-        "The standup is complete, but workspace actions were not updated.",
+        statsError,
+        "The standup is complete, but workspace stats were not updated.",
       )
     : null;
 }

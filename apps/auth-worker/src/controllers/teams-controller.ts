@@ -1144,7 +1144,9 @@ export async function completeSessionByRoomKeyController(
     return workspace.response;
   }
 
-  const body = await request.json<{ roomKey?: string }>();
+  const body = await request.json<{
+    roomKey?: string;
+  }>();
   const roomKey = body?.roomKey?.trim();
   if (!roomKey) {
     return jsonError("Room key is required", 400);

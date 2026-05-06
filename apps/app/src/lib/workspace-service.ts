@@ -13,6 +13,7 @@ import type {
   OAuthProvider,
   CreateWorkspaceActionInput,
   RecordPlanningWorkspaceActionsInput,
+  RecordStandupSessionStatsInput,
   RecordStandupWorkspaceActionsInput,
   SessionStats,
   SaveTeamsCollaborationInstallationInput,
@@ -495,6 +496,15 @@ export async function recordStandupActionsByRoomKey(
     },
   );
   return data.actionIds;
+}
+
+export async function recordStandupSessionStats(
+  payload: RecordStandupSessionStatsInput,
+): Promise<void> {
+  await workspaceRequest(`${API_BASE_URL}/stats/standup-session`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function getWorkspaceStats(): Promise<WorkspaceStats | null> {

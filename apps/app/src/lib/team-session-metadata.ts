@@ -9,6 +9,7 @@ import {
   parseWorkspaceProcessLoopIntent,
   normaliseOptionalString,
   safeJsonParse,
+  normaliseWorkspaceTeamSessionType,
 } from "@sprintjam/utils";
 import type {
   TeamSession,
@@ -77,20 +78,6 @@ interface BuildTeamSessionMetadataOptions {
   date?: Date;
 }
 
-const SESSION_TYPES = new Set<TeamSessionType>([
-  "planning",
-  "standup",
-  "wheel",
-]);
-
-const normaliseSessionType = (value: unknown): TeamSessionType => {
-  if (typeof value === "string" && SESSION_TYPES.has(value as TeamSessionType)) {
-    return value as TeamSessionType;
-  }
-
-  return "planning";
-};
-
 export function parsePlanningFollowUpText(value: string): string[] {
   return value
     .split(/\r?\n/)
@@ -127,7 +114,7 @@ export function getTeamSessionType(
   session: Pick<TeamSession, "metadata">,
 ): TeamSessionType {
   const metadata = parseTeamSessionMetadata(session);
-  return normaliseSessionType(metadata?.type);
+  return normaliseWorkspaceTeamSessionType(metadata?.type);
 }
 
 export function getLinkedSessionContext(

@@ -22,3 +22,4 @@ export * from "./team-collaboration-installations";
 export * from "./round-votes";
 export * from "./vote-records";
 export * from "./room-stats";
+export * from "./standup-session-stats";

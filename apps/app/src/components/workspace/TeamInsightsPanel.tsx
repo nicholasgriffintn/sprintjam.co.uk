@@ -1,16 +1,15 @@
 import {
-  Target,
-  MessageSquare,
-  Zap,
-  HelpCircle,
   BarChart3,
-  Users,
   TrendingUp,
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { SuggestedFocusCards } from "@/components/workspace/SuggestedFocusCards";
-import { formatVelocity } from "@/lib/formatters";
+import { CeremonyCountStrip } from "@/components/workspace/InsightActivitySummary";
+import {
+  buildPlanningInsightMetrics,
+  buildStandupInsightMetrics,
+} from "@/components/workspace/workspaceInsightMetrics";
 import { buildInsightPrompts } from "@/utils/workspace-insight-prompts";
 import type { TeamInsights, TeamSessionCounts } from "@sprintjam/types";
 
@@ -18,10 +17,6 @@ interface TeamInsightsPanelProps {
   teamName: string;
   insights: TeamInsights | null;
   sessionCounts?: TeamSessionCounts;
-}
-
-function formatPercentage(value: number): string {
-  return `${Math.round(value)}%`;
 }
 
 function MetricCard({
@@ -59,29 +54,6 @@ function MetricCard({
   );
 }
 
-function ToolCountStrip({ counts }: { counts: TeamSessionCounts }) {
-  const items = [
-    { label: "Planning", value: counts.planning },
-    { label: "Standups", value: counts.standup },
-    { label: "Wheels", value: counts.wheel },
-  ];
-
-  return (
-    <div className="grid grid-cols-3 divide-x divide-slate-100 border-y border-slate-100 py-3 dark:divide-slate-800 dark:border-slate-800">
-      {items.map((item) => (
-        <div key={item.label} className="px-3 first:pl-0 last:pr-0">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {item.label}
-          </p>
-          <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
-            {item.value}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function TeamInsightsPanel({
   teamName,
   insights,
@@ -97,58 +69,27 @@ export function TeamInsightsPanel({
               Team insights
             </h3>
           </div>
-          {sessionCounts ? <ToolCountStrip counts={sessionCounts} /> : null}
+          {sessionCounts ? (
+            <CeremonyCountStrip counts={sessionCounts} label="Linked sessions" />
+          ) : null}
           <p className="text-sm text-slate-600 dark:text-slate-300">
-            No planning insights available for {teamName}. Complete planning
-            sessions, standups, and wheels to build team history.
+            No completed insights available for {teamName}. Complete planning
+            sessions, standups, or wheels to build team history.
           </p>
         </div>
       </SurfaceCard>
     );
   }
 
-  const metrics = [
-    {
-      label: "First-round consensus",
-      value: formatPercentage(insights.firstRoundConsensusRate),
-      icon: <Target className="h-4 w-4" />,
-      description: "Tickets agreed on first vote",
-      color: "text-emerald-600 dark:text-emerald-400",
-      bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
-    },
-    {
-      label: "Discussion rate",
-      value: formatPercentage(insights.discussionRate),
-      icon: <MessageSquare className="h-4 w-4" />,
-      description: "Tickets needing discussion",
-      color: "text-amber-600 dark:text-amber-400",
-      bgColor: "bg-amber-50 dark:bg-amber-900/20",
-    },
-    {
-      label: "Estimation velocity",
-      value: formatVelocity(insights.estimationVelocity),
-      icon: <Zap className="h-4 w-4" />,
-      description: "Tickets per hour",
-      color: "text-violet-600 dark:text-violet-400",
-      bgColor: "bg-violet-50 dark:bg-violet-900/20",
-    },
-    {
-      label: "Participation rate",
-      value: formatPercentage(insights.participationRate),
-      icon: <Users className="h-4 w-4" />,
-      description: "Average per round",
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20",
-    },
-    {
-      label: "Uncertainty rate",
-      value: formatPercentage(insights.questionMarkRate),
-      icon: <HelpCircle className="h-4 w-4" />,
-      description: '"?" votes cast',
-      color: "text-slate-600 dark:text-slate-400",
-      bgColor: "bg-slate-100 dark:bg-slate-700",
-    },
-  ];
+  const metrics = buildPlanningInsightMetrics(insights, {
+    includeParticipation: true,
+    discussionDescription: "Tickets needing discussion",
+    velocityDescription: "Tickets per hour",
+    uncertaintyDescription: '"?" votes cast',
+  });
+  const standupMetrics = buildStandupInsightMetrics(insights.standup);
+  const hasPlanningRounds = insights.totalRounds > 0;
+  const hasStandupInsights = insights.standup.sessionsAnalyzed > 0;
   const prompts = buildInsightPrompts(insights);
 
   return (
@@ -162,16 +103,47 @@ export function TeamInsightsPanel({
             </h3>
           </div>
           <span className="text-xs text-slate-400 dark:text-slate-500">
-            {insights.sessionsAnalyzed} sessions · {insights.totalRounds} rounds
+            {insights.sessionsAnalyzed} sessions · {insights.totalRounds}{" "}
+            planning rounds
           </span>
         </div>
 
-        {sessionCounts ? <ToolCountStrip counts={sessionCounts} /> : null}
+        <CeremonyCountStrip counts={insights.sessionTypeCounts} />
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {metrics.map((metric) => (
-            <MetricCard key={metric.label} {...metric} />
-          ))}
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            Planning signals
+          </h4>
+          {hasPlanningRounds ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {metrics.map((metric) => (
+                <MetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              Planning-specific metrics appear after a linked planning room
+              completes.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            Standup signals
+          </h4>
+          {hasStandupInsights ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {standupMetrics.map((metric) => (
+                <MetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              Standup-specific metrics appear after a linked standup room
+              completes.
+            </p>
+          )}
         </div>
 
         {prompts.length > 0 ? (
@@ -185,7 +157,9 @@ export function TeamInsightsPanel({
 
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
           <span className="text-xs text-slate-500 dark:text-slate-400">
-            {insights.totalTickets} tickets estimated
+            {insights.totalTickets > 0
+              ? `${insights.totalTickets} tickets estimated`
+              : "No planning tickets estimated yet"}
           </span>
           <span className="text-xs text-slate-500 dark:text-slate-400">
             Based on last {insights.sessionsAnalyzed} completed sessions

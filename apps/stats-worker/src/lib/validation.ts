@@ -1,4 +1,7 @@
-import type { RoundIngestPayload } from "@sprintjam/types";
+import type {
+  RecordStandupSessionStatsInput,
+  RoundIngestPayload,
+} from "@sprintjam/types";
 
 export const LIMITS = {
   MAX_VOTES_PER_ROUND: 100,
@@ -11,6 +14,7 @@ export const LIMITS = {
   MAX_STRUCTURED_VOTE_SIZE: 10000,
   MAX_JUDGE_METADATA_SIZE: 10000,
   MAX_TYPE_LENGTH: 50,
+  MAX_STANDUP_RESPONSES: 100,
 } as const;
 
 export type ValidationResult =
@@ -166,6 +170,110 @@ export function validateRoundIngestPayload(body: unknown): ValidationResult {
       valid: false,
       error: `type must be either "reset" or "next_ticket"`,
     };
+  }
+
+  return { valid: true };
+}
+
+export function validateStandupSessionStatsPayload(
+  body: unknown,
+): ValidationResult {
+  if (!body || typeof body !== "object") {
+    return { valid: false, error: "Request body must be an object" };
+  }
+
+  const b = body as Partial<RecordStandupSessionStatsInput>;
+
+  if (!b.roomKey || b.totalParticipants === undefined || !b.responses) {
+    return { valid: false, error: "Missing required fields" };
+  }
+
+  if (
+    typeof b.roomKey !== "string" ||
+    b.roomKey.length > LIMITS.MAX_ROOM_KEY_LENGTH
+  ) {
+    return {
+      valid: false,
+      error: `roomKey must be a string with max ${LIMITS.MAX_ROOM_KEY_LENGTH} characters`,
+    };
+  }
+
+  if (
+    typeof b.totalParticipants !== "number" ||
+    !Number.isInteger(b.totalParticipants) ||
+    b.totalParticipants < 0 ||
+    b.totalParticipants > LIMITS.MAX_STANDUP_RESPONSES
+  ) {
+    return {
+      valid: false,
+      error: `totalParticipants must be an integer between 0 and ${LIMITS.MAX_STANDUP_RESPONSES}`,
+    };
+  }
+
+  if (
+    !Array.isArray(b.responses) ||
+    b.responses.length > LIMITS.MAX_STANDUP_RESPONSES
+  ) {
+    return {
+      valid: false,
+      error: `responses must be an array with max ${LIMITS.MAX_STANDUP_RESPONSES} items`,
+    };
+  }
+
+  for (const [index, response] of b.responses.entries()) {
+    if (!response || typeof response !== "object") {
+      return { valid: false, error: `responses[${index}] must be an object` };
+    }
+
+    if (
+      typeof response.healthCheck !== "number" ||
+      !Number.isInteger(response.healthCheck) ||
+      response.healthCheck < 1 ||
+      response.healthCheck > 5
+    ) {
+      return {
+        valid: false,
+        error: `responses[${index}].healthCheck must be an integer between 1 and 5`,
+      };
+    }
+
+    if (typeof response.hasBlocker !== "boolean") {
+      return {
+        valid: false,
+        error: `responses[${index}].hasBlocker must be a boolean`,
+      };
+    }
+
+    if (
+      response.blockerResolved !== undefined &&
+      typeof response.blockerResolved !== "boolean"
+    ) {
+      return {
+        valid: false,
+        error: `responses[${index}].blockerResolved must be a boolean`,
+      };
+    }
+
+    if (
+      response.linkedTicketCount !== undefined &&
+      (!Number.isInteger(response.linkedTicketCount) ||
+        response.linkedTicketCount < 0)
+    ) {
+      return {
+        valid: false,
+        error: `responses[${index}].linkedTicketCount must be a non-negative integer`,
+      };
+    }
+
+    if (
+      response.hasKudos !== undefined &&
+      typeof response.hasKudos !== "boolean"
+    ) {
+      return {
+        valid: false,
+        error: `responses[${index}].hasKudos must be a boolean`,
+      };
+    }
   }
 
   return { valid: true };

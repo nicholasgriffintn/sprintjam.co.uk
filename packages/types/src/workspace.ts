@@ -143,6 +143,18 @@ export interface RecordStandupWorkspaceActionsInput {
   }>;
 }
 
+export interface RecordStandupSessionStatsInput {
+  roomKey: string;
+  totalParticipants: number;
+  responses: Array<{
+    healthCheck: number;
+    hasBlocker: boolean;
+    blockerResolved?: boolean;
+    linkedTicketCount?: number;
+    hasKudos?: boolean;
+  }>;
+}
+
 export interface RecordPlanningWorkspaceActionsInput {
   roomKey: string;
   followUps: Array<{
@@ -287,6 +299,8 @@ export interface WorkspaceProfile {
 
 export interface TeamInsights {
   sessionsAnalyzed: number;
+  sessionTypeCounts: TeamSessionCounts;
+  standup: WorkspaceStandupInsights;
   totalTickets: number;
   totalRounds: number;
   participationRate: number;
@@ -294,6 +308,26 @@ export interface TeamInsights {
   discussionRate: number;
   estimationVelocity: number | null;
   questionMarkRate: number;
+}
+
+export interface WorkspaceStandupSessionInsights {
+  totalParticipants: number;
+  responsesSubmitted: number;
+  healthScoreTotal: number;
+  healthResponseCount: number;
+  blockerCount: number;
+  unresolvedBlockerCount: number;
+  linkedTicketCount: number;
+  kudosCount: number;
+}
+
+export interface WorkspaceStandupInsights
+  extends WorkspaceStandupSessionInsights {
+  sessionsAnalyzed: number;
+  responseRate: number;
+  averageHealth: number | null;
+  blockerRate: number;
+  unresolvedBlockerRate: number;
 }
 
 export interface WorkspaceInsightsContributor {
@@ -307,6 +341,8 @@ export interface WorkspaceInsights {
   totalVotes: number;
   totalRounds: number;
   totalTickets: number;
+  sessionTypeCounts: TeamSessionCounts;
+  standup: WorkspaceStandupInsights;
   participationRate: number;
   firstRoundConsensusRate: number;
   discussionRate: number;

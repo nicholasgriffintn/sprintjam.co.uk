@@ -7,11 +7,15 @@ import {
   voteRecords,
   roomStats,
   teamSessions,
+  standupSessionStats,
 } from "@sprintjam/db/d1/schemas";
 import type {
+  RecordStandupSessionStatsInput,
   RoundIngestPayload,
   SessionStats,
   TeamInsights,
+  TeamSessionCounts,
+  WorkspaceStandupInsights,
   WorkspaceInsights,
 } from "@sprintjam/types";
 
@@ -30,7 +34,13 @@ import {
   calculateInsightMetrics,
 } from "../lib/metrics";
 
-import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@sprintjam/utils";
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  aggregateWorkspaceStandupInsights,
+  buildWorkspaceStandupSessionInsightsFromResponses,
+  countWorkspaceTeamSessionTypes,
+} from "@sprintjam/utils";
 
 const MAX_SESSIONS_FOR_AGGREGATION = 1000;
 const MAX_VOTES_FOR_AGGREGATION = 50000;
@@ -52,6 +62,8 @@ interface InsightsQueryData {
 
 interface InsightsResult {
   sessionsAnalyzed: number;
+  sessionTypeCounts: TeamSessionCounts;
+  standup: WorkspaceStandupInsights;
   totalTickets: number;
   totalRounds: number;
   participationRate: number;
@@ -137,6 +149,42 @@ export class StatsRepository {
     }
 
     await this.updateRoomStats(data.roomKey, data.votes.length);
+  }
+
+  async recordStandupSessionStats(
+    data: RecordStandupSessionStatsInput,
+  ): Promise<void> {
+    const now = Math.floor(Date.now() / 1000);
+    const insights = buildWorkspaceStandupSessionInsightsFromResponses(data);
+
+    await this.db
+      .insert(standupSessionStats)
+      .values({
+        roomKey: data.roomKey,
+        totalParticipants: insights.totalParticipants,
+        responsesSubmitted: insights.responsesSubmitted,
+        healthScoreTotal: insights.healthScoreTotal,
+        healthResponseCount: insights.healthResponseCount,
+        blockerCount: insights.blockerCount,
+        unresolvedBlockerCount: insights.unresolvedBlockerCount,
+        linkedTicketCount: insights.linkedTicketCount,
+        kudosCount: insights.kudosCount,
+        lastUpdatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: standupSessionStats.roomKey,
+        set: {
+          totalParticipants: insights.totalParticipants,
+          responsesSubmitted: insights.responsesSubmitted,
+          healthScoreTotal: insights.healthScoreTotal,
+          healthResponseCount: insights.healthResponseCount,
+          blockerCount: insights.blockerCount,
+          unresolvedBlockerCount: insights.unresolvedBlockerCount,
+          linkedTicketCount: insights.linkedTicketCount,
+          kudosCount: insights.kudosCount,
+          lastUpdatedAt: now,
+        },
+      });
   }
 
   private async updateRoomStats(
@@ -402,6 +450,7 @@ export class StatsRepository {
       .select({
         roomKey: teamSessions.roomKey,
         completedAt: teamSessions.completedAt,
+        metadata: teamSessions.metadata,
       })
       .from(teamSessions)
       .where(eq(teamSessions.teamId, teamId))
@@ -416,15 +465,18 @@ export class StatsRepository {
     if (completedSessions.length === 0) return null;
 
     const roomKeys = [...new Set(completedSessions.map((s) => s.roomKey))];
-    const data = await this.queryInsightsData(roomKeys);
-
-    if (data.rounds.length === 0) return null;
+    const [data, standupStats] = await Promise.all([
+      this.queryInsightsData(roomKeys),
+      this.queryStandupSessionStats(roomKeys),
+    ]);
 
     const baseMetrics = this.calculateBaseMetrics(data);
     const metrics = this.calculateInsights(data, baseMetrics);
 
     return {
       sessionsAnalyzed: completedSessions.length,
+      sessionTypeCounts: countWorkspaceTeamSessionTypes(completedSessions),
+      standup: this.calculateStandupInsights(standupStats),
       ...metrics,
     };
   }
@@ -443,6 +495,7 @@ export class StatsRepository {
         roomKey: teamSessions.roomKey,
         teamId: teamSessions.teamId,
         completedAt: teamSessions.completedAt,
+        metadata: teamSessions.metadata,
       })
       .from(teamSessions)
       .where(inArray(teamSessions.teamId, teamIds))
@@ -457,9 +510,10 @@ export class StatsRepository {
 
     const roomKeys = [...new Set(completedSessions.map((s) => s.roomKey))];
     const uniqueTeamIds = new Set(completedSessions.map((s) => s.teamId));
-    const data = await this.queryInsightsData(roomKeys);
-
-    if (data.rounds.length === 0) return null;
+    const [data, standupStats] = await Promise.all([
+      this.queryInsightsData(roomKeys),
+      this.queryStandupSessionStats(roomKeys),
+    ]);
 
     const baseMetrics = this.calculateBaseMetrics(data);
     const metrics = this.calculateInsights(data, baseMetrics);
@@ -472,6 +526,8 @@ export class StatsRepository {
 
     return {
       totalVotes: data.votes.length,
+      sessionTypeCounts: countWorkspaceTeamSessionTypes(completedSessions),
+      standup: this.calculateStandupInsights(standupStats),
       ...metrics,
       teamCount: uniqueTeamIds.size,
       sessionsAnalyzed: completedSessions.length,
@@ -560,6 +616,10 @@ export class StatsRepository {
   private async queryInsightsData(
     roomKeys: string[],
   ): Promise<InsightsQueryData> {
+    if (roomKeys.length === 0) {
+      return { rounds: [], votes: [] };
+    }
+
     const [rounds, votes] = await Promise.all([
       this.db
         .select()
@@ -580,6 +640,18 @@ export class StatsRepository {
     ]);
 
     return { rounds, votes };
+  }
+
+  private async queryStandupSessionStats(roomKeys: string[]) {
+    if (roomKeys.length === 0) {
+      return [];
+    }
+
+    return await this.db
+      .select()
+      .from(standupSessionStats)
+      .where(inArray(standupSessionStats.roomKey, roomKeys))
+      .all();
   }
 
   private calculateBaseMetrics(data: InsightsQueryData) {
@@ -611,7 +683,10 @@ export class StatsRepository {
   private calculateInsights(
     data: InsightsQueryData,
     baseMetrics: ReturnType<typeof this.calculateBaseMetrics>,
-  ): Omit<InsightsResult, "sessionsAnalyzed"> {
+  ): Omit<
+    InsightsResult,
+    "sessionsAnalyzed" | "sessionTypeCounts" | "standup"
+  > {
     const metrics = calculateInsightMetrics(
       baseMetrics.ticketMetrics,
       baseMetrics.velocity,
@@ -625,6 +700,32 @@ export class StatsRepository {
       totalTickets: baseMetrics.ticketMetrics.totalTickets,
       totalRounds: data.rounds.length,
     };
+  }
+
+  private calculateStandupInsights(
+    sessions: Array<{
+      totalParticipants: number;
+      responsesSubmitted: number;
+      healthScoreTotal: number;
+      healthResponseCount: number;
+      blockerCount: number;
+      unresolvedBlockerCount: number;
+      linkedTicketCount: number;
+      kudosCount: number;
+    }>,
+  ): WorkspaceStandupInsights {
+    const standupSessionInsights = sessions.map((session) => ({
+      totalParticipants: session.totalParticipants,
+      responsesSubmitted: session.responsesSubmitted,
+      healthScoreTotal: session.healthScoreTotal,
+      healthResponseCount: session.healthResponseCount,
+      blockerCount: session.blockerCount,
+      unresolvedBlockerCount: session.unresolvedBlockerCount,
+      linkedTicketCount: session.linkedTicketCount,
+      kudosCount: session.kudosCount,
+    }));
+
+    return aggregateWorkspaceStandupInsights(standupSessionInsights);
   }
 
   private calculateTopContributors(

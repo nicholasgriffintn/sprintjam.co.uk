@@ -5,6 +5,7 @@ import {
   voteRecords,
   roomStats,
   teamSessions,
+  standupSessionStats,
 } from "@sprintjam/db/d1/schemas";
 import { drizzle } from "drizzle-orm/d1";
 
@@ -97,6 +98,83 @@ describe("StatsRepository ingestRound", () => {
   });
 });
 
+describe("StatsRepository recordStandupSessionStats", () => {
+  let mockD1: {
+    batch: ReturnType<typeof vi.fn>;
+    prepare: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockD1 = {
+      batch: vi.fn().mockResolvedValue(undefined),
+      prepare: vi.fn(() => ({
+        bind: vi.fn(() => ({})),
+      })),
+    };
+  });
+
+  it("stores derived standup metrics in the stats table", async () => {
+    const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined);
+    const values = vi.fn(() => ({ onConflictDoUpdate }));
+    const insert = vi.fn((table) => {
+      if (table !== standupSessionStats) {
+        throw new Error("Unexpected insert table");
+      }
+
+      return { values };
+    });
+
+    vi.mocked(drizzle).mockReturnValue({ insert } as any);
+
+    const repo = new StatsRepository(mockD1 as any);
+    await repo.recordStandupSessionStats({
+      roomKey: "standup-a",
+      totalParticipants: 3,
+      responses: [
+        {
+          healthCheck: 4,
+          hasBlocker: true,
+          blockerResolved: false,
+          linkedTicketCount: 2,
+          hasKudos: true,
+        },
+        {
+          healthCheck: 2,
+          hasBlocker: false,
+          linkedTicketCount: 0,
+          hasKudos: false,
+        },
+      ],
+    });
+
+    expect(insert).toHaveBeenCalledWith(standupSessionStats);
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roomKey: "standup-a",
+        totalParticipants: 3,
+        responsesSubmitted: 2,
+        healthScoreTotal: 6,
+        healthResponseCount: 2,
+        blockerCount: 1,
+        unresolvedBlockerCount: 1,
+        linkedTicketCount: 2,
+        kudosCount: 1,
+      }),
+    );
+    expect(onConflictDoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: standupSessionStats.roomKey,
+        set: expect.objectContaining({
+          responsesSubmitted: 2,
+          healthScoreTotal: 6,
+          blockerCount: 1,
+        }),
+      }),
+    );
+  });
+});
+
 describe("StatsRepository getTeamInsights", () => {
   let mockD1: {
     batch: ReturnType<typeof vi.fn>;
@@ -115,8 +193,33 @@ describe("StatsRepository getTeamInsights", () => {
 
   it("calculates team insights from completed sessions", async () => {
     const sessions = [
-      { roomKey: "room-a", completedAt: 2000 },
-      { roomKey: "room-b", completedAt: 1000 },
+      {
+        id: 1,
+        roomKey: "room-a",
+        teamId: 1,
+        completedAt: 2000,
+        metadata: null,
+      },
+      {
+        roomKey: "room-b",
+        teamId: 1,
+        completedAt: 1000,
+        metadata: '{"type":"standup"}',
+      },
+    ];
+    const standupStats = [
+      {
+        roomKey: "room-b",
+        totalParticipants: 3,
+        responsesSubmitted: 2,
+        healthScoreTotal: 6,
+        healthResponseCount: 2,
+        blockerCount: 1,
+        unresolvedBlockerCount: 1,
+        linkedTicketCount: 2,
+        kudosCount: 1,
+        lastUpdatedAt: 1,
+      },
     ];
     const rounds = [
       {
@@ -173,6 +276,13 @@ describe("StatsRepository getTeamInsights", () => {
             })),
           };
         }
+        if (table === standupSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue(standupStats),
+            })),
+          };
+        }
         throw new Error("Unexpected select table");
       },
     }));
@@ -184,6 +294,17 @@ describe("StatsRepository getTeamInsights", () => {
 
     expect(result).not.toBeNull();
     expect(result?.sessionsAnalyzed).toBe(2);
+    expect(result?.sessionTypeCounts).toEqual({
+      all: 2,
+      planning: 1,
+      standup: 1,
+      wheel: 0,
+    });
+    expect(result?.standup.sessionsAnalyzed).toBe(1);
+    expect(result?.standup.responseRate).toBeCloseTo(66.7, 1);
+    expect(result?.standup.averageHealth).toBe(3);
+    expect(result?.standup.blockerRate).toBe(50);
+    expect(result?.standup.linkedTicketCount).toBe(2);
     expect(result?.totalTickets).toBe(2);
     expect(result?.totalRounds).toBe(3);
     expect(result?.participationRate).toBeCloseTo(100, 1);
@@ -191,6 +312,93 @@ describe("StatsRepository getTeamInsights", () => {
     expect(result?.discussionRate).toBeCloseTo(50, 1);
     expect(result?.estimationVelocity).toBeCloseTo(1, 1);
     expect(result?.questionMarkRate).toBeCloseTo(20, 1);
+  });
+
+  it("returns completed standup and wheel insight counts without planning rounds", async () => {
+    const sessions = [
+      {
+        roomKey: "standup-a",
+        teamId: 1,
+        completedAt: 2000,
+        metadata: '{"type":"standup"}',
+      },
+      {
+        roomKey: "wheel-a",
+        teamId: 1,
+        completedAt: 1000,
+        metadata: '{"type":"wheel"}',
+      },
+    ];
+    const standupStats = [
+      {
+        roomKey: "standup-a",
+        totalParticipants: 2,
+        responsesSubmitted: 2,
+        healthScoreTotal: 5,
+        healthResponseCount: 2,
+        blockerCount: 2,
+        unresolvedBlockerCount: 1,
+        linkedTicketCount: 1,
+        kudosCount: 0,
+        lastUpdatedAt: 1,
+      },
+    ];
+
+    const select = vi.fn(() => ({
+      from: (table: unknown) => {
+        if (table === teamSessions) {
+          return {
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                all: vi.fn().mockResolvedValue(sessions),
+              })),
+            })),
+          };
+        }
+        if (table === roundVotes) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
+        if (table === voteRecords) {
+          return {
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                all: vi.fn().mockResolvedValue([]),
+              })),
+            })),
+          };
+        }
+        if (table === standupSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue(standupStats),
+            })),
+          };
+        }
+        throw new Error("Unexpected select table");
+      },
+    }));
+
+    vi.mocked(drizzle).mockReturnValue({ select } as any);
+
+    const repo = new StatsRepository(mockD1 as any);
+    const result = await repo.getTeamInsights(1, { limit: 6 });
+
+    expect(result).not.toBeNull();
+    expect(result?.sessionsAnalyzed).toBe(2);
+    expect(result?.sessionTypeCounts).toEqual({
+      all: 2,
+      planning: 0,
+      standup: 1,
+      wheel: 1,
+    });
+    expect(result?.totalRounds).toBe(0);
+    expect(result?.standup.sessionsAnalyzed).toBe(1);
+    expect(result?.standup.averageHealth).toBe(2.5);
+    expect(result?.standup.unresolvedBlockerRate).toBe(50);
   });
 });
 
@@ -221,8 +429,33 @@ describe("StatsRepository getWorkspaceInsights", () => {
 
   it("aggregates insights across multiple teams", async () => {
     const sessions = [
-      { roomKey: "room-a", teamId: 1, completedAt: 2000 },
-      { roomKey: "room-b", teamId: 2, completedAt: 1000 },
+      {
+        id: 1,
+        roomKey: "room-a",
+        teamId: 1,
+        completedAt: 2000,
+        metadata: null,
+      },
+      {
+        roomKey: "room-b",
+        teamId: 2,
+        completedAt: 1000,
+        metadata: '{"type":"standup"}',
+      },
+    ];
+    const standupStats = [
+      {
+        roomKey: "room-b",
+        totalParticipants: 4,
+        responsesSubmitted: 3,
+        healthScoreTotal: 12,
+        healthResponseCount: 3,
+        blockerCount: 1,
+        unresolvedBlockerCount: 0,
+        linkedTicketCount: 2,
+        kudosCount: 2,
+        lastUpdatedAt: 1,
+      },
     ];
     const rounds = [
       {
@@ -271,6 +504,13 @@ describe("StatsRepository getWorkspaceInsights", () => {
             })),
           };
         }
+        if (table === standupSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue(standupStats),
+            })),
+          };
+        }
         throw new Error("Unexpected select table");
       },
     }));
@@ -282,6 +522,9 @@ describe("StatsRepository getWorkspaceInsights", () => {
 
     expect(result).not.toBeNull();
     expect(result?.sessionsAnalyzed).toBe(2);
+    expect(result?.sessionTypeCounts.standup).toBe(1);
+    expect(result?.standup.sessionsAnalyzed).toBe(1);
+    expect(result?.standup.responseRate).toBe(75);
     expect(result?.teamCount).toBe(2);
     expect(result?.totalVotes).toBe(3);
     expect(result?.totalRounds).toBe(2);

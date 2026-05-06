@@ -227,13 +227,19 @@ export async function getWorkspaceInsightsController(
   }
 
   const url = new URL(request.url);
-  const sessionsPagination = parsePagination(url, { defaultLimit: 20 });
+  const sessionsPagination = parsePagination(url, {
+    defaultLimit: 20,
+    limitParam: "sessionsLimit",
+  });
 
   if (isPaginationError(sessionsPagination)) {
     return errorResponse(sessionsPagination.error, 400);
   }
 
-  const contributorsPagination = parsePagination(url, { defaultLimit: 10 });
+  const contributorsPagination = parsePagination(url, {
+    defaultLimit: 10,
+    limitParam: "contributorsLimit",
+  });
 
   if (isPaginationError(contributorsPagination)) {
     return errorResponse(contributorsPagination.error, 400);

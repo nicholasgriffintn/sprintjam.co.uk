@@ -4,7 +4,10 @@ import type {
 } from "@cloudflare/workers-types";
 import type { StatsWorkerEnv } from "@sprintjam/types";
 
-import { ingestRoundController } from "./ingest";
+import {
+  ingestRoundController,
+  recordStandupSessionStatsController,
+} from "./ingest";
 import {
   getRoomStatsController,
   getUserRoomStatsController,
@@ -34,6 +37,12 @@ const ROUTES: RouteDefinition[] = [
     method: "POST",
     pattern: /^ingest\/round$/,
     handler: ingestRoundController as RouteDefinition["handler"],
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^stats\/standup-session$/,
+    handler: recordStandupSessionStatsController as RouteDefinition["handler"],
     paramTypes: ["none"],
   },
   {

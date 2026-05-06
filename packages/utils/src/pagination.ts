@@ -19,12 +19,18 @@ export const MIN_PAGE_SIZE = 1;
 
 export function parsePagination(
   url: URL,
-  options?: { defaultLimit?: number },
+  options?: {
+    defaultLimit?: number;
+    limitParam?: string;
+    offsetParam?: string;
+  },
 ): PaginationOptions | PaginationError {
   const defaultLimit = options?.defaultLimit ?? DEFAULT_PAGE_SIZE;
+  const limitParam = options?.limitParam ?? "limit";
+  const offsetParam = options?.offsetParam ?? "offset";
 
-  const rawLimit = url.searchParams.get("limit");
-  const rawOffset = url.searchParams.get("offset");
+  const rawLimit = url.searchParams.get(limitParam);
+  const rawOffset = url.searchParams.get(offsetParam);
 
   const limit = rawLimit ? Number.parseInt(rawLimit, 10) : defaultLimit;
   const offset = rawOffset ? Number.parseInt(rawOffset, 10) : 0;

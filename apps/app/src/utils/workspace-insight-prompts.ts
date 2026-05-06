@@ -7,6 +7,8 @@ type InsightSource = Pick<
   | "discussionRate"
   | "questionMarkRate"
   | "sessionsAnalyzed"
+  | "totalRounds"
+  | "standup"
 >;
 
 export interface InsightPrompt {
@@ -22,7 +24,38 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
 
   const prompts: InsightPrompt[] = [];
 
-  if (insights.participationRate < 75) {
+  if (
+    insights.standup.sessionsAnalyzed > 0 &&
+    insights.standup.responseRate < 80
+  ) {
+    prompts.push({
+      title: "Improve standup coverage",
+      detail:
+        "Low response rate means blockers and next steps may be missing from the team picture.",
+      tone: "warning",
+    });
+  }
+
+  if (
+    insights.standup.averageHealth !== null &&
+    insights.standup.averageHealth < 3
+  ) {
+    prompts.push({
+      title: "Check team health",
+      detail: "Standup health is trending low. Use the next sync to surface load or delivery pressure.",
+      tone: "warning",
+    });
+  }
+
+  if (insights.standup.unresolvedBlockerCount > 0) {
+    prompts.push({
+      title: "Clear standup blockers",
+      detail: "Unresolved blockers are still showing up in completed standups.",
+      tone: "warning",
+    });
+  }
+
+  if (insights.totalRounds > 0 && insights.participationRate < 75) {
     prompts.push({
       title: "Increase participation",
       detail: "Invite missing voters before reveal so estimates reflect the full team.",
@@ -30,7 +63,7 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
     });
   }
 
-  if (insights.discussionRate > 35) {
+  if (insights.totalRounds > 0 && insights.discussionRate > 35) {
     prompts.push({
       title: "Pre-split unclear work",
       detail: "High re-vote rate usually means stories need sharper scope before sizing.",
@@ -38,7 +71,7 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
     });
   }
 
-  if (insights.questionMarkRate > 10) {
+  if (insights.totalRounds > 0 && insights.questionMarkRate > 10) {
     prompts.push({
       title: "Resolve unknowns before sizing",
       detail: 'Frequent "?" votes suggest missing context, dependencies, or acceptance criteria.',
@@ -48,6 +81,7 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
 
   if (
     prompts.length === 0 &&
+    insights.totalRounds > 0 &&
     insights.firstRoundConsensusRate >= 60 &&
     insights.participationRate >= 75
   ) {

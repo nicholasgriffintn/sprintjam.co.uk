@@ -369,6 +369,22 @@ describe("getTeamInsightsController", () => {
     vi.mocked(auth.isUserInTeam).mockResolvedValue(true);
     mockRepo.getTeamInsights.mockResolvedValue({
       sessionsAnalyzed: 4,
+      sessionTypeCounts: { all: 4, planning: 2, standup: 1, wheel: 1 },
+      standup: {
+        sessionsAnalyzed: 1,
+        totalParticipants: 5,
+        responsesSubmitted: 4,
+        responseRate: 80,
+        healthScoreTotal: 14,
+        healthResponseCount: 4,
+        averageHealth: 3.5,
+        blockerCount: 1,
+        blockerRate: 25,
+        unresolvedBlockerCount: 1,
+        unresolvedBlockerRate: 100,
+        linkedTicketCount: 2,
+        kudosCount: 1,
+      },
       totalTickets: 10,
       totalRounds: 12,
       participationRate: 85,
