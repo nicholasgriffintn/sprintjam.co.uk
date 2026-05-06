@@ -98,7 +98,7 @@ export default function WorkspaceTeamHome() {
     error,
     refreshWorkspace,
   } = useWorkspaceData();
-  const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
+  const { goToLogin, startCreateFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
   const [isCopied, setIsCopied] = useState(false);
   const team = teams.find((candidate) => candidate.slug === teamSlug) ?? null;
@@ -142,20 +142,6 @@ export default function WorkspaceTeamHome() {
       toast.error(message);
     },
   });
-
-  const handleOpenSession = (session: TeamSession) => {
-    const targetKey = session.roomKey.trim();
-    if (!targetKey) {
-      return;
-    }
-
-    if (getTeamSessionType(session) === "standup") {
-      navigateTo("standupJoin", { standupKey: targetKey });
-      return;
-    }
-
-    goToRoom(targetKey);
-  };
 
   const handleCopy = async () => {
     try {
@@ -302,7 +288,6 @@ export default function WorkspaceTeamHome() {
               isLoading={sessionsQuery.isLoading}
               emptyTitle="No active sessions"
               emptyDescription="Start a planning room when the team is ready."
-              onOpenSession={handleOpenSession}
             />
           </SurfaceCard>
         )}

@@ -23,7 +23,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { getTeamSessionType } from "@/lib/team-session-metadata";
 import type {
   TeamSessionsPage,
   WorkspaceTeamSessionFilter,
@@ -126,7 +125,7 @@ export default function WorkspaceSessions() {
     refreshWorkspace,
   } = useWorkspaceData({ sessionsByTeamId: initialSessionsByTeamId });
 
-  const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
+  const { goToLogin, startCreateFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
@@ -221,26 +220,6 @@ export default function WorkspaceSessions() {
       isCancelled = true;
     };
   }, [selectedTeam, selectedTeamId, sessionFilter, sessionPagesByTeamId]);
-
-  const handleOpenSession = (session: (typeof sessions)[number]) => {
-    const targetKey = session.roomKey.trim();
-    if (!targetKey) {
-      return;
-    }
-
-    const sessionType = getTeamSessionType(session);
-    if (sessionType === "standup") {
-      navigateTo("standupJoin", { standupKey: targetKey });
-      return;
-    }
-
-    if (sessionType === "wheel") {
-      navigateTo("wheel", { wheelKey: targetKey });
-      return;
-    }
-
-    goToRoom(targetKey);
-  };
 
   const handleRequestAccess = async () => {
     if (!selectedTeam) {
@@ -469,7 +448,6 @@ export default function WorkspaceSessions() {
                                   ? "Use the save flow in a planning room to link it to this team."
                                   : "Create or link a session to show it here."
                           }
-                          onOpenSession={handleOpenSession}
                         />
                         {canLoadMoreSessions && (
                           <div className="flex justify-center pt-2">

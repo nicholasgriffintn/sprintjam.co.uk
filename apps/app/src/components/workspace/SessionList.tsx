@@ -11,7 +11,6 @@ interface SessionListProps {
   isLoading: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
-  onOpenSession: (session: TeamSession) => void;
 }
 
 export function SessionList({
@@ -19,7 +18,6 @@ export function SessionList({
   isLoading,
   emptyTitle = "No sessions linked",
   emptyDescription = "Use the save flow from a room or standup to link it to this team.",
-  onOpenSession,
 }: SessionListProps) {
   const { statsMap, isLoading: isLoadingStats } = useSessionStats(sessions);
 
@@ -55,7 +53,6 @@ export function SessionList({
           key={`${session.teamId}-${session.id}`}
           session={session}
           stats={statsMap[session.roomKey] ?? null}
-          onOpenSession={onOpenSession}
         />
       ))}
     </div>

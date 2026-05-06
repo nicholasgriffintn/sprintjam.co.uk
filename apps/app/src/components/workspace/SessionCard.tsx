@@ -11,15 +11,15 @@ import {
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/cn";
+import { getTeamSessionPath } from "@/lib/team-session-links";
 import { getTeamSessionType } from "@/lib/team-session-metadata";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
 
 interface SessionCardProps {
   session: TeamSession;
   stats?: SessionStats | null;
-  onOpenSession: (session: TeamSession) => void;
 }
 
 const formatDate = (timestamp: number | null) => {
@@ -65,7 +65,6 @@ function StatBadge({
 export function SessionCard({
   session,
   stats,
-  onOpenSession,
 }: SessionCardProps) {
   const isComplete = Boolean(session.completedAt);
   const duration = formatDuration(stats?.durationMinutes ?? null);
@@ -87,6 +86,12 @@ export function SessionCard({
   ) : (
     <Target className="h-3.5 w-3.5" />
   );
+  const sessionPath = getTeamSessionPath(session);
+  const openLabel = isStandup
+    ? "Open standup"
+    : isWheel
+      ? "Open wheel"
+      : "Open room";
 
   return (
     <SurfaceCard variant="subtle" padding="sm" className="flex flex-col gap-3">
@@ -123,15 +128,19 @@ export function SessionCard({
           </div>
         </div>
         <div className="flex-shrink-0">
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<ArrowUpRight className="h-3.5 w-3.5" />}
-            onClick={() => onOpenSession(session)}
-            className="w-full sm:w-auto"
+          <a
+            href={sessionPath ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            aria-disabled={!sessionPath}
+            className={cn(
+              "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200/60 bg-white/90 px-4 py-2 text-sm font-semibold tracking-tight text-brand-700 transition-all duration-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:hover:bg-slate-900 sm:w-auto",
+              !sessionPath && "pointer-events-none opacity-60",
+            )}
           >
-            {isStandup ? "Open standup" : isWheel ? "Open wheel" : "Open room"}
-          </Button>
+            <ArrowUpRight className="h-3.5 w-3.5" />
+            <span className="leading-none">{openLabel}</span>
+          </a>
         </div>
       </div>
 

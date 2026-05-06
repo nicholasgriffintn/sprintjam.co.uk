@@ -314,6 +314,40 @@ describe("WorkspaceSessions", () => {
     expect(screen.queryByText("Daily Standup")).toBeNull();
   });
 
+  it("opens linked sessions in a new tab", () => {
+    workspaceDataMock.teams = [accessibleTeam];
+    workspaceDataMock.sessions = [planningSession, standupSession, wheelSession];
+    workspaceDataMock.selectedTeamId = accessibleTeam.id;
+    loaderDataMock.sessionsByTeamId = {
+      [accessibleTeam.id]: createSessionsPage([
+        planningSession,
+        standupSession,
+        wheelSession,
+      ]),
+    };
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <WorkspaceSessions />
+      </QueryClientProvider>,
+    );
+
+    const openRoom = screen.getByRole("link", { name: "Open room" });
+    const openStandup = screen.getByRole("link", { name: "Open standup" });
+    const openWheel = screen.getByRole("link", { name: "Open wheel" });
+
+    expect(openRoom.getAttribute("href")).toBe("/room/ROOM42");
+    expect(openRoom.getAttribute("target")).toBe("_blank");
+    expect(openRoom.getAttribute("rel")).toBe("noreferrer");
+    expect(openStandup.getAttribute("href")).toBe("/standup/join/STAND9");
+    expect(openStandup.getAttribute("target")).toBe("_blank");
+    expect(openWheel.getAttribute("href")).toBe("/wheel/WHEEL7");
+    expect(openWheel.getAttribute("target")).toBe("_blank");
+  });
+
   it("loads the next sessions page for the selected team", async () => {
     workspaceDataMock.teams = [accessibleTeam];
     workspaceDataMock.sessions = [planningSession];
