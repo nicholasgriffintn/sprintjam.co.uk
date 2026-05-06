@@ -6,10 +6,11 @@ import {
   useRouteError,
 } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
-import { Building2, Clock3, MailPlus, Shield, UserMinus } from "lucide-react";
+import { Building2, MailPlus } from "lucide-react";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { AdminSidebar } from "@/components/workspace/AdminSidebar";
+import { WorkspaceMemberSections } from "@/components/workspace/WorkspaceMemberSections";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Alert } from "@/components/ui/Alert";
 import { Input } from "@/components/ui/Input";
@@ -421,154 +422,18 @@ export default function WorkspaceAdminOverview() {
             </SurfaceCard>
 
             <SurfaceCard className="space-y-5">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <section className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50">
-                  <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                    <Shield className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-                    Workspace members ({activeMembers.length})
-                  </p>
-                  <div className="space-y-3">
-                    {activeMembers.length === 0 && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        No active members.
-                      </p>
-                    )}
-                    {activeMembers.map((member) => (
-                      <div
-                        key={member.id}
-                        className="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 dark:border-white/10 dark:bg-slate-900/60"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-medium text-slate-900 dark:text-white">
-                              {member.name?.trim() || member.email}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {member.email}
-                            </p>
-                          </div>
-                          <Badge
-                            variant={
-                              member.role === "admin" ? "primary" : "default"
-                            }
-                            size="sm"
-                          >
-                            {member.role === "admin" ? "Admin" : "Member"}
-                          </Badge>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {member.role === "admin" ? (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              isLoading={isUpdatingMemberId === member.id}
-                              disabled={!isWorkspaceAdmin}
-                              onClick={() =>
-                                void handleRoleChange(member, "member")
-                              }
-                            >
-                              Make member
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              isLoading={isUpdatingMemberId === member.id}
-                              disabled={!isWorkspaceAdmin}
-                              onClick={() =>
-                                void handleRoleChange(member, "admin")
-                              }
-                            >
-                              Make admin
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            icon={<UserMinus className="h-4 w-4" />}
-                            isLoading={isUpdatingMemberId === member.id}
-                            disabled={!isWorkspaceAdmin}
-                            onClick={() => setPendingRemovalMember(member)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-slate-900/50">
-                  <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-                    <Clock3 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    Pending access ({pendingMembers.length + invites.length})
-                  </p>
-                  <div className="space-y-3">
-                    {pendingMembers.length === 0 && invites.length === 0 && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        No pending approvals or invites.
-                      </p>
-                    )}
-
-                    {pendingMembers.map((member) => (
-                      <div
-                        key={member.id}
-                        className="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 dark:border-white/10 dark:bg-slate-900/60"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-medium text-slate-900 dark:text-white">
-                              {member.name?.trim() || member.email}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {member.email}
-                            </p>
-                          </div>
-                          <Badge variant="warning" size="sm">
-                            Pending approval
-                          </Badge>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            isLoading={isUpdatingMemberId === member.id}
-                            disabled={!isWorkspaceAdmin}
-                            onClick={() => void handleApproveMember(member)}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            isLoading={isUpdatingMemberId === member.id}
-                            disabled={!isWorkspaceAdmin}
-                            onClick={() => setPendingRemovalMember(member)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-
-                    {invites.map((invite) => (
-                      <div
-                        key={invite.id}
-                        className="rounded-xl border border-slate-200/70 bg-white/80 px-3 py-3 dark:border-white/10 dark:bg-slate-900/60"
-                      >
-                        <p className="font-medium text-slate-900 dark:text-white">
-                          {invite.email}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Invite sent{" "}
-                          {new Date(invite.updatedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </div>
+              <WorkspaceMemberSections
+                activeMembers={activeMembers}
+                pendingMembers={pendingMembers}
+                invites={invites}
+                isWorkspaceAdmin={isWorkspaceAdmin}
+                isUpdatingMemberId={isUpdatingMemberId}
+                onApproveMember={(member) => void handleApproveMember(member)}
+                onRemoveMember={setPendingRemovalMember}
+                onRoleChange={(member, role) =>
+                  void handleRoleChange(member, role)
+                }
+              />
             </SurfaceCard>
           </div>
         </div>
