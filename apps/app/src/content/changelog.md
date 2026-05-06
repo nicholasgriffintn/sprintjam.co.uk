@@ -1,3 +1,14 @@
+## V4.7
+
+- Added a new sprint actions board in workspaces so teams can track follow-ups from planning sessions, blockers and next steps from standups, and outcomes from wheel sessions in one place.
+- Added the ability to resolve sprint actions and wheel outcomes, helping teams keep their workspace history useful after a session has finished.
+- Added better workspace insights across planning sessions, standups, and wheels, including standup health and blocker signals as well as wheel spin and outcome signals.
+- Added session type filters and pagination to the workspace sessions page, making it easier to browse planning rooms, standups, and wheels without loading everything at once.
+- Added new wheel modes for facilitator selection, decisions, and reviewer selection, with linked wheel results now recorded against workspace sessions.
+- Changed team URLs to use readable team slugs instead of internal ids.
+- Improved the workspace dashboard, team member lists, metrics widgets, linked session cards, and mobile layouts.
+- Fixed a number of smaller issues, including retaining generated icebreaker questions and correcting places that were not yet using the new team URLs.
+
 ## V4.6
 
 - Refactored a lot of the codebase for better maintainability and readability.

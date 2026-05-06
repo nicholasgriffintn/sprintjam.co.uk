@@ -65,7 +65,7 @@ describe("InsightsGrid", () => {
   it("renders cross-feature collaboration summaries", () => {
     render(<InsightsGrid insights={insights} />);
 
-    expect(screen.getByText("Collaboration insights")).toBeTruthy();
+    expect(screen.getByText("Collaboration Insights")).toBeTruthy();
     expect(screen.getByText("Standups")).toBeTruthy();
     expect(screen.getByText("Wheels")).toBeTruthy();
     expect(screen.getByText("Standup response")).toBeTruthy();
