@@ -53,10 +53,6 @@ export function WorkspaceActionBoard({
     pending: { isCreatingAction, isRefreshing, updatingActionId },
   } = useWorkspaceActionBoard({ teamId, actionsPage, processLoops });
   const openActions = counts.open + counts.in_progress;
-  const activeLoopName =
-    activeLoops.find((loop) => loop.id === selectedLoopId)?.name ??
-    activeLoops[0]?.name ??
-    "Current loop";
 
   return (
     <section className="space-y-4 border-y border-slate-100 py-4 dark:border-slate-800">
@@ -72,8 +68,8 @@ export function WorkspaceActionBoard({
             </Badge>
           </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {activeLoopName} gathers planning follow-ups, standup blockers, and
-            wheel outcomes.
+            Today&apos;s action loop connects planning follow-ups, standup
+            blockers, and wheel outcomes.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
