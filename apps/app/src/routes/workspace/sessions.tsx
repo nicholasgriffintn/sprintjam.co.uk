@@ -184,7 +184,7 @@ export default function WorkspaceSessions() {
     let isCancelled = false;
     setIsLoadingFilteredSessions(true);
 
-    void listTeamSessionsPage(selectedTeamId, {
+    void listTeamSessionsPage(selectedTeam.slug, {
       limit: WORKSPACE_SESSIONS_PAGE_SIZE,
       offset: 0,
       type: sessionFilter,
@@ -249,7 +249,7 @@ export default function WorkspaceSessions() {
 
     setIsRequestingAccess(true);
     try {
-      await requestTeamAccess(selectedTeam.id);
+      await requestTeamAccess(selectedTeam.slug);
       await refreshWorkspace(true);
       toast.success("Access request sent");
     } catch (err) {
@@ -272,7 +272,7 @@ export default function WorkspaceSessions() {
 
     setIsLoadingMoreSessions(true);
     try {
-      const nextPage = await listTeamSessionsPage(selectedTeamId, {
+      const nextPage = await listTeamSessionsPage(selectedTeam.slug, {
         limit: WORKSPACE_SESSIONS_PAGE_SIZE,
         offset: selectedTeamSessionPage.pagination.nextOffset,
         type: sessionFilter,

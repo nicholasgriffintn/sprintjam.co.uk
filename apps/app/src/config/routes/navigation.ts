@@ -6,7 +6,7 @@ export interface ParsedPath {
   screen: AppScreen;
   roomKey?: string;
   standupKey?: string;
-  teamId?: number;
+  teamSlug?: string;
 }
 
 type RouteEntry = (typeof ROUTE_DEFINITIONS)[number];
@@ -80,13 +80,13 @@ export function parsePath(path: string): ParsedPath {
       }
 
       if (route.screen === "workspaceTeam") {
-        const teamId = Number.parseInt(match[1] ?? "", 10);
+        const teamSlug = match[1]?.toLowerCase();
 
-        if (Number.isNaN(teamId)) {
+        if (!teamSlug) {
           return { screen: "404" };
         }
 
-        return { screen: "workspaceTeam", teamId };
+        return { screen: "workspaceTeam", teamSlug };
       }
 
       return { screen: route.screen };
@@ -122,6 +122,7 @@ export function getPathFromScreen(
       wheelKey: resolvedParams?.wheelKey,
       standupKey: resolvedParams?.standupKey,
       teamId: resolvedParams?.teamId,
+      teamSlug: resolvedParams?.teamSlug,
     });
   }
   return route.path;

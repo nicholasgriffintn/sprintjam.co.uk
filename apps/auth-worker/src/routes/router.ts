@@ -1,5 +1,5 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { validateRequestBodySize } from "@sprintjam/utils";
+import { isTeamSlug, validateRequestBodySize } from "@sprintjam/utils";
 
 import {
   requestMagicLinkController,
@@ -77,6 +77,7 @@ import {
   refreshTeamCredentialsInternalController,
 } from "../controllers/team-integrations-controller";
 import { jsonError, jsonResponse, notFoundResponse } from "../lib/response";
+import { TeamRepository } from "../repositories/team-repository";
 
 type HandlerParam = string | number;
 type HandlerParams = HandlerParam[];
@@ -101,6 +102,22 @@ function requireNumberParam(
     return { ok: false, response: jsonError(`Invalid ${name}`, 400) };
   }
   return { ok: true, value };
+}
+
+async function requireTeamSlugParam(
+  env: AuthWorkerEnv,
+  value: HandlerParam,
+): Promise<{ ok: true; value: number } | { ok: false; response: Response }> {
+  if (typeof value !== "string" || !isTeamSlug(value)) {
+    return { ok: false, response: jsonError("Invalid team slug", 400) };
+  }
+
+  const team = await new TeamRepository(env.DB).getTeamBySlug(value);
+  if (!team) {
+    return { ok: false, response: notFoundResponse("Team not found") };
+  }
+
+  return { ok: true, value: team.id };
 }
 
 const ROUTES: RouteDefinition[] = [
@@ -172,69 +189,69 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "PUT",
-    pattern: /^teams\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return updateTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "DELETE",
-    pattern: /^teams\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return deleteTeamController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/members$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/members$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamMembersController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/members$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/members$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return addTeamMemberController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/request-access$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/request-access$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return requestTeamAccessController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/members\/(\d+)\/approve$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/members\/(\d+)\/approve$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const userIdResult = requireNumberParam(params[1], "userId");
       if (!userIdResult.ok) return userIdResult.response;
@@ -245,13 +262,13 @@ const ROUTES: RouteDefinition[] = [
         userIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/members\/(\d+)\/move$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/members\/(\d+)\/move$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const userIdResult = requireNumberParam(params[1], "userId");
       if (!userIdResult.ok) return userIdResult.response;
@@ -262,13 +279,13 @@ const ROUTES: RouteDefinition[] = [
         userIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "PUT",
-    pattern: /^teams\/(\d+)\/members\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/members\/(\d+)$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const userIdResult = requireNumberParam(params[1], "userId");
       if (!userIdResult.ok) return userIdResult.response;
@@ -279,13 +296,13 @@ const ROUTES: RouteDefinition[] = [
         userIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "DELETE",
-    pattern: /^teams\/(\d+)\/members\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/members\/(\d+)$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const userIdResult = requireNumberParam(params[1], "userId");
       if (!userIdResult.ok) return userIdResult.response;
@@ -296,33 +313,33 @@ const ROUTES: RouteDefinition[] = [
         userIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/sessions$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamSessionsController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/sessions$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return createTeamSessionController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/process-loops$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/process-loops$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return listWorkspaceProcessLoopsController(
         request,
@@ -330,13 +347,13 @@ const ROUTES: RouteDefinition[] = [
         teamIdResult.value,
       );
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/process-loops$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/process-loops$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return createWorkspaceProcessLoopController(
         request,
@@ -344,33 +361,33 @@ const ROUTES: RouteDefinition[] = [
         teamIdResult.value,
       );
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/actions$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/actions$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return listWorkspaceActionsController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/actions$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/actions$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return createWorkspaceActionController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "PATCH",
-    pattern: /^teams\/(\d+)\/actions\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/actions\/(\d+)$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const actionIdResult = requireNumberParam(params[1], "actionId");
       if (!actionIdResult.ok) return actionIdResult.response;
@@ -381,13 +398,13 @@ const ROUTES: RouteDefinition[] = [
         actionIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/actions\/(\d+)\/events$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/actions\/(\d+)\/events$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const actionIdResult = requireNumberParam(params[1], "actionId");
       if (!actionIdResult.ok) return actionIdResult.response;
@@ -398,13 +415,13 @@ const ROUTES: RouteDefinition[] = [
         actionIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions\/(\d+)$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const sessionIdResult = requireNumberParam(params[1], "sessionId");
       if (!sessionIdResult.ok) return sessionIdResult.response;
@@ -415,13 +432,13 @@ const ROUTES: RouteDefinition[] = [
         sessionIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/sessions\/(\d+)\/link$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions\/(\d+)\/link$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const sessionIdResult = requireNumberParam(params[1], "sessionId");
       if (!sessionIdResult.ok) return sessionIdResult.response;
@@ -432,13 +449,13 @@ const ROUTES: RouteDefinition[] = [
         sessionIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "PUT",
-    pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions\/(\d+)$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const sessionIdResult = requireNumberParam(params[1], "sessionId");
       if (!sessionIdResult.ok) return sessionIdResult.response;
@@ -449,13 +466,13 @@ const ROUTES: RouteDefinition[] = [
         sessionIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/sessions\/(\d+)\/recap-actions\/resolve$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions\/(\d+)\/recap-actions\/resolve$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const sessionIdResult = requireNumberParam(params[1], "sessionId");
       if (!sessionIdResult.ok) return sessionIdResult.response;
@@ -466,7 +483,7 @@ const ROUTES: RouteDefinition[] = [
         sessionIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "GET",
@@ -557,29 +574,29 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/settings$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/settings$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamSettingsController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "PUT",
-    pattern: /^teams\/(\d+)\/settings$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/settings$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return saveTeamSettingsController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/collaboration-installations$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/collaboration-installations$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamCollaborationInstallationsController(
         request,
@@ -587,7 +604,7 @@ const ROUTES: RouteDefinition[] = [
         teamIdResult.value,
       );
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "POST",
@@ -598,9 +615,9 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/collaboration-installations\/teams$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/collaboration-installations\/teams$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return saveTeamsCollaborationInstallationController(
         request,
@@ -608,13 +625,13 @@ const ROUTES: RouteDefinition[] = [
         teamIdResult.value,
       );
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "DELETE",
-    pattern: /^teams\/(\d+)\/collaboration-installations\/(\d+)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/collaboration-installations\/(\d+)$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       const installationIdResult = requireNumberParam(
         params[1],
@@ -628,23 +645,23 @@ const ROUTES: RouteDefinition[] = [
         installationIdResult.value,
       );
     },
-    paramTypes: ["number", "number"],
+    paramTypes: ["string", "number"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/integrations$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamIntegrationsController(request, env, teamIdResult.value);
     },
-    paramTypes: ["number"],
+    paramTypes: ["string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/authorize$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/authorize$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return initiateTeamOAuthController(
         request,
@@ -653,13 +670,13 @@ const ROUTES: RouteDefinition[] = [
         params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ["number", "string"],
+    paramTypes: ["string", "string"],
   },
   {
     method: "GET",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/status$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/status$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return getTeamIntegrationStatusController(
         request,
@@ -668,13 +685,13 @@ const ROUTES: RouteDefinition[] = [
         params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ["number", "string"],
+    paramTypes: ["string", "string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/boards$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/boards$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamIntegrationBoardsController(
         request,
@@ -683,13 +700,13 @@ const ROUTES: RouteDefinition[] = [
         params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ["number", "string"],
+    paramTypes: ["string", "string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/sprints$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/sprints$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return listTeamIntegrationSprintsController(
         request,
@@ -698,13 +715,13 @@ const ROUTES: RouteDefinition[] = [
         params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ["number", "string"],
+    paramTypes: ["string", "string"],
   },
   {
     method: "POST",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)\/tickets$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/tickets$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return searchTeamIntegrationTicketsController(
         request,
@@ -713,13 +730,13 @@ const ROUTES: RouteDefinition[] = [
         params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ["number", "string"],
+    paramTypes: ["string", "string"],
   },
   {
     method: "DELETE",
-    pattern: /^teams\/(\d+)\/integrations\/(jira|linear|github)$/,
-    handler: (request, env, params) => {
-      const teamIdResult = requireNumberParam(params[0], "teamId");
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
       return revokeTeamIntegrationController(
         request,
@@ -728,7 +745,7 @@ const ROUTES: RouteDefinition[] = [
         params[1] as "jira" | "linear" | "github",
       );
     },
-    paramTypes: ["number", "string"],
+    paramTypes: ["string", "string"],
   },
   {
     method: "GET",
@@ -774,6 +791,16 @@ const ROUTES: RouteDefinition[] = [
       return handleGithubTeamOAuthCallbackController(new URL(request.url), env);
     },
     paramTypes: ["none"],
+  },
+  {
+    method: "GET",
+    pattern: /^internal\/teams\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return getTeamController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
   },
   {
     method: "POST",

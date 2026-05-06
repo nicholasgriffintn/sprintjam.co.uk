@@ -63,9 +63,9 @@ describe("navigation", () => {
       expect(parsePath("/workspace/sessions")).toEqual({
         screen: "workspaceSessions",
       });
-      expect(parsePath("/workspace/teams/12")).toEqual({
+      expect(parsePath("/workspace/teams/amber-cobalt-ripple")).toEqual({
         screen: "workspaceTeam",
-        teamId: 12,
+        teamSlug: "amber-cobalt-ripple",
       });
       expect(parsePath("/workspace/admin")).toEqual({
         screen: "workspaceAdmin",
@@ -183,9 +183,13 @@ describe("navigation", () => {
       );
     });
 
-    it("generates workspace team path with team id", () => {
-      expect(getPathFromScreen("workspaceTeam", { teamId: 12 })).toBe(
-        "/workspace/teams/12",
+    it("generates workspace team path with team slug", () => {
+      expect(
+        getPathFromScreen("workspaceTeam", {
+          teamSlug: "amber-cobalt-ripple",
+        }),
+      ).toBe(
+        "/workspace/teams/amber-cobalt-ripple",
       );
     });
 

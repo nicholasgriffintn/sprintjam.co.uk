@@ -7,6 +7,7 @@ import {
   initiateTeamOAuth,
   revokeTeamIntegration,
 } from "@/lib/workspace-service";
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 
 const openAuthWindow = (url: string, label: string) => {
   const width = 600;
@@ -33,21 +34,23 @@ export function useTeamOAuth(
   provider: OAuthProvider,
 ): TeamOAuthResult {
   const queryClient = useQueryClient();
+  const { teams } = useWorkspaceData();
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const queryKey = ["team-oauth", teamId, provider] as const;
+  const teamSlug = teams.find((team) => team.id === teamId)?.slug ?? null;
 
   const statusQuery = useQuery<TeamIntegrationStatus>({
     queryKey,
-    enabled: teamId !== null,
-    queryFn: () => getTeamIntegrationStatus(teamId!, provider),
+    enabled: teamSlug !== null,
+    queryFn: () => getTeamIntegrationStatus(teamSlug!, provider),
     staleTime: 0,
   });
 
   const connectMutation = useMutation({
     mutationKey: ["team-oauth-connect", teamId, provider],
     mutationFn: async () => {
-      if (teamId === null) return;
-      const authUrl = await initiateTeamOAuth(teamId, provider);
+      if (teamSlug === null) return;
+      const authUrl = await initiateTeamOAuth(teamSlug, provider);
       const authWindow = openAuthWindow(authUrl, provider);
       if (!authWindow) {
         throw new Error("Popup blocked. Please allow popups and try again.");
@@ -68,8 +71,10 @@ export function useTeamOAuth(
   const disconnectMutation = useMutation({
     mutationKey: ["team-oauth-disconnect", teamId, provider],
     mutationFn: () => {
-      if (teamId === null) return Promise.reject(new Error("No team selected"));
-      return revokeTeamIntegration(teamId, provider);
+      if (teamSlug === null) {
+        return Promise.reject(new Error("No team selected"));
+      }
+      return revokeTeamIntegration(teamSlug, provider);
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
   });
@@ -88,7 +93,7 @@ export function useTeamOAuth(
     connected: false,
   };
   const loading =
-    (teamId !== null && statusQuery.isLoading) ||
+    (teamSlug !== null && statusQuery.isLoading) ||
     connectMutation.isPending ||
     disconnectMutation.isPending;
   const error =

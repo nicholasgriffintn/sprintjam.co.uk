@@ -110,15 +110,8 @@
     {
       "idx": 15,
       "version": "6",
-      "when": 1778103806011,
-      "tag": "0015_cuddly_unicorn",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "6",
-      "when": 1778104542368,
-      "tag": "0016_young_gambit",
+      "when": 1778060000000,
+      "tag": "0015_team_slugs",
       "breakpoints": true
     }
   ]

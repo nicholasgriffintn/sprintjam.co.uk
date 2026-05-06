@@ -112,28 +112,28 @@ export default function WorkspaceTeamSettings() {
   );
   const [targetTeamId, setTargetTeamId] = useState("");
   const teamHomeUrl = useMemo(() => {
-    if (!selectedTeamId) {
+    if (!selectedTeam) {
       return null;
     }
 
     if (typeof window === "undefined") {
-      return `https://sprintjam.co.uk/workspace/teams/${selectedTeamId}`;
+      return `https://sprintjam.co.uk/workspace/teams/${selectedTeam.slug}`;
     }
 
-    return `${window.location.origin}/workspace/teams/${selectedTeamId}`;
-  }, [selectedTeamId]);
+    return `${window.location.origin}/workspace/teams/${selectedTeam.slug}`;
+  }, [selectedTeam]);
 
   const settingsQuery = useQuery<RoomSettings | null>({
     queryKey: settingsQueryKey,
-    enabled: selectedTeamId !== null,
-    queryFn: () => getTeamSettings(selectedTeamId!),
+    enabled: selectedTeam !== null,
+    queryFn: () => getTeamSettings(selectedTeam!.slug),
     staleTime: 0,
   });
 
   const teamMembersQuery = useQuery<TeamMember[]>({
     queryKey: teamMembersQueryKey,
-    enabled: selectedTeamId !== null && canManageTeam,
-    queryFn: () => listTeamMembers(selectedTeamId!),
+    enabled: selectedTeam !== null && canManageTeam,
+    queryFn: () => listTeamMembers(selectedTeam!.slug),
     staleTime: 0,
   });
 
@@ -160,8 +160,8 @@ export default function WorkspaceTeamSettings() {
 
   const collaborationQuery = useQuery<TeamCollaborationInstallation[]>({
     queryKey: collaborationQueryKey,
-    enabled: selectedTeamId !== null,
-    queryFn: () => listTeamCollaborationInstallations(selectedTeamId!),
+    enabled: selectedTeam !== null,
+    queryFn: () => listTeamCollaborationInstallations(selectedTeam!.slug),
     staleTime: 0,
   });
 
@@ -200,7 +200,7 @@ export default function WorkspaceTeamSettings() {
 
   const saveSettingsMutation = useMutation({
     mutationFn: (settings: RoomSettings) =>
-      saveTeamSettings(selectedTeamId!, settings),
+      saveTeamSettings(selectedTeam!.slug, settings),
     onSuccess: (saved) => {
       queryClient.setQueryData(settingsQueryKey, saved);
       toast.success("Default settings saved");
@@ -216,7 +216,7 @@ export default function WorkspaceTeamSettings() {
 
   const addMemberMutation = useMutation({
     mutationFn: (payload: { userId: number; role: "admin" | "member" }) =>
-      addTeamMember(selectedTeamId!, payload.userId, payload.role),
+      addTeamMember(selectedTeam!.slug, payload.userId, payload.role),
     onSuccess: async () => {
       await refreshTeamMembers();
       setSelectedWorkspaceUserId("");
@@ -231,7 +231,7 @@ export default function WorkspaceTeamSettings() {
   });
 
   const approveMemberMutation = useMutation({
-    mutationFn: (userId: number) => approveTeamMember(selectedTeamId!, userId),
+    mutationFn: (userId: number) => approveTeamMember(selectedTeam!.slug, userId),
     onSuccess: async () => {
       await refreshTeamMembers();
       toast.success("Team member approved");
@@ -245,7 +245,7 @@ export default function WorkspaceTeamSettings() {
 
   const updateMemberRoleMutation = useMutation({
     mutationFn: (payload: { userId: number; role: "admin" | "member" }) =>
-      updateTeamMemberRole(selectedTeamId!, payload.userId, payload.role),
+      updateTeamMemberRole(selectedTeam!.slug, payload.userId, payload.role),
     onSuccess: async (_, variables) => {
       await refreshTeamMembers();
       toast.success(
@@ -262,7 +262,7 @@ export default function WorkspaceTeamSettings() {
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: (userId: number) => removeTeamMember(selectedTeamId!, userId),
+    mutationFn: (userId: number) => removeTeamMember(selectedTeam!.slug, userId),
     onSuccess: async () => {
       await refreshTeamMembers();
       toast.success("Team member removed");
@@ -282,7 +282,7 @@ export default function WorkspaceTeamSettings() {
       role: "admin" | "member";
     }) =>
       moveTeamMember(
-        selectedTeamId!,
+        selectedTeam!.slug,
         payload.userId,
         payload.targetTeamId,
         payload.role,
@@ -302,7 +302,7 @@ export default function WorkspaceTeamSettings() {
 
   const disconnectCollaborationMutation = useMutation({
     mutationFn: (installationId: number) =>
-      deleteTeamCollaborationInstallation(selectedTeamId!, installationId),
+      deleteTeamCollaborationInstallation(selectedTeam!.slug, installationId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: collaborationQueryKey });
       toast.success("Collaboration app disconnected");

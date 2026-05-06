@@ -53,7 +53,7 @@ export default [
   ...prefix("workspace", [
     route("profile", "routes/workspace/profile.tsx"),
     route("sessions", "routes/workspace/sessions.tsx"),
-    route("teams/:teamId", "routes/workspace/teams.$teamId.tsx"),
+    route("teams/:teamSlug", "routes/workspace/teams.$teamSlug.tsx"),
     route("admin", "routes/workspace/admin.tsx"),
     route("admin/teams", "routes/workspace/admin/teams.tsx"),
     route("admin/teams/settings", "routes/workspace/admin/teams/settings.tsx"),

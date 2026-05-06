@@ -16,7 +16,7 @@ import {
 const authState = vi.hoisted(() => ({
   isAuthenticated: true,
   isLoading: false,
-  teams: [{ id: 7, name: "Delivery" }],
+  teams: [{ id: 7, slug: "amber-cobalt-ripple", name: "Delivery" }],
 }));
 const goToLoginMock = vi.hoisted(() => vi.fn());
 
@@ -111,7 +111,7 @@ describe("CompletedWorkspaceFollowUps", () => {
 
     await waitFor(() => {
       expect(createTeamSession).toHaveBeenCalledWith(
-        7,
+        "amber-cobalt-ripple",
         "Sprint planning",
         "ROOM1",
         expect.objectContaining({

@@ -11,7 +11,10 @@ import {
   sql,
 } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
-import type { PaginationOptions } from "@sprintjam/utils";
+import {
+  createTeamSlugCandidate,
+  type PaginationOptions,
+} from "@sprintjam/utils";
 import {
   teamMemberships,
   workspaceActionEvents,
@@ -34,6 +37,7 @@ const SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1000;
 
 const teamSelection = {
   id: teams.id,
+  slug: teams.slug,
   name: teams.name,
   logoUrl: teams.logoUrl,
   organisationId: teams.organisationId,
@@ -131,10 +135,12 @@ export class TeamRepository {
     logoUrl: string | null = null,
   ): Promise<number> {
     const now = Date.now();
+    const slug = await this.createAvailableTeamSlug();
     const result = await this.db
       .insert(teams)
       .values({
         organisationId,
+        slug,
         name,
         logoUrl,
         ownerId,
@@ -157,11 +163,31 @@ export class TeamRepository {
     return teamId;
   }
 
+  private async createAvailableTeamSlug(): Promise<string> {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const slug = createTeamSlugCandidate();
+      const existing = await this.getTeamBySlug(slug);
+      if (!existing) {
+        return slug;
+      }
+    }
+
+    throw new Error("Unable to generate a unique team slug");
+  }
+
   async getTeamById(teamId: number) {
     return await this.db
       .select(teamSelection)
       .from(teams)
       .where(eq(teams.id, teamId))
+      .get();
+  }
+
+  async getTeamBySlug(slug: string) {
+    return await this.db
+      .select(teamSelection)
+      .from(teams)
+      .where(eq(teams.slug, slug))
       .get();
   }
 
@@ -587,10 +613,10 @@ export class TeamRepository {
           isWorkspaceAdmin
             ? sql`1 = 1`
             : or(
-                eq(teamSessions.createdById, userId),
-                eq(teams.accessPolicy, "open"),
-                eq(teamMemberships.userId, userId),
-              ),
+              eq(teamSessions.createdById, userId),
+              eq(teams.accessPolicy, "open"),
+              eq(teamMemberships.userId, userId),
+            ),
         ),
       )
       .orderBy(desc(teamSessions.createdAt))
@@ -667,10 +693,10 @@ export class TeamRepository {
           isWorkspaceAdmin
             ? sql`1 = 1`
             : or(
-                eq(teamSessions.createdById, userId),
-                eq(teams.accessPolicy, "open"),
-                eq(teamMemberships.userId, userId),
-              ),
+              eq(teamSessions.createdById, userId),
+              eq(teams.accessPolicy, "open"),
+              eq(teamMemberships.userId, userId),
+            ),
           isNull(teamSessions.completedAt),
         ),
       );

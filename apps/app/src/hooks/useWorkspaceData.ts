@@ -209,7 +209,12 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setIsMutating(true);
       setActionError(null);
       try {
-        const updated = await updateTeam(teamId, payload);
+        const team = teams.find((candidate) => candidate.id === teamId);
+        if (!team) {
+          throw new Error("Team not found");
+        }
+
+        const updated = await updateTeam(team.slug, payload);
         await refreshWorkspace(true);
         return updated;
       } catch (mutationError) {
@@ -219,7 +224,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         setIsMutating(false);
       }
     },
-    [isAuthenticated, refreshWorkspace],
+    [isAuthenticated, refreshWorkspace, teams],
   );
 
   const handleDeleteTeam = useCallback(
@@ -232,7 +237,12 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setIsMutating(true);
       setActionError(null);
       try {
-        await deleteTeam(teamId);
+        const team = teams.find((candidate) => candidate.id === teamId);
+        if (!team) {
+          throw new Error("Team not found");
+        }
+
+        await deleteTeam(team.slug);
         await refreshWorkspace(true);
 
         if (selectedTeamIdState === teamId) {
@@ -247,7 +257,13 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         setIsMutating(false);
       }
     },
-    [isAuthenticated, refreshWorkspace, selectedTeamIdState, setSelectedTeamId],
+    [
+      isAuthenticated,
+      refreshWorkspace,
+      selectedTeamIdState,
+      setSelectedTeamId,
+      teams,
+    ],
   );
 
   const handleCreateSession = useCallback(
@@ -267,7 +283,17 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
       setIsMutating(true);
       setActionError(null);
       try {
-        const session = await createTeamSession(teamId, name, roomKey, metadata);
+        const team = teams.find((candidate) => candidate.id === teamId);
+        if (!team) {
+          throw new Error("Team not found");
+        }
+
+        const session = await createTeamSession(
+          team.slug,
+          name,
+          roomKey,
+          metadata,
+        );
         await refreshWorkspace(true);
         return session;
       } catch (mutationError) {
@@ -279,7 +305,7 @@ export const useWorkspaceData = (options: UseWorkspaceDataOptions = {}) => {
         setIsMutating(false);
       }
     },
-    [isAuthenticated, refreshWorkspace],
+    [isAuthenticated, refreshWorkspace, teams],
   );
 
   const handleLogout = useCallback(async () => {

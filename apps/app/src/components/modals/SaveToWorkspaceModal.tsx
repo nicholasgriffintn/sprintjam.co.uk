@@ -49,6 +49,8 @@ export function SaveToWorkspaceModal({
   const [error, setError] = useState<string | null>(null);
   const isEditMode = Boolean(linkedSession);
   const activeLinkedSession = linkedSession;
+  const selectedTeam =
+    teams.find((team) => team.id === selectedTeamId) ?? null;
   const linkedTeamName =
     teams.find((team) => team.id === linkedSession?.teamId)?.name ?? null;
 
@@ -66,6 +68,10 @@ export function SaveToWorkspaceModal({
 
   const handleSave = async () => {
     if (!selectedTeamId || !sessionName.trim()) return;
+    if (!selectedTeam) {
+      setError("Team not found");
+      return;
+    }
 
     setIsSaving(true);
     setError(null);
@@ -73,14 +79,14 @@ export function SaveToWorkspaceModal({
     try {
       const session = isEditMode
         ? await updateTeamSession(
-            activeLinkedSession!.teamId,
+            selectedTeam.slug,
             activeLinkedSession!.id,
             {
               name: sessionName.trim(),
             },
           )
         : await createTeamSession(
-            selectedTeamId,
+            selectedTeam.slug,
             sessionName.trim(),
             roomKey,
             buildTeamSessionMetadata({

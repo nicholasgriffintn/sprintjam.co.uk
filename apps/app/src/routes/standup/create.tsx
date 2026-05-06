@@ -89,8 +89,13 @@ export default function StandupCreateRoute() {
 
       if (teamIdForCreate) {
         try {
+          const teamSlug = selectedTeam?.slug;
+          if (!teamSlug) {
+            throw new Error("Team not found");
+          }
+
           await createTeamSession(
-            teamIdForCreate,
+            teamSlug,
             buildStandupSessionName(),
             response.standup.key,
             buildTeamSessionMetadata({

@@ -29,6 +29,7 @@ const loaderDataMock = {
 
 const restrictedTeam: WorkspaceTeam = {
   id: 10,
+  slug: "amber-cobalt-ripple",
   name: "Platform",
   logoUrl: null,
   organisationId: 1,
@@ -301,7 +302,7 @@ describe("WorkspaceSessions", () => {
 
     expect(await screen.findByText("Daily Standup")).toBeTruthy();
     expect(screen.queryByText("Sprint 12 Planning")).toBeNull();
-    expect(listTeamSessionsPage).toHaveBeenCalledWith(10, {
+    expect(listTeamSessionsPage).toHaveBeenCalledWith("amber-cobalt-ripple", {
       limit: 20,
       offset: 0,
       type: "standup",
@@ -363,7 +364,7 @@ describe("WorkspaceSessions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Load more sessions" }));
 
     await waitFor(() => {
-      expect(listTeamSessionsPage).toHaveBeenCalledWith(10, {
+      expect(listTeamSessionsPage).toHaveBeenCalledWith("amber-cobalt-ripple", {
         limit: 20,
         offset: 1,
         type: "all",

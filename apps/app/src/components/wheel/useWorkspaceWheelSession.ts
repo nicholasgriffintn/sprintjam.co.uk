@@ -14,16 +14,16 @@ function buildWheelSessionName(): string {
   }).format(new Date())}`;
 }
 
-export function useWorkspaceWheelSession(teamId?: number) {
+export function useWorkspaceWheelSession(team?: { id: number; slug: string }) {
   const attemptsRef = useRef(new Set<string>());
 
   return useCallback(
     async (wheelKey: string) => {
-      if (!teamId) {
+      if (!team) {
         return;
       }
 
-      const attemptKey = `${teamId}:${wheelKey}`;
+      const attemptKey = `${team.id}:${wheelKey}`;
       if (attemptsRef.current.has(attemptKey)) {
         return;
       }
@@ -36,12 +36,12 @@ export function useWorkspaceWheelSession(teamId?: number) {
         }
 
         await createTeamSession(
-          teamId,
+          team.slug,
           buildWheelSessionName(),
           wheelKey,
           buildTeamSessionMetadata({
             type: "wheel",
-            teamId,
+            teamId: team.id,
           }),
         );
       } catch (error) {
@@ -49,6 +49,6 @@ export function useWorkspaceWheelSession(teamId?: number) {
         throw error;
       }
     },
-    [teamId],
+    [team],
   );
 }

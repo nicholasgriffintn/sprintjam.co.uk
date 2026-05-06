@@ -51,6 +51,8 @@ export function CompletedWorkspaceFollowUps({
     () => parsePlanningFollowUpText(followUpsText).map((title) => ({ title })),
     [followUpsText],
   );
+  const selectedTeam =
+    teams.find((team) => team.id === selectedTeamId) ?? null;
   const canSaveFollowUps = followUps.length > 0;
 
   useEffect(() => {
@@ -75,6 +77,10 @@ export function CompletedWorkspaceFollowUps({
     const name = sessionName.trim();
     if (isSaving || !canSaveFollowUps) return;
     if (!linkedWorkspaceSession && (!selectedTeamId || !name)) return;
+    if (!linkedWorkspaceSession && !selectedTeam) {
+      setError("Team not found");
+      return;
+    }
 
     setIsSaving(true);
     setError(null);
@@ -88,7 +94,7 @@ export function CompletedWorkspaceFollowUps({
         });
       } else {
         const session = await createTeamSession(
-          selectedTeamId!,
+          selectedTeam!.slug,
           name,
           roomKey,
           buildTeamSessionMetadata({

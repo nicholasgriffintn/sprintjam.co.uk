@@ -93,15 +93,15 @@ export async function loadWorkspaceInsights(
 
 export async function loadTeamSessions(
   args: WorkerLoaderArgs,
-  teamId: number,
+  teamSlug: string,
 ): Promise<TeamSession[]> {
-  const data = await loadTeamSessionsPage(args, teamId);
+  const data = await loadTeamSessionsPage(args, teamSlug);
   return data?.sessions ?? [];
 }
 
 export async function loadTeamSessionsPage(
   args: WorkerLoaderArgs,
-  teamId: number,
+  teamSlug: string,
   options: {
     limit?: number;
     offset?: number;
@@ -115,29 +115,29 @@ export async function loadTeamSessionsPage(
   });
   const data = await loadFromAuthWorker<TeamSessionsPage>(
     args,
-    `/api/teams/${teamId}/sessions?${params.toString()}`,
+    `/api/teams/${teamSlug}/sessions?${params.toString()}`,
   );
   return data;
 }
 
 export async function loadWorkspaceProcessLoops(
   args: WorkerLoaderArgs,
-  teamId: number,
+  teamSlug: string,
 ): Promise<WorkspaceProcessLoop[]> {
   const data = await loadFromAuthWorker<{ loops: WorkspaceProcessLoop[] }>(
     args,
-    `/api/teams/${teamId}/process-loops`,
+    `/api/teams/${teamSlug}/process-loops`,
   );
   return data?.loops ?? [];
 }
 
 export async function loadWorkspaceActionsPage(
   args: WorkerLoaderArgs,
-  teamId: number,
+  teamSlug: string,
 ): Promise<WorkspaceActionsPage | null> {
   return loadFromAuthWorker<WorkspaceActionsPage>(
     args,
-    `/api/teams/${teamId}/actions?limit=50&offset=0&status=all&source=all`,
+    `/api/teams/${teamSlug}/actions?limit=50&offset=0&status=all&source=all`,
   );
 }
 
@@ -150,7 +150,7 @@ export async function loadAccessibleTeamSessions(
       .filter((team) => team.canAccess)
       .map(async (team) => [
         team.id,
-        await loadTeamSessionsPage(args, team.id),
+        await loadTeamSessionsPage(args, team.slug),
       ]),
   );
 
@@ -170,7 +170,7 @@ export async function loadAccessibleTeamProcessLoops(
       .filter((team) => team.canAccess)
       .map(async (team) => [
         team.id,
-        await loadWorkspaceProcessLoops(args, team.id),
+        await loadWorkspaceProcessLoops(args, team.slug),
       ]),
   );
 
@@ -186,7 +186,7 @@ export async function loadAccessibleTeamActions(
       .filter((team) => team.canAccess)
       .map(async (team) => [
         team.id,
-        await loadWorkspaceActionsPage(args, team.id),
+        await loadWorkspaceActionsPage(args, team.slug),
       ]),
   );
 
@@ -222,21 +222,21 @@ export async function loadAccessibleTeamInsights(
 
 export async function loadTeamMembers(
   args: WorkerLoaderArgs,
-  teamId: number,
+  teamSlug: string,
 ): Promise<TeamMember[]> {
   const data = await loadFromAuthWorker<{ members: TeamMember[] }>(
     args,
-    `/api/teams/${teamId}/members`,
+    `/api/teams/${teamSlug}/members`,
   );
   return data?.members ?? [];
 }
 
 export async function loadTeamSettings(
   args: WorkerLoaderArgs,
-  teamId: number,
+  teamSlug: string,
 ): Promise<RoomSettings | null> {
   return loadFromAuthWorker<RoomSettings>(
     args,
-    `/api/teams/${teamId}/settings`,
+    `/api/teams/${teamSlug}/settings`,
   );
 }

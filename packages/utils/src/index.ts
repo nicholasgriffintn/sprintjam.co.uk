@@ -28,3 +28,4 @@ export * from "./pagination";
 export * from "./workspace-session-types";
 export * from "./workspace-standup-insights";
 export * from "./workspace-wheel-insights";
+export * from "./team-slug";

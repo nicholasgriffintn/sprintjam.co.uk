@@ -9,13 +9,15 @@ import type { WorkspaceTeam } from "@sprintjam/types";
 
 interface TeamsListProps {
   teams: WorkspaceTeam[];
-  onOpenTeam: (team: WorkspaceTeam) => void;
+  getTeamPageHref: (team: WorkspaceTeam) => string;
+  onOpenTeam?: (team: WorkspaceTeam) => void;
   onEditTeam: (team: WorkspaceTeam) => void;
   onTeamSettings?: (team: WorkspaceTeam) => void;
 }
 
 export function TeamsList({
   teams,
+  getTeamPageHref,
   onOpenTeam,
   onEditTeam,
   onTeamSettings,
@@ -84,15 +86,16 @@ export function TeamsList({
             </div>
           </div>
           <div className="grid gap-2 sm:flex sm:justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              icon={<ExternalLink className="h-4 w-4" />}
-              onClick={() => onOpenTeam(team)}
-              size="sm"
+            <a
+              href={getTeamPageHref(team)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => onOpenTeam?.(team)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/60 bg-white/90 px-4 py-2 text-sm font-semibold tracking-tight text-brand-700 transition-all duration-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:hover:bg-slate-900"
             >
+              <ExternalLink className="h-4 w-4" />
               Open page
-            </Button>
+            </a>
             {team.canManage ? (
               <>
                 <Button

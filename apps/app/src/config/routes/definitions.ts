@@ -495,8 +495,10 @@ export const ROUTE_DEFINITIONS = [
   {
     screen: "workspaceTeam",
     path: (params) =>
-      params.teamId ? `/workspace/teams/${params.teamId}` : "/workspace/teams",
-    pathPattern: /^\/workspace\/teams\/(\d+)$/i,
+      params.teamSlug
+        ? `/workspace/teams/${params.teamSlug}`
+        : "/workspace/teams",
+    pathPattern: /^\/workspace\/teams\/([a-z]+(?:-[a-z]+){2})$/i,
     group: "workspace",
     parent: "workspaceSessions",
     meta: {

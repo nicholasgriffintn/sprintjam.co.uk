@@ -74,6 +74,7 @@ const makeMembership = (overrides: Record<string, unknown> = {}) => ({
 
 const makeTeam = (overrides: Record<string, unknown> = {}) => ({
   id: 10,
+  slug: "amber-cobalt-ripple",
   name: "Platform",
   logoUrl: null,
   organisationId: 1,

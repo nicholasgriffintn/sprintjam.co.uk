@@ -167,7 +167,9 @@ describe("StandupCreateRoute", () => {
 
   it("shows the workspace team selector when authenticated with teams", () => {
     workspaceDataMock.isAuthenticated = true;
-    workspaceDataMock.teams = [{ id: 1, name: "Acme", canAccess: true }];
+    workspaceDataMock.teams = [
+      { id: 1, slug: "amber-cobalt-ripple", name: "Acme", canAccess: true },
+    ];
 
     render(<StandupCreateRoute />);
 
@@ -181,7 +183,9 @@ describe("StandupCreateRoute", () => {
 
     workspaceDataMock.isAuthenticated = true;
     workspaceDataMock.selectedTeamId = 1;
-    workspaceDataMock.teams = [{ id: 1, name: "Acme", canAccess: true }];
+    workspaceDataMock.teams = [
+      { id: 1, slug: "amber-cobalt-ripple", name: "Acme", canAccess: true },
+    ];
 
     render(<StandupCreateRoute />);
 
@@ -208,7 +212,9 @@ describe("StandupCreateRoute", () => {
 
     workspaceDataMock.isAuthenticated = true;
     workspaceDataMock.selectedTeamId = 1;
-    workspaceDataMock.teams = [{ id: 1, name: "Acme", canAccess: true }];
+    workspaceDataMock.teams = [
+      { id: 1, slug: "amber-cobalt-ripple", name: "Acme", canAccess: true },
+    ];
 
     render(<StandupCreateRoute />);
 
@@ -221,7 +227,7 @@ describe("StandupCreateRoute", () => {
 
     await waitFor(() => {
       expect(createTeamSession).toHaveBeenCalledWith(
-        1,
+        "amber-cobalt-ripple",
         expect.stringMatching(/^Standup /),
         "ABC123",
         expect.objectContaining({

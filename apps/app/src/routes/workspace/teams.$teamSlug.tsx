@@ -16,6 +16,7 @@ import {
   Radio,
 } from "lucide-react";
 import type { TeamSession } from "@sprintjam/types";
+import { isTeamSlug } from "@sprintjam/utils";
 
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
@@ -43,28 +44,21 @@ import { getInitials } from "@/utils/initials";
 
 export const meta = createMeta("workspaceTeam");
 
-function parseTeamId(value: string | undefined): number | null {
-  if (!value) {
-    return null;
-  }
-
-  const teamId = Number.parseInt(value, 10);
-  return Number.isNaN(teamId) ? null : teamId;
-}
-
 export async function loader({ request, context, params }: LoaderFunctionArgs) {
-  const teamId = parseTeamId(params.teamId);
-  if (teamId === null) {
+  const teamSlug = params.teamSlug?.toLowerCase() ?? null;
+  if (!teamSlug || !isTeamSlug(teamSlug)) {
     throw new Response("Team not found", { status: 404 });
   }
 
   const args = { request, context };
   const profile = await loadWorkspaceAuthProfile(args);
-  const team = profile?.teams.find((candidate) => candidate.id === teamId);
-  const sessions = team?.canAccess ? await loadTeamSessions(args, teamId) : [];
+  const team = profile?.teams.find((candidate) => candidate.slug === teamSlug);
+  const sessions = team?.canAccess
+    ? await loadTeamSessions(args, team.slug)
+    : [];
 
   return {
-    teamId,
+    teamSlug,
     sessions,
   };
 }
@@ -93,7 +87,8 @@ export function ErrorBoundary() {
 }
 
 export default function WorkspaceTeamHome() {
-  const { teamId, sessions: initialSessions } = useLoaderData<typeof loader>();
+  const { teamSlug, sessions: initialSessions } =
+    useLoaderData<typeof loader>();
   const {
     user,
     teams,
@@ -106,17 +101,17 @@ export default function WorkspaceTeamHome() {
   const { goToLogin, goToRoom, startCreateFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
   const [isCopied, setIsCopied] = useState(false);
-  const team = teams.find((candidate) => candidate.id === teamId) ?? null;
+  const team = teams.find((candidate) => candidate.slug === teamSlug) ?? null;
   const teamUrl =
     typeof window === "undefined"
-      ? `/workspace/teams/${teamId}`
-      : `${window.location.origin}/workspace/teams/${teamId}`;
+      ? `/workspace/teams/${teamSlug}`
+      : `${window.location.origin}/workspace/teams/${teamSlug}`;
 
   const sessionsQuery = useQuery<TeamSession[]>({
-    queryKey: ["workspace-team-home-sessions", teamId],
+    queryKey: ["workspace-team-home-sessions", teamSlug],
     enabled: Boolean(team?.canAccess),
     initialData: initialSessions,
-    queryFn: () => listTeamSessions(teamId),
+    queryFn: () => listTeamSessions(teamSlug),
     staleTime: 0,
   });
   const activeSessions = useMemo(
@@ -136,7 +131,7 @@ export default function WorkspaceTeamHome() {
   const activeStandupCount = activeSessions.length - activePlanningCount;
 
   const requestAccessMutation = useMutation({
-    mutationFn: () => requestTeamAccess(teamId),
+    mutationFn: () => requestTeamAccess(teamSlug),
     onSuccess: async () => {
       await refreshWorkspace(true);
       toast.success("Access request sent");

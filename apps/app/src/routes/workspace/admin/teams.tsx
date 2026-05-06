@@ -13,11 +13,11 @@ import { Alert } from "@/components/ui/Alert";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Select } from "@/components/ui/Select";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
-import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useSessionActions } from "@/context/SessionContext";
 import type { TeamAccessPolicy, WorkspaceTeam } from "@sprintjam/types";
 import { BetaBadge } from "@/components/BetaBadge";
 import { createMeta } from "@/utils/route-meta";
+import { getPathFromScreen } from "@/config/routes";
 
 export const meta = createMeta("workspaceAdminTeams");
 
@@ -38,7 +38,6 @@ export default function WorkspaceAdminTeams() {
   } = useWorkspaceData();
 
   const { goToLogin, goToWorkspaceAdminTeamSettings } = useSessionActions();
-  const navigateTo = useAppNavigation();
   const [isCreateTeamModalOpen, setIsCreateTeamModalOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -74,7 +73,6 @@ export default function WorkspaceAdminTeams() {
 
   const handleOpenTeam = (team: WorkspaceTeam) => {
     setSelectedTeamId(team.id);
-    navigateTo("workspaceTeam", { teamId: team.id });
   };
 
   const handleEditTeam = (team: WorkspaceTeam) => {
@@ -93,7 +91,7 @@ export default function WorkspaceAdminTeams() {
 
   const handleSaveTeam = async () => {
     if (!editingTeam || !renameInput.trim()) return;
-    await updateTeam(editingTeam.id, {
+    await updateTeam(editingTeam.slug, {
       name: renameInput.trim(),
       logoUrl: logoUrlInput.trim() || null,
       accessPolicy,
@@ -110,7 +108,7 @@ export default function WorkspaceAdminTeams() {
 
   const handleDeleteTeamConfirmed = async () => {
     if (!editingTeam) return;
-    await deleteTeam(editingTeam.id);
+    await deleteTeam(editingTeam.slug);
     setIsTeamModalOpen(false);
     setEditingTeam(null);
     setLogoUrlInput("");
@@ -165,6 +163,9 @@ export default function WorkspaceAdminTeams() {
             </div>
             <TeamsList
               teams={teams}
+              getTeamPageHref={(team) =>
+                getPathFromScreen("workspaceTeam", { teamSlug: team.slug })
+              }
               onOpenTeam={handleOpenTeam}
               onEditTeam={handleEditTeam}
               onTeamSettings={handleTeamSettings}

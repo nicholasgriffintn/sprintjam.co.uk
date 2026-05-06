@@ -193,7 +193,7 @@ export default function TeamsLaunch() {
   const sessionsQuery = useQuery<TeamSession[]>({
     queryKey: ["teams-collaboration-sessions", resolvedInstallation?.teamId],
     enabled: resolvedInstallation !== null && Boolean(linkedTeam?.canAccess),
-    queryFn: () => listTeamSessions(resolvedInstallation!.teamId),
+    queryFn: () => listTeamSessions(linkedTeam!.slug),
     staleTime: 0,
   });
   const activeSessions = (sessionsQuery.data ?? []).filter(
@@ -231,7 +231,7 @@ export default function TeamsLaunch() {
 
   const connectMutation = useMutation({
     mutationFn: () =>
-      saveTeamsCollaborationInstallation(selectedTeamId!, {
+      saveTeamsCollaborationInstallation(selectedTeam!.slug, {
         tenantId: context.tenantId,
         externalTeamId: context.externalTeamId,
         externalChannelId: context.externalChannelId,

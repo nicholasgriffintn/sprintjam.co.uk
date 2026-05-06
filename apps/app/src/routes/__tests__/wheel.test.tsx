@@ -123,7 +123,9 @@ describe("WheelRoute", () => {
   });
 
   it("links created wheels to the selected workspace team", async () => {
-    workspaceDataMock.teams = [{ id: 7, canAccess: true }];
+    workspaceDataMock.teams = [
+      { id: 7, slug: "amber-cobalt-ripple", canAccess: true },
+    ];
     workspaceDataMock.selectedTeamId = 7;
     vi.mocked(createWheel).mockResolvedValue({
       token: "token",
@@ -151,7 +153,7 @@ describe("WheelRoute", () => {
     await waitFor(() => {
       expect(getTeamSessionByRoomKey).toHaveBeenCalledWith("531N72");
       expect(createTeamSession).toHaveBeenCalledWith(
-        7,
+        "amber-cobalt-ripple",
         expect.stringMatching(/^Wheel /),
         "531N72",
         expect.objectContaining({
@@ -166,7 +168,9 @@ describe("WheelRoute", () => {
   });
 
   it("links joined wheels to the selected workspace team before mounting", async () => {
-    workspaceDataMock.teams = [{ id: 7, canAccess: true }];
+    workspaceDataMock.teams = [
+      { id: 7, slug: "amber-cobalt-ripple", canAccess: true },
+    ];
     workspaceDataMock.selectedTeamId = 7;
     vi.mocked(getWheelAccessSettings).mockResolvedValue({
       settings: {
@@ -212,7 +216,7 @@ describe("WheelRoute", () => {
 
     await waitFor(() => {
       expect(createTeamSession).toHaveBeenCalledWith(
-        7,
+        "amber-cobalt-ripple",
         expect.stringMatching(/^Wheel /),
         "0F2D3D",
         expect.objectContaining({

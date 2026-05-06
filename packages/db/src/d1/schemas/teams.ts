@@ -8,6 +8,7 @@ export const teams = sqliteTable("teams", {
   organisationId: integer("organisation_id")
     .notNull()
     .references(() => organisations.id),
+  slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   logoUrl: text("logo_url"),
   ownerId: integer("owner_id")

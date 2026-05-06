@@ -68,6 +68,8 @@ const CreateRoomRoute = () => {
 
   const { selectedWorkspaceTeamId } = useSessionState();
   const { setSelectedWorkspaceTeamId } = useSessionActions();
+  const selectedWorkspaceTeam =
+    teams.find((team) => team.id === selectedWorkspaceTeamId) ?? null;
   const workspaceName = user?.name?.trim() ?? "";
   const workspaceAvatar = sanitiseAvatarValue(user?.avatar);
   const hasWorkspaceName = validateName(workspaceName).ok;
@@ -98,7 +100,12 @@ const CreateRoomRoute = () => {
       return;
     }
 
-    getTeamSettings(selectedWorkspaceTeamId)
+    if (!selectedWorkspaceTeam) {
+      applySettings(defaults);
+      return;
+    }
+
+    getTeamSettings(selectedWorkspaceTeam.slug)
       .then((teamSettings) => {
         applySettings(
           teamSettings ? { ...defaults, ...teamSettings } : defaults,
@@ -108,7 +115,7 @@ const CreateRoomRoute = () => {
         console.error("Failed to load team settings", error);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedWorkspaceTeamId]);
+  }, [selectedWorkspaceTeam, selectedWorkspaceTeamId]);
 
   const teamPreloadDone = useRef(false);
   useEffect(() => {

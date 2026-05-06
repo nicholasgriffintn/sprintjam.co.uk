@@ -45,7 +45,7 @@ export async function createRoomController(
   if (teamId !== undefined && env.AUTH_WORKER) {
     const cookie = request.headers.get("Cookie") ?? "";
     const authResponse = await env.AUTH_WORKER.fetch(
-      new Request(`https://auth-worker/api/teams/${teamId}`, {
+      new Request(`https://auth-worker/api/internal/teams/${teamId}`, {
         method: "GET",
         headers: { Cookie: cookie },
       }) as unknown as CfRequest,
