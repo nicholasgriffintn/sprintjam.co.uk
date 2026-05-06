@@ -5,12 +5,16 @@ import { MemoryRouter, Route, Routes } from "react-router";
 
 import WheelRoute from "../wheel";
 import WheelKeyRoute from "../wheel/$wheelKey";
+import { WheelHeaderProvider } from "@/context/WheelHeaderContext";
 import {
   createWheel,
   getWheelAccessSettings,
   joinWheel,
 } from "@/lib/wheel-api-service";
-import { createTeamSession } from "@/lib/workspace-service";
+import {
+  createTeamSession,
+  getTeamSessionByRoomKey,
+} from "@/lib/workspace-service";
 
 const navigateToMock = vi.hoisted(() => vi.fn());
 const workspaceDataMock = vi.hoisted(() => ({
@@ -19,9 +23,21 @@ const workspaceDataMock = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/wheel-api-service", () => ({
+  addEntry: vi.fn(),
+  bulkAddEntries: vi.fn(),
+  clearEntries: vi.fn(),
+  connectToWheel: vi.fn(),
   createWheel: vi.fn(),
+  disconnectFromWheel: vi.fn(),
   getWheelAccessSettings: vi.fn(),
+  getCachedWheel: vi.fn(() => null),
   joinWheel: vi.fn(),
+  removeEntry: vi.fn(),
+  resetWheel: vi.fn(),
+  spin: vi.fn(),
+  toggleEntry: vi.fn(),
+  updateEntry: vi.fn(),
+  updateWheelSettings: vi.fn(),
 }));
 
 vi.mock("@/hooks/useAppNavigation", () => ({
@@ -34,6 +50,7 @@ vi.mock("@/hooks/useWorkspaceData", () => ({
 
 vi.mock("@/lib/workspace-service", () => ({
   createTeamSession: vi.fn(),
+  getTeamSessionByRoomKey: vi.fn(),
 }));
 
 describe("WheelRoute", () => {
@@ -46,6 +63,8 @@ describe("WheelRoute", () => {
     vi.mocked(getWheelAccessSettings).mockReset();
     vi.mocked(joinWheel).mockReset();
     vi.mocked(createTeamSession).mockReset();
+    vi.mocked(getTeamSessionByRoomKey).mockReset();
+    vi.mocked(getTeamSessionByRoomKey).mockResolvedValue(null);
     workspaceDataMock.teams = [];
     workspaceDataMock.selectedTeamId = null;
   });
@@ -128,15 +147,76 @@ describe("WheelRoute", () => {
     render(<WheelRoute />);
 
     await waitFor(() => {
+      expect(getTeamSessionByRoomKey).toHaveBeenCalledWith("531N72");
       expect(createTeamSession).toHaveBeenCalledWith(
         7,
         expect.stringMatching(/^Wheel /),
         "531N72",
         expect.objectContaining({
           type: "wheel",
-          sessionContext: expect.objectContaining({
-            id: expect.stringMatching(/^team-7-/),
-            intentionallyLinked: true,
+          processLoop: expect.objectContaining({
+            key: expect.stringMatching(/^team-7-/),
+            name: expect.stringMatching(/^Team loop /),
+          }),
+        }),
+      );
+    });
+  });
+
+  it("links joined wheels to the selected workspace team before mounting", async () => {
+    workspaceDataMock.teams = [{ id: 7, canAccess: true }];
+    workspaceDataMock.selectedTeamId = 7;
+    vi.mocked(getWheelAccessSettings).mockResolvedValue({
+      settings: {
+        removeWinnerAfterSpin: false,
+        showConfetti: true,
+        playSounds: true,
+        spinDurationMs: 4000,
+      },
+      moderator: "Moderator",
+      isModerator: true,
+      hasPasscode: false,
+    });
+    vi.mocked(joinWheel).mockResolvedValue({
+      token: "token",
+      recoveryPasskey: "ABCD-EFGH",
+      wheel: {
+        key: "0F2D3D",
+        entries: [],
+        users: ["User-test"],
+        connectedUsers: { "User-test": false },
+        moderator: "User-test",
+        spinState: null,
+        results: [],
+        settings: {
+          removeWinnerAfterSpin: false,
+          showConfetti: true,
+          playSounds: true,
+          spinDurationMs: 4000,
+        },
+        status: "active",
+      },
+    });
+
+    render(
+      <WheelHeaderProvider>
+        <MemoryRouter initialEntries={["/wheel/0F2D3D"]}>
+          <Routes>
+            <Route path="/wheel/:wheelKey" element={<WheelKeyRoute />} />
+          </Routes>
+        </MemoryRouter>
+      </WheelHeaderProvider>,
+    );
+
+    await waitFor(() => {
+      expect(createTeamSession).toHaveBeenCalledWith(
+        7,
+        expect.stringMatching(/^Wheel /),
+        "0F2D3D",
+        expect.objectContaining({
+          type: "wheel",
+          processLoop: expect.objectContaining({
+            key: expect.stringMatching(/^team-7-/),
           }),
         }),
       );

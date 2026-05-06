@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { RoomGameType } from "@sprintjam/types";
+import { buildPlanningFollowUpsFromTicketQueue } from "@sprintjam/utils";
 
 import {
   selectTicket,
@@ -12,7 +13,10 @@ import {
   submitGameMove,
   endGame,
 } from "@/lib/api-service";
-import { completeSessionByRoomKey } from "@/lib/workspace-service";
+import {
+  completeSessionByRoomKey,
+  recordPlanningActionsByRoomKey,
+} from "@/lib/workspace-service";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { HttpError } from "@/lib/errors";
 import type { ErrorKind, RoomData, TicketQueueItem } from "@/types";
@@ -127,6 +131,21 @@ export function useRoomQueueAndGameActions({
       completeSession();
       if (!isAuthenticated) {
         return;
+      }
+
+      const followUps = buildPlanningFollowUpsFromTicketQueue(
+        roomData.ticketQueue,
+      );
+      if (followUps.length > 0) {
+        void recordPlanningActionsByRoomKey({
+          roomKey: roomData.key,
+          followUps,
+        }).catch((err: unknown) => {
+          if (err instanceof HttpError && err.status === 404) {
+            return;
+          }
+          assignRoomError(err, "Failed to update workspace actions");
+        });
       }
 
       void completeSessionByRoomKey(roomData.key).catch((err: unknown) => {

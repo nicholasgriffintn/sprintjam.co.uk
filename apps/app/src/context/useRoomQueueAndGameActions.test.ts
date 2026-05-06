@@ -32,6 +32,7 @@ vi.mock("@/lib/api-service", () => ({
 
 vi.mock("@/lib/workspace-service", () => ({
   completeSessionByRoomKey: vi.fn(),
+  recordPlanningActionsByRoomKey: vi.fn(),
 }));
 
 vi.mock("@/context/WorkspaceAuthContext", () => ({
@@ -41,7 +42,10 @@ vi.mock("@/context/WorkspaceAuthContext", () => ({
 }));
 
 import { useRoomQueueAndGameActions } from "@/context/useRoomQueueAndGameActions";
-import { completeSessionByRoomKey } from "@/lib/workspace-service";
+import {
+  completeSessionByRoomKey,
+  recordPlanningActionsByRoomKey,
+} from "@/lib/workspace-service";
 
 const createRoomData = (status: RoomData["status"] = "active"): RoomData => ({
   key: "ROOM1",
@@ -173,5 +177,58 @@ describe("useRoomQueueAndGameActions", () => {
 
     expect(mockCompleteSession).toHaveBeenCalled();
     expect(completeSessionByRoomKey).toHaveBeenCalledWith("ROOM1");
+  });
+
+  it("records generated planning follow-ups when completing a linked room", async () => {
+    vi.mocked(recordPlanningActionsByRoomKey).mockResolvedValue([31]);
+    const roomData = {
+      ...createRoomData(),
+      ticketQueue: [
+        {
+          id: 1,
+          roomKey: "ROOM1",
+          ticketId: "FOLLOW-1",
+          title: "Clarify unknowns",
+          outcome: "Check acceptance criteria",
+          status: "pending" as const,
+          createdAt: 1,
+          ordinal: 1,
+          externalService: "none" as const,
+        },
+      ],
+    };
+
+    const { result } = renderHook(
+      () =>
+        useRoomQueueAndGameActions({
+          roomData,
+          userName: "alice",
+          setRoomError,
+          setRoomErrorKind,
+          assignRoomError,
+        }),
+      {
+        wrapper: createWrapper(),
+      },
+    );
+
+    act(() => {
+      result.current.handleCompleteSession();
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(recordPlanningActionsByRoomKey).toHaveBeenCalledWith({
+      roomKey: "ROOM1",
+      followUps: [
+        {
+          title: "Clarify unknowns",
+          detail: "Check acceptance criteria",
+          ticketKey: "FOLLOW-1",
+        },
+      ],
+    });
   });
 });

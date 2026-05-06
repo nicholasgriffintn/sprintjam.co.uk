@@ -108,6 +108,7 @@ export function useRoomEntryActions({
               roomKey: newRoom.key,
               metadata: buildTeamSessionMetadata({
                 type: "planning",
+                teamId: selectedWorkspaceTeamId,
               }),
             });
           } catch (e) {

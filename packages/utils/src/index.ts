@@ -17,6 +17,7 @@ export * from "./base64";
 export * from "./validate";
 export * from "./wheel-outcomes";
 export * from "./recap-actions";
+export * from "./workspace-actions";
 export * from "./lib/polychat-client";
 export * from "./generate-id";
 export * from "./lib/stats-client";

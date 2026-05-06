@@ -38,6 +38,16 @@ function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
   });
 }
 
+export function isAuthWorkerApiPath(path: string): boolean {
+  return (
+    path.startsWith("auth/") ||
+    path === "teams" ||
+    path.startsWith("teams/") ||
+    path.startsWith("workspace/") ||
+    path.startsWith("sessions/")
+  );
+}
+
 async function handleRequest(
   request: CfRequest,
   env: DispatchWorkerEnv,
@@ -61,14 +71,7 @@ async function handleRequest(
         return await env.STANDUP_WORKER.fetch(request);
       }
 
-      if (
-        path.startsWith("auth/") ||
-        path === "teams" ||
-        path.startsWith("teams/") ||
-        path.startsWith("workspace/") ||
-        path === "sessions/complete" ||
-        path === "sessions/by-room"
-      ) {
+      if (isAuthWorkerApiPath(path)) {
         return await env.AUTH_WORKER.fetch(request);
       }
 

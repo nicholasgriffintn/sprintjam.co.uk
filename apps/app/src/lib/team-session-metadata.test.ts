@@ -53,11 +53,11 @@ describe("team-session-metadata", () => {
     expect(getTeamSessionType(session)).toBe("planning");
   });
 
-  it("requires intentional context before grouping sessions", () => {
+  it("requires a valid process loop before grouping sessions", () => {
     const session = createSession(
       JSON.stringify({
         type: "standup",
-        sessionContext: { id: "sprint-44", label: "Sprint 44" },
+        processLoop: { key: "sprint-44" },
       }),
     );
 
@@ -135,31 +135,29 @@ describe("team-session-metadata", () => {
     ]);
   });
 
-  it("builds linked session metadata with planning follow-ups", () => {
+  it("builds linked session metadata with process loop context", () => {
     expect(
       buildTeamSessionMetadata({
         type: "planning",
         teamId: 7,
-        linkSessionContext: true,
-        planningFollowUps: ["Review API blocker"],
         date: new Date("2026-05-05T12:00:00Z"),
       }),
     ).toEqual({
       type: "planning",
-      sessionContext: {
-        id: "team-7-2026-05-05",
-        label: "Team sessions 2026-05-05",
-        intentionallyLinked: true,
+      processLoop: {
+        key: "team-7-2026-05-05",
+        name: "Team loop 2026-05-05",
+        status: "active",
+        startsAt: new Date("2026-05-05T00:00:00").getTime(),
       },
-      planningFollowUps: ["Review API blocker"],
     });
   });
 
-  it("builds combined recaps only for intentionally linked sessions", () => {
-    const sessionContext = {
-      id: "sprint-44",
-      label: "Sprint 44 session",
-      intentionallyLinked: true,
+  it("builds combined recaps only for process-loop linked sessions", () => {
+    const processLoop = {
+      key: "sprint-44",
+      name: "Sprint 44 session",
+      status: "active",
     };
     const recaps = buildLinkedSessionSummaries([
       createSession(JSON.stringify({ type: "planning" }), {
@@ -171,7 +169,7 @@ describe("team-session-metadata", () => {
       createSession(
         JSON.stringify({
           type: "standup",
-          sessionContext,
+          processLoop,
           planningFollowUps: [
             { title: "Estimate blocked API", ticketKey: "API-1" },
           ],
@@ -181,7 +179,7 @@ describe("team-session-metadata", () => {
       createSession(
         JSON.stringify({
           type: "wheel",
-          sessionContext,
+          processLoop,
           wheelOutcomes: [
             {
               id: "spin-1",
@@ -223,16 +221,16 @@ describe("team-session-metadata", () => {
   });
 
   it("excludes resolved recap actions from linked summaries", () => {
-    const sessionContext = {
-      id: "sprint-44",
-      label: "Sprint 44 session",
-      intentionallyLinked: true,
+    const processLoop = {
+      key: "sprint-44",
+      name: "Sprint 44 session",
+      status: "active",
     };
     const recaps = buildLinkedSessionSummaries([
       createSession(
         JSON.stringify({
           type: "standup",
-          sessionContext,
+          processLoop,
           planningFollowUps: [
             {
               title: "Estimate blocked API",
@@ -247,7 +245,7 @@ describe("team-session-metadata", () => {
       createSession(
         JSON.stringify({
           type: "wheel",
-          sessionContext,
+          processLoop,
           wheelOutcomes: [
             {
               id: "spin-1",

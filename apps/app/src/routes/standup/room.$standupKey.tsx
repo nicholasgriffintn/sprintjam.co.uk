@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
   isRouteErrorResponse,
@@ -17,8 +17,6 @@ import {
 } from "@/context/StandupContext";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { getStoredUserName } from "@/hooks/useUserPersistence";
-import { completeSessionByRoomKey } from "@/lib/workspace-service";
-import { HttpError } from "@/lib/errors";
 import { validateName } from "@/utils/validators";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +29,7 @@ import { StandupAudienceView } from "@/components/standup/StandupAudienceView";
 import { StandupPresentationView } from "@/components/standup/StandupPresentationView";
 import { StandupResultsPanel } from "@/components/standup/StandupResultsPanel";
 import { StandupSidebar } from "@/components/standup/StandupSidebar";
+import { useStandupWorkspaceCompletion } from "@/components/standup/useStandupWorkspaceCompletion";
 import { consumeStandupNotice } from "@/lib/standup-notice";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
 import { Footer } from "@/components/layout/Footer";
@@ -110,6 +109,12 @@ function StandupRoomContent({
   const [isStartingPresentation, setIsStartingPresentation] = useState(false);
   const [activeTab, setActiveTab] = useState<StandupTab>("response");
   const [retryNonce, setRetryNonce] = useState(0);
+  const completedWorkspaceSyncRef = useRef<string | null>(null);
+  const completeWorkspaceHistory = useStandupWorkspaceCompletion({
+    standupData,
+    standupKey,
+    isAuthenticated,
+  });
 
   useEffect(() => {
     setStandupKey(standupKey);
@@ -144,26 +149,21 @@ function StandupRoomContent({
     setParticipantCount(standupData.users.length);
   }, [setParticipantCount, setRespondedCount, setStandupStatus, standupData]);
 
-  const completeWorkspaceHistory = async () => {
-    if (!standupData?.teamId || !isAuthenticated) {
+  useEffect(() => {
+    if (
+      standupData?.status !== "completed" ||
+      completedWorkspaceSyncRef.current === standupKey
+    ) {
       return;
     }
 
-    try {
-      await completeSessionByRoomKey(standupKey);
-      setCompletionNotice(null);
-    } catch (error) {
-      if (error instanceof HttpError && error.status === 404) {
-        return;
+    completedWorkspaceSyncRef.current = standupKey;
+    completeWorkspaceHistory().then((warning) => {
+      if (warning) {
+        setCompletionNotice(warning);
       }
-
-      setCompletionNotice(
-        error instanceof Error
-          ? `${error.message} The standup is complete, but workspace history was not updated.`
-          : "The standup is complete, but workspace history was not updated.",
-      );
-    }
-  };
+    });
+  }, [completeWorkspaceHistory, standupData?.status, standupKey]);
 
   const onLockResponses = () => {
     setIsLockingResponses(true);
@@ -198,7 +198,7 @@ function StandupRoomContent({
 
     try {
       handleCompleteStandup();
-      await completeWorkspaceHistory();
+      setCompletionNotice(await completeWorkspaceHistory());
     } finally {
       setIsCompletingStandup(false);
     }

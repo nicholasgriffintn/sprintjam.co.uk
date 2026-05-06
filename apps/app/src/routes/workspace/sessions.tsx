@@ -16,7 +16,7 @@ import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { TeamSelector } from "@/components/workspace/TeamSelector";
 import { SessionList } from "@/components/workspace/SessionList";
 import { TeamInsightsPanel } from "@/components/workspace/TeamInsightsPanel";
-import { LinkedSessionSummaryPanel } from "@/components/workspace/LinkedSessionSummaryPanel";
+import { WorkspaceActionBoard } from "@/components/workspace/WorkspaceActionBoard";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -37,6 +37,8 @@ import { createMeta } from "@/utils/route-meta";
 import {
   WORKSPACE_SESSIONS_PAGE_SIZE,
   loadAccessibleTeamInsights,
+  loadAccessibleTeamActions,
+  loadAccessibleTeamProcessLoops,
   loadAccessibleTeamSessions,
   loadWorkspaceAuthProfile,
 } from "@/lib/workspace-loaders";
@@ -47,14 +49,23 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const args = { request, context };
   const profile = await loadWorkspaceAuthProfile(args);
   const teams = profile?.teams ?? [];
-  const [sessionsByTeamId, teamInsightsByTeamId] = await Promise.all([
+  const [
+    sessionsByTeamId,
+    teamInsightsByTeamId,
+    actionsByTeamId,
+    processLoopsByTeamId,
+  ] = await Promise.all([
     loadAccessibleTeamSessions(args, teams),
     loadAccessibleTeamInsights(args, teams),
+    loadAccessibleTeamActions(args, teams),
+    loadAccessibleTeamProcessLoops(args, teams),
   ]);
 
   return {
     sessionsByTeamId,
     teamInsightsByTeamId,
+    actionsByTeamId,
+    processLoopsByTeamId,
   };
 }
 
@@ -85,7 +96,12 @@ type SessionFilter = WorkspaceTeamSessionFilter;
 type TeamSessionPagesByFilter = Partial<Record<SessionFilter, TeamSessionsPage>>;
 
 export default function WorkspaceSessions() {
-  const { sessionsByTeamId, teamInsightsByTeamId } =
+  const {
+    sessionsByTeamId,
+    teamInsightsByTeamId,
+    actionsByTeamId,
+    processLoopsByTeamId,
+  } =
     useLoaderData<typeof loader>();
   const initialSessionsByTeamId = useMemo(
     () =>
@@ -148,8 +164,6 @@ export default function WorkspaceSessions() {
     selectedTeamSessionPages?.[sessionFilter] ?? null;
   const selectedTeamAllSessionsPage = selectedTeamSessionPages?.all ?? null;
   const sessions = selectedTeamSessionPage?.sessions ?? initialSessions;
-  const linkedSummarySessions =
-    selectedTeamAllSessionsPage?.sessions ?? initialSessions;
   const sessionCounts =
     selectedTeamSessionPage?.counts ?? selectedTeamAllSessionsPage?.counts;
   const totalSessions = sessionCounts?.[sessionFilter] ?? sessions.length;
@@ -403,8 +417,12 @@ export default function WorkspaceSessions() {
                 </div>
                 {selectedTeam.canAccess ? (
                   <div className="space-y-4">
-                    <LinkedSessionSummaryPanel
-                      sessions={linkedSummarySessions}
+                    <WorkspaceActionBoard
+                      teamId={selectedTeam.id}
+                      actionsPage={actionsByTeamId[selectedTeam.id] ?? null}
+                      processLoops={
+                        processLoopsByTeamId[selectedTeam.id] ?? []
+                      }
                     />
                     <Tabs.Root
                       value={sessionFilter}

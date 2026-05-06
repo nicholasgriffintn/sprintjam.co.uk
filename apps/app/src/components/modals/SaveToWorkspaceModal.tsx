@@ -5,7 +5,6 @@ import type { TeamSession } from "@sprintjam/types";
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Spinner } from "@/components/ui/Spinner";
@@ -13,10 +12,7 @@ import { Alert } from "@/components/ui/Alert";
 import { useWorkspaceAuth } from "@/context/WorkspaceAuthContext";
 import { useSessionActions } from "@/context/SessionContext";
 import { createTeamSession, updateTeamSession } from "@/lib/workspace-service";
-import {
-  buildTeamSessionMetadata,
-  parsePlanningFollowUpText,
-} from "@/lib/team-session-metadata";
+import { buildTeamSessionMetadata } from "@/lib/team-session-metadata";
 import { cn } from "@/lib/cn";
 import { BetaBadge } from "@/components/BetaBadge";
 import { setReturnUrl } from "@/config/routes";
@@ -48,8 +44,6 @@ export function SaveToWorkspaceModal({
 
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [sessionName, setSessionName] = useState(suggestedName || "");
-  const [linkSessionContext, setLinkSessionContext] = useState(false);
-  const [planningFollowUpsText, setPlanningFollowUpsText] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,8 +61,6 @@ export function SaveToWorkspaceModal({
       );
       setIsSuccess(false);
       setError(null);
-      setLinkSessionContext(false);
-      setPlanningFollowUpsText("");
     }
   }, [isOpen, linkedSession, suggestedName, teams]);
 
@@ -94,10 +86,6 @@ export function SaveToWorkspaceModal({
             buildTeamSessionMetadata({
               type: "planning",
               teamId: selectedTeamId,
-              linkSessionContext,
-              planningFollowUps: parsePlanningFollowUpText(
-                planningFollowUpsText,
-              ),
             }),
           );
       onSaved?.(session);
@@ -253,52 +241,6 @@ export function SaveToWorkspaceModal({
           onChange={(e) => setSessionName(e.target.value)}
           fullWidth
         />
-
-        {!isEditMode && (
-          <SurfaceCard variant="subtle" className="space-y-3">
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="planning-link-session-context"
-                aria-label="Link with today's team sessions"
-                checked={linkSessionContext}
-                onCheckedChange={setLinkSessionContext}
-              />
-              <span className="space-y-1">
-                <label
-                  htmlFor="planning-link-session-context"
-                  className="block text-sm font-medium text-slate-900 dark:text-white"
-                >
-                  Link with today's team sessions
-                </label>
-                <span className="block text-sm text-slate-500 dark:text-slate-400">
-                  Include this room in a shared summary with standups or wheels
-                  from the same team.
-                </span>
-              </span>
-            </div>
-
-            {linkSessionContext && (
-              <div className="space-y-2">
-                <label
-                  htmlFor="planning-follow-ups"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-                >
-                  Planning follow-ups
-                </label>
-                <textarea
-                  id="planning-follow-ups"
-                  value={planningFollowUpsText}
-                  onChange={(event) =>
-                    setPlanningFollowUpsText(event.target.value)
-                  }
-                  rows={3}
-                  className="w-full rounded-xl border border-white/50 bg-white/70 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-white/10 dark:bg-slate-900/40 dark:text-white dark:focus:border-brand-500 dark:focus:ring-brand-900/30"
-                  placeholder="One follow-up per line"
-                />
-              </div>
-            )}
-          </SurfaceCard>
-        )}
 
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">

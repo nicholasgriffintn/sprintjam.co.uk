@@ -83,6 +83,18 @@ export function buildWheelOutcomeActionId(
     : null;
 }
 
+export function buildCurrentWheelOutcomeActionId(
+  sessionId: number,
+  mode: unknown,
+): string | null {
+  const normalisedMode = normaliseOptionalString(mode);
+  return normalisedMode
+    ? buildLinkedSessionRecapActionId("wheel_outcome", sessionId, [
+        normalisedMode,
+      ])
+    : null;
+}
+
 export function isResolvedRecapAction(value: unknown): boolean {
   return (
     isRecord(value) &&

@@ -5,10 +5,12 @@ import type {
   TeamMember,
   TeamSession,
   TeamSessionsPage,
+  WorkspaceActionsPage,
   WorkspaceTeamSessionFilter,
   WorkspaceAuthProfile,
   WorkspaceInsights,
   WorkspaceProfile,
+  WorkspaceProcessLoop,
   WorkspaceStats,
 } from "@sprintjam/types";
 
@@ -118,6 +120,27 @@ export async function loadTeamSessionsPage(
   return data;
 }
 
+export async function loadWorkspaceProcessLoops(
+  args: WorkerLoaderArgs,
+  teamId: number,
+): Promise<WorkspaceProcessLoop[]> {
+  const data = await loadFromAuthWorker<{ loops: WorkspaceProcessLoop[] }>(
+    args,
+    `/api/teams/${teamId}/process-loops`,
+  );
+  return data?.loops ?? [];
+}
+
+export async function loadWorkspaceActionsPage(
+  args: WorkerLoaderArgs,
+  teamId: number,
+): Promise<WorkspaceActionsPage | null> {
+  return loadFromAuthWorker<WorkspaceActionsPage>(
+    args,
+    `/api/teams/${teamId}/actions?limit=50&offset=0&status=all&source=all`,
+  );
+}
+
 export async function loadAccessibleTeamSessions(
   args: WorkerLoaderArgs,
   teams: WorkspaceAuthProfile["teams"],
@@ -133,6 +156,42 @@ export async function loadAccessibleTeamSessions(
 
   return Object.fromEntries(
     entries.filter((entry): entry is [number, TeamSessionsPage] =>
+      Boolean(entry[1]),
+    ),
+  );
+}
+
+export async function loadAccessibleTeamProcessLoops(
+  args: WorkerLoaderArgs,
+  teams: WorkspaceAuthProfile["teams"],
+): Promise<Record<number, WorkspaceProcessLoop[]>> {
+  const entries = await Promise.all(
+    teams
+      .filter((team) => team.canAccess)
+      .map(async (team) => [
+        team.id,
+        await loadWorkspaceProcessLoops(args, team.id),
+      ]),
+  );
+
+  return Object.fromEntries(entries);
+}
+
+export async function loadAccessibleTeamActions(
+  args: WorkerLoaderArgs,
+  teams: WorkspaceAuthProfile["teams"],
+): Promise<Record<number, WorkspaceActionsPage>> {
+  const entries = await Promise.all(
+    teams
+      .filter((team) => team.canAccess)
+      .map(async (team) => [
+        team.id,
+        await loadWorkspaceActionsPage(args, team.id),
+      ]),
+  );
+
+  return Object.fromEntries(
+    entries.filter((entry): entry is [number, WorkspaceActionsPage] =>
       Boolean(entry[1]),
     ),
   );

@@ -215,11 +215,6 @@ describe("StandupCreateRoute", () => {
     fireEvent.change(screen.getByLabelText(/your name/i), {
       target: { value: "Alice" },
     });
-    fireEvent.click(
-      screen.getByRole("checkbox", {
-        name: /link with today's team sessions/i,
-      }),
-    );
     fireEvent.submit(
       screen.getByRole("button", { name: /create standup/i }).closest("form")!,
     );
@@ -231,9 +226,9 @@ describe("StandupCreateRoute", () => {
         "ABC123",
         expect.objectContaining({
           type: "standup",
-          sessionContext: expect.objectContaining({
-            id: expect.stringMatching(/^team-1-/),
-            intentionallyLinked: true,
+          processLoop: expect.objectContaining({
+            key: expect.stringMatching(/^team-1-/),
+            name: expect.stringMatching(/^Team loop /),
           }),
         }),
       );

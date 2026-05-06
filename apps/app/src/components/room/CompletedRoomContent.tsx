@@ -1,7 +1,7 @@
 import { Footer } from "@/components/layout/Footer";
-import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { RoomStatsPanel } from "@/components/room/RoomStatsPanel";
+import { CompletedWorkspaceFollowUps } from "@/components/room/CompletedWorkspaceFollowUps";
 import type { RoomData } from "@/types";
 import type { TeamSession } from "@sprintjam/types";
 import { useRoomSessionRecap } from "@/hooks/useRoomSessionRecap";
@@ -12,8 +12,8 @@ interface CompletedRoomContentProps {
   isQueueEnabled: boolean;
   linkedWorkspaceSession: TeamSession | null;
   linkedWorkspaceTeamName: string | null;
-  showSaveToWorkspace: boolean;
-  onOpenSaveToWorkspace: () => void;
+  onWorkspaceSessionSaved: (session: TeamSession) => void;
+  onOpenRenameWorkspaceSession: () => void;
   onOpenGames: () => void;
 }
 
@@ -22,8 +22,8 @@ export const CompletedRoomContent = ({
   isQueueEnabled,
   linkedWorkspaceSession,
   linkedWorkspaceTeamName,
-  showSaveToWorkspace,
-  onOpenSaveToWorkspace,
+  onWorkspaceSessionSaved,
+  onOpenRenameWorkspaceSession,
   onOpenGames,
 }: CompletedRoomContentProps) => {
   const recap = useRoomSessionRecap(roomData, isQueueEnabled);
@@ -44,42 +44,14 @@ export const CompletedRoomContent = ({
           Review the notes and votes captured for each{" "}
           {isQueueEnabled ? "ticket" : "round"}.
         </p>
-        {linkedWorkspaceSession ? (
-          <div className="space-y-3 pt-1">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100">
-              <p className="font-medium">
-                Saved to workspace
-                {linkedWorkspaceTeamName
-                  ? ` in ${linkedWorkspaceTeamName}`
-                  : ""}
-                .
-              </p>
-              <p className="mt-1 text-emerald-800/90 dark:text-emerald-200/90">
-                {linkedWorkspaceSession.name}
-              </p>
-            </div>
-            <div className="pt-1">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onOpenSaveToWorkspace}
-              >
-                Rename workspace session
-              </Button>
-            </div>
-          </div>
-        ) : showSaveToWorkspace ? (
-          <div className="pt-1">
-            <Button
-              type="button"
-              variant="secondary"
-              data-testid="save-to-workspace-screen-button"
-              onClick={onOpenSaveToWorkspace}
-            >
-              Save to workspace
-            </Button>
-          </div>
-        ) : null}
+        <CompletedWorkspaceFollowUps
+          roomKey={roomData.key}
+          suggestedName={roomData.currentTicket?.title ?? "Sprint planning"}
+          linkedWorkspaceSession={linkedWorkspaceSession}
+          linkedWorkspaceTeamName={linkedWorkspaceTeamName}
+          onWorkspaceSessionSaved={onWorkspaceSessionSaved}
+          onOpenRenameWorkspaceSession={onOpenRenameWorkspaceSession}
+        />
       </SurfaceCard>
 
       <SurfaceCard

@@ -1,19 +1,27 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import type { PaginationOptions } from "@sprintjam/utils";
 import type {
+  CreateWorkspaceActionInput,
   TeamSessionCounts,
+  UpdateWorkspaceActionInput,
+  WorkspaceActionSourceFilter,
+  WorkspaceActionStatusFilter,
+  CreateWorkspaceProcessLoopInput,
   WorkspaceTeamSessionFilter,
 } from "@sprintjam/types";
 
 import { AuthRepository } from "./auth-repository";
 import { TeamRepository } from "./team-repository";
+import { WorkspaceActionRepository } from "./workspace-action-repository";
 
 export class WorkspaceAuthRepository {
   private auth: AuthRepository;
+  private actions: WorkspaceActionRepository;
   private teams: TeamRepository;
 
   constructor(d1: D1Database) {
     this.auth = new AuthRepository(d1);
+    this.actions = new WorkspaceActionRepository(d1);
     this.teams = new TeamRepository(d1);
   }
 
@@ -468,6 +476,111 @@ export class WorkspaceAuthRepository {
     metadata: Record<string, unknown>,
   ): Promise<void> {
     return this.teams.updateTeamSessionMetadata(sessionId, metadata);
+  }
+
+  listWorkspaceProcessLoops(teamId: number) {
+    return this.actions.listProcessLoops(teamId);
+  }
+
+  createWorkspaceProcessLoop(
+    teamId: number,
+    input: CreateWorkspaceProcessLoopInput & { createdById: number; key: string },
+  ): Promise<number> {
+    return this.actions.createProcessLoop({
+      teamId,
+      ...input,
+    });
+  }
+
+  getWorkspaceProcessLoopById(processLoopId: number) {
+    return this.actions.getProcessLoopById(processLoopId);
+  }
+
+  getOrCreateWorkspaceProcessLoop(params: {
+    teamId: number;
+    key: string;
+    name: string;
+    goal?: string | null;
+    status?: "planned" | "active" | "completed";
+    startsAt?: number | null;
+    endsAt?: number | null;
+    createdById: number;
+  }) {
+    return this.actions.getOrCreateProcessLoop(params);
+  }
+
+  linkTeamSessionToProcessLoop(params: {
+    teamId: number;
+    processLoopId: number;
+    sessionId: number;
+    linkedById: number;
+  }): Promise<void> {
+    return this.actions.linkSessionToProcessLoop(params);
+  }
+
+  getProcessLoopForSession(sessionId: number) {
+    return this.actions.getProcessLoopForSession(sessionId);
+  }
+
+  listWorkspaceActions(
+    teamId: number,
+    pagination?: PaginationOptions,
+    filters?: {
+      status?: WorkspaceActionStatusFilter;
+      source?: WorkspaceActionSourceFilter;
+      processLoopId?: number;
+    },
+  ) {
+    return this.actions.listActions(teamId, pagination, filters);
+  }
+
+  getWorkspaceActionCounts(
+    teamId: number,
+    filters?: {
+      source?: WorkspaceActionSourceFilter;
+      processLoopId?: number;
+    },
+  ) {
+    return this.actions.getActionCounts(teamId, filters);
+  }
+
+  getWorkspaceActionById(actionId: number) {
+    return this.actions.getActionById(actionId);
+  }
+
+  upsertWorkspaceAction(
+    params: CreateWorkspaceActionInput & {
+      teamId: number;
+      source: NonNullable<CreateWorkspaceActionInput["source"]>;
+      sourceRef: string;
+      createdById: number;
+    },
+  ): Promise<number> {
+    return this.actions.upsertAction(params);
+  }
+
+  updateWorkspaceAction(
+    actionId: number,
+    updates: UpdateWorkspaceActionInput & { resolvedById?: number | null },
+  ): Promise<void> {
+    return this.actions.updateAction(actionId, updates);
+  }
+
+  createWorkspaceActionEvent(params: {
+    teamId: number;
+    actionId: number;
+    actorUserId?: number | null;
+    eventType: "created" | "updated" | "status_changed" | "commented";
+    fromStatus?: string | null;
+    toStatus?: string | null;
+    note?: string | null;
+    metadata?: Record<string, unknown> | null;
+  }): Promise<number> {
+    return this.actions.createActionEvent(params);
+  }
+
+  listWorkspaceActionEvents(actionId: number) {
+    return this.actions.listActionEvents(actionId);
   }
 
   completeTeamSession(sessionId: number): Promise<void> {
