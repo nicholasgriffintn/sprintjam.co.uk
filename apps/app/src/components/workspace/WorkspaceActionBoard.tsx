@@ -14,6 +14,7 @@ import type {
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 import { Select } from "@/components/ui/Select";
 import {
   formatActionSource,
@@ -153,7 +154,11 @@ export function WorkspaceActionBoard({
       </div>
 
       {actions.length ? (
-        <div className="divide-y divide-slate-100 rounded-lg border border-slate-100 dark:divide-slate-800 dark:border-slate-800">
+        <ScrollArea
+          aria-label="Sprint actions list"
+          className="max-h-[min(42vh,28rem)] rounded-lg border border-slate-100 bg-white/30 dark:border-slate-800 dark:bg-slate-950/10"
+          contentClassName="divide-y divide-slate-100 dark:divide-slate-800"
+        >
           {actions.map((action) => (
             <div
               key={action.id}
@@ -224,7 +229,7 @@ export function WorkspaceActionBoard({
               </div>
             </div>
           ))}
-        </div>
+        </ScrollArea>
       ) : (
         <div className="rounded-lg border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
           No actions match current filters. Follow-ups, blockers, and wheel
