@@ -34,6 +34,7 @@ import { consumeStandupNotice } from "@/lib/standup-notice";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
 import { Footer } from "@/components/layout/Footer";
 import { createMeta } from "@/utils/route-meta";
+import type { WorkspaceTeam } from "@sprintjam/types";
 
 export const meta = createMeta("standupRoom");
 
@@ -67,11 +68,13 @@ function StandupRoomContent({
   userName,
   isAuthenticated,
   initialNotice,
+  workspaceTeams,
 }: {
   standupKey: string;
   userName: string;
   isAuthenticated: boolean;
   initialNotice?: string | null;
+  workspaceTeams: WorkspaceTeam[];
 }) {
   const navigateTo = useAppNavigation();
   const { standupData, isModeratorView } = useStandupState();
@@ -115,6 +118,14 @@ function StandupRoomContent({
     standupKey,
     isAuthenticated,
   });
+  const standupTeamId = standupData?.teamId;
+  const standupTeamSlug = useMemo(
+    () =>
+      workspaceTeams.find(
+        (team) => team.id === standupTeamId && team.canAccess,
+      )?.slug,
+    [standupTeamId, workspaceTeams],
+  );
 
   useEffect(() => {
     setStandupKey(standupKey);
@@ -361,7 +372,7 @@ function StandupRoomContent({
                 <StandupResponseForm
                   response={yourResponse}
                   status={standupData.status}
-                  teamId={standupData.teamId}
+                  teamSlug={standupTeamSlug}
                   isModeratorView={isModeratorView}
                   isSocketConnected={isSocketConnected}
                   onSubmit={handleSubmitResponse}
@@ -401,7 +412,7 @@ function StandupRoomContent({
 
 export default function StandupRoomRoute() {
   const { standupKey: routeStandupKey } = useParams<{ standupKey: string }>();
-  const { user, isAuthenticated } = useWorkspaceData();
+  const { user, isAuthenticated, teams } = useWorkspaceData();
   const navigateTo = useAppNavigation();
   const [standupKey, setStandupKey] = useState<string | null>(
     () => routeStandupKey?.toUpperCase() ?? null,
@@ -447,6 +458,7 @@ export default function StandupRoomRoute() {
         userName={userName.trim()}
         isAuthenticated={isAuthenticated}
         initialNotice={initialNotice}
+        workspaceTeams={teams}
       />
     </StandupProvider>
   );

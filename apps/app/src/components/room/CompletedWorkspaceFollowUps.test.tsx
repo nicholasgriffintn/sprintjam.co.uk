@@ -69,7 +69,9 @@ describe("CompletedWorkspaceFollowUps", () => {
     vi.clearAllMocks();
     authState.isAuthenticated = true;
     authState.isLoading = false;
-    authState.teams = [{ id: 7, name: "Delivery" }];
+    authState.teams = [
+      { id: 7, slug: "amber-cobalt-ripple", name: "Delivery" },
+    ];
   });
 
   it("records follow-ups against an existing workspace planning session", async () => {

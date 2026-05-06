@@ -212,7 +212,7 @@ describe("WorkspaceSessions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Request access" }));
 
     await waitFor(() => {
-      expect(requestTeamAccess).toHaveBeenCalledWith(10);
+      expect(requestTeamAccess).toHaveBeenCalledWith("amber-cobalt-ripple");
     });
     expect(refreshWorkspace).toHaveBeenCalledWith(true);
     expect(toastSuccess).toHaveBeenCalledWith("Access request sent");

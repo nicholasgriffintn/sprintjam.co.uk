@@ -91,7 +91,7 @@ export default function WorkspaceAdminTeams() {
 
   const handleSaveTeam = async () => {
     if (!editingTeam || !renameInput.trim()) return;
-    await updateTeam(editingTeam.slug, {
+    await updateTeam(editingTeam.id, {
       name: renameInput.trim(),
       logoUrl: logoUrlInput.trim() || null,
       accessPolicy,
@@ -108,7 +108,7 @@ export default function WorkspaceAdminTeams() {
 
   const handleDeleteTeamConfirmed = async () => {
     if (!editingTeam) return;
-    await deleteTeam(editingTeam.slug);
+    await deleteTeam(editingTeam.id);
     setIsTeamModalOpen(false);
     setEditingTeam(null);
     setLogoUrlInput("");

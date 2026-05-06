@@ -18,7 +18,7 @@ import {
 
 const navigateToMock = vi.hoisted(() => vi.fn());
 const workspaceDataMock = vi.hoisted(() => ({
-  teams: [] as Array<{ id: number; canAccess: boolean }>,
+  teams: [] as Array<{ id: number; slug: string; canAccess: boolean }>,
   selectedTeamId: null as number | null,
 }));
 

@@ -12,6 +12,7 @@ const workspaceDataMock = {
   user: null as { name: string; email: string; avatar: string } | null,
   teams: [] as Array<{
     id: number;
+    slug: string;
     name: string;
     canAccess: boolean;
     currentUserStatus?: string;

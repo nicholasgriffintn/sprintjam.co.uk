@@ -18,13 +18,13 @@ import {
 import { defaultWorkspaceActionCounts } from "./workspace-action-board-model";
 
 interface UseWorkspaceActionBoardParams {
-  teamId: number;
+  teamSlug: string;
   actionsPage: WorkspaceActionsPage | null;
   processLoops: WorkspaceProcessLoop[];
 }
 
 export function useWorkspaceActionBoard({
-  teamId,
+  teamSlug,
   actionsPage,
   processLoops,
 }: UseWorkspaceActionBoardParams) {
@@ -50,7 +50,7 @@ export function useWorkspaceActionBoard({
     setActions(actionsPage?.actions ?? []);
     setCounts(actionsPage?.counts ?? defaultWorkspaceActionCounts);
     setLoops(processLoops);
-  }, [teamId, actionsPage, processLoops]);
+  }, [teamSlug, actionsPage, processLoops]);
 
   const activeLoops = useMemo(
     () => loops.filter((loop) => loop.status !== "completed"),
@@ -64,7 +64,7 @@ export function useWorkspaceActionBoard({
   ) => {
     setIsRefreshing(true);
     try {
-      const page = await listWorkspaceActionsPage(teamId, {
+      const page = await listWorkspaceActionsPage(teamSlug, {
         status: nextStatus,
         source: nextSource,
         processLoopId: nextLoopId ?? undefined,
@@ -104,7 +104,7 @@ export function useWorkspaceActionBoard({
 
     setIsCreatingAction(true);
     try {
-      const action = await createWorkspaceAction(teamId, {
+      const action = await createWorkspaceAction(teamSlug, {
         title,
         source: "manual",
         processLoopId: selectedLoopId,
@@ -132,7 +132,7 @@ export function useWorkspaceActionBoard({
   ) => {
     setUpdatingActionId(action.id);
     try {
-      const updated = await updateWorkspaceAction(teamId, action.id, {
+      const updated = await updateWorkspaceAction(teamSlug, action.id, {
         status,
       });
       setActions((current) =>

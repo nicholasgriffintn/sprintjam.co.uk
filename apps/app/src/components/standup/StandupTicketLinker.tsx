@@ -122,12 +122,12 @@ function isLinked(
 }
 
 export function StandupTicketLinker({
-  teamId,
+  teamSlug,
   linkedTickets,
   onChange,
   disabled = false,
 }: {
-  teamId: number;
+  teamSlug: string;
   linkedTickets: LinkedTicket[];
   onChange: (tickets: LinkedTicket[]) => void;
   disabled?: boolean;
@@ -139,8 +139,8 @@ export function StandupTicketLinker({
   const [search, setSearch] = useState("");
 
   const integrationsQuery = useQuery({
-    queryKey: ["standup-team-integrations", teamId],
-    queryFn: () => listTeamIntegrations(teamId),
+    queryKey: ["standup-team-integrations", teamSlug],
+    queryFn: () => listTeamIntegrations(teamSlug),
     staleTime: 60_000,
   });
 
@@ -169,22 +169,22 @@ export function StandupTicketLinker({
   }, [selectedBoardId]);
 
   const boardsQuery = useQuery({
-    queryKey: ["standup-ticket-boards", teamId, activeProvider],
+    queryKey: ["standup-ticket-boards", teamSlug, activeProvider],
     enabled: activeProvider !== null,
-    queryFn: () => listTeamIntegrationBoards(teamId, activeProvider!),
+    queryFn: () => listTeamIntegrationBoards(teamSlug, activeProvider!),
     staleTime: 60_000,
   });
 
   const sprintsQuery = useQuery({
     queryKey: [
       "standup-ticket-sprints",
-      teamId,
+      teamSlug,
       activeProvider,
       selectedBoardId,
     ],
     enabled: activeProvider !== null && selectedBoardId.length > 0,
     queryFn: () =>
-      listTeamIntegrationSprints(teamId, activeProvider!, selectedBoardId),
+      listTeamIntegrationSprints(teamSlug, activeProvider!, selectedBoardId),
     staleTime: 60_000,
   });
 
@@ -201,7 +201,7 @@ export function StandupTicketLinker({
   const ticketsQuery = useQuery({
     queryKey: [
       "standup-ticket-results",
-      teamId,
+      teamSlug,
       activeProvider,
       selectedBoardId,
       selectedSprintId,
@@ -211,7 +211,7 @@ export function StandupTicketLinker({
     ],
     enabled: activeProvider !== null && selectedBoardId.length > 0,
     queryFn: () =>
-      searchTeamIntegrationTickets(teamId, activeProvider!, {
+      searchTeamIntegrationTickets(teamSlug, activeProvider!, {
         boardId: selectedBoardId,
         sprintId: selectedSprintId || undefined,
         sprintName: selectedSprint?.name ?? undefined,

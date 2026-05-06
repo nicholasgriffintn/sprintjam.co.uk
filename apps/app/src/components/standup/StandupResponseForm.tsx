@@ -31,7 +31,7 @@ import { StandupTicketLinker } from "./StandupTicketLinker";
 interface StandupResponseFormProps {
   response?: StandupResponse;
   status: StandupData["status"];
-  teamId?: number;
+  teamSlug?: string;
   isModeratorView: boolean;
   isSocketConnected: boolean;
   onSubmit: (payload: StandupResponsePayload) => void;
@@ -83,7 +83,7 @@ function formatTime(timestamp: number) {
 export function StandupResponseForm({
   response,
   status,
-  teamId,
+  teamSlug,
   isModeratorView,
   isSocketConnected,
   onSubmit,
@@ -597,9 +597,9 @@ export function StandupResponseForm({
             </label>
           </section>
 
-          {teamId ? (
+          {teamSlug ? (
             <StandupTicketLinker
-              teamId={teamId}
+              teamSlug={teamSlug}
               linkedTickets={draft.linkedTickets}
               onChange={(linkedTickets) =>
                 setDraft((current) => ({

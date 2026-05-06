@@ -55,6 +55,7 @@ const initialProfile: WorkspaceAuthProfile = {
   teams: [
     {
       id: 10,
+      slug: "amber-cobalt-ripple",
       name: "Platform",
       logoUrl: null,
       organisationId: 1,

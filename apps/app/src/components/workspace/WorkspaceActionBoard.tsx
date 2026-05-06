@@ -27,13 +27,13 @@ import {
 import { useWorkspaceActionBoard } from "./useWorkspaceActionBoard";
 
 interface WorkspaceActionBoardProps {
-  teamId: number;
+  teamSlug: string;
   actionsPage: WorkspaceActionsPage | null;
   processLoops: WorkspaceProcessLoop[];
 }
 
 export function WorkspaceActionBoard({
-  teamId,
+  teamSlug,
   actionsPage,
   processLoops,
 }: WorkspaceActionBoardProps) {
@@ -52,7 +52,7 @@ export function WorkspaceActionBoard({
       updateActionStatus: handleUpdateActionStatus,
     },
     pending: { isCreatingAction, isRefreshing, updatingActionId },
-  } = useWorkspaceActionBoard({ teamId, actionsPage, processLoops });
+  } = useWorkspaceActionBoard({ teamSlug, actionsPage, processLoops });
   const openActions = counts.open + counts.in_progress;
 
   return (

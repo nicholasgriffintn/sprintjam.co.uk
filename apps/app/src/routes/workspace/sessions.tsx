@@ -242,6 +242,7 @@ export default function WorkspaceSessions() {
 
   const handleLoadMoreSessions = async () => {
     if (
+      !selectedTeam ||
       selectedTeamId === null ||
       selectedTeamSessionPage?.pagination.nextOffset === null ||
       selectedTeamSessionPage?.pagination.nextOffset === undefined
@@ -397,7 +398,7 @@ export default function WorkspaceSessions() {
                 {selectedTeam.canAccess ? (
                   <div className="space-y-4">
                     <WorkspaceActionBoard
-                      teamId={selectedTeam.id}
+                      teamSlug={selectedTeam.slug}
                       actionsPage={actionsByTeamId[selectedTeam.id] ?? null}
                       processLoops={
                         processLoopsByTeamId[selectedTeam.id] ?? []
