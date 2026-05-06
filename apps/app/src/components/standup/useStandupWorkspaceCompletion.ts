@@ -65,6 +65,15 @@ export async function completeStandupWorkspaceHistory(
     }
   }
 
+  if (standupData.status === "completed") {
+    return actionsError
+      ? workspaceHistoryWarning(
+          actionsError,
+          "The standup is complete, but workspace actions were not updated.",
+        )
+      : null;
+  }
+
   try {
     await services.completeSession(standupKey);
   } catch (error) {

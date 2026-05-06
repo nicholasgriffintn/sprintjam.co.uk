@@ -181,8 +181,10 @@ const RoomContent = ({
               isQueueEnabled={isQueueEnabled}
               linkedWorkspaceSession={linkedWorkspaceSession}
               linkedWorkspaceTeamName={linkedWorkspaceTeamName}
-              showSaveToWorkspace={showSaveToWorkspace}
-              onOpenSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
+              onWorkspaceSessionSaved={setLinkedWorkspaceSession}
+              onOpenRenameWorkspaceSession={() =>
+                setIsSaveToWorkspaceOpen(true)
+              }
               onOpenGames={() => setIsGamesModalOpen(true)}
             />
           ) : (

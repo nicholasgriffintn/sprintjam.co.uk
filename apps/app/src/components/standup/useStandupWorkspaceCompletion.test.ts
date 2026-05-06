@@ -80,7 +80,40 @@ describe("completeStandupWorkspaceHistory", () => {
       { recordActions, completeSession },
     );
 
+    expect(recordActions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roomKey: "5W362R",
+        blockers: [
+          expect.objectContaining({
+            userName: "Ava",
+            description: "Waiting on review",
+          }),
+        ],
+      }),
+    );
     expect(completeSession).toHaveBeenCalledWith("5W362R");
+    expect(warning).toBeNull();
+  });
+
+  it("does not complete workspace history again when backfilling a completed standup", async () => {
+    const recordActions = vi.fn().mockResolvedValue([1]);
+    const completeSession = vi.fn().mockResolvedValue({ id: 1 });
+
+    const warning = await completeStandupWorkspaceHistory(
+      {
+        standupData: { ...standupData, status: "completed" },
+        standupKey: "5W362R",
+        isAuthenticated: true,
+      },
+      { recordActions, completeSession },
+    );
+
+    expect(recordActions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roomKey: "5W362R",
+      }),
+    );
+    expect(completeSession).not.toHaveBeenCalled();
     expect(warning).toBeNull();
   });
 });

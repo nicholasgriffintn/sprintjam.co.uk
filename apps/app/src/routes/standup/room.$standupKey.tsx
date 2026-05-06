@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
   isRouteErrorResponse,
@@ -109,6 +109,7 @@ function StandupRoomContent({
   const [isStartingPresentation, setIsStartingPresentation] = useState(false);
   const [activeTab, setActiveTab] = useState<StandupTab>("response");
   const [retryNonce, setRetryNonce] = useState(0);
+  const completedWorkspaceSyncRef = useRef<string | null>(null);
   const completeWorkspaceHistory = useStandupWorkspaceCompletion({
     standupData,
     standupKey,
@@ -147,6 +148,22 @@ function StandupRoomContent({
     setRespondedCount(standupData.respondedUsers.length);
     setParticipantCount(standupData.users.length);
   }, [setParticipantCount, setRespondedCount, setStandupStatus, standupData]);
+
+  useEffect(() => {
+    if (
+      standupData?.status !== "completed" ||
+      completedWorkspaceSyncRef.current === standupKey
+    ) {
+      return;
+    }
+
+    completedWorkspaceSyncRef.current = standupKey;
+    completeWorkspaceHistory().then((warning) => {
+      if (warning) {
+        setCompletionNotice(warning);
+      }
+    });
+  }, [completeWorkspaceHistory, standupData?.status, standupKey]);
 
   const onLockResponses = () => {
     setIsLockingResponses(true);
