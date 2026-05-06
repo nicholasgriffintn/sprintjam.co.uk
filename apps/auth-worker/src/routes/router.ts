@@ -32,7 +32,6 @@ import {
   updateTeamSessionController,
   resolveTeamSessionRecapActionController,
   completeSessionByRoomKeyController,
-  recordWheelOutcomeByRoomKeyController,
   getWorkspaceProfileController,
   getWorkspaceStatsController,
   updateWorkspaceProfileController,
@@ -41,6 +40,18 @@ import {
   removeWorkspaceMemberController,
   inviteWorkspaceMemberController,
 } from "../controllers/teams-controller";
+import {
+  createWorkspaceActionController,
+  createWorkspaceActionEventController,
+  createWorkspaceProcessLoopController,
+  linkTeamSessionToProcessLoopController,
+  listWorkspaceActionsController,
+  listWorkspaceProcessLoopsController,
+  recordPlanningActionsByRoomKeyController,
+  recordStandupActionsByRoomKeyController,
+  recordWheelOutcomeByRoomKeyController,
+  updateWorkspaceActionController,
+} from "../controllers/workspace-action-controllers";
 import {
   getTeamSettingsController,
   saveTeamSettingsController,
@@ -309,6 +320,88 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "GET",
+    pattern: /^teams\/(\d+)\/process-loops$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listWorkspaceProcessLoopsController(
+        request,
+        env,
+        teamIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/process-loops$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return createWorkspaceProcessLoopController(
+        request,
+        env,
+        teamIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "GET",
+    pattern: /^teams\/(\d+)\/actions$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return listWorkspaceActionsController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/actions$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return createWorkspaceActionController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "PATCH",
+    pattern: /^teams\/(\d+)\/actions\/(\d+)$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const actionIdResult = requireNumberParam(params[1], "actionId");
+      if (!actionIdResult.ok) return actionIdResult.response;
+      return updateWorkspaceActionController(
+        request,
+        env,
+        teamIdResult.value,
+        actionIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/actions\/(\d+)\/events$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const actionIdResult = requireNumberParam(params[1], "actionId");
+      if (!actionIdResult.ok) return actionIdResult.response;
+      return createWorkspaceActionEventController(
+        request,
+        env,
+        teamIdResult.value,
+        actionIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "GET",
     pattern: /^teams\/(\d+)\/sessions\/(\d+)$/,
     handler: (request, env, params) => {
       const teamIdResult = requireNumberParam(params[0], "teamId");
@@ -316,6 +409,23 @@ const ROUTES: RouteDefinition[] = [
       const sessionIdResult = requireNumberParam(params[1], "sessionId");
       if (!sessionIdResult.ok) return sessionIdResult.response;
       return getTeamSessionController(
+        request,
+        env,
+        teamIdResult.value,
+        sessionIdResult.value,
+      );
+    },
+    paramTypes: ["number", "number"],
+  },
+  {
+    method: "POST",
+    pattern: /^teams\/(\d+)\/sessions\/(\d+)\/link$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      const sessionIdResult = requireNumberParam(params[1], "sessionId");
+      if (!sessionIdResult.ok) return sessionIdResult.response;
+      return linkTeamSessionToProcessLoopController(
         request,
         env,
         teamIdResult.value,
@@ -375,6 +485,20 @@ const ROUTES: RouteDefinition[] = [
     pattern: /^sessions\/wheel-outcomes$/,
     handler: (request, env) =>
       recordWheelOutcomeByRoomKeyController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^sessions\/planning-actions$/,
+    handler: (request, env) =>
+      recordPlanningActionsByRoomKeyController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^sessions\/standup-actions$/,
+    handler: (request, env) =>
+      recordStandupActionsByRoomKeyController(request, env),
     paramTypes: ["none"],
   },
   {

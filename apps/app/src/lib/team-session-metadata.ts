@@ -5,6 +5,8 @@ import {
   isResolvedRecapAction,
   isWorkspaceWheelMode,
   type LinkedSessionRecapActionKind,
+  buildWorkspaceProcessLoopIntent,
+  parseWorkspaceProcessLoopIntent,
   normaliseOptionalString,
   safeJsonParse,
 } from "@sprintjam/utils";
@@ -72,7 +74,6 @@ function parseWheelAutomationProvider(
 interface BuildTeamSessionMetadataOptions {
   type: TeamSessionType;
   teamId?: number;
-  linkSessionContext?: boolean;
   planningFollowUps?: string[];
   date?: Date;
 }
@@ -91,13 +92,6 @@ const normaliseSessionType = (value: unknown): TeamSessionType => {
   return "planning";
 };
 
-const formatSessionContextDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
 export function parsePlanningFollowUpText(value: string): string[] {
   return value
     .split(/\r?\n/)
@@ -108,19 +102,13 @@ export function parsePlanningFollowUpText(value: string): string[] {
 export function buildTeamSessionMetadata({
   type,
   teamId,
-  linkSessionContext = false,
   planningFollowUps = [],
   date = new Date(),
 }: BuildTeamSessionMetadataOptions): Record<string, unknown> {
   const metadata: Record<string, unknown> = { type };
 
-  if (linkSessionContext && teamId !== undefined) {
-    const contextDate = formatSessionContextDate(date);
-    metadata.sessionContext = {
-      id: `team-${teamId}-${contextDate}`,
-      label: `Team sessions ${contextDate}`,
-      intentionallyLinked: true,
-    };
+  if (teamId !== undefined) {
+    metadata.processLoop = buildWorkspaceProcessLoopIntent(teamId, date);
   }
 
   if (planningFollowUps.length > 0) {
@@ -152,20 +140,14 @@ export function getLinkedSessionContext(
   session: Pick<TeamSession, "metadata">,
 ): LinkedSessionContext | null {
   const metadata = parseTeamSessionMetadata(session);
-  const context = metadata?.sessionContext;
-
-  if (!isRecord(context) || context.intentionallyLinked !== true) {
-    return null;
-  }
-
-  const id = normaliseOptionalString(context.id);
-  if (!id) {
+  const processLoop = parseWorkspaceProcessLoopIntent(metadata?.processLoop);
+  if (!processLoop) {
     return null;
   }
 
   return {
-    id,
-    label: normaliseOptionalString(context.label) ?? "Linked sessions",
+    id: processLoop.key,
+    label: processLoop.name,
   };
 }
 

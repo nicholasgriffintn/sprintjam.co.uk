@@ -134,9 +134,9 @@ describe("WheelRoute", () => {
         "531N72",
         expect.objectContaining({
           type: "wheel",
-          sessionContext: expect.objectContaining({
-            id: expect.stringMatching(/^team-7-/),
-            intentionallyLinked: true,
+          processLoop: expect.objectContaining({
+            key: expect.stringMatching(/^team-7-/),
+            name: expect.stringMatching(/^Team loop /),
           }),
         }),
       );

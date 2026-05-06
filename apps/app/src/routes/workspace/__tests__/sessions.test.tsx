@@ -23,6 +23,8 @@ const navigateTo = vi.fn();
 const loaderDataMock = {
   sessionsByTeamId: {},
   teamInsightsByTeamId: {},
+  actionsByTeamId: {},
+  processLoopsByTeamId: {},
 };
 
 const restrictedTeam: WorkspaceTeam = {
@@ -196,6 +198,8 @@ describe("WorkspaceSessions", () => {
     workspaceDataMock.selectedTeamId = restrictedTeam.id;
     loaderDataMock.sessionsByTeamId = {};
     loaderDataMock.teamInsightsByTeamId = {};
+    loaderDataMock.actionsByTeamId = {};
+    loaderDataMock.processLoopsByTeamId = {};
     listTeamSessionsPage.mockReset();
   });
 

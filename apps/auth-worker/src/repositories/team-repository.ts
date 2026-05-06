@@ -14,6 +14,10 @@ import type { D1Database } from "@cloudflare/workers-types";
 import type { PaginationOptions } from "@sprintjam/utils";
 import {
   teamMemberships,
+  workspaceActionEvents,
+  workspaceActionItems,
+  workspaceProcessLoops,
+  workspaceSessionLinks,
   teamSessions,
   teamSettings,
   teams,
@@ -179,6 +183,18 @@ export class TeamRepository {
   }
 
   async deleteTeam(teamId: number): Promise<void> {
+    await this.db
+      .delete(workspaceActionEvents)
+      .where(eq(workspaceActionEvents.teamId, teamId));
+    await this.db
+      .delete(workspaceActionItems)
+      .where(eq(workspaceActionItems.teamId, teamId));
+    await this.db
+      .delete(workspaceSessionLinks)
+      .where(eq(workspaceSessionLinks.teamId, teamId));
+    await this.db
+      .delete(workspaceProcessLoops)
+      .where(eq(workspaceProcessLoops.teamId, teamId));
     await this.db.delete(teamSessions).where(eq(teamSessions.teamId, teamId));
     await this.db
       .delete(teamMemberships)

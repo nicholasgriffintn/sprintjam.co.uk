@@ -1,43 +1,38 @@
 import type {
   AuthWorkerEnv,
-  SpinResult,
   TeamAccessPolicy,
-  WheelMode,
-  WorkspaceWheelMode,
   WorkspaceTeam,
   WorkspaceTeamSessionFilter,
 } from "@sprintjam/types";
 import { sendWorkspaceInviteEmail } from "@sprintjam/services";
 import {
-  appendWorkspaceWheelOutcome,
   buildPaginationMeta,
-  buildWorkspaceWheelOutcome,
-  isRecord,
   isPaginationError,
-  isWorkspaceWheelMode,
   normaliseOptionalString,
   parsePagination,
   resolveTeamSessionRecapAction,
-  safeJsonParse,
   type LinkedSessionRecapActionKind,
 } from "@sprintjam/utils";
 
-import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
+import type { AuthResult } from "../lib/auth";
 import { EMAIL_REGEX } from "../lib/auth-helpers";
 import {
   forbiddenResponse,
   jsonError,
   jsonResponse,
   notFoundResponse,
-  unauthorizedResponse,
 } from "../lib/response";
-import {
-  buildWorkspaceTeam,
-  canAccessTeam,
-  canManageTeam,
-  isActiveTeamMember,
-} from "../lib/team-access";
+import { buildWorkspaceTeam, canManageTeam } from "../lib/team-access";
 import { normalizeOptionalHttpUrl } from "../lib/url-validation";
+import { parseTeamSessionMetadata } from "./controller-parsing";
+import { applySessionWorkspaceMetadata } from "./workspace-action-controllers";
+import {
+  getAuthOrError,
+  getTeamViewer,
+  getWorkspaceViewer,
+  type TeamViewer,
+  type WorkspaceViewer,
+} from "./workspace-viewer";
 
 const MAX_WORKSPACE_NAME_LENGTH = 120;
 const MAX_LOGO_URL_LENGTH = 500;
@@ -51,25 +46,6 @@ const TEAM_SESSION_FILTERS = new Set<WorkspaceTeamSessionFilter>([
   "standup",
   "wheel",
 ]);
-
-type WorkspaceViewer = {
-  user: NonNullable<Awaited<ReturnType<AuthResult["repo"]["getUserById"]>>>;
-  membership: NonNullable<
-    Awaited<ReturnType<AuthResult["repo"]["getOrganisationMembership"]>>
-  >;
-  isWorkspaceAdmin: boolean;
-};
-
-type TeamViewer = WorkspaceViewer & {
-  team: NonNullable<Awaited<ReturnType<AuthResult["repo"]["getTeamById"]>>>;
-  teamMembership: Awaited<
-    ReturnType<AuthResult["repo"]["getTeamMembership"]>
-  > | null;
-  isTeamAdmin: boolean;
-  isTeamMember: boolean;
-  canAccess: boolean;
-};
-
 type TeamMembershipRecord = NonNullable<
   Awaited<ReturnType<AuthResult["repo"]["getTeamMembership"]>>
 >;
@@ -84,54 +60,6 @@ function parseTeamSessionFilter(
   }
 
   return { error: "type must be one of all, planning, standup, or wheel" };
-}
-
-function parseTeamSessionMetadata(
-  metadata: string | null,
-): Record<string, unknown> | null {
-  if (!metadata) {
-    return null;
-  }
-
-  const parsed = safeJsonParse<unknown>(metadata, { silent: true });
-  return isRecord(parsed) ? parsed : null;
-}
-
-function parseWheelOutcomeBody(body: {
-  result?: Partial<SpinResult>;
-  mode?: WheelMode;
-}): { result: SpinResult; mode: WorkspaceWheelMode } | { error: string } {
-  const id = normaliseOptionalString(body.result?.id);
-  const winner = normaliseOptionalString(body.result?.winner);
-  const timestamp = body.result?.timestamp;
-  const removedAfter = body.result?.removedAfter;
-  const mode = body.mode;
-
-  if (!id || !winner) {
-    return { error: "Wheel result id and winner are required" };
-  }
-
-  if (typeof timestamp !== "number" || !Number.isFinite(timestamp)) {
-    return { error: "Wheel result timestamp is required" };
-  }
-
-  if (typeof removedAfter !== "boolean") {
-    return { error: "Wheel result removedAfter flag is required" };
-  }
-
-  if (!isWorkspaceWheelMode(mode)) {
-    return { error: "Wheel mode must be decision, reviewer, or facilitator" };
-  }
-
-  return {
-    mode,
-    result: {
-      id,
-      winner,
-      timestamp,
-      removedAfter,
-    },
-  };
 }
 
 function parseRecapActionBody(body: {
@@ -151,103 +79,6 @@ function parseRecapActionBody(body: {
 
   return {
     error: "Recap action kind must be planning_follow_up or wheel_outcome",
-  };
-}
-
-async function getAuthOrError(
-  request: Request,
-  env: AuthWorkerEnv,
-): Promise<{ result: AuthResult } | { response: Response }> {
-  const result = await authenticateRequest(request, env.DB);
-
-  if (isAuthError(result)) {
-    if (result.code === "unauthorized") {
-      return { response: unauthorizedResponse() };
-    }
-
-    return {
-      response: unauthorizedResponse("Session expired", "session_expired"),
-    };
-  }
-
-  return { result };
-}
-
-async function getWorkspaceViewer(
-  result: AuthResult,
-): Promise<{ viewer: WorkspaceViewer } | { response: Response }> {
-  const user = await result.repo.getUserById(result.userId);
-  if (!user) {
-    return { response: notFoundResponse("User not found") };
-  }
-
-  const membership = await result.repo.getOrganisationMembership(
-    result.userId,
-    user.organisationId,
-  );
-  if (!membership || membership.status !== "active") {
-    return { response: forbiddenResponse("Workspace access is not active") };
-  }
-
-  const isWorkspaceAdmin = await result.repo.isOrganisationAdmin(
-    result.userId,
-    user.organisationId,
-  );
-
-  return {
-    viewer: {
-      user,
-      membership,
-      isWorkspaceAdmin,
-    },
-  };
-}
-
-async function getTeamViewer(
-  result: AuthResult,
-  teamId: number,
-): Promise<{ viewer: TeamViewer } | { response: Response }> {
-  const workspace = await getWorkspaceViewer(result);
-  if ("response" in workspace) {
-    return workspace;
-  }
-
-  const team = await result.repo.getTeamById(teamId);
-  if (!team) {
-    return { response: notFoundResponse("Team not found") };
-  }
-
-  if (team.organisationId !== workspace.viewer.user.organisationId) {
-    return { response: forbiddenResponse() };
-  }
-
-  const teamMembership = await result.repo.getTeamMembership(
-    teamId,
-    result.userId,
-  );
-  const isTeamMember = isActiveTeamMember(team, teamMembership, result.userId);
-  const isTeamAdmin = canManageTeam(
-    team,
-    teamMembership,
-    result.userId,
-    workspace.viewer.isWorkspaceAdmin,
-  );
-  const canAccess = canAccessTeam(
-    team,
-    teamMembership,
-    result.userId,
-    workspace.viewer.isWorkspaceAdmin,
-  );
-
-  return {
-    viewer: {
-      ...workspace.viewer,
-      team,
-      teamMembership,
-      isTeamAdmin,
-      isTeamMember,
-      canAccess,
-    },
   };
 }
 
@@ -1125,6 +956,13 @@ export async function createTeamSessionController(
     auth.result.userId,
     body?.metadata,
   );
+  await applySessionWorkspaceMetadata({
+    repo: auth.result.repo,
+    teamId,
+    sessionId,
+    createdById: auth.result.userId,
+    metadata: body?.metadata,
+  });
   const session = await auth.result.repo.getTeamSessionById(sessionId);
 
   return jsonResponse({ session }, 201);
@@ -1323,67 +1161,6 @@ export async function completeSessionByRoomKeyController(
   if (!updatedSession) {
     return notFoundResponse("Session not found");
   }
-
-  return jsonResponse({ session: updatedSession });
-}
-
-export async function recordWheelOutcomeByRoomKeyController(
-  request: Request,
-  env: AuthWorkerEnv,
-): Promise<Response> {
-  const auth = await getAuthOrError(request, env);
-  if ("response" in auth) {
-    return auth.response;
-  }
-
-  const workspace = await getWorkspaceViewer(auth.result);
-  if ("response" in workspace) {
-    return workspace.response;
-  }
-
-  const body = await request.json<{
-    roomKey?: string;
-    mode?: WheelMode;
-    result?: Partial<SpinResult>;
-  }>();
-  const roomKey = body?.roomKey?.trim();
-  if (!roomKey) {
-    return jsonError("Room key is required", 400);
-  }
-
-  const parsedOutcome = parseWheelOutcomeBody(body);
-  if ("error" in parsedOutcome) {
-    return jsonError(parsedOutcome.error, 400);
-  }
-
-  const repo = auth.result.repo;
-  const session = await repo.getAccessibleTeamSessionByRoomKey(
-    roomKey,
-    workspace.viewer.user.organisationId,
-    auth.result.userId,
-    workspace.viewer.isWorkspaceAdmin,
-  );
-  if (!session) {
-    return notFoundResponse("Session not found");
-  }
-
-  const metadata = parseTeamSessionMetadata(session.metadata);
-  if (metadata?.type !== "wheel") {
-    return jsonError("Session is not a wheel session", 409);
-  }
-
-  const outcome = buildWorkspaceWheelOutcome(
-    parsedOutcome.result,
-    parsedOutcome.mode,
-  );
-  const nextMetadata = appendWorkspaceWheelOutcome(metadata, outcome);
-  const metadataString = JSON.stringify(nextMetadata);
-  if (metadataString.length > 10000) {
-    return jsonError("Metadata is too large (max 10KB)", 400);
-  }
-
-  await repo.updateTeamSessionMetadata(session.id, nextMetadata);
-  const updatedSession = await repo.getTeamSessionById(session.id);
 
   return jsonResponse({ session: updatedSession });
 }

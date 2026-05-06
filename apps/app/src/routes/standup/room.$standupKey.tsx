@@ -17,7 +17,10 @@ import {
 } from "@/context/StandupContext";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { getStoredUserName } from "@/hooks/useUserPersistence";
-import { completeSessionByRoomKey } from "@/lib/workspace-service";
+import {
+  completeSessionByRoomKey,
+  recordStandupActionsByRoomKey,
+} from "@/lib/workspace-service";
 import { HttpError } from "@/lib/errors";
 import { validateName } from "@/utils/validators";
 import { Alert } from "@/components/ui/Alert";
@@ -150,6 +153,23 @@ function StandupRoomContent({
     }
 
     try {
+      await recordStandupActionsByRoomKey({
+        roomKey: standupKey,
+        blockers: standupData.responses
+          .filter(
+            (response) => response.hasBlocker && !response.blockerResolved,
+          )
+          .map((response) => ({
+            userName: response.userName,
+            description: response.blockerDescription ?? null,
+            linkedTickets: response.linkedTickets,
+          })),
+        nextSteps: standupData.responses.map((response) => ({
+          userName: response.userName,
+          description: response.today ?? null,
+          linkedTickets: response.linkedTickets,
+        })),
+      });
       await completeSessionByRoomKey(standupKey);
       setCompletionNotice(null);
     } catch (error) {

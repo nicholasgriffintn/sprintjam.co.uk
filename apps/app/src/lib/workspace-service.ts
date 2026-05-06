@@ -11,6 +11,9 @@ import type {
   ExternalSprintOption,
   ExternalTicketMetadata,
   OAuthProvider,
+  CreateWorkspaceActionInput,
+  RecordPlanningWorkspaceActionsInput,
+  RecordStandupWorkspaceActionsInput,
   SessionStats,
   SaveTeamsCollaborationInstallationInput,
   TeamAccessPolicy,
@@ -20,7 +23,12 @@ import type {
   TeamIntegrationStatus,
   TeamSession,
   TeamSessionsPage,
+  UpdateWorkspaceActionInput,
+  WorkspaceActionsPage,
+  WorkspaceActionSourceFilter,
+  WorkspaceActionStatusFilter,
   WorkspaceTeamSessionFilter,
+  WorkspaceProcessLoop,
   WorkspaceMember,
   WorkspaceInsights,
   WorkspaceInvite,
@@ -295,6 +303,69 @@ export async function listTeamSessionsPage(
   );
 }
 
+export async function listWorkspaceProcessLoops(
+  teamId: number,
+): Promise<WorkspaceProcessLoop[]> {
+  const data = await workspaceRequest<{ loops: WorkspaceProcessLoop[] }>(
+    `${API_BASE_URL}/teams/${teamId}/process-loops`,
+  );
+  return data.loops;
+}
+
+export async function listWorkspaceActionsPage(
+  teamId: number,
+  options: {
+    limit?: number;
+    offset?: number;
+    status?: WorkspaceActionStatusFilter;
+    source?: WorkspaceActionSourceFilter;
+    processLoopId?: number;
+  } = {},
+): Promise<WorkspaceActionsPage> {
+  const params = new URLSearchParams({
+    limit: String(options.limit ?? 50),
+    offset: String(options.offset ?? 0),
+    status: options.status ?? "all",
+    source: options.source ?? "all",
+  });
+  if (options.processLoopId !== undefined) {
+    params.set("processLoopId", String(options.processLoopId));
+  }
+
+  return workspaceRequest<WorkspaceActionsPage>(
+    `${API_BASE_URL}/teams/${teamId}/actions?${params.toString()}`,
+  );
+}
+
+export async function createWorkspaceAction(
+  teamId: number,
+  payload: CreateWorkspaceActionInput,
+) {
+  const data = await workspaceRequest<{ action: WorkspaceActionsPage["actions"][number] }>(
+    `${API_BASE_URL}/teams/${teamId}/actions`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.action;
+}
+
+export async function updateWorkspaceAction(
+  teamId: number,
+  actionId: number,
+  payload: UpdateWorkspaceActionInput,
+) {
+  const data = await workspaceRequest<{ action: WorkspaceActionsPage["actions"][number] }>(
+    `${API_BASE_URL}/teams/${teamId}/actions/${actionId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.action;
+}
+
 export async function listTeamSessions(teamId: number): Promise<TeamSession[]> {
   const data = await listTeamSessionsPage(teamId);
   return data.sessions;
@@ -398,6 +469,32 @@ export async function recordWheelOutcomeByRoomKey(
     },
   );
   return data.session;
+}
+
+export async function recordPlanningActionsByRoomKey(
+  payload: RecordPlanningWorkspaceActionsInput,
+): Promise<number[]> {
+  const data = await workspaceRequest<{ actionIds: number[] }>(
+    `${API_BASE_URL}/sessions/planning-actions`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.actionIds;
+}
+
+export async function recordStandupActionsByRoomKey(
+  payload: RecordStandupWorkspaceActionsInput,
+): Promise<number[]> {
+  const data = await workspaceRequest<{ actionIds: number[] }>(
+    `${API_BASE_URL}/sessions/standup-actions`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.actionIds;
 }
 
 export async function getWorkspaceStats(): Promise<WorkspaceStats | null> {

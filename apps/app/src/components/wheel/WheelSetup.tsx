@@ -377,7 +377,6 @@ export function WheelSetup({ initialWheelKey = "" }: WheelSetupProps) {
                 buildTeamSessionMetadata({
                   type: "wheel",
                   teamId: teamIdForCreate,
-                  linkSessionContext: true,
                 }),
               );
             } catch {

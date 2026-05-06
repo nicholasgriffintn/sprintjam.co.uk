@@ -20,7 +20,6 @@ import { getRecoveryPasskeyStorageKey } from "@/constants";
 import { safeLocalStorage } from "@/utils/storage";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -49,7 +48,6 @@ export default function StandupCreateRoute() {
     validateName(workspaceName).ok ? workspaceName : getStoredUserName(),
   );
   const [passcode, setPasscode] = useState("");
-  const [linkSessionContext, setLinkSessionContext] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +96,6 @@ export default function StandupCreateRoute() {
             buildTeamSessionMetadata({
               type: "standup",
               teamId: teamIdForCreate,
-              linkSessionContext,
             }),
           );
         } catch (workspaceError) {
@@ -243,28 +240,6 @@ export default function StandupCreateRoute() {
                         : "Leave this as personal if you only need a standalone standup room."}
                     </span>
                   </div>
-                  {teamIdForCreate ? (
-                    <div className="flex items-start gap-3 rounded-xl border border-white/50 bg-white/60 p-3 dark:border-white/10 dark:bg-slate-900/40">
-                      <Checkbox
-                        id="standup-link-session-context"
-                        aria-label="Link with today's team sessions"
-                        checked={linkSessionContext}
-                        onCheckedChange={setLinkSessionContext}
-                      />
-                      <span className="space-y-1">
-                        <label
-                          htmlFor="standup-link-session-context"
-                          className="block text-sm font-medium text-slate-900 dark:text-white"
-                        >
-                          Link with today's team sessions
-                        </label>
-                        <span className="block text-sm text-slate-500 dark:text-slate-400">
-                          Include this standup in a shared summary with planning
-                          or wheel sessions from the same team.
-                        </span>
-                      </span>
-                    </div>
-                  ) : null}
                 </div>
               ) : null}
             </div>

@@ -10,12 +10,17 @@ import type {
   teamSettings,
   teams,
   users,
+  workspaceActionEvents,
+  workspaceActionItems,
   workspaceInvites,
   workspaceMemberships,
+  workspaceProcessLoops,
+  workspaceSessionLinks,
 } from "@sprintjam/db";
 import type { RoomSettings, RoundTransitionType } from "./room";
 import type { OAuthProvider } from "./external";
 import type { WheelMode } from "./wheel";
+import type { LinkedTicket } from "./standup";
 
 export type Team = typeof teams.$inferSelect;
 export type TeamMembershipRow = typeof teamMemberships.$inferSelect;
@@ -24,6 +29,10 @@ export type TeamSettingsRow = typeof teamSettings.$inferSelect;
 export type TeamIntegrationRow = typeof teamIntegrations.$inferSelect;
 export type TeamCollaborationInstallationRow =
   typeof teamCollaborationInstallations.$inferSelect;
+export type WorkspaceProcessLoop = typeof workspaceProcessLoops.$inferSelect;
+export type WorkspaceSessionLink = typeof workspaceSessionLinks.$inferSelect;
+export type WorkspaceActionItem = typeof workspaceActionItems.$inferSelect;
+export type WorkspaceActionEvent = typeof workspaceActionEvents.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Organisation = typeof organisations.$inferSelect;
 export type WorkspaceInvite = typeof workspaceInvites.$inferSelect;
@@ -44,12 +53,103 @@ export interface WorkspacePaginationMeta {
 export type WorkspaceTeamSessionType = "planning" | "standup" | "wheel";
 export type WorkspaceTeamSessionFilter = "all" | WorkspaceTeamSessionType;
 
+export type WorkspaceProcessLoopStatus =
+  WorkspaceProcessLoop["status"];
+export type WorkspaceActionSource = WorkspaceActionItem["source"];
+export type WorkspaceActionStatus = WorkspaceActionItem["status"];
+export type WorkspaceActionPriority = WorkspaceActionItem["priority"];
+
+export type WorkspaceActionStatusFilter = "all" | WorkspaceActionStatus;
+export type WorkspaceActionSourceFilter = "all" | WorkspaceActionSource;
+
 export type TeamSessionCounts = Record<WorkspaceTeamSessionFilter, number>;
 
 export interface TeamSessionsPage {
   sessions: TeamSession[];
   pagination: WorkspacePaginationMeta;
   counts: TeamSessionCounts;
+}
+
+export interface WorkspaceActionFilters {
+  status?: WorkspaceActionStatusFilter;
+  source?: WorkspaceActionSourceFilter;
+  processLoopId?: number;
+}
+
+export interface WorkspaceActionsPage {
+  actions: WorkspaceActionItem[];
+  pagination: WorkspacePaginationMeta;
+  counts: Record<WorkspaceActionStatusFilter, number>;
+}
+
+export interface CreateWorkspaceProcessLoopInput {
+  key?: string;
+  name: string;
+  goal?: string | null;
+  status?: WorkspaceProcessLoopStatus;
+  startsAt?: number | null;
+  endsAt?: number | null;
+}
+
+export interface CreateWorkspaceActionInput {
+  processLoopId?: number | null;
+  source?: WorkspaceActionSource;
+  sourceSessionId?: number | null;
+  sourceRef?: string;
+  title: string;
+  detail?: string | null;
+  priority?: WorkspaceActionPriority;
+  ownerUserId?: number | null;
+  ownerName?: string | null;
+  dueAt?: number | null;
+  externalProvider?: string | null;
+  externalTicketKey?: string | null;
+  externalTicketUrl?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface UpdateWorkspaceActionInput {
+  processLoopId?: number | null;
+  title?: string;
+  detail?: string | null;
+  status?: WorkspaceActionStatus;
+  priority?: WorkspaceActionPriority;
+  ownerUserId?: number | null;
+  ownerName?: string | null;
+  dueAt?: number | null;
+  externalProvider?: string | null;
+  externalTicketKey?: string | null;
+  externalTicketUrl?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface CreateWorkspaceActionEventInput {
+  eventType?: WorkspaceActionEvent["eventType"];
+  note?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface RecordStandupWorkspaceActionsInput {
+  roomKey: string;
+  blockers: Array<{
+    userName: string;
+    description?: string | null;
+    linkedTickets?: LinkedTicket[];
+  }>;
+  nextSteps: Array<{
+    userName: string;
+    description?: string | null;
+    linkedTickets?: LinkedTicket[];
+  }>;
+}
+
+export interface RecordPlanningWorkspaceActionsInput {
+  roomKey: string;
+  followUps: Array<{
+    title: string;
+    detail?: string | null;
+    ticketKey?: string | null;
+  }>;
 }
 
 export interface TeamWithSettings extends Team {

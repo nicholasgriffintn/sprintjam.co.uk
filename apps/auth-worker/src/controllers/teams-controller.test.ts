@@ -20,12 +20,21 @@ import {
   updateTeamSessionController,
   resolveTeamSessionRecapActionController,
   completeSessionByRoomKeyController,
-  recordWheelOutcomeByRoomKeyController,
   getWorkspaceProfileController,
   getWorkspaceStatsController,
   updateWorkspaceProfileController,
   inviteWorkspaceMemberController,
 } from "./teams-controller";
+import {
+  createWorkspaceActionController,
+  createWorkspaceProcessLoopController,
+  listWorkspaceActionsController,
+  listWorkspaceProcessLoopsController,
+  recordPlanningActionsByRoomKeyController,
+  recordStandupActionsByRoomKeyController,
+  recordWheelOutcomeByRoomKeyController,
+  updateWorkspaceActionController,
+} from "./workspace-action-controllers";
 import * as auth from "../lib/auth";
 import * as services from "@sprintjam/services";
 
@@ -140,6 +149,25 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
   }),
   updateTeamSessionName: vi.fn(),
   updateTeamSessionMetadata: vi.fn(),
+  getOrCreateWorkspaceProcessLoop: vi.fn(),
+  linkTeamSessionToProcessLoop: vi.fn(),
+  getProcessLoopForSession: vi.fn().mockResolvedValue(null),
+  upsertWorkspaceAction: vi.fn().mockResolvedValue(31),
+  getWorkspaceActionById: vi.fn().mockResolvedValue(null),
+  listWorkspaceProcessLoops: vi.fn().mockResolvedValue([]),
+  createWorkspaceProcessLoop: vi.fn().mockResolvedValue(11),
+  getWorkspaceProcessLoopById: vi.fn().mockResolvedValue(null),
+  listWorkspaceActions: vi.fn().mockResolvedValue([]),
+  getWorkspaceActionCounts: vi.fn().mockResolvedValue({
+    all: 0,
+    open: 0,
+    in_progress: 0,
+    resolved: 0,
+    dismissed: 0,
+  }),
+  updateWorkspaceAction: vi.fn(),
+  createWorkspaceActionEvent: vi.fn().mockResolvedValue(41),
+  listWorkspaceActionEvents: vi.fn().mockResolvedValue([]),
   completeLatestSessionByRoomKey: vi.fn().mockResolvedValue({
     id: 21,
     teamId: 10,
@@ -1018,6 +1046,232 @@ describe("teams-controller", () => {
     );
   });
 
+  it("creates planning actions when saving a session with follow-ups", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "member" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "restricted" })),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
+      getOrCreateWorkspaceProcessLoop: vi.fn().mockResolvedValue({ id: 12 }),
+    });
+    authenticateAs(repo);
+
+    const response = await createTeamSessionController(
+      makeRequest("https://test.com/teams/10/sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Sprint Planning",
+          roomKey: "ROOM-1",
+          metadata: {
+            type: "planning",
+            processLoop: {
+              key: "team-10-2026-05-06",
+              name: "Team loop 2026-05-06",
+              status: "active",
+            },
+            planningFollowUps: ["Review API blocker"],
+          },
+        }),
+      }),
+      env,
+      10,
+    );
+
+    expect(response.status).toBe(201);
+    expect(repo.getOrCreateWorkspaceProcessLoop).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 10,
+        key: "team-10-2026-05-06",
+        createdById: 1,
+      }),
+    );
+    expect(repo.linkTeamSessionToProcessLoop).toHaveBeenCalledWith({
+      teamId: 10,
+      processLoopId: 12,
+      sessionId: 21,
+      linkedById: 1,
+    });
+    expect(repo.upsertWorkspaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 10,
+        processLoopId: 12,
+        sourceSessionId: 21,
+        source: "planning",
+        sourceRef: "planning-follow-up-21-review-api-blocker",
+        title: "Review API blocker",
+      }),
+    );
+  });
+
+  it("creates process loops for accessible teams", async () => {
+    const repo = createRepo({
+      getWorkspaceProcessLoopById: vi.fn().mockResolvedValue({
+        id: 11,
+        teamId: 10,
+        key: "sprint-42",
+        name: "Sprint 42",
+        status: "active",
+      }),
+    });
+    authenticateAs(repo);
+
+    const response = await createWorkspaceProcessLoopController(
+      makeRequest("https://test.com/teams/10/process-loops", {
+        method: "POST",
+        body: JSON.stringify({
+          key: "sprint-42",
+          name: "Sprint 42",
+          status: "active",
+        }),
+      }),
+      env,
+      10,
+    );
+
+    expect(response.status).toBe(201);
+    expect(repo.createWorkspaceProcessLoop).toHaveBeenCalledWith(10, {
+      key: "sprint-42",
+      name: "Sprint 42",
+      goal: null,
+      status: "active",
+      startsAt: null,
+      endsAt: null,
+      createdById: 1,
+    });
+  });
+
+  it("lists process loops for accessible teams", async () => {
+    const repo = createRepo({
+      listWorkspaceProcessLoops: vi.fn().mockResolvedValue([
+        { id: 11, teamId: 10, name: "Sprint 42" },
+      ]),
+    });
+    authenticateAs(repo);
+
+    const response = await listWorkspaceProcessLoopsController(
+      makeRequest("https://test.com/teams/10/process-loops"),
+      env,
+      10,
+    );
+    const data = (await response.json()) as { loops: unknown[] };
+
+    expect(response.status).toBe(200);
+    expect(data.loops).toHaveLength(1);
+  });
+
+  it("lists workspace actions with filters", async () => {
+    const repo = createRepo({
+      listWorkspaceActions: vi.fn().mockResolvedValue([{ id: 31, teamId: 10 }]),
+      getWorkspaceActionCounts: vi.fn().mockResolvedValue({
+        all: 1,
+        open: 1,
+        in_progress: 0,
+        resolved: 0,
+        dismissed: 0,
+      }),
+    });
+    authenticateAs(repo);
+
+    const response = await listWorkspaceActionsController(
+      makeRequest(
+        "https://test.com/teams/10/actions?status=open&source=standup",
+      ),
+      env,
+      10,
+    );
+
+    expect(response.status).toBe(200);
+    expect(repo.listWorkspaceActions).toHaveBeenCalledWith(
+      10,
+      expect.objectContaining({ limit: 50, offset: 0 }),
+      { status: "open", source: "standup", processLoopId: undefined },
+    );
+  });
+
+  it("creates manual workspace actions", async () => {
+    const repo = createRepo({
+      getWorkspaceActionById: vi.fn().mockResolvedValue({
+        id: 31,
+        teamId: 10,
+        source: "manual",
+        title: "Follow up dependency",
+      }),
+    });
+    authenticateAs(repo);
+
+    const response = await createWorkspaceActionController(
+      makeRequest("https://test.com/teams/10/actions", {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Follow up dependency",
+          priority: "high",
+        }),
+      }),
+      env,
+      10,
+    );
+
+    expect(response.status).toBe(201);
+    expect(repo.upsertWorkspaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 10,
+        createdById: 1,
+        source: "manual",
+        title: "Follow up dependency",
+        priority: "high",
+      }),
+    );
+  });
+
+  it("updates workspace action status and records an event", async () => {
+    const repo = createRepo({
+      getWorkspaceActionById: vi
+        .fn()
+        .mockResolvedValueOnce({
+          id: 31,
+          teamId: 10,
+          status: "open",
+        })
+        .mockResolvedValueOnce({
+          id: 31,
+          teamId: 10,
+          status: "resolved",
+        }),
+    });
+    authenticateAs(repo);
+
+    const response = await updateWorkspaceActionController(
+      makeRequest("https://test.com/teams/10/actions/31", {
+        method: "PATCH",
+        body: JSON.stringify({ status: "resolved" }),
+      }),
+      env,
+      10,
+      31,
+    );
+
+    expect(response.status).toBe(200);
+    expect(repo.updateWorkspaceAction).toHaveBeenCalledWith(31, {
+      status: "resolved",
+      resolvedById: 1,
+    });
+    expect(repo.createWorkspaceActionEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 10,
+        actionId: 31,
+        eventType: "status_changed",
+        fromStatus: "open",
+        toStatus: "resolved",
+      }),
+    );
+  });
+
   it("rejects duplicate room links within the workspace", async () => {
     const repo = createRepo({
       isOrganisationAdmin: vi.fn().mockResolvedValue(false),
@@ -1270,7 +1524,7 @@ describe("teams-controller", () => {
     );
   });
 
-  it("records a wheel outcome in linked session metadata", async () => {
+  it("records a wheel outcome as a workspace action", async () => {
     const repo = createRepo({
       getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue({
         id: 21,
@@ -1306,19 +1560,124 @@ describe("teams-controller", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(repo.updateTeamSessionMetadata).toHaveBeenCalledWith(
-      21,
+    expect(repo.upsertWorkspaceAction).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: "wheel",
-        existing: true,
-        wheelOutcomes: [
-          expect.objectContaining({
-            id: "spin-1",
-            mode: "reviewer",
-            resultLabel: "Reviewer",
-            winner: "Ava",
-          }),
-        ],
+        teamId: 10,
+        processLoopId: null,
+        sourceSessionId: 21,
+        source: "wheel",
+        sourceRef: "wheel-outcome-21-spin-1",
+        title: "Reviewer: Ava",
+      }),
+    );
+    expect(repo.updateTeamSessionMetadata).not.toHaveBeenCalled();
+  });
+
+  it("records complete planning follow-ups as workspace actions", async () => {
+    const repo = createRepo({
+      getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue({
+        id: 23,
+        teamId: 10,
+        roomKey: "ROOM-1",
+        name: "Sprint planning",
+        metadata: JSON.stringify({ type: "planning" }),
+      }),
+      getProcessLoopForSession: vi.fn().mockResolvedValue({ id: 12 }),
+    });
+    authenticateAs(repo);
+
+    const response = await recordPlanningActionsByRoomKeyController(
+      makeRequest("https://test.com/sessions/planning-actions", {
+        method: "POST",
+        body: JSON.stringify({
+          roomKey: "ROOM-1",
+          followUps: [
+            {
+              title: "Clarify unknowns",
+              detail: "Check acceptance criteria",
+              ticketKey: "FOLLOW-1",
+            },
+          ],
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(repo.upsertWorkspaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 10,
+        processLoopId: 12,
+        sourceSessionId: 23,
+        source: "planning",
+        sourceRef: "planning-follow-up-23-clarify-unknowns-follow-1",
+        title: "Clarify unknowns",
+      }),
+    );
+  });
+
+  it("records standup blockers as workspace actions", async () => {
+    const repo = createRepo({
+      getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue({
+        id: 22,
+        teamId: 10,
+        roomKey: "STAND-1",
+        name: "Standup",
+        metadata: JSON.stringify({ type: "standup" }),
+      }),
+    });
+    authenticateAs(repo);
+
+    const response = await recordStandupActionsByRoomKeyController(
+      makeRequest("https://test.com/sessions/standup-actions", {
+        method: "POST",
+        body: JSON.stringify({
+          roomKey: "STAND-1",
+          blockers: [
+            {
+              userName: "Ava",
+              description: "Waiting on review",
+              linkedTickets: [
+                {
+                  id: "1",
+                  key: "SJ-2",
+                  title: "Review",
+                  provider: "github",
+                },
+              ],
+            },
+          ],
+          nextSteps: [
+            {
+              userName: "Ben",
+              description: "Finish workspace UI",
+            },
+          ],
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(repo.upsertWorkspaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 10,
+        sourceSessionId: 22,
+        source: "standup",
+        sourceRef: "standup-blocker:ava",
+        title: "Resolve blocker for Ava",
+        priority: "high",
+      }),
+    );
+    expect(repo.upsertWorkspaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 10,
+        sourceSessionId: 22,
+        source: "standup",
+        sourceRef: "standup-next-step:ben",
+        title: "Next step for Ben",
+        detail: "Finish workspace UI",
+        priority: "normal",
       }),
     );
   });
