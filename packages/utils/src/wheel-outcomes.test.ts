@@ -10,7 +10,7 @@ describe("wheel outcome utilities", () => {
   it("keeps only workspace-backed wheel modes", () => {
     expect(isWorkspaceWheelMode("decision")).toBe(true);
     expect(isWorkspaceWheelMode("reviewer")).toBe(true);
-    expect(isWorkspaceWheelMode("speaker_order")).toBe(true);
+    expect(isWorkspaceWheelMode("facilitator")).toBe(true);
     expect(isWorkspaceWheelMode("pair_picker" as never)).toBe(false);
   });
 

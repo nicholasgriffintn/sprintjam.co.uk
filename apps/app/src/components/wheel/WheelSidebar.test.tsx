@@ -9,7 +9,7 @@ import { WheelSidebar } from "./WheelSidebar";
 const baseProps = {
   results: [],
   settings: {
-    mode: "decision" as const,
+    mode: "facilitator" as const,
     removeWinnerAfterSpin: false,
     showConfetti: true,
     playSounds: true,

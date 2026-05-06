@@ -23,8 +23,8 @@ export interface SpinResult {
 }
 
 export type WheelMode =
+  | "facilitator"
   | "decision"
-  | "speaker_order"
   | "reviewer";
 
 export interface WheelSettings {
@@ -107,7 +107,7 @@ export type WheelServerMessage =
   | { type: "pong" };
 
 export const DEFAULT_WHEEL_SETTINGS: WheelSettings = {
-  mode: "decision",
+  mode: "facilitator",
   removeWinnerAfterSpin: false,
   showConfetti: true,
   playSounds: true,
@@ -115,8 +115,8 @@ export const DEFAULT_WHEEL_SETTINGS: WheelSettings = {
 };
 
 export const WHEEL_MODES: WheelMode[] = [
+  "facilitator",
   "decision",
-  "speaker_order",
   "reviewer",
 ];
 

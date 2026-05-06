@@ -1,18 +1,23 @@
 import {
+  CheckCircle2,
   ClipboardCopy,
   Download,
   Link2,
   ListChecks,
 } from "lucide-react";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui";
 import { copyText } from "@/lib/clipboard";
 import {
+  buildLinkedSessionRecapActions,
   buildLinkedSessionSummaries,
+  filterLinkedSessionSummaryActions,
   type LinkedSessionSummary,
 } from "@/lib/team-session-metadata";
+import { resolveTeamSessionRecapAction } from "@/lib/workspace-service";
 import { downloadTextFile } from "@/utils/download";
 import type { TeamSession } from "@sprintjam/types";
 
@@ -30,25 +35,18 @@ function formatSessionTypes(recap: LinkedSessionSummary) {
     .join(" + ");
 }
 
-function buildRecapActions(recap: LinkedSessionSummary) {
-  return [
-    ...recap.planningFollowUps.map((followUp) => ({
-      id: `follow-up-${followUp.source}-${followUp.ticketKey ?? ""}-${followUp.title}`,
-      title: followUp.title,
-      detail: followUp.ticketKey ? `[${followUp.ticketKey}]` : null,
-    })),
-    ...recap.wheelOutcomes.map((outcome) => ({
-      id: `wheel-${outcome.id}`,
-      title: `${outcome.resultLabel}: ${outcome.winner}`,
-      detail: outcome.automation[0]?.label ?? null,
-    })),
-  ];
-}
-
 export function LinkedSessionSummaryPanel({
   sessions,
 }: LinkedSessionSummaryPanelProps) {
-  const recaps = buildLinkedSessionSummaries(sessions);
+  const [hiddenActionIds, setHiddenActionIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [resolvingActionId, setResolvingActionId] = useState<string | null>(
+    null,
+  );
+  const recaps = buildLinkedSessionSummaries(sessions).map((recap) =>
+    filterLinkedSessionSummaryActions(recap, hiddenActionIds),
+  );
 
   if (recaps.length === 0) {
     return null;
@@ -67,6 +65,28 @@ export function LinkedSessionSummaryPanel({
 
   const handleExport = () => {
     downloadTextFile("sprintjam-linked-session-summary.txt", recapText);
+  };
+
+  const handleResolveAction = async (
+    action: ReturnType<typeof buildLinkedSessionRecapActions>[number],
+  ) => {
+    setResolvingActionId(action.id);
+    try {
+      await resolveTeamSessionRecapAction(action.teamId, action.sessionId, {
+        actionId: action.id,
+        kind: action.kind,
+      });
+      setHiddenActionIds((current) => {
+        const next = new Set(current);
+        next.add(action.id);
+        return next;
+      });
+      toast.success("Recap action resolved");
+    } catch {
+      toast.error("Couldn't resolve recap action");
+    } finally {
+      setResolvingActionId(null);
+    }
   };
 
   return (
@@ -102,7 +122,9 @@ export function LinkedSessionSummaryPanel({
 
       <div className="grid gap-3">
         {recaps.map((recap) => {
-          const actions = buildRecapActions(recap);
+          const actions = buildLinkedSessionRecapActions(recap).filter(
+            (action) => !hiddenActionIds.has(action.id),
+          );
 
           return (
             <div
@@ -128,9 +150,9 @@ export function LinkedSessionSummaryPanel({
               {actions.length > 0 ? (
                 <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                   {actions.slice(0, 6).map((action) => (
-                    <li key={action.id} className="flex gap-2">
+                    <li key={action.id} className="flex items-start gap-2">
                       <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
-                      <span>
+                      <span className="min-w-0 flex-1">
                         {action.title}
                         {action.detail ? (
                           <span className="text-slate-400">
@@ -139,6 +161,21 @@ export function LinkedSessionSummaryPanel({
                           </span>
                         ) : null}
                       </span>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        iconOnly
+                        aria-label={`Resolve ${action.title}`}
+                        title="Resolve action"
+                        isLoading={resolvingActionId === action.id}
+                        disabled={Boolean(
+                          resolvingActionId &&
+                            resolvingActionId !== action.id,
+                        )}
+                        className="h-7 w-7 shrink-0 rounded-md border-slate-200 p-1 text-slate-500 shadow-none hover:text-emerald-600 dark:border-slate-700 dark:text-slate-400 dark:hover:text-emerald-300"
+                        icon={<CheckCircle2 className="h-4 w-4" />}
+                        onClick={() => void handleResolveAction(action)}
+                      />
                     </li>
                   ))}
                 </ul>

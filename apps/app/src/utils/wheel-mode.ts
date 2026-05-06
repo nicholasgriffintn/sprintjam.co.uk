@@ -8,18 +8,17 @@ export const WHEEL_MODE_OPTIONS: Array<{
   resultLabel: string;
 }> = [
   {
-    value: "decision",
-    label: "Decision",
+    value: "facilitator",
+    label: "Facilitator",
     description:
-      "Record a team choice that can be shared to Slack or Teams and attached to linked work.",
-    resultLabel: getWorkspaceWheelModeResultLabel("decision"),
+      "Choose a facilitator to kick off the meeting, spin the wheel a few times to determine the order.",
+    resultLabel: getWorkspaceWheelModeResultLabel("facilitator"),
   },
   {
-    value: "speaker_order",
-    label: "Speaker order",
-    description:
-      "Build a facilitation queue for linked planning or standup sessions.",
-    resultLabel: getWorkspaceWheelModeResultLabel("speaker_order"),
+    value: "decision",
+    label: "Decision",
+    description: "Record a team decision or outcome.",
+    resultLabel: getWorkspaceWheelModeResultLabel("decision"),
   },
   {
     value: "reviewer",

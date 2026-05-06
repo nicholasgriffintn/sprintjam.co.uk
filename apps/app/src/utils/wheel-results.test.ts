@@ -23,7 +23,7 @@ const results: SpinResult[] = [
 
 describe("wheel result utilities", () => {
   it("formats latest result first for copying", () => {
-    expect(buildWheelResultsText(results, "speaker_order").split("\n")[0]).toBe(
+    expect(buildWheelResultsText(results, "facilitator").split("\n")[0]).toBe(
       "Speaker 2: Bob removed after spin",
     );
   });
@@ -31,7 +31,7 @@ describe("wheel result utilities", () => {
   it("exports wheel results as csv", () => {
     const csv = buildWheelResultsCsv(results);
 
-    expect(csv).toContain('"Spin","Decision","Mode"');
-    expect(csv).toContain('"2","Bob","Decision","Yes"');
+    expect(csv).toContain('"Spin","Speaker","Mode"');
+    expect(csv).toContain('"2","Bob","Facilitator","Yes"');
   });
 });

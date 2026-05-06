@@ -1,6 +1,10 @@
 import {
+  buildPlanningFollowUpActionId,
+  buildWheelOutcomeActionId,
   isRecord,
+  isResolvedRecapAction,
   isWorkspaceWheelMode,
+  type LinkedSessionRecapActionKind,
   normaliseOptionalString,
   safeJsonParse,
 } from "@sprintjam/utils";
@@ -18,10 +22,24 @@ export interface LinkedSessionContext {
 }
 
 export interface PlanningFollowUp {
+  id: string;
+  sessionId: number;
   title: string;
   detail?: string;
   ticketKey?: string;
   source: TeamSessionType;
+  status?: "resolved";
+  resolvedAt?: number;
+  resolvedById?: number;
+}
+
+export interface LinkedSessionRecapAction {
+  id: string;
+  kind: LinkedSessionRecapActionKind;
+  sessionId: number;
+  teamId: number;
+  title: string;
+  detail?: string | null;
 }
 
 export interface LinkedSessionSummary {
@@ -152,7 +170,7 @@ export function getLinkedSessionContext(
 }
 
 export function getPlanningFollowUps(
-  session: Pick<TeamSession, "metadata">,
+  session: Pick<TeamSession, "id" | "metadata">,
 ): PlanningFollowUp[] {
   const metadata = parseTeamSessionMetadata(session);
   const rawFollowUps = metadata?.planningFollowUps;
@@ -164,9 +182,18 @@ export function getPlanningFollowUps(
   const source = getTeamSessionType(session);
 
   return rawFollowUps.flatMap((followUp): PlanningFollowUp[] => {
+    if (isResolvedRecapAction(followUp)) {
+      return [];
+    }
+
+    const id = buildPlanningFollowUpActionId(session.id, followUp);
+    if (!id) {
+      return [];
+    }
+
     if (typeof followUp === "string") {
       const title = normaliseOptionalString(followUp);
-      return title ? [{ title, source }] : [];
+      return title ? [{ id, sessionId: session.id, title, source }] : [];
     }
 
     if (!isRecord(followUp)) {
@@ -181,6 +208,8 @@ export function getPlanningFollowUps(
     return [
       {
         title,
+        id,
+        sessionId: session.id,
         detail: normaliseOptionalString(followUp.detail),
         ticketKey: normaliseOptionalString(followUp.ticketKey),
         source,
@@ -210,7 +239,7 @@ function parseWheelAutomationSuggestion(
 }
 
 export function getWheelOutcomes(
-  session: Pick<TeamSession, "metadata">,
+  session: Pick<TeamSession, "id" | "metadata">,
 ): WorkspaceWheelOutcome[] {
   const metadata = parseTeamSessionMetadata(session);
   const rawOutcomes = metadata?.wheelOutcomes;
@@ -220,15 +249,21 @@ export function getWheelOutcomes(
   }
 
   return rawOutcomes.flatMap((outcome): WorkspaceWheelOutcome[] => {
+    if (isResolvedRecapAction(outcome)) {
+      return [];
+    }
+
     if (!isRecord(outcome) || !isWorkspaceWheelMode(outcome.mode)) {
       return [];
     }
 
-    const id = normaliseOptionalString(outcome.id);
+    const outcomeId = normaliseOptionalString(outcome.id);
+    const id = buildWheelOutcomeActionId(session.id, outcomeId);
     const winner = normaliseOptionalString(outcome.winner);
     const resultLabel = normaliseOptionalString(outcome.resultLabel);
     if (
       !id ||
+      !outcomeId ||
       !winner ||
       !resultLabel ||
       typeof outcome.timestamp !== "number" ||
@@ -240,7 +275,8 @@ export function getWheelOutcomes(
 
     return [
       {
-        id,
+        id: outcomeId,
+        sessionId: session.id,
         mode: outcome.mode,
         resultLabel,
         winner,
@@ -256,6 +292,78 @@ export function getWheelOutcomes(
       },
     ];
   });
+}
+
+export function buildLinkedSessionRecapActions(
+  recap: LinkedSessionSummary,
+): LinkedSessionRecapAction[] {
+  return [
+    ...recap.planningFollowUps.flatMap((followUp) => {
+      const session = recap.sessions.find(
+        (candidate) => candidate.id === followUp.sessionId,
+      );
+
+      return session
+        ? [
+            {
+              id: followUp.id,
+              kind: "planning_follow_up" as const,
+              sessionId: followUp.sessionId,
+              teamId: session.teamId,
+              title: followUp.title,
+              detail: followUp.ticketKey ? `[${followUp.ticketKey}]` : null,
+            },
+          ]
+        : [];
+    }),
+    ...recap.wheelOutcomes.flatMap((outcome) => {
+      const sessionId = outcome.sessionId;
+      const session = recap.sessions.find(
+        (candidate) => candidate.id === sessionId,
+      );
+      const id =
+        typeof sessionId === "number"
+          ? buildWheelOutcomeActionId(sessionId, outcome.id)
+          : null;
+
+      return id && session
+        ? [
+            {
+              id,
+              kind: "wheel_outcome" as const,
+              sessionId: session.id,
+              teamId: session.teamId,
+              title: `${outcome.resultLabel}: ${outcome.winner}`,
+              detail: outcome.automation[0]?.label ?? null,
+            },
+          ]
+        : [];
+    }),
+  ];
+}
+
+export function filterLinkedSessionSummaryActions(
+  recap: LinkedSessionSummary,
+  hiddenActionIds: ReadonlySet<string>,
+): LinkedSessionSummary {
+  const nextRecap: Omit<LinkedSessionSummary, "recapText"> = {
+    ...recap,
+    planningFollowUps: recap.planningFollowUps.filter(
+      (followUp) => !hiddenActionIds.has(followUp.id),
+    ),
+    wheelOutcomes: recap.wheelOutcomes.filter((outcome) => {
+      const actionId =
+        typeof outcome.sessionId === "number"
+          ? buildWheelOutcomeActionId(outcome.sessionId, outcome.id)
+          : null;
+      return !actionId || !hiddenActionIds.has(actionId);
+    }),
+  };
+
+  return {
+    ...nextRecap,
+    recapText: buildLinkedSessionSummaryText(nextRecap),
+  };
 }
 
 export function buildLinkedSessionSummaryText(

@@ -81,8 +81,15 @@ describe("team-session-metadata", () => {
     );
 
     expect(getPlanningFollowUps(session)).toEqual([
-      { title: "Review release blocker", source: "standup" },
       {
+        id: "planning-follow-up-1-review-release-blocker",
+        sessionId: 1,
+        title: "Review release blocker",
+        source: "standup",
+      },
+      {
+        id: "planning-follow-up-1-split-deployment-story-sj-44",
+        sessionId: 1,
         title: "Split deployment story",
         detail: "Auth deploy still blocked",
         ticketKey: "SJ-44",
@@ -120,6 +127,7 @@ describe("team-session-metadata", () => {
     expect(getWheelOutcomes(session)).toEqual([
       expect.objectContaining({
         id: "spin-1",
+        sessionId: 1,
         mode: "reviewer",
         resultLabel: "Reviewer",
         winner: "Ava",
@@ -199,12 +207,70 @@ describe("team-session-metadata", () => {
     expect(recaps).toHaveLength(1);
     expect(recaps[0]?.sessionTypes).toEqual(["standup", "wheel"]);
     expect(recaps[0]?.planningFollowUps).toEqual([
-      { title: "Estimate blocked API", ticketKey: "API-1", source: "standup" },
+      {
+        id: "planning-follow-up-2-estimate-blocked-api-api-1",
+        sessionId: 2,
+        title: "Estimate blocked API",
+        ticketKey: "API-1",
+        source: "standup",
+      },
     ]);
     expect(recaps[0]?.wheelOutcomes).toEqual([
       expect.objectContaining({ resultLabel: "Decision", winner: "Ship it" }),
     ]);
     expect(recaps[0]?.recapText).toContain("Sprint 44 session");
     expect(recaps[0]?.recapText).toContain("Decision: Ship it");
+  });
+
+  it("excludes resolved recap actions from linked summaries", () => {
+    const sessionContext = {
+      id: "sprint-44",
+      label: "Sprint 44 session",
+      intentionallyLinked: true,
+    };
+    const recaps = buildLinkedSessionSummaries([
+      createSession(
+        JSON.stringify({
+          type: "standup",
+          sessionContext,
+          planningFollowUps: [
+            {
+              title: "Estimate blocked API",
+              status: "resolved",
+              resolvedAt: 1_700_000_000_000,
+            },
+            "Review release blocker",
+          ],
+        }),
+        { id: 2, roomKey: "STAND44", name: "Standup", createdAt: 1 },
+      ),
+      createSession(
+        JSON.stringify({
+          type: "wheel",
+          sessionContext,
+          wheelOutcomes: [
+            {
+              id: "spin-1",
+              mode: "decision",
+              resultLabel: "Decision",
+              winner: "Ship it",
+              timestamp: 1_700_000_000_000,
+              removedAfter: false,
+              recordedAt: 1_700_000_000_100,
+              status: "resolved",
+              automation: [],
+            },
+          ],
+        }),
+        { id: 3, roomKey: "WHEEL44", name: "Wheel", createdAt: 2 },
+      ),
+    ]);
+
+    expect(recaps[0]?.planningFollowUps).toEqual([
+      expect.objectContaining({ title: "Review release blocker" }),
+    ]);
+    expect(recaps[0]?.wheelOutcomes).toEqual([]);
+    expect(recaps[0]?.recapText).not.toContain("Estimate blocked API");
+    expect(recaps[0]?.recapText).not.toContain("Decision: Ship it");
   });
 });

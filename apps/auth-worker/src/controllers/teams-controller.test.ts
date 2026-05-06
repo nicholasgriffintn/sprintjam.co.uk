@@ -18,6 +18,7 @@ import {
   createTeamSessionController,
   getTeamSessionByRoomKeyController,
   updateTeamSessionController,
+  resolveTeamSessionRecapActionController,
   completeSessionByRoomKeyController,
   recordWheelOutcomeByRoomKeyController,
   getWorkspaceProfileController,
@@ -1131,6 +1132,121 @@ describe("teams-controller", () => {
     expect(response.status).toBe(200);
     expect(data.session.name).toBe("After");
     expect(repo.updateTeamSessionName).toHaveBeenCalledWith(21, "After");
+  });
+
+  it("resolves a recap follow-up in session metadata", async () => {
+    const repo = createRepo({
+      getTeamSessionById: vi
+        .fn()
+        .mockResolvedValueOnce({
+          id: 21,
+          teamId: 10,
+          roomKey: "STAND-1",
+          name: "Standup",
+          metadata: JSON.stringify({
+            type: "standup",
+            planningFollowUps: ["Review API blocker"],
+          }),
+        })
+        .mockResolvedValueOnce({
+          id: 21,
+          teamId: 10,
+          roomKey: "STAND-1",
+          name: "Standup",
+        }),
+    });
+    authenticateAs(repo);
+
+    const response = await resolveTeamSessionRecapActionController(
+      makeRequest("https://test.com/teams/10/sessions/21/recap-actions/resolve", {
+        method: "POST",
+        body: JSON.stringify({
+          actionId: "planning-follow-up-21-review-api-blocker",
+          kind: "planning_follow_up",
+        }),
+      }),
+      env,
+      10,
+      21,
+    );
+
+    expect(response.status).toBe(200);
+    expect(repo.updateTeamSessionMetadata).toHaveBeenCalledWith(
+      21,
+      expect.objectContaining({
+        type: "standup",
+        planningFollowUps: [
+          expect.objectContaining({
+            title: "Review API blocker",
+            status: "resolved",
+            resolvedById: 1,
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("resolves a wheel outcome in session metadata", async () => {
+    const repo = createRepo({
+      getTeamSessionById: vi
+        .fn()
+        .mockResolvedValueOnce({
+          id: 21,
+          teamId: 10,
+          roomKey: "WHEEL-1",
+          name: "Wheel",
+          metadata: JSON.stringify({
+            type: "wheel",
+            wheelOutcomes: [
+              {
+                id: "spin-1",
+                mode: "decision",
+                resultLabel: "Decision",
+                winner: "Ship it",
+                timestamp: 1_700_000_000_000,
+                removedAfter: false,
+                recordedAt: 1_700_000_000_100,
+                automation: [],
+              },
+            ],
+          }),
+        })
+        .mockResolvedValueOnce({
+          id: 21,
+          teamId: 10,
+          roomKey: "WHEEL-1",
+          name: "Wheel",
+        }),
+    });
+    authenticateAs(repo);
+
+    const response = await resolveTeamSessionRecapActionController(
+      makeRequest("https://test.com/teams/10/sessions/21/recap-actions/resolve", {
+        method: "POST",
+        body: JSON.stringify({
+          actionId: "wheel-outcome-21-spin-1",
+          kind: "wheel_outcome",
+        }),
+      }),
+      env,
+      10,
+      21,
+    );
+
+    expect(response.status).toBe(200);
+    expect(repo.updateTeamSessionMetadata).toHaveBeenCalledWith(
+      21,
+      expect.objectContaining({
+        type: "wheel",
+        wheelOutcomes: [
+          expect.objectContaining({
+            id: "spin-1",
+            status: "resolved",
+            resolvedById: 1,
+          }),
+        ],
+      }),
+    );
   });
 
   it("completes the latest room session with workspace scope", async () => {

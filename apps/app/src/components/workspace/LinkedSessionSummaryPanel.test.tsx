@@ -1,12 +1,21 @@
 /**
  * @vitest-environment jsdom
  */
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TeamSession } from "@sprintjam/types";
 
 import { LinkedSessionSummaryPanel } from "@/components/workspace/LinkedSessionSummaryPanel";
+import { resolveTeamSessionRecapAction } from "@/lib/workspace-service";
+
+vi.mock("@/lib/workspace-service", () => ({
+  resolveTeamSessionRecapAction: vi.fn(),
+}));
+
+const resolveTeamSessionRecapActionMock = vi.mocked(
+  resolveTeamSessionRecapAction,
+);
 
 function createSession(
   metadata: Record<string, unknown> | null,
@@ -26,6 +35,10 @@ function createSession(
 }
 
 describe("LinkedSessionSummaryPanel", () => {
+  beforeEach(() => {
+    resolveTeamSessionRecapActionMock.mockReset();
+  });
+
   it("renders combined recap only for intentionally linked sessions", () => {
     const sessionContext = {
       id: "sprint-44",
@@ -80,6 +93,54 @@ describe("LinkedSessionSummaryPanel", () => {
     expect(screen.getByText("Estimate blocked API")).toBeTruthy();
     expect(screen.getByText(/Reviewer: Ava/)).toBeTruthy();
     expect(screen.queryByText("Planning")).toBeNull();
+  });
+
+  it("resolves recap actions and removes them from the card", async () => {
+    resolveTeamSessionRecapActionMock.mockResolvedValue(
+      createSession(null, { id: 2 }),
+    );
+    const sessionContext = {
+      id: "sprint-44",
+      label: "Sprint 44 session",
+      intentionallyLinked: true,
+    };
+
+    render(
+      <LinkedSessionSummaryPanel
+        sessions={[
+          createSession(
+            {
+              type: "standup",
+              sessionContext,
+              planningFollowUps: [
+                { title: "Estimate blocked API", ticketKey: "API-1" },
+              ],
+            },
+            { id: 2, name: "Standup", roomKey: "STAND44" },
+          ),
+          createSession(
+            {
+              type: "wheel",
+              sessionContext,
+              wheelOutcomes: [],
+            },
+            { id: 3, name: "Wheel", roomKey: "WHEEL44" },
+          ),
+        ]}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Resolve Estimate blocked API" }),
+    );
+
+    await waitFor(() => {
+      expect(resolveTeamSessionRecapActionMock).toHaveBeenCalledWith(7, 2, {
+        actionId: "planning-follow-up-2-estimate-blocked-api-api-1",
+        kind: "planning_follow_up",
+      });
+    });
+    expect(screen.queryByText("Estimate blocked API")).toBeNull();
   });
 
   it("does not render for unlinked sessions", () => {

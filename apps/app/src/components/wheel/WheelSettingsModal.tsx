@@ -56,7 +56,7 @@ export function WheelSettingsModal({
             </label>
             <select
               id="wheel-mode"
-              value={draftSettings.mode ?? "decision"}
+              value={draftSettings.mode ?? "facilitator"}
               onChange={(event) => {
                 const nextMode = event.target.value;
                 if (!isWheelMode(nextMode)) {

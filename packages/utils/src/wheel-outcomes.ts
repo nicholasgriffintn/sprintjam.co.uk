@@ -13,13 +13,13 @@ const WORKSPACE_WHEEL_MODE_LABELS: Record<
 > = {
   decision: { resultLabel: "Decision" },
   reviewer: { resultLabel: "Reviewer" },
-  speaker_order: { resultLabel: "Speaker" },
+  facilitator: { resultLabel: "Speaker" },
 };
 
 export function isWorkspaceWheelMode(
   mode: unknown,
 ): mode is WorkspaceWheelMode {
-  return mode === "decision" || mode === "reviewer" || mode === "speaker_order";
+  return mode === "decision" || mode === "reviewer" || mode === "facilitator";
 }
 
 export function getWorkspaceWheelModeResultLabel(

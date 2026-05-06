@@ -34,6 +34,7 @@ import type {
   SpinResult,
   WheelMode,
 } from "@sprintjam/types";
+import type { LinkedSessionRecapActionKind } from "@sprintjam/utils";
 
 export type MfaMethod = "totp" | "webauthn";
 
@@ -350,6 +351,21 @@ export async function updateTeamSession(
     `${API_BASE_URL}/teams/${teamId}/sessions/${sessionId}`,
     {
       method: "PUT",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.session;
+}
+
+export async function resolveTeamSessionRecapAction(
+  teamId: number,
+  sessionId: number,
+  payload: { actionId: string; kind: LinkedSessionRecapActionKind },
+): Promise<TeamSession> {
+  const data = await workspaceRequest<{ session: TeamSession }>(
+    `${API_BASE_URL}/teams/${teamId}/sessions/${sessionId}/recap-actions/resolve`,
+    {
+      method: "POST",
       body: JSON.stringify(payload),
     },
   );

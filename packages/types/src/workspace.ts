@@ -139,7 +139,7 @@ export interface SessionTimelineData {
 
 export type WorkspaceWheelMode = Extract<
   WheelMode,
-  "decision" | "reviewer" | "speaker_order"
+  "decision" | "reviewer" | "facilitator"
 >;
 
 export interface WorkspaceWheelAutomationSuggestion {
@@ -150,12 +150,16 @@ export interface WorkspaceWheelAutomationSuggestion {
 
 export interface WorkspaceWheelOutcome {
   id: string;
+  sessionId?: number;
   mode: WorkspaceWheelMode;
   resultLabel: string;
   winner: string;
   timestamp: number;
   removedAfter: boolean;
   recordedAt: number;
+  status?: "resolved";
+  resolvedAt?: number;
+  resolvedById?: number;
   automation: WorkspaceWheelAutomationSuggestion[];
 }
 

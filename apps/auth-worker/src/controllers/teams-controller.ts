@@ -17,7 +17,9 @@ import {
   isWorkspaceWheelMode,
   normaliseOptionalString,
   parsePagination,
+  resolveTeamSessionRecapAction,
   safeJsonParse,
+  type LinkedSessionRecapActionKind,
 } from "@sprintjam/utils";
 
 import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
@@ -118,7 +120,7 @@ function parseWheelOutcomeBody(body: {
   }
 
   if (!isWorkspaceWheelMode(mode)) {
-    return { error: "Wheel mode must be decision, reviewer, or speaker_order" };
+    return { error: "Wheel mode must be decision, reviewer, or facilitator" };
   }
 
   return {
@@ -129,6 +131,26 @@ function parseWheelOutcomeBody(body: {
       timestamp,
       removedAfter,
     },
+  };
+}
+
+function parseRecapActionBody(body: {
+  actionId?: unknown;
+  kind?: unknown;
+}):
+  | { actionId: string; kind: LinkedSessionRecapActionKind }
+  | { error: string } {
+  const actionId = normaliseOptionalString(body.actionId);
+  if (!actionId) {
+    return { error: "Recap action id is required" };
+  }
+
+  if (body.kind === "planning_follow_up" || body.kind === "wheel_outcome") {
+    return { actionId, kind: body.kind };
+  }
+
+  return {
+    error: "Recap action kind must be planning_follow_up or wheel_outcome",
   };
 }
 
@@ -1207,6 +1229,64 @@ export async function updateTeamSessionController(
   }
 
   await auth.result.repo.updateTeamSessionName(sessionId, name);
+  const updatedSession = await auth.result.repo.getTeamSessionById(sessionId);
+
+  return jsonResponse({ session: updatedSession });
+}
+
+export async function resolveTeamSessionRecapActionController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+  sessionId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  if (!teamViewer.viewer.canAccess) {
+    return forbiddenResponse("You do not have access to team sessions");
+  }
+
+  const session = await auth.result.repo.getTeamSessionById(sessionId);
+  if (!session || session.teamId !== teamId) {
+    return notFoundResponse("Session not found");
+  }
+
+  const body = await request.json<{
+    actionId?: unknown;
+    kind?: unknown;
+  }>();
+  const parsedBody = parseRecapActionBody(body);
+  if ("error" in parsedBody) {
+    return jsonError(parsedBody.error, 400);
+  }
+
+  const resolved = resolveTeamSessionRecapAction({
+    metadata: parseTeamSessionMetadata(session.metadata),
+    kind: parsedBody.kind,
+    sessionId,
+    actionId: parsedBody.actionId,
+    resolvedAt: Date.now(),
+    resolvedById: auth.result.userId,
+  });
+
+  if (!resolved.matched) {
+    return notFoundResponse("Recap action not found");
+  }
+
+  const metadataString = JSON.stringify(resolved.metadata);
+  if (metadataString.length > 10000) {
+    return jsonError("Metadata is too large (max 10KB)", 400);
+  }
+
+  await auth.result.repo.updateTeamSessionMetadata(sessionId, resolved.metadata);
   const updatedSession = await auth.result.repo.getTeamSessionById(sessionId);
 
   return jsonResponse({ session: updatedSession });
