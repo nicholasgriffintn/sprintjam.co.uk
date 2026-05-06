@@ -204,6 +204,14 @@ describe("WorkspaceSessions", () => {
     listTeamSessionsPage.mockReset();
   });
 
+  it("shows sessions and insights as top-level workspace tabs", () => {
+    render(<WorkspaceSessions />);
+
+    expect(screen.getByRole("tab", { name: "Sessions" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Insights" })).toBeTruthy();
+    expect(screen.getByLabelText("Team")).toBeTruthy();
+  });
+
   it("requests access for a restricted team", async () => {
     requestTeamAccess.mockResolvedValue(undefined);
 
