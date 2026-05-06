@@ -51,7 +51,14 @@ const insights: WorkspaceInsights = {
   questionMarkRate: 8,
   teamCount: 2,
   sessionsAnalyzed: 5,
-  topContributors: [],
+  topContributors: [
+    {
+      userName: "Asha Patel",
+      totalVotes: 8,
+      participationRate: 90,
+      consensusAlignment: 75,
+    },
+  ],
 };
 
 describe("InsightsGrid", () => {
@@ -64,5 +71,7 @@ describe("InsightsGrid", () => {
     expect(screen.getByText("Standup response")).toBeTruthy();
     expect(screen.getByText("Average health")).toBeTruthy();
     expect(screen.getByText("Wheel spins")).toBeTruthy();
+    expect(screen.queryByText("Top contributors")).toBeNull();
+    expect(screen.queryByText("Asha Patel")).toBeNull();
   });
 });

@@ -11,6 +11,7 @@ import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { StatCards } from "@/components/workspace/StatCards";
 import { SessionsChart } from "@/components/workspace/SessionsChart";
 import { InsightsGrid } from "@/components/workspace/InsightsGrid";
+import { WorkspaceInsightWidgets } from "@/components/workspace/WorkspaceInsightWidgets";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Button } from "@/components/ui/Button";
 import { BetaBadge } from "@/components/BetaBadge";
@@ -123,9 +124,12 @@ export default function WorkspaceDashboard() {
         />
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-          <SurfaceCard>
-            <SessionsChart data={sessionsOverTime} />
-          </SurfaceCard>
+          <div className="space-y-6">
+            <WorkspaceInsightWidgets insights={insights} />
+            <SurfaceCard>
+              <SessionsChart data={sessionsOverTime} />
+            </SurfaceCard>
+          </div>
 
           <SurfaceCard>
             <InsightsGrid insights={insights} />

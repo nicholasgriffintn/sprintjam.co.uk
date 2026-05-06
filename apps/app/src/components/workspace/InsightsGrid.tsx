@@ -1,11 +1,6 @@
-import {
-  Users,
-  TrendingUp,
-  Award,
-} from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { SuggestedFocusCards } from "@/components/workspace/SuggestedFocusCards";
 import { CeremonyCountStrip } from "@/components/workspace/InsightActivitySummary";
 import {
   buildPlanningInsightMetrics,
@@ -13,7 +8,6 @@ import {
   buildWheelInsightMetrics,
   type WorkspaceInsightMetric,
 } from "@/components/workspace/workspaceInsightMetrics";
-import { buildInsightPrompts } from "@/utils/workspace-insight-prompts";
 import type { WorkspaceInsights } from "@sprintjam/types";
 
 interface InsightsGridProps {
@@ -56,9 +50,12 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
   if (!insights) {
     return (
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-800/50">
-        <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300">
-          Collaboration insights
-        </h3>
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-blue-500" />
+          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            Collaboration Insights
+          </h3>
+        </div>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           No insights available yet
         </p>
@@ -74,8 +71,6 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
     velocityDescription: "Tickets estimated per hour",
     uncertaintyDescription: '"?" votes indicating uncertainty',
   });
-  const hasContributors = insights.topContributors.length > 0;
-  const insightPrompts = buildInsightPrompts(insights);
   const hasPlanningRounds = insights.totalRounds > 0;
   const hasStandupInsights = insights.standup.sessionsAnalyzed > 0;
   const hasWheelInsights = insights.wheel.sessionsAnalyzed > 0;
@@ -85,9 +80,12 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-500 dark:text-slate-300">
-          Collaboration insights
-        </h3>
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-blue-500" />
+          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            Collaboration Insights
+          </h3>
+        </div>
         <span className="text-xs text-slate-400 dark:text-slate-500">
           {insights.sessionsAnalyzed} sessions analysed
         </span>
@@ -150,53 +148,6 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
           )}
         </div>
       </div>
-
-      {insightPrompts.length > 0 ? (
-        <div className="space-y-2 border-t border-slate-100 pt-3 dark:border-slate-800">
-          <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
-            Suggested focus
-          </h4>
-          <SuggestedFocusCards prompts={insightPrompts} />
-        </div>
-      ) : null}
-
-      {hasContributors && (
-        <div className="pt-2">
-          <div className="flex items-center gap-2 mb-3">
-            <Award className="h-4 w-4 text-amber-500" />
-            <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
-              Top contributors
-            </h4>
-          </div>
-          <div className="space-y-2">
-            {insights.topContributors.slice(0, 5).map((contributor, index) => (
-              <div
-                key={contributor.userName}
-                className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/50"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                    {index + 1}
-                  </span>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[120px]">
-                    {contributor.userName}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    {contributor.totalVotes} votes
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    {Math.round(contributor.consensusAlignment)}% aligned
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
