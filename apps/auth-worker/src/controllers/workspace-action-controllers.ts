@@ -541,7 +541,10 @@ export async function listWorkspaceActionsController(
       source,
       processLoopId,
     }),
-    auth.result.repo.getWorkspaceActionCounts(teamId),
+    auth.result.repo.getWorkspaceActionCounts(teamId, {
+      source,
+      processLoopId,
+    }),
   ]);
 
   return jsonResponse({

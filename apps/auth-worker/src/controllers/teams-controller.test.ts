@@ -1180,7 +1180,7 @@ describe("teams-controller", () => {
 
     const response = await listWorkspaceActionsController(
       makeRequest(
-        "https://test.com/teams/10/actions?status=open&source=standup",
+        "https://test.com/teams/10/actions?status=open&source=standup&processLoopId=12",
       ),
       env,
       10,
@@ -1190,7 +1190,11 @@ describe("teams-controller", () => {
     expect(repo.listWorkspaceActions).toHaveBeenCalledWith(
       10,
       expect.objectContaining({ limit: 50, offset: 0 }),
-      { status: "open", source: "standup", processLoopId: undefined },
+      { status: "open", source: "standup", processLoopId: 12 },
+    );
+    expect(repo.getWorkspaceActionCounts).toHaveBeenCalledWith(
+      10,
+      { source: "standup", processLoopId: 12 },
     );
   });
 

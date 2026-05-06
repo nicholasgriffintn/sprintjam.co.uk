@@ -239,29 +239,45 @@ export class WorkspaceActionRepository {
   async countActions(
     teamId: number,
     status: WorkspaceActionStatusFilter = "all",
+    filters: {
+      source?: WorkspaceActionSourceFilter;
+      processLoopId?: number;
+    } = {},
   ): Promise<number> {
-    const whereCondition =
-      status === "all"
-        ? eq(workspaceActionItems.teamId, teamId)
-        : and(
-            eq(workspaceActionItems.teamId, teamId),
-            eq(workspaceActionItems.status, status),
-          );
+    const conditions = [eq(workspaceActionItems.teamId, teamId)];
+    if (status !== "all") {
+      conditions.push(eq(workspaceActionItems.status, status));
+    }
+    if (filters.source && filters.source !== "all") {
+      conditions.push(eq(workspaceActionItems.source, filters.source));
+    }
+    if (filters.processLoopId !== undefined) {
+      conditions.push(
+        eq(workspaceActionItems.processLoopId, filters.processLoopId),
+      );
+    }
+
     const result = await this.db
       .select({ value: count() })
       .from(workspaceActionItems)
-      .where(whereCondition);
+      .where(and(...conditions));
 
     return result[0]?.value ?? 0;
   }
 
-  async getActionCounts(teamId: number) {
+  async getActionCounts(
+    teamId: number,
+    filters: {
+      source?: WorkspaceActionSourceFilter;
+      processLoopId?: number;
+    } = {},
+  ) {
     const [all, open, inProgress, resolved, dismissed] = await Promise.all([
-      this.countActions(teamId, "all"),
-      this.countActions(teamId, "open"),
-      this.countActions(teamId, "in_progress"),
-      this.countActions(teamId, "resolved"),
-      this.countActions(teamId, "dismissed"),
+      this.countActions(teamId, "all", filters),
+      this.countActions(teamId, "open", filters),
+      this.countActions(teamId, "in_progress", filters),
+      this.countActions(teamId, "resolved", filters),
+      this.countActions(teamId, "dismissed", filters),
     ]);
 
     return {
@@ -329,6 +345,28 @@ export class WorkspaceActionRepository {
       resolvedAt,
       metadata: params.metadata ? JSON.stringify(params.metadata) : null,
     };
+    const updates = {
+      processLoopId: values.processLoopId,
+      title: values.title,
+      detail: values.detail,
+      priority: values.priority,
+      ownerUserId: values.ownerUserId,
+      ownerName: values.ownerName,
+      dueAt: values.dueAt,
+      externalProvider: values.externalProvider,
+      externalTicketKey: values.externalTicketKey,
+      externalTicketUrl: values.externalTicketUrl,
+      updatedAt: now,
+      metadata: values.metadata,
+      ...(params.status === undefined
+        ? {}
+        : {
+            status: values.status,
+            resolvedById: values.resolvedById,
+            resolvedAt,
+          }),
+    };
+
     const result = await this.db
       .insert(workspaceActionItems)
       .values(values)
@@ -339,23 +377,7 @@ export class WorkspaceActionRepository {
           workspaceActionItems.sourceSessionId,
           workspaceActionItems.sourceRef,
         ],
-        set: {
-          processLoopId: values.processLoopId,
-          title: values.title,
-          detail: values.detail,
-          status: values.status,
-          priority: values.priority,
-          ownerUserId: values.ownerUserId,
-          ownerName: values.ownerName,
-          dueAt: values.dueAt,
-          externalProvider: values.externalProvider,
-          externalTicketKey: values.externalTicketKey,
-          externalTicketUrl: values.externalTicketUrl,
-          resolvedById: values.resolvedById,
-          updatedAt: now,
-          resolvedAt,
-          metadata: values.metadata,
-        },
+        set: updates,
       })
       .returning({ id: workspaceActionItems.id });
 

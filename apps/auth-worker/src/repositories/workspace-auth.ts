@@ -534,8 +534,14 @@ export class WorkspaceAuthRepository {
     return this.actions.listActions(teamId, pagination, filters);
   }
 
-  getWorkspaceActionCounts(teamId: number) {
-    return this.actions.getActionCounts(teamId);
+  getWorkspaceActionCounts(
+    teamId: number,
+    filters?: {
+      source?: WorkspaceActionSourceFilter;
+      processLoopId?: number;
+    },
+  ) {
+    return this.actions.getActionCounts(teamId, filters);
   }
 
   getWorkspaceActionById(actionId: number) {
