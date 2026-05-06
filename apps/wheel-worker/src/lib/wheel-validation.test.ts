@@ -14,6 +14,6 @@ describe("wheel settings validation", () => {
       normalizeWheelSettings(undefined, {
         mode: "pair_picker",
       }),
-    ).toEqual(expect.objectContaining({ mode: "decision" }));
+    ).toEqual(expect.objectContaining({ mode: "facilitator" }));
   });
 });

@@ -119,7 +119,7 @@ describe("wheel http controller", () => {
     expect(putWheelData).toHaveBeenCalledWith(
       expect.objectContaining({
         settings: {
-          mode: "decision",
+          mode: "facilitator",
           removeWinnerAfterSpin: false,
           showConfetti: false,
           playSounds: true,
