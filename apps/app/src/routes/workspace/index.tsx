@@ -122,7 +122,7 @@ export default function WorkspaceDashboard() {
           onOpenWheel={() => navigateTo("wheel")}
         />
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
           <SurfaceCard>
             <SessionsChart data={sessionsOverTime} />
           </SurfaceCard>

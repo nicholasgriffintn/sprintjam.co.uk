@@ -20,21 +20,31 @@ interface InsightsGridProps {
   insights: WorkspaceInsights | null;
 }
 
-function InsightMetricCard({ metric }: { metric: WorkspaceInsightMetric }) {
+function MetricCard({
+  label,
+  value,
+  icon,
+  description,
+  color,
+  bgColor,
+}: WorkspaceInsightMetric) {
   return (
     <SurfaceCard variant="subtle" padding="sm">
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <div
-          className={`flex h-9 w-9 items-center justify-center rounded-lg ${metric.bgColor} ${metric.color}`}
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${bgColor} ${color}`}
         >
-          {metric.icon}
+          {icon}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-            {metric.label}
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            {label}
           </p>
-          <p className="text-lg font-semibold text-slate-900 dark:text-white">
-            {metric.value}
+          <p className="mt-1 text-lg font-semibold leading-none text-slate-900 dark:text-white">
+            {value}
+          </p>
+          <p className="mt-1 text-xs leading-snug text-slate-400 dark:text-slate-500">
+            {description}
           </p>
         </div>
       </div>
@@ -83,30 +93,62 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
         </span>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <CeremonyCountStrip counts={insights.sessionTypeCounts} />
+      <div className="space-y-4">
+        <CeremonyCountStrip counts={insights.sessionTypeCounts} />
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+            Planning signals
+          </h4>
+          {hasPlanningRounds ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {collaborationMetrics.map((metric) => (
+                <MetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              Planning-specific metrics appear after a linked planning room
+              completes.
+            </p>
+          )}
         </div>
-        {hasPlanningRounds ? (
-          collaborationMetrics.map((metric) => (
-            <InsightMetricCard key={metric.label} metric={metric} />
-          ))
-        ) : (
-          <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300 sm:col-span-2">
-            Planning-specific metrics appear after a linked planning room
-            completes.
-          </p>
-        )}
-        {hasStandupInsights
-          ? standupMetrics.map((metric) => (
-              <InsightMetricCard key={metric.label} metric={metric} />
-            ))
-          : null}
-        {hasWheelInsights
-          ? wheelMetrics.map((metric) => (
-              <InsightMetricCard key={metric.label} metric={metric} />
-            ))
-          : null}
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+            Standup signals
+          </h4>
+          {hasStandupInsights ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {standupMetrics.map((metric) => (
+                <MetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              Standup-specific metrics appear after a linked standup room
+              completes.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+            Wheel signals
+          </h4>
+          {hasWheelInsights ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {wheelMetrics.map((metric) => (
+                <MetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              Wheel-specific metrics appear after a linked wheel room records a
+              spin.
+            </p>
+          )}
+        </div>
       </div>
 
       {insightPrompts.length > 0 ? (
