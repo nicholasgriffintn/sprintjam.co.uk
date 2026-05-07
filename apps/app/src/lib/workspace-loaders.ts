@@ -67,7 +67,12 @@ async function loadFromStatsWorker<T>(
 export async function loadWorkspaceAuthProfile(
   args: WorkerLoaderArgs,
 ): Promise<WorkspaceAuthProfile | null> {
-  return loadFromAuthWorker<WorkspaceAuthProfile>(args, "/api/auth/me");
+  try {
+    return await loadFromAuthWorker<WorkspaceAuthProfile>(args, "/api/auth/me");
+  } catch (error) {
+    console.error("Failed to load initial workspace auth profile", error);
+    return null;
+  }
 }
 
 export async function loadWorkspaceProfile(

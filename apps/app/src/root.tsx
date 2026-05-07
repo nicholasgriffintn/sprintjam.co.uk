@@ -71,7 +71,10 @@ function loadInitialServerDefaults(): ServerDefaults {
 export function loader({ request, context }: LoaderFunctionArgs) {
   return {
     initialServerDefaults: loadInitialServerDefaults(),
-    initialWorkspaceProfile: loadWorkspaceAuthProfile({ request, context }),
+    initialWorkspaceProfile: loadWorkspaceAuthProfile({
+      request,
+      context,
+    }),
   };
 }
 
