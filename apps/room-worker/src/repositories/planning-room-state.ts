@@ -314,6 +314,28 @@ export class PlanningRoomStateStore {
     });
   }
 
+  validateAnySessionToken(token: string | null): boolean {
+    if (!token) {
+      return false;
+    }
+
+    const records = this.db
+      .select({
+        token: sessionTokens.token,
+        createdAt: sessionTokens.createdAt,
+      })
+      .from(sessionTokens)
+      .all();
+
+    return records.some((record) =>
+      isSessionTokenValid({
+        storedToken: record.token,
+        providedToken: token,
+        createdAt: record.createdAt,
+      }),
+    );
+  }
+
   async setRecoveryPasskey(userName: string, passkey: string): Promise<void> {
     const canonicalName = this.ensureUser(userName);
     const hashed = await hashRecoveryPasskey(passkey);

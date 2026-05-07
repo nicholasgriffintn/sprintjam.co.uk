@@ -22,6 +22,8 @@ const makeContext = (options: {
       if (!token) return false;
       return tokens.get(userName.toLowerCase()) === token;
     },
+    validateAnySessionToken: (token: string | null) =>
+      token ? Array.from(tokens.values()).includes(token) : false,
     setSessionToken: (userName: string, token: string) => {
       tokens.set(userName.toLowerCase(), token);
     },
@@ -236,6 +238,7 @@ describe("planning-room-http permissions and state updates", () => {
     const repository: PlanningRoomHttpContext["repository"] = {
       getPasscodeHash: vi.fn().mockReturnValue(null),
       validateSessionToken: vi.fn().mockReturnValue(false),
+      validateAnySessionToken: vi.fn().mockReturnValue(false),
       setSessionToken: vi.fn((user, token) =>
         tokens.set(user.toLowerCase(), token),
       ),

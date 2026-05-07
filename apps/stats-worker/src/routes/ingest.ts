@@ -16,11 +16,6 @@ import {
   validateWheelSessionStatsPayload,
 } from "../lib/validation";
 import { successResponse, errorResponse } from "../lib/response";
-import {
-  authenticateRequest,
-  canUserAccessRoom,
-  isAuthError,
-} from "../lib/auth";
 
 function validateToken(request: CfRequest, env: StatsWorkerEnv): boolean {
   const authHeader = request.headers.get("Authorization");
@@ -52,18 +47,10 @@ export async function ingestRoundController(
   return successResponse({ status: "ingested" });
 }
 
-export async function recordStandupSessionStatsController(
+export async function recordStandupSessionStatsInternalController(
   request: CfRequest,
   env: StatsWorkerEnv,
 ): Promise<CfResponse> {
-  const authResult = await authenticateRequest(request, env.DB);
-  if (isAuthError(authResult)) {
-    return errorResponse(
-      authResult.code === "unauthorized" ? "Unauthorized" : "Session expired",
-      401,
-    );
-  }
-
   const body = await request.json();
   const validation = validateStandupSessionStatsPayload(body);
   if (!validation.valid) {
@@ -71,39 +58,16 @@ export async function recordStandupSessionStatsController(
   }
 
   const payload = body as RecordStandupSessionStatsInput;
-  const auth = authResult;
-  const hasAccess = await canUserAccessRoom(
-    env.DB,
-    auth.userId,
-    auth.organisationId,
-    auth.workspaceRole === "admin",
-    payload.roomKey,
-  );
-  if (!hasAccess) {
-    return errorResponse(
-      "You do not have access to this standup's stats",
-      403,
-    );
-  }
-
   const repo = new StatsRepository(env.DB);
   await repo.recordStandupSessionStats(payload);
 
   return successResponse({ status: "recorded" });
 }
 
-export async function recordWheelSessionStatsController(
+export async function recordWheelSessionStatsInternalController(
   request: CfRequest,
   env: StatsWorkerEnv,
 ): Promise<CfResponse> {
-  const authResult = await authenticateRequest(request, env.DB);
-  if (isAuthError(authResult)) {
-    return errorResponse(
-      authResult.code === "unauthorized" ? "Unauthorized" : "Session expired",
-      401,
-    );
-  }
-
   const body = await request.json();
   const validation = validateWheelSessionStatsPayload(body);
   if (!validation.valid) {
@@ -111,17 +75,6 @@ export async function recordWheelSessionStatsController(
   }
 
   const payload = body as RecordWheelSessionStatsInput;
-  const hasAccess = await canUserAccessRoom(
-    env.DB,
-    authResult.userId,
-    authResult.organisationId,
-    authResult.workspaceRole === "admin",
-    payload.roomKey,
-  );
-  if (!hasAccess) {
-    return errorResponse("You do not have access to this wheel's stats", 403);
-  }
-
   const repo = new StatsRepository(env.DB);
   await repo.recordWheelSessionStats(payload);
 

@@ -45,6 +45,7 @@ import {
   getAuthOrError,
   getTeamViewer,
   getWorkspaceViewer,
+  requireTeamMemberWriteAccess,
 } from "./workspace-viewer";
 
 const MAX_ACTION_TITLE_LENGTH = 200;
@@ -414,8 +415,12 @@ export async function createWorkspaceProcessLoopController(
   const teamViewer = await getTeamViewer(auth.result, teamId);
   if ("response" in teamViewer) return teamViewer.response;
 
-  if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse("You do not have access to process loops");
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to create process loops",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
   }
 
   const body = await request.json<CreateWorkspaceProcessLoopInput>();
@@ -443,8 +448,12 @@ export async function linkTeamSessionToProcessLoopController(
   const teamViewer = await getTeamViewer(auth.result, teamId);
   if ("response" in teamViewer) return teamViewer.response;
 
-  if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse("You do not have access to team sessions");
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to link team sessions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
   }
 
   const session = await auth.result.repo.getTeamSessionById(sessionId);
@@ -548,8 +557,12 @@ export async function createWorkspaceActionController(
   const teamViewer = await getTeamViewer(auth.result, teamId);
   if ("response" in teamViewer) return teamViewer.response;
 
-  if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse("You do not have access to workspace actions");
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to create workspace actions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
   }
 
   const body = await request.json<CreateWorkspaceActionInput>();
@@ -587,8 +600,12 @@ export async function updateWorkspaceActionController(
   const teamViewer = await getTeamViewer(auth.result, teamId);
   if ("response" in teamViewer) return teamViewer.response;
 
-  if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse("You do not have access to workspace actions");
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to update workspace actions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
   }
 
   const action = await auth.result.repo.getWorkspaceActionById(actionId);
@@ -648,8 +665,12 @@ export async function createWorkspaceActionEventController(
   const teamViewer = await getTeamViewer(auth.result, teamId);
   if ("response" in teamViewer) return teamViewer.response;
 
-  if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse("You do not have access to workspace actions");
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to update workspace actions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
   }
 
   const action = await auth.result.repo.getWorkspaceActionById(actionId);
@@ -717,6 +738,17 @@ export async function recordWheelOutcomeByRoomKeyController(
   );
   if (!session) return notFoundResponse("Session not found");
 
+  const teamViewer = await getTeamViewer(auth.result, session.teamId);
+  if ("response" in teamViewer) return teamViewer.response;
+
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to record wheel outcomes",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
+  }
+
   const metadata = parseTeamSessionMetadata(session.metadata);
   if (metadata?.type !== "wheel") {
     return jsonError("Session is not a wheel session", 409);
@@ -773,6 +805,17 @@ export async function recordPlanningActionsByRoomKeyController(
   );
   if (!session) return notFoundResponse("Session not found");
 
+  const teamViewer = await getTeamViewer(auth.result, session.teamId);
+  if ("response" in teamViewer) return teamViewer.response;
+
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to record planning actions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
+  }
+
   const metadata = parseTeamSessionMetadata(session.metadata);
   if (metadata?.type !== "planning") {
     return jsonError("Session is not a planning session", 409);
@@ -820,6 +863,17 @@ export async function recordStandupActionsByRoomKeyController(
     workspace.viewer.isWorkspaceAdmin,
   );
   if (!session) return notFoundResponse("Session not found");
+
+  const teamViewer = await getTeamViewer(auth.result, session.teamId);
+  if ("response" in teamViewer) return teamViewer.response;
+
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to record standup actions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
+  }
 
   const metadata = parseTeamSessionMetadata(session.metadata);
   if (metadata?.type !== "standup") {

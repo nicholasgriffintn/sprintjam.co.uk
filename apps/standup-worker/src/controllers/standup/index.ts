@@ -41,6 +41,10 @@ export async function handleHttpRequest(
     return handleRecover(context, request);
   }
 
+  if (path === "/session/validate-any" && request.method === "POST") {
+    return handleValidateAnySession(context, request);
+  }
+
   return null;
 }
 
@@ -94,6 +98,30 @@ function buildSessionResponse(
         isSecure,
       ),
     },
+  });
+}
+
+async function handleValidateAnySession(
+  context: StandupRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const sessionToken = getStandupSessionToken(request);
+  if (!sessionToken) {
+    return jsonError("Standup session is required", 401);
+  }
+
+  const standupData = await context.getStandupData();
+  if (!standupData) {
+    return jsonError("Standup not found", 404);
+  }
+
+  if (!context.repository.validateAnySessionToken(sessionToken)) {
+    return jsonError("Invalid session", 401);
+  }
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
   });
 }
 

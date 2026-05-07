@@ -33,6 +33,7 @@ import {
   recordWheelSessionStats,
 } from "@/lib/workspace-service";
 import { upsertWheel } from "@/lib/wheel-store";
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 
 interface WheelStateContextValue {
   wheelData: WheelData | null;
@@ -119,6 +120,7 @@ interface WheelProviderProps {
 }
 
 export function WheelProvider({ children, userName }: WheelProviderProps) {
+  const { isAuthenticated } = useWorkspaceData();
   const [wheelData, setWheelData] = useState<WheelData | null>(null);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [wheelError, setWheelError] = useState<string | null>(null);
@@ -140,8 +142,7 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
       }
 
       const results = [...wheel.results, result];
-      const [outcomeResult, statsResult] = await Promise.allSettled([
-        recordWheelOutcomeByRoomKey(wheel.key, wheel.settings.mode, result),
+      const statsResult = await Promise.allSettled([
         recordWheelSessionStats({
           roomKey: wheel.key,
           mode: wheel.settings.mode,
@@ -154,11 +155,20 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
           })),
         }),
       ]);
+      const outcomeResult = isAuthenticated
+        ? await Promise.allSettled([
+            recordWheelOutcomeByRoomKey(wheel.key, wheel.settings.mode, result),
+          ])
+        : [];
 
-      logWorkspaceRecordFailure("outcome", outcomeResult);
-      logWorkspaceRecordFailure("stats", statsResult);
+      for (const result of outcomeResult) {
+        logWorkspaceRecordFailure("outcome", result);
+      }
+      for (const result of statsResult) {
+        logWorkspaceRecordFailure("stats", result);
+      }
     },
-    [],
+    [isAuthenticated],
   );
 
   const handleMessage = useCallback((message: WheelServerMessage) => {

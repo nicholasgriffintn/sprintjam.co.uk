@@ -379,11 +379,18 @@ export async function createTeamSession(
   roomKey: string,
   metadata?: Record<string, unknown>,
 ): Promise<TeamSession> {
+  const type = metadata?.type;
+  const path =
+    type === "standup"
+      ? "standups/workspace-sessions"
+      : type === "wheel"
+        ? "wheels/workspace-sessions"
+        : "rooms/workspace-sessions";
   const data = await workspaceRequest<{ session: TeamSession }>(
-    `${API_BASE_URL}/teams/${teamSlug}/sessions`,
+    `${API_BASE_URL}/${path}`,
     {
       method: "POST",
-      body: JSON.stringify({ name, roomKey, metadata }),
+      body: JSON.stringify({ teamSlug, name, roomKey, metadata }),
     },
   );
   return data.session;
@@ -393,7 +400,7 @@ export async function getTeamSessionByRoomKey(
   roomKey: string,
 ): Promise<TeamSession | null> {
   try {
-    const data = await workspaceRequest<{ session: TeamSession }>(
+    const data = await workspaceRequest<{ session: TeamSession | null }>(
       `${API_BASE_URL}/sessions/by-room?roomKey=${encodeURIComponent(roomKey)}`,
     );
     return data.session;
@@ -447,9 +454,14 @@ export async function resolveTeamSessionRecapAction(
 
 export async function completeSessionByRoomKey(
   roomKey: string,
+  type: "planning" | "standup" = "planning",
 ): Promise<TeamSession> {
+  const path =
+    type === "standup"
+      ? "standups/workspace-sessions/complete"
+      : "rooms/workspace-sessions/complete";
   const data = await workspaceRequest<{ session: TeamSession }>(
-    `${API_BASE_URL}/sessions/complete`,
+    `${API_BASE_URL}/${path}`,
     {
       method: "POST",
       body: JSON.stringify({ roomKey }),
@@ -464,7 +476,7 @@ export async function recordWheelOutcomeByRoomKey(
   result: SpinResult,
 ): Promise<TeamSession> {
   const data = await workspaceRequest<{ session: TeamSession }>(
-    `${API_BASE_URL}/sessions/wheel-outcomes`,
+    `${API_BASE_URL}/wheels/workspace-outcomes`,
     {
       method: "POST",
       body: JSON.stringify({ roomKey, mode, result }),
@@ -477,7 +489,7 @@ export async function recordPlanningActionsByRoomKey(
   payload: RecordPlanningWorkspaceActionsInput,
 ): Promise<number[]> {
   const data = await workspaceRequest<{ actionIds: number[] }>(
-    `${API_BASE_URL}/sessions/planning-actions`,
+    `${API_BASE_URL}/rooms/workspace-actions`,
     {
       method: "POST",
       body: JSON.stringify(payload),
@@ -490,7 +502,7 @@ export async function recordStandupActionsByRoomKey(
   payload: RecordStandupWorkspaceActionsInput,
 ): Promise<number[]> {
   const data = await workspaceRequest<{ actionIds: number[] }>(
-    `${API_BASE_URL}/sessions/standup-actions`,
+    `${API_BASE_URL}/standups/workspace-actions`,
     {
       method: "POST",
       body: JSON.stringify(payload),
@@ -502,7 +514,7 @@ export async function recordStandupActionsByRoomKey(
 export async function recordStandupSessionStats(
   payload: RecordStandupSessionStatsInput,
 ): Promise<void> {
-  await workspaceRequest(`${API_BASE_URL}/stats/standup-session`, {
+  await workspaceRequest(`${API_BASE_URL}/standups/session-stats`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -511,7 +523,7 @@ export async function recordStandupSessionStats(
 export async function recordWheelSessionStats(
   payload: RecordWheelSessionStatsInput,
 ): Promise<void> {
-  await workspaceRequest(`${API_BASE_URL}/stats/wheel-session`, {
+  await workspaceRequest(`${API_BASE_URL}/wheels/session-stats`, {
     method: "POST",
     body: JSON.stringify(payload),
   });

@@ -10,18 +10,19 @@ import type { SessionStats } from "@sprintjam/types";
 
 interface RoomStatsPanelProps {
   roomKey: string;
+  enabled: boolean;
 }
 
-export function RoomStatsPanel({ roomKey }: RoomStatsPanelProps) {
+export function RoomStatsPanel({ roomKey, enabled }: RoomStatsPanelProps) {
   const { isAuthenticated } = useWorkspaceData();
   const { data: stats, isLoading } = useQuery<SessionStats | null>({
     queryKey: ["session-stats", roomKey],
-    enabled: isAuthenticated,
+    enabled: enabled && isAuthenticated,
     queryFn: () => getSessionStats(roomKey),
     staleTime: 0,
   });
 
-  if (!isAuthenticated) return null;
+  if (!enabled || !isAuthenticated) return null;
 
   if (isLoading) {
     return (

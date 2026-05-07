@@ -1025,6 +1025,7 @@ describe("teams-controller", () => {
     const response = await createTeamSessionController(
       makeRequest("https://test.com/teams/10/sessions", {
         method: "POST",
+        headers: { Cookie: "room_session=room-token" },
         body: JSON.stringify({
           name: "Sprint Planning",
           roomKey: "ROOM-1",
@@ -1066,6 +1067,7 @@ describe("teams-controller", () => {
     const response = await createTeamSessionController(
       makeRequest("https://test.com/teams/10/sessions", {
         method: "POST",
+        headers: { Cookie: "room_session=room-token" },
         body: JSON.stringify({
           name: "Sprint Planning",
           roomKey: "ROOM-1",
@@ -1103,6 +1105,9 @@ describe("teams-controller", () => {
 
   it("creates process loops for accessible teams", async () => {
     const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
       getWorkspaceProcessLoopById: vi.fn().mockResolvedValue({
         id: 11,
         teamId: 10,
@@ -1192,6 +1197,9 @@ describe("teams-controller", () => {
 
   it("creates manual workspace actions", async () => {
     const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
       getWorkspaceActionById: vi.fn().mockResolvedValue({
         id: 31,
         teamId: 10,
@@ -1227,6 +1235,9 @@ describe("teams-controller", () => {
 
   it("updates workspace action status and records an event", async () => {
     const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
       getWorkspaceActionById: vi
         .fn()
         .mockResolvedValueOnce({
@@ -1292,6 +1303,7 @@ describe("teams-controller", () => {
     const response = await createTeamSessionController(
       makeRequest("https://test.com/teams/10/sessions", {
         method: "POST",
+        headers: { Cookie: "room_session=room-token" },
         body: JSON.stringify({
           name: "Sprint Planning",
           roomKey: "ROOM-1",
@@ -1337,6 +1349,24 @@ describe("teams-controller", () => {
       1,
       true,
     );
+  });
+
+  it("returns null when no linked session exists for a room key", async () => {
+    const repo = createRepo({
+      getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue(null),
+    });
+    authenticateAs(repo);
+
+    const response = await getTeamSessionByRoomKeyController(
+      makeRequest("https://test.com/sessions/by-room?roomKey=ROOM-1"),
+      env,
+    );
+    const data = (await response.json()) as {
+      session: null;
+    };
+
+    expect(response.status).toBe(200);
+    expect(data.session).toBeNull();
   });
 
   it("updates a linked session name", async () => {
@@ -1386,6 +1416,9 @@ describe("teams-controller", () => {
 
   it("resolves a recap follow-up in session metadata", async () => {
     const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
       getTeamSessionById: vi
         .fn()
         .mockResolvedValueOnce({
@@ -1438,6 +1471,9 @@ describe("teams-controller", () => {
 
   it("resolves a wheel outcome in session metadata", async () => {
     const repo = createRepo({
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
       getTeamSessionById: vi
         .fn()
         .mockResolvedValueOnce({
@@ -1500,12 +1536,24 @@ describe("teams-controller", () => {
   });
 
   it("completes the latest room session with workspace scope", async () => {
-    const repo = createRepo();
+    const repo = createRepo({
+      getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue({
+        id: 21,
+        teamId: 10,
+        roomKey: "ROOM-1",
+        name: "Sprint Planning",
+        metadata: JSON.stringify({ type: "planning" }),
+      }),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
+    });
     authenticateAs(repo);
 
     const response = await completeSessionByRoomKeyController(
       makeRequest("https://test.com/sessions/complete", {
         method: "POST",
+        headers: { Cookie: "room_session=room-token" },
         body: JSON.stringify({ roomKey: "ROOM-1" }),
       }),
       env,
@@ -1535,12 +1583,16 @@ describe("teams-controller", () => {
         roomKey: "WHEEL-1",
         name: "Review picker",
       }),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
     });
     authenticateAs(repo);
 
     const response = await recordWheelOutcomeByRoomKeyController(
       makeRequest("https://test.com/sessions/wheel-outcomes", {
         method: "POST",
+        headers: { Cookie: "wheel_session=wheel-token" },
         body: JSON.stringify({
           roomKey: "WHEEL-1",
           mode: "reviewer",
@@ -1579,12 +1631,16 @@ describe("teams-controller", () => {
         metadata: JSON.stringify({ type: "planning" }),
       }),
       getProcessLoopForSession: vi.fn().mockResolvedValue({ id: 12 }),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
     });
     authenticateAs(repo);
 
     const response = await recordPlanningActionsByRoomKeyController(
       makeRequest("https://test.com/sessions/planning-actions", {
         method: "POST",
+        headers: { Cookie: "room_session=room-token" },
         body: JSON.stringify({
           roomKey: "ROOM-1",
           followUps: [
@@ -1621,12 +1677,16 @@ describe("teams-controller", () => {
         name: "Standup",
         metadata: JSON.stringify({ type: "standup" }),
       }),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
     });
     authenticateAs(repo);
 
     const response = await recordStandupActionsByRoomKeyController(
       makeRequest("https://test.com/sessions/standup-actions", {
         method: "POST",
+        headers: { Cookie: "standup_session=standup-token" },
         body: JSON.stringify({
           roomKey: "STAND-1",
           blockers: [

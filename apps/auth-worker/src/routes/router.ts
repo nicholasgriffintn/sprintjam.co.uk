@@ -34,6 +34,7 @@ import {
   completeSessionByRoomKeyController,
   getWorkspaceProfileController,
   getWorkspaceStatsController,
+  requireTeamMemberInternalController,
   updateWorkspaceProfileController,
   approveWorkspaceMemberController,
   updateWorkspaceMemberController,
@@ -327,7 +328,7 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions$/,
+    pattern: /^internal\/teams\/([a-z]+(?:-[a-z]+){2})\/sessions$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -493,27 +494,27 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^sessions\/complete$/,
+    pattern: /^internal\/sessions\/complete$/,
     handler: (request, env) => completeSessionByRoomKeyController(request, env),
     paramTypes: ["none"],
   },
   {
     method: "POST",
-    pattern: /^sessions\/wheel-outcomes$/,
+    pattern: /^internal\/sessions\/wheel-outcomes$/,
     handler: (request, env) =>
       recordWheelOutcomeByRoomKeyController(request, env),
     paramTypes: ["none"],
   },
   {
     method: "POST",
-    pattern: /^sessions\/planning-actions$/,
+    pattern: /^internal\/sessions\/planning-actions$/,
     handler: (request, env) =>
       recordPlanningActionsByRoomKeyController(request, env),
     paramTypes: ["none"],
   },
   {
     method: "POST",
-    pattern: /^sessions\/standup-actions$/,
+    pattern: /^internal\/sessions\/standup-actions$/,
     handler: (request, env) =>
       recordStandupActionsByRoomKeyController(request, env),
     paramTypes: ["none"],
@@ -791,6 +792,20 @@ const ROUTES: RouteDefinition[] = [
       return handleGithubTeamOAuthCallbackController(new URL(request.url), env);
     },
     paramTypes: ["none"],
+  },
+  {
+    method: "GET",
+    pattern: /^internal\/teams\/(\d+)\/write-access$/,
+    handler: (request, env, params) => {
+      const teamIdResult = requireNumberParam(params[0], "teamId");
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return requireTeamMemberInternalController(
+        request,
+        env,
+        teamIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
   },
   {
     method: "GET",

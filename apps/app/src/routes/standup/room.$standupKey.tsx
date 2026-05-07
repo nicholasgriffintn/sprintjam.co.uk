@@ -206,6 +206,7 @@ function StandupRoomContent({
 
     setIsCompletingStandup(true);
     setCompletionNotice(null);
+    completedWorkspaceSyncRef.current = standupKey;
 
     try {
       handleCompleteStandup();
@@ -369,32 +370,36 @@ function StandupRoomContent({
               </Tabs.List>
 
               <Tabs.Panel value="response">
-                <StandupResponseForm
-                  response={yourResponse}
-                  status={standupData.status}
-                  teamSlug={standupTeamSlug}
-                  isModeratorView={isModeratorView}
-                  isSocketConnected={isSocketConnected}
-                  onSubmit={handleSubmitResponse}
-                />
+                {activeTab === "response" ? (
+                  <StandupResponseForm
+                    response={yourResponse}
+                    status={standupData.status}
+                    teamSlug={standupTeamSlug}
+                    isModeratorView={isModeratorView}
+                    isSocketConnected={isSocketConnected}
+                    onSubmit={handleSubmitResponse}
+                  />
+                ) : null}
               </Tabs.Panel>
 
               <Tabs.Panel value="results">
-                <StandupResultsPanel
-                  standupData={standupData}
-                  yourResponse={yourResponse}
-                  isModeratorView={isModeratorView}
-                  isSocketConnected={isSocketConnected}
-                  onLockResponses={onLockResponses}
-                  onUnlockResponses={onUnlockResponses}
-                  onStartPresentation={onStartPresentation}
-                  onCompleteStandup={onCompleteStandup}
-                  onFocusUser={handleFocusUser}
-                  onSetBlockerResolved={handleSetBlockerResolved}
-                  isLockingResponses={isLockingResponses}
-                  isStartingPresentation={isStartingPresentation}
-                  isCompletingStandup={isCompletingStandup}
-                />
+                {activeTab === "results" ? (
+                  <StandupResultsPanel
+                    standupData={standupData}
+                    yourResponse={yourResponse}
+                    isModeratorView={isModeratorView}
+                    isSocketConnected={isSocketConnected}
+                    onLockResponses={onLockResponses}
+                    onUnlockResponses={onUnlockResponses}
+                    onStartPresentation={onStartPresentation}
+                    onCompleteStandup={onCompleteStandup}
+                    onFocusUser={handleFocusUser}
+                    onSetBlockerResolved={handleSetBlockerResolved}
+                    isLockingResponses={isLockingResponses}
+                    isStartingPresentation={isStartingPresentation}
+                    isCompletingStandup={isCompletingStandup}
+                  />
+                ) : null}
               </Tabs.Panel>
             </Tabs.Root>
           )}
