@@ -28,6 +28,37 @@ const createBaseRoom = (): RoomData => ({
 });
 
 describe("applyRoomUpdate", () => {
+  describe("userJoined messages", () => {
+    it("adds a new user as connected", () => {
+      const room = createBaseRoom();
+      const message: WebSocketMessage = {
+        type: "userJoined",
+        user: "Charlie",
+        avatar: "bird",
+      };
+
+      const result = applyRoomUpdate(room, message);
+
+      expect(result?.users).toContain("Charlie");
+      expect(result?.connectedUsers.Charlie).toBe(true);
+      expect(result?.userAvatars?.Charlie).toBe("bird");
+    });
+
+    it("does not overwrite an explicit disconnected status for an existing user", () => {
+      const room = createBaseRoom();
+      room.connectedUsers.Bob = false;
+
+      const message: WebSocketMessage = {
+        type: "userJoined",
+        user: "Bob",
+      };
+
+      const result = applyRoomUpdate(room, message);
+
+      expect(result?.connectedUsers.Bob).toBe(false);
+    });
+  });
+
   describe("vote messages", () => {
     it("updates votingCompletion when included in vote message", () => {
       const room = createBaseRoom();

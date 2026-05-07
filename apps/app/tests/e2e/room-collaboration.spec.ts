@@ -93,7 +93,7 @@ test.describe("Collaboration journeys", () => {
     await welcome.startJoinRoom();
     await join.completeParticipantDetails({
       name: "Passcode QA",
-      roomKey: "BADPASS",
+      roomKey: "BADPAS",
       passcode: "wrong",
     });
     await join.selectAvatarAndJoin();

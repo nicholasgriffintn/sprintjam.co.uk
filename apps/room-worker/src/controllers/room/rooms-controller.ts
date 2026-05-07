@@ -42,13 +42,20 @@ export async function createRoomController(
       ? rawTeamId
       : undefined;
 
-  if (teamId !== undefined && env.AUTH_WORKER) {
+  if (teamId !== undefined && !env.AUTH_WORKER) {
+    return jsonError("Team access validation is unavailable", 503);
+  }
+
+  if (teamId !== undefined) {
     const cookie = request.headers.get("Cookie") ?? "";
     const authResponse = await env.AUTH_WORKER.fetch(
-      new Request(`https://auth-worker/api/internal/teams/${teamId}`, {
-        method: "GET",
-        headers: { Cookie: cookie },
-      }) as unknown as CfRequest,
+      new Request(
+        `https://auth-worker/api/internal/teams/${teamId}/write-access`,
+        {
+          method: "GET",
+          headers: { Cookie: cookie },
+        },
+      ) as unknown as CfRequest,
     );
     if (!authResponse.ok) {
       return jsonError("You do not have access to the specified team", 403);
@@ -200,6 +207,33 @@ export async function getRoomSettingsController(
       headers: {
         ...(sessionToken ? { Cookie: `room_session=${sessionToken}` } : {}),
       },
+    }) as unknown as CfRequest,
+  );
+}
+
+export async function validateRoomSessionController(
+  request: CfRequest,
+  env: RoomWorkerEnv,
+): Promise<CfResponse> {
+  const body = await request.json<{ roomKey?: string }>();
+  const roomKey = body?.roomKey?.trim().toUpperCase();
+  const sessionToken = getRoomSessionTokenForRoom(request, roomKey);
+
+  if (!roomKey) {
+    return jsonError("Room key is required");
+  }
+
+  if (!sessionToken) {
+    return jsonError("Room session is required", 401);
+  }
+
+  const roomObject = getRoomStub(env, roomKey);
+
+  return roomObject.fetch(
+    new Request("https://internal/session/validate-any", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionToken }),
     }) as unknown as CfRequest,
   );
 }

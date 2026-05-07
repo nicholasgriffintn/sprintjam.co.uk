@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-import { createStandupWithParticipant } from "./helpers/standup-journeys";
+import {
+  createFacilitatorStandup,
+  createStandupWithParticipant,
+} from "./helpers/standup-journeys";
 import { StandupCreatePage } from "./pageObjects/standup-create-page";
 import { StandupJoinPage } from "./pageObjects/standup-join-page";
 import { StandupRoomPage } from "./pageObjects/standup-room-page";
@@ -128,7 +131,7 @@ test.describe("Standup — response submission", () => {
 
   test("facilitator can also submit a response", async ({ browser }) => {
     const { facilitatorRoom, cleanup } =
-      await createStandupWithParticipant(browser);
+      await createFacilitatorStandup(browser);
 
     try {
       await facilitatorRoom.setAttendance("in-person");
@@ -181,7 +184,7 @@ test.describe("Standup — facilitator controls", () => {
 
   test("facilitator can complete the standup", async ({ browser }) => {
     const { facilitatorRoom, cleanup } =
-      await createStandupWithParticipant(browser);
+      await createFacilitatorStandup(browser);
 
     try {
       await facilitatorRoom.setAttendance("in-person");

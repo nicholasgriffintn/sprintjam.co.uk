@@ -47,6 +47,16 @@
       }
     ]
   },
+  "services": [
+    {
+      "binding": "AUTH_WORKER",
+      "service": "sprintjam-auth-worker"
+    },
+    {
+      "binding": "STATS_WORKER",
+      "service": "sprintjam-stats-worker"
+    }
+  ],
   "rules": [
     {
       "type": "Text",
@@ -76,6 +86,16 @@
         "ENABLE_WHEEL_RATE_LIMIT": "false"
       },
       "ratelimits": [],
+      "services": [
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-development"
+        },
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-development"
+        }
+      ],
       "durable_objects": {
         "bindings": [
           {
@@ -114,6 +134,16 @@
             "limit": 30,
             "period": 60
           }
+        }
+      ],
+      "services": [
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-staging"
+        },
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-staging"
         }
       ],
       "durable_objects": {

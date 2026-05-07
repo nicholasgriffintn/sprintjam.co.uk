@@ -55,6 +55,10 @@ export async function handleHttpRequest(
     return handleRecover(context, request);
   }
 
+  if (path === "/session/validate-any" && request.method === "POST") {
+    return handleValidateAnySession(context, request);
+  }
+
   if (path === "/settings" && request.method === "GET") {
     return handleGetSettings(context, request);
   }
@@ -96,6 +100,27 @@ function buildSessionResponse(
       ),
     },
   });
+}
+
+async function handleValidateAnySession(
+  context: WheelRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const sessionToken = getWheelSessionToken(request);
+  if (!sessionToken) {
+    return jsonError("Wheel session is required", 401);
+  }
+
+  const wheelData = await context.getWheelData();
+  if (!wheelData) {
+    return jsonError("Wheel not found", 404);
+  }
+
+  if (!context.repository.validateAnySessionToken(sessionToken)) {
+    return jsonError("Invalid session", 401);
+  }
+
+  return jsonResponse({ success: true });
 }
 
 async function handleInitialize(

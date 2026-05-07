@@ -369,6 +369,28 @@ export class WheelRoomRepository {
     });
   }
 
+  validateAnySessionToken(token: string | null): boolean {
+    if (!token) {
+      return false;
+    }
+
+    const records = this.db
+      .select({
+        token: wheelSessionTokens.token,
+        createdAt: wheelSessionTokens.createdAt,
+      })
+      .from(wheelSessionTokens)
+      .all();
+
+    return records.some((record) =>
+      isSessionTokenValid({
+        storedToken: record.token,
+        providedToken: token,
+        createdAt: record.createdAt,
+      }),
+    );
+  }
+
   async setRecoveryPasskey(userName: string, passkey: string): Promise<void> {
     const canonicalName = this.ensureUser(userName);
     const hashed = await hashRecoveryPasskey(passkey);

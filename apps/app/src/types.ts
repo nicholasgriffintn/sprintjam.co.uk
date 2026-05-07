@@ -155,6 +155,7 @@ interface WebSocketPayloads {
     user: string;
   };
   userConnectionStatus: {
+    roomKey?: string;
     user: string;
     isConnected: boolean;
   };

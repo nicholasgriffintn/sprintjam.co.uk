@@ -41,7 +41,7 @@ function createWorkspaceRouteMock() {
       });
     });
 
-    await context.route("**/api/teams/*/sessions", async (route) => {
+    await context.route("**/api/rooms/workspace-sessions", async (route) => {
       if (route.request().method() !== "POST") {
         await route.fallback();
         return;
@@ -112,7 +112,7 @@ function createWorkspaceRouteMock() {
       });
     });
 
-    await context.route("**/api/sessions/complete", async (route) => {
+    await context.route("**/api/rooms/workspace-sessions/complete", async (route) => {
       const payload = (await route.request().postDataJSON()) as {
         roomKey?: string;
       };

@@ -34,6 +34,10 @@ async function setupWorkspaceRoutes(context: BrowserContext) {
       return;
     }
 
+    await route.fallback();
+  });
+
+  await context.route("**/api/rooms/workspace-sessions", async (route) => {
     route.fulfill({
       status: 200,
       contentType: "application/json",

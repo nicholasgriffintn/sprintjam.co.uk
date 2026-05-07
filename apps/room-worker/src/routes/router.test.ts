@@ -18,10 +18,14 @@ import { getRoomStub } from "@sprintjam/utils";
 
 describe("handleRequest websocket", () => {
   const roomFetch = vi.fn();
-  const env = {} as RoomWorkerEnv;
+  const authFetch = vi.fn();
+  const env = {
+    AUTH_WORKER: { fetch: authFetch },
+  } as unknown as RoomWorkerEnv;
 
   beforeEach(() => {
     roomFetch.mockReset();
+    authFetch.mockReset();
     vi.mocked(getRoomStub).mockReturnValue({ fetch: roomFetch } as any);
   });
 
@@ -40,5 +44,35 @@ describe("handleRequest websocket", () => {
 
     expect(response.status).toBe(200);
     expect(roomFetch).toHaveBeenCalled();
+  });
+
+  it("validates room ownership before forwarding workspace session writes", async () => {
+    roomFetch.mockResolvedValue(new Response(JSON.stringify({ success: true })));
+    authFetch.mockResolvedValue(
+      new Response(JSON.stringify({ session: { id: 21 } }), { status: 201 }),
+    );
+
+    const response = (await handleRequest(
+      new Request("https://test/api/rooms/workspace-sessions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: "room_session=token",
+        },
+        body: JSON.stringify({
+          teamSlug: "amber-cobalt-ripple",
+          name: "Sprint Planning",
+          roomKey: "ROOM1",
+        }),
+      }) as unknown as CfRequest,
+      env,
+    )) as Response;
+
+    expect(response.status).toBe(201);
+    const validationRequest = roomFetch.mock.calls[0]?.[0] as Request;
+    await expect(validationRequest.json()).resolves.toEqual({
+      sessionToken: "token",
+    });
+    expect(authFetch).toHaveBeenCalled();
   });
 });

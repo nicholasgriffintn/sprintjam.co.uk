@@ -30,6 +30,7 @@ import {
   getAuthOrError,
   getTeamViewer,
   getWorkspaceViewer,
+  requireTeamMemberWriteAccess,
   type TeamViewer,
   type WorkspaceViewer,
 } from "./workspace-viewer";
@@ -893,10 +894,12 @@ export async function createTeamSessionController(
     return teamViewer.response;
   }
 
-  if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse(
-      "You must be a team member to create sessions in this team",
-    );
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to create sessions in this team",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
   }
 
   const body = await request.json<{
@@ -994,7 +997,7 @@ export async function getTeamSessionByRoomKeyController(
     workspace.viewer.isWorkspaceAdmin,
   );
   if (!session) {
-    return notFoundResponse("Session not found");
+    return jsonResponse({ session: null });
   }
 
   return jsonResponse({ session });
@@ -1044,8 +1047,12 @@ export async function updateTeamSessionController(
     return teamViewer.response;
   }
 
-  if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse("You do not have access to team sessions");
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to update team sessions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
   }
 
   const session = await auth.result.repo.getTeamSessionById(sessionId);
@@ -1088,8 +1095,12 @@ export async function resolveTeamSessionRecapActionController(
     return teamViewer.response;
   }
 
-  if (!teamViewer.viewer.canAccess) {
-    return forbiddenResponse("You do not have access to team sessions");
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to resolve recap actions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
   }
 
   const session = await auth.result.repo.getTeamSessionById(sessionId);
@@ -1130,6 +1141,32 @@ export async function resolveTeamSessionRecapActionController(
   return jsonResponse({ session: updatedSession });
 }
 
+export async function requireTeamMemberInternalController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to write to this team",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
+  }
+
+  return jsonResponse({ ok: true, teamId });
+}
+
 export async function completeSessionByRoomKeyController(
   request: Request,
   env: AuthWorkerEnv,
@@ -1153,6 +1190,30 @@ export async function completeSessionByRoomKeyController(
   }
 
   const repo = auth.result.repo;
+  const session = await repo.getAccessibleTeamSessionByRoomKey(
+    roomKey,
+    workspace.viewer.user.organisationId,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+
+  if (!session) {
+    return notFoundResponse("Session not found");
+  }
+
+  const teamViewer = await getTeamViewer(auth.result, session.teamId);
+  if ("response" in teamViewer) {
+    return teamViewer.response;
+  }
+
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to complete this session",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
+  }
+
   const updatedSession = await repo.completeLatestSessionByRoomKey(
     roomKey,
     workspace.viewer.user.organisationId,

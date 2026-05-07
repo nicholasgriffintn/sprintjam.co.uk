@@ -43,7 +43,7 @@ test.describe("Wheel journey", () => {
     await page.keyboard.press("ControlOrMeta+Enter");
 
     await page.getByRole("button", { name: "Results" }).click();
-    await expect(page.getByText("1 total")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("1 speaker")).toBeVisible({ timeout: 15_000 });
   });
 
   test("participant sees entries read-only", async ({ page, browser }) => {

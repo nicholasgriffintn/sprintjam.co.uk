@@ -14,26 +14,27 @@ export class StandupJoinPage extends BasePage {
   }
 
   async fillName(name: string) {
-    await this.page.locator("#standup-join-name").fill(name);
+    const nameInput = this.page.locator("#standup-join-name");
+    await nameInput.fill(name);
+    await expect(nameInput).toHaveValue(name);
   }
 
   async fillKey(key: string) {
-    await this.page.locator("#standup-join-key").fill(key);
+    const keyInput = this.page.locator("#standup-join-key");
+    await keyInput.fill(key);
+    await expect(keyInput).toHaveValue(key);
   }
 
   async fillPasscode(passcode: string) {
-    await this.page.locator("#standup-join-passcode").fill(passcode);
+    const passcodeInput = this.page.locator("#standup-join-passcode");
+    await passcodeInput.fill(passcode);
+    await expect(passcodeInput).toHaveValue(passcode);
   }
 
   async submit() {
     const button = this.page.getByRole("button", { name: /join standup/i });
     await expect(button).toBeEnabled();
-    await Promise.all([
-      this.page.waitForResponse((response) =>
-        response.url().includes("/api/standups/join"),
-      ),
-      button.click(),
-    ]);
+    await button.click();
   }
 
   async waitForRoom() {

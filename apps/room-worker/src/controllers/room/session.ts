@@ -57,3 +57,27 @@ export async function handleSessionValidation(
 
   return createJsonResponse({ success: true });
 }
+
+export async function handleAnySessionValidation(
+  ctx: PlanningRoomHttpContext,
+  request: Request,
+): Promise<CfResponse> {
+  const { sessionToken } = (await request.json()) as {
+    sessionToken?: string;
+  };
+
+  if (!sessionToken) {
+    return createJsonResponse({ error: "Missing session token" }, 400);
+  }
+
+  const roomData = await ctx.getRoomData();
+  if (!roomData || !roomData.key) {
+    return createJsonResponse({ error: "Room not found" }, 404);
+  }
+
+  if (!ctx.repository.validateAnySessionToken(sessionToken)) {
+    return createJsonResponse({ error: "Invalid session" }, 401);
+  }
+
+  return createJsonResponse({ success: true });
+}

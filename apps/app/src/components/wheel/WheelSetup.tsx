@@ -92,10 +92,6 @@ function WheelRoomContent({
   const [lastResultId, setLastResultId] = useState<string | null>(null);
 
   useEffect(() => {
-    primeWheelAudio();
-  }, []);
-
-  useEffect(() => {
     setWheelKey(wheelKey);
     return () => setWheelKey(null);
   }, [wheelKey, setWheelKey]);
@@ -143,9 +139,17 @@ function WheelRoomContent({
     const enabledCount =
       wheelData?.entries.filter((entry) => entry.enabled).length ?? 0;
     if (enabledCount >= 2 && !wheelData?.spinState?.isSpinning) {
+      if (wheelData?.settings.playSounds) {
+        primeWheelAudio();
+      }
       handleSpin();
     }
-  }, [handleSpin, wheelData?.entries, wheelData?.spinState?.isSpinning]);
+  }, [
+    handleSpin,
+    wheelData?.entries,
+    wheelData?.settings.playSounds,
+    wheelData?.spinState?.isSpinning,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

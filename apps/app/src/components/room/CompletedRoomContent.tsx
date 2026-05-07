@@ -131,7 +131,10 @@ export const CompletedRoomContent = ({
         </SurfaceCard>
       ) : null}
 
-      <RoomStatsPanel roomKey={roomData.key} />
+      <RoomStatsPanel
+        roomKey={roomData.key}
+        enabled={linkedWorkspaceSession !== null}
+      />
 
       <SurfaceCard padding="md" className="space-y-3 text-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">

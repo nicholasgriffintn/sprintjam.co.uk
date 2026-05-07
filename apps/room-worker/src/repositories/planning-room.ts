@@ -180,6 +180,10 @@ export class PlanningRoomRepository {
     return this.stateStore.validateSessionToken(userName, token);
   }
 
+  validateAnySessionToken(token: string | null) {
+    return this.stateStore.validateAnySessionToken(token);
+  }
+
   setRecoveryPasskey(userName: string, passkey: string) {
     return this.stateStore.setRecoveryPasskey(userName, passkey);
   }

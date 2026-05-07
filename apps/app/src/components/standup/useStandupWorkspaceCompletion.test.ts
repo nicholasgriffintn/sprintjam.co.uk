@@ -75,7 +75,7 @@ describe("completeStandupWorkspaceHistory", () => {
         },
       ],
     });
-    expect(completeSession).toHaveBeenCalledWith("5W362R");
+    expect(completeSession).toHaveBeenCalledWith("5W362R", "standup");
     expect(warning).toContain("workspace actions were not updated");
   });
 
@@ -114,7 +114,7 @@ describe("completeStandupWorkspaceHistory", () => {
         ]),
       }),
     );
-    expect(completeSession).toHaveBeenCalledWith("5W362R");
+    expect(completeSession).toHaveBeenCalledWith("5W362R", "standup");
     expect(warning).toBeNull();
   });
 
@@ -160,7 +160,29 @@ describe("completeStandupWorkspaceHistory", () => {
       { recordActions, recordStats, completeSession },
     );
 
-    expect(completeSession).toHaveBeenCalledWith("5W362R");
+    expect(completeSession).toHaveBeenCalledWith("5W362R", "standup");
     expect(warning).toContain("workspace stats were not updated");
+  });
+
+  it("records anonymous standup stats without workspace writes", async () => {
+    const recordActions = vi.fn().mockResolvedValue([1]);
+    const recordStats = vi.fn().mockResolvedValue(undefined);
+    const completeSession = vi.fn().mockResolvedValue({ id: 1 });
+
+    const warning = await completeStandupWorkspaceHistory(
+      {
+        standupData: { ...standupData, teamId: undefined },
+        standupKey: "5W362R",
+        isAuthenticated: false,
+      },
+      { recordActions, recordStats, completeSession },
+    );
+
+    expect(recordStats).toHaveBeenCalledWith(
+      expect.objectContaining({ roomKey: "5W362R" }),
+    );
+    expect(recordActions).not.toHaveBeenCalled();
+    expect(completeSession).not.toHaveBeenCalled();
+    expect(warning).toBeNull();
   });
 });

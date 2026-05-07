@@ -6,8 +6,8 @@ import type { StatsWorkerEnv } from "@sprintjam/types";
 
 import {
   ingestRoundController,
-  recordStandupSessionStatsController,
-  recordWheelSessionStatsController,
+  recordStandupSessionStatsInternalController,
+  recordWheelSessionStatsInternalController,
 } from "./ingest";
 import {
   getRoomStatsController,
@@ -42,14 +42,16 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^stats\/standup-session$/,
-    handler: recordStandupSessionStatsController as RouteDefinition["handler"],
+    pattern: /^internal\/stats\/standup-session$/,
+    handler:
+      recordStandupSessionStatsInternalController as RouteDefinition["handler"],
     paramTypes: ["none"],
   },
   {
     method: "POST",
-    pattern: /^stats\/wheel-session$/,
-    handler: recordWheelSessionStatsController as RouteDefinition["handler"],
+    pattern: /^internal\/stats\/wheel-session$/,
+    handler:
+      recordWheelSessionStatsInternalController as RouteDefinition["handler"],
     paramTypes: ["none"],
   },
   {

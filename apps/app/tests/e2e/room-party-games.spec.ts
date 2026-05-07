@@ -26,7 +26,13 @@ test.describe("Room party games", () => {
     });
 
     await page.getByRole("button", { name: "Party games" }).click();
-    await page.getByRole("button", { name: "Start Emoji Story" }).click();
+    const gamesDialog = page.getByRole("dialog", { name: "Party games" });
+    await expect(gamesDialog).toBeVisible();
+    await gamesDialog
+      .locator("article")
+      .filter({ hasText: "Emoji Story" })
+      .getByRole("button", { name: "Start round" })
+      .click();
 
     await expect(page.getByText("Party game live")).toBeVisible();
     await page.getByPlaceholder("Drop 1-6 emojis").fill("🚀");

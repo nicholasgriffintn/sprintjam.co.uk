@@ -65,7 +65,23 @@ export async function completeStandupWorkspaceHistory(
   },
 ): Promise<string | null> {
   const { standupData, standupKey, isAuthenticated } = options;
-  if (!standupData?.teamId || !isAuthenticated) {
+  if (!standupData) {
+    return null;
+  }
+
+  let statsError: unknown = null;
+  try {
+    await services.recordStats({
+      roomKey: standupKey,
+      ...buildStandupStatsPayload(standupData),
+    });
+  } catch (error) {
+    if (!(error instanceof HttpError && error.status === 404)) {
+      statsError = error;
+    }
+  }
+
+  if (!standupData.teamId || !isAuthenticated) {
     return null;
   }
 
@@ -78,18 +94,6 @@ export async function completeStandupWorkspaceHistory(
   } catch (error) {
     if (!(error instanceof HttpError && error.status === 404)) {
       actionsError = error;
-    }
-  }
-
-  let statsError: unknown = null;
-  try {
-    await services.recordStats({
-      roomKey: standupKey,
-      ...buildStandupStatsPayload(standupData),
-    });
-  } catch (error) {
-    if (!(error instanceof HttpError && error.status === 404)) {
-      statsError = error;
     }
   }
 
@@ -110,7 +114,7 @@ export async function completeStandupWorkspaceHistory(
   }
 
   try {
-    await services.completeSession(standupKey);
+    await services.completeSession(standupKey, "standup");
   } catch (error) {
     if (error instanceof HttpError && error.status === 404) {
       return null;
