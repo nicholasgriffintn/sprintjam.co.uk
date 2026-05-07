@@ -17,7 +17,7 @@ import { WorkspaceAuthProvider } from "@/context/WorkspaceAuthContext";
 import { AppToastProvider } from "@/components/ui";
 import { useCurrentRoute } from "@/hooks/useCurrentRoute";
 import { queryClient } from "@/lib/query-client";
-import { loadWorkspaceAuthProfile } from "@/lib/workspace-loaders";
+import { loadInitialWorkspaceAuthProfile } from "@/lib/workspace-loaders";
 import { ThemeProvider } from "@/lib/theme-context";
 import type { ServerDefaults } from "@/types";
 
@@ -71,7 +71,7 @@ function loadInitialServerDefaults(): ServerDefaults {
 export function loader({ request, context }: LoaderFunctionArgs) {
   return {
     initialServerDefaults: loadInitialServerDefaults(),
-    initialWorkspaceProfile: loadWorkspaceAuthProfile({
+    initialWorkspaceProfile: loadInitialWorkspaceAuthProfile({
       request,
       context,
     }),

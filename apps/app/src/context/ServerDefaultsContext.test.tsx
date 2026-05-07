@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { getServerDefaults } from "@sprintjam/utils";
 
 import {
@@ -10,16 +10,6 @@ import {
   useServerDefaults,
 } from "./ServerDefaultsContext";
 import type { ServerDefaults } from "@/types";
-
-const mocks = vi.hoisted(() => ({
-  state: "idle" as "idle" | "loading" | "submitting",
-}));
-
-vi.mock("react-router", () => ({
-  useRevalidator: () => ({
-    state: mocks.state,
-  }),
-}));
 
 function DefaultsProbe() {
   const { serverDefaults, isLoadingDefaults } = useServerDefaults();
@@ -43,10 +33,6 @@ function getTestServerDefaults(): ServerDefaults {
 }
 
 describe("ServerDefaultsProvider", () => {
-  beforeEach(() => {
-    mocks.state = "idle";
-  });
-
   it("exposes loader defaults through context", () => {
     const defaults = getTestServerDefaults();
 
@@ -62,9 +48,8 @@ describe("ServerDefaultsProvider", () => {
     expect(screen.getByTestId("loading").textContent).toBe("false");
   });
 
-  it("tracks route revalidation while defaults are refreshed by the loader", () => {
+  it("does not report unrelated route revalidation as server-defaults loading", () => {
     const defaults = getTestServerDefaults();
-    mocks.state = "loading";
 
     render(
       <ServerDefaultsProvider defaults={defaults}>
@@ -72,6 +57,6 @@ describe("ServerDefaultsProvider", () => {
       </ServerDefaultsProvider>,
     );
 
-    expect(screen.getByTestId("loading").textContent).toBe("true");
+    expect(screen.getByTestId("loading").textContent).toBe("false");
   });
 });
