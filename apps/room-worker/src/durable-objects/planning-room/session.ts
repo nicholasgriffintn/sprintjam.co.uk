@@ -1,5 +1,5 @@
 import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
-import { validateClientMessage } from "@sprintjam/utils";
+import { generateSessionToken, validateClientMessage } from "@sprintjam/utils";
 
 import type { PlanningRoom } from ".";
 import {
@@ -30,7 +30,7 @@ async function markDisconnectedIfLastSession(
   }
 
   const latestRoomData = await room.getRoomData();
-  if (!latestRoomData || latestRoomData.connectedUsers?.[userName] === false) {
+  if (!latestRoomData) {
     return;
   }
 
@@ -38,6 +38,7 @@ async function markDisconnectedIfLastSession(
   room.repository.setUserConnection(userName, false);
   room.broadcast({
     type: "userConnectionStatus",
+    roomKey: latestRoomData.key,
     user: userName,
     isConnected: false,
   });
@@ -59,6 +60,21 @@ async function markDisconnectedIfLastSession(
         moderator: latestRoomData.moderator,
       });
     }
+  }
+}
+
+function removeDuplicateUserSessions(
+  room: PlanningRoom,
+  userName: string,
+  currentSocket: CfWebSocket,
+) {
+  for (const [socket, session] of room.sessions) {
+    if (socket === currentSocket || session.userName !== userName) {
+      continue;
+    }
+
+    room.sessions.delete(socket);
+    socket.close(1000, "User left the room");
   }
 }
 
@@ -113,6 +129,11 @@ export async function handleSession(
     return;
   }
 
+  if (!room.repository.validateSessionToken(canonicalUserName, sessionToken)) {
+    webSocket.close(4003, "Invalid session token");
+    return;
+  }
+
   const normalizedRoomData = normalizeRoomData(roomData);
   markUserConnection(normalizedRoomData, canonicalUserName, true);
 
@@ -133,6 +154,7 @@ export async function handleSession(
   } else {
     room.broadcast({
       type: "userConnectionStatus",
+      roomKey: freshRoomData?.key ?? roomData.key,
       user: canonicalUserName,
       isConnected: true,
     });
@@ -240,6 +262,11 @@ export async function handleSession(
           break;
         case "leaveRoom":
           room.sessions.delete(webSocket);
+          removeDuplicateUserSessions(room, canonicalUserName, webSocket);
+          room.repository.setSessionToken(
+            canonicalUserName,
+            generateSessionToken(),
+          );
           await markDisconnectedIfLastSession(room, canonicalUserName);
           webSocket.close(1000, "User left the room");
           break;

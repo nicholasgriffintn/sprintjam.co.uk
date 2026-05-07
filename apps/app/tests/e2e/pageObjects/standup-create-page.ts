@@ -10,18 +10,24 @@ export class StandupCreatePage extends BasePage {
   async goto() {
     await this.page.goto("/standup/create");
     await expect(this.page.locator("#standup-create-name")).toBeVisible();
+    await expect(
+      this.page.getByRole("button", { name: /create standup/i }),
+    ).toBeDisabled();
   }
 
   async fillName(name: string) {
-    await this.page.locator("#standup-create-name").fill(name);
+    const nameInput = this.page.locator("#standup-create-name");
+    await nameInput.fill(name);
+    await expect(nameInput).toHaveValue(name);
   }
 
   async fillPasscode(passcode: string) {
-    await this.page.locator("#standup-create-passcode").fill(passcode);
+    const passcodeInput = this.page.locator("#standup-create-passcode");
+    await passcodeInput.fill(passcode);
+    await expect(passcodeInput).toHaveValue(passcode);
   }
 
   async submit() {
-    // TODO: Fix this, button not showing sometimes
     const button = this.page.getByRole("button", { name: /create standup/i });
     await expect(button).toBeEnabled();
     await button.click();

@@ -51,6 +51,9 @@ const extractRoomKey = (
   if (roomData?.key) {
     return roomData.key;
   }
+  if ("roomKey" in message && typeof message.roomKey === "string") {
+    return message.roomKey;
+  }
   return fallbackRoomKey ?? null;
 };
 

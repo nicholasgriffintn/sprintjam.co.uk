@@ -39,14 +39,13 @@ export function applyRoomUpdate(
       if (!user) return prev;
 
       const alreadyPresent = prev.users.includes(user);
-      const alreadyConnected = prev.connectedUsers[user] === true;
-
-      if (alreadyPresent && alreadyConnected) {
-        return prev;
-      }
+      const hasConnectionStatus = Object.prototype.hasOwnProperty.call(
+        prev.connectedUsers,
+        user,
+      );
 
       const users = alreadyPresent ? prev.users : [...prev.users, user];
-      const connectedUsers = alreadyConnected
+      const connectedUsers = hasConnectionStatus
         ? prev.connectedUsers
         : { ...prev.connectedUsers, [user]: true };
 
@@ -56,6 +55,14 @@ export function applyRoomUpdate(
           ...(userAvatars ?? {}),
           [user]: message.avatar,
         };
+      }
+
+      if (
+        users === prev.users &&
+        connectedUsers === prev.connectedUsers &&
+        userAvatars === prev.userAvatars
+      ) {
+        return prev;
       }
 
       return {
