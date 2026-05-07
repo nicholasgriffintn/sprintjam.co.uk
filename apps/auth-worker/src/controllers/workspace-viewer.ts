@@ -131,7 +131,7 @@ export function requireTeamMemberWriteAccess(
   viewer: TeamViewer,
   message = "You must be a team member to update this team",
 ): Response | null {
-  if (!viewer.isTeamMember) {
+  if (!viewer.isWorkspaceAdmin && !viewer.isTeamMember) {
     return forbiddenResponse(message);
   }
 

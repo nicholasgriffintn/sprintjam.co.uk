@@ -1048,6 +1048,42 @@ describe("teams-controller", () => {
     );
   });
 
+  it("creates a team session for a workspace admin without team membership", async () => {
+    const repo = createRepo({
+      isOrganisationAdmin: vi.fn().mockResolvedValue(true),
+      getOrganisationMembership: vi
+        .fn()
+        .mockResolvedValue(makeMembership({ role: "admin" })),
+      getTeamById: vi
+        .fn()
+        .mockResolvedValue(makeTeam({ id: 10, accessPolicy: "restricted" })),
+      getTeamMembership: vi.fn().mockResolvedValue(null),
+    });
+    authenticateAs(repo);
+
+    const response = await createTeamSessionController(
+      makeRequest("https://test.com/teams/10/sessions", {
+        method: "POST",
+        body: JSON.stringify({
+          name: "Admin standup",
+          roomKey: "ROOM-2",
+          metadata: { type: "standup" },
+        }),
+      }),
+      env,
+      10,
+    );
+
+    expect(response.status).toBe(201);
+    expect(repo.createTeamSession).toHaveBeenCalledWith(
+      10,
+      "ROOM-2",
+      "Admin standup",
+      1,
+      { type: "standup" },
+    );
+  });
+
   it("links session metadata without recording actions during session creation", async () => {
     const repo = createRepo({
       isOrganisationAdmin: vi.fn().mockResolvedValue(false),
