@@ -484,7 +484,10 @@ export class WorkspaceAuthRepository {
 
   createWorkspaceProcessLoop(
     teamId: number,
-    input: CreateWorkspaceProcessLoopInput & { createdById: number; key: string },
+    input: CreateWorkspaceProcessLoopInput & {
+      createdById: number;
+      key: string;
+    },
   ): Promise<number> {
     return this.actions.createProcessLoop({
       teamId,
@@ -622,6 +625,17 @@ export class WorkspaceAuthRepository {
     settings: import("@sprintjam/types").RoomSettings,
   ): Promise<void> {
     return this.teams.saveTeamSettings(teamId, settings);
+  }
+
+  getTeamRetroSettings(teamId: number) {
+    return this.teams.getTeamRetroSettings(teamId);
+  }
+
+  saveTeamRetroSettings(
+    teamId: number,
+    settings: import("@sprintjam/types").RetroSettings,
+  ): Promise<void> {
+    return this.teams.saveTeamRetroSettings(teamId, settings);
   }
 
   cleanupExpiredMagicLinks(): Promise<number> {

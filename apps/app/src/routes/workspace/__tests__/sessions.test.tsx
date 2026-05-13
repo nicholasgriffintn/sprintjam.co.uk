@@ -140,6 +140,8 @@ function createSessionsPage(
       ).length,
       wheel: sessions.filter((session) => session.metadata?.includes("wheel"))
         .length,
+      retro: sessions.filter((session) => session.metadata?.includes("retro"))
+        .length,
     },
     ...overrides,
   };
@@ -244,7 +246,11 @@ describe("WorkspaceSessions", () => {
 
   it("filters standups and wheels separately from planning sessions", async () => {
     workspaceDataMock.teams = [accessibleTeam];
-    workspaceDataMock.sessions = [planningSession, standupSession, wheelSession];
+    workspaceDataMock.sessions = [
+      planningSession,
+      standupSession,
+      wheelSession,
+    ];
     workspaceDataMock.selectedTeamId = accessibleTeam.id;
     loaderDataMock.sessionsByTeamId = {
       [accessibleTeam.id]: createSessionsPage([
@@ -269,6 +275,7 @@ describe("WorkspaceSessions", () => {
               planning: 1,
               standup: 1,
               wheel: 1,
+              retro: 0,
             },
           }),
         );
@@ -288,6 +295,7 @@ describe("WorkspaceSessions", () => {
             planning: 1,
             standup: 1,
             wheel: 1,
+            retro: 0,
           },
         }),
       );
@@ -324,7 +332,11 @@ describe("WorkspaceSessions", () => {
 
   it("opens linked sessions in a new tab", () => {
     workspaceDataMock.teams = [accessibleTeam];
-    workspaceDataMock.sessions = [planningSession, standupSession, wheelSession];
+    workspaceDataMock.sessions = [
+      planningSession,
+      standupSession,
+      wheelSession,
+    ];
     workspaceDataMock.selectedTeamId = accessibleTeam.id;
     loaderDataMock.sessionsByTeamId = {
       [accessibleTeam.id]: createSessionsPage([
@@ -374,6 +386,7 @@ describe("WorkspaceSessions", () => {
           planning: 1,
           standup: 1,
           wheel: 0,
+          retro: 0,
         },
       }),
     };
@@ -391,6 +404,7 @@ describe("WorkspaceSessions", () => {
         planning: 1,
         standup: 1,
         wheel: 0,
+        retro: 0,
       },
     });
 

@@ -29,6 +29,7 @@ const GROUP_BACKGROUNDS: Record<RouteGroup, PageBackgroundVariant> = {
   auth: "compact",
   flow: "compact",
   wheel: "compact",
+  retro: "compact",
   standup: "compact",
 };
 
@@ -40,6 +41,7 @@ const GROUP_HEADERS: Record<RouteGroup, HeaderVariant> = {
   auth: "marketing",
   flow: "marketing",
   wheel: "wheel",
+  retro: "retro",
   standup: "standup",
 };
 

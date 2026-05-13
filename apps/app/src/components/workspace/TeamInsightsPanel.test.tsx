@@ -10,7 +10,7 @@ import { TeamInsightsPanel } from "@/components/workspace/TeamInsightsPanel";
 
 const insights: TeamInsights = {
   sessionsAnalyzed: 4,
-  sessionTypeCounts: { all: 4, planning: 2, standup: 1, wheel: 1 },
+  sessionTypeCounts: { all: 4, planning: 2, standup: 1, wheel: 1, retro: 0 },
   standup: {
     sessionsAnalyzed: 1,
     totalParticipants: 5,
@@ -42,6 +42,16 @@ const insights: TeamInsights = {
     modeSessionCounts: { decision: 0, reviewer: 1, facilitator: 0 },
     modeSpinCounts: { decision: 0, reviewer: 3, facilitator: 0 },
   },
+  retro: {
+    sessions: 0,
+    totalParticipants: 0,
+    totalCards: 0,
+    totalVotes: 0,
+    totalActions: 0,
+    completedActions: 0,
+    averageCardsPerSession: 0,
+    averageVotesPerSession: 0,
+  },
   totalTickets: 18,
   totalRounds: 22,
   participationRate: 96,
@@ -57,7 +67,7 @@ describe("TeamInsightsPanel", () => {
       <TeamInsightsPanel
         teamName="Platform"
         insights={insights}
-        sessionCounts={{ all: 6, planning: 3, standup: 2, wheel: 1 }}
+        sessionCounts={{ all: 6, planning: 3, standup: 2, wheel: 1, retro: 0 }}
       />,
     );
 

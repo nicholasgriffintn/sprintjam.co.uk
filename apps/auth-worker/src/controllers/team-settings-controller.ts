@@ -1,4 +1,9 @@
-import type { AuthWorkerEnv, RoomSettings } from "@sprintjam/types";
+import type {
+  AuthWorkerEnv,
+  RetroSettings,
+  RoomSettings,
+} from "@sprintjam/types";
+import { normaliseRetroSettings } from "@sprintjam/utils";
 import { authenticateRequest, isAuthError, type AuthResult } from "../lib/auth";
 import {
   jsonResponse,
@@ -156,4 +161,92 @@ export async function saveTeamSettingsController(
   const merged = { ...(existing ?? {}), ...settings } as RoomSettings;
   await repo.saveTeamSettings(teamId, merged);
   return jsonResponse({ settings: merged });
+}
+
+export async function getTeamRetroSettingsController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) return auth.response;
+
+  const { userId, repo } = auth.result;
+  const team = await repo.getTeamById(teamId);
+  if (!team) return notFoundResponse("Team not found");
+
+  const user = await repo.getUserById(userId);
+  if (!user || user.organisationId !== team.organisationId) {
+    return forbiddenResponse();
+  }
+
+  const isWorkspaceAdmin = await repo.isOrganisationAdmin(
+    userId,
+    user.organisationId,
+  );
+  const teamMembership = await repo.getTeamMembership(teamId, userId);
+  const canAccess = canAccessTeam(
+    team,
+    teamMembership,
+    userId,
+    isWorkspaceAdmin,
+  );
+
+  if (!canAccess) {
+    return forbiddenResponse("You do not have access to this team");
+  }
+
+  const settings = await repo.getTeamRetroSettings(teamId);
+  return jsonResponse({ settings });
+}
+
+export async function saveTeamRetroSettingsController(
+  request: Request,
+  env: AuthWorkerEnv,
+  teamId: number,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) return auth.response;
+
+  const { userId, repo } = auth.result;
+  const team = await repo.getTeamById(teamId);
+  if (!team) return notFoundResponse("Team not found");
+
+  const user = await repo.getUserById(userId);
+  if (!user || user.organisationId !== team.organisationId) {
+    return forbiddenResponse();
+  }
+
+  const isWorkspaceAdmin = await repo.isOrganisationAdmin(
+    userId,
+    user.organisationId,
+  );
+  const teamMembership = await repo.getTeamMembership(teamId, userId);
+  const isTeamAdmin = canManageTeam(
+    team,
+    teamMembership,
+    userId,
+    isWorkspaceAdmin,
+  );
+  if (!isTeamAdmin) {
+    return forbiddenResponse("Only team admins can update team settings");
+  }
+
+  let settings: RetroSettings;
+  try {
+    const body = await request.json<{ settings?: Partial<RetroSettings> }>();
+    if (
+      !body?.settings ||
+      typeof body.settings !== "object" ||
+      Array.isArray(body.settings)
+    ) {
+      return jsonError("settings object is required", 400);
+    }
+    settings = normaliseRetroSettings(undefined, body.settings);
+  } catch {
+    return jsonError("Invalid request body", 400);
+  }
+
+  await repo.saveTeamRetroSettings(teamId, settings);
+  return jsonResponse({ settings });
 }

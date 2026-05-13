@@ -12,19 +12,21 @@ describe("workspace session types", () => {
     expect(getWorkspaceTeamSessionType("{bad-json")).toBe("planning");
   });
 
-  it("counts planning, standup, and wheel sessions from metadata", () => {
+  it("counts planning, standup, wheel, and retro sessions from metadata", () => {
     expect(
       countWorkspaceTeamSessionTypes([
         { metadata: null },
         { metadata: '{"type":"standup"}' },
         { metadata: { type: "wheel" } },
+        { metadata: { type: "retro" } },
         { metadata: '{"type":"planning"}' },
       ]),
     ).toEqual({
-      all: 4,
+      all: 5,
       planning: 2,
       standup: 1,
       wheel: 1,
+      retro: 1,
     });
   });
 });

@@ -10,6 +10,7 @@ import { ServerDefaultsProvider } from "@/context/ServerDefaultsContext";
 import { StandupHeaderProvider } from "@/context/StandupHeaderContext";
 import { RoomProvider } from "@/context/RoomContext";
 import { WheelHeaderProvider } from "@/context/WheelHeaderContext";
+import { RetroHeaderProvider } from "@/context/RetroHeaderContext";
 import { getBackgroundVariant } from "@/config/routes/derived";
 import type { AppScreen } from "@/config/routes/definitions";
 import type { ServerDefaults } from "@/types";
@@ -27,17 +28,19 @@ export function AppShell({
         <RoomHeaderProvider>
           <WheelHeaderProvider>
             <StandupHeaderProvider>
-              <FidgetToyProvider>
-                <PageBackground variant={getBackgroundVariant(screen)}>
-                  <Header />
-                  <MotionConfig reducedMotion="user">
-                    <main className="flex-1">
-                      <Outlet />
-                    </main>
-                    <FidgetToyShelf />
-                  </MotionConfig>
-                </PageBackground>
-              </FidgetToyProvider>
+              <RetroHeaderProvider>
+                <FidgetToyProvider>
+                  <PageBackground variant={getBackgroundVariant(screen)}>
+                    <Header />
+                    <MotionConfig reducedMotion="user">
+                      <main className="flex-1">
+                        <Outlet />
+                      </main>
+                      <FidgetToyShelf />
+                    </MotionConfig>
+                  </PageBackground>
+                </FidgetToyProvider>
+              </RetroHeaderProvider>
             </StandupHeaderProvider>
           </WheelHeaderProvider>
         </RoomHeaderProvider>

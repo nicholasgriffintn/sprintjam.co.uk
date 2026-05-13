@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
   validateRoundIngestPayload,
+  validateRetroSessionStatsPayload,
   validateWheelSessionStatsPayload,
   LIMITS,
 } from "./validation";
@@ -469,6 +470,53 @@ describe("validateRoundIngestPayload", () => {
       });
       expect(result.valid).toBe(true);
     });
+  });
+});
+
+describe("validateRetroSessionStatsPayload", () => {
+  const validPayload = {
+    roomKey: "RETRO1",
+    templateId: "start-stop-continue",
+    templateName: "Start, Stop, Continue",
+    totalParticipants: 5,
+    cardCount: 12,
+    voteCount: 18,
+    actionCount: 3,
+    completedActionCount: 1,
+    durationMs: 120000,
+  };
+
+  it("accepts a valid retro session stats payload", () => {
+    expect(validateRetroSessionStatsPayload(validPayload)).toEqual({
+      valid: true,
+    });
+  });
+
+  it("rejects completed actions above total actions", () => {
+    const result = validateRetroSessionStatsPayload({
+      ...validPayload,
+      actionCount: 1,
+      completedActionCount: 2,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result).toHaveProperty(
+      "error",
+      "completedActionCount cannot be greater than actionCount",
+    );
+  });
+
+  it("rejects negative duration", () => {
+    const result = validateRetroSessionStatsPayload({
+      ...validPayload,
+      durationMs: -1,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result).toHaveProperty(
+      "error",
+      "durationMs must be a non-negative number",
+    );
   });
 });
 

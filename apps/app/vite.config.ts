@@ -48,6 +48,9 @@ export default defineConfig((env) => {
                 {
                   configPath: "../standup-worker/wrangler.json",
                 },
+              {
+                configPath: "../retro-worker/wrangler.json",
+              },
               ],
         persistState: {
           path: "../../.data",

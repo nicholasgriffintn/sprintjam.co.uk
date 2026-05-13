@@ -24,6 +24,7 @@ export interface DispatchWorkerEnv extends BaseEnv {
   STATS_WORKER: Fetcher;
   WHEEL_WORKER: Fetcher;
   STANDUP_WORKER: Fetcher;
+  RETRO_WORKER: Fetcher;
 }
 
 /**
@@ -107,6 +108,20 @@ export interface StandupWorkerEnv extends BaseEnv {
   STANDUP_CREATE_RATE_LIMITER: RateLimit;
   STANDUP_JOIN_RATE_LIMITER: RateLimit;
   STANDUP_IP_RATE_LIMITER: RateLimit;
+  AUTH_WORKER?: Fetcher;
+  STATS_WORKER?: Fetcher;
+}
+
+/**
+ * Environment for the retro worker
+ */
+export interface RetroWorkerEnv extends BaseEnv {
+  RETRO_ROOM: DurableObjectNamespace;
+  TOKEN_ENCRYPTION_SECRET: string;
+  ENABLE_RETRO_RATE_LIMIT?: string;
+  RETRO_CREATE_RATE_LIMITER: RateLimit;
+  RETRO_JOIN_RATE_LIMITER: RateLimit;
+  RETRO_IP_RATE_LIMITER: RateLimit;
   AUTH_WORKER?: Fetcher;
   STATS_WORKER?: Fetcher;
 }

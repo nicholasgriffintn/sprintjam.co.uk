@@ -5,7 +5,7 @@ vi.mock("@/constants", () => ({
 }));
 
 import { HttpError } from "@/lib/errors";
-import { requestMagicLink } from "@/lib/workspace-service";
+import { createTeamSession, requestMagicLink } from "@/lib/workspace-service";
 
 describe("workspace-service", () => {
   afterEach(() => {
@@ -44,5 +44,44 @@ describe("workspace-service", () => {
       message:
         "Your email domain is not authorized for workspace access. Please contact your administrator.",
     });
+  });
+
+  it("routes retro workspace session creation through the retro worker", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ session: { id: 1 } }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await createTeamSession(
+      "atlas-amber-amber",
+      "Retro 14 May 2026",
+      "2T0W2H",
+      {
+        type: "retro",
+        templateId: "start-stop-continue",
+        templateName: "Start, Stop, Continue",
+      },
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost/retros/workspace-sessions",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({
+          teamSlug: "atlas-amber-amber",
+          name: "Retro 14 May 2026",
+          roomKey: "2T0W2H",
+          metadata: {
+            type: "retro",
+            templateId: "start-stop-continue",
+            templateName: "Start, Stop, Continue",
+          },
+        }),
+      }),
+    );
   });
 });

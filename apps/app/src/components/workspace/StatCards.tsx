@@ -7,9 +7,9 @@ import {
   TrendingUp,
   TrendingDown,
   CalendarClock,
+  Columns3,
   MessageSquareQuote,
   Wand2,
-  Sparkle,
 } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -114,33 +114,31 @@ export function StatCards({
     },
     ...(stats
       ? [
-        {
-          label: "Planning",
-          value: stats.sessionTypeCounts.planning,
-          icon: <Target className="h-5 w-5 text-indigo-500" />,
-          trend: null,
-        },
-        {
-          label: "Standups",
-          value: stats.sessionTypeCounts.standup,
-          icon: (
-            <MessageSquareQuote className="h-5 w-5 text-emerald-500" />
-          ),
-          trend: null,
-        },
-        {
-          label: "Retros",
-          value: 0,
-          icon: <Sparkle className="h-5 w-5 text-amber-500" />,
-          trend: null,
-        },
-        {
-          label: "Wheels",
-          value: stats.sessionTypeCounts.wheel,
-          icon: <Wand2 className="h-5 w-5 text-amber-500" />,
-          trend: null,
-        },
-      ]
+          {
+            label: "Planning",
+            value: stats.sessionTypeCounts.planning,
+            icon: <Target className="h-5 w-5 text-indigo-500" />,
+            trend: null,
+          },
+          {
+            label: "Standups",
+            value: stats.sessionTypeCounts.standup,
+            icon: <MessageSquareQuote className="h-5 w-5 text-emerald-500" />,
+            trend: null,
+          },
+          {
+            label: "Retros",
+            value: stats.sessionTypeCounts.retro,
+            icon: <Columns3 className="h-5 w-5 text-amber-500" />,
+            trend: null,
+          },
+          {
+            label: "Wheels",
+            value: stats.sessionTypeCounts.wheel,
+            icon: <Wand2 className="h-5 w-5 text-amber-500" />,
+            trend: null,
+          },
+        ]
       : []),
     {
       label: "Active",

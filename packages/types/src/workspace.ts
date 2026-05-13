@@ -21,6 +21,7 @@ import type { RoomSettings, RoundTransitionType } from "./room";
 import type { OAuthProvider } from "./external";
 import type { WheelMode } from "./wheel";
 import type { LinkedTicket } from "./standup";
+import type { RetroSettings, WorkspaceRetroInsights } from "./retro";
 
 export type Team = typeof teams.$inferSelect;
 export type TeamMembershipRow = typeof teamMemberships.$inferSelect;
@@ -50,11 +51,14 @@ export interface WorkspacePaginationMeta {
   nextOffset: number | null;
 }
 
-export type WorkspaceTeamSessionType = "planning" | "standup" | "wheel";
+export type WorkspaceTeamSessionType =
+  | "planning"
+  | "standup"
+  | "wheel"
+  | "retro";
 export type WorkspaceTeamSessionFilter = "all" | WorkspaceTeamSessionType;
 
-export type WorkspaceProcessLoopStatus =
-  WorkspaceProcessLoop["status"];
+export type WorkspaceProcessLoopStatus = WorkspaceProcessLoop["status"];
 export type WorkspaceActionSource = WorkspaceActionItem["source"];
 export type WorkspaceActionStatus = WorkspaceActionItem["status"];
 export type WorkspaceActionPriority = WorkspaceActionItem["priority"];
@@ -167,6 +171,10 @@ export interface RecordWheelSessionStatsInput {
   }>;
 }
 
+export interface TeamRetroSettingsPayload {
+  settings: RetroSettings | null;
+}
+
 export interface RecordPlanningWorkspaceActionsInput {
   roomKey: string;
   followUps: Array<{
@@ -178,6 +186,7 @@ export interface RecordPlanningWorkspaceActionsInput {
 
 export interface TeamWithSettings extends Team {
   settings?: RoomSettings;
+  retroSettings?: RetroSettings;
 }
 
 export interface TeamIntegrationStatus {
@@ -314,6 +323,7 @@ export interface TeamInsights {
   sessionTypeCounts: TeamSessionCounts;
   standup: WorkspaceStandupInsights;
   wheel: WorkspaceWheelInsights;
+  retro: WorkspaceRetroInsights;
   totalTickets: number;
   totalRounds: number;
   participationRate: number;
@@ -334,8 +344,7 @@ export interface WorkspaceStandupSessionInsights {
   kudosCount: number;
 }
 
-export interface WorkspaceStandupInsights
-  extends WorkspaceStandupSessionInsights {
+export interface WorkspaceStandupInsights extends WorkspaceStandupSessionInsights {
   sessionsAnalyzed: number;
   responseRate: number;
   averageHealth: number | null;
@@ -354,8 +363,10 @@ export interface WorkspaceWheelSessionInsights {
   repeatWinnerCount: number;
 }
 
-export interface WorkspaceWheelInsights
-  extends Omit<WorkspaceWheelSessionInsights, "mode"> {
+export interface WorkspaceWheelInsights extends Omit<
+  WorkspaceWheelSessionInsights,
+  "mode"
+> {
   sessionsAnalyzed: number;
   averageSpinsPerSession: number;
   uniqueWinnerRate: number;
@@ -379,6 +390,7 @@ export interface WorkspaceInsights {
   sessionTypeCounts: TeamSessionCounts;
   standup: WorkspaceStandupInsights;
   wheel: WorkspaceWheelInsights;
+  retro: WorkspaceRetroInsights;
   participationRate: number;
   firstRoundConsensusRate: number;
   discussionRate: number;

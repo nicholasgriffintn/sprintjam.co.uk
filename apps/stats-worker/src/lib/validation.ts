@@ -1,5 +1,6 @@
 import type {
   RecordStandupSessionStatsInput,
+  RecordRetroSessionStatsInput,
   RecordWheelSessionStatsInput,
   RoundIngestPayload,
 } from "@sprintjam/types";
@@ -20,6 +21,10 @@ export const LIMITS = {
   MAX_WHEEL_RESULTS: 100,
   MAX_WHEEL_ENTRIES: 200,
   MAX_WHEEL_WINNER_LENGTH: 200,
+  MAX_RETRO_CARDS: 500,
+  MAX_RETRO_ACTIONS: 100,
+  MAX_RETRO_TEMPLATE_ID_LENGTH: 80,
+  MAX_RETRO_TEMPLATE_NAME_LENGTH: 120,
 } as const;
 
 export type ValidationResult =
@@ -357,7 +362,10 @@ export function validateWheelSessionStatsPayload(
     };
   }
 
-  if (!Array.isArray(b.results) || b.results.length > LIMITS.MAX_WHEEL_RESULTS) {
+  if (
+    !Array.isArray(b.results) ||
+    b.results.length > LIMITS.MAX_WHEEL_RESULTS
+  ) {
     return {
       valid: false,
       error: `results must be an array with max ${LIMITS.MAX_WHEEL_RESULTS} items`,
@@ -386,6 +394,100 @@ export function validateWheelSessionStatsPayload(
         error: `results[${index}].removedAfter must be a boolean`,
       };
     }
+  }
+
+  return { valid: true };
+}
+
+export function validateRetroSessionStatsPayload(
+  body: unknown,
+): ValidationResult {
+  if (!body || typeof body !== "object") {
+    return { valid: false, error: "Request body must be an object" };
+  }
+
+  const b = body as Partial<RecordRetroSessionStatsInput>;
+
+  if (
+    !b.roomKey ||
+    !b.templateId ||
+    !b.templateName ||
+    b.totalParticipants === undefined ||
+    b.cardCount === undefined ||
+    b.voteCount === undefined ||
+    b.actionCount === undefined ||
+    b.completedActionCount === undefined
+  ) {
+    return { valid: false, error: "Missing required fields" };
+  }
+
+  if (
+    typeof b.roomKey !== "string" ||
+    b.roomKey.length > LIMITS.MAX_ROOM_KEY_LENGTH
+  ) {
+    return {
+      valid: false,
+      error: `roomKey must be a string with max ${LIMITS.MAX_ROOM_KEY_LENGTH} characters`,
+    };
+  }
+
+  if (
+    typeof b.templateId !== "string" ||
+    b.templateId.length > LIMITS.MAX_RETRO_TEMPLATE_ID_LENGTH
+  ) {
+    return {
+      valid: false,
+      error: `templateId must be a string with max ${LIMITS.MAX_RETRO_TEMPLATE_ID_LENGTH} characters`,
+    };
+  }
+
+  if (
+    typeof b.templateName !== "string" ||
+    b.templateName.length > LIMITS.MAX_RETRO_TEMPLATE_NAME_LENGTH
+  ) {
+    return {
+      valid: false,
+      error: `templateName must be a string with max ${LIMITS.MAX_RETRO_TEMPLATE_NAME_LENGTH} characters`,
+    };
+  }
+
+  const numericFields = [
+    ["totalParticipants", b.totalParticipants, LIMITS.MAX_WHEEL_ENTRIES],
+    ["cardCount", b.cardCount, LIMITS.MAX_RETRO_CARDS],
+    ["voteCount", b.voteCount, LIMITS.MAX_RETRO_CARDS * 10],
+    ["actionCount", b.actionCount, LIMITS.MAX_RETRO_ACTIONS],
+    ["completedActionCount", b.completedActionCount, LIMITS.MAX_RETRO_ACTIONS],
+  ] as const;
+
+  for (const [field, value, max] of numericFields) {
+    if (
+      typeof value !== "number" ||
+      !Number.isInteger(value) ||
+      value < 0 ||
+      value > max
+    ) {
+      return {
+        valid: false,
+        error: `${field} must be an integer between 0 and ${max}`,
+      };
+    }
+  }
+
+  if (b.completedActionCount > b.actionCount) {
+    return {
+      valid: false,
+      error: "completedActionCount cannot be greater than actionCount",
+    };
+  }
+
+  if (
+    b.durationMs !== undefined &&
+    (typeof b.durationMs !== "number" || b.durationMs < 0)
+  ) {
+    return {
+      valid: false,
+      error: "durationMs must be a non-negative number",
+    };
   }
 
   return { valid: true };

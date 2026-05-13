@@ -6,6 +6,7 @@ export interface ParsedPath {
   screen: AppScreen;
   roomKey?: string;
   standupKey?: string;
+  retroKey?: string;
   teamSlug?: string;
 }
 
@@ -79,6 +80,19 @@ export function parsePath(path: string): ParsedPath {
         return { screen: route.screen, standupKey: standupKey.toUpperCase() };
       }
 
+      if (route.screen === "retroJoin" || route.screen === "retroRoom") {
+        const retroKey = match[1];
+
+        if (!retroKey) {
+          if (route.screen === "retroJoin") {
+            return { screen: "retroJoin" };
+          }
+          return { screen: "404" };
+        }
+
+        return { screen: route.screen, retroKey: retroKey.toUpperCase() };
+      }
+
       if (route.screen === "workspaceTeam") {
         const teamSlug = match[1]?.toLowerCase();
 
@@ -121,6 +135,7 @@ export function getPathFromScreen(
       roomKey: resolvedParams?.roomKey,
       wheelKey: resolvedParams?.wheelKey,
       standupKey: resolvedParams?.standupKey,
+      retroKey: resolvedParams?.retroKey,
       teamId: resolvedParams?.teamId,
       teamSlug: resolvedParams?.teamSlug,
     });

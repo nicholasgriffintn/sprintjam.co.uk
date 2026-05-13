@@ -3,6 +3,7 @@ export type HeaderVariant =
   | "room"
   | "workspace"
   | "wheel"
+  | "retro"
   | "standup";
 export type MarketingVariant = "hero" | "compact";
 export type LogoSize = "xs" | "sm" | "md" | "lg";

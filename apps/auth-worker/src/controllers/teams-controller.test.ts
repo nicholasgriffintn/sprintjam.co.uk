@@ -138,6 +138,7 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
     planning: 0,
     standup: 0,
     wheel: 0,
+    retro: 0,
   }),
   createTeamSession: vi.fn().mockResolvedValue(21),
   getOrganisationTeamSessionByRoomKey: vi.fn().mockResolvedValue(null),
@@ -184,6 +185,7 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
       planning: 7,
       standup: 4,
       wheel: 1,
+      retro: 0,
     },
   }),
   updateOrganisation: vi.fn(),
@@ -924,6 +926,7 @@ describe("teams-controller", () => {
         planning: 10,
         standup: 8,
         wheel: 3,
+        retro: 0,
       }),
     });
     authenticateAs(repo);
@@ -938,7 +941,13 @@ describe("teams-controller", () => {
     const data = (await response.json()) as {
       sessions: Array<{ id: number }>;
       pagination: { limit: number; offset: number; total: number };
-      counts: { all: number; planning: number; standup: number; wheel: number };
+      counts: {
+        all: number;
+        planning: number;
+        standup: number;
+        wheel: number;
+        retro: number;
+      };
     };
 
     expect(response.status).toBe(200);
@@ -961,6 +970,7 @@ describe("teams-controller", () => {
       planning: 10,
       standup: 8,
       wheel: 3,
+      retro: 0,
     });
   });
 
@@ -1181,9 +1191,9 @@ describe("teams-controller", () => {
 
   it("lists process loops for accessible teams", async () => {
     const repo = createRepo({
-      listWorkspaceProcessLoops: vi.fn().mockResolvedValue([
-        { id: 11, teamId: 10, name: "Sprint 42" },
-      ]),
+      listWorkspaceProcessLoops: vi
+        .fn()
+        .mockResolvedValue([{ id: 11, teamId: 10, name: "Sprint 42" }]),
     });
     authenticateAs(repo);
 
@@ -1225,10 +1235,10 @@ describe("teams-controller", () => {
       expect.objectContaining({ limit: 50, offset: 0 }),
       { status: "open", source: "standup", processLoopId: 12 },
     );
-    expect(repo.getWorkspaceActionCounts).toHaveBeenCalledWith(
-      10,
-      { source: "standup", processLoopId: 12 },
-    );
+    expect(repo.getWorkspaceActionCounts).toHaveBeenCalledWith(10, {
+      source: "standup",
+      processLoopId: 12,
+    });
   });
 
   it("creates manual workspace actions", async () => {
@@ -1477,13 +1487,16 @@ describe("teams-controller", () => {
     authenticateAs(repo);
 
     const response = await resolveTeamSessionRecapActionController(
-      makeRequest("https://test.com/teams/10/sessions/21/recap-actions/resolve", {
-        method: "POST",
-        body: JSON.stringify({
-          actionId: "planning-follow-up-21-review-api-blocker",
-          kind: "planning_follow_up",
-        }),
-      }),
+      makeRequest(
+        "https://test.com/teams/10/sessions/21/recap-actions/resolve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            actionId: "planning-follow-up-21-review-api-blocker",
+            kind: "planning_follow_up",
+          }),
+        },
+      ),
       env,
       10,
       21,
@@ -1543,13 +1556,16 @@ describe("teams-controller", () => {
     authenticateAs(repo);
 
     const response = await resolveTeamSessionRecapActionController(
-      makeRequest("https://test.com/teams/10/sessions/21/recap-actions/resolve", {
-        method: "POST",
-        body: JSON.stringify({
-          actionId: "wheel-outcome-21-spin-1",
-          kind: "wheel_outcome",
-        }),
-      }),
+      makeRequest(
+        "https://test.com/teams/10/sessions/21/recap-actions/resolve",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            actionId: "wheel-outcome-21-spin-1",
+            kind: "wheel_outcome",
+          }),
+        },
+      ),
       env,
       10,
       21,

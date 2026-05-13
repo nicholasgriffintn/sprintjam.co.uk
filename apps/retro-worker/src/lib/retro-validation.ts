@@ -1,0 +1,141 @@
+import type {
+  RetroClientMessage,
+  RetroPhase,
+  RetroSettings,
+} from "@sprintjam/types";
+import { normaliseRetroSettings } from "@sprintjam/utils";
+
+const MAX_MESSAGE_CHARS = 10000;
+const MAX_CARD_TEXT_CHARS = 1000;
+const MAX_ACTION_TEXT_CHARS = 200;
+
+export function validateRetroMessagePayload(
+  raw: string,
+): { ok: true; message: RetroClientMessage } | { ok: false; error: string } {
+  if (raw.length > MAX_MESSAGE_CHARS) {
+    return { ok: false, error: "Message too large" };
+  }
+
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return { ok: false, error: "Invalid JSON" };
+  }
+
+  if (!data || typeof data !== "object") {
+    return { ok: false, error: "Invalid message format" };
+  }
+
+  const msg = data as Record<string, unknown>;
+  if (typeof msg.type !== "string") {
+    return { ok: false, error: "Missing message type" };
+  }
+
+  switch (msg.type) {
+    case "addCard": {
+      const columnId = normaliseText(msg.columnId, 80);
+      const text = normaliseText(msg.text, MAX_CARD_TEXT_CHARS);
+      if (!columnId || !text) {
+        return { ok: false, error: "Card column and text are required" };
+      }
+      return { ok: true, message: { type: "addCard", columnId, text } };
+    }
+    case "deleteCard": {
+      const cardId = normaliseText(msg.cardId, 80);
+      if (!cardId) {
+        return { ok: false, error: "Card id is required" };
+      }
+      return { ok: true, message: { type: "deleteCard", cardId } };
+    }
+    case "voteCard": {
+      const cardId = normaliseText(msg.cardId, 80);
+      if (!cardId) {
+        return { ok: false, error: "Card id is required" };
+      }
+      return { ok: true, message: { type: "voteCard", cardId } };
+    }
+    case "setPhase": {
+      if (!isRetroPhase(msg.phase)) {
+        return { ok: false, error: "Invalid retro phase" };
+      }
+      return { ok: true, message: { type: "setPhase", phase: msg.phase } };
+    }
+    case "setReady":
+      return {
+        ok: true,
+        message: { type: "setReady", ready: Boolean(msg.ready) },
+      };
+    case "addAction": {
+      const title = normaliseText(msg.title, MAX_ACTION_TEXT_CHARS);
+      const owner = normaliseOptionalText(msg.owner, 100);
+      if (!title) {
+        return { ok: false, error: "Action title is required" };
+      }
+      return { ok: true, message: { type: "addAction", title, owner } };
+    }
+    case "toggleAction": {
+      const actionId = normaliseText(msg.actionId, 80);
+      if (!actionId) {
+        return { ok: false, error: "Action id is required" };
+      }
+      return {
+        ok: true,
+        message: {
+          type: "toggleAction",
+          actionId,
+          completed: Boolean(msg.completed),
+        },
+      };
+    }
+    case "updateSettings":
+      if (!msg.settings || typeof msg.settings !== "object") {
+        return { ok: false, error: "Settings are required" };
+      }
+      return {
+        ok: true,
+        message: {
+          type: "updateSettings",
+          settings: normaliseRetroSettings(
+            undefined,
+            msg.settings as Partial<RetroSettings>,
+          ),
+        },
+      };
+    case "completeRetro":
+      return { ok: true, message: { type: "completeRetro" } };
+    case "ping":
+      return { ok: true, message: { type: "ping" } };
+    default:
+      return { ok: false, error: `Unknown message type: ${msg.type}` };
+  }
+}
+
+function isRetroPhase(value: unknown): value is RetroPhase {
+  return (
+    value === "input" ||
+    value === "review" ||
+    value === "focus" ||
+    value === "completed"
+  );
+}
+
+function normaliseText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > maxLength) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+function normaliseOptionalText(
+  value: unknown,
+  maxLength: number,
+): string | undefined {
+  return normaliseText(value, maxLength) ?? undefined;
+}

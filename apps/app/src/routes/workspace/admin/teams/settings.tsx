@@ -14,10 +14,13 @@ import {
   UserMinus,
 } from "lucide-react";
 import type {
+  RetroSettings,
   TeamCollaborationInstallation,
   TeamIntegrationStatus,
   TeamMember,
 } from "@sprintjam/types";
+import { DEFAULT_RETRO_SETTINGS } from "@sprintjam/types";
+import { normaliseRetroSettings } from "@sprintjam/utils";
 
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { AdminSidebar } from "@/components/workspace/AdminSidebar";
@@ -29,6 +32,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { Select } from "@/components/ui/Select";
 import { RoomSettingsTabs } from "@/components/RoomSettingsTabs";
+import { RetroSettingsFields } from "@/components/retro/RetroSettingsFields";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { useSessionActions } from "@/context/SessionContext";
 import { useRoomState } from "@/context/RoomContext";
@@ -40,10 +44,12 @@ import {
   approveTeamMember,
   deleteTeamCollaborationInstallation,
   getTeamSettings,
+  getTeamRetroSettings,
   listTeamCollaborationInstallations,
   listTeamMembers,
   moveTeamMember,
   removeTeamMember,
+  saveTeamRetroSettings,
   saveTeamSettings,
   updateTeamMemberRole,
 } from "@/lib/workspace-service";
@@ -93,14 +99,23 @@ export default function WorkspaceTeamSettings() {
 
   const queryClient = useQueryClient();
   const settingsQueryKey = ["team-settings", selectedTeamId] as const;
+  const retroSettingsQueryKey = [
+    "team-retro-settings",
+    selectedTeamId,
+  ] as const;
   const teamMembersQueryKey = ["team-members", selectedTeamId] as const;
   const collaborationQueryKey = [
     "team-collaboration-installations",
     selectedTeamId,
   ] as const;
   const settingsRef = useRef<RoomSettings | null>(null);
+  const retroSettingsRef = useRef<RetroSettings | null>(null);
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [retroSettingsError, setRetroSettingsError] = useState<string | null>(
+    null,
+  );
   const [settingsResetKey, setSettingsResetKey] = useState(0);
+  const [retroSettingsResetKey, setRetroSettingsResetKey] = useState(0);
   const [selectedWorkspaceUserId, setSelectedWorkspaceUserId] = useState("");
   const [selectedRole, setSelectedRole] = useState<"member" | "admin">(
     "member",
@@ -130,6 +145,13 @@ export default function WorkspaceTeamSettings() {
     staleTime: 0,
   });
 
+  const retroSettingsQuery = useQuery<RetroSettings | null>({
+    queryKey: retroSettingsQueryKey,
+    enabled: selectedTeam !== null,
+    queryFn: () => getTeamRetroSettings(selectedTeam!.slug),
+    staleTime: 0,
+  });
+
   const teamMembersQuery = useQuery<TeamMember[]>({
     queryKey: teamMembersQueryKey,
     enabled: selectedTeam !== null && canManageTeam,
@@ -147,12 +169,23 @@ export default function WorkspaceTeamSettings() {
     return defaults;
   }, [settingsQuery.data, defaults]);
 
+  const effectiveRetroSettings: RetroSettings = useMemo(
+    () =>
+      normaliseRetroSettings(retroSettingsQuery.data ?? DEFAULT_RETRO_SETTINGS),
+    [retroSettingsQuery.data],
+  );
+
   useEffect(() => {
     if (effectiveSettings) {
       settingsRef.current = effectiveSettings;
       setSettingsResetKey((key) => key + 1);
     }
   }, [effectiveSettings, selectedTeamId]);
+
+  useEffect(() => {
+    retroSettingsRef.current = effectiveRetroSettings;
+    setRetroSettingsResetKey((key) => key + 1);
+  }, [effectiveRetroSettings, selectedTeamId]);
 
   const jiraOAuth = useTeamOAuth(selectedTeamId, "jira");
   const linearOAuth = useTeamOAuth(selectedTeamId, "linear");
@@ -169,6 +202,13 @@ export default function WorkspaceTeamSettings() {
     if (settingsRef.current && selectedTeamId && canManageTeam) {
       setSettingsError(null);
       void saveSettingsMutation.mutateAsync(settingsRef.current);
+    }
+  };
+
+  const handleSaveRetroSettings = () => {
+    if (retroSettingsRef.current && selectedTeamId && canManageTeam) {
+      setRetroSettingsError(null);
+      void saveRetroSettingsMutation.mutateAsync(retroSettingsRef.current);
     }
   };
 
@@ -214,6 +254,22 @@ export default function WorkspaceTeamSettings() {
     },
   });
 
+  const saveRetroSettingsMutation = useMutation({
+    mutationFn: (settings: RetroSettings) =>
+      saveTeamRetroSettings(selectedTeam!.slug, settings),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(retroSettingsQueryKey, saved);
+      toast.success("Retros settings saved");
+    },
+    onError: (error) => {
+      setRetroSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Unable to save retros settings",
+      );
+    },
+  });
+
   const addMemberMutation = useMutation({
     mutationFn: (payload: { userId: number; role: "admin" | "member" }) =>
       addTeamMember(selectedTeam!.slug, payload.userId, payload.role),
@@ -231,7 +287,8 @@ export default function WorkspaceTeamSettings() {
   });
 
   const approveMemberMutation = useMutation({
-    mutationFn: (userId: number) => approveTeamMember(selectedTeam!.slug, userId),
+    mutationFn: (userId: number) =>
+      approveTeamMember(selectedTeam!.slug, userId),
     onSuccess: async () => {
       await refreshTeamMembers();
       toast.success("Team member approved");
@@ -262,7 +319,8 @@ export default function WorkspaceTeamSettings() {
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: (userId: number) => removeTeamMember(selectedTeam!.slug, userId),
+    mutationFn: (userId: number) =>
+      removeTeamMember(selectedTeam!.slug, userId),
     onSuccess: async () => {
       await refreshTeamMembers();
       toast.success("Team member removed");
@@ -648,11 +706,11 @@ export default function WorkspaceTeamSettings() {
               <SurfaceCard className="flex flex-col gap-4">
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    Default settings
+                    Planning Poker Settings
                   </h2>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    These settings are preloaded when creating a room for this
-                    team.
+                    These settings are preloaded when creating a planning poker
+                    room for this team.
                   </p>
                 </div>
 
@@ -689,7 +747,52 @@ export default function WorkspaceTeamSettings() {
                       disabled={!canManageTeam}
                       className="w-full sm:w-auto"
                     >
-                      Save default settings
+                      Save planning settings
+                    </Button>
+                  </>
+                )}
+              </SurfaceCard>
+
+              <SurfaceCard className="flex flex-col gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                    Retros Settings
+                  </h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    These defaults are preloaded when creating a retro for this
+                    team.
+                  </p>
+                </div>
+
+                {retroSettingsQuery.isLoading ? (
+                  <div className="flex items-center gap-3">
+                    <Spinner />
+                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                      Loading retros settings…
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <RetroSettingsFields
+                      key={retroSettingsResetKey}
+                      settings={effectiveRetroSettings}
+                      onSettingsChange={(updated) => {
+                        retroSettingsRef.current = updated;
+                      }}
+                      disabled={!canManageTeam}
+                    />
+
+                    {retroSettingsError && (
+                      <Alert variant="warning">{retroSettingsError}</Alert>
+                    )}
+
+                    <Button
+                      onClick={handleSaveRetroSettings}
+                      isLoading={saveRetroSettingsMutation.isPending}
+                      disabled={!canManageTeam}
+                      className="w-full sm:w-auto"
+                    >
+                      Save retros settings
                     </Button>
                   </>
                 )}

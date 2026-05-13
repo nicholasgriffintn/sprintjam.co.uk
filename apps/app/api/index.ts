@@ -71,6 +71,10 @@ async function handleRequest(
         return await env.STANDUP_WORKER.fetch(request);
       }
 
+      if (path.startsWith("retros")) {
+        return await env.RETRO_WORKER.fetch(request);
+      }
+
       if (isAuthWorkerApiPath(path)) {
         return await env.AUTH_WORKER.fetch(request);
       }
@@ -92,6 +96,10 @@ async function handleRequest(
 
     if (url.pathname === "/ws/standup") {
       return await env.STANDUP_WORKER.fetch(request);
+    }
+
+    if (url.pathname === "/ws/retro") {
+      return await env.RETRO_WORKER.fetch(request);
     }
 
     // @ts-expect-error - i dunno, types are weird

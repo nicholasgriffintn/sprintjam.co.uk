@@ -28,4 +28,6 @@ export * from "./pagination";
 export * from "./workspace-session-types";
 export * from "./workspace-standup-insights";
 export * from "./workspace-wheel-insights";
+export * from "./workspace-retro-insights";
+export * from "./retro-templates";
 export * from "./team-slug";

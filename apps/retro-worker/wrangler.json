@@ -1,0 +1,126 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sprintjam-retro-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "placement": {
+    "mode": "smart"
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "ENABLE_RETRO_RATE_LIMIT": "true"
+  },
+  "ratelimits": [
+    {
+      "name": "RETRO_CREATE_RATE_LIMITER",
+      "namespace_id": "4001",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    },
+    {
+      "name": "RETRO_JOIN_RATE_LIMITER",
+      "namespace_id": "4002",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
+      "name": "RETRO_IP_RATE_LIMITER",
+      "namespace_id": "4003",
+      "simple": {
+        "limit": 30,
+        "period": 60
+      }
+    }
+  ],
+  "services": [
+    {
+      "binding": "AUTH_WORKER",
+      "service": "sprintjam-auth-worker"
+    },
+    {
+      "binding": "STATS_WORKER",
+      "service": "sprintjam-stats-worker"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "RETRO_ROOM",
+        "class_name": "RetroRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RetroRoom"]
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": false
+    }
+  },
+  "env": {
+    "development": {
+      "vars": {
+        "ENVIRONMENT": "development",
+        "ENABLE_RETRO_RATE_LIMIT": "false"
+      },
+      "ratelimits": [],
+      "services": [
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-development"
+        },
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-development"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "RETRO_ROOM",
+            "class_name": "RetroRoom"
+          }
+        ]
+      }
+    },
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "ENABLE_RETRO_RATE_LIMIT": "true"
+      },
+      "services": [
+        {
+          "binding": "AUTH_WORKER",
+          "service": "sprintjam-auth-worker-staging"
+        },
+        {
+          "binding": "STATS_WORKER",
+          "service": "sprintjam-stats-worker-staging"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "RETRO_ROOM",
+            "class_name": "RetroRoom"
+          }
+        ]
+      }
+    }
+  }
+}

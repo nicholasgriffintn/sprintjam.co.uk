@@ -12,13 +12,19 @@ export function createEmptyTeamSessionCounts(): TeamSessionCounts {
     planning: 0,
     standup: 0,
     wheel: 0,
+    retro: 0,
   };
 }
 
 export function normaliseWorkspaceTeamSessionType(
   value: unknown,
 ): WorkspaceTeamSessionType {
-  if (value === "standup" || value === "wheel" || value === "planning") {
+  if (
+    value === "standup" ||
+    value === "wheel" ||
+    value === "planning" ||
+    value === "retro"
+  ) {
     return value;
   }
 

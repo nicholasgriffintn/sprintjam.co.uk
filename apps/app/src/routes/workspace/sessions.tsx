@@ -6,7 +6,13 @@ import {
   useRouteError,
 } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
-import { Building2, MessageSquareQuote, Plus, Target } from "lucide-react";
+import {
+  Building2,
+  Columns3,
+  MessageSquareQuote,
+  Plus,
+  Target,
+} from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
@@ -92,7 +98,9 @@ export function ErrorBoundary() {
 }
 
 type SessionFilter = WorkspaceTeamSessionFilter;
-type TeamSessionPagesByFilter = Partial<Record<SessionFilter, TeamSessionsPage>>;
+type TeamSessionPagesByFilter = Partial<
+  Record<SessionFilter, TeamSessionsPage>
+>;
 type WorkspaceSessionsView = "sessions" | "insights";
 
 export default function WorkspaceSessions() {
@@ -101,8 +109,7 @@ export default function WorkspaceSessions() {
     teamInsightsByTeamId,
     actionsByTeamId,
     processLoopsByTeamId,
-  } =
-    useLoaderData<typeof loader>();
+  } = useLoaderData<typeof loader>();
   const initialSessionsByTeamId = useMemo(
     () =>
       Object.fromEntries(
@@ -419,6 +426,16 @@ export default function WorkspaceSessions() {
                         >
                           New standup
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => navigateTo("retroCreate")}
+                          icon={<Columns3 className="h-4 w-4" />}
+                          disabled={!selectedTeam.canAccess}
+                          className="w-full sm:w-auto"
+                        >
+                          New retro
+                        </Button>
                       </div>
                       {!selectedTeam.canAccess &&
                         selectedTeam.currentUserStatus !== "pending" && (
@@ -458,6 +475,9 @@ export default function WorkspaceSessions() {
                           <Tabs.Tab value="standup">
                             Standups ({sessionCounts?.standup ?? 0})
                           </Tabs.Tab>
+                          <Tabs.Tab value="retro">
+                            Retros ({sessionCounts?.retro ?? 0})
+                          </Tabs.Tab>
                           <Tabs.Tab value="wheel">
                             Wheels ({sessionCounts?.wheel ?? 0})
                           </Tabs.Tab>
@@ -472,20 +492,24 @@ export default function WorkspaceSessions() {
                             emptyTitle={
                               sessionFilter === "standup"
                                 ? "No standups linked"
-                                : sessionFilter === "wheel"
-                                  ? "No wheels linked"
-                                  : sessionFilter === "planning"
-                                    ? "No planning sessions linked"
-                                    : "No sessions linked"
+                                : sessionFilter === "retro"
+                                  ? "No retros linked"
+                                  : sessionFilter === "wheel"
+                                    ? "No wheels linked"
+                                    : sessionFilter === "planning"
+                                      ? "No planning sessions linked"
+                                      : "No sessions linked"
                             }
                             emptyDescription={
                               sessionFilter === "standup"
                                 ? "Create a team standup to link it here."
-                                : sessionFilter === "wheel"
-                                  ? "Create or link a wheel to show it here."
-                                  : sessionFilter === "planning"
-                                    ? "Use the save flow in a planning room to link it to this team."
-                                    : "Create or link a session to show it here."
+                                : sessionFilter === "retro"
+                                  ? "Create a team retro to link it here."
+                                  : sessionFilter === "wheel"
+                                    ? "Create or link a wheel to show it here."
+                                    : sessionFilter === "planning"
+                                      ? "Use the save flow in a planning room to link it to this team."
+                                      : "Create or link a session to show it here."
                             }
                           />
                           {canLoadMoreSessions && (

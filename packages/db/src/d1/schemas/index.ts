@@ -24,3 +24,4 @@ export * from "./vote-records";
 export * from "./room-stats";
 export * from "./standup-session-stats";
 export * from "./wheel-session-stats";
+export * from "./retro-session-stats";
