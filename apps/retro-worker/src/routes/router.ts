@@ -123,7 +123,6 @@ async function createRetroController(
     settings?: Record<string, unknown>;
     templateId?: string;
     avatar?: string;
-    teamId?: number;
   }>();
   const name = typeof body.name === "string" ? body.name.trim() : "";
 
@@ -149,7 +148,6 @@ async function createRetroController(
         templateId: body.templateId,
         avatar: body.avatar,
         workspaceUserId,
-        teamId: body.teamId,
       }),
     }) as unknown as CfRequest,
   );

@@ -116,7 +116,6 @@ export class RetroRoom {
       templateId?: string;
       avatar?: string;
       workspaceUserId?: number;
-      teamId?: number;
     }>();
 
     if (!body.retroKey || !body.moderator) {
@@ -157,7 +156,6 @@ export class RetroRoom {
         autoResetOnVotesReset: false,
       },
       userAvatars: body.avatar ? { [body.moderator]: body.avatar } : undefined,
-      teamId: body.teamId,
       createdAt: now,
       passcodeHash: body.passcode
         ? await hashPasscode(body.passcode)
@@ -610,6 +608,14 @@ export class RetroRoom {
     userName: string,
   ): Promise<void> {
     this.sessions.delete(webSocket);
+    const isUserStillConnected = Array.from(this.sessions.values()).some(
+      (session) => session.userName === userName,
+    );
+
+    if (isUserStillConnected) {
+      return;
+    }
+
     await this.repository.setUserConnection(userName, false);
     const retro = await this.repository.getRetroData();
     if (retro) {

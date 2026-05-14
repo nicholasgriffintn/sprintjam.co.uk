@@ -47,7 +47,6 @@ export async function createRetro(
   passcode?: string,
   settings?: Partial<RetroSettings>,
   avatar?: string,
-  teamId?: number,
   options?: RequestOptions,
 ): Promise<RetroSessionResponse> {
   try {
@@ -60,7 +59,6 @@ export async function createRetro(
         settings,
         templateId: settings?.templateId,
         avatar,
-        teamId,
       }),
       credentials: "include",
       signal: options?.signal,

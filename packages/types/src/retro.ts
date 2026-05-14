@@ -62,7 +62,6 @@ export interface RetroData {
   actionItems: RetroActionItem[];
   readyUsers: string[];
   userAvatars?: Record<string, string>;
-  teamId?: number;
   createdAt: number;
   completedAt?: number;
 }

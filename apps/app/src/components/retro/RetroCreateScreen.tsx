@@ -100,7 +100,6 @@ export function RetroCreateScreen() {
         passcode.trim() || undefined,
         settings,
         avatarValue,
-        selectedTeam?.id,
       );
 
       try {
