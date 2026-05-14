@@ -54,7 +54,9 @@ import {
   updateWorkspaceActionController,
 } from "../controllers/workspace-action-controllers";
 import {
+  getTeamRetroSettingsController,
   getTeamSettingsController,
+  saveTeamRetroSettingsController,
   saveTeamSettingsController,
 } from "../controllers/team-settings-controller";
 import {
@@ -471,7 +473,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions\/(\d+)\/recap-actions\/resolve$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/sessions\/(\d+)\/recap-actions\/resolve$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -584,6 +587,26 @@ const ROUTES: RouteDefinition[] = [
     paramTypes: ["string"],
   },
   {
+    method: "GET",
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/retro-settings$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return getTeamRetroSettingsController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["string"],
+  },
+  {
+    method: "PUT",
+    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/retro-settings$/,
+    handler: async (request, env, params) => {
+      const teamIdResult = await requireTeamSlugParam(env, params[0]);
+      if (!teamIdResult.ok) return teamIdResult.response;
+      return saveTeamRetroSettingsController(request, env, teamIdResult.value);
+    },
+    paramTypes: ["string"],
+  },
+  {
     method: "PUT",
     pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/settings$/,
     handler: async (request, env, params) => {
@@ -616,7 +639,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/collaboration-installations\/teams$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/collaboration-installations\/teams$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -630,7 +654,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "DELETE",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/collaboration-installations\/(\d+)$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/collaboration-installations\/(\d+)$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -660,7 +685,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/authorize$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/authorize$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -675,7 +701,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "GET",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/status$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/status$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -690,7 +717,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/boards$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/boards$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -705,7 +733,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/sprints$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/sprints$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -720,7 +749,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "POST",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/tickets$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)\/tickets$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;
@@ -735,7 +765,8 @@ const ROUTES: RouteDefinition[] = [
   },
   {
     method: "DELETE",
-    pattern: /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)$/,
+    pattern:
+      /^teams\/([a-z]+(?:-[a-z]+){2})\/integrations\/(jira|linear|github)$/,
     handler: async (request, env, params) => {
       const teamIdResult = await requireTeamSlugParam(env, params[0]);
       if (!teamIdResult.ok) return teamIdResult.response;

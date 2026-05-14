@@ -17,7 +17,7 @@ import type {
   WorkspaceWheelOutcome,
 } from "@sprintjam/types";
 
-export type TeamSessionType = "planning" | "standup" | "wheel";
+export type TeamSessionType = "planning" | "standup" | "wheel" | "retro";
 
 export interface LinkedSessionContext {
   id: string;
@@ -411,5 +411,7 @@ export function buildLinkedSessionSummaries(
       groups.set(context.id, recap);
     });
 
-  return Array.from(groups.values()).filter((recap) => recap.sessions.length > 1);
+  return Array.from(groups.values()).filter(
+    (recap) => recap.sessions.length > 1,
+  );
 }

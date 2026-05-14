@@ -118,6 +118,10 @@ export function getStandupSessionToken(request: Request): string | null {
   return getCookieValue(request, "standup_session");
 }
 
+export function getRetroSessionToken(request: Request): string | null {
+  return getCookieValue(request, "retro_session");
+}
+
 export function createStandupSessionCookie(
   token: string,
   maxAgeSeconds: number,
@@ -144,6 +148,20 @@ export function createWheelSessionCookie(
 export function clearWheelSessionCookie(isSecure = true): string {
   const secureFlag = isSecure ? " Secure;" : "";
   return `wheel_session=; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=0`;
+}
+
+export function createRetroSessionCookie(
+  token: string,
+  maxAgeSeconds: number,
+  isSecure = true,
+): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `retro_session=${token}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
+}
+
+export function clearRetroSessionCookie(isSecure = true): string {
+  const secureFlag = isSecure ? " Secure;" : "";
+  return `retro_session=; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=0`;
 }
 
 function parseRoomSessionCookie(

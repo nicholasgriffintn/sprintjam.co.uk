@@ -444,6 +444,87 @@ export const ROUTE_DEFINITIONS = [
     },
   },
   {
+    screen: "retro",
+    path: "/retro",
+    group: "retro",
+    meta: {
+      title: `Retrospectives - ${SITE_NAME}`,
+      description:
+        "Run sprint retrospectives with templates, cards, voting, focus phases, and workspace-linked outcomes.",
+      keywords:
+        "retrospective, sprint retro, agile retro, scrum retrospective, retro board",
+      ogImage: "/og-image.png",
+    },
+    layout: {
+      header: "marketing",
+    },
+  },
+  {
+    screen: "retroTemplates",
+    path: "/retro/templates",
+    group: "retro",
+    meta: {
+      title: `Retro Templates - ${SITE_NAME}`,
+      description:
+        "Choose from retrospective templates including Start Stop Continue, 4Ls, KALM, Sailboat, and Rose Thorn Bud.",
+      keywords:
+        "retro templates, retrospective templates, agile retrospective formats",
+      ogImage: "/og-image.png",
+    },
+    layout: {
+      header: "marketing",
+    },
+  },
+  {
+    screen: "retroCreate",
+    path: "/retro/create",
+    group: "retro",
+    meta: {
+      title: `Create Retro - ${SITE_NAME}`,
+      description:
+        "Create a retrospective room, choose a template, and link it to your workspace.",
+      keywords: "create retro, retrospective room, agile retro board",
+      ogImage: "/og-image.png",
+    },
+    layout: {
+      header: "marketing",
+    },
+  },
+  {
+    screen: "retroJoin",
+    path: (params) =>
+      params.retroKey ? `/retro/join/${params.retroKey}` : "/retro/join",
+    pathPattern: /^\/retro\/join(?:\/([A-Z0-9]+))?$/i,
+    group: "retro",
+    meta: {
+      title: `Join Retro - ${SITE_NAME}`,
+      description:
+        "Join an existing retrospective room and add feedback with your team.",
+      keywords: "join retro, retrospective room, retro code",
+      ogImage: "/og-image.png",
+    },
+    layout: {
+      header: "marketing",
+    },
+  },
+  {
+    screen: "retroRoom",
+    path: (params) =>
+      params.retroKey ? `/retro/room/${params.retroKey}` : "/retro/room",
+    pathPattern: /^\/retro\/room\/([A-Z0-9]+)$/i,
+    group: "retro",
+    meta: {
+      title: `Retro Room - ${SITE_NAME}`,
+      description:
+        "Facilitate a live retrospective with cards, voting, focus, and actions.",
+      keywords: "retro room, retrospective board, agile retro",
+      ogImage: "/og-image.png",
+    },
+    layout: {
+      background: "room",
+    },
+  },
+  {
     screen: "workspace",
     path: "/workspace",
     group: "workspace",

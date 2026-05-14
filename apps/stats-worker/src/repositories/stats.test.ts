@@ -7,6 +7,7 @@ import {
   teamSessions,
   standupSessionStats,
   wheelSessionStats,
+  retroSessionStats,
 } from "@sprintjam/db/d1/schemas";
 import { drizzle } from "drizzle-orm/d1";
 
@@ -362,6 +363,13 @@ describe("StatsRepository getTeamInsights", () => {
             })),
           };
         }
+        if (table === retroSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
         throw new Error("Unexpected select table");
       },
     }));
@@ -378,6 +386,7 @@ describe("StatsRepository getTeamInsights", () => {
       planning: 1,
       standup: 1,
       wheel: 0,
+      retro: 0,
     });
     expect(result?.standup.sessionsAnalyzed).toBe(1);
     expect(result?.wheel.sessionsAnalyzed).toBe(0);
@@ -479,6 +488,13 @@ describe("StatsRepository getTeamInsights", () => {
             })),
           };
         }
+        if (table === retroSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
         throw new Error("Unexpected select table");
       },
     }));
@@ -495,6 +511,7 @@ describe("StatsRepository getTeamInsights", () => {
       planning: 0,
       standup: 1,
       wheel: 1,
+      retro: 0,
     });
     expect(result?.totalRounds).toBe(0);
     expect(result?.standup.sessionsAnalyzed).toBe(1);
@@ -555,6 +572,13 @@ describe("StatsRepository getTeamInsights", () => {
             })),
           };
         }
+        if (table === retroSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
         if (table === roundVotes) {
           return {
             where: vi.fn(() => ({
@@ -587,6 +611,7 @@ describe("StatsRepository getTeamInsights", () => {
       planning: 0,
       standup: 0,
       wheel: 1,
+      retro: 0,
     });
     expect(result?.wheel.sessionsAnalyzed).toBe(1);
     expect(result?.wheel.spinCount).toBe(4);
@@ -711,6 +736,13 @@ describe("StatsRepository getWorkspaceInsights", () => {
             })),
           };
         }
+        if (table === retroSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
+            })),
+          };
+        }
         throw new Error("Unexpected select table");
       },
     }));
@@ -780,6 +812,13 @@ describe("StatsRepository getWorkspaceInsights", () => {
           return {
             where: vi.fn(() => ({
               all: vi.fn().mockResolvedValue(wheelStats),
+            })),
+          };
+        }
+        if (table === retroSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: vi.fn().mockResolvedValue([]),
             })),
           };
         }

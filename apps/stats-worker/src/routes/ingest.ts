@@ -4,6 +4,7 @@ import type {
 } from "@cloudflare/workers-types";
 import type {
   RecordStandupSessionStatsInput,
+  RecordRetroSessionStatsInput,
   RecordWheelSessionStatsInput,
   RoundIngestPayload,
   StatsWorkerEnv,
@@ -13,6 +14,7 @@ import { StatsRepository } from "../repositories/stats";
 import {
   validateRoundIngestPayload,
   validateStandupSessionStatsPayload,
+  validateRetroSessionStatsPayload,
   validateWheelSessionStatsPayload,
 } from "../lib/validation";
 import { successResponse, errorResponse } from "../lib/response";
@@ -77,6 +79,23 @@ export async function recordWheelSessionStatsInternalController(
   const payload = body as RecordWheelSessionStatsInput;
   const repo = new StatsRepository(env.DB);
   await repo.recordWheelSessionStats(payload);
+
+  return successResponse({ status: "recorded" });
+}
+
+export async function recordRetroSessionStatsInternalController(
+  request: CfRequest,
+  env: StatsWorkerEnv,
+): Promise<CfResponse> {
+  const body = await request.json();
+  const validation = validateRetroSessionStatsPayload(body);
+  if (!validation.valid) {
+    return errorResponse(validation.error, 400);
+  }
+
+  const payload = body as RecordRetroSessionStatsInput;
+  const repo = new StatsRepository(env.DB);
+  await repo.recordRetroSessionStats(payload);
 
   return successResponse({ status: "recorded" });
 }

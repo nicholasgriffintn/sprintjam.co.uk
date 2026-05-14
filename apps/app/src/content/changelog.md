@@ -1,3 +1,14 @@
+## V5
+
+- Added retros in beta, giving teams a dedicated room for gathering feedback, reviewing cards, focusing on the most important themes, and capturing follow-up actions.
+- Added retro templates, including common formats such as Start, Stop, Continue and Sailboat, with a templates page to help teams choose the right format before creating a room.
+- Added create and join flows for retro rooms, including room codes, optional passcodes, template selection, and workspace-linked sessions.
+- Added retro defaults to team settings so teams can configure their preferred template, anonymity, votes, timer, and phase control from the workspace.
+- Added a retro timer with moderator controls, expiry notifications, a chime, duration presets, and an option to extend the timer.
+- Added retro workspace tracking so saved retro rooms appear alongside planning, standup, and wheel sessions, with retro stats included in workspace insights.
+- Updated the homepage and workspace surfaces to include retros as a beta feature.
+- Improved retro room security by keeping anonymous card ownership private while still enforcing delete permissions on the backend.
+
 ## V4.7
 
 - Added a new sprint actions board in workspaces so teams can track follow-ups from planning sessions, blockers and next steps from standups, and outcomes from wheel sessions in one place.

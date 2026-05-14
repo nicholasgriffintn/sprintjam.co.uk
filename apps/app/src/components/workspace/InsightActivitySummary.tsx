@@ -12,6 +12,7 @@ export function CeremonyCountStrip({
   const items = [
     { label: "Planning", value: counts.planning },
     { label: "Standups", value: counts.standup },
+    { label: "Retros", value: counts.retro },
     { label: "Wheels", value: counts.wheel },
   ];
 
@@ -20,7 +21,7 @@ export function CeremonyCountStrip({
       <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
         {label}
       </p>
-      <div className="grid grid-cols-3 divide-x divide-slate-100 border-y border-slate-100 py-3 dark:divide-slate-800 dark:border-slate-800">
+      <div className="grid grid-cols-4 divide-x divide-slate-100 border-y border-slate-100 py-3 dark:divide-slate-800 dark:border-slate-800">
         {items.map((item) => (
           <div key={item.label} className="px-3 first:pl-0 last:pr-0">
             <p className="text-xs text-slate-500 dark:text-slate-400">

@@ -43,6 +43,7 @@ import type {
   WorkspaceUser,
   SpinResult,
   WheelMode,
+  RetroSettings,
 } from "@sprintjam/types";
 import type { LinkedSessionRecapActionKind } from "@sprintjam/utils";
 
@@ -343,13 +344,12 @@ export async function createWorkspaceAction(
   teamSlug: string,
   payload: CreateWorkspaceActionInput,
 ) {
-  const data = await workspaceRequest<{ action: WorkspaceActionsPage["actions"][number] }>(
-    `${API_BASE_URL}/teams/${teamSlug}/actions`,
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    },
-  );
+  const data = await workspaceRequest<{
+    action: WorkspaceActionsPage["actions"][number];
+  }>(`${API_BASE_URL}/teams/${teamSlug}/actions`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
   return data.action;
 }
 
@@ -358,17 +358,18 @@ export async function updateWorkspaceAction(
   actionId: number,
   payload: UpdateWorkspaceActionInput,
 ) {
-  const data = await workspaceRequest<{ action: WorkspaceActionsPage["actions"][number] }>(
-    `${API_BASE_URL}/teams/${teamSlug}/actions/${actionId}`,
-    {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-    },
-  );
+  const data = await workspaceRequest<{
+    action: WorkspaceActionsPage["actions"][number];
+  }>(`${API_BASE_URL}/teams/${teamSlug}/actions/${actionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
   return data.action;
 }
 
-export async function listTeamSessions(teamSlug: string): Promise<TeamSession[]> {
+export async function listTeamSessions(
+  teamSlug: string,
+): Promise<TeamSession[]> {
   const data = await listTeamSessionsPage(teamSlug);
   return data.sessions;
 }
@@ -385,7 +386,9 @@ export async function createTeamSession(
       ? "standups/workspace-sessions"
       : type === "wheel"
         ? "wheels/workspace-sessions"
-        : "rooms/workspace-sessions";
+        : type === "retro"
+          ? "retros/workspace-sessions"
+          : "rooms/workspace-sessions";
   const data = await workspaceRequest<{ session: TeamSession }>(
     `${API_BASE_URL}/${path}`,
     {
@@ -454,12 +457,14 @@ export async function resolveTeamSessionRecapAction(
 
 export async function completeSessionByRoomKey(
   roomKey: string,
-  type: "planning" | "standup" = "planning",
+  type: "planning" | "standup" | "retro" = "planning",
 ): Promise<TeamSession> {
   const path =
     type === "standup"
       ? "standups/workspace-sessions/complete"
-      : "rooms/workspace-sessions/complete";
+      : type === "retro"
+        ? "retros/workspace-sessions/complete"
+        : "rooms/workspace-sessions/complete";
   const data = await workspaceRequest<{ session: TeamSession }>(
     `${API_BASE_URL}/${path}`,
     {
@@ -662,9 +667,12 @@ export async function removeTeamMember(
   teamSlug: string,
   userId: number,
 ): Promise<void> {
-  await workspaceRequest(`${API_BASE_URL}/teams/${teamSlug}/members/${userId}`, {
-    method: "DELETE",
-  });
+  await workspaceRequest(
+    `${API_BASE_URL}/teams/${teamSlug}/members/${userId}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 export async function moveTeamMember(
@@ -745,6 +753,29 @@ export async function saveTeamSettings(
 ): Promise<RoomSettings> {
   const data = await workspaceRequest<{ settings: RoomSettings }>(
     `${API_BASE_URL}/teams/${teamSlug}/settings`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ settings }),
+    },
+  );
+  return data.settings;
+}
+
+export async function getTeamRetroSettings(
+  teamSlug: string,
+): Promise<RetroSettings | null> {
+  const data = await workspaceRequest<{ settings: RetroSettings | null }>(
+    `${API_BASE_URL}/teams/${teamSlug}/retro-settings`,
+  );
+  return data.settings;
+}
+
+export async function saveTeamRetroSettings(
+  teamSlug: string,
+  settings: RetroSettings,
+): Promise<RetroSettings> {
+  const data = await workspaceRequest<{ settings: RetroSettings }>(
+    `${API_BASE_URL}/teams/${teamSlug}/retro-settings`,
     {
       method: "PUT",
       body: JSON.stringify({ settings }),

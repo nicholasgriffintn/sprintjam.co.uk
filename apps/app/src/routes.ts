@@ -49,6 +49,14 @@ export default [
     route("join/:standupKey", "routes/standup/join.$standupKey.tsx"),
     route("room/:standupKey", "routes/standup/room.$standupKey.tsx"),
   ]),
+  route("retro", "routes/retro/index.tsx"),
+  ...prefix("retro", [
+    route("templates", "routes/retro/templates.tsx"),
+    route("create", "routes/retro/create.tsx"),
+    route("join", "routes/retro/join.tsx"),
+    route("join/:retroKey", "routes/retro/join.$retroKey.tsx"),
+    route("room/:retroKey", "routes/retro/room.$retroKey.tsx"),
+  ]),
   route("workspace", "routes/workspace/index.tsx"),
   ...prefix("workspace", [
     route("profile", "routes/workspace/profile.tsx"),

@@ -43,6 +43,10 @@
     {
       "binding": "STANDUP_WORKER",
       "service": "sprintjam-standup-worker"
+    },
+    {
+      "binding": "RETRO_WORKER",
+      "service": "sprintjam-retro-worker"
     }
   ],
   "migrations": [
@@ -94,6 +98,10 @@
         {
           "binding": "STANDUP_WORKER",
           "service": "sprintjam-standup-worker-development"
+        },
+        {
+          "binding": "RETRO_WORKER",
+          "service": "sprintjam-retro-worker-development"
         }
       ],
       "migrations": []
@@ -129,6 +137,10 @@
         {
           "binding": "STANDUP_WORKER",
           "service": "sprintjam-standup-worker-staging"
+        },
+        {
+          "binding": "RETRO_WORKER",
+          "service": "sprintjam-retro-worker-staging"
         }
       ]
     }

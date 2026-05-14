@@ -13,6 +13,7 @@ export type RouteGroup =
   | "collaboration"
   | "room"
   | "wheel"
+  | "retro"
   | "standup"
   | "auth"
   | "flow";
@@ -20,6 +21,7 @@ export type RouteGroup =
 export interface RoutePathParams {
   roomKey?: string;
   wheelKey?: string;
+  retroKey?: string;
   standupKey?: string;
   teamId?: number | string;
   teamSlug?: string;

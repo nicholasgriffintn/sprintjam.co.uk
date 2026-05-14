@@ -9,8 +9,10 @@ import {
   teamSessions,
   standupSessionStats,
   wheelSessionStats,
+  retroSessionStats,
 } from "@sprintjam/db/d1/schemas";
 import type {
+  RecordRetroSessionStatsInput,
   RecordStandupSessionStatsInput,
   RecordWheelSessionStatsInput,
   RoundIngestPayload,
@@ -19,6 +21,7 @@ import type {
   TeamSessionCounts,
   WorkspaceStandupInsights,
   WorkspaceWheelInsights,
+  WorkspaceRetroInsights,
   WorkspaceInsights,
 } from "@sprintjam/types";
 
@@ -41,7 +44,9 @@ import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
   aggregateWorkspaceStandupInsights,
+  aggregateWorkspaceRetroInsights,
   aggregateWorkspaceWheelInsights,
+  buildWorkspaceRetroSessionInsights,
   buildWorkspaceStandupSessionInsightsFromResponses,
   buildWorkspaceWheelSessionInsights,
   countWorkspaceTeamSessionTypes,
@@ -77,6 +82,7 @@ interface InsightsResult {
   sessionTypeCounts: TeamSessionCounts;
   standup: WorkspaceStandupInsights;
   wheel: WorkspaceWheelInsights;
+  retro: WorkspaceRetroInsights;
   totalTickets: number;
   totalRounds: number;
   participationRate: number;
@@ -231,6 +237,42 @@ export class StatsRepository {
           uniqueWinnerCount: insights.uniqueWinnerCount,
           removedAfterCount: insights.removedAfterCount,
           repeatWinnerCount: insights.repeatWinnerCount,
+          lastUpdatedAt: now,
+        },
+      });
+  }
+
+  async recordRetroSessionStats(
+    data: RecordRetroSessionStatsInput,
+  ): Promise<void> {
+    const now = Math.floor(Date.now() / 1000);
+    const insights = buildWorkspaceRetroSessionInsights(data);
+
+    await this.db
+      .insert(retroSessionStats)
+      .values({
+        roomKey: data.roomKey,
+        templateId: data.templateId,
+        templateName: data.templateName,
+        totalParticipants: insights.totalParticipants,
+        cardCount: insights.totalCards,
+        voteCount: insights.totalVotes,
+        actionCount: insights.totalActions,
+        completedActionCount: insights.completedActions,
+        durationMs: data.durationMs ?? null,
+        lastUpdatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: retroSessionStats.roomKey,
+        set: {
+          templateId: data.templateId,
+          templateName: data.templateName,
+          totalParticipants: insights.totalParticipants,
+          cardCount: insights.totalCards,
+          voteCount: insights.totalVotes,
+          actionCount: insights.totalActions,
+          completedActionCount: insights.completedActions,
+          durationMs: data.durationMs ?? null,
           lastUpdatedAt: now,
         },
       });
@@ -508,11 +550,16 @@ export class StatsRepository {
       .all();
 
     const sessionRoomKeys = [...new Set(sessions.map((s) => s.roomKey))];
-    const [standupStats, wheelStats] = await Promise.all([
+    const [standupStats, wheelStats, retroStats] = await Promise.all([
       this.queryStandupSessionStats(sessionRoomKeys),
       this.queryWheelSessionStats(sessionRoomKeys),
+      this.queryRetroSessionStats(sessionRoomKeys),
     ]);
-    const statsRoomKeys = this.buildStatsRoomKeySet(standupStats, wheelStats);
+    const statsRoomKeys = this.buildStatsRoomKeySet(
+      standupStats,
+      wheelStats,
+      retroStats,
+    );
     const insightSessions = this.selectInsightSessions(
       sessions,
       statsRoomKeys,
@@ -536,6 +583,9 @@ export class StatsRepository {
       ),
       wheel: this.calculateWheelInsights(
         wheelStats.filter((stats) => roomKeySet.has(stats.roomKey)),
+      ),
+      retro: this.calculateRetroInsights(
+        retroStats.filter((stats) => roomKeySet.has(stats.roomKey)),
       ),
       ...metrics,
     };
@@ -564,11 +614,16 @@ export class StatsRepository {
       .all();
 
     const sessionRoomKeys = [...new Set(sessions.map((s) => s.roomKey))];
-    const [standupStats, wheelStats] = await Promise.all([
+    const [standupStats, wheelStats, retroStats] = await Promise.all([
       this.queryStandupSessionStats(sessionRoomKeys),
       this.queryWheelSessionStats(sessionRoomKeys),
+      this.queryRetroSessionStats(sessionRoomKeys),
     ]);
-    const statsRoomKeys = this.buildStatsRoomKeySet(standupStats, wheelStats);
+    const statsRoomKeys = this.buildStatsRoomKeySet(
+      standupStats,
+      wheelStats,
+      retroStats,
+    );
     const insightSessions = this.selectInsightSessions(
       sessions,
       statsRoomKeys,
@@ -599,6 +654,9 @@ export class StatsRepository {
       ),
       wheel: this.calculateWheelInsights(
         wheelStats.filter((stats) => roomKeySet.has(stats.roomKey)),
+      ),
+      retro: this.calculateRetroInsights(
+        retroStats.filter((stats) => roomKeySet.has(stats.roomKey)),
       ),
       ...metrics,
       teamCount: uniqueTeamIds.size,
@@ -738,13 +796,27 @@ export class StatsRepository {
       .all();
   }
 
+  private async queryRetroSessionStats(roomKeys: string[]) {
+    if (roomKeys.length === 0) {
+      return [];
+    }
+
+    return await this.db
+      .select()
+      .from(retroSessionStats)
+      .where(inArray(retroSessionStats.roomKey, roomKeys))
+      .all();
+  }
+
   private buildStatsRoomKeySet(
     standupStats: Array<{ roomKey: string }>,
     wheelStats: Array<{ roomKey: string }>,
+    retroStats: Array<{ roomKey: string }>,
   ): Set<string> {
     return new Set([
       ...standupStats.map((stats) => stats.roomKey),
       ...wheelStats.map((stats) => stats.roomKey),
+      ...retroStats.map((stats) => stats.roomKey),
     ]);
   }
 
@@ -799,7 +871,7 @@ export class StatsRepository {
     baseMetrics: ReturnType<typeof this.calculateBaseMetrics>,
   ): Omit<
     InsightsResult,
-    "sessionsAnalyzed" | "sessionTypeCounts" | "standup" | "wheel"
+    "sessionsAnalyzed" | "sessionTypeCounts" | "standup" | "wheel" | "retro"
   > {
     const metrics = calculateInsightMetrics(
       baseMetrics.ticketMetrics,
@@ -814,6 +886,29 @@ export class StatsRepository {
       totalTickets: baseMetrics.ticketMetrics.totalTickets,
       totalRounds: data.rounds.length,
     };
+  }
+
+  private calculateRetroInsights(
+    sessions: Array<{
+      totalParticipants: number;
+      cardCount: number;
+      voteCount: number;
+      actionCount: number;
+      completedActionCount: number;
+    }>,
+  ): WorkspaceRetroInsights {
+    return aggregateWorkspaceRetroInsights(
+      sessions.map((session) => ({
+        sessions: 1,
+        totalParticipants: session.totalParticipants,
+        totalCards: session.cardCount,
+        totalVotes: session.voteCount,
+        totalActions: session.actionCount,
+        completedActions: session.completedActionCount,
+        averageCardsPerSession: session.cardCount,
+        averageVotesPerSession: session.voteCount,
+      })),
+    );
   }
 
   private calculateStandupInsights(

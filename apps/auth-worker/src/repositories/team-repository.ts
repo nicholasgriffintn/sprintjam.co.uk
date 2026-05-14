@@ -13,6 +13,7 @@ import {
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   createTeamSlugCandidate,
+  normaliseRetroSettings,
   type PaginationOptions,
 } from "@sprintjam/utils";
 import {
@@ -29,6 +30,7 @@ import {
 import * as schema from "@sprintjam/db/d1/schemas";
 import type {
   RoomSettings,
+  RetroSettings,
   TeamSessionCounts,
   WorkspaceTeamSessionFilter,
 } from "@sprintjam/types";
@@ -73,8 +75,12 @@ function getTeamSessionTypeCondition(type: WorkspaceTeamSessionFilter) {
     return sql`${metadataType} = 'wheel'`;
   }
 
+  if (type === "retro") {
+    return sql`${metadataType} = 'retro'`;
+  }
+
   if (type === "planning") {
-    return sql`${metadataType} IS NULL OR ${metadataType} NOT IN ('standup', 'wheel')`;
+    return sql`${metadataType} IS NULL OR ${metadataType} NOT IN ('standup', 'wheel', 'retro')`;
   }
 
   return undefined;
@@ -476,6 +482,69 @@ export class TeamRepository {
     }
   }
 
+  async getTeamRetroSettings(teamId: number): Promise<RetroSettings | null> {
+    const row = await this.db
+      .select({ settings: teamSettings.settings })
+      .from(teamSettings)
+      .where(eq(teamSettings.teamId, teamId))
+      .get();
+
+    if (!row) return null;
+
+    try {
+      const parsed = JSON.parse(row.settings) as Record<string, unknown>;
+      const retroSettings = parsed.retroSettings;
+      if (!retroSettings || typeof retroSettings !== "object") {
+        return null;
+      }
+      return normaliseRetroSettings(
+        undefined,
+        retroSettings as Partial<RetroSettings>,
+      );
+    } catch {
+      return null;
+    }
+  }
+
+  async saveTeamRetroSettings(
+    teamId: number,
+    settings: RetroSettings,
+  ): Promise<void> {
+    const existing = await this.db
+      .select({ settings: teamSettings.settings })
+      .from(teamSettings)
+      .where(eq(teamSettings.teamId, teamId))
+      .get();
+
+    let merged: Record<string, unknown> = {};
+    if (existing) {
+      try {
+        merged = JSON.parse(existing.settings) as Record<string, unknown>;
+      } catch {
+        merged = {};
+      }
+    }
+
+    merged.retroSettings = normaliseRetroSettings(undefined, settings);
+
+    const now = Date.now();
+    await this.db
+      .insert(teamSettings)
+      .values({
+        teamId,
+        settings: JSON.stringify(merged),
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: teamSettings.teamId,
+        set: {
+          settings: JSON.stringify(merged),
+          updatedAt: now,
+        },
+      });
+  }
+
   async saveTeamSettings(
     teamId: number,
     settings: RoomSettings,
@@ -559,14 +628,15 @@ export class TeamRepository {
   }
 
   async getTeamSessionCounts(teamId: number): Promise<TeamSessionCounts> {
-    const [all, planning, standup, wheel] = await Promise.all([
+    const [all, planning, standup, wheel, retro] = await Promise.all([
       this.countTeamSessions(teamId, "all"),
       this.countTeamSessions(teamId, "planning"),
       this.countTeamSessions(teamId, "standup"),
       this.countTeamSessions(teamId, "wheel"),
+      this.countTeamSessions(teamId, "retro"),
     ]);
 
-    return { all, planning, standup, wheel };
+    return { all, planning, standup, wheel, retro };
   }
 
   async getOrganisationTeamSessionByRoomKey(
@@ -613,10 +683,10 @@ export class TeamRepository {
           isWorkspaceAdmin
             ? sql`1 = 1`
             : or(
-              eq(teamSessions.createdById, userId),
-              eq(teams.accessPolicy, "open"),
-              eq(teamMemberships.userId, userId),
-            ),
+                eq(teamSessions.createdById, userId),
+                eq(teams.accessPolicy, "open"),
+                eq(teamMemberships.userId, userId),
+              ),
         ),
       )
       .orderBy(desc(teamSessions.createdAt))
@@ -693,10 +763,10 @@ export class TeamRepository {
           isWorkspaceAdmin
             ? sql`1 = 1`
             : or(
-              eq(teamSessions.createdById, userId),
-              eq(teams.accessPolicy, "open"),
-              eq(teamMemberships.userId, userId),
-            ),
+                eq(teamSessions.createdById, userId),
+                eq(teams.accessPolicy, "open"),
+                eq(teamMemberships.userId, userId),
+              ),
           isNull(teamSessions.completedAt),
         ),
       );
@@ -740,6 +810,7 @@ export class TeamRepository {
           planning: 0,
           standup: 0,
           wheel: 0,
+          retro: 0,
         },
         sessionTimeline: [],
       };
@@ -752,9 +823,10 @@ export class TeamRepository {
       .select({
         total: count(),
         active: sql<number>`sum(case when ${teamSessions.completedAt} is null then 1 else 0 end)`,
-        planning: sql<number>`sum(case when ${metadataType} is null or ${metadataType} not in ('standup', 'wheel') then 1 else 0 end)`,
+        planning: sql<number>`sum(case when ${metadataType} is null or ${metadataType} not in ('standup', 'wheel', 'retro') then 1 else 0 end)`,
         standup: sql<number>`sum(case when ${metadataType} = 'standup' then 1 else 0 end)`,
         wheel: sql<number>`sum(case when ${metadataType} = 'wheel' then 1 else 0 end)`,
+        retro: sql<number>`sum(case when ${metadataType} = 'retro' then 1 else 0 end)`,
       })
       .from(teamSessions)
       .where(inArray(teamSessions.teamId, teamIds));
@@ -786,6 +858,7 @@ export class TeamRepository {
         planning: Number(sessionCounts?.planning ?? 0),
         standup: Number(sessionCounts?.standup ?? 0),
         wheel: Number(sessionCounts?.wheel ?? 0),
+        retro: Number(sessionCounts?.retro ?? 0),
       },
       sessionTimeline: this.buildSessionTimeline(timelineSessions),
     };

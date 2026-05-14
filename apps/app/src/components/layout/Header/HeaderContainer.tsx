@@ -39,6 +39,7 @@ export const HeaderContainer: FC<HeaderContainerProps> = ({
         variant === "room" ||
           variant === "workspace" ||
           variant === "wheel" ||
+          variant === "retro" ||
           variant === "standup"
           ? "px-4 py-3 shadow-sm"
           : "",

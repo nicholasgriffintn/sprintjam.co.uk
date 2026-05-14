@@ -46,6 +46,7 @@ const TEAM_SESSION_FILTERS = new Set<WorkspaceTeamSessionFilter>([
   "planning",
   "standup",
   "wheel",
+  "retro",
 ]);
 type TeamMembershipRecord = NonNullable<
   Awaited<ReturnType<AuthResult["repo"]["getTeamMembership"]>>
@@ -60,7 +61,9 @@ function parseTeamSessionFilter(
     return rawType as WorkspaceTeamSessionFilter;
   }
 
-  return { error: "type must be one of all, planning, standup, or wheel" };
+  return {
+    error: "type must be one of all, planning, standup, wheel, or retro",
+  };
 }
 
 function parseRecapActionBody(body: {
@@ -1135,7 +1138,10 @@ export async function resolveTeamSessionRecapActionController(
     return jsonError("Metadata is too large (max 10KB)", 400);
   }
 
-  await auth.result.repo.updateTeamSessionMetadata(sessionId, resolved.metadata);
+  await auth.result.repo.updateTeamSessionMetadata(
+    sessionId,
+    resolved.metadata,
+  );
   const updatedSession = await auth.result.repo.getTeamSessionById(sessionId);
 
   return jsonResponse({ session: updatedSession });

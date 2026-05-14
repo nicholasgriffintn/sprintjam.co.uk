@@ -15,6 +15,7 @@ const stats: WorkspaceStats = {
     planning: 50,
     standup: 23,
     wheel: 1,
+    retro: 0,
   },
   sessionTimeline: [],
 };

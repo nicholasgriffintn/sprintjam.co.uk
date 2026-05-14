@@ -12,8 +12,8 @@ import {
   GitBranch,
   ArrowUpRight,
   CircleDashed,
+  Columns3,
   MessageSquare,
-  Sparkles,
 } from "lucide-react";
 
 import { useSessionActions } from "@/context/SessionContext";
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/Button";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Footer } from "@/components/layout/Footer";
 import { MarketingCardHeading } from "@/components/marketing/MarketingCardHeading";
+import { BetaBadge } from "@/components/BetaBadge";
 import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { SITE_NAME } from "@/constants";
@@ -276,26 +277,32 @@ const WelcomeRoute = () => {
               </button>
             </div>
 
-            <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-slate-300/60 bg-white/40 p-5 text-left dark:border-white/10 dark:bg-slate-900/20">
+            <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
               <div className="flex items-center justify-between">
                 <MarketingCardHeading
-                  icon={<Sparkles className="h-5 w-5" />}
+                  icon={<Columns3 className="h-5 w-5" />}
                   size="base"
-                  tone="slate"
-                  titleClassName="text-slate-400 dark:text-slate-500"
+                  tone="orange"
                 >
-                  More to come
+                  Run retrospectives
                 </MarketingCardHeading>
-                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-                  Coming soon
-                </span>
+                <BetaBadge />
               </div>
               <div className="flex-1 space-y-2">
-                <p className="text-sm text-slate-400 dark:text-slate-600">
-                  We&apos;re building more tools to enhance your sprint rituals.
-                  Stay tuned.
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Choose a retro template, gather cards, vote on what matters,
+                  and keep actions linked to your workspace.
                 </p>
               </div>
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
+                onClick={() => handleNavigate("retro")}
+                data-testid="homepage-flow-retro"
+              >
+                Open retros
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
           <SurfaceCard className="text-left">

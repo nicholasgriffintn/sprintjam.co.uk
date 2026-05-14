@@ -17,5 +17,9 @@ export function getTeamSessionPath(session: TeamSession): string | null {
     return getPathFromScreen("wheel", { wheelKey: targetKey });
   }
 
+  if (sessionType === "retro") {
+    return getPathFromScreen("retroJoin", { retroKey: targetKey });
+  }
+
   return getPathFromScreen("room", { roomKey: targetKey });
 }

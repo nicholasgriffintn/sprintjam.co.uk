@@ -188,9 +188,7 @@ describe("navigation", () => {
         getPathFromScreen("workspaceTeam", {
           teamSlug: "amber-cobalt-ripple",
         }),
-      ).toBe(
-        "/workspace/teams/amber-cobalt-ripple",
-      );
+      ).toBe("/workspace/teams/amber-cobalt-ripple");
     });
 
     it("generates room path without room key", () => {
@@ -510,6 +508,7 @@ describe("ROUTES registry", () => {
       "flow",
       "wheel",
       "standup",
+      "retro",
     ];
     for (const route of ROUTES) {
       expect(validGroups).toContain(route.group);
