@@ -76,6 +76,13 @@ export class RetroRoom {
       return this.handleValidateAnySession(request);
     }
 
+    if (
+      url.pathname === "/session/validate-moderator" &&
+      request.method === "POST"
+    ) {
+      return this.handleValidateModeratorSession(request);
+    }
+
     return jsonError("Retro Route Not found", 404);
   }
 
@@ -308,6 +315,24 @@ export class RetroRoom {
     return valid.some(Boolean)
       ? jsonResponse({ success: true })
       : jsonError("Invalid session", 401);
+  }
+
+  private async handleValidateModeratorSession(
+    request: Request,
+  ): Promise<Response> {
+    const token = getRetroSessionToken(request as unknown as CfRequest);
+    const retro = await this.repository.getRetroData();
+    if (!token || !retro) {
+      return jsonError("Retro session is required", 401);
+    }
+
+    const valid = await this.repository.validateSessionToken(
+      retro.moderator,
+      token,
+    );
+    return valid
+      ? jsonResponse({ success: true })
+      : jsonError("Moderator session is required", 403);
   }
 
   private async handleSession(

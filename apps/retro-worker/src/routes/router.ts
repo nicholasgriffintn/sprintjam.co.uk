@@ -61,10 +61,6 @@ export async function handleRequest(
     return createWorkspaceSessionController(request, env);
   }
 
-  if (request.method === "POST" && path === "retros/session-stats") {
-    return recordSessionStatsController(request, env);
-  }
-
   if (
     request.method === "POST" &&
     path === "retros/workspace-sessions/complete"
@@ -245,6 +241,7 @@ async function validateRetroSessionForKey(
   request: CfRequest,
   env: RetroWorkerEnv,
   retroKey: string,
+  mode: "any" | "moderator" = "any",
 ): Promise<CfResponse | null> {
   const sessionToken = getRetroSessionToken(request);
   if (!sessionToken) {
@@ -252,7 +249,7 @@ async function validateRetroSessionForKey(
   }
 
   const response = await getRetroStub(env, retroKey).fetch(
-    new Request("https://internal/session/validate-any", {
+    new Request(`https://internal/session/validate-${mode}`, {
       method: "POST",
       headers: {
         Cookie: `retro_session=${sessionToken}`,
@@ -289,6 +286,7 @@ async function createWorkspaceSessionController(
     request,
     env,
     retroKey,
+    "moderator",
   );
   if (validationError) {
     return validationError;
@@ -305,45 +303,6 @@ async function createWorkspaceSessionController(
         name: body.name,
         roomKey: retroKey,
         metadata: body.metadata,
-      }),
-    }) as unknown as CfRequest,
-  );
-}
-
-async function recordSessionStatsController(
-  request: CfRequest,
-  env: RetroWorkerEnv,
-): Promise<CfResponse> {
-  if (!env.STATS_WORKER) {
-    return jsonError("Stats collection is unavailable", 503);
-  }
-
-  const body = await request.json<
-    Record<string, unknown> & { roomKey?: string }
-  >();
-  const retroKey =
-    typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
-
-  if (!retroKey) {
-    return jsonError("Retro key is required", 400);
-  }
-
-  const validationError = await validateRetroSessionForKey(
-    request,
-    env,
-    retroKey,
-  );
-  if (validationError) {
-    return validationError;
-  }
-
-  return env.STATS_WORKER.fetch(
-    new Request("https://stats-worker/api/internal/stats/retro-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...body,
-        roomKey: retroKey,
       }),
     }) as unknown as CfRequest,
   );
@@ -369,6 +328,7 @@ async function completeWorkspaceSessionController(
     request,
     env,
     retroKey,
+    "moderator",
   );
   if (validationError) {
     return validationError;

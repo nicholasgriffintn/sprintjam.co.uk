@@ -111,16 +111,30 @@ export function connectRetroWebSocket(
   userName: string,
   onMessage: (message: RetroEventMessage) => void,
 ): WebSocket {
-  activeRetroKey = retroKey;
-  activeUserName = userName;
   if (
     activeSocket &&
     (activeSocket.readyState === WebSocket.OPEN ||
-      activeSocket.readyState === WebSocket.CONNECTING)
+      activeSocket.readyState === WebSocket.CONNECTING) &&
+    activeRetroKey === retroKey &&
+    activeUserName === userName
   ) {
     return activeSocket;
   }
 
+  activeRetroKey = retroKey;
+  activeUserName = userName;
+
+  if (reconnectTimer) {
+    globalThis.clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
+  if (activeSocket) {
+    activeSocket.onclose = null;
+    activeSocket.close();
+  }
+
+  resetReconnectAttempts(reconnectState);
   eventManager.clear();
   eventManager.addEventListener("initialize", onMessage);
   eventManager.addEventListener("userJoined", onMessage);
@@ -155,6 +169,8 @@ export function connectRetroWebSocket(
 
     if (
       !disconnectPending &&
+      activeRetroKey === retroKey &&
+      activeUserName === userName &&
       activeRetroKey &&
       activeUserName &&
       shouldReconnect(reconnectState)
@@ -162,8 +178,12 @@ export function connectRetroWebSocket(
       const delay = calculateReconnectDelay(reconnectState);
       incrementReconnectAttempts(reconnectState);
       reconnectTimer = globalThis.setTimeout(() => {
+        if (activeRetroKey !== retroKey || activeUserName !== userName) {
+          return;
+        }
+
         activeSocket = null;
-        connectRetroWebSocket(activeRetroKey!, activeUserName!, onMessage);
+        connectRetroWebSocket(retroKey, userName, onMessage);
       }, delay);
     }
   };
@@ -179,7 +199,10 @@ export function disconnectRetroWebSocket(): void {
   }
   activeSocket?.close();
   activeSocket = null;
+  activeRetroKey = null;
+  activeUserName = null;
   eventManager.clear();
+  resetReconnectAttempts(reconnectState);
 }
 
 export function sendRetroCard(columnId: string, text: string): void {
