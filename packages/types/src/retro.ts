@@ -1,5 +1,5 @@
 import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
-import type { PasscodeHashPayload } from "./room";
+import type { PasscodeHashPayload, TimerState } from "./room";
 
 export type RetroPhase = "input" | "review" | "focus" | "completed";
 
@@ -56,6 +56,7 @@ export interface RetroData {
   connectedUsers: Record<string, boolean>;
   phase: RetroPhase;
   phaseStartedAt: number;
+  timerState?: TimerState;
   status: RetroStatus;
   cards: RetroCard[];
   actionItems: RetroActionItem[];
@@ -94,6 +95,14 @@ export type RetroClientMessage =
   | { type: "setReady"; ready: boolean }
   | { type: "addAction"; title: string; owner?: string }
   | { type: "toggleAction"; actionId: string; completed: boolean }
+  | { type: "startTimer" }
+  | { type: "pauseTimer" }
+  | { type: "resetTimer" }
+  | {
+      type: "configureTimer";
+      config: { targetDurationSeconds?: number; resetCountdown?: boolean };
+    }
+  | { type: "extendTimer"; seconds: number }
   | { type: "updateSettings"; settings: Partial<RetroSettings> }
   | { type: "completeRetro" }
   | { type: "ping" };

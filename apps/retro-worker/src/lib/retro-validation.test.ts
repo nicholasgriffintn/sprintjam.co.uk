@@ -50,6 +50,30 @@ describe("validateRetroMessagePayload", () => {
         title: "Write the rollout note",
       },
     });
+
+    expect(
+      validateRetroMessagePayload(
+        JSON.stringify({
+          type: "configureTimer",
+          config: { targetDurationSeconds: 300, resetCountdown: true },
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      message: {
+        type: "configureTimer",
+        config: { targetDurationSeconds: 300, resetCountdown: true },
+      },
+    });
+
+    expect(
+      validateRetroMessagePayload(
+        JSON.stringify({ type: "extendTimer", seconds: 300 }),
+      ),
+    ).toEqual({
+      ok: true,
+      message: { type: "extendTimer", seconds: 300 },
+    });
   });
 
   it("rejects malformed messages", () => {
@@ -72,6 +96,14 @@ describe("validateRetroMessagePayload", () => {
     ).toEqual({
       ok: false,
       error: "Card column and text are required",
+    });
+    expect(
+      validateRetroMessagePayload(
+        JSON.stringify({ type: "configureTimer", config: null }),
+      ),
+    ).toEqual({
+      ok: false,
+      error: "Timer config is required",
     });
   });
 });

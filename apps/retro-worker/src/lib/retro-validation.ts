@@ -8,6 +8,8 @@ import { normaliseRetroSettings } from "@sprintjam/utils";
 const MAX_MESSAGE_CHARS = 10000;
 const MAX_CARD_TEXT_CHARS = 1000;
 const MAX_ACTION_TEXT_CHARS = 200;
+const MIN_TIMER_EXTENSION_SECONDS = 60;
+const MAX_TIMER_EXTENSION_SECONDS = 60 * 60;
 
 export function validateRetroMessagePayload(
   raw: string,
@@ -85,6 +87,50 @@ export function validateRetroMessagePayload(
           type: "toggleAction",
           actionId,
           completed: Boolean(msg.completed),
+        },
+      };
+    }
+    case "startTimer":
+      return { ok: true, message: { type: "startTimer" } };
+    case "pauseTimer":
+      return { ok: true, message: { type: "pauseTimer" } };
+    case "resetTimer":
+      return { ok: true, message: { type: "resetTimer" } };
+    case "configureTimer": {
+      if (!msg.config || typeof msg.config !== "object") {
+        return { ok: false, error: "Timer config is required" };
+      }
+
+      const config = msg.config as Record<string, unknown>;
+      const targetDurationSeconds =
+        typeof config.targetDurationSeconds === "number"
+          ? config.targetDurationSeconds
+          : undefined;
+
+      return {
+        ok: true,
+        message: {
+          type: "configureTimer",
+          config: {
+            targetDurationSeconds,
+            resetCountdown: Boolean(config.resetCountdown),
+          },
+        },
+      };
+    }
+    case "extendTimer": {
+      if (typeof msg.seconds !== "number" || !Number.isFinite(msg.seconds)) {
+        return { ok: false, error: "Timer extension is required" };
+      }
+
+      return {
+        ok: true,
+        message: {
+          type: "extendTimer",
+          seconds: Math.max(
+            MIN_TIMER_EXTENSION_SECONDS,
+            Math.min(msg.seconds, MAX_TIMER_EXTENSION_SECONDS),
+          ),
         },
       };
     }

@@ -31,6 +31,14 @@ import {
 import { RetroRoomRepository } from "../repositories/retro-room";
 import { toClientRetroData } from "../lib/client-retro";
 import { canDeleteRetroCard, canSetRetroPhase } from "../lib/retro-permissions";
+import {
+  configureRetroTimer,
+  ensureRetroTimerState,
+  extendRetroTimer,
+  pauseRetroTimer,
+  resetRetroTimer,
+  startRetroTimer,
+} from "../lib/retro-timer";
 import { jsonError, jsonResponse } from "../lib/response";
 import { validateRetroMessagePayload } from "../lib/retro-validation";
 
@@ -140,6 +148,14 @@ export class RetroRoom {
       cards: [],
       actionItems: [],
       readyUsers: [],
+      timerState: {
+        running: true,
+        seconds: 0,
+        lastUpdateTime: now,
+        targetDurationSeconds: settings.timerMinutes * 60,
+        roundAnchorSeconds: 0,
+        autoResetOnVotesReset: false,
+      },
       userAvatars: body.avatar ? { [body.moderator]: body.avatar } : undefined,
       teamId: body.teamId,
       createdAt: now,
@@ -331,7 +347,10 @@ export class RetroRoom {
       userName: canonicalName,
     });
     await this.repository.setUserConnection(canonicalName, true);
-    const connectedRetro = await this.repository.getRetroData();
+    const connectedRetro = await this.repository.updateRetroData((current) => {
+      ensureRetroTimerState(current);
+      return current;
+    });
 
     this.broadcast({
       type: "userJoined",
@@ -501,16 +520,48 @@ export class RetroRoom {
             current.settings,
             message.settings,
           );
-          return {
+          const next = {
             ...current,
             settings,
             template: getRetroTemplate(settings.templateId),
           };
+          const timerState = ensureRetroTimerState(next);
+          timerState.targetDurationSeconds = settings.timerMinutes * 60;
+          return {
+            ...next,
+            timerState,
+          };
+        });
+      case "startTimer":
+        return this.repository.updateRetroData((current) => {
+          startRetroTimer(current, Date.now());
+          return current;
+        });
+      case "pauseTimer":
+        return this.repository.updateRetroData((current) => {
+          pauseRetroTimer(current, Date.now());
+          return current;
+        });
+      case "resetTimer":
+        return this.repository.updateRetroData((current) => {
+          resetRetroTimer(current, Date.now(), false);
+          return current;
+        });
+      case "configureTimer":
+        return this.repository.updateRetroData((current) => {
+          configureRetroTimer(current, message.config, Date.now());
+          return current;
+        });
+      case "extendTimer":
+        return this.repository.updateRetroData((current) => {
+          extendRetroTimer(current, message.seconds, Date.now());
+          return current;
         });
       case "completeRetro":
         await this.recordStats(retro);
         return this.repository.updateRetroData((current) => {
           const now = Date.now();
+          pauseRetroTimer(current, now);
           return {
             ...current,
             phase: "completed",
@@ -527,11 +578,15 @@ export class RetroRoom {
   private async setPhase(
     phase: RetroPhase,
   ): Promise<RetroStateData | undefined> {
-    return this.repository.updateRetroData((current) => ({
-      ...current,
-      phase,
-      phaseStartedAt: Date.now(),
-    }));
+    return this.repository.updateRetroData((current) => {
+      const now = Date.now();
+      return {
+        ...current,
+        phase,
+        phaseStartedAt: now,
+        timerState: resetRetroTimer(current, now, true),
+      };
+    });
   }
 
   private requiresModerator(
@@ -541,6 +596,11 @@ export class RetroRoom {
     return (
       message.type === "updateSettings" ||
       message.type === "completeRetro" ||
+      message.type === "startTimer" ||
+      message.type === "pauseTimer" ||
+      message.type === "resetTimer" ||
+      message.type === "configureTimer" ||
+      message.type === "extendTimer" ||
       (message.type === "setPhase" && !settings.allowParticipantPhaseControl)
     );
   }

@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { RetroData, RetroPhase } from "@sprintjam/types";
-import { CheckCircle2, Clock3, Plus, ThumbsUp } from "lucide-react";
+import { CheckCircle2, Plus, ThumbsUp } from "lucide-react";
 
 import { useRetroHeader } from "@/context/RetroHeaderContext";
 import { getStoredUserName } from "@/hooks/useUserPersistence";
-import { formatTime } from "@/utils/time";
 import {
   addRetroAction,
   completeRetro,
@@ -20,6 +19,7 @@ import { completeSessionByRoomKey } from "@/lib/workspace-service";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { RetroTimerChip } from "@/components/retro/RetroTimerChip";
 import { cn } from "@/lib/cn";
 
 interface RetroRoomScreenProps {
@@ -60,7 +60,6 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   const [error, setError] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [actionTitle, setActionTitle] = useState("");
-  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     setRetroKey(retro?.key ?? retroKey);
@@ -107,13 +106,6 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
     };
   }, [retroKey, userName]);
 
-  useEffect(() => {
-    if (!retro || retro.phase === "completed") return undefined;
-
-    const intervalId = window.setInterval(() => setNow(Date.now()), 1_000);
-    return () => window.clearInterval(intervalId);
-  }, [retro]);
-
   if (error && !retro) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg items-center px-4">
@@ -137,12 +129,6 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   const isReady = retro.readyUsers.includes(userName);
   const showActionsPanel =
     retro.phase === "focus" || retro.actionItems.length > 0;
-  const phaseStartedAt = retro.phaseStartedAt ?? retro.createdAt;
-  const timerEndsAt = phaseStartedAt + retro.settings.timerMinutes * 60_000;
-  const timerRemainingSeconds =
-    retro.phase === "completed"
-      ? 0
-      : Math.max(0, Math.ceil((timerEndsAt - now) / 1_000));
 
   const addCard = (columnId: string) => {
     const text = drafts[columnId]?.trim();
@@ -187,10 +173,7 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200/70 bg-white/90 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-slate-100">
-              <Clock3 className="h-4 w-4" />
-              {formatTime(timerRemainingSeconds)}
-            </div>
+            <RetroTimerChip retro={retro} isModerator={isModerator} />
             <div className="flex flex-wrap gap-2">
               {phaseOrder.map((phase) => (
                 <Button

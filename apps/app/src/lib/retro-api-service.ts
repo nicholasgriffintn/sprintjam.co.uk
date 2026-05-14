@@ -204,6 +204,29 @@ export function setRetroReady(ready: boolean): void {
   sendWebSocketMessage(activeSocket, { type: "setReady", ready });
 }
 
+export function startRetroTimer(): void {
+  sendWebSocketMessage(activeSocket, { type: "startTimer" });
+}
+
+export function pauseRetroTimer(): void {
+  sendWebSocketMessage(activeSocket, { type: "pauseTimer" });
+}
+
+export function resetRetroTimer(): void {
+  sendWebSocketMessage(activeSocket, { type: "resetTimer" });
+}
+
+export function configureRetroTimer(config: {
+  targetDurationSeconds?: number;
+  resetCountdown?: boolean;
+}): void {
+  sendWebSocketMessage(activeSocket, { type: "configureTimer", config });
+}
+
+export function extendRetroTimer(seconds: number): void {
+  sendWebSocketMessage(activeSocket, { type: "extendTimer", seconds });
+}
+
 export function addRetroAction(title: string, owner?: string): void {
   sendWebSocketMessage(activeSocket, { type: "addAction", title, owner });
 }
