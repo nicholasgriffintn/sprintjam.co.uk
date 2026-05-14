@@ -313,7 +313,7 @@ export default function WorkspaceSessions() {
             Sessions <BetaBadge />
           </h1>
           <p className="text-slate-600 dark:text-slate-300">
-            View and manage planning sessions, standups, and wheels
+            View and manage planning sessions, standups, retros, and wheels
           </p>
         </div>
 

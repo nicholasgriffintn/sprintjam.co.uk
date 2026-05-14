@@ -2,6 +2,7 @@ import {
   Target,
   CalendarClock,
   CheckCircle2,
+  Columns3,
   ArrowUpRight,
   MessageSquareQuote,
   Users,
@@ -14,7 +15,10 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import { getTeamSessionPath } from "@/lib/team-session-links";
-import { getTeamSessionType } from "@/lib/team-session-metadata";
+import {
+  getTeamSessionType,
+  parseTeamSessionMetadata,
+} from "@/lib/team-session-metadata";
 import type { SessionStats, TeamSession } from "@sprintjam/types";
 
 interface SessionCardProps {
@@ -69,13 +73,26 @@ export function SessionCard({
   const isComplete = Boolean(session.completedAt);
   const duration = formatDuration(stats?.durationMinutes ?? null);
   const sessionType = getTeamSessionType(session);
+  const metadata = parseTeamSessionMetadata(session);
   const isStandup = sessionType === "standup";
   const isWheel = sessionType === "wheel";
-  const sessionLabel = isStandup ? "Standup" : isWheel ? "Wheel" : "Planning";
+  const isRetro = sessionType === "retro";
+  const isPlanning = sessionType === "planning";
+  const templateName =
+    typeof metadata?.templateName === "string" ? metadata.templateName : null;
+  const sessionLabel = isStandup
+    ? "Standup"
+    : isWheel
+      ? "Wheel"
+      : isRetro
+        ? "Retro"
+        : "Planning";
   const sessionIcon = isStandup ? (
     <MessageSquareQuote className="mr-1.5 h-3 w-3" />
   ) : isWheel ? (
     <Vote className="mr-1.5 h-3 w-3" />
+  ) : isRetro ? (
+    <Columns3 className="mr-1.5 h-3 w-3" />
   ) : (
     <Target className="mr-1.5 h-3 w-3" />
   );
@@ -83,6 +100,8 @@ export function SessionCard({
     <MessageSquareQuote className="h-3.5 w-3.5" />
   ) : isWheel ? (
     <Vote className="h-3.5 w-3.5" />
+  ) : isRetro ? (
+    <Columns3 className="h-3.5 w-3.5" />
   ) : (
     <Target className="h-3.5 w-3.5" />
   );
@@ -91,7 +110,9 @@ export function SessionCard({
     ? "Open standup"
     : isWheel
       ? "Open wheel"
-      : "Open room";
+      : isRetro
+        ? "Open retro"
+        : "Open room";
 
   return (
     <SurfaceCard variant="subtle" padding="sm" className="flex flex-col gap-3">
@@ -101,7 +122,10 @@ export function SessionCard({
             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
               {session.name}
             </p>
-            <Badge variant={isStandup || isWheel ? "info" : "warning"} size="sm">
+            <Badge
+              variant={isStandup || isWheel || isRetro ? "info" : "warning"}
+              size="sm"
+            >
               {sessionIcon}
               {sessionLabel}
             </Badge>
@@ -112,9 +136,14 @@ export function SessionCard({
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1">
               {metaIcon}
-              {isStandup ? "Standup" : isWheel ? "Wheel" : "Room"}{" "}
-              {session.roomKey}
+              {sessionLabel} {session.roomKey}
             </span>
+            {isRetro && templateName ? (
+              <span className="flex items-center gap-1">
+                <Columns3 className="h-3.5 w-3.5" />
+                {templateName}
+              </span>
+            ) : null}
             <span className="flex items-center gap-1">
               <CalendarClock className="h-3.5 w-3.5" />
               Created {formatDate(session.createdAt)}
@@ -144,7 +173,7 @@ export function SessionCard({
         </div>
       </div>
 
-      {!isStandup && stats && (
+      {isPlanning && stats && (
         <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
           <StatBadge
             icon={<Users className="h-3 w-3 text-slate-500" />}

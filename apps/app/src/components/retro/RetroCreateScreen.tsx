@@ -14,15 +14,12 @@ import {
   useUserPersistence,
 } from "@/hooks/useUserPersistence";
 import { createRetro } from "@/lib/retro-api-service";
-import {
-  createTeamSession,
-  getTeamRetroSettings,
-} from "@/lib/workspace-service";
-import { buildTeamSessionMetadata } from "@/lib/team-session-metadata";
+import { getTeamRetroSettings } from "@/lib/workspace-service";
 import { sanitiseAvatarValue } from "@/utils/avatars";
 import { validateName, validatePasscode } from "@/utils/validators";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -30,14 +27,7 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { Footer } from "@/components/layout/Footer";
 import { BetaBadge } from "@/components/BetaBadge";
 import { RetroTemplateSelect } from "./RetroTemplateSelect";
-
-function buildRetroSessionName(): string {
-  return `Retro ${new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date())}`;
-}
+import { useWorkspaceRetroSession } from "./useWorkspaceRetroSession";
 
 export function RetroCreateScreen() {
   const navigateTo = useAppNavigation();
@@ -56,8 +46,14 @@ export function RetroCreateScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
-  const teamIdForCreate = selectedTeam?.canAccess ? selectedTeam.id : undefined;
+  const accessibleTeams = teams.filter((team) => team.canAccess);
+  const selectedTeam =
+    accessibleTeams.find((team) => team.id === selectedTeamId) ?? null;
+  const ensureWorkspaceRetroSession = useWorkspaceRetroSession(
+    selectedTeam
+      ? { id: selectedTeam.id, slug: selectedTeam.slug }
+      : undefined,
+  );
   const avatarValue = workspaceAvatar ?? storedAvatar ?? undefined;
 
   useUserPersistence({ name: userName, avatar: storedAvatar });
@@ -104,22 +100,20 @@ export function RetroCreateScreen() {
         passcode.trim() || undefined,
         settings,
         avatarValue,
-        teamIdForCreate,
+        selectedTeam?.id,
       );
 
-      if (selectedTeam?.slug && teamIdForCreate) {
-        await createTeamSession(
-          selectedTeam.slug,
-          buildRetroSessionName(),
+      try {
+        await ensureWorkspaceRetroSession(
           response.retro.key,
-          {
-            ...buildTeamSessionMetadata({
-              type: "retro",
-              teamId: teamIdForCreate,
-            }),
-            templateId: response.retro.template.id,
-            templateName: response.retro.template.name,
-          },
+          response.retro.template,
+        );
+      } catch (linkError) {
+        console.warn("Retro created without workspace session link", {
+          linkError,
+        });
+        toast.error(
+          "The retro is live, but it was not linked into workspace history.",
         );
       }
 
@@ -188,7 +182,7 @@ export function RetroCreateScreen() {
               icon={<Lock className="h-4 w-4" />}
               fullWidth
             />
-            {isAuthenticated && teams.length > 0 ? (
+            {isAuthenticated && accessibleTeams.length > 0 ? (
               <div>
                 <label
                   htmlFor="retro-team-select"
@@ -198,7 +192,7 @@ export function RetroCreateScreen() {
                 </label>
                 <Select
                   id="retro-team-select"
-                  value={selectedTeamId ? String(selectedTeamId) : "none"}
+                  value={selectedTeam ? String(selectedTeam.id) : "none"}
                   onValueChange={(value) =>
                     setSelectedTeamId(
                       value && value !== "none" ? Number(value) : null,
@@ -206,7 +200,7 @@ export function RetroCreateScreen() {
                   }
                   options={[
                     { label: "Do not link", value: "none" },
-                    ...teams.map((team) => ({
+                    ...accessibleTeams.map((team) => ({
                       label: team.name,
                       value: String(team.id),
                     })),

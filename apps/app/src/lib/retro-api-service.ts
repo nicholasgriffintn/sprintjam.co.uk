@@ -231,6 +231,14 @@ export function addRetroAction(title: string, owner?: string): void {
   sendWebSocketMessage(activeSocket, { type: "addAction", title, owner });
 }
 
+export function toggleRetroAction(actionId: string, completed: boolean): void {
+  sendWebSocketMessage(activeSocket, {
+    type: "toggleAction",
+    actionId,
+    completed,
+  });
+}
+
 export function completeRetro(): void {
   sendWebSocketMessage(activeSocket, { type: "completeRetro" });
 }

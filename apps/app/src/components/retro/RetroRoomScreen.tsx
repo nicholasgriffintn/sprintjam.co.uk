@@ -13,6 +13,7 @@ import {
   sendRetroCard,
   setRetroPhase,
   setRetroReady,
+  toggleRetroAction,
   voteRetroCard,
 } from "@/lib/retro-api-service";
 import { completeSessionByRoomKey } from "@/lib/workspace-service";
@@ -127,6 +128,10 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   const nextPhase =
     phaseOrder[Math.min(currentPhaseIndex + 1, phaseOrder.length - 1)];
   const isReady = retro.readyUsers.includes(userName);
+  const canMovePhase =
+    isModerator || retro.settings.allowParticipantPhaseControl;
+  const canUseNextPhase =
+    nextPhase === "completed" ? isModerator : canMovePhase;
   const showActionsPanel =
     retro.phase === "focus" || retro.actionItems.length > 0;
 
@@ -146,6 +151,9 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
 
   const handleNextPhase = () => {
     if (nextPhase === "completed") {
+      if (!isModerator) {
+        return;
+      }
       completeRetro();
       void completeSessionByRoomKey(retro.key, "retro").catch(
         (completionError) => {
@@ -197,9 +205,7 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
                   size="sm"
                   variant="secondary"
                   onClick={() => handleNextPhase()}
-                  disabled={
-                    !isModerator && !retro.settings.allowParticipantPhaseControl
-                  }
+                  disabled={!canUseNextPhase}
                 >
                   Next
                 </Button>
@@ -340,9 +346,34 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
                   {retro.actionItems.map((action) => (
                     <div
                       key={action.id}
-                      className="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-white/10 dark:bg-white/5"
+                      className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-white/10 dark:bg-white/5"
                     >
-                      {action.title}
+                      <button
+                        type="button"
+                        aria-pressed={action.completed}
+                        onClick={() =>
+                          toggleRetroAction(action.id, !action.completed)
+                        }
+                        className={cn(
+                          "mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300",
+                          action.completed
+                            ? "border-emerald-500 bg-emerald-500"
+                            : "border-slate-300 bg-white dark:border-white/20 dark:bg-transparent",
+                        )}
+                      >
+                        {action.completed ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        ) : null}
+                      </button>
+                      <span
+                        className={cn(
+                          "min-w-0 flex-1",
+                          action.completed &&
+                            "text-slate-500 line-through dark:text-slate-400",
+                        )}
+                      >
+                        {action.title}
+                      </span>
                     </div>
                   ))}
                 </div>

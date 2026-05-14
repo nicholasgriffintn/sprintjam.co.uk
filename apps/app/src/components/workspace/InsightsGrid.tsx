@@ -4,6 +4,7 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { CeremonyCountStrip } from "@/components/workspace/InsightActivitySummary";
 import {
   buildPlanningInsightMetrics,
+  buildRetroInsightMetrics,
   buildStandupInsightMetrics,
   buildWheelInsightMetrics,
   type WorkspaceInsightMetric,
@@ -74,8 +75,10 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
   const hasPlanningRounds = insights.totalRounds > 0;
   const hasStandupInsights = insights.standup.sessionsAnalyzed > 0;
   const hasWheelInsights = insights.wheel.sessionsAnalyzed > 0;
+  const hasRetroInsights = insights.retro.sessions > 0;
   const standupMetrics = buildStandupInsightMetrics(insights.standup);
   const wheelMetrics = buildWheelInsightMetrics(insights.wheel);
+  const retroMetrics = buildRetroInsightMetrics(insights.retro);
 
   return (
     <div className="space-y-4">
@@ -144,6 +147,23 @@ export function InsightsGrid({ insights }: InsightsGridProps) {
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
               Wheel-specific metrics appear after a linked wheel room records a
               spin.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-500 dark:text-slate-300">
+            Retro signals
+          </h4>
+          {hasRetroInsights ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {retroMetrics.map((metric) => (
+                <MetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              Retro-specific metrics appear after a linked retro completes.
             </p>
           )}
         </div>

@@ -10,7 +10,7 @@ import { TeamInsightsPanel } from "@/components/workspace/TeamInsightsPanel";
 
 const insights: TeamInsights = {
   sessionsAnalyzed: 4,
-  sessionTypeCounts: { all: 4, planning: 2, standup: 1, wheel: 1, retro: 0 },
+  sessionTypeCounts: { all: 5, planning: 2, standup: 1, wheel: 1, retro: 1 },
   standup: {
     sessionsAnalyzed: 1,
     totalParticipants: 5,
@@ -43,14 +43,14 @@ const insights: TeamInsights = {
     modeSpinCounts: { decision: 0, reviewer: 3, facilitator: 0 },
   },
   retro: {
-    sessions: 0,
-    totalParticipants: 0,
-    totalCards: 0,
-    totalVotes: 0,
-    totalActions: 0,
-    completedActions: 0,
-    averageCardsPerSession: 0,
-    averageVotesPerSession: 0,
+    sessions: 1,
+    totalParticipants: 5,
+    totalCards: 12,
+    totalVotes: 8,
+    totalActions: 3,
+    completedActions: 1,
+    averageCardsPerSession: 12,
+    averageVotesPerSession: 8,
   },
   totalTickets: 18,
   totalRounds: 22,
@@ -67,7 +67,7 @@ describe("TeamInsightsPanel", () => {
       <TeamInsightsPanel
         teamName="Platform"
         insights={insights}
-        sessionCounts={{ all: 6, planning: 3, standup: 2, wheel: 1, retro: 0 }}
+        sessionCounts={{ all: 6, planning: 3, standup: 1, wheel: 1, retro: 1 }}
       />,
     );
 
@@ -77,6 +77,8 @@ describe("TeamInsightsPanel", () => {
     expect(screen.getByText("Average health")).toBeTruthy();
     expect(screen.getByText("3.5/5")).toBeTruthy();
     expect(screen.getByText("Wheel spins")).toBeTruthy();
+    expect(screen.getByText("Retro cards")).toBeTruthy();
+    expect(screen.getByText("12")).toBeTruthy();
     expect(screen.getByText("Pre-split unclear work")).toBeTruthy();
   });
 });

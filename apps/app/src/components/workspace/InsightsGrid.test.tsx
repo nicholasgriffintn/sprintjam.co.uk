@@ -12,7 +12,7 @@ const insights: WorkspaceInsights = {
   totalVotes: 12,
   totalRounds: 4,
   totalTickets: 3,
-  sessionTypeCounts: { all: 5, planning: 2, standup: 2, wheel: 1, retro: 0 },
+  sessionTypeCounts: { all: 6, planning: 2, standup: 2, wheel: 1, retro: 1 },
   standup: {
     sessionsAnalyzed: 2,
     totalParticipants: 10,
@@ -45,14 +45,14 @@ const insights: WorkspaceInsights = {
     modeSpinCounts: { decision: 0, reviewer: 3, facilitator: 0 },
   },
   retro: {
-    sessions: 0,
-    totalParticipants: 0,
-    totalCards: 0,
-    totalVotes: 0,
-    totalActions: 0,
-    completedActions: 0,
-    averageCardsPerSession: 0,
-    averageVotesPerSession: 0,
+    sessions: 1,
+    totalParticipants: 5,
+    totalCards: 9,
+    totalVotes: 6,
+    totalActions: 2,
+    completedActions: 1,
+    averageCardsPerSession: 9,
+    averageVotesPerSession: 6,
   },
   participationRate: 88,
   firstRoundConsensusRate: 67,
@@ -81,6 +81,8 @@ describe("InsightsGrid", () => {
     expect(screen.getByText("Standup response")).toBeTruthy();
     expect(screen.getByText("Average health")).toBeTruthy();
     expect(screen.getByText("Wheel spins")).toBeTruthy();
+    expect(screen.getByText("Retros")).toBeTruthy();
+    expect(screen.getByText("Retro cards")).toBeTruthy();
     expect(screen.queryByText("Top contributors")).toBeNull();
     expect(screen.queryByText("Asha Patel")).toBeNull();
   });

@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
 import {
   AlertTriangle,
+  Columns3,
+  ListChecks,
   HeartPulse,
   HelpCircle,
   Link2,
   MessageSquare,
+  MessageSquareText,
   Repeat2,
   RotateCw,
   Target,
@@ -14,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import type {
+  WorkspaceRetroInsights,
   WorkspaceStandupInsights,
   WorkspaceWheelInsights,
 } from "@sprintjam/types";
@@ -180,6 +184,45 @@ export function buildWheelInsightMetrics(
       description: "Winners removed",
       color: "text-rose-600 dark:text-rose-400",
       bgColor: "bg-rose-50 dark:bg-rose-900/20",
+    },
+  ];
+}
+
+export function buildRetroInsightMetrics(
+  retro: WorkspaceRetroInsights,
+): WorkspaceInsightMetric[] {
+  return [
+    {
+      label: "Retro cards",
+      value: String(retro.totalCards),
+      icon: <Columns3 className="h-4 w-4" />,
+      description: "Feedback cards captured",
+      color: "text-sky-600 dark:text-sky-400",
+      bgColor: "bg-sky-50 dark:bg-sky-900/20",
+    },
+    {
+      label: "Retro votes",
+      value: String(retro.totalVotes),
+      icon: <MessageSquareText className="h-4 w-4" />,
+      description: "Focus votes cast",
+      color: "text-violet-600 dark:text-violet-400",
+      bgColor: "bg-violet-50 dark:bg-violet-900/20",
+    },
+    {
+      label: "Retro actions",
+      value: String(retro.totalActions),
+      icon: <ListChecks className="h-4 w-4" />,
+      description: "Actions created",
+      color: "text-emerald-600 dark:text-emerald-400",
+      bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+    },
+    {
+      label: "Completed actions",
+      value: String(retro.completedActions),
+      icon: <Target className="h-4 w-4" />,
+      description: "Actions marked done",
+      color: "text-amber-600 dark:text-amber-400",
+      bgColor: "bg-amber-50 dark:bg-amber-900/20",
     },
   ];
 }

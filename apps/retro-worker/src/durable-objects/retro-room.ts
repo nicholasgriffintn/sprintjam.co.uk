@@ -635,26 +635,30 @@ export class RetroRoom {
       0,
     );
 
-    await this.env.STATS_WORKER.fetch(
-      "https://stats-worker/api/internal/stats/retro-session",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomKey: retro.key,
-          templateId: retro.template.id,
-          templateName: retro.template.name,
-          totalParticipants: retro.users.length,
-          cardCount: retro.cards.length,
-          voteCount,
-          actionCount: retro.actionItems.length,
-          completedActionCount: retro.actionItems.filter(
-            (action) => action.completed,
-          ).length,
-          durationMs: Date.now() - retro.createdAt,
-        }),
-      },
-    );
+    try {
+      await this.env.STATS_WORKER.fetch(
+        "https://stats-worker/api/internal/stats/retro-session",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomKey: retro.key,
+            templateId: retro.template.id,
+            templateName: retro.template.name,
+            totalParticipants: retro.users.length,
+            cardCount: retro.cards.length,
+            voteCount,
+            actionCount: retro.actionItems.length,
+            completedActionCount: retro.actionItems.filter(
+              (action) => action.completed,
+            ).length,
+            durationMs: Date.now() - retro.createdAt,
+          }),
+        },
+      );
+    } catch (error) {
+      console.warn("Retro completed without stats sync", { error });
+    }
   }
 
   private broadcast(message: unknown): void {

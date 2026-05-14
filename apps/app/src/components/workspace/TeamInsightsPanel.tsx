@@ -8,6 +8,7 @@ import { SuggestedFocusCards } from "@/components/workspace/SuggestedFocusCards"
 import { CeremonyCountStrip } from "@/components/workspace/InsightActivitySummary";
 import {
   buildPlanningInsightMetrics,
+  buildRetroInsightMetrics,
   buildStandupInsightMetrics,
   buildWheelInsightMetrics,
 } from "@/components/workspace/workspaceInsightMetrics";
@@ -75,7 +76,7 @@ export function TeamInsightsPanel({
           ) : null}
           <p className="text-sm text-slate-600 dark:text-slate-300">
             No analysed insights available for {teamName}. Complete planning
-            sessions, standups, or record wheel spins to build team history.
+            sessions, standups, retros, or wheel spins to build team history.
           </p>
         </div>
       </SurfaceCard>
@@ -90,9 +91,11 @@ export function TeamInsightsPanel({
   });
   const standupMetrics = buildStandupInsightMetrics(insights.standup);
   const wheelMetrics = buildWheelInsightMetrics(insights.wheel);
+  const retroMetrics = buildRetroInsightMetrics(insights.retro);
   const hasPlanningRounds = insights.totalRounds > 0;
   const hasStandupInsights = insights.standup.sessionsAnalyzed > 0;
   const hasWheelInsights = insights.wheel.sessionsAnalyzed > 0;
+  const hasRetroInsights = insights.retro.sessions > 0;
   const prompts = buildInsightPrompts(insights);
 
   return (
@@ -163,6 +166,23 @@ export function TeamInsightsPanel({
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
               Wheel-specific metrics appear after a linked wheel room records a
               spin.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            Retro signals
+          </h4>
+          {hasRetroInsights ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {retroMetrics.map((metric) => (
+                <MetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              Retro-specific metrics appear after a linked retro completes.
             </p>
           )}
         </div>
