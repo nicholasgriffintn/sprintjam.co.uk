@@ -1,6 +1,6 @@
-# SprintJam - Fast, real-time planning poker for distributed teams
+# SprintJam - Fast planning, standups, and retros for distributed teams
 
-SprintJam makes it easy to estimate stories in minutes with live voting, smart consensus insights, and a distraction-free room that keeps everyone focused. No sign-ups required, just share a link to start.
+SprintJam helps distributed teams run the core sprint ceremonies in one place: planning poker, daily standups, retrospectives, decision wheels, and workspace history. No sign-ups required for individual rooms, just share a link to start.
 
 [![Website](https://img.shields.io/badge/sprintjam.co.uk-blue?style=for-the-badge)](https://sprintjam.co.uk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)](LICENSE)
@@ -9,11 +9,12 @@ SprintJam makes it easy to estimate stories in minutes with live voting, smart c
 
 ## Features
 
-### Live Estimations
+### Planning Poker Rooms
 
 - Classic planning poker with Fibonacci, short Fibonacci, doubling, T-shirt sizes, hours, yes/no, simple, planet, or custom scales
 - Structured voting with weighted scoring across complexity, confidence, volume, and unknowns
 - Extra vote cards such as unknown, coffee break, and cannot complete
+- Ticket queues, CSV export, provider imports, post-session recaps, and workspace follow-up actions
 
 ### Automated Consensus Insights
 
@@ -21,7 +22,19 @@ SprintJam makes it easy to estimate stories in minutes with live voting, smart c
 - Moderator controls for hidden voting, auto-reveal, locked votes, spectator mode, and passcode-protected rooms
 - Shared timers, contextual room guidance, summary cards, and vote distribution views
 
-### Third party integrations
+### Standups
+
+- Async daily check-in rooms with facilitator controls for live walkthroughs
+- Private participant responses covering yesterday, today, blockers, health, icebreakers, kudos, and reactions
+- Workspace-linked standups with ticket links, blocker tracking, completion state, and team insights
+
+### Retrospectives
+
+- Template-led retro rooms with formats such as Start, Stop, Continue and Sailboat
+- Create and join flows with room codes, optional passcodes, template selection, and workspace-linked sessions
+- Card gathering, review, focus voting, moderator timers, action capture, team defaults, and workspace insights
+
+### Third-party Integrations
 
 - Jira, Linear, and GitHub integrations with workspace-managed team connections and room-level flows
 - Import tickets, browse boards, sprints, cycles, repos, and milestones, then estimate without leaving SprintJam
@@ -31,13 +44,15 @@ SprintJam makes it easy to estimate stories in minutes with live voting, smart c
 
 - Magic-link sign-in for approved workspace domains
 - MFA with TOTP or passkeys, plus recovery codes
-- Team defaults, shared integrations, saved sessions, and workspace-level planning insights
+- Team defaults, shared integrations, saved sessions, sprint actions, and workspace-level insights across planning, standups, retros, and wheels
+- Workspace admins, team admins, restricted teams, member approval, readable team URLs, and session filters
 
 ### Real-Time Collaboration Tools
 
 - WebSocket-powered rooms with live presence, moderator controls, and shareable links or QR codes
-- A built-in spin-the-wheel tool for quick decisions during planning sessions
+- A built-in spin-the-wheel tool for facilitator selection, decisions, reviewers, and workspace-linked outcomes
 - Quick break games including Guess the Number, Word Chain, Emoji Story, One-Word Pitch, Category Blitz, Clueboard, Sprint Word, Team Threads, and Sprint Risk
+- Optional focus toys and background music controls for rooms
 
 ### Privacy-First Design
 
@@ -66,6 +81,8 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    - `apps/auth-worker` - workspace auth, teams, and team-level integrations backed by D1
    - `apps/stats-worker` - stats ingest and query APIs backed by D1
    - `apps/wheel-worker` - spin-the-wheel APIs and the `WheelRoom` Durable Object
+   - `apps/standup-worker` - standup APIs, WebSockets, stats, and the `StandupRoom` Durable Object
+   - `apps/retro-worker` - retro APIs, WebSockets, stats, and the `RetroRoom` Durable Object
 
 2. **Install dependencies**
 
@@ -129,9 +146,22 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    TOKEN_ENCRYPTION_SECRET=replace-me
    ```
 
+   ```env
+   # apps/standup-worker/.dev.vars
+
+   TOKEN_ENCRYPTION_SECRET=replace-me
+   ```
+
+   ```env
+   # apps/retro-worker/.dev.vars
+
+   TOKEN_ENCRYPTION_SECRET=replace-me
+   ```
+
    Notes:
    - Set the same `INTERNAL_API_SECRET` in `apps/room-worker/.dev.vars` and `apps/auth-worker/.dev.vars` if you want room sessions to use team-level provider credentials.
-   - Set the same `STATS_INGEST_TOKEN` in `apps/room-worker/.dev.vars` and `apps/stats-worker/.dev.vars` if you want round stats to be persisted locally.
+   - Set the same `STATS_INGEST_TOKEN` in `apps/room-worker/.dev.vars` and `apps/stats-worker/.dev.vars` if you want planning round stats to be persisted locally.
+   - `apps/wheel-worker`, `apps/standup-worker`, and `apps/retro-worker` send workspace and stats data through service bindings, so they need matching service bindings rather than local stats tokens.
    - Add OAuth credentials to both `apps/room-worker/.dev.vars` and `apps/auth-worker/.dev.vars` if you want both room-level and team-level integrations.
 
 4. **Apply the local database migrations**
@@ -152,9 +182,11 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
 
 6. **Prepare your Cloudflare account before the first deploy**
 
-   The checked-in `wrangler.jsonc` files still need your own account-level resources:
-   - update the routes in `apps/app/wrangler.jsonc`
-   - create a D1 database for auth and stats, then replace the bound `database_name` and `database_id` values in `apps/auth-worker/wrangler.jsonc` and `apps/stats-worker/wrangler.jsonc`
+   The checked-in `wrangler.json` files still need your own account-level resources:
+   - update the routes in `apps/app/wrangler.json`
+   - create a D1 database for auth and stats, then replace the bound `database_name` and `database_id` values in `apps/auth-worker/wrangler.json` and `apps/stats-worker/wrangler.json`
+   - configure the Cloudflare Send Email binding used by `apps/auth-worker`
+   - create the rate-limit bindings used by the room, auth, wheel, standup, and retro workers, or disable those rate limits in non-production environments
    - keep the service binding names aligned across workers if you rename any Worker
    - add the same secrets in Cloudflare that you used locally
 
