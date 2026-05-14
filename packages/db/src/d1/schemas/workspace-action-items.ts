@@ -16,7 +16,7 @@ export const workspaceActionItems = sqliteTable(
       () => workspaceProcessLoops.id,
     ),
     source: text("source", {
-      enum: ["planning", "standup", "wheel", "manual"],
+      enum: ["planning", "standup", "wheel", "retro", "manual"],
     }).notNull(),
     sourceSessionId: integer("source_session_id").references(
       () => teamSessions.id,

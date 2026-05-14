@@ -13,6 +13,7 @@ import type {
   OAuthProvider,
   CreateWorkspaceActionInput,
   RecordPlanningWorkspaceActionsInput,
+  RecordRetroWorkspaceActionsInput,
   RecordStandupSessionStatsInput,
   RecordStandupWorkspaceActionsInput,
   RecordWheelSessionStatsInput,
@@ -495,6 +496,19 @@ export async function recordPlanningActionsByRoomKey(
 ): Promise<number[]> {
   const data = await workspaceRequest<{ actionIds: number[] }>(
     `${API_BASE_URL}/rooms/workspace-actions`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return data.actionIds;
+}
+
+export async function recordRetroActionsByRoomKey(
+  payload: RecordRetroWorkspaceActionsInput,
+): Promise<number[]> {
+  const data = await workspaceRequest<{ actionIds: number[] }>(
+    `${API_BASE_URL}/retros/workspace-actions`,
     {
       method: "POST",
       body: JSON.stringify(payload),

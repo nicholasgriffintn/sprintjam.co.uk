@@ -184,6 +184,16 @@ export interface RecordPlanningWorkspaceActionsInput {
   }>;
 }
 
+export interface RecordRetroWorkspaceActionsInput {
+  roomKey: string;
+  actions: Array<{
+    id: string;
+    title: string;
+    owner?: string | null;
+    completed?: boolean;
+  }>;
+}
+
 export interface TeamWithSettings extends Team {
   settings?: RoomSettings;
   retroSettings?: RetroSettings;

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildPlanningActionIntents,
   buildPlanningFollowUpsFromTicketQueue,
+  buildRetroActionIntents,
   buildStandupBlockerActionIntents,
   buildStandupNextStepActionIntents,
   buildWheelActionIntent,
@@ -117,6 +118,47 @@ describe("workspace-actions", () => {
         timestamp: 1_700_000_000_000,
       },
     });
+  });
+
+  it("builds retro action intents with completion status", () => {
+    expect(
+      buildRetroActionIntents(14, [
+        {
+          id: "action-1",
+          title: "Pair on release checklist",
+          owner: "Ava",
+          completed: false,
+        },
+        {
+          id: "action-2",
+          title: "Update incident playbook",
+          completed: true,
+        },
+        {
+          id: "",
+          title: "Ignored",
+        },
+      ]),
+    ).toEqual([
+      {
+        source: "retro",
+        sourceRef: "retro-action-14-action-1",
+        title: "Pair on release checklist",
+        status: "open",
+        priority: "normal",
+        ownerName: "Ava",
+        metadata: { retroActionId: "action-1" },
+      },
+      {
+        source: "retro",
+        sourceRef: "retro-action-14-action-2",
+        title: "Update incident playbook",
+        status: "resolved",
+        priority: "normal",
+        ownerName: undefined,
+        metadata: { retroActionId: "action-2" },
+      },
+    ]);
   });
 
   it("builds standup blocker actions with ticket metadata", () => {

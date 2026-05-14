@@ -25,6 +25,7 @@ export const WORKSPACE_ACTION_SOURCES: WorkspaceActionSource[] = [
   "planning",
   "standup",
   "wheel",
+  "retro",
   "manual",
 ];
 
@@ -54,6 +55,7 @@ export interface WorkspaceActionIntent {
   sourceRef: string;
   title: string;
   detail?: string | null;
+  status?: WorkspaceActionStatus;
   priority?: WorkspaceActionPriority;
   ownerName?: string | null;
   metadata?: Record<string, unknown> | null;
@@ -206,6 +208,36 @@ export function buildPlanningFollowUpsFromTicketQueue(
         title,
         detail: normaliseOptionalString(ticket.outcome ?? ticket.description),
         ticketKey: normaliseOptionalString(ticket.ticketId),
+      },
+    ];
+  });
+}
+
+export function buildRetroActionIntents(
+  sessionId: number,
+  actions: Array<{
+    id?: string | null;
+    title?: string | null;
+    owner?: string | null;
+    completed?: boolean;
+  }>,
+): WorkspaceActionIntent[] {
+  return actions.flatMap((action): WorkspaceActionIntent[] => {
+    const id = normaliseOptionalString(action.id);
+    const title = normaliseOptionalString(action.title);
+    if (!id || !title) {
+      return [];
+    }
+
+    return [
+      {
+        source: "retro",
+        sourceRef: `retro-action-${sessionId}-${id}`,
+        title,
+        status: action.completed ? "resolved" : "open",
+        priority: "normal",
+        ownerName: normaliseOptionalString(action.owner),
+        metadata: { retroActionId: id },
       },
     ];
   });

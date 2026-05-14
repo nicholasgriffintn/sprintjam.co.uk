@@ -49,6 +49,7 @@ import {
   listWorkspaceActionsController,
   listWorkspaceProcessLoopsController,
   recordPlanningActionsByRoomKeyController,
+  recordRetroActionsByRoomKeyController,
   recordStandupActionsByRoomKeyController,
   recordWheelOutcomeByRoomKeyController,
   updateWorkspaceActionController,
@@ -520,6 +521,13 @@ const ROUTES: RouteDefinition[] = [
     pattern: /^internal\/sessions\/standup-actions$/,
     handler: (request, env) =>
       recordStandupActionsByRoomKeyController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^internal\/sessions\/retro-actions$/,
+    handler: (request, env) =>
+      recordRetroActionsByRoomKeyController(request, env),
     paramTypes: ["none"],
   },
   {

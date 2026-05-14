@@ -31,6 +31,7 @@ import {
   listWorkspaceActionsController,
   listWorkspaceProcessLoopsController,
   recordPlanningActionsByRoomKeyController,
+  recordRetroActionsByRoomKeyController,
   recordStandupActionsByRoomKeyController,
   recordWheelOutcomeByRoomKeyController,
   updateWorkspaceActionController,
@@ -1716,6 +1717,56 @@ describe("teams-controller", () => {
         source: "planning",
         sourceRef: "planning-follow-up-23-clarify-unknowns-follow-1",
         title: "Clarify unknowns",
+      }),
+    );
+  });
+
+  it("records retro actions as workspace actions", async () => {
+    const repo = createRepo({
+      getAccessibleTeamSessionByRoomKey: vi.fn().mockResolvedValue({
+        id: 24,
+        teamId: 10,
+        roomKey: "RETRO1",
+        name: "Sprint retro",
+        metadata: JSON.stringify({ type: "retro" }),
+      }),
+      getProcessLoopForSession: vi.fn().mockResolvedValue({ id: 12 }),
+      getTeamMembership: vi
+        .fn()
+        .mockResolvedValue({ role: "member", status: "active" }),
+    });
+    authenticateAs(repo);
+
+    const response = await recordRetroActionsByRoomKeyController(
+      makeRequest("https://test.com/sessions/retro-actions", {
+        method: "POST",
+        headers: { Cookie: "retro_session=retro-token" },
+        body: JSON.stringify({
+          roomKey: "RETRO1",
+          actions: [
+            {
+              id: "action-1",
+              title: "Pair on release checklist",
+              owner: "Ava",
+              completed: true,
+            },
+          ],
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(repo.upsertWorkspaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 10,
+        processLoopId: 12,
+        sourceSessionId: 24,
+        source: "retro",
+        sourceRef: "retro-action-24-action-1",
+        title: "Pair on release checklist",
+        status: "resolved",
+        ownerName: "Ava",
       }),
     );
   });

@@ -3,6 +3,7 @@ import type {
   CreateWorkspaceActionInput,
   CreateWorkspaceProcessLoopInput,
   RecordPlanningWorkspaceActionsInput,
+  RecordRetroWorkspaceActionsInput,
   RecordStandupWorkspaceActionsInput,
   SpinResult,
   UpdateWorkspaceActionInput,
@@ -14,6 +15,7 @@ import type {
 import {
   buildPaginationMeta,
   buildPlanningActionIntents,
+  buildRetroActionIntents,
   buildStandupBlockerActionIntents,
   buildStandupNextStepActionIntents,
   buildWheelActionIntent,
@@ -65,6 +67,7 @@ const ACTION_SOURCE_FILTERS = new Set<WorkspaceActionSourceFilter>([
   "planning",
   "standup",
   "wheel",
+  "retro",
   "manual",
 ]);
 
@@ -825,6 +828,62 @@ export async function recordPlanningActionsByRoomKeyController(
     session.id,
     body.followUps ?? [],
   );
+  const processLoop = await repo.getProcessLoopForSession(session.id);
+  const actionIds = await Promise.all(
+    actionIntents.map((intent) =>
+      repo.upsertWorkspaceAction({
+        teamId: session.teamId,
+        processLoopId: processLoop?.id ?? null,
+        sourceSessionId: session.id,
+        createdById: auth.result.userId,
+        ...intent,
+      }),
+    ),
+  );
+
+  return jsonResponse({ actionIds });
+}
+
+export async function recordRetroActionsByRoomKeyController(
+  request: Request,
+  env: AuthWorkerEnv,
+): Promise<Response> {
+  const auth = await getAuthOrError(request, env);
+  if ("response" in auth) return auth.response;
+
+  const workspace = await getWorkspaceViewer(auth.result);
+  if ("response" in workspace) return workspace.response;
+
+  const body = await request.json<RecordRetroWorkspaceActionsInput>();
+  const roomKey = body?.roomKey?.trim();
+  if (!roomKey) return jsonError("Retro key is required", 400);
+
+  const repo = auth.result.repo;
+  const session = await repo.getAccessibleTeamSessionByRoomKey(
+    roomKey,
+    workspace.viewer.user.organisationId,
+    auth.result.userId,
+    workspace.viewer.isWorkspaceAdmin,
+  );
+  if (!session) return notFoundResponse("Session not found");
+
+  const teamViewer = await getTeamViewer(auth.result, session.teamId);
+  if ("response" in teamViewer) return teamViewer.response;
+
+  const writeAccessResponse = requireTeamMemberWriteAccess(
+    teamViewer.viewer,
+    "You must be a team member to record retro actions",
+  );
+  if (writeAccessResponse) {
+    return writeAccessResponse;
+  }
+
+  const metadata = parseTeamSessionMetadata(session.metadata);
+  if (metadata?.type !== "retro") {
+    return jsonError("Session is not a retro session", 409);
+  }
+
+  const actionIntents = buildRetroActionIntents(session.id, body.actions ?? []);
   const processLoop = await repo.getProcessLoopForSession(session.id);
   const actionIds = await Promise.all(
     actionIntents.map((intent) =>

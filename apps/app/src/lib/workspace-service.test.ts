@@ -5,7 +5,11 @@ vi.mock("@/constants", () => ({
 }));
 
 import { HttpError } from "@/lib/errors";
-import { createTeamSession, requestMagicLink } from "@/lib/workspace-service";
+import {
+  createTeamSession,
+  recordRetroActionsByRoomKey,
+  requestMagicLink,
+} from "@/lib/workspace-service";
 
 describe("workspace-service", () => {
   afterEach(() => {
@@ -80,6 +84,47 @@ describe("workspace-service", () => {
             templateId: "start-stop-continue",
             templateName: "Start, Stop, Continue",
           },
+        }),
+      }),
+    );
+  });
+
+  it("routes retro workspace actions through the retro worker", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ actionIds: [31] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await recordRetroActionsByRoomKey({
+      roomKey: "2T0W2H",
+      actions: [
+        {
+          id: "action-1",
+          title: "Pair on release checklist",
+          owner: "Ava",
+          completed: false,
+        },
+      ],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost/retros/workspace-actions",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({
+          roomKey: "2T0W2H",
+          actions: [
+            {
+              id: "action-1",
+              title: "Pair on release checklist",
+              owner: "Ava",
+              completed: false,
+            },
+          ],
         }),
       }),
     );

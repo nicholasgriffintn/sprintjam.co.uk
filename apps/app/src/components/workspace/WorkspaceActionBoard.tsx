@@ -70,7 +70,7 @@ export function WorkspaceActionBoard({
           </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Today&apos;s action loop connects planning follow-ups, standup
-            blockers, and wheel outcomes.
+            blockers, retro actions, and wheel outcomes.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

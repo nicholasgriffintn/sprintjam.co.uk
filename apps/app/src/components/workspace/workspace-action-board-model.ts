@@ -33,6 +33,7 @@ export const sourceOptions: Array<{
   { label: "Planning", value: "planning" },
   { label: "Standups", value: "standup" },
   { label: "Wheels", value: "wheel" },
+  { label: "Retros", value: "retro" },
   { label: "Manual", value: "manual" },
 ];
 
@@ -41,9 +42,11 @@ export function formatActionSource(source: WorkspaceActionItem["source"]) {
     ? "Standup"
     : source === "wheel"
       ? "Wheel"
-      : source === "planning"
-        ? "Planning"
-        : "Manual";
+      : source === "retro"
+        ? "Retro"
+        : source === "planning"
+          ? "Planning"
+          : "Manual";
 }
 
 export function formatActionStatus(status: WorkspaceActionStatus) {

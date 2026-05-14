@@ -61,6 +61,10 @@ export async function handleRequest(
     return createWorkspaceSessionController(request, env);
   }
 
+  if (request.method === "POST" && path === "retros/workspace-actions") {
+    return recordWorkspaceActionsController(request, env);
+  }
+
   if (
     request.method === "POST" &&
     path === "retros/workspace-sessions/complete"
@@ -303,6 +307,49 @@ async function createWorkspaceSessionController(
         name: body.name,
         roomKey: retroKey,
         metadata: body.metadata,
+      }),
+    }) as unknown as CfRequest,
+  );
+}
+
+async function recordWorkspaceActionsController(
+  request: CfRequest,
+  env: RetroWorkerEnv,
+): Promise<CfResponse> {
+  if (!env.AUTH_WORKER) {
+    return jsonError("Workspace actions are unavailable", 503);
+  }
+
+  const body = await request.json<
+    Record<string, unknown> & { roomKey?: string }
+  >();
+  const retroKey =
+    typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
+
+  if (!retroKey) {
+    return jsonError("Retro key is required", 400);
+  }
+
+  const validationError = await validateRetroSessionForKey(
+    request,
+    env,
+    retroKey,
+    "moderator",
+  );
+  if (validationError) {
+    return validationError;
+  }
+
+  return env.AUTH_WORKER.fetch(
+    new Request("https://auth-worker/api/internal/sessions/retro-actions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: request.headers.get("Cookie") ?? "",
+      },
+      body: JSON.stringify({
+        ...body,
+        roomKey: retroKey,
       }),
     }) as unknown as CfRequest,
   );

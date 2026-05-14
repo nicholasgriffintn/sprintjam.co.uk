@@ -16,7 +16,10 @@ import {
   toggleRetroAction,
   voteRetroCard,
 } from "@/lib/retro-api-service";
-import { completeSessionByRoomKey } from "@/lib/workspace-service";
+import {
+  completeSessionByRoomKey,
+  recordRetroActionsByRoomKey,
+} from "@/lib/workspace-service";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -155,13 +158,26 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
         return;
       }
       completeRetro();
-      void completeSessionByRoomKey(retro.key, "retro").catch(
-        (completionError) => {
+      void Promise.all([
+        recordRetroActionsByRoomKey({
+          roomKey: retro.key,
+          actions: retro.actionItems.map((action) => ({
+            id: action.id,
+            title: action.title,
+            owner: action.owner,
+            completed: action.completed,
+          })),
+        }).catch((actionsError) => {
+          console.warn("Retro completed without workspace action sync", {
+            actionsError,
+          });
+        }),
+        completeSessionByRoomKey(retro.key, "retro").catch((completionError) => {
           console.warn("Retro completed without workspace completion sync", {
             completionError,
           });
-        },
-      );
+        }),
+      ]);
       return;
     }
 
