@@ -30,6 +30,7 @@ import {
 
 import { RetroRoomRepository } from "../repositories/retro-room";
 import { toClientRetroData } from "../lib/client-retro";
+import { canDeleteRetroCard, canSetRetroPhase } from "../lib/retro-permissions";
 import { jsonError, jsonResponse } from "../lib/response";
 import { validateRetroMessagePayload } from "../lib/retro-validation";
 
@@ -124,6 +125,7 @@ export class RetroRoom {
       templateId: body.templateId ?? body.settings?.templateId,
     });
     const template = getRetroTemplate(settings.templateId);
+    const now = Date.now();
     const sessionToken = generateSessionToken();
     const retro: RetroStateData = {
       key: body.retroKey,
@@ -131,6 +133,7 @@ export class RetroRoom {
       users: [body.moderator],
       connectedUsers: { [body.moderator]: false },
       phase: "input",
+      phaseStartedAt: now,
       status: "active",
       template,
       settings,
@@ -139,7 +142,7 @@ export class RetroRoom {
       readyUsers: [],
       userAvatars: body.avatar ? { [body.moderator]: body.avatar } : undefined,
       teamId: body.teamId,
-      createdAt: Date.now(),
+      createdAt: now,
       passcodeHash: body.passcode
         ? await hashPasscode(body.passcode)
         : undefined,
@@ -412,6 +415,7 @@ export class RetroRoom {
               id: generateID(),
               columnId: message.columnId,
               text: message.text,
+              owner: userName,
               author: current.settings.anonymousCards ? "" : userName,
               createdAt: Date.now(),
               votes: [],
@@ -424,9 +428,11 @@ export class RetroRoom {
           cards: current.cards.filter(
             (card) =>
               card.id !== message.cardId ||
-              (card.author &&
-                card.author !== userName &&
-                current.moderator !== userName),
+              !canDeleteRetroCard({
+                card,
+                moderator: current.moderator,
+                userName,
+              }),
           ),
         }));
       case "voteCard":
@@ -455,6 +461,9 @@ export class RetroRoom {
           }),
         }));
       case "setPhase":
+        if (!canSetRetroPhase(message.phase)) {
+          return undefined;
+        }
         return this.setPhase(message.phase);
       case "setReady":
         return this.repository.updateRetroData((current) => ({
@@ -500,12 +509,16 @@ export class RetroRoom {
         });
       case "completeRetro":
         await this.recordStats(retro);
-        return this.repository.updateRetroData((current) => ({
-          ...current,
-          phase: "completed",
-          status: "completed",
-          completedAt: Date.now(),
-        }));
+        return this.repository.updateRetroData((current) => {
+          const now = Date.now();
+          return {
+            ...current,
+            phase: "completed",
+            phaseStartedAt: now,
+            status: "completed",
+            completedAt: now,
+          };
+        });
       case "ping":
         return undefined;
     }
@@ -517,6 +530,7 @@ export class RetroRoom {
     return this.repository.updateRetroData((current) => ({
       ...current,
       phase,
+      phaseStartedAt: Date.now(),
     }));
   }
 

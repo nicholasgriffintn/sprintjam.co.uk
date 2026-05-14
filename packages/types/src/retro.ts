@@ -31,6 +31,7 @@ export interface RetroCard {
   id: string;
   columnId: string;
   text: string;
+  owner?: string;
   author: string;
   createdAt: number;
   votes: string[];
@@ -54,6 +55,7 @@ export interface RetroData {
   users: string[];
   connectedUsers: Record<string, boolean>;
   phase: RetroPhase;
+  phaseStartedAt: number;
   status: RetroStatus;
   cards: RetroCard[];
   actionItems: RetroActionItem[];
