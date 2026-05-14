@@ -1767,6 +1767,7 @@ describe("teams-controller", () => {
         title: "Pair on release checklist",
         status: "resolved",
         ownerName: "Ava",
+        resolvedById: 1,
       }),
     );
   });

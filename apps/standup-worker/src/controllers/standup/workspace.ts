@@ -72,6 +72,7 @@ export async function createWorkspaceSessionController(
     request,
     env,
     standupKey,
+    "moderator",
   );
   if (validationError) {
     return validationError;
@@ -105,6 +106,7 @@ export async function completeWorkspaceSessionController(
     request,
     env,
     standupKey,
+    "moderator",
   );
   if (validationError) {
     return validationError;
@@ -133,6 +135,7 @@ export async function recordWorkspaceActionsController(
     request,
     env,
     standupKey,
+    "moderator",
   );
   if (validationError) {
     return validationError;

@@ -36,6 +36,7 @@ const buildContext = (
       setUserAvatar: vi.fn(),
       setRecoveryPasskey: vi.fn().mockResolvedValue(undefined),
       validateRecoveryPasskey: vi.fn().mockResolvedValue(false),
+      validateAnySessionToken: vi.fn().mockReturnValue(false),
       findUserNameByWorkspaceId: vi.fn().mockReturnValue(undefined),
       setWorkspaceUserId: vi.fn(),
     },
@@ -88,6 +89,41 @@ describe("wheel http controller", () => {
 
     const body = (await response?.json()) as { wheel: Record<string, unknown> };
     expect(body.wheel).not.toHaveProperty("passcodeHash");
+  });
+
+  it("accepts moderator tokens for moderator-only validation", async () => {
+    const context = buildContext({
+      getWheelData: vi.fn().mockResolvedValue(buildWheelData()),
+    });
+    const validateSessionToken = vi.fn().mockReturnValue(true);
+    context.repository.validateSessionToken = validateSessionToken;
+
+    const response = await handleHttpRequest(
+      context,
+      new Request("https://internal/session/validate-moderator", {
+        method: "POST",
+        headers: { Cookie: "wheel_session=mod-token" },
+      }),
+    );
+
+    expect(response?.status).toBe(200);
+    expect(validateSessionToken).toHaveBeenCalledWith("mod", "mod-token");
+  });
+
+  it("rejects participant tokens for moderator-only validation", async () => {
+    const context = buildContext({
+      getWheelData: vi.fn().mockResolvedValue(buildWheelData()),
+    });
+
+    const response = await handleHttpRequest(
+      context,
+      new Request("https://internal/session/validate-moderator", {
+        method: "POST",
+        headers: { Cookie: "wheel_session=participant-token" },
+      }),
+    );
+
+    expect(response?.status).toBe(403);
   });
 
   it("normalizes settings during initialization", async () => {

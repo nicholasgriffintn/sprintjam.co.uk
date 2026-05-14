@@ -16,6 +16,7 @@ export async function validateWheelSessionForKey(
   request: CfRequest,
   env: WheelWorkerEnv,
   wheelKey: string,
+  mode: "any" | "moderator" = "any",
 ): Promise<CfResponse | null> {
   const sessionToken = getWheelSessionToken(request);
   if (!sessionToken) {
@@ -23,7 +24,7 @@ export async function validateWheelSessionForKey(
   }
 
   const response = await getWheelStub(env, wheelKey).fetch(
-    new Request("https://internal/session/validate-any", {
+    new Request(`https://internal/session/validate-${mode}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -45,6 +45,10 @@ export async function handleHttpRequest(
     return handleValidateAnySession(context, request);
   }
 
+  if (path === "/session/validate-moderator" && request.method === "POST") {
+    return handleValidateModeratorSession(context, request);
+  }
+
   return null;
 }
 
@@ -117,6 +121,32 @@ async function handleValidateAnySession(
 
   if (!context.repository.validateAnySessionToken(sessionToken)) {
     return jsonError("Invalid session", 401);
+  }
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+async function handleValidateModeratorSession(
+  context: StandupRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const sessionToken = getStandupSessionToken(request);
+  if (!sessionToken) {
+    return jsonError("Standup session is required", 401);
+  }
+
+  const standupData = await context.getStandupData();
+  if (!standupData) {
+    return jsonError("Standup not found", 404);
+  }
+
+  if (
+    !context.repository.validateSessionToken(standupData.moderator, sessionToken)
+  ) {
+    return jsonError("Moderator session is required", 403);
   }
 
   return new Response(JSON.stringify({ success: true }), {

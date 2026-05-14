@@ -59,6 +59,10 @@ export async function handleHttpRequest(
     return handleValidateAnySession(context, request);
   }
 
+  if (path === "/session/validate-moderator" && request.method === "POST") {
+    return handleValidateModeratorSession(context, request);
+  }
+
   if (path === "/settings" && request.method === "GET") {
     return handleGetSettings(context, request);
   }
@@ -118,6 +122,29 @@ async function handleValidateAnySession(
 
   if (!context.repository.validateAnySessionToken(sessionToken)) {
     return jsonError("Invalid session", 401);
+  }
+
+  return jsonResponse({ success: true });
+}
+
+async function handleValidateModeratorSession(
+  context: WheelRoomHttpContext,
+  request: Request,
+): Promise<Response> {
+  const sessionToken = getWheelSessionToken(request);
+  if (!sessionToken) {
+    return jsonError("Wheel session is required", 401);
+  }
+
+  const wheelData = await context.getWheelData();
+  if (!wheelData) {
+    return jsonError("Wheel not found", 404);
+  }
+
+  if (
+    !context.repository.validateSessionToken(wheelData.moderator, sessionToken)
+  ) {
+    return jsonError("Moderator session is required", 403);
   }
 
   return jsonResponse({ success: true });

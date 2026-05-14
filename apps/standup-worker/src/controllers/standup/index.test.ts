@@ -30,6 +30,7 @@ const buildContext = (
       setUserAvatar: vi.fn(),
       getPasscode: vi.fn().mockReturnValue(null),
       validateSessionToken: vi.fn().mockReturnValue(false),
+      validateAnySessionToken: vi.fn().mockReturnValue(false),
       findUserNameByWorkspaceId: vi.fn().mockReturnValue(undefined),
       setWorkspaceUserId: vi.fn(),
     },
@@ -575,5 +576,42 @@ describe("standup http controller", () => {
     );
 
     expect(response).toBeNull();
+  });
+
+  describe("session validation", () => {
+    it("accepts moderator tokens for moderator-only validation", async () => {
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(buildStandupData()),
+      });
+      const validateSessionToken = vi.fn().mockReturnValue(true);
+      context.repository.validateSessionToken = validateSessionToken;
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/session/validate-moderator", {
+          method: "POST",
+          headers: { Cookie: "standup_session=mod-token" },
+        }),
+      );
+
+      expect(response?.status).toBe(200);
+      expect(validateSessionToken).toHaveBeenCalledWith("mod", "mod-token");
+    });
+
+    it("rejects participant tokens for moderator-only validation", async () => {
+      const context = buildContext({
+        getStandupData: vi.fn().mockResolvedValue(buildStandupData()),
+      });
+
+      const response = await handleHttpRequest(
+        context,
+        new Request("https://internal/session/validate-moderator", {
+          method: "POST",
+          headers: { Cookie: "standup_session=participant-token" },
+        }),
+      );
+
+      expect(response?.status).toBe(403);
+    });
   });
 });

@@ -10,13 +10,14 @@ import {
   validateRequestBodySize,
 } from "@sprintjam/utils";
 
+import {
+  completeWorkspaceSessionController,
+  createWorkspaceSessionController,
+  recordWorkspaceActionsController,
+} from "../controllers/retro/workspace";
 import { createRateLimit, joinRateLimit } from "../lib/rate-limit";
+import { getRetroStub } from "../lib/retro-room-stub";
 import { jsonError, notFoundResponse, rootResponse } from "../lib/response";
-
-function getRetroStub(env: RetroWorkerEnv, retroKey: string) {
-  const id = env.RETRO_ROOM.idFromName(retroKey);
-  return env.RETRO_ROOM.get(id);
-}
 
 function generateRetroKey(): string {
   const array = new Uint8Array(4);
@@ -237,158 +238,6 @@ async function getRetroSettingsController(
       headers: {
         ...(sessionToken ? { Cookie: `retro_session=${sessionToken}` } : {}),
       },
-    }) as unknown as CfRequest,
-  );
-}
-
-async function validateRetroSessionForKey(
-  request: CfRequest,
-  env: RetroWorkerEnv,
-  retroKey: string,
-  mode: "any" | "moderator" = "any",
-): Promise<CfResponse | null> {
-  const sessionToken = getRetroSessionToken(request);
-  if (!sessionToken) {
-    return jsonError("Retro session is required", 401);
-  }
-
-  const response = await getRetroStub(env, retroKey).fetch(
-    new Request(`https://internal/session/validate-${mode}`, {
-      method: "POST",
-      headers: {
-        Cookie: `retro_session=${sessionToken}`,
-      },
-    }) as unknown as CfRequest,
-  );
-
-  return response.ok ? null : (response as CfResponse);
-}
-
-async function createWorkspaceSessionController(
-  request: CfRequest,
-  env: RetroWorkerEnv,
-): Promise<CfResponse> {
-  if (!env.AUTH_WORKER) {
-    return jsonError("Workspace history is unavailable", 503);
-  }
-
-  const body = await request.json<{
-    teamSlug?: string;
-    name?: string;
-    roomKey?: string;
-    metadata?: Record<string, unknown>;
-  }>();
-  const teamSlug = typeof body.teamSlug === "string" ? body.teamSlug : "";
-  const retroKey =
-    typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
-
-  if (!teamSlug || !retroKey) {
-    return jsonError("Team slug and retro key are required", 400);
-  }
-
-  const validationError = await validateRetroSessionForKey(
-    request,
-    env,
-    retroKey,
-    "moderator",
-  );
-  if (validationError) {
-    return validationError;
-  }
-
-  return env.AUTH_WORKER.fetch(
-    new Request(`https://auth-worker/api/internal/teams/${teamSlug}/sessions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: request.headers.get("Cookie") ?? "",
-      },
-      body: JSON.stringify({
-        name: body.name,
-        roomKey: retroKey,
-        metadata: body.metadata,
-      }),
-    }) as unknown as CfRequest,
-  );
-}
-
-async function recordWorkspaceActionsController(
-  request: CfRequest,
-  env: RetroWorkerEnv,
-): Promise<CfResponse> {
-  if (!env.AUTH_WORKER) {
-    return jsonError("Workspace actions are unavailable", 503);
-  }
-
-  const body = await request.json<
-    Record<string, unknown> & { roomKey?: string }
-  >();
-  const retroKey =
-    typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
-
-  if (!retroKey) {
-    return jsonError("Retro key is required", 400);
-  }
-
-  const validationError = await validateRetroSessionForKey(
-    request,
-    env,
-    retroKey,
-    "moderator",
-  );
-  if (validationError) {
-    return validationError;
-  }
-
-  return env.AUTH_WORKER.fetch(
-    new Request("https://auth-worker/api/internal/sessions/retro-actions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: request.headers.get("Cookie") ?? "",
-      },
-      body: JSON.stringify({
-        ...body,
-        roomKey: retroKey,
-      }),
-    }) as unknown as CfRequest,
-  );
-}
-
-async function completeWorkspaceSessionController(
-  request: CfRequest,
-  env: RetroWorkerEnv,
-): Promise<CfResponse> {
-  if (!env.AUTH_WORKER) {
-    return jsonError("Workspace history is unavailable", 503);
-  }
-
-  const body = await request.json<{ roomKey?: string }>();
-  const retroKey =
-    typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
-
-  if (!retroKey) {
-    return jsonError("Retro key is required", 400);
-  }
-
-  const validationError = await validateRetroSessionForKey(
-    request,
-    env,
-    retroKey,
-    "moderator",
-  );
-  if (validationError) {
-    return validationError;
-  }
-
-  return env.AUTH_WORKER.fetch(
-    new Request("https://auth-worker/api/internal/sessions/complete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: request.headers.get("Cookie") ?? "",
-      },
-      body: JSON.stringify({ roomKey: retroKey }),
     }) as unknown as CfRequest,
   );
 }

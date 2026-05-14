@@ -16,6 +16,7 @@ export async function validateStandupSessionForKey(
   request: CfRequest,
   env: StandupWorkerEnv,
   standupKey: string,
+  mode: "any" | "moderator" = "any",
 ): Promise<CfResponse | null> {
   const sessionToken = getStandupSessionToken(request);
   if (!sessionToken) {
@@ -23,7 +24,7 @@ export async function validateStandupSessionForKey(
   }
 
   const response = await getStandupStub(env, standupKey).fetch(
-    new Request("https://internal/session/validate-any", {
+    new Request(`https://internal/session/validate-${mode}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

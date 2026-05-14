@@ -557,6 +557,7 @@ export class WorkspaceAuthRepository {
       source: NonNullable<CreateWorkspaceActionInput["source"]>;
       sourceRef: string;
       createdById: number;
+      resolvedById?: number | null;
     },
   ): Promise<number> {
     return this.actions.upsertAction(params);

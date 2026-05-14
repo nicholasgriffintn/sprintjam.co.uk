@@ -892,6 +892,8 @@ export async function recordRetroActionsByRoomKeyController(
         processLoopId: processLoop?.id ?? null,
         sourceSessionId: session.id,
         createdById: auth.result.userId,
+        resolvedById:
+          intent.status === "resolved" ? auth.result.userId : null,
         ...intent,
       }),
     ),

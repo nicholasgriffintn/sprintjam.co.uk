@@ -2,19 +2,20 @@ import type {
   Request as CfRequest,
   Response as CfResponse,
 } from "@cloudflare/workers-types";
-import type { WheelWorkerEnv } from "@sprintjam/types";
+import type { RetroWorkerEnv } from "@sprintjam/types";
 
 import { jsonError } from "../../lib/response";
-import { validateWheelSessionForKey } from "./session-validation";
+import { validateRetroSessionForKey } from "./session-validation";
 
 async function forwardAuthWorkspaceWrite(
   request: CfRequest,
-  env: WheelWorkerEnv,
+  env: RetroWorkerEnv,
   path: string,
   body: Record<string, unknown>,
+  unavailableMessage: string,
 ): Promise<CfResponse> {
   if (!env.AUTH_WORKER) {
-    return jsonError("Workspace history is unavailable", 503);
+    return jsonError(unavailableMessage, 503);
   }
 
   return env.AUTH_WORKER.fetch(
@@ -29,26 +30,9 @@ async function forwardAuthWorkspaceWrite(
   );
 }
 
-async function forwardStatsWrite(
-  env: WheelWorkerEnv,
-  body: Record<string, unknown>,
-): Promise<CfResponse> {
-  if (!env.STATS_WORKER) {
-    return jsonError("Stats collection is unavailable", 503);
-  }
-
-  return env.STATS_WORKER.fetch(
-    new Request("https://stats-worker/api/internal/stats/wheel-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }) as unknown as CfRequest,
-  );
-}
-
 export async function createWorkspaceSessionController(
   request: CfRequest,
-  env: WheelWorkerEnv,
+  env: RetroWorkerEnv,
 ): Promise<CfResponse> {
   const body = await request.json<{
     teamSlug?: string;
@@ -57,21 +41,17 @@ export async function createWorkspaceSessionController(
     metadata?: Record<string, unknown>;
   }>();
   const teamSlug = typeof body.teamSlug === "string" ? body.teamSlug : "";
-  const wheelKey =
+  const retroKey =
     typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
 
-  if (!teamSlug) {
-    return jsonError("Team slug is required", 400);
+  if (!teamSlug || !retroKey) {
+    return jsonError("Team slug and retro key are required", 400);
   }
 
-  if (!wheelKey) {
-    return jsonError("Wheel key is required", 400);
-  }
-
-  const validationError = await validateWheelSessionForKey(
+  const validationError = await validateRetroSessionForKey(
     request,
     env,
-    wheelKey,
+    retroKey,
     "moderator",
   );
   if (validationError) {
@@ -84,30 +64,31 @@ export async function createWorkspaceSessionController(
     `internal/teams/${teamSlug}/sessions`,
     {
       name: body.name,
-      roomKey: wheelKey,
+      roomKey: retroKey,
       metadata: body.metadata,
     },
+    "Workspace history is unavailable",
   );
 }
 
-export async function recordWorkspaceOutcomeController(
+export async function recordWorkspaceActionsController(
   request: CfRequest,
-  env: WheelWorkerEnv,
+  env: RetroWorkerEnv,
 ): Promise<CfResponse> {
   const body = await request.json<
     Record<string, unknown> & { roomKey?: string }
   >();
-  const wheelKey =
+  const retroKey =
     typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
 
-  if (!wheelKey) {
-    return jsonError("Wheel key is required", 400);
+  if (!retroKey) {
+    return jsonError("Retro key is required", 400);
   }
 
-  const validationError = await validateWheelSessionForKey(
+  const validationError = await validateRetroSessionForKey(
     request,
     env,
-    wheelKey,
+    retroKey,
     "moderator",
   );
   if (validationError) {
@@ -117,39 +98,42 @@ export async function recordWorkspaceOutcomeController(
   return forwardAuthWorkspaceWrite(
     request,
     env,
-    "internal/sessions/wheel-outcomes",
+    "internal/sessions/retro-actions",
     {
       ...body,
-      roomKey: wheelKey,
+      roomKey: retroKey,
     },
+    "Workspace actions are unavailable",
   );
 }
 
-export async function recordSessionStatsController(
+export async function completeWorkspaceSessionController(
   request: CfRequest,
-  env: WheelWorkerEnv,
+  env: RetroWorkerEnv,
 ): Promise<CfResponse> {
-  const body = await request.json<
-    Record<string, unknown> & { roomKey?: string }
-  >();
-  const wheelKey =
+  const body = await request.json<{ roomKey?: string }>();
+  const retroKey =
     typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
 
-  if (!wheelKey) {
-    return jsonError("Wheel key is required", 400);
+  if (!retroKey) {
+    return jsonError("Retro key is required", 400);
   }
 
-  const validationError = await validateWheelSessionForKey(
+  const validationError = await validateRetroSessionForKey(
     request,
     env,
-    wheelKey,
+    retroKey,
+    "moderator",
   );
   if (validationError) {
     return validationError;
   }
 
-  return forwardStatsWrite(env, {
-    ...body,
-    roomKey: wheelKey,
-  });
+  return forwardAuthWorkspaceWrite(
+    request,
+    env,
+    "internal/sessions/complete",
+    { roomKey: retroKey },
+    "Workspace history is unavailable",
+  );
 }
