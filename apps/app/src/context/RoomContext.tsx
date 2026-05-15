@@ -152,11 +152,17 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
             message: "Please choose a different name to join the room.",
           });
 
+          if (routeRoomKey) {
+            setRoomKey(routeRoomKey);
+          }
           startJoinFlow();
           return;
         }
 
         if (isAuthError) {
+          if (routeRoomKey) {
+            setRoomKey(routeRoomKey);
+          }
           startJoinFlow();
           setError(message, "auth");
           return;
@@ -168,13 +174,23 @@ export const RoomProvider = ({ children }: { children: ReactNode }) => {
           message,
         });
       },
-      [setError, goHome, startJoinFlow, setConnectionIssue],
+      [
+        setError,
+        goHome,
+        routeRoomKey,
+        setRoomKey,
+        startJoinFlow,
+        setConnectionIssue,
+      ],
     ),
     onLoadingChange: setIsLoading,
     onReconnectComplete: useCallback(() => setAutoReconnectDone(true), []),
     onNeedsJoin: useCallback(() => {
+      if (routeRoomKey) {
+        setRoomKey(routeRoomKey);
+      }
       startJoinFlow();
-    }, [startJoinFlow]),
+    }, [routeRoomKey, setRoomKey, startJoinFlow]),
   });
 
   useRoomConnection({
