@@ -12,9 +12,9 @@ test.describe("Data persistence", () => {
     try {
       await moderatorRoom.castVote("5");
       await participantRoom.castVote("3");
+      await moderatorRoom.expectVotingProgress(2, 2);
       await moderatorRoom.revealVotes();
 
-      // TODO: Fix this, is not expecting a modal, says 1 out of 2 votes not completed.
       await moderatorRoom.getPage().getByTestId("queue-expand").click();
       await moderatorRoom.getPage().getByTestId("queue-toggle-add").click();
       await moderatorRoom

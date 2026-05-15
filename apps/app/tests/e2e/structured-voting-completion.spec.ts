@@ -139,6 +139,7 @@ test.describe("Structured voting completion warnings", () => {
       await participantPanel.selectScore("volume", 1);
       await participantPanel.selectScore("unknowns", 0);
       await participantPanel.expectStoryPoints(3);
+      await moderatorRoom.expectVotingProgress(2, 2);
 
       // Reveal votes should work without warning
       await moderatorRoom.revealVotes();

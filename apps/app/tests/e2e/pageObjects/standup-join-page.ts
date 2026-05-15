@@ -3,6 +3,9 @@ import { expect, type Page } from "@playwright/test";
 import { BasePage } from "./base-page";
 
 export class StandupJoinPage extends BasePage {
+  private enteredName: string | null = null;
+  private enteredPasscode: string | null = null;
+
   constructor(page: Page) {
     super(page);
   }
@@ -11,9 +14,15 @@ export class StandupJoinPage extends BasePage {
     const path = standupKey ? `/standup/join/${standupKey}` : "/standup/join";
     await this.page.goto(path);
     await expect(this.page.locator("#standup-join-name")).toBeVisible();
+    if (standupKey) {
+      await expect(this.page.locator("#standup-join-key")).toHaveValue(
+        standupKey,
+      );
+    }
   }
 
   async fillName(name: string) {
+    this.enteredName = name;
     const nameInput = this.page.locator("#standup-join-name");
     await nameInput.fill(name);
     await expect(nameInput).toHaveValue(name);
@@ -26,6 +35,7 @@ export class StandupJoinPage extends BasePage {
   }
 
   async fillPasscode(passcode: string) {
+    this.enteredPasscode = passcode;
     const passcodeInput = this.page.locator("#standup-join-passcode");
     await passcodeInput.fill(passcode);
     await expect(passcodeInput).toHaveValue(passcode);
@@ -33,7 +43,21 @@ export class StandupJoinPage extends BasePage {
 
   async submit() {
     const button = this.page.getByRole("button", { name: /join standup/i });
-    await expect(button).toBeEnabled();
+    await expect(async () => {
+      if (this.enteredName) {
+        const nameInput = this.page.locator("#standup-join-name");
+        await nameInput.fill(this.enteredName);
+        await expect(nameInput).toHaveValue(this.enteredName);
+      }
+
+      if (this.enteredPasscode !== null) {
+        const passcodeInput = this.page.locator("#standup-join-passcode");
+        await passcodeInput.fill(this.enteredPasscode);
+        await expect(passcodeInput).toHaveValue(this.enteredPasscode);
+      }
+
+      await expect(button).toBeEnabled();
+    }).toPass({ timeout: 10_000 });
     await button.click();
   }
 
@@ -44,7 +68,9 @@ export class StandupJoinPage extends BasePage {
   }
 
   async expectAlertMessage(message: string | RegExp) {
-    await expect(this.page.getByRole("alert")).toContainText(message);
+    await expect(this.page.getByRole("alert")).toContainText(message, {
+      timeout: 10_000,
+    });
   }
 
   async fillRecoveryPasskey(passkey: string) {

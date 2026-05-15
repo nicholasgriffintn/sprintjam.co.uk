@@ -57,6 +57,7 @@ test.describe("Room settings", () => {
 
       await moderatorRoom.castVote("8");
       await participantRoom.castVote("5");
+      await participantRoom.expectVotingProgress(2, 2);
       await participantRoom.revealVotes();
 
       await moderatorRoom.expectVoteVisible(participantName, "5");
@@ -75,6 +76,7 @@ test.describe("Room settings", () => {
     try {
       await moderatorRoom.castVote("5");
       await participantRoom.castVote("3");
+      await moderatorRoom.expectVotingProgress(2, 2);
       await moderatorRoom.revealVotes();
 
       await moderatorRoom.expectVoteButtonDisabled("8");

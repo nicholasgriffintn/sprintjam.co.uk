@@ -91,6 +91,9 @@ export function StandupResponseForm({
   const [draft, setDraft] = useState<DraftState>(() => getDraftState(response));
   const [isEditing, setIsEditing] = useState(() => !response);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedResponseVersion, setSubmittedResponseVersion] = useState<
+    number | null
+  >(null);
   const icebreakerQuestion = useMemo(
     () => response?.icebreakerQuestion ?? getIcebreakerQuestion(),
     [response?.icebreakerQuestion],
@@ -107,6 +110,33 @@ export function StandupResponseForm({
       setDraft(getDraftState(response));
     }
   }, [isEditing, response]);
+
+  useEffect(() => {
+    if (
+      !isSubmitting ||
+      !response ||
+      response.updatedAt === submittedResponseVersion
+    ) {
+      return;
+    }
+
+    setIsSubmitting(false);
+    setIsEditing(false);
+    setSubmittedResponseVersion(null);
+  }, [isSubmitting, response, submittedResponseVersion]);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      return;
+    }
+
+    const timeout = globalThis.setTimeout(() => {
+      setIsSubmitting(false);
+      setSubmittedResponseVersion(null);
+    }, 5_000);
+
+    return () => globalThis.clearTimeout(timeout);
+  }, [isSubmitting]);
 
   const isCompleted = status === "completed";
   const isLocked = status === "locked" && !isModeratorView;
@@ -132,6 +162,7 @@ export function StandupResponseForm({
     }
 
     setIsSubmitting(true);
+    setSubmittedResponseVersion(response?.updatedAt ?? null);
     onSubmit({
       isInPerson: draft.isInPerson,
       yesterday: draft.isInPerson ? undefined : draft.yesterday.trim(),
@@ -148,9 +179,6 @@ export function StandupResponseForm({
         ? icebreakerQuestion
         : undefined,
     });
-
-    setTimeout(() => setIsSubmitting(false), 1000);
-    setIsEditing(false);
   };
 
   return (

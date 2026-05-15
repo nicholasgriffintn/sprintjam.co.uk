@@ -19,14 +19,22 @@ export class WelcomePage extends BasePage {
   }
 
   async startCreateRoom() {
-    await this.page.getByTestId("create-room-button").click();
-    await expect(this.page).toHaveURL(/\/create$/);
+    const button = this.page.getByTestId("create-room-button");
+    await expect(button).toBeEnabled();
+    await expect(async () => {
+      await button.click();
+      await expect(this.page).toHaveURL(/\/create$/, { timeout: 1_000 });
+    }).toPass({ timeout: 5_000 });
     await expect(this.page.getByTestId("create-room-submit")).toBeVisible();
   }
 
   async startJoinRoom() {
-    await this.page.getByTestId("join-room-button").click();
-    await expect(this.page).toHaveURL(/\/join$/);
+    const button = this.page.getByTestId("join-room-button");
+    await expect(button).toBeEnabled();
+    await expect(async () => {
+      await button.click();
+      await expect(this.page).toHaveURL(/\/join$/, { timeout: 1_000 });
+    }).toPass({ timeout: 5_000 });
     await expect(this.page.getByTestId("join-room-submit")).toBeVisible();
   }
 

@@ -23,6 +23,7 @@ export function StandupJoinScreen({
     handleRecover,
     handleSubmit,
     isConflict,
+    isFormValid,
     isRecovering,
     isSubmitting,
     nameValidation,
@@ -174,6 +175,7 @@ export function StandupJoinScreen({
               </Button>
               <Button
                 type="submit"
+                disabled={!isFormValid}
                 isLoading={isSubmitting}
                 fullWidth
                 icon={<LogIn className="h-4 w-4" />}

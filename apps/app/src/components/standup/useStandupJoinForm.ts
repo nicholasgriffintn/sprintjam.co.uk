@@ -173,6 +173,7 @@ export function useStandupJoinForm({
     handleRecover,
     handleSubmit,
     isConflict,
+    isFormValid,
     isRecovering,
     isSubmitting,
     nameValidation,

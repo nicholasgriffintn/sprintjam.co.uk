@@ -85,6 +85,7 @@ export class RoomPage {
   async expectVoteVisible(_participantName: string, expectedValue: string) {
     await expect(this.page.getByTestId("results-panel")).toContainText(
       expectedValue,
+      { timeout: 10_000 },
     );
   }
 

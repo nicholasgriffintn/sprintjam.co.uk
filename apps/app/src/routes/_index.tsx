@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router";
 import {
   Users,
   Plus,
@@ -27,6 +28,7 @@ import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { SITE_NAME } from "@/constants";
 import { createMeta } from "@/utils/route-meta";
+import { cn } from "@/lib/cn";
 
 export const meta = createMeta("welcome");
 
@@ -90,7 +92,7 @@ const WelcomeRoute = () => {
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const { startCreateFlow, startJoinFlow } = useSessionActions();
+  const { startCreateFlow } = useSessionActions();
   const navigateTo = useAppNavigation();
 
   const handleNavigate = (screen: AppScreen) => {
@@ -129,25 +131,30 @@ const WelcomeRoute = () => {
         </div>
 
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
-          <Button
+          <Link
+            to="/create"
             data-testid="create-room-button"
-            onClick={() => startCreateFlow()}
-            icon={<Plus className="h-4 w-4" />}
-            size="lg"
-            className="w-full sm:w-auto"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 font-semibold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+              "rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-6 py-4 text-base text-white shadow-floating hover:from-brand-600 hover:to-indigo-600 focus-visible:ring-brand-300",
+              "w-full sm:w-auto",
+            )}
           >
+            <Plus className="h-4 w-4 shrink-0" />
             Create a room
-          </Button>
-          <Button
-            variant="secondary"
+          </Link>
+          <Link
+            to="/join"
             data-testid="join-room-button"
-            onClick={startJoinFlow}
-            icon={<Users className="h-4 w-4" />}
-            size="lg"
-            className="w-full sm:w-auto"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 font-semibold tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+              "rounded-2xl border border-slate-200/60 bg-white/90 px-6 py-4 text-base text-brand-700 hover:bg-white focus-visible:ring-slate-200 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:hover:bg-slate-900",
+              "w-full sm:w-auto",
+            )}
           >
+            <Users className="h-4 w-4 shrink-0" />
             Join a session
-          </Button>
+          </Link>
         </div>
 
         <motion.div

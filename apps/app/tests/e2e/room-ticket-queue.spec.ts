@@ -179,6 +179,7 @@ test.describe("Ticket Queue", () => {
 
       await moderatorRoom.castVote("5");
       await participantRoom.castVote("3");
+      await moderatorRoom.expectVotingProgress(2, 2);
       await moderatorRoom.revealVotes();
 
       await page.getByTestId("next-ticket-button").click();

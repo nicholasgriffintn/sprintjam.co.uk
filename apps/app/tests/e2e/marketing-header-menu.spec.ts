@@ -186,10 +186,10 @@ test.describe("Marketing Header Menu", () => {
 
     // Check action buttons section
     await expect(
-      page.getByRole("button", { name: "Create a room" }),
+      page.getByRole("link", { name: "Create a room" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Join a session" }),
+      page.getByRole("link", { name: "Join a session" }),
     ).toBeVisible();
   });
 });
