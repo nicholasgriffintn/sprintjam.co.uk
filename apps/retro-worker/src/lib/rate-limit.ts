@@ -1,9 +1,20 @@
 import type { RetroWorkerEnv } from "@sprintjam/types";
 import { jsonError } from "@sprintjam/utils";
 
+interface RateLimitBinding {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
+export interface RetroRateLimitEnv {
+  ENABLE_RETRO_RATE_LIMIT?: RetroWorkerEnv["ENABLE_RETRO_RATE_LIMIT"];
+  RETRO_CREATE_RATE_LIMITER?: RateLimitBinding;
+  RETRO_JOIN_RATE_LIMITER?: RateLimitBinding;
+  RETRO_IP_RATE_LIMITER?: RateLimitBinding;
+}
+
 export async function createRateLimit(
   request: Request,
-  env: RetroWorkerEnv,
+  env: RetroRateLimitEnv,
 ): Promise<Response | null> {
   if (env.ENABLE_RETRO_RATE_LIMIT !== "true") {
     return null;
@@ -35,7 +46,7 @@ export async function createRateLimit(
 
 export async function joinRateLimit(
   request: Request,
-  env: RetroWorkerEnv,
+  env: RetroRateLimitEnv,
 ): Promise<Response | null> {
   if (env.ENABLE_RETRO_RATE_LIMIT !== "true") {
     return null;

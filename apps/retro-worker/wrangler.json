@@ -103,6 +103,32 @@
         "ENVIRONMENT": "staging",
         "ENABLE_RETRO_RATE_LIMIT": "true"
       },
+      "ratelimits": [
+        {
+          "name": "RETRO_CREATE_RATE_LIMITER",
+          "namespace_id": "4001",
+          "simple": {
+            "limit": 5,
+            "period": 60
+          }
+        },
+        {
+          "name": "RETRO_JOIN_RATE_LIMITER",
+          "namespace_id": "4002",
+          "simple": {
+            "limit": 10,
+            "period": 60
+          }
+        },
+        {
+          "name": "RETRO_IP_RATE_LIMITER",
+          "namespace_id": "4003",
+          "simple": {
+            "limit": 30,
+            "period": 60
+          }
+        }
+      ],
       "services": [
         {
           "binding": "AUTH_WORKER",
