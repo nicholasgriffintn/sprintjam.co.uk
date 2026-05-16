@@ -99,6 +99,35 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
       if (message.type === "retroUpdated") {
         setRetro(message.retro);
       }
+      if (message.type === "userJoined") {
+        setRetro((current) =>
+          current
+            ? {
+                ...current,
+                users: message.users,
+                connectedUsers: {
+                  ...current.connectedUsers,
+                  [message.user]: true,
+                },
+                userAvatars: message.userAvatars ?? current.userAvatars,
+              }
+            : current,
+        );
+      }
+      if (message.type === "userLeft") {
+        setRetro((current) =>
+          current
+            ? {
+                ...current,
+                users: message.users,
+                connectedUsers: {
+                  ...current.connectedUsers,
+                  [message.user]: false,
+                },
+              }
+            : current,
+        );
+      }
       if (message.type === "error") {
         setError(message.error);
       }
@@ -187,7 +216,10 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[radial-gradient(circle_at_1px_1px,rgba(100,116,139,0.26)_1px,transparent_0)] [background-size:28px_28px] px-4 py-6 sm:px-6">
+    <div
+      data-testid="retro-room"
+      className="min-h-[calc(100vh-5rem)] bg-[radial-gradient(circle_at_1px_1px,rgba(100,116,139,0.26)_1px,transparent_0)] [background-size:28px_28px] px-4 py-6 sm:px-6"
+    >
       <div className="mx-auto flex w-full max-w-[108rem] flex-col gap-5">
         <section className="flex flex-col gap-3 rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-950/70 md:flex-row md:items-center md:justify-between">
           <div>
@@ -249,6 +281,7 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
                 return (
                   <div
                     key={column.id}
+                    data-testid="retro-column"
                     className={cn(
                       "flex min-h-[620px] flex-col rounded-2xl border border-dashed p-4",
                       columnToneClasses[column.tone],
@@ -268,6 +301,7 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
                       {cards.map((card) => (
                         <article
                           key={card.id}
+                          data-testid="retro-card"
                           className="rounded-xl border border-white/70 bg-white/90 p-3 text-slate-800 shadow-sm dark:border-white/10 dark:bg-slate-950/80 dark:text-slate-100"
                         >
                           <p className="text-sm">{card.text}</p>
@@ -276,6 +310,8 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
                             <div className="flex gap-2">
                               <button
                                 type="button"
+                                data-testid="retro-card-vote"
+                                aria-label={`Vote for ${card.text}`}
                                 onClick={() => voteRetroCard(card.id)}
                                 className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 font-semibold dark:bg-white/10"
                               >
@@ -329,14 +365,21 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
           </div>
 
           <aside className="space-y-4">
-            <div className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-slate-950/70">
+            <div
+              data-testid="participants-panel"
+              className="rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-slate-950/70"
+            >
               <h2 className="font-bold text-slate-950 dark:text-white">
                 Participants
               </h2>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div
+                data-testid="participants-list"
+                className="mt-3 flex flex-wrap gap-2"
+              >
                 {retro.users.map((user) => (
                   <span
                     key={user}
+                    data-testid="participant-row"
                     className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 dark:bg-white/10 dark:text-slate-200"
                   >
                     {user}
@@ -368,7 +411,13 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
                     >
                       <button
                         type="button"
+                        data-testid="retro-action-toggle"
                         aria-pressed={action.completed}
+                        aria-label={
+                          action.completed
+                            ? `Mark ${action.title} incomplete`
+                            : `Mark ${action.title} complete`
+                        }
                         onClick={() =>
                           toggleRetroAction(action.id, !action.completed)
                         }

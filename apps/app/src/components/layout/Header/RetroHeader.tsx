@@ -59,7 +59,10 @@ export const RetroHeader: FC = () => {
         {retroKey ? (
           <div className="flex min-w-0 items-center gap-2">
             <div className="flex items-center gap-2 rounded-2xl border border-black/5 bg-black/5 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white">
-              <span className="font-mono text-xs tracking-[0.3em] sm:text-sm">
+              <span
+                data-testid="retro-room-key"
+                className="font-mono text-xs tracking-[0.3em] sm:text-sm"
+              >
                 {retroKey}
               </span>
               {phase ? (
