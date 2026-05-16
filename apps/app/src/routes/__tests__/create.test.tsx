@@ -23,6 +23,9 @@ const workspaceDataMock = {
     avatar: string;
   } | null,
 };
+const roomStatusMock = {
+  isLoading: false,
+};
 const mockServerDefaults = {
   roomSettings: {
     enableStructuredVoting: false,
@@ -69,7 +72,7 @@ vi.mock("@/context/RoomContext", () => ({
     serverDefaults: mockServerDefaults,
   }),
   useRoomStatus: () => ({
-    isLoading: false,
+    isLoading: roomStatusMock.isLoading,
   }),
 }));
 
@@ -93,6 +96,7 @@ describe("CreateRoomRoute", () => {
     workspaceDataMock.teams = [];
     workspaceDataMock.isAuthenticated = false;
     workspaceDataMock.user = null;
+    roomStatusMock.isLoading = false;
     mockNavigateTo.mockReset();
   });
 
@@ -125,5 +129,15 @@ describe("CreateRoomRoute", () => {
     expect(mockHandleCreateRoom).toHaveBeenCalled();
     expect(mockSetPendingCreateSettings).not.toHaveBeenCalled();
     expect(mockSetJoinFlowMode).not.toHaveBeenCalled();
+  });
+
+  it("shows loading feedback while creating a room", () => {
+    roomStatusMock.isLoading = true;
+
+    render(<CreateRoomRoute />);
+
+    expect(
+      screen.getByTestId("create-room-submit").querySelector(".animate-spin"),
+    ).toBeTruthy();
   });
 });

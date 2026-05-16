@@ -117,13 +117,12 @@ export function RetroCreateScreen() {
       persistUserName(normalizedName);
       navigateTo("retroRoom", { retroKey: response.retro.key });
     } catch (submitError) {
+      setIsSubmitting(false);
       setError(
         submitError instanceof Error
           ? submitError.message
           : "Unable to create this retro.",
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -154,6 +153,7 @@ export function RetroCreateScreen() {
         <SurfaceCard>
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
+              id="retro-create-name"
               label="Your name"
               value={userName}
               onChange={(event) => setUserName(event.target.value)}
@@ -161,6 +161,7 @@ export function RetroCreateScreen() {
               fullWidth
             />
             <Input
+              id="retro-create-passcode"
               label={
                 <span className="flex items-center gap-2">
                   Passcode

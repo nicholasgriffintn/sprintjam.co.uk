@@ -126,13 +126,12 @@ export default function StandupCreateRoute() {
       persistUserName(normalizedUserName);
       navigateTo("standupRoom", { standupKey: response.standup.key });
     } catch (submitError) {
+      setIsSubmitting(false);
       setError(
         submitError instanceof Error
           ? submitError.message
           : "Unable to create this standup.",
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

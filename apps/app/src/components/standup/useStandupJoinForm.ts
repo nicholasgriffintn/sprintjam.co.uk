@@ -114,6 +114,7 @@ export function useStandupJoinForm({
     try {
       await joinAndNavigate(userName.trim());
     } catch (submitError) {
+      setIsSubmitting(false);
       if (
         submitError instanceof Error &&
         submitError.message === "PASSCODE_REQUIRED"
@@ -135,8 +136,6 @@ export function useStandupJoinForm({
             : "Unable to join this standup.",
         );
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

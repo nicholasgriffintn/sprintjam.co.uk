@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
     "deploy": "turbo deploy",
     "deploy:staging": "turbo run deploy:staging --filter=\"...[HEAD^]\"",
     "deploy:prod": "turbo run deploy:prod --filter=\"...[HEAD^]\"",

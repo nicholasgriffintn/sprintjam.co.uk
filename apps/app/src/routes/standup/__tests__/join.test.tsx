@@ -119,6 +119,29 @@ describe("StandupJoinRoute", () => {
     });
   });
 
+  it("keeps the join button loading after successful navigation starts", async () => {
+    vi.mocked(joinStandup).mockResolvedValue(mockResponse);
+
+    render(<StandupJoinRoute />);
+
+    fireEvent.change(screen.getByLabelText(/your name/i), {
+      target: { value: "Bob" },
+    });
+    fireEvent.change(screen.getByLabelText(/standup key/i), {
+      target: { value: "ABC123" },
+    });
+    const button = screen.getByRole("button", { name: /join standup/i });
+    fireEvent.submit(button.closest("form")!);
+
+    await waitFor(() => {
+      expect(mockNavigateTo).toHaveBeenCalledWith("standupRoom", {
+        standupKey: "ABC123",
+      });
+    });
+
+    expect(button.querySelector(".animate-spin")).toBeTruthy();
+  });
+
   it("shows a passcode error when the room requires one", async () => {
     vi.mocked(joinStandup).mockRejectedValue(new Error("PASSCODE_REQUIRED"));
 

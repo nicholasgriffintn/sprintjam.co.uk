@@ -34,6 +34,9 @@
     },
     "test": {
       "outputs": []
+    },
+    "test:e2e": {
+      "outputs": []
     }
   }
 }

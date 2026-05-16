@@ -175,7 +175,7 @@ export function StandupJoinScreen({
               </Button>
               <Button
                 type="submit"
-                disabled={!isFormValid}
+                disabled={!isFormValid || isSubmitting}
                 isLoading={isSubmitting}
                 fullWidth
                 icon={<LogIn className="h-4 w-4" />}

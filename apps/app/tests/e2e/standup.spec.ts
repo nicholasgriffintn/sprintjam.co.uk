@@ -7,6 +7,12 @@ import {
 import { StandupCreatePage } from "./pageObjects/standup-create-page";
 import { StandupJoinPage } from "./pageObjects/standup-join-page";
 import { StandupRoomPage } from "./pageObjects/standup-room-page";
+import { enterTextField } from "./helpers/form-fields";
+import {
+  delayPostResponse,
+  expectButtonLoading,
+  standupResponse,
+} from "./helpers/loading-states";
 
 test.describe("Standup — create and join", () => {
   test("facilitator can create a room and a participant can join via the key", async ({
@@ -66,6 +72,38 @@ test.describe("Standup — create and join", () => {
         participantContext.close().catch(() => {}),
       ]);
     }
+  });
+
+  test("create and join submits show loading while requests are pending", async ({
+    page,
+  }) => {
+    await page.goto("/standup/create");
+    await enterTextField(page.locator("#standup-create-name"), "Standup Host");
+
+    const releaseCreate = await delayPostResponse(
+      page,
+      "**/api/standups",
+      standupResponse("STND01", "Standup Host"),
+    );
+    const createSubmit = page.getByRole("button", {
+      name: /create standup/i,
+    });
+    await createSubmit.click();
+    await expectButtonLoading(createSubmit);
+    releaseCreate();
+
+    await page.goto("/standup/join/STND01");
+    await expect(page.locator("#standup-join-name")).toBeVisible();
+
+    const releaseJoin = await delayPostResponse(
+      page,
+      "**/api/standups/join",
+      standupResponse("STND01", "Standup Host"),
+    );
+    const joinSubmit = page.getByRole("button", { name: /join standup/i });
+    await joinSubmit.click();
+    await expectButtonLoading(joinSubmit);
+    releaseJoin();
   });
 
   test("join screen shows a passcode error for a protected room", async ({

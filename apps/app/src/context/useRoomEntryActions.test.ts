@@ -28,6 +28,7 @@ describe("useRoomEntryActions", () => {
 
     const markAutoReconnectDone = vi.fn();
     const goToRoom = vi.fn();
+    const setIsLoading = vi.fn();
 
     const { result } = renderHook(() =>
       useRoomEntryActions({
@@ -42,7 +43,7 @@ describe("useRoomEntryActions", () => {
         setActiveRoomKey: vi.fn(),
         setIsModeratorView: vi.fn(),
         setPendingCreateSettings: vi.fn(),
-        setIsLoading: vi.fn(),
+        setIsLoading,
         markAutoReconnectDone,
         createSession: vi.fn(),
       }),
@@ -54,6 +55,8 @@ describe("useRoomEntryActions", () => {
 
     expect(markAutoReconnectDone).toHaveBeenCalledTimes(1);
     expect(goToRoom).toHaveBeenCalledWith("1I1L1P");
+    expect(setIsLoading).toHaveBeenNthCalledWith(1, true);
+    expect(setIsLoading).toHaveBeenLastCalledWith(false);
   });
 
   it("marks auto reconnect done after successful create", async () => {
@@ -63,6 +66,7 @@ describe("useRoomEntryActions", () => {
 
     const markAutoReconnectDone = vi.fn();
     const goToRoom = vi.fn();
+    const setIsLoading = vi.fn();
 
     const { result } = renderHook(() =>
       useRoomEntryActions({
@@ -77,7 +81,7 @@ describe("useRoomEntryActions", () => {
         setActiveRoomKey: vi.fn(),
         setIsModeratorView: vi.fn(),
         setPendingCreateSettings: vi.fn(),
-        setIsLoading: vi.fn(),
+        setIsLoading,
         markAutoReconnectDone,
         createSession: vi.fn(),
       }),
@@ -89,5 +93,7 @@ describe("useRoomEntryActions", () => {
 
     expect(markAutoReconnectDone).toHaveBeenCalledTimes(1);
     expect(goToRoom).toHaveBeenCalledWith("AB12CD");
+    expect(setIsLoading).toHaveBeenNthCalledWith(1, true);
+    expect(setIsLoading).toHaveBeenLastCalledWith(false);
   });
 });

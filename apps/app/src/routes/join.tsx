@@ -388,6 +388,7 @@ const JoinRoomRoute = () => {
                 type="submit"
                 data-testid="join-room-submit"
                 disabled={!getFormValid() || isLoading}
+                isLoading={isLoading}
                 className="sm:flex-1"
                 icon={
                   currentStep === "details" ? (

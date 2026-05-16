@@ -341,6 +341,7 @@ const CreateRoomRoute = () => {
                     type="button"
                     onClick={() => handleStartFlow(buildQuickSettings())}
                     disabled={!canStart || isLoading}
+                    isLoading={isLoading}
                     className="sm:flex-1"
                     icon={<Sparkles className="h-4 w-4" />}
                     data-testid="create-room-submit"
@@ -391,6 +392,7 @@ const CreateRoomRoute = () => {
                     type="button"
                     onClick={() => handleStartFlow(advancedSettingsRef.current)}
                     disabled={!canStart || isLoading}
+                    isLoading={isLoading}
                     className="sm:flex-1"
                     data-testid="create-advanced-continue"
                     fullWidth

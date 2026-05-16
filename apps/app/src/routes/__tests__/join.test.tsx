@@ -32,6 +32,9 @@ const sessionErrorMock = {
     | "unknown"
     | null,
 };
+const roomStatusMock = {
+  isLoading: false,
+};
 
 const mockSetName = vi.fn();
 const mockSetRoomKey = vi.fn();
@@ -68,7 +71,7 @@ vi.mock("@/context/RoomContext", () => ({
     handleCreateRoom: mockHandleCreateRoom,
   }),
   useRoomStatus: () => ({
-    isLoading: false,
+    isLoading: roomStatusMock.isLoading,
   }),
 }));
 
@@ -92,6 +95,7 @@ describe("JoinRoomRoute", () => {
     sessionStateMock.joinFlowMode = "join";
     sessionErrorMock.error = "";
     sessionErrorMock.errorKind = null;
+    roomStatusMock.isLoading = false;
     workspaceDataMock.isAuthenticated = false;
     workspaceDataMock.user = null;
   });
@@ -139,5 +143,15 @@ describe("JoinRoomRoute", () => {
     expect(mockClearError).toHaveBeenCalled();
     expect(mockHandleCreateRoom).toHaveBeenCalled();
     expect(mockSetJoinFlowMode).not.toHaveBeenCalledWith("join");
+  });
+
+  it("shows loading feedback while joining a room", () => {
+    roomStatusMock.isLoading = true;
+
+    render(<JoinRoomRoute />);
+
+    expect(
+      screen.getByTestId("join-room-submit").querySelector(".animate-spin"),
+    ).toBeTruthy();
   });
 });

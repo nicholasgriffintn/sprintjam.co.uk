@@ -66,13 +66,12 @@ export function RetroJoinScreen({
       persistUserName(normalizedName);
       navigateTo("retroRoom", { retroKey: response.retro.key });
     } catch (joinError) {
+      setIsSubmitting(false);
       setError(
         joinError instanceof Error
           ? joinError.message
           : "Unable to join this retro.",
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -102,6 +101,7 @@ export function RetroJoinScreen({
         <SurfaceCard>
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
+              id="retro-join-name"
               label={
                 <span className="flex items-center gap-2">
                   <User className="h-4 w-4" />
@@ -119,6 +119,7 @@ export function RetroJoinScreen({
               fullWidth
             />
             <Input
+              id="retro-join-key"
               label={
                 <span className="flex items-center gap-2">
                   <Key className="h-4 w-4" />
@@ -140,6 +141,7 @@ export function RetroJoinScreen({
               fullWidth
             />
             <Input
+              id="retro-join-passcode"
               label={
                 <span className="flex items-center gap-2">
                   <Lock className="h-4 w-4" />

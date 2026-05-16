@@ -121,6 +121,26 @@ describe("StandupCreateRoute", () => {
     });
   });
 
+  it("keeps the create button loading after successful navigation starts", async () => {
+    vi.mocked(createStandup).mockResolvedValue(mockResponse);
+
+    render(<StandupCreateRoute />);
+
+    fireEvent.change(screen.getByLabelText(/your name/i), {
+      target: { value: "Alice" },
+    });
+    const button = screen.getByRole("button", { name: /create standup/i });
+    fireEvent.submit(button.closest("form")!);
+
+    await waitFor(() => {
+      expect(mockNavigateTo).toHaveBeenCalledWith("standupRoom", {
+        standupKey: "ABC123",
+      });
+    });
+
+    expect(button.querySelector(".animate-spin")).toBeTruthy();
+  });
+
   it("passes the passcode when provided", async () => {
     vi.mocked(createStandup).mockResolvedValue(mockResponse);
 

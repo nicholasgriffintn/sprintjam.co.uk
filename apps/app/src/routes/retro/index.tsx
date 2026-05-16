@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -15,7 +16,9 @@ import { PageSection } from "@/components/layout/PageBackground";
 import { MarketingCardHeading } from "@/components/marketing/MarketingCardHeading";
 import { RetroTemplateGrid } from "@/components/retro/RetroTemplateGrid";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
+import { Button } from "@/components/ui/Button";
 import { SITE_NAME } from "@/constants";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { createMeta } from "@/utils/route-meta";
 
 export const meta = createMeta("retro");
@@ -66,6 +69,14 @@ const steps = [
 ] as const;
 
 export default function RetroIndexRoute() {
+  const navigateTo = useAppNavigation();
+  const [isOpeningCreate, setIsOpeningCreate] = useState(false);
+
+  const handleCreateRetro = () => {
+    setIsOpeningCreate(true);
+    navigateTo("retroCreate");
+  };
+
   return (
     <PageSection maxWidth="xl">
       <motion.div
@@ -90,13 +101,16 @@ export default function RetroIndexRoute() {
               keep actions visible in {SITE_NAME} workspace history.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link
-                to="/retro/create"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              <Button
+                type="button"
+                onClick={handleCreateRetro}
+                isLoading={isOpeningCreate}
+                disabled={isOpeningCreate}
+                icon={<ArrowRight className="h-4 w-4" />}
+                iconPosition="right"
               >
                 Create retro
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              </Button>
               <Link
                 to="/retro/templates"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:translate-x-1 dark:text-brand-200"
@@ -229,13 +243,15 @@ export default function RetroIndexRoute() {
                 starts with the right structure.
               </p>
             </div>
-            <Link
-              to="/retro/create"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-floating transition hover:from-brand-600 hover:to-indigo-600"
+            <Button
+              type="button"
+              onClick={handleCreateRetro}
+              isLoading={isOpeningCreate}
+              disabled={isOpeningCreate}
+              icon={<Columns3 className="h-4 w-4" />}
             >
               Create retro
-              <Columns3 className="h-4 w-4" />
-            </Link>
+            </Button>
           </div>
         </SurfaceCard>
 

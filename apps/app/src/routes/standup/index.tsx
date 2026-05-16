@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Briefcase, Plus, Shield, Sunrise, Users, Zap } from "lucide-react";
 
@@ -35,6 +36,14 @@ const features = [
 
 export default function StandupRoute() {
   const navigateTo = useAppNavigation();
+  const [pendingDestination, setPendingDestination] = useState<
+    "standupCreate" | "standupJoin" | null
+  >(null);
+
+  const handleNavigate = (destination: "standupCreate" | "standupJoin") => {
+    setPendingDestination(destination);
+    navigateTo(destination);
+  };
 
   return (
     <PageSection maxWidth="xl">
@@ -69,7 +78,9 @@ export default function StandupRoute() {
             icon={<Plus className="h-4 w-4" />}
             size="lg"
             className="w-full sm:w-auto"
-            onClick={() => navigateTo("standupCreate")}
+            disabled={pendingDestination !== null}
+            isLoading={pendingDestination === "standupCreate"}
+            onClick={() => handleNavigate("standupCreate")}
           >
             Create a standup
           </Button>
@@ -79,7 +90,9 @@ export default function StandupRoute() {
             icon={<Users className="h-4 w-4" />}
             size="lg"
             className="w-full sm:w-auto"
-            onClick={() => navigateTo("standupJoin")}
+            disabled={pendingDestination !== null}
+            isLoading={pendingDestination === "standupJoin"}
+            onClick={() => handleNavigate("standupJoin")}
           >
             Join a session
           </Button>
