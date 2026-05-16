@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { findClosestOption } from "./array";
+import { chunkArray, findClosestOption } from "./array";
 
 describe("Judge Utilities", () => {
   describe("findClosestOption", () => {
@@ -78,5 +78,20 @@ describe("Judge Utilities", () => {
       const result = findClosestOption(4, validOptions);
       expect([3, 5]).toContain(result);
     });
+  });
+});
+
+describe("chunkArray", () => {
+  it("splits arrays into fixed-size chunks", () => {
+    expect(chunkArray([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+  });
+
+  it("returns an empty array for empty input", () => {
+    expect(chunkArray([], 10)).toEqual([]);
+  });
+
+  it("rejects invalid chunk sizes", () => {
+    expect(() => chunkArray([1, 2, 3], 0)).toThrow(RangeError);
+    expect(() => chunkArray([1, 2, 3], 1.5)).toThrow(RangeError);
   });
 });

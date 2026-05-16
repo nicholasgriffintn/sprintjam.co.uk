@@ -765,6 +765,87 @@ describe("StatsRepository getWorkspaceInsights", () => {
     expect(result?.topContributors[0].userName).toBe("Alice");
   });
 
+  it("chunks workspace session stat lookups for large room sets", async () => {
+    const sessions = Array.from({ length: 181 }, (_, index) => ({
+      roomKey: `room-${index}`,
+      teamId: index % 2 === 0 ? 1 : 2,
+      createdAt: 1000 + index,
+      completedAt: 2000 + index,
+      metadata: null,
+    }));
+
+    const sessionsAll = vi.fn().mockResolvedValue(sessions);
+    const standupStatsAll = vi.fn().mockResolvedValue([]);
+    const wheelStatsAll = vi.fn().mockResolvedValue([]);
+    const retroStatsAll = vi.fn().mockResolvedValue([]);
+    const roundsAll = vi.fn().mockResolvedValue([]);
+    const votesAll = vi.fn().mockResolvedValue([]);
+
+    const select = vi.fn(() => ({
+      from: (table: unknown) => {
+        if (table === teamSessions) {
+          return {
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                all: sessionsAll,
+              })),
+            })),
+          };
+        }
+        if (table === standupSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: standupStatsAll,
+            })),
+          };
+        }
+        if (table === wheelSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: wheelStatsAll,
+            })),
+          };
+        }
+        if (table === retroSessionStats) {
+          return {
+            where: vi.fn(() => ({
+              all: retroStatsAll,
+            })),
+          };
+        }
+        if (table === roundVotes) {
+          return {
+            where: vi.fn(() => ({
+              all: roundsAll,
+            })),
+          };
+        }
+        if (table === voteRecords) {
+          return {
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                all: votesAll,
+              })),
+            })),
+          };
+        }
+        throw new Error("Unexpected select table");
+      },
+    }));
+
+    vi.mocked(drizzle).mockReturnValue({ select } as any);
+
+    const repo = new StatsRepository(mockD1 as any);
+    const result = await repo.getWorkspaceInsights([1, 2]);
+
+    expect(result?.sessionsAnalyzed).toBe(20);
+    expect(standupStatsAll).toHaveBeenCalledTimes(3);
+    expect(wheelStatsAll).toHaveBeenCalledTimes(3);
+    expect(retroStatsAll).toHaveBeenCalledTimes(3);
+    expect(roundsAll).toHaveBeenCalledTimes(1);
+    expect(votesAll).toHaveBeenCalledTimes(1);
+  });
+
   it("includes active wheel sessions with recorded wheel stats", async () => {
     const sessions = [
       {

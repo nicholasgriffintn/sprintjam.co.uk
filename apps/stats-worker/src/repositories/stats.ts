@@ -49,12 +49,14 @@ import {
   buildWorkspaceRetroSessionInsights,
   buildWorkspaceStandupSessionInsightsFromResponses,
   buildWorkspaceWheelSessionInsights,
+  chunkArray,
   countWorkspaceTeamSessionTypes,
   isWorkspaceWheelMode,
 } from "@sprintjam/utils";
 
 const MAX_SESSIONS_FOR_AGGREGATION = 1000;
 const MAX_VOTES_FOR_AGGREGATION = 50000;
+const D1_IN_QUERY_BATCH_SIZE = 90;
 
 interface InsightsQueryData {
   rounds: Array<{
@@ -694,35 +696,46 @@ export class StatsRepository {
   ): Promise<Map<string, SessionStats>> {
     if (roomKeys.length === 0) return new Map();
 
+    const roomKeyBatches = chunkArray(roomKeys, D1_IN_QUERY_BATCH_SIZE);
     const [rounds, votes] = await Promise.all([
-      this.db
-        .select()
-        .from(roundVotes)
-        .where(inArray(roundVotes.roomKey, roomKeys))
-        .all(),
-      this.db
-        .select({
-          roundId: voteRecords.roundId,
-          userName: voteRecords.userName,
-          vote: voteRecords.vote,
-          roomKey: roundVotes.roomKey,
-        })
-        .from(voteRecords)
-        .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
-        .where(inArray(roundVotes.roomKey, roomKeys))
-        .all(),
+      Promise.all(
+        roomKeyBatches.map((batch) =>
+          this.db
+            .select()
+            .from(roundVotes)
+            .where(inArray(roundVotes.roomKey, batch))
+            .all(),
+        ),
+      ),
+      Promise.all(
+        roomKeyBatches.map((batch) =>
+          this.db
+            .select({
+              roundId: voteRecords.roundId,
+              userName: voteRecords.userName,
+              vote: voteRecords.vote,
+              roomKey: roundVotes.roomKey,
+            })
+            .from(voteRecords)
+            .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
+            .where(inArray(roundVotes.roomKey, batch))
+            .all(),
+        ),
+      ),
     ]);
+    const flatRounds = rounds.flat();
+    const flatVotes = votes.flat();
 
-    const roundsByRoom = new Map<string, typeof rounds>();
-    const votesByRoom = new Map<string, typeof votes>();
+    const roundsByRoom = new Map<string, typeof flatRounds>();
+    const votesByRoom = new Map<string, typeof flatVotes>();
 
-    for (const round of rounds) {
+    for (const round of flatRounds) {
       const existing = roundsByRoom.get(round.roomKey) ?? [];
       existing.push(round);
       roundsByRoom.set(round.roomKey, existing);
     }
 
-    for (const vote of votes) {
+    for (const vote of flatVotes) {
       const existing = votesByRoom.get(vote.roomKey) ?? [];
       existing.push(vote);
       votesByRoom.set(vote.roomKey, existing);
@@ -750,26 +763,35 @@ export class StatsRepository {
       return { rounds: [], votes: [] };
     }
 
+    const roomKeyBatches = chunkArray(roomKeys, D1_IN_QUERY_BATCH_SIZE);
     const [rounds, votes] = await Promise.all([
-      this.db
-        .select()
-        .from(roundVotes)
-        .where(inArray(roundVotes.roomKey, roomKeys))
-        .all(),
-      this.db
-        .select({
-          roundId: voteRecords.roundId,
-          userName: voteRecords.userName,
-          vote: voteRecords.vote,
-          roomKey: roundVotes.roomKey,
-        })
-        .from(voteRecords)
-        .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
-        .where(inArray(roundVotes.roomKey, roomKeys))
-        .all(),
+      Promise.all(
+        roomKeyBatches.map((batch) =>
+          this.db
+            .select()
+            .from(roundVotes)
+            .where(inArray(roundVotes.roomKey, batch))
+            .all(),
+        ),
+      ),
+      Promise.all(
+        roomKeyBatches.map((batch) =>
+          this.db
+            .select({
+              roundId: voteRecords.roundId,
+              userName: voteRecords.userName,
+              vote: voteRecords.vote,
+              roomKey: roundVotes.roomKey,
+            })
+            .from(voteRecords)
+            .innerJoin(roundVotes, eq(voteRecords.roundId, roundVotes.roundId))
+            .where(inArray(roundVotes.roomKey, batch))
+            .all(),
+        ),
+      ),
     ]);
 
-    return { rounds, votes };
+    return { rounds: rounds.flat(), votes: votes.flat() };
   }
 
   private async queryStandupSessionStats(roomKeys: string[]) {
@@ -777,11 +799,16 @@ export class StatsRepository {
       return [];
     }
 
-    return await this.db
-      .select()
-      .from(standupSessionStats)
-      .where(inArray(standupSessionStats.roomKey, roomKeys))
-      .all();
+    const results = await Promise.all(
+      chunkArray(roomKeys, D1_IN_QUERY_BATCH_SIZE).map((batch) =>
+        this.db
+          .select()
+          .from(standupSessionStats)
+          .where(inArray(standupSessionStats.roomKey, batch))
+          .all(),
+      ),
+    );
+    return results.flat();
   }
 
   private async queryWheelSessionStats(roomKeys: string[]) {
@@ -789,11 +816,16 @@ export class StatsRepository {
       return [];
     }
 
-    return await this.db
-      .select()
-      .from(wheelSessionStats)
-      .where(inArray(wheelSessionStats.roomKey, roomKeys))
-      .all();
+    const results = await Promise.all(
+      chunkArray(roomKeys, D1_IN_QUERY_BATCH_SIZE).map((batch) =>
+        this.db
+          .select()
+          .from(wheelSessionStats)
+          .where(inArray(wheelSessionStats.roomKey, batch))
+          .all(),
+      ),
+    );
+    return results.flat();
   }
 
   private async queryRetroSessionStats(roomKeys: string[]) {
@@ -801,11 +833,16 @@ export class StatsRepository {
       return [];
     }
 
-    return await this.db
-      .select()
-      .from(retroSessionStats)
-      .where(inArray(retroSessionStats.roomKey, roomKeys))
-      .all();
+    const results = await Promise.all(
+      chunkArray(roomKeys, D1_IN_QUERY_BATCH_SIZE).map((batch) =>
+        this.db
+          .select()
+          .from(retroSessionStats)
+          .where(inArray(retroSessionStats.roomKey, batch))
+          .all(),
+      ),
+    );
+    return results.flat();
   }
 
   private buildStatsRoomKeySet(
