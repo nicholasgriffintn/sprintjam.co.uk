@@ -50,9 +50,7 @@ export function RetroCreateScreen() {
   const selectedTeam =
     accessibleTeams.find((team) => team.id === selectedTeamId) ?? null;
   const ensureWorkspaceRetroSession = useWorkspaceRetroSession(
-    selectedTeam
-      ? { id: selectedTeam.id, slug: selectedTeam.slug }
-      : undefined,
+    selectedTeam ? { id: selectedTeam.id, slug: selectedTeam.slug } : undefined,
   );
   const avatarValue = workspaceAvatar ?? storedAvatar ?? undefined;
 

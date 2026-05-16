@@ -46,7 +46,7 @@ export class RoomPage {
   async castVote(option: string | number) {
     const voteOption = this.page.getByTestId(`vote-option-${option}`);
     await expect(voteOption).toBeVisible();
-    await expect(voteOption).toBeEnabled({ timeout: 10_000 });
+    await expect(voteOption).toBeEnabled();
     await voteOption.click();
   }
 
@@ -72,8 +72,28 @@ export class RoomPage {
     );
   }
 
-  async revealVotes() {
+  async revealVotes({
+    confirmIncompleteWarning = false,
+  }: { confirmIncompleteWarning?: boolean } = {}) {
     await this.page.getByTestId("toggle-votes-button").click();
+
+    if (confirmIncompleteWarning) {
+      await this.confirmShowVotesWarningIfPresent();
+    }
+  }
+
+  async confirmShowVotesWarningIfPresent() {
+    await this.page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(resolve)),
+    );
+
+    const dialog = this.page.getByRole("alertdialog", { name: "Show votes?" });
+    if ((await dialog.count()) === 0 || !(await dialog.isVisible())) {
+      return;
+    }
+
+    await dialog.getByRole("button", { name: "Show votes" }).click();
+    await expect(dialog).toBeHidden();
   }
 
   async expectVotesHiddenMessage(expected: string) {
@@ -85,7 +105,6 @@ export class RoomPage {
   async expectVoteVisible(_participantName: string, expectedValue: string) {
     await expect(this.page.getByTestId("results-panel")).toContainText(
       expectedValue,
-      { timeout: 10_000 },
     );
   }
 
@@ -94,6 +113,7 @@ export class RoomPage {
   }
 
   async resetVotes() {
+    await this.confirmShowVotesWarningIfPresent();
     await this.page.getByTestId("reset-votes-button").click();
   }
 

@@ -41,7 +41,8 @@ export function buildWheelOutcomeAutomationSuggestions(
       },
       {
         label: "Update linked issue",
-        detail: "Record the decision against an imported Jira, Linear, or GitHub item.",
+        detail:
+          "Record the decision against an imported Jira, Linear, or GitHub item.",
         provider: "github",
       },
     ];

@@ -1,4 +1,10 @@
-import { index, integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  unique,
+} from "drizzle-orm/sqlite-core";
 
 import { teamSessions } from "./team-sessions";
 import { teams } from "./teams";

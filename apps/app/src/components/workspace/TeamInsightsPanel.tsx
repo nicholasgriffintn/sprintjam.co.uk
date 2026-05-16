@@ -1,7 +1,4 @@
-import {
-  BarChart3,
-  TrendingUp,
-} from "lucide-react";
+import { BarChart3, TrendingUp } from "lucide-react";
 
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { SuggestedFocusCards } from "@/components/workspace/SuggestedFocusCards";
@@ -72,7 +69,10 @@ export function TeamInsightsPanel({
             </h3>
           </div>
           {sessionCounts ? (
-            <CeremonyCountStrip counts={sessionCounts} label="Linked sessions" />
+            <CeremonyCountStrip
+              counts={sessionCounts}
+              label="Linked sessions"
+            />
           ) : null}
           <p className="text-sm text-slate-600 dark:text-slate-300">
             No analysed insights available for {teamName}. Complete planning

@@ -13,10 +13,7 @@ import {
 describe("workspace-actions", () => {
   it("builds stable process loop intent from team and date", () => {
     expect(
-      buildWorkspaceProcessLoopIntent(
-        7,
-        new Date("2026-05-05T12:00:00Z"),
-      ),
+      buildWorkspaceProcessLoopIntent(7, new Date("2026-05-05T12:00:00Z")),
     ).toEqual({
       key: "team-7-2026-05-05",
       name: "Team loop 2026-05-05",

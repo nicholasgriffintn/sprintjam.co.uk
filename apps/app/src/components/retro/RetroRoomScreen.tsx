@@ -172,11 +172,13 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
             actionsError,
           });
         }),
-        completeSessionByRoomKey(retro.key, "retro").catch((completionError) => {
-          console.warn("Retro completed without workspace completion sync", {
-            completionError,
-          });
-        }),
+        completeSessionByRoomKey(retro.key, "retro").catch(
+          (completionError) => {
+            console.warn("Retro completed without workspace completion sync", {
+              completionError,
+            });
+          },
+        ),
       ]);
       return;
     }

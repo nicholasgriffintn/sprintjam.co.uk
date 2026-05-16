@@ -41,9 +41,7 @@ const buildRetro = (
   };
 };
 
-const createStorage = (
-  retro?: RetroStateData,
-): DurableObjectStorage => {
+const createStorage = (retro?: RetroStateData): DurableObjectStorage => {
   const data = new Map<string, unknown>();
   if (retro) {
     data.set("retro", retro);
@@ -58,17 +56,14 @@ const createStorage = (
 };
 
 const createRoom = (retro?: RetroStateData): RetroRoom =>
-  new RetroRoom(
-    { storage: createStorage(retro) } as DurableObjectState,
-    {
-      ENVIRONMENT: "development",
-      RETRO_ROOM: {} as DurableObjectNamespace,
-      TOKEN_ENCRYPTION_SECRET: "test-secret",
-      RETRO_CREATE_RATE_LIMITER: {} as RateLimit,
-      RETRO_JOIN_RATE_LIMITER: {} as RateLimit,
-      RETRO_IP_RATE_LIMITER: {} as RateLimit,
-    } satisfies RetroWorkerEnv,
-  );
+  new RetroRoom({ storage: createStorage(retro) } as DurableObjectState, {
+    ENVIRONMENT: "development",
+    RETRO_ROOM: {} as DurableObjectNamespace,
+    TOKEN_ENCRYPTION_SECRET: "test-secret",
+    RETRO_CREATE_RATE_LIMITER: {} as RateLimit,
+    RETRO_JOIN_RATE_LIMITER: {} as RateLimit,
+    RETRO_IP_RATE_LIMITER: {} as RateLimit,
+  } satisfies RetroWorkerEnv);
 
 const validate = (room: RetroRoom, path: string, token?: string) =>
   room.fetch(

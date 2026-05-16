@@ -319,8 +319,7 @@ export function buildStandupNextStepActionIntents(
     }
 
     const ticketKeys =
-      nextStep.linkedTickets?.map((ticket) => ticket.key).filter(Boolean) ??
-      [];
+      nextStep.linkedTickets?.map((ticket) => ticket.key).filter(Boolean) ?? [];
     const detailParts = [
       description,
       ticketKeys.length ? `Tickets: ${ticketKeys.join(", ")}` : null,

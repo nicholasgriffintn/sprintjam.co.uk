@@ -23,8 +23,7 @@ export const WHEEL_MODE_OPTIONS: Array<{
   {
     value: "reviewer",
     label: "Reviewer",
-    description:
-      "Choose a reviewer for a linked Jira, Linear, or GitHub item.",
+    description: "Choose a reviewer for a linked Jira, Linear, or GitHub item.",
     resultLabel: getWorkspaceWheelModeResultLabel("reviewer"),
   },
 ];

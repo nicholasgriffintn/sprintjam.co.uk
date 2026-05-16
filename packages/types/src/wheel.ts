@@ -22,10 +22,7 @@ export interface SpinResult {
   removedAfter: boolean;
 }
 
-export type WheelMode =
-  | "facilitator"
-  | "decision"
-  | "reviewer";
+export type WheelMode = "facilitator" | "decision" | "reviewer";
 
 export interface WheelSettings {
   mode?: WheelMode;
@@ -114,11 +111,7 @@ export const DEFAULT_WHEEL_SETTINGS: WheelSettings = {
   spinDurationMs: 4000,
 };
 
-export const WHEEL_MODES: WheelMode[] = [
-  "facilitator",
-  "decision",
-  "reviewer",
-];
+export const WHEEL_MODES: WheelMode[] = ["facilitator", "decision", "reviewer"];
 
 export function isWheelMode(value: string): value is WheelMode {
   return WHEEL_MODES.some((mode) => mode === value);

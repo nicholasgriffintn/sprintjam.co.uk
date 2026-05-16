@@ -112,32 +112,35 @@ function createWorkspaceRouteMock() {
       });
     });
 
-    await context.route("**/api/rooms/workspace-sessions/complete", async (route) => {
-      const payload = (await route.request().postDataJSON()) as {
-        roomKey?: string;
-      };
-      linkedSession = linkedSession
-        ? {
-            ...linkedSession,
-            roomKey: payload.roomKey ?? linkedSession.roomKey,
-            updatedAt: Date.now(),
-            completedAt: Date.now(),
-          }
-        : null;
+    await context.route(
+      "**/api/rooms/workspace-sessions/complete",
+      async (route) => {
+        const payload = (await route.request().postDataJSON()) as {
+          roomKey?: string;
+        };
+        linkedSession = linkedSession
+          ? {
+              ...linkedSession,
+              roomKey: payload.roomKey ?? linkedSession.roomKey,
+              updatedAt: Date.now(),
+              completedAt: Date.now(),
+            }
+          : null;
 
-      route.fulfill({
-        status: linkedSession ? 200 : 404,
-        contentType: "application/json",
-        body: JSON.stringify(
-          linkedSession
-            ? { session: linkedSession }
-            : {
-                code: "not_found",
-                message: "Session not found",
-              },
-        ),
-      });
-    });
+        route.fulfill({
+          status: linkedSession ? 200 : 404,
+          contentType: "application/json",
+          body: JSON.stringify(
+            linkedSession
+              ? { session: linkedSession }
+              : {
+                  code: "not_found",
+                  message: "Session not found",
+                },
+          ),
+        });
+      },
+    );
   };
 
   return {

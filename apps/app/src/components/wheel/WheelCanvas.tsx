@@ -296,12 +296,7 @@ export function WheelCanvas({
             stroke="#f8fafc"
             strokeWidth="1"
           />
-          <circle
-            cx="50"
-            cy="50"
-            r="4"
-            fill="#f8fafc"
-          />
+          <circle cx="50" cy="50" r="4" fill="#f8fafc" />
         </svg>
       </motion.div>
 

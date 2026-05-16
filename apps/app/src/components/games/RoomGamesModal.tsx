@@ -51,13 +51,12 @@ export const RoomGamesModal = ({
                 key={game.type}
                 className={cn(
                   "group relative flex h-full min-h-[18rem] flex-col overflow-hidden border rounded-2xl p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0",
-                  "bg-white/85 dark:bg-slate-900/55 border-slate-200 dark:border-white/10"
+                  "bg-white/85 dark:bg-slate-900/55 border-slate-200 dark:border-white/10",
                 )}
               >
                 <div
                   className={cn(
                     "pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full blur-2xl transition group-hover:scale-125 motion-reduce:transition-none",
-
                   )}
                 />
                 <div className="relative mb-4 flex items-start gap-3">

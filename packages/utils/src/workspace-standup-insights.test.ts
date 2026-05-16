@@ -67,5 +67,4 @@ describe("workspace standup insights", () => {
     expect(aggregate.blockerRate).toBe(50);
     expect(aggregate.unresolvedBlockerRate).toBe(100);
   });
-
 });

@@ -51,8 +51,7 @@ export function CompletedWorkspaceFollowUps({
     () => parsePlanningFollowUpText(followUpsText).map((title) => ({ title })),
     [followUpsText],
   );
-  const selectedTeam =
-    teams.find((team) => team.id === selectedTeamId) ?? null;
+  const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
   const canSaveFollowUps = followUps.length > 0;
 
   useEffect(() => {
@@ -112,9 +111,7 @@ export function CompletedWorkspaceFollowUps({
       setFollowUpsText("");
       setNotice("Follow-ups added to sprint actions.");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to add follow-ups",
-      );
+      setError(err instanceof Error ? err.message : "Failed to add follow-ups");
     } finally {
       setIsSaving(false);
     }
@@ -167,8 +164,7 @@ export function CompletedWorkspaceFollowUps({
           <div>
             <p className="font-medium">
               Saved to workspace
-              {linkedWorkspaceTeamName ? ` in ${linkedWorkspaceTeamName}` : ""}
-              .
+              {linkedWorkspaceTeamName ? ` in ${linkedWorkspaceTeamName}` : ""}.
             </p>
             <p className="mt-1 text-emerald-800/90 dark:text-emerald-200/90">
               {linkedWorkspaceSession.name}

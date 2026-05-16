@@ -121,9 +121,8 @@ function StandupRoomContent({
   const standupTeamId = standupData?.teamId;
   const standupTeamSlug = useMemo(
     () =>
-      workspaceTeams.find(
-        (team) => team.id === standupTeamId && team.canAccess,
-      )?.slug,
+      workspaceTeams.find((team) => team.id === standupTeamId && team.canAccess)
+        ?.slug,
     [standupTeamId, workspaceTeams],
   );
 

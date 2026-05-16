@@ -32,16 +32,7 @@ export const useUserPersistence = ({
   avatar,
 }: UseUserPersistenceOptions) => {
   useEffect(() => {
-    if (name === "") {
-      persistUserName(name);
-      return;
-    }
-
-    const saveTimeout = setTimeout(() => {
-      persistUserName(name);
-    }, 500);
-
-    return () => clearTimeout(saveTimeout);
+    persistUserName(name);
   }, [name]);
 
   useEffect(() => {

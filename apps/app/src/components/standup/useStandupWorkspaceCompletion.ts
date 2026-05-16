@@ -51,9 +51,7 @@ function buildStandupStatsPayload(standupData: StandupData) {
 }
 
 function workspaceHistoryWarning(error: unknown, suffix: string): string {
-  return error instanceof Error
-    ? `${error.message} ${suffix}`
-    : suffix;
+  return error instanceof Error ? `${error.message} ${suffix}` : suffix;
 }
 
 export async function completeStandupWorkspaceHistory(

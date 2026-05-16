@@ -129,6 +129,10 @@ test.describe("Marketing Header Menu", () => {
     // Check initial ARIA state
     await expect(menuButton).toHaveAttribute("aria-expanded", "false");
     await expect(menuButton).toHaveAttribute("aria-haspopup", "menu");
+    await expect(menuButton).toHaveAttribute(
+      "aria-controls",
+      "marketing-navigation-menu",
+    );
 
     // Open menu and check ARIA state
     await menuButton.click();
@@ -186,10 +190,10 @@ test.describe("Marketing Header Menu", () => {
 
     // Check action buttons section
     await expect(
-      page.getByRole("link", { name: "Create a room" }),
+      menuDropdown.getByRole("menuitem", { name: "Create a room" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Join a session" }),
+      menuDropdown.getByRole("menuitem", { name: "Join a session" }),
     ).toBeVisible();
   });
 });

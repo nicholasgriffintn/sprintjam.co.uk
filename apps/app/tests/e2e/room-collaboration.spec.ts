@@ -75,7 +75,9 @@ test.describe("Collaboration journeys", () => {
       roomKey: "BAD404",
       passcode: "bad",
     });
-    await join.selectAvatarAndJoin();
+    await join.selectAvatarAndJoin("avatar-option-bird", {
+      expectRoom: false,
+    });
     await join.expectAlertMessage("Room not found");
     await page.unroute("**/api/rooms/join");
 
@@ -96,7 +98,9 @@ test.describe("Collaboration journeys", () => {
       roomKey: "BADPAS",
       passcode: "wrong",
     });
-    await join.selectAvatarAndJoin();
+    await join.selectAvatarAndJoin("avatar-option-bird", {
+      expectRoom: false,
+    });
     await join.expectAlertMessage("Passcode incorrect");
     await page.unroute("**/api/rooms/join");
 

@@ -209,14 +209,17 @@ describe("recordStandupSessionStatsInternalController", () => {
   });
 
   it("returns 400 when the payload is invalid", async () => {
-    const request = new Request("https://test.com/internal/stats/standup-session", {
-      method: "POST",
-      body: JSON.stringify({
-        roomKey: "standup-a",
-        totalParticipants: 2,
-        responses: "invalid",
-      }),
-    });
+    const request = new Request(
+      "https://test.com/internal/stats/standup-session",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          roomKey: "standup-a",
+          totalParticipants: 2,
+          responses: "invalid",
+        }),
+      },
+    );
 
     const response = await recordStandupSessionStatsInternalController(
       request as any,
@@ -242,10 +245,13 @@ describe("recordStandupSessionStatsInternalController", () => {
         },
       ],
     };
-    const request = new Request("https://test.com/internal/stats/standup-session", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const request = new Request(
+      "https://test.com/internal/stats/standup-session",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    );
 
     const response = await recordStandupSessionStatsInternalController(
       request as any,
@@ -270,10 +276,13 @@ describe("recordStandupSessionStatsInternalController", () => {
         { winner: "Ben", removedAfter: true },
       ],
     };
-    const request = new Request("https://test.com/internal/stats/wheel-session", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const request = new Request(
+      "https://test.com/internal/stats/wheel-session",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    );
 
     const response = await recordWheelSessionStatsInternalController(
       request as any,
@@ -287,17 +296,20 @@ describe("recordStandupSessionStatsInternalController", () => {
   });
 
   it("rejects invalid wheel stats payloads", async () => {
-    const request = new Request("https://test.com/internal/stats/wheel-session", {
-      method: "POST",
-      body: JSON.stringify({
-        roomKey: "wheel-a",
-        mode: "unsupported",
-        totalParticipants: 3,
-        entryCount: 3,
-        enabledEntryCount: 2,
-        results: [],
-      }),
-    });
+    const request = new Request(
+      "https://test.com/internal/stats/wheel-session",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          roomKey: "wheel-a",
+          mode: "unsupported",
+          totalParticipants: 3,
+          entryCount: 3,
+          enabledEntryCount: 2,
+          results: [],
+        }),
+      },
+    );
 
     const response = await recordWheelSessionStatsInternalController(
       request as any,

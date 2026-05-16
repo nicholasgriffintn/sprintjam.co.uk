@@ -199,9 +199,9 @@ const WheelEntriesPanel = memo(function WheelEntriesPanel({
           aria-label="Wheel entries"
         >
           {entries.length === 0 ? (
-              <div className="py-8 text-center text-sm text-slate-500">
+            <div className="py-8 text-center text-sm text-slate-500">
               Waiting for entries...
-              </div>
+            </div>
           ) : (
             <ul className="space-y-1">
               {entries

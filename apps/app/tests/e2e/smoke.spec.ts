@@ -53,7 +53,7 @@ test.describe("Smoke tests @smoke", () => {
       await moderatorRoom.expectVotePendingState();
 
       // Reveal votes
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
 
       // Verify results are visible to both users
       await moderatorRoom.expectVoteVisible(moderatorName, "5");
@@ -95,7 +95,7 @@ test.describe("Smoke tests @smoke", () => {
       await participantRoom.castVote("3");
       await moderatorRoom.expectVotePendingState();
 
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
       await moderatorRoom.expectVoteVisible(moderatorName, "5");
       await moderatorRoom.expectVoteVisible(participantName, "3");
       await participantRoom.expectResultsVisible();
@@ -137,7 +137,7 @@ test.describe("Smoke tests @smoke", () => {
       await participantPanel.selectScore("volume", 1);
       await participantPanel.selectScore("unknowns", 0);
 
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
       await moderatorRoom.expectVoteVisible(moderatorName, "3");
       await moderatorRoom.expectVoteVisible(participantName, "2");
       await participantRoom.expectResultsVisible();
@@ -164,12 +164,12 @@ test.describe("Smoke tests @smoke", () => {
 
       await moderatorRoom.castVote("5");
       await participantRoom.castVote("3");
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
       await moderatorRoom.resetVotes();
 
       await moderatorRoom.castVote("8");
       await participantRoom.castVote("5");
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
 
       const completeDialog = await openCompleteSessionDialog(page);
       await expect(
@@ -218,12 +218,12 @@ test.describe("Smoke tests @smoke", () => {
 
       await moderatorRoom.castVote("5");
       await participantRoom.castVote("3");
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
       await moveToNextTicket(page);
 
       await moderatorRoom.castVote("8");
       await participantRoom.castVote("5");
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
 
       const completeDialog = await openCompleteSessionDialog(page);
       await expect(
@@ -280,17 +280,17 @@ test.describe("Smoke tests @smoke", () => {
 
       await moderatorRoom.castVote("5");
       await participantRoom.castVote("3");
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
       await moderatorRoom.resetVotes();
 
       await moderatorRoom.castVote("8");
       await participantRoom.castVote("5");
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
       await moveToNextTicket(page);
 
       await moderatorRoom.castVote("3");
       await participantRoom.castVote("2");
-      await moderatorRoom.revealVotes();
+      await moderatorRoom.revealVotes({ confirmIncompleteWarning: true });
 
       const completeDialog = await openCompleteSessionDialog(page);
       await expect(

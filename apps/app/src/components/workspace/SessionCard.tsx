@@ -66,10 +66,7 @@ function StatBadge({
   );
 }
 
-export function SessionCard({
-  session,
-  stats,
-}: SessionCardProps) {
+export function SessionCard({ session, stats }: SessionCardProps) {
   const isComplete = Boolean(session.completedAt);
   const duration = formatDuration(stats?.durationMinutes ?? null);
   const sessionType = getTeamSessionType(session);
@@ -204,7 +201,6 @@ export function SessionCard({
           )}
         </div>
       )}
-
     </SurfaceCard>
   );
 }

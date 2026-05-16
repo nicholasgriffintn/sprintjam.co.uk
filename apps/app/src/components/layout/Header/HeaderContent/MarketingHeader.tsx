@@ -16,6 +16,7 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
   const navigateTo = useAppNavigation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = "marketing-navigation-menu";
 
   const logoSize = variant === "hero" ? "lg" : "md";
 
@@ -74,6 +75,7 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
             expandOnHover
             aria-expanded={isMenuOpen}
             aria-haspopup="menu"
+            aria-controls={menuId}
             aria-label="Open marketing navigation"
             onClick={() => setIsMenuOpen((open) => !open)}
             className={cn(
@@ -88,6 +90,7 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
           <AnimatePresence>
             {isMenuOpen && (
               <motion.div
+                id={menuId}
                 role="menu"
                 aria-labelledby="marketing-menu-button"
                 initial={{ opacity: 0, y: -10, scale: 0.98 }}

@@ -27,7 +27,8 @@ function memberDisplayName(member: WorkspaceMember) {
 function MemberAvatar({ member }: { member: WorkspaceMember }) {
   const displayName = memberDisplayName(member);
   const avatarInfo = member.avatar ? getAvatarInfo(member.avatar) : null;
-  const fallbackInitials = getInitials(displayName) || getInitials(member.email);
+  const fallbackInitials =
+    getInitials(displayName) || getInitials(member.email);
 
   return (
     <Avatar

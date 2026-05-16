@@ -1,9 +1,6 @@
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
 import { handleInitialize } from "./initialize";
-import {
-  handleAnySessionValidation,
-  handleSessionValidation,
-} from "./session";
+import { handleAnySessionValidation, handleSessionValidation } from "./session";
 import { handleJoin } from "./join";
 import { handleRecover } from "./recover";
 import { handleVote } from "./vote";
@@ -31,10 +28,7 @@ export async function handleHttpRequest(
       return handleSessionValidation(ctx, request);
     }
 
-    if (
-      url.pathname === "/session/validate-any" &&
-      request.method === "POST"
-    ) {
+    if (url.pathname === "/session/validate-any" && request.method === "POST") {
       return handleAnySessionValidation(ctx, request);
     }
 

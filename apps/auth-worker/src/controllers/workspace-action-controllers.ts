@@ -81,7 +81,8 @@ function parseWorkspaceActionStatusFilter(
   }
 
   return {
-    error: "status must be one of all, open, in_progress, resolved, or dismissed",
+    error:
+      "status must be one of all, open, in_progress, resolved, or dismissed",
   };
 }
 
@@ -101,7 +102,7 @@ function parseWorkspaceActionSourceFilter(
 
 function parseProcessLoopBody(
   body: CreateWorkspaceProcessLoopInput,
-): CreateWorkspaceProcessLoopInput & { key: string } | { error: string } {
+): (CreateWorkspaceProcessLoopInput & { key: string }) | { error: string } {
   const name = parseOptionalString(
     body.name,
     "Process loop name",
@@ -153,9 +154,7 @@ function parseProcessLoopBody(
   };
 }
 
-function parseWorkspaceActionBody(
-  body: CreateWorkspaceActionInput,
-):
+function parseWorkspaceActionBody(body: CreateWorkspaceActionInput):
   | (CreateWorkspaceActionInput & {
       source: WorkspaceActionSource;
       sourceRef: string;
@@ -187,7 +186,9 @@ function parseWorkspaceActionBody(
 
   const source = body.source ?? "manual";
   if (!isWorkspaceActionSource(source)) {
-    return { error: "Action source must be planning, standup, wheel, or manual" };
+    return {
+      error: "Action source must be planning, standup, wheel, or manual",
+    };
   }
 
   const priority = body.priority ?? "normal";
@@ -227,7 +228,8 @@ function parseWorkspaceActionBody(
     detail,
     source,
     sourceRef:
-      normaliseOptionalString(body.sourceRef) ?? `manual-${crypto.randomUUID()}`,
+      normaliseOptionalString(body.sourceRef) ??
+      `manual-${crypto.randomUUID()}`,
     priority,
     dueAt,
     processLoopId,
@@ -286,7 +288,8 @@ function parseWorkspaceActionUpdateBody(
   if (body.status !== undefined) {
     if (!isWorkspaceActionStatus(body.status)) {
       return {
-        error: "Action status must be open, in_progress, resolved, or dismissed",
+        error:
+          "Action status must be open, in_progress, resolved, or dismissed",
       };
     }
     updates.status = body.status;
@@ -319,9 +322,7 @@ function parseWorkspaceActionUpdateBody(
 function parseWheelOutcomeBody(body: {
   result?: Partial<SpinResult>;
   mode?: WheelMode;
-}):
-  | { mode: WheelMode; result: SpinResult }
-  | { error: string } {
+}): { mode: WheelMode; result: SpinResult } | { error: string } {
   const id = normaliseOptionalString(body.result?.id);
   const winner = normaliseOptionalString(body.result?.winner);
   const timestamp = body.result?.timestamp;
@@ -892,8 +893,7 @@ export async function recordRetroActionsByRoomKeyController(
         processLoopId: processLoop?.id ?? null,
         sourceSessionId: session.id,
         createdById: auth.result.userId,
-        resolvedById:
-          intent.status === "resolved" ? auth.result.userId : null,
+        resolvedById: intent.status === "resolved" ? auth.result.userId : null,
         ...intent,
       }),
     ),

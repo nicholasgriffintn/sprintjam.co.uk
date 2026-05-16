@@ -45,7 +45,10 @@ export function buildWorkspaceStandupSessionInsights(
 }
 
 export function buildWorkspaceStandupSessionInsightsFromResponses(
-  input: Pick<RecordStandupSessionStatsInput, "totalParticipants" | "responses">,
+  input: Pick<
+    RecordStandupSessionStatsInput,
+    "totalParticipants" | "responses"
+  >,
 ): WorkspaceStandupSessionInsights {
   const insights = createEmptyWorkspaceStandupSessionInsights();
 

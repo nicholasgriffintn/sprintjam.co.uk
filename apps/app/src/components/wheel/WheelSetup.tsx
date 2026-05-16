@@ -283,8 +283,7 @@ export function WheelSetup({ initialWheelKey = "" }: WheelSetupProps) {
   const joiningLock = useRef(false);
   const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? null;
   const teamForCreate = selectedTeam?.canAccess ? selectedTeam : undefined;
-  const ensureWorkspaceWheelSession =
-    useWorkspaceWheelSession(teamForCreate);
+  const ensureWorkspaceWheelSession = useWorkspaceWheelSession(teamForCreate);
 
   useEffect(() => {
     if (!wheelKey) {

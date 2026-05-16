@@ -37,6 +37,17 @@ describe("useUserPersistence", () => {
     expect(storage.get("sprintjam_avatar")).toBe("robot");
   });
 
+  it("stores the name immediately so reloads can rejoin rooms", () => {
+    renderHook(() =>
+      useUserPersistence({
+        name: "Alice",
+        avatar: null,
+      }),
+    );
+
+    expect(storage.get("sprintjam_username")).toBe("Alice");
+  });
+
   it("removes stored avatar when avatar is cleared", () => {
     storage.set("sprintjam_avatar", "robot");
 

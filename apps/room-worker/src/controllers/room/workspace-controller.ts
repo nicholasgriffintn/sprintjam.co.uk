@@ -71,7 +71,11 @@ export async function createWorkspaceSessionController(
     return jsonError("Room key is required", 400);
   }
 
-  const validationError = await validateRoomSessionForKey(request, env, roomKey);
+  const validationError = await validateRoomSessionForKey(
+    request,
+    env,
+    roomKey,
+  );
   if (validationError) {
     return validationError;
   }
@@ -99,7 +103,11 @@ export async function completeWorkspaceSessionController(
     return jsonError("Room key is required", 400);
   }
 
-  const validationError = await validateRoomSessionForKey(request, env, roomKey);
+  const validationError = await validateRoomSessionForKey(
+    request,
+    env,
+    roomKey,
+  );
   if (validationError) {
     return validationError;
   }
@@ -122,7 +130,11 @@ export async function recordPlanningActionsController(
     return jsonError("Room key is required", 400);
   }
 
-  const validationError = await validateRoomSessionForKey(request, env, roomKey);
+  const validationError = await validateRoomSessionForKey(
+    request,
+    env,
+    roomKey,
+  );
   if (validationError) {
     return validationError;
   }

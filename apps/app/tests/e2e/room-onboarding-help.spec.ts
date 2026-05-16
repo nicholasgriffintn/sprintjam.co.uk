@@ -26,6 +26,7 @@ test.describe("Room onboarding hints", () => {
     try {
       await moderatorRoom.castVote("1");
       await participantRoom.castVote("13");
+      await moderatorRoom.expectVotingProgress(2, 2);
       await moderatorRoom.revealVotes();
 
       await expect(
@@ -74,6 +75,7 @@ test.describe("Room help panel", () => {
     try {
       await moderatorRoom.castVote("1");
       await participantRoom.castVote("13");
+      await moderatorRoom.expectVotingProgress(2, 2);
       await moderatorRoom.revealVotes();
 
       const page = moderatorRoom.getPage();

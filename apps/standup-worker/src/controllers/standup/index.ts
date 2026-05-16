@@ -144,7 +144,10 @@ async function handleValidateModeratorSession(
   }
 
   if (
-    !context.repository.validateSessionToken(standupData.moderator, sessionToken)
+    !context.repository.validateSessionToken(
+      standupData.moderator,
+      sessionToken,
+    )
   ) {
     return jsonError("Moderator session is required", 403);
   }

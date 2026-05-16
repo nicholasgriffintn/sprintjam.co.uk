@@ -171,119 +171,122 @@ export function WheelProvider({ children, userName }: WheelProviderProps) {
     [isAuthenticated],
   );
 
-  const handleMessage = useCallback((message: WheelServerMessage) => {
-    switch (message.type) {
-      case "initialize":
-        setWheelData(message.wheel);
-        upsertWheel(message.wheel);
-        setIsLoading(false);
-        break;
+  const handleMessage = useCallback(
+    (message: WheelServerMessage) => {
+      switch (message.type) {
+        case "initialize":
+          setWheelData(message.wheel);
+          upsertWheel(message.wheel);
+          setIsLoading(false);
+          break;
 
-      case "userJoined":
-        setWheelData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            users: message.users,
-            userAvatars: message.userAvatars ?? prev.userAvatars,
-            connectedUsers: {
-              ...prev.connectedUsers,
-              [message.user]: true,
-            },
-          };
-        });
-        break;
+        case "userJoined":
+          setWheelData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              users: message.users,
+              userAvatars: message.userAvatars ?? prev.userAvatars,
+              connectedUsers: {
+                ...prev.connectedUsers,
+                [message.user]: true,
+              },
+            };
+          });
+          break;
 
-      case "userLeft":
-        setWheelData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            users: message.users,
-            connectedUsers: {
-              ...prev.connectedUsers,
-              [message.user]: false,
-            },
-          };
-        });
-        break;
+        case "userLeft":
+          setWheelData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              users: message.users,
+              connectedUsers: {
+                ...prev.connectedUsers,
+                [message.user]: false,
+              },
+            };
+          });
+          break;
 
-      case "entriesUpdated":
-        setWheelData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            entries: message.entries,
-          };
-        });
-        break;
+        case "entriesUpdated":
+          setWheelData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              entries: message.entries,
+            };
+          });
+          break;
 
-      case "spinStarted":
-        setWheelData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            spinState: message.spinState,
-          };
-        });
-        break;
+        case "spinStarted":
+          setWheelData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              spinState: message.spinState,
+            };
+          });
+          break;
 
-      case "spinEnded":
-        if (wheelDataRef.current) {
-          void recordWorkspaceOutcome(
-            wheelDataRef.current,
-            message.result,
-            message.entries,
-          );
-        }
-        setWheelData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            spinState: null,
-            entries: message.entries,
-            results: [...prev.results, message.result],
-          };
-        });
-        break;
+        case "spinEnded":
+          if (wheelDataRef.current) {
+            void recordWorkspaceOutcome(
+              wheelDataRef.current,
+              message.result,
+              message.entries,
+            );
+          }
+          setWheelData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              spinState: null,
+              entries: message.entries,
+              results: [...prev.results, message.result],
+            };
+          });
+          break;
 
-      case "settingsUpdated":
-        setWheelData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            settings: message.settings,
-          };
-        });
-        break;
+        case "settingsUpdated":
+          setWheelData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              settings: message.settings,
+            };
+          });
+          break;
 
-      case "wheelReset":
-        setWheelData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            entries: message.entries,
-            results: message.results,
-            spinState: null,
-          };
-        });
-        break;
+        case "wheelReset":
+          setWheelData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              entries: message.entries,
+              results: message.results,
+              spinState: null,
+            };
+          });
+          break;
 
-      case "newModerator":
-        setWheelData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            moderator: message.moderator,
-          };
-        });
-        break;
+        case "newModerator":
+          setWheelData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              moderator: message.moderator,
+            };
+          });
+          break;
 
-      case "error":
-        setWheelError(message.error);
-        break;
-    }
-  }, [recordWorkspaceOutcome]);
+        case "error":
+          setWheelError(message.error);
+          break;
+      }
+    },
+    [recordWorkspaceOutcome],
+  );
 
   const handleConnectionChange = useCallback((connected: boolean) => {
     setIsSocketConnected(connected);

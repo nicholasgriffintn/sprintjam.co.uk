@@ -42,7 +42,8 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
   ) {
     prompts.push({
       title: "Check team health",
-      detail: "Standup health is trending low. Use the next sync to surface load or delivery pressure.",
+      detail:
+        "Standup health is trending low. Use the next sync to surface load or delivery pressure.",
       tone: "warning",
     });
   }
@@ -58,7 +59,8 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
   if (insights.totalRounds > 0 && insights.participationRate < 75) {
     prompts.push({
       title: "Increase participation",
-      detail: "Invite missing voters before reveal so estimates reflect the full team.",
+      detail:
+        "Invite missing voters before reveal so estimates reflect the full team.",
       tone: "warning",
     });
   }
@@ -66,7 +68,8 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
   if (insights.totalRounds > 0 && insights.discussionRate > 35) {
     prompts.push({
       title: "Pre-split unclear work",
-      detail: "High re-vote rate usually means stories need sharper scope before sizing.",
+      detail:
+        "High re-vote rate usually means stories need sharper scope before sizing.",
       tone: "warning",
     });
   }
@@ -74,7 +77,8 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
   if (insights.totalRounds > 0 && insights.questionMarkRate > 10) {
     prompts.push({
       title: "Resolve unknowns before sizing",
-      detail: 'Frequent "?" votes suggest missing context, dependencies, or acceptance criteria.',
+      detail:
+        'Frequent "?" votes suggest missing context, dependencies, or acceptance criteria.',
       tone: "warning",
     });
   }
@@ -87,7 +91,8 @@ export function buildInsightPrompts(insights: InsightSource): InsightPrompt[] {
   ) {
     prompts.push({
       title: "Planning flow looks steady",
-      detail: "Consensus and participation are healthy. Keep the current facilitation pattern.",
+      detail:
+        "Consensus and participation are healthy. Keep the current facilitation pattern.",
       tone: "good",
     });
   }

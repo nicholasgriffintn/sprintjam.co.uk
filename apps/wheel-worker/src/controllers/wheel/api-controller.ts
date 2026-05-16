@@ -12,10 +12,7 @@ import {
 
 import { jsonError, notFoundResponse } from "../../lib/response";
 import { createRateLimit, joinRateLimit } from "../../lib/rate-limit";
-import {
-  getWheelStub,
-  validateWheelSessionForKey,
-} from "./session-validation";
+import { getWheelStub, validateWheelSessionForKey } from "./session-validation";
 import {
   createWorkspaceSessionController,
   recordSessionStatsController,

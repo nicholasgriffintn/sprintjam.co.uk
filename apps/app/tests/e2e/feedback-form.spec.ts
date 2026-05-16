@@ -59,6 +59,7 @@ test.describe("Feedback form", () => {
     await footerButton.click();
 
     const modal = page.getByRole("dialog", { name: "Send feedback" });
+    await expect(modal).toBeVisible();
     const submitButton = modal.getByRole("button", { name: "Send feedback" });
     await expect(submitButton).toBeDisabled();
 

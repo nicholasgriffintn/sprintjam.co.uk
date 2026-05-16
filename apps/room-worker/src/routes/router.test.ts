@@ -47,7 +47,9 @@ describe("handleRequest websocket", () => {
   });
 
   it("validates room ownership before forwarding workspace session writes", async () => {
-    roomFetch.mockResolvedValue(new Response(JSON.stringify({ success: true })));
+    roomFetch.mockResolvedValue(
+      new Response(JSON.stringify({ success: true })),
+    );
     authFetch.mockResolvedValue(
       new Response(JSON.stringify({ session: { id: 21 } }), { status: 201 }),
     );

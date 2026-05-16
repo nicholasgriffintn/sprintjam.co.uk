@@ -36,20 +36,15 @@ export function useWorkspaceRetroSession(team?: { id: number; slug: string }) {
           return;
         }
 
-        await createTeamSession(
-          team.slug,
-          buildRetroSessionName(),
-          retroKey,
-          {
-            ...buildTeamSessionMetadata({
-              type: "retro",
-              teamId: team.id,
-            }),
-            ...(template
-              ? { templateId: template.id, templateName: template.name }
-              : {}),
-          },
-        );
+        await createTeamSession(team.slug, buildRetroSessionName(), retroKey, {
+          ...buildTeamSessionMetadata({
+            type: "retro",
+            teamId: team.id,
+          }),
+          ...(template
+            ? { templateId: template.id, templateName: template.name }
+            : {}),
+        });
       } catch (error) {
         attemptsRef.current.delete(attemptKey);
         throw error;

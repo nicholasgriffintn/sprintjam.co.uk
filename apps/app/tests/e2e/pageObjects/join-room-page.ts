@@ -1,10 +1,15 @@
 import { expect, type Page } from "@playwright/test";
 
+import { enterTextField } from "../helpers/form-fields";
+
 export class JoinRoomPage {
   constructor(private readonly page: Page) {}
 
   private async submitCurrentStep() {
     const submitButton = this.page.getByTestId("join-room-submit");
+    await this.page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(resolve)),
+    );
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
   }
@@ -18,24 +23,27 @@ export class JoinRoomPage {
     roomKey?: string;
     passcode?: string;
   }) {
-    await this.page.locator("#join-name").fill(name);
-    await expect(this.page.locator("#join-name")).toHaveValue(name);
+    await enterTextField(this.page.locator("#join-name"), name);
     if (roomKey) {
-      await this.page.locator("#join-room-key").fill(roomKey);
-      await expect(this.page.locator("#join-room-key")).toHaveValue(roomKey);
+      await enterTextField(this.page.locator("#join-room-key"), roomKey);
     }
     if (typeof passcode === "string") {
-      await this.page.locator("#join-passcode").fill(passcode);
-      await expect(this.page.locator("#join-passcode")).toHaveValue(passcode);
+      await enterTextField(this.page.locator("#join-passcode"), passcode);
     }
     await this.submitCurrentStep();
   }
 
-  async selectAvatarAndJoin(testId = "avatar-option-bird") {
+  async selectAvatarAndJoin(
+    testId = "avatar-option-bird",
+    { expectRoom = true }: { expectRoom?: boolean } = {},
+  ) {
     const avatarOption = this.page.getByTestId(testId).first();
     await expect(avatarOption).toBeVisible();
     await avatarOption.click();
     await this.submitCurrentStep();
+    if (expectRoom) {
+      await expect(this.page).toHaveURL(/\/room\/[a-z0-9]+$/i);
+    }
   }
 
   async selectAvatarOnlyAndJoin(testId = "avatar-option-robot") {
