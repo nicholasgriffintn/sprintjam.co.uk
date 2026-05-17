@@ -24,7 +24,8 @@ export async function readJsonBody<T>(
   request: Request,
 ): Promise<{ ok: true; body: T } | { ok: false; response: Response }> {
   try {
-    return { ok: true, body: await request.json<T>() };
+    const body = await request.json();
+    return { ok: true, body: body as T };
   } catch {
     return { ok: false, response: jsonError("Invalid JSON", 400) };
   }
