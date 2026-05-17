@@ -30,7 +30,7 @@
     "@sentry/react": "^10.36.0",
     "@sprintjam/types": "workspace:*",
     "@sprintjam/utils": "workspace:*",
-    "@strudel/web": "1.2.6",
+    "@strudel/web": "1.3.0",
     "@tailwindcss/typography": "0.5.19",
     "@tanstack/query-core": "5.100.9",
     "@tanstack/react-query": "5.100.9",
