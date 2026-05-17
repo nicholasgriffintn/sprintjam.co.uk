@@ -219,7 +219,7 @@ export function SaveToWorkspaceModal({
                       "w-full rounded-xl border p-3 text-left transition",
                       selectedTeamId === team.id
                         ? "border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-900/20"
-                        : "border-white/50 bg-white/70 hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/40 dark:hover:border-brand-800",
+                        : "border-slate-200/80 bg-white/70 hover:border-brand-200 dark:border-white/10 dark:bg-slate-900/40 dark:hover:border-brand-800",
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export function SaveToWorkspaceModal({
           <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
             Room key
           </label>
-          <div className="rounded-xl border border-white/50 bg-white/50 px-4 py-2 font-mono text-sm dark:border-white/10 dark:bg-slate-900/40">
+          <div className="rounded-xl border border-slate-200/80 bg-white/70 px-4 py-2 font-mono text-sm dark:border-white/10 dark:bg-slate-900/40">
             {roomKey}
           </div>
         </div>

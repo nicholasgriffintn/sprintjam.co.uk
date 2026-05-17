@@ -35,7 +35,7 @@ export function Checkbox({
       data-testid={dataTestId}
       className={cn(
         "flex h-4 w-4 flex-shrink-0 items-center justify-center rounded",
-        "border border-white/50 dark:border-white/10",
+        "border border-slate-300 bg-white/80 dark:border-white/10 dark:bg-slate-900/60",
         "data-[checked]:border-brand-600 data-[checked]:bg-brand-600",
         "dark:data-[checked]:border-brand-500 dark:data-[checked]:bg-brand-500",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500",

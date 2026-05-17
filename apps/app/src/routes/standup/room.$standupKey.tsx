@@ -323,7 +323,7 @@ function StandupRoomContent({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="order-2 border-b border-white/30 dark:border-white/10 md:order-none md:h-full md:min-h-0 md:border-b-0 md:border-r">
+        <div className="order-2 border-b border-slate-200/80 dark:border-white/10 md:order-none md:h-full md:min-h-0 md:border-b-0 md:border-r">
           <div className="flex h-full min-h-0 flex-col gap-3 p-3 shadow-sm backdrop-blur md:sticky md:top-[65px] md:h-[calc(100vh-65px)] md:min-h-[420px]">
             <StandupSidebar
               standupData={standupData}

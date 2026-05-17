@@ -76,7 +76,7 @@ export function RoomSidebar({
   };
 
   return (
-    <div className="md:relative md:min-h-0 md:h-full border-b border-white/30 dark:border-white/10 md:border-b-0 md:border-r">
+    <div className="md:relative md:min-h-0 md:h-full border-b border-slate-200/80 dark:border-white/10 md:border-b-0 md:border-r">
       <div
         ref={sidebarRef}
         className="flex h-full min-h-0 flex-col gap-3 p-3 shadow-sm backdrop-blur md:sticky md:top-[65px] md:h-[calc(100vh-65px)] md:min-h-[420px]"
@@ -108,7 +108,7 @@ export function RoomSidebar({
               type="button"
               variant="unstyled"
               onPointerDown={handleSplitPointerDown}
-              className="cursor-row-resize hidden h-4 items-center justify-center rounded-xl border border-dashed border-white/40 bg-white/70 text-[10px] uppercase tracking-wide text-slate-500 transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-200 dark:border-white/10 dark:bg-white/10 dark:text-slate-300 md:flex"
+              className="cursor-row-resize hidden h-4 items-center justify-center rounded-xl border border-dashed border-slate-300/80 bg-white/70 text-[10px] uppercase tracking-wide text-slate-500 transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-200 dark:border-white/10 dark:bg-white/10 dark:text-slate-300 md:flex"
               aria-label="Resize sidebar sections"
             >
               <span className="h-0.5 w-10 rounded-full bg-slate-400/80 dark:bg-slate-500/80" />

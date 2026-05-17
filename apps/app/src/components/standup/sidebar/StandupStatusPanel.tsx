@@ -51,7 +51,7 @@ export function StandupStatusPanel({
     >
       <div
         className={cn(
-          "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
+          "flex items-center justify-between gap-2 border-b border-slate-200/80 px-4 py-3 dark:border-white/10",
           isCollapsed && "border-b-0 py-2",
         )}
       >
@@ -67,7 +67,7 @@ export function StandupStatusPanel({
         <Button
           type="button"
           variant="unstyled"
-          className="inline-flex items-center rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
+          className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
           onClick={onToggleCollapse}
           aria-label={
             isCollapsed ? "Expand room status" : "Collapse room status"

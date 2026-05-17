@@ -59,7 +59,7 @@ export const Input = ({
           aria-describedby={helperId}
           aria-invalid={!!error}
           className={cn(
-            "rounded-2xl border border-white/50 bg-white/80 px-4 py-3 text-base text-slate-900 shadow-sm transition",
+            "rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-base text-slate-900 shadow-sm transition",
             "placeholder:text-slate-400",
             "focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200",
             "dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:placeholder:text-slate-500",

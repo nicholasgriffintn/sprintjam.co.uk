@@ -27,7 +27,7 @@ type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
 };
 
 const SELECT_BASE_CLASSNAME =
-  "w-full appearance-none rounded-2xl border border-white/50 bg-white/80 px-4 py-3 pr-10 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900 dark:disabled:bg-slate-800 dark:disabled:text-slate-500";
+  "w-full appearance-none rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 pr-10 text-base text-slate-900 shadow-sm transition focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:border-brand-400 dark:focus:ring-brand-900 dark:disabled:bg-slate-800 dark:disabled:text-slate-500";
 
 export function Select({
   options,

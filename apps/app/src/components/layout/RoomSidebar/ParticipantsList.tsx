@@ -80,7 +80,7 @@ const ParticipantItem = memo(
         data-testid="participant-row"
         data-participant-name={user}
         data-connected={isConnected ? "true" : "false"}
-        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/50 bg-white/80 px-3 py-2 text-slate-900 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
+        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/80 px-3 py-2 text-slate-900 shadow-sm dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -204,7 +204,7 @@ export const ParticipantsList = memo(function ParticipantsList({
     >
       <div
         className={cn(
-          "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
+          "flex items-center justify-between gap-2 border-b border-slate-200/80 px-4 py-3 dark:border-white/10",
           collapsed && "border-b-0 py-2",
         )}
       >
@@ -223,7 +223,7 @@ export const ParticipantsList = memo(function ParticipantsList({
         <Button
           type="button"
           variant="unstyled"
-          className="inline-flex items-center rounded-full border border-white/40 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
+          className="inline-flex items-center rounded-full border border-slate-200/80 bg-white/70 p-1 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
           onClick={handleToggle}
           aria-label={
             collapsed ? "Expand participants" : "Collapse participants"

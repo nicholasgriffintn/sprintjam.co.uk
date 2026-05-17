@@ -58,7 +58,7 @@ export const RoomGamePanel = ({
   return (
     <SurfaceCard
       padding="md"
-      className="relative overflow-visible space-y-4 border-white/50 bg-white/70 shadow-[0_18px_50px_rgba(15,23,42,0.16)] dark:border-white/10 dark:bg-slate-900/45"
+      className="relative overflow-visible space-y-4 border-slate-200/80 bg-white/70 shadow-[0_18px_50px_rgba(15,23,42,0.16)] dark:border-white/10 dark:bg-slate-900/45"
     >
       <div className="relative space-y-3">
         <div className="flex min-w-0 items-start gap-3 pr-36 sm:pr-40">

@@ -437,7 +437,7 @@ export function StandupTicketLinker({
                   return (
                     <div
                       key={`${activeProvider}-${ticket.id ?? ticket.key}`}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/5 bg-black/[0.02] px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]"
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-white/[0.03]"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">

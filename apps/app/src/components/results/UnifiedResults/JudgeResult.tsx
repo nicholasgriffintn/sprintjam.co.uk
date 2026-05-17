@@ -83,7 +83,7 @@ export const JudgeResult = memo(function JudgeResult({
           The Judge's Verdict
         </h3>
       </div>
-      <div className="bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl p-4">
+      <div className="bg-white/85 dark:bg-slate-900/55 border border-slate-200/70 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl p-4">
         <motion.div
           className="flex flex-col sm:flex-row sm:justify-between sm:items-center"
           initial={{ opacity: 0 }}

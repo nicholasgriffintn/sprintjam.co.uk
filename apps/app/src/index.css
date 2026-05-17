@@ -11,7 +11,7 @@
     --card-dark: rgba(2, 6, 23, 0.7);
   }
 
-  .dark :root {
+  :root.dark {
     color-scheme: dark;
   }
 

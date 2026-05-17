@@ -6,7 +6,7 @@ import { type HeaderContainerProps } from "@/components/layout/Header/types";
 import { Z_INDEX, HEADER_TRANSITION } from "@/constants";
 
 const GLASSMORPHISM_STYLES =
-  "bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-white/50 dark:border-white/10";
+  "bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/70 dark:border-white/10";
 
 export const HeaderContainer: FC<HeaderContainerProps> = ({
   variant,

@@ -197,7 +197,7 @@ export function StandupFacilitatorView({
         ) : null}
 
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
             <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
               Average health
             </div>
@@ -249,7 +249,7 @@ export function StandupFacilitatorView({
             )}
           </div>
 
-          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
             <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
               Blocker summary
             </div>
@@ -309,7 +309,7 @@ export function StandupFacilitatorView({
             )}
           </div>
 
-          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
             <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
               Waiting on
             </div>
@@ -318,7 +318,7 @@ export function StandupFacilitatorView({
                 {pendingUsers.map((user) => (
                   <span
                     key={user}
-                    className="rounded-full border border-black/5 bg-white/70 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200"
+                    className="rounded-full border border-slate-200/70 bg-white/80 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200"
                   >
                     {user}
                   </span>

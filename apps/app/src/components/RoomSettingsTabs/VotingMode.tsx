@@ -36,7 +36,7 @@ export function VotingMode({
           />
         </div>
         {isStructured && (
-          <div className="bg-white/50 dark:bg-slate-800/50 p-3 rounded-2xl border border-white/50 dark:border-white/10">
+          <div className="bg-white/70 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/70 dark:border-white/10">
             <p className="text-xs text-slate-600 dark:text-slate-400">
               Structured voting allows users to vote on multiple criteria with
               scores from 0-4. Story points are automatically calculated based

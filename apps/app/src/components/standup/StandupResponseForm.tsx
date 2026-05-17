@@ -238,7 +238,7 @@ export function StandupResponseForm({
             </div>
           ) : (
             <>
-              <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
                   Yesterday
                 </div>
@@ -247,7 +247,7 @@ export function StandupResponseForm({
                 </p>
               </div>
 
-              <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
                   Today
                 </div>
@@ -258,7 +258,7 @@ export function StandupResponseForm({
             </>
           )}
 
-          <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
                 Health
@@ -282,7 +282,7 @@ export function StandupResponseForm({
               "rounded-[1.75rem] border p-4",
               draft.hasBlocker
                 ? "border-rose-200/40 bg-rose-50/50 dark:border-rose-400/10 dark:bg-rose-950/10"
-                : "border-black/5 bg-black/[0.02] dark:border-white/10 dark:bg-white/[0.03]",
+                : "border-slate-200/70 bg-white/70 dark:border-white/10 dark:bg-white/[0.03]",
             )}
           >
             <div className="flex items-center justify-between gap-3">
@@ -308,7 +308,7 @@ export function StandupResponseForm({
           </div>
 
           {draft.linkedTickets.length ? (
-            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
                 <LinkIcon className="h-3.5 w-3.5" />
                 Linked tickets
@@ -317,7 +317,7 @@ export function StandupResponseForm({
                 {draft.linkedTickets.map((ticket) => (
                   <div
                     key={ticket.id}
-                    className="rounded-full border border-black/5 bg-white/70 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200"
+                    className="rounded-full border border-slate-200/70 bg-white/80 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-200"
                   >
                     <span className="font-semibold">{ticket.key}</span>
                     <span className="ml-2 text-slate-500 dark:text-slate-300">
@@ -342,7 +342,7 @@ export function StandupResponseForm({
           ) : null}
 
           {draft.icebreakerAnswer ? (
-            <div className="rounded-[1.75rem] border border-black/5 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="rounded-[1.75rem] border border-slate-200/70 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
                 <Sparkles className="h-3.5 w-3.5" />
                 Icebreaker

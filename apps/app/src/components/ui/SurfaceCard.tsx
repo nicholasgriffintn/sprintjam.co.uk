@@ -14,9 +14,9 @@ type SurfaceCardProps = PropsWithChildren<
 
 const baseVariants: Record<SurfaceVariant, string> = {
   default:
-    "bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)]",
+    "bg-white/85 dark:bg-slate-900/55 border border-slate-200/70 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)]",
   subtle:
-    "bg-white/65 dark:bg-slate-900/35 border border-white/40 dark:border-white/5 shadow-[0_6px_20px_rgba(15,23,42,0.08)]",
+    "bg-white/65 dark:bg-slate-900/35 border border-slate-200/60 dark:border-white/5 shadow-[0_6px_20px_rgba(15,23,42,0.08)]",
 };
 
 const paddingMap: Record<SurfacePadding, string> = {

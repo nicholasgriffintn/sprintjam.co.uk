@@ -218,7 +218,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
       >
         <div
           className={cn(
-            "flex items-center justify-between gap-2 border-b border-white/40 px-4 py-3 dark:border-white/10",
+            "flex items-center justify-between gap-2 border-b border-slate-200/80 px-4 py-3 dark:border-white/10",
             collapsed && "border-b-0 py-2",
           )}
         >
@@ -246,7 +246,7 @@ export const TicketQueueSidebar: FC<TicketQueueSidebarProps> = ({
                 collapsed ? "Expand ticket queue" : "Collapse ticket queue"
               }
               aria-expanded={!collapsed}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-600 shadow-sm transition hover:border-brand-200 hover:text-brand-600 focus-visible:ring-brand-300 dark:border-white/10 dark:bg-white/10 dark:text-white"
             >
               {collapsed ? (
                 <ChevronDown className="h-4 w-4" />

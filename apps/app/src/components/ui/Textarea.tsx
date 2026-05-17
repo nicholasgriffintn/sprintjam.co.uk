@@ -54,7 +54,7 @@ export const Textarea = ({
           "resize-y",
           isError
             ? "border-rose-200/80 focus:border-rose-300 focus:ring-rose-200 dark:border-rose-400/20 dark:bg-slate-950/60"
-            : "border-white/50 focus:border-brand-300 focus:ring-brand-200 dark:border-white/10 dark:focus:border-brand-400 dark:focus:ring-brand-900",
+            : "border-slate-200/80 focus:border-brand-300 focus:ring-brand-200 dark:border-white/10 dark:focus:border-brand-400 dark:focus:ring-brand-900",
           fullWidth && "w-full",
           className,
         )}

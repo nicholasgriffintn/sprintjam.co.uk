@@ -30,7 +30,7 @@ export function Decrement({
     <NumberField.Decrement
       className={composeClassName(
         cn(
-          "flex h-10 w-10 items-center justify-center rounded-l-2xl border border-white/50 bg-white/80 text-slate-700 shadow-sm transition select-none",
+          "flex h-10 w-10 items-center justify-center rounded-l-2xl border border-slate-200/80 bg-white/80 text-slate-700 shadow-sm transition select-none",
           "hover:bg-white/90 active:bg-slate-100",
           "dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800/80",
           "disabled:cursor-not-allowed disabled:opacity-50",
@@ -51,7 +51,7 @@ export const Input = React.forwardRef<
       ref={ref}
       className={composeClassName(
         cn(
-          "h-10 w-16 border-y border-white/50 bg-white/80 text-center text-base text-slate-900 tabular-nums shadow-sm transition",
+          "h-10 w-16 border-y border-slate-200/80 bg-white/80 text-center text-base text-slate-900 tabular-nums shadow-sm transition",
           "focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-brand-400",
           "dark:border-white/10 dark:bg-slate-900/60 dark:text-white",
           "disabled:cursor-not-allowed disabled:opacity-50",
@@ -71,7 +71,7 @@ export function Increment({
     <NumberField.Increment
       className={composeClassName(
         cn(
-          "flex h-10 w-10 items-center justify-center rounded-r-2xl border border-white/50 bg-white/80 text-slate-700 shadow-sm transition select-none",
+          "flex h-10 w-10 items-center justify-center rounded-r-2xl border border-slate-200/80 bg-white/80 text-slate-700 shadow-sm transition select-none",
           "hover:bg-white/90 active:bg-slate-100",
           "dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800/80",
           "disabled:cursor-not-allowed disabled:opacity-50",

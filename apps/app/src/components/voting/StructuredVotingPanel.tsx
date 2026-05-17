@@ -274,7 +274,7 @@ export function StructuredVotingPanel({
         <div>
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-6 lg:items-start">
             <div>
-              <div className="bg-white/85 dark:bg-slate-900/55 border border-white/50 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl p-2 mb-4">
+              <div className="bg-white/85 dark:bg-slate-900/55 border border-slate-200/70 dark:border-white/5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl rounded-3xl p-2 mb-4">
                 {isExceptionActive && selectedExtraOption && (
                   <div className="mb-3 rounded-2xl border border-amber-200/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
                     The {selectedExtraOption.label} option has been selected.
