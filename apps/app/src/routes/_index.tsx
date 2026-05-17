@@ -243,7 +243,7 @@ const WelcomeRoute = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
+            <SurfaceCard className="flex flex-col gap-4 text-left">
               <div className="flex-1 space-y-2">
                 <MarketingCardHeading
                   icon={sprintFlow[0].icon}
@@ -265,9 +265,9 @@ const WelcomeRoute = () => {
                 {sprintFlow[0].actionLabel}
                 <ArrowUpRight className="h-4 w-4" />
               </button>
-            </div>
+            </SurfaceCard>
 
-            <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
+            <SurfaceCard className="flex flex-col gap-4 text-left">
               <div className="flex-1 space-y-2">
                 <MarketingCardHeading
                   icon={sprintFlow[2].icon}
@@ -289,9 +289,9 @@ const WelcomeRoute = () => {
                 {sprintFlow[2].actionLabel}
                 <ArrowUpRight className="h-4 w-4" />
               </button>
-            </div>
+            </SurfaceCard>
 
-            <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-left dark:border-white/10 dark:bg-slate-900/40">
+            <SurfaceCard className="flex flex-col gap-4 text-left">
               <div className="flex items-center justify-between">
                 <MarketingCardHeading
                   icon={<Columns3 className="h-5 w-5" />}
@@ -317,7 +317,7 @@ const WelcomeRoute = () => {
                 Open retros
                 <ArrowUpRight className="h-4 w-4" />
               </button>
-            </div>
+            </SurfaceCard>
           </div>
           <SurfaceCard className="text-left">
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
