@@ -2,6 +2,7 @@ import {
   useState,
   type KeyboardEvent,
   type PointerEvent,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import type { RetroCard, RetroData } from "@sprintjam/types";
@@ -250,7 +251,7 @@ export function RetroBoard({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex flex-col gap-4 xl:h-full xl:min-h-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {boardControls}
@@ -277,12 +278,14 @@ export function RetroBoard({
         </div>
       </div>
 
-      <div className="mx-auto min-h-0 w-full flex-1 overflow-x-auto pb-2">
+      <div className="mx-auto w-full pb-2 xl:min-h-0 xl:flex-1 xl:overflow-x-auto">
         <div
-          className="grid h-full min-h-0 min-w-full gap-4"
-          style={{
-            gridTemplateColumns: `repeat(${retro.template.columns.length}, minmax(260px, 1fr))`,
-          }}
+          className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:h-full xl:min-h-0 xl:min-w-full xl:[grid-template-columns:repeat(var(--retro-column-count),minmax(260px,1fr))]"
+          style={
+            {
+              "--retro-column-count": retro.template.columns.length,
+            } as CSSProperties
+          }
         >
           {retro.template.columns.map((column) => {
             const cards = filterAndSortRetroCards({
@@ -303,7 +306,7 @@ export function RetroBoard({
                 data-testid="retro-column"
                 data-retro-column-id={column.id}
                 className={cn(
-                  "flex h-full min-h-0 flex-col rounded-2xl border border-dashed p-4",
+                  "flex min-h-[22rem] flex-col rounded-2xl border border-dashed p-4 md:min-h-[24rem] xl:h-full xl:min-h-0",
                   columnToneClasses[column.tone],
                 )}
               >

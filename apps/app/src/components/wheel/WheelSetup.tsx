@@ -6,6 +6,7 @@ import { useWheelConfetti } from "@/hooks/useWheelConfetti";
 import { WheelSidebar } from "@/components/wheel/WheelSidebar";
 import { ShareWheelModal } from "@/components/wheel/ShareWheelModal";
 import { WheelSettingsModal } from "@/components/wheel/WheelSettingsModal";
+import { Footer } from "@/components/layout/Footer";
 import { PageSection } from "@/components/layout/PageBackground";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Spinner } from "@/components/ui/Spinner";
@@ -199,7 +200,10 @@ function WheelRoomContent({
       : null;
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div
+      data-testid="wheel-room"
+      className="flex min-h-[calc(100vh-4.5rem)] overflow-y-auto bg-[radial-gradient(circle_at_1px_1px,rgba(100,116,139,0.26)_1px,transparent_0)] [background-size:28px_28px] px-4 py-5 sm:px-6 xl:h-[calc(100vh-4.5rem)] xl:min-h-0 xl:overflow-hidden xl:py-6"
+    >
       <ShareWheelModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
@@ -217,42 +221,46 @@ function WheelRoomContent({
         disabled={!isSocketConnected || !!wheelData.spinState?.isSpinning}
       />
 
-      <div className="flex flex-1 min-h-0 flex-col gap-6 p-4 sm:p-6 lg:flex-row lg:items-stretch lg:gap-8">
-        <div className="flex-1 flex flex-col items-center justify-center min-w-0 relative py-4 sm:py-6 lg:py-10">
-          {latestWinner && !wheelData.spinState?.isSpinning && (
-            <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10">
-              <div className="relative bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-500 rounded-3xl px-10 py-5 shadow-2xl border-4 border-white/30 animate-pulse">
-                <div className="absolute -top-3 -left-3 text-4xl">🎉</div>
-                <div className="absolute -top-3 -right-3 text-4xl">🎊</div>
-                <p className="text-white text-base font-bold mb-1 uppercase tracking-widest text-center drop-shadow-md">
-                  Winner!
-                </p>
-                <p className="text-5xl font-black text-white drop-shadow-2xl text-center">
-                  {latestWinner}
-                </p>
+      <div className="mx-auto flex w-full max-w-[108rem] flex-1 flex-col gap-5 xl:min-h-0">
+        <div className="flex flex-col gap-5 xl:min-h-0 xl:flex-1 xl:flex-row xl:items-stretch xl:gap-8">
+          <div className="relative flex min-w-0 flex-col items-center justify-center py-2 sm:py-4 xl:flex-1 xl:py-10">
+            {latestWinner && !wheelData.spinState?.isSpinning && (
+              <div className="absolute top-8 left-1/2 z-10 -translate-x-1/2">
+                <div className="relative rounded-3xl border-4 border-white/30 bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-500 px-10 py-5 shadow-2xl animate-pulse">
+                  <div className="absolute -top-3 -left-3 text-4xl">🎉</div>
+                  <div className="absolute -top-3 -right-3 text-4xl">🎊</div>
+                  <p className="mb-1 text-center text-base font-bold uppercase tracking-widest text-white drop-shadow-md">
+                    Winner!
+                  </p>
+                  <p className="text-center text-5xl font-black text-white drop-shadow-2xl">
+                    {latestWinner}
+                  </p>
+                </div>
               </div>
+            )}
+            <div className="aspect-square w-full max-w-[min(82vw,520px)] sm:max-w-[min(58vh,640px)] xl:max-w-[min(82vh,900px)]">
+              <WheelCanvas
+                entries={wheelData.entries}
+                spinState={wheelData.spinState}
+                onSpin={isModeratorView ? handleSpinClick : undefined}
+                disabled={!isModeratorView || !isSocketConnected}
+                playSounds={wheelData.settings.playSounds}
+              />
             </div>
-          )}
-          <div className="w-full max-w-[min(82vw,520px)] sm:max-w-[min(80vh,760px)] lg:max-w-[min(82vh,900px)] aspect-square">
-            <WheelCanvas
-              entries={wheelData.entries}
-              spinState={wheelData.spinState}
-              onSpin={isModeratorView ? handleSpinClick : undefined}
-              disabled={!isModeratorView || !isSocketConnected}
-              playSounds={wheelData.settings.playSounds}
-            />
           </div>
+
+          <WheelSidebar
+            entries={wheelData.entries}
+            results={wheelData.results}
+            settings={wheelData.settings}
+            isModeratorView={isModeratorView}
+            onBulkAddEntries={handleBulkAddEntries}
+            onClearEntries={handleClearEntries}
+            disabled={!!wheelData.spinState?.isSpinning || !isSocketConnected}
+          />
         </div>
 
-        <WheelSidebar
-          entries={wheelData.entries}
-          results={wheelData.results}
-          settings={wheelData.settings}
-          isModeratorView={isModeratorView}
-          onBulkAddEntries={handleBulkAddEntries}
-          onClearEntries={handleClearEntries}
-          disabled={!!wheelData.spinState?.isSpinning || !isSocketConnected}
-        />
+        <Footer layout="wide" fullWidth displayFidgetToyLink />
       </div>
     </div>
   );

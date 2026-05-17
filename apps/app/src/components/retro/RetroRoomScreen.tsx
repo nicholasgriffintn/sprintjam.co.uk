@@ -45,6 +45,7 @@ import { downloadCsv } from "@/utils/csv";
 import { parseDateInputValue } from "@/utils/date";
 import { downloadTextFile } from "@/utils/download";
 import { buildRetroRecapCsv, buildRetroRecapText } from "@/utils/retro-recap";
+import { Footer } from "@/components/layout/Footer";
 
 interface RetroRoomScreenProps {
   retroKey: string;
@@ -333,7 +334,7 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   return (
     <div
       data-testid="retro-room"
-      className="flex h-[calc(100vh-4.5rem)] min-h-0 overflow-hidden bg-[radial-gradient(circle_at_1px_1px,rgba(100,116,139,0.26)_1px,transparent_0)] [background-size:28px_28px] px-4 py-6 sm:px-6"
+      className="flex min-h-[calc(100vh-4.5rem)] overflow-y-auto bg-[radial-gradient(circle_at_1px_1px,rgba(100,116,139,0.26)_1px,transparent_0)] [background-size:28px_28px] px-4 py-5 sm:px-6 xl:h-[calc(100vh-4.5rem)] xl:min-h-0 xl:overflow-hidden xl:py-6"
     >
       <ShareSessionModal
         isOpen={isShareModalOpen}
@@ -348,15 +349,15 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
         qrCodeTitle="QR code for retro invite link"
         footer="Anyone with this link can join this retro."
       />
-      <div className="mx-auto flex min-h-0 w-full max-w-[108rem] flex-1 flex-col gap-5">
+      <div className="mx-auto flex w-full max-w-[108rem] flex-1 flex-col gap-5 xl:min-h-0">
         {error ? <Alert variant="warning">{error}</Alert> : null}
         {voteNotice ? <Alert variant="warning">{voteNotice}</Alert> : null}
         {completionNotice ? (
           <Alert variant="warning">{completionNotice}</Alert>
         ) : null}
 
-        <section className="grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="h-full min-h-0">
+        <section className="grid flex-1 items-start gap-4 xl:min-h-0 xl:items-stretch xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="xl:h-full xl:min-h-0">
             <RetroBoard
               retro={retro}
               userName={userName}
@@ -456,6 +457,7 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
             ) : null}
           </aside>
         </section>
+        <Footer layout="wide" fullWidth displayFidgetToyLink />
       </div>
     </div>
   );

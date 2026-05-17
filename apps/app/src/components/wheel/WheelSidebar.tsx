@@ -352,7 +352,7 @@ export function WheelSidebar({
   return (
     <SurfaceCard
       padding="sm"
-      className="relative w-full flex-shrink-0 flex flex-col min-h-0 overflow-hidden border-cyan-200/70 lg:w-[340px] dark:border-cyan-300/20"
+      className="relative flex min-h-[22rem] w-full flex-shrink-0 flex-col overflow-hidden border-cyan-200/70 md:min-h-[24rem] xl:min-h-0 xl:w-[340px] dark:border-cyan-300/20"
     >
       <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full" />
       <div className="flex flex-col gap-3 border-b border-slate-200/70 pb-3 dark:border-white/10">
