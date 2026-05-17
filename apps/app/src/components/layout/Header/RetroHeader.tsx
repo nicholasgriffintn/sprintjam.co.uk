@@ -8,7 +8,6 @@ import { ShareSessionButton } from "@/components/share/ShareSessionButton";
 import { useRetroHeaderOptional } from "@/context/RetroHeaderContext";
 import { useSessionActions } from "@/context/SessionContext";
 import { HEADER_TRANSITION } from "@/constants";
-import DarkModeToggle from "./DarkModeToggle";
 import { HeaderLogo } from "./HeaderLogo";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 
@@ -71,7 +70,6 @@ export const RetroHeader: FC = () => {
         animate={{ opacity: 1 }}
         transition={HEADER_TRANSITION}
       >
-        <DarkModeToggle />
         <HeaderUserMenu />
       </motion.div>
     </>

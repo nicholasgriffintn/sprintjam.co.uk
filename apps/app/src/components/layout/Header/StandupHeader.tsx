@@ -7,7 +7,6 @@ import { useSessionActions } from "@/context/SessionContext";
 import { Badge } from "@/components/ui/Badge";
 import { ShareSessionButton } from "@/components/share/ShareSessionButton";
 import { HeaderLogo } from "./HeaderLogo";
-import DarkModeToggle from "./DarkModeToggle";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 import { HEADER_TRANSITION } from "@/constants";
 
@@ -76,7 +75,6 @@ export const StandupHeader: FC = () => {
         animate={{ opacity: 1 }}
         transition={HEADER_TRANSITION}
       >
-        <DarkModeToggle />
         <HeaderUserMenu />
       </motion.div>
     </>

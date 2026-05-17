@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { BetaBadge } from "@/components/BetaBadge";
+import { Footer } from "@/components/layout/Footer";
 
 interface WorkspaceLayoutProps {
   isLoading: boolean;
@@ -99,6 +100,8 @@ export function WorkspaceLayout({
           <p className="text-center text-sm text-slate-500 dark:text-slate-400">
             Need help? Ask your workspace administrator for more information.
           </p>
+
+          <Footer displayRepoLink={false} fullWidth={false} priorityLinksOnly />
         </motion.div>
       </div>
     );
@@ -106,29 +109,35 @@ export function WorkspaceLayout({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      {error && (
-        <Alert variant="error">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="font-medium">{error}</span>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onRefresh}
-              icon={<RefreshCcw className="h-3.5 w-3.5" />}
-            >
-              Retry
-            </Button>
-          </div>
-        </Alert>
-      )}
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className={error ? "mt-6 space-y-6" : "space-y-6"}
-      >
-        {children}
-      </motion.div>
+      <div className="space-y-8">
+        <div>
+          {error && (
+            <Alert variant="error">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-medium">{error}</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={onRefresh}
+                  icon={<RefreshCcw className="h-3.5 w-3.5" />}
+                >
+                  Retry
+                </Button>
+              </div>
+            </Alert>
+          )}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className={error ? "mt-6 space-y-6" : "space-y-6"}
+          >
+            {children}
+          </motion.div>
+        </div>
+
+        <Footer priorityLinksOnly={false} />
+      </div>
     </div>
   );
 }

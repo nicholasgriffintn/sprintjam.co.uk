@@ -10,7 +10,6 @@ import { getWorkspaceNavItems } from "@/config/routes/derived";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { HeaderLogo } from "../HeaderLogo";
-import DarkModeToggle from "../DarkModeToggle";
 import { HEADER_TRANSITION } from "@/constants";
 import { HeaderUserMenu } from "../HeaderUserMenu";
 
@@ -85,8 +84,6 @@ export const WorkspaceHeader: FC = () => {
             New Room
           </span>
         </Button>
-
-        <DarkModeToggle />
 
         <HeaderUserMenu />
       </motion.div>

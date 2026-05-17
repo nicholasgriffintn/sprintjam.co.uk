@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/Separator";
 import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useFidgetToys } from "@/components/easter-eggs/FidgetToyContext";
+import { DarkModeToggle } from "@/components/layout/DarkModeToggle";
 
 type FooterProps = {
   displayRepoLink?: boolean;
@@ -129,6 +130,8 @@ export const Footer = ({
             fullWidth ? " lg:w-auto lg:flex-nowrap" : ""
           } flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2`}
         >
+          <DarkModeToggle />
+
           {onOpenGames ? (
             <Button
               type="button"

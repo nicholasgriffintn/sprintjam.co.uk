@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { ShareSessionButton } from "@/components/share/ShareSessionButton";
 import { cn } from "@/lib/cn";
 import { HeaderLogo } from "../HeaderLogo";
-import DarkModeToggle from "../DarkModeToggle";
 import { HEADER_TRANSITION } from "@/constants";
 import { HeaderUserMenu } from "../HeaderUserMenu";
 import { useSessionActions } from "@/context/SessionContext";
@@ -55,7 +54,6 @@ export const WheelHeader: FC = () => {
           animate={{ opacity: 1 }}
           transition={HEADER_TRANSITION}
         >
-          <DarkModeToggle />
           <Button
             type="button"
             variant="unstyled"

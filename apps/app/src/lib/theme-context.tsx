@@ -83,3 +83,7 @@ export function useTheme() {
   }
   return context;
 }
+
+export function useOptionalTheme() {
+  return useContext(ThemeContext);
+}
