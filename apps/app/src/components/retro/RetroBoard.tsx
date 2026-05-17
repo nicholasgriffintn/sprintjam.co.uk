@@ -1,16 +1,28 @@
-import type { ReactNode } from "react";
+import {
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import type { RetroCard, RetroData } from "@sprintjam/types";
-import { Edit3, Layers3, Plus, Save, ThumbsUp } from "lucide-react";
+import { Edit3, GripVertical, Plus, Save, ThumbsUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import {
+  getRetroBoardDropTargetKey,
+  resolveRetroBoardDrop,
+  type RetroBoardDragPayload,
+  type RetroBoardDropAction,
+  type RetroBoardDropTarget,
+} from "@/components/retro/retro-board-dnd";
 import {
   filterAndSortRetroCards,
   type RetroCardSortMode,
   type RetroCardVoteFilter,
 } from "@/components/retro/retro-board-utils";
+import { useRetroBoardDrag } from "@/components/retro/useRetroBoardDrag";
 import { cn } from "@/lib/cn";
 
 interface RetroBoardProps {
@@ -20,22 +32,18 @@ interface RetroBoardProps {
   drafts: Record<string, string>;
   cardSort: RetroCardSortMode;
   cardFilter: RetroCardVoteFilter;
-  selectedCardIds: string[];
-  groupTitle: string;
   editingCard: { id: string; text: string } | null;
   boardControls?: ReactNode;
   onCardSortChange: (sort: RetroCardSortMode) => void;
   onCardFilterChange: (filter: RetroCardVoteFilter) => void;
-  onGroupTitleChange: (title: string) => void;
-  onGroupSelectedCards: () => void;
   onDraftChange: (columnId: string, value: string) => void;
   onAddCard: (columnId: string) => void;
-  onToggleCardSelection: (cardId: string) => void;
   onEditCardDraftChange: (cardId: string, text: string) => void;
   onSaveCardEdit: () => void;
   onCancelCardEdit: () => void;
   onVoteCard: (card: RetroCard) => void;
   onMoveCard: (cardId: string, columnId: string) => void;
+  onGroupCards: (cardIds: string[], title: string) => void;
   onStartCardEdit: (card: RetroCard) => void;
   onUngroupCard: (cardId: string) => void;
   onDeleteCard: (cardId: string) => void;
@@ -102,26 +110,145 @@ export function RetroBoard({
   drafts,
   cardSort,
   cardFilter,
-  selectedCardIds,
-  groupTitle,
   editingCard,
   boardControls,
   onCardSortChange,
   onCardFilterChange,
-  onGroupTitleChange,
-  onGroupSelectedCards,
   onDraftChange,
   onAddCard,
-  onToggleCardSelection,
   onEditCardDraftChange,
   onSaveCardEdit,
   onCancelCardEdit,
   onVoteCard,
   onMoveCard,
+  onGroupCards,
   onStartCardEdit,
   onUngroupCard,
   onDeleteCard,
 }: RetroBoardProps) {
+  const [keyboardDragPayload, setKeyboardDragPayload] =
+    useState<RetroBoardDragPayload | null>(null);
+
+  const applyDropAction = (action: RetroBoardDropAction) => {
+    if (action.type === "none") {
+      return;
+    }
+
+    if (action.type === "moveCards") {
+      action.ungroupCardIds?.forEach((cardId) => onUngroupCard(cardId));
+      action.cardIds.forEach((cardId) => onMoveCard(cardId, action.columnId));
+      return;
+    }
+
+    action.ungroupCardIds?.forEach((cardId) => onUngroupCard(cardId));
+    action.cardIds.forEach((cardId) => {
+      const card = retro.cards.find((item) => item.id === cardId);
+      if (card && card.columnId !== action.columnId) {
+        onMoveCard(cardId, action.columnId);
+      }
+    });
+    onGroupCards(action.cardIds, action.title);
+  };
+
+  const applyDropTarget = (
+    target: RetroBoardDropTarget,
+    payload: RetroBoardDragPayload | null,
+  ) => {
+    applyDropAction(
+      resolveRetroBoardDrop({
+        cards: retro.cards,
+        payload,
+        target,
+      }),
+    );
+  };
+
+  const { activeDragPayload, activeDropTargetKey, startPointerDrag } =
+    useRetroBoardDrag({
+      isEnabled: isModerator,
+      onDrop: applyDropTarget,
+    });
+
+  const handleKeyboardDrop = (
+    event: KeyboardEvent<HTMLElement>,
+    target: RetroBoardDropTarget,
+  ) => {
+    if (
+      !isModerator ||
+      isFromInteractiveElement(event) ||
+      !isKeyboardDropKey(event)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (keyboardDragPayload) {
+      applyDropTarget(target, keyboardDragPayload);
+      setKeyboardDragPayload(null);
+    }
+  };
+
+  const handleGroupKeyDown = (
+    event: KeyboardEvent<HTMLElement>,
+    groupId: string,
+  ) => {
+    if (!isModerator || isFromInteractiveElement(event)) {
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setKeyboardDragPayload(null);
+      return;
+    }
+
+    if (!isKeyboardDropKey(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const groupDropTarget: RetroBoardDropTarget = { type: "group", groupId };
+    if (keyboardDragPayload) {
+      applyDropTarget(groupDropTarget, keyboardDragPayload);
+      setKeyboardDragPayload(null);
+      return;
+    }
+
+    setKeyboardDragPayload({ type: "group", groupId });
+  };
+
+  const handleCardKeyDown = (
+    event: KeyboardEvent<HTMLElement>,
+    cardId: string,
+  ) => {
+    if (!isModerator || isFromInteractiveElement(event)) {
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setKeyboardDragPayload(null);
+      return;
+    }
+
+    if (!isKeyboardDropKey(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (keyboardDragPayload) {
+      applyDropTarget({ type: "card", cardId }, keyboardDragPayload);
+      setKeyboardDragPayload(null);
+      return;
+    }
+
+    setKeyboardDragPayload({ type: "card", cardId });
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -164,17 +291,17 @@ export function RetroBoard({
               filter: cardFilter,
               sort: cardSort,
             });
-            const selectedCardsInColumn = selectedCardIds.filter((cardId) =>
-              retro.cards.some(
-                (card) => card.id === cardId && card.columnId === column.id,
-              ),
-            );
             const cardListItems = buildCardListItems(cards);
+            const columnDropTarget: RetroBoardDropTarget = {
+              type: "column",
+              columnId: column.id,
+            };
 
             return (
               <div
                 key={column.id}
                 data-testid="retro-column"
+                data-retro-column-id={column.id}
                 className={cn(
                   "flex h-full min-h-0 flex-col rounded-2xl border border-dashed p-4",
                   columnToneClasses[column.tone],
@@ -190,101 +317,126 @@ export function RetroBoard({
                   <p className="text-sm opacity-80">{column.prompt}</p>
                 </div>
 
-                {isModerator && selectedCardsInColumn.length > 0 ? (
-                  <div className="mt-3 rounded-xl border border-current/15 bg-white/80 p-3 shadow-sm dark:bg-slate-950/50">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold uppercase tracking-[0.14em]">
-                        Group selected
-                      </span>
-                      <Badge variant="info">
-                        {selectedCardsInColumn.length} selected
-                      </Badge>
-                    </div>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Input
-                        aria-label={`Group title for ${column.title}`}
-                        value={groupTitle}
-                        onChange={(event) =>
-                          onGroupTitleChange(event.target.value)
-                        }
-                        placeholder="Group title"
-                        className="min-w-0 flex-1 rounded-xl px-3 py-2 text-sm"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        icon={<Layers3 className="h-4 w-4" />}
-                        disabled={
-                          selectedCardsInColumn.length < 2 || !groupTitle.trim()
-                        }
-                        onClick={onGroupSelectedCards}
-                      >
-                        Group
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 pr-1">
-                  <div className="flex flex-col gap-3">
-                    {cardListItems.map((item) =>
-                      item.type === "group" ? (
-                        <section
-                          key={item.groupId}
-                          data-testid="retro-card-group"
-                          className="rounded-2xl border border-slate-300/80 bg-white/70 p-2 shadow-sm dark:border-white/15 dark:bg-white/5"
-                        >
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-800 dark:border-white/10 dark:bg-white/10 dark:text-white">
-                            <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-700 dark:text-white">
-                              Group: {item.groupTitle}
-                            </span>
-                            <Badge variant="info">
-                              {item.cards.length} cards
-                            </Badge>
-                          </div>
-                          <div className="space-y-2">
-                            {item.cards.map((card) =>
-                              renderCard({
-                                card,
-                                userName,
-                                isModerator,
-                                selectedCardIds,
-                                editingCard,
-                                retro,
-                                onToggleCardSelection,
-                                onEditCardDraftChange,
-                                onSaveCardEdit,
-                                onCancelCardEdit,
-                                onVoteCard,
-                                onMoveCard,
-                                onStartCardEdit,
-                                onUngroupCard,
-                                onDeleteCard,
-                              }),
-                            )}
-                          </div>
-                        </section>
-                      ) : (
-                        renderCard({
-                          card: item.card,
-                          userName,
-                          isModerator,
-                          selectedCardIds,
-                          editingCard,
-                          retro,
-                          onToggleCardSelection,
-                          onEditCardDraftChange,
-                          onSaveCardEdit,
-                          onCancelCardEdit,
-                          onVoteCard,
-                          onMoveCard,
-                          onStartCardEdit,
-                          onUngroupCard,
-                          onDeleteCard,
-                        })
-                      ),
+                  <div
+                    data-testid="retro-column-drop-zone"
+                    data-retro-column-id={column.id}
+                    tabIndex={isModerator ? 0 : undefined}
+                    onKeyDown={(event) =>
+                      handleKeyboardDrop(event, columnDropTarget)
+                    }
+                    className={cn(
+                      "flex min-h-32 flex-col gap-3 rounded-xl outline-none transition",
+                      activeDropTargetKey ===
+                        getRetroBoardDropTargetKey(columnDropTarget) &&
+                        "bg-white/50 ring-2 ring-brand-300/60 dark:bg-white/10",
                     )}
+                  >
+                    {isModerator ? (
+                      <div
+                        data-testid="retro-column-move-zone"
+                        data-retro-column-id={column.id}
+                        className={cn(
+                          "h-2 rounded-lg border border-transparent transition-all",
+                          activeDragPayload &&
+                            "h-8 border-current/20 bg-white/45 dark:bg-white/10",
+                          activeDropTargetKey ===
+                            getRetroBoardDropTargetKey(columnDropTarget) &&
+                            "border-brand-300 bg-brand-50/80 ring-2 ring-brand-300/60 dark:border-brand-300/60 dark:bg-brand-500/15",
+                        )}
+                      />
+                    ) : null}
+                    {cardListItems.map((item) => {
+                      if (item.type === "group") {
+                        const groupDropTarget: RetroBoardDropTarget = {
+                          type: "group",
+                          groupId: item.groupId,
+                        };
+
+                        return (
+                          <section
+                            key={item.groupId}
+                            data-testid="retro-card-group"
+                            data-retro-group-id={item.groupId}
+                            tabIndex={isModerator ? 0 : undefined}
+                            onKeyDown={(event) =>
+                              handleGroupKeyDown(event, item.groupId)
+                            }
+                            className={cn(
+                              "rounded-2xl border border-slate-300/80 bg-white/70 p-2 shadow-sm outline-none transition dark:border-white/15 dark:bg-white/5",
+                              activeDropTargetKey ===
+                                getRetroBoardDropTargetKey(groupDropTarget) &&
+                                "ring-2 ring-brand-300/60",
+                            )}
+                          >
+                            <div
+                              onPointerDown={(event) =>
+                                startPointerDrag(event, {
+                                  type: "group",
+                                  groupId: item.groupId,
+                                })
+                              }
+                              className={cn(
+                                "mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-800 dark:border-white/10 dark:bg-white/10 dark:text-white",
+                                isModerator &&
+                                  "cursor-grab active:cursor-grabbing",
+                              )}
+                            >
+                              <span className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.18em] text-slate-700 dark:text-white">
+                                {isModerator ? (
+                                  <GripVertical className="h-3.5 w-3.5" />
+                                ) : null}
+                                Group: {item.groupTitle}
+                              </span>
+                              <Badge variant="info">
+                                {item.cards.length} cards
+                              </Badge>
+                            </div>
+                            <div className="space-y-2">
+                              {item.cards.map((card) =>
+                                renderCard({
+                                  card,
+                                  userName,
+                                  isModerator,
+                                  editingCard,
+                                  activeDragPayload,
+                                  activeDropTargetKey,
+                                  keyboardDragPayload,
+                                  onCardPointerDragStart: startPointerDrag,
+                                  onCardKeyDown: handleCardKeyDown,
+                                  onEditCardDraftChange,
+                                  onSaveCardEdit,
+                                  onCancelCardEdit,
+                                  onVoteCard,
+                                  onStartCardEdit,
+                                  onUngroupCard,
+                                  onDeleteCard,
+                                }),
+                              )}
+                            </div>
+                          </section>
+                        );
+                      }
+
+                      return renderCard({
+                        card: item.card,
+                        userName,
+                        isModerator,
+                        editingCard,
+                        activeDragPayload,
+                        activeDropTargetKey,
+                        keyboardDragPayload,
+                        onCardPointerDragStart: startPointerDrag,
+                        onCardKeyDown: handleCardKeyDown,
+                        onEditCardDraftChange,
+                        onSaveCardEdit,
+                        onCancelCardEdit,
+                        onVoteCard,
+                        onStartCardEdit,
+                        onUngroupCard,
+                        onDeleteCard,
+                      });
+                    })}
                   </div>
                 </div>
 
@@ -322,15 +474,16 @@ function renderCard({
   card,
   userName,
   isModerator,
-  selectedCardIds,
   editingCard,
-  retro,
-  onToggleCardSelection,
+  activeDragPayload,
+  activeDropTargetKey,
+  keyboardDragPayload,
+  onCardPointerDragStart,
+  onCardKeyDown,
   onEditCardDraftChange,
   onSaveCardEdit,
   onCancelCardEdit,
   onVoteCard,
-  onMoveCard,
   onStartCardEdit,
   onUngroupCard,
   onDeleteCard,
@@ -338,41 +491,64 @@ function renderCard({
   card: RetroCard;
   userName: string;
   isModerator: boolean;
-  selectedCardIds: string[];
   editingCard: { id: string; text: string } | null;
-  retro: RetroData;
-  onToggleCardSelection: (cardId: string) => void;
+  activeDragPayload: RetroBoardDragPayload | null;
+  activeDropTargetKey: string | null;
+  keyboardDragPayload: RetroBoardDragPayload | null;
+  onCardPointerDragStart: (
+    event: PointerEvent<HTMLElement>,
+    payload: RetroBoardDragPayload,
+  ) => void;
+  onCardKeyDown: (event: KeyboardEvent<HTMLElement>, cardId: string) => void;
   onEditCardDraftChange: (cardId: string, text: string) => void;
   onSaveCardEdit: () => void;
   onCancelCardEdit: () => void;
   onVoteCard: (card: RetroCard) => void;
-  onMoveCard: (cardId: string, columnId: string) => void;
   onStartCardEdit: (card: RetroCard) => void;
   onUngroupCard: (cardId: string) => void;
   onDeleteCard: (cardId: string) => void;
 }) {
-  const isSelected = selectedCardIds.includes(card.id);
+  const cardDropTarget: RetroBoardDropTarget = {
+    type: "card",
+    cardId: card.id,
+  };
+  const isKeyboardDragging =
+    keyboardDragPayload?.type === "card" &&
+    keyboardDragPayload.cardId === card.id;
+  const isPointerDragging =
+    activeDragPayload?.type === "card" && activeDragPayload.cardId === card.id;
+  const canDragCard = isModerator && editingCard?.id !== card.id;
 
   return (
     <article
       key={card.id}
       data-testid="retro-card"
+      data-retro-card-id={card.id}
+      tabIndex={isModerator ? 0 : undefined}
+      aria-label={`Retro card: ${card.text}`}
+      onKeyDown={(event) => onCardKeyDown(event, card.id)}
       className={cn(
-        "rounded-xl border border-white/70 bg-white/90 p-3 text-slate-800 shadow-sm dark:border-white/10 dark:bg-slate-950/80 dark:text-slate-100",
-        isSelected &&
+        "rounded-xl border border-white/70 bg-white/90 p-3 text-slate-800 shadow-sm outline-none transition dark:border-white/10 dark:bg-slate-950/80 dark:text-slate-100",
+        isPointerDragging && "opacity-60",
+        (activeDropTargetKey === getRetroBoardDropTargetKey(cardDropTarget) ||
+          isKeyboardDragging) &&
           "border-brand-300 bg-brand-50/80 ring-2 ring-brand-300/50 dark:border-brand-300/60 dark:bg-brand-500/15",
       )}
     >
-      {isModerator ? (
-        <label className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => onToggleCardSelection(card.id)}
-            className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-300"
-          />
-          {isSelected ? "Selected" : "Select"}
-        </label>
+      {canDragCard ? (
+        <button
+          type="button"
+          aria-label={`Drag ${card.text}`}
+          onPointerDown={(event) =>
+            onCardPointerDragStart(event, { type: "card", cardId: card.id })
+          }
+          className={cn(
+            "mb-2 inline-flex rounded-md text-slate-400 outline-none hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-brand-300 dark:text-slate-500 dark:hover:text-slate-300",
+            canDragCard && "cursor-grab active:cursor-grabbing",
+          )}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
       ) : null}
       {editingCard?.id === card.id ? (
         <div className="space-y-2">
@@ -418,20 +594,6 @@ function renderCard({
             <ThumbsUp className="h-3.5 w-3.5" />
             {card.votes.length}
           </button>
-          {isModerator ? (
-            <select
-              aria-label={`Move ${card.text}`}
-              value={card.columnId}
-              onChange={(event) => onMoveCard(card.id, event.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-100"
-            >
-              {retro.template.columns.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.title}
-                </option>
-              ))}
-            </select>
-          ) : null}
           {(card.owner ?? card.author) === userName || isModerator ? (
             <button
               type="button"
@@ -463,5 +625,20 @@ function renderCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function isKeyboardDropKey(event: KeyboardEvent<HTMLElement>): boolean {
+  return event.key === "Enter" || event.key === " ";
+}
+
+function isFromInteractiveElement(event: KeyboardEvent<HTMLElement>): boolean {
+  return (
+    event.target instanceof HTMLElement &&
+    Boolean(
+      event.target.closest(
+        "a,button,input,select,textarea,[contenteditable='true']",
+      ),
+    )
   );
 }

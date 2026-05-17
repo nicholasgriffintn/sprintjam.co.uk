@@ -157,7 +157,7 @@ test.describe("Standup — response submission", () => {
       await facilitatorRoom.switchToResultsTab();
       await expect(
         facilitatorRoom.getPage().getByText(new RegExp(`1.*submitted`, "i")),
-      ).toBeVisible({ timeout: 10_000 });
+      ).toBeVisible();
 
       await expect(
         facilitatorRoom.getPage().getByText(participantName),

@@ -146,7 +146,7 @@ test.describe("Error scenarios", () => {
 
       await expect(
         moderatorRoom.getPage().getByTestId("reconnect-spinner"),
-      ).toBeVisible({ timeout: 3_000 });
+      ).toBeVisible();
 
       await expect(
         moderatorRoom
@@ -158,7 +158,7 @@ test.describe("Error scenarios", () => {
         moderatorRoom
           .getPage()
           .getByRole("dialog", { name: "Connection lost. Trying to" }),
-      ).toBeVisible({ timeout: 15_000 });
+      ).toBeVisible();
     } finally {
       await cleanup();
     }

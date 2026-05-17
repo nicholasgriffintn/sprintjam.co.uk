@@ -236,7 +236,7 @@ test.describe("Jira integration", () => {
       await moderatorRoom.revealVotes();
 
       await expect
-        .poll(() => storyPointsUpdated, { timeout: 5000 })
+        .poll(() => storyPointsUpdated)
         .toBeTruthy();
 
       await page.getByTestId("queue-expand").click();

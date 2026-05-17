@@ -83,7 +83,7 @@ test.describe("Dark Mode Accessibility Journey", () => {
     await resultsToggle.click();
     await page
       .getByTestId("results-panel")
-      .waitFor({ state: "visible", timeout: 5000 });
+      .waitFor({ state: "visible" });
     await waitForA11yReady(page);
     await scrollToBottom(page);
     // Wait for any animations to settle

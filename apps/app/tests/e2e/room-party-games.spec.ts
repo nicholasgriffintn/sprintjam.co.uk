@@ -18,12 +18,10 @@ test.describe("Room party games", () => {
     const joinWithAvatarButton = page.getByRole("button", {
       name: "Create & join",
     });
-    await expect(joinWithAvatarButton).toBeVisible({ timeout: 10_000 });
+    await expect(joinWithAvatarButton).toBeVisible();
     await joinWithAvatarButton.click();
 
-    await expect(page.getByTestId("participants-panel")).toBeVisible({
-      timeout: 10_000,
-    });
+    await expect(page.getByTestId("participants-panel")).toBeVisible();
 
     await page.getByRole("button", { name: "Party games" }).click();
     const gamesDialog = page.getByRole("dialog", { name: "Party games" });

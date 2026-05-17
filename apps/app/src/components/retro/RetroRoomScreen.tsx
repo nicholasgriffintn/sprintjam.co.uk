@@ -76,8 +76,6 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [cardSort, setCardSort] = useState<RetroCardSortMode>("newest");
   const [cardFilter, setCardFilter] = useState<RetroCardVoteFilter>("all");
-  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
-  const [groupTitle, setGroupTitle] = useState("");
   const [editingCard, setEditingCard] = useState<{
     id: string;
     text: string;
@@ -188,12 +186,6 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
     });
   }, [completeWorkspaceHistory, retro?.key, retro?.status]);
 
-  useEffect(() => {
-    if (selectedCardIds.length === 0 && groupTitle) {
-      setGroupTitle("");
-    }
-  }, [groupTitle, selectedCardIds.length]);
-
   if (error && !retro) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg items-center px-4">
@@ -271,27 +263,6 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
     voteRetroCard(card.id);
   };
 
-  const toggleCardSelection = (cardId: string) => {
-    const card = retro.cards.find((item) => item.id === cardId);
-    if (!card) {
-      return;
-    }
-
-    setSelectedCardIds((current) => {
-      if (current.includes(cardId)) {
-        return current.filter((id) => id !== cardId);
-      }
-
-      const sameColumnSelection = current.filter((id) =>
-        retro.cards.some(
-          (item) => item.id === id && item.columnId === card.columnId,
-        ),
-      );
-
-      return [...sameColumnSelection, cardId];
-    });
-  };
-
   const saveCardEdit = () => {
     const text = editingCard?.text.trim();
     if (!editingCard || !text) {
@@ -304,17 +275,6 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
 
   const updateEditingCardDraft = (cardId: string, text: string) => {
     setEditingCard({ id: cardId, text });
-  };
-
-  const groupSelectedCards = () => {
-    const title = groupTitle.trim();
-    if (selectedCardIds.length < 2 || !title) {
-      return;
-    }
-
-    groupRetroCards(selectedCardIds, title);
-    setSelectedCardIds([]);
-    setGroupTitle("");
   };
 
   const updateActionOwner = (actionId: string, owner: string) => {
@@ -394,8 +354,6 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
               drafts={drafts}
               cardSort={cardSort}
               cardFilter={cardFilter}
-              selectedCardIds={selectedCardIds}
-              groupTitle={groupTitle}
               editingCard={editingCard}
               boardControls={
                 <>
@@ -435,16 +393,14 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
               }
               onCardSortChange={setCardSort}
               onCardFilterChange={setCardFilter}
-              onGroupTitleChange={setGroupTitle}
-              onGroupSelectedCards={groupSelectedCards}
               onDraftChange={updateCardDraft}
               onAddCard={addCard}
-              onToggleCardSelection={toggleCardSelection}
               onEditCardDraftChange={updateEditingCardDraft}
               onSaveCardEdit={saveCardEdit}
               onCancelCardEdit={() => setEditingCard(null)}
               onVoteCard={handleVoteCard}
               onMoveCard={moveRetroCard}
+              onGroupCards={groupRetroCards}
               onStartCardEdit={(card) =>
                 setEditingCard({ id: card.id, text: card.text })
               }

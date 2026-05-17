@@ -11,12 +11,8 @@ export class StandupRoomPage {
   }
 
   async waitForLoaded() {
-    await expect(this.page.getByTestId("standup-room")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(this.page.getByTestId("participants-panel")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(this.page.getByTestId("standup-room")).toBeVisible();
+    await expect(this.page.getByTestId("participants-panel")).toBeVisible();
   }
 
   async dismissRecoveryPasskeyModalIfPresent() {
@@ -34,7 +30,7 @@ export class StandupRoomPage {
 
   async getRoomKey(): Promise<string> {
     const keyEl = this.page.getByTestId("standup-room-key");
-    await expect(keyEl).toBeVisible({ timeout: 10_000 });
+    await expect(keyEl).toBeVisible();
     const text = await keyEl.textContent();
     if (!text) throw new Error("Standup room key not found in header");
     return text.trim();
@@ -60,14 +56,14 @@ export class StandupRoomPage {
   async fillYesterday(text: string) {
     await this.ensureResponseTab();
     const field = this.page.locator("#standup-yesterday");
-    await expect(field).toBeVisible({ timeout: 5_000 });
+    await expect(field).toBeVisible();
     await field.fill(text);
   }
 
   async fillToday(text: string) {
     await this.ensureResponseTab();
     const field = this.page.locator("#standup-today");
-    await expect(field).toBeVisible({ timeout: 5_000 });
+    await expect(field).toBeVisible();
     await field.fill(text);
   }
 
@@ -80,14 +76,14 @@ export class StandupRoomPage {
   async fillBlockerDescription(text: string) {
     await this.ensureResponseTab();
     const field = this.page.locator("#standup-blocker");
-    await expect(field).toBeVisible({ timeout: 5_000 });
+    await expect(field).toBeVisible();
     await field.fill(text);
   }
 
   async submitResponse() {
     await this.ensureResponseTab();
     const button = this.page.getByTestId("standup-submit");
-    await expect(button).toBeEnabled({ timeout: 5_000 });
+    await expect(button).toBeEnabled();
     await button.click();
   }
 
@@ -128,13 +124,11 @@ export class StandupRoomPage {
   async expectPresentationMode() {
     await expect(
       this.page.getByRole("button", { name: /complete standup/i }),
-    ).toBeVisible({ timeout: 10_000 });
+    ).toBeVisible();
   }
 
   async expectCompletedState() {
-    await expect(this.page.getByText(/this standup is complete/i)).toBeVisible({
-      timeout: 10_000,
-    });
+    await expect(this.page.getByText(/this standup is complete/i)).toBeVisible();
   }
 
   async expectStatusBadge(
@@ -142,7 +136,7 @@ export class StandupRoomPage {
   ) {
     await expect(
       this.page.getByRole("banner").getByText(status, { exact: true }),
-    ).toBeVisible({ timeout: 10_000 });
+    ).toBeVisible();
   }
 
   getPage() {

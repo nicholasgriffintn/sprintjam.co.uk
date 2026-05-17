@@ -57,20 +57,16 @@ export class StandupJoinPage extends BasePage {
       }
 
       await expect(button).toBeEnabled();
-    }).toPass({ timeout: 10_000 });
+    }).toPass();
     await button.click();
   }
 
   async waitForRoom() {
-    await expect(this.page.getByTestId("standup-room")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(this.page.getByTestId("standup-room")).toBeVisible();
   }
 
   async expectAlertMessage(message: string | RegExp) {
-    await expect(this.page.getByRole("alert")).toContainText(message, {
-      timeout: 10_000,
-    });
+    await expect(this.page.getByRole("alert")).toContainText(message);
   }
 
   async fillRecoveryPasskey(passkey: string) {

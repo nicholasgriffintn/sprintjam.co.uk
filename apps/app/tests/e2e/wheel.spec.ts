@@ -16,7 +16,7 @@ const getWheelKeyFromUrl = (url: string) => {
 
 const waitForWheelReady = async (page: Page) => {
   const entriesInput = page.getByPlaceholder("Enter names, one per line...");
-  await expect(entriesInput).toBeVisible({ timeout: 15_000 });
+  await expect(entriesInput).toBeVisible();
   await expect(entriesInput).toBeEnabled();
   return entriesInput;
 };
@@ -30,20 +30,16 @@ test.describe("Wheel journey", () => {
 
     const entriesInput = await waitForWheelReady(page);
     await expect(entriesInput).toHaveValue(/Ada/);
-    await expect(page.getByText("6 entries on wheel")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(page.getByText("6 entries on wheel")).toBeVisible();
 
     await entriesInput.fill("Alpha\nBeta\nGamma");
 
-    await expect(page.getByText("3 entries on wheel")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(page.getByText("3 entries on wheel")).toBeVisible();
 
     await page.keyboard.press("ControlOrMeta+Enter");
 
     await page.getByRole("button", { name: "Results" }).click();
-    await expect(page.getByText("1 speaker")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("1 speaker")).toBeVisible();
   });
 
   test("participant sees entries read-only", async ({ page, browser }) => {
@@ -54,9 +50,7 @@ test.describe("Wheel journey", () => {
 
     const entriesInput = await waitForWheelReady(page);
     await entriesInput.fill("Alpha\nBeta");
-    await expect(page.getByText("2 entries on wheel")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(page.getByText("2 entries on wheel")).toBeVisible();
 
     const wheelKey = getWheelKeyFromUrl(page.url());
     if (!wheelKey) {
@@ -74,9 +68,7 @@ test.describe("Wheel journey", () => {
     ).toHaveCount(0);
 
     const entriesList = guestPage.getByRole("list").first();
-    await expect(entriesList.getByText("Alpha")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(entriesList.getByText("Alpha")).toBeVisible();
     await expect(entriesList.getByText("Beta")).toBeVisible();
 
     await guestContext.close();
@@ -118,9 +110,7 @@ test.describe("Wheel journey", () => {
       ).toBeVisible();
       await guestPage.locator("#wheel-passcode").fill(passcode);
       await guestPage.getByRole("button", { name: "Join wheel" }).click();
-      await expect(guestPage.getByText("Wheel control")).toBeVisible({
-        timeout: 15_000,
-      });
+      await expect(guestPage.getByText("Wheel control")).toBeVisible();
     } finally {
       await guestContext.close();
     }
@@ -167,9 +157,7 @@ test.describe("Wheel journey", () => {
       await recoveryPage
         .getByRole("button", { name: "Recover session" })
         .click();
-      await expect(recoveryPage.getByText("Wheel control")).toBeVisible({
-        timeout: 15_000,
-      });
+      await expect(recoveryPage.getByText("Wheel control")).toBeVisible();
     } finally {
       await recoveryContext.close();
     }

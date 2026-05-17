@@ -48,13 +48,11 @@ export class StandupCreatePage extends BasePage {
       }
 
       await expect(button).toBeEnabled();
-    }).toPass({ timeout: 10_000 });
+    }).toPass();
     await button.click();
   }
 
   async waitForRoom() {
-    await expect(this.page.getByTestId("standup-room")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(this.page.getByTestId("standup-room")).toBeVisible();
   }
 }

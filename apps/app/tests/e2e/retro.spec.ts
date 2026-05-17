@@ -124,6 +124,7 @@ test.describe("Retro — board collaboration", () => {
     const cardText = "Pair on the release checklist";
     const movedCardText = "Keep launch notes visible";
     const editedCardText = "Pair on the launch checklist";
+    const groupedLaterCardText = "Confirm launch owner";
     const actionTitle = "Publish the release checklist";
 
     try {
@@ -132,10 +133,15 @@ test.describe("Retro — board collaboration", () => {
       await facilitatorRoom.expectCardVisible(cardText);
       await facilitatorRoom.editCard(cardText, editedCardText);
       await facilitatorRoom.moveCard(movedCardText, "Start");
-      await facilitatorRoom.groupCards(
+      await facilitatorRoom.groupCards("Start", [
+        editedCardText,
+        movedCardText,
+      ]);
+      await participantRoom.addCard("Start", groupedLaterCardText);
+      await facilitatorRoom.addCardToGroup(
         "Start",
-        [editedCardText, movedCardText],
-        "Release readiness",
+        groupedLaterCardText,
+        editedCardText,
       );
 
       await facilitatorRoom.nextPhase();

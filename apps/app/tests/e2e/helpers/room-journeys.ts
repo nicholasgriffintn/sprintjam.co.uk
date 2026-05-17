@@ -94,11 +94,11 @@ export async function createRoomWithParticipant(
     const nextStep = await Promise.race([
       moderatorPage
         .getByTestId("participants-panel")
-        .waitFor({ state: "visible", timeout: 10_000 })
+        .waitFor({ state: "visible" })
         .then(() => "room" as const)
         .catch(() => null),
       joinAvatarOption
-        .waitFor({ state: "visible", timeout: 10_000 })
+        .waitFor({ state: "visible" })
         .then(() => "avatar" as const)
         .catch(() => null),
     ]);

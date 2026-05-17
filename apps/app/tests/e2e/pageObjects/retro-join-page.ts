@@ -67,9 +67,7 @@ export class RetroJoinPage extends BasePage {
   }
 
   async waitForRoom() {
-    await expect(this.page.getByTestId("retro-room")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(this.page.getByTestId("retro-room")).toBeVisible();
   }
 
   async expectAlertMessage(message: string | RegExp) {

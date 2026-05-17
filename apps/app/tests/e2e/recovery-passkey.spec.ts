@@ -50,9 +50,7 @@ test.describe("Recovery passkey notification", () => {
     await page.reload();
     await moderatorRoom.waitForLoaded();
 
-    await expect(page.getByText("Save your recovery passkey")).toBeVisible({
-      timeout: 10_000,
-    });
+    await expect(page.getByText("Save your recovery passkey")).toBeVisible();
 
     await expect(page.getByText("TEST-PASS")).toBeVisible();
 
@@ -74,15 +72,11 @@ test.describe("Recovery passkey notification", () => {
     await page.reload();
     await moderatorRoom.waitForLoaded();
 
-    await expect(page.getByText("Save your recovery passkey")).toBeVisible({
-      timeout: 10_000,
-    });
+    await expect(page.getByText("Save your recovery passkey")).toBeVisible();
 
     await page.getByLabel("Close notification").click();
 
-    await expect(page.getByText("Save your recovery passkey")).not.toBeVisible({
-      timeout: 5_000,
-    });
+    await expect(page.getByText("Save your recovery passkey")).not.toBeVisible();
 
     await cleanup();
   });
@@ -107,9 +101,7 @@ test.describe("Recovery passkey notification", () => {
     await page.reload();
     await participantRoom.waitForLoaded();
 
-    await expect(page.getByText("Save your recovery passkey")).not.toBeVisible({
-      timeout: 5_000,
-    });
+    await expect(page.getByText("Save your recovery passkey")).not.toBeVisible();
 
     await cleanup();
   });

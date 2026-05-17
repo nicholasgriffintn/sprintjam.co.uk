@@ -13,13 +13,13 @@ export class RetroRoomPage {
     return this.page.getByTestId("retro-card").filter({ hasText: cardText });
   }
 
+  private getColumnDropZone(columnTitle: string) {
+    return this.getColumn(columnTitle).getByTestId("retro-column-move-zone");
+  }
+
   async waitForLoaded() {
-    await expect(this.page.getByTestId("retro-room")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(this.page.getByTestId("participants-panel")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(this.page.getByTestId("retro-room")).toBeVisible();
+    await expect(this.page.getByTestId("participants-panel")).toBeVisible();
   }
 
   async getRetroKey(): Promise<string> {
@@ -80,36 +80,26 @@ export class RetroRoomPage {
     await expect(async () => {
       const card = this.getCard(cardText);
       await expect(card).toBeVisible();
-      await card
-        .getByLabel(`Move ${cardText}`)
-        .selectOption({ label: columnTitle });
+      await card.dragTo(this.getColumnDropZone(columnTitle));
       await expect(
         this.getColumn(columnTitle).filter({ hasText: cardText }),
       ).toBeVisible();
     }).toPass();
   }
 
-  async groupCards(
-    columnTitle: string,
-    cardTexts: string[],
-    groupTitle: string,
-  ) {
+  async groupCards(columnTitle: string, cardTexts: string[]) {
     const column = this.getColumn(columnTitle);
-    await expect(column.getByLabel(/group title for/i)).toHaveCount(0);
 
     await expect(async () => {
-      for (const cardText of cardTexts) {
-        const card = this.getCard(cardText);
-        await expect(card).toBeVisible();
-        await card.getByLabel(/select|selected/i).check();
+      const [sourceText, targetText] = cardTexts;
+      if (!sourceText || !targetText) {
+        throw new Error("Drag grouping needs at least two cards");
       }
 
-      await expect(this.page.getByLabel(/group title for/i)).toHaveCount(1);
-      await column.getByLabel(/group title for/i).fill(groupTitle);
-      await column.getByRole("button", { name: /^group$/i }).click();
+      await this.getCard(sourceText).dragTo(this.getCard(targetText));
 
-      const group = this.page.getByTestId("retro-card-group").filter({
-        hasText: groupTitle,
+      const group = column.getByTestId("retro-card-group").filter({
+        has: this.getCard(targetText),
       });
       await expect(group).toBeVisible();
       for (const cardText of cardTexts) {
@@ -117,6 +107,29 @@ export class RetroRoomPage {
           group.getByTestId("retro-card").filter({ hasText: cardText }),
         ).toBeVisible();
       }
+    }).toPass();
+  }
+
+  async addCardToGroup(
+    columnTitle: string,
+    cardText: string,
+    existingGroupCardText: string,
+  ) {
+    const column = this.getColumn(columnTitle);
+
+    await expect(async () => {
+      const card = this.getCard(cardText);
+      await expect(card).toBeVisible();
+
+      const group = column.getByTestId("retro-card-group").filter({
+        has: this.getCard(existingGroupCardText),
+      });
+      await expect(group).toBeVisible();
+      await card.dragTo(group);
+
+      await expect(
+        group.getByTestId("retro-card").filter({ hasText: cardText }),
+      ).toBeVisible();
     }).toPass();
   }
 
@@ -195,7 +208,7 @@ export class RetroRoomPage {
     await this.nextPhase();
     await expect(
       this.page.getByRole("heading", { name: /^recap$/i }),
-    ).toBeVisible({ timeout: 15_000 });
+    ).toBeVisible();
   }
 
   getPage() {
