@@ -6,7 +6,9 @@ import type { RetroWorkerEnv } from "@sprintjam/types";
 import {
   checkBotProtection,
   getRetroSessionToken,
+  readJsonBody,
   resolveWorkspaceUserId,
+  secureRandomString,
   validateRequestBodySize,
 } from "@sprintjam/utils";
 
@@ -19,14 +21,12 @@ import { createRateLimit, joinRateLimit } from "../lib/rate-limit";
 import { getRetroStub } from "../lib/retro-room-stub";
 import { jsonError, notFoundResponse, rootResponse } from "../lib/response";
 
+const RETRO_KEY_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const RETRO_KEY_LENGTH = 6;
+const MAX_RETRO_KEY_ATTEMPTS = 5;
+
 function generateRetroKey(): string {
-  const array = new Uint8Array(4);
-  crypto.getRandomValues(array);
-  return Array.from(array)
-    .map((b) => b.toString(36).padStart(2, "0"))
-    .join("")
-    .substring(0, 6)
-    .toUpperCase();
+  return secureRandomString(RETRO_KEY_ALPHABET, RETRO_KEY_LENGTH);
 }
 
 export async function handleRequest(
@@ -118,40 +118,52 @@ async function createRetroController(
     return sizeCheck.response as CfResponse;
   }
 
-  const body = await request.json<{
+  const parsedBody = await readJsonBody<{
     name?: string;
     passcode?: string;
     settings?: Record<string, unknown>;
     templateId?: string;
     avatar?: string;
-  }>();
+  }>(request);
+  if (!parsedBody.ok) {
+    return parsedBody.response as CfResponse;
+  }
+  const body = parsedBody.body;
   const name = typeof body.name === "string" ? body.name.trim() : "";
 
   if (!name) {
     return jsonError("Name is required", 400);
   }
 
-  const retroKey = generateRetroKey();
   const workspaceUserId = await resolveWorkspaceUserId(
     request,
     env.AUTH_WORKER,
   );
 
-  return getRetroStub(env, retroKey).fetch(
-    new Request("https://internal/initialize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        retroKey,
-        moderator: name,
-        passcode: body.passcode,
-        settings: body.settings,
-        templateId: body.templateId,
-        avatar: body.avatar,
-        workspaceUserId,
-      }),
-    }) as unknown as CfRequest,
-  );
+  for (let attempt = 0; attempt < MAX_RETRO_KEY_ATTEMPTS; attempt += 1) {
+    const retroKey = generateRetroKey();
+    const response = await getRetroStub(env, retroKey).fetch(
+      new Request("https://internal/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          retroKey,
+          moderator: name,
+          passcode: body.passcode,
+          settings: body.settings,
+          templateId: body.templateId,
+          avatar: body.avatar,
+          workspaceUserId,
+        }),
+      }) as unknown as CfRequest,
+    );
+
+    if (response.status !== 409) {
+      return response as CfResponse;
+    }
+  }
+
+  return jsonError("Unable to allocate a retro code. Please try again.", 503);
 }
 
 async function joinRetroController(
@@ -176,13 +188,17 @@ async function joinRetroController(
     return sizeCheck.response as CfResponse;
   }
 
-  const body = await request.json<{
+  const parsedBody = await readJsonBody<{
     name?: string;
     retroKey?: string;
     passcode?: string;
     avatar?: string;
     authToken?: string;
-  }>();
+  }>(request);
+  if (!parsedBody.ok) {
+    return parsedBody.response as CfResponse;
+  }
+  const body = parsedBody.body;
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const retroKey =
     typeof body.retroKey === "string" ? body.retroKey.trim().toUpperCase() : "";

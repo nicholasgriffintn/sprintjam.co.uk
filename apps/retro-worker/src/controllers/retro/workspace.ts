@@ -3,6 +3,7 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 import type { RetroWorkerEnv } from "@sprintjam/types";
+import { readJsonBody } from "@sprintjam/utils";
 
 import { jsonError } from "../../lib/response";
 import { validateRetroSessionForKey } from "./session-validation";
@@ -34,12 +35,16 @@ export async function createWorkspaceSessionController(
   request: CfRequest,
   env: RetroWorkerEnv,
 ): Promise<CfResponse> {
-  const body = await request.json<{
+  const parsedBody = await readJsonBody<{
     teamSlug?: string;
     name?: string;
     roomKey?: string;
     metadata?: Record<string, unknown>;
-  }>();
+  }>(request);
+  if (!parsedBody.ok) {
+    return parsedBody.response as CfResponse;
+  }
+  const body = parsedBody.body;
   const teamSlug = typeof body.teamSlug === "string" ? body.teamSlug : "";
   const retroKey =
     typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
@@ -75,9 +80,13 @@ export async function recordWorkspaceActionsController(
   request: CfRequest,
   env: RetroWorkerEnv,
 ): Promise<CfResponse> {
-  const body = await request.json<
+  const parsedBody = await readJsonBody<
     Record<string, unknown> & { roomKey?: string }
-  >();
+  >(request);
+  if (!parsedBody.ok) {
+    return parsedBody.response as CfResponse;
+  }
+  const body = parsedBody.body;
   const retroKey =
     typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
 
@@ -111,7 +120,11 @@ export async function completeWorkspaceSessionController(
   request: CfRequest,
   env: RetroWorkerEnv,
 ): Promise<CfResponse> {
-  const body = await request.json<{ roomKey?: string }>();
+  const parsedBody = await readJsonBody<{ roomKey?: string }>(request);
+  if (!parsedBody.ok) {
+    return parsedBody.response as CfResponse;
+  }
+  const body = parsedBody.body;
   const retroKey =
     typeof body.roomKey === "string" ? body.roomKey.trim().toUpperCase() : "";
 

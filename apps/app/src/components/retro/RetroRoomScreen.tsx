@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { RetroData, RetroPhase } from "@sprintjam/types";
 import { CheckCircle2, Plus, ThumbsUp } from "lucide-react";
 
 import { useRetroHeader } from "@/context/RetroHeaderContext";
+import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { getStoredUserName } from "@/hooks/useUserPersistence";
 import {
   addRetroAction,
@@ -16,15 +17,12 @@ import {
   toggleRetroAction,
   voteRetroCard,
 } from "@/lib/retro-api-service";
-import {
-  completeSessionByRoomKey,
-  recordRetroActionsByRoomKey,
-} from "@/lib/workspace-service";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ShareSessionModal } from "@/components/share/ShareSessionModal";
 import { RetroTimerChip } from "@/components/retro/RetroTimerChip";
+import { useRetroWorkspaceCompletion } from "@/components/retro/useRetroWorkspaceCompletion";
 import { cn } from "@/lib/cn";
 
 interface RetroRoomScreenProps {
@@ -55,6 +53,7 @@ const columnToneClasses = {
 
 export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   const userName = useMemo(() => getStoredUserName(), []);
+  const { isAuthenticated } = useWorkspaceData();
   const {
     setRetroKey,
     setPhase: setHeaderPhase,
@@ -65,8 +64,15 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   } = useRetroHeader();
   const [retro, setRetro] = useState<RetroData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [completionNotice, setCompletionNotice] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [actionTitle, setActionTitle] = useState("");
+  const completedWorkspaceSyncRef = useRef<string | null>(null);
+  const completeWorkspaceHistory = useRetroWorkspaceCompletion({
+    retroData: retro,
+    retroKey,
+    isAuthenticated,
+  });
 
   useEffect(() => {
     setRetroKey(retro?.key ?? retroKey);
@@ -144,6 +150,22 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
     };
   }, [retroKey, userName]);
 
+  useEffect(() => {
+    if (
+      retro?.status !== "completed" ||
+      completedWorkspaceSyncRef.current === retro.key
+    ) {
+      return;
+    }
+
+    completedWorkspaceSyncRef.current = retro.key;
+    completeWorkspaceHistory().then((warning) => {
+      if (warning) {
+        setCompletionNotice(warning);
+      }
+    });
+  }, [completeWorkspaceHistory, retro?.key, retro?.status]);
+
   if (error && !retro) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg items-center px-4">
@@ -191,29 +213,10 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
       if (!isModerator) {
         return;
       }
+      setCompletionNotice(null);
+      completedWorkspaceSyncRef.current = retro.key;
       completeRetro();
-      void Promise.all([
-        recordRetroActionsByRoomKey({
-          roomKey: retro.key,
-          actions: retro.actionItems.map((action) => ({
-            id: action.id,
-            title: action.title,
-            owner: action.owner,
-            completed: action.completed,
-          })),
-        }).catch((actionsError) => {
-          console.warn("Retro completed without workspace action sync", {
-            actionsError,
-          });
-        }),
-        completeSessionByRoomKey(retro.key, "retro").catch(
-          (completionError) => {
-            console.warn("Retro completed without workspace completion sync", {
-              completionError,
-            });
-          },
-        ),
-      ]);
+      completeWorkspaceHistory().then(setCompletionNotice);
       return;
     }
 
@@ -283,6 +286,9 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
         </section>
 
         {error ? <Alert variant="warning">{error}</Alert> : null}
+        {completionNotice ? (
+          <Alert variant="warning">{completionNotice}</Alert>
+        ) : null}
 
         <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="mx-auto w-full overflow-x-auto pb-2">

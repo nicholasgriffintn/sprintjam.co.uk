@@ -20,6 +20,16 @@ export function jsonError(message: string, status = 400): Response {
   });
 }
 
+export async function readJsonBody<T>(
+  request: Request,
+): Promise<{ ok: true; body: T } | { ok: false; response: Response }> {
+  try {
+    return { ok: true, body: await request.json<T>() };
+  } catch {
+    return { ok: false, response: jsonError("Invalid JSON", 400) };
+  }
+}
+
 export function getCookieValue(
   request: Request,
   cookieName: string,

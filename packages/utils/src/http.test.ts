@@ -7,6 +7,7 @@ import {
   getRoomSessionTokenForRoom,
   jsonError,
   isAllowedOrigin,
+  readJsonBody,
   validateRequestBodySize,
 } from "./http";
 
@@ -41,6 +42,30 @@ describe("http utils", () => {
     const response = jsonError("error");
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(response.headers.get("X-Frame-Options")).toBe("DENY");
+  });
+
+  it("reads JSON bodies and returns a controlled error for malformed JSON", async () => {
+    const valid = await readJsonBody<{ ok: boolean }>(
+      new Request("https://example.com", {
+        method: "POST",
+        body: JSON.stringify({ ok: true }),
+      }),
+    );
+    expect(valid).toEqual({ ok: true, body: { ok: true } });
+
+    const invalid = await readJsonBody<{ ok: boolean }>(
+      new Request("https://example.com", {
+        method: "POST",
+        body: "{bad",
+      }),
+    );
+    expect(invalid.ok).toBe(false);
+    if (!invalid.ok) {
+      expect(invalid.response.status).toBe(400);
+      await expect(invalid.response.json()).resolves.toEqual({
+        error: "Invalid JSON",
+      });
+    }
   });
 });
 
