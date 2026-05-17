@@ -32,6 +32,57 @@ describe("validateRetroMessagePayload", () => {
 
     expect(
       validateRetroMessagePayload(
+        JSON.stringify({
+          type: "updateCard",
+          cardId: "card-1",
+          text: "Keep demos smaller",
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      message: {
+        type: "updateCard",
+        cardId: "card-1",
+        text: "Keep demos smaller",
+      },
+    });
+
+    expect(
+      validateRetroMessagePayload(
+        JSON.stringify({
+          type: "moveCard",
+          cardId: "card-1",
+          columnId: "continue",
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      message: {
+        type: "moveCard",
+        cardId: "card-1",
+        columnId: "continue",
+      },
+    });
+
+    expect(
+      validateRetroMessagePayload(
+        JSON.stringify({
+          type: "groupCards",
+          cardIds: ["card-1", "card-2", "card-1"],
+          title: "Release quality",
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      message: {
+        type: "groupCards",
+        cardIds: ["card-1", "card-2"],
+        title: "Release quality",
+      },
+    });
+
+    expect(
+      validateRetroMessagePayload(
         JSON.stringify({ type: "setPhase", phase: "focus" }),
       ),
     ).toEqual({
@@ -41,13 +92,43 @@ describe("validateRetroMessagePayload", () => {
 
     expect(
       validateRetroMessagePayload(
-        JSON.stringify({ type: "addAction", title: "Write the rollout note" }),
+        JSON.stringify({
+          type: "addAction",
+          title: "Write the rollout note",
+          owner: "Ava",
+          dueAt: 1_700_000_000_000,
+          priority: "high",
+        }),
       ),
     ).toEqual({
       ok: true,
       message: {
         type: "addAction",
         title: "Write the rollout note",
+        owner: "Ava",
+        dueAt: 1_700_000_000_000,
+        priority: "high",
+      },
+    });
+
+    expect(
+      validateRetroMessagePayload(
+        JSON.stringify({
+          type: "updateAction",
+          actionId: "action-1",
+          owner: null,
+          dueAt: null,
+          priority: "low",
+        }),
+      ),
+    ).toEqual({
+      ok: true,
+      message: {
+        type: "updateAction",
+        actionId: "action-1",
+        owner: null,
+        dueAt: null,
+        priority: "low",
       },
     });
 
@@ -104,6 +185,18 @@ describe("validateRetroMessagePayload", () => {
     ).toEqual({
       ok: false,
       error: "Timer config is required",
+    });
+    expect(
+      validateRetroMessagePayload(
+        JSON.stringify({
+          type: "groupCards",
+          cardIds: ["card-1"],
+          title: "Too small",
+        }),
+      ),
+    ).toEqual({
+      ok: false,
+      error: "Group title and at least two cards are required",
     });
   });
 });

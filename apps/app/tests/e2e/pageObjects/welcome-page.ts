@@ -20,17 +20,21 @@ export class WelcomePage extends BasePage {
 
   async startCreateRoom() {
     const button = this.page.getByTestId("create-room-button");
-    await expect(button).toBeEnabled();
-    await button.click();
-    await expect(this.page).toHaveURL(/\/create$/);
+    await expect(async () => {
+      await expect(button).toBeEnabled();
+      await button.click();
+      await expect(this.page).toHaveURL(/\/create$/);
+    }).toPass();
     await expect(this.page.getByTestId("create-room-submit")).toBeVisible();
   }
 
   async startJoinRoom() {
     const button = this.page.getByTestId("join-room-button");
-    await expect(button).toBeEnabled();
-    await button.click();
-    await expect(this.page).toHaveURL(/\/join$/);
+    await expect(async () => {
+      await expect(button).toBeEnabled();
+      await button.click();
+      await expect(this.page).toHaveURL(/\/join$/);
+    }).toPass();
     await expect(this.page.getByTestId("join-room-submit")).toBeVisible();
   }
 

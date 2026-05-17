@@ -3,7 +3,10 @@ import type {
   RetroPhase,
   RetroSettings,
 } from "@sprintjam/types";
-import { normaliseRetroSettings } from "@sprintjam/utils";
+import {
+  isWorkspaceActionPriority,
+  normaliseRetroSettings,
+} from "@sprintjam/utils";
 
 const MAX_MESSAGE_CHARS = 10000;
 const MAX_CARD_TEXT_CHARS = 1000;
@@ -50,6 +53,49 @@ export function validateRetroMessagePayload(
       }
       return { ok: true, message: { type: "deleteCard", cardId } };
     }
+    case "updateCard": {
+      const cardId = normaliseText(msg.cardId, 80);
+      const text = normaliseText(msg.text, MAX_CARD_TEXT_CHARS);
+      if (!cardId || !text) {
+        return { ok: false, error: "Card id and text are required" };
+      }
+      return { ok: true, message: { type: "updateCard", cardId, text } };
+    }
+    case "moveCard": {
+      const cardId = normaliseText(msg.cardId, 80);
+      const columnId = normaliseText(msg.columnId, 80);
+      if (!cardId || !columnId) {
+        return { ok: false, error: "Card id and column are required" };
+      }
+      return { ok: true, message: { type: "moveCard", cardId, columnId } };
+    }
+    case "groupCards": {
+      const title = normaliseText(msg.title, 120);
+      const cardIds = Array.isArray(msg.cardIds)
+        ? msg.cardIds.flatMap((cardId) => {
+            const normalised = normaliseText(cardId, 80);
+            return normalised ? [normalised] : [];
+          })
+        : [];
+      const uniqueCardIds = [...new Set(cardIds)].slice(0, 50);
+      if (!title || uniqueCardIds.length < 2) {
+        return {
+          ok: false,
+          error: "Group title and at least two cards are required",
+        };
+      }
+      return {
+        ok: true,
+        message: { type: "groupCards", title, cardIds: uniqueCardIds },
+      };
+    }
+    case "ungroupCard": {
+      const cardId = normaliseText(msg.cardId, 80);
+      if (!cardId) {
+        return { ok: false, error: "Card id is required" };
+      }
+      return { ok: true, message: { type: "ungroupCard", cardId } };
+    }
     case "voteCard": {
       const cardId = normaliseText(msg.cardId, 80);
       if (!cardId) {
@@ -71,10 +117,48 @@ export function validateRetroMessagePayload(
     case "addAction": {
       const title = normaliseText(msg.title, MAX_ACTION_TEXT_CHARS);
       const owner = normaliseOptionalText(msg.owner, 100);
+      const dueAt = normaliseOptionalTimestamp(msg.dueAt);
+      const priority = isWorkspaceActionPriority(msg.priority)
+        ? msg.priority
+        : undefined;
       if (!title) {
         return { ok: false, error: "Action title is required" };
       }
-      return { ok: true, message: { type: "addAction", title, owner } };
+      return {
+        ok: true,
+        message: { type: "addAction", title, owner, dueAt, priority },
+      };
+    }
+    case "updateAction": {
+      const actionId = normaliseText(msg.actionId, 80);
+      if (!actionId) {
+        return { ok: false, error: "Action id is required" };
+      }
+      let title: string | undefined;
+      if (msg.title !== undefined) {
+        const normalisedTitle = normaliseText(msg.title, MAX_ACTION_TEXT_CHARS);
+        if (!normalisedTitle) {
+          return { ok: false, error: "Action title is required" };
+        }
+        title = normalisedTitle;
+      }
+      const owner =
+        msg.owner === null ? null : normaliseOptionalText(msg.owner, 100);
+      const dueAt = normaliseOptionalTimestamp(msg.dueAt);
+      const priority = isWorkspaceActionPriority(msg.priority)
+        ? msg.priority
+        : undefined;
+      return {
+        ok: true,
+        message: {
+          type: "updateAction",
+          actionId,
+          title,
+          owner,
+          dueAt,
+          priority,
+        },
+      };
     }
     case "toggleAction": {
       const actionId = normaliseText(msg.actionId, 80);
@@ -184,4 +268,20 @@ function normaliseOptionalText(
   maxLength: number,
 ): string | undefined {
   return normaliseText(value, maxLength) ?? undefined;
+}
+
+function normaliseOptionalTimestamp(value: unknown): number | null | undefined {
+  if (value === null) {
+    return null;
+  }
+
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    return undefined;
+  }
+
+  return Math.floor(value);
 }

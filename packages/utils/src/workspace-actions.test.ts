@@ -124,6 +124,8 @@ describe("workspace-actions", () => {
           id: "action-1",
           title: "Pair on release checklist",
           owner: "Ava",
+          dueAt: 1_700_000_000_000,
+          priority: "high",
           completed: false,
         },
         {
@@ -142,8 +144,9 @@ describe("workspace-actions", () => {
         sourceRef: "retro-action-14-action-1",
         title: "Pair on release checklist",
         status: "open",
-        priority: "normal",
+        priority: "high",
         ownerName: "Ava",
+        dueAt: 1_700_000_000_000,
         metadata: { retroActionId: "action-1" },
       },
       {
@@ -153,6 +156,7 @@ describe("workspace-actions", () => {
         status: "resolved",
         priority: "normal",
         ownerName: undefined,
+        dueAt: null,
         metadata: { retroActionId: "action-2" },
       },
     ]);

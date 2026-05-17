@@ -45,6 +45,7 @@ import { validateRetroMessagePayload } from "../lib/retro-validation";
 export class RetroRoom {
   private readonly repository: RetroRoomRepository;
   private readonly sessions = new Map<CfWebSocket, RetroSessionInfo>();
+  private socketMutationQueue: Promise<void> = Promise.resolve();
 
   constructor(
     state: DurableObjectState,
@@ -417,13 +418,21 @@ export class RetroRoom {
       return;
     }
 
-    const updated = await this.applyMessage(userName, validation.message);
-    if (updated) {
-      this.broadcast({
-        type: "retroUpdated",
-        retro: toClientRetroData(updated),
-      });
-    }
+    await this.enqueueSocketMutation(async () => {
+      const updated = await this.applyMessage(userName, validation.message);
+      if (updated) {
+        this.broadcast({
+          type: "retroUpdated",
+          retro: toClientRetroData(updated),
+        });
+      }
+    });
+  }
+
+  private enqueueSocketMutation(operation: () => Promise<void>): Promise<void> {
+    const queued = this.socketMutationQueue.then(operation, operation);
+    this.socketMutationQueue = queued.catch(() => undefined);
+    return queued;
   }
 
   private async applyMessage(
@@ -477,6 +486,71 @@ export class RetroRoom {
               }),
           ),
         }));
+      case "updateCard":
+        return this.repository.updateRetroData((current) => ({
+          ...current,
+          cards: current.cards.map((card) => {
+            const canEdit =
+              card.id === message.cardId &&
+              (card.owner === userName ||
+                card.author === userName ||
+                current.moderator === userName);
+            return canEdit ? { ...card, text: message.text } : card;
+          }),
+        }));
+      case "moveCard":
+        if (
+          !retro.template.columns.some(
+            (column) => column.id === message.columnId,
+          )
+        ) {
+          return undefined;
+        }
+        return this.repository.updateRetroData((current) => ({
+          ...current,
+          cards: current.cards.map((card) =>
+            card.id === message.cardId
+              ? { ...card, columnId: message.columnId }
+              : card,
+          ),
+        }));
+      case "groupCards":
+        return this.repository.updateRetroData((current) => {
+          const selectedCardIds = new Set(message.cardIds);
+          const selectedCount = current.cards.filter((card) =>
+            selectedCardIds.has(card.id),
+          ).length;
+          if (selectedCount < 2) {
+            return current;
+          }
+
+          const groupId = generateID();
+          return {
+            ...current,
+            cards: current.cards.map((card) =>
+              selectedCardIds.has(card.id)
+                ? {
+                    ...card,
+                    groupId,
+                    groupTitle: message.title,
+                  }
+                : card,
+            ),
+          };
+        });
+      case "ungroupCard":
+        return this.repository.updateRetroData((current) => ({
+          ...current,
+          cards: current.cards.map((card) =>
+            card.id === message.cardId
+              ? {
+                  ...card,
+                  groupId: undefined,
+                  groupTitle: undefined,
+                }
+              : card,
+          ),
+        }));
       case "voteCard":
         return this.repository.updateRetroData((current) => ({
           ...current,
@@ -523,10 +597,31 @@ export class RetroRoom {
               id: generateID(),
               title: message.title,
               owner: message.owner,
+              dueAt: message.dueAt,
+              priority: message.priority ?? "normal",
               createdAt: Date.now(),
               completed: false,
             },
           ],
+        }));
+      case "updateAction":
+        return this.repository.updateRetroData((current) => ({
+          ...current,
+          actionItems: current.actionItems.map((action) =>
+            action.id === message.actionId
+              ? {
+                  ...action,
+                  title: message.title ?? action.title,
+                  owner:
+                    message.owner === undefined
+                      ? action.owner
+                      : (message.owner ?? undefined),
+                  dueAt:
+                    message.dueAt === undefined ? action.dueAt : message.dueAt,
+                  priority: message.priority ?? action.priority ?? "normal",
+                }
+              : action,
+          ),
         }));
       case "toggleAction":
         return this.repository.updateRetroData((current) => ({
@@ -618,6 +713,9 @@ export class RetroRoom {
   ): boolean {
     return (
       message.type === "updateSettings" ||
+      message.type === "moveCard" ||
+      message.type === "groupCards" ||
+      message.type === "ungroupCard" ||
       message.type === "completeRetro" ||
       message.type === "startTimer" ||
       message.type === "pauseTimer" ||

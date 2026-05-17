@@ -3,6 +3,7 @@ import type {
   RetroPhase,
   RetroServerMessage,
   RetroSettings,
+  WorkspaceActionPriority,
 } from "@sprintjam/types";
 
 import { RETRO_API_BASE_URL, RETRO_WS_BASE_URL } from "@/constants";
@@ -219,6 +220,22 @@ export function sendRetroCard(columnId: string, text: string): void {
   sendWebSocketMessage(activeSocket, { type: "addCard", columnId, text });
 }
 
+export function updateRetroCard(cardId: string, text: string): void {
+  sendWebSocketMessage(activeSocket, { type: "updateCard", cardId, text });
+}
+
+export function moveRetroCard(cardId: string, columnId: string): void {
+  sendWebSocketMessage(activeSocket, { type: "moveCard", cardId, columnId });
+}
+
+export function groupRetroCards(cardIds: string[], title: string): void {
+  sendWebSocketMessage(activeSocket, { type: "groupCards", cardIds, title });
+}
+
+export function ungroupRetroCard(cardId: string): void {
+  sendWebSocketMessage(activeSocket, { type: "ungroupCard", cardId });
+}
+
 export function voteRetroCard(cardId: string): void {
   sendWebSocketMessage(activeSocket, { type: "voteCard", cardId });
 }
@@ -258,8 +275,31 @@ export function extendRetroTimer(seconds: number): void {
   sendWebSocketMessage(activeSocket, { type: "extendTimer", seconds });
 }
 
-export function addRetroAction(title: string, owner?: string): void {
-  sendWebSocketMessage(activeSocket, { type: "addAction", title, owner });
+export function addRetroAction(
+  title: string,
+  options: {
+    owner?: string;
+    dueAt?: number | null;
+    priority?: WorkspaceActionPriority;
+  } = {},
+): void {
+  sendWebSocketMessage(activeSocket, { type: "addAction", title, ...options });
+}
+
+export function updateRetroAction(
+  actionId: string,
+  options: {
+    title?: string;
+    owner?: string | null;
+    dueAt?: number | null;
+    priority?: WorkspaceActionPriority;
+  },
+): void {
+  sendWebSocketMessage(activeSocket, {
+    type: "updateAction",
+    actionId,
+    ...options,
+  });
 }
 
 export function toggleRetroAction(actionId: string, completed: boolean): void {

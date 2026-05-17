@@ -78,6 +78,14 @@ export const MarketingHeader: FC<MarketingHeaderProps> = ({ variant }) => {
             aria-controls={menuId}
             aria-label="Open marketing navigation"
             onClick={() => setIsMenuOpen((open) => !open)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") {
+                return;
+              }
+
+              event.preventDefault();
+              setIsMenuOpen((open) => !open);
+            }}
             className={cn(
               "min-h-9 min-w-9 border-slate-200/80 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white",
               variant === "hero" && "sm:min-h-10 sm:min-w-10",

@@ -27,6 +27,8 @@ const buildRetro = (overrides: Partial<RetroData> = {}): RetroData => ({
       id: "action-1",
       title: "Publish the checklist",
       owner: "Alice",
+      dueAt: 1_700_000_000_000,
+      priority: "high",
       createdAt: 1,
       completed: false,
     },
@@ -48,9 +50,9 @@ const teamSession: TeamSession = {
 };
 
 const createServices = () => ({
-  recordActions: vi.fn<typeof recordRetroActionsByRoomKey>().mockResolvedValue(
-    [],
-  ),
+  recordActions: vi
+    .fn<typeof recordRetroActionsByRoomKey>()
+    .mockResolvedValue([]),
   completeSession: vi
     .fn<typeof completeSessionByRoomKey>()
     .mockResolvedValue(teamSession),
@@ -74,6 +76,8 @@ describe("completeRetroWorkspaceHistory", () => {
           id: "action-1",
           title: "Publish the checklist",
           owner: "Alice",
+          dueAt: 1_700_000_000_000,
+          priority: "high",
           completed: false,
         },
       ],
@@ -120,6 +124,24 @@ describe("completeRetroWorkspaceHistory", () => {
     expect(warning).toBeNull();
     expect(services.recordActions).toHaveBeenCalled();
     expect(services.completeSession).not.toHaveBeenCalled();
+  });
+
+  it("can force workspace session completion when retrying completed retros", async () => {
+    const services = createServices();
+    const retro = buildRetro({ status: "completed", phase: "completed" });
+
+    const warning = await completeRetroWorkspaceHistory(
+      {
+        retroData: retro,
+        retroKey: retro.key,
+        isAuthenticated: true,
+        forceCompleteSession: true,
+      },
+      services,
+    );
+
+    expect(warning).toBeNull();
+    expect(services.completeSession).toHaveBeenCalledWith("RETRO1", "retro");
   });
 
   it("ignores missing workspace sessions", async () => {

@@ -1,5 +1,6 @@
 import type { WebSocket as CfWebSocket } from "@cloudflare/workers-types";
 import type { PasscodeHashPayload, TimerState } from "./room";
+import type { WorkspaceActionPriority } from "./workspace";
 
 export type RetroPhase = "input" | "review" | "focus" | "completed";
 
@@ -31,6 +32,8 @@ export interface RetroCard {
   id: string;
   columnId: string;
   text: string;
+  groupId?: string;
+  groupTitle?: string;
   owner?: string;
   author: string;
   createdAt: number;
@@ -41,6 +44,8 @@ export interface RetroActionItem {
   id: string;
   title: string;
   owner?: string;
+  dueAt?: number | null;
+  priority?: WorkspaceActionPriority;
   createdAt: number;
   completed: boolean;
 }
@@ -88,11 +93,29 @@ export interface RetroSessionInfo {
 
 export type RetroClientMessage =
   | { type: "addCard"; columnId: string; text: string }
+  | { type: "updateCard"; cardId: string; text: string }
+  | { type: "moveCard"; cardId: string; columnId: string }
+  | { type: "groupCards"; cardIds: string[]; title: string }
+  | { type: "ungroupCard"; cardId: string }
   | { type: "deleteCard"; cardId: string }
   | { type: "voteCard"; cardId: string }
   | { type: "setPhase"; phase: RetroPhase }
   | { type: "setReady"; ready: boolean }
-  | { type: "addAction"; title: string; owner?: string }
+  | {
+      type: "addAction";
+      title: string;
+      owner?: string;
+      dueAt?: number | null;
+      priority?: WorkspaceActionPriority;
+    }
+  | {
+      type: "updateAction";
+      actionId: string;
+      title?: string;
+      owner?: string | null;
+      dueAt?: number | null;
+      priority?: WorkspaceActionPriority;
+    }
   | { type: "toggleAction"; actionId: string; completed: boolean }
   | { type: "startTimer" }
   | { type: "pauseTimer" }

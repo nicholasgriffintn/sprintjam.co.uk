@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
+import { enterTextField } from "../helpers/form-fields";
 import { BasePage } from "./base-page";
 
 export class RetroJoinPage extends BasePage {
@@ -16,54 +17,52 @@ export class RetroJoinPage extends BasePage {
     await this.page.goto(path);
     await expect(this.page.locator("#retro-join-name")).toBeVisible();
     if (retroKey) {
+      this.enteredKey = retroKey;
       await expect(this.page.locator("#retro-join-key")).toHaveValue(retroKey);
     }
   }
 
   async fillName(name: string) {
     this.enteredName = name;
-    const nameInput = this.page.locator("#retro-join-name");
-    await nameInput.fill(name);
-    await expect(nameInput).toHaveValue(name);
+    await enterTextField(this.page.locator("#retro-join-name"), name);
   }
 
   async fillKey(retroKey: string) {
     this.enteredKey = retroKey;
-    const keyInput = this.page.locator("#retro-join-key");
-    await keyInput.fill(retroKey);
-    await expect(keyInput).toHaveValue(retroKey);
+    await enterTextField(this.page.locator("#retro-join-key"), retroKey);
   }
 
   async fillPasscode(passcode: string) {
     this.enteredPasscode = passcode;
-    const passcodeInput = this.page.locator("#retro-join-passcode");
-    await passcodeInput.fill(passcode);
-    await expect(passcodeInput).toHaveValue(passcode);
+    await enterTextField(this.page.locator("#retro-join-passcode"), passcode);
   }
 
   async submit() {
     const button = this.page.getByRole("button", { name: /join retro/i });
     await expect(async () => {
       if (this.enteredName) {
-        const nameInput = this.page.locator("#retro-join-name");
-        await nameInput.fill(this.enteredName);
-        await expect(nameInput).toHaveValue(this.enteredName);
+        await enterTextField(
+          this.page.locator("#retro-join-name"),
+          this.enteredName,
+        );
       }
 
       if (this.enteredKey) {
-        const keyInput = this.page.locator("#retro-join-key");
-        await keyInput.fill(this.enteredKey);
-        await expect(keyInput).toHaveValue(this.enteredKey);
+        await enterTextField(
+          this.page.locator("#retro-join-key"),
+          this.enteredKey,
+        );
       }
 
       if (this.enteredPasscode !== null) {
-        const passcodeInput = this.page.locator("#retro-join-passcode");
-        await passcodeInput.fill(this.enteredPasscode);
-        await expect(passcodeInput).toHaveValue(this.enteredPasscode);
+        await enterTextField(
+          this.page.locator("#retro-join-passcode"),
+          this.enteredPasscode,
+        );
       }
 
       await expect(button).toBeEnabled();
-    }).toPass({ timeout: 10_000 });
+    }).toPass();
     await button.click();
   }
 
@@ -74,8 +73,6 @@ export class RetroJoinPage extends BasePage {
   }
 
   async expectAlertMessage(message: string | RegExp) {
-    await expect(this.page.getByRole("alert")).toContainText(message, {
-      timeout: 10_000,
-    });
+    await expect(this.page.getByRole("alert")).toContainText(message);
   }
 }

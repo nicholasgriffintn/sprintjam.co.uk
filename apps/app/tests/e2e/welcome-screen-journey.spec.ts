@@ -61,8 +61,12 @@ test.describe("Welcome screen journey", () => {
     page,
   }) => {
     await page.goto("/create");
-    await enterTextField(page.locator("#create-name"), "Planning Host");
-    await page.getByTestId("create-room-submit").click();
+    const instantCreateSubmit = page.getByTestId("create-room-submit");
+    await expect(async () => {
+      await enterTextField(page.locator("#create-name"), "Planning Host");
+      await expect(instantCreateSubmit).toBeEnabled();
+    }).toPass();
+    await instantCreateSubmit.click();
     await page.getByTestId("avatar-option-robot").first().click();
 
     const releaseCreate = await delayPostResponse(
@@ -86,9 +90,9 @@ test.describe("Welcome screen journey", () => {
     await joinPage.goto("/join");
     await expect(joinPage.locator("#join-name")).toBeVisible();
     await expect(async () => {
-      await joinPage.locator("#join-room-key").fill("PLAN01");
-      await expect(joinPage.locator("#join-room-key")).toHaveValue("PLAN01");
-    }).toPass({ timeout: 10_000 });
+      await enterTextField(joinPage.locator("#join-room-key"), "PLAN01");
+      await expect(joinPage.getByTestId("join-room-submit")).toBeEnabled();
+    }).toPass();
     await joinPage.getByTestId("join-room-submit").click();
     await joinPage.getByTestId("avatar-option-bird").first().click();
 
@@ -98,6 +102,7 @@ test.describe("Welcome screen journey", () => {
       roomResponse("PLAN01", "Planning Host"),
     );
     const joinSubmit = joinPage.getByTestId("join-room-submit");
+    await expect(joinSubmit).toBeEnabled();
     await joinSubmit.click();
     await expectButtonLoading(joinSubmit);
     releaseJoin();

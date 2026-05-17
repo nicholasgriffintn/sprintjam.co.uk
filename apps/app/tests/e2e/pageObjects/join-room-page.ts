@@ -40,9 +40,10 @@ export class JoinRoomPage {
     const avatarOption = this.page.getByTestId(testId).first();
     await expect(avatarOption).toBeVisible();
     await avatarOption.click();
+    await expect(avatarOption).toHaveAttribute("aria-pressed", "true");
     await this.submitCurrentStep();
     if (expectRoom) {
-      await expect(this.page).toHaveURL(/\/room\/[a-z0-9]+$/i);
+      await expect(this.page.getByTestId("participants-panel")).toBeVisible();
     }
   }
 

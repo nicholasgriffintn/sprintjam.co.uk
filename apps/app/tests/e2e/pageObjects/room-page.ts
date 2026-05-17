@@ -76,10 +76,21 @@ export class RoomPage {
     confirmIncompleteWarning = false,
   }: { confirmIncompleteWarning?: boolean } = {}) {
     await this.page.getByTestId("toggle-votes-button").click();
+    await this.page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(resolve)),
+    );
 
-    if (confirmIncompleteWarning) {
-      await this.confirmShowVotesWarningIfPresent();
+    const dialog = this.page.getByRole("alertdialog", { name: "Show votes?" });
+    if ((await dialog.count()) > 0 && (await dialog.isVisible())) {
+      if (!confirmIncompleteWarning) {
+        return;
+      }
+
+      await dialog.getByRole("button", { name: "Show votes" }).click();
+      await expect(dialog).toBeHidden();
     }
+
+    await this.expectResultsVisible();
   }
 
   async confirmShowVotesWarningIfPresent() {

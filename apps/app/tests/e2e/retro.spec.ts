@@ -4,12 +4,12 @@ import {
   createFacilitatorRetro,
   createRetroWithParticipant,
 } from "./helpers/retro-journeys";
-import { enterTextField } from "./helpers/form-fields";
 import {
   delayPostResponse,
   expectButtonLoading,
   retroResponse,
 } from "./helpers/loading-states";
+import { RetroCreatePage } from "./pageObjects/retro-create-page";
 import { RetroJoinPage } from "./pageObjects/retro-join-page";
 
 test.describe("Retro — create and join", () => {
@@ -35,33 +35,51 @@ test.describe("Retro — create and join", () => {
   });
 
   test("create and join submits show loading while requests are pending", async ({
-    page,
+    browser,
   }) => {
-    await page.goto("/retro/create");
-    await enterTextField(page.locator("#retro-create-name"), "Retro Host");
+    const createContext = await browser.newContext();
+    const joinContext = await browser.newContext();
 
-    const releaseCreate = await delayPostResponse(
-      page,
-      "**/api/retros",
-      retroResponse("RET123", "Retro Host"),
-    );
-    const createSubmit = page.getByRole("button", { name: /create retro/i });
-    await createSubmit.click();
-    await expectButtonLoading(createSubmit);
-    releaseCreate();
+    try {
+      const createBrowserPage = await createContext.newPage();
+      const createPage = new RetroCreatePage(createBrowserPage);
+      await createPage.goto();
+      await createPage.fillName("Retro Host");
 
-    await page.goto("/retro/join/RET123");
-    await enterTextField(page.locator("#retro-join-name"), "Retro Guest");
+      const releaseCreate = await delayPostResponse(
+        createBrowserPage,
+        "**/api/retros",
+        retroResponse("RET123", "Retro Host"),
+      );
+      const createSubmit = createBrowserPage.getByRole("button", {
+        name: /create retro/i,
+      });
+      await createPage.submit();
+      await expectButtonLoading(createSubmit);
+      releaseCreate();
+      await expect(createBrowserPage).toHaveURL(/\/retro\/room\/RET123$/);
 
-    const releaseJoin = await delayPostResponse(
-      page,
-      "**/api/retros/join",
-      retroResponse("RET123", "Retro Host"),
-    );
-    const joinSubmit = page.getByRole("button", { name: /join retro/i });
-    await joinSubmit.click();
-    await expectButtonLoading(joinSubmit);
-    releaseJoin();
+      const joinBrowserPage = await joinContext.newPage();
+      const joinPage = new RetroJoinPage(joinBrowserPage);
+      await joinPage.goto("RET123");
+      await joinPage.fillName("Retro Guest");
+
+      const releaseJoin = await delayPostResponse(
+        joinBrowserPage,
+        "**/api/retros/join",
+        retroResponse("RET123", "Retro Host"),
+      );
+      const joinSubmit = joinBrowserPage.getByRole("button", {
+        name: /join retro/i,
+      });
+      await joinPage.submit();
+      await expectButtonLoading(joinSubmit);
+      releaseJoin();
+      await expect(joinBrowserPage).toHaveURL(/\/retro\/room\/RET123$/);
+    } finally {
+      await createContext.close();
+      await joinContext.close();
+    }
   });
 
   test("join screen shows a passcode error for a protected room", async ({
@@ -104,22 +122,36 @@ test.describe("Retro — board collaboration", () => {
     const { facilitatorRoom, participantRoom, cleanup } =
       await createRetroWithParticipant(browser);
     const cardText = "Pair on the release checklist";
+    const movedCardText = "Keep launch notes visible";
+    const editedCardText = "Pair on the launch checklist";
     const actionTitle = "Publish the release checklist";
 
     try {
       await participantRoom.addCard("Start", cardText);
+      await participantRoom.addCard("Continue", movedCardText);
       await facilitatorRoom.expectCardVisible(cardText);
+      await facilitatorRoom.editCard(cardText, editedCardText);
+      await facilitatorRoom.moveCard(movedCardText, "Start");
+      await facilitatorRoom.groupCards(
+        "Start",
+        [editedCardText, movedCardText],
+        "Release readiness",
+      );
 
       await facilitatorRoom.nextPhase();
-      await facilitatorRoom.voteForCard(cardText);
-      await participantRoom.voteForCard(cardText);
-      await facilitatorRoom.expectCardVoteCount(cardText, 2);
+      await facilitatorRoom.voteForCard(editedCardText);
+      await participantRoom.voteForCard(editedCardText);
+      await facilitatorRoom.expectCardVoteCount(editedCardText, 2);
 
       await facilitatorRoom.switchToFocusPhase();
-      await facilitatorRoom.addAction(actionTitle);
+      await facilitatorRoom.addAction(actionTitle, {
+        owner: "Retro Host QA",
+        dueDate: "2026-05-20",
+        priority: "high",
+      });
       await expect(
         participantRoom.getPage().getByText(actionTitle),
-      ).toBeVisible({ timeout: 10_000 });
+      ).toBeVisible();
 
       await facilitatorRoom.completeAction(actionTitle);
       await facilitatorRoom.completeRetro();
@@ -143,10 +175,12 @@ test.describe("Retro — board collaboration", () => {
   });
 
   test("facilitator can mark themselves ready", async ({ browser }) => {
-    const { facilitatorRoom, cleanup } = await createFacilitatorRetro(browser);
+    const { facilitatorRoom, facilitatorName, cleanup } =
+      await createFacilitatorRetro(browser);
 
     try {
       await facilitatorRoom.markReady();
+      await facilitatorRoom.expectParticipantReady(facilitatorName);
     } finally {
       await cleanup();
     }

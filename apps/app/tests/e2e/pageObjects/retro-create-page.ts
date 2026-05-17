@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
+import { enterTextField } from "../helpers/form-fields";
 import { BasePage } from "./base-page";
 
 export class RetroCreatePage extends BasePage {
@@ -20,35 +21,33 @@ export class RetroCreatePage extends BasePage {
 
   async fillName(name: string) {
     this.enteredName = name;
-    const nameInput = this.page.locator("#retro-create-name");
-    await nameInput.fill(name);
-    await expect(nameInput).toHaveValue(name);
+    await enterTextField(this.page.locator("#retro-create-name"), name);
   }
 
   async fillPasscode(passcode: string) {
     this.enteredPasscode = passcode;
-    const passcodeInput = this.page.locator("#retro-create-passcode");
-    await passcodeInput.fill(passcode);
-    await expect(passcodeInput).toHaveValue(passcode);
+    await enterTextField(this.page.locator("#retro-create-passcode"), passcode);
   }
 
   async submit() {
     const button = this.page.getByRole("button", { name: /create retro/i });
     await expect(async () => {
       if (this.enteredName) {
-        const nameInput = this.page.locator("#retro-create-name");
-        await nameInput.fill(this.enteredName);
-        await expect(nameInput).toHaveValue(this.enteredName);
+        await enterTextField(
+          this.page.locator("#retro-create-name"),
+          this.enteredName,
+        );
       }
 
       if (this.enteredPasscode !== null) {
-        const passcodeInput = this.page.locator("#retro-create-passcode");
-        await passcodeInput.fill(this.enteredPasscode);
-        await expect(passcodeInput).toHaveValue(this.enteredPasscode);
+        await enterTextField(
+          this.page.locator("#retro-create-passcode"),
+          this.enteredPasscode,
+        );
       }
 
       await expect(button).toBeEnabled();
-    }).toPass({ timeout: 10_000 });
+    }).toPass();
     await button.click();
   }
 

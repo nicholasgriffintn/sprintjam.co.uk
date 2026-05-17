@@ -58,6 +58,7 @@ export interface WorkspaceActionIntent {
   status?: WorkspaceActionStatus;
   priority?: WorkspaceActionPriority;
   ownerName?: string | null;
+  dueAt?: number | null;
   metadata?: Record<string, unknown> | null;
 }
 
@@ -219,6 +220,8 @@ export function buildRetroActionIntents(
     id?: string | null;
     title?: string | null;
     owner?: string | null;
+    dueAt?: number | null;
+    priority?: WorkspaceActionPriority;
     completed?: boolean;
   }>,
 ): WorkspaceActionIntent[] {
@@ -235,8 +238,11 @@ export function buildRetroActionIntents(
         sourceRef: `retro-action-${sessionId}-${id}`,
         title,
         status: action.completed ? "resolved" : "open",
-        priority: "normal",
+        priority: isWorkspaceActionPriority(action.priority)
+          ? action.priority
+          : "normal",
         ownerName: normaliseOptionalString(action.owner),
+        dueAt: typeof action.dueAt === "number" ? action.dueAt : null,
         metadata: { retroActionId: id },
       },
     ];

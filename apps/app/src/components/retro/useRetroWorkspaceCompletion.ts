@@ -11,6 +11,7 @@ interface CompleteRetroWorkspaceHistoryOptions {
   retroData: RetroData | null;
   retroKey: string;
   isAuthenticated: boolean;
+  forceCompleteSession?: boolean;
 }
 
 interface RetroWorkspaceHistoryServices {
@@ -24,6 +25,8 @@ function buildRetroActionPayload(retroData: RetroData) {
       id: action.id,
       title: action.title,
       owner: action.owner,
+      dueAt: action.dueAt,
+      priority: action.priority,
       completed: action.completed,
     })),
   };
@@ -40,7 +43,8 @@ export async function completeRetroWorkspaceHistory(
     completeSession: completeSessionByRoomKey,
   },
 ): Promise<string | null> {
-  const { retroData, retroKey, isAuthenticated } = options;
+  const { retroData, retroKey, isAuthenticated, forceCompleteSession } =
+    options;
   if (!retroData || !isAuthenticated) {
     return null;
   }
@@ -57,7 +61,7 @@ export async function completeRetroWorkspaceHistory(
     }
   }
 
-  if (retroData.status !== "completed") {
+  if (retroData.status !== "completed" || forceCompleteSession) {
     try {
       await services.completeSession(retroKey, "retro");
     } catch (error) {
@@ -86,11 +90,12 @@ export function useRetroWorkspaceCompletion({
   isAuthenticated,
 }: CompleteRetroWorkspaceHistoryOptions) {
   return useCallback(
-    () =>
+    (options: { forceCompleteSession?: boolean } = {}) =>
       completeRetroWorkspaceHistory({
         retroData,
         retroKey,
         isAuthenticated,
+        forceCompleteSession: options.forceCompleteSession,
       }),
     [isAuthenticated, retroData, retroKey],
   );

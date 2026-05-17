@@ -190,6 +190,8 @@ export interface RecordRetroWorkspaceActionsInput {
     id: string;
     title: string;
     owner?: string | null;
+    dueAt?: number | null;
+    priority?: WorkspaceActionPriority;
     completed?: boolean;
   }>;
 }
