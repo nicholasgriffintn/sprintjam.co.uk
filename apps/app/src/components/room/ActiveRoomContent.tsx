@@ -28,7 +28,6 @@ interface ActiveRoomContentProps {
   canManageQueue: boolean;
   isSpectator: boolean;
   onOpenSettings: (tab?: RoomSettingsTabId) => void;
-  onOpenGames: () => void;
   onOpenCompleteSession: () => void;
   onOpenSummary: (note: string) => void;
 }
@@ -41,7 +40,6 @@ export const ActiveRoomContent = ({
   canManageQueue,
   isSpectator,
   onOpenSettings,
-  onOpenGames,
   onOpenCompleteSession,
   onOpenSummary,
 }: ActiveRoomContentProps) => {
@@ -252,9 +250,10 @@ export const ActiveRoomContent = ({
 
             <Footer
               displayRepoLink={false}
+              displayPartyGames
+              displayFidgetToyLink
               layout="wide"
               fullWidth
-              onOpenGames={onOpenGames}
             />
           </motion.div>
         ) : (
@@ -291,9 +290,10 @@ export const ActiveRoomContent = ({
 
             <Footer
               displayRepoLink={false}
+                displayPartyGames
+                displayFidgetToyLink
               layout="wide"
-              fullWidth
-              onOpenGames={onOpenGames}
+                fullWidth
             />
           </motion.div>
         )}

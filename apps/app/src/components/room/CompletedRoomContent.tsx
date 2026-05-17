@@ -14,7 +14,6 @@ interface CompletedRoomContentProps {
   linkedWorkspaceTeamName: string | null;
   onWorkspaceSessionSaved: (session: TeamSession) => void;
   onOpenRenameWorkspaceSession: () => void;
-  onOpenGames: () => void;
 }
 
 export const CompletedRoomContent = ({
@@ -24,7 +23,6 @@ export const CompletedRoomContent = ({
   linkedWorkspaceTeamName,
   onWorkspaceSessionSaved,
   onOpenRenameWorkspaceSession,
-  onOpenGames,
 }: CompletedRoomContentProps) => {
   const recap = useRoomSessionRecap(roomData, isQueueEnabled);
   const gameTitle = roomData.gameSession
@@ -201,9 +199,10 @@ export const CompletedRoomContent = ({
 
       <Footer
         displayRepoLink={false}
+        displayPartyGames
+        displayFidgetToyLink
         layout="wide"
         fullWidth
-        onOpenGames={onOpenGames}
       />
     </>
   );

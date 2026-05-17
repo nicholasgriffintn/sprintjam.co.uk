@@ -267,6 +267,7 @@ function StandupRoomContent({
         </SurfaceCard>
         <Footer
           displayRepoLink={false}
+          displayFidgetToyLink
           fullWidth={false}
           priorityLinksOnly={true}
         />
@@ -285,6 +286,7 @@ function StandupRoomContent({
         </SurfaceCard>
         <Footer
           displayRepoLink={false}
+          displayFidgetToyLink
           fullWidth={false}
           priorityLinksOnly={true}
         />
@@ -422,6 +424,7 @@ function StandupRoomContent({
           )}
           <Footer
             displayRepoLink={false}
+            displayFidgetToyLink
             layout="wide"
             fullWidth={true}
             priorityLinksOnly={true}

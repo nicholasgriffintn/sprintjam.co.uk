@@ -9,7 +9,6 @@ import { SaveToWorkspaceModal } from "@/components/modals/SaveToWorkspaceModal";
 import ShareRoomModal from "@/components/modals/ShareRoomModal";
 import SettingsModal from "@/components/modals/SettingsModal";
 import { TicketQueueModal } from "@/components/modals/TicketQueueModal";
-import { RoomGamesModal } from "@/components/games/RoomGamesModal";
 import type { RoomData, RoomStats, ServerDefaults } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
 
@@ -41,8 +40,6 @@ interface RoomModalsProps {
   onCloseSaveToWorkspace: () => void;
   onOpenSaveToWorkspace: () => void;
   onWorkspaceSessionSaved: (session: TeamSession) => void;
-  isGamesModalOpen: boolean;
-  onCloseGamesModal: () => void;
 }
 
 export const RoomModals = ({
@@ -73,8 +70,6 @@ export const RoomModals = ({
   onCloseSaveToWorkspace,
   onOpenSaveToWorkspace,
   onWorkspaceSessionSaved,
-  isGamesModalOpen,
-  onCloseGamesModal,
 }: RoomModalsProps) => {
   const { name } = useSessionState();
   const {
@@ -86,7 +81,6 @@ export const RoomModals = ({
     handleDeleteTicket,
     reportRoomError,
     handleCompleteSession,
-    handleStartGame,
   } = useRoomActions();
 
   return (
@@ -107,13 +101,6 @@ export const RoomModals = ({
           />
         )}
       </AnimatePresence>
-
-      <RoomGamesModal
-        isOpen={isGamesModalOpen}
-        roomData={roomData}
-        onClose={onCloseGamesModal}
-        onStartGame={handleStartGame}
-      />
 
       <AnimatePresence>
         {isShareModalOpen && (

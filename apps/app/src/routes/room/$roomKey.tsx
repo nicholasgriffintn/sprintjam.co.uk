@@ -110,7 +110,6 @@ const RoomContent = ({
   const [isCompleteSessionOpen, setIsCompleteSessionOpen] = useState(false);
   const [pendingNextTicket, setPendingNextTicket] = useState(false);
   const [summaryNote, setSummaryNote] = useState("");
-  const [isGamesModalOpen, setIsGamesModalOpen] = useState(false);
   const stats = useRoomStats(roomData);
   useConsensusCelebration({ roomData, stats });
 
@@ -185,7 +184,6 @@ const RoomContent = ({
               onOpenRenameWorkspaceSession={() =>
                 setIsSaveToWorkspaceOpen(true)
               }
-              onOpenGames={() => setIsGamesModalOpen(true)}
             />
           ) : (
             <ActiveRoomContent
@@ -196,7 +194,6 @@ const RoomContent = ({
               canManageQueue={canManageQueue}
               isSpectator={isSpectator}
               onOpenSettings={handleOpenSettings}
-              onOpenGames={() => setIsGamesModalOpen(true)}
               onOpenCompleteSession={() => setIsCompleteSessionOpen(true)}
               onOpenSummary={openSummary}
             />
@@ -255,8 +252,6 @@ const RoomContent = ({
         onCloseSaveToWorkspace={() => setIsSaveToWorkspaceOpen(false)}
         onOpenSaveToWorkspace={() => setIsSaveToWorkspaceOpen(true)}
         onWorkspaceSessionSaved={setLinkedWorkspaceSession}
-        isGamesModalOpen={isGamesModalOpen}
-        onCloseGamesModal={() => setIsGamesModalOpen(false)}
       />
     </div>
   );

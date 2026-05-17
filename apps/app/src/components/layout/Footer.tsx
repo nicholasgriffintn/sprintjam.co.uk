@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Gamepad2, Github, MessageSquare, Joystick } from "lucide-react";
+import { Github, MessageSquare, Joystick } from "lucide-react";
 
 import { Modal } from "@/components/ui/Modal";
 import { FeedbackForm } from "@/components/FeedbackForm";
@@ -9,21 +9,24 @@ import type { AppScreen } from "@/config/routes";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useFidgetToys } from "@/components/easter-eggs/FidgetToyContext";
 import { DarkModeToggle } from "@/components/layout/DarkModeToggle";
+import { FooterPartyGames } from "@/components/layout/FooterPartyGames";
 
 type FooterProps = {
   displayRepoLink?: boolean;
+  displayPartyGames?: boolean;
+  displayFidgetToyLink?: boolean;
   layout?: "standard" | "wide";
   fullWidth?: boolean;
   priorityLinksOnly?: boolean;
-  onOpenGames?: () => void;
 };
 
 export const Footer = ({
   displayRepoLink = true,
+  displayPartyGames = false,
+  displayFidgetToyLink = false,
   layout = "standard",
   fullWidth = true,
   priorityLinksOnly = true,
-  onOpenGames,
 }: FooterProps) => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
@@ -132,27 +135,19 @@ export const Footer = ({
         >
           <DarkModeToggle />
 
-          {onOpenGames ? (
+          {displayPartyGames ? <FooterPartyGames /> : null}
+
+          {displayFidgetToyLink ? (
             <Button
               type="button"
               variant="unstyled"
-              onClick={onOpenGames}
-              className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 shadow-sm transition hover:-translate-y-0.5 dark:border-brand-300/30 dark:bg-brand-400/10 dark:text-brand-100"
+              onClick={openPicker}
+              className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 dark:border-purple-300/30 dark:bg-purple-400/10 dark:text-purple-100"
             >
-              <Gamepad2 className="h-3.5 w-3.5" />
-              Party games
+              <Joystick className="h-3.5 w-3.5" />
+              Fidget box
             </Button>
           ) : null}
-
-          <Button
-            type="button"
-            variant="unstyled"
-            onClick={openPicker}
-            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm transition hover:-translate-y-0.5 hover:border-purple-300 dark:border-purple-300/30 dark:bg-purple-400/10 dark:text-purple-100"
-          >
-            <Joystick className="h-3.5 w-3.5" />
-            Fidget box
-          </Button>
 
           <Button
             type="button"
