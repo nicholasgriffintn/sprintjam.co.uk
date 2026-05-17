@@ -28,7 +28,8 @@ let reconnectTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
 
 type RetroEventMessage =
   | RetroServerMessage
-  | { type: "disconnected"; error: string; reason: "disconnect" };
+  | { type: "disconnected"; error: string; reason: "disconnect" }
+  | { type: "error"; error: string; reason?: "auth" | "disconnect" };
 type RetroEventType = RetroEventMessage["type"];
 
 const eventManager = new EventManager<RetroEventMessage>();
@@ -160,7 +161,16 @@ export function connectRetroWebSocket(
     eventManager.triggerEventListeners(data.type as RetroEventType, data);
   };
 
-  socket.onclose = () => {
+  socket.onclose = (event) => {
+    if (event.code === 4003) {
+      eventManager.triggerEventListeners("error", {
+        type: "error",
+        error: "Session expired. Rejoin this retro to continue.",
+        reason: "auth",
+      });
+      return;
+    }
+
     eventManager.triggerEventListeners("disconnected", {
       type: "disconnected",
       error: "Retro connection closed",

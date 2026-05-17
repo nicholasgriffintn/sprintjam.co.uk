@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -21,11 +22,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-const getInitialTheme = (): Theme => {
-  if (typeof window === "undefined") {
-    return "light";
-  }
-
+const getStoredTheme = (): Theme => {
   try {
     const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === "light" || saved === "dark") {
@@ -43,17 +40,26 @@ const getInitialTheme = (): Theme => {
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
+  const [theme, setTheme] = useState<Theme>("light");
+  const hasResolvedTheme = useRef(false);
 
   useIsomorphicLayoutEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
+
+    const nextTheme = hasResolvedTheme.current ? theme : getStoredTheme();
+    hasResolvedTheme.current = true;
+
+    if (nextTheme !== theme) {
+      setTheme(nextTheme);
+    }
+
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
-    root.classList.add(theme);
+    root.classList.add(nextTheme);
     try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
     } catch {
       // Ignore storage write errors (private mode, etc.)
     }

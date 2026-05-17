@@ -95,4 +95,22 @@ describe("retro-api-service websocket lifecycle", () => {
     expect(MockWebSocket.instances).toHaveLength(2);
     expect(MockWebSocket.instances[1].url).toContain("name=Bob");
   });
+
+  it("does not reconnect after the retro session is rejected", () => {
+    vi.useFakeTimers();
+    const onMessage = vi.fn();
+
+    retroApiService.connectRetroWebSocket("RETRO1", "Alice", onMessage);
+    const socket = MockWebSocket.instances[0];
+
+    socket.onclose?.({ code: 4003, reason: "Invalid session token" });
+    vi.runAllTimers();
+
+    expect(MockWebSocket.instances).toHaveLength(1);
+    expect(onMessage).toHaveBeenCalledWith({
+      type: "error",
+      error: "Session expired. Rejoin this retro to continue.",
+      reason: "auth",
+    });
+  });
 });
