@@ -10,6 +10,8 @@ interface StandupHeaderContextValue {
   setRespondedCount: (count: number) => void;
   participantCount: number;
   setParticipantCount: (count: number) => void;
+  isShareModalOpen: boolean;
+  setIsShareModalOpen: (open: boolean) => void;
 }
 
 const StandupHeaderContext = createContext<StandupHeaderContextValue | null>(
@@ -23,6 +25,7 @@ export function StandupHeaderProvider({ children }: { children: ReactNode }) {
   >(null);
   const [respondedCount, setRespondedCount] = useState(0);
   const [participantCount, setParticipantCount] = useState(0);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   return (
     <StandupHeaderContext.Provider
@@ -35,6 +38,8 @@ export function StandupHeaderProvider({ children }: { children: ReactNode }) {
         setRespondedCount,
         participantCount,
         setParticipantCount,
+        isShareModalOpen,
+        setIsShareModalOpen,
       }}
     >
       {children}

@@ -29,6 +29,7 @@ import { StandupAudienceView } from "@/components/standup/StandupAudienceView";
 import { StandupPresentationView } from "@/components/standup/StandupPresentationView";
 import { StandupResultsPanel } from "@/components/standup/StandupResultsPanel";
 import { StandupSidebar } from "@/components/standup/StandupSidebar";
+import { ShareSessionModal } from "@/components/share/ShareSessionModal";
 import { useStandupWorkspaceCompletion } from "@/components/standup/useStandupWorkspaceCompletion";
 import { consumeStandupNotice } from "@/lib/standup-notice";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
@@ -99,6 +100,8 @@ function StandupRoomContent({
     setStandupStatus,
     setRespondedCount,
     setParticipantCount,
+    isShareModalOpen,
+    setIsShareModalOpen,
   } = useStandupHeader();
   useRecoveryPasskeyNotice({
     feature: "standup",
@@ -133,9 +136,11 @@ function StandupRoomContent({
       setStandupStatus(null);
       setRespondedCount(0);
       setParticipantCount(0);
+      setIsShareModalOpen(false);
     };
   }, [
     standupKey,
+    setIsShareModalOpen,
     setParticipantCount,
     setRespondedCount,
     setStandupKey,
@@ -297,6 +302,19 @@ function StandupRoomContent({
       data-testid="standup-room"
       className="min-h-[calc(100vh-65px)] flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white"
     >
+      <ShareSessionModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        title="Share Standup"
+        sessionType="standup"
+        sessionKey={standupKey}
+        inputId="share-standup-url"
+        inputAriaLabel="Shareable standup URL"
+        copySuccessMessage="Standup link copied"
+        copyErrorMessage="Couldn't copy standup link"
+        qrCodeTitle="QR code for standup invite link"
+        footer="Anyone with this link can join this standup."
+      />
       <motion.div
         className="flex flex-1 flex-col py-0 md:grid md:h-[calc(100vh-65px)] md:grid-cols-[minmax(280px,360px)_1fr] md:items-start md:overflow-hidden"
         initial={{ opacity: 0, y: 20 }}

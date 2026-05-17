@@ -23,6 +23,7 @@ import {
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ShareSessionModal } from "@/components/share/ShareSessionModal";
 import { RetroTimerChip } from "@/components/retro/RetroTimerChip";
 import { cn } from "@/lib/cn";
 
@@ -59,6 +60,8 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
     setPhase: setHeaderPhase,
     setStatus: setHeaderStatus,
     setParticipantCount,
+    isShareModalOpen,
+    setIsShareModalOpen,
   } = useRetroHeader();
   const [retro, setRetro] = useState<RetroData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,12 +78,14 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
       setHeaderPhase(null);
       setHeaderStatus(null);
       setParticipantCount(0);
+      setIsShareModalOpen(false);
     };
   }, [
     retro,
     retroKey,
     setHeaderPhase,
     setHeaderStatus,
+    setIsShareModalOpen,
     setParticipantCount,
     setRetroKey,
   ]);
@@ -220,6 +225,19 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
       data-testid="retro-room"
       className="min-h-[calc(100vh-5rem)] bg-[radial-gradient(circle_at_1px_1px,rgba(100,116,139,0.26)_1px,transparent_0)] [background-size:28px_28px] px-4 py-6 sm:px-6"
     >
+      <ShareSessionModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        title="Share Retro"
+        sessionType="retro"
+        sessionKey={retroKey}
+        inputId="share-retro-url"
+        inputAriaLabel="Shareable retro URL"
+        copySuccessMessage="Retro link copied"
+        copyErrorMessage="Couldn't copy retro link"
+        qrCodeTitle="QR code for retro invite link"
+        footer="Anyone with this link can join this retro."
+      />
       <div className="mx-auto flex w-full max-w-[108rem] flex-col gap-5">
         <section className="flex flex-col gap-3 rounded-2xl border border-white/60 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-950/70 md:flex-row md:items-center md:justify-between">
           <div>

@@ -1,14 +1,6 @@
-import { type FC, useRef, useMemo, lazy, Suspense } from "react";
+import type { FC } from "react";
 
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
-import { FallbackLoading } from "@/components/ui/FallbackLoading";
-import { toast } from "@/components/ui";
-import { copyText } from "@/lib/clipboard";
-
-const QRCodeSVG = lazy(() =>
-  import("qrcode.react").then((module) => ({ default: module.QRCodeSVG })),
-);
+import { ShareSessionModal } from "@/components/share/ShareSessionModal";
 
 interface ShareRoomModalProps {
   isOpen: boolean;
@@ -21,76 +13,20 @@ const ShareRoomModal: FC<ShareRoomModalProps> = ({
   onClose,
   roomKey,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const shareableUrl = useMemo(() => {
-    if (typeof window === "undefined") {
-      return "";
-    }
-    return `${window.location.origin}/room/${roomKey}`;
-  }, [roomKey]);
-
-  const handleCopy = async () => {
-    if (inputRef.current) {
-      inputRef.current.select();
-      try {
-        await copyText(shareableUrl);
-        toast.success("Room link copied");
-      } catch (error) {
-        console.error("Failed to copy text: ", error);
-        toast.error("Couldn't copy room link");
-      }
-    }
-  };
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Share Room" size="md">
-      <div className="space-y-6">
-        <div>
-          <label
-            htmlFor="share-room-url"
-            className="mb-2 block text-sm text-slate-600 dark:text-slate-300"
-          >
-            Share this link with your team:
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="share-room-url"
-              ref={inputRef}
-              type="text"
-              readOnly
-              value={shareableUrl}
-              aria-label="Shareable room URL"
-              className="flex-1 rounded-2xl border border-white/50 bg-white/80 px-4 py-2.5 text-base text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-200 focus:border-brand-300 dark:border-white/10 dark:bg-slate-900/60 dark:text-white dark:focus:ring-brand-900 dark:focus:border-brand-400"
-            />
-            <Button onClick={handleCopy} variant="primary" size="md">
-              Copy
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <p className="mb-3 text-sm text-slate-600 dark:text-slate-300">
-            Or scan this QR code:
-          </p>
-          <div className="p-4 bg-white/80 dark:bg-slate-900/60 border border-white/50 dark:border-white/10 rounded-2xl shadow-sm">
-            <Suspense fallback={<FallbackLoading />}>
-              <QRCodeSVG
-                value={shareableUrl}
-                size={200}
-                title="QR code for room invite link"
-                role="img"
-                aria-label="QR code for room invite link"
-              />
-            </Suspense>
-          </div>
-        </div>
-
-        <div className="text-sm text-slate-600 dark:text-slate-300 italic">
-          Anyone with this link can join this planning room.
-        </div>
-      </div>
-    </Modal>
+    <ShareSessionModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Share Room"
+      sessionType="room"
+      sessionKey={roomKey}
+      inputId="share-room-url"
+      inputAriaLabel="Shareable room URL"
+      copySuccessMessage="Room link copied"
+      copyErrorMessage="Couldn't copy room link"
+      qrCodeTitle="QR code for room invite link"
+      footer="Anyone with this link can join this planning room."
+    />
   );
 };
 

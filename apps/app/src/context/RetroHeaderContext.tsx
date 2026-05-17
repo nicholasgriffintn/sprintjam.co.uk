@@ -10,6 +10,8 @@ interface RetroHeaderContextValue {
   setStatus: (status: RetroStatus | null) => void;
   participantCount: number;
   setParticipantCount: (count: number) => void;
+  isShareModalOpen: boolean;
+  setIsShareModalOpen: (open: boolean) => void;
 }
 
 const RetroHeaderContext = createContext<RetroHeaderContextValue | null>(null);
@@ -19,6 +21,7 @@ export function RetroHeaderProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<RetroPhase | null>(null);
   const [status, setStatus] = useState<RetroStatus | null>(null);
   const [participantCount, setParticipantCount] = useState(0);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   return (
     <RetroHeaderContext.Provider
@@ -31,6 +34,8 @@ export function RetroHeaderProvider({ children }: { children: ReactNode }) {
         setStatus,
         participantCount,
         setParticipantCount,
+        isShareModalOpen,
+        setIsShareModalOpen,
       }}
     >
       {children}
