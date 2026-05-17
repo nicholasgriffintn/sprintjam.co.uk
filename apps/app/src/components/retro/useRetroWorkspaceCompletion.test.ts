@@ -108,7 +108,7 @@ describe("completeRetroWorkspaceHistory", () => {
     );
 
     expect(warning).toBe(
-      "Auth worker failed The retro is complete, but workspace history was not updated.",
+      "Auth worker failed Workspace history was not updated.",
     );
   });
 

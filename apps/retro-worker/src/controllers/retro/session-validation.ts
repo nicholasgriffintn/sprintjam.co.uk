@@ -14,7 +14,7 @@ export async function validateRetroSessionForKey(
   retroKey: string,
   mode: "any" | "moderator" = "any",
 ): Promise<CfResponse | null> {
-  const sessionToken = getRetroSessionToken(request);
+  const sessionToken = getRetroSessionToken(request, retroKey);
   if (!sessionToken) {
     return jsonError("Retro session is required", 401);
   }

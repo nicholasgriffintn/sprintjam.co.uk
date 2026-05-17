@@ -86,6 +86,7 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
   const [actionDueDate, setActionDueDate] = useState("");
   const [actionPriority, setActionPriority] =
     useState<WorkspaceActionPriority>("normal");
+  const [isCompletingRetro, setIsCompletingRetro] = useState(false);
   const completedWorkspaceSyncRef = useRef<string | null>(null);
   const completeWorkspaceHistory = useRetroWorkspaceCompletion({
     retroData: retro,
@@ -303,17 +304,26 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
     downloadCsv(`retro-${retro.key}-recap.csv`, buildRetroRecapCsv(retro));
   };
 
-  const handleNextPhase = () => {
+  const handleNextPhase = async () => {
     if (nextPhase === "completed") {
-      if (!isModerator) {
+      if (!isModerator || isCompletingRetro) {
         return;
       }
       setCompletionNotice(null);
-      completedWorkspaceSyncRef.current = retro.key;
-      completeRetro();
-      completeWorkspaceHistory({ forceCompleteSession: true }).then(
-        setCompletionNotice,
-      );
+      setIsCompletingRetro(true);
+      try {
+        const warning = await completeWorkspaceHistory({
+          forceCompleteSession: true,
+        });
+        if (warning) {
+          setCompletionNotice(warning);
+          return;
+        }
+        completedWorkspaceSyncRef.current = retro.key;
+        completeRetro();
+      } finally {
+        setIsCompletingRetro(false);
+      }
       return;
     }
 
@@ -384,7 +394,7 @@ export function RetroRoomScreen({ retroKey }: RetroRoomScreenProps) {
                       size="sm"
                       variant="secondary"
                       onClick={() => handleNextPhase()}
-                      disabled={!canUseNextPhase}
+                      disabled={!canUseNextPhase || isCompletingRetro}
                     >
                       Next
                     </Button>

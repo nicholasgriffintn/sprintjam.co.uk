@@ -68,7 +68,7 @@ export async function completeRetroWorkspaceHistory(
       if (!(error instanceof HttpError && error.status === 404)) {
         return workspaceHistoryWarning(
           error,
-          "The retro is complete, but workspace history was not updated.",
+          "Workspace history was not updated.",
         );
       }
     }
@@ -77,7 +77,7 @@ export async function completeRetroWorkspaceHistory(
   if (actionsError) {
     return workspaceHistoryWarning(
       actionsError,
-      "The retro is complete, but workspace actions were not updated.",
+      "Workspace actions were not updated.",
     );
   }
 

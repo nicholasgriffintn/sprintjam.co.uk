@@ -108,4 +108,35 @@ describe("RetroRoom session validation", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ success: true });
   });
+
+  it("rejects structured tokens that belong to another retro", async () => {
+    const response = await validate(
+      createRoom(buildRetro()),
+      "/session/validate-moderator",
+      "RETRO2:moderator-token",
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "Retro session is required",
+    });
+  });
+
+  it("scopes issued retro session cookies to the retro key", async () => {
+    const response = await createRoom().fetch(
+      new Request("https://internal/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          retroKey: "RETRO1",
+          moderator: "Alice",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Set-Cookie")).toMatch(
+      /^retro_session=RETRO1:/,
+    );
+  });
 });

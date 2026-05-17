@@ -97,7 +97,10 @@ export class RetroRoom {
     const url = new URL(request.url);
     const retroKey = url.searchParams.get("retro");
     const userName = url.searchParams.get("name");
-    const sessionToken = getRetroSessionToken(request as unknown as CfRequest);
+    const sessionToken = getRetroSessionToken(
+      request as unknown as CfRequest,
+      retroKey,
+    );
 
     if (!retroKey || !userName || !sessionToken) {
       return new Response("Missing retro key, user name, or session", {
@@ -184,6 +187,7 @@ export class RetroRoom {
         retro: toClientRetroData(retro),
       },
       sessionToken,
+      body.retroKey,
     );
   }
 
@@ -267,18 +271,23 @@ export class RetroRoom {
         retro: toClientRetroData(updated),
       },
       sessionToken,
+      updated.key,
     );
   }
 
   private async handleSettings(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const name = url.searchParams.get("name");
-    const sessionToken = getRetroSessionToken(request as unknown as CfRequest);
     const retro = await this.repository.getRetroData();
 
     if (!retro) {
       return jsonError("Retro not found", 404);
     }
+
+    const sessionToken = getRetroSessionToken(
+      request as unknown as CfRequest,
+      retro.key,
+    );
 
     const canonicalName = name
       ? this.repository.findCanonicalUserNameInData(retro, name)
@@ -302,8 +311,10 @@ export class RetroRoom {
   }
 
   private async handleValidateAnySession(request: Request): Promise<Response> {
-    const token = getRetroSessionToken(request as unknown as CfRequest);
     const retro = await this.repository.getRetroData();
+    const token = retro
+      ? getRetroSessionToken(request as unknown as CfRequest, retro.key)
+      : null;
     if (!token || !retro) {
       return jsonError("Retro session is required", 401);
     }
@@ -321,8 +332,10 @@ export class RetroRoom {
   private async handleValidateModeratorSession(
     request: Request,
   ): Promise<Response> {
-    const token = getRetroSessionToken(request as unknown as CfRequest);
     const retro = await this.repository.getRetroData();
+    const token = retro
+      ? getRetroSessionToken(request as unknown as CfRequest, retro.key)
+      : null;
     if (!token || !retro) {
       return jsonError("Retro session is required", 401);
     }
@@ -801,7 +814,11 @@ export class RetroRoom {
     }
   }
 
-  private buildSessionResponse(body: unknown, sessionToken: string): Response {
+  private buildSessionResponse(
+    body: unknown,
+    sessionToken: string,
+    retroKey: string,
+  ): Response {
     const isSecure = this.env.ENVIRONMENT !== "development";
     const maxAgeSeconds = Math.floor(SESSION_TOKEN_TTL_MS / 1000);
     return new Response(JSON.stringify(body), {
@@ -812,6 +829,7 @@ export class RetroRoom {
           sessionToken,
           maxAgeSeconds,
           isSecure,
+          retroKey,
         ),
       },
     });

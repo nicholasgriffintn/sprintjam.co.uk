@@ -87,7 +87,7 @@ async function handleRetroWebSocket(
   const url = new URL(request.url);
   const retroKey = url.searchParams.get("retro");
   const userName = url.searchParams.get("name");
-  const sessionToken = getRetroSessionToken(request);
+  const sessionToken = getRetroSessionToken(request, retroKey);
 
   if (!retroKey || !userName || !sessionToken) {
     return jsonError("Missing retro key, user name, or session token", 400);
@@ -202,7 +202,8 @@ async function joinRetroController(
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const retroKey =
     typeof body.retroKey === "string" ? body.retroKey.trim().toUpperCase() : "";
-  const sessionToken = getRetroSessionToken(request) ?? body.authToken;
+  const sessionToken =
+    getRetroSessionToken(request, retroKey) ?? body.authToken;
 
   if (!name || !retroKey) {
     return jsonError("Name and retro key are required", 400);
@@ -237,7 +238,7 @@ async function getRetroSettingsController(
   const url = new URL(request.url);
   const retroKey = url.searchParams.get("retroKey");
   const name = url.searchParams.get("name");
-  const sessionToken = getRetroSessionToken(request);
+  const sessionToken = getRetroSessionToken(request, retroKey);
 
   if (!retroKey) {
     return jsonError("Retro key is required", 400);

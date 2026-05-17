@@ -107,13 +107,13 @@ export function getRoomSessionTokenForRoom(
   request: Request,
   roomKey?: string | null,
 ): string | null {
-  const parsed = parseRoomSessionCookie(request);
+  const parsed = parseStructuredSessionCookie(request, "room_session");
   if (!parsed) {
     return null;
   }
 
   const requestedRoomKey = roomKey?.trim().toUpperCase();
-  if (parsed.roomKey && parsed.roomKey !== requestedRoomKey) {
+  if (parsed.sessionKey && parsed.sessionKey !== requestedRoomKey) {
     return null;
   }
 
@@ -128,8 +128,25 @@ export function getStandupSessionToken(request: Request): string | null {
   return getCookieValue(request, "standup_session");
 }
 
-export function getRetroSessionToken(request: Request): string | null {
-  return getCookieValue(request, "retro_session");
+export function getRetroSessionToken(
+  request: Request,
+  retroKey?: string | null,
+): string | null {
+  const parsed = parseStructuredSessionCookie(request, "retro_session");
+  if (!parsed) {
+    return null;
+  }
+
+  const requestedRetroKey = retroKey?.trim().toUpperCase();
+  if (
+    requestedRetroKey &&
+    parsed.sessionKey &&
+    parsed.sessionKey !== requestedRetroKey
+  ) {
+    return null;
+  }
+
+  return parsed.token;
 }
 
 export function createStandupSessionCookie(
@@ -164,9 +181,18 @@ export function createRetroSessionCookie(
   token: string,
   maxAgeSeconds: number,
   isSecure = true,
+  retroKey?: string,
 ): string {
   const secureFlag = isSecure ? " Secure;" : "";
-  return `retro_session=${token}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
+  const normalizedRetroKey = retroKey?.trim().toUpperCase();
+  const hasStructuredRetroKey = Boolean(
+    normalizedRetroKey && /^[A-Z0-9]{4,6}$/.test(normalizedRetroKey),
+  );
+  const cookieValue = hasStructuredRetroKey
+    ? `${normalizedRetroKey}:${token}`
+    : token;
+
+  return `retro_session=${cookieValue}; HttpOnly;${secureFlag} SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}`;
 }
 
 export function clearRetroSessionCookie(isSecure = true): string {
@@ -176,8 +202,15 @@ export function clearRetroSessionCookie(isSecure = true): string {
 
 function parseRoomSessionCookie(
   request: Request,
-): { token: string; roomKey: string | null } | null {
-  const rawValue = getCookieValue(request, "room_session");
+): { token: string; sessionKey: string | null } | null {
+  return parseStructuredSessionCookie(request, "room_session");
+}
+
+function parseStructuredSessionCookie(
+  request: Request,
+  cookieName: string,
+): { token: string; sessionKey: string | null } | null {
+  const rawValue = getCookieValue(request, cookieName);
   if (!rawValue) {
     return null;
   }
@@ -186,23 +219,23 @@ function parseRoomSessionCookie(
   if (separatorIndex <= 0 || separatorIndex >= rawValue.length - 1) {
     return {
       token: rawValue,
-      roomKey: null,
+      sessionKey: null,
     };
   }
 
-  const roomKey = rawValue.slice(0, separatorIndex).toUpperCase();
+  const sessionKey = rawValue.slice(0, separatorIndex).toUpperCase();
   const token = rawValue.slice(separatorIndex + 1);
 
-  if (!/^[A-Z0-9]{4,6}$/.test(roomKey)) {
+  if (!/^[A-Z0-9]{4,6}$/.test(sessionKey)) {
     return {
       token: rawValue,
-      roomKey: null,
+      sessionKey: null,
     };
   }
 
   return {
     token,
-    roomKey,
+    sessionKey,
   };
 }
 

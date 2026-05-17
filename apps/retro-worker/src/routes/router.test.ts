@@ -31,6 +31,17 @@ function createRetroRequest(body: string) {
   });
 }
 
+function joinRetroRequest(body: unknown, cookie?: string) {
+  return new Request("https://sprintjam.co.uk/api/retros/join", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(cookie ? { Cookie: cookie } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 describe("retro router", () => {
   it("returns a controlled error for malformed create JSON", async () => {
     const env = createEnv(vi.fn());
@@ -82,5 +93,45 @@ describe("retro router", () => {
     await expect(response.json()).resolves.toEqual({
       error: "Unable to allocate a retro code. Please try again.",
     });
+  });
+
+  it("forwards matching structured retro session cookies to joins", async () => {
+    const fetch = vi.fn<(request: Request) => Promise<Response>>(async () =>
+      new Response(null, { status: 200 }),
+    );
+    const env = createEnv(fetch);
+
+    const response = await handleRequest(
+      joinRetroRequest(
+        { name: "Alice", retroKey: "retro1" },
+        "retro_session=RETRO1:cookie-token",
+      ),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    const forwardedRequest = fetch.mock.calls[0]?.[0] as Request;
+    expect(forwardedRequest.headers.get("Cookie")).toBe(
+      "retro_session=cookie-token",
+    );
+  });
+
+  it("does not forward mismatched structured retro session cookies to joins", async () => {
+    const fetch = vi.fn<(request: Request) => Promise<Response>>(async () =>
+      new Response(null, { status: 200 }),
+    );
+    const env = createEnv(fetch);
+
+    const response = await handleRequest(
+      joinRetroRequest(
+        { name: "Alice", retroKey: "RETRO1" },
+        "retro_session=RETRO2:cookie-token",
+      ),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    const forwardedRequest = fetch.mock.calls[0]?.[0] as Request;
+    expect(forwardedRequest.headers.get("Cookie")).toBeNull();
   });
 });

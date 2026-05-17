@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   createJsonResponse,
   createRoomSessionCookie,
+  createRetroSessionCookie,
   getRoomSessionToken,
   getRoomSessionTokenForRoom,
+  getRetroSessionToken,
   jsonError,
   isAllowedOrigin,
   readJsonBody,
@@ -183,5 +185,35 @@ describe("room session cookie helpers", () => {
 
     expect(getRoomSessionToken(request)).toBe("legacy-token");
     expect(getRoomSessionTokenForRoom(request, "ABC123")).toBe("legacy-token");
+  });
+});
+
+describe("retro session cookie helpers", () => {
+  it("stores retro key metadata in retro session cookies", () => {
+    const cookie = createRetroSessionCookie("token-abc", 3600, true, "retro1");
+    expect(cookie).toContain("retro_session=RETRO1:token-abc");
+  });
+
+  it("parses structured retro session cookies", () => {
+    const request = new Request("https://sprintjam.co.uk", {
+      headers: {
+        Cookie: "retro_session=RETRO1:token-abc",
+      },
+    });
+
+    expect(getRetroSessionToken(request)).toBe("token-abc");
+    expect(getRetroSessionToken(request, "RETRO1")).toBe("token-abc");
+    expect(getRetroSessionToken(request, "RETRO2")).toBeNull();
+  });
+
+  it("supports existing retro session cookies without retro key metadata", () => {
+    const request = new Request("https://sprintjam.co.uk", {
+      headers: {
+        Cookie: "retro_session=legacy-token",
+      },
+    });
+
+    expect(getRetroSessionToken(request)).toBe("legacy-token");
+    expect(getRetroSessionToken(request, "RETRO1")).toBe("legacy-token");
   });
 });
