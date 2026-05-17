@@ -34,6 +34,20 @@ export interface RouteNavConfig {
   activeForScreens?: string[];
 }
 
+export type SitemapChangeFrequency =
+  | "always"
+  | "hourly"
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
+  | "never";
+
+export interface RouteSitemapConfig {
+  changefreq: SitemapChangeFrequency;
+  priority: number;
+}
+
 export interface RouteLayoutConfig {
   background?: PageBackgroundVariant;
   header?: HeaderVariant;
@@ -45,6 +59,7 @@ export interface RouteDefinition<TScreen extends string = string> {
   path: string | ((params: RoutePathParams) => string);
   group: RouteGroup;
   meta: MetaTagConfig;
+  sitemap?: RouteSitemapConfig;
   nav?: RouteNavConfig;
   layout?: RouteLayoutConfig;
   pathPattern?: RegExp;

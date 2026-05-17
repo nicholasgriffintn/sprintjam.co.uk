@@ -34,10 +34,13 @@ import { useStandupWorkspaceCompletion } from "@/components/standup/useStandupWo
 import { consumeStandupNotice } from "@/lib/standup-notice";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
 import { Footer } from "@/components/layout/Footer";
+import { NOINDEX_ROBOTS } from "@/utils/meta";
 import { createMeta } from "@/utils/route-meta";
 import type { WorkspaceTeam } from "@sprintjam/types";
 
-export const meta = createMeta("standupRoom");
+export const meta = createMeta("standupRoom", ({ params }) =>
+  params.standupKey ? { robots: NOINDEX_ROBOTS } : {},
+);
 
 export function ErrorBoundary() {
   const error = useRouteError();

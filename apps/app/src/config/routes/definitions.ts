@@ -1,7 +1,18 @@
 import { LayoutDashboard, Settings, Target, Users } from "lucide-react";
 
-import type { RouteDefinition } from "./types";
+import type { RouteDefinition, RouteSitemapConfig } from "./types";
 import { SITE_NAME } from "@/constants";
+import { NOINDEX_ROBOTS } from "@/utils/meta";
+
+const SITEMAP = {
+  home: { changefreq: "weekly", priority: 1.0 },
+  primary: { changefreq: "weekly", priority: 0.9 },
+  section: { changefreq: "monthly", priority: 0.8 },
+  page: { changefreq: "monthly", priority: 0.7 },
+  guide: { changefreq: "monthly", priority: 0.6 },
+  changelog: { changefreq: "weekly", priority: 0.5 },
+  legal: { changefreq: "yearly", priority: 0.3 },
+} as const satisfies Record<string, RouteSitemapConfig>;
 
 export const ROUTE_DEFINITIONS = [
   {
@@ -16,6 +27,7 @@ export const ROUTE_DEFINITIONS = [
         "planning poker, agile estimation, scrum poker, story points, sprint planning, agile, scrum, estimation, team collaboration, facilitator selection, async standups",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.home,
     layout: {
       marketingVariant: "hero",
     },
@@ -30,6 +42,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "privacy policy, data protection, privacy, terms",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.legal,
   },
   {
     screen: "terms",
@@ -41,6 +54,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "terms and conditions, terms, conditions",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.legal,
   },
   {
     screen: "changelog",
@@ -52,6 +66,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "changelog, release notes, updates",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.changelog,
   },
   {
     screen: "faq",
@@ -63,6 +78,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "faq, sprintjam help, planning poker guide, scrum estimation",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
   },
   {
     screen: "integrations",
@@ -74,6 +90,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "jira integration, linear integration, github integration",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.section,
   },
   {
     screen: "integrationsJira",
@@ -85,6 +102,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "jira planning poker, jira integration, story point sync",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
   },
   {
     screen: "integrationsLinear",
@@ -96,6 +114,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "linear planning poker, linear integration, story points",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
   },
   {
     screen: "integrationsGithub",
@@ -107,6 +126,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "github planning poker, github integration, issue estimation",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
   },
   {
     screen: "guides",
@@ -119,6 +139,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "planning poker guides, estimation guides, agile guides",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.section,
   },
   {
     screen: "guidesPlanningPoker",
@@ -131,6 +152,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "planning poker guides, estimation guides, agile guides",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesFibonacciScale",
@@ -143,6 +165,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "fibonacci scale, story points, agile estimation",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesFibonacciShort",
@@ -155,6 +178,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "fibonacci short, story points, quick estimation",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesDoublingScale",
@@ -166,6 +190,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "doubling scale, powers of two, estimation",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesTshirtSizing",
@@ -178,6 +203,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "tshirt sizing, relative estimation, agile",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesPlanetScale",
@@ -189,6 +215,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "planet scale, fun estimation, agile games",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesYesNo",
@@ -200,6 +227,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "yes no voting, quick decisions, team voting",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesSimpleScale",
@@ -211,6 +239,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "simple scale, 1-5 scale, easy estimation",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesHoursEstimates",
@@ -222,6 +251,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "hours estimation, time estimates, task planning",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesSessionRoles",
@@ -233,6 +263,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "session roles, moderator, facilitator, scrum master",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesRemoteEstimation",
@@ -244,6 +275,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "remote estimation, distributed teams, online planning poker",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesStoryPoints",
@@ -255,6 +287,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "story points, agile estimation, relative sizing",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesSprintPlanning",
@@ -266,6 +299,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "sprint planning, scrum, agile ceremonies",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesConsensusBuilding",
@@ -277,6 +311,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "consensus building, team alignment, estimation discussions",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "guidesStructuredVoting",
@@ -288,6 +323,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "structured voting, multi-criteria, weighted estimation",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.guide,
   },
   {
     screen: "login",
@@ -299,6 +335,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "login, workspace access, planning poker, estimation rooms, team collaboration",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
   },
   {
@@ -313,6 +350,7 @@ export const ROUTE_DEFINITIONS = [
         "create room, planning poker, estimation session, scrum poker, team estimation",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.primary,
   },
   {
     screen: "join",
@@ -326,6 +364,7 @@ export const ROUTE_DEFINITIONS = [
         "join room, planning poker, estimation session, team collaboration",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
   },
   {
     screen: "room",
@@ -339,6 +378,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "estimation room, planning poker session, real-time voting, story points, sprint planning",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
   },
   {
@@ -350,6 +390,7 @@ export const ROUTE_DEFINITIONS = [
       description: `Launch ${SITE_NAME} planning sessions from a Microsoft Teams chat or channel.`,
       keywords: "microsoft teams planning poker, teams sprint planning",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
     layout: {
       header: "workspace",
@@ -370,6 +411,7 @@ export const ROUTE_DEFINITIONS = [
         "wheel spinner, random picker, team selection, name picker, standup picker",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.section,
   },
   {
     screen: "standup",
@@ -383,6 +425,7 @@ export const ROUTE_DEFINITIONS = [
         "daily standup, standup facilitator, scrum standup, team updates, blockers, agile ceremonies",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.section,
     layout: {
       header: "marketing",
     },
@@ -399,6 +442,7 @@ export const ROUTE_DEFINITIONS = [
         "create standup, standup room, daily updates, agile standup, facilitator",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
     layout: {
       header: "marketing",
     },
@@ -419,6 +463,7 @@ export const ROUTE_DEFINITIONS = [
         "join standup, standup key, daily updates, team standup, agile ceremony",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
     layout: {
       header: "marketing",
     },
@@ -438,6 +483,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "standup room, facilitator controls, blockers, daily standup, scrum ceremony",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
     layout: {
       background: "room",
@@ -455,6 +501,7 @@ export const ROUTE_DEFINITIONS = [
         "retrospective, sprint retro, agile retro, scrum retrospective, retro board",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.section,
     layout: {
       header: "marketing",
     },
@@ -471,6 +518,7 @@ export const ROUTE_DEFINITIONS = [
         "retro templates, retrospective templates, agile retrospective formats",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
     layout: {
       header: "marketing",
     },
@@ -486,6 +534,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "create retro, retrospective room, agile retro board",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
     layout: {
       header: "marketing",
     },
@@ -503,6 +552,7 @@ export const ROUTE_DEFINITIONS = [
       keywords: "join retro, retrospective room, retro code",
       ogImage: "/og-image.png",
     },
+    sitemap: SITEMAP.page,
     layout: {
       header: "marketing",
     },
@@ -519,6 +569,7 @@ export const ROUTE_DEFINITIONS = [
         "Facilitate a live retrospective with cards, voting, focus, and actions.",
       keywords: "retro room, retrospective board, agile retro",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
     layout: {
       background: "room",
@@ -535,6 +586,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "workspace, estimation rooms, planning poker, team collaboration, scrum poker, agile estimation",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
     nav: {
       label: "Dashboard",
@@ -553,6 +605,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "workspace profile, avatar settings, display name, planning poker",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
   },
   {
@@ -566,6 +619,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "planning sessions, estimation rooms, team sessions, scrum poker, agile estimation",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
     nav: {
       label: "Sessions",
@@ -589,6 +643,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "team planning page, team sessions, planning poker, workspace team",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
   },
   {
@@ -602,6 +657,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "workspace admin, team management, workspace settings, administration",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
     nav: {
       label: "Admin",
@@ -626,6 +682,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "team management, create teams, workspace teams, team administration",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
     nav: {
       label: "Teams",
@@ -645,6 +702,7 @@ export const ROUTE_DEFINITIONS = [
       keywords:
         "team settings, default settings, team integrations, jira, linear, github",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
   },
   {
@@ -656,6 +714,7 @@ export const ROUTE_DEFINITIONS = [
       description: `The page you are looking for could not be found. Return to ${SITE_NAME} to create or join an estimation room.`,
       keywords: "404, page not found",
       ogImage: "/og-image.png",
+      robots: NOINDEX_ROBOTS,
     },
   },
 ] as const satisfies readonly RouteDefinition[];

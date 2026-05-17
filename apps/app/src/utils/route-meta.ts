@@ -2,7 +2,7 @@ import type { MetaFunction } from "react-router";
 
 import { getMetaConfig } from "@/config/meta";
 import type { AppScreen } from "@/config/routes";
-import type { MetaTagConfig } from "@/utils/meta";
+import { INDEX_ROBOTS, type MetaTagConfig } from "@/utils/meta";
 
 const SITE_ORIGIN = "https://sprintjam.co.uk";
 const SITE_NAME = "SprintJam";
@@ -58,7 +58,7 @@ function getRouteMeta(config: MetaTagConfig, pathname: string) {
     { name: "twitter:creator", content: TWITTER_HANDLE },
     { name: "twitter:site", content: TWITTER_HANDLE },
     { name: "twitter:image", content: config.twitterImage ?? socialImageUrl },
-    { name: "robots", content: "index, follow, max-image-preview:large" },
+    { name: "robots", content: config.robots ?? INDEX_ROBOTS },
     { name: "application-name", content: SITE_NAME },
     ...(config.jsonLd ? [{ "script:ld+json": config.jsonLd }] : []),
   ];
@@ -66,14 +66,14 @@ function getRouteMeta(config: MetaTagConfig, pathname: string) {
 
 export function createMeta(
   screen: AppScreen,
-  getOverrides?: () => MetaTagConfig,
+  getOverrides?: (args: Parameters<MetaFunction>[0]) => MetaTagConfig,
 ): MetaFunction {
-  return ({ location }) =>
+  return (args) =>
     getRouteMeta(
       {
         ...getMetaConfig(screen),
-        ...getOverrides?.(),
+        ...getOverrides?.(args),
       },
-      location.pathname,
+      args.location.pathname,
     );
 }

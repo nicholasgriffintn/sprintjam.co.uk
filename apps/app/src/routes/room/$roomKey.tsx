@@ -24,9 +24,12 @@ import { useRoomGameOverlay } from "@/hooks/useRoomGameOverlay";
 import { useRoomStats } from "@/hooks/useRoomStats";
 import type { ConnectionStatusState, RoomData, ServerDefaults } from "@/types";
 import type { RoomSettingsTabId } from "@/components/RoomSettingsTabs";
+import { NOINDEX_ROBOTS } from "@/utils/meta";
 import { createMeta } from "@/utils/route-meta";
 
-export const meta = createMeta("room");
+export const meta = createMeta("room", ({ params }) =>
+  params.roomKey ? { robots: NOINDEX_ROBOTS } : {},
+);
 
 export function ErrorBoundary() {
   const error = useRouteError();

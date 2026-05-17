@@ -7,6 +7,10 @@ import type {
 import { createRequestHandler } from "react-router";
 import type { DispatchWorkerEnv } from "@sprintjam/types";
 import * as Sentry from "@sentry/cloudflare";
+import {
+  createRobotsTxtResponse,
+  createSitemapXmlResponse,
+} from "../src/utils/search-indexing";
 
 declare module "react-router" {
   export interface AppLoadContext {
@@ -21,22 +25,6 @@ const requestHandler = createRequestHandler(
   () => import("virtual:react-router/server-build"),
   import.meta.env.MODE,
 );
-
-function handleRobotsTxt(env: DispatchWorkerEnv): CfResponse {
-  const isStaging = env.ENVIRONMENT === "staging";
-  const robotsBody = isStaging
-    ? "User-agent: *\nDisallow: /"
-    : "User-agent: *\nAllow: /\nSitemap: https://sprintjam.co.uk/sitemap.xml";
-
-  // @ts-expect-error - types are weird
-  return new Response(robotsBody, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      ...(isStaging ? { "X-Robots-Tag": "noindex, nofollow" } : {}),
-    },
-  });
-}
 
 export function isAuthWorkerApiPath(path: string): boolean {
   return (
@@ -57,7 +45,13 @@ async function handleRequest(
     const url = new URL(request.url);
 
     if (url.pathname === "/robots.txt") {
-      return handleRobotsTxt(env);
+      // @ts-expect-error - types are weird
+      return createRobotsTxtResponse(env, url);
+    }
+
+    if (url.pathname === "/sitemap.xml") {
+      // @ts-expect-error - types are weird
+      return createSitemapXmlResponse(url);
     }
 
     if (url.pathname.startsWith("/api/")) {

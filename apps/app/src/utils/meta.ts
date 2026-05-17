@@ -1,7 +1,11 @@
+export const INDEX_ROBOTS = "index, follow, max-image-preview:large";
+export const NOINDEX_ROBOTS = "noindex, nofollow";
+
 export interface MetaTagConfig {
   title?: string;
   description?: string;
   keywords?: string;
+  robots?: string;
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
