@@ -235,9 +235,7 @@ test.describe("Jira integration", () => {
       );
       await moderatorRoom.revealVotes();
 
-      await expect
-        .poll(() => storyPointsUpdated)
-        .toBeTruthy();
+      await expect.poll(() => storyPointsUpdated).toBeTruthy();
 
       await page.getByTestId("queue-expand").click();
       const reopenedDialog = page.getByRole("dialog", { name: "Ticket Queue" });

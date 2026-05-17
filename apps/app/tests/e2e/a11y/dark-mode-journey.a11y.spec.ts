@@ -81,9 +81,7 @@ test.describe("Dark Mode Accessibility Journey", () => {
 
     const resultsToggle = page.getByTestId("toggle-votes-button");
     await resultsToggle.click();
-    await page
-      .getByTestId("results-panel")
-      .waitFor({ state: "visible" });
+    await page.getByTestId("results-panel").waitFor({ state: "visible" });
     await waitForA11yReady(page);
     await scrollToBottom(page);
     // Wait for any animations to settle

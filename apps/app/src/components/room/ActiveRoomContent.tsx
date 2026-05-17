@@ -290,10 +290,10 @@ export const ActiveRoomContent = ({
 
             <Footer
               displayRepoLink={false}
-                displayPartyGames
-                displayFidgetToyLink
+              displayPartyGames
+              displayFidgetToyLink
               layout="wide"
-                fullWidth
+              fullWidth
             />
           </motion.div>
         )}

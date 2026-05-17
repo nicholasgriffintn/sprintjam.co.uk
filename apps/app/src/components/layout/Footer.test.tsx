@@ -31,9 +31,7 @@ describe("Footer", () => {
   it("keeps party games hidden by default", () => {
     renderFooter(<Footer />);
 
-    expect(
-      screen.queryByRole("button", { name: "Party games" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Party games" })).toBeNull();
   });
 
   it("shows party games when the display flag is provided", () => {

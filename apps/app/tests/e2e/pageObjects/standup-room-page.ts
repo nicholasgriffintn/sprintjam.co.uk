@@ -128,7 +128,9 @@ export class StandupRoomPage {
   }
 
   async expectCompletedState() {
-    await expect(this.page.getByText(/this standup is complete/i)).toBeVisible();
+    await expect(
+      this.page.getByText(/this standup is complete/i),
+    ).toBeVisible();
   }
 
   async expectStatusBadge(

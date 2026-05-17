@@ -76,7 +76,9 @@ test.describe("Recovery passkey notification", () => {
 
     await page.getByLabel("Close notification").click();
 
-    await expect(page.getByText("Save your recovery passkey")).not.toBeVisible();
+    await expect(
+      page.getByText("Save your recovery passkey"),
+    ).not.toBeVisible();
 
     await cleanup();
   });
@@ -101,7 +103,9 @@ test.describe("Recovery passkey notification", () => {
     await page.reload();
     await participantRoom.waitForLoaded();
 
-    await expect(page.getByText("Save your recovery passkey")).not.toBeVisible();
+    await expect(
+      page.getByText("Save your recovery passkey"),
+    ).not.toBeVisible();
 
     await cleanup();
   });

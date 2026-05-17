@@ -96,8 +96,8 @@ describe("retro router", () => {
   });
 
   it("forwards matching structured retro session cookies to joins", async () => {
-    const fetch = vi.fn<(request: Request) => Promise<Response>>(async () =>
-      new Response(null, { status: 200 }),
+    const fetch = vi.fn<(request: Request) => Promise<Response>>(
+      async () => new Response(null, { status: 200 }),
     );
     const env = createEnv(fetch);
 
@@ -117,8 +117,8 @@ describe("retro router", () => {
   });
 
   it("does not forward mismatched structured retro session cookies to joins", async () => {
-    const fetch = vi.fn<(request: Request) => Promise<Response>>(async () =>
-      new Response(null, { status: 200 }),
+    const fetch = vi.fn<(request: Request) => Promise<Response>>(
+      async () => new Response(null, { status: 200 }),
     );
     const env = createEnv(fetch);
 
