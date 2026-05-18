@@ -19,7 +19,6 @@ import { sanitiseAvatarValue } from "@/utils/avatars";
 import { validateName, validatePasscode } from "@/utils/validators";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import { toast } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
@@ -109,9 +108,6 @@ export function RetroCreateScreen() {
         console.warn("Retro created without workspace session link", {
           linkError,
         });
-        toast.error(
-          "The retro is live, but it was not linked into workspace history.",
-        );
       }
 
       persistUserName(normalizedName);

@@ -44,10 +44,6 @@ vi.mock("@/lib/workspace-service", () => ({
   getTeamRetroSettings: vi.fn(),
 }));
 
-vi.mock("@/components/ui", () => ({
-  toast: { error: vi.fn() },
-}));
-
 vi.mock("./useWorkspaceRetroSession", () => ({
   useWorkspaceRetroSession: () => mockEnsureWorkspaceRetroSession,
 }));
