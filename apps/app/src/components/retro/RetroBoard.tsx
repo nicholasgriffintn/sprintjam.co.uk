@@ -401,6 +401,10 @@ export function RetroBoard({
                                   card,
                                   userName,
                                   isModerator,
+                                  hideCardContent: isRetroCardContentHidden(
+                                    retro,
+                                    card,
+                                  ),
                                   editingCard,
                                   activeDragPayload,
                                   activeDropTargetKey,
@@ -425,6 +429,10 @@ export function RetroBoard({
                         card: item.card,
                         userName,
                         isModerator,
+                        hideCardContent: isRetroCardContentHidden(
+                          retro,
+                          item.card,
+                        ),
                         editingCard,
                         activeDragPayload,
                         activeDropTargetKey,
@@ -477,6 +485,7 @@ function renderCard({
   card,
   userName,
   isModerator,
+  hideCardContent,
   editingCard,
   activeDragPayload,
   activeDropTargetKey,
@@ -494,6 +503,7 @@ function renderCard({
   card: RetroCard;
   userName: string;
   isModerator: boolean;
+  hideCardContent: boolean;
   editingCard: { id: string; text: string } | null;
   activeDragPayload: RetroBoardDragPayload | null;
   activeDropTargetKey: string | null;
@@ -520,7 +530,15 @@ function renderCard({
     keyboardDragPayload.cardId === card.id;
   const isPointerDragging =
     activeDragPayload?.type === "card" && activeDragPayload.cardId === card.id;
-  const canDragCard = isModerator && editingCard?.id !== card.id;
+  const canDragCard =
+    isModerator && !hideCardContent && editingCard?.id !== card.id;
+  const canManageCard =
+    !hideCardContent &&
+    ((card.owner ?? card.author) === userName || isModerator);
+  const cardLabel = hideCardContent
+    ? "Hidden retro card"
+    : `Retro card: ${card.text}`;
+  const cardActionLabel = hideCardContent ? "hidden retro card" : card.text;
 
   return (
     <article
@@ -528,7 +546,7 @@ function renderCard({
       data-testid="retro-card"
       data-retro-card-id={card.id}
       tabIndex={isModerator ? 0 : undefined}
-      aria-label={`Retro card: ${card.text}`}
+      aria-label={cardLabel}
       onKeyDown={(event) => onCardKeyDown(event, card.id)}
       className={cn(
         "rounded-xl border border-white/70 bg-white/90 p-3 text-slate-800 shadow-sm outline-none transition dark:border-white/10 dark:bg-slate-950/80 dark:text-slate-100",
@@ -541,7 +559,7 @@ function renderCard({
       {canDragCard ? (
         <button
           type="button"
-          aria-label={`Drag ${card.text}`}
+          aria-label={`Drag ${cardActionLabel}`}
           onPointerDown={(event) =>
             onCardPointerDragStart(event, { type: "card", cardId: card.id })
           }
@@ -582,22 +600,28 @@ function renderCard({
           </div>
         </div>
       ) : (
-        <p className="text-sm">{card.text}</p>
+        <>
+          {hideCardContent ? (
+            <HiddenRetroCardBody />
+          ) : (
+            <p className="text-sm">{card.text}</p>
+          )}
+        </>
       )}
       <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-        <span>{card.author || "Anonymous"}</span>
+        <span>{hideCardContent ? "Hidden" : card.author || "Anonymous"}</span>
         <div className="flex flex-wrap justify-end gap-2">
           <button
             type="button"
             data-testid="retro-card-vote"
-            aria-label={`Vote for ${card.text}`}
+            aria-label={`Vote for ${cardActionLabel}`}
             onClick={() => onVoteCard(card)}
             className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 font-semibold dark:bg-white/10"
           >
             <ThumbsUp className="h-3.5 w-3.5" />
             {card.votes.length}
           </button>
-          {(card.owner ?? card.author) === userName || isModerator ? (
+          {canManageCard ? (
             <button
               type="button"
               onClick={() => onStartCardEdit(card)}
@@ -616,7 +640,7 @@ function renderCard({
               Ungroup
             </button>
           ) : null}
-          {(card.owner ?? card.author) === userName || isModerator ? (
+          {canManageCard ? (
             <button
               type="button"
               onClick={() => onDeleteCard(card.id)}
@@ -628,6 +652,28 @@ function renderCard({
         </div>
       </div>
     </article>
+  );
+}
+
+function HiddenRetroCardBody() {
+  return (
+    <div
+      data-testid="retro-card-hidden-content"
+      aria-hidden="true"
+      className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-100/80 p-3 blur-[1px] dark:border-white/10 dark:bg-white/10"
+    >
+      <div className="h-3 w-11/12 rounded-full bg-slate-300/80 dark:bg-white/25" />
+      <div className="h-3 w-3/4 rounded-full bg-slate-300/70 dark:bg-white/20" />
+      <div className="h-3 w-1/2 rounded-full bg-slate-300/60 dark:bg-white/15" />
+    </div>
+  );
+}
+
+function isRetroCardContentHidden(retro: RetroData, card: RetroCard): boolean {
+  return (
+    retro.phase === "input" &&
+    retro.settings.hideCardsDuringInput &&
+    card.text.length === 0
   );
 }
 

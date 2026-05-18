@@ -23,6 +23,7 @@ export interface RetroTemplate {
 export interface RetroSettings {
   templateId: string;
   anonymousCards: boolean;
+  hideCardsDuringInput: boolean;
   votesPerParticipant: number;
   timerMinutes: number;
   allowParticipantPhaseControl: boolean;
@@ -172,6 +173,7 @@ export interface WorkspaceRetroInsights {
 export const DEFAULT_RETRO_SETTINGS: RetroSettings = {
   templateId: "start-stop-continue",
   anonymousCards: false,
+  hideCardsDuringInput: true,
   votesPerParticipant: 3,
   timerMinutes: 10,
   allowParticipantPhaseControl: false,

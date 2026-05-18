@@ -201,6 +201,7 @@ export function normaliseRetroSettings(
       ? merged.templateId
       : DEFAULT_RETRO_SETTINGS.templateId,
     anonymousCards: Boolean(merged.anonymousCards),
+    hideCardsDuringInput: Boolean(merged.hideCardsDuringInput),
     votesPerParticipant,
     timerMinutes,
     allowParticipantPhaseControl: Boolean(merged.allowParticipantPhaseControl),

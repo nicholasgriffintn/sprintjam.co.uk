@@ -23,12 +23,14 @@ describe("retro templates", () => {
         votesPerParticipant: 30,
         timerMinutes: 0,
         anonymousCards: true,
+        hideCardsDuringInput: false,
       }),
     ).toMatchObject({
       templateId: "sailboat",
       votesPerParticipant: 10,
       timerMinutes: 1,
       anonymousCards: true,
+      hideCardsDuringInput: false,
     });
   });
 });

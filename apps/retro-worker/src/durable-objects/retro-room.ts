@@ -184,7 +184,7 @@ export class RetroRoom {
     return this.buildSessionResponse(
       {
         success: true,
-        retro: toClientRetroData(retro),
+        retro: toClientRetroData(retro, body.moderator),
       },
       sessionToken,
       body.retroKey,
@@ -268,7 +268,7 @@ export class RetroRoom {
     return this.buildSessionResponse(
       {
         success: true,
-        retro: toClientRetroData(updated),
+        retro: toClientRetroData(updated, canonicalName),
       },
       sessionToken,
       updated.key,
@@ -398,7 +398,7 @@ export class RetroRoom {
     webSocket.send(
       JSON.stringify({
         type: "initialize",
-        retro: toClientRetroData(connectedRetro ?? retro),
+        retro: toClientRetroData(connectedRetro ?? retro, canonicalName),
       }),
     );
 
@@ -434,10 +434,7 @@ export class RetroRoom {
     await this.enqueueSocketMutation(async () => {
       const updated = await this.applyMessage(userName, validation.message);
       if (updated) {
-        this.broadcast({
-          type: "retroUpdated",
-          retro: toClientRetroData(updated),
-        });
+        this.broadcastRetroUpdated(updated);
       }
     });
   }
@@ -760,10 +757,7 @@ export class RetroRoom {
         user: userName,
         users: retro.users,
       });
-      this.broadcast({
-        type: "retroUpdated",
-        retro: toClientRetroData(retro),
-      });
+      this.broadcastRetroUpdated(retro);
     }
   }
 
@@ -808,6 +802,21 @@ export class RetroRoom {
     for (const [socket, session] of this.sessions.entries()) {
       try {
         session.webSocket.send(json);
+      } catch {
+        this.sessions.delete(socket);
+      }
+    }
+  }
+
+  private broadcastRetroUpdated(retro: RetroStateData): void {
+    for (const [socket, session] of this.sessions.entries()) {
+      try {
+        session.webSocket.send(
+          JSON.stringify({
+            type: "retroUpdated",
+            retro: toClientRetroData(retro, session.userName),
+          }),
+        );
       } catch {
         this.sessions.delete(socket);
       }

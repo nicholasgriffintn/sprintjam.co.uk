@@ -92,6 +92,28 @@ export function RetroSettingsFields({
         <div className="flex items-center justify-between gap-4">
           <div>
             <label
+              htmlFor="retro-hide-cards-during-input"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Hide cards during input
+            </label>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Keep each response private until the team moves to review.
+            </p>
+          </div>
+          <Switch
+            id="retro-hide-cards-during-input"
+            checked={draftSettings.hideCardsDuringInput}
+            onCheckedChange={(checked) =>
+              updateSettings({ hideCardsDuringInput: checked })
+            }
+            disabled={disabled}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <label
               htmlFor="retro-phase-control"
               className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
