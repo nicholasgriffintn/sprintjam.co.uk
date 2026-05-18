@@ -11,7 +11,7 @@ import { getContrastingTextColor } from "@/utils/colors";
 import { getExtraVoteValueSet } from "@/utils/votingOptions";
 import { Button } from "@/components/ui/Button";
 
-const MotionButton = motion(Button);
+const MotionButton = motion.create(Button);
 
 const parseOptionLabel = (optionText: string) => {
   const [first, ...rest] = optionText.split(" ");

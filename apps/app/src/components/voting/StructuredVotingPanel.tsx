@@ -11,7 +11,7 @@ import { TimerChip } from "./TimerChip";
 import { useRoomState } from "@/context/RoomContext";
 import { Button } from "@/components/ui/Button";
 
-const MotionButton = motion(Button);
+const MotionButton = motion.create(Button);
 
 interface StructuredVotingPanelProps {
   criteria: VotingCriterion[];

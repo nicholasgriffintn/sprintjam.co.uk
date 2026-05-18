@@ -17,7 +17,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 const buttonBase =
   " group relative overflow-hidden rounded-xl px-4 py-2 text-sm font-semibold shadow-md hover:shadow-lg";
 
-const MotionButton = motion(Button);
+const MotionButton = motion.create(Button);
 
 export function ResultsControls({
   roomData,

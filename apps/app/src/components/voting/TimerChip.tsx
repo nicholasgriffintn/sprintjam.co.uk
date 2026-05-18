@@ -22,7 +22,7 @@ import {
 import { TIMER_DURATION_PRESETS } from "@/constants";
 import { playChime, primeChimeAudio } from "@/lib/audio";
 
-const MotionButton = motion(Button);
+const MotionButton = motion.create(Button);
 
 export function TimerChip() {
   const { roomData, isModeratorView } = useRoomState();
