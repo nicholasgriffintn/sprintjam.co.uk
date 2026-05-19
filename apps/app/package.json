@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
-    "@sentry/cloudflare": "^10.36.0",
+    "@sentry/cloudflare": "^10.52.0",
     "@sentry/react": "^10.36.0",
     "@sprintjam/types": "workspace:*",
     "@sprintjam/utils": "workspace:*",
