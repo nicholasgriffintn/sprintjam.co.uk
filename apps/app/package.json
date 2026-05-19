@@ -25,7 +25,7 @@
     "generate:types": "react-router typegen && wrangler types --include-runtime=false"
   },
   "dependencies": {
-    "@base-ui/react": "^1.2.0",
+    "@base-ui/react": "^1.4.1",
     "@sentry/cloudflare": "^10.36.0",
     "@sentry/react": "^10.36.0",
     "@sprintjam/types": "workspace:*",
