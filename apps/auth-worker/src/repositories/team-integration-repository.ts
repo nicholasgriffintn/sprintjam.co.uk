@@ -65,6 +65,7 @@ export class TeamIntegrationRepository {
   }
 
   async listIntegrationStatuses(teamId: number) {
+    const now = Date.now();
     const rows = await this.db
       .select({
         provider: teamIntegrations.provider,
@@ -77,7 +78,8 @@ export class TeamIntegrationRepository {
 
     return rows.map((row) => ({
       provider: row.provider as OAuthProvider,
-      connected: true,
+      connected:
+        typeof row.expiresAt === "number" ? row.expiresAt > now : false,
       authorizedBy: row.authorizedBy,
       expiresAt: row.expiresAt,
       metadata:

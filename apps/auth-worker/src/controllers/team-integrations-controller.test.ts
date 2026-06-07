@@ -4,6 +4,7 @@ import { signState } from "@sprintjam/utils";
 
 import {
   initiateTeamOAuthController,
+  handleLinearTeamOAuthCallbackController,
   handleGithubTeamOAuthCallbackController,
   listTeamIntegrationBoardsController,
   searchTeamIntegrationTicketsController,
@@ -17,9 +18,13 @@ const mockWorkspaceMarkChallengeUsed = vi.fn();
 const mockWorkspaceIsOrganisationAdmin = vi.fn();
 const mockGetJiraCredentials = vi.fn();
 const mockGetGithubCredentials = vi.fn();
+const mockSaveLinearCredentials = vi.fn();
+const mockSaveGithubCredentials = vi.fn();
 const mockUpdateTokens = vi.fn();
 const mockFetchJiraBoards = vi.fn();
 const mockFetchGithubRepoIssues = vi.fn();
+const mockGetLinearOrganization = vi.fn();
+const mockGetLinearViewer = vi.fn();
 
 vi.mock("../lib/auth", () => ({
   authenticateRequest: (...args: unknown[]) => mockAuthenticateRequest(...args),
@@ -49,6 +54,14 @@ vi.mock("../repositories/team-integration-repository", () => ({
       return mockGetGithubCredentials(...args);
     }
 
+    saveLinearCredentials(...args: unknown[]) {
+      return mockSaveLinearCredentials(...args);
+    }
+
+    saveGithubCredentials(...args: unknown[]) {
+      return mockSaveGithubCredentials(...args);
+    }
+
     updateTokens(...args: unknown[]) {
       return mockUpdateTokens(...args);
     }
@@ -68,8 +81,8 @@ vi.mock("@sprintjam/services", () => ({
   fetchLinearTeams: vi.fn(),
   findDefaultStoryPointsField: vi.fn(),
   findDefaultSprintField: vi.fn(),
-  getLinearOrganization: vi.fn(),
-  getLinearViewer: vi.fn(),
+  getLinearOrganization: (...args: unknown[]) => mockGetLinearOrganization(...args),
+  getLinearViewer: (...args: unknown[]) => mockGetLinearViewer(...args),
 }));
 
 vi.mock("../repositories/workspace-auth", () => ({
@@ -250,6 +263,77 @@ describe("team integrations OAuth security", () => {
     const html = await response.text();
     expect(html).toContain("Invalid OAuth state");
     expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+
+  it("persists Linear refresh token when callback returns it", async () => {
+    const state = await signState(
+      {
+        teamId: 7,
+        userId: 12,
+        nonce: "linear-callback-nonce",
+      },
+      "linear-secret",
+    );
+    const url = new URL(
+      `https://test/api/teams/integrations/linear/callback?code=abc&state=${encodeURIComponent(state)}`,
+    );
+    mockTeamIsAdmin.mockResolvedValue(true);
+    mockWorkspaceGetChallenge.mockResolvedValue({
+      id: 4,
+      userId: 12,
+      tokenHash: "hash",
+      type: "oauth",
+      metadata: JSON.stringify({ teamId: 7, authorizedBy: "owner@example.com" }),
+      expiresAt: Date.now() + 1000 * 60,
+      usedAt: null,
+    });
+    mockGetLinearOrganization.mockResolvedValue({ id: "linear-org" });
+    mockGetLinearViewer.mockResolvedValue({
+      id: "linear-user",
+      email: "linear-user@example.com",
+    });
+
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            access_token: "linear-token",
+            refresh_token: "linear-refresh-token",
+            token_type: "Bearer",
+            expires_in: 3600,
+            scope: "read write",
+          }),
+          { status: 200 },
+        ),
+      );
+
+    const env = {
+      DB: {} as any,
+      LINEAR_OAUTH_CLIENT_ID: "linear-id",
+      LINEAR_OAUTH_CLIENT_SECRET: "linear-secret",
+      TOKEN_ENCRYPTION_SECRET: "token-secret",
+    } as AuthWorkerEnv;
+
+    const response = await handleLinearTeamOAuthCallbackController(url, env);
+
+    expect(response.status).toBe(200);
+    expect(mockSaveLinearCredentials).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teamId: 7,
+        accessToken: "linear-token",
+        refreshToken: "linear-refresh-token",
+        linearOrganizationId: "linear-org",
+        linearUserId: "linear-user",
+        linearUserEmail: "linear-user@example.com",
+      }),
+    );
+    expect(mockGetLinearOrganization).toHaveBeenCalledWith("linear-token");
+    expect(mockGetLinearViewer).toHaveBeenCalledWith("linear-token");
+    expect(mockWorkspaceMarkChallengeUsed).toHaveBeenCalledWith(4);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     fetchSpy.mockRestore();
   });

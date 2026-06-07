@@ -1054,6 +1054,7 @@ export async function handleLinearTeamOAuthCallbackController(
 
     const tokenData = await tokenResponse.json<{
       access_token: string;
+      refresh_token?: string;
       token_type: string;
       expires_in?: number;
       scope?: string;
@@ -1082,7 +1083,7 @@ export async function handleLinearTeamOAuthCallbackController(
     await integrationRepo.saveLinearCredentials({
       teamId,
       accessToken: tokenData.access_token,
-      refreshToken: null,
+      refreshToken: tokenData.refresh_token || null,
       tokenType: tokenData.token_type,
       expiresAt,
       scope: tokenData.scope ?? null,
@@ -1175,6 +1176,7 @@ export async function handleGithubTeamOAuthCallbackController(
 
     const tokenData = await tokenResponse.json<{
       access_token: string;
+      refresh_token?: string;
       token_type: string;
       scope?: string;
       error?: string;
@@ -1210,7 +1212,7 @@ export async function handleGithubTeamOAuthCallbackController(
     await integrationRepo.saveGithubCredentials({
       teamId,
       accessToken: tokenData.access_token,
-      refreshToken: null,
+      refreshToken: tokenData.refresh_token || null,
       tokenType: tokenData.token_type,
       expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
       scope: tokenData.scope ?? null,
