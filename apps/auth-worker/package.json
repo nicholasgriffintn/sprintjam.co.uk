@@ -34,7 +34,7 @@
     "@vitest/coverage-v8": "4.0.16",
     "drizzle-kit": "0.31.8",
     "typescript": "5.9.3",
-    "vitest": "4.0.16",
+    "vitest": "4.1.0",
     "wrangler": "4.87.0"
   }
 }
