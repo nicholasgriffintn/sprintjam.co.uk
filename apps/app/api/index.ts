@@ -118,7 +118,9 @@ async function handleRequest(
 export default Sentry.withSentry(
   (env: DispatchWorkerEnv) => ({
     dsn: "https://d2b3ceb688e14058bf82a71ed27951c3@ingest.bitwobbly.com/11",
-    tracesSampleRate: 0.1,
+    sampleRate: 1,
+    enableLogs: false,
+    tracesSampleRate: 0,
     enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
   }),
   {

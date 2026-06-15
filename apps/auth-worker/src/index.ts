@@ -7,10 +7,18 @@ import { WorkspaceAuthRepository } from "./repositories/workspace-auth";
 const SENTRY_DSN =
   "https://95460a28df42464d8860431ec35767c7@ingest.bitwobbly.com/12";
 
-export default Sentry.withSentry(
-  (env: AuthWorkerEnv) => ({
+export default Sentry.withSentry<AuthWorkerEnv, unknown>(
+  (env) => ({
     dsn: SENTRY_DSN,
-    tracesSampleRate: 0.1,
+    sampleRate: 1,
+    enableLogs: false,
+    tracesSampleRate: 0,
+    beforeSend(event) {
+      return event.exception?.values?.length ? event : null;
+    },
+    beforeSendTransaction() {
+      return null;
+    },
     enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
   }),
   {
