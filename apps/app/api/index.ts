@@ -115,12 +115,18 @@ async function handleRequest(
   }
 }
 
-export default Sentry.withSentry(
-  (env: DispatchWorkerEnv) => ({
+export default Sentry.withSentry<DispatchWorkerEnv, unknown>(
+  (env) => ({
     dsn: "https://d2b3ceb688e14058bf82a71ed27951c3@ingest.bitwobbly.com/11",
     sampleRate: 1,
     enableLogs: false,
     tracesSampleRate: 0,
+    beforeSend(event) {
+      return event.exception?.values?.length ? event : null;
+    },
+    beforeSendTransaction() {
+      return null;
+    },
     enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
   }),
   {
