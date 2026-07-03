@@ -59,14 +59,14 @@
     "enabled": false,
     "head_sampling_rate": 1,
     "logs": {
-      "enabled": true,
+      "enabled": false,
       "destinations": ["sprint-jam-api-otlp-logs"],
       "head_sampling_rate": 1,
       "persist": true,
       "invocation_logs": false
     },
     "traces": {
-      "enabled": true,
+      "enabled": false,
       "destinations": ["sprint-jam-api-otlp-traces"],
       "persist": true,
       "head_sampling_rate": 1

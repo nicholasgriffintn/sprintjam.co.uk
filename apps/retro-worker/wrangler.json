@@ -64,10 +64,10 @@
     }
   ],
   "observability": {
-    "enabled": true,
+    "enabled": false,
     "head_sampling_rate": 1,
     "logs": {
-      "enabled": true,
+      "enabled": false,
       "head_sampling_rate": 1,
       "invocation_logs": false
     }
