@@ -1,5 +1,9 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { isTeamSlug, validateRequestBodySize } from "@sprintjam/utils";
+import {
+  CACHE_CONTROL,
+  isTeamSlug,
+  validateRequestBodySize,
+} from "@sprintjam/utils";
 
 import {
   requestMagicLinkController,
@@ -929,7 +933,10 @@ export async function handleRequest(
       JSON.stringify({ error: "[auth-worker] Internal Server Error" }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": CACHE_CONTROL.NO_STORE,
+        },
       },
     );
   }

@@ -3,6 +3,9 @@
   "name": "sprintjam",
   "compatibility_date": "2026-04-21",
   "compatibility_flags": ["nodejs_compat"],
+  "cache": {
+    "enabled": true
+  },
   "main": "./api/index.ts",
   "preview_urls": false,
   "workers_dev": false,

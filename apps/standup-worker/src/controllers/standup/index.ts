@@ -13,7 +13,7 @@ import {
   PASSCODE_MIN_LENGTH,
   PASSCODE_MAX_LENGTH,
 } from "@sprintjam/utils";
-import { jsonError } from "../../lib/response";
+import { jsonError, jsonResponse } from "../../lib/response";
 
 export interface StandupRoomHttpContext {
   repository: StandupRoom["repository"];
@@ -123,10 +123,7 @@ async function handleValidateAnySession(
     return jsonError("Invalid session", 401);
   }
 
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return jsonResponse({ success: true });
 }
 
 async function handleValidateModeratorSession(
@@ -152,10 +149,7 @@ async function handleValidateModeratorSession(
     return jsonError("Moderator session is required", 403);
   }
 
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return jsonResponse({ success: true });
 }
 
 async function handleInitialize(

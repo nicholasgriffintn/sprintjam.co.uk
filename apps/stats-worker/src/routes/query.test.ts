@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { StatsWorkerEnv } from "@sprintjam/types";
+import { CACHE_CONTROL } from "@sprintjam/utils";
 
 import {
   getRoomStatsController,
@@ -772,7 +773,11 @@ describe("getTeamStatsController", () => {
 
     const response = await getTeamStatsController(request as any, mockEnv, 1);
 
-    expect(response.headers.get("Cache-Control")).toBe("private, max-age=60");
+    expect(response.headers.get("Cache-Control")).toBe(
+      CACHE_CONTROL.PUBLIC_USER_SHORT,
+    );
+    expect(response.headers.get("Cache-Tag")).toBe("stats, stats-team");
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization");
   });
 });
 
@@ -819,10 +824,14 @@ describe("Cache-Control headers", () => {
       "test-room",
     );
 
-    expect(response.headers.get("Cache-Control")).toBe("private, max-age=60");
+    expect(response.headers.get("Cache-Control")).toBe(
+      CACHE_CONTROL.PUBLIC_USER_SHORT,
+    );
+    expect(response.headers.get("Cache-Tag")).toBe("stats, stats-room");
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization");
   });
 
-  it("getRoomStatsController does not include Cache-Control on error", async () => {
+  it("getRoomStatsController marks errors as no-store", async () => {
     vi.mocked(auth.authenticateRequest).mockResolvedValue({
       status: "error",
       code: "unauthorized",
@@ -838,7 +847,7 @@ describe("Cache-Control headers", () => {
       "test-room",
     );
 
-    expect(response.headers.get("Cache-Control")).toBeNull();
+    expect(response.headers.get("Cache-Control")).toBe(CACHE_CONTROL.NO_STORE);
   });
 
   it("getUserRoomStatsController includes Cache-Control on success", async () => {
@@ -871,7 +880,11 @@ describe("Cache-Control headers", () => {
       "alice",
     );
 
-    expect(response.headers.get("Cache-Control")).toBe("private, max-age=60");
+    expect(response.headers.get("Cache-Control")).toBe(
+      CACHE_CONTROL.PUBLIC_USER_SHORT,
+    );
+    expect(response.headers.get("Cache-Tag")).toBe("stats, stats-user-room");
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization");
   });
 
   it("getBatchRoomStatsController includes Cache-Control on success", async () => {
@@ -901,6 +914,10 @@ describe("Cache-Control headers", () => {
 
     const response = await getBatchRoomStatsController(request as any, mockEnv);
 
-    expect(response.headers.get("Cache-Control")).toBe("private, max-age=60");
+    expect(response.headers.get("Cache-Control")).toBe(
+      CACHE_CONTROL.PUBLIC_USER_SHORT,
+    );
+    expect(response.headers.get("Cache-Tag")).toBe("stats, stats-rooms");
+    expect(response.headers.get("Vary")).toBe("Cookie, Authorization");
   });
 });

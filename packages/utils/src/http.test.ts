@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CACHE_CONTROL,
   createJsonResponse,
   createRoomSessionCookie,
   createRetroSessionCookie,
@@ -18,6 +19,7 @@ describe("http utils", () => {
     const response = createJsonResponse({ ok: true }, 201);
     expect(response.status).toBe(201);
     expect(response.headers.get("Content-Type")).toBe("application/json");
+    expect(response.headers.get("Cache-Control")).toBe(CACHE_CONTROL.NO_STORE);
     await expect(response.json()).resolves.toEqual({ ok: true });
   });
 
@@ -25,6 +27,7 @@ describe("http utils", () => {
     const response = jsonError("nope");
     expect(response.status).toBe(400);
     expect(response.headers.get("Content-Type")).toBe("application/json");
+    expect(response.headers.get("Cache-Control")).toBe(CACHE_CONTROL.NO_STORE);
     await expect(response.json()).resolves.toEqual({ error: "nope" });
   });
 
