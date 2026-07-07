@@ -45,7 +45,10 @@
 import type { VotingCriterion, StructuredVote } from "@sprintjam/types";
 import { getDefaultVotingCriteria } from "@sprintjam/utils";
 
-function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
+function computeWeightedScoreAndRules(
+  criteriaScores: Record<string, number>,
+  votingCriteria: VotingCriterion[] = getDefaultVotingCriteria(),
+): {
   weightedScore: number;
   finalScore: number;
   appliedConversionRules: string[];
@@ -57,94 +60,62 @@ function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
     contributionPercent: number;
   }[];
 } {
-  const maxComplexityScore = 4;
-  const maxConfidenceScore = 4;
-  const maxVolumeScore = 4;
-  const maxUnknownsScore = 2;
-
-  const clampScore = (value: number, max: number) =>
-    Math.min(Math.max(value, 0), max);
-
-  const complexity = clampScore(
-    criteriaScores.complexity ?? 0,
-    maxComplexityScore,
+  const criteria =
+    votingCriteria.length > 0 ? votingCriteria : getDefaultVotingCriteria();
+  const totalWeight = criteria.reduce(
+    (total, criterion) => total + (criterion.weight ?? 0),
+    0,
   );
-  const confidenceInput = clampScore(
-    criteriaScores.confidence ?? 0,
-    maxConfidenceScore,
+  const equalWeight = criteria.length > 0 ? 1 / criteria.length : 0;
+
+  const clampScore = (value: number, min: number, max: number) =>
+    Math.min(Math.max(value, min), max);
+
+  const contributions = criteria.map((criterion) => {
+    const score = clampScore(
+      criteriaScores[criterion.id] ?? criterion.minScore,
+      criterion.minScore,
+      criterion.maxScore,
+    );
+    const range = criterion.maxScore - criterion.minScore;
+    const normalizedScore =
+      range <= 0 ? 0 : (score - criterion.minScore) / range;
+    const contributionRatio =
+      criterion.scoringDirection === "inverse"
+        ? 1 - normalizedScore
+        : normalizedScore;
+    const weight =
+      totalWeight > 0 ? (criterion.weight ?? 0) / totalWeight : equalWeight;
+    const weightPercent = weight * 100;
+
+    return {
+      id: criterion.id,
+      weightPercent,
+      score,
+      maxScore: criterion.maxScore,
+      contributionPercent: contributionRatio * weightPercent,
+    };
+  });
+
+  const weightedScore = contributions.reduce(
+    (total, contribution) => total + contribution.contributionPercent,
+    0,
   );
-  const volume = clampScore(criteriaScores.volume ?? 0, maxVolumeScore);
-  const unknowns = clampScore(criteriaScores.unknowns ?? 0, maxUnknownsScore);
-
-  const complexityWeight = 0.35;
-  const confidenceWeight = 0.25;
-  const volumeWeight = 0.25;
-  const unknownsWeight = 0.15;
-
-  const complexityContribution =
-    (complexity / maxComplexityScore) * (complexityWeight * 100);
-  const confidenceDeficit = maxConfidenceScore - confidenceInput;
-  const confidenceContribution =
-    (confidenceDeficit / maxConfidenceScore) * (confidenceWeight * 100);
-  const volumeContribution = (volume / maxVolumeScore) * (volumeWeight * 100);
-  const unknownsContribution =
-    (unknowns / maxUnknownsScore) * (unknownsWeight * 100);
-
-  const weightedScore =
-    complexityContribution +
-    confidenceContribution +
-    volumeContribution +
-    unknownsContribution;
-
-  const contributions = [
-    {
-      id: "complexity",
-      weightPercent: complexityWeight * 100,
-      score: complexity,
-      maxScore: maxComplexityScore,
-      contributionPercent: complexityContribution,
-    },
-    {
-      id: "confidence",
-      weightPercent: confidenceWeight * 100,
-      score: confidenceInput,
-      maxScore: maxConfidenceScore,
-      contributionPercent: confidenceContribution,
-    },
-    {
-      id: "volume",
-      weightPercent: volumeWeight * 100,
-      score: volume,
-      maxScore: maxVolumeScore,
-      contributionPercent: volumeContribution,
-    },
-    {
-      id: "unknowns",
-      weightPercent: unknownsWeight * 100,
-      score: unknowns,
-      maxScore: maxUnknownsScore,
-      contributionPercent: unknownsContribution,
-    },
-  ];
 
   const appliedConversionRules: string[] = [];
   let finalScore = weightedScore;
 
-  const minUnknowns2Score = 80;
-  const minUnknowns1Score = 35;
-  const minVolume4Score = 80;
+  for (const criterion of criteria) {
+    const score = contributions.find(
+      (contribution) => contribution.id === criterion.id,
+    )?.score;
 
-  if (unknowns === 2) {
-    finalScore = Math.max(finalScore, minUnknowns2Score);
-    appliedConversionRules.push("Unknowns=2 → minimum 8pt");
-  } else if (unknowns === 1) {
-    finalScore = Math.max(finalScore, minUnknowns1Score);
-    appliedConversionRules.push("Unknowns=1 → minimum 3pt");
-  }
-
-  if (volume === 4) {
-    finalScore = Math.max(finalScore, minVolume4Score);
-    appliedConversionRules.push("Volume=4 → minimum 8pt");
+    for (const rule of criterion.conversionRules ?? []) {
+      if (score === rule.score) {
+        finalScore = Math.max(finalScore, rule.minimumPercentageScore);
+        appliedConversionRules.push(rule.label);
+      }
+    }
   }
 
   return { weightedScore, finalScore, appliedConversionRules, contributions };
@@ -152,8 +123,12 @@ function computeWeightedScoreAndRules(criteriaScores: Record<string, number>): {
 
 export function calculateStoryPointsFromStructuredVote(
   criteriaScores: Record<string, number>,
+  votingCriteria: VotingCriterion[] = getDefaultVotingCriteria(),
 ): string | number | undefined {
-  const { finalScore } = computeWeightedScoreAndRules(criteriaScores);
+  const { finalScore } = computeWeightedScoreAndRules(
+    criteriaScores,
+    votingCriteria,
+  );
 
   const max1ptScore = 35;
   const max3ptScore = 50;
@@ -172,11 +147,12 @@ export function calculateStoryPointsFromStructuredVote(
 
 export function createStructuredVote(
   criteriaScores: Record<string, number>,
+  votingCriteria: VotingCriterion[] = getDefaultVotingCriteria(),
 ): StructuredVote {
   const calculatedStoryPoints =
-    calculateStoryPointsFromStructuredVote(criteriaScores);
+    calculateStoryPointsFromStructuredVote(criteriaScores, votingCriteria);
   const { weightedScore, appliedConversionRules, contributions } =
-    computeWeightedScoreAndRules(criteriaScores);
+    computeWeightedScoreAndRules(criteriaScores, votingCriteria);
 
   return {
     criteriaScores,

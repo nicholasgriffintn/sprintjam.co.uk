@@ -82,7 +82,10 @@ export async function handleVote(
   let finalVote: string | number;
   let structuredVotePayload: StructuredVote | null = null;
   if (isStructuredVote(vote)) {
-    const structuredVote = createStructuredVote(vote.criteriaScores);
+    const structuredVote = createStructuredVote(
+      vote.criteriaScores,
+      roomData.settings.votingCriteria,
+    );
     const calculatedPoints = structuredVote.calculatedStoryPoints || "?";
     finalVote = calculatedPoints;
     if (!roomData.structuredVotes) {

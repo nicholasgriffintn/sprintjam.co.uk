@@ -19,7 +19,7 @@
     "@sprintjam/db": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20260115.0",
+    "@cloudflare/workers-types": "5.20260707.1",
     "typescript": "5.9.3"
   }
 }

@@ -25,7 +25,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: 4.107.1
-        version: 4.107.1(@cloudflare/workers-types@4.20260115.0)
+        version: 4.107.1(@cloudflare/workers-types@5.20260707.1)
 
   apps/app:
     dependencies:
@@ -143,7 +143,7 @@ importers:
     dependencies:
       '@sentry/cloudflare':
         specifier: ^10.36.0
-        version: 10.36.0(@cloudflare/workers-types@4.20260115.0)
+        version: 10.36.0(@cloudflare/workers-types@5.20260707.1)
       '@simplewebauthn/server':
         specifier: 13.2.3
         version: 13.2.3
@@ -161,11 +161,11 @@ importers:
         version: link:../../packages/utils
       drizzle-orm:
         specifier: 0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.2(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/api@1.9.1)
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       '@vitest/coverage-v8':
         specifier: 4.0.16
         version: 4.0.16(vitest@4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0))
@@ -180,13 +180,13 @@ importers:
         version: 4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0)
       wrangler:
         specifier: 4.107.1
-        version: 4.107.1(@cloudflare/workers-types@4.20260115.0)
+        version: 4.107.1(@cloudflare/workers-types@5.20260707.1)
 
   apps/retro-worker:
     dependencies:
       '@sentry/cloudflare':
         specifier: ^10.36.0
-        version: 10.36.0(@cloudflare/workers-types@4.20260115.0)
+        version: 10.36.0(@cloudflare/workers-types@5.20260707.1)
       '@sprintjam/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -195,8 +195,8 @@ importers:
         version: link:../../packages/utils
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -205,13 +205,13 @@ importers:
         version: 4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0)
       wrangler:
         specifier: 4.107.1
-        version: 4.107.1(@cloudflare/workers-types@4.20260115.0)
+        version: 4.107.1(@cloudflare/workers-types@5.20260707.1)
 
   apps/room-worker:
     dependencies:
       '@sentry/cloudflare':
         specifier: ^10.36.0
-        version: 10.36.0(@cloudflare/workers-types@4.20260115.0)
+        version: 10.36.0(@cloudflare/workers-types@5.20260707.1)
       '@sprintjam/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -226,11 +226,11 @@ importers:
         version: link:../../packages/utils
       drizzle-orm:
         specifier: 0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.2(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/api@1.9.1)
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       drizzle-kit:
         specifier: 0.31.8
         version: 0.31.8
@@ -242,13 +242,13 @@ importers:
         version: 4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0)
       wrangler:
         specifier: 4.107.1
-        version: 4.107.1(@cloudflare/workers-types@4.20260115.0)
+        version: 4.107.1(@cloudflare/workers-types@5.20260707.1)
 
   apps/standup-worker:
     dependencies:
       '@sentry/cloudflare':
         specifier: ^10.36.0
-        version: 10.36.0(@cloudflare/workers-types@4.20260115.0)
+        version: 10.36.0(@cloudflare/workers-types@5.20260707.1)
       '@sprintjam/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -260,11 +260,11 @@ importers:
         version: link:../../packages/utils
       drizzle-orm:
         specifier: 0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.2(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/api@1.9.1)
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       drizzle-kit:
         specifier: 0.31.8
         version: 0.31.8
@@ -276,13 +276,13 @@ importers:
         version: 4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0)
       wrangler:
         specifier: 4.107.1
-        version: 4.107.1(@cloudflare/workers-types@4.20260115.0)
+        version: 4.107.1(@cloudflare/workers-types@5.20260707.1)
 
   apps/stats-worker:
     dependencies:
       '@sentry/cloudflare':
         specifier: ^10.36.0
-        version: 10.36.0(@cloudflare/workers-types@4.20260115.0)
+        version: 10.36.0(@cloudflare/workers-types@5.20260707.1)
       '@sprintjam/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -294,11 +294,11 @@ importers:
         version: link:../../packages/utils
       drizzle-orm:
         specifier: 0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.2(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/api@1.9.1)
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       '@vitest/coverage-v8':
         specifier: 4.0.16
         version: 4.0.16(vitest@4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0))
@@ -310,13 +310,13 @@ importers:
         version: 4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0)
       wrangler:
         specifier: 4.107.1
-        version: 4.107.1(@cloudflare/workers-types@4.20260115.0)
+        version: 4.107.1(@cloudflare/workers-types@5.20260707.1)
 
   apps/wheel-worker:
     dependencies:
       '@sentry/cloudflare':
         specifier: ^10.36.0
-        version: 10.36.0(@cloudflare/workers-types@4.20260115.0)
+        version: 10.36.0(@cloudflare/workers-types@5.20260707.1)
       '@sprintjam/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -328,11 +328,11 @@ importers:
         version: link:../../packages/utils
       drizzle-orm:
         specifier: 0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.2(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/api@1.9.1)
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       drizzle-kit:
         specifier: 0.31.8
         version: 0.31.8
@@ -344,17 +344,17 @@ importers:
         version: 4.0.16(@opentelemetry/api@1.9.1)(@types/node@25.0.3)(jiti@2.7.0)(jsdom@27.4.0)(lightningcss@1.32.0)
       wrangler:
         specifier: 4.107.1
-        version: 4.107.1(@cloudflare/workers-types@4.20260115.0)
+        version: 4.107.1(@cloudflare/workers-types@5.20260707.1)
 
   packages/db:
     dependencies:
       drizzle-orm:
         specifier: 0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.2(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/api@1.9.1)
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       drizzle-kit:
         specifier: 0.31.8
         version: 0.31.8
@@ -372,8 +372,8 @@ importers:
         version: link:../utils
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -388,8 +388,8 @@ importers:
         version: link:../db
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -404,14 +404,14 @@ importers:
         version: link:../types
       drizzle-orm:
         specifier: 0.45.2
-        version: 0.45.2(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.1)
+        version: 0.45.2(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/api@1.9.1)
       isbot:
         specifier: ^5.1.33
         version: 5.1.33
     devDependencies:
       '@cloudflare/workers-types':
-        specifier: 4.20260115.0
-        version: 4.20260115.0
+        specifier: 5.20260707.1
+        version: 5.20260707.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -711,9 +711,6 @@ packages:
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
-
-  '@cloudflare/workers-types@4.20260115.0':
-    resolution: {integrity: sha512-vi68ZODh6m9fH9wdBOzDsyWgrYRIZbzZEAGGkvFn4b1FQSukxaWS8NAtSd/h9mL4gVK9hG8FEYq/jipdOo4RJg==}
 
   '@cloudflare/workers-types@5.20260707.1':
     resolution: {integrity: sha512-oTiTTaRNR4mMbuiQo2ijAYMAvjFVWn0uDDfawdT2XS4t6hSa7hNPelDV9aWv/pXuz5ew+HPCabE8TMBy7qLwGQ==}
@@ -3785,8 +3782,6 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260702.1':
     optional: true
 
-  '@cloudflare/workers-types@4.20260115.0': {}
-
   '@cloudflare/workers-types@5.20260707.1': {}
 
   '@cspotcode/source-map-support@0.8.1':
@@ -4617,12 +4612,12 @@ snapshots:
       '@sentry-internal/replay-canvas': 10.36.0
       '@sentry/core': 10.36.0
 
-  '@sentry/cloudflare@10.36.0(@cloudflare/workers-types@4.20260115.0)':
+  '@sentry/cloudflare@10.36.0(@cloudflare/workers-types@5.20260707.1)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@sentry/core': 10.36.0
     optionalDependencies:
-      '@cloudflare/workers-types': 4.20260115.0
+      '@cloudflare/workers-types': 5.20260707.1
 
   '@sentry/cloudflare@10.64.0(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))':
     dependencies:
@@ -5303,9 +5298,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260115.0)(@opentelemetry/api@1.9.1):
+  drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260707.1)(@opentelemetry/api@1.9.1):
     optionalDependencies:
-      '@cloudflare/workers-types': 4.20260115.0
+      '@cloudflare/workers-types': 5.20260707.1
       '@opentelemetry/api': 1.9.1
 
   electron-to-chromium@1.5.267: {}
@@ -6160,23 +6155,6 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20260702.1
       '@cloudflare/workerd-linux-arm64': 1.20260702.1
       '@cloudflare/workerd-windows-64': 1.20260702.1
-
-  wrangler@4.107.1(@cloudflare/workers-types@4.20260115.0):
-    dependencies:
-      '@cloudflare/kv-asset-handler': 0.5.0
-      '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260702.1)
-      blake3-wasm: 2.1.5
-      esbuild: 0.28.1
-      miniflare: 4.20260702.0
-      path-to-regexp: 6.3.0
-      unenv: 2.0.0-rc.24
-      workerd: 1.20260702.1
-    optionalDependencies:
-      '@cloudflare/workers-types': 4.20260115.0
-      fsevents: 2.3.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   wrangler@4.107.1(@cloudflare/workers-types@5.20260707.1):
     dependencies:

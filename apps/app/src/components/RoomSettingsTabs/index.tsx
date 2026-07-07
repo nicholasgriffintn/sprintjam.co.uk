@@ -3,6 +3,7 @@ import type {
   VotingSequenceId,
   VotingSequenceTemplate,
   ExtraVoteOption,
+  VotingCriterion,
 } from "@sprintjam/types";
 
 import type { RoomSettings, JudgeAlgorithm } from "@/types";
@@ -13,6 +14,7 @@ import { PermissionsOptions } from "@/components/RoomSettingsTabs/PermissionsOpt
 import { ResultsOptions } from "@/components/RoomSettingsTabs/ResultsOptions";
 import { BackgroundMusic } from "@/components/RoomSettingsTabs/BackgroundMusic";
 import { TicketQueueSettings } from "@/components/RoomSettingsTabs/TicketQueueSettings";
+import { StructuredFieldOptions } from "@/components/RoomSettingsTabs/StructuredFieldOptions";
 import { Tabs } from "@/components/ui";
 import {
   cloneExtraVoteOptions,
@@ -279,6 +281,7 @@ export function RoomSettingsTabs({
       | boolean
       | (string | number)[]
       | JudgeAlgorithm
+      | VotingCriterion[]
       | number
       | string
       | null,
@@ -347,6 +350,10 @@ export function RoomSettingsTabs({
 
       return newSettings;
     });
+  };
+
+  const handleVotingCriteriaChange = (votingCriteria: VotingCriterion[]) => {
+    updateSettings((prev) => ({ ...prev, votingCriteria }));
   };
 
   const handleEstimateOptionsChange = (value: string) => {
@@ -429,6 +436,12 @@ export function RoomSettingsTabs({
                   localSettings={localSettings}
                   handleChange={handleChange}
                 />
+                {localSettings.enableStructuredVoting && (
+                  <StructuredFieldOptions
+                    votingCriteria={localSettings.votingCriteria}
+                    onVotingCriteriaChange={handleVotingCriteriaChange}
+                  />
+                )}
                 <EstimateOptions
                   localSettings={localSettings}
                   defaultSettings={defaultSettings}
