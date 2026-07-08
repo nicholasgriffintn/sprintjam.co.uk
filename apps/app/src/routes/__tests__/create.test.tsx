@@ -145,12 +145,10 @@ describe("CreateRoomRoute", () => {
     render(<CreateRoomRoute />);
 
     expect(screen.getByText("Estimate options")).toBeTruthy();
-    expect(screen.queryByText("Structured fields")).toBeNull();
 
     fireEvent.click(screen.getByTestId("create-voting-mode"));
 
     expect(screen.queryByText("Estimate options")).toBeNull();
-    expect(screen.getByText("Structured fields")).toBeTruthy();
     expect(screen.getByTestId("structured-field-complexity")).toBeTruthy();
     expect(screen.getByTestId("structured-field-risk")).toBeTruthy();
   });

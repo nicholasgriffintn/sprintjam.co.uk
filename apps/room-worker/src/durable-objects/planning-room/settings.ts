@@ -1,8 +1,28 @@
-import type { RoomData } from "@sprintjam/types";
+import type { RoomData, VotingCriterion } from "@sprintjam/types";
 
 import type { PlanningRoom } from ".";
 import { resetVotingState } from "./room-helpers";
 import { applySettingsUpdate } from "../../lib/room-settings";
+
+function getVotingCriteriaSignature(criteria?: VotingCriterion[]) {
+  return JSON.stringify(
+    (criteria ?? []).map((criterion) => ({
+      id: criterion.id,
+      name: criterion.name,
+      description: criterion.description,
+      minScore: criterion.minScore,
+      maxScore: criterion.maxScore,
+      weight: criterion.weight ?? null,
+      scoringDirection: criterion.scoringDirection ?? null,
+      conversionRules:
+        criterion.conversionRules?.map((rule) => ({
+          score: rule.score,
+          minimumPercentageScore: rule.minimumPercentageScore,
+          label: rule.label,
+        })) ?? [],
+    })),
+  );
+}
 
 export async function handleUpdateSettings(
   room: PlanningRoom,
@@ -25,12 +45,14 @@ export async function handleUpdateSettings(
 
   const oldEstimateOptions = roomData.settings.estimateOptions.map(String);
   const oldStructuredVoting = roomData.settings.enableStructuredVoting;
+  const oldVotingCriteria = roomData.settings.votingCriteria;
   const newSettings = applySettingsUpdate({
     currentSettings: roomData.settings,
     settingsUpdate: settings,
   });
   const newEstimateOptions = newSettings.estimateOptions.map(String);
   const newStructuredVoting = newSettings.enableStructuredVoting;
+  const newVotingCriteria = newSettings.votingCriteria;
 
   const estimateOptionsChanged =
     oldEstimateOptions.length !== newEstimateOptions.length ||
@@ -38,11 +60,23 @@ export async function handleUpdateSettings(
 
   const structuredVotingModeChanged =
     oldStructuredVoting !== newStructuredVoting;
+  const structuredVotingCriteriaChanged =
+    newStructuredVoting === true &&
+    settings.votingCriteria !== undefined &&
+    getVotingCriteriaSignature(oldVotingCriteria) !==
+      getVotingCriteriaSignature(newVotingCriteria);
+  const hasCurrentRoundVotingState =
+    Object.keys(roomData.votes).length > 0 ||
+    Object.keys(roomData.structuredVotes ?? {}).length > 0 ||
+    roomData.judgeScore !== null ||
+    roomData.judgeMetadata !== undefined;
 
   const wasAlwaysReveal = roomData.settings.alwaysRevealVotes || false;
 
   roomData.settings = newSettings;
   room.repository.setSettings(roomData.settings);
+
+  let votingStateReset = false;
 
   if (
     newSettings.alwaysRevealVotes &&
@@ -61,11 +95,28 @@ export async function handleUpdateSettings(
 
     if (invalidVotes.length > 0) {
       resetVotingState(room, roomData);
+      votingStateReset = true;
       room.broadcast({
         type: "resetVotes",
       });
     }
-  } else if (structuredVotingModeChanged && !newStructuredVoting) {
+  }
+
+  if (
+    !votingStateReset &&
+    structuredVotingCriteriaChanged &&
+    hasCurrentRoundVotingState
+  ) {
+    resetVotingState(room, roomData);
+    votingStateReset = true;
+    room.broadcast({
+      type: "resetVotes",
+    });
+  } else if (
+    !votingStateReset &&
+    structuredVotingModeChanged &&
+    !newStructuredVoting
+  ) {
     if (
       roomData.structuredVotes &&
       Object.keys(roomData.structuredVotes).length > 0

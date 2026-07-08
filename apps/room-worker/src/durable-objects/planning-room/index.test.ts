@@ -284,6 +284,104 @@ describe("PlanningRoom critical flows", () => {
     );
   });
 
+  it("clears structured votes and judge state when structured voting criteria change", async () => {
+    const state = makeState();
+    const room = new PlanningRoom(state, env);
+    const roomData: RoomData = createInitialRoomData({
+      key: "room-criteria",
+      users: ["mod"],
+      moderator: "mod",
+      connectedUsers: { mod: true },
+      settings: {
+        ...createInitialRoomData({
+          key: "room-criteria",
+          users: [],
+          moderator: "mod",
+          connectedUsers: {},
+        }).settings,
+        enableStructuredVoting: true,
+        enableJudge: true,
+        votingCriteria: [
+          {
+            id: "complexity",
+            name: "Complexity",
+            description: "How complex is the work?",
+            minScore: 1,
+            maxScore: 5,
+          },
+          {
+            id: "unknowns",
+            name: "Unknowns",
+            description: "How many unknowns remain?",
+            minScore: 1,
+            maxScore: 5,
+          },
+        ],
+      },
+    });
+    roomData.votes = { mod: "5" };
+    roomData.structuredVotes = {
+      mod: {
+        criteriaScores: { complexity: 4, unknowns: 3 },
+        calculatedStoryPoints: 5,
+      },
+    };
+    roomData.showVotes = true;
+    roomData.judgeScore = 5;
+    roomData.judgeMetadata = {
+      confidence: "high",
+      needsDiscussion: false,
+      reasoning: "",
+      algorithm: "simpleAverage",
+    } as any;
+
+    const repository = {
+      setSettings: vi.fn(),
+      clearVotes: vi.fn(),
+      clearStructuredVotes: vi.fn(),
+      setShowVotes: vi.fn(),
+      setJudgeState: vi.fn(),
+    } as unknown as PlanningRoom["repository"];
+
+    room.repository = repository;
+    room.broadcast = vi.fn();
+    room.getRoomData = vi.fn(async () => roomData);
+
+    await room.handleUpdateSettings("mod", {
+      votingCriteria: [
+        {
+          id: "complexity",
+          name: "Complexity",
+          description: "How complex is the work?",
+          minScore: 1,
+          maxScore: 5,
+        },
+        {
+          id: "risk",
+          name: "Risk",
+          description: "How risky is the work?",
+          minScore: 1,
+          maxScore: 5,
+        },
+      ],
+    });
+
+    expect(roomData.votes).toEqual({});
+    expect(roomData.structuredVotes).toEqual({});
+    expect(roomData.showVotes).toBe(false);
+    expect(roomData.judgeScore).toBeNull();
+    expect(roomData.judgeMetadata).toBeUndefined();
+    expect(repository.clearVotes).toHaveBeenCalled();
+    expect(repository.clearStructuredVotes).toHaveBeenCalled();
+    expect(repository.setJudgeState).toHaveBeenCalledWith(null);
+    expect(room.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "resetVotes" }),
+    );
+    expect(room.broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "settingsUpdated" }),
+    );
+  });
+
   it("clamps and broadcasts timer configuration updates", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-01T00:00:30Z"));
