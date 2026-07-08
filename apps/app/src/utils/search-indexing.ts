@@ -1,4 +1,5 @@
 import type { DispatchWorkerEnv } from "@sprintjam/types";
+import { CACHE_CONTROL } from "@sprintjam/utils";
 
 import { getSitemapEntries, renderSitemapXml } from "@/config/routes/sitemap";
 
@@ -8,7 +9,9 @@ export function shouldPreventSearchIndexing(
   env: Pick<DispatchWorkerEnv, "ENVIRONMENT">,
   url: URL,
 ): boolean {
-  return env.ENVIRONMENT !== "production" || !PRODUCTION_HOSTS.has(url.hostname);
+  return (
+    env.ENVIRONMENT !== "production" || !PRODUCTION_HOSTS.has(url.hostname)
+  );
 }
 
 export function createRobotsTxtResponse(
@@ -24,6 +27,8 @@ export function createRobotsTxtResponse(
     status: 200,
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": CACHE_CONTROL.PUBLIC_LONG,
+      "Cache-Tag": "search-indexing",
     },
   });
 }
@@ -33,6 +38,8 @@ export function createSitemapXmlResponse(url: URL): Response {
     status: 200,
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": CACHE_CONTROL.PUBLIC_LONG,
+      "Cache-Tag": "search-indexing",
     },
   });
 }

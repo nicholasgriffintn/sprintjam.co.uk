@@ -3,7 +3,11 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 import type { StatsWorkerEnv } from "@sprintjam/types";
-import { parsePagination, isPaginationError } from "@sprintjam/utils";
+import {
+  CACHE_CONTROL,
+  parsePagination,
+  isPaginationError,
+} from "@sprintjam/utils";
 
 import { StatsRepository } from "../repositories/stats";
 import {
@@ -50,7 +54,11 @@ export async function getRoomStatsController(
     return errorResponse("Room not found", 404);
   }
 
-  return successResponse(stats, true);
+  return successResponse(stats, {
+    "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+    "Cache-Tag": "stats, stats-room",
+    Vary: "Cookie, Authorization",
+  });
 }
 
 export async function getUserRoomStatsController(
@@ -83,7 +91,11 @@ export async function getUserRoomStatsController(
     return errorResponse("User stats not found", 404);
   }
 
-  return successResponse(stats, true);
+  return successResponse(stats, {
+    "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+    "Cache-Tag": "stats, stats-user-room",
+    Vary: "Cookie, Authorization",
+  });
 }
 
 export async function getBatchRoomStatsController(
@@ -122,7 +134,11 @@ export async function getBatchRoomStatsController(
 
   const stats = Object.fromEntries(statsMap);
 
-  return successResponse(stats, true);
+  return successResponse(stats, {
+    "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+    "Cache-Tag": "stats, stats-rooms",
+    Vary: "Cookie, Authorization",
+  });
 }
 
 export async function getTeamStatsController(
@@ -161,7 +177,11 @@ export async function getTeamStatsController(
     return errorResponse("Team stats not found", 404);
   }
 
-  return successResponse(stats, true);
+  return successResponse(stats, {
+    "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+    "Cache-Tag": "stats, stats-team",
+    Vary: "Cookie, Authorization",
+  });
 }
 
 export async function getTeamInsightsController(
@@ -199,10 +219,18 @@ export async function getTeamInsightsController(
   });
 
   if (!insights) {
-    return successResponse(null, true);
+    return successResponse(null, {
+      "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+      "Cache-Tag": "stats, stats-team-insights",
+      Vary: "Cookie, Authorization",
+    });
   }
 
-  return successResponse(insights, true);
+  return successResponse(insights, {
+    "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+    "Cache-Tag": "stats, stats-team-insights",
+    Vary: "Cookie, Authorization",
+  });
 }
 
 export async function getWorkspaceInsightsController(
@@ -223,7 +251,11 @@ export async function getWorkspaceInsightsController(
   );
 
   if (teamIds.length === 0) {
-    return successResponse(null, true);
+    return successResponse(null, {
+      "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+      "Cache-Tag": "stats, stats-workspace-insights",
+      Vary: "Cookie, Authorization",
+    });
   }
 
   const url = new URL(request.url);
@@ -251,7 +283,11 @@ export async function getWorkspaceInsightsController(
     contributorsLimit: contributorsPagination.limit,
   });
 
-  return successResponse(insights, true);
+  return successResponse(insights, {
+    "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+    "Cache-Tag": "stats, stats-workspace-insights",
+    Vary: "Cookie, Authorization",
+  });
 }
 
 export async function getSessionStatsController(
@@ -280,10 +316,18 @@ export async function getSessionStatsController(
   const stats = await repo.getSessionStats(roomKey);
 
   if (!stats) {
-    return successResponse(null, true);
+    return successResponse(null, {
+      "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+      "Cache-Tag": "stats, stats-session",
+      Vary: "Cookie, Authorization",
+    });
   }
 
-  return successResponse(stats, true);
+  return successResponse(stats, {
+    "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+    "Cache-Tag": "stats, stats-session",
+    Vary: "Cookie, Authorization",
+  });
 }
 
 export async function getBatchSessionStatsController(
@@ -322,5 +366,9 @@ export async function getBatchSessionStatsController(
 
   const stats = Object.fromEntries(statsMap);
 
-  return successResponse(stats, true);
+  return successResponse(stats, {
+    "Cache-Control": CACHE_CONTROL.PUBLIC_USER_SHORT,
+    "Cache-Tag": "stats, stats-sessions",
+    Vary: "Cookie, Authorization",
+  });
 }

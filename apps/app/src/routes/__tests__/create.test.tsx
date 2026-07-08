@@ -140,4 +140,16 @@ describe("CreateRoomRoute", () => {
       screen.getByTestId("create-room-submit").querySelector(".animate-spin"),
     ).toBeTruthy();
   });
+
+  it("shows structured field controls instead of estimate options when structured voting is enabled", () => {
+    render(<CreateRoomRoute />);
+
+    expect(screen.getByText("Estimate options")).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId("create-voting-mode"));
+
+    expect(screen.queryByText("Estimate options")).toBeNull();
+    expect(screen.getByTestId("structured-field-complexity")).toBeTruthy();
+    expect(screen.getByTestId("structured-field-risk")).toBeTruthy();
+  });
 });

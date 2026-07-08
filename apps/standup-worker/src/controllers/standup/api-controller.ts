@@ -10,7 +10,7 @@ import {
   resolveWorkspaceUserId,
 } from "@sprintjam/utils";
 
-import { jsonError, notFoundResponse } from "../../lib/response";
+import { jsonError, jsonResponse, notFoundResponse } from "../../lib/response";
 import { createRateLimit, joinRateLimit } from "../../lib/rate-limit";
 import {
   getStandupStub,
@@ -260,13 +260,7 @@ async function validateStandupSessionController(
     standupKey,
   );
 
-  return (
-    validationError ??
-    new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    })
-  );
+  return validationError ?? jsonResponse({ success: true });
 }
 
 export async function handleStandupApiRoute(

@@ -3,6 +3,7 @@ import type {
   Response as CfResponse,
 } from "@cloudflare/workers-types";
 import type { StatsWorkerEnv } from "@sprintjam/types";
+import { CACHE_CONTROL } from "@sprintjam/utils";
 
 import {
   ingestRoundController,
@@ -115,7 +116,10 @@ const ROUTES: RouteDefinition[] = [
 function notFoundResponse(): CfResponse {
   return new Response(JSON.stringify({ error: "Stats Route Not found" }), {
     status: 404,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": CACHE_CONTROL.NO_STORE,
+    },
   });
 }
 
@@ -127,7 +131,10 @@ function rootResponse(): CfResponse {
     }),
     {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": CACHE_CONTROL.NO_STORE,
+      },
     },
   );
 }
@@ -179,7 +186,10 @@ export async function handleRequest(
       JSON.stringify({ error: "[stats-worker] Internal Server Error" }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": CACHE_CONTROL.NO_STORE,
+        },
       },
     );
   }

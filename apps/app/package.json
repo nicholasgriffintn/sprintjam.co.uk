@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
-    "@sentry/cloudflare": "^10.36.0",
+    "@sentry/cloudflare": "^10.64.0",
     "@sentry/react": "^10.36.0",
     "@sprintjam/types": "workspace:*",
     "@sprintjam/utils": "workspace:*",
@@ -48,8 +48,8 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
-    "@cloudflare/vite-plugin": "1.35.0",
-    "@cloudflare/workers-types": "4.20260115.0",
+    "@cloudflare/vite-plugin": "1.43.1",
+    "@cloudflare/workers-types": "5.20260707.1",
     "@playwright/test": "1.57.0",
     "@react-router/dev": "^7.13.1",
     "@tailwindcss/vite": "4.2.4",
@@ -62,6 +62,6 @@
     "typescript": "5.9.3",
     "vite": "7.3.2",
     "vitest": "4.0.16",
-    "wrangler": "4.87.0"
+    "wrangler": "4.107.1"
   }
 }

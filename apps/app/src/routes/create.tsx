@@ -28,9 +28,11 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Footer } from "@/components/layout/Footer";
 import { RoomSettingsTabs } from "@/components/RoomSettingsTabs";
+import { StructuredFieldOptions } from "@/components/RoomSettingsTabs/StructuredFieldOptions";
 import { sanitiseAvatarValue } from "@/utils/avatars";
 import { validateName } from "@/utils/validators";
 import { createMeta } from "@/utils/route-meta";
+import { getDefaultVotingCriteria } from "@sprintjam/utils";
 
 export const meta = createMeta("create");
 
@@ -150,6 +152,28 @@ const CreateRoomRoute = () => {
     }
   };
 
+  const getStructuredVotingCriteria = () => {
+    if (advancedSettings.votingCriteria?.length) {
+      return advancedSettings.votingCriteria;
+    }
+
+    if (defaults.votingCriteria?.length) {
+      return defaults.votingCriteria;
+    }
+
+    return getDefaultVotingCriteria();
+  };
+
+  const handleVotingCriteriaChange = (
+    votingCriteria: RoomSettings["votingCriteria"],
+  ) => {
+    setAdvancedSettings((current) => {
+      const updated = { ...current, votingCriteria };
+      advancedSettingsRef.current = updated;
+      return updated;
+    });
+  };
+
   const canStart = validateName(effectiveName).ok;
   const handleStartFlow = (settings?: Partial<RoomSettings> | null) => {
     if (!canStart) return;
@@ -170,12 +194,17 @@ const CreateRoomRoute = () => {
   const buildQuickSettings = (): Partial<RoomSettings> => {
     const preset = votingPresets?.find((p) => p.id === selectedSequenceId);
     const estimateOptions = preset?.options ?? defaults.estimateOptions;
+    const votingCriteria =
+      votingMode === "structured"
+        ? getStructuredVotingCriteria()
+        : advancedSettings.votingCriteria;
 
     return {
       ...advancedSettings,
       enableStructuredVoting: votingMode === "structured",
       votingSequenceId: selectedSequenceId,
       estimateOptions,
+      votingCriteria,
     };
   };
 
@@ -291,36 +320,40 @@ const CreateRoomRoute = () => {
                 </div>
               </div>
 
-              <div>
-                <label
-                  htmlFor="estimate-sequence"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-                >
-                  Estimate options
-                </label>
-                <Select
-                  id="estimate-sequence"
-                  value={selectedSequenceId}
-                  onValueChange={(value) =>
-                    setSelectedSequenceId(value as VotingSequenceId)
-                  }
-                  disabled={votingMode === "structured"}
-                  data-testid="create-estimate-sequence"
-                  options={votingPresetOptions}
+              {votingMode === "structured" ? (
+                <StructuredFieldOptions
+                  votingCriteria={getStructuredVotingCriteria()}
+                  onVotingCriteriaChange={handleVotingCriteriaChange}
                 />
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  {votingMode === "structured"
-                    ? "(Always uses the default option for structured voting)"
-                    : (() => {
-                        const preset = votingPresets?.find(
-                          (p) => p.id === selectedSequenceId,
-                        );
-                        return preset?.options
-                          ? `Cards: ${preset.options.join(", ")}`
-                          : "Choose your estimation scale";
-                      })()}
-                </p>
-              </div>
+              ) : (
+                <div>
+                  <label
+                    htmlFor="estimate-sequence"
+                    className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                  >
+                    Estimate options
+                  </label>
+                  <Select
+                    id="estimate-sequence"
+                    value={selectedSequenceId}
+                    onValueChange={(value) =>
+                      setSelectedSequenceId(value as VotingSequenceId)
+                    }
+                    data-testid="create-estimate-sequence"
+                    options={votingPresetOptions}
+                  />
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {(() => {
+                      const preset = votingPresets?.find(
+                        (p) => p.id === selectedSequenceId,
+                      );
+                      return preset?.options
+                        ? `Cards: ${preset.options.join(", ")}`
+                        : "Choose your estimation scale";
+                    })()}
+                  </p>
+                </div>
+              )}
             </div>
 
             {!showAdvanced ? (

@@ -1,5 +1,8 @@
+import { CACHE_CONTROL } from "@sprintjam/utils";
+
 const SECURITY_HEADERS = {
   "Content-Type": "application/json",
+  "Cache-Control": CACHE_CONTROL.NO_STORE,
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
 };

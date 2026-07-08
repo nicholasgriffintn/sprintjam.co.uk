@@ -5,6 +5,7 @@ import {
   generateID,
   escapeHtml,
   hashToken,
+  CACHE_CONTROL,
 } from "@sprintjam/utils";
 import {
   fetchGithubMilestones,
@@ -1299,7 +1300,10 @@ export async function getTeamCredentialsInternalController(
     return jsonError("Not connected", 404);
   }
 
-  return jsonResponse({ credentials }, { "Cache-Control": "no-store" });
+  return jsonResponse(
+    { credentials },
+    { "Cache-Control": CACHE_CONTROL.NO_STORE },
+  );
 }
 
 export async function refreshTeamCredentialsInternalController(

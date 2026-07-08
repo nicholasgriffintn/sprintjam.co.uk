@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { getDefaultVotingCriteria } from "@sprintjam/utils";
+import {
+  getDefaultVotingCriteria,
+  getStructuredVotingCriteriaPreset,
+} from "@sprintjam/utils";
 
 import {
   calculateStoryPointsFromStructuredVote,
@@ -210,6 +213,29 @@ describe("Structured Voting Calculations", () => {
       });
 
       expect(vote.appliedConversionRules).toHaveLength(0);
+    });
+
+    it("scores active fixed criteria only", () => {
+      const criteria = getStructuredVotingCriteriaPreset({
+        activeCriteriaIds: ["complexity", "confidence", "volume", "risk"],
+      });
+
+      const vote = createStructuredVote(
+        {
+          complexity: 0,
+          confidence: 4,
+          volume: 0,
+          unknowns: 2,
+          risk: 4,
+        },
+        criteria,
+      );
+
+      expect(vote.percentageScore).toBeCloseTo(19.05, 1);
+      expect(vote.appliedConversionRules).toHaveLength(0);
+      expect(vote.contributions?.map((contribution) => contribution.id)).toEqual(
+        ["complexity", "confidence", "volume", "risk"],
+      );
     });
   });
 

@@ -152,6 +152,15 @@ export interface VotingCriterion {
   description: string;
   minScore: number;
   maxScore: number;
+  weight?: number;
+  scoringDirection?: "direct" | "inverse";
+  conversionRules?: VotingCriterionConversionRule[];
+}
+
+export interface VotingCriterionConversionRule {
+  score: number;
+  minimumPercentageScore: number;
+  label: string;
 }
 
 export interface StructuredVote {

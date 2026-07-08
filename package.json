@@ -28,7 +28,7 @@
     "sherif": "1.9.0",
     "turbo": "2.8.10",
     "typescript": "5.9.3",
-    "wrangler": "4.87.0"
+    "wrangler": "4.107.1"
   },
   "packageManager": "pnpm@10.27.0"
 }

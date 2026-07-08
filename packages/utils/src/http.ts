@@ -6,17 +6,24 @@ const SECURITY_HEADERS = {
   "X-Frame-Options": "DENY",
 };
 
+export const CACHE_CONTROL = {
+  NO_STORE: "no-store",
+  PUBLIC_USER_SHORT: "public, max-age=60, stale-while-revalidate=300",
+  PUBLIC_SHORT: "public, max-age=300, stale-while-revalidate=3600",
+  PUBLIC_LONG: "public, max-age=3600, stale-while-revalidate=86400",
+} as const;
+
 export function createJsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: SECURITY_HEADERS,
+    headers: { ...SECURITY_HEADERS, "Cache-Control": CACHE_CONTROL.NO_STORE },
   });
 }
 
 export function jsonError(message: string, status = 400): Response {
   return new Response(JSON.stringify({ error: message }), {
     status,
-    headers: SECURITY_HEADERS,
+    headers: { ...SECURITY_HEADERS, "Cache-Control": CACHE_CONTROL.NO_STORE },
   });
 }
 
