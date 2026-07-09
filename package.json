@@ -20,7 +20,8 @@
     "db:generate": "pnpm --filter @sprintjam/auth-worker db:generate",
     "db:migrate:local": "pnpm --filter @sprintjam/auth-worker db:migrate:local",
     "db:migrate:staging": "pnpm --filter @sprintjam/auth-worker db:migrate:staging",
-    "db:migrate:prod": "pnpm --filter @sprintjam/auth-worker db:migrate:prod"
+    "db:migrate:prod": "pnpm --filter @sprintjam/auth-worker db:migrate:prod",
+    "mfa:reset": "pnpm --filter @sprintjam/auth-worker mfa:reset"
   },
   "devDependencies": {
     "@types/node": "25.0.3",

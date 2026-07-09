@@ -18,6 +18,7 @@
     "db:migrate:local": "wrangler d1 migrations apply sprintjam-workspaces-staging --local --persist-to ../../.data --env development",
     "db:migrate:staging": "wrangler d1 migrations apply sprintjam-workspaces-staging --remote --env staging",
     "db:migrate:prod": "wrangler d1 migrations apply sprintjam-workspaces --remote",
+    "mfa:reset": "node scripts/reset-user-mfa.mjs",
     "generate:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
