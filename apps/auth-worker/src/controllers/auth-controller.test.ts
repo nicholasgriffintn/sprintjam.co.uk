@@ -1247,6 +1247,69 @@ describe("mfa verify", () => {
     vi.mocked(utils.generateToken).mockResolvedValue("session-token-123");
   });
 
+  it("logs the underlying WebAuthn verifier error without returning it to the client", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
+      id: 4,
+      userId: 12,
+      type: "verify",
+      usedAt: null,
+      expiresAt: Date.now() + 60000,
+      metadata: JSON.stringify({
+        challenge: "expected-challenge",
+        origin: "https://staging.sprintjam.co.uk",
+        rpId: "staging.sprintjam.co.uk",
+      }),
+    });
+    mockRepo.getUserById.mockResolvedValue({
+      id: 12,
+      email: "user@example.com",
+      name: null,
+      organisationId: 2,
+    });
+    mockRepo.getWebAuthnCredentialById = vi.fn().mockResolvedValue({
+      id: 9,
+      credentialId: "credential-id",
+      publicKey: "AQID",
+      counter: 0,
+    });
+
+    const request = makeRequest(
+      "https://staging.sprintjam.co.uk/api/auth/mfa/verify",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "challenge",
+          method: "webauthn",
+          credential: {
+            id: "credential-id",
+            rawId: "credential-id",
+            type: "public-key",
+            clientExtensionResults: {},
+            response: {
+              clientDataJSON: "invalid-client-data",
+              authenticatorData: "auth-data",
+              signature: "signature",
+            },
+          },
+        }),
+      },
+    );
+
+    const response = await verifyMfaController(request, mockEnv);
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({
+      code: "unauthorized",
+      message: "Unable to verify WebAuthn assertion",
+      error: "Unable to verify WebAuthn assertion",
+    });
+    expect(consoleError).toHaveBeenCalledWith(
+      "[auth] WebAuthn assertion verification failed",
+      expect.any(Error),
+    );
+  });
+
   it("should verify a recovery code and require MFA reset setup", async () => {
     mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
       id: 3,

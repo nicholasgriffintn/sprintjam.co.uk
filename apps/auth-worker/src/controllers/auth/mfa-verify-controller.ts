@@ -226,6 +226,7 @@ export async function verifyMfaController(
         );
       }
     } catch (error) {
+      console.error("[auth] WebAuthn assertion verification failed", error);
       await repo.logAuditEvent({
         userId: user.id,
         email: user.email,
