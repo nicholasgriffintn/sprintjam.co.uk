@@ -30,5 +30,10 @@
     "typescript": "5.9.3",
     "wrangler": "4.107.1"
   },
+  "pnpm": {
+    "overrides": {
+      "@peculiar/asn1-schema": "2.7.0"
+    }
+  },
   "packageManager": "pnpm@10.27.0"
 }
