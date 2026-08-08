@@ -1,23 +1,20 @@
-import type { AuthWorkerEnv } from "@sprintjam/types";
-import {
-  extractDomain,
-  generateToken,
-  generateVerificationCode,
-  hashToken,
-} from "@sprintjam/utils";
+import { AuthError } from "@ngriffin_uk/auth-core";
 import { sendVerificationCodeEmail } from "@sprintjam/services";
+import type { AuthWorkerEnv } from "@sprintjam/types";
+import { extractDomain } from "@sprintjam/utils";
 
 import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
 import { jsonError, jsonResponse } from "../../lib/response";
-import {
-  AUTH_CHALLENGE_EXPIRY_MS,
-  MAGIC_LINK_EXPIRY_MS,
-} from "../../constants";
 import {
   EMAIL_REGEX,
   enforceEmailAndIpRateLimit,
   getRequestMeta,
 } from "../../lib/auth-helpers";
+import { createSprintJamMagicLinkAuth } from "../../lib/shared-auth";
+import {
+  resolveWorkspaceAuthUser,
+  WorkspaceAccessError,
+} from "../../lib/workspace-auth-user";
 
 export async function requestMagicLinkController(
   request: Request,
@@ -25,11 +22,7 @@ export async function requestMagicLinkController(
 ): Promise<Response> {
   const body = await request.json<{ email?: string }>();
   const email = body?.email?.toLowerCase().trim();
-
-  if (!email) {
-    return jsonError("Email is required", 400, "email_required");
-  }
-
+  if (!email) return jsonError("Email is required", 400, "email_required");
   if (!EMAIL_REGEX.test(email)) {
     return jsonError("Invalid email format", 400, "invalid_email_format");
   }
@@ -42,50 +35,12 @@ export async function requestMagicLinkController(
     "magic-link:email",
     "Rate limit exceeded. Please wait before requesting another magic link.",
   );
-  if (rateLimitResponse) {
-    return rateLimitResponse;
-  }
+  if (rateLimitResponse) return rateLimitResponse;
 
-  const domain = extractDomain(email);
   const repo = new WorkspaceAuthRepository(env.DB);
+  const eligibility = await getEligibility(repo, email);
   const { ip, userAgent } = getRequestMeta(request);
-
-  let isDomainAllowed = false;
-  let pendingInvite: Awaited<
-    ReturnType<WorkspaceAuthRepository["getPendingWorkspaceInviteByEmail"]>
-  > | null = null;
-  let activeMembership: Awaited<
-    ReturnType<
-      WorkspaceAuthRepository["getActiveOrganisationMembershipByEmail"]
-    >
-  > | null = null;
-  try {
-    isDomainAllowed = await repo.isDomainAllowed(domain);
-    if (!isDomainAllowed) {
-      pendingInvite = await repo.getPendingWorkspaceInviteByEmail(email);
-      if (!pendingInvite) {
-        activeMembership =
-          await repo.getActiveOrganisationMembershipByEmail(email);
-      }
-    }
-  } catch (error) {
-    console.error("Failed to check domain allowlist:", error);
-    await repo.logAuditEvent({
-      email,
-      event: "magic_link_request",
-      status: "failure",
-      reason: "domain_check_failed",
-      ip,
-      userAgent,
-    });
-    return jsonError(
-      "Service temporarily unavailable",
-      503,
-      "service_unavailable",
-    );
-  }
-
-  if (!isDomainAllowed && !pendingInvite && !activeMembership) {
+  if (!eligibility.allowed) {
     await repo.logAuditEvent({
       email,
       event: "magic_link_request",
@@ -100,57 +55,44 @@ export async function requestMagicLinkController(
       "domain_not_allowed",
     );
   }
-
-  const code = generateVerificationCode();
-  const codeHash = await hashToken(code);
-  const expiresAt = Date.now() + MAGIC_LINK_EXPIRY_MS;
-
-  try {
-    await repo.createMagicLink(email, codeHash, expiresAt);
-  } catch (error) {
-    console.error("Failed to persist verification code:", error);
-    await repo.logAuditEvent({
-      email,
-      event: "magic_link_request",
-      status: "failure",
-      reason: "magic_link_persist_failed",
-      ip,
-      userAgent,
-    });
-    return jsonError(
-      "Unable to create a verification code right now. Please try again shortly.",
-      500,
-      "verification_code_creation_failed",
-    );
-  }
-
   if (!env.SEND_EMAIL) {
-    console.warn(
-      "SEND_EMAIL is not configured. Skipping sending verification code email.",
-    );
-    await repo.logAuditEvent({
-      email,
-      event: "magic_link_request",
-      status: "success",
-      reason: "code_generated_but_email_not_sent",
-      ip,
-      userAgent,
-    });
     return jsonError(
-      "Verification code generated but email sending is disabled in this environment.",
+      "Verification code email is disabled in this environment.",
       500,
       "verification_code_email_disabled",
     );
   }
 
   try {
-    await sendVerificationCodeEmail({
-      email,
-      code,
-      sendEmail: env.SEND_EMAIL,
+    const auth = createSprintJamMagicLinkAuth(env, {
+      resolveUser: (candidate) => resolveWorkspaceAuthUser(env, candidate),
+      send: async (delivery) => {
+        await sendVerificationCodeEmail({
+          email: delivery.email,
+          code: delivery.token,
+          sendEmail: env.SEND_EMAIL,
+        });
+      },
     });
-  } catch (error) {
-    console.error("Failed to send verification code email:", error);
+    const result = await auth.providers["magic-link"].request(email);
+    if (!result) {
+      return jsonError(
+        "Unable to create a verification code.",
+        500,
+        "verification_code_creation_failed",
+      );
+    }
+    await repo.logAuditEvent({
+      email,
+      event: "magic_link_request",
+      status: "success",
+      reason: eligibility.reason,
+      ip,
+      userAgent,
+    });
+    return jsonResponse(result);
+  } catch {
+    console.error("Failed to send verification code email.");
     await repo.logAuditEvent({
       email,
       event: "magic_link_request",
@@ -165,209 +107,115 @@ export async function requestMagicLinkController(
       "verification_code_email_failed",
     );
   }
-
-  await repo.logAuditEvent({
-    email,
-    event: "magic_link_request",
-    status: "success",
-    reason: pendingInvite
-      ? "code_sent_for_invite"
-      : activeMembership
-        ? "code_sent_for_existing_member"
-        : "code_sent",
-    ip,
-    userAgent,
-  });
-
-  return jsonResponse({ message: "Verification code sent to your email" });
 }
 
 export async function verifyCodeController(
   request: Request,
   env: AuthWorkerEnv,
 ): Promise<Response> {
-  const body = await request.json<{ email?: string; code?: string }>();
-  const email = body?.email?.toLowerCase().trim();
+  const body = await request.json<{
+    challengeToken?: string;
+    code?: string;
+  }>();
+  const challengeToken = body?.challengeToken?.trim();
   const code = body?.code?.trim();
-
-  if (!email || !code) {
+  if (!challengeToken || !code) {
     return jsonError(
-      "Email and code are required",
+      "Challenge token and code are required",
       400,
-      "email_and_code_required",
+      "challenge_and_code_required",
     );
   }
 
-  const verifyRateLimitResponse = await enforceEmailAndIpRateLimit(
-    request,
-    env,
-    email,
-    env.VERIFICATION_RATE_LIMITER,
-    "verify:email",
-    "Too many verification attempts. Please wait before trying again.",
-  );
-  if (verifyRateLimitResponse) {
-    return verifyRateLimitResponse;
-  }
-
-  const codeHash = await hashToken(code);
-  const repo = new WorkspaceAuthRepository(env.DB);
   const { ip, userAgent } = getRequestMeta(request);
-
-  const result = await repo.validateVerificationCode(email, codeHash);
-  if (!result.success) {
-    const errorMessages = {
-      invalid: "Invalid verification code",
-      expired: "Verification code has expired",
-      used: "Verification code has already been used",
-      locked: "Too many failed attempts. Please request a new code.",
-    };
-    const errorCodes = {
-      invalid: "invalid_verification_code",
-      expired: "verification_code_expired",
-      used: "verification_code_used",
-      locked: "verification_code_locked",
-    } as const;
+  try {
+    const auth = createSprintJamMagicLinkAuth(env, {
+      resolveUser: (email) => resolveWorkspaceAuthUser(env, email),
+      send: async () => {},
+    });
+    const user = await auth.providers["magic-link"].verify({
+      token: challengeToken,
+      code,
+    });
+    const repo = new WorkspaceAuthRepository(env.DB);
+    const credentials = await repo.listMfaCredentials(Number(user.id));
+    const methods = Array.from(
+      new Set(
+        credentials
+          .map((credential: { type: string }) => credential.type)
+          .filter(isMfaMethod),
+      ),
+    );
+    const mode = methods.length === 0 ? "setup" : "verify";
+    const availableChallenges =
+      mode === "setup" ? ["totp", "webauthn"] : methods;
+    const selection = await auth.issueChallenge("sprintjam", "mfa_selection", {
+      userId: user.id,
+      email: user.email,
+      mode,
+      availableChallenges,
+    });
     await repo.logAuditEvent({
-      email,
+      userId: Number(user.id),
+      email: user.email,
       event: "magic_link_verify",
-      status: "failure",
-      reason: result.error,
+      status: "success",
+      reason: mode === "setup" ? "mfa_setup_required" : "mfa_verify_required",
       ip,
       userAgent,
     });
-    return jsonError(
-      errorMessages[result.error],
-      401,
-      errorCodes[result.error],
-    );
-  }
-
-  const domain = extractDomain(result.email);
-  const pendingInvite = await repo.getPendingWorkspaceInviteByEmail(
-    result.email,
-  );
-  const existingUser = await repo.getUserByEmail(email);
-  const activeMembership = await repo.getActiveOrganisationMembershipByEmail(
-    result.email,
-  );
-  const isDomainAllowed = await repo.isDomainAllowed(domain);
-
-  let organisationId: number;
-  if (pendingInvite) {
-    organisationId = pendingInvite.organisationId;
-    if (existingUser && existingUser.organisationId !== organisationId) {
-      await repo.updateUserOrganisation(existingUser.id, organisationId);
+    return jsonResponse({
+      status:
+        mode === "setup" ? "mfa_setup_required" : "mfa_challenge_required",
+      challenge: {
+        kind: "mfa_selection",
+        continuationToken: selection.token,
+        expiresAt: selection.expiresAt,
+        parameters: {
+          mode,
+          availableChallenges,
+        },
+      },
+    });
+  } catch (error) {
+    if (error instanceof WorkspaceAccessError) {
+      return jsonError(error.message, error.status, error.code);
     }
-  } else if (activeMembership) {
-    organisationId = activeMembership.organisationId;
-  } else if (isDomainAllowed) {
-    organisationId = await repo.getOrCreateOrganisation(domain);
-  } else {
-    await repo.logAuditEvent({
-      email,
-      event: "magic_link_verify",
-      status: "failure",
-      reason: "membership_not_allowed",
-      ip,
-      userAgent,
-    });
-    return jsonError(
-      "Your workspace access is not allowed",
-      403,
-      "workspace_access_not_allowed",
-    );
-  }
-
-  const userId = await repo.getOrCreateUser(email, organisationId);
-  await repo.setOrganisationOwnerIfNull(organisationId, userId);
-  const organisation = await repo.getOrganisationById(organisationId);
-  if (!organisation) {
-    return jsonError("Organisation not found", 404, "organisation_not_found");
-  }
-
-  const role = organisation.ownerId === userId ? "admin" : "member";
-  const existingMembership = await repo.getOrganisationMembership(
-    userId,
-    organisationId,
-  );
-
-  if (pendingInvite) {
-    await repo.upsertWorkspaceMembership({
-      organisationId,
-      userId,
-      role,
-      status: "active",
-      approvedById: pendingInvite.invitedById,
-    });
-    await repo.markWorkspaceInviteAccepted(pendingInvite.id, userId);
-  } else if (!existingMembership || existingMembership.status !== "active") {
-    if (organisation.requireMemberApproval && organisation.ownerId !== userId) {
-      await repo.upsertWorkspaceMembership({
-        organisationId,
-        userId,
-        role,
-        status: "pending",
-      });
-      await repo.logAuditEvent({
-        userId,
-        email,
-        event: "magic_link_verify",
-        status: "failure",
-        reason: "membership_pending_approval",
-        ip,
-        userAgent,
-      });
+    if (error instanceof AuthError) {
       return jsonError(
-        "Your workspace membership is pending approval",
-        403,
-        "workspace_membership_pending_approval",
+        error.code === "challenge_expired"
+          ? "Verification code has expired"
+          : "Invalid verification code",
+        401,
+        error.code === "challenge_expired"
+          ? "verification_code_expired"
+          : "invalid_verification_code",
       );
     }
-
-    await repo.upsertWorkspaceMembership({
-      organisationId,
-      userId,
-      role,
-      status: "active",
-      approvedById: organisation.ownerId === userId ? userId : null,
-    });
+    throw error;
   }
+}
 
-  const user = await repo.getUserByEmail(email);
-  if (!user?.id) {
-    return jsonError("User not found", 404, "user_not_found");
-  }
+async function getEligibility(
+  repo: WorkspaceAuthRepository,
+  email: string,
+): Promise<{ readonly allowed: boolean; readonly reason: string }> {
+  const domain = extractDomain(email);
+  const [isDomainAllowed, pendingInvite, activeMembership] = await Promise.all([
+    repo.isDomainAllowed(domain),
+    repo.getPendingWorkspaceInviteByEmail(email),
+    repo.getActiveOrganisationMembershipByEmail(email),
+  ]);
+  return {
+    allowed: Boolean(isDomainAllowed || pendingInvite || activeMembership),
+    reason: pendingInvite
+      ? "code_sent_for_invite"
+      : activeMembership
+        ? "code_sent_for_existing_member"
+        : "code_sent",
+  };
+}
 
-  const existingMfa = await repo.listMfaCredentials(userId);
-  const methods = Array.from(
-    new Set(existingMfa.map((credential: { type: string }) => credential.type)),
-  ) as Array<"totp" | "webauthn">;
-  const requiresSetup = methods.length === 0;
-
-  const challengeToken = await generateToken();
-  const challengeTokenHash = await hashToken(challengeToken);
-  await repo.createAuthChallenge({
-    userId,
-    tokenHash: challengeTokenHash,
-    type: requiresSetup ? "setup" : "verify",
-    expiresAt: Date.now() + AUTH_CHALLENGE_EXPIRY_MS,
-  });
-
-  await repo.logAuditEvent({
-    userId,
-    email,
-    event: "magic_link_verify",
-    status: "success",
-    reason: requiresSetup ? "mfa_setup_required" : "mfa_verify_required",
-    ip,
-    userAgent,
-  });
-
-  return jsonResponse({
-    status: "mfa_required",
-    mode: requiresSetup ? "setup" : "verify",
-    challengeToken,
-    methods: requiresSetup ? ["totp", "webauthn"] : methods,
-  });
+function isMfaMethod(value: string): value is "totp" | "webauthn" {
+  return value === "totp" || value === "webauthn";
 }

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { AuthWorkerEnv } from "@sprintjam/types";
 import * as utils from "@sprintjam/utils";
 import * as services from "@sprintjam/services";
+import { generateTotp } from "@ngriffin_uk/auth-otp";
 
 import {
   requestMagicLinkController,
@@ -13,7 +14,6 @@ import {
   logoutController,
 } from "./auth-controller";
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
-import { generateTotpCode } from "../lib/mfa";
 
 const makeRequest = (input: RequestInfo | URL, init?: RequestInit): Request =>
   new Request(input, init);
@@ -1127,7 +1127,7 @@ describe("mfa setup", () => {
     const secret = "JBSWY3DPEHPK3PXP";
     const cipher = new utils.TokenCipher("test-secret");
     const secretEncrypted = await cipher.encrypt(secret);
-    const code = await generateTotpCode(secret, Date.now());
+    const code = await generateTotp(utils.base32Decode(secret), new Date());
 
     mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
       id: 2,
@@ -1181,7 +1181,7 @@ describe("mfa setup", () => {
     const secret = "JBSWY3DPEHPK3PXP";
     const cipher = new utils.TokenCipher("test-secret");
     const secretEncrypted = await cipher.encrypt(secret);
-    const code = await generateTotpCode(secret, Date.now());
+    const code = await generateTotp(utils.base32Decode(secret), new Date());
 
     mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
       id: 5,
@@ -1248,7 +1248,9 @@ describe("mfa verify", () => {
   });
 
   it("logs the underlying WebAuthn verifier error without returning it to the client", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
     mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
       id: 4,
       userId: 12,

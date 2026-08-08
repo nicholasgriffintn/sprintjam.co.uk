@@ -4,6 +4,7 @@ export * from "./users";
 export * from "./teams";
 export * from "./magic-links";
 export * from "./auth-challenges";
+export * from "./shared-auth-challenges";
 export * from "./mfa-credentials";
 export * from "./mfa-recovery-codes";
 export * from "./login-audit-logs";

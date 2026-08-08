@@ -1,28 +1,17 @@
+import { AuthError, type AuthFlowResult } from "@ngriffin_uk/auth-core";
+import { createRecoveryCodes, hashRecoveryCode } from "@ngriffin_uk/auth-otp";
+import type { WebAuthnRegistrationResponse } from "@ngriffin_uk/auth-webauthn";
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { TokenCipher } from "@sprintjam/utils";
 
 import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
+import { createAuthResponse, getRequestMeta } from "../../lib/auth-helpers";
 import { jsonError, jsonResponse } from "../../lib/response";
 import {
-  MFA_RECOVERY_CODES_COUNT,
-  createAuthenticatedSessionResponse,
-  encodeUserIdForWebAuthn,
-  getChallengeAndUserOrError,
-  getRequestMeta,
-  parseChallengeMetadata,
-} from "../../lib/auth-helpers";
-import {
-  createWebAuthnRegistrationOptions,
-  verifyWebAuthnAttestation,
-} from "../../lib/webauthn";
-import { getWebAuthnRequestContext } from "./webauthn-context";
-import {
-  buildTotpUri,
-  generateRecoveryCodes,
-  generateTotpSecret,
-  hashRecoveryCode,
-  verifyTotpCode,
-} from "../../lib/mfa";
+  createSprintJamAuth,
+  createSprintJamOtpAuth,
+  createSprintJamWebAuthnAuth,
+  type SprintJamAuthUser,
+} from "../../lib/shared-auth";
 
 export async function startMfaSetupController(
   request: Request,
@@ -32,77 +21,33 @@ export async function startMfaSetupController(
     challengeToken?: string;
     method?: "totp" | "webauthn";
   }>();
-  const challengeToken = body?.challengeToken;
-  const method = body?.method;
-
-  if (!method) {
-    return jsonError("MFA method is required", 400);
+  if (!body.challengeToken || !body.method) {
+    return jsonError("Challenge token and MFA method are required", 400);
   }
 
-  const repo = new WorkspaceAuthRepository(env.DB);
-  const challengeAndUser = await getChallengeAndUserOrError(
-    repo,
-    challengeToken,
-    "setup",
-  );
-  if ("response" in challengeAndUser) {
-    return challengeAndUser.response;
-  }
-  const { challenge, user } = challengeAndUser;
-  const setupMetadata = parseChallengeMetadata<{ allowMfaReset?: boolean }>(
-    challenge.metadata,
-  );
+  try {
+    const selection = await readSetupSelection(env, body.challengeToken);
+    const userId = payloadUserId(selection.payload);
+    if (body.method === "totp") {
+      const auth = createSprintJamOtpAuth(env);
+      const result = await auth.providers.otp.startSetup({
+        userId,
+        accountName: payloadEmail(selection.payload),
+      });
+      return jsonResponse(withSelectionToken(result, body.challengeToken));
+    }
 
-  const allowMfaReset = setupMetadata?.allowMfaReset === true;
-  const existing = await repo.listMfaCredentials(user.id);
-  if (existing.length > 0 && !allowMfaReset) {
-    return jsonError("MFA already configured", 409);
-  }
-
-  if (method === "totp") {
-    const secret = generateTotpSecret();
-    const cipher = new TokenCipher(env.TOKEN_ENCRYPTION_SECRET);
-    const secretEncrypted = await cipher.encrypt(secret);
-    await repo.updateAuthChallengeMetadata(
-      challenge.id,
-      JSON.stringify({ secretEncrypted, allowMfaReset }),
-      "totp",
-    );
-
-    return jsonResponse({
-      method: "totp",
-      secret,
-      otpauthUrl: buildTotpUri({
-        secret,
-        account: user.email,
-        issuer: "SprintJam",
-      }),
+    const auth = createSprintJamWebAuthnAuth(request, env);
+    const email = payloadEmail(selection.payload);
+    const result = await auth.providers.webauthn.startRegistration({
+      userId,
+      userName: email,
+      displayName: email,
     });
+    return jsonResponse(withSelectionToken(result, body.challengeToken));
+  } catch (error) {
+    return sharedAuthError(error);
   }
-
-  const { origin, rpId } = getWebAuthnRequestContext(request);
-  const options = await createWebAuthnRegistrationOptions({
-    rpId,
-    rpName: "SprintJam",
-    userId: encodeUserIdForWebAuthn(user.id),
-    userName: user.email,
-  });
-
-  await repo.updateAuthChallengeMetadata(
-    challenge.id,
-    JSON.stringify({
-      challenge: options.challenge,
-      origin,
-      rpId,
-      allowMfaReset,
-    }),
-    "webauthn",
-  );
-
-  return jsonResponse({
-    method: "webauthn",
-    options,
-  });
 }
 
 export async function verifyMfaSetupController(
@@ -111,147 +56,160 @@ export async function verifyMfaSetupController(
 ): Promise<Response> {
   const body = await request.json<{
     challengeToken?: string;
+    selectionToken?: string;
     method?: "totp" | "webauthn";
     code?: string;
-    credential?: {
-      id: string;
-      rawId: string;
-      type: "public-key";
-      clientExtensionResults: Record<string, unknown>;
-      response: {
-        clientDataJSON: string;
-        attestationObject: string;
-      };
-    };
+    credential?: WebAuthnRegistrationResponse;
   }>();
-
-  const challengeToken = body?.challengeToken;
-  const method = body?.method;
-  if (!method) {
-    return jsonError("MFA method is required", 400);
+  if (!body.challengeToken || !body.selectionToken || !body.method) {
+    return jsonError("MFA setup data is incomplete", 400);
   }
 
-  const repo = new WorkspaceAuthRepository(env.DB);
-  const challengeAndUser = await getChallengeAndUserOrError(
-    repo,
-    challengeToken,
-    "setup",
-  );
-  if ("response" in challengeAndUser) {
-    return challengeAndUser.response;
-  }
-  const { challenge, user } = challengeAndUser;
+  const baseAuth = createSprintJamAuth(env);
+  try {
+    const selection = await baseAuth.consumeChallenge(
+      body.selectionToken,
+      "sprintjam",
+      ["mfa_selection"],
+    );
+    requireMode(selection.payload, "setup");
+    const expectedUserId = payloadUserId(selection.payload);
+    const reset = selection.payload["reset"] === true;
+    let result: AuthFlowResult<SprintJamAuthUser>;
+    let recoveryCodes: string[] | undefined;
+    const repo = new WorkspaceAuthRepository(env.DB);
 
-  const { ip, userAgent } = getRequestMeta(request);
-  let persistVerifiedCredential: (() => Promise<void>) | null = null;
-  let shouldResetExistingMfa = false;
-
-  if (method === "totp") {
-    if (!body?.code?.trim()) {
-      return jsonError("Verification code is required", 400);
-    }
-
-    const metadata = parseChallengeMetadata<{
-      secretEncrypted?: string;
-      allowMfaReset?: boolean;
-    }>(challenge.metadata);
-
-    if (!metadata?.secretEncrypted) {
-      return jsonError("TOTP setup has not been started", 400);
-    }
-    shouldResetExistingMfa = metadata.allowMfaReset === true;
-
-    const cipher = new TokenCipher(env.TOKEN_ENCRYPTION_SECRET);
-    const secret = await cipher.decrypt(metadata.secretEncrypted);
-    const isValid = await verifyTotpCode(secret, body.code);
-
-    if (!isValid) {
-      await repo.logAuditEvent({
-        userId: user.id,
-        email: user.email,
-        event: "mfa_setup",
-        status: "failure",
-        reason: "totp_invalid",
-        ip,
-        userAgent,
+    if (body.method === "totp") {
+      if (!body.code) return jsonError("Verification code is required", 400);
+      result = await createSprintJamOtpAuth(env).providers.otp.verifySetup({
+        token: body.challengeToken,
+        code: body.code,
+        expectedUserId,
       });
-      return jsonError("Invalid authenticator code", 401);
-    }
-
-    const { secretEncrypted } = metadata;
-    persistVerifiedCredential = () =>
-      repo.createTotpCredential(user.id, secretEncrypted);
-  } else {
-    if (!body?.credential) {
-      return jsonError("WebAuthn credential is required", 400);
-    }
-
-    const metadata = parseChallengeMetadata<{
-      challenge?: string;
-      origin?: string;
-      rpId?: string;
-      allowMfaReset?: boolean;
-    }>(challenge.metadata);
-
-    if (!metadata?.challenge || !metadata.origin || !metadata.rpId) {
-      return jsonError("WebAuthn setup has not been started", 400);
-    }
-    shouldResetExistingMfa = metadata.allowMfaReset === true;
-
-    try {
-      const attestation = await verifyWebAuthnAttestation({
+      if (reset) {
+        await repo.deleteWebAuthnCredentials(Number(expectedUserId));
+      }
+    } else {
+      if (!body.credential) {
+        return jsonError("WebAuthn credential is required", 400);
+      }
+      result = await createSprintJamWebAuthnAuth(
+        request,
+        env,
+      ).providers.webauthn.finishRegistration({
+        token: body.challengeToken,
         response: body.credential,
-        expectedChallenge: metadata.challenge,
-        expectedOrigin: metadata.origin,
-        expectedRpId: metadata.rpId,
+        expectedUserId,
       });
-
-      persistVerifiedCredential = () =>
-        repo.createWebAuthnCredential({
-          userId: user.id,
-          credentialId: attestation.credentialId,
-          publicKey: attestation.publicKey,
-          counter: attestation.counter,
-        });
-    } catch (error) {
-      await repo.logAuditEvent({
-        userId: user.id,
-        email: user.email,
-        event: "mfa_setup",
-        status: "failure",
-        reason: "webauthn_invalid",
-        ip,
-        userAgent,
-      });
-      return jsonError("Unable to verify WebAuthn credential", 401);
+      recoveryCodes = createRecoveryCodes(8);
+      const hashes = await Promise.all(recoveryCodes.map(hashRecoveryCode));
+      await repo.replaceRecoveryCodes(
+        Number(expectedUserId),
+        hashes.filter((hash): hash is string => hash !== null),
+      );
+      if (reset) {
+        await repo.deleteMfaCredentialsExcept(
+          Number(expectedUserId),
+          body.credential.credentialId,
+        );
+      }
     }
-  }
 
-  if (!persistVerifiedCredential) {
-    return jsonError("Unable to store MFA credential", 500);
+    const { ip, userAgent } = getRequestMeta(request);
+    await repo.logAuditEvent({
+      userId: Number(expectedUserId),
+      event: "mfa_setup",
+      status: "success",
+      reason: body.method,
+      ip,
+      userAgent,
+    });
+    return authenticatedResponse(result, recoveryCodes);
+  } catch (error) {
+    return sharedAuthError(error);
   }
+}
 
-  if (shouldResetExistingMfa) {
-    await repo.resetMfaConfiguration(user.id);
-  }
-  await persistVerifiedCredential();
-
-  const recoveryCodes = generateRecoveryCodes(MFA_RECOVERY_CODES_COUNT);
-  const recoveryHashes = await Promise.all(
-    recoveryCodes.map((code) => hashRecoveryCode(code)),
+async function readSetupSelection(env: AuthWorkerEnv, token: string) {
+  const selection = await createSprintJamAuth(env).readChallenge(
+    token,
+    "sprintjam",
+    ["mfa_selection"],
   );
-  await repo.storeRecoveryCodes(user.id, recoveryHashes);
-  await repo.markAuthChallengeUsed(challenge.id);
+  requireMode(selection.payload, "setup");
+  return selection;
+}
 
-  await repo.logAuditEvent({
-    userId: user.id,
-    email: user.email,
-    event: "mfa_setup",
-    status: "success",
-    reason: method,
-    ip,
-    userAgent,
+function withSelectionToken(
+  result: AuthFlowResult<SprintJamAuthUser>,
+  selectionToken: string,
+) {
+  if (
+    result.status !== "mfa_setup_required" &&
+    result.status !== "webauthn_challenge_required"
+  ) {
+    throw new AuthError("unsupported_operation");
+  }
+  return {
+    ...result,
+    challenge: {
+      ...result.challenge,
+      parameters: {
+        ...result.challenge.parameters,
+        selectionToken,
+      },
+    },
+  };
+}
+
+function authenticatedResponse(
+  result: AuthFlowResult<SprintJamAuthUser>,
+  recoveryCodes?: string[],
+): Response {
+  if (result.status !== "authenticated") {
+    return jsonError("MFA setup did not complete", 500);
+  }
+  const user = result.session.user;
+  return createAuthResponse({
+    sessionToken: result.session.token,
+    expiresAt: result.session.expiresAt.getTime(),
+    user: {
+      id: Number(user.id),
+      email: user.email,
+      name: user.name,
+      organisationId: user.organisationId,
+    },
+    ...(recoveryCodes ? { recoveryCodes } : {}),
   });
+}
 
-  return createAuthenticatedSessionResponse(repo, user, recoveryCodes);
+function payloadUserId(payload: Readonly<Record<string, unknown>>): string {
+  const value = payload["userId"];
+  if (typeof value !== "string") throw new AuthError("challenge_mismatch");
+  return value;
+}
+
+function payloadEmail(payload: Readonly<Record<string, unknown>>): string {
+  const value = payload["email"];
+  if (typeof value !== "string") throw new AuthError("challenge_mismatch");
+  return value;
+}
+
+function requireMode(
+  payload: Readonly<Record<string, unknown>>,
+  mode: "setup" | "verify",
+): void {
+  if (payload["mode"] !== mode) throw new AuthError("challenge_mismatch");
+}
+
+function sharedAuthError(error: unknown): Response {
+  if (error instanceof AuthError) {
+    const expired = error.code === "challenge_expired";
+    return jsonError(
+      expired ? "Authentication challenge expired" : error.message,
+      expired ? 401 : 400,
+      error.code,
+    );
+  }
+  throw error;
 }

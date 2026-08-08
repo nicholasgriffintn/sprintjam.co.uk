@@ -1,9 +1,8 @@
 import type { D1Database } from "@cloudflare/workers-types";
 
-import { hashToken } from "@sprintjam/utils";
-
 import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
 import { getSessionTokenFromRequest } from "./session";
+import { createSprintJamAuth } from "./shared-auth";
 
 export interface AuthResult {
   userId: number;
@@ -31,18 +30,16 @@ export async function authenticateRequest(
     return { status: "error", code: "unauthorized" };
   }
 
-  const tokenHash = await hashToken(token);
   const repo = new WorkspaceAuthRepository(db);
-
-  const result = await repo.validateSession(tokenHash);
+  const result = await createSprintJamAuth({ DB: db }).authenticate(token);
 
   if (!result) {
     return { status: "error", code: "expired" };
   }
 
   return {
-    userId: result.userId,
-    email: result.email,
+    userId: Number(result.user.id),
+    email: result.user.email,
     repo,
   };
 }

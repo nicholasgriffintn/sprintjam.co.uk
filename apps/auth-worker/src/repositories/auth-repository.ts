@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/d1";
-import { and, desc, eq, isNull, lt } from "drizzle-orm";
+import { and, desc, eq, isNull, lt, ne, or } from "drizzle-orm";
 import type { D1Database } from "@cloudflare/workers-types";
 import {
   allowedDomains,
@@ -900,6 +900,44 @@ export class AuthRepository {
       createdAt,
     }));
     await this.db.insert(mfaRecoveryCodes).values(values);
+  }
+
+  async replaceRecoveryCodes(
+    userId: number,
+    codeHashes: string[],
+  ): Promise<void> {
+    await this.db
+      .delete(mfaRecoveryCodes)
+      .where(eq(mfaRecoveryCodes.userId, userId));
+    await this.storeRecoveryCodes(userId, codeHashes);
+  }
+
+  async deleteWebAuthnCredentials(userId: number): Promise<void> {
+    await this.db
+      .delete(mfaCredentials)
+      .where(
+        and(
+          eq(mfaCredentials.userId, userId),
+          eq(mfaCredentials.type, "webauthn"),
+        ),
+      );
+  }
+
+  async deleteMfaCredentialsExcept(
+    userId: number,
+    credentialId: string,
+  ): Promise<void> {
+    await this.db
+      .delete(mfaCredentials)
+      .where(
+        and(
+          eq(mfaCredentials.userId, userId),
+          or(
+            isNull(mfaCredentials.credentialId),
+            ne(mfaCredentials.credentialId, credentialId),
+          ),
+        ),
+      );
   }
 
   async consumeRecoveryCode(

@@ -15,3 +15,4 @@ export {
   updateCurrentUserProfileController,
   logoutController,
 } from "./auth/session-controller";
+export { authUiController } from "./auth/ui-controller";

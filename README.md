@@ -42,7 +42,7 @@ SprintJam helps distributed teams run the core sprint ceremonies in one place: p
 
 ### Managed Workspaces and Teams
 
-- Magic-link sign-in for approved workspace domains
+- Six-digit email-code sign-in for approved workspace domains, active members, and invited users
 - MFA with TOTP or passkeys, plus recovery codes
 - Team defaults, shared integrations, saved sessions, sprint actions, and workspace-level insights across planning, standups, retros, and wheels
 - Workspace admins, team admins, restricted teams, member approval, readable team URLs, and session filters
@@ -159,6 +159,11 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    ```
 
    Notes:
+   - Configure the auth worker's `SEND_EMAIL` binding before enabling sign-in. Users cannot receive verification codes without it.
+   - Add each self-service email domain to the workspace allowlist. Users outside those domains need an active membership or a pending invitation.
+   - Keep `TOKEN_ENCRYPTION_SECRET` stable and secret. Changing it prevents existing authenticator-app credentials from being read.
+   - Serve the sign-in page over HTTPS with a hostname that matches the passkey relying-party domain. Local passkey testing also needs a browser-supported secure context.
+   - This authentication change signs existing workspace sessions out. Users must verify their email and enrol MFA again.
    - Set the same `INTERNAL_API_SECRET` in `apps/room-worker/.dev.vars` and `apps/auth-worker/.dev.vars` if you want room sessions to use team-level provider credentials.
    - Set the same `STATS_INGEST_TOKEN` in `apps/room-worker/.dev.vars` and `apps/stats-worker/.dev.vars` if you want planning round stats to be persisted locally.
    - `apps/wheel-worker`, `apps/standup-worker`, and `apps/retro-worker` send workspace and stats data through service bindings, so they need matching service bindings rather than local stats tokens.

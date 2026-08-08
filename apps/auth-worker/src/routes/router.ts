@@ -15,6 +15,7 @@ import {
   getCurrentUserController,
   updateCurrentUserProfileController,
   logoutController,
+  authUiController,
 } from "../controllers/auth-controller";
 import {
   listTeamsController,
@@ -129,6 +130,12 @@ async function requireTeamSlugParam(
 }
 
 const ROUTES: RouteDefinition[] = [
+  {
+    method: "POST",
+    pattern: /^auth$/,
+    handler: (request, env) => authUiController(request, env),
+    paramTypes: ["none"],
+  },
   {
     method: "POST",
     pattern: /^auth\/magic-link$/,

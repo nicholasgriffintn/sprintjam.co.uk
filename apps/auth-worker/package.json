@@ -22,8 +22,12 @@
     "generate:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
+    "@ngriffin_uk/auth-core": "^0.4.2",
+    "@ngriffin_uk/auth-encoding": "^0.2.4",
+    "@ngriffin_uk/auth-magic-link": "^0.0.4",
+    "@ngriffin_uk/auth-otp": "^0.4.2",
+    "@ngriffin_uk/auth-webauthn": "^0.4.4",
     "@sentry/cloudflare": "^10.64.0",
-    "@simplewebauthn/server": "13.3.2",
     "@sprintjam/db": "workspace:*",
     "@sprintjam/services": "workspace:*",
     "@sprintjam/types": "workspace:*",

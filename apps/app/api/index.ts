@@ -28,6 +28,7 @@ const requestHandler = createRequestHandler(
 
 export function isAuthWorkerApiPath(path: string): boolean {
   return (
+    path === "auth" ||
     path.startsWith("auth/") ||
     path === "teams" ||
     path.startsWith("teams/") ||

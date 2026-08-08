@@ -1,10 +1,11 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { clearSessionCookie, hashToken } from "@sprintjam/utils";
+import { clearSessionCookie } from "@sprintjam/utils";
 
 import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
 import { jsonError, jsonResponse } from "../../lib/response";
 import { getSessionTokenFromRequest } from "../../lib/session";
 import { buildWorkspaceTeam } from "../../lib/team-access";
+import { createSprintJamAuth } from "../../lib/shared-auth";
 
 const MAX_PROFILE_NAME_LENGTH = 64;
 const MAX_PROFILE_AVATAR_LENGTH = 500;
@@ -18,15 +19,13 @@ export async function getCurrentUserController(
     return jsonError("Unauthorized", 401, "unauthorized");
   }
 
-  const tokenHash = await hashToken(token);
   const repo = new WorkspaceAuthRepository(env.DB);
-
-  const session = await repo.validateSession(tokenHash);
+  const session = await createSprintJamAuth(env).authenticate(token);
   if (!session) {
     return jsonError("Invalid or expired session", 401, "invalid_session");
   }
 
-  const user = await repo.getUserByEmail(session.email);
+  const user = await repo.getUserByEmail(session.user.email);
   if (!user?.id) {
     return jsonError("User not found", 404, "user_not_found");
   }
@@ -85,15 +84,13 @@ export async function updateCurrentUserProfileController(
     return jsonError("Unauthorized", 401, "unauthorized");
   }
 
-  const tokenHash = await hashToken(token);
   const repo = new WorkspaceAuthRepository(env.DB);
-
-  const session = await repo.validateSession(tokenHash);
+  const session = await createSprintJamAuth(env).authenticate(token);
   if (!session) {
     return jsonError("Invalid or expired session", 401, "invalid_session");
   }
 
-  const user = await repo.getUserByEmail(session.email);
+  const user = await repo.getUserByEmail(session.user.email);
   if (!user?.id) {
     return jsonError("User not found", 404, "user_not_found");
   }
@@ -181,10 +178,7 @@ export async function logoutController(
     return jsonError("Unauthorized", 401, "unauthorized");
   }
 
-  const tokenHash = await hashToken(token);
-  const repo = new WorkspaceAuthRepository(env.DB);
-
-  await repo.invalidateSession(tokenHash);
+  await createSprintJamAuth(env).revokeSession(token);
 
   return new Response(
     JSON.stringify({

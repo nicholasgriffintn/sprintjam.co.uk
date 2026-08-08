@@ -294,6 +294,21 @@ export class WorkspaceAuthRepository {
     return this.auth.storeRecoveryCodes(userId, codeHashes);
   }
 
+  replaceRecoveryCodes(userId: number, codeHashes: string[]): Promise<void> {
+    return this.auth.replaceRecoveryCodes(userId, codeHashes);
+  }
+
+  deleteWebAuthnCredentials(userId: number): Promise<void> {
+    return this.auth.deleteWebAuthnCredentials(userId);
+  }
+
+  deleteMfaCredentialsExcept(
+    userId: number,
+    credentialId: string,
+  ): Promise<void> {
+    return this.auth.deleteMfaCredentialsExcept(userId, credentialId);
+  }
+
   consumeRecoveryCode(userId: number, codeHash: string): Promise<boolean> {
     return this.auth.consumeRecoveryCode(userId, codeHash);
   }
