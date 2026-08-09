@@ -178,6 +178,7 @@ export function createSprintJamCoreAuthStores(
                 provider: record.provider,
                 kind: record.kind,
                 payload: await challengeCipher.encrypt(record),
+                userId: readChallengeUserId(record.payload),
                 createdAt: record.createdAt.getTime(),
                 expiresAt: record.expiresAt.getTime(),
                 attempts: record.attempts,
@@ -221,4 +222,11 @@ export function createSprintJamCoreAuthStores(
         }
       : {}),
   };
+}
+
+function readChallengeUserId(
+  payload: Readonly<Record<string, unknown>>,
+): number | null {
+  const userId = Number(payload["userId"]);
+  return Number.isSafeInteger(userId) && userId > 0 ? userId : null;
 }

@@ -5,12 +5,12 @@ import { HydratedRouter } from "react-router/dom";
 
 const onError: ClientOnErrorFunction = (
   error,
-  { location, params, unstable_pattern, errorInfo },
+  { location, params, pattern, errorInfo },
 ) => {
   console.error("[client] hydration error", {
     source: "react-router-client",
     url: `${location.pathname}${location.search ?? ""}${location.hash ?? ""}`,
-    routePattern: unstable_pattern ?? undefined,
+    routePattern: pattern || undefined,
     params,
     componentStack: errorInfo?.componentStack ?? undefined,
     error,

@@ -152,3 +152,42 @@ describe("AuthRepository.validateSession stale-threshold guard", () => {
     expect(update).not.toHaveBeenCalled();
   });
 });
+
+describe("AuthRepository MFA reset approval", () => {
+  it("batches request resolution, credential revocation, session revocation, and audit", async () => {
+    const prepare = vi.fn((sql: string) => ({
+      sql,
+      bind: vi.fn((...bindings: unknown[]) => ({ sql, bindings })),
+    }));
+    const batch = vi.fn().mockResolvedValue([{ meta: { changes: 1 } }]);
+    const repo = new AuthRepository({ prepare, batch } as any);
+
+    const approved = await repo.approveMfaResetRequest({
+      requestId: 22,
+      organisationId: 10,
+      userId: 2,
+      resolvedById: 1,
+      resolvedAt: 1_786_277_600_000,
+    });
+
+    expect(approved).toBe(true);
+    expect(batch).toHaveBeenCalledOnce();
+    const statements = batch.mock.calls[0][0] as Array<{ sql: string }>;
+    expect(statements).toHaveLength(7);
+    expect(statements.map((statement) => statement.sql).join("\n")).toContain(
+      "UPDATE mfa_reset_requests",
+    );
+    expect(statements.map((statement) => statement.sql).join("\n")).toContain(
+      "DELETE FROM mfa_credentials",
+    );
+    expect(statements.map((statement) => statement.sql).join("\n")).toContain(
+      "DELETE FROM shared_auth_challenges",
+    );
+    expect(statements.map((statement) => statement.sql).join("\n")).toContain(
+      "DELETE FROM workspace_sessions",
+    );
+    expect(statements.map((statement) => statement.sql).join("\n")).toContain(
+      "INSERT INTO login_audit_logs",
+    );
+  });
+});

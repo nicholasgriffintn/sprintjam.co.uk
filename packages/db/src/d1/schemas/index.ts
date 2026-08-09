@@ -7,6 +7,7 @@ export * from "./auth-challenges";
 export * from "./shared-auth-challenges";
 export * from "./mfa-credentials";
 export * from "./mfa-recovery-codes";
+export * from "./mfa-reset-requests";
 export * from "./login-audit-logs";
 export * from "./workspace-sessions";
 export * from "./workspace-invites";

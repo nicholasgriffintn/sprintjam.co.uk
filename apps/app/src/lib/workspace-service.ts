@@ -200,6 +200,13 @@ export async function verifyMfa(
   });
 }
 
+export async function requestMfaReset(challengeToken: string): Promise<void> {
+  await workspaceRequest(`${API_BASE_URL}/auth/mfa/reset-requests`, {
+    method: "POST",
+    body: JSON.stringify({ challengeToken }),
+  });
+}
+
 export async function getWorkspaceProfile(): Promise<WorkspaceProfile> {
   return workspaceRequest<WorkspaceProfile>(
     `${API_BASE_URL}/workspace/profile`,
@@ -614,6 +621,20 @@ export async function removeWorkspaceMember(userId: number): Promise<void> {
   await workspaceRequest(`${API_BASE_URL}/workspace/members/${userId}`, {
     method: "DELETE",
   });
+}
+
+export async function approveMfaResetRequest(requestId: number): Promise<void> {
+  await workspaceRequest(
+    `${API_BASE_URL}/workspace/mfa-reset-requests/${requestId}/approve`,
+    { method: "POST", body: JSON.stringify({}) },
+  );
+}
+
+export async function rejectMfaResetRequest(requestId: number): Promise<void> {
+  await workspaceRequest(
+    `${API_BASE_URL}/workspace/mfa-reset-requests/${requestId}/reject`,
+    { method: "POST", body: JSON.stringify({}) },
+  );
 }
 
 export async function listTeamMembers(teamSlug: string): Promise<TeamMember[]> {

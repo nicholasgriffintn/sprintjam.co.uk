@@ -11,6 +11,7 @@ import { Building2, MailPlus } from "lucide-react";
 import { WorkspaceLayout } from "@/components/workspace/WorkspaceLayout";
 import { AdminSidebar } from "@/components/workspace/AdminSidebar";
 import { WorkspaceMemberSections } from "@/components/workspace/WorkspaceMemberSections";
+import { WorkspaceMfaResetRequestsPanel } from "@/components/workspace/WorkspaceMfaResetRequestsPanel";
 import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { Alert } from "@/components/ui/Alert";
 import { Input } from "@/components/ui/Input";
@@ -93,6 +94,7 @@ export default function WorkspaceAdminOverview() {
   const organisation = profile?.organisation ?? null;
   const members = profile?.members ?? [];
   const invites = profile?.invites ?? [];
+  const mfaResetRequests = profile?.mfaResetRequests ?? [];
   const isWorkspaceAdmin = profile?.membership.role === "admin";
 
   const pendingMembers = useMemo(
@@ -384,6 +386,14 @@ export default function WorkspaceAdminOverview() {
                 </div>
               </div>
             </SurfaceCard>
+
+            {isWorkspaceAdmin ? (
+              <WorkspaceMfaResetRequestsPanel
+                requests={mfaResetRequests}
+                currentUserId={user?.id}
+                onRefresh={() => refreshWorkspace(true)}
+              />
+            ) : null}
 
             <SurfaceCard className="space-y-5">
               <div>

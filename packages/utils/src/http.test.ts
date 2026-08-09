@@ -10,6 +10,7 @@ import {
   getRetroSessionToken,
   jsonError,
   isAllowedOrigin,
+  normaliseHttpUrl,
   readJsonBody,
   validateRequestBodySize,
 } from "./http";
@@ -115,6 +116,20 @@ describe("isAllowedOrigin", () => {
 
   it("returns false for unknown origin even in development mode", () => {
     expect(isAllowedOrigin("https://evil.com", true)).toBe(false);
+  });
+});
+
+describe("normaliseHttpUrl", () => {
+  it("accepts HTTP URLs and rejects non-web protocols", () => {
+    expect(
+      normaliseHttpUrl(
+        "https://sprintjam.co.uk/workspace/admin",
+        "https://sprintjam.co.uk",
+      ),
+    ).toBe("https://sprintjam.co.uk/workspace/admin");
+    expect(
+      normaliseHttpUrl("javascript:alert(1)", "https://sprintjam.co.uk"),
+    ).toBe("https://sprintjam.co.uk");
   });
 });
 

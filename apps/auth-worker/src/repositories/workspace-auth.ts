@@ -317,6 +317,50 @@ export class WorkspaceAuthRepository {
     return this.auth.resetMfaConfiguration(userId);
   }
 
+  expireMfaResetRequests(userId: number, now: number): Promise<void> {
+    return this.auth.expireMfaResetRequests(userId, now);
+  }
+
+  getPendingMfaResetRequestForUser(userId: number, now: number) {
+    return this.auth.getPendingMfaResetRequestForUser(userId, now);
+  }
+
+  createMfaResetRequest(params: {
+    organisationId: number;
+    userId: number;
+    requestedAt: number;
+    expiresAt: number;
+  }) {
+    return this.auth.createMfaResetRequest(params);
+  }
+
+  listPendingMfaResetRequests(organisationId: number, now: number) {
+    return this.auth.listPendingMfaResetRequests(organisationId, now);
+  }
+
+  getMfaResetRequestById(requestId: number) {
+    return this.auth.getMfaResetRequestById(requestId);
+  }
+
+  approveMfaResetRequest(params: {
+    requestId: number;
+    organisationId: number;
+    userId: number;
+    resolvedById: number;
+    resolvedAt: number;
+  }): Promise<boolean> {
+    return this.auth.approveMfaResetRequest(params);
+  }
+
+  rejectMfaResetRequest(params: {
+    requestId: number;
+    organisationId: number;
+    resolvedById: number;
+    resolvedAt: number;
+  }): Promise<boolean> {
+    return this.auth.rejectMfaResetRequest(params);
+  }
+
   getOrganisationTeams(organisationId: number) {
     return this.teams.getOrganisationTeams(organisationId);
   }

@@ -306,6 +306,18 @@ export function isAllowedOrigin(
   return false;
 }
 
+export function normaliseHttpUrl(value: string, fallback: string): string {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.toString();
+    }
+  } catch {
+    // Fall through to the known-safe caller-provided URL.
+  }
+  return fallback;
+}
+
 const MAX_BODY_SIZE = 100 * 1024; // 100KB
 
 export function validateRequestBodySize(

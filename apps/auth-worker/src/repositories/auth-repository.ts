@@ -1,6 +1,9 @@
 import { drizzle } from "drizzle-orm/d1";
-import { and, desc, eq, isNull, lt, ne, or } from "drizzle-orm";
-import type { D1Database } from "@cloudflare/workers-types";
+import { and, desc, eq, gt, isNull, lt, lte, ne, or } from "drizzle-orm";
+import type {
+  D1Database,
+  D1PreparedStatement,
+} from "@cloudflare/workers-types";
 import {
   allowedDomains,
   organisations,
@@ -13,6 +16,7 @@ import {
   authChallenges,
   mfaCredentials,
   mfaRecoveryCodes,
+  mfaResetRequests,
   loginAuditLogs,
 } from "@sprintjam/db";
 import * as schema from "@sprintjam/db/d1/schemas";
@@ -21,8 +25,10 @@ import { SESSION_LAST_USED_UPDATE_THRESHOLD_MS } from "../constants";
 
 export class AuthRepository {
   private db: ReturnType<typeof drizzle>;
+  private d1: D1Database;
 
   constructor(d1: D1Database) {
+    this.d1 = d1;
     this.db = drizzle(d1, { schema });
   }
 
@@ -975,6 +981,193 @@ export class AuthRepository {
     await this.db
       .delete(mfaRecoveryCodes)
       .where(eq(mfaRecoveryCodes.userId, userId));
+  }
+
+  async expireMfaResetRequests(userId: number, now: number): Promise<void> {
+    await this.db
+      .update(mfaResetRequests)
+      .set({ status: "expired", resolvedAt: now })
+      .where(
+        and(
+          eq(mfaResetRequests.userId, userId),
+          eq(mfaResetRequests.status, "pending"),
+          lte(mfaResetRequests.expiresAt, now),
+        ),
+      );
+  }
+
+  async getPendingMfaResetRequestForUser(userId: number, now: number) {
+    return this.db
+      .select()
+      .from(mfaResetRequests)
+      .where(
+        and(
+          eq(mfaResetRequests.userId, userId),
+          eq(mfaResetRequests.status, "pending"),
+          gt(mfaResetRequests.expiresAt, now),
+        ),
+      )
+      .get();
+  }
+
+  async createMfaResetRequest(params: {
+    organisationId: number;
+    userId: number;
+    requestedAt: number;
+    expiresAt: number;
+  }) {
+    return this.db.insert(mfaResetRequests).values(params).returning().get();
+  }
+
+  async listPendingMfaResetRequests(organisationId: number, now: number) {
+    return this.db
+      .select({
+        id: mfaResetRequests.id,
+        organisationId: mfaResetRequests.organisationId,
+        userId: mfaResetRequests.userId,
+        status: mfaResetRequests.status,
+        requestedAt: mfaResetRequests.requestedAt,
+        expiresAt: mfaResetRequests.expiresAt,
+        resolvedAt: mfaResetRequests.resolvedAt,
+        resolvedById: mfaResetRequests.resolvedById,
+        email: users.email,
+        name: users.name,
+        avatar: users.avatar,
+      })
+      .from(mfaResetRequests)
+      .innerJoin(users, eq(users.id, mfaResetRequests.userId))
+      .where(
+        and(
+          eq(mfaResetRequests.organisationId, organisationId),
+          eq(mfaResetRequests.status, "pending"),
+          gt(mfaResetRequests.expiresAt, now),
+        ),
+      )
+      .orderBy(mfaResetRequests.requestedAt);
+  }
+
+  async getMfaResetRequestById(requestId: number) {
+    return this.db
+      .select()
+      .from(mfaResetRequests)
+      .where(eq(mfaResetRequests.id, requestId))
+      .get();
+  }
+
+  async approveMfaResetRequest(params: {
+    requestId: number;
+    organisationId: number;
+    userId: number;
+    resolvedById: number;
+    resolvedAt: number;
+  }): Promise<boolean> {
+    const approvalMarker = `${params.requestId}:${params.resolvedAt}:${params.resolvedById}`;
+    const approvedRequestExists = `EXISTS (
+      SELECT 1 FROM mfa_reset_requests
+      WHERE id = ? AND organisation_id = ? AND user_id = ?
+        AND status = 'approved' AND resolved_at = ? AND resolved_by_id = ?
+    )`;
+    const bindApprovalScope = (statement: D1PreparedStatement) =>
+      statement.bind(
+        params.userId,
+        params.requestId,
+        params.organisationId,
+        params.userId,
+        params.resolvedAt,
+        params.resolvedById,
+      );
+
+    const statements = [
+      this.d1
+        .prepare(
+          `UPDATE mfa_reset_requests
+           SET status = 'approved', resolved_at = ?, resolved_by_id = ?
+           WHERE id = ? AND organisation_id = ? AND user_id = ?
+             AND status = 'pending' AND expires_at > ?`,
+        )
+        .bind(
+          params.resolvedAt,
+          params.resolvedById,
+          params.requestId,
+          params.organisationId,
+          params.userId,
+          params.resolvedAt,
+        ),
+      bindApprovalScope(
+        this.d1.prepare(
+          `DELETE FROM mfa_recovery_codes WHERE user_id = ? AND ${approvedRequestExists}`,
+        ),
+      ),
+      bindApprovalScope(
+        this.d1.prepare(
+          `DELETE FROM mfa_credentials WHERE user_id = ? AND ${approvedRequestExists}`,
+        ),
+      ),
+      bindApprovalScope(
+        this.d1.prepare(
+          `DELETE FROM auth_challenges
+           WHERE user_id = ? AND type IN ('setup', 'verify')
+             AND ${approvedRequestExists}`,
+        ),
+      ),
+      bindApprovalScope(
+        this.d1.prepare(
+          `DELETE FROM shared_auth_challenges WHERE user_id = ? AND ${approvedRequestExists}`,
+        ),
+      ),
+      bindApprovalScope(
+        this.d1.prepare(
+          `DELETE FROM workspace_sessions WHERE user_id = ? AND ${approvedRequestExists}`,
+        ),
+      ),
+      this.d1
+        .prepare(
+          `INSERT INTO login_audit_logs
+             (user_id, email, event, status, reason, created_at)
+           SELECT users.id, users.email, 'mfa_admin_reset', 'success', ?, ?
+           FROM users
+           WHERE users.id = ? AND ${approvedRequestExists}`,
+        )
+        .bind(
+          `request:${approvalMarker}`,
+          params.resolvedAt,
+          params.userId,
+          params.requestId,
+          params.organisationId,
+          params.userId,
+          params.resolvedAt,
+          params.resolvedById,
+        ),
+    ];
+
+    const [approval] = await this.d1.batch(statements);
+    return (approval.meta.changes ?? 0) === 1;
+  }
+
+  async rejectMfaResetRequest(params: {
+    requestId: number;
+    organisationId: number;
+    resolvedById: number;
+    resolvedAt: number;
+  }): Promise<boolean> {
+    const result = await this.db
+      .update(mfaResetRequests)
+      .set({
+        status: "rejected",
+        resolvedAt: params.resolvedAt,
+        resolvedById: params.resolvedById,
+      })
+      .where(
+        and(
+          eq(mfaResetRequests.id, params.requestId),
+          eq(mfaResetRequests.organisationId, params.organisationId),
+          eq(mfaResetRequests.status, "pending"),
+          gt(mfaResetRequests.expiresAt, params.resolvedAt),
+        ),
+      )
+      .returning({ id: mfaResetRequests.id })
+      .get();
+    return Boolean(result);
   }
 
   async cleanupExpiredMagicLinks(): Promise<number> {

@@ -85,6 +85,11 @@ import {
   getTeamCredentialsInternalController,
   refreshTeamCredentialsInternalController,
 } from "../controllers/team-integrations-controller";
+import {
+  approveMfaResetRequestController,
+  rejectMfaResetRequestController,
+  requestMfaResetController,
+} from "../controllers/mfa-reset-controller";
 import { jsonError, jsonResponse, notFoundResponse } from "../lib/response";
 import { TeamRepository } from "../repositories/team-repository";
 
@@ -170,6 +175,12 @@ const ROUTES: RouteDefinition[] = [
     method: "POST",
     pattern: /^auth\/mfa\/verify$/,
     handler: (request, env) => verifyMfaController(request, env),
+    paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^auth\/mfa\/reset-requests$/,
+    handler: (request, env) => requestMfaResetController(request, env),
     paramTypes: ["none"],
   },
   {
@@ -564,6 +575,34 @@ const ROUTES: RouteDefinition[] = [
     pattern: /^workspace\/invites$/,
     handler: (request, env) => inviteWorkspaceMemberController(request, env),
     paramTypes: ["none"],
+  },
+  {
+    method: "POST",
+    pattern: /^workspace\/mfa-reset-requests\/(\d+)\/approve$/,
+    handler: (request, env, params) => {
+      const requestIdResult = requireNumberParam(params[0], "requestId");
+      if (!requestIdResult.ok) return requestIdResult.response;
+      return approveMfaResetRequestController(
+        request,
+        env,
+        requestIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
+  },
+  {
+    method: "POST",
+    pattern: /^workspace\/mfa-reset-requests\/(\d+)\/reject$/,
+    handler: (request, env, params) => {
+      const requestIdResult = requireNumberParam(params[0], "requestId");
+      if (!requestIdResult.ok) return requestIdResult.response;
+      return rejectMfaResetRequestController(
+        request,
+        env,
+        requestIdResult.value,
+      );
+    },
+    paramTypes: ["number"],
   },
   {
     method: "POST",

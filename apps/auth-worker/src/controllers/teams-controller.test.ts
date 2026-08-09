@@ -193,6 +193,7 @@ const createRepo = (overrides: Record<string, unknown> = {}) => ({
   getOrganisationById: vi.fn().mockResolvedValue(makeOrganisation()),
   getOrganisationMembers: vi.fn().mockResolvedValue([]),
   listPendingWorkspaceInvites: vi.fn().mockResolvedValue([]),
+  listPendingMfaResetRequests: vi.fn().mockResolvedValue([]),
   getUserByEmail: vi.fn().mockResolvedValue(null),
   createOrUpdateWorkspaceInvite: vi.fn().mockResolvedValue(makeInvite()),
   ...overrides,
@@ -1900,6 +1901,15 @@ describe("teams-controller", () => {
       listPendingWorkspaceInvites: vi
         .fn()
         .mockResolvedValue([makeInvite({ email: "pending@example.com" })]),
+      listPendingMfaResetRequests: vi.fn().mockResolvedValue([
+        {
+          id: 22,
+          organisationId: 1,
+          userId: 2,
+          email: "member@example.com",
+          status: "pending",
+        },
+      ]),
     });
     authenticateAs(repo);
 
@@ -1912,6 +1922,7 @@ describe("teams-controller", () => {
       organisation: { name: string };
       members: Array<{ email: string }>;
       invites: Array<{ email: string }>;
+      mfaResetRequests: Array<{ email: string }>;
     };
 
     expect(response.status).toBe(200);
@@ -1922,6 +1933,9 @@ describe("teams-controller", () => {
     ]);
     expect(data.invites).toEqual([
       expect.objectContaining({ email: "pending@example.com" }),
+    ]);
+    expect(data.mfaResetRequests).toEqual([
+      expect.objectContaining({ email: "member@example.com" }),
     ]);
   });
 

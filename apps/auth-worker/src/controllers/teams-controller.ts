@@ -16,6 +16,7 @@ import {
 
 import type { AuthResult } from "../lib/auth";
 import { EMAIL_REGEX } from "../lib/auth-helpers";
+import { resolveSprintJamAppOrigin } from "../lib/app-origin";
 import {
   forbiddenResponse,
   jsonError,
@@ -1288,12 +1289,19 @@ export async function getWorkspaceProfileController(
         workspace.viewer.user.organisationId,
       )
     : [];
+  const mfaResetRequests = workspace.viewer.isWorkspaceAdmin
+    ? await auth.result.repo.listPendingMfaResetRequests(
+        workspace.viewer.user.organisationId,
+        Date.now(),
+      )
+    : [];
 
   return jsonResponse({
     membership: workspace.viewer.membership,
     organisation,
     members,
     invites,
+    mfaResetRequests,
   });
 }
 
@@ -1588,7 +1596,7 @@ export async function inviteWorkspaceMemberController(
   const workspaceName = organisation?.name ?? "your workspace";
   const inviterName =
     workspace.viewer.user.name?.trim() || workspace.viewer.user.email;
-  const loginUrl = `${new URL(request.url).origin}/login`;
+  const loginUrl = `${resolveSprintJamAppOrigin(request, env.ENVIRONMENT)}/login`;
 
   try {
     await sendWorkspaceInviteEmail({

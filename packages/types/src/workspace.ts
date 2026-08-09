@@ -13,6 +13,7 @@ import type {
   workspaceActionEvents,
   workspaceActionItems,
   workspaceInvites,
+  mfaResetRequests,
   workspaceMemberships,
   workspaceProcessLoops,
   workspaceSessionLinks,
@@ -37,6 +38,7 @@ export type WorkspaceActionEvent = typeof workspaceActionEvents.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Organisation = typeof organisations.$inferSelect;
 export type WorkspaceInvite = typeof workspaceInvites.$inferSelect;
+export type MfaResetRequestRow = typeof mfaResetRequests.$inferSelect;
 export type WorkspaceMembershipRow = typeof workspaceMemberships.$inferSelect;
 export type WorkspaceRole = WorkspaceMembershipRow["role"];
 export type MembershipStatus = WorkspaceMembershipRow["status"];
@@ -257,6 +259,9 @@ export type WorkspaceMember = Pick<
   approvedAt: number | null;
 };
 
+export type WorkspaceMfaResetRequest = MfaResetRequestRow &
+  Pick<User, "email" | "name" | "avatar">;
+
 export type TeamMember = Pick<
   User,
   "id" | "email" | "name" | "avatar" | "createdAt" | "lastLoginAt"
@@ -328,6 +333,7 @@ export interface WorkspaceProfile {
   organisation: WorkspaceOrganisation;
   members: WorkspaceMember[];
   invites: WorkspaceInvite[];
+  mfaResetRequests: WorkspaceMfaResetRequest[];
 }
 
 export interface TeamInsights {
